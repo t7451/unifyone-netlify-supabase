@@ -1,15 +1,17 @@
 # UnifyOne — Netlify Deployment Configuration
-# Target: operation-v3.netlify.app
+# Repo root IS the project root (no subdirectory base)
 
 [build]
-  command = "pnpm build"
+  base = ""
+  command = "pnpm install && pnpm build"
   publish = "dist/public"
 
 [build.environment]
   NODE_VERSION = "22"
   PNPM_VERSION = "10"
+  NODE_ENV = "production"
 
-# Redirect all routes to the Express server (SSR / API)
+# Redirect API calls to the Express server function
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/server/:splat"
@@ -30,7 +32,6 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co; frame-src https://js.stripe.com https://hooks.stripe.com;"
 
 # Cache static assets aggressively
 [[headers]]
