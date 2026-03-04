@@ -8,6 +8,7 @@ import { ordersRouter } from "./routers/orders";
 import { productsRouter } from "./routers/products";
 import { tenantRouter } from "./routers/tenant";
 import { subscriptionRouter } from "./routers/subscription";
+import { teamRouter } from "./routers/team";
 
 export const appRouter = router({
   system: systemRouter,
@@ -27,6 +28,7 @@ export const appRouter = router({
   analytics: analyticsRouter,
   integrations: integrationsRouter,
   subscription: subscriptionRouter,
+  team: teamRouter,
 });
 
 export type AppRouter = typeof appRouter;

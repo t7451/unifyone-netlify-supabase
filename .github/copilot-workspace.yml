@@ -1,0 +1,38 @@
+# GitHub Copilot Workspace Configuration
+# Guides Copilot's code suggestions across the UnifyOne codebase
+
+version: 1
+
+# Preferred languages and frameworks
+languages:
+  - typescript
+  - tsx
+
+# Code style preferences
+style:
+  indent: 2
+  quotes: double
+  semicolons: true
+  trailing_comma: es5
+
+# File patterns Copilot should prioritize for context
+context_files:
+  - .github/copilot-instructions.md
+  - drizzle/schema.ts
+  - server/db.ts
+  - server/routers.ts
+  - shared/const.ts
+
+# Patterns to avoid suggesting
+avoid_patterns:
+  - raw SQL strings in router files
+  - hardcoded port numbers
+  - client-side secret access
+  - cross-tenant data queries without tenantId filter
+  - useState/navigation calls in render phase
+
+# Test file conventions
+test_conventions:
+  framework: vitest
+  location: server/*.test.ts
+  pattern: describe/it/expect

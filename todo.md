@@ -135,3 +135,18 @@
 - [x] Build /billing page: current plan card, period end, Stripe portal button, invoice history with PDF download
 - [x] Add Billing route to App.tsx and Billing link to sidebar nav
 - [x] Run full test suite (21/21) and save checkpoint
+
+## Phase 9 — Copilot Bots + Pay Now + Team Invites + v1.7.0 Release
+- [x] Create .github/copilot-instructions.md with UnifyOne codebase context
+- [x] Create .github/workflows/claude-review.yml — Claude Haiku PR code review bot
+- [x] Create .github/workflows/dependency-audit.yml — weekly pnpm audit + auto-PR
+- [x] Create .github/workflows/test-ci.yml — run vitest on every push/PR
+- [x] Add Pay Now button to Orders table for unpaid orders
+- [x] Wire /checkout?orderId=X pre-fill (amount + description from order)
+- [x] Auto-mark order as paid on PayPal/Stripe capture success
+- [x] Add team_invites table to schema + migration applied
+- [x] Add /team page: member list, role management, invite flow, pending invites, copy link
+- [x] Add teamRouter: invite/revoke/accept/listMembers/updateMemberRole/removeMember procedures
+- [x] Add Team link to DashboardLayout sidebar nav
+- [x] Create GitHub v1.7.0 release tag — https://github.com/ksksrbiz-arch/unifyone-netlify-supabase/releases/tag/v1.7.0
+- [x] Run full test suite (21/21) and save checkpoint

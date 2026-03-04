@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useRealtimeOrders } from "@/lib/supabaseRealtime";
 import { RealtimeStatus } from "@/components/RealtimeStatus";
@@ -12,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
   Search, ShoppingCart, Plus, Eye, Package, Truck, CheckCircle,
-  Clock, XCircle, RefreshCw, Loader2, ChevronRight, DollarSign, User
+  Clock, XCircle, RefreshCw, Loader2, ChevronRight, DollarSign, User, CreditCard
 } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -58,6 +59,7 @@ interface OrderItem {
 const emptyItem = (): OrderItem => ({ productName: "", productSku: "", quantity: 1, unitPrice: 0 });
 
 export default function Orders() {
+  const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -265,6 +267,18 @@ export default function Orders() {
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </Button>
+                      {(o.paymentStatus === "pending" || o.paymentStatus === "failed") && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 gap-1"
+                          title="Pay Now"
+                          onClick={() => navigate(`/checkout?orderId=${o.id}&amount=${Number(o.total).toFixed(2)}&desc=Order+${encodeURIComponent(o.orderNumber)}`)}
+                        >
+                          <CreditCard className="w-3.5 h-3.5" />
+                          Pay
+                        </Button>
+                      )}
                       <Select
                         value={o.status}
                         onValueChange={v => updateStatus.mutate({ id: o.id, status: v as OrderStatus })}

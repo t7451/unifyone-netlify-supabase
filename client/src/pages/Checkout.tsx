@@ -43,7 +43,9 @@ export default function Checkout() {
   const [selectedRail, setSelectedRail] = useState<PaymentRail>("stripe");
   const [amount, setAmount] = useState("29.00");
   const [description, setDescription] = useState("UnifyOne Pro Subscription");
+  const [linkedOrderId, setLinkedOrderId] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const markOrderPaid = trpc.orders.updateStatus.useMutation();
   const [paypalLoaded, setPaypalLoaded] = useState(false);
   const paypalContainerRef = useRef<HTMLDivElement>(null);
   const paypalButtonsRef = useRef<any>(null);
@@ -57,6 +59,7 @@ export default function Checkout() {
     const params = new URLSearchParams(searchStr);
     if (params.get("amount")) setAmount(params.get("amount")!);
     if (params.get("desc")) setDescription(params.get("desc")!);
+    if (params.get("orderId")) setLinkedOrderId(parseInt(params.get("orderId")!, 10));
     // Check for PayPal return
     if (params.get("paypal_return") === "1") {
       toast.success("Payment approved! Processing your order...");
@@ -140,7 +143,13 @@ export default function Checkout() {
           const result = await response.json();
           if (!response.ok) throw new Error(result.error);
           toast.success(`Payment of $${result.amount} captured successfully!`);
-          navigate("/dashboard?payment=success");
+          // Auto-mark linked order as paid
+          if (linkedOrderId) {
+            await markOrderPaid.mutateAsync({ id: linkedOrderId, status: "processing", paymentStatus: "paid" }).catch(() => {});
+            navigate(`/orders?paid=${linkedOrderId}`);
+          } else {
+            navigate("/dashboard?payment=success");
+          }
         } catch (err: any) {
           toast.error(`Capture failed: ${err.message}`);
         } finally {
@@ -184,7 +193,12 @@ export default function Checkout() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       toast.info("Redirecting to Stripe Checkout...");
+      // Pass orderId in Stripe success URL so webhook can mark it paid
       window.open(data.url, "_blank");
+      // Optimistically mark as pending payment if linked to an order
+      if (linkedOrderId) {
+        await markOrderPaid.mutateAsync({ id: linkedOrderId, status: "processing", paymentStatus: "pending" }).catch(() => {});
+      }
     } catch (err: any) {
       toast.error(`Stripe error: ${err.message}`);
     } finally {
