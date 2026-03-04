@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { createOrder, getCustomers, getOrderById, getOrderWithItems, getOrders, updateOrderStatus, upsertCustomer } from "../db";
+import { createOrder, getCustomerById, getCustomers, getOrderById, getOrdersByCustomerEmail, getOrderWithItems, getOrders, updateCustomer, updateOrderStatus, upsertCustomer } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 
 const requireTenant = (tenantId: number | null | undefined) => {
@@ -92,5 +92,38 @@ export const ordersRouter = router({
   }).optional()).query(async ({ ctx, input }) => {
     const tenantId = requireTenant(ctx.user.tenantId);
     return getCustomers(tenantId, input);
+  }),
+
+  getCustomer: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+    const tenantId = requireTenant(ctx.user.tenantId);
+    const customer = await getCustomerById(input.id, tenantId);
+    if (!customer) throw new TRPCError({ code: "NOT_FOUND" });
+    return customer;
+  }),
+
+  customerOrders: protectedProcedure.input(z.object({ email: z.string() })).query(async ({ ctx, input }) => {
+    const tenantId = requireTenant(ctx.user.tenantId);
+    return getOrdersByCustomerEmail(tenantId, input.email);
+  }),
+
+  updateCustomer: protectedProcedure.input(z.object({
+    id: z.number(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    phone: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    address: z.object({
+      line1: z.string().optional(),
+      line2: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      zip: z.string().optional(),
+      country: z.string().optional(),
+    }).optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const tenantId = requireTenant(ctx.user.tenantId);
+    const { id, ...data } = input;
+    await updateCustomer(id, tenantId, data as any);
+    return { success: true };
   }),
 });

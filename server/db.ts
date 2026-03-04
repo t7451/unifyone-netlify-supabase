@@ -281,6 +281,25 @@ export async function getCustomers(tenantId: number, opts?: { limit?: number; of
   return db.select().from(customers).where(and(...conditions)).orderBy(desc(customers.createdAt)).limit(opts?.limit ?? 50).offset(opts?.offset ?? 0);
 }
 
+export async function getCustomerById(id: number, tenantId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(customers).where(and(eq(customers.id, id), eq(customers.tenantId, tenantId))).limit(1);
+  return result[0] ?? null;
+}
+
+export async function getOrdersByCustomerEmail(tenantId: number, email: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(orders).where(and(eq(orders.tenantId, tenantId), eq(orders.customerEmail, email))).orderBy(desc(orders.createdAt)).limit(20);
+}
+
+export async function updateCustomer(id: number, tenantId: number, data: Partial<typeof customers.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(customers).set({ ...data, updatedAt: new Date() }).where(and(eq(customers.id, id), eq(customers.tenantId, tenantId)));
+}
+
 export async function upsertCustomer(tenantId: number, email: string, data: Partial<typeof customers.$inferInsert>) {
   const db = await getDb();
   if (!db) return;

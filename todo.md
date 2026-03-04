@@ -67,3 +67,12 @@
 - [x] Supabase Realtime: live order status updates
 - [x] Supabase Realtime: live inventory quantity updates
 - [x] Run full test suite (14/14) and save checkpoint
+
+## Phase 4 — Customers CRUD, Dashboard Analytics, GitHub Export
+- [ ] Request Supabase Realtime secrets (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
+- [ ] Build Customers CRUD page with profile modal and order history
+- [ ] Build real Dashboard page with KPI cards and recharts analytics
+- [ ] Add Dashboard revenue chart (last 30 days)
+- [ ] Add Dashboard top products widget
+- [ ] Add Dashboard recent orders feed
+- [ ] Run full test suite and save checkpoint
