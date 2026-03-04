@@ -56,3 +56,14 @@
 - [x] Configure netlify.toml for operation-v3.netlify.app
 - [x] Update app title and meta tags for production
 - [x] Run full test suite (14/14 passing) and save checkpoint
+
+## Phase 3 — Stripe Checkout, Order CRUD, Realtime
+- [x] Wire Stripe checkout button in Settings page (real checkout session)
+- [x] Add Stripe customer portal link in Settings billing section
+- [x] Build order detail modal with line items and status timeline
+- [x] Add create order form (manual order entry)
+- [x] Add order status update flow (pending → processing → shipped → delivered)
+- [x] Add order search and status filter
+- [x] Supabase Realtime: live order status updates
+- [x] Supabase Realtime: live inventory quantity updates
+- [x] Run full test suite (14/14) and save checkpoint
