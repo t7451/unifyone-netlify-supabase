@@ -1,5 +1,27 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1772597362844,
+      "tag": "0000_lethal_black_bolt",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1772597459775,
+      "tag": "0001_nosy_patch",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772597527615,
+      "tag": "0002_tired_sebastian_shaw",
+      "breakpoints": true
+    }
+  ]
 }
