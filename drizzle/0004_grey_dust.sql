@@ -1,0 +1,1 @@
+ALTER TABLE `tenants` ADD `shopifyCheckoutUrl` text;

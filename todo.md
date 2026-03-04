@@ -104,3 +104,18 @@
 - [x] Redirect from /setup to /dashboard after tenant creation
 - [x] Add TenantGuard in App.tsx — tenantless users auto-redirected to /setup
 - [x] Run full test suite (15/15) and save checkpoint
+
+## Phase 7 — Live Payments: Stripe + PayPal + Shopify
+- [x] Audit existing Stripe routes and webhook handler
+- [x] Check PayPal MCP available tools
+- [x] Check Shopify integration for checkout URL pattern
+- [x] Add PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET secrets (live keys validated via curl)
+- [x] Add PayPal order creation REST endpoint (/api/paypal/create-order)
+- [x] Add PayPal order capture REST endpoint (/api/paypal/capture-order)
+- [x] Add shopifyCheckoutUrl field to tenants schema + migration applied
+- [x] Build unified /checkout page with payment rail selector (Stripe / PayPal / Shopify)
+- [x] Add PayPal Smart Buttons on frontend (JS SDK loaded dynamically)
+- [x] Add Shopify "Open Shopify Store" redirect button
+- [x] Update Integrations page with payment rail status cards + Shopify checkout URL field
+- [x] Add paymentMethod and paypalOrderId columns to orders table + migration applied
+- [x] Run full test suite (18/18) and save checkpoint

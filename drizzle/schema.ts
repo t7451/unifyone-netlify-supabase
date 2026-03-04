@@ -64,6 +64,7 @@ export const tenants = mysqlTable("tenants", {
   shopifyShopDomain: varchar("shopifyShopDomain", { length: 255 }),
   shopifyAccessToken: text("shopifyAccessToken"),
   shopifySyncEnabled: boolean("shopifySyncEnabled").default(false),
+  shopifyCheckoutUrl: text("shopifyCheckoutUrl"),
   n8nWebhookUrl: text("n8nWebhookUrl"),
   settings: json("settings").$type<Record<string, unknown>>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -170,6 +171,8 @@ export const orders = mysqlTable("orders", {
   stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 100 }),
   stripeSessionId: varchar("stripeSessionId", { length: 100 }),
   shopifyOrderId: varchar("shopifyOrderId", { length: 100 }),
+  paypalOrderId: varchar("paypalOrderId", { length: 100 }),
+  paymentMethod: mysqlEnum("paymentMethod", ["stripe", "paypal", "shopify", "manual", "other"]),
   customerEmail: varchar("customerEmail", { length: 320 }),
   customerName: varchar("customerName", { length: 500 }),
   shippingAddress: json("shippingAddress").$type<{

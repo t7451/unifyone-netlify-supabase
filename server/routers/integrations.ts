@@ -75,6 +75,15 @@ export const integrationsRouter = router({
     return { success: true, message: "Product sync initiated. Products will appear shortly." };
   }),
 
+  // Shopify: update direct checkout URL
+  shopifySetCheckoutUrl: protectedProcedure.input(z.object({
+    checkoutUrl: z.string().url().or(z.literal("")),
+  })).mutation(async ({ ctx, input }) => {
+    const tenantId = requireTenant(ctx.user.tenantId);
+    await updateTenant(tenantId, { shopifyCheckoutUrl: input.checkoutUrl || undefined });
+    return { success: true };
+  }),
+
   // n8n: update webhook URL
   n8nUpdate: protectedProcedure.input(z.object({
     webhookUrl: z.string().url(),
@@ -128,6 +137,10 @@ export const integrationsRouter = router({
         configured: !!tenant.n8nWebhookUrl,
         webhookUrl: tenant.n8nWebhookUrl,
       },
+      paypal: {
+        configured: !!(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET),
+      },
+      shopifyCheckoutUrl: tenant.shopifyCheckoutUrl || null,
     };
   }),
 });
