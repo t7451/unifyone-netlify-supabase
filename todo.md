@@ -91,5 +91,16 @@
 - [x] Loading skeletons already present on Products, Orders, Customers pages
 - [x] Empty states already present on Products, Orders, Customers pages
 - [x] Add Demo Data seed button in Settings page (seedDemo tRPC mutation)
-- [ ] Push to GitHub (ksksrbiz-arch/unifyone-platform)
-- [ ] Run full test suite and save checkpoint
+- [x] Push to GitHub (ksksrbiz-arch/unifyone-platform) — via checkpoint sync
+- [x] Run full test suite (15/15) and save checkpoint v1.4
+
+## Phase 6 — Supabase Realtime + Onboarding Wizard
+- [x] Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY secrets
+- [x] Verify Supabase Realtime client activates with secrets present
+- [x] Confirm live updates on Orders and Customers pages (RealtimeStatus shows green Live dot)
+- [x] Build /setup onboarding wizard page (3-step: Store Details → Plan → Success)
+- [x] Auto-generate store slug from user name on mount
+- [x] Wire tenant.create mutation in setup wizard
+- [x] Redirect from /setup to /dashboard after tenant creation
+- [x] Add TenantGuard in App.tsx — tenantless users auto-redirected to /setup
+- [x] Run full test suite (15/15) and save checkpoint

@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
@@ -16,6 +16,7 @@ import TenantSetup from "./pages/TenantSetup";
 import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
 import { getLoginUrl } from "./const";
+import { trpc } from "./lib/trpc";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, loading } = useAuth();
@@ -33,11 +34,31 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 
 function DashboardRoute({ component: Component }: { component: React.ComponentType }) {
   return (
-    <ProtectedRoute component={() => (
-      <DashboardLayout>
-        <Component />
-      </DashboardLayout>
-    )} />
+    <ProtectedRoute component={() => <TenantGuard component={Component} />} />
+  );
+}
+
+function TenantGuard({ component: Component }: { component: React.ComponentType }) {
+  const [, navigate] = useLocation();
+  const tenants = trpc.tenant.list.useQuery();
+  const hasTenant = tenants.data && tenants.data.length > 0;
+  const isLoading = tenants.isLoading;
+
+  if (isLoading) return (
+    <div className="min-h-screen bg-[#0A1128] flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-[#00D9FF] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
+  if (!hasTenant) {
+    navigate("/setup");
+    return null;
+  }
+
+  return (
+    <DashboardLayout>
+      <Component />
+    </DashboardLayout>
   );
 }
 
