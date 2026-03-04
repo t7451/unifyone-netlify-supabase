@@ -21,12 +21,13 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, ShoppingBag, ShoppingCart, BarChart3, Zap, Settings, Building2, ChevronDown } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, ShoppingBag, ShoppingCart, BarChart3, Zap, Settings, Building2, ChevronDown, CreditCard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
+import { SubscriptionWidget } from './SubscriptionWidget';
 import { Button } from "./ui/button";
 
 const menuItems = [
@@ -37,6 +38,7 @@ const menuItems = [
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
   { icon: Zap, label: "Integrations", path: "/integrations" },
   { icon: Settings, label: "Settings", path: "/settings" },
+  { icon: CreditCard, label: "Billing", path: "/billing" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -223,6 +225,12 @@ function DashboardLayoutContent({
               })}
             </SidebarMenu>
           </SidebarContent>
+
+          {!isCollapsed && (
+            <div className="px-3 pb-2">
+              <SubscriptionWidget />
+            </div>
+          )}
 
           <SidebarFooter className="p-3">
             <DropdownMenu>

@@ -14,6 +14,7 @@ import Integrations from "./pages/Integrations";
 import Settings from "./pages/Settings";
 import TenantSetup from "./pages/TenantSetup";
 import Checkout from "./pages/Checkout";
+import Billing from "./pages/Billing";
 import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
 import { getLoginUrl } from "./const";
@@ -75,6 +76,7 @@ function Router() {
       <Route path="/analytics" component={() => <DashboardRoute component={Analytics} />} />
       <Route path="/integrations" component={() => <DashboardRoute component={Integrations} />} />
       <Route path="/settings" component={() => <DashboardRoute component={Settings} />} />
+      <Route path="/billing" component={() => <DashboardRoute component={Billing} />} />
       <Route path="/checkout" component={() => <ProtectedRoute component={Checkout} />} />
       <Route path="/checkout/paypal-return" component={() => <ProtectedRoute component={Checkout} />} />
       <Route path="/checkout/paypal-cancel" component={() => <ProtectedRoute component={Checkout} />} />
