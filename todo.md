@@ -214,6 +214,8 @@
 - [x] Bell icon added to DashboardLayout header (desktop + mobile)
 - [x] /notifications route registered in App.tsx + sidebar nav item
 - [x] SEO: title, meta description, keywords, OG tags, Twitter Card, JSON-LD, canonical URL already in place
+- [x] SEO fix: title expanded from 29 → 43 chars ("UnifyOne — Multi-Tenant Commerce Platform") — within 30-60 target
+- [x] SEO fix: keywords trimmed from 13 → 6 focused terms — within 3-8 target
 - [x] Notification tests: 15 tests passing (all 4 tiers)
 
 ## Phase 13 — Custom UnifyOne Branded Login + Theme Store Marketplace [COMPLETE]
