@@ -1,22 +1,23 @@
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   ShoppingCart, BarChart3, Zap, Globe, Shield, ArrowRight,
-  CheckCircle, Package, Users, TrendingUp, Layers, Workflow
+  CheckCircle, TrendingUp, Layers, Workflow, Menu, X
 } from "lucide-react";
 import { useLocation } from "wouter";
 
 const FEATURES = [
-  { icon: Layers, title: "Multi-Tenant Architecture", desc: "Isolated environments for each store with dedicated data, settings, and team access." },
-  { icon: ShoppingCart, title: "Commerce Engine", desc: "Full product catalog, inventory tracking, order processing, and customer management." },
-  { icon: BarChart3, title: "Analytics Dashboard", desc: "Real-time revenue metrics, customer insights, and sales performance charts." },
-  { icon: Zap, title: "Stripe Payments", desc: "Checkout sessions, subscription billing, webhook handling, and refund management." },
-  { icon: Globe, title: "Shopify Sync", desc: "Bidirectional product and order sync with your Shopify store via webhooks." },
-  { icon: Workflow, title: "n8n Automation", desc: "Trigger n8n workflows for order fulfillment, notifications, and data pipelines." },
-  { icon: Shield, title: "Role-Based Access", desc: "Admin and user roles with fine-grained procedure-level authorization." },
-  { icon: TrendingUp, title: "Realtime Updates", desc: "Live order status and inventory changes powered by Supabase Realtime." },
+  { icon: Layers, title: "Multi-Tenant Architecture", desc: "Isolated environments for each store with dedicated data, settings, and team access.", color: "#00D9FF" },
+  { icon: ShoppingCart, title: "Commerce Engine", desc: "Full product catalog, inventory tracking, order processing, and customer management.", color: "#0284C7" },
+  { icon: BarChart3, title: "Analytics Dashboard", desc: "Real-time revenue metrics, customer insights, and sales performance charts.", color: "#6A1B9A" },
+  { icon: Zap, title: "Stripe Payments", desc: "Checkout sessions, subscription billing, webhook handling, and refund management.", color: "#635BFF" },
+  { icon: Globe, title: "Shopify Sync", desc: "Bidirectional product and order sync with your Shopify store via webhooks.", color: "#96BF48" },
+  { icon: Workflow, title: "n8n Automation", desc: "Trigger n8n workflows for order fulfillment, notifications, and data pipelines.", color: "#EA4B71" },
+  { icon: Shield, title: "Role-Based Access", desc: "Admin and user roles with fine-grained procedure-level authorization.", color: "#10B981" },
+  { icon: TrendingUp, title: "Realtime Updates", desc: "Live order status and inventory changes powered by Supabase Realtime.", color: "#F59E0B" },
 ];
 
 const PLANS = [
@@ -35,6 +36,16 @@ const STATS = [
 export default function Home() {
   const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [heroVisible, setHeroVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setHeroVisible(true), 100);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => { clearTimeout(timer); window.removeEventListener("scroll", handleScroll); };
+  }, []);
 
   const handleGetStarted = () => {
     if (isAuthenticated) navigate("/dashboard");
@@ -44,28 +55,28 @@ export default function Home() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0A1128" }}>
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5">
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "glass border-b border-white/10 shadow-lg" : "border-b border-transparent"}`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00D9FF] to-[#0284C7] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00D9FF] to-[#0284C7] flex items-center justify-center shadow-lg">
               <Layers className="w-4 h-4 text-[#0A1128]" />
             </div>
-            <span className="text-white font-bold text-lg">UnifyOne</span>
-            <Badge variant="outline" className="text-[10px] border-[#00D9FF]/40 text-[#00D9FF] ml-1">BETA</Badge>
+            <span className="text-white font-bold text-lg tracking-tight">UnifyOne</span>
+            <Badge variant="outline" className="text-[10px] border-[#00D9FF]/40 text-[#00D9FF] ml-1 hidden sm:flex">BETA</Badge>
           </div>
           <div className="hidden md:flex items-center gap-8">
             {["Features", "Pricing", "Integrations"].map(item => (
-              <a key={item} href={`#${item.toLowerCase()}`} className="text-sm text-gray-400 hover:text-[#00D9FF] transition-colors">{item}</a>
+              <a key={item} href={`#${item.toLowerCase()}`} className="text-sm text-gray-400 hover:text-[#00D9FF] transition-colors font-medium">{item}</a>
             ))}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
               <Button onClick={() => navigate("/dashboard")} className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold">
-                Dashboard
+                Dashboard <ArrowRight className="ml-1 w-3 h-3" />
               </Button>
             ) : (
               <>
-                <Button variant="ghost" onClick={() => window.location.href = getLoginUrl()} className="text-gray-300 hover:text-white">
+                <Button variant="ghost" onClick={() => window.location.href = getLoginUrl()} className="text-gray-300 hover:text-white hover:bg-white/5">
                   Sign In
                 </Button>
                 <Button onClick={handleGetStarted} className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold">
@@ -74,19 +85,46 @@ export default function Home() {
               </>
             )}
           </div>
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden glass border-t border-white/10 px-6 py-4 space-y-3">
+            {["Features", "Pricing", "Integrations"].map(item => (
+              <a key={item} href={`#${item.toLowerCase()}`} className="block text-gray-300 hover:text-[#00D9FF] transition-colors py-2 font-medium" onClick={() => setMobileMenuOpen(false)}>{item}</a>
+            ))}
+            <div className="pt-2 border-t border-white/10 flex flex-col gap-2">
+              {isAuthenticated ? (
+                <Button onClick={() => { navigate("/dashboard"); setMobileMenuOpen(false); }} className="w-full bg-[#00D9FF] text-[#0A1128] font-semibold">Dashboard</Button>
+              ) : (
+                <>
+                  <Button variant="ghost" onClick={() => window.location.href = getLoginUrl()} className="w-full text-gray-300 hover:text-white border border-white/10">Sign In</Button>
+                  <Button onClick={handleGetStarted} className="w-full bg-[#00D9FF] text-[#0A1128] font-semibold">Get Started Free</Button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero */}
       <section className="relative pt-32 pb-24 px-6 overflow-hidden">
-        {/* Background glow */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#00D9FF]/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-[#6A1B9A]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/2 w-full h-px bg-gradient-to-r from-transparent via-[#00D9FF]/20 to-transparent" />
 
-        <div className="max-w-5xl mx-auto text-center relative">
-          <Badge className="mb-6 bg-[#00D9FF]/10 text-[#00D9FF] border border-[#00D9FF]/20 px-4 py-1.5">
+        <div className={`max-w-5xl mx-auto text-center relative transition-all duration-700 ${heroVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#00D9FF]/30 bg-[#00D9FF]/5 text-[#00D9FF] text-sm font-medium mb-8">
+            <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse" />
             Multi-Tenant Commerce Platform
-          </Badge>
+          </div>
           <h1 className="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-6">
             One Platform.{" "}
             <span className="gradient-text">Every Store.</span>
@@ -98,14 +136,14 @@ export default function Home() {
             <Button
               size="lg"
               onClick={handleGetStarted}
-              className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold text-base px-8 h-12 cyan-glow-sm"
+              className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold text-base px-10 h-12 shadow-lg shadow-[#00D9FF]/20 w-full sm:w-auto"
             >
               Start Free Trial <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
             <Button
               size="lg"
-              variant="outline"
-              className="border-white/20 text-white hover:bg-white/5 font-medium text-base px-8 h-12"
+              variant="ghost"
+              className="border border-white/10 text-white hover:bg-white/5 font-medium text-base px-8 h-12 w-full sm:w-auto"
               onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
             >
               See Features
@@ -133,9 +171,9 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {FEATURES.map(f => (
-              <div key={f.title} className="feature-card rounded-xl p-6">
-                <div className="w-10 h-10 rounded-lg bg-[#00D9FF]/10 border border-[#00D9FF]/20 flex items-center justify-center mb-4">
-                  <f.icon className="w-5 h-5 text-[#00D9FF]" />
+              <div key={f.title} className="feature-card rounded-xl p-6 group hover:border-[#00D9FF]/20 transition-all duration-300">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110" style={{ backgroundColor: f.color + "18", border: `1px solid ${f.color}30` }}>
+                  <f.icon className="w-5 h-5" style={{ color: f.color }} />
                 </div>
                 <h3 className="text-white font-semibold mb-2">{f.title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
@@ -146,27 +184,28 @@ export default function Home() {
       </section>
 
       {/* Integrations */}
-      <section id="integrations" className="py-24 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="glass rounded-2xl p-12 text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">Powered by Best-in-Class Integrations</h2>
-            <p className="text-gray-400 mb-10">Connect your existing tools without replacing them.</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[
-                { name: "Stripe", desc: "Payments & Billing", color: "#635BFF" },
-                { name: "Shopify", desc: "Product & Order Sync", color: "#96BF48" },
-                { name: "Supabase", desc: "Database & Realtime", color: "#3ECF8E" },
-                { name: "n8n", desc: "Workflow Automation", color: "#EA4B71" },
-              ].map(int => (
-                <div key={int.name} className="feature-card rounded-xl p-6">
-                  <div className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: int.color + "33", border: `1px solid ${int.color}55` }}>
-                    {int.name[0]}
-                  </div>
-                  <div className="text-white font-semibold">{int.name}</div>
-                  <div className="text-gray-400 text-sm mt-1">{int.desc}</div>
+      <section id="integrations" className="py-24 px-6 bg-white/[0.02]">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <Badge variant="outline" className="border-[#00D9FF]/30 text-[#00D9FF] mb-4">Integrations</Badge>
+            <h2 className="text-4xl font-bold text-white mb-4">Connect Your Entire Stack</h2>
+            <p className="text-gray-400 text-lg">Connect your existing tools without replacing them.</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { name: "Stripe", desc: "Payments & Billing", color: "#635BFF", initial: "S" },
+              { name: "Shopify", desc: "Product & Order Sync", color: "#96BF48", initial: "Sh" },
+              { name: "Supabase", desc: "Database & Realtime", color: "#3ECF8E", initial: "Su" },
+              { name: "n8n", desc: "Workflow Automation", color: "#EA4B71", initial: "n" },
+            ].map(int => (
+              <div key={int.name} className="feature-card rounded-xl p-6 text-center group hover:scale-105 transition-all duration-300">
+                <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center font-bold text-xl shadow-lg" style={{ backgroundColor: int.color + "25", border: `1px solid ${int.color}40`, color: int.color }}>
+                  {int.initial}
                 </div>
-              ))}
-            </div>
+                <div className="text-white font-semibold">{int.name}</div>
+                <div className="text-gray-400 text-sm mt-1">{int.desc}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -216,34 +255,44 @@ export default function Home() {
       {/* CTA */}
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="glass rounded-2xl p-12 border border-[#00D9FF]/20">
-            <h2 className="text-4xl font-bold text-white mb-4">Ready to Unify Your Commerce?</h2>
-            <p className="text-gray-400 text-lg mb-8">Join operators building scalable, automated commerce infrastructure on UnifyOne.</p>
-            <Button
-              size="lg"
-              onClick={handleGetStarted}
-              className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold text-base px-10 h-12 cyan-glow-sm"
-            >
-              Get Started Free <ArrowRight className="ml-2 w-4 h-4" />
-            </Button>
+          <div className="glass rounded-2xl p-12 border border-[#00D9FF]/20 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#00D9FF]/5 to-[#6A1B9A]/5 pointer-events-none" />
+            <div className="relative">
+              <h2 className="text-4xl font-bold text-white mb-4">Ready to Unify Your Commerce?</h2>
+              <p className="text-gray-400 text-lg mb-8 max-w-xl mx-auto">Join operators building scalable, automated commerce infrastructure on UnifyOne.</p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Button size="lg" onClick={handleGetStarted} className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold text-base px-10 h-12 shadow-lg shadow-[#00D9FF]/20 w-full sm:w-auto">
+                  Get Started Free <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+                <Button size="lg" variant="ghost" className="text-gray-300 hover:text-white border border-white/10 hover:bg-white/5 h-12 px-8 w-full sm:w-auto" onClick={() => window.open("mailto:skdev@1commercesolutions.com", "_blank")}>
+                  Contact Sales
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-white/5 py-12 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-[#00D9FF] to-[#0284C7] flex items-center justify-center">
-              <Layers className="w-3 h-3 text-[#0A1128]" />
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#00D9FF] to-[#0284C7] flex items-center justify-center">
+                <Layers className="w-3.5 h-3.5 text-[#0A1128]" />
+              </div>
+              <span className="text-white font-bold text-lg">UnifyOne</span>
+              <span className="text-gray-500 text-sm ml-2">by 1Commerce LLC</span>
             </div>
-            <span className="text-white font-semibold">UnifyOne</span>
+            <div className="flex gap-6">
+              {["Privacy", "Terms", "Security", "Docs"].map(item => (
+                <a key={item} href="#" className="text-gray-500 hover:text-[#00D9FF] text-sm transition-colors">{item}</a>
+              ))}
+            </div>
           </div>
-          <p className="text-gray-500 text-sm">Powered by 1Commerce LLC · SOC 2 Compliant · GDPR Ready</p>
-          <div className="flex gap-6">
-            {["Privacy", "Terms", "Security"].map(item => (
-              <a key={item} href="#" className="text-gray-500 hover:text-[#00D9FF] text-sm transition-colors">{item}</a>
-            ))}
+          <div className="border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-gray-600 text-sm">© 2025 1Commerce LLC · All rights reserved</p>
+            <p className="text-gray-600 text-sm">SOC 2 Compliant · GDPR Ready · skdev@1commercesolutions.com</p>
           </div>
         </div>
       </footer>

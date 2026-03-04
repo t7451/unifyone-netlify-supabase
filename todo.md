@@ -79,3 +79,17 @@
 
 ## Bug Fixes
 - [x] Fix /api/oauth/login 404 — ProtectedRoute now uses getLoginUrl() correctly
+
+## Phase 5 — Env Wiring, Polish, GitHub Push
+- [x] Wire VITE_OAUTH_PORTAL_URL secret (system secret, auto-injected)
+- [x] Wire VITE_APP_ID secret (system secret, auto-injected)
+- [x] Wire DATABASE_URL secret (system secret, auto-injected)
+- [x] Wire JWT_SECRET secret (system secret, auto-injected)
+- [x] Wire STRIPE_SECRET_KEY secret (system secret, auto-injected)
+- [x] Polish landing page: mobile nav (hamburger), scroll effect, hero animation, per-feature colors
+- [x] Polish dashboard: Tenant Switcher in sidebar, improved branding
+- [x] Loading skeletons already present on Products, Orders, Customers pages
+- [x] Empty states already present on Products, Orders, Customers pages
+- [x] Add Demo Data seed button in Settings page (seedDemo tRPC mutation)
+- [ ] Push to GitHub (ksksrbiz-arch/unifyone-platform)
+- [ ] Run full test suite and save checkpoint

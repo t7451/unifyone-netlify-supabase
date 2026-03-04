@@ -21,7 +21,9 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, ShoppingBag, ShoppingCart, BarChart3, Zap, Settings } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, ShoppingBag, ShoppingCart, BarChart3, Zap, Settings, Building2, ChevronDown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { trpc } from "@/lib/trpc";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -119,6 +121,8 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+  const tenantQuery = trpc.tenant.list.useQuery(undefined, { retry: false });
+  const tenantName = (tenantQuery.data && tenantQuery.data.length > 0 ? tenantQuery.data[0].name : null) ?? "My Store";
 
   useEffect(() => {
     if (isCollapsed) {
@@ -180,9 +184,23 @@ function DashboardLayoutContent({
                   </span>
                 </div>
               ) : null}
+              {isCollapsed ? (
+                <div className="w-8 h-8 rounded-lg bg-[#00D9FF]/10 border border-[#00D9FF]/20 flex items-center justify-center shrink-0">
+                  <Building2 className="w-4 h-4 text-[#00D9FF]" />
+                </div>
+              ) : null}
             </div>
           </SidebarHeader>
 
+          {!isCollapsed && (
+            <div className="px-3 pb-2">
+              <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-accent/50 transition-colors text-left">
+                <Building2 className="w-3.5 h-3.5 text-[#00D9FF] shrink-0" />
+                <span className="text-xs font-medium text-gray-300 truncate flex-1">{tenantName}</span>
+                <ChevronDown className="w-3 h-3 text-gray-500 shrink-0" />
+              </button>
+            </div>
+          )}
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
               {menuItems.map(item => {

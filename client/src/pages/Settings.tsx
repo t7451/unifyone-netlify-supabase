@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
   Building2, CreditCard, Users, CheckCircle, ExternalLink,
-  Loader2, Shield, Zap, Crown, ArrowUpRight, Settings2
+  Loader2, Shield, Zap, Crown, ArrowUpRight, Settings2, FlaskConical
 } from "lucide-react";
 
 const PLAN_ICONS: Record<string, React.ReactNode> = {
@@ -319,6 +319,48 @@ export default function Settings() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Demo Data */}
+      <DemoDataCard />
     </div>
+  );
+}
+
+function DemoDataCard() {
+  const utils = trpc.useUtils();
+  const seedMutation = trpc.tenant.seedDemo.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Demo data seeded: ${data.productsCreated} products, ${data.customersCreated} customers, ${data.ordersCreated} orders`);
+      utils.products.list.invalidate();
+      utils.orders.list.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  return (
+    <Card className="bg-card border-border">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-white text-base flex items-center gap-2">
+          <FlaskConical className="w-4 h-4 text-[#00D9FF]" />
+          Demo Data
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex-1">
+            <p className="text-gray-400 text-sm mb-1">Seed your store with realistic sample products, customers, and orders for testing and demos.</p>
+            <p className="text-gray-500 text-xs">Creates 6 products (Apparel + Industrial), 3 customers, and 3 orders across different statuses.</p>
+          </div>
+          <Button
+            onClick={() => seedMutation.mutate()}
+            disabled={seedMutation.isPending}
+            className="bg-[#00D9FF]/10 border border-[#00D9FF]/30 text-[#00D9FF] hover:bg-[#00D9FF]/20 shrink-0"
+          >
+            {seedMutation.isPending
+              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Seeding...</>
+              : <><FlaskConical className="w-4 h-4 mr-2" />Seed Demo Data</>}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
