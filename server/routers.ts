@@ -13,6 +13,8 @@ import { socialRouter } from "./routers/social";
 import { referralRouter } from "./routers/referral";
 import { leadsRouter } from "./routers/leads";
 import { automationRouter } from "./routers/automation";
+import { notificationsRouter } from "./routers/notifications";
+import { themesRouter } from "./routers/themes";
 
 export const appRouter = router({
   system: systemRouter,
@@ -37,6 +39,8 @@ export const appRouter = router({
   referral: referralRouter,
   leads: leadsRouter,
   automation: automationRouter,
+  notifications: notificationsRouter,
+  themes: themesRouter,
 });
 
 export type AppRouter = typeof appRouter;

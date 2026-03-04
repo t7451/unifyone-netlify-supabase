@@ -21,13 +21,14 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, ShoppingBag, ShoppingCart, BarChart3, Zap, Settings, Building2, ChevronDown, CreditCard, UserPlus, Share2, Gift, Target, Workflow } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, ShoppingBag, ShoppingCart, BarChart3, Zap, Settings, Building2, ChevronDown, CreditCard, UserPlus, Share2, Gift, Target, Workflow, Bell, Store, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { SubscriptionWidget } from './SubscriptionWidget';
+import { NotificationCenter } from './NotificationCenter';
 import { Button } from "./ui/button";
 
 const menuItems = [
@@ -44,6 +45,9 @@ const menuItems = [
   { icon: Gift, label: "Promote & Earn", path: "/referrals" },
   { icon: Target, label: "Leads", path: "/leads" },
   { icon: Workflow, label: "Automations", path: "/automations" },
+  { icon: Bell, label: "Notifications", path: "/notifications" },
+  { icon: Store, label: "Theme Store", path: "/themes" },
+  { icon: Package, label: "My Themes", path: "/my-themes" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -185,10 +189,11 @@ function DashboardLayoutContent({
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
               {!isCollapsed ? (
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold tracking-tight truncate text-[#00D9FF]">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="font-semibold tracking-tight truncate text-[#00D9FF] flex-1">
                     UnifyOne
                   </span>
+                  <NotificationCenter />
                 </div>
               ) : null}
               {isCollapsed ? (
@@ -290,6 +295,9 @@ function DashboardLayoutContent({
                   </span>
                 </div>
               </div>
+            </div>
+            <div className="flex items-center gap-1 pr-2">
+              <NotificationCenter />
             </div>
           </div>
         )}

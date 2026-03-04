@@ -429,3 +429,142 @@ export const mailchimpConfig = mysqlTable("mailchimp_config", {
 });
 
 export type MailchimpConfig = typeof mailchimpConfig.$inferSelect;
+
+// ── In-App Notifications ──────────────────────────────────────────────────────
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tenantId: int("tenantId"),
+  type: varchar("type", { length: 50 }).notNull().default("info"),
+  // type: info | success | warning | error | order | payment | team | social | lead
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body"),
+  link: varchar("link", { length: 500 }),
+  read: boolean("read").default(false).notNull(),
+  readAt: timestamp("readAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+
+// ── Admin Announcements (broadcast to all users) ───────────────────────────────
+export const announcements = mysqlTable("announcements", {
+  id: int("id").autoincrement().primaryKey(),
+  adminId: int("adminId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  type: varchar("type", { length: 30 }).notNull().default("banner"),
+  // type: banner | toast | modal
+  severity: varchar("severity", { length: 20 }).notNull().default("info"),
+  // severity: info | success | warning | error
+  dismissible: boolean("dismissible").default(true).notNull(),
+  startsAt: timestamp("startsAt").defaultNow().notNull(),
+  endsAt: timestamp("endsAt"),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Announcement = typeof announcements.$inferSelect;
+export type InsertAnnouncement = typeof announcements.$inferInsert;
+
+// ── Announcement Dismissals (per-user) ────────────────────────────────────────
+export const announcementDismissals = mysqlTable("announcement_dismissals", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  announcementId: int("announcementId").notNull(),
+  dismissedAt: timestamp("dismissedAt").defaultNow().notNull(),
+});
+export type AnnouncementDismissal = typeof announcementDismissals.$inferSelect;
+
+// ── Notification Event Triggers (per-event webhook/email config) ──────────────
+export const notificationTriggers = mysqlTable("notification_triggers", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  event: varchar("event", { length: 100 }).notNull(),
+  // event: order.created | order.status_changed | payment.received | lead.submitted | team.invite_accepted | social.post_published
+  n8nEnabled: boolean("n8nEnabled").default(false).notNull(),
+  zapierEnabled: boolean("zapierEnabled").default(false).notNull(),
+  mailchimpEnabled: boolean("mailchimpEnabled").default(false).notNull(),
+  slackWebhookUrl: text("slackWebhookUrl"),
+  slackEnabled: boolean("slackEnabled").default(false).notNull(),
+  emailEnabled: boolean("emailEnabled").default(false).notNull(),
+  emailRecipients: text("emailRecipients"),
+  // comma-separated email addresses
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NotificationTrigger = typeof notificationTriggers.$inferSelect;
+export type InsertNotificationTrigger = typeof notificationTriggers.$inferInsert;
+
+// ── Theme Store ───────────────────────────────────────────────────────────────
+export const themeCategories = mysqlTable("theme_categories", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  description: text("description"),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ThemeCategory = typeof themeCategories.$inferSelect;
+
+export const themes = mysqlTable("themes", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  slug: varchar("slug", { length: 200 }).notNull().unique(),
+  description: text("description"),
+  longDescription: text("longDescription"),
+  authorId: int("authorId").notNull(),
+  categoryId: int("categoryId"),
+  // Pricing
+  priceType: mysqlEnum("priceType", ["free", "paid", "subscription"]).notNull().default("free"),
+  price: decimal("price", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  stripePriceId: varchar("stripePriceId", { length: 100 }),
+  // Assets
+  previewUrl: text("previewUrl"),       // live preview URL or iframe src
+  thumbnailUrl: text("thumbnailUrl"),   // main card image (CDN)
+  screenshotUrls: json("screenshotUrls").$type<string[]>().default([]),
+  downloadUrl: text("downloadUrl"),     // S3 URL for the zip file
+  // Metadata
+  tags: json("tags").$type<string[]>().default([]),
+  industry: varchar("industry", { length: 100 }),
+  complexity: mysqlEnum("complexity", ["starter", "standard", "advanced"]).notNull().default("standard"),
+  features: json("features").$type<string[]>().default([]),
+  techStack: json("techStack").$type<string[]>().default([]),
+  // Stats
+  installCount: int("installCount").default(0).notNull(),
+  reviewCount: int("reviewCount").default(0).notNull(),
+  averageRating: decimal("averageRating", { precision: 3, scale: 2 }).default("0.00").notNull(),
+  // Status
+  status: mysqlEnum("status", ["draft", "pending_review", "published", "archived"]).notNull().default("draft"),
+  featured: boolean("featured").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Theme = typeof themes.$inferSelect;
+export type InsertTheme = typeof themes.$inferInsert;
+
+export const themeInstalls = mysqlTable("theme_installs", {
+  id: int("id").autoincrement().primaryKey(),
+  themeId: int("themeId").notNull(),
+  userId: int("userId").notNull(),
+  tenantId: int("tenantId"),
+  // Payment tracking (null for free themes)
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 100 }),
+  amountPaid: decimal("amountPaid", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  installedAt: timestamp("installedAt").defaultNow().notNull(),
+});
+export type ThemeInstall = typeof themeInstalls.$inferSelect;
+
+export const themeReviews = mysqlTable("theme_reviews", {
+  id: int("id").autoincrement().primaryKey(),
+  themeId: int("themeId").notNull(),
+  userId: int("userId").notNull(),
+  rating: int("rating").notNull(), // 1-5
+  title: varchar("title", { length: 200 }),
+  body: text("body"),
+  helpful: int("helpful").default(0).notNull(),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).notNull().default("pending"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ThemeReview = typeof themeReviews.$inferSelect;

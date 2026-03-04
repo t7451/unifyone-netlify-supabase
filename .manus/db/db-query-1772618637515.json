@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `theme_reviews` (`id` int AUTO_INCREMENT NOT NULL, `themeId` int NOT NULL, `userId` int NOT NULL, `rating` int NOT NULL, `title` varchar(200), `body` text, `helpful` int NOT NULL DEFAULT 0, `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending', `createdAt` timestamp NOT NULL DEFAULT (now()), `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT `theme_reviews_id` PRIMARY KEY(`id`))",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 372pgni6FByAp3r.b99b1625eed2 --database VyofXqD3FvrztXonjtHUZp --execute CREATE TABLE IF NOT EXISTS `theme_reviews` (`id` int AUTO_INCREMENT NOT NULL, `themeId` int NOT NULL, `userId` int NOT NULL, `rating` int NOT NULL, `title` varchar(200), `body` text, `helpful` int NOT NULL DEFAULT 0, `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending', `createdAt` timestamp NOT NULL DEFAULT (now()), `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT `theme_reviews_id` PRIMARY KEY(`id`))",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 356
+}

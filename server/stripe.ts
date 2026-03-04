@@ -2,8 +2,8 @@ import Stripe from "stripe";
 import { Express, Request, Response } from "express";
 import express from "express";
 import { getDb } from "./db";
-import { tenants, plans } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { tenants, plans, themeInstalls, themes } from "../drizzle/schema";
+import { eq, and, sql } from "drizzle-orm";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2026-02-25.clover",
@@ -96,6 +96,32 @@ export function registerStripeRoutes(app: Express) {
             const session = event.data.object as Stripe.Checkout.Session;
             const tenantId = session.metadata?.tenant_id;
             const customerId = session.customer as string;
+
+            // ── Theme purchase fulfillment ─────────────────────────────────
+            if (session.metadata?.purchase_type === "theme" && session.metadata?.theme_id && session.metadata?.user_id) {
+              const themeId = parseInt(session.metadata.theme_id);
+              const userId = parseInt(session.metadata.user_id);
+              const amountPaid = session.amount_total ? (session.amount_total / 100).toFixed(2) : "0.00";
+              const db = await getDb();
+              if (db) {
+                const existing = await db.select().from(themeInstalls)
+                  .where(and(eq(themeInstalls.themeId, themeId), eq(themeInstalls.userId, userId)))
+                  .limit(1);
+                if (!existing.length) {
+                  await db.insert(themeInstalls).values({
+                    themeId,
+                    userId,
+                    amountPaid,
+                    stripePaymentIntentId: session.payment_intent as string ?? null,
+                  });
+                  await db.update(themes)
+                    .set({ installCount: sql`${themes.installCount} + 1` })
+                    .where(eq(themes.id, themeId));
+                  console.log(`[Stripe] Theme ${themeId} purchased by user ${userId}, amount: $${amountPaid}`);
+                }
+              }
+              break;
+            }
 
             if (tenantId && customerId) {
               const db = await getDb();

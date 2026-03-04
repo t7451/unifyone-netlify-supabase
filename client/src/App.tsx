@@ -20,6 +20,12 @@ import Social from "./pages/Social";
 import Referrals from "./pages/Referrals";
 import Leads from "./pages/Leads";
 import Automations from "./pages/Automations";
+import Notifications from "./pages/Notifications";
+import ThemeStore from "./pages/ThemeStore";
+import MyThemes from "./pages/MyThemes";
+import AdminThemes from "./pages/AdminThemes";
+import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import { useAuth } from "./_core/hooks/useAuth";
@@ -75,6 +81,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
+      <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/setup" component={() => <ProtectedRoute component={TenantSetup} />} />
       <Route path="/dashboard" component={() => <DashboardRoute component={Dashboard} />} />
       <Route path="/products" component={() => <DashboardRoute component={Products} />} />
@@ -89,6 +97,10 @@ function Router() {
       <Route path="/referrals" component={() => <DashboardRoute component={Referrals} />} />
       <Route path="/leads" component={() => <DashboardRoute component={Leads} />} />
       <Route path="/automations" component={() => <DashboardRoute component={Automations} />} />
+      <Route path="/notifications" component={() => <DashboardRoute component={Notifications} />} />
+      <Route path="/themes" component={ThemeStore} />
+      <Route path="/my-themes" component={() => <DashboardRoute component={MyThemes} />} />
+      <Route path="/admin/themes" component={() => <DashboardRoute component={AdminThemes} />} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
       <Route path="/checkout" component={() => <ProtectedRoute component={Checkout} />} />

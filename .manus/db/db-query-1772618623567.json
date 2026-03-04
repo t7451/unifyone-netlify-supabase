@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `theme_categories` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`name` varchar(100) NOT NULL,\n\t`slug` varchar(100) NOT NULL,\n\t`description` text,\n\t`sortOrder` int NOT NULL DEFAULT 0,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `theme_categories_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `theme_categories_slug_unique` UNIQUE(`slug`)\n);\nCREATE TABLE IF NOT EXISTS `theme_installs` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`themeId` int NOT NULL,\n\t`userId` int NOT NULL,\n\t`tenantId` int,\n\t`stripePaymentIntentId` varchar(100),\n\t`amountPaid` decimal(10,2) NOT NULL DEFAULT '0.00',\n\t`installedAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `theme_installs_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 372pgni6FByAp3r.b99b1625eed2 --database VyofXqD3FvrztXonjtHUZp --execute CREATE TABLE IF NOT EXISTS `theme_categories` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`name` varchar(100) NOT NULL,\n\t`slug` varchar(100) NOT NULL,\n\t`description` text,\n\t`sortOrder` int NOT NULL DEFAULT 0,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `theme_categories_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `theme_categories_slug_unique` UNIQUE(`slug`)\n);\nCREATE TABLE IF NOT EXISTS `theme_installs` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`themeId` int NOT NULL,\n\t`userId` int NOT NULL,\n\t`tenantId` int,\n\t`stripePaymentIntentId` varchar(100),\n\t`amountPaid` decimal(10,2) NOT NULL DEFAULT '0.00',\n\t`installedAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `theme_installs_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 428
+}

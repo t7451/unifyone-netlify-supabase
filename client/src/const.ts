@@ -1,15 +1,26 @@
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
-// Generate login URL at runtime so redirect URI reflects the current origin.
-// Guards against missing env vars (e.g. on Netlify before env vars are configured).
-export const getLoginUrl = () => {
+/**
+ * Returns the UnifyOne-branded login page path.
+ * All auth entry points route through /login so users never see Manus OAuth UI directly.
+ * The actual OAuth redirect is initiated from the Login page after showing UnifyOne branding.
+ */
+export const getLoginUrl = (_returnPath?: string): string => {
+  return "/login";
+};
+
+/**
+ * Returns the raw Manus OAuth URL. Used internally by the Login page only.
+ * Do NOT call this from ProtectedRoute or nav components — use getLoginUrl() instead.
+ */
+export const getOAuthUrl = (): string => {
   const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
   const appId = import.meta.env.VITE_APP_ID;
 
   // If OAuth env vars are not configured, fall back gracefully to avoid crash
   if (!oauthPortalUrl || !appId) {
     console.warn("[Auth] VITE_OAUTH_PORTAL_URL or VITE_APP_ID is not set.");
-    return "/";
+    return "/login";
   }
 
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
@@ -23,7 +34,7 @@ export const getLoginUrl = () => {
     url.searchParams.set("type", "signIn");
     return url.toString();
   } catch (e) {
-    console.error("[Auth] Failed to construct login URL:", e);
-    return "/";
+    console.error("[Auth] Failed to construct OAuth URL:", e);
+    return "/login";
   }
 };

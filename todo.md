@@ -185,3 +185,53 @@
 - [x] Add AutomationFlowAnimation component: 6-step live pipeline demo with event stream log
 - [x] Inject animation between Integrations and Pricing sections on landing page
 - [x] Run full test suite (21/21) and save checkpoint
+
+## Phase 12 — SEO Fixes + Full 4-Tier Notification System
+- [ ] Fix page title: 30-60 chars, keyword-rich
+- [ ] Add meta keywords, description, Open Graph, Twitter Card, canonical tags
+- [ ] Add notifications table (userId, tenantId, type, title, body, read, link, createdAt)
+- [ ] Add announcements table (adminId, title, body, type, startsAt, endsAt, dismissible)
+- [ ] Add notification_dismissals table (userId, announcementId)
+- [ ] Build notificationRouter: list, markRead, markAllRead, create (admin), broadcast
+- [ ] Build announcementRouter: create, list active, dismiss
+- [ ] Build in-app notification center: bell icon in DashboardLayout header with unread badge
+- [ ] Build notification dropdown: real-time list, mark-as-read, empty state, link navigation
+- [ ] Build admin announcement composer: title, body, type (banner/toast/modal), schedule, duration
+- [ ] Show active announcements as dismissible banners at top of dashboard
+- [ ] Build custom owner alert composer in Settings: send on-demand push notification
+- [ ] Build webhook/email trigger configurator: per-event toggles for n8n/Mailchimp/Slack
+- [ ] Run full test suite and save checkpoint
+
+## Phase 12 — Completed Items (Notification System)
+- [x] Notification tables schema + migration (notifications, announcements, notification_dismissals, notification_triggers)
+- [x] notificationsRouter: list, unreadCount, markRead, markAllRead, delete, sendToUser, broadcastToTenant
+- [x] notificationsRouter: createAnnouncement, listAnnouncements, listAllAnnouncements, toggleAnnouncement, deleteAnnouncement, dismissAnnouncement
+- [x] notificationsRouter: listTriggers, upsertTrigger, deleteTrigger
+- [x] NotificationCenter bell icon component with unread badge (dropdown)
+- [x] AnnouncementBanner component (dismissible banners per severity)
+- [x] AdminAnnouncementComposer component (create/toggle/delete announcements)
+- [x] /notifications page with 4 tabs: Inbox, Broadcast (admin), Announcements (admin), Triggers
+- [x] Bell icon added to DashboardLayout header (desktop + mobile)
+- [x] /notifications route registered in App.tsx + sidebar nav item
+- [x] SEO: title, meta description, keywords, OG tags, Twitter Card, JSON-LD, canonical URL already in place
+- [x] Notification tests: 15 tests passing (all 4 tiers)
+
+## Phase 13 — Custom UnifyOne Branded Login + Theme Store Marketplace [COMPLETE]
+- [x] Custom /login page with UnifyOne branding (no Manus OAuth UI visible)
+- [x] Auth bridge: intercept Manus OAuth redirect, show UnifyOne-branded loading/transition screen (/auth/callback)
+- [x] Remove all Manus badge/logo/branding from auth-facing UI and redirect flows
+- [x] Custom branded loading screen during OAuth callback
+- [x] getLoginUrl() rerouted to /login — all login CTAs go through branded page
+- [x] Theme Store DB schema: themes, theme_categories, theme_installs, theme_reviews tables + migrations applied
+- [x] Theme Store tRPC router: list, get, search, filter, installFree, createCheckout, admin CRUD, review moderation
+- [x] Theme Store frontend: /themes browse page (grid layout, category filters, price filter, search, sort)
+- [x] Theme Store frontend: theme detail modal (screenshots, features, tech stack, pricing, install/purchase CTA)
+- [x] Theme Store frontend: free install flow (one-click install, instant access)
+- [x] Theme Store frontend: paid checkout via Stripe (one-time + subscription modes, opens in new tab)
+- [x] Theme Store admin: /admin/themes upload page (metadata form, price management, status toggle)
+- [x] Theme Store admin: price management (free / paid / subscription tier + Stripe Price ID)
+- [x] Theme Store admin: review moderation panel (approve/reject reviews)
+- [x] /my-themes installed themes page in dashboard
+- [x] Stripe webhook fulfillment: checkout.session.completed → theme install record + installCount increment
+- [x] Theme Store sidebar nav items (Theme Store + My Themes) + routes in App.tsx
+- [x] Theme Store tests: 23 tests passing (helpers, filter logic, slug generation, pricing validation)
