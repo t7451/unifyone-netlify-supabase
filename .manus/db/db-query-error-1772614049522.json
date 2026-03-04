@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, name, slug, price, stripePriceIdMonthly, stripePriceIdYearly FROM plans;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 372pgni6FByAp3r.b99b1625eed2 --database VyofXqD3FvrztXonjtHUZp --execute SELECT id, name, slug, price, stripePriceIdMonthly, stripePriceIdYearly FROM plans;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'price' in 'field list'"
+  ]
+}

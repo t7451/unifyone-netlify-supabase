@@ -16,6 +16,12 @@ import TenantSetup from "./pages/TenantSetup";
 import Checkout from "./pages/Checkout";
 import Billing from "./pages/Billing";
 import Team from "./pages/Team";
+import Social from "./pages/Social";
+import Referrals from "./pages/Referrals";
+import Leads from "./pages/Leads";
+import Automations from "./pages/Automations";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
 import { getLoginUrl } from "./const";
@@ -79,6 +85,12 @@ function Router() {
       <Route path="/settings" component={() => <DashboardRoute component={Settings} />} />
       <Route path="/billing" component={() => <DashboardRoute component={Billing} />} />
       <Route path="/team" component={() => <DashboardRoute component={Team} />} />
+      <Route path="/social" component={() => <DashboardRoute component={Social} />} />
+      <Route path="/referrals" component={() => <DashboardRoute component={Referrals} />} />
+      <Route path="/leads" component={() => <DashboardRoute component={Leads} />} />
+      <Route path="/automations" component={() => <DashboardRoute component={Automations} />} />
+      <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/terms" component={TermsOfService} />
       <Route path="/checkout" component={() => <ProtectedRoute component={Checkout} />} />
       <Route path="/checkout/paypal-return" component={() => <ProtectedRoute component={Checkout} />} />
       <Route path="/checkout/paypal-cancel" component={() => <ProtectedRoute component={Checkout} />} />

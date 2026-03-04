@@ -22,6 +22,8 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  creditBalance: int("creditBalance").default(0).notNull(),
+  referralCode: varchar("referralCode", { length: 32 }).unique(),
 });
 
 export type User = typeof users.$inferSelect;
@@ -260,3 +262,170 @@ export const teamInvites = mysqlTable("team_invites", {
 
 export type TeamInvite = typeof teamInvites.$inferSelect;
 export type InsertTeamInvite = typeof teamInvites.$inferInsert;
+
+// ── Social Accounts ───────────────────────────────────────────────────────────
+export const socialAccounts = mysqlTable("social_accounts", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  platform: mysqlEnum("platform", ["twitter", "instagram", "linkedin", "facebook", "tiktok"]).notNull(),
+  handle: varchar("handle", { length: 255 }),
+  accessToken: text("accessToken"),
+  refreshToken: text("refreshToken"),
+  tokenExpiresAt: timestamp("tokenExpiresAt"),
+  profileImageUrl: text("profileImageUrl"),
+  followerCount: int("followerCount").default(0),
+  isConnected: boolean("isConnected").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SocialAccount = typeof socialAccounts.$inferSelect;
+
+// ── Social Posts ──────────────────────────────────────────────────────────────
+export const socialPosts = mysqlTable("social_posts", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  userId: int("userId").notNull(),
+  content: text("content").notNull(),
+  platforms: json("platforms").$type<string[]>().notNull(),
+  mediaUrls: json("mediaUrls").$type<string[]>(),
+  status: mysqlEnum("status", ["draft", "scheduled", "published", "failed", "cancelled"]).default("draft").notNull(),
+  scheduledAt: timestamp("scheduledAt"),
+  publishedAt: timestamp("publishedAt"),
+  campaignTag: varchar("campaignTag", { length: 100 }),
+  utmSource: varchar("utmSource", { length: 100 }),
+  utmMedium: varchar("utmMedium", { length: 100 }),
+  utmCampaign: varchar("utmCampaign", { length: 100 }),
+  metrics: json("metrics").$type<{
+    impressions?: number; clicks?: number; likes?: number;
+    shares?: number; comments?: number; reach?: number;
+  }>(),
+  aiGenerated: boolean("aiGenerated").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SocialPost = typeof socialPosts.$inferSelect;
+export type InsertSocialPost = typeof socialPosts.$inferInsert;
+
+// ── Referrals ─────────────────────────────────────────────────────────────────
+export const referrals = mysqlTable("referrals", {
+  id: int("id").autoincrement().primaryKey(),
+  referrerId: int("referrerId").notNull(),
+  referredEmail: varchar("referredEmail", { length: 320 }),
+  referredUserId: int("referredUserId"),
+  referralCode: varchar("referralCode", { length: 32 }).notNull().unique(),
+  platform: varchar("platform", { length: 50 }),
+  utmSource: varchar("utmSource", { length: 100 }),
+  status: mysqlEnum("status", ["clicked", "signed_up", "converted", "expired"]).default("clicked").notNull(),
+  creditsAwarded: int("creditsAwarded").default(0),
+  clickCount: int("clickCount").default(0),
+  convertedAt: timestamp("convertedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Referral = typeof referrals.$inferSelect;
+
+// ── Credit Transactions ───────────────────────────────────────────────────────
+export const creditTransactions = mysqlTable("credit_transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  amount: int("amount").notNull(),
+  type: mysqlEnum("type", ["earned", "redeemed", "expired", "bonus", "adjustment"]).notNull(),
+  source: mysqlEnum("source", ["referral_click", "referral_signup", "referral_conversion", "social_share", "subscription_redemption", "admin", "bonus"]).notNull(),
+  description: varchar("description", { length: 500 }),
+  balanceAfter: int("balanceAfter").notNull(),
+  referralId: int("referralId"),
+  socialPostId: int("socialPostId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CreditTransaction = typeof creditTransactions.$inferSelect;
+
+// ── Leads ─────────────────────────────────────────────────────────────────────
+export const leads = mysqlTable("leads", {
+  id: int("id").autoincrement().primaryKey(),
+  // Contact info
+  companyName: varchar("companyName", { length: 500 }),
+  contactName: varchar("contactName", { length: 500 }),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  website: varchar("website", { length: 500 }),
+  // Lead details
+  plan: varchar("plan", { length: 100 }),
+  platforms: json("platforms").$type<string[]>(),
+  branding: varchar("branding", { length: 255 }),
+  monthlyRevenue: varchar("monthlyRevenue", { length: 100 }),
+  teamSize: varchar("teamSize", { length: 50 }),
+  message: text("message"),
+  source: varchar("source", { length: 100 }).default("landing_page"),
+  utmSource: varchar("utmSource", { length: 100 }),
+  utmMedium: varchar("utmMedium", { length: 100 }),
+  utmCampaign: varchar("utmCampaign", { length: 100 }),
+  // CRM status
+  status: mysqlEnum("status", ["new", "contacted", "qualified", "converted", "lost"]).default("new").notNull(),
+  assignedTo: int("assignedTo"),
+  notes: text("notes"),
+  // Automation tracking
+  n8nTriggered: boolean("n8nTriggered").default(false),
+  zapierTriggered: boolean("zapierTriggered").default(false),
+  mailchimpSubscribed: boolean("mailchimpSubscribed").default(false),
+  notificationSent: boolean("notificationSent").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Lead = typeof leads.$inferSelect;
+export type InsertLead = typeof leads.$inferInsert;
+
+// ── n8n Workflows ─────────────────────────────────────────────────────────────
+export const n8nWorkflows = mysqlTable("n8n_workflows", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId"),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  triggerEvent: varchar("triggerEvent", { length: 100 }).notNull(),
+  webhookUrl: text("webhookUrl").notNull(),
+  payloadTemplate: json("payloadTemplate").$type<Record<string, unknown>>(),
+  enabled: boolean("enabled").default(true).notNull(),
+  lastTriggeredAt: timestamp("lastTriggeredAt"),
+  triggerCount: int("triggerCount").default(0),
+  lastError: text("lastError"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type N8nWorkflow = typeof n8nWorkflows.$inferSelect;
+export type InsertN8nWorkflow = typeof n8nWorkflows.$inferInsert;
+
+// ── Zapier Hooks ──────────────────────────────────────────────────────────────
+export const zapierHooks = mysqlTable("zapier_hooks", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId"),
+  name: varchar("name", { length: 255 }).notNull(),
+  triggerEvent: varchar("triggerEvent", { length: 100 }).notNull(),
+  webhookUrl: text("webhookUrl").notNull(),
+  enabled: boolean("enabled").default(true).notNull(),
+  lastTriggeredAt: timestamp("lastTriggeredAt"),
+  triggerCount: int("triggerCount").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ZapierHook = typeof zapierHooks.$inferSelect;
+
+// ── Mailchimp Config ──────────────────────────────────────────────────────────
+export const mailchimpConfig = mysqlTable("mailchimp_config", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").unique(),
+  apiKey: text("apiKey"),
+  serverPrefix: varchar("serverPrefix", { length: 10 }),
+  listId: varchar("listId", { length: 100 }),
+  tagPrefix: varchar("tagPrefix", { length: 100 }).default("unifyone"),
+  enabled: boolean("enabled").default(false).notNull(),
+  subscriberCount: int("subscriberCount").default(0),
+  lastSyncAt: timestamp("lastSyncAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MailchimpConfig = typeof mailchimpConfig.$inferSelect;

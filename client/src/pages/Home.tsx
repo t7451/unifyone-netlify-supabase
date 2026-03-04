@@ -8,6 +8,9 @@ import {
   CheckCircle, TrendingUp, Layers, Workflow, Menu, X
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import AutomationFlowAnimation from "@/components/AutomationFlowAnimation";
 
 const FEATURES = [
   { icon: Layers, title: "Multi-Tenant Architecture", desc: "Isolated environments for each store with dedicated data, settings, and team access.", color: "#00D9FF" },
@@ -39,6 +42,9 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [heroVisible, setHeroVisible] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const createCheckout = trpc.subscription.createCheckout.useMutation();
 
   useEffect(() => {
     const timer = setTimeout(() => setHeroVisible(true), 100);
@@ -50,6 +56,36 @@ export default function Home() {
   const handleGetStarted = () => {
     if (isAuthenticated) navigate("/dashboard");
     else window.location.href = getLoginUrl();
+  };
+
+  const handlePlanCheckout = async (planSlug: string, planName: string) => {
+    if (!isAuthenticated) {
+      window.location.href = getLoginUrl();
+      return;
+    }
+    if (planSlug === "enterprise") {
+      window.open("mailto:skdev@1commercesolutions.com?subject=UnifyOne Enterprise Inquiry", "_blank");
+      return;
+    }
+    setCheckoutLoading(planSlug);
+    try {
+      toast.info(`Redirecting to ${planName} checkout...`);
+      const result = await createCheckout.mutateAsync({
+        planSlug,
+        billingPeriod,
+        origin: window.location.origin,
+      });
+      if (result.url) {
+        window.open(result.url, "_blank");
+      } else {
+        toast.error("Could not create checkout session. Please try again.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Checkout failed";
+      toast.error(msg);
+    } finally {
+      setCheckoutLoading(null);
+    }
   };
 
   return (
@@ -210,44 +246,90 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Automation Flow Animation */}
+      <section id="automation" className="py-24 px-6 bg-white/[0.01]">
+        <div className="max-w-7xl mx-auto">
+          <AutomationFlowAnimation />
+        </div>
+      </section>
+
       {/* Pricing */}
       <section id="pricing" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-white mb-4">Simple, Transparent Pricing</h2>
             <p className="text-gray-400 text-lg">No hidden fees. No surprises. Cancel anytime.</p>
+            {/* Billing period toggle */}
+            <div className="flex items-center justify-center gap-1 mt-8 p-1 rounded-xl bg-white/5 border border-white/10 w-fit mx-auto">
+              <button
+                onClick={() => setBillingPeriod("monthly")}
+                className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                  billingPeriod === "monthly"
+                    ? "bg-[#00D9FF] text-[#0A1128] shadow"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingPeriod("yearly")}
+                className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                  billingPeriod === "yearly"
+                    ? "bg-[#00D9FF] text-[#0A1128] shadow"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Yearly
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 font-semibold">Save 17%</span>
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {PLANS.map(plan => (
-              <div key={plan.name} className={`pricing-card rounded-2xl p-8 relative ${plan.highlight ? "border-2 border-[#00D9FF] bg-[#00D9FF]/5 cyan-glow-sm" : "feature-card"}`}>
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-[#00D9FF] text-[#0A1128] font-bold px-4">Most Popular</Badge>
+            {PLANS.map(plan => {
+              const slug = plan.name.toLowerCase();
+              const isLoading = checkoutLoading === slug;
+              const yearlyPrice = plan.name === "Starter" ? "$24" : plan.name === "Growth" ? "$66" : "Custom";
+              const displayPrice = billingPeriod === "yearly" && plan.price !== "Custom" ? yearlyPrice : plan.price;
+              return (
+                <div key={plan.name} className={`pricing-card rounded-2xl p-8 relative ${plan.highlight ? "border-2 border-[#00D9FF] bg-[#00D9FF]/5 cyan-glow-sm" : "feature-card"}`}>
+                  {plan.highlight && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-[#00D9FF] text-[#0A1128] font-bold px-4">Most Popular</Badge>
+                    </div>
+                  )}
+                  <div className="mb-6">
+                    <h3 className="text-white font-bold text-xl mb-2">{plan.name}</h3>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-extrabold text-white">{displayPrice}</span>
+                      <span className="text-gray-400">{plan.price !== "Custom" ? "/mo" : ""}</span>
+                    </div>
+                    {billingPeriod === "yearly" && plan.price !== "Custom" && (
+                      <p className="text-xs text-green-400 mt-1">Billed annually · 2 months free</p>
+                    )}
                   </div>
-                )}
-                <div className="mb-6">
-                  <h3 className="text-white font-bold text-xl mb-2">{plan.name}</h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-extrabold text-white">{plan.price}</span>
-                    <span className="text-gray-400">{plan.period}</span>
-                  </div>
+                  <ul className="space-y-3 mb-8">
+                    {plan.features.map(f => (
+                      <li key={f} className="flex items-center gap-2 text-gray-300 text-sm">
+                        <CheckCircle className="w-4 h-4 text-[#00D9FF] flex-shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    className={`w-full font-semibold ${plan.highlight ? "bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90" : "border border-white/20 text-white hover:bg-white/5 bg-transparent"}`}
+                    onClick={() => handlePlanCheckout(slug, plan.name)}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        Redirecting...
+                      </span>
+                    ) : plan.cta}
+                  </Button>
                 </div>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map(f => (
-                    <li key={f} className="flex items-center gap-2 text-gray-300 text-sm">
-                      <CheckCircle className="w-4 h-4 text-[#00D9FF] flex-shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className={`w-full font-semibold ${plan.highlight ? "bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90" : "border border-white/20 text-white hover:bg-white/5 bg-transparent"}`}
-                  onClick={handleGetStarted}
-                >
-                  {plan.cta}
-                </Button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -285,13 +367,14 @@ export default function Home() {
               <span className="text-gray-500 text-sm ml-2">by 1Commerce LLC</span>
             </div>
             <div className="flex gap-6">
-              {["Privacy", "Terms", "Security", "Docs"].map(item => (
-                <a key={item} href="#" className="text-gray-500 hover:text-[#00D9FF] text-sm transition-colors">{item}</a>
-              ))}
+              <a href="/privacy" className="text-gray-500 hover:text-[#00D9FF] text-sm transition-colors">Privacy</a>
+              <a href="/terms" className="text-gray-500 hover:text-[#00D9FF] text-sm transition-colors">Terms</a>
+              <a href="#" className="text-gray-500 hover:text-[#00D9FF] text-sm transition-colors">Security</a>
+              <a href="#" className="text-gray-500 hover:text-[#00D9FF] text-sm transition-colors">Docs</a>
             </div>
           </div>
           <div className="border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className="text-gray-600 text-sm">© 2025 1Commerce LLC · All rights reserved</p>
+            <p className="text-gray-600 text-sm">© 2026 1Commerce LLC · All rights reserved</p>
             <p className="text-gray-600 text-sm">SOC 2 Compliant · GDPR Ready · skdev@1commercesolutions.com</p>
           </div>
         </div>

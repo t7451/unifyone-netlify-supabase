@@ -1,0 +1,84 @@
+# ============================================================================
+# 1Commerce LLC - robots.txt
+# https://1commerce-consulting.netlify.app/robots.txt
+# Last updated: 2026-02-15
+# ============================================================================
+
+# Allow all Google Search crawlers (Search, Images, Video, News)
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /debug/
+
+# Allow Google Images crawler
+User-agent: Googlebot-Image
+Allow: /assets/
+Allow: /images/
+Disallow: /api/
+
+# Allow Google Video crawler
+User-agent: Googlebot-Video
+Allow: /
+
+# Allow Google News crawler
+User-agent: Googlebot-News
+Allow: /blog/
+Allow: /case-studies/
+
+# Allow Google Shopping crawler
+User-agent: Storebot-Google
+Allow: /products/
+Allow: /bundle
+Allow: /pricing
+
+# Allow Google Search Console inspection
+User-agent: Google-InspectionTool
+Allow: /
+
+# Allow Google Cloud Vertex AI (if used for Gemini features)
+User-agent: Google-CloudVertexBot
+Disallow: /
+
+# Control Google Extended (Gemini training) - allow for discovery
+User-agent: Google-Extended
+Allow: /
+
+# Allow GoogleOther for general crawling
+User-agent: GoogleOther
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+
+# Bing
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+
+# DuckDuckGo
+User-agent: DuckDuckBot
+Allow: /
+Disallow: /api/
+
+# Block AI training crawlers that we don't want
+User-agent: CCBot
+Disallow: /
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+# Default rule for all other bots
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /debug/
+Disallow: /_next/
+
+# Sitemap location
+Sitemap: https://unifyone-vyofxqd3.manus.space/sitemap.xml

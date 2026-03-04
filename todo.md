@@ -150,3 +150,38 @@
 - [x] Add Team link to DashboardLayout sidebar nav
 - [x] Create GitHub v1.7.0 release tag — https://github.com/ksksrbiz-arch/unifyone-netlify-supabase/releases/tag/v1.7.0
 - [x] Run full test suite (21/21) and save checkpoint
+
+## Phase 10 — Social Media Suite + Promote & Earn + Ecosystem [COMPLETE]
+- [x] Add social_posts table (platform, content, status, scheduledAt, publishedAt, metrics)
+- [x] Add social_accounts table (platform, accessToken, handle, tenantId)
+- [x] Add referrals table (referrerId, referredEmail, status, creditsAwarded)
+- [x] Add credit_transactions table (userId, amount, type, description, balanceAfter)
+- [x] Add creditBalance field to users table
+- [x] Run all schema migrations
+- [x] Build socialRouter: createPost, listPosts, schedulePost, getMetrics, aiCompose procedures
+- [x] Build referralRouter: generateLink, trackClick, listReferrals, getBalance procedures
+- [x] Build /social page: AI post composer, platform selector, content calendar, post list
+- [x] Build /referrals page: Promote & Earn hub, shareable templates, credit wallet, leaderboard
+- [x] Add Social and Referrals links to DashboardLayout sidebar
+- [x] Add robots.txt and sitemap.xml to client/public
+- [x] Add /privacy and /terms pages from uploaded HTML files
+- [x] Add Privacy Policy and Terms links to landing page footer
+- [x] Run full test suite (21/21) and save checkpoint
+
+## Phase 11 — n8n/Zapier/Mailchimp + Leads Pipeline + Stripe Checkout + Landing Animation [COMPLETE]
+- [x] Add leads table (company, contact, email, phone, plan, platforms, branding, status, notes, createdAt)
+- [x] Add n8n_workflows table (name, triggerEvent, webhookUrl, payload, enabled, lastTriggeredAt)
+- [x] Add zapier_hooks table (name, triggerEvent, webhookUrl, enabled)
+- [x] Add mailchimp_config table (apiKey, listId, enabled, tagPrefix)
+- [x] Run all schema migrations (4 tables applied)
+- [x] Build leadsRouter: submit (public), list (admin), updateStatus, addNote, getStats procedures
+- [x] Build automationRouter: n8n CRUD, Zapier CRUD, Mailchimp config, test-trigger procedures
+- [x] Wire leads.submit to persist lead + fire owner notification + trigger n8n/Zapier webhooks
+- [x] Build admin /leads page: kanban status board (New→Contacted→Qualified→Converted→Lost), lead detail panel
+- [x] Build /automations page: n8n workflow builder, Zapier hook manager, Mailchimp config
+- [x] Add Leads and Automations links to DashboardLayout sidebar (admin-gated)
+- [x] Activate Stripe checkout on Pricing page: monthly/yearly toggle, real createCheckout mutation
+- [x] n8n webhook fires on lead.submitted event (fireAutomations() already wired)
+- [x] Add AutomationFlowAnimation component: 6-step live pipeline demo with event stream log
+- [x] Inject animation between Integrations and Pricing sections on landing page
+- [x] Run full test suite (21/21) and save checkpoint
