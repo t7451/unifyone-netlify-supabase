@@ -1,15 +1,21 @@
 # UnifyOne — Netlify Deployment Configuration
-# Repo root IS the project root (no subdirectory base)
+# Full-stack: React SPA (dist/public) + Express via Netlify Functions
 
 [build]
   base = ""
   command = "pnpm install && pnpm build"
   publish = "dist/public"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "22"
   PNPM_VERSION = "10"
   NODE_ENV = "production"
+
+# Netlify Functions — use esbuild to bundle the TypeScript server function
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["drizzle/**", "server/**"]
 
 # Redirect API calls to the Express server function
 [[redirects]]
@@ -27,6 +33,7 @@
 [[headers]]
   for = "/*"
   [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
     X-Frame-Options = "DENY"
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
