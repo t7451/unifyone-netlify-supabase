@@ -43,3 +43,16 @@
 - [x] TypeScript: 0 errors
 - [ ] Responsive design check (manual)
 - [ ] Empty states for all list views (partial)
+
+## Phase 2 — Stripe, CRUD, Netlify
+- [x] Pull latest UnifyOne-CSS and apply design updates
+- [x] Wire STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET via secrets
+- [x] Implement Stripe checkout session creation (live keys)
+- [x] Implement Stripe webhook handler (payment_intent, subscription events)
+- [x] Build product CRUD modal: create product form
+- [x] Build product CRUD modal: edit product form
+- [x] Build product CRUD modal: delete confirmation
+- [x] Add inventory management inline in Products page
+- [x] Configure netlify.toml for operation-v3.netlify.app
+- [x] Update app title and meta tags for production
+- [x] Run full test suite (14/14 passing) and save checkpoint
