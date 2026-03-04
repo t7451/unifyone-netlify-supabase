@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import TenantSetup from "./pages/TenantSetup";
 import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
+import { getLoginUrl } from "./const";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, loading } = useAuth();
@@ -24,7 +25,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
     </div>
   );
   if (!isAuthenticated) {
-    window.location.href = `${window.location.origin}/api/oauth/login?returnPath=${encodeURIComponent(window.location.pathname)}`;
+    window.location.href = getLoginUrl();
     return null;
   }
   return <Component />;

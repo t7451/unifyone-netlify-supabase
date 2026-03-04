@@ -76,3 +76,6 @@
 - [ ] Add Dashboard top products widget
 - [ ] Add Dashboard recent orders feed
 - [ ] Run full test suite and save checkpoint
+
+## Bug Fixes
+- [x] Fix /api/oauth/login 404 — ProtectedRoute now uses getLoginUrl() correctly
