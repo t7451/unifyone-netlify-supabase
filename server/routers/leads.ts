@@ -160,6 +160,17 @@ export const leadsRouter = router({
 
       const autoResults = await fireAutomations(null, "lead.submitted", automationPayload);
 
+      // Fire Meta CAPI Lead event (non-blocking — deduplication via eventId)
+      try {
+        const { capi } = await import("../meta/capi");
+        const eventId = `lead-${leadId}-${Date.now()}`;
+        await capi.lead(
+          eventId,
+          { email: input.email },
+          "https://unifyone.1commercesolutions.com"
+        );
+      } catch (_) { /* CAPI failure is non-critical */ }
+
       // Update automation tracking flags
       if (notificationSent || autoResults.n8n || autoResults.zapier) {
         try {

@@ -951,3 +951,47 @@ export const friendChallenges = mysqlTable("friend_challenges", {
 });
 export type FriendChallenge = typeof friendChallenges.$inferSelect;
 export type InsertFriendChallenge = typeof friendChallenges.$inferInsert;
+
+// ─── Mobile: Deep Link Attributions ──────────────────────────────────────────
+export const deepLinkAttributions = mysqlTable("deep_link_attributions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  email: varchar("email", { length: 255 }),
+  source: varchar("source", { length: 100 }).notNull().default("unknown"),
+  medium: varchar("medium", { length: 100 }),
+  campaign: varchar("campaign", { length: 255 }),
+  deepLinkPath: varchar("deepLinkPath", { length: 500 }),
+  referralCode: varchar("referralCode", { length: 100 }),
+  utmSource: varchar("utmSource", { length: 255 }),
+  utmMedium: varchar("utmMedium", { length: 255 }),
+  utmCampaign: varchar("utmCampaign", { length: 255 }),
+  converted: boolean("converted").default(false).notNull(),
+  convertedAt: timestamp("convertedAt"),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type DeepLinkAttribution = typeof deepLinkAttributions.$inferSelect;
+export type InsertDeepLinkAttribution = typeof deepLinkAttributions.$inferInsert;
+
+// ─── Mobile: n8n Schedules ────────────────────────────────────────────────────
+export const n8nSchedules = mysqlTable("n8n_schedules", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  workflowId: varchar("workflowId", { length: 255 }),
+  webhookUrl: varchar("webhookUrl", { length: 1000 }),
+  cronExpression: varchar("cronExpression", { length: 100 }).notNull(),
+  payload: json("payload").$type<Record<string, unknown>>(),
+  enabled: boolean("enabled").default(true).notNull(),
+  lastRunAt: timestamp("lastRunAt"),
+  nextRunAt: timestamp("nextRunAt"),
+  lastRunStatus: mysqlEnum("lastRunStatus", ["success", "failed", "pending"]),
+  lastRunError: text("lastRunError"),
+  triggerCount: int("triggerCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type N8nSchedule = typeof n8nSchedules.$inferSelect;
+export type InsertN8nSchedule = typeof n8nSchedules.$inferInsert;

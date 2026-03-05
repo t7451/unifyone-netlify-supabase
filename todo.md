@@ -446,3 +446,20 @@
 - [x] DashboardLayout nav: Gig Command item added (Navigation icon)
 - [x] App.tsx route /gig-command registered
 - [x] 96 tests passing, 0 TypeScript errors
+
+## Phase 23 — Meta CAPI Event Loop + Mobile Automation Scheduling
+
+- [ ] Audit existing Meta Pixel code and VITE_META_PIXEL_ID gap
+- [ ] Add meta_capi_events table (eventName, userId, eventSourceUrl, userData, customData, sentAt, responseCode)
+- [ ] capiRouter: fireLead, firePurchase, fireCompleteRegistration, fireCustomEvent, listEvents procedures
+- [ ] Wire CAPI into: Stripe purchase (firePurchase), lead submit (fireLead), rewards key claim (fireCompleteRegistration), shift completed (fireCustomEvent), friend challenge accepted (fireCustomEvent)
+- [ ] Add VITE_META_PIXEL_ID secret
+- [ ] Frontend Pixel helper: trackPixelEvent(eventName, params) using fbq()
+- [ ] Wire frontend Pixel on: page views (App.tsx), checkout open, shift start
+- [ ] Add n8n_schedules table (name, cronExpression, workflowId, payload, enabled, lastRunAt, nextRunAt)
+- [ ] mobileAutomationRouter: listSchedules, createSchedule, updateSchedule, deleteSchedule, triggerNow, getDeepLinkStats, listCapiEvents
+- [ ] /mobile-automation page: n8n workflow scheduler with cron builder, deep link attribution table (userId, email, source, createdAt), CAPI event log, mobile push scheduling panel
+- [ ] DashboardLayout nav: Mobile Automation item added
+- [ ] App.tsx route /mobile-automation registered
+- [ ] Tests for capiRouter and mobileAutomationRouter
+- [ ] 0 TypeScript errors, all tests passing

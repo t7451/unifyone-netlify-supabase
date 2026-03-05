@@ -36,6 +36,7 @@ import MoneyManager from "./pages/MoneyManager";
 import Achievements from "./pages/Achievements";
 import Friends from "./pages/Friends";
 import GigCommand from "./pages/GigCommand";
+import MobileAutomation from "./pages/MobileAutomation";
 import ShopifyInstall from "./pages/ShopifyInstall";
 import ShopifySuccess from "./pages/ShopifySuccess";
 import SyncMonitor from "./pages/SyncMonitor";
@@ -122,6 +123,7 @@ function Router() {
       <Route path="/achievements" component={() => <DashboardRoute component={Achievements} />} />
       <Route path="/friends" component={() => <DashboardRoute component={Friends} />} />
       <Route path="/gig-command" component={() => <DashboardRoute component={GigCommand} />} />
+      <Route path="/mobile-automation" component={() => <DashboardRoute component={MobileAutomation} />} />
       <Route path="/sovereign" component={Sovereign} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />

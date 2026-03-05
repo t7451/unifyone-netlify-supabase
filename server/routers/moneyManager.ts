@@ -175,6 +175,19 @@ export const moneyManagerRouter = router({
         }
       } catch (_) { /* non-critical: don't fail shift end if completion check errors */ }
 
+      // Fire Meta CAPI GigShiftCompleted event (non-blocking)
+      try {
+        const { capi } = await import("../meta/capi");
+        const capiEventId = `shift-${input.shiftId}-${Date.now()}`;
+        await capi.custom(
+          "GigShiftCompleted",
+          capiEventId,
+          { externalId: String(ctx.user.id), email: ctx.user.email ?? undefined },
+          "https://unifyone.1commercesolutions.com/gig-command",
+          { duration_minutes: durationMinutes, gross_earnings: input.grossEarnings, platform: existing.platform }
+        );
+      } catch (_) { /* CAPI failure is non-critical */ }
+
       return { success: true, durationMinutes };
     }),
 
@@ -293,6 +306,19 @@ export const moneyManagerRouter = router({
           await checkAndResolveFriendChallenge(challengeId, ctx.user.id);
         }
       } catch (_) { /* non-critical */ }
+
+      // Fire Meta CAPI MileageLogged event (non-blocking)
+      try {
+        const { capi } = await import("../meta/capi");
+        const capiEventId = `mileage-${ctx.user.id}-${Date.now()}`;
+        await capi.custom(
+          "MileageLogged",
+          capiEventId,
+          { externalId: String(ctx.user.id), email: ctx.user.email ?? undefined },
+          "https://unifyone.1commercesolutions.com/gig-command",
+          { miles: input.miles, deduction_dollars: deductionCents / 100 }
+        );
+      } catch (_) { /* CAPI failure is non-critical */ }
 
       return { deductionCents, deductionDollars: deductionCents / 100 };
     }),

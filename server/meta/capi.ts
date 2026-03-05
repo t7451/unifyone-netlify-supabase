@@ -187,4 +187,14 @@ export const capi = {
       userData,
       customData: { platform },
     }),
+
+  /** Generic custom event — use for any non-standard event name */
+  custom: (
+    eventName: string,
+    eventId: string,
+    userData: CAPIUserData,
+    url: string,
+    customData?: Record<string, unknown>
+  ) =>
+    sendCAPIEvent({ eventName, eventId, eventSourceUrl: url, userData, customData }),
 };
