@@ -197,7 +197,8 @@ export default function Orders() {
 
       {/* Orders Table */}
       <div className="rounded-xl border border-border overflow-hidden">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className="border-b border-border bg-white/3">
               {["Order", "Customer", "Items", "Total", "Status", "Payment", "Date", "Actions"].map(h => (
@@ -299,8 +300,8 @@ export default function Orders() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
-
       {/* Order Detail Modal */}
       <Dialog open={showDetail} onOpenChange={setShowDetail}>
         <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-2xl max-h-[85vh] overflow-y-auto">

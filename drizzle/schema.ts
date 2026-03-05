@@ -942,6 +942,9 @@ export const friendChallenges = mysqlTable("friend_challenges", {
   winnerId: int("winnerId"),
   acceptedAt: timestamp("acceptedAt"),
   completedAt: timestamp("completedAt"),
+  resolvedAt: timestamp("resolvedAt"),
+  winnerNotified: boolean("winnerNotified").default(false).notNull(),
+  loserNotified: boolean("loserNotified").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

@@ -380,11 +380,45 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── AUTOMATION DEMO ── */}
-      <section id="automation" className="py-16 sm:py-24 px-4 sm:px-6 bg-white/[0.01]">
-        {/* Fixed-height container prevents layout shift on mobile */}
+      {/* ── AUTOMATION DEMO (desktop only — avoids mobile layout shift) ── */}
+      <section id="automation" className="hidden lg:block py-24 px-6 bg-white/[0.01]">
         <div className="max-w-7xl mx-auto">
           <AutomationFlowAnimation />
+        </div>
+      </section>
+
+      {/* ── AUTOMATION DEMO — mobile static version ── */}
+      <section className="lg:hidden py-14 px-4 bg-white/[0.01]">
+        <div className="max-w-sm mx-auto">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#EA4B71]/30 bg-[#EA4B71]/5 text-[#EA4B71] text-xs font-medium mb-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#EA4B71]" />
+              Automation Pipeline
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-3">Watch Your Commerce Run Itself</h2>
+            <p className="text-gray-400 text-sm leading-relaxed">One order triggers a fully automated pipeline — payments, fulfillment, notifications, and analytics.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: "Order Created", sub: "Shopify / UnifyOne", color: "#96BF48" },
+              { label: "n8n Triggered", sub: "Automation fires", color: "#EA4B71" },
+              { label: "Stripe Charged", sub: "Payment captured", color: "#635BFF" },
+              { label: "Email Sent", sub: "Mailchimp receipt", color: "#FFD700" },
+              { label: "Owner Notified", sub: "Instant alert", color: "#00D9FF" },
+              { label: "Analytics Updated", sub: "Real-time metrics", color: "#10B981" },
+            ].map((step) => (
+              <div key={step.label} className="rounded-xl p-4 border border-white/10 bg-white/[0.03]">
+                <div className="w-2 h-2 rounded-full mb-2" style={{ backgroundColor: step.color }} />
+                <p className="text-white text-xs font-semibold leading-tight">{step.label}</p>
+                <p className="text-gray-500 text-[10px] mt-0.5">{step.sub}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 flex flex-wrap gap-2 justify-center">
+            {["n8n", "Stripe", "Mailchimp", "Shopify", "Zapier", "Supabase"].map((name) => (
+              <span key={name} className="text-[10px] px-2.5 py-1 rounded-md font-medium bg-white/5 text-gray-400 border border-white/10">{name}</span>
+            ))}
+          </div>
         </div>
       </section>
 

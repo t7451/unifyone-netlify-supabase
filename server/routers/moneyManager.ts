@@ -7,6 +7,7 @@ import {
   userPoints, pointsTransactions,
 } from "../../drizzle/schema";
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
+import { checkAndResolveFriendChallenge } from "../challengeCompletion";
 
 // IRS 2025 standard mileage rate (cents per mile)
 const IRS_RATE_CENTS = 70;
@@ -161,6 +162,18 @@ export const moneyManagerRouter = router({
         String(input.shiftId)
       );
 
+      // Auto-detect friend challenge completion for any challenge the user has joined
+      try {
+        const { challengeProgress: cpTable } = await import("../../drizzle/schema");
+        const joined = await db
+          .select({ challengeId: cpTable.challengeId })
+          .from(cpTable)
+          .where(eq(cpTable.userId, ctx.user.id));
+        for (const { challengeId } of joined) {
+          await checkAndResolveFriendChallenge(challengeId, ctx.user.id);
+        }
+      } catch (_) { /* non-critical: don't fail shift end if completion check errors */ }
+
       return { success: true, durationMinutes };
     }),
 
@@ -267,6 +280,18 @@ export const moneyManagerRouter = router({
 
       await awardPoints(db, ctx.user.id, "mileage_logged", POINTS.mileage_logged,
         `Logged ${input.miles} miles — $${(deductionCents / 100).toFixed(2)} deduction`);
+
+      // Auto-detect friend challenge completion for mileage-based challenges
+      try {
+        const { challengeProgress: cpTable } = await import("../../drizzle/schema");
+        const joined = await db
+          .select({ challengeId: cpTable.challengeId })
+          .from(cpTable)
+          .where(eq(cpTable.userId, ctx.user.id));
+        for (const { challengeId } of joined) {
+          await checkAndResolveFriendChallenge(challengeId, ctx.user.id);
+        }
+      } catch (_) { /* non-critical */ }
 
       return { deductionCents, deductionDollars: deductionCents / 100 };
     }),

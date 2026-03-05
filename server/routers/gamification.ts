@@ -7,6 +7,7 @@ import {
   userPoints, pointsTransactions, users,
 } from "../../drizzle/schema";
 import { eq, desc, and, sql, lte, gte, not, inArray } from "drizzle-orm";
+import { checkAndResolveFriendChallenge, resolveAllPendingFriendChallenges } from "../challengeCompletion";
 
 // Seed achievements on first call if table is empty
 const SEED_ACHIEVEMENTS = [
@@ -204,6 +205,66 @@ export const gamificationRouter = router({
       history,
     };
   }),
+
+  // ── Update Challenge Progress ────────────────────────────────────────────────
+  /** Increment a user's progress on a challenge they've joined. Auto-resolves friend challenges. */
+  updateProgress: protectedProcedure
+    .input(z.object({
+      challengeId: z.number(),
+      increment: z.number().min(1).default(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+      const [existing] = await db
+        .select()
+        .from(challengeProgress)
+        .where(and(
+          eq(challengeProgress.userId, ctx.user.id),
+          eq(challengeProgress.challengeId, input.challengeId)
+        ))
+        .limit(1);
+
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Not joined this challenge" });
+      if (existing.completed) return { alreadyCompleted: true, progress: existing.progress, goal: 0 };
+
+      const [challengeDef] = await db
+        .select()
+        .from(challenges)
+        .where(eq(challenges.id, input.challengeId))
+        .limit(1);
+
+      if (!challengeDef) throw new TRPCError({ code: "NOT_FOUND", message: "Challenge not found" });
+
+      const newProgress = Math.min(existing.progress + input.increment, challengeDef.goal);
+      const nowCompleted = newProgress >= challengeDef.goal;
+
+      await db
+        .update(challengeProgress)
+        .set({
+          progress: newProgress,
+          completed: nowCompleted,
+          ...(nowCompleted ? { completedAt: new Date() } : {}),
+        })
+        .where(eq(challengeProgress.id, existing.id));
+
+      // Auto-detect and resolve any friend challenges
+      if (nowCompleted) {
+        await checkAndResolveFriendChallenge(input.challengeId, ctx.user.id);
+      }
+
+      return { progress: newProgress, completed: nowCompleted, goal: challengeDef.goal };
+    }),
+
+  // ── Admin: Resolve All Pending Friend Challenges ───────────────────────────
+  /** Admin utility: scan and resolve all accepted friend challenges with undetected completions. */
+  checkAllFriendChallenges: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const resolved = await resolveAllPendingFriendChallenges();
+      return { resolved };
+    }),
 
   // ── Admin: Create Challenge ───────────────────────────────────────────────────
   createChallenge: protectedProcedure

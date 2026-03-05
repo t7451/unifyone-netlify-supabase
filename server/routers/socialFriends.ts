@@ -547,4 +547,62 @@ export const socialFriendsRouter = router({
 
     return { sent: enrichedSent, received: enrichedReceived };
   }),
+
+  // ── Get Resolved Challenge Results ───────────────────────────────────────────────────
+  /** Returns completed friend challenges with winner info for the current user. */
+  getChallengeResults: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+
+    const completed = await db
+      .select()
+      .from(friendChallenges)
+      .where(
+        and(
+          eq(friendChallenges.status, "completed"),
+          or(
+            eq(friendChallenges.challengerId, ctx.user.id),
+            eq(friendChallenges.challengeeId, ctx.user.id)
+          )
+        )
+      )
+      .orderBy(desc(friendChallenges.resolvedAt))
+      .limit(20);
+
+    const enriched = await Promise.all(
+      completed.map(async (fc) => {
+        const opponentId = fc.challengerId === ctx.user.id ? fc.challengeeId : fc.challengerId;
+        const [u] = await db
+          .select({ name: users.name })
+          .from(users)
+          .where(eq(users.id, opponentId))
+          .limit(1);
+        const [ch] = await db
+          .select({ name: challenges.name, pointsReward: challenges.pointsReward, unit: challenges.unit, goal: challenges.goal })
+          .from(challenges)
+          .where(eq(challenges.id, fc.challengeId))
+          .limit(1);
+
+        const iWon = fc.winnerId === ctx.user.id;
+        const isTie = fc.status === "completed" && fc.winnerId === null;
+
+        return {
+          id: fc.id,
+          challengeId: fc.challengeId,
+          challengeName: ch?.name ?? "Unknown Challenge",
+          pointsReward: ch?.pointsReward ?? 0,
+          opponentName: u?.name ?? "Unknown",
+          opponentId,
+          winnerId: fc.winnerId,
+          iWon,
+          isTie,
+          resolvedAt: fc.resolvedAt,
+          completedAt: fc.completedAt,
+          myRole: fc.challengerId === ctx.user.id ? "challenger" as const : "challengee" as const,
+        };
+      })
+    );
+
+    return enriched;
+  }),
 });

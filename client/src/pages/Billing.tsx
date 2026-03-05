@@ -181,7 +181,7 @@ export default function Billing() {
 
           {/* Plan details */}
           {!subLoading && subStatus?.plan && (
-            <div className="mt-4 pt-4 border-t border-slate-700/50 grid grid-cols-3 gap-4 text-center">
+            <div className="mt-4 pt-4 border-t border-slate-700/50 grid grid-cols-3 gap-2 sm:gap-4 text-center">
               <div>
                 <p className="text-lg font-semibold text-white">{subStatus.plan.maxProducts?.toLocaleString()}</p>
                 <p className="text-xs text-slate-500">Max Products</p>
@@ -270,9 +270,9 @@ export default function Billing() {
                       <p className="text-xs text-slate-500">{formatDate(invoice.created)}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     <InvoiceStatusBadge status={invoice.status} />
-                    <span className="text-sm font-semibold text-white min-w-[4rem] text-right">
+                    <span className="text-sm font-semibold text-white min-w-[3.5rem] text-right">
                       {formatCurrency(invoice.amount_paid || invoice.amount_due, invoice.currency)}
                     </span>
                     {invoice.invoice_pdf && (

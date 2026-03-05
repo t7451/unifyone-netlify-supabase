@@ -388,3 +388,30 @@
 - [x] In-app notifications: friend request sent/accepted, challenge sent/responded
 - [x] Tests for socialFriendsRouter business logic (96 tests / 10 files passing)
 - [x] 0 TypeScript errors, 96 tests passing
+
+## Phase 20 — Automated Challenge Completion Detection
+- [ ] Schema: add resolvedAt, winnerNotified, loserNotified columns to friend_challenges + migration
+- [ ] challengeCompletion.ts engine: checkAndResolveFriendChallenges(challengeId, userId) function
+- [ ] Completion logic: compare challenger vs challengee progress when either hits goal
+- [ ] Tie-break logic: first to complete wins; exact tie → both marked winner
+- [ ] Winner notification: in-app "You Won!" with points awarded
+- [ ] Loser notification: in-app "Challenge Complete — better luck next time" with encouragement
+- [ ] Bonus points: award extra points to winner on top of challenge reward
+- [ ] Wire completion check into: gamification.joinChallenge, gamification progress updates
+- [ ] Wire completion check into: moneyManager.endShift, moneyManager.logMileage
+- [ ] Add socialFriends.getChallengeResults procedure (resolved challenges with winner info)
+- [ ] Update /friends Challenges tab: show resolved challenges with winner badge + result banner
+- [ ] Add completionRouter.checkAll admin procedure for manual re-scan
+- [ ] Tests for completion engine (tie, winner, loser, already-resolved guard)
+- [ ] 0 TypeScript errors, all tests passing
+
+## Phase 21 — Mobile Layout Re-optimization
+- [x] Remove animated demo from mobile (AutomationFlowAnimation hidden on < lg breakpoint)
+- [x] Add static 2-column pipeline grid for mobile in place of animated demo
+- [x] Orders table: wrap with overflow-x-auto + min-w-[640px] for horizontal scroll on mobile
+- [x] Customers table: wrap with overflow-x-auto + min-w-[640px] for horizontal scroll on mobile
+- [x] Customers dialog stats grid: grid-cols-1 sm:grid-cols-3 (stacks on mobile)
+- [x] Billing plan metrics grid: gap-2 sm:gap-4 (tighter on mobile)
+- [x] Friends.tsx tab labels: hidden sm:inline (icon-only on xs, icon+label on sm+)
+- [x] Achievements.tsx tab labels: text-xs sm:text-sm (smaller text on mobile)
+- [x] 96 tests passing, 0 TypeScript errors

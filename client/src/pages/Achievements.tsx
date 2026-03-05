@@ -167,9 +167,9 @@ export default function AchievementsPage() {
 
       <Tabs defaultValue="achievements">
         <TabsList className="grid grid-cols-3 w-full max-w-md">
-          <TabsTrigger value="achievements">Achievements</TabsTrigger>
-          <TabsTrigger value="challenges">Challenges</TabsTrigger>
-          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+          <TabsTrigger value="achievements" className="text-xs sm:text-sm">Achievements</TabsTrigger>
+          <TabsTrigger value="challenges" className="text-xs sm:text-sm">Challenges</TabsTrigger>
+          <TabsTrigger value="leaderboard" className="text-xs sm:text-sm">Leaderboard</TabsTrigger>
         </TabsList>
 
         {/* Achievements Tab */}

@@ -133,7 +133,8 @@ export default function Customers() {
       </div>
 
       <div className="rounded-xl border border-border overflow-hidden">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className="border-b border-border bg-white/2">
               {["Customer", "Email", "Phone", "Orders", "Total Spent", "Tags", "Joined", ""].map(h => (
@@ -215,6 +216,7 @@ export default function Customers() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Profile Modal */}
@@ -233,7 +235,7 @@ export default function Customers() {
           </DialogHeader>
           {selectedCustomer && (
             <div className="space-y-5">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
                   { icon: ShoppingBag, label: "Total Orders", value: selectedCustomer.totalOrders ?? 0, color: "#00D9FF" },
                   { icon: DollarSign, label: "Total Spent", value: `$${Number(selectedCustomer.totalSpent ?? 0).toFixed(2)}`, color: "#10B981" },

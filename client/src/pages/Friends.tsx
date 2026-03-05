@@ -659,16 +659,16 @@ export default function Friends() {
       <Tabs defaultValue="friends">
         <TabsList className="bg-white/5 border border-white/10 w-full grid grid-cols-4">
           <TabsTrigger value="friends" className="data-[state=active]:bg-[#00D9FF]/10 data-[state=active]:text-[#00D9FF] text-gray-400 text-xs sm:text-sm">
-            <Users className="w-3.5 h-3.5 mr-1.5" />
-            Friends
+            <Users className="w-3.5 h-3.5 sm:mr-1.5" />
+            <span className="hidden sm:inline">Friends</span>
           </TabsTrigger>
           <TabsTrigger value="search" className="data-[state=active]:bg-[#00D9FF]/10 data-[state=active]:text-[#00D9FF] text-gray-400 text-xs sm:text-sm">
-            <Search className="w-3.5 h-3.5 mr-1.5" />
-            Search
+            <Search className="w-3.5 h-3.5 sm:mr-1.5" />
+            <span className="hidden sm:inline">Search</span>
           </TabsTrigger>
           <TabsTrigger value="requests" className="relative data-[state=active]:bg-[#00D9FF]/10 data-[state=active]:text-[#00D9FF] text-gray-400 text-xs sm:text-sm">
-            <Bell className="w-3.5 h-3.5 mr-1.5" />
-            Requests
+            <Bell className="w-3.5 h-3.5 sm:mr-1.5" />
+            <span className="hidden sm:inline">Requests</span>
             {pendingCount > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#00D9FF] text-black text-[10px] font-bold rounded-full flex items-center justify-center">
                 {pendingCount}
@@ -676,8 +676,8 @@ export default function Friends() {
             )}
           </TabsTrigger>
           <TabsTrigger value="challenges" className="relative data-[state=active]:bg-purple-600/10 data-[state=active]:text-purple-300 text-gray-400 text-xs sm:text-sm">
-            <Swords className="w-3.5 h-3.5 mr-1.5" />
-            Challenges
+            <Swords className="w-3.5 h-3.5 sm:mr-1.5" />
+            <span className="hidden sm:inline">Challenges</span>
             {receivedChallenges > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                 {receivedChallenges}
