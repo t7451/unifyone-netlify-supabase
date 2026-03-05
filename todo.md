@@ -463,3 +463,16 @@
 - [ ] App.tsx route /mobile-automation registered
 - [ ] Tests for capiRouter and mobileAutomationRouter
 - [ ] 0 TypeScript errors, all tests passing
+
+## Phase 25 — Manus AI Integration [COMPLETE]
+
+- [x] ai_conversations table: userId, messages JSON, context (page slug), createdAt, updatedAt + migration
+- [x] manusAIRouter: chat (invokeLLM with system context), listConversations, getConversation, deleteConversation, clearAllConversations, getSuggestions
+- [x] /ai-assistant page: full-screen chat UI with conversation history sidebar, context selector (10 contexts), suggested prompts, new/delete/clear controls
+- [x] Floating AI widget in DashboardLayout: bottom-right collapsible chat bubble with unread badge, context-aware from current route
+- [x] Context-aware suggestions: Dashboard → earnings summary, Gig Command → route tips, Money Manager → tax insights
+- [x] DashboardLayout nav item: AI Assistant (Sparkles icon)
+- [x] App.tsx route: /ai-assistant registered
+- [x] Tests for manusAIRouter (100 tests passing)
+- [x] 0 TypeScript errors, all tests passing
+- [x] GitHub release v1.5.0-manus-ai

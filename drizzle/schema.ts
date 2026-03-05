@@ -995,3 +995,16 @@ export const n8nSchedules = mysqlTable("n8n_schedules", {
 });
 export type N8nSchedule = typeof n8nSchedules.$inferSelect;
 export type InsertN8nSchedule = typeof n8nSchedules.$inferInsert;
+
+// ─── AI Conversations ─────────────────────────────────────────────────────────
+export const aiConversations = mysqlTable("ai_conversations", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  context: varchar("context", { length: 100 }).default("general").notNull(),
+  messages: json("messages").$type<Array<{ role: "user" | "assistant" | "system"; content: string; timestamp: number }>>().default([]).notNull(),
+  title: varchar("title", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AiConversation = typeof aiConversations.$inferSelect;
+export type InsertAiConversation = typeof aiConversations.$inferInsert;

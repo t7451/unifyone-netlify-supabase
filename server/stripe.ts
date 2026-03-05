@@ -4,6 +4,7 @@ import express from "express";
 import { getDb } from "./db";
 import { tenants, plans, themeInstalls, themes } from "../drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
+import { capi } from "./meta/capi";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2026-02-25.clover",
@@ -118,6 +119,16 @@ export function registerStripeRoutes(app: Express) {
                     .set({ installCount: sql`${themes.installCount} + 1` })
                     .where(eq(themes.id, themeId));
                   console.log(`[Stripe] Theme ${themeId} purchased by user ${userId}, amount: $${amountPaid}`);
+
+                  // Fire CAPI Purchase event for theme purchase
+                  const themeEmail = session.customer_details?.email || session.metadata?.customer_email || "";
+                  capi.purchase(
+                    `stripe_theme_${session.id}`,
+                    { email: themeEmail },
+                    `${process.env.VITE_OAUTH_PORTAL_URL || "https://unify0ne.manus.space"}/checkout`,
+                    parseFloat(amountPaid),
+                    (session.currency || "USD").toUpperCase()
+                  ).catch((err: Error) => console.error("[CAPI] Purchase event failed:", err.message));
                 }
               }
               break;
@@ -142,6 +153,19 @@ export function registerStripeRoutes(app: Express) {
                 session.subscription as string
               );
               await syncSubscription(sub);
+            }
+
+            // Fire CAPI Purchase event for subscription checkout
+            const sessionAmount = session.amount_total ? session.amount_total / 100 : 0;
+            const sessionEmail = session.customer_details?.email || session.metadata?.customer_email || "";
+            if (sessionAmount > 0 && sessionEmail) {
+              capi.purchase(
+                `stripe_sub_${session.id}`,
+                { email: sessionEmail },
+                `${process.env.VITE_OAUTH_PORTAL_URL || "https://unify0ne.manus.space"}/checkout`,
+                sessionAmount,
+                (session.currency || "USD").toUpperCase()
+              ).catch((err: Error) => console.error("[CAPI] Purchase event failed:", err.message));
             }
 
             console.log(

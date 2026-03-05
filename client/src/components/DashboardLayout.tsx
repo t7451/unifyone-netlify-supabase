@@ -21,7 +21,9 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, ShoppingBag, ShoppingCart, BarChart3, Zap, Settings, Building2, ChevronDown, CreditCard, UserPlus, Share2, Gift, Target, Workflow, Bell, Store, Package, Key, TrendingUp, Link2, Activity, Plug, DollarSign, Trophy, UserRound, Navigation, Smartphone } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, ShoppingBag, ShoppingCart, BarChart3, Zap, Settings, Building2, ChevronDown, CreditCard, UserPlus, Share2, Gift, Target, Workflow, Bell, Store, Package, Key, TrendingUp, Link2, Activity, Plug, DollarSign, Trophy, UserRound, Navigation, Smartphone, Sparkles, X } from "lucide-react";
+import { AIChatBox } from "@/components/AIChatBox";
+import type { Message } from "@/components/AIChatBox";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -58,6 +60,7 @@ const menuItems = [
   { icon: Trophy, label: "Achievements", path: "/achievements" },
   { icon: UserRound, label: "Friends & Social", path: "/friends" },
   { icon: Smartphone, label: "Mobile Automation", path: "/mobile-automation" },
+  { icon: Sparkles, label: "AI Assistant", path: "/ai-assistant" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -313,6 +316,106 @@ function DashboardLayoutContent({
         )}
         <main className="flex-1 p-4">{children}</main>
       </SidebarInset>
+      <FloatingAIWidget />
     </>
+  );
+}
+
+// ─── Floating AI Chat Widget ─────────────────────────────────────────────────
+function FloatingAIWidget() {
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [unread, setUnread] = useState(0);
+  const [conversationId, setConversationId] = useState<number | undefined>();
+  const [location] = useLocation();
+
+  // Derive context from current route (strip leading /)
+  const context = location.replace(/^\//, "") || "general";
+
+  const { data: suggestionsData } = trpc.manusAI.getSuggestions.useQuery(
+    { context },
+    { enabled: !!user }
+  );
+
+  const chatMutation = trpc.manusAI.chat.useMutation({
+    onSuccess: (data) => {
+      setConversationId(data.conversationId);
+      setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      if (!open) setUnread(n => n + 1);
+    },
+    onError: () => {
+      setMessages(prev => [
+        ...prev,
+        { role: "assistant", content: "Sorry, I encountered an error. Please try again." },
+      ]);
+    },
+  });
+
+  const handleSend = (content: string) => {
+    setMessages(prev => [...prev, { role: "user", content }]);
+    chatMutation.mutate({ message: content, context, conversationId });
+  };
+
+  const handleOpen = () => {
+    setOpen(true);
+    setUnread(0);
+  };
+
+  if (!user) return null;
+
+  const contextLabel = context.replace(/-/g, " ") || "general";
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+      {/* Chat panel */}
+      {open && (
+        <div
+          className="w-80 sm:w-96 rounded-2xl border border-border bg-card shadow-2xl flex flex-col overflow-hidden"
+          style={{ height: "480px" }}
+        >
+          {/* Widget header */}
+          <div className="flex items-center gap-2 px-4 py-3 bg-primary text-primary-foreground shrink-0">
+            <Sparkles className="h-4 w-4" />
+            <span className="font-semibold text-sm flex-1">Manus AI</span>
+            <span className="text-xs opacity-70 capitalize">{contextLabel}</span>
+            <button
+              onClick={() => setOpen(false)}
+              className="ml-2 opacity-70 hover:opacity-100 transition-opacity"
+              aria-label="Close AI chat"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          {/* Chat box */}
+          <div className="flex-1 overflow-hidden p-2">
+            <AIChatBox
+              messages={messages}
+              onSendMessage={handleSend}
+              isLoading={chatMutation.isPending}
+              placeholder="Ask Manus anything…"
+              height="100%"
+              className="h-full"
+              emptyStateMessage={`Hi ${user.name?.split(" ")[0] ?? "there"}! How can I help you?`}
+              suggestedPrompts={suggestionsData?.suggestions?.slice(0, 2)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Floating button */}
+      <button
+        onClick={open ? () => setOpen(false) : handleOpen}
+        className="relative h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center"
+        aria-label="Open AI Assistant"
+      >
+        {open ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
+        {!open && unread > 0 && (
+          <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-bold">
+            {unread > 9 ? "9+" : unread}
+          </span>
+        )}
+      </button>
+    </div>
   );
 }
