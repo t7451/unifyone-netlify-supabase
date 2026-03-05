@@ -568,3 +568,95 @@ export const themeReviews = mysqlTable("theme_reviews", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type ThemeReview = typeof themeReviews.$inferSelect;
+
+// ─── Rewards Keys ─────────────────────────────────────────────────────────────
+
+export const rewardOpportunities = mysqlTable("reward_opportunities", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  credits: int("credits").notNull(),
+  category: mysqlEnum("category", ["signup", "referral", "purchase", "engagement", "milestone", "promotion"]).notNull().default("engagement"),
+  maxClaimsPerUser: int("maxClaimsPerUser").default(1).notNull(),
+  totalMaxClaims: int("totalMaxClaims"), // null = unlimited
+  claimCount: int("claimCount").default(0).notNull(),
+  active: boolean("active").default(true).notNull(),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type RewardOpportunity = typeof rewardOpportunities.$inferSelect;
+export type InsertRewardOpportunity = typeof rewardOpportunities.$inferInsert;
+
+export const rewardClaims = mysqlTable("reward_claims", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  opportunityId: int("opportunityId").notNull(),
+  credits: int("credits").notNull(),
+  status: mysqlEnum("status", ["pending", "completed", "rejected"]).notNull().default("completed"),
+  metaEventId: varchar("metaEventId", { length: 100 }), // for CAPI deduplication
+  claimedAt: timestamp("claimedAt").defaultNow().notNull(),
+});
+export type RewardClaim = typeof rewardClaims.$inferSelect;
+export type InsertRewardClaim = typeof rewardClaims.$inferInsert;
+
+// ─── Meta CAPI Event Log ──────────────────────────────────────────────────────
+
+export const metaPixelEvents = mysqlTable("meta_pixel_events", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  eventName: varchar("eventName", { length: 100 }).notNull(),
+  eventId: varchar("eventId", { length: 100 }).notNull(), // deduplication key
+  eventSourceUrl: varchar("eventSourceUrl", { length: 500 }),
+  customData: json("customData"),
+  status: mysqlEnum("status", ["sent", "failed", "skipped"]).notNull().default("sent"),
+  responseCode: int("responseCode"),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+});
+export type MetaPixelEvent = typeof metaPixelEvents.$inferSelect;
+export type InsertMetaPixelEvent = typeof metaPixelEvents.$inferInsert;
+
+// ─── Revenue Streams ──────────────────────────────────────────────────────────
+
+export const revenueStreams = mysqlTable("revenue_streams", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tenantId: int("tenantId"),
+  name: varchar("name", { length: 200 }).notNull(),
+  type: mysqlEnum("type", ["affiliate", "saas", "consulting", "physical", "digital", "passive"]).notNull(),
+  platform: varchar("platform", { length: 100 }),
+  monthlyValue: decimal("monthlyValue", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  commissionRate: decimal("commissionRate", { precision: 5, scale: 2 }), // percentage
+  status: mysqlEnum("status", ["active", "pending", "inactive", "broken"]).notNull().default("active"),
+  affiliateLink: varchar("affiliateLink", { length: 1000 }),
+  cookieDuration: int("cookieDuration"), // days
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type RevenueStream = typeof revenueStreams.$inferSelect;
+export type InsertRevenueStream = typeof revenueStreams.$inferInsert;
+
+// ─── Affiliate Programs ───────────────────────────────────────────────────────
+
+export const affiliatePrograms = mysqlTable("affiliate_programs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tenantId: int("tenantId"),
+  name: varchar("name", { length: 200 }).notNull(),
+  category: varchar("category", { length: 100 }),
+  platform: varchar("platform", { length: 100 }),
+  commissionRate: decimal("commissionRate", { precision: 5, scale: 2 }).notNull(),
+  commissionType: mysqlEnum("commissionType", ["percentage", "flat", "recurring"]).notNull().default("percentage"),
+  cookieDuration: int("cookieDuration").default(30).notNull(), // days
+  affiliateLink: varchar("affiliateLink", { length: 1000 }),
+  monthlyEarnings: decimal("monthlyEarnings", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  pendingPayout: decimal("pendingPayout", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  instantPayout: boolean("instantPayout").default(false).notNull(),
+  active: boolean("active").default(true).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AffiliateProgram = typeof affiliatePrograms.$inferSelect;
+export type InsertAffiliateProgram = typeof affiliatePrograms.$inferInsert;

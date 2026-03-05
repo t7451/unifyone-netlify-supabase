@@ -237,3 +237,38 @@
 - [x] Stripe webhook fulfillment: checkout.session.completed → theme install record + installCount increment
 - [x] Theme Store sidebar nav items (Theme Store + My Themes) + routes in App.tsx
 - [x] Theme Store tests: 23 tests passing (helpers, filter logic, slug generation, pricing validation)
+
+## Phase 14 — Meta Ads/CAPI + Rewards Keys + Revenue Streams + Affiliate Hub
+
+- [ ] Rewards Keys DB schema: reward_opportunities, reward_claims tables + migration
+- [ ] Meta CAPI DB schema: meta_pixel_events log table + migration
+- [ ] Rewards Keys tRPC router: balance, opportunities, claim, credit history
+- [ ] Meta CAPI server helper (capi.ts): sendCAPIEvent, hashed userData, deduplication
+- [ ] Meta CAPI tRPC relay procedure: generic event relay + RewardsKeyEarned + Purchase
+- [ ] Rewards Keys dashboard page (/rewards): balance widget, opportunities list, claim flow
+- [ ] Revenue Streams page (/revenue-streams): multi-type stream tracker (affiliate/SaaS/consulting/physical/digital/passive)
+- [ ] Affiliate Hub page (/affiliates): program manager with commission tracking, copy link, toggle active
+- [ ] Meta Pixel script injection in index.html (VITE_META_PIXEL_ID env)
+- [ ] Client-side pixel.ts helper: trackPixelEvent, typed convenience helpers
+- [ ] n8n workflow JSON files added to /public/n8n/ for import reference
+- [ ] Netlify build fix: remove base = "main" from netlify.toml
+- [ ] Sidebar nav items: Rewards, Revenue Streams, Affiliates
+- [ ] Tests for rewards router and CAPI helper
+
+## Phase 14 — Meta Ads/CAPI + Rewards Keys + Revenue Streams + Affiliate Hub [COMPLETE]
+- [x] DB schema: rewards_keys, credit_transactions, meta_capi_events, revenue_streams, affiliate_programs tables + migrations applied
+- [x] Rewards Keys tRPC router: balance, opportunities, claim, history, adminCredit, adminCreateOpportunity
+- [x] Meta CAPI server helper (server/meta/capi.ts): SHA-256 hashing, event relay to Meta Graph API v19.0
+- [x] Meta CAPI tRPC router: relayEvent procedure with DB logging and deduplication via eventId
+- [x] Rewards Keys dashboard page (/rewards): balance widget, opportunities list, claim flow, credit history
+- [x] Revenue Streams tRPC router: list, create, update, delete, getSummary
+- [x] Revenue Streams page (/revenue-streams): type breakdown, monthly totals, CRUD with status tracking
+- [x] Affiliates tRPC router: list, create, update, delete, getSummary
+- [x] Affiliate Hub page (/affiliates): commission tracking, pending payouts, instant payout flag, cookie duration
+- [x] Meta Pixel base code injected in index.html (fires only when VITE_META_PIXEL_ID env var is set)
+- [x] Client-side pixel.ts helper: track, trackCustom, pageView, lead, purchase, viewContent, addToCart, initiateCheckout, rewardsKeyEarned + fbp/fbc cookie readers
+- [x] n8n workflow: meta-capi-relay.json (webhook → validate → Meta CAPI → respond)
+- [x] n8n workflow: rewards-auto-credit.json (Stripe webhook → filter → extract → credit API → respond)
+- [x] All 3 new pages registered in App.tsx with DashboardRoute protection
+- [x] Sidebar nav items added: Rewards Keys, Revenue Streams, Affiliate Hub
+- [x] 59 tests passing, 0 TypeScript errors

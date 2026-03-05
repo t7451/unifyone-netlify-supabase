@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, ShoppingBag, ShoppingCart, BarChart3, Zap, Settings, Building2, ChevronDown, CreditCard, UserPlus, Share2, Gift, Target, Workflow, Bell, Store, Package } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, ShoppingBag, ShoppingCart, BarChart3, Zap, Settings, Building2, ChevronDown, CreditCard, UserPlus, Share2, Gift, Target, Workflow, Bell, Store, Package, Key, TrendingUp, Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -48,6 +48,9 @@ const menuItems = [
   { icon: Bell, label: "Notifications", path: "/notifications" },
   { icon: Store, label: "Theme Store", path: "/themes" },
   { icon: Package, label: "My Themes", path: "/my-themes" },
+  { icon: Key, label: "Rewards Keys", path: "/rewards" },
+  { icon: TrendingUp, label: "Revenue Streams", path: "/revenue-streams" },
+  { icon: Link2, label: "Affiliate Hub", path: "/affiliates" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

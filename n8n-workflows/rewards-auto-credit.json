@@ -1,0 +1,106 @@
+{
+  "name": "UnifyOne — Rewards Auto-Credit on Purchase",
+  "description": "Listens for Stripe checkout.session.completed webhook events and automatically credits Rewards Keys to the purchasing user. 1 credit per $1 spent.",
+  "nodes": [
+    {
+      "id": "stripe-webhook",
+      "name": "Webhook: Stripe Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300],
+      "parameters": {
+        "path": "stripe-rewards-credit",
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "filter-checkout",
+      "name": "Filter: checkout.session.completed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [420, 300],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.type }}",
+              "operation": "equal",
+              "value2": "checkout.session.completed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "extract-data",
+      "name": "Extract Purchase Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [640, 200],
+      "parameters": {
+        "jsCode": "const session = $input.first().json.body.data.object;\nconst amountTotal = session.amount_total || 0;\nconst credits = Math.floor(amountTotal / 100); // 1 credit per $1\nconst userId = session.metadata?.user_id || session.client_reference_id;\nreturn [{ json: { userId, credits, sessionId: session.id, amount: amountTotal } }];"
+      }
+    },
+    {
+      "id": "credit-api",
+      "name": "HTTP: Credit Rewards Keys",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [860, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.UNIFYONE_API_URL }}/api/trpc/rewards.adminCredit",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.UNIFYONE_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "json": {
+            "userId": "={{ $json.userId }}",
+            "credits": "={{ $json.credits }}",
+            "reason": "=Purchase reward: Stripe session {{ $json.sessionId }}"
+          }
+        }
+      }
+    },
+    {
+      "id": "respond-ok",
+      "name": "Respond: OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1080, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"received\": true }"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook: Stripe Event": {
+      "main": [[{ "node": "Filter: checkout.session.completed", "type": "main", "index": 0 }]]
+    },
+    "Filter: checkout.session.completed": {
+      "main": [
+        [{ "node": "Extract Purchase Data", "type": "main", "index": 0 }],
+        [{ "node": "Respond: OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extract Purchase Data": {
+      "main": [[{ "node": "HTTP: Credit Rewards Keys", "type": "main", "index": 0 }]]
+    },
+    "HTTP: Credit Rewards Keys": {
+      "main": [[{ "node": "Respond: OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "instanceId": "unifyone-rewards-auto-credit-v1",
+    "envVarsRequired": ["UNIFYONE_API_URL", "UNIFYONE_API_KEY"]
+  }
+}

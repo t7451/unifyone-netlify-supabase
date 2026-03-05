@@ -26,6 +26,9 @@ import MyThemes from "./pages/MyThemes";
 import AdminThemes from "./pages/AdminThemes";
 import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
+import Rewards from "./pages/Rewards";
+import RevenueStreams from "./pages/RevenueStreams";
+import Affiliates from "./pages/Affiliates";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import { useAuth } from "./_core/hooks/useAuth";
@@ -101,6 +104,9 @@ function Router() {
       <Route path="/themes" component={ThemeStore} />
       <Route path="/my-themes" component={() => <DashboardRoute component={MyThemes} />} />
       <Route path="/admin/themes" component={() => <DashboardRoute component={AdminThemes} />} />
+      <Route path="/rewards" component={() => <DashboardRoute component={Rewards} />} />
+      <Route path="/revenue-streams" component={() => <DashboardRoute component={RevenueStreams} />} />
+      <Route path="/affiliates" component={() => <DashboardRoute component={Affiliates} />} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
       <Route path="/checkout" component={() => <ProtectedRoute component={Checkout} />} />

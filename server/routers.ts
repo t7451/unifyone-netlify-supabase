@@ -15,6 +15,10 @@ import { leadsRouter } from "./routers/leads";
 import { automationRouter } from "./routers/automation";
 import { notificationsRouter } from "./routers/notifications";
 import { themesRouter } from "./routers/themes";
+import { rewardsRouter } from "./routers/rewards";
+import { metaRouter } from "./routers/meta";
+import { revenueStreamsRouter } from "./routers/revenueStreams";
+import { affiliatesRouter } from "./routers/affiliates";
 
 export const appRouter = router({
   system: systemRouter,
@@ -41,6 +45,10 @@ export const appRouter = router({
   automation: automationRouter,
   notifications: notificationsRouter,
   themes: themesRouter,
+  rewards: rewardsRouter,
+  meta: metaRouter,
+  revenueStreams: revenueStreamsRouter,
+  affiliates: affiliatesRouter,
 });
 
 export type AppRouter = typeof appRouter;
