@@ -8,6 +8,7 @@ import {
 } from "../../drizzle/schema";
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
 import { checkAndResolveFriendChallenge } from "../challengeCompletion";
+import { invokeLLM } from "../_core/llm";
 
 // IRS 2025 standard mileage rate (cents per mile)
 const IRS_RATE_CENTS = 70;
@@ -426,5 +427,242 @@ export const moneyManagerRouter = router({
         .orderBy(desc(pointsTransactions.createdAt))
         .limit(input.limit)
         .offset(input.offset);
+    }),
+
+  // ── Gig Command: GPS & Route ─────────────────────────────────────────────────
+  getActiveShift: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return null;
+    const [shift] = await db
+      .select()
+      .from(gigShifts)
+      .where(and(
+        eq(gigShifts.userId, ctx.user.id),
+        eq(gigShifts.status, "active")
+      ))
+      .orderBy(desc(gigShifts.startTime))
+      .limit(1);
+    return shift ?? null;
+  }),
+
+  updateShiftGPS: protectedProcedure
+    .input(z.object({
+      shiftId: z.number(),
+      lat: z.number(),
+      lng: z.number(),
+      appendWaypoint: z.boolean().default(true),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [shift] = await db
+        .select()
+        .from(gigShifts)
+        .where(and(
+          eq(gigShifts.id, input.shiftId),
+          eq(gigShifts.userId, ctx.user.id),
+          eq(gigShifts.status, "active")
+        ))
+        .limit(1);
+
+      if (!shift) throw new TRPCError({ code: "NOT_FOUND", message: "Active shift not found" });
+
+      const waypoints: Array<{ lat: number; lng: number; ts: number }> =
+        (shift.routeWaypoints as Array<{ lat: number; lng: number; ts: number }>) ?? [];
+
+      if (input.appendWaypoint) {
+        waypoints.push({ lat: input.lat, lng: input.lng, ts: Date.now() });
+      }
+
+      await db
+        .update(gigShifts)
+        .set({ routeWaypoints: waypoints })
+        .where(eq(gigShifts.id, input.shiftId));
+
+      return { ok: true, waypointCount: waypoints.length };
+    }),
+
+  getRouteIntelligence: protectedProcedure
+    .input(z.object({
+      lat: z.number(),
+      lng: z.number(),
+      platform: z.string().default("any"),
+      radiusMiles: z.number().default(5),
+    }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return null;
+
+      // Pull user's last 30 shifts for context
+      const recentShifts = await db
+        .select()
+        .from(gigShifts)
+        .where(and(
+          eq(gigShifts.userId, ctx.user.id),
+          eq(gigShifts.status, "completed")
+        ))
+        .orderBy(desc(gigShifts.startTime))
+        .limit(30);
+
+      const avgEarnings = recentShifts.length > 0
+        ? recentShifts.reduce((s, r) => s + parseFloat(r.grossEarnings as string), 0) / recentShifts.length
+        : 0;
+      const avgMiles = recentShifts.length > 0
+        ? recentShifts.reduce((s, r) => s + parseFloat(r.totalMiles as string), 0) / recentShifts.length
+        : 0;
+
+      const hour = new Date().getHours();
+      const dayOfWeek = new Date().toLocaleDateString("en-US", { weekday: "long" });
+
+      const prompt = `You are a gig economy route intelligence assistant. Based on the following data, provide actionable zone recommendations and tips.
+
+Current location: lat ${input.lat.toFixed(4)}, lng ${input.lng.toFixed(4)}
+Platform: ${input.platform}
+Radius: ${input.radiusMiles} miles
+Time: ${hour}:00 ${dayOfWeek}
+User's avg earnings per shift: $${avgEarnings.toFixed(2)}
+User's avg miles per shift: ${avgMiles.toFixed(1)} miles
+Total completed shifts: ${recentShifts.length}
+
+Provide a JSON response with:
+1. hotZones: array of 3 recommended zone names near this location with demand level (high/medium/low) and reason
+2. timingTip: one sentence about optimal timing right now
+3. earningsTip: one sentence to improve earnings based on their history
+4. weatherAlert: null or a brief weather-related tip
+5. estimatedDemand: "high" | "medium" | "low" for current time/location`;
+
+      try {
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are a gig economy intelligence assistant. Always respond with valid JSON only." },
+            { role: "user", content: prompt },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "route_intelligence",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  hotZones: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        name: { type: "string" },
+                        demand: { type: "string", enum: ["high", "medium", "low"] },
+                        reason: { type: "string" },
+                      },
+                      required: ["name", "demand", "reason"],
+                      additionalProperties: false,
+                    },
+                  },
+                  timingTip: { type: "string" },
+                  earningsTip: { type: "string" },
+                  weatherAlert: { type: ["string", "null"] },
+                  estimatedDemand: { type: "string", enum: ["high", "medium", "low"] },
+                },
+                required: ["hotZones", "timingTip", "earningsTip", "weatherAlert", "estimatedDemand"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+         const content = response?.choices?.[0]?.message?.content;
+        const contentStr = typeof content === "string" ? content : null;
+        return contentStr ? JSON.parse(contentStr) : null;
+      } catch {
+        return null;
+      }
+    }),
+  generateAIShortcuts: protectedProcedure
+    .input(z.object({ platform: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return [];
+
+      const recentShifts = await db
+        .select()
+        .from(gigShifts)
+        .where(and(
+          eq(gigShifts.userId, ctx.user.id),
+          eq(gigShifts.status, "completed")
+        ))
+        .orderBy(desc(gigShifts.startTime))
+        .limit(20);
+
+      const recentMileage = await db
+        .select()
+        .from(mileageLogs)
+        .where(eq(mileageLogs.userId, ctx.user.id))
+        .orderBy(desc(mileageLogs.date))
+        .limit(10);
+
+      const totalEarnings = recentShifts.reduce((s, r) => s + parseFloat(r.grossEarnings as string), 0);
+      const totalMiles = recentMileage.reduce((s, r) => s + parseFloat(r.miles as string), 0);
+      const totalHours = recentShifts.reduce((s, r) => s + (r.durationMinutes ?? 0), 0) / 60;
+      const earningsPerHour = totalHours > 0 ? totalEarnings / totalHours : 0;
+
+      const prompt = `You are a gig economy coach. Based on this driver's recent performance, generate 5 specific, actionable shortcuts or tips.
+
+Platform: ${input.platform ?? "multi-platform"}
+Recent shifts: ${recentShifts.length}
+Total earnings (last 20 shifts): $${totalEarnings.toFixed(2)}
+Total miles logged: ${totalMiles.toFixed(1)}
+Avg earnings/hour: $${earningsPerHour.toFixed(2)}
+
+Generate 5 shortcuts as a JSON array. Each shortcut has:
+- title: short action title (max 6 words)
+- description: one sentence explaining the tip
+- category: "earnings" | "efficiency" | "tax" | "timing" | "safety"
+- impact: "high" | "medium" | "low"
+- emoji: single relevant emoji`;
+
+      try {
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are a gig economy performance coach. Always respond with valid JSON only." },
+            { role: "user", content: prompt },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "ai_shortcuts",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  shortcuts: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        description: { type: "string" },
+                        category: { type: "string", enum: ["earnings", "efficiency", "tax", "timing", "safety"] },
+                        impact: { type: "string", enum: ["high", "medium", "low"] },
+                        emoji: { type: "string" },
+                      },
+                      required: ["title", "description", "category", "impact", "emoji"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["shortcuts"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        const content = response?.choices?.[0]?.message?.content;
+        const contentStr = typeof content === "string" ? content : null;
+        if (!contentStr) return [];
+        const parsed = JSON.parse(contentStr);
+        return parsed.shortcuts ?? [];
+      } catch {
+        return [];
+      }
     }),
 });

@@ -748,6 +748,7 @@ export const gigShifts = mysqlTable("gig_shifts", {
   startLng: decimal("startLng", { precision: 10, scale: 7 }),
   endLat: decimal("endLat", { precision: 10, scale: 7 }),
   endLng: decimal("endLng", { precision: 10, scale: 7 }),
+  routeWaypoints: json("routeWaypoints").$type<Array<{ lat: number; lng: number; ts: number }>>(),
   totalMiles: decimal("totalMiles", { precision: 8, scale: 2 }).default("0.00").notNull(),
   grossEarnings: decimal("grossEarnings", { precision: 10, scale: 2 }).default("0.00").notNull(),
   tips: decimal("tips", { precision: 10, scale: 2 }).default("0.00").notNull(),

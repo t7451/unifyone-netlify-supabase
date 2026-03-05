@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE `gig_shifts` ADD `routeWaypoints` json;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 372pgni6FByAp3r.b99b1625eed2 --database VyofXqD3FvrztXonjtHUZp --execute ALTER TABLE `gig_shifts` ADD `routeWaypoints` json;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'vyofxqd3fvrztxonjthuzp.gig_shifts' doesn't exist"
+  ]
+}

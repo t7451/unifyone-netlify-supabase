@@ -415,3 +415,34 @@
 - [x] Friends.tsx tab labels: hidden sm:inline (icon-only on xs, icon+label on sm+)
 - [x] Achievements.tsx tab labels: text-xs sm:text-sm (smaller text on mobile)
 - [x] 96 tests passing, 0 TypeScript errors
+
+## Phase 22 — Gig Command Center (/gig-command)
+- [ ] Schema: add startLat, startLng, endLat, endLng, routeWaypoints (JSON) to gig_shifts + migration
+- [ ] moneyManagerRouter: updateShiftGPS (capture live coordinates mid-shift), getActiveShift, getRouteIntelligence (AI-powered zone/demand analysis)
+- [ ] moneyManagerRouter: generateAIShortcuts (LLM-powered gig tips based on shift history)
+- [ ] /gig-command page: GPS shift timer widget (start/stop with live elapsed time + distance)
+- [ ] /gig-command page: Google Maps route overlay (live position, waypoints, heat zones)
+- [ ] /gig-command page: Mileage log table with IRS deduction column
+- [ ] /gig-command page: Tax deduction calculator (rate × miles, YTD summary)
+- [ ] /gig-command page: AI shortcut generator (LLM tips panel)
+- [ ] DashboardLayout nav: Gig Command item added
+- [ ] App.tsx route /gig-command registered
+- [ ] Tests for new moneyManager procedures
+- [ ] 0 TypeScript errors, all tests passing
+
+## Phase 22 — Gig Command Center (COMPLETED)
+
+- [x] routeWaypoints JSON column added to gig_shifts schema + migration applied
+- [x] All pending DB migrations applied (0013-0016): gig_shifts, achievements, challenges, user_points, mileage_logs, user_achievements, challenge_progress, subscription_entitlements
+- [x] Gamification seed: 12 achievements + 1 sample weekly challenge seeded
+- [x] moneyManager router: getActiveShift, updateShiftGPS, getRouteIntelligence (AI-powered), generateAIShortcuts (AI-powered)
+- [x] /gig-command page: GPS-aware shift timer with live elapsed clock
+- [x] /gig-command page: Google Maps route overlay with live polyline + AdvancedMarkerElement
+- [x] /gig-command page: GPS watchPosition integration with 60s server sync
+- [x] /gig-command page: Route intelligence panel (AI hot zones, timing tip, earnings tip, weather alert, demand badge)
+- [x] /gig-command page: AI Shortcuts panel (5 personalized tips per platform)
+- [x] /gig-command page: Mileage log table with IRS 2025 $0.70/mile tax deduction column
+- [x] /gig-command page: KPI cards (avg $/hr, YTD miles, YTD tax deduction, total shifts)
+- [x] DashboardLayout nav: Gig Command item added (Navigation icon)
+- [x] App.tsx route /gig-command registered
+- [x] 96 tests passing, 0 TypeScript errors

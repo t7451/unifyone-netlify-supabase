@@ -1,0 +1,1 @@
+ALTER TABLE `gig_shifts` ADD `routeWaypoints` json;
