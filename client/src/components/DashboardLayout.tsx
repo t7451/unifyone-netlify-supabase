@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, ShoppingBag, ShoppingCart, BarChart3, Zap, Settings, Building2, ChevronDown, CreditCard, UserPlus, Share2, Gift, Target, Workflow, Bell, Store, Package, Key, TrendingUp, Link2, Activity, Plug, DollarSign, Trophy } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, ShoppingBag, ShoppingCart, BarChart3, Zap, Settings, Building2, ChevronDown, CreditCard, UserPlus, Share2, Gift, Target, Workflow, Bell, Store, Package, Key, TrendingUp, Link2, Activity, Plug, DollarSign, Trophy, UserRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -55,6 +55,7 @@ const menuItems = [
   { icon: Plug, label: "Connect Shopify", path: "/shopify/install" },
   { icon: DollarSign, label: "Money Manager", path: "/money-manager" },
   { icon: Trophy, label: "Achievements", path: "/achievements" },
+  { icon: UserRound, label: "Friends & Social", path: "/friends" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

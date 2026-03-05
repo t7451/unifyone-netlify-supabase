@@ -918,3 +918,32 @@ export const subscriptionEntitlements = mysqlTable("subscription_entitlements", 
 });
 export type SubscriptionEntitlement = typeof subscriptionEntitlements.$inferSelect;
 export type InsertSubscriptionEntitlement = typeof subscriptionEntitlements.$inferInsert;
+
+// ─── Social: Friendships ──────────────────────────────────────────────────────
+export const friendships = mysqlTable("friendships", {
+  id: int("id").autoincrement().primaryKey(),
+  requesterId: int("requesterId").notNull(),
+  addresseeId: int("addresseeId").notNull(),
+  status: mysqlEnum("status", ["pending", "accepted", "declined", "blocked"]).notNull().default("pending"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Friendship = typeof friendships.$inferSelect;
+export type InsertFriendship = typeof friendships.$inferInsert;
+
+// ─── Social: Friend Challenges ────────────────────────────────────────────────
+export const friendChallenges = mysqlTable("friend_challenges", {
+  id: int("id").autoincrement().primaryKey(),
+  challengerId: int("challengerId").notNull(),
+  challengeeId: int("challengeeId").notNull(),
+  challengeId: int("challengeId").notNull(),
+  message: varchar("message", { length: 500 }),
+  status: mysqlEnum("status", ["pending", "accepted", "declined", "completed"]).notNull().default("pending"),
+  winnerId: int("winnerId"),
+  acceptedAt: timestamp("acceptedAt"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type FriendChallenge = typeof friendChallenges.$inferSelect;
+export type InsertFriendChallenge = typeof friendChallenges.$inferInsert;

@@ -24,6 +24,7 @@ import { syncMonitorRouter } from "./routers/syncMonitor";
 import { sovereignRouter } from "./routers/sovereign";
 import { moneyManagerRouter } from "./routers/moneyManager";
 import { gamificationRouter } from "./routers/gamification";
+import { socialFriendsRouter } from "./routers/socialFriends";
 
 export const appRouter = router({
   system: systemRouter,
@@ -59,6 +60,7 @@ export const appRouter = router({
   sovereign: sovereignRouter,
   moneyManager: moneyManagerRouter,
   gamification: gamificationRouter,
+  socialFriends: socialFriendsRouter,
 });
 
 export type AppRouter = typeof appRouter;

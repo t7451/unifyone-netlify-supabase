@@ -372,3 +372,19 @@
 - [x] DashboardLayout nav items: Money Manager, Achievements (Gig Command deferred)
 - [x] App.tsx routes registered for /money-manager and /achievements
 - [x] 59 tests passing, 0 TypeScript errors — existing test suite green
+
+## Phase 19 — Social Achievements: Friends, Feed & Direct Challenges
+- [x] Schema: friendships table (requesterId, addresseeId, status: pending/accepted/declined/blocked, createdAt)
+- [x] Schema: friend_challenges table (challengerId, challengeeId, challengeId, message, status: pending/accepted/declined/completed, winnerId, createdAt)
+- [x] Apply schema migration via webdev_execute_sql
+- [x] socialFriendsRouter: searchUsers, sendRequest, acceptRequest, declineRequest, removeFriend, listFriends, listPendingRequests
+- [x] socialFriendsRouter: getFriendAchievements (feed of friends' recent unlocks), getFriendStats
+- [x] socialFriendsRouter: challengeFriend (create friend_challenge record + notify), respondToChallenge, listFriendChallenges
+- [x] /friends page: Friend search + send request, Pending requests (accept/decline), Friends list with stats
+- [x] /friends page: Achievement feed (friends' recent unlocks, sorted by time)
+- [x] /friends page: Active friend challenges (sent + received), challenge modal
+- [x] DashboardLayout nav item: Friends & Social (UserRound icon)
+- [x] App.tsx route: /friends registered
+- [x] In-app notifications: friend request sent/accepted, challenge sent/responded
+- [x] Tests for socialFriendsRouter business logic (96 tests / 10 files passing)
+- [x] 0 TypeScript errors, 96 tests passing
