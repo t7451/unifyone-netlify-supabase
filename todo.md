@@ -356,3 +356,19 @@
 - [x] n8n-workflows/social-media-scheduler.json: 9 Day 1 viral posts (LinkedIn x3, Facebook x2, Twitter x3, Instagram x1) with scheduling logic and owner notification
 - [x] 7-day revenue sprint document written (unifyone-revenue-sprint.md): Netlify fix, video teleprompter script, email template, Shopify App Store submission steps, sales conversation scripts, referral activation, revenue projection
 - [x] Shopify Partner API key usage documented (prtapi vs atkn vs OAuth app credentials)
+
+## Phase 18 — Money Manager + Gamification (from MoneyGeneratorApp + Mini-Accountant)
+- [x] Schema: gig_shifts, mileage_logs, financial_rules, user_achievements, user_points, challenges, challenge_progress, subscription_entitlements tables + migration
+- [x] moneyManagerRouter: startShift, endShift, listShifts, logMileage, getMileageSummary, listRules, createRule, updateRule, deleteRule
+- [x] entitlementsRouter: getEntitlements, createSubscription, cancelSubscription, getSubscriptionStatus
+- [x] gamificationRouter: getPoints, addPoints, listAchievements, unlockAchievement, listChallenges, joinChallenge, updateChallengeProgress, getLeaderboard
+- [x] /money-manager page: shift tracker widget, mileage/tax deduction HUD, financial rules list, earnings summary
+- [x] /achievements page: points balance card, achievement grid (locked/unlocked), active challenges with progress bars, leaderboard
+- [ ] /gig-command page: shift start/stop with GPS timer, route intel, mileage log table, tax deduction calculator, AI shortcut generator
+- [ ] Wire PayPal subscription relay from MoneyGeneratorApp backend (createPayPalSubscription, confirmPayPalSubscription, cancelPayPalSubscription)
+- [ ] Wire Plaid bank link token relay (createPlaidLinkToken, exchangePlaidPublicToken)
+- [ ] Wire metrics event recording from MoneyGeneratorApp analytics service
+- [x] Auto-award points on key events: shift completed, mileage logged, rule created, achievement unlocked
+- [x] DashboardLayout nav items: Money Manager, Achievements (Gig Command deferred)
+- [x] App.tsx routes registered for /money-manager and /achievements
+- [x] 59 tests passing, 0 TypeScript errors — existing test suite green

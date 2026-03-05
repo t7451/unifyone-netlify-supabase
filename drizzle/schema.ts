@@ -734,3 +734,187 @@ export const sovereignWaitlist = mysqlTable("sovereign_waitlist", {
 });
 export type SovereignWaitlist = typeof sovereignWaitlist.$inferSelect;
 export type InsertSovereignWaitlist = typeof sovereignWaitlist.$inferInsert;
+
+// ─── Gig Shifts (from MoneyGeneratorApp / Gig Command Center) ─────────────────
+export const gigShifts = mysqlTable("gig_shifts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  platform: varchar("platform", { length: 100 }).notNull().default("other"),
+  // e.g. DoorDash, Uber, Instacart, Lyft, Upwork, etc.
+  startTime: timestamp("startTime").notNull(),
+  endTime: timestamp("endTime"),
+  durationMinutes: int("durationMinutes"),
+  startLat: decimal("startLat", { precision: 10, scale: 7 }),
+  startLng: decimal("startLng", { precision: 10, scale: 7 }),
+  endLat: decimal("endLat", { precision: 10, scale: 7 }),
+  endLng: decimal("endLng", { precision: 10, scale: 7 }),
+  totalMiles: decimal("totalMiles", { precision: 8, scale: 2 }).default("0.00").notNull(),
+  grossEarnings: decimal("grossEarnings", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  tips: decimal("tips", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  bonuses: decimal("bonuses", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  notes: text("notes"),
+  status: mysqlEnum("status", ["active", "completed", "cancelled"]).notNull().default("active"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type GigShift = typeof gigShifts.$inferSelect;
+export type InsertGigShift = typeof gigShifts.$inferInsert;
+
+// ─── Mileage Logs ─────────────────────────────────────────────────────────────
+export const mileageLogs = mysqlTable("mileage_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  shiftId: int("shiftId"),
+  date: timestamp("date").notNull(),
+  miles: decimal("miles", { precision: 8, scale: 2 }).notNull(),
+  purpose: varchar("purpose", { length: 255 }).notNull().default("business"),
+  // IRS 2025 rate: 0.70/mile
+  irsRateCents: int("irsRateCents").default(70).notNull(),
+  deductionCents: int("deductionCents").notNull(),
+  startAddress: varchar("startAddress", { length: 500 }),
+  endAddress: varchar("endAddress", { length: 500 }),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type MileageLog = typeof mileageLogs.$inferSelect;
+export type InsertMileageLog = typeof mileageLogs.$inferInsert;
+
+// ─── Financial Rules (Money Management Rules Engine) ─────────────────────────
+export const financialRules = mysqlTable("financial_rules", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  // Rule types: auto-save, budget-cap, alert, allocation
+  type: mysqlEnum("type", ["auto_save", "budget_cap", "alert", "allocation", "goal"]).notNull(),
+  // Trigger condition
+  triggerType: mysqlEnum("triggerType", ["income_received", "expense_over", "balance_below", "balance_above", "scheduled", "manual"]).notNull(),
+  triggerValue: decimal("triggerValue", { precision: 10, scale: 2 }),
+  // Action
+  actionType: mysqlEnum("actionType", ["transfer", "notify", "block", "tag", "save"]).notNull(),
+  actionValue: decimal("actionValue", { precision: 10, scale: 2 }),
+  actionPercent: decimal("actionPercent", { precision: 5, scale: 2 }),
+  // Targeting
+  category: varchar("category", { length: 100 }),
+  platform: varchar("platform", { length: 100 }),
+  enabled: boolean("enabled").default(true).notNull(),
+  triggerCount: int("triggerCount").default(0).notNull(),
+  lastTriggeredAt: timestamp("lastTriggeredAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type FinancialRule = typeof financialRules.$inferSelect;
+export type InsertFinancialRule = typeof financialRules.$inferInsert;
+
+// ─── Gamification: User Points ────────────────────────────────────────────────
+export const userPoints = mysqlTable("user_points", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  totalPoints: int("totalPoints").default(0).notNull(),
+  lifetimePoints: int("lifetimePoints").default(0).notNull(),
+  level: int("level").default(1).notNull(),
+  // Level thresholds: 1=0, 2=100, 3=300, 4=600, 5=1000, 6=1500, 7=2500, 8=4000, 9=6000, 10=10000
+  streakDays: int("streakDays").default(0).notNull(),
+  lastActivityAt: timestamp("lastActivityAt"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type UserPoints = typeof userPoints.$inferSelect;
+
+// ─── Gamification: Points Transactions ───────────────────────────────────────
+export const pointsTransactions = mysqlTable("points_transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  points: int("points").notNull(), // positive = earned, negative = spent
+  action: varchar("action", { length: 100 }).notNull(),
+  // e.g. shift_completed, mileage_logged, rule_created, achievement_unlocked, challenge_completed, daily_login, referral
+  description: varchar("description", { length: 500 }),
+  referenceId: varchar("referenceId", { length: 100 }), // e.g. shiftId, achievementId
+  balanceAfter: int("balanceAfter").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PointsTransaction = typeof pointsTransactions.$inferSelect;
+
+// ─── Gamification: Achievements ───────────────────────────────────────────────
+export const achievements = mysqlTable("achievements", {
+  id: int("id").autoincrement().primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  // e.g. first_shift, mileage_100, streak_7, rule_master, referral_5
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  icon: varchar("icon", { length: 100 }).notNull().default("Trophy"),
+  // Lucide icon name
+  category: mysqlEnum("category", ["gig", "finance", "social", "platform", "milestone", "special"]).notNull(),
+  pointsReward: int("pointsReward").default(50).notNull(),
+  requirement: json("requirement").$type<{
+    type: string; threshold: number; unit?: string;
+  }>().notNull(),
+  rarity: mysqlEnum("rarity", ["common", "uncommon", "rare", "epic", "legendary"]).notNull().default("common"),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Achievement = typeof achievements.$inferSelect;
+
+// ─── Gamification: User Achievements (unlocked) ───────────────────────────────
+export const userAchievements = mysqlTable("user_achievements", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  achievementId: int("achievementId").notNull(),
+  unlockedAt: timestamp("unlockedAt").defaultNow().notNull(),
+  pointsAwarded: int("pointsAwarded").notNull(),
+});
+export type UserAchievement = typeof userAchievements.$inferSelect;
+
+// ─── Gamification: Challenges ─────────────────────────────────────────────────
+export const challenges = mysqlTable("challenges", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  type: mysqlEnum("type", ["daily", "weekly", "monthly", "one_time", "community"]).notNull(),
+  category: mysqlEnum("category", ["gig", "finance", "social", "platform"]).notNull(),
+  goal: int("goal").notNull(), // target number (e.g. 5 shifts, 100 miles)
+  unit: varchar("unit", { length: 50 }).notNull().default("count"), // shifts, miles, dollars, rules, referrals
+  pointsReward: int("pointsReward").notNull(),
+  bonusReward: varchar("bonusReward", { length: 200 }), // e.g. "Free month Pro"
+  startsAt: timestamp("startsAt").notNull(),
+  endsAt: timestamp("endsAt").notNull(),
+  maxParticipants: int("maxParticipants"), // null = unlimited
+  participantCount: int("participantCount").default(0).notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Challenge = typeof challenges.$inferSelect;
+
+// ─── Gamification: Challenge Progress (per user) ──────────────────────────────
+export const challengeProgress = mysqlTable("challenge_progress", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  challengeId: int("challengeId").notNull(),
+  progress: int("progress").default(0).notNull(),
+  completed: boolean("completed").default(false).notNull(),
+  completedAt: timestamp("completedAt"),
+  pointsAwarded: int("pointsAwarded").default(0).notNull(),
+  joinedAt: timestamp("joinedAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ChallengeProgress = typeof challengeProgress.$inferSelect;
+
+// ─── Subscription Entitlements (from MoneyGeneratorApp) ───────────────────────
+export const subscriptionEntitlements = mysqlTable("subscription_entitlements", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  planId: varchar("planId", { length: 100 }).notNull(),
+  // e.g. free, pro, enterprise
+  provider: mysqlEnum("provider", ["stripe", "paypal", "manual"]).notNull().default("stripe"),
+  providerSubscriptionId: varchar("providerSubscriptionId", { length: 255 }),
+  status: mysqlEnum("status", ["active", "pending", "canceled", "expired", "trial"]).notNull().default("pending"),
+  features: json("features").$type<string[]>().default([]),
+  // e.g. ["gig_tracker", "unlimited_rules", "advanced_analytics"]
+  trialEndsAt: timestamp("trialEndsAt"),
+  currentPeriodStart: timestamp("currentPeriodStart"),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  canceledAt: timestamp("canceledAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type SubscriptionEntitlement = typeof subscriptionEntitlements.$inferSelect;
+export type InsertSubscriptionEntitlement = typeof subscriptionEntitlements.$inferInsert;

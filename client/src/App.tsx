@@ -32,6 +32,8 @@ import Affiliates from "./pages/Affiliates";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Sovereign from "./pages/Sovereign";
 import TermsOfService from "./pages/TermsOfService";
+import MoneyManager from "./pages/MoneyManager";
+import Achievements from "./pages/Achievements";
 import ShopifyInstall from "./pages/ShopifyInstall";
 import ShopifySuccess from "./pages/ShopifySuccess";
 import SyncMonitor from "./pages/SyncMonitor";
@@ -114,6 +116,8 @@ function Router() {
       <Route path="/shopify/install" component={ShopifyInstall} />
       <Route path="/shopify/success" component={ShopifySuccess} />
       <Route path="/sync-monitor" component={() => <DashboardRoute component={SyncMonitor} />} />
+      <Route path="/money-manager" component={() => <DashboardRoute component={MoneyManager} />} />
+      <Route path="/achievements" component={() => <DashboardRoute component={Achievements} />} />
       <Route path="/sovereign" component={Sovereign} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
