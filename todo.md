@@ -476,3 +476,10 @@
 - [x] Tests for manusAIRouter (100 tests passing)
 - [x] 0 TypeScript errors, all tests passing
 - [x] GitHub release v1.5.0-manus-ai
+
+## Phase 26 — Context-Aware AI Insight Panels [COMPLETE]
+
+- [x] AIInsightsCard reusable component: collapsible card with suggested prompts, one-shot chat mutation, markdown response, refresh button, "Open full chat" link
+- [x] Money Manager: AIInsightsCard wired above KPI cards — injects live earnings/miles/hours/tax deduction data as context
+- [x] Gig Command: AIInsightsCard wired above AI Shortcuts panel — injects platform, avg $/hr, YTD miles, tax deduction, shift status as context
+- [x] 100 tests passing, 0 TypeScript errors

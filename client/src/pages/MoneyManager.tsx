@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AIInsightsCard from "@/components/AIInsightsCard";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -142,6 +143,16 @@ export default function MoneyManager() {
           </Select>
         </div>
       </div>
+
+      {/* AI Insights Panel */}
+      {s && (
+        <AIInsightsCard
+          context="money-manager"
+          title="Money Manager AI Insights"
+          dataContext={`Earnings this ${period}: $${(s.totalEarnings ?? 0).toFixed(2)}. Total shifts: ${s.totalShifts ?? 0}. Hours worked: ${(s.totalHours ?? 0).toFixed(1)}h. Avg $/hour: $${(s.avgPerHour ?? 0).toFixed(2)}. Total miles: ${(s.totalMiles ?? 0).toFixed(1)}. Tax deduction: $${(s.taxDeduction ?? 0).toFixed(2)} (IRS 2025 rate $0.70/mile). Period: ${period}.`}
+          defaultCollapsed={false}
+        />
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">

@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import {
-  Play, Square, MapPin, Navigation, Zap, TrendingUp,
+import AIInsightsCard from "@/components/AIInsightsCard";
+import { Play, Square, MapPin, Navigation, Zap, TrendingUp,
   DollarSign, Gauge, Clock, Route, Sparkles, RefreshCw,
   AlertTriangle, ChevronUp, ChevronDown, Car, Bike, Truck
 } from "lucide-react";
@@ -426,6 +426,14 @@ export default function GigCommand() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* AI Insights Panel */}
+            <AIInsightsCard
+              context="gig-command"
+              title="Gig Command AI"
+              dataContext={`Platform: ${platform}. Avg $/hour (last 5 shifts): $${earningsPerHour.toFixed(2)}. YTD miles: ${(mileageSummary?.totalMiles ?? 0).toFixed(1)}. YTD tax deduction: $${ytdDeduction.toFixed(2)} (IRS 2025 $0.70/mile). Recent shifts: ${recentShifts.length}. Shift currently ${timerActive ? `active (${formatDuration(elapsed)} elapsed)` : 'not active'}.`}
+              defaultCollapsed={false}
+            />
 
             {/* AI Shortcuts */}
             <Card className="border-border/50 bg-card/80">
