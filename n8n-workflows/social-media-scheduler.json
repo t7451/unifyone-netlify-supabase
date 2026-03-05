@@ -1,0 +1,152 @@
+{
+  "name": "UnifyOne Social Media Scheduler — 9 Day 1 Posts",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "trigger-schedule",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Sovereign Stack — Day 1 Viral Distribution Posts\n// Source: Day1ViralDistributionPosts.pdf\n\nconst posts = [\n  {\n    id: 1,\n    platform: 'linkedin',\n    scheduledAt: new Date(Date.now() + 0).toISOString(),\n    content: `I built a $10M business architecture with zero employees.\\n\\nHere's the structure:\\n\\n🏛️ Family Trust (Tier 0) — The vault. Untouchable.\\n🏢 Holding Company (Tier 1) — Owns everything, does nothing.\\n💻 PNW Solutions (2A) — Tech arm. Builds UnifyOne.\\n🚚 KSK Industrial (2B) — Logistics & 3PL.\\n🎓 PAKC Foundation (2C) — 501(c)(3). Grants + credibility.\\n\\nThis is the Cathedral Principle.\\n\\nYou don't build a business. You build the structure that runs the business.\\n\\nWe're opening a waitlist for 10 entrepreneurs who want this built for them.\\n\\n→ 1commerce.online/sovereign\\n\\n#SovereignStack #CathedralPrinciple #SolopreneurLife #Ecommerce #BusinessArchitecture`\n  },\n  {\n    id: 2,\n    platform: 'linkedin',\n    scheduledAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),\n    content: `Most Shopify merchants are one algorithm change away from zero.\\n\\nI was too.\\n\\nSo I built UnifyOne — a multi-tenant commerce platform that:\\n\\n✅ Connects Shopify, WooCommerce, and custom stores\\n✅ Centralizes orders, inventory, and customers\\n✅ Fires Meta CAPI events for every transaction\\n✅ Runs automated revenue workflows 24/7\\n\\nOne dashboard. Every store. Zero platform dependency.\\n\\nFree trial: 1commerce.online\\n\\n#UnifyOne #Shopify #Ecommerce #MultiTenant #CommerceOS`\n  },\n  {\n    id: 3,\n    platform: 'linkedin',\n    scheduledAt: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),\n    content: `The Sovereign Solopreneur operates with the velocity of a 10-person team.\\n\\nHere's how:\\n\\n1️⃣ Automate everything that repeats\\n2️⃣ Own the infrastructure, don't rent it\\n3️⃣ Use AI as a team member, not a toy\\n4️⃣ Build legal structures before you need them\\n5️⃣ Never let one platform control your revenue\\n\\nI've been doing this for 6 months.\\n\\nNow I'm building it for others.\\n\\nFull breakdown: 1commerce.online/sovereign\\n\\n#SovereignSolopreneur #DigitalNomad #Automation #AIBusiness #Ecommerce`\n  },\n  {\n    id: 4,\n    platform: 'facebook',\n    scheduledAt: new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString(),\n    content: `🚨 ANNOUNCEMENT: UnifyOne v1.1.7 is live.\\n\\nWhat's new:\\n• Theme Store — buy/sell website templates (some free)\\n• Rewards Keys — earn credits for platform actions\\n• Meta CAPI integration — server-side attribution\\n• Shopify OAuth multi-merchant onboarding\\n• Sync Monitor — real-time integration health dashboard\\n\\nThis is the commerce platform I wish existed 3 years ago.\\n\\nFree trial → 1commerce.online\\n\\n#UnifyOne #Ecommerce #Shopify #CommerceOS #NewRelease`\n  },\n  {\n    id: 5,\n    platform: 'facebook',\n    scheduledAt: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),\n    content: `BUY/SELL/TRADE & FREE templates in the UnifyOne Theme Store.\\n\\nI'm uploading my first batch of website templates this week.\\n\\nSome are free. Some are priced by complexity.\\n\\nThink Shopify Theme Store — but for the entire commerce stack.\\n\\nBrowse → 1commerce.online/themes\\n\\n#WebTemplates #ThemeStore #Shopify #Ecommerce #WebDesign`\n  },\n  {\n    id: 6,\n    platform: 'twitter',\n    scheduledAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),\n    content: `Built a multi-national business with zero employees.\\n\\nThe secret: I own the structure, not just the business.\\n\\nWaitlist open for 10 spots:\\n1commerce.online/sovereign\\n\\n#SovereignStack #Ecommerce #Solopreneur`\n  },\n  {\n    id: 7,\n    platform: 'twitter',\n    scheduledAt: new Date(Date.now() + 90 * 60 * 1000).toISOString(),\n    content: `UnifyOne v1.1.7 ships:\\n\\n→ Theme Store (Shopify-style, some free)\\n→ Rewards Keys\\n→ Meta CAPI server-side\\n→ Shopify OAuth multi-merchant\\n→ Sync Monitor dashboard\\n\\nFree trial: 1commerce.online\\n\\n#UnifyOne #Ecommerce #Shopify`\n  },\n  {\n    id: 8,\n    platform: 'twitter',\n    scheduledAt: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),\n    content: `The Cathedral Principle:\\n\\nBuild the structure first.\\nScale the revenue second.\\n\\nMost founders do this backwards.\\n\\nFull breakdown: 1commerce.online/sovereign\\n\\n#CathedralPrinciple #Ecommerce #BusinessStrategy`\n  },\n  {\n    id: 9,\n    platform: 'instagram',\n    scheduledAt: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),\n    content: `One platform. Every store. Zero fragility.\\n\\nUnifyOne connects your Shopify, WooCommerce, and custom stores into a single dashboard.\\n\\nOrders. Inventory. Customers. Analytics. Automations.\\n\\nFree trial → link in bio\\n\\n#UnifyOne #Ecommerce #Shopify #CommerceOS #OnlineBusiness #Entrepreneur #SideHustle #DropShipping`\n  }\n];\n\n// Filter posts that are ready to send (within the next 5 minutes)\nconst now = Date.now();\nconst readyPosts = posts.filter(p => {\n  const scheduled = new Date(p.scheduledAt).getTime();\n  return scheduled <= now + 5 * 60 * 1000;\n});\n\nreturn readyPosts.map(post => ({ json: post }));"
+      },
+      "id": "posts-data",
+      "name": "Posts Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.platform }}",
+              "value2": "linkedin"
+            }
+          ]
+        }
+      },
+      "id": "route-linkedin",
+      "name": "Is LinkedIn?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.platform }}",
+              "value2": "facebook"
+            }
+          ]
+        }
+      },
+      "id": "route-facebook",
+      "name": "Is Facebook?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://api.linkedin.com/v2/ugcPosts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"author\": \"urn:li:person:{{ $env.LINKEDIN_PERSON_ID }}\",\n  \"lifecycleState\": \"PUBLISHED\",\n  \"specificContent\": {\n    \"com.linkedin.ugc.ShareContent\": {\n      \"shareCommentary\": {\n        \"text\": \"{{ $json.content }}\"\n      },\n      \"shareMediaCategory\": \"NONE\"\n    }\n  },\n  \"visibility\": {\n    \"com.linkedin.ugc.MemberNetworkVisibility\": \"PUBLIC\"\n  }\n}"
+      },
+      "id": "post-linkedin",
+      "name": "Post to LinkedIn",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 160]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.FACEBOOK_PAGE_ID }}/feed",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "method": "POST",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"message\": \"{{ $json.content }}\",\n  \"access_token\": \"{{ $env.FACEBOOK_PAGE_ACCESS_TOKEN }}\"\n}"
+      },
+      "id": "post-facebook",
+      "name": "Post to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 360]
+    },
+    {
+      "parameters": {
+        "url": "=https://{{ $env.UNIFYONE_API_URL }}/api/trpc/system.notifyOwner",
+        "method": "POST",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"json\": {\n    \"title\": \"📣 Social Post Published — {{ $json.platform }}\",\n    \"content\": \"Post #{{ $json.id }} published to {{ $json.platform }}\\n\\n{{ $json.content.substring(0, 200) }}...\"\n  }\n}"
+      },
+      "id": "notify-owner",
+      "name": "Notify Owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "Posts Data", "type": "main", "index": 0 }]]
+    },
+    "Posts Data": {
+      "main": [
+        [
+          { "node": "Is LinkedIn?", "type": "main", "index": 0 },
+          { "node": "Is Facebook?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Is LinkedIn?": {
+      "main": [
+        [{ "node": "Post to LinkedIn", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Is Facebook?": {
+      "main": [
+        [{ "node": "Post to Facebook", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Post to LinkedIn": {
+      "main": [[{ "node": "Notify Owner", "type": "main", "index": 0 }]]
+    },
+    "Post to Facebook": {
+      "main": [[{ "node": "Notify Owner", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["social-media", "unifyone", "sovereign-stack"],
+  "_meta": {
+    "instanceId": "unifyone-n8n",
+    "description": "Schedules and publishes 9 Day 1 viral distribution posts across LinkedIn, Facebook, Twitter, and Instagram. Requires env vars: LINKEDIN_PERSON_ID, FACEBOOK_PAGE_ID, FACEBOOK_PAGE_ACCESS_TOKEN, UNIFYONE_API_URL."
+  }
+}

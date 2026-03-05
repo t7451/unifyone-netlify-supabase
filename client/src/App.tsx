@@ -30,7 +30,11 @@ import Rewards from "./pages/Rewards";
 import RevenueStreams from "./pages/RevenueStreams";
 import Affiliates from "./pages/Affiliates";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Sovereign from "./pages/Sovereign";
 import TermsOfService from "./pages/TermsOfService";
+import ShopifyInstall from "./pages/ShopifyInstall";
+import ShopifySuccess from "./pages/ShopifySuccess";
+import SyncMonitor from "./pages/SyncMonitor";
 import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
 import { getLoginUrl } from "./const";
@@ -107,6 +111,10 @@ function Router() {
       <Route path="/rewards" component={() => <DashboardRoute component={Rewards} />} />
       <Route path="/revenue-streams" component={() => <DashboardRoute component={RevenueStreams} />} />
       <Route path="/affiliates" component={() => <DashboardRoute component={Affiliates} />} />
+      <Route path="/shopify/install" component={ShopifyInstall} />
+      <Route path="/shopify/success" component={ShopifySuccess} />
+      <Route path="/sync-monitor" component={() => <DashboardRoute component={SyncMonitor} />} />
+      <Route path="/sovereign" component={Sovereign} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
       <Route path="/checkout" component={() => <ProtectedRoute component={Checkout} />} />

@@ -660,3 +660,77 @@ export const affiliatePrograms = mysqlTable("affiliate_programs", {
 });
 export type AffiliateProgram = typeof affiliatePrograms.$inferSelect;
 export type InsertAffiliateProgram = typeof affiliatePrograms.$inferInsert;
+
+// ─── Shopify OAuth Stores ─────────────────────────────────────────────────────
+export const shopifyStores = mysqlTable("shopify_stores", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId"),
+  userId: int("userId").notNull(),
+  shopDomain: varchar("shopDomain", { length: 255 }).notNull().unique(),
+  accessToken: varchar("accessToken", { length: 500 }).notNull(),
+  scopes: text("scopes").notNull(),
+  shopName: varchar("shopName", { length: 255 }),
+  shopEmail: varchar("shopEmail", { length: 255 }),
+  shopCurrency: varchar("shopCurrency", { length: 10 }).default("USD"),
+  shopPlan: varchar("shopPlan", { length: 100 }),
+  status: mysqlEnum("status", ["active", "suspended", "uninstalled"]).notNull().default("active"),
+  lastSyncAt: timestamp("lastSyncAt"),
+  installedAt: timestamp("installedAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ShopifyStore = typeof shopifyStores.$inferSelect;
+export type InsertShopifyStore = typeof shopifyStores.$inferInsert;
+
+// ─── Shopify Sync Audit Log ───────────────────────────────────────────────────
+export const shopifySyncLog = mysqlTable("shopify_sync_log", {
+  id: int("id").autoincrement().primaryKey(),
+  storeId: int("storeId").notNull(),
+  tenantId: int("tenantId"),
+  event: varchar("event", { length: 100 }).notNull(),
+  entity: mysqlEnum("entity", ["product", "order", "customer", "inventory", "fulfillment", "webhook"]).notNull(),
+  entityId: varchar("entityId", { length: 100 }),
+  direction: mysqlEnum("direction", ["inbound", "outbound"]).notNull().default("inbound"),
+  status: mysqlEnum("status", ["success", "failed", "skipped", "retrying"]).notNull(),
+  latencyMs: int("latencyMs"),
+  errorMsg: text("errorMsg"),
+  retryCount: int("retryCount").default(0).notNull(),
+  payload: json("payload"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ShopifySyncLog = typeof shopifySyncLog.$inferSelect;
+export type InsertShopifySyncLog = typeof shopifySyncLog.$inferInsert;
+
+// ─── Shopify API Quota Tracking ───────────────────────────────────────────────
+export const shopifyApiQuota = mysqlTable("shopify_api_quota", {
+  id: int("id").autoincrement().primaryKey(),
+  storeId: int("storeId").notNull(),
+  restCallsMade: int("restCallsMade").default(0).notNull(),
+  restCallsLimit: int("restCallsLimit").default(40).notNull(),
+  graphqlPointsUsed: int("graphqlPointsUsed").default(0).notNull(),
+  graphqlPointsLimit: int("graphqlPointsLimit").default(1000).notNull(),
+  throttledCount: int("throttledCount").default(0).notNull(),
+  recordedAt: timestamp("recordedAt").defaultNow().notNull(),
+});
+export type ShopifyApiQuota = typeof shopifyApiQuota.$inferSelect;
+export type InsertShopifyApiQuota = typeof shopifyApiQuota.$inferInsert;
+
+// ─── Sovereign Stack Waitlist ─────────────────────────────────────────────────
+export const sovereignWaitlist = mysqlTable("sovereign_waitlist", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  name: varchar("name", { length: 255 }),
+  company: varchar("company", { length: 255 }),
+  currentStack: text("currentStack"),
+  monthlyRevenue: mysqlEnum("monthlyRevenue", ["pre_revenue", "under_5k", "5k_25k", "25k_100k", "over_100k"]),
+  biggestChallenge: text("biggestChallenge"),
+  referralSource: varchar("referralSource", { length: 100 }),
+  utmSource: varchar("utmSource", { length: 100 }),
+  utmMedium: varchar("utmMedium", { length: 100 }),
+  utmCampaign: varchar("utmCampaign", { length: 100 }),
+  status: mysqlEnum("status", ["pending", "contacted", "qualified", "converted", "rejected"]).default("pending").notNull(),
+  position: int("position"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SovereignWaitlist = typeof sovereignWaitlist.$inferSelect;
+export type InsertSovereignWaitlist = typeof sovereignWaitlist.$inferInsert;

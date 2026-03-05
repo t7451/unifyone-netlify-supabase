@@ -1,0 +1,281 @@
+import express, { type Express, type Request, type Response } from "express";
+import crypto from "crypto";
+import { getDb } from "./db";
+import { shopifyStores, shopifySyncLog } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
+
+// ─── Shopify OAuth Config ─────────────────────────────────────────────────────
+const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY || "";
+const SHOPIFY_API_SECRET = process.env.SHOPIFY_API_SECRET || "";
+const REQUIRED_SCOPES = [
+  "read_products",
+  "write_products",
+  "read_orders",
+  "write_orders",
+  "read_customers",
+  "write_customers",
+  "read_inventory",
+  "write_inventory",
+  "read_fulfillments",
+  "write_fulfillments",
+].join(",");
+
+// ─── HMAC Validation ──────────────────────────────────────────────────────────
+function validateHmac(query: Record<string, string>): boolean {
+  const { hmac, ...rest } = query;
+  if (!hmac || !SHOPIFY_API_SECRET) return false;
+  const message = Object.keys(rest)
+    .sort()
+    .map((k) => `${k}=${rest[k]}`)
+    .join("&");
+  const digest = crypto
+    .createHmac("sha256", SHOPIFY_API_SECRET)
+    .update(message)
+    .digest("hex");
+  return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(hmac));
+}
+
+// ─── Validate Webhook Signature ───────────────────────────────────────────────
+export function validateShopifyWebhook(rawBody: Buffer, hmacHeader: string): boolean {
+  if (!SHOPIFY_API_SECRET) return false;
+  const digest = crypto
+    .createHmac("sha256", SHOPIFY_API_SECRET)
+    .update(rawBody)
+    .digest("base64");
+  return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(hmacHeader));
+}
+
+// ─── Log Sync Event Helper ────────────────────────────────────────────────────
+export async function logSyncEvent(params: {
+  storeId: number;
+  tenantId?: number;
+  event: string;
+  entity: "product" | "order" | "customer" | "inventory" | "fulfillment" | "webhook";
+  entityId?: string;
+  direction?: "inbound" | "outbound";
+  status: "success" | "failed" | "skipped" | "retrying";
+  latencyMs?: number;
+  errorMsg?: string;
+  retryCount?: number;
+  payload?: unknown;
+}) {
+  try {
+    const db = await getDb();
+    if (!db) return;
+    await db.insert(shopifySyncLog).values({
+      storeId: params.storeId,
+      tenantId: params.tenantId,
+      event: params.event,
+      entity: params.entity,
+      entityId: params.entityId,
+      direction: params.direction ?? "inbound",
+      status: params.status,
+      latencyMs: params.latencyMs,
+      errorMsg: params.errorMsg,
+      retryCount: params.retryCount ?? 0,
+      payload: params.payload as Record<string, unknown>,
+    });
+  } catch (err) {
+    console.error("[ShopifySync] Failed to log sync event:", err);
+  }
+}
+
+// ─── Register Shopify OAuth Routes ───────────────────────────────────────────
+export function registerShopifyRoutes(app: Express) {
+  // ── Step 1: Initiate OAuth (/api/shopify/install) ──────────────────────────
+  app.get("/api/shopify/install", (req: Request, res: Response) => {
+    const shop = (req.query.shop as string || "").trim().toLowerCase();
+    if (!shop || !shop.includes(".myshopify.com")) {
+      return res.status(400).json({ error: "Invalid shop domain. Must end in .myshopify.com" });
+    }
+    if (!SHOPIFY_API_KEY) {
+      return res.status(500).json({ error: "SHOPIFY_API_KEY not configured" });
+    }
+    const state = crypto.randomBytes(16).toString("hex");
+    const redirectUri = `${req.protocol}://${req.get("host")}/api/shopify/callback`;
+    const installUrl =
+      `https://${shop}/admin/oauth/authorize` +
+      `?client_id=${SHOPIFY_API_KEY}` +
+      `&scope=${encodeURIComponent(REQUIRED_SCOPES)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&state=${state}`;
+    // Store state in a short-lived cookie for CSRF protection
+    res.cookie("shopify_oauth_state", state, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 10 * 60 * 1000, // 10 minutes
+    });
+    return res.redirect(installUrl);
+  });
+
+  // ── Step 2: OAuth Callback (/api/shopify/callback) ─────────────────────────
+  app.get("/api/shopify/callback", async (req: Request, res: Response) => {
+    const { shop, code, state, hmac } = req.query as Record<string, string>;
+
+    // CSRF check
+    const storedState = req.cookies?.shopify_oauth_state;
+    if (!state || state !== storedState) {
+      return res.status(403).send("State mismatch — possible CSRF attack");
+    }
+
+    // HMAC validation
+    if (!validateHmac(req.query as Record<string, string>)) {
+      return res.status(403).send("Invalid HMAC signature");
+    }
+
+    if (!shop || !code) {
+      return res.status(400).send("Missing shop or code");
+    }
+
+    try {
+      // ── Exchange code for access token ──────────────────────────────────────
+      const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_id: SHOPIFY_API_KEY,
+          client_secret: SHOPIFY_API_SECRET,
+          code,
+        }),
+      });
+
+      if (!tokenRes.ok) {
+        const err = await tokenRes.text();
+        console.error("[Shopify OAuth] Token exchange failed:", err);
+        return res.status(500).send("Token exchange failed");
+      }
+
+      const tokenData = (await tokenRes.json()) as {
+        access_token: string;
+        scope: string;
+      };
+
+      // ── Fetch shop details ──────────────────────────────────────────────────
+      const shopRes = await fetch(`https://${shop}/admin/api/2024-01/shop.json`, {
+        headers: { "X-Shopify-Access-Token": tokenData.access_token },
+      });
+      const shopData = shopRes.ok
+        ? ((await shopRes.json()) as { shop: { name: string; email: string; currency: string; plan_name: string } }).shop
+        : null;
+
+      // ── Upsert store record ─────────────────────────────────────────────────
+      const db = await getDb();
+      if (!db) {
+        return res.status(500).send("Database unavailable");
+      }
+
+      const existing = await db
+        .select()
+        .from(shopifyStores)
+        .where(eq(shopifyStores.shopDomain, shop))
+        .limit(1);
+
+      if (existing.length > 0) {
+        await db
+          .update(shopifyStores)
+          .set({
+            accessToken: tokenData.access_token,
+            scopes: tokenData.scope,
+            shopName: shopData?.name,
+            shopEmail: shopData?.email,
+            shopCurrency: shopData?.currency ?? "USD",
+            shopPlan: shopData?.plan_name,
+            status: "active",
+          })
+          .where(eq(shopifyStores.shopDomain, shop));
+      } else {
+        // userId will be set to 0 for now — the user can link it from the dashboard
+        await db.insert(shopifyStores).values({
+          userId: 0,
+          shopDomain: shop,
+          accessToken: tokenData.access_token,
+          scopes: tokenData.scope,
+          shopName: shopData?.name,
+          shopEmail: shopData?.email,
+          shopCurrency: shopData?.currency ?? "USD",
+          shopPlan: shopData?.plan_name,
+          status: "active",
+        });
+      }
+
+      // Clear CSRF cookie
+      res.clearCookie("shopify_oauth_state");
+
+      // Redirect to success page
+      return res.redirect(`/shopify/success?shop=${encodeURIComponent(shop)}`);
+    } catch (err) {
+      console.error("[Shopify OAuth] Callback error:", err);
+      return res.status(500).send("OAuth callback failed");
+    }
+  });
+
+  // ── Shopify Webhook Receiver (/api/shopify/webhook) ────────────────────────
+  app.post(
+    "/api/shopify/webhook",
+    express.raw({ type: "application/json" }),
+    async (req: Request, res: Response) => {
+      const hmacHeader = req.headers["x-shopify-hmac-sha256"] as string;
+      const topic = req.headers["x-shopify-topic"] as string;
+      const shopDomain = req.headers["x-shopify-shop-domain"] as string;
+
+      if (!validateShopifyWebhook(req.body as Buffer, hmacHeader)) {
+        return res.status(401).send("Unauthorized");
+      }
+
+      const startTime = Date.now();
+      let payload: Record<string, unknown> = {};
+      try {
+        payload = JSON.parse((req.body as Buffer).toString());
+      } catch {
+        // non-JSON payload
+      }
+
+      // Find the store
+      const db = await getDb();
+      let storeId = 0;
+      if (db && shopDomain) {
+        const stores = await db
+          .select({ id: shopifyStores.id, tenantId: shopifyStores.tenantId })
+          .from(shopifyStores)
+          .where(eq(shopifyStores.shopDomain, shopDomain))
+          .limit(1);
+        if (stores.length > 0) {
+          storeId = stores[0].id;
+        }
+      }
+
+      // Determine entity type from topic
+      const entityMap: Record<string, "product" | "order" | "customer" | "inventory" | "fulfillment" | "webhook"> = {
+        "products/create": "product",
+        "products/update": "product",
+        "products/delete": "product",
+        "orders/create": "order",
+        "orders/updated": "order",
+        "orders/cancelled": "order",
+        "orders/fulfilled": "order",
+        "customers/create": "customer",
+        "customers/update": "customer",
+        "customers/delete": "customer",
+        "inventory_levels/update": "inventory",
+        "fulfillments/create": "fulfillment",
+        "fulfillments/update": "fulfillment",
+      };
+      const entity = entityMap[topic] ?? "webhook";
+      const entityId = (payload.id as string | number | undefined)?.toString();
+
+      await logSyncEvent({
+        storeId,
+        event: topic,
+        entity,
+        entityId,
+        direction: "inbound",
+        status: "success",
+        latencyMs: Date.now() - startTime,
+        payload: { topic, shopDomain, id: payload.id },
+      });
+
+      console.log(`[Shopify Webhook] ${topic} from ${shopDomain}`);
+      return res.status(200).send("OK");
+    }
+  );
+}

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `sovereign_waitlist` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`email` varchar(255) NOT NULL,\n\t`name` varchar(255),\n\t`company` varchar(255),\n\t`currentStack` text,\n\t`monthlyRevenue` enum('pre_revenue','under_5k','5k_25k','25k_100k','over_100k'),\n\t`biggestChallenge` text,\n\t`referralSource` varchar(100),\n\t`utmSource` varchar(100),\n\t`utmMedium` varchar(100),\n\t`utmCampaign` varchar(100),\n\t`status` enum('pending','contacted','qualified','converted','rejected') NOT NULL DEFAULT 'pending',\n\t`position` int,\n\t`notes` text,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `sovereign_waitlist_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `sovereign_waitlist_email_unique` UNIQUE(`email`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 372pgni6FByAp3r.b99b1625eed2 --database VyofXqD3FvrztXonjtHUZp --execute CREATE TABLE `sovereign_waitlist` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`email` varchar(255) NOT NULL,\n\t`name` varchar(255),\n\t`company` varchar(255),\n\t`currentStack` text,\n\t`monthlyRevenue` enum('pre_revenue','under_5k','5k_25k','25k_100k','over_100k'),\n\t`biggestChallenge` text,\n\t`referralSource` varchar(100),\n\t`utmSource` varchar(100),\n\t`utmMedium` varchar(100),\n\t`utmCampaign` varchar(100),\n\t`status` enum('pending','contacted','qualified','converted','rejected') NOT NULL DEFAULT 'pending',\n\t`position` int,\n\t`notes` text,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `sovereign_waitlist_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `sovereign_waitlist_email_unique` UNIQUE(`email`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 473
+}

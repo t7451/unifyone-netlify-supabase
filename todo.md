@@ -307,3 +307,52 @@
 - [x] Mobile menu items have 44px min-height and ChevronRight indicators for discoverability
 - [x] Footer enhanced with Contact link and responsive flex-wrap for mobile
 - [x] Pricing section: added "All plans include 14-day free trial" trust line
+
+## Phase 16 — Shopify OAuth Multi-Merchant + Sync Monitoring Dashboard
+- [ ] Add shopify_stores table (tenantId, shopDomain, accessToken, scopes, installedAt, status)
+- [ ] Add shopify_sync_log table (storeId, event, entity, entityId, status, latencyMs, errorMsg, createdAt)
+- [ ] Add shopify_api_quota table (storeId, callsMade, callsLimit, graphqlPoints, graphqlLimit, recordedAt)
+- [ ] Run schema migrations
+- [ ] Build Shopify OAuth install route (/api/shopify/install) — redirects to Shopify OAuth consent screen
+- [ ] Build Shopify OAuth callback route (/api/shopify/callback) — exchanges code for access token, saves to DB
+- [ ] Build shopifyStoresRouter: listStores, getStore, removeStore, syncNow, getScopes procedures
+- [ ] Build syncMonitorRouter: getSyncStats, getAuditLog, getQuotaUtilization, getLatencyChart procedures
+- [ ] Build /shopify/install page — merchant enters shop domain, initiates OAuth
+- [ ] Build /shopify/success page — post-install confirmation with scope summary
+- [ ] Build multi-merchant store switcher component in Integrations page
+- [ ] Build /sync-monitor page — KPI cards (latency, error rate, quota %), audit log table, latency chart
+- [ ] Add Sync Monitor nav link to DashboardLayout sidebar
+- [ ] Wire all new routes in App.tsx
+- [ ] Run tests and save checkpoint
+
+## Phase 16 — Shopify OAuth Multi-Merchant + Sync Monitor [COMPLETE]
+- [x] Schema: shopify_stores, shopify_sync_log, shopify_api_quota tables + migration applied
+- [x] Server: registerShopifyRoutes() — /api/shopify/install (OAuth initiation with HMAC+CSRF), /api/shopify/callback (token exchange + store upsert), /api/shopify/webhook (HMAC-verified event ingestion + sync log)
+- [x] logSyncEvent() helper — writes to shopify_sync_log from any server context
+- [x] tRPC: shopifyStoresRouter — listStores, getStore, removeStore, syncNow, getScopes, linkToUser (admin)
+- [x] tRPC: syncMonitorRouter — getSyncStats, getAuditLog, getQuotaUtilization, getLatencyChart, getStoreHealth
+- [x] Frontend: /shopify/install — branded OAuth install page with domain input, scope preview, trust signals
+- [x] Frontend: /shopify/success — post-install success page with next-step cards (Products, Orders, Sync Monitor)
+- [x] Frontend: /sync-monitor — full dashboard: KPI cards (total events, success rate, error rate, avg latency), latency LineChart, event volume BarChart, store health grid, paginated audit log with entity/status filters
+- [x] DashboardLayout: Sync Monitor + Connect Shopify nav items added (Activity + Plug icons)
+- [x] App.tsx: /shopify/install, /shopify/success, /sync-monitor routes registered
+- [x] 59 tests passing, 0 TypeScript errors
+
+## Phase 17 — Revenue Sprint: /sovereign Waitlist + Social Launch
+- [ ] Build /sovereign waitlist landing page (Cathedral Principle copy, lead capture, Stripe waitlist)
+- [ ] Add sovereign_waitlist table to schema + migration
+- [ ] Add sovereignRouter: joinWaitlist (public), listWaitlist (admin) procedures
+- [ ] Wire /sovereign route in App.tsx (public, no auth required)
+- [ ] Wire Shopify Partner API key (SHOPIFY_PARTNER_API_KEY, SHOPIFY_PARTNER_ID)
+- [ ] Schedule 9 content calendar posts via n8n workflow
+- [ ] Produce 7-day revenue sprint document with post copy, video teleprompter, and action plan
+- [ ] Save checkpoint and push to GitHub
+
+## Phase 17 — Revenue Sprint: /sovereign Waitlist + Social Launch [COMPLETE]
+- [x] sovereign_waitlist DB table (position, tier, challenge, utmSource/Medium/Campaign, status) + migration applied
+- [x] sovereignRouter: joinWaitlist (public, UTM tracking, position counter, owner notification), getCount (public social proof), listWaitlist (admin), updateStatus (admin)
+- [x] /sovereign landing page: Cathedral Principle architecture diagram, Sovereign Tech Stack grid, What You Get pricing section, testimonials, waitlist form with revenue tier + challenge fields, UTM param capture
+- [x] /sovereign route registered in App.tsx (public, no auth required)
+- [x] n8n-workflows/social-media-scheduler.json: 9 Day 1 viral posts (LinkedIn x3, Facebook x2, Twitter x3, Instagram x1) with scheduling logic and owner notification
+- [x] 7-day revenue sprint document written (unifyone-revenue-sprint.md): Netlify fix, video teleprompter script, email template, Shopify App Store submission steps, sales conversation scripts, referral activation, revenue projection
+- [x] Shopify Partner API key usage documented (prtapi vs atkn vs OAuth app credentials)

@@ -19,6 +19,9 @@ import { rewardsRouter } from "./routers/rewards";
 import { metaRouter } from "./routers/meta";
 import { revenueStreamsRouter } from "./routers/revenueStreams";
 import { affiliatesRouter } from "./routers/affiliates";
+import { shopifyStoresRouter } from "./routers/shopifyStores";
+import { syncMonitorRouter } from "./routers/syncMonitor";
+import { sovereignRouter } from "./routers/sovereign";
 
 export const appRouter = router({
   system: systemRouter,
@@ -49,6 +52,9 @@ export const appRouter = router({
   meta: metaRouter,
   revenueStreams: revenueStreamsRouter,
   affiliates: affiliatesRouter,
+  shopifyStores: shopifyStoresRouter,
+  syncMonitor: syncMonitorRouter,
+  sovereign: sovereignRouter,
 });
 
 export type AppRouter = typeof appRouter;

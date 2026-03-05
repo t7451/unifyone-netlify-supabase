@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStripeRoutes } from "../stripe";
 import { registerPayPalRoutes } from "../paypal";
+import { registerShopifyRoutes } from "../shopify";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -36,6 +37,8 @@ async function startServer() {
   registerStripeRoutes(app);
   // Register PayPal REST API routes
   registerPayPalRoutes(app);
+  // Register Shopify OAuth + webhook routes (webhook needs raw body BEFORE json middleware)
+  registerShopifyRoutes(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
