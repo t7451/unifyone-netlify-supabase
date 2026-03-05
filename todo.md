@@ -275,3 +275,35 @@
 
 ## SEO Fixes (ongoing)
 - [x] Fix runtime document.title on / — scanner reads 8 chars instead of 43 (set via useEffect in Home.tsx)
+
+## Phase 15 — Meta Pixel Activation + Full Mobile Optimization
+- [ ] Add VITE_META_PIXEL_ID secret
+- [ ] Add META_CAPI_ACCESS_TOKEN secret
+- [ ] Fix animation layout push — CTA buttons jump when AutomationFlowAnimation loads
+- [ ] Mobile hero: fix font sizes, button stacking, breathing room below nav
+- [ ] Mobile nav: hamburger menu refinement, tap targets >= 44px
+- [ ] Mobile sections: Features, How It Works, Pricing — single column, readable typography
+- [ ] Fix animation section min-height so it doesn't push CTA off screen on mobile
+- [ ] Enrich landing page copy: clearer value prop, feature explanations, social proof
+- [ ] Add "How It Works" visual steps section (3-step: Connect → Unify → Scale)
+- [ ] Add testimonials/social proof section
+- [ ] Optimize Pricing section for mobile (card stack, toggle accessible)
+- [ ] Add sticky mobile CTA bar at bottom of viewport
+
+## Phase 15 — Mobile Optimization + OG Image + Visual Enhancement [COMPLETE]
+- [x] Generated branded 1200x630 OG social share image (CDN hosted, replaces blank FB preview)
+- [x] Generated hero visual for landing page (CDN hosted, 2-col hero layout)
+- [x] Wired OG image into og:image and twitter:image meta tags (real CDN URL, not placeholder)
+- [x] Fixed animation layout push — hero uses 2-col grid, animation in its own section with no CTA overlap
+- [x] Full mobile optimization: 44px min touch targets, px-4 gutters, responsive typography (sm: breakpoints)
+- [x] Added sticky mobile CTA bar (Start Free Trial + Sign In) fixed at bottom on mobile only
+- [x] Added How It Works section (3 steps: Connect → Unify → Scale, with arrow connectors)
+- [x] Added Testimonials section with 3 social proof cards and star ratings
+- [x] Expanded integrations grid from 4 to 8 (added PayPal, Zapier, Mailchimp, Meta)
+- [x] Enriched hero copy: 2-column layout with hero visual image on desktop
+- [x] Enriched all 8 feature descriptions with specific operational details
+- [x] Added trust signals under CTAs: "No credit card required · 14-day free trial · Cancel anytime"
+- [x] Added How It Works nav link in desktop nav and mobile menu
+- [x] Mobile menu items have 44px min-height and ChevronRight indicators for discoverability
+- [x] Footer enhanced with Contact link and responsive flex-wrap for mobile
+- [x] Pricing section: added "All plans include 14-day free trial" trust line
