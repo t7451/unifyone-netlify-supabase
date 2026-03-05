@@ -272,3 +272,6 @@
 - [x] All 3 new pages registered in App.tsx with DashboardRoute protection
 - [x] Sidebar nav items added: Rewards Keys, Revenue Streams, Affiliate Hub
 - [x] 59 tests passing, 0 TypeScript errors
+
+## SEO Fixes (ongoing)
+- [x] Fix runtime document.title on / — scanner reads 8 chars instead of 43 (set via useEffect in Home.tsx)

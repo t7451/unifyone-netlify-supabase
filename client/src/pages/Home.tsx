@@ -47,6 +47,8 @@ export default function Home() {
   const createCheckout = trpc.subscription.createCheckout.useMutation();
 
   useEffect(() => {
+    // SEO: set runtime title (43 chars — within 30-60 target)
+    document.title = "UnifyOne — Multi-Tenant Commerce Platform";
     const timer = setTimeout(() => setHeroVisible(true), 100);
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
