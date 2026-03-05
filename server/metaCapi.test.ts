@@ -1,8 +1,9 @@
 /**
  * Meta CAPI credentials validation test
- * Validates META_PIXEL_ID and META_CAPI_ACCESS_TOKEN by sending a test
- * event to the Meta CAPI /events endpoint with test_event_code=TEST1.
- * A 200 response with events_received > 0 confirms the token is valid.
+ * Validates META_PIXEL_ID (Madgicx CAPI Gateway Pixel: 1985866985330714)
+ * and META_CAPI_ACCESS_TOKEN by sending a test event to the Meta CAPI
+ * /events endpoint. A 200 response with events_received > 0 confirms
+ * the Madgicx Gateway Pixel and CAPI token are both valid.
  */
 import { describe, it, expect } from "vitest";
 
