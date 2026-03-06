@@ -1,9 +1,0 @@
-{
-  "query": "CREATE TABLE IF NOT EXISTS `document_embeddings` (\n  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,\n  `docId` varchar(100) NOT NULL,\n  `docTitle` varchar(255) NOT NULL,\n  `chunk` longtext NOT NULL,\n  `chunkIndex` int NOT NULL,\n  `embedding` json NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  UNIQUE KEY `unique_doc_chunk` (`docId`, `chunkIndex`),\n  KEY `idx_doc_id` (`docId`),\n  KEY `idx_created_at` (`createdAt`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 372pgni6FByAp3r.b99b1625eed2 --database VyofXqD3FvrztXonjtHUZp --execute CREATE TABLE IF NOT EXISTS `document_embeddings` (\n  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,\n  `docId` varchar(100) NOT NULL,\n  `docTitle` varchar(255) NOT NULL,\n  `chunk` longtext NOT NULL,\n  `chunkIndex` int NOT NULL,\n  `embedding` json NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  UNIQUE KEY `unique_doc_chunk` (`docId`, `chunkIndex`),\n  KEY `idx_doc_id` (`docId`),\n  KEY `idx_created_at` (`createdAt`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 379
-}
