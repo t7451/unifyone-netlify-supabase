@@ -421,3 +421,131 @@
 ::-webkit-scrollbar-track { background: var(--stone-void); }
 ::-webkit-scrollbar-thumb { background: var(--gold-ember); }
 ::-webkit-scrollbar-thumb:hover { background: var(--gold-illuminate); }
+
+/* ── Image Rendering — HiDPI / Retina optimization ─────────────────────── */
+img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Background images — smooth scaling on all platforms */
+[style*="background-image"] {
+  image-rendering: auto;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* ── Mobile Typography Scaling ──────────────────────────────────────────── */
+
+/* Prevent iOS font size inflation */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Mobile-first stat values — scale down on small screens */
+@media (max-width: 480px) {
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .inscription {
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+  }
+
+  .btn-illuminate,
+  .btn-ghost-gold {
+    font-size: 0.65rem;
+    padding: 0.75rem 1.5rem;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Tablet breakpoint — intermediate scaling */
+@media (min-width: 481px) and (max-width: 768px) {
+  .stat-value {
+    font-size: 1.75rem;
+  }
+}
+
+/* ── Enhanced Stone Texture — stronger grid lines ───────────────────────── */
+
+/* Upgraded cathedral-bg with more visible stone grid */
+.cathedral-bg {
+  background-color: var(--stone-void);
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 59px,
+      rgba(212, 168, 67, 0.035) 59px,
+      rgba(212, 168, 67, 0.035) 60px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 59px,
+      rgba(212, 168, 67, 0.035) 59px,
+      rgba(212, 168, 67, 0.035) 60px
+    );
+}
+
+/* Upgraded stone-surface with more visible mortar lines */
+.stone-surface {
+  background-color: var(--stone-nave);
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 39px,
+      rgba(255,255,255,0.025) 39px,
+      rgba(255,255,255,0.025) 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 79px,
+      rgba(255,255,255,0.018) 79px,
+      rgba(255,255,255,0.018) 80px
+    );
+}
+
+/* ── Cross-Platform Background Section Hardening ────────────────────────── */
+
+/* Ensure background images cover correctly on all aspect ratios */
+section > .absolute.inset-0 > img {
+  object-fit: cover;
+  object-position: center center;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+/* Ensure text over backgrounds always has minimum contrast */
+.relative.z-10 {
+  isolation: isolate;
+}
+
+/* ── Print / Reduced Motion ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-apex-pulse,
+  .animate-illuminate,
+  .animate-gold-beam {
+    animation: none;
+  }
+
+  .animate-rise {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Dark mode media query — ensure correct rendering on auto-dark systems */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}

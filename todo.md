@@ -563,3 +563,22 @@
 - [x] Update index.html: Cinzel + Crimson Pro font preconnects, theme-color #020202
 - [x] 100 tests passing, 0 TypeScript errors
 - [x] Checkpoint saved, GitHub release v1.6.0-cathedral pushed
+
+## Phase 31 — Visual Enhancement & Cross-Platform Visibility [COMPLETE]
+
+- [x] Regenerate hero background: gothic vault interior with apex light beam (2752x1536px, 75% opacity)
+- [x] Regenerate features section background: lancet window light shafts on stone floor (22% opacity)
+- [x] Regenerate CTA section background: rose window close-up in amber gold (35% opacity)
+- [x] Regenerate Manus AI section background: digital-blue cathedral nave (18% opacity)
+- [x] All 4 new assets on CDN (webdev lifecycle URLs)
+- [x] Update Home.tsx CDN URLs with new high-fidelity v2 assets
+- [x] Tune hero overlay: lighter center (0.25), heavier bottom (0.88), side vignette for ultra-wide
+- [x] Tune features/CTA/Manus AI section overlays for cross-platform visibility
+- [x] Add CSS mobile typography scaling: stat-value, inscription, btn at 480px and 768px breakpoints
+- [x] Add CSS image-rendering optimization: crisp-edges for img, auto for background-image
+- [x] Add CSS prefers-reduced-motion: disable all animations for accessibility
+- [x] Add CSS prefers-color-scheme: dark color-scheme declaration
+- [x] Add iOS -webkit-text-size-adjust: 100% to prevent font inflation
+- [x] Upgrade cathedral-bg and stone-surface texture opacity (0.025 -> 0.035)
+- [x] 100 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved, GitHub release v1.6.1-visual-enhancement pushed

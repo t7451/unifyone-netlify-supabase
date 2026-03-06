@@ -3,10 +3,10 @@ import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 
 // ── Cathedral Framework Asset URLs ──────────────────────────────────────────
-const CATHEDRAL_HERO_BG    = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-hero-bg-N2WT5VwtdNgxEQjUd4uK4J.webp";
-const CATHEDRAL_FEATURES_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-features-bg-dAppRQYWJW9DPsbSVWtL8i.webp";
-const CATHEDRAL_CTA_BG     = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-cta-bg-22EwHq2vATmnZFBNXPuDhy.webp";
-const MANUS_AI_HERO        = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-hero-N2WT5VwtdNgxEQjUd4uK4J.webp";
+const CATHEDRAL_HERO_BG    = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-hero-v2-3N4uGvSKiz77L95UQXYYxJ.webp";
+const CATHEDRAL_FEATURES_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-features-v2-TQVRMkNdoVVuwphEqVNwpV.webp";
+const CATHEDRAL_CTA_BG     = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-cta-v2-SHGs9wAatFAKqbC6k4GcCb.webp";
+const CATHEDRAL_MANUS_BG   = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-manus-v2-LMRaCZwgmBR3hoFULMA6gG.webp";
 const MANUS_AI_BANNER      = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-feature-banner-N2WT5VwtdNgxEQjUd4uK4J.webp";
 
 // ── Navigation ───────────────────────────────────────────────────────────────
@@ -291,15 +291,19 @@ export default function Home() {
             src={CATHEDRAL_HERO_BG}
             alt=""
             className="w-full h-full object-cover"
-            style={{ opacity: 0.65 }}
+            style={{ opacity: 0.75 }}
           />
-          {/* Dark overlay — heavier at bottom for text legibility */}
+          {/* Dark overlay — heavier at bottom for text legibility, lighter on mobile for contrast */}
           <div className="absolute inset-0" style={{
-            background: "linear-gradient(to bottom, rgba(2,2,2,0.3) 0%, rgba(2,2,2,0.5) 40%, rgba(2,2,2,0.92) 75%, rgba(2,2,2,1) 100%)"
+            background: "linear-gradient(to bottom, rgba(2,2,2,0.25) 0%, rgba(2,2,2,0.4) 35%, rgba(2,2,2,0.88) 70%, rgba(2,2,2,1) 100%)"
           }} />
           {/* Apex light beam — gold radial from top center */}
           <div className="absolute inset-0 animate-gold-beam" style={{
-            background: "radial-gradient(ellipse 30% 50% at 50% 0%, rgba(212,168,67,0.12) 0%, transparent 60%)"
+            background: "radial-gradient(ellipse 35% 55% at 50% 0%, rgba(212,168,67,0.18) 0%, transparent 65%)"
+          }} />
+          {/* Side vignette for ultra-wide screens */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to right, rgba(2,2,2,0.5) 0%, transparent 20%, transparent 80%, rgba(2,2,2,0.5) 100%)"
           }} />
         </div>
 
@@ -375,8 +379,8 @@ export default function Home() {
       <section id="features" className="relative py-24 sm:py-32 overflow-hidden">
         {/* Cathedral lancet windows background */}
         <div className="absolute inset-0">
-          <img src={CATHEDRAL_FEATURES_BG} alt="" className="w-full h-full object-cover" style={{ opacity: 0.12 }} />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, #020202 0%, transparent 15%, transparent 85%, #020202 100%)" }} />
+          <img src={CATHEDRAL_FEATURES_BG} alt="" className="w-full h-full object-cover" style={{ opacity: 0.22 }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, #020202 0%, rgba(2,2,2,0.6) 15%, rgba(2,2,2,0.55) 85%, #020202 100%)" }} />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8">
@@ -481,8 +485,8 @@ export default function Home() {
       {/* ── MANUS AI SECTION ────────────────────────────────────────────── */}
       <section id="manus-ai" className="relative py-24 sm:py-32 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={MANUS_AI_HERO} alt="" className="w-full h-full object-cover" style={{ opacity: 0.08 }} />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #020202 0%, rgba(2,2,2,0.85) 50%, #020202 100%)" }} />
+          <img src={CATHEDRAL_MANUS_BG} alt="" className="w-full h-full object-cover" style={{ opacity: 0.18 }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(2,2,2,0.88) 0%, rgba(2,2,2,0.72) 50%, rgba(2,2,2,0.88) 100%)" }} />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8">
@@ -683,8 +687,11 @@ export default function Home() {
       <section className="relative py-24 sm:py-40 overflow-hidden">
         {/* Rose window background */}
         <div className="absolute inset-0">
-          <img src={CATHEDRAL_CTA_BG} alt="" className="w-full h-full object-cover" style={{ opacity: 0.25 }} />
-          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 80% at 50% 50%, rgba(2,2,2,0.5) 0%, rgba(2,2,2,0.95) 70%)" }} />
+          <img src={CATHEDRAL_CTA_BG} alt="" className="w-full h-full object-cover" style={{ opacity: 0.35 }} />
+          {/* Dark radial overlay — lighter center to let rose window breathe */}
+          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 70% 70% at 50% 50%, rgba(2,2,2,0.3) 0%, rgba(2,2,2,0.92) 75%)" }} />
+          {/* Edge vignette */}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(2,2,2,0.8) 0%, transparent 20%, transparent 80%, rgba(2,2,2,0.8) 100%)" }} />
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-8 text-center">
