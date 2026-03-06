@@ -607,3 +607,17 @@
 - [x] All 3 blog routes registered in App.tsx
 - [x] 100 tests passing, 0 TypeScript errors
 - [x] Checkpoint saved, GitHub release v1.6.2-seo-blitz pushed
+
+## Phase 33 — Multi-Page Public Architecture [COMPLETE]
+
+- [x] Read Home.tsx nav, App.tsx routes, index.css to plan the split
+- [x] Build PublicLayout component: shared nav + footer, active route highlighting, mobile menu, sticky CTA bar
+- [x] Home.tsx nav updated: Link components replacing anchor scrolls, NAV_LINKS point to real routes
+- [x] Build /architecture page: Six Pillars deep-dive, tech stack table, Cathedral Framework philosophy, PublicLayout wrapper
+- [x] Build /the-system page: How It Works 4-phase timeline, integrations grid, automation demo, platform features, PublicLayout wrapper
+- [x] Build /manus-ai page: AI co-pilot deep-dive, 6 context panels, floating widget demo, AI feature grid, PublicLayout wrapper
+- [x] Build /tithes page: full pricing with 3 plans, 20-row comparison table, FAQ accordion, Stripe CTAs, PublicLayout wrapper
+- [x] All 4 new routes registered in App.tsx (Architecture, TheSystem, ManusAIPage, Tithes)
+- [x] sitemap.xml updated: anchor URLs replaced with canonical page URLs (/architecture, /the-system, /manus-ai, /tithes)
+- [x] 100 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved, GitHub release v1.7.0-multipage pushed

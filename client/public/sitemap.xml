@@ -18,30 +18,30 @@
     </image:image>
   </url>
 
-  <!-- ── Feature Sections ──────────────────────────────────────────────── -->
+  <!-- ── Core Public Pages ──────────────────────────────────────────────── -->
   <url>
-    <loc>https://1commerce.online/#features</loc>
+    <loc>https://1commerce.online/architecture</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
+    <priority>0.92</priority>
   </url>
   <url>
-    <loc>https://1commerce.online/#how-it-works</loc>
+    <loc>https://1commerce.online/the-system</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.80</priority>
-  </url>
-  <url>
-    <loc>https://1commerce.online/#manus-ai</loc>
-    <lastmod>2026-03-06</lastmod>
-    <changefreq>weekly</changefreq>
     <priority>0.90</priority>
   </url>
   <url>
-    <loc>https://1commerce.online/#pricing</loc>
+    <loc>https://1commerce.online/manus-ai</loc>
     <lastmod>2026-03-06</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://1commerce.online/tithes</loc>
+    <lastmod>2026-03-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.92</priority>
   </url>
 
   <!-- ── Legal ─────────────────────────────────────────────────────────── -->

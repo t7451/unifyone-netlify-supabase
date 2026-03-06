@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 
 // ── Cathedral Framework Asset URLs ──────────────────────────────────────────
@@ -11,10 +11,10 @@ const MANUS_AI_BANNER      = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400
 
 // ── Navigation ───────────────────────────────────────────────────────────────
 const NAV_LINKS = [
-  { label: "Architecture", href: "#features" },
-  { label: "The System", href: "#how-it-works" },
-  { label: "Manus AI", href: "#manus-ai" },
-  { label: "Tithes", href: "#pricing" },
+  { label: "Architecture", href: "/architecture" },
+  { label: "The System",   href: "/the-system" },
+  { label: "Manus AI",     href: "/manus-ai" },
+  { label: "Tithes",       href: "/tithes" },
 ];
 
 // ── Feature Pillars ──────────────────────────────────────────────────────────
@@ -146,13 +146,7 @@ export default function Home() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleAnchor = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    e.preventDefault();
-    if (href.startsWith("#")) {
-      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
-    }
-    setMobileMenuOpen(false);
-  };
+  const handleNavClick = () => setMobileMenuOpen(false);
 
   return (
     <div style={{ backgroundColor: "#020202", color: "#F0E8D0", minHeight: "100vh" }}>
@@ -191,24 +185,23 @@ export default function Home() {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8">
             {NAV_LINKS.map(link => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={e => handleAnchor(e, link.href)}
-                className="transition-colors duration-200"
-                style={{
-                  fontFamily: "Cinzel, serif",
-                  fontSize: "0.65rem",
-                  fontWeight: 600,
-                  letterSpacing: "0.2em",
-                  textTransform: "uppercase",
-                  color: "#5A5A5A",
-                }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#D4A843")}
-                onMouseLeave={e => (e.currentTarget.style.color = "#5A5A5A")}
-              >
-                {link.label}
-              </a>
+              <Link key={link.href} href={link.href}>
+                <span
+                  className="cursor-pointer transition-colors duration-200"
+                  style={{
+                    fontFamily: "Cinzel, serif",
+                    fontSize: "0.65rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase" as const,
+                    color: "#5A5A5A",
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = "#D4A843")}
+                  onMouseLeave={e => (e.currentTarget.style.color = "#5A5A5A")}
+                >
+                  {link.label}
+                </span>
+              </Link>
             ))}
           </div>
 
@@ -257,22 +250,22 @@ export default function Home() {
         {mobileMenuOpen && (
           <div className="md:hidden" style={{ borderTop: "1px solid rgba(212,168,67,0.1)", backgroundColor: "rgba(2,2,2,0.98)" }}>
             {NAV_LINKS.map(link => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={e => handleAnchor(e, link.href)}
-                className="block px-6 py-4"
-                style={{
-                  fontFamily: "Cinzel, serif",
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.2em",
-                  textTransform: "uppercase",
-                  color: "#5A5A5A",
-                  borderBottom: "1px solid rgba(212,168,67,0.06)",
-                }}
-              >
-                {link.label}
-              </a>
+              <Link key={link.href} href={link.href}>
+                <span
+                  onClick={handleNavClick}
+                  className="block px-6 py-4 cursor-pointer"
+                  style={{
+                    fontFamily: "Cinzel, serif",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase" as const,
+                    color: "#5A5A5A",
+                    borderBottom: "1px solid rgba(212,168,67,0.06)",
+                  }}
+                >
+                  {link.label}
+                </span>
+              </Link>
             ))}
             <div className="px-6 py-4">
               <a href={getLoginUrl()} className="btn-illuminate block text-center" style={{ padding: "0.75rem 1.5rem", fontSize: "0.7rem" }}>
@@ -336,13 +329,11 @@ export default function Home() {
             <a href={getLoginUrl()} className="btn-illuminate inline-block text-center">
               Begin Construction
             </a>
-            <a
-              href="#features"
-              onClick={e => handleAnchor(e, "#features")}
-              className="btn-ghost-gold inline-block text-center"
-            >
-              View the Architecture
-            </a>
+            <Link href="/architecture">
+              <span className="btn-ghost-gold inline-block text-center cursor-pointer">
+                View the Architecture
+              </span>
+            </Link>
           </div>
 
           {/* Stat row — separated by pillar lines */}
@@ -717,14 +708,11 @@ export default function Home() {
             <a href={getLoginUrl()} className="btn-illuminate inline-block" style={{ padding: "1rem 2.5rem" }}>
               Lay the First Stone
             </a>
-            <a
-              href="#features"
-              onClick={e => handleAnchor(e, "#features")}
-              className="btn-ghost-gold inline-block"
-              style={{ padding: "1rem 2.5rem" }}
-            >
-              Study the Plans
-            </a>
+            <Link href="/architecture">
+              <span className="btn-ghost-gold inline-block cursor-pointer" style={{ padding: "1rem 2.5rem" }}>
+                Study the Plans
+              </span>
+            </Link>
           </div>
 
           <p className="font-crimson text-sm mt-8" style={{ color: "#3A3A3A" }}>

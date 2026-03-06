@@ -44,6 +44,10 @@ import SyncMonitor from "./pages/SyncMonitor";
 import GigEcommercePost from "./pages/blog/GigEcommercePost";
 import MultiTenantPost from "./pages/blog/MultiTenantPost";
 import ManusAIPost from "./pages/blog/ManusAIPost";
+import Architecture from "./pages/Architecture";
+import TheSystem from "./pages/TheSystem";
+import ManusAIPage from "./pages/ManusAIPage";
+import Tithes from "./pages/Tithes";
 import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
 import { getLoginUrl } from "./const";
@@ -132,6 +136,11 @@ function Router() {
       <Route path="/sovereign" component={Sovereign} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
+      {/* Public Multi-Page Routes */}
+      <Route path="/architecture" component={Architecture} />
+      <Route path="/the-system" component={TheSystem} />
+      <Route path="/manus-ai" component={ManusAIPage} />
+      <Route path="/tithes" component={Tithes} />
       {/* SEO Blog Routes */}
       <Route path="/blog/gig-economy-commerce-platform" component={GigEcommercePost} />
       <Route path="/blog/multi-tenant-ecommerce-saas" component={MultiTenantPost} />
