@@ -1,8 +1,8 @@
-import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { getLoginUrl } from "@/const";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 const CANONICAL = "https://1commerce.online/architecture";
 
@@ -103,6 +103,8 @@ const TECH_STACK = [
 ];
 
 export default function Architecture() {
+  const pillarsRef = useScrollReveal<HTMLDivElement>(0.1);
+
   return (
     <PublicLayout>
       <Helmet>
@@ -177,10 +179,12 @@ export default function Architecture() {
             <span className="inscription block mb-4">Structural Elements</span>
             <h2 className="font-cinzel text-3xl sm:text-4xl font-bold" style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}>The Six Pillars</h2>
           </div>
-          <div className="space-y-0">
+          <div className="space-y-0" ref={pillarsRef}>
             {PILLARS.map((pillar, i) => (
               <div
                 key={i}
+                data-reveal
+                data-reveal-delay={String(i * 120)}
                 className="grid grid-cols-1 lg:grid-cols-12 gap-0"
                 style={{ borderTop: "1px solid rgba(212,168,67,0.08)" }}
               >

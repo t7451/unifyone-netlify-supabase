@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { getLoginUrl } from "@/const";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 const CANONICAL = "https://1commerce.online/the-system";
 
@@ -109,6 +110,8 @@ const PLATFORM_FEATURES = [
 ];
 
 export default function TheSystem() {
+  const phasesRef = useScrollReveal<HTMLDivElement>(0.1);
+
   return (
     <PublicLayout>
       <Helmet>
@@ -156,10 +159,12 @@ export default function TheSystem() {
             <span className="inscription block mb-4">The Build Sequence</span>
             <h2 className="font-cinzel text-3xl sm:text-4xl font-bold" style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}>Four Phases of Construction</h2>
           </div>
-          <div className="space-y-0">
+          <div className="space-y-0" ref={phasesRef}>
             {CONSTRUCTION_PHASES.map((phase, i) => (
               <div
                 key={i}
+                data-reveal
+                data-reveal-delay={String(i * 150)}
                 className="grid grid-cols-1 lg:grid-cols-12 gap-0 py-12"
                 style={{ borderTop: "1px solid rgba(212,168,67,0.08)" }}
               >

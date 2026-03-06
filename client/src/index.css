@@ -416,6 +416,10 @@
 .animate-rise        { animation: rise 0.6s ease-out forwards; }
 .animate-gold-beam   { animation: gold-beam 6s ease-in-out infinite; }
 
+/* ── Scroll Reveal ──────────────────────────────────────────────────────── */
+.reveal-hidden  { opacity: 0; transform: translateY(24px); transition: none; }
+.reveal-visible { animation: rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
 /* ── Scrollbar ──────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--stone-void); }

@@ -633,3 +633,14 @@
 - [x] All 4 pages: removed manual useEffect document.title/querySelector hacks replaced with Helmet
 - [x] 100 tests passing, 0 TypeScript errors
 - [x] Checkpoint saved, GitHub release v1.7.1-jsonld pushed
+
+## Phase 35 — Scroll-Triggered IntersectionObserver Reveals [COMPLETE]
+
+- [x] Confirmed animate-rise keyframe in index.css (rise 0.6s ease-out forwards)
+- [x] Built useScrollReveal<T> custom hook: IntersectionObserver, threshold 0.1, rootMargin 0px 0px -40px 0px, animates once, prefers-reduced-motion safe
+- [x] Added reveal-hidden / reveal-visible CSS utility classes to index.css (cubic-bezier 0.22,1,0.36,1)
+- [x] Wired Six Pillars grid on /architecture: each of 6 pillar rows has data-reveal + data-reveal-delay (0, 120, 240, 360, 480, 600ms)
+- [x] Wired 4-phase timeline on /the-system: each of 4 phase blocks has data-reveal + data-reveal-delay (0, 150, 300, 450ms)
+- [x] Removed stale useEffect import from Architecture.tsx
+- [x] 100 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved, GitHub release v1.7.2-scroll-reveal pushed
