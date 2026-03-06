@@ -700,3 +700,13 @@
 - [x] Verified CAPI helper hashes user data (SHA256) per Meta spec
 - [x] 101 tests passing, 0 TypeScript errors
 - [x] Checkpoint saved, GitHub release v1.7.5-stripe-capi pushed
+
+
+## Phase 38 — Documentation Nav Link [COMPLETE]
+
+- [x] Added Documentation link to NAV_LINKS in PublicLayout.tsx
+- [x] Link points to /documents with consistent Cathedral styling
+- [x] Appears in both desktop nav and mobile menu
+- [x] Active state highlighting works (gold when on /documents)
+- [x] 128 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved, GitHub release v1.7.6-docs-nav pushed

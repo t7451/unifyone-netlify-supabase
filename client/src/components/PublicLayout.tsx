@@ -7,6 +7,7 @@ const NAV_LINKS = [
   { label: "The System",   href: "/the-system" },
   { label: "Manus AI",     href: "/manus-ai" },
   { label: "Tithes",       href: "/tithes" },
+  { label: "Documentation", href: "/documents" },
 ];
 
 interface PublicLayoutProps {
