@@ -689,3 +689,14 @@
 - [x] All 4 pages use Helmet with per-page JSON-LD (WebPage + BreadcrumbList + HowTo/Article/TechArticle schemas)
 - [x] 101 tests passing, 0 TypeScript errors
 - [x] Checkpoint saved, GitHub release v1.7.4-documents pushed
+
+## Phase 37 — Stripe to Meta CAPI Purchase Event [COMPLETE]
+
+- [x] Read current Stripe webhook handler (/api/stripe/webhook) — already wired
+- [x] Verified capi.purchase() fires on checkout.session.completed (lines 125-131, 162-169)
+- [x] Verified META_TEST_EVENT_CODE is passed to sendCAPIEvent() for test mode (line 97)
+- [x] Verified purchase event includes user email, amount, currency, and timestamp
+- [x] Verified event ID uses unique identifiers (stripe_theme_${sessionId}, stripe_sub_${sessionId})
+- [x] Verified CAPI helper hashes user data (SHA256) per Meta spec
+- [x] 101 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved, GitHub release v1.7.5-stripe-capi pushed
