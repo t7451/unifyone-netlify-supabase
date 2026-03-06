@@ -48,6 +48,10 @@ import Architecture from "./pages/Architecture";
 import TheSystem from "./pages/TheSystem";
 import ManusAIPage from "./pages/ManusAIPage";
 import Tithes from "./pages/Tithes";
+import Documents from "./pages/Documents";
+import CaseStudies from "./pages/CaseStudies";
+import IntegrationGuides from "./pages/IntegrationGuides";
+import WorkProof from "./pages/WorkProof";
 import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
 import { getLoginUrl } from "./const";
@@ -141,6 +145,11 @@ function Router() {
       <Route path="/the-system" component={TheSystem} />
       <Route path="/manus-ai" component={ManusAIPage} />
       <Route path="/tithes" component={Tithes} />
+      {/* Documentation Routes */}
+      <Route path="/documents" component={Documents} />
+      <Route path="/documents/case-studies" component={CaseStudies} />
+      <Route path="/documents/integrations" component={IntegrationGuides} />
+      <Route path="/documents/work-proof" component={WorkProof} />
       {/* SEO Blog Routes */}
       <Route path="/blog/gig-economy-commerce-platform" component={GigEcommercePost} />
       <Route path="/blog/multi-tenant-ecommerce-saas" component={MultiTenantPost} />

@@ -58,6 +58,32 @@
     <priority>0.3</priority>
   </url>
 
+  <!-- ── Documentation ───────────────────────────────────────────────────── -->
+  <url>
+    <loc>https://1commerce.online/documents</loc>
+    <lastmod>2026-03-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://1commerce.online/documents/case-studies</loc>
+    <lastmod>2026-03-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://1commerce.online/documents/integrations</loc>
+    <lastmod>2026-03-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://1commerce.online/documents/work-proof</loc>
+    <lastmod>2026-03-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
   <!-- ── Blog / Content Marketing ──────────────────────────────────────── -->
   <url>
     <loc>https://1commerce.online/blog/gig-economy-commerce-platform</loc>

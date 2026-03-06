@@ -661,3 +661,31 @@
 - [x] Wire landing page capture form to trpc.email.capture.useMutation
 - [x] 101 tests passing (100 + 1 Resend validation test), 0 TypeScript errors
 - [x] Checkpoint saved, GitHub release v1.7.3-resend-email-capture pushed
+
+## Phase 36 — Documents Section Overhaul: Work Proof + Integration Guides
+
+- [ ] Plan documents section architecture: /documents landing, /documents/case-studies, /documents/integrations, /documents/work-proof
+- [ ] Build /documents landing page: tabbed nav (Overview, Case Studies, Integration Guides, Work Proof), Cathedral aesthetic
+- [ ] Build /documents/case-studies page: 3-5 case studies (Cathedral Framework, Manus AI Integration, Multi-Tenant Commerce, Stripe CAPI Bridge, Scroll Reveals)
+- [ ] Build /documents/integrations page: Claude + Manus integration guide (from manus-integration.jsx), code blocks, checklist, n8n bridge
+- [ ] Build /documents/work-proof page: project timeline (35 phases), deliverables grid, technical achievements, GitHub releases
+- [ ] Add DocumentsLayout wrapper (shared nav + sidebar)
+- [ ] Register all document routes in App.tsx
+- [ ] Update sitemap.xml with /documents/* URLs
+- [ ] Add per-page Helmet JSON-LD (Article schema for case studies, HowTo for integrations, WebPage for work-proof)
+- [ ] 100+ tests passing, 0 TypeScript errors
+- [ ] Checkpoint saved, GitHub release v1.8.0-documents pushed
+
+
+## Phase 36 — Documents Section Overhaul [COMPLETE]
+
+- [x] Read manus-integration.jsx and plan documents architecture
+- [x] Build /documents landing page with tabbed navigation (Overview, Case Studies, Integrations, Work Proof)
+- [x] Build /documents/case-studies page with 5 detailed case studies (Cathedral Framework, Manus AI, Multi-Tenant Commerce, Stripe Integration, SEO Blitz)
+- [x] Build /documents/integrations page with Claude + Manus integration guide, 7 code blocks, and 10-item checklist
+- [x] Build /documents/work-proof page with 36-phase timeline, 6 achievement categories, and GitHub release link
+- [x] Add Documents imports and routes to App.tsx (/documents, /documents/case-studies, /documents/integrations, /documents/work-proof)
+- [x] Update sitemap.xml with 4 new documentation URLs (priority 0.85, monthly changefreq)
+- [x] All 4 pages use Helmet with per-page JSON-LD (WebPage + BreadcrumbList + HowTo/Article/TechArticle schemas)
+- [x] 101 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved, GitHub release v1.7.4-documents pushed
