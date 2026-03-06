@@ -621,3 +621,15 @@
 - [x] sitemap.xml updated: anchor URLs replaced with canonical page URLs (/architecture, /the-system, /manus-ai, /tithes)
 - [x] 100 tests passing, 0 TypeScript errors
 - [x] Checkpoint saved, GitHub release v1.7.0-multipage pushed
+
+## Phase 34 — Per-Page JSON-LD & Canonical Meta Tags [COMPLETE]
+
+- [x] Install react-helmet-async 3.0.0
+- [x] Add HelmetProvider to main.tsx wrapping entire app
+- [x] /architecture: Helmet with title, description, canonical, OG, Twitter + 3 JSON-LD schemas (WebPage, BreadcrumbList, TechArticle)
+- [x] /the-system: Helmet with title, description, canonical, OG, Twitter + 3 JSON-LD schemas (WebPage, BreadcrumbList, HowTo with 4 steps)
+- [x] /manus-ai: Helmet with title, description, canonical, OG, Twitter + 3 JSON-LD schemas (WebPage, BreadcrumbList, SoftwareApplication with featureList + Offer)
+- [x] /tithes: Helmet with title, description, canonical, OG, Twitter + 3 JSON-LD schemas (WebPage, BreadcrumbList, ItemList with 3 Offer tiers including prices)
+- [x] All 4 pages: removed manual useEffect document.title/querySelector hacks replaced with Helmet
+- [x] 100 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved, GitHub release v1.7.1-jsonld pushed

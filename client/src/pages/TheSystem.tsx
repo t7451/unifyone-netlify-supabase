@@ -1,7 +1,43 @@
-import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { getLoginUrl } from "@/const";
+
+const CANONICAL = "https://1commerce.online/the-system";
+
+const JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": CANONICAL,
+    "url": CANONICAL,
+    "name": "The System — How UnifyOne Works | UnifyOne",
+    "description": "How UnifyOne works: four sequential construction phases, ten integrations, and six platform features that replace three separate SaaS tools.",
+    "isPartOf": { "@id": "https://1commerce.online/#website" },
+    "inLanguage": "en-US"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://1commerce.online/" },
+      { "@type": "ListItem", "position": 2, "name": "The System", "item": CANONICAL }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to Build a Commerce Platform with UnifyOne",
+    "description": "Four sequential phases to launch a fully operational multi-tenant commerce platform: foundation, walls, vaults, and spire.",
+    "url": CANONICAL,
+    "step": [
+      { "@type": "HowToStep", "position": 1, "name": "Lay the Foundation", "text": "Create your tenant, configure your store identity, and connect your payment rails." },
+      { "@type": "HowToStep", "position": 2, "name": "Raise the Walls", "text": "Import your product catalog, configure inventory thresholds, and define your order processing rules." },
+      { "@type": "HowToStep", "position": 3, "name": "Install the Vaults", "text": "Wire your automation layer — n8n workflows, Zapier hooks, and email sequences fire on real commerce events." },
+      { "@type": "HowToStep", "position": 4, "name": "Light the Spire", "text": "Activate Manus AI. Your co-pilot reads your actual operational data and surfaces insights and earnings projections." }
+    ]
+  }
+];
 
 const CATHEDRAL_FEATURES_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-features-v2-TQVRMkNdoVVuwphEqVNwpV.webp";
 
@@ -73,16 +109,22 @@ const PLATFORM_FEATURES = [
 ];
 
 export default function TheSystem() {
-  useEffect(() => {
-    document.title = "The System — How UnifyOne Works | UnifyOne";
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", "How UnifyOne works: four construction phases, ten integrations, and six platform features that replace three separate SaaS tools.");
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) canonical.setAttribute("href", "https://1commerce.online/the-system");
-  }, []);
-
   return (
     <PublicLayout>
+      <Helmet>
+        <title>The System — How UnifyOne Works | UnifyOne</title>
+        <meta name="description" content="How UnifyOne works: four sequential construction phases, ten integrations, and six platform features that replace three separate SaaS tools. Commerce infrastructure built to endure." />
+        <link rel="canonical" href={CANONICAL} />
+        <meta property="og:title" content="The System — How UnifyOne Works | UnifyOne" />
+        <meta property="og:description" content="Four construction phases. Ten integrations. Six platform features. One unified commerce system." />
+        <meta property="og:url" content={CANONICAL} />
+        <meta property="og:type" content="article" />
+        <meta name="twitter:title" content="The System — How UnifyOne Works | UnifyOne" />
+        <meta name="twitter:description" content="Four construction phases. Ten integrations. Six platform features. One unified commerce system." />
+        {JSON_LD.map((schema, i) => (
+          <script key={i} type="application/ld+json">{JSON.stringify(schema)}</script>
+        ))}
+      </Helmet>
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section className="relative pt-32 pb-24 overflow-hidden">
         <div

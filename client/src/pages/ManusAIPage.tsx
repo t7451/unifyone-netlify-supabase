@@ -1,7 +1,53 @@
-import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { getLoginUrl } from "@/const";
+
+const CANONICAL = "https://1commerce.online/manus-ai";
+
+const JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": CANONICAL,
+    "url": CANONICAL,
+    "name": "Manus AI — Your Gig Commerce Co-Pilot | UnifyOne",
+    "description": "Manus AI embedded in UnifyOne: context-aware insights on every dashboard page, route optimization, tax intelligence, and a full conversational assistant powered by your actual operational data.",
+    "isPartOf": { "@id": "https://1commerce.online/#website" },
+    "inLanguage": "en-US"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://1commerce.online/" },
+      { "@type": "ListItem", "position": 2, "name": "Manus AI", "item": CANONICAL }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Manus AI for UnifyOne",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "url": CANONICAL,
+    "description": "Context-aware AI co-pilot embedded in UnifyOne commerce platform. Provides route optimization, earnings projections, tax intelligence, and conversational assistance powered by live operational data.",
+    "featureList": [
+      "Context-aware AI insights on every dashboard page",
+      "Route optimization for gig delivery workers",
+      "Tax deduction intelligence and mileage tracking",
+      "Earnings projections and platform comparison",
+      "Full conversational chat with conversation history",
+      "Floating AI widget accessible from any page"
+    ],
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "description": "Included in all UnifyOne plans"
+    }
+  }
+];
 
 const CATHEDRAL_MANUS_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-manus-v2-LMRaCZwgmBR3hoFULMA6gG.webp";
 const MANUS_AI_BANNER    = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-feature-banner-N2WT5VwtdNgxEQjUd4uK4J.webp";
@@ -82,16 +128,22 @@ const CHAT_DEMO = [
 ];
 
 export default function ManusAIPage() {
-  useEffect(() => {
-    document.title = "Manus AI — Your Gig Commerce Co-Pilot | UnifyOne";
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", "Manus AI embedded in UnifyOne: context-aware insights on every dashboard page, route optimization, tax intelligence, and a full conversational assistant — all powered by your actual operational data.");
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) canonical.setAttribute("href", "https://1commerce.online/manus-ai");
-  }, []);
-
   return (
     <PublicLayout>
+      <Helmet>
+        <title>Manus AI — Your Gig Commerce Co-Pilot | UnifyOne</title>
+        <meta name="description" content="Manus AI embedded in UnifyOne: context-aware insights on every dashboard page, route optimization, tax intelligence, and a full conversational assistant — all powered by your actual operational data." />
+        <link rel="canonical" href={CANONICAL} />
+        <meta property="og:title" content="Manus AI — Your Gig Commerce Co-Pilot | UnifyOne" />
+        <meta property="og:description" content="Context-aware AI insights, route optimization, and tax intelligence — powered by your live operational data." />
+        <meta property="og:url" content={CANONICAL} />
+        <meta property="og:type" content="article" />
+        <meta name="twitter:title" content="Manus AI — Your Gig Commerce Co-Pilot | UnifyOne" />
+        <meta name="twitter:description" content="Context-aware AI insights, route optimization, and tax intelligence — powered by your live operational data." />
+        {JSON_LD.map((schema, i) => (
+          <script key={i} type="application/ld+json">{JSON.stringify(schema)}</script>
+        ))}
+      </Helmet>
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section className="relative pt-32 pb-24 overflow-hidden">
         <div

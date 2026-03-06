@@ -1,7 +1,48 @@
 import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { getLoginUrl } from "@/const";
+
+const CANONICAL = "https://1commerce.online/architecture";
+
+const JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": CANONICAL,
+    "url": CANONICAL,
+    "name": "Architecture — UnifyOne Cathedral Framework",
+    "description": "Explore the six structural pillars of UnifyOne: multi-tenant foundation, commerce infrastructure, payment orchestration, automation mesh, social intelligence, and Manus AI. Built on the Cathedral Framework — sequential, structural, built to endure.",
+    "isPartOf": { "@id": "https://1commerce.online/#website" },
+    "inLanguage": "en-US",
+    "publisher": {
+      "@type": "Organization",
+      "name": "1Commerce / PNW Enterprises",
+      "url": "https://1commerce.online"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://1commerce.online/" },
+      { "@type": "ListItem", "position": 2, "name": "Architecture", "item": CANONICAL }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "The Cathedral Framework: Six Structural Pillars of UnifyOne",
+    "description": "A deep-dive into the architectural principles behind UnifyOne — multi-tenant isolation, payment orchestration, automation mesh, and Manus AI integration.",
+    "url": CANONICAL,
+    "author": { "@type": "Organization", "name": "1Commerce / PNW Enterprises" },
+    "publisher": { "@type": "Organization", "name": "1Commerce", "url": "https://1commerce.online" },
+    "keywords": "multi-tenant commerce architecture, Cathedral Framework, gig economy platform, commerce infrastructure, tRPC, Drizzle ORM",
+    "datePublished": "2026-03-06",
+    "dateModified": "2026-03-06"
+  }
+];
 
 const CATHEDRAL_FEATURES_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-features-v2-TQVRMkNdoVVuwphEqVNwpV.webp";
 
@@ -62,16 +103,22 @@ const TECH_STACK = [
 ];
 
 export default function Architecture() {
-  useEffect(() => {
-    document.title = "Architecture — Cathedral Framework | UnifyOne";
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", "The Six Pillars of UnifyOne's Cathedral Framework: multi-tenant foundation, commerce infrastructure, payment orchestration, automation nave, analytics clerestory, and Manus AI spire.");
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) canonical.setAttribute("href", "https://1commerce.online/architecture");
-  }, []);
-
   return (
     <PublicLayout>
+      <Helmet>
+        <title>Architecture — Cathedral Framework | UnifyOne</title>
+        <meta name="description" content="Explore the six structural pillars of UnifyOne: multi-tenant foundation, commerce infrastructure, payment orchestration, automation mesh, social intelligence, and Manus AI. Built on the Cathedral Framework — sequential, structural, built to endure." />
+        <link rel="canonical" href={CANONICAL} />
+        <meta property="og:title" content="Architecture — Cathedral Framework | UnifyOne" />
+        <meta property="og:description" content="Six structural pillars. Zero plugin dependencies. Built to outlast every platform trend." />
+        <meta property="og:url" content={CANONICAL} />
+        <meta property="og:type" content="article" />
+        <meta name="twitter:title" content="Architecture — Cathedral Framework | UnifyOne" />
+        <meta name="twitter:description" content="Six structural pillars. Zero plugin dependencies. Built to outlast every platform trend." />
+        {JSON_LD.map((schema, i) => (
+          <script key={i} type="application/ld+json">{JSON.stringify(schema)}</script>
+        ))}
+      </Helmet>
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section className="relative pt-32 pb-24 overflow-hidden">
         <div

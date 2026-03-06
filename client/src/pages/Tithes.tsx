@@ -1,7 +1,78 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { getLoginUrl } from "@/const";
+
+const CANONICAL = "https://1commerce.online/tithes";
+
+const JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": CANONICAL,
+    "url": CANONICAL,
+    "name": "Tithes — Pricing | UnifyOne",
+    "description": "UnifyOne pricing: Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). All plans include multi-tenant commerce infrastructure. Manus AI included in Architect and above.",
+    "isPartOf": { "@id": "https://1commerce.online/#website" },
+    "inLanguage": "en-US"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://1commerce.online/" },
+      { "@type": "ListItem", "position": 2, "name": "Tithes", "item": CANONICAL }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "UnifyOne Pricing Plans",
+    "url": CANONICAL,
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "item": {
+          "@type": "Offer",
+          "name": "Acolyte",
+          "description": "Free forever. 1 store, 50 products, 100 orders/month, 2 team members. Stripe + PayPal rails.",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "url": CANONICAL
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "item": {
+          "@type": "Offer",
+          "name": "Architect",
+          "description": "$49/month. 5 stores, 500 products, unlimited orders, 10 team members, Manus AI, social suite, referral engine.",
+          "price": "49",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "url": CANONICAL
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "item": {
+          "@type": "Offer",
+          "name": "Cathedral",
+          "description": "$149/month. Unlimited stores, unlimited products, unlimited orders, unlimited team members, white-label, SLA, dedicated support.",
+          "price": "149",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "url": CANONICAL
+        }
+      }
+    ]
+  }
+];
 
 const CATHEDRAL_CTA_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-cta-v2-SHGs9wAatFAKqbC6k4GcCb.webp";
 
@@ -123,16 +194,22 @@ export default function Tithes() {
   const [yearly, setYearly] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  useEffect(() => {
-    document.title = "Tithes — Pricing | UnifyOne";
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", "UnifyOne pricing: Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). All plans include multi-tenant commerce infrastructure. Manus AI included in Architect and above.");
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) canonical.setAttribute("href", "https://1commerce.online/tithes");
-  }, []);
-
   return (
     <PublicLayout>
+      <Helmet>
+        <title>Tithes — Pricing | UnifyOne</title>
+        <meta name="description" content="UnifyOne pricing: Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). All plans include multi-tenant commerce infrastructure. Manus AI included in Architect and above." />
+        <link rel="canonical" href={CANONICAL} />
+        <meta property="og:title" content="Tithes — Pricing | UnifyOne" />
+        <meta property="og:description" content="Free forever to $149/mo. Multi-tenant commerce infrastructure, Manus AI, social suite, and referral engine. No plugin dependencies." />
+        <meta property="og:url" content={CANONICAL} />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:title" content="Tithes — Pricing | UnifyOne" />
+        <meta name="twitter:description" content="Free forever to $149/mo. Multi-tenant commerce infrastructure, Manus AI, social suite, and referral engine." />
+        {JSON_LD.map((schema, i) => (
+          <script key={i} type="application/ld+json">{JSON.stringify(schema)}</script>
+        ))}
+      </Helmet>
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section className="relative pt-32 pb-24 overflow-hidden">
         <div
