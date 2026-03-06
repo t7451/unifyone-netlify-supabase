@@ -310,7 +310,7 @@ export default function Home() {
           {/* Inscription label */}
           <div className="flex items-center gap-4 mb-8">
             <div className="h-px flex-1 max-w-12" style={{ backgroundColor: "rgba(212,168,67,0.4)" }} />
-            <span className="inscription">PNW Enterprises · Est. 2024 · Cathedral Framework</span>
+            <span className="inscription">PNW Enterprises · Est. 2025 · Cathedral Framework</span>
             <div className="h-px flex-1 max-w-12" style={{ backgroundColor: "rgba(212,168,67,0.4)" }} />
           </div>
 
@@ -871,7 +871,7 @@ export default function Home() {
 
           <div className="mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4" style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}>
             <span className="inscription" style={{ color: "#2A2A2A" }}>
-              © 2024 1Commerce Solutions · PNW Enterprises · All rights reserved
+              © 2025 1Commerce Solutions · PNW Enterprises · All rights reserved
             </span>
             <span className="inscription" style={{ color: "#2A2A2A" }}>
               Cathedral Framework v1.6

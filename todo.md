@@ -735,3 +735,37 @@
 - [x] Wire DocsChat route in App.tsx
 - [x] 128 tests passing, 0 TypeScript errors
 - [x] Checkpoint saved, GitHub release v1.7.7-claude-docs-chat pushed
+
+
+## Phase 40 — Establishment Year + Chat with Docs Link
+
+- [ ] Update establishment year from 2024 to 2025 across all pages (Home, Architecture, About, footer)
+- [ ] Add "Chat with Docs" button/link to Documents page pointing to /docs-chat
+- [ ] Update meta tags and schema to reflect 2025 founding year
+- [ ] 128 tests passing, 0 TypeScript errors
+
+## Phase 41 — Populate Master Intelligence Documents
+
+- [ ] Populate 00_Master_Intelligence.md: strategic overview, ecosystem map, mission statement
+- [ ] Populate 01_Governance_and_Compliance.md: governance charter, escalation logic, regulatory posture
+- [ ] Populate 02_Investor_and_Board.md: pitch narrative, defensibility, capital strategy, board structure
+- [ ] Populate 03_Technical_Architecture.md: system layers, agent roles, V4 Autonomous Expansion Mode
+- [ ] Populate 04_Brand_and_Persona_Canon.md: identity doctrine, personas, voice constraints, SSOT rules
+- [ ] Create CLAUDE_INTEGRATION.md: Claude API integration patterns, safety constraints, autonomous decision rules
+
+## Phase 42 — Seed Master Intelligence into Claude Chatbot
+
+- [ ] Extract and chunk all 6 Master Intelligence documents
+- [ ] Generate embeddings for each chunk via Claude API
+- [ ] Seed documentEmbeddings table with governance, brand, and technical knowledge
+- [ ] Test Claude chatbot with governance-specific queries
+
+## Phase 43 — Build Governance Dashboard
+
+- [ ] Create governanceRules table: rule_id, category, constraint, escalation_path, audit_log
+- [ ] Build /admin/governance page: authenticated, role-based access (admin only)
+- [ ] Dashboard sections: Governance Rules, Escalation Paths, Audit Log, Version Control
+- [ ] Wire governance rules to tRPC procedures with pre-execution validation
+- [ ] Add kill-switch mechanism for autonomous actions
+- [ ] 128 tests passing, 0 TypeScript errors
+- [ ] Checkpoint saved, GitHub release v1.8.0-master-intelligence pushed
