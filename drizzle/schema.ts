@@ -1008,3 +1008,21 @@ export const aiConversations = mysqlTable("ai_conversations", {
 });
 export type AiConversation = typeof aiConversations.$inferSelect;
 export type InsertAiConversation = typeof aiConversations.$inferInsert;
+
+// ── Email Subscribers ─────────────────────────────────────────────────────────
+export const emailSubscribers = mysqlTable("email_subscribers", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  firstName: varchar("firstName", { length: 255 }),
+  lastName: varchar("lastName", { length: 255 }),
+  status: mysqlEnum("status", ["subscribed", "unsubscribed", "bounced"]).default("subscribed").notNull(),
+  source: varchar("source", { length: 50 }).default("landing_page").notNull(), // landing_page, blog, referral, etc.
+  dripsCompleted: int("dripsCompleted").default(0).notNull(), // Track which drip emails have been sent (0-5)
+  lastDripSentAt: timestamp("lastDripSentAt"),
+  metadata: json("metadata").$type<Record<string, unknown>>(), // Store custom data like utm params, referral source, etc.
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EmailSubscriber = typeof emailSubscribers.$inferSelect;
+export type InsertEmailSubscriber = typeof emailSubscribers.$inferInsert;

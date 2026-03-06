@@ -644,3 +644,20 @@
 - [x] Removed stale useEffect import from Architecture.tsx
 - [x] 100 tests passing, 0 TypeScript errors
 - [x] Checkpoint saved, GitHub release v1.7.2-scroll-reveal pushed
+
+## Phase 28 — Resend Email Capture + 5-Email Drip Sequence [COMPLETE]
+
+- [x] Install resend npm package (3.4.0)
+- [x] Add RESEND_API_KEY secret via webdev_request_secrets (user provided: re_V7PK9QxQ_2dkqYqwuxcyA3ogixc1NQZN5)
+- [x] Validate Resend API key with test (server/resend.test.ts passes)
+- [x] email_subscribers table: id, email, firstName, lastName, source, status, dripsCompleted, metadata, createdAt, lastDripSentAt + migration applied
+- [x] emailRouter: capture (public, duplicate check, insert, send welcome), getByEmail (query), unsubscribe (mutation)
+- [x] Register emailRouter in server/routers.ts (trpc.email.*)
+- [x] Build emailTemplates.ts: 5 HTML templates (welcome, platformOverview, gettingStarted, successStories, limitedOffer) with Cathedral aesthetic
+- [x] Build dripScheduler.ts: sendDripEmail (single email send), processPendingDrips (cron job), sendWelcomeEmail (immediate)
+- [x] Drip schedule: [1, 0hrs, welcome], [2, 48hrs, platformOverview], [3, 96hrs, gettingStarted], [4, 168hrs, successStories], [5, 336hrs, limitedOffer]
+- [x] Wire sendWelcomeEmail in emailRouter.capture mutation (fires immediately on subscribe)
+- [x] Email capture UI section on Home.tsx: "Join the Cathedral" above footer, email input + SUBSCRIBE button, success/error states, unsubscribe link
+- [x] Wire landing page capture form to trpc.email.capture.useMutation
+- [x] 101 tests passing (100 + 1 Resend validation test), 0 TypeScript errors
+- [x] Checkpoint saved, GitHub release v1.7.3-resend-email-capture pushed

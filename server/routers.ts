@@ -27,6 +27,7 @@ import { gamificationRouter } from "./routers/gamification";
 import { socialFriendsRouter } from "./routers/socialFriends";
 import { mobileAutomationRouter } from "./routers/mobileAutomation";
 import { manusAIRouter } from "./routers/manusAI";
+import { emailRouter } from "./routers/email";
 
 export const appRouter = router({
   system: systemRouter,
@@ -65,6 +66,7 @@ export const appRouter = router({
   socialFriends: socialFriendsRouter,
   mobileAutomation: mobileAutomationRouter,
   manusAI: manusAIRouter,
+  email: emailRouter,
 });
 
 export type AppRouter = typeof appRouter;

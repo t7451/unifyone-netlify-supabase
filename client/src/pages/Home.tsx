@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
+import { trpc } from "@/lib/trpc";
 
 // ── Cathedral Framework Asset URLs ──────────────────────────────────────────
 const CATHEDRAL_HERO_BG    = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-hero-v2-3N4uGvSKiz77L95UQXYYxJ.webp";
@@ -135,7 +136,11 @@ const INTEGRATIONS = [
 ];
 
 export default function Home() {
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
+  const [emailInput, setEmailInput] = useState("");
+  const [emailStatus, setEmailStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [emailMessage, setEmailMessage] = useState("");
+  const emailCapture = trpc.email.capture.useMutation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
@@ -208,7 +213,7 @@ export default function Home() {
           {/* CTA */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setLocation("/dashboard")}
+              onClick={() => navigate("/dashboard")}
               className="hidden sm:block transition-all duration-200"
               style={{
                 fontFamily: "Cinzel, serif",
@@ -721,6 +726,101 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── EMAIL CAPTURE ───────────────────────────────────────────────── */}
+      <section style={{ backgroundColor: "#020202", borderTop: "1px solid rgba(212,168,67,0.1)" }} className="py-24">
+        <div className="max-w-2xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-12">
+            <span className="inscription block mb-4">STAY CONNECTED</span>
+            <h2 className="font-cinzel text-3xl sm:text-4xl font-bold" style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}>Join the Cathedral</h2>
+            <p className="font-crimson text-lg mt-6" style={{ color: "#9A9A9A", lineHeight: 1.8 }}>Get exclusive insights, early access to features, and the Cathedral Principle delivered to your inbox.</p>
+          </div>
+
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!emailInput.trim()) return;
+              
+              setEmailStatus("loading");
+              setEmailMessage("");
+              
+              try {
+                const result = await emailCapture.mutateAsync({
+                  email: emailInput,
+                  source: "landing_page",
+                });
+                
+                if (result.success) {
+                  setEmailStatus("success");
+                  setEmailMessage(result.message);
+                  setEmailInput("");
+                  setTimeout(() => setEmailStatus("idle"), 5000);
+                } else {
+                  setEmailStatus("error");
+                  setEmailMessage(result.message || "An error occurred");
+                }
+              } catch (error) {
+                setEmailStatus("error");
+                setEmailMessage("Failed to subscribe. Please try again.");
+              }
+            }}
+            className="flex flex-col sm:flex-row gap-3 mb-6"
+          >
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              disabled={emailStatus === "loading" || emailStatus === "success"}
+              style={{
+                flex: 1,
+                padding: "12px 16px",
+                backgroundColor: "rgba(212,168,67,0.05)",
+                border: "1px solid rgba(212,168,67,0.2)",
+                color: "#F0E8D0",
+                fontFamily: "'Crimson Pro', serif",
+                fontSize: "16px",
+              }}
+              className="focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={emailStatus === "loading" || emailStatus === "success"}
+              className="btn-gold"
+              style={{
+                padding: "12px 32px",
+                fontFamily: "'Cinzel', serif",
+                fontSize: "14px",
+                letterSpacing: "0.1em",
+                fontWeight: 600,
+                opacity: emailStatus === "success" ? 0.7 : 1,
+              }}
+            >
+              {emailStatus === "loading" ? "Subscribing..." : emailStatus === "success" ? "✓ Subscribed" : "SUBSCRIBE"}
+            </button>
+          </form>
+
+          {emailMessage && (
+            <div
+              style={{
+                padding: "12px 16px",
+                backgroundColor: emailStatus === "success" ? "rgba(212,168,67,0.1)" : "rgba(200,100,100,0.1)",
+                border: `1px solid ${emailStatus === "success" ? "rgba(212,168,67,0.3)" : "rgba(200,100,100,0.3)"}`,
+                color: emailStatus === "success" ? "#D4A843" : "#FF6B6B",
+                fontFamily: "'Crimson Pro', serif",
+                fontSize: "14px",
+                textAlign: "center",
+              }}
+            >
+              {emailMessage}
+            </div>
+          )}
+
+          <p className="font-crimson text-sm text-center mt-6" style={{ color: "#5A5A5A" }}>
+            We respect your inbox. Unsubscribe anytime.
+          </p>
+        </div>
+      </section>
+
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
       <footer style={{ borderTop: "1px solid rgba(212,168,67,0.1)", backgroundColor: "#020202" }}>
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12">
@@ -793,7 +893,7 @@ export default function Home() {
           Begin Construction
         </a>
         <button
-          onClick={() => setLocation("/dashboard")}
+          onClick={() => navigate("/dashboard")}
           className="px-6 py-4 btn-ghost-gold"
           style={{ fontSize: "0.65rem", borderLeft: "1px solid rgba(212,168,67,0.2)" }}
         >
