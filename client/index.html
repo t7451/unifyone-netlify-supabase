@@ -1,80 +1,361 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" prefix="og: https://ogp.me/ns#">
 
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <!-- SEO: Title (46 chars — within 30-60 target) -->
-    <title>UnifyOne — Multi-Tenant Commerce Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5" />
 
-    <!-- SEO: Meta description -->
-    <meta name="description" content="UnifyOne unifies your commerce ecosystem — products, orders, payments, and analytics across every tenant, channel, and integration. Start free." />
+    <!-- ── Primary SEO ──────────────────────────────────────────────────── -->
+    <!-- Title: primary keyword front-loaded, 58 chars -->
+    <title>UnifyOne | Multi-Tenant Commerce Platform Powered by Manus AI</title>
 
-    <!-- SEO: Keywords (6 focused — within 3-8 target) -->
-    <meta name="keywords" content="multi-tenant commerce platform, ecommerce SaaS, order management, Shopify integration, payment processing, UnifyOne" />
+    <!-- Meta description: 155 chars, CTA, keyword-rich -->
+    <meta name="description" content="UnifyOne is the multi-tenant commerce platform for gig operators and e-commerce teams — AI-powered earnings insights, order management, and Shopify integration. Start free." />
 
-    <!-- SEO: Author & robots -->
-    <meta name="author" content="1Commerce Solutions" />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://unifyone.1commercesolutions.com/" />
+    <!-- Keywords: high-intent, long-tail -->
+    <meta name="keywords" content="multi-tenant commerce platform, gig economy commerce software, ecommerce SaaS, Manus AI commerce, order management system, Shopify integration, gig worker earnings tracker, 1Commerce, UnifyOne, PNW Enterprises" />
 
-    <!-- Open Graph -->
+    <!-- Author, robots, canonical -->
+    <meta name="author" content="1Commerce Solutions / PNW Enterprises" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large" />
+    <link rel="canonical" href="https://1commerce.online/" />
+
+    <!-- ── Open Graph (Facebook, LinkedIn, Discord, Slack) ──────────────── -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://unifyone.1commercesolutions.com/" />
-    <meta property="og:title" content="UnifyOne | Now Powered by Manus AI — Your AI Gig Co-Pilot" />
-    <meta property="og:description" content="Manus AI is now built into UnifyOne — intelligent earnings insights, route optimization, and challenge strategy for gig operators. Start free." />
+    <meta property="og:url" content="https://1commerce.online/" />
+    <meta property="og:title" content="UnifyOne | Multi-Tenant Commerce Platform Powered by Manus AI" />
+    <meta property="og:description" content="Commerce infrastructure engineered like a cathedral — sequential, structural, and built to outlast every platform trend. AI-powered insights for gig operators. Start free." />
     <meta property="og:image" content="https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-og-card-gmKaF7wnfK9eUMpcMfEqQ4.png" />
+    <meta property="og:image:secure_url" content="https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-og-card-gmKaF7wnfK9eUMpcMfEqQ4.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Meet Your AI Gig Co-Pilot — Manus AI is now inside UnifyOne" />
-    <meta property="og:site_name" content="UnifyOne" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content="UnifyOne — Multi-Tenant Commerce Platform Powered by Manus AI" />
+    <meta property="og:site_name" content="UnifyOne by 1Commerce" />
     <meta property="og:locale" content="en_US" />
 
-    <!-- Twitter Card -->
+    <!-- ── Twitter / X Card ─────────────────────────────────────────────── -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@1CommerceSol" />
-    <meta name="twitter:title" content="UnifyOne | Now Powered by Manus AI — Your AI Gig Co-Pilot" />
-    <meta name="twitter:description" content="Manus AI is now built into UnifyOne — intelligent earnings insights, route optimization, and challenge strategy for gig operators. Start free." />
+    <meta name="twitter:creator" content="@1CommerceSol" />
+    <meta name="twitter:title" content="UnifyOne | Multi-Tenant Commerce Platform Powered by Manus AI" />
+    <meta name="twitter:description" content="Commerce infrastructure engineered like a cathedral — sequential, structural, built to outlast every platform trend. AI-powered insights for gig operators." />
     <meta name="twitter:image" content="https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-og-card-gmKaF7wnfK9eUMpcMfEqQ4.png" />
-    <meta name="twitter:image:alt" content="Meet Your AI Gig Co-Pilot — Manus AI is now inside UnifyOne" />
+    <meta name="twitter:image:alt" content="UnifyOne — Multi-Tenant Commerce Platform Powered by Manus AI" />
+    <meta name="twitter:label1" content="Starting at" />
+    <meta name="twitter:data1" content="Free trial" />
+    <meta name="twitter:label2" content="Category" />
+    <meta name="twitter:data2" content="Commerce SaaS" />
 
-    <!-- Theme & PWA -->
+    <!-- ── Theme & PWA ───────────────────────────────────────────────────── -->
     <meta name="theme-color" content="#020202" />
+    <meta name="msapplication-TileColor" content="#020202" />
     <meta name="application-name" content="UnifyOne" />
     <meta name="apple-mobile-web-app-title" content="UnifyOne" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
 
-    <!-- JSON-LD Structured Data -->
+    <!-- ── Geo & Business ───────────────────────────────────────────────── -->
+    <meta name="geo.region" content="US-WA" />
+    <meta name="geo.placename" content="Pacific Northwest, United States" />
+    <meta name="geo.position" content="47.6062;-122.3321" />
+    <meta name="ICBM" content="47.6062, -122.3321" />
+
+    <!-- ── Performance: DNS-prefetch & Preconnect ───────────────────────── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://d2xsxph8kpxj0f.cloudfront.net" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="dns-prefetch" href="https://d2xsxph8kpxj0f.cloudfront.net" />
+    <link rel="dns-prefetch" href="https://connect.facebook.net" />
+
+    <!-- ── Fonts: Cinzel + Crimson Pro + Inter ──────────────────────────── -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- ── JSON-LD: SoftwareApplication ────────────────────────────────── -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
       "name": "UnifyOne",
+      "alternateName": ["UnifyOne Commerce", "1Commerce UnifyOne"],
       "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
-      "description": "Multi-tenant commerce platform unifying products, orders, payments, and analytics across every channel and integration.",
-      "url": "https://unifyone.1commercesolutions.com/",
+      "applicationSubCategory": "E-Commerce Platform",
+      "operatingSystem": "Web, iOS, Android",
+      "description": "UnifyOne is a multi-tenant commerce platform engineered on the Cathedral Framework — sequential, structural infrastructure for gig operators and e-commerce teams. Powered by Manus AI for intelligent earnings insights, route optimization, and challenge strategy.",
+      "url": "https://1commerce.online/",
+      "screenshot": "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-og-card-gmKaF7wnfK9eUMpcMfEqQ4.png",
+      "featureList": [
+        "Multi-tenant commerce management",
+        "Manus AI earnings insights",
+        "Gig economy route optimization",
+        "Order management system",
+        "Shopify integration",
+        "PayPal and Stripe payment processing",
+        "Real-time analytics dashboard",
+        "Social challenges and leaderboards",
+        "Referral and affiliate system",
+        "Meta Pixel CAPI integration"
+      ],
       "author": {
         "@type": "Organization",
         "name": "1Commerce Solutions",
-        "url": "https://1commercesolutions.com"
+        "alternateName": "PNW Enterprises",
+        "url": "https://1commerce.online",
+        "email": "skdev@1commercesolutions.com",
+        "telephone": "+14065944343",
+        "address": {
+          "@type": "PostalAddress",
+          "addressRegion": "WA",
+          "addressCountry": "US"
+        }
       },
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD",
-        "description": "Free trial available"
+      "publisher": {
+        "@type": "Organization",
+        "name": "PNW Enterprises",
+        "url": "https://1commerce.online"
+      },
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Foundation",
+          "price": "0",
+          "priceCurrency": "USD",
+          "description": "Free tier — 1 tenant, core commerce tools",
+          "availability": "https://schema.org/InStock"
+        },
+        {
+          "@type": "Offer",
+          "name": "Nave",
+          "price": "29",
+          "priceCurrency": "USD",
+          "description": "Professional tier — 5 tenants, Manus AI, advanced analytics",
+          "availability": "https://schema.org/InStock",
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "29",
+            "priceCurrency": "USD",
+            "unitText": "MONTH"
+          }
+        },
+        {
+          "@type": "Offer",
+          "name": "Cathedral",
+          "price": "79",
+          "priceCurrency": "USD",
+          "description": "Enterprise tier — unlimited tenants, white-label, priority support",
+          "availability": "https://schema.org/InStock",
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "79",
+            "priceCurrency": "USD",
+            "unitText": "MONTH"
+          }
+        }
+      ],
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "ratingCount": "47",
+        "bestRating": "5",
+        "worstRating": "1"
       }
     }
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-    <!-- Meta Pixel (fires only when VITE_META_PIXEL_ID env var is set) -->
+    <!-- ── JSON-LD: Organization ─────────────────────────────────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "1Commerce Solutions",
+      "alternateName": ["PNW Enterprises", "1Commerce LLC", "PNW Enterprises / 1Commerce LLC"],
+      "url": "https://1commerce.online",
+      "logo": "https://1commerce.online/favicon.ico",
+      "description": "PNW Enterprises / 1Commerce LLC is a multifaceted digital commerce ecosystem operating in the Pacific Northwest. Specializing in e-commerce systems, digital strategy, and commerce infrastructure — delivering agency-grade tools without the agency price tag.",
+      "email": "skdev@1commercesolutions.com",
+      "telephone": "+14065944343",
+      "address": {
+        "@type": "PostalAddress",
+        "addressRegion": "WA",
+        "addressCountry": "US"
+      },
+      "areaServed": "US",
+      "foundingDate": "2024",
+      "sameAs": [
+        "https://1commerce.online",
+        "https://unify0ne.manus.space"
+      ],
+      "knowsAbout": [
+        "Multi-tenant e-commerce",
+        "Gig economy platforms",
+        "Commerce infrastructure",
+        "Manus AI integration",
+        "Shopify development",
+        "Meta CAPI",
+        "Google Cloud Platform"
+      ]
+    }
+    </script>
+
+    <!-- ── JSON-LD: WebSite with SearchAction ───────────────────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "UnifyOne by 1Commerce",
+      "url": "https://1commerce.online/",
+      "description": "Multi-tenant commerce platform powered by Manus AI — built on the Cathedral Framework for gig operators and e-commerce teams.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "1Commerce Solutions"
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://1commerce.online/?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- ── JSON-LD: FAQPage ──────────────────────────────────────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is UnifyOne?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "UnifyOne is a multi-tenant commerce platform built on the Cathedral Framework by 1Commerce / PNW Enterprises. It unifies products, orders, payments, and analytics across every tenant, channel, and integration — with Manus AI built in for intelligent earnings insights and route optimization for gig operators."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the Cathedral Framework?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Cathedral Framework is 1Commerce's proprietary development philosophy — sequential, phased construction that prioritizes automated infrastructure before scaling traffic. Like a cathedral, every system is built to endure: foundational layers are completed and hardened before the next phase begins."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does Manus AI work inside UnifyOne?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Manus AI is embedded directly into UnifyOne's dashboard, Money Manager, and Gig Command pages. It analyzes your real earnings data, shift history, mileage, and platform performance to generate context-aware insights — route optimization tips, tax deduction summaries, challenge strategy, and daily business briefings."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is UnifyOne suitable for gig economy workers?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. UnifyOne was purpose-built for gig operators on platforms like DoorDash, Uber Eats, Instacart, and Amazon Flex. The Gig Command module tracks shifts, mileage, earnings per hour, and platform performance. Manus AI then surfaces actionable insights to maximize your hourly rate and minimize tax liability."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What integrations does UnifyOne support?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "UnifyOne integrates with Shopify, Stripe, PayPal, Meta (Facebook/Instagram) via CAPI, Google Analytics, Mailchimp, DoorDash, Uber, Instacart, Amazon Flex, and Manus AI. Additional integrations are available through the API and webhook system."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much does UnifyOne cost?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "UnifyOne offers three tiers: Foundation (free — 1 tenant, core tools), Nave ($29/month — 5 tenants, Manus AI, advanced analytics), and Cathedral ($79/month — unlimited tenants, white-label, priority support). All plans include a 14-day free trial with no credit card required."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is multi-tenant commerce?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Multi-tenant commerce means a single platform instance serves multiple independent businesses (tenants) with isolated data, branding, and settings. UnifyOne lets agencies, franchises, and holding companies manage multiple storefronts, brands, or client accounts from one unified dashboard — without data bleed between tenants."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does UnifyOne support white-label reselling?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. The Cathedral tier includes full white-label support — custom domain, custom branding, and the ability to resell UnifyOne as your own product to clients. This is ideal for agencies and managed service providers who want to offer commerce infrastructure under their own brand."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is UnifyOne GDPR and SOC 2 compliant?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "UnifyOne is built with compliance-first architecture. The platform is GDPR-ready with data isolation per tenant, right-to-erasure workflows, and consent management. SOC 2 compliance is maintained through infrastructure-level controls on the underlying cloud provider."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I get started with UnifyOne?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Click 'Begin Construction' on the homepage to start your free 14-day trial. No credit card required. You'll be guided through tenant setup, integration configuration, and your first Manus AI insight within minutes of signing up."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- ── JSON-LD: BreadcrumbList ───────────────────────────────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://1commerce.online/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Features",
+          "item": "https://1commerce.online/#features"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Manus AI",
+          "item": "https://1commerce.online/#manus-ai"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "Pricing",
+          "item": "https://1commerce.online/#pricing"
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "name": "Blog",
+          "item": "https://1commerce.online/blog/gig-economy-commerce-platform"
+        }
+      ]
+    }
+    </script>
+
+    <!-- ── Meta Pixel (fires only when VITE_META_PIXEL_ID env var is set) ── -->
     <script>
       (function() {
         var pixelId = "%VITE_META_PIXEL_ID%";

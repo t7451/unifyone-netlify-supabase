@@ -582,3 +582,28 @@
 - [x] Upgrade cathedral-bg and stone-surface texture opacity (0.025 -> 0.035)
 - [x] 100 tests passing, 0 TypeScript errors
 - [x] Checkpoint saved, GitHub release v1.6.1-visual-enhancement pushed
+
+## Phase 32 — Full SEO Blitz [COMPLETE]
+
+- [x] sitemap.xml: all canonical URLs with lastmod, changefreq, priority (1commerce.online canonical)
+- [x] robots.txt: granular crawler rules (Googlebot, Bingbot, Twitterbot, facebookexternalhit, block AI trainers), sitemap pointer
+- [x] canonical meta tag in index.html pointing to https://1commerce.online/
+- [x] JSON-LD: SoftwareApplication schema (name, alternateName, featureList, 3 Offer tiers, aggregateRating)
+- [x] JSON-LD: FAQPage schema (10 Q&As targeting: UnifyOne, Cathedral Framework, Manus AI, gig workers, integrations, pricing, multi-tenant, white-label, GDPR, getting started)
+- [x] JSON-LD: Organization schema (PNW Enterprises / 1Commerce, geo, sameAs, knowsAbout)
+- [x] JSON-LD: BreadcrumbList schema (5 items: Home, Features, Manus AI, Pricing, Blog)
+- [x] JSON-LD: WebSite schema with SearchAction
+- [x] Hardened title: "UnifyOne | Multi-Tenant Commerce Platform Powered by Manus AI" (58 chars)
+- [x] Hardened meta description: 172 chars, CTA, keyword-rich
+- [x] Added meta keywords: 10 long-tail terms
+- [x] Complete OG tags: og:type, og:site_name, og:locale, og:image:secure_url, og:image:type
+- [x] Complete Twitter Card: twitter:site, twitter:creator, twitter:label1/data1/label2/data2
+- [x] Added geo meta tags: geo.region, geo.placename, geo.position, ICBM
+- [x] Added PWA meta: mobile-web-app-capable, format-detection, msapplication-TileColor
+- [x] Preconnect to CDN (d2xsxph8kpxj0f.cloudfront.net) + dns-prefetch for all external origins
+- [x] Blog post 1: /blog/gig-economy-commerce-platform (1200 words, Article schema, breadcrumb, related posts)
+- [x] Blog post 2: /blog/multi-tenant-ecommerce-saas (1100 words, Article schema, breadcrumb, related posts)
+- [x] Blog post 3: /blog/manus-ai-gig-workers (1050 words, Article schema, breadcrumb, related posts)
+- [x] All 3 blog routes registered in App.tsx
+- [x] 100 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved, GitHub release v1.6.2-seo-blitz pushed

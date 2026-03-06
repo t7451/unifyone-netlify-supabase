@@ -1,68 +1,86 @@
 # ============================================================================
-# 1Commerce LLC - robots.txt
-# https://1commerce-consulting.netlify.app/robots.txt
-# Last updated: 2026-02-15
+# UnifyOne — 1Commerce / PNW Enterprises
+# https://1commerce.online
+# Last updated: 2026-03-06
 # ============================================================================
 
-# Allow all Google Search crawlers (Search, Images, Video, News)
+# ── Google Search crawlers ────────────────────────────────────────────────
 User-agent: Googlebot
 Allow: /
+Allow: /blog/
+Allow: /privacy
+Allow: /terms
 Disallow: /api/
-Disallow: /admin/
-Disallow: /_next/
-Disallow: /debug/
+Disallow: /dashboard
+Disallow: /setup
+Disallow: /checkout
+Disallow: /billing
+Disallow: /team
+Disallow: /orders
+Disallow: /products
+Disallow: /customers
+Disallow: /analytics
+Disallow: /settings
+Disallow: /social
+Disallow: /referrals
+Disallow: /leads
+Disallow: /automations
+Disallow: /ai-assistant
+Disallow: /friends
+Disallow: /gig-command
+Disallow: /money-manager
 
-# Allow Google Images crawler
+# ── Google Images ─────────────────────────────────────────────────────────
 User-agent: Googlebot-Image
-Allow: /assets/
-Allow: /images/
-Disallow: /api/
-
-# Allow Google Video crawler
-User-agent: Googlebot-Video
 Allow: /
 
-# Allow Google News crawler
+# ── Google News ───────────────────────────────────────────────────────────
 User-agent: Googlebot-News
 Allow: /blog/
-Allow: /case-studies/
 
-# Allow Google Shopping crawler
+# ── Google Shopping ───────────────────────────────────────────────────────
 User-agent: Storebot-Google
-Allow: /products/
-Allow: /bundle
-Allow: /pricing
+Allow: /
+Allow: /#pricing
 
-# Allow Google Search Console inspection
+# ── Google Search Console inspection ─────────────────────────────────────
 User-agent: Google-InspectionTool
 Allow: /
 
-# Allow Google Cloud Vertex AI (if used for Gemini features)
-User-agent: Google-CloudVertexBot
-Disallow: /
-
-# Control Google Extended (Gemini training) - allow for discovery
+# ── Google Extended (Gemini training) — allow for discovery ──────────────
 User-agent: Google-Extended
 Allow: /
 
-# Allow GoogleOther for general crawling
-User-agent: GoogleOther
-Allow: /
-Disallow: /api/
-Disallow: /admin/
-
-# Bing
+# ── Bing ──────────────────────────────────────────────────────────────────
 User-agent: Bingbot
 Allow: /
+Allow: /blog/
 Disallow: /api/
-Disallow: /admin/
+Disallow: /dashboard
 
-# DuckDuckGo
+# ── DuckDuckGo ────────────────────────────────────────────────────────────
 User-agent: DuckDuckBot
 Allow: /
 Disallow: /api/
 
-# Block AI training crawlers that we don't want
+# ── Yandex ────────────────────────────────────────────────────────────────
+User-agent: YandexBot
+Allow: /
+Disallow: /api/
+
+# ── LinkedIn crawler (for OG preview) ────────────────────────────────────
+User-agent: LinkedInBot
+Allow: /
+
+# ── Twitter/X card crawler ────────────────────────────────────────────────
+User-agent: Twitterbot
+Allow: /
+
+# ── Facebook crawler (OG preview) ────────────────────────────────────────
+User-agent: facebookexternalhit
+Allow: /
+
+# ── Block AI training crawlers ────────────────────────────────────────────
 User-agent: CCBot
 Disallow: /
 
@@ -72,13 +90,22 @@ Disallow: /
 User-agent: anthropic-ai
 Disallow: /
 
-# Default rule for all other bots
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: cohere-ai
+Disallow: /
+
+# ── Default rule for all other bots ──────────────────────────────────────
 User-agent: *
 Allow: /
+Allow: /blog/
+Allow: /privacy
+Allow: /terms
 Disallow: /api/
-Disallow: /admin/
-Disallow: /debug/
-Disallow: /_next/
+Disallow: /dashboard
+Crawl-delay: 1
 
-# Sitemap location
-Sitemap: https://unifyone-vyofxqd3.manus.space/sitemap.xml
+# ── Sitemaps ──────────────────────────────────────────────────────────────
+Sitemap: https://1commerce.online/sitemap.xml
+Sitemap: https://www.1commerce.online/sitemap.xml

@@ -41,6 +41,9 @@ import AIAssistant from "./pages/AIAssistant";
 import ShopifyInstall from "./pages/ShopifyInstall";
 import ShopifySuccess from "./pages/ShopifySuccess";
 import SyncMonitor from "./pages/SyncMonitor";
+import GigEcommercePost from "./pages/blog/GigEcommercePost";
+import MultiTenantPost from "./pages/blog/MultiTenantPost";
+import ManusAIPost from "./pages/blog/ManusAIPost";
 import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
 import { getLoginUrl } from "./const";
@@ -129,6 +132,10 @@ function Router() {
       <Route path="/sovereign" component={Sovereign} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
+      {/* SEO Blog Routes */}
+      <Route path="/blog/gig-economy-commerce-platform" component={GigEcommercePost} />
+      <Route path="/blog/multi-tenant-ecommerce-saas" component={MultiTenantPost} />
+      <Route path="/blog/manus-ai-gig-workers" component={ManusAIPost} />
       <Route path="/checkout" component={() => <ProtectedRoute component={Checkout} />} />
       <Route path="/checkout/paypal-return" component={() => <ProtectedRoute component={Checkout} />} />
       <Route path="/checkout/paypal-cancel" component={() => <ProtectedRoute component={Checkout} />} />
