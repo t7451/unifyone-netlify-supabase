@@ -1,642 +1,810 @@
-import { useState, useEffect } from "react";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  ShoppingCart, BarChart3, Zap, Globe, Shield, ArrowRight,
-  CheckCircle, TrendingUp, Layers, Workflow, Menu, X,
-  Star, Package, Users, CreditCard, Plug, ChevronRight
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { trpc } from "@/lib/trpc";
-import { toast } from "sonner";
-import AutomationFlowAnimation from "@/components/AutomationFlowAnimation";
+import { getLoginUrl } from "@/const";
 
-const HERO_VISUAL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-hero-TWvyRNoyoXmz8CnBLvHXFQ.webp";
-const MANUS_AI_BANNER = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-feature-banner-mZjQMb2t9uP6W2BitsSWMq.webp";
-const MANUS_AI_OG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-og-card-gmKaF7wnfK9eUMpcMfEqQ4.png";
+// ── Cathedral Framework Asset URLs ──────────────────────────────────────────
+const CATHEDRAL_HERO_BG    = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-hero-bg-N2WT5VwtdNgxEQjUd4uK4J.webp";
+const CATHEDRAL_FEATURES_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-features-bg-dAppRQYWJW9DPsbSVWtL8i.webp";
+const CATHEDRAL_CTA_BG     = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-cta-bg-22EwHq2vATmnZFBNXPuDhy.webp";
+const MANUS_AI_HERO        = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-hero-N2WT5VwtdNgxEQjUd4uK4J.webp";
+const MANUS_AI_BANNER      = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-feature-banner-N2WT5VwtdNgxEQjUd4uK4J.webp";
 
-const FEATURES = [
-  { icon: Layers, title: "Multi-Tenant Architecture", desc: "Each store gets its own isolated environment — dedicated data, settings, team access, and billing. Scale from 1 to 1,000 stores without re-architecting.", color: "#00D9FF" },
-  { icon: ShoppingCart, title: "Commerce Engine", desc: "Full product catalog with variants, inventory tracking, order processing, fulfillment workflows, and customer management — all in one place.", color: "#0284C7" },
-  { icon: BarChart3, title: "Analytics Dashboard", desc: "Real-time revenue metrics, customer lifetime value, sales performance charts, and cohort analysis. Know your numbers before your accountant does.", color: "#6A1B9A" },
-  { icon: Zap, title: "Stripe & PayPal Payments", desc: "Checkout sessions, subscription billing, webhook handling, refund management, and PayPal Smart Buttons — all payment rails in a single integration.", color: "#635BFF" },
-  { icon: Globe, title: "Shopify Sync", desc: "Bidirectional product and order sync with your Shopify store via webhooks. Sell on Shopify, manage everywhere.", color: "#96BF48" },
-  { icon: Workflow, title: "n8n & Zapier Automation", desc: "Trigger n8n workflows and Zapier hooks for order fulfillment, notifications, Mailchimp campaigns, and custom data pipelines — no code required.", color: "#EA4B71" },
-  { icon: Shield, title: "Role-Based Access", desc: "Admin and user roles with fine-grained procedure-level authorization. Invite team members, set permissions, and audit every action.", color: "#10B981" },
-  { icon: TrendingUp, title: "Realtime Updates", desc: "Live order status and inventory changes powered by Supabase Realtime. Your dashboard updates the moment anything changes.", color: "#F59E0B" },
+// ── Navigation ───────────────────────────────────────────────────────────────
+const NAV_LINKS = [
+  { label: "Architecture", href: "#features" },
+  { label: "The System", href: "#how-it-works" },
+  { label: "Manus AI", href: "#manus-ai" },
+  { label: "Tithes", href: "#pricing" },
 ];
 
-const HOW_IT_WORKS = [
+// ── Feature Pillars ──────────────────────────────────────────────────────────
+const PILLARS = [
   {
-    step: "01",
-    icon: Plug,
-    title: "Connect Your Stack",
-    desc: "Link your Shopify store, Stripe account, and existing tools in minutes. UnifyOne speaks the APIs you already use.",
-    color: "#00D9FF",
+    glyph: "I",
+    title: "Multi-Tenant Foundation",
+    body: "Every store is an isolated vault. Tenant data, billing, and access controls are structurally separated at the schema level — not by convention.",
   },
   {
-    step: "02",
-    icon: Package,
-    title: "Unify Your Operations",
-    desc: "Products, orders, customers, and payments flow into one dashboard. No more tab-switching between five different tools.",
-    color: "#635BFF",
+    glyph: "II",
+    title: "Commerce Infrastructure",
+    body: "Products, orders, inventory, and fulfillment built as load-bearing walls. No plugin dependencies. No single points of failure.",
   },
   {
-    step: "03",
-    icon: TrendingUp,
-    title: "Scale Without Headcount",
-    desc: "Automation handles fulfillment, notifications, and reporting. You focus on growth — the platform handles the rest.",
-    color: "#10B981",
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Marcus T.",
-    role: "E-commerce Director",
-    company: "Pacific Goods Co.",
-    quote: "We went from managing 3 separate dashboards to one. Order processing time dropped 60% in the first month.",
-    stars: 5,
+    glyph: "III",
+    title: "Payment Orchestration",
+    body: "Stripe, PayPal, and Shopify Checkout unified under one roof. Webhooks are verified, idempotent, and fire into your automation layer.",
   },
   {
-    name: "Sarah K.",
-    role: "Founder",
-    company: "Cascade Apparel",
-    quote: "The Shopify sync alone saved us 10 hours a week. The automation pipeline is genuinely impressive.",
-    stars: 5,
+    glyph: "IV",
+    title: "Automation Nave",
+    body: "n8n workflows, Zapier hooks, and Mailchimp drip sequences triggered by real commerce events — not scheduled polling.",
   },
   {
-    name: "Dev P.",
-    role: "CTO",
-    company: "Northwest Digital",
-    quote: "Finally a commerce platform built by engineers who understand multi-tenant architecture. The tRPC API is clean.",
-    stars: 5,
+    glyph: "V",
+    title: "Analytics Clerestory",
+    body: "Revenue, orders, and customer data illuminated in real time. Supabase Realtime keeps every panel current without a page refresh.",
+  },
+  {
+    glyph: "VI",
+    title: "Manus AI Spire",
+    body: "An intelligent co-pilot built into every page. Context-aware insights drawn from your actual shift, earnings, and route data.",
   },
 ];
 
-const PLANS = [
+// ── How It Works ─────────────────────────────────────────────────────────────
+const CONSTRUCTION_PHASES = [
   {
-    name: "Starter",
-    price: "$29",
-    yearlyPrice: "$24",
-    features: ["1 Store", "500 Products", "1,000 Orders/mo", "Basic Analytics", "Stripe Payments", "Email Support"],
-    cta: "Start Free Trial",
+    phase: "Phase I",
+    title: "Lay the Foundation",
+    body: "Create your tenant, configure your store identity, and connect your payment rails. The crypt is sealed before the nave rises.",
+  },
+  {
+    phase: "Phase II",
+    title: "Raise the Walls",
+    body: "Import your product catalog, configure inventory thresholds, and define your order processing rules. Structure before decoration.",
+  },
+  {
+    phase: "Phase III",
+    title: "Install the Vaults",
+    body: "Wire your automation layer — n8n workflows, Zapier hooks, and Mailchimp sequences fire on real commerce events.",
+  },
+  {
+    phase: "Phase IV",
+    title: "Light the Spire",
+    body: "Activate Manus AI. Your co-pilot reads your actual data and surfaces insights, route optimizations, and earnings projections.",
+  },
+];
+
+// ── Pricing ──────────────────────────────────────────────────────────────────
+const TIERS = [
+  {
+    name: "Acolyte",
+    price: "$0",
+    period: "forever",
+    description: "For builders proving the concept.",
+    features: ["1 tenant", "100 products", "500 orders/mo", "Stripe checkout", "Basic analytics"],
+    cta: "Begin Construction",
     highlight: false,
   },
   {
-    name: "Growth",
-    price: "$79",
-    yearlyPrice: "$66",
-    features: ["5 Stores", "10,000 Products", "Unlimited Orders", "Advanced Analytics", "Shopify Sync", "n8n Automation", "Priority Support"],
-    cta: "Start Free Trial",
+    name: "Architect",
+    price: "$49",
+    period: "per month",
+    description: "For operators running real commerce.",
+    features: ["5 tenants", "Unlimited products", "Unlimited orders", "All payment rails", "Manus AI included", "Automation layer", "Priority support"],
+    cta: "Claim Your Nave",
     highlight: true,
   },
   {
-    name: "Enterprise",
-    price: "Custom",
-    yearlyPrice: "Custom",
-    features: ["Unlimited Stores", "Unlimited Products", "SLA Guarantee", "Dedicated Support", "Custom Integrations", "White-label Option", "SSO & Audit Logs"],
-    cta: "Contact Sales",
+    name: "Cathedral",
+    price: "$149",
+    period: "per month",
+    description: "For enterprises building at scale.",
+    features: ["Unlimited tenants", "White-label ready", "Custom domains", "SLA guarantee", "Dedicated infrastructure", "API access", "Concierge onboarding"],
+    cta: "Commission the Build",
     highlight: false,
   },
 ];
 
-const STATS = [
-  { value: "99.9%", label: "Uptime SLA" },
-  { value: "< 200ms", label: "API Response" },
-  { value: "SOC 2", label: "Compliant" },
-  { value: "GDPR", label: "Ready" },
+// ── Testimonials ─────────────────────────────────────────────────────────────
+const TESTIMONIALS = [
+  {
+    quote: "UnifyOne replaced three separate SaaS tools. The automation layer alone saves us four hours a week.",
+    name: "Marcus T.",
+    role: "DoorDash Fleet Operator",
+    city: "Seattle, WA",
+  },
+  {
+    quote: "The Manus AI insights are genuinely useful. It told me my Tuesday routes were underperforming before I noticed.",
+    name: "Priya K.",
+    role: "Multi-platform Gig Operator",
+    city: "Portland, OR",
+  },
+  {
+    quote: "I've used Shopify, WooCommerce, and three others. UnifyOne is the first platform that feels engineered, not assembled.",
+    name: "Jordan M.",
+    role: "E-commerce Director",
+    city: "Boise, ID",
+  },
 ];
 
+// ── Integrations ─────────────────────────────────────────────────────────────
 const INTEGRATIONS = [
-  { name: "Stripe", desc: "Payments & Billing", color: "#635BFF", initial: "S" },
-  { name: "Shopify", desc: "Product & Order Sync", color: "#96BF48", initial: "Sh" },
-  { name: "PayPal", desc: "Smart Checkout", color: "#003087", initial: "P" },
-  { name: "Supabase", desc: "Database & Realtime", color: "#3ECF8E", initial: "Su" },
-  { name: "n8n", desc: "Workflow Automation", color: "#EA4B71", initial: "n" },
-  { name: "Zapier", desc: "App Connections", color: "#FF4A00", initial: "Z" },
-  { name: "Mailchimp", desc: "Email Marketing", color: "#FFD700", initial: "M" },
-  { name: "Meta", desc: "Ads & CAPI", color: "#1877F2", initial: "fb" },
-  { name: "Manus AI", desc: "Built-in AI Co-Pilot", color: "#6366f1", initial: "M" },
+  "Stripe", "PayPal", "Shopify", "Manus AI", "n8n",
+  "Zapier", "Supabase", "Meta Ads", "Google Analytics", "Resend",
 ];
 
 export default function Home() {
-  const { isAuthenticated } = useAuth();
-  const [, navigate] = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [, setLocation] = useLocation();
   const [scrolled, setScrolled] = useState(false);
-  const [heroVisible, setHeroVisible] = useState(false);
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
-  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
-  const createCheckout = trpc.subscription.createCheckout.useMutation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.title = "UnifyOne — Multi-Tenant Commerce Platform";
-    const timer = setTimeout(() => setHeroVisible(true), 100);
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => { clearTimeout(timer); window.removeEventListener("scroll", handleScroll); };
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleGetStarted = () => {
-    if (isAuthenticated) navigate("/dashboard");
-    else window.location.href = getLoginUrl();
-  };
-
-  const handlePlanCheckout = async (planSlug: string, planName: string) => {
-    if (!isAuthenticated) {
-      window.location.href = getLoginUrl();
-      return;
+  const handleAnchor = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    if (href.startsWith("#")) {
+      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
     }
-    if (planSlug === "enterprise") {
-      window.open("mailto:skdev@1commercesolutions.com?subject=UnifyOne Enterprise Inquiry", "_blank");
-      return;
-    }
-    setCheckoutLoading(planSlug);
-    try {
-      toast.info(`Redirecting to ${planName} checkout...`);
-      const result = await createCheckout.mutateAsync({ planSlug, billingPeriod, origin: window.location.origin });
-      if (result.url) window.open(result.url, "_blank");
-      else toast.error("Could not create checkout session. Please try again.");
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Checkout failed");
-    } finally {
-      setCheckoutLoading(null);
-    }
+    setMobileMenuOpen(false);
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#000000" }}>
+    <div style={{ backgroundColor: "#020202", color: "#F0E8D0", minHeight: "100vh" }}>
 
-      {/* ── NAV ── */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "border-b border-[#1A1A1A] shadow-lg" : "border-b border-transparent"}`} style={{ backgroundColor: scrolled ? "rgba(0,0,0,0.95)" : "transparent" }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-sm border border-[#C9A84C]/40 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(201,168,76,0.1)" }}>
-              <Layers className="w-3.5 h-3.5" style={{ color: "#C9A84C" }} />
+      {/* ── NAVIGATION ─────────────────────────────────────────────────── */}
+      <nav
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
+        style={{
+          backgroundColor: scrolled ? "rgba(2,2,2,0.97)" : "transparent",
+          borderBottom: scrolled ? "1px solid rgba(212,168,67,0.12)" : "1px solid transparent",
+          backdropFilter: scrolled ? "blur(12px)" : "none",
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
+          {/* Wordmark */}
+          <div className="flex items-center gap-3">
+            {/* Cathedral cross glyph */}
+            <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
+              <div className="absolute inset-0" style={{ border: "1px solid rgba(212,168,67,0.4)" }} />
+              <div className="absolute inset-[3px]" style={{ border: "1px solid rgba(212,168,67,0.15)" }} />
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <line x1="7" y1="1" x2="7" y2="13" stroke="#D4A843" strokeWidth="1.5"/>
+                <line x1="1" y1="5" x2="13" y2="5" stroke="#D4A843" strokeWidth="1.5"/>
+              </svg>
             </div>
             <div>
-              <span className="text-white font-bold text-base tracking-tight font-serif-display">UnifyOne</span>
-              <span className="text-[#9A7A30] text-[9px] font-semibold tracking-[0.2em] uppercase ml-2 hidden sm:inline">by 1Commerce</span>
+              <span className="font-cinzel text-sm font-700 tracking-widest" style={{ color: "#D4A843", letterSpacing: "0.2em" }}>
+                UNIFYONE
+              </span>
+              <span className="hidden sm:inline text-xs ml-2" style={{ color: "#5A5A5A", letterSpacing: "0.1em", fontFamily: "Cinzel, serif" }}>
+                BY 1COMMERCE
+              </span>
             </div>
           </div>
+
+          {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8">
-            {["Features", "How It Works", "Pricing", "Integrations"].map(item => (
-              <a key={item} href={`#${item.toLowerCase().replace(/ /g, "-")}`} className="text-xs text-gray-400 hover:text-[#C9A84C] transition-colors tracking-wide uppercase font-medium">{item}</a>
-            ))}
-          </div>
-          <div className="hidden md:flex items-center gap-3">
-            {isAuthenticated ? (
-              <Button onClick={() => navigate("/dashboard")} className="font-semibold rounded-none px-5 h-9 text-sm" style={{ backgroundColor: "#C9A84C", color: "#000" }}>
-                Dashboard <ArrowRight className="ml-1 w-3 h-3" />
-              </Button>
-            ) : (
-              <>
-                <Button variant="ghost" onClick={() => window.location.href = getLoginUrl()} className="text-gray-400 hover:text-white text-xs tracking-wide uppercase">Sign In</Button>
-                <Button onClick={handleGetStarted} className="font-semibold rounded-none px-5 h-9 text-sm" style={{ backgroundColor: "#C9A84C", color: "#000" }}>Get Started</Button>
-              </>
-            )}
-          </div>
-          <button
-            className="md:hidden p-2.5 text-gray-400 hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-[#1A1A1A] px-4 py-4 space-y-1" style={{ backgroundColor: "rgba(0,0,0,0.97)" }}>
-            {["Features", "How It Works", "Pricing", "Integrations"].map(item => (
+            {NAV_LINKS.map(link => (
               <a
-                key={item}
-                href={`#${item.toLowerCase().replace(/ /g, "-")}`}
-                className="flex items-center justify-between text-gray-400 hover:text-[#C9A84C] transition-colors py-3 px-2 font-medium min-h-[44px] text-xs uppercase tracking-widest"
-                onClick={() => setMobileMenuOpen(false)}
+                key={link.href}
+                href={link.href}
+                onClick={e => handleAnchor(e, link.href)}
+                className="transition-colors duration-200"
+                style={{
+                  fontFamily: "Cinzel, serif",
+                  fontSize: "0.65rem",
+                  fontWeight: 600,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  color: "#5A5A5A",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#D4A843")}
+                onMouseLeave={e => (e.currentTarget.style.color = "#5A5A5A")}
               >
-                {item}
-                <ChevronRight className="w-4 h-4 opacity-40" />
+                {link.label}
               </a>
             ))}
-            <div className="pt-3 border-t border-[#1A1A1A] flex flex-col gap-2">
-              {isAuthenticated ? (
-                <Button onClick={() => { navigate("/dashboard"); setMobileMenuOpen(false); }} className="w-full font-semibold h-12 rounded-none" style={{ backgroundColor: "#C9A84C", color: "#000" }}>Dashboard</Button>
-              ) : (
-                <>
-                  <Button variant="ghost" onClick={() => window.location.href = getLoginUrl()} className="w-full text-gray-400 hover:text-white border border-[#1A1A1A] h-12 rounded-none text-xs uppercase tracking-widest">Sign In</Button>
-                  <Button onClick={handleGetStarted} className="w-full font-semibold h-12 rounded-none" style={{ backgroundColor: "#C9A84C", color: "#000" }}>Get Started →</Button>
-                </>
-              )}
+          </div>
+
+          {/* CTA */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setLocation("/dashboard")}
+              className="hidden sm:block transition-all duration-200"
+              style={{
+                fontFamily: "Cinzel, serif",
+                fontSize: "0.65rem",
+                fontWeight: 600,
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: "#5A5A5A",
+                background: "none",
+                border: "none",
+                padding: "0.5rem 0",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = "#D4A843")}
+              onMouseLeave={e => (e.currentTarget.style.color = "#5A5A5A")}
+            >
+              Enter
+            </button>
+            <a
+              href={getLoginUrl()}
+              className="btn-illuminate"
+              style={{ padding: "0.5rem 1.25rem", fontSize: "0.65rem" }}
+            >
+              Begin
+            </a>
+            {/* Mobile menu toggle */}
+            <button
+              className="md:hidden p-2"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{ color: "#5A5A5A" }}
+            >
+              <div className="w-5 h-px mb-1.5 transition-all" style={{ backgroundColor: mobileMenuOpen ? "#D4A843" : "#5A5A5A" }} />
+              <div className="w-5 h-px mb-1.5" style={{ backgroundColor: "#3A3A3A" }} />
+              <div className="w-5 h-px transition-all" style={{ backgroundColor: mobileMenuOpen ? "#D4A843" : "#5A5A5A" }} />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden" style={{ borderTop: "1px solid rgba(212,168,67,0.1)", backgroundColor: "rgba(2,2,2,0.98)" }}>
+            {NAV_LINKS.map(link => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={e => handleAnchor(e, link.href)}
+                className="block px-6 py-4"
+                style={{
+                  fontFamily: "Cinzel, serif",
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  color: "#5A5A5A",
+                  borderBottom: "1px solid rgba(212,168,67,0.06)",
+                }}
+              >
+                {link.label}
+              </a>
+            ))}
+            <div className="px-6 py-4">
+              <a href={getLoginUrl()} className="btn-illuminate block text-center" style={{ padding: "0.75rem 1.5rem", fontSize: "0.7rem" }}>
+                Begin Construction
+              </a>
             </div>
           </div>
         )}
       </nav>
 
-      {/* ── HERO ── */}
-      <section className="relative min-h-screen flex items-center px-4 sm:px-6 overflow-hidden" style={{ background: "linear-gradient(to bottom, #000 0%, #050505 60%, #000 100%)" }}>
-        {/* Subtle radial glow behind hero image */}
-        <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[50%] h-[80%] pointer-events-none" style={{ background: "radial-gradient(ellipse at right center, rgba(201,168,76,0.04) 0%, transparent 70%)" }} />
-
-        <div className={`max-w-6xl mx-auto w-full relative transition-all duration-700 pt-24 pb-16 ${heroVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Left: copy */}
-            <div className="text-left">
-              {/* Eyebrow */}
-              <p className="section-label mb-6">PNW Enterprises · Est. 2024</p>
-
-              <h1 className="font-serif-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-[1.05] mb-6">
-                One Platform.{" "}
-                <span className="gradient-text">Every Store.</span>
-              </h1>
-
-              <p className="text-base sm:text-lg text-gray-400 mb-6 leading-relaxed max-w-lg">
-                UnifyOne is the commerce infrastructure layer that connects your products, orders, payments, and automations — across every store, every channel, every integration.
-              </p>
-
-              {/* Manus AI callout — minimal, gold */}
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-px h-8 flex-shrink-0" style={{ backgroundColor: "#C9A84C" }} />
-                <div>
-                  <p className="text-xs uppercase tracking-widest font-semibold" style={{ color: "#C9A84C" }}>Now Powered by Manus AI</p>
-                  <p className="text-gray-500 text-xs mt-0.5">Intelligent gig co-pilot — earnings insights, route optimization, challenge strategy.</p>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={handleGetStarted}
-                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 text-sm font-semibold transition-all duration-200 hover:opacity-90 active:scale-95"
-                  style={{ backgroundColor: "#C9A84C", color: "#000" }}
-                >
-                  Start Free Trial <ArrowRight className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
-                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 text-sm font-medium text-gray-300 border transition-all duration-200 hover:text-white hover:border-[#C9A84C]/40"
-                  style={{ borderColor: "#2A2A2A" }}
-                >
-                  Explore the Platform
-                </button>
-              </div>
-              <p className="text-xs mt-4" style={{ color: "#4A4A4A" }}>No credit card required · 14-day free trial · Cancel anytime</p>
-            </div>
-
-            {/* Right: hero visual */}
-            <div className="hidden lg:flex items-center justify-center">
-              <div className="relative w-full max-w-lg">
-                <div className="absolute inset-0 blur-3xl" style={{ background: "radial-gradient(ellipse, rgba(201,168,76,0.08) 0%, transparent 70%)" }} />
-                <img
-                  src={HERO_VISUAL}
-                  alt="UnifyOne — Powered by Manus AI"
-                  className="relative w-full shadow-2xl"
-                  style={{ border: "1px solid rgba(201,168,76,0.15)" }}
-                  loading="eager"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Stats row */}
-          <div className="mt-16 sm:mt-20 grid grid-cols-2 md:grid-cols-4 gap-0 border-t" style={{ borderColor: "#1A1A1A" }}>
-            {STATS.map((s, i) => (
-              <div key={s.label} className={`py-6 px-4 sm:px-6 ${i < STATS.length - 1 ? "border-r" : ""}`} style={{ borderColor: "#1A1A1A" }}>
-                <div className="text-2xl sm:text-3xl font-bold font-serif-display" style={{ color: "#C9A84C" }}>{s.value}</div>
-                <div className="text-xs mt-1 uppercase tracking-widest" style={{ color: "#4A4A4A" }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
+      {/* ── HERO ────────────────────────────────────────────────────────── */}
+      <section ref={heroRef} className="relative min-h-screen flex flex-col justify-end overflow-hidden">
+        {/* Cathedral vault background */}
+        <div className="absolute inset-0">
+          <img
+            src={CATHEDRAL_HERO_BG}
+            alt=""
+            className="w-full h-full object-cover"
+            style={{ opacity: 0.65 }}
+          />
+          {/* Dark overlay — heavier at bottom for text legibility */}
+          <div className="absolute inset-0" style={{
+            background: "linear-gradient(to bottom, rgba(2,2,2,0.3) 0%, rgba(2,2,2,0.5) 40%, rgba(2,2,2,0.92) 75%, rgba(2,2,2,1) 100%)"
+          }} />
+          {/* Apex light beam — gold radial from top center */}
+          <div className="absolute inset-0 animate-gold-beam" style={{
+            background: "radial-gradient(ellipse 30% 50% at 50% 0%, rgba(212,168,67,0.12) 0%, transparent 60%)"
+          }} />
         </div>
-      </section>
 
-      {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-20 sm:py-28 px-4 sm:px-6" style={{ backgroundColor: "#060606" }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="mb-14">
-            <p className="section-label mb-4">Three Week Path</p>
-            <h2 className="font-serif-display text-3xl sm:text-4xl font-bold text-white">From Chaos to Commerce</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-t" style={{ borderColor: "#1A1A1A" }}>
-            {HOW_IT_WORKS.map((step, i) => {
-              const Icon = step.icon;
-              return (
-                <div key={step.step} className={`pt-8 pb-6 pr-8 ${i < HOW_IT_WORKS.length - 1 ? "border-r" : ""}`} style={{ borderColor: "#1A1A1A" }}>
-                  <div className="mb-4">
-                    <span className="font-serif-display text-4xl font-bold" style={{ color: "rgba(201,168,76,0.25)" }}>{step.step}</span>
-                    <div className="w-px h-4 mt-1 ml-1" style={{ backgroundColor: "#C9A84C", opacity: 0.4 }} />
-                  </div>
-                  <p className="text-xs uppercase tracking-widest mb-2" style={{ color: "#9A7A30" }}>Week {i + 1}</p>
-                  <h3 className="text-white font-semibold text-lg mb-3 font-serif-display">{step.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{step.desc}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FEATURES ── */}
-      <section id="features" className="py-20 sm:py-28 px-4 sm:px-6" style={{ backgroundColor: "#000" }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-14">
-            <p className="section-label mb-4">The Complete Package</p>
-            <h2 className="font-serif-display text-3xl sm:text-4xl font-bold text-white">Everything You Need</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border-t border-l" style={{ borderColor: "#1A1A1A" }}>
-            {FEATURES.map(f => {
-              const Icon = f.icon;
-              return (
-                <div key={f.title} className="feature-card p-6 sm:p-7 group border-b border-r" style={{ borderColor: "#1A1A1A" }}>
-                  <div className="w-9 h-9 flex items-center justify-center mb-5 flex-shrink-0" style={{ backgroundColor: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)" }}>
-                    <Icon className="w-4 h-4" style={{ color: "#C9A84C" }} />
-                  </div>
-                  <h3 className="text-white font-semibold mb-2 text-sm">{f.title}</h3>
-                  <p className="text-gray-500 text-xs leading-relaxed">{f.desc}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── INTEGRATIONS ── */}
-      <section id="integrations" className="py-20 sm:py-28 px-4 sm:px-6" style={{ backgroundColor: "#060606" }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-14">
-            <p className="section-label mb-4">Built for Speed</p>
-            <h2 className="font-serif-display text-3xl sm:text-4xl font-bold text-white">Connect Your Entire Stack</h2>
-          </div>
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-0 border-t border-l" style={{ borderColor: "#1A1A1A" }}>
-            {INTEGRATIONS.map(int => (
-              <div key={int.name} className="feature-card p-5 sm:p-6 text-center group border-b border-r" style={{ borderColor: "#1A1A1A" }}>
-                <div className="w-10 h-10 mx-auto mb-3 flex items-center justify-center font-bold text-sm" style={{ backgroundColor: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)", color: "#C9A84C" }}>
-                  {int.initial}
-                </div>
-                <div className="text-white font-semibold text-xs">{int.name}</div>
-                <div className="text-xs mt-0.5" style={{ color: "#4A4A4A" }}>{int.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── AUTOMATION DEMO (desktop only) ── */}
-      <section id="automation" className="hidden lg:block py-24 px-6" style={{ backgroundColor: "#000" }}>
-        <div className="max-w-7xl mx-auto">
-          <AutomationFlowAnimation />
-        </div>
-      </section>
-
-      {/* ── AUTOMATION DEMO — mobile static version ── */}
-      <section className="lg:hidden py-14 px-4" style={{ backgroundColor: "#000" }}>
-        <div className="max-w-sm mx-auto">
-          <p className="section-label mb-4">Automation Pipeline</p>
-          <h2 className="font-serif-display text-2xl font-bold text-white mb-3">Watch Your Commerce Run Itself</h2>
-          <p className="text-gray-500 text-sm leading-relaxed mb-8">One order triggers a fully automated pipeline — payments, fulfillment, notifications, and analytics.</p>
-          <div className="grid grid-cols-2 gap-0 border-t border-l" style={{ borderColor: "#1A1A1A" }}>
-            {[
-              { label: "Order Created", sub: "Shopify / UnifyOne" },
-              { label: "n8n Triggered", sub: "Automation fires" },
-              { label: "Stripe Charged", sub: "Payment captured" },
-              { label: "Email Sent", sub: "Mailchimp receipt" },
-              { label: "Owner Notified", sub: "Instant alert" },
-              { label: "Analytics Updated", sub: "Real-time metrics" },
-            ].map((step) => (
-              <div key={step.label} className="p-4 border-b border-r" style={{ borderColor: "#1A1A1A" }}>
-                <div className="w-1.5 h-1.5 mb-2" style={{ backgroundColor: "#C9A84C" }} />
-                <p className="text-white text-xs font-semibold leading-tight">{step.label}</p>
-                <p className="text-xs mt-0.5" style={{ color: "#4A4A4A" }}>{step.sub}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── MANUS AI FEATURE SECTION ── */}
-      <section id="manus-ai" className="py-20 sm:py-28 px-4 sm:px-6 relative overflow-hidden" style={{ backgroundColor: "#060606" }}>
-        <div className="max-w-6xl mx-auto relative">
-          {/* Section header */}
-          <div className="mb-12 sm:mb-16">
-            <p className="section-label mb-4">New — Manus AI Integration</p>
-            <h2 className="font-serif-display text-3xl sm:text-4xl font-bold text-white mb-4">
-              Meet Your AI Gig Co-Pilot
-            </h2>
-            <p className="text-gray-500 text-base sm:text-lg max-w-2xl">
-              Manus AI is now built directly into UnifyOne — an intelligent assistant that knows your shifts, your earnings, your routes, and your challenges. No setup. Always on.
-            </p>
+        {/* Hero content — positioned at bottom of viewport */}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 pb-20 sm:pb-28 pt-32">
+          {/* Inscription label */}
+          <div className="flex items-center gap-4 mb-8">
+            <div className="h-px flex-1 max-w-12" style={{ backgroundColor: "rgba(212,168,67,0.4)" }} />
+            <span className="inscription">PNW Enterprises · Est. 2024 · Cathedral Framework</span>
+            <div className="h-px flex-1 max-w-12" style={{ backgroundColor: "rgba(212,168,67,0.4)" }} />
           </div>
 
-          {/* Feature banner image */}
-          <div className="overflow-hidden mb-10 sm:mb-14" style={{ border: "1px solid rgba(201,168,76,0.15)" }}>
-            <img
-              src={MANUS_AI_BANNER}
-              alt="Manus AI — Your AI Gig Co-Pilot is Here. Chat, Route Intelligence, Money Manager panels."
-              className="w-full"
-              loading="lazy"
-            />
-          </div>
+          {/* Main headline — Cinzel, massive */}
+          <h1 className="font-cinzel mb-6" style={{ lineHeight: 1.05 }}>
+            <span className="block text-5xl sm:text-7xl lg:text-8xl font-black" style={{ color: "#F0E8D0", letterSpacing: "-0.01em" }}>
+              Built to
+            </span>
+            <span className="block text-5xl sm:text-7xl lg:text-8xl font-black gradient-gold" style={{ letterSpacing: "-0.01em" }}>
+              Endure.
+            </span>
+          </h1>
 
-          {/* 4-feature grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border-t border-l" style={{ borderColor: "#1A1A1A" }}>
-            {[
-              { emoji: "🤖", title: "AI Chat Assistant", desc: "Ask Manus anything about your earnings, tax deductions, or platform strategy. Full conversation history, context-aware responses." },
-              { emoji: "📍", title: "Route Intelligence", desc: "AI-powered hot zone analysis, demand forecasting, and timing tips — updated in real time based on your GPS position." },
-              { emoji: "💰", title: "Earnings Insights", desc: "Manus reads your shift data and surfaces actionable insights — which platform pays best, when to work, and how to maximize your $/hour." },
-              { emoji: "🏆", title: "Challenge Strategy", desc: "Get AI-generated tips on which challenges to join, how to win active ones, and how to climb the leaderboard faster." },
-            ].map((f) => (
-              <div key={f.title} className="feature-card p-6 sm:p-7 group border-b border-r" style={{ borderColor: "#1A1A1A" }}>
-                <div className="w-9 h-9 flex items-center justify-center mb-4 text-lg" style={{ backgroundColor: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)" }}>
-                  {f.emoji}
-                </div>
-                <h3 className="text-white font-semibold mb-2 text-sm">{f.title}</h3>
-                <p className="text-gray-500 text-xs leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
+          {/* Subheadline — Crimson Pro, editorial */}
+          <p className="font-crimson text-xl sm:text-2xl mb-10 max-w-2xl" style={{ color: "#9A9A9A", lineHeight: 1.6, fontStyle: "italic" }}>
+            Commerce infrastructure engineered like a cathedral — sequential, structural, and built to outlast every platform trend.
+          </p>
 
-          {/* CTA strip */}
-          <div className="mt-10">
-            <button
-              onClick={handleGetStarted}
-              className="inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold transition-all duration-200 hover:opacity-90"
-              style={{ backgroundColor: "#C9A84C", color: "#000" }}
+          {/* CTA row */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-16">
+            <a href={getLoginUrl()} className="btn-illuminate inline-block text-center">
+              Begin Construction
+            </a>
+            <a
+              href="#features"
+              onClick={e => handleAnchor(e, "#features")}
+              className="btn-ghost-gold inline-block text-center"
             >
-              <Zap className="w-4 h-4" />
-              Try Manus AI Free
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <p className="text-xs mt-3" style={{ color: "#4A4A4A" }}>Available on all plans · No setup required</p>
+              View the Architecture
+            </a>
           </div>
+
+          {/* Stat row — separated by pillar lines */}
+          <div className="flex items-stretch gap-0" style={{ borderTop: "1px solid rgba(212,168,67,0.15)" }}>
+            {[
+              { value: "99.9%", label: "Uptime" },
+              { value: "< 200ms", label: "Response" },
+              { value: "SOC 2", label: "Compliant" },
+              { value: "GDPR", label: "Ready" },
+            ].map((stat, i) => (
+              <div
+                key={stat.label}
+                className="flex-1 py-6 px-4 sm:px-6"
+                style={{
+                  borderRight: i < 3 ? "1px solid rgba(212,168,67,0.1)" : "none",
+                }}
+              >
+                <div className="stat-value text-2xl sm:text-3xl">{stat.value}</div>
+                <div className="inscription mt-1" style={{ color: "#3A3A3A" }}>{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Arch SVG divider at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none">
+          <svg viewBox="0 0 1440 64" fill="none" preserveAspectRatio="none" className="w-full h-full">
+            <path d="M0 64 L0 32 Q360 0 720 32 Q1080 64 1440 32 L1440 64 Z" fill="#020202"/>
+          </svg>
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6" style={{ backgroundColor: "#000" }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-14">
-            <p className="section-label mb-4">Success Stories</p>
-            <h2 className="font-serif-display text-3xl sm:text-4xl font-bold text-white">What Our Clients Say</h2>
+      {/* ── FEATURES / PILLARS ──────────────────────────────────────────── */}
+      <section id="features" className="relative py-24 sm:py-32 overflow-hidden">
+        {/* Cathedral lancet windows background */}
+        <div className="absolute inset-0">
+          <img src={CATHEDRAL_FEATURES_BG} alt="" className="w-full h-full object-cover" style={{ opacity: 0.12 }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, #020202 0%, transparent 15%, transparent 85%, #020202 100%)" }} />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8">
+          {/* Section header */}
+          <div className="mb-16 sm:mb-20">
+            <span className="inscription block mb-4">The Six Pillars</span>
+            <h2 className="font-cinzel text-3xl sm:text-5xl font-bold mb-4" style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}>
+              The Architecture
+            </h2>
+            <div className="h-px max-w-xs" style={{ background: "linear-gradient(to right, #D4A843, transparent)" }} />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-l" style={{ borderColor: "#1A1A1A" }}>
-            {TESTIMONIALS.map(t => (
-              <div key={t.name} className="p-6 sm:p-8 flex flex-col gap-4 border-b border-r" style={{ borderColor: "#1A1A1A", backgroundColor: "#0A0A0A" }}>
-                <div className="flex gap-0.5">
-                  {Array.from({ length: t.stars }).map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5" style={{ fill: "#C9A84C", color: "#C9A84C" }} />
-                  ))}
+
+          {/* 3-column pillar grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0">
+            {PILLARS.map((pillar, i) => (
+              <div
+                key={pillar.glyph}
+                className="stone-card p-8 sm:p-10 group"
+                style={{
+                  borderRight: (i % 3 !== 2) ? "1px solid #242424" : "1px solid #242424",
+                  borderBottom: i < 3 ? "1px solid #242424" : "1px solid #242424",
+                }}
+              >
+                {/* Roman numeral glyph */}
+                <div className="font-cinzel text-xs font-600 mb-6" style={{ color: "rgba(212,168,67,0.35)", letterSpacing: "0.3em" }}>
+                  {pillar.glyph}
                 </div>
-                <p className="text-gray-400 text-sm leading-relaxed flex-1">“{t.quote}”</p>
-                <div className="pt-4 border-t" style={{ borderColor: "#1A1A1A" }}>
-                  <div className="text-white text-sm font-semibold font-serif-display">{t.name}</div>
-                  <div className="text-xs mt-0.5" style={{ color: "#4A4A4A" }}>{t.role} · {t.company}</div>
-                </div>
+                {/* Arch-top accent line */}
+                <div className="w-8 h-px mb-6 transition-all duration-300 group-hover:w-16" style={{ backgroundColor: "#D4A843" }} />
+                <h3 className="font-cinzel text-base font-600 mb-4" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>
+                  {pillar.title}
+                </h3>
+                <p className="font-crimson text-base leading-relaxed" style={{ color: "#6A6A6A" }}>
+                  {pillar.body}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── PRICING ── */}
-      <section id="pricing" className="py-20 sm:py-28 px-4 sm:px-6" style={{ backgroundColor: "#060606" }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-10">
-            <p className="section-label mb-4">Pricing</p>
-            <h2 className="font-serif-display text-3xl sm:text-4xl font-bold text-white mb-4">Simple, Transparent Pricing</h2>
-            {/* Billing toggle */}
-            <div className="flex items-center gap-1 p-1 w-fit" style={{ backgroundColor: "#0D0D0D", border: "1px solid #1A1A1A" }}>
-              <button
-                onClick={() => setBillingPeriod("monthly")}
-                className={`px-5 py-2 text-xs font-medium transition-all uppercase tracking-widest ${billingPeriod === "monthly" ? "text-black" : "text-gray-500 hover:text-white"}`}
-                style={billingPeriod === "monthly" ? { backgroundColor: "#C9A84C" } : {}}
-              >Monthly</button>
-              <button
-                onClick={() => setBillingPeriod("yearly")}
-                className={`px-5 py-2 text-xs font-medium transition-all uppercase tracking-widest flex items-center gap-2 ${billingPeriod === "yearly" ? "text-black" : "text-gray-500 hover:text-white"}`}
-                style={billingPeriod === "yearly" ? { backgroundColor: "#C9A84C" } : {}}
-              >Yearly <span className="text-[9px] px-1.5 py-0.5 font-bold" style={{ backgroundColor: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>-17%</span></button>
-            </div>
+      {/* ── HOW IT WORKS / CONSTRUCTION PHASES ──────────────────────────── */}
+      <section id="how-it-works" className="py-24 sm:py-32 cathedral-bg">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8">
+          <div className="mb-16 sm:mb-20">
+            <span className="inscription block mb-4">The Cathedral Principle</span>
+            <h2 className="font-cinzel text-3xl sm:text-5xl font-bold mb-4" style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}>
+              Sequential Construction
+            </h2>
+            <div className="h-px max-w-xs" style={{ background: "linear-gradient(to right, #D4A843, transparent)" }} />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-l" style={{ borderColor: "#1A1A1A" }}>
-            {PLANS.map(plan => {
-              const slug = plan.name.toLowerCase();
-              const isLoading = checkoutLoading === slug;
-              const displayPrice = billingPeriod === "yearly" && plan.price !== "Custom" ? plan.yearlyPrice : plan.price;
-              return (
-                <div key={plan.name} className={`pricing-card p-7 sm:p-8 relative border-b border-r flex flex-col`} style={{ borderColor: "#1A1A1A", backgroundColor: plan.highlight ? "#0D0D0D" : "#000" }}>
-                  {plan.highlight && (
-                    <div className="mb-4">
-                      <span className="text-[9px] px-2.5 py-1 uppercase tracking-widest font-bold" style={{ backgroundColor: "rgba(201,168,76,0.15)", color: "#C9A84C", border: "1px solid rgba(201,168,76,0.3)" }}>Most Popular</span>
+
+          {/* Vertical timeline — cathedral nave columns */}
+          <div className="relative">
+            {/* Central pillar line */}
+            <div className="absolute left-6 sm:left-1/2 top-0 bottom-0 w-px hidden sm:block" style={{ background: "linear-gradient(to bottom, transparent, rgba(212,168,67,0.3), transparent)" }} />
+
+            <div className="space-y-0">
+              {CONSTRUCTION_PHASES.map((phase, i) => (
+                <div
+                  key={phase.phase}
+                  className={`relative flex flex-col sm:flex-row gap-8 sm:gap-16 ${i % 2 === 0 ? "sm:flex-row" : "sm:flex-row-reverse"}`}
+                  style={{ paddingBottom: i < CONSTRUCTION_PHASES.length - 1 ? "4rem" : 0 }}
+                >
+                  {/* Content */}
+                  <div className="flex-1 sm:text-right" style={{ textAlign: i % 2 === 0 ? undefined : "left" }}>
+                    <div className={`stone-card p-8 ${i % 2 === 0 ? "sm:mr-8" : "sm:ml-8"}`}>
+                      <span className="inscription block mb-3" style={{ color: "rgba(212,168,67,0.5)" }}>{phase.phase}</span>
+                      <h3 className="font-cinzel text-lg font-600 mb-3" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>
+                        {phase.title}
+                      </h3>
+                      <p className="font-crimson text-base leading-relaxed" style={{ color: "#6A6A6A" }}>
+                        {phase.body}
+                      </p>
                     </div>
-                  )}
-                  <div className="mb-6">
-                    <h3 className="text-white font-bold text-lg mb-3 font-serif-display">{plan.name}</h3>
-                    <div className="flex items-baseline gap-1">
-                      <span className="font-serif-display text-4xl font-bold" style={{ color: "#C9A84C" }}>{displayPrice}</span>
-                      <span className="text-gray-600 text-sm">{plan.price !== "Custom" ? "/mo" : ""}</span>
-                    </div>
-                    {billingPeriod === "yearly" && plan.price !== "Custom" && (
-                      <p className="text-xs mt-1" style={{ color: "#9A7A30" }}>Billed annually · 2 months free</p>
-                    )}
                   </div>
-                  <ul className="space-y-2.5 mb-8 flex-1">
-                    {plan.features.map(f => (
-                      <li key={f} className="flex items-center gap-2 text-gray-400 text-sm">
-                        <div className="w-1 h-1 flex-shrink-0" style={{ backgroundColor: "#C9A84C" }} />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    className={`w-full font-semibold h-11 text-sm uppercase tracking-widest transition-all hover:opacity-90 disabled:opacity-50`}
-                    style={plan.highlight ? { backgroundColor: "#C9A84C", color: "#000" } : { border: "1px solid #2A2A2A", color: "#9A9A9A" }}
-                    onClick={() => handlePlanCheckout(slug, plan.name)}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        Redirecting...
-                      </span>
-                    ) : plan.cta}
-                  </button>
+
+                  {/* Center node — keystone */}
+                  <div className="hidden sm:flex items-start justify-center w-12 shrink-0 pt-8">
+                    <div
+                      className="w-8 h-8 flex items-center justify-center font-cinzel text-xs font-700"
+                      style={{
+                        backgroundColor: "#020202",
+                        border: "1px solid rgba(212,168,67,0.5)",
+                        color: "#D4A843",
+                        letterSpacing: "0.1em",
+                      }}
+                    >
+                      {i + 1}
+                    </div>
+                  </div>
+
+                  {/* Spacer */}
+                  <div className="flex-1 hidden sm:block" />
                 </div>
-              );
-            })}
-          </div>
-          <p className="text-xs mt-6" style={{ color: "#3A3A3A" }}>All plans include a 14-day free trial. No credit card required to start.</p>
-        </div>
-      </section>
-
-      {/* ── FINAL CTA ── */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6" style={{ backgroundColor: "#000" }}>
-        <div className="max-w-4xl mx-auto">
-          <div className="p-10 sm:p-16 relative" style={{ border: "1px solid rgba(201,168,76,0.2)", backgroundColor: "#060606" }}>
-            <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, rgba(201,168,76,0.03) 0%, transparent 70%)" }} />
-            <div className="relative text-center">
-              <p className="section-label mb-5">Ready to Launch?</p>
-              <h2 className="font-serif-display text-3xl sm:text-5xl font-bold text-white mb-5">Start Your Journey</h2>
-              <p className="text-gray-500 text-base sm:text-lg mb-10 max-w-xl mx-auto">Join operators building scalable, automated commerce infrastructure on UnifyOne. Start free, scale when you're ready.</p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-                <button onClick={handleGetStarted} className="inline-flex items-center gap-2 px-10 py-4 text-sm font-semibold transition-all hover:opacity-90 w-full sm:w-auto justify-center" style={{ backgroundColor: "#C9A84C", color: "#000" }}>
-                  Get Started Free <ArrowRight className="w-4 h-4" />
-                </button>
-                <button onClick={() => window.open("mailto:skdev@1commercesolutions.com", "_blank")} className="inline-flex items-center gap-2 px-10 py-4 text-sm font-medium text-gray-400 transition-all hover:text-white w-full sm:w-auto justify-center" style={{ border: "1px solid #2A2A2A" }}>
-                  Contact Sales
-                </button>
-              </div>
-              <p className="text-xs mt-5" style={{ color: "#3A3A3A" }}>14-day free trial · No credit card · Cancel anytime</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── FOOTER ── */}
-      <footer className="py-10 sm:py-12 px-4 sm:px-6" style={{ borderTop: "1px solid #1A1A1A", backgroundColor: "#000" }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 flex items-center justify-center" style={{ border: "1px solid rgba(201,168,76,0.3)", backgroundColor: "rgba(201,168,76,0.08)" }}>
-                <Layers className="w-3 h-3" style={{ color: "#C9A84C" }} />
-              </div>
-              <span className="text-white font-bold font-serif-display">UnifyOne</span>
-              <span className="text-xs ml-2 uppercase tracking-widest" style={{ color: "#4A4A4A" }}>by 1Commerce LLC</span>
-            </div>
-            <div className="flex flex-wrap justify-center gap-6">
-              {["Privacy", "Terms", "Security", "Docs", "Contact"].map((l, i) => (
-                <a key={l} href={l === "Contact" ? "mailto:skdev@1commercesolutions.com" : l === "Privacy" ? "/privacy" : l === "Terms" ? "/terms" : "#"}
-                  className="text-xs uppercase tracking-widest transition-colors hover:text-white" style={{ color: "#4A4A4A" }}>{l}</a>
               ))}
             </div>
           </div>
-          <div className="pt-5 flex flex-col sm:flex-row items-center justify-between gap-2" style={{ borderTop: "1px solid #1A1A1A" }}>
-            <p className="text-xs uppercase tracking-widest" style={{ color: "#2A2A2A" }}>© 2026 1Commerce LLC · All rights reserved</p>
-            <p className="text-xs uppercase tracking-widest" style={{ color: "#2A2A2A" }}>SOC 2 Compliant · GDPR Ready · 1commerce.online</p>
+        </div>
+      </section>
+
+      {/* ── MANUS AI SECTION ────────────────────────────────────────────── */}
+      <section id="manus-ai" className="relative py-24 sm:py-32 overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={MANUS_AI_HERO} alt="" className="w-full h-full object-cover" style={{ opacity: 0.08 }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #020202 0%, rgba(2,2,2,0.85) 50%, #020202 100%)" }} />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8">
+          {/* Header */}
+          <div className="mb-12">
+            <span className="inscription block mb-4">New — The Spire</span>
+            <h2 className="font-cinzel text-3xl sm:text-5xl font-bold mb-4" style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}>
+              Manus AI
+            </h2>
+            <p className="font-crimson text-xl sm:text-2xl max-w-2xl" style={{ color: "#6A6A6A", fontStyle: "italic" }}>
+              An intelligence layer that reads your actual commerce data — not generic advice, but specific insight drawn from your shifts, routes, and earnings.
+            </p>
+            <div className="h-px max-w-xs mt-6" style={{ background: "linear-gradient(to right, #D4A843, transparent)" }} />
+          </div>
+
+          {/* Banner image */}
+          <div className="mb-12 overflow-hidden" style={{ border: "1px solid rgba(212,168,67,0.12)" }}>
+            <img
+              src={MANUS_AI_BANNER}
+              alt="Manus AI — Your AI Gig Co-Pilot"
+              className="w-full object-cover"
+              style={{ maxHeight: "320px", objectPosition: "center" }}
+            />
+          </div>
+
+          {/* Feature grid — 4 columns */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0">
+            {[
+              { glyph: "✦", title: "Contextual Chat", body: "Every page has a dedicated AI context. The assistant on Gig Command knows your routes. The one on Money Manager knows your tax position." },
+              { glyph: "✦", title: "Route Intelligence", body: "Analyzes your historical mileage and earnings per platform to surface which routes and time windows yield the highest $/hr." },
+              { glyph: "✦", title: "Earnings Illumination", body: "Reads your shift data and projects YTD earnings, tax deductions, and platform performance — updated on every session." },
+              { glyph: "✦", title: "Challenge Strategy", body: "Monitors your active challenges and suggests optimal completion paths based on your current platform and location data." },
+            ].map((feat, i) => (
+              <div
+                key={feat.title}
+                className="stone-card p-8 group"
+                style={{ borderRight: i < 3 ? "1px solid #242424" : "1px solid #242424" }}
+              >
+                <div className="text-lg mb-4 animate-gold-beam" style={{ color: "#D4A843" }}>{feat.glyph}</div>
+                <div className="w-6 h-px mb-5 transition-all duration-300 group-hover:w-12" style={{ backgroundColor: "#D4A843" }} />
+                <h3 className="font-cinzel text-sm font-600 mb-3" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>
+                  {feat.title}
+                </h3>
+                <p className="font-crimson text-sm leading-relaxed" style={{ color: "#5A5A5A" }}>
+                  {feat.body}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div className="mt-10">
+            <a href={getLoginUrl()} className="btn-illuminate inline-block">
+              Activate the Spire
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── INTEGRATIONS ────────────────────────────────────────────────── */}
+      <section className="py-16 sm:py-20" style={{ borderTop: "1px solid rgba(212,168,67,0.08)", borderBottom: "1px solid rgba(212,168,67,0.08)" }}>
+        <div className="max-w-7xl mx-auto px-6 sm:px-8">
+          <span className="inscription block text-center mb-10" style={{ color: "#3A3A3A" }}>
+            Integrated Infrastructure
+          </span>
+          <div className="flex flex-wrap justify-center gap-0">
+            {INTEGRATIONS.map((name, i) => (
+              <div
+                key={name}
+                className="px-6 py-4 transition-colors duration-200"
+                style={{
+                  borderRight: i < INTEGRATIONS.length - 1 ? "1px solid rgba(212,168,67,0.08)" : "none",
+                  fontFamily: "Cinzel, serif",
+                  fontSize: "0.65rem",
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  color: "#3A3A3A",
+                  cursor: "default",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#D4A843")}
+                onMouseLeave={e => (e.currentTarget.style.color = "#3A3A3A")}
+              >
+                {name}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ────────────────────────────────────────────────── */}
+      <section className="py-24 sm:py-32 cathedral-bg">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8">
+          <div className="mb-16">
+            <span className="inscription block mb-4">From the Congregation</span>
+            <h2 className="font-cinzel text-3xl sm:text-4xl font-bold" style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}>
+              Testimonials
+            </h2>
+            <div className="h-px max-w-xs mt-4" style={{ background: "linear-gradient(to right, #D4A843, transparent)" }} />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+            {TESTIMONIALS.map((t, i) => (
+              <div
+                key={t.name}
+                className="p-8 sm:p-10"
+                style={{
+                  borderRight: i < 2 ? "1px solid rgba(212,168,67,0.1)" : "none",
+                  borderTop: "1px solid rgba(212,168,67,0.1)",
+                }}
+              >
+                {/* Quotation mark — manuscript style */}
+                <div className="font-cinzel text-5xl leading-none mb-6" style={{ color: "rgba(212,168,67,0.2)" }}>"</div>
+                <p className="font-crimson text-lg leading-relaxed mb-8" style={{ color: "#9A9A9A", fontStyle: "italic" }}>
+                  {t.quote}
+                </p>
+                <div>
+                  <div className="font-cinzel text-xs font-600" style={{ color: "#D4A843", letterSpacing: "0.15em" }}>{t.name}</div>
+                  <div className="inscription mt-1" style={{ color: "#3A3A3A" }}>{t.role} · {t.city}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRICING ─────────────────────────────────────────────────────── */}
+      <section id="pricing" className="py-24 sm:py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8">
+          <div className="mb-16">
+            <span className="inscription block mb-4">Investment</span>
+            <h2 className="font-cinzel text-3xl sm:text-5xl font-bold mb-4" style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}>
+              Tithes & Offerings
+            </h2>
+            <p className="font-crimson text-xl" style={{ color: "#5A5A5A", fontStyle: "italic" }}>
+              No hidden fees. No platform tax. Cancel at the solstice.
+            </p>
+            <div className="h-px max-w-xs mt-6" style={{ background: "linear-gradient(to right, #D4A843, transparent)" }} />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+            {TIERS.map((tier, i) => (
+              <div
+                key={tier.name}
+                className="relative p-8 sm:p-10 transition-all duration-300 group"
+                style={{
+                  backgroundColor: tier.highlight ? "#0A0A0A" : "#020202",
+                  border: tier.highlight ? "1px solid rgba(212,168,67,0.4)" : "1px solid #242424",
+                  borderRight: i < 2 ? (tier.highlight ? "1px solid rgba(212,168,67,0.4)" : "1px solid #242424") : undefined,
+                  boxShadow: tier.highlight ? "0 0 60px rgba(212,168,67,0.08), inset 0 1px 0 rgba(212,168,67,0.2)" : "none",
+                }}
+              >
+                {tier.highlight && (
+                  <div className="absolute -top-px left-0 right-0 h-px" style={{ background: "linear-gradient(to right, transparent, #D4A843, transparent)" }} />
+                )}
+                {tier.highlight && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="inscription px-3 py-1" style={{ backgroundColor: "#D4A843", color: "#020202" }}>
+                      Most Chosen
+                    </span>
+                  </div>
+                )}
+
+                <div className="font-cinzel text-xs font-600 mb-6" style={{ color: "rgba(212,168,67,0.4)", letterSpacing: "0.3em" }}>
+                  {tier.name.toUpperCase()}
+                </div>
+                <div className="mb-2">
+                  <span className="font-cinzel text-4xl font-black" style={{ color: tier.highlight ? "#F0D080" : "#F0E8D0" }}>
+                    {tier.price}
+                  </span>
+                  <span className="font-crimson text-sm ml-2" style={{ color: "#5A5A5A" }}>/ {tier.period}</span>
+                </div>
+                <p className="font-crimson text-base mb-8" style={{ color: "#5A5A5A", fontStyle: "italic" }}>
+                  {tier.description}
+                </p>
+
+                <div className="space-y-3 mb-10">
+                  {tier.features.map(f => (
+                    <div key={f} className="flex items-center gap-3">
+                      <div className="w-3 h-px shrink-0" style={{ backgroundColor: "#D4A843" }} />
+                      <span className="font-crimson text-sm" style={{ color: "#6A6A6A" }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <a
+                  href={getLoginUrl()}
+                  className={tier.highlight ? "btn-illuminate block text-center" : "btn-ghost-gold block text-center"}
+                >
+                  {tier.cta}
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FINAL CTA ────────────────────────────────────────────────────── */}
+      <section className="relative py-24 sm:py-40 overflow-hidden">
+        {/* Rose window background */}
+        <div className="absolute inset-0">
+          <img src={CATHEDRAL_CTA_BG} alt="" className="w-full h-full object-cover" style={{ opacity: 0.25 }} />
+          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 80% at 50% 50%, rgba(2,2,2,0.5) 0%, rgba(2,2,2,0.95) 70%)" }} />
+        </div>
+
+        <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-8 text-center">
+          {/* Decorative cross */}
+          <div className="flex justify-center mb-10">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <line x1="16" y1="2" x2="16" y2="30" stroke="#D4A843" strokeWidth="1"/>
+              <line x1="2" y1="12" x2="30" y2="12" stroke="#D4A843" strokeWidth="1"/>
+              <rect x="1" y="1" width="30" height="30" stroke="rgba(212,168,67,0.2)" strokeWidth="1"/>
+            </svg>
+          </div>
+
+          <span className="inscription block mb-6">The Foundation Awaits</span>
+          <h2 className="font-cinzel text-4xl sm:text-6xl font-black mb-6" style={{ color: "#F0E8D0", letterSpacing: "0.02em", lineHeight: 1.1 }}>
+            Begin Construction<br />
+            <span className="gradient-gold">Today.</span>
+          </h2>
+          <p className="font-crimson text-xl sm:text-2xl mb-12 max-w-2xl mx-auto" style={{ color: "#5A5A5A", fontStyle: "italic" }}>
+            Cathedrals are not built in a day. But every one begins with the same first stone. Yours is waiting.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href={getLoginUrl()} className="btn-illuminate inline-block" style={{ padding: "1rem 2.5rem" }}>
+              Lay the First Stone
+            </a>
+            <a
+              href="#features"
+              onClick={e => handleAnchor(e, "#features")}
+              className="btn-ghost-gold inline-block"
+              style={{ padding: "1rem 2.5rem" }}
+            >
+              Study the Plans
+            </a>
+          </div>
+
+          <p className="font-crimson text-sm mt-8" style={{ color: "#3A3A3A" }}>
+            14-day free trial · No credit card required · Cancel at any time
+          </p>
+        </div>
+      </section>
+
+      {/* ── FOOTER ──────────────────────────────────────────────────────── */}
+      <footer style={{ borderTop: "1px solid rgba(212,168,67,0.1)", backgroundColor: "#020202" }}>
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-8">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-6 h-6 flex items-center justify-center" style={{ border: "1px solid rgba(212,168,67,0.3)" }}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <line x1="5" y1="1" x2="5" y2="9" stroke="#D4A843" strokeWidth="1"/>
+                    <line x1="1" y1="4" x2="9" y2="4" stroke="#D4A843" strokeWidth="1"/>
+                  </svg>
+                </div>
+                <span className="font-cinzel text-xs font-600" style={{ color: "#D4A843", letterSpacing: "0.2em" }}>UNIFYONE</span>
+              </div>
+              <p className="font-crimson text-sm" style={{ color: "#3A3A3A", maxWidth: "240px" }}>
+                Commerce infrastructure built on the Cathedral Principle. By 1Commerce · PNW Enterprises.
+              </p>
+            </div>
+
+            {/* Links */}
+            <div className="flex flex-wrap gap-8">
+              {[
+                { label: "Privacy Policy", href: "/privacy" },
+                { label: "Terms of Service", href: "/terms" },
+                { label: "Dashboard", href: "/dashboard" },
+                { label: "skdev@1commercesolutions.com", href: "mailto:skdev@1commercesolutions.com" },
+              ].map(link => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className="transition-colors duration-200"
+                  style={{
+                    fontFamily: "Cinzel, serif",
+                    fontSize: "0.6rem",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
+                    color: "#3A3A3A",
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = "#D4A843")}
+                  onMouseLeave={e => (e.currentTarget.style.color = "#3A3A3A")}
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4" style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}>
+            <span className="inscription" style={{ color: "#2A2A2A" }}>
+              © 2024 1Commerce Solutions · PNW Enterprises · All rights reserved
+            </span>
+            <span className="inscription" style={{ color: "#2A2A2A" }}>
+              Cathedral Framework v1.6
+            </span>
           </div>
         </div>
       </footer>
 
-      {/* ── STICKY MOBILE CTA BAR ── */}
-      {!isAuthenticated && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden" style={{ borderTop: "1px solid #1A1A1A", backgroundColor: "rgba(0,0,0,0.97)" }}>
-          <div className="px-4 py-3 flex gap-2 items-center">
-            <button
-              onClick={handleGetStarted}
-              className="flex-1 font-bold h-11 text-sm flex items-center justify-center gap-1.5"
-              style={{ backgroundColor: "#C9A84C", color: "#000" }}
-            >
-              Start Free Trial <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => window.location.href = getLoginUrl()}
-              className="h-11 px-4 text-xs uppercase tracking-widest text-gray-400 hover:text-white flex-shrink-0 transition-colors"
-              style={{ border: "1px solid #1A1A1A" }}
-            >
-              Sign In
-            </button>
-          </div>
-        </div>
-      )}
+      {/* ── MOBILE STICKY CTA ───────────────────────────────────────────── */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 sm:hidden flex gap-0"
+        style={{ borderTop: "1px solid rgba(212,168,67,0.2)", backgroundColor: "rgba(2,2,2,0.98)" }}
+      >
+        <a
+          href={getLoginUrl()}
+          className="flex-1 py-4 text-center btn-illuminate"
+          style={{ fontSize: "0.65rem" }}
+        >
+          Begin Construction
+        </a>
+        <button
+          onClick={() => setLocation("/dashboard")}
+          className="px-6 py-4 btn-ghost-gold"
+          style={{ fontSize: "0.65rem", borderLeft: "1px solid rgba(212,168,67,0.2)" }}
+        >
+          Enter
+        </button>
+      </div>
     </div>
   );
 }

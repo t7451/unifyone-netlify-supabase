@@ -192,26 +192,36 @@ function DashboardLayoutContent({
           className="border-r-0"
           disableTransition={isResizing}
         >
-          <SidebarHeader className="h-16 justify-center" style={{ borderBottom: "1px solid #1A1A1A" }}>
+          <SidebarHeader className="h-16 justify-center" style={{ borderBottom: "1px solid rgba(212,168,67,0.1)" }}>
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
                 onClick={toggleSidebar}
                 className="h-8 w-8 flex items-center justify-center transition-colors focus:outline-none shrink-0 hover:opacity-70"
                 aria-label="Toggle navigation"
               >
-                <PanelLeft className="h-4 w-4" style={{ color: "#4A4A4A" }} />
+                <PanelLeft className="h-4 w-4" style={{ color: "#3A3A3A" }} />
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <span className="font-bold tracking-tight truncate flex-1 font-serif-display" style={{ color: "#C9A84C" }}>
-                    UnifyOne
-                  </span>
+                  {/* Cathedral cross glyph + wordmark */}
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="w-5 h-5 flex items-center justify-center shrink-0" style={{ border: "1px solid rgba(212,168,67,0.35)" }}>
+                      <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
+                        <line x1="4.5" y1="1" x2="4.5" y2="8" stroke="#D4A843" strokeWidth="1"/>
+                        <line x1="1" y1="3.5" x2="8" y2="3.5" stroke="#D4A843" strokeWidth="1"/>
+                      </svg>
+                    </div>
+                    <span className="font-cinzel text-xs font-700 truncate" style={{ color: "#D4A843", letterSpacing: "0.2em" }}>UNIFYONE</span>
+                  </div>
                   <NotificationCenter />
                 </div>
               ) : null}
               {isCollapsed ? (
-                <div className="w-7 h-7 flex items-center justify-center shrink-0" style={{ border: "1px solid rgba(201,168,76,0.3)", backgroundColor: "rgba(201,168,76,0.08)" }}>
-                  <Building2 className="w-3.5 h-3.5" style={{ color: "#C9A84C" }} />
+                <div className="w-7 h-7 flex items-center justify-center shrink-0" style={{ border: "1px solid rgba(212,168,67,0.3)" }}>
+                  <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                    <line x1="5.5" y1="1" x2="5.5" y2="10" stroke="#D4A843" strokeWidth="1"/>
+                    <line x1="1" y1="4" x2="10" y2="4" stroke="#D4A843" strokeWidth="1"/>
+                  </svg>
                 </div>
               ) : null}
             </div>
@@ -219,10 +229,10 @@ function DashboardLayoutContent({
 
           {!isCollapsed && (
             <div className="px-3 pb-2 pt-2">
-              <button className="w-full flex items-center gap-2 px-2 py-1.5 transition-colors text-left hover:opacity-80" style={{ border: "1px solid #1A1A1A", backgroundColor: "#0A0A0A" }}>
-                <Building2 className="w-3 h-3 shrink-0" style={{ color: "#9A7A30" }} />
-                <span className="text-xs font-medium truncate flex-1" style={{ color: "#9A9A9A" }}>{tenantName}</span>
-                <ChevronDown className="w-3 h-3 shrink-0" style={{ color: "#3A3A3A" }} />
+              <button className="w-full flex items-center gap-2 px-2 py-1.5 transition-colors text-left hover:opacity-80" style={{ borderBottom: "1px solid rgba(212,168,67,0.08)" }}>
+                <Building2 className="w-3 h-3 shrink-0" style={{ color: "rgba(212,168,67,0.4)" }} />
+                <span className="font-cinzel text-xs truncate flex-1" style={{ color: "#4A4A4A", letterSpacing: "0.1em" }}>{tenantName}</span>
+                <ChevronDown className="w-3 h-3 shrink-0" style={{ color: "#2A2A2A" }} />
               </button>
             </div>
           )}
@@ -237,13 +247,16 @@ function DashboardLayoutContent({
                       onClick={() => setLocation(item.path)}
                       tooltip={item.label}
                       className="h-9 transition-all font-normal rounded-none"
-                      style={isActive ? { backgroundColor: "rgba(201,168,76,0.1)", borderLeft: "2px solid #C9A84C" } : { borderLeft: "2px solid transparent" }}
+                      style={isActive
+                        ? { backgroundColor: "rgba(212,168,67,0.06)", borderLeft: "2px solid #D4A843", borderBottom: "1px solid rgba(212,168,67,0.08)" }
+                        : { borderLeft: "2px solid transparent", borderBottom: "1px solid transparent" }
+                      }
                     >
                       <item.icon
                         className="h-3.5 w-3.5"
-                        style={{ color: isActive ? "#C9A84C" : "#4A4A4A" }}
+                        style={{ color: isActive ? "#D4A843" : "#3A3A3A" }}
                       />
-                      <span style={{ color: isActive ? "#C9A84C" : "#6A6A6A", fontSize: "0.75rem", letterSpacing: "0.02em" }}>{item.label}</span>
+                      <span className="font-cinzel" style={{ color: isActive ? "#D4A843" : "#4A4A4A", fontSize: "0.6rem", letterSpacing: "0.12em" }}>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -401,16 +414,25 @@ function FloatingAIWidget() {
         </div>
       )}
 
-      {/* Floating button */}
+      {/* Floating button — Cathedral cross medallion */}
       <button
         onClick={open ? () => setOpen(false) : handleOpen}
-        className="relative h-12 w-12 shadow-lg hover:opacity-90 transition-all flex items-center justify-center"
-        style={{ backgroundColor: "#C9A84C" }}
+        className="relative h-11 w-11 shadow-lg hover:opacity-90 transition-all flex items-center justify-center"
+        style={{ backgroundColor: "#D4A843", border: "1px solid #F0D080" }}
         aria-label="Open AI Assistant"
       >
-        {open ? <X className="h-5 w-5 text-black" /> : <Sparkles className="h-5 w-5 text-black" />}
+        {open
+          ? <X className="h-4 w-4" style={{ color: "#020202" }} />
+          : (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <line x1="8" y1="1" x2="8" y2="15" stroke="#020202" strokeWidth="1.5"/>
+              <line x1="1" y1="6" x2="15" y2="6" stroke="#020202" strokeWidth="1.5"/>
+              <rect x="0.5" y="0.5" width="15" height="15" stroke="rgba(2,2,2,0.3)" strokeWidth="0.5"/>
+            </svg>
+          )
+        }
         {!open && unread > 0 && (
-          <span className="absolute -top-1 -right-1 h-5 w-5 text-xs flex items-center justify-center font-bold" style={{ backgroundColor: "#9A7A30", color: "#000" }}>
+          <span className="absolute -top-1.5 -right-1.5 h-4 w-4 text-xs flex items-center justify-center font-bold font-cinzel" style={{ backgroundColor: "#020202", color: "#D4A843", border: "1px solid #D4A843", fontSize: "0.5rem" }}>
             {unread > 9 ? "9+" : unread}
           </span>
         )}

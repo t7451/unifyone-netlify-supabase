@@ -536,3 +536,30 @@
 - [x] Restyled FloatingAIWidget: gold header, gold floating button, dark panel
 - [x] 99/100 tests passing (1 PayPal network test fails due to sandbox network restriction — expected)
 - [x] 0 TypeScript errors
+
+## Phase 30 — Cathedral Framework Original Rebuild
+
+- [ ] Generate hero background: gothic vault stone texture, apex light beam, SVG arch geometry
+- [ ] Generate feature section background: stone masonry pattern, subtle grid lines
+- [ ] Rebuild index.css: Cathedral design tokens (obsidian stone, manuscript gold, vault geometry, apex glow), original font pairing, structural grid utilities
+- [ ] Rebuild Home.tsx hero: pointed arch SVG frame, apex radial light, manuscript gold headline, vault-geometry stat row
+- [ ] Rebuild features section: stone-block grid cards, illuminated icon medallions, arch-top card borders
+- [ ] Rebuild How It Works: cathedral nave column layout, numbered stone pillars
+- [ ] Rebuild Manus AI section: stained-glass-inspired feature grid, gold illumination
+- [ ] Rebuild Pricing: stone tablet cards, gold highlight tier, arch-top active card
+- [ ] Rebuild Testimonials: cathedral choir stall layout, manuscript quote styling
+- [ ] Rebuild Footer: cathedral foundation stone aesthetic, carved-text links
+- [ ] Restyle DashboardLayout: cathedral nave sidebar, arch active indicators, stone header
+- [ ] 0 TypeScript errors, 99+ tests passing
+- [ ] Checkpoint + GitHub release v1.6.0-cathedral
+
+## Phase 30 — Cathedral Framework Rebuild [COMPLETE]
+
+- [x] Design Cathedral Framework token system: stone palette (void/crypt/nave/wall/mortar), illumination palette (apex/illuminate/warm/deep/ember/trace), arch-radius=0
+- [x] Rebuild index.css: Cinzel + Crimson Pro fonts, stone-surface/cathedral-bg textures, inscription labels, pillar lines, arch borders, stone-card, btn-illuminate, btn-ghost-gold, medallion, stat-value, apex-pulse/illuminate/rise/gold-beam animations
+- [x] Generate 4 cathedral assets: vault interior hero, lancet windows features bg, rose window CTA bg, Manus AI hero
+- [x] Rebuild Home.tsx from scratch: cathedral vault hero with apex light beam + arch SVG divider, Six Pillars grid, Sequential Construction timeline, Manus AI spire section, integrations strip, testimonials with manuscript quotation marks, Tithes & Offerings pricing, rose window CTA, footer with cross glyph
+- [x] Update DashboardLayout: cross glyph logo, Cinzel wordmark, gold left-border active indicator, Cinzel nav labels, cross medallion FloatingAI button
+- [x] Update index.html: Cinzel + Crimson Pro font preconnects, theme-color #020202
+- [x] 100 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved, GitHub release v1.6.0-cathedral pushed
