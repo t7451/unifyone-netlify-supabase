@@ -497,3 +497,42 @@
 - [x] Manus AI added to Integrations grid
 - [x] 100 tests passing, 0 TypeScript errors
 - [x] Checkpoint saved, GitHub release v1.5.2-manus-ai-marketing pushed
+
+## Phase 28 — SEO Infrastructure + Resend Email Capture
+
+- [ ] Install resend npm package
+- [ ] Add RESEND_API_KEY secret via webdev_request_secrets
+- [ ] Generate sitemap.xml with all landing page anchors and static routes
+- [ ] Update robots.txt with Sitemap directive
+- [ ] Expand JSON-LD: add FAQPage schema (8 Q&As) and Organization schema with sameAs links
+- [ ] email_subscribers table: id, email, source, drip_step, subscribed_at, unsubscribed_at, tags + migration
+- [ ] emailSubscriberRouter: subscribe (public), unsubscribe (token-based), listSubscribers (admin)
+- [ ] Resend welcome email (drip step 1): HTML template, fires on subscribe
+- [ ] Drip email templates 2-5: feature tour, Manus AI walkthrough, earnings case study, trial nudge
+- [ ] Drip cron job: server-side scheduled procedure advances drip_step and sends next email
+- [ ] Email capture UI section on landing page: above footer, single email field + CTA, success state
+- [ ] Wire landing page capture to trpc.emailSubscriber.subscribe mutation
+- [ ] Tests for emailSubscriberRouter
+- [ ] 100 tests passing, 0 TypeScript errors
+- [ ] Save checkpoint and push GitHub release v1.5.3
+
+## Phase 29 — 1Commerce Gothic-Gold Aesthetic Restyle [COMPLETE]
+
+- [x] Extracted design tokens from 1commerce.manus.space: pure black bg, gold #C9A84C, Playfair Display serif, all-caps spaced labels, sharp corners, grid-line layouts
+- [x] Updated index.css: new CSS variables (gold primary, obsidian backgrounds, sharp radius 0.25rem), Playfair Display + Inter fonts, gold utility classes (.gradient-text, .section-label, .gold-glow, .gold-rule, .font-serif-display), updated scrollbar to gold
+- [x] Restyled Home.tsx nav: gold logo, "by 1Commerce" eyebrow, uppercase tracking nav links, gold CTA buttons (no rounded corners)
+- [x] Restyled Home.tsx hero: full-viewport black bg, Playfair Display headline, gold vertical-bar Manus AI callout, gold CTA buttons, stats row with gold values and grid-line dividers
+- [x] Restyled How It Works: grid-line layout, serif step numbers, gold accent bars
+- [x] Restyled Features: grid-line card layout (border-t border-l pattern), gold icon boxes
+- [x] Restyled Integrations: grid-line 5-col layout, gold icon boxes
+- [x] Restyled Automation Demo (mobile): grid-line layout, gold dots
+- [x] Restyled Manus AI section: grid-line feature cards, gold CTA
+- [x] Restyled Testimonials: grid-line layout, gold stars, serif names
+- [x] Restyled Pricing: gold price values, gold active toggle, gold highlight badge, gold CTA
+- [x] Restyled Final CTA: gold-bordered panel, radial glow, serif headline
+- [x] Restyled Footer: minimal, uppercase tracking links, gold logo icon
+- [x] Restyled mobile sticky CTA bar: gold primary button
+- [x] Restyled DashboardLayout sidebar: gold logo, gold active nav items with left-border indicator, dark tenant selector, gold floating AI button
+- [x] Restyled FloatingAIWidget: gold header, gold floating button, dark panel
+- [x] 99/100 tests passing (1 PayPal network test fails due to sandbox network restriction — expected)
+- [x] 0 TypeScript errors

@@ -192,37 +192,37 @@ function DashboardLayoutContent({
           className="border-r-0"
           disableTransition={isResizing}
         >
-          <SidebarHeader className="h-16 justify-center">
+          <SidebarHeader className="h-16 justify-center" style={{ borderBottom: "1px solid #1A1A1A" }}>
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
                 onClick={toggleSidebar}
-                className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
+                className="h-8 w-8 flex items-center justify-center transition-colors focus:outline-none shrink-0 hover:opacity-70"
                 aria-label="Toggle navigation"
               >
-                <PanelLeft className="h-4 w-4 text-muted-foreground" />
+                <PanelLeft className="h-4 w-4" style={{ color: "#4A4A4A" }} />
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <span className="font-semibold tracking-tight truncate text-[#00D9FF] flex-1">
+                  <span className="font-bold tracking-tight truncate flex-1 font-serif-display" style={{ color: "#C9A84C" }}>
                     UnifyOne
                   </span>
                   <NotificationCenter />
                 </div>
               ) : null}
               {isCollapsed ? (
-                <div className="w-8 h-8 rounded-lg bg-[#00D9FF]/10 border border-[#00D9FF]/20 flex items-center justify-center shrink-0">
-                  <Building2 className="w-4 h-4 text-[#00D9FF]" />
+                <div className="w-7 h-7 flex items-center justify-center shrink-0" style={{ border: "1px solid rgba(201,168,76,0.3)", backgroundColor: "rgba(201,168,76,0.08)" }}>
+                  <Building2 className="w-3.5 h-3.5" style={{ color: "#C9A84C" }} />
                 </div>
               ) : null}
             </div>
           </SidebarHeader>
 
           {!isCollapsed && (
-            <div className="px-3 pb-2">
-              <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-accent/50 transition-colors text-left">
-                <Building2 className="w-3.5 h-3.5 text-[#00D9FF] shrink-0" />
-                <span className="text-xs font-medium text-gray-300 truncate flex-1">{tenantName}</span>
-                <ChevronDown className="w-3 h-3 text-gray-500 shrink-0" />
+            <div className="px-3 pb-2 pt-2">
+              <button className="w-full flex items-center gap-2 px-2 py-1.5 transition-colors text-left hover:opacity-80" style={{ border: "1px solid #1A1A1A", backgroundColor: "#0A0A0A" }}>
+                <Building2 className="w-3 h-3 shrink-0" style={{ color: "#9A7A30" }} />
+                <span className="text-xs font-medium truncate flex-1" style={{ color: "#9A9A9A" }}>{tenantName}</span>
+                <ChevronDown className="w-3 h-3 shrink-0" style={{ color: "#3A3A3A" }} />
               </button>
             </div>
           )}
@@ -236,12 +236,14 @@ function DashboardLayoutContent({
                       isActive={isActive}
                       onClick={() => setLocation(item.path)}
                       tooltip={item.label}
-                      className={`h-10 transition-all font-normal`}
+                      className="h-9 transition-all font-normal rounded-none"
+                      style={isActive ? { backgroundColor: "rgba(201,168,76,0.1)", borderLeft: "2px solid #C9A84C" } : { borderLeft: "2px solid transparent" }}
                     >
                       <item.icon
-                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                        className="h-3.5 w-3.5"
+                        style={{ color: isActive ? "#C9A84C" : "#4A4A4A" }}
                       />
-                      <span>{item.label}</span>
+                      <span style={{ color: isActive ? "#C9A84C" : "#6A6A6A", fontSize: "0.75rem", letterSpacing: "0.02em" }}>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -298,16 +300,12 @@ function DashboardLayoutContent({
 
       <SidebarInset>
         {isMobile && (
-          <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
+          <div className="flex h-14 items-center justify-between px-2 sticky top-0 z-40" style={{ borderBottom: "1px solid #1A1A1A", backgroundColor: "rgba(0,0,0,0.97)" }}>
             <div className="flex items-center gap-2">
-              <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="tracking-tight text-foreground">
-                    {activeMenuItem?.label ?? "Menu"}
-                  </span>
-                </div>
-              </div>
+              <SidebarTrigger className="h-9 w-9" style={{ color: "#4A4A4A" }} />
+              <span className="text-sm font-medium tracking-wide" style={{ color: "#9A9A9A" }}>
+                {activeMenuItem?.label ?? "Menu"}
+              </span>
             </div>
             <div className="flex items-center gap-1 pr-2">
               <NotificationCenter />
@@ -371,20 +369,20 @@ function FloatingAIWidget() {
       {/* Chat panel */}
       {open && (
         <div
-          className="w-80 sm:w-96 rounded-2xl border border-border bg-card shadow-2xl flex flex-col overflow-hidden"
-          style={{ height: "480px" }}
+          className="w-80 sm:w-96 flex flex-col overflow-hidden shadow-2xl"
+          style={{ height: "480px", border: "1px solid rgba(201,168,76,0.25)", backgroundColor: "#000" }}
         >
           {/* Widget header */}
-          <div className="flex items-center gap-2 px-4 py-3 bg-primary text-primary-foreground shrink-0">
-            <Sparkles className="h-4 w-4" />
-            <span className="font-semibold text-sm flex-1">Manus AI</span>
-            <span className="text-xs opacity-70 capitalize">{contextLabel}</span>
+          <div className="flex items-center gap-2 px-4 py-3 shrink-0" style={{ borderBottom: "1px solid #1A1A1A", backgroundColor: "#060606" }}>
+            <Sparkles className="h-4 w-4" style={{ color: "#C9A84C" }} />
+            <span className="font-semibold text-sm flex-1 font-serif-display" style={{ color: "#C9A84C" }}>Manus AI</span>
+            <span className="text-xs capitalize uppercase tracking-widest" style={{ color: "#4A4A4A" }}>{contextLabel}</span>
             <button
               onClick={() => setOpen(false)}
-              className="ml-2 opacity-70 hover:opacity-100 transition-opacity"
+              className="ml-2 transition-opacity hover:opacity-100 opacity-50"
               aria-label="Close AI chat"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4" style={{ color: "#9A9A9A" }} />
             </button>
           </div>
           {/* Chat box */}
@@ -406,12 +404,13 @@ function FloatingAIWidget() {
       {/* Floating button */}
       <button
         onClick={open ? () => setOpen(false) : handleOpen}
-        className="relative h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center"
+        className="relative h-12 w-12 shadow-lg hover:opacity-90 transition-all flex items-center justify-center"
+        style={{ backgroundColor: "#C9A84C" }}
         aria-label="Open AI Assistant"
       >
-        {open ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
+        {open ? <X className="h-5 w-5 text-black" /> : <Sparkles className="h-5 w-5 text-black" />}
         {!open && unread > 0 && (
-          <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-bold">
+          <span className="absolute -top-1 -right-1 h-5 w-5 text-xs flex items-center justify-center font-bold" style={{ backgroundColor: "#9A7A30", color: "#000" }}>
             {unread > 9 ? "9+" : unread}
           </span>
         )}

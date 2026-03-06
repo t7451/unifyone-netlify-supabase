@@ -43,45 +43,55 @@
 }
 
 :root {
-  /* UnifyOne Brand */
-  --deep-navy: #0A1128;
+  /* 1Commerce Gothic-Gold Brand */
+  --gold: #C9A84C;
+  --gold-light: #E2C47A;
+  --gold-dark: #9A7A30;
+  --gold-muted: #6B5A2A;
+  --obsidian: #000000;
+  --obsidian-2: #0A0A0A;
+  --obsidian-3: #111111;
+  --obsidian-4: #1A1A1A;
+  --obsidian-5: #222222;
+
+  /* Keep cyan for dashboard/data contexts only */
   --electric-cyan: #00D9FF;
   --unify-blue: #0284C7;
-  --tech-purple: #6A1B9A;
 
-  --primary: oklch(0.82 0.18 195);
-  --primary-foreground: oklch(0.085 0.025 240);
-  --sidebar-primary: oklch(0.82 0.18 195);
-  --sidebar-primary-foreground: oklch(0.085 0.025 240);
-  --chart-1: oklch(0.82 0.18 195);
-  --chart-2: oklch(0.65 0.18 250);
-  --chart-3: oklch(0.70 0.18 300);
-  --chart-4: oklch(0.75 0.15 160);
-  --chart-5: oklch(0.68 0.20 30);
-  --radius: 0.75rem;
-  --background: oklch(0.085 0.025 240);
-  --foreground: oklch(0.97 0 0);
-  --card: oklch(0.11 0.025 240);
+  /* Semantic tokens — gold-on-black */
+  --primary: oklch(0.72 0.12 75);        /* gold */
+  --primary-foreground: oklch(0.05 0 0); /* black */
+  --sidebar-primary: oklch(0.72 0.12 75);
+  --sidebar-primary-foreground: oklch(0.05 0 0);
+  --chart-1: oklch(0.72 0.12 75);   /* gold */
+  --chart-2: oklch(0.65 0.18 195);  /* cyan */
+  --chart-3: oklch(0.70 0.18 300);  /* purple */
+  --chart-4: oklch(0.75 0.15 160);  /* green */
+  --chart-5: oklch(0.68 0.20 30);   /* orange */
+  --radius: 0.25rem;                 /* sharp corners like 1Commerce */
+  --background: oklch(0.04 0 0);     /* near-black */
+  --foreground: oklch(0.97 0 0);     /* white */
+  --card: oklch(0.07 0 0);           /* dark card */
   --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.11 0.025 240);
+  --popover: oklch(0.07 0 0);
   --popover-foreground: oklch(0.97 0 0);
-  --secondary: oklch(0.16 0.025 240);
+  --secondary: oklch(0.10 0 0);
   --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.16 0.025 240);
-  --muted-foreground: oklch(0.62 0.02 240);
-  --accent: oklch(0.82 0.18 195);
-  --accent-foreground: oklch(0.085 0.025 240);
+  --muted: oklch(0.10 0 0);
+  --muted-foreground: oklch(0.55 0 0); /* gray-400 equivalent */
+  --accent: oklch(0.72 0.12 75);      /* gold accent */
+  --accent-foreground: oklch(0.05 0 0);
   --destructive: oklch(0.60 0.22 25);
   --destructive-foreground: oklch(0.97 0 0);
-  --border: oklch(0.22 0.025 240);
-  --input: oklch(0.22 0.025 240);
-  --ring: oklch(0.82 0.18 195);
-  --sidebar: oklch(0.075 0.025 240);
+  --border: oklch(0.15 0 0);          /* very dark border */
+  --input: oklch(0.12 0 0);
+  --ring: oklch(0.72 0.12 75);        /* gold ring */
+  --sidebar: oklch(0.05 0 0);
   --sidebar-foreground: oklch(0.97 0 0);
-  --sidebar-accent: oklch(0.14 0.025 240);
+  --sidebar-accent: oklch(0.10 0 0);
   --sidebar-accent-foreground: oklch(0.97 0 0);
-  --sidebar-border: oklch(0.20 0.025 240);
-  --sidebar-ring: oklch(0.82 0.18 195);
+  --sidebar-border: oklch(0.13 0 0);
+  --sidebar-ring: oklch(0.72 0.12 75);
 }
 
 /* UnifyOne is always dark-themed — no .dark override needed */
@@ -148,48 +158,88 @@
     }
   }
 }
-/* ── UnifyOne Brand Utilities ─────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* ── 1Commerce Gothic-Gold Brand Utilities ──────────────────────────────── */
 
-.glass {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Playfair Display for editorial serif headlines */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Serif headline utility */
+.font-serif-display {
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
+/* Gold gradient text */
 .gradient-text {
+  background: linear-gradient(135deg, #E2C47A 0%, #C9A84C 50%, #9A7A30 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Cyan gradient text (kept for dashboard data contexts) */
+.gradient-text-cyan {
   background: linear-gradient(135deg, #00D9FF 0%, #0284C7 50%, #6A1B9A 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.cyan-glow { box-shadow: 0 0 30px rgba(0, 217, 255, 0.4); }
-.cyan-glow-sm { box-shadow: 0 0 15px rgba(0, 217, 255, 0.25); }
+/* Section eyebrow label — all-caps, spaced, muted gold */
+.section-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #9A7A30;
+}
 
+/* Glass — kept for dashboard panels only */
+.glass {
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(201, 168, 76, 0.12);
+}
+
+/* Feature card — dark with gold border on hover */
 .feature-card {
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.9) 0%, rgba(10, 17, 40, 0.9) 100%);
-  border: 1px solid rgba(0, 217, 255, 0.1);
+  background: #0D0D0D;
+  border: 1px solid #1F1F1F;
   transition: all 0.3s ease;
 }
 .feature-card:hover {
-  border-color: rgba(0, 217, 255, 0.4);
-  box-shadow: 0 10px 40px rgba(0, 217, 255, 0.15);
+  border-color: rgba(201, 168, 76, 0.35);
+  box-shadow: 0 8px 32px rgba(201, 168, 76, 0.08);
 }
+
+/* Pricing card */
 .pricing-card { transition: all 0.3s ease; }
 .pricing-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 60px rgba(0, 217, 255, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(201, 168, 76, 0.12);
+}
+
+/* Gold glow utilities */
+.gold-glow { box-shadow: 0 0 30px rgba(201, 168, 76, 0.35); }
+.gold-glow-sm { box-shadow: 0 0 15px rgba(201, 168, 76, 0.2); }
+
+/* Cyan glow — kept for dashboard/data contexts */
+.cyan-glow { box-shadow: 0 0 30px rgba(0, 217, 255, 0.4); }
+.cyan-glow-sm { box-shadow: 0 0 15px rgba(0, 217, 255, 0.25); }
+
+/* Thin horizontal rule in gold */
+.gold-rule {
+  border: none;
+  border-top: 1px solid rgba(201, 168, 76, 0.25);
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-16px); }
 }
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(0, 217, 255, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(0, 217, 255, 0.6); }
+@keyframes pulse-glow-gold {
+  0%, 100% { box-shadow: 0 0 20px rgba(201, 168, 76, 0.25); }
+  50% { box-shadow: 0 0 40px rgba(201, 168, 76, 0.5); }
 }
 @keyframes gradient-shift {
   0% { background-position: 0% 50%; }
@@ -198,10 +248,10 @@
 }
 
 .animate-float { animation: float 6s ease-in-out infinite; }
-.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow-gold 3s ease-in-out infinite; }
 .animate-gradient { background-size: 200% 200%; animation: gradient-shift 8s ease infinite; }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0A1128; }
-::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #0284C7; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #000000; }
+::-webkit-scrollbar-thumb { background: #3A2E10; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #C9A84C; }
