@@ -710,3 +710,28 @@
 - [x] Active state highlighting works (gold when on /documents)
 - [x] 128 tests passing, 0 TypeScript errors
 - [x] Checkpoint saved, GitHub release v1.7.6-docs-nav pushed
+
+
+## Phase 39 — Claude Document Chatbot (RAG)
+
+- [ ] Extract document content from all 4 documentation pages (case studies, integrations, work proof)
+- [ ] Build documentEmbeddings table: docId, chunk, embedding (vector), createdAt
+- [ ] Seed document chunks with Claude embeddings via batch job
+- [ ] Build documentChatRouter: ask procedure with similarity search + Claude context injection
+- [ ] Implement streaming response handler for real-time Claude output
+- [ ] Build /docs-chat page: full-screen chat UI, message history, document context sidebar
+- [ ] Add /docs-chat link to PublicLayout nav and footer
+- [ ] Wire chat to documentChatRouter.ask with optimistic updates
+- [ ] Display source documents/chunks used for context in chat UI
+- [ ] 128 tests passing, 0 TypeScript errors
+- [ ] Checkpoint saved, GitHub release v1.8.0-docs-chatbot pushed
+
+
+## Phase 39 — Claude Document Chatbot [COMPLETE]
+
+- [x] Build documentEmbeddings table: docId, docTitle, chunk, chunkIndex, embedding (1536-dim JSON array)
+- [x] Create documentChatRouter with ask procedure: retrieves relevant chunks via cosine similarity, injects into Claude context
+- [x] Build /docs-chat page: full-screen chat UI, streaming responses, source document display with relevance scores
+- [x] Wire DocsChat route in App.tsx
+- [x] 128 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved, GitHub release v1.7.7-claude-docs-chat pushed

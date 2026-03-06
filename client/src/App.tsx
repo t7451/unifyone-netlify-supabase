@@ -52,6 +52,7 @@ import Documents from "./pages/Documents";
 import CaseStudies from "./pages/CaseStudies";
 import IntegrationGuides from "./pages/IntegrationGuides";
 import WorkProof from "./pages/WorkProof";
+import { DocsChat } from "./pages/DocsChat";
 import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
 import { getLoginUrl } from "./const";
@@ -150,6 +151,7 @@ function Router() {
       <Route path="/documents/case-studies" component={CaseStudies} />
       <Route path="/documents/integrations" component={IntegrationGuides} />
       <Route path="/documents/work-proof" component={WorkProof} />
+      <Route path="/docs-chat" component={DocsChat} />
       {/* SEO Blog Routes */}
       <Route path="/blog/gig-economy-commerce-platform" component={GigEcommercePost} />
       <Route path="/blog/multi-tenant-ecommerce-saas" component={MultiTenantPost} />

@@ -1026,3 +1026,18 @@ export const emailSubscribers = mysqlTable("email_subscribers", {
 
 export type EmailSubscriber = typeof emailSubscribers.$inferSelect;
 export type InsertEmailSubscriber = typeof emailSubscribers.$inferInsert;
+
+
+// ── Document Embeddings (RAG) ─────────────────────────────────────────────────
+export const documentEmbeddings = mysqlTable("document_embeddings", {
+  id: int("id").autoincrement().primaryKey(),
+  docId: varchar("docId", { length: 100 }).notNull(), // e.g., "case-study-1", "integration-claude"
+  docTitle: varchar("docTitle", { length: 255 }).notNull(), // e.g., "Cathedral Framework Case Study"
+  chunk: text("chunk").notNull(), // Text chunk (max 1000 chars)
+  chunkIndex: int("chunkIndex").notNull(), // Order within document
+  embedding: json("embedding").$type<number[]>().notNull(), // Claude embeddings (1536-dim array)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type DocumentEmbedding = typeof documentEmbeddings.$inferSelect;
+export type InsertDocumentEmbedding = typeof documentEmbeddings.$inferInsert;

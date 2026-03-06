@@ -141,6 +141,13 @@
       "when": 1772808049625,
       "tag": "0019_tearful_harpoon",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1772810697615,
+      "tag": "0020_violet_slayback",
+      "breakpoints": true
     }
   ]
 }
