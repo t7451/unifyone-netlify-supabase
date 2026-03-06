@@ -13,7 +13,9 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import AutomationFlowAnimation from "@/components/AutomationFlowAnimation";
 
-const HERO_VISUAL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/unifyone-hero-visual_667963e8.png";
+const HERO_VISUAL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-hero-TWvyRNoyoXmz8CnBLvHXFQ.webp";
+const MANUS_AI_BANNER = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-feature-banner-mZjQMb2t9uP6W2BitsSWMq.webp";
+const MANUS_AI_OG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-og-card-gmKaF7wnfK9eUMpcMfEqQ4.png";
 
 const FEATURES = [
   { icon: Layers, title: "Multi-Tenant Architecture", desc: "Each store gets its own isolated environment — dedicated data, settings, team access, and billing. Scale from 1 to 1,000 stores without re-architecting.", color: "#00D9FF" },
@@ -117,6 +119,7 @@ const INTEGRATIONS = [
   { name: "Zapier", desc: "App Connections", color: "#FF4A00", initial: "Z" },
   { name: "Mailchimp", desc: "Email Marketing", color: "#FFD700", initial: "M" },
   { name: "Meta", desc: "Ads & CAPI", color: "#1877F2", initial: "fb" },
+  { name: "Manus AI", desc: "Built-in AI Co-Pilot", color: "#6366f1", initial: "M" },
 ];
 
 export default function Home() {
@@ -238,9 +241,15 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left: copy */}
             <div className="text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#00D9FF]/30 bg-[#00D9FF]/5 text-[#00D9FF] text-sm font-medium mb-6">
-                <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse flex-shrink-0" />
-                Multi-Tenant Commerce Platform
+              <div className="flex flex-wrap gap-2 mb-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#00D9FF]/30 bg-[#00D9FF]/5 text-[#00D9FF] text-sm font-medium">
+                  <span className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse flex-shrink-0" />
+                  Multi-Tenant Commerce Platform
+                </div>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-500/30 bg-violet-500/5 text-violet-400 text-sm font-medium">
+                  <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse flex-shrink-0" />
+                  Now with Manus AI
+                </div>
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-5">
                 One Platform.{" "}
@@ -249,9 +258,18 @@ export default function Home() {
               <p className="text-lg sm:text-xl text-gray-400 mb-4 leading-relaxed">
                 UnifyOne is the commerce infrastructure layer that connects your products, orders, payments, and automations — across every store, every channel, every integration.
               </p>
-              <p className="text-base text-gray-500 mb-8 leading-relaxed">
+              <p className="text-base text-gray-500 mb-4 leading-relaxed">
                 Built for operators who need enterprise-grade infrastructure without the enterprise price tag. Connect Shopify, wire Stripe, automate with n8n — and manage everything from one dashboard.
               </p>
+              <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-violet-500/20 bg-violet-500/5 mb-8">
+                <div className="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-4 h-4 text-violet-400" />
+                </div>
+                <div>
+                  <p className="text-violet-300 text-sm font-semibold leading-tight">Powered by Manus AI</p>
+                  <p className="text-gray-500 text-xs">Your intelligent gig co-pilot — earnings insights, route optimization, and challenge strategy, built in.</p>
+                </div>
+              </div>
               <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
                 <Button
                   size="lg"
@@ -418,6 +436,94 @@ export default function Home() {
             {["n8n", "Stripe", "Mailchimp", "Shopify", "Zapier", "Supabase"].map((name) => (
               <span key={name} className="text-[10px] px-2.5 py-1 rounded-md font-medium bg-white/5 text-gray-400 border border-white/10">{name}</span>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── MANUS AI FEATURE SECTION ── */}
+      <section id="manus-ai" className="py-16 sm:py-24 px-4 sm:px-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-900/10 via-transparent to-indigo-900/10 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-violet-600/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="max-w-6xl mx-auto relative">
+          {/* Section header */}
+          <div className="text-center mb-10 sm:mb-14">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-500/30 bg-violet-500/5 text-violet-400 text-sm font-medium mb-5">
+              <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+              New — Manus AI Integration
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Meet Your AI Gig Co-Pilot
+            </h2>
+            <p className="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto">
+              Manus AI is now built directly into UnifyOne — an intelligent assistant that knows your shifts, your earnings, your routes, and your challenges. No setup. Always on.
+            </p>
+          </div>
+
+          {/* Feature banner image */}
+          <div className="rounded-2xl overflow-hidden border border-violet-500/20 shadow-2xl shadow-violet-900/20 mb-10 sm:mb-14">
+            <img
+              src={MANUS_AI_BANNER}
+              alt="Manus AI — Your AI Gig Co-Pilot is Here. Chat, Route Intelligence, Money Manager panels."
+              className="w-full"
+              loading="lazy"
+            />
+          </div>
+
+          {/* 4-feature grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              {
+                emoji: "🤖",
+                title: "AI Chat Assistant",
+                desc: "Ask Manus anything about your earnings, tax deductions, or platform strategy. Full conversation history, context-aware responses.",
+                color: "#6366f1",
+              },
+              {
+                emoji: "📍",
+                title: "Route Intelligence",
+                desc: "AI-powered hot zone analysis, demand forecasting, and timing tips — updated in real time based on your GPS position.",
+                color: "#06b6d4",
+              },
+              {
+                emoji: "💰",
+                title: "Earnings Insights",
+                desc: "Manus reads your shift data and surfaces actionable insights — which platform pays best, when to work, and how to maximize your $/hour.",
+                color: "#10b981",
+              },
+              {
+                emoji: "🏆",
+                title: "Challenge Strategy",
+                desc: "Get AI-generated tips on which challenges to join, how to win active ones, and how to climb the leaderboard faster.",
+                color: "#f59e0b",
+              },
+            ].map((f) => (
+              <div
+                key={f.title}
+                className="feature-card rounded-xl p-5 sm:p-6 border border-white/10 hover:border-violet-500/30 transition-all duration-300 group"
+              >
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 text-xl transition-transform duration-300 group-hover:scale-110"
+                  style={{ backgroundColor: f.color + "20", border: `1px solid ${f.color}40` }}
+                >
+                  {f.emoji}
+                </div>
+                <h3 className="text-white font-semibold mb-2 text-sm sm:text-base">{f.title}</h3>
+                <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA strip */}
+          <div className="mt-10 text-center">
+            <button
+              onClick={handleGetStarted}
+              className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-violet-600 hover:bg-violet-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-violet-900/30"
+            >
+              <Zap className="w-4 h-4" />
+              Try Manus AI Free
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <p className="text-gray-600 text-xs mt-3">Available on all plans · No setup required</p>
           </div>
         </div>
       </section>

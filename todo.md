@@ -483,3 +483,17 @@
 - [x] Money Manager: AIInsightsCard wired above KPI cards — injects live earnings/miles/hours/tax deduction data as context
 - [x] Gig Command: AIInsightsCard wired above AI Shortcuts panel — injects platform, avg $/hr, YTD miles, tax deduction, shift status as context
 - [x] 100 tests passing, 0 TypeScript errors
+
+## Phase 27 — Manus AI Marketing Media + Hero Update [COMPLETE]
+
+- [x] Generate hero image: Manus AI integration visual (dark tech, chat UI, gig worker context)
+- [x] Generate OG social share card (1200x630) for Manus AI feature announcement
+- [x] Generate feature banner: "Powered by Manus AI" horizontal marketing strip (21:9 ultrawide)
+- [x] Generate social media card (1080x1080) for Instagram/Facebook
+- [x] All assets on CDN (webdev lifecycle URLs)
+- [x] Update landing page hero: dual badge (Multi-Tenant + Now with Manus AI), new hero image, Powered by Manus AI callout strip
+- [x] Add "Meet Your AI Gig Co-Pilot" full feature section with banner image + 4-feature grid + CTA
+- [x] Update og:image and twitter:image meta tags with new OG card + image dimensions + alt text
+- [x] Manus AI added to Integrations grid
+- [x] 100 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved, GitHub release v1.5.2-manus-ai-marketing pushed
