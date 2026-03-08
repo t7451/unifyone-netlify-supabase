@@ -181,7 +181,7 @@ export default function Social() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                Full OAuth integration coming soon. For now, register your handle to enable scheduling and credit tracking.
+                Register your handle to enable scheduling, credit tracking, and cross-platform analytics.
               </p>
               <Button
                 className="w-full"

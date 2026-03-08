@@ -50,7 +50,7 @@ const JSON_LD = [
 ];
 
 const CATHEDRAL_MANUS_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-manus-v2-LMRaCZwgmBR3hoFULMA6gG.webp";
-const MANUS_AI_BANNER    = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-feature-banner-N2WT5VwtdNgxEQjUd4uK4J.webp";
+const MANUS_AI_BANNER    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663412766662/NtFplUgYjHyrzGzn.jpg";
 
 const AI_SURFACES = [
   {

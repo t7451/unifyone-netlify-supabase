@@ -92,7 +92,7 @@ Result: A platform that can scale to thousands of tenants without compromising s
     metrics: [
       { label: "Event Latency", value: "<500ms" },
       { label: "Webhook Coverage", value: "3 events" },
-      { label: "Test Event Code", value: "Configured" },
+      { label: "Event Validation", value: "Configured" },
     ],
     description: `The Stripe → Meta CAPI bridge is the critical link between commerce transactions and Meta's advertising algorithm. Without this bridge, every paid conversion is invisible to Meta, which means higher CPM and CPL over time.
 
@@ -105,7 +105,7 @@ The implementation:
    - event_id: Stripe session ID (deduplication)
    - user_data: email, phone, first/last name, city, state, zip
    - custom_data: value (order amount), currency (USD)
-   - test_event_code: META_TEST_EVENT_CODE (for sandbox testing)
+   - test_event_code: Configured via environment variable for event validation
 
 3. **Webhook Signature Verification**: Stripe signs all webhooks with HMAC-SHA256. The handler verifies the signature before processing to prevent spoofing.
 
@@ -115,7 +115,7 @@ Result: Every paid conversion is immediately fed to Meta's algorithm, which lear
     achievements: [
       "Stripe webhook handler with signature verification",
       "firePurchase() function calling Meta CAPI",
-      "Test event code (META_TEST_EVENT_CODE) configured",
+      "Event validation code configured via environment variable",
       "Event deduplication via Stripe session ID",
       "User data enrichment (email, name, location)",
       "Custom data (value, currency) for conversion tracking",

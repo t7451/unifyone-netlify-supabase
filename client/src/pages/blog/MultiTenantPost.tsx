@@ -6,7 +6,7 @@ const ARTICLE_SCHEMA = {
   "@type": "Article",
   "headline": "Why Multi-Tenant SaaS Is the Right Architecture for Commerce Teams",
   "description": "A technical and strategic breakdown of multi-tenant commerce architecture — why it outperforms single-tenant deployments for agencies, franchises, and holding companies managing multiple brands or client accounts.",
-  "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-features-v2-4rGHkL9MNPq5R3sJjFSG8r.png",
+  "image": "https://files.manuscdn.com/user_upload_by_module/session_file/310519663412766662/uBzlkALhOZxeuTyR.jpg",
   "author": {
     "@type": "Organization",
     "name": "1Commerce Solutions",
@@ -87,13 +87,13 @@ export default function MultiTenantPost() {
           <section>
             <h2 className="font-cinzel text-xl sm:text-2xl font-bold mb-4" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>The Economics of Multi-Tenancy</h2>
             <p>The economic argument for multi-tenant SaaS is straightforward. A single infrastructure deployment serves N tenants at a marginal cost approaching zero per additional tenant. Your fixed costs (server, database, CDN, monitoring) are amortized across the entire tenant base. As you add clients, your cost per client drops — your margin expands without headcount growth.</p>
-            <p className="mt-4">For agencies, this is the difference between a services business (linear revenue, linear cost) and a product business (exponential revenue, flat cost). UnifyOne's Cathedral tier at $79/month supports unlimited tenants. A ten-client agency paying $79/month in infrastructure costs while billing each client $500/month is running an 84% gross margin infrastructure layer.</p>
+            <p className="mt-4">For agencies, this is the difference between a services business (linear revenue, linear cost) and a product business (exponential revenue, flat cost). UnifyOne's Cathedral tier at $149/month supports unlimited tenants. A ten-client agency paying $149/month in infrastructure costs while billing each client $500/month is running an exceptional gross margin infrastructure layer.</p>
           </section>
 
           <section>
             <h2 className="font-cinzel text-xl sm:text-2hz font-bold mb-4" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>White-Label: The Reseller Multiplier</h2>
             <p>Multi-tenant architecture enables white-labeling at zero marginal cost. UnifyOne's Cathedral tier includes custom domain support and full brand customization per tenant. An agency can deploy UnifyOne under their own brand — "PoweredBy YourAgency Commerce" — and resell it to clients as a proprietary product. The underlying infrastructure is UnifyOne; the brand experience is entirely theirs.</p>
-            <p className="mt-4">This is the reseller multiplier: you buy infrastructure at $79/month and sell it as a branded product at $500/month per client. The margin is the brand. The brand is built on someone else's infrastructure. This is how software companies are built without engineering teams.</p>
+            <p className="mt-4">This is the reseller multiplier: you buy infrastructure at $149/month and sell it as a branded product at $500/month per client. The margin is the brand. The brand is built on someone else's infrastructure. This is how software companies are built without engineering teams.</p>
           </section>
 
           <section>

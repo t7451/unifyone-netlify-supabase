@@ -125,7 +125,7 @@ export default function GigEcommercePost() {
 
           <section>
             <h2 className="font-cinzel text-xl sm:text-2xl font-bold mb-4" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>Getting Started</h2>
-            <p>UnifyOne's Foundation tier is free — one tenant, core commerce tools, and access to the Gig Command shift tracker. The Nave tier ($29/month) unlocks Manus AI insights, advanced analytics, and up to five tenants. The Cathedral tier ($79/month) is for operators running a full commerce operation with white-label requirements.</p>
+            <p>UnifyOne's Acolyte tier is free — one tenant, core commerce tools, and access to the Gig Command shift tracker. The Architect tier ($49/month) unlocks Manus AI insights, advanced analytics, all payment rails, and up to five tenants. The Cathedral tier ($149/month) is for operators running a full commerce operation with white-label requirements.</p>
             <p className="mt-4">The first stone is free. The cathedral is built one phase at a time.</p>
           </section>
         </div>

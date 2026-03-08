@@ -314,8 +314,7 @@ export default function Settings() {
           )}
 
           <p className="text-gray-500 text-xs mt-4 text-center">
-            Payments are processed securely by Stripe. Test with card{" "}
-            <code className="bg-white/5 px-1 py-0.5 rounded text-gray-400">4242 4242 4242 4242</code>.
+            Payments are processed securely by Stripe. All transactions are encrypted and PCI-compliant.
           </p>
         </CardContent>
       </Card>
@@ -347,7 +346,7 @@ function DemoDataCard() {
       <CardContent>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex-1">
-            <p className="text-gray-400 text-sm mb-1">Seed your store with realistic sample products, customers, and orders for testing and demos.</p>
+            <p className="text-gray-400 text-sm mb-1">Populate your store with sample catalog data to explore the platform features.</p>
             <p className="text-gray-500 text-xs">Creates 6 products (Apparel + Industrial), 3 customers, and 3 orders across different statuses.</p>
           </div>
           <Button
@@ -356,8 +355,8 @@ function DemoDataCard() {
             className="bg-[#00D9FF]/10 border border-[#00D9FF]/30 text-[#00D9FF] hover:bg-[#00D9FF]/20 shrink-0"
           >
             {seedMutation.isPending
-              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Seeding...</>
-              : <><FlaskConical className="w-4 h-4 mr-2" />Seed Demo Data</>}
+              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading...</>
+              : <><FlaskConical className="w-4 h-4 mr-2" />Load Sample Data</>}
           </Button>
         </div>
       </CardContent>
