@@ -421,7 +421,7 @@ export default function ComponentsShowcase() {
                 </div>
                 <div className="space-y-2">
                   <Label>Select</Label>
-                  <Select>
+                  <Select defaultValue="apple">
                     <SelectTrigger>
                       <SelectValue placeholder="Select a fruit" />
                     </SelectTrigger>

@@ -28,7 +28,7 @@ const EMPTY_FORM = {
   initialStock: "0",
   lowStockThreshold: "5",
   weight: "",
-  categoryId: "",
+  categoryId: "none",
 };
 
 type ProductForm = typeof EMPTY_FORM;
@@ -129,7 +129,7 @@ function ProductFormFields({ form, setForm }: { form: ProductForm; setForm: (f: 
               <SelectValue placeholder="None" />
             </SelectTrigger>
             <SelectContent className="bg-[#0F172A] border-white/10">
-              <SelectItem value="">None</SelectItem>
+              <SelectItem value="none">None</SelectItem>
               {(categories.data ?? []).map((c: any) => (
                 <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
               ))}
