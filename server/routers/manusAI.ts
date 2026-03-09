@@ -129,83 +129,94 @@ export const manusAIRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
+      try {
+        const db = await getDb();
 
-      // Build system prompt with optional data context
-      const baseSystemPrompt = CONTEXT_PROMPTS[input.context] ?? CONTEXT_PROMPTS.general;
-      const systemPrompt = input.dataContext
-        ? `${baseSystemPrompt}\n\nCurrent user data context:\n${input.dataContext}`
-        : baseSystemPrompt;
+        // Build system prompt with optional data context
+        const baseSystemPrompt = CONTEXT_PROMPTS[input.context] ?? CONTEXT_PROMPTS.general;
+        const systemPrompt = input.dataContext
+          ? `${baseSystemPrompt}\n\nCurrent user data context:\n${input.dataContext}`
+          : baseSystemPrompt;
 
-      // Load or create conversation
-      type ConvoMessage = { role: "user" | "assistant" | "system"; content: string; timestamp: number };
-      let conversationId = input.conversationId;
-      let existingMessages: ConvoMessage[] = [];
+        // Load or create conversation
+        type ConvoMessage = { role: "user" | "assistant" | "system"; content: string; timestamp: number };
+        let conversationId = input.conversationId;
+        let existingMessages: ConvoMessage[] = [];
 
-      if (conversationId && db) {
-        const [existing] = await db
-          .select()
-          .from(aiConversations)
-          .where(and(eq(aiConversations.id, conversationId), eq(aiConversations.userId, ctx.user.id)))
-          .limit(1);
-        if (existing) {
-          existingMessages = (existing.messages as ConvoMessage[]) ?? [];
+        if (conversationId && db) {
+          const [existing] = await db
+            .select()
+            .from(aiConversations)
+            .where(and(eq(aiConversations.id, conversationId), eq(aiConversations.userId, ctx.user.id)))
+            .limit(1);
+          if (existing) {
+            existingMessages = (existing.messages as ConvoMessage[]) ?? [];
+          }
         }
-      }
 
-      // Build LLM message history (last 20 turns to stay within context window)
-      const historyMessages = existingMessages.slice(-20).map(m => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      }));
+        // Build LLM message history (last 20 turns to stay within context window)
+        const historyMessages = existingMessages.slice(-20).map(m => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }));
 
-      const llmMessages = [
-        { role: "system" as const, content: systemPrompt },
-        ...historyMessages,
-        { role: "user" as const, content: input.message },
-      ];
+        const llmMessages = [
+          { role: "system" as const, content: systemPrompt },
+          ...historyMessages,
+          { role: "user" as const, content: input.message },
+        ];
 
-      // Call LLM
-      const response = await invokeLLM({ messages: llmMessages });
-      const rawContent = response.choices[0]?.message?.content;
-      const assistantContent = typeof rawContent === "string" ? rawContent : "I'm sorry, I couldn't generate a response. Please try again.";
-
-      // Persist conversation
-      const now = Date.now();
-      const userMsg: ConvoMessage = { role: "user", content: input.message, timestamp: now };
-      const assistantMsg: ConvoMessage = { role: "assistant", content: assistantContent, timestamp: now + 1 };
-      const updatedMessages = [...existingMessages, userMsg, assistantMsg];
-
-      // Auto-generate title from first user message
-      const title = existingMessages.length === 0
-        ? input.message.slice(0, 80) + (input.message.length > 80 ? "…" : "")
-        : undefined;
-
-      if (db) {
-        if (conversationId) {
-          await db
-            .update(aiConversations)
-            .set({ messages: updatedMessages, updatedAt: new Date() })
-            .where(and(eq(aiConversations.id, conversationId), eq(aiConversations.userId, ctx.user.id)));
-        } else {
-          const [inserted] = await db
-            .insert(aiConversations)
-            .values({
-              userId: ctx.user.id,
-              context: input.context,
-              messages: updatedMessages,
-              title: title ?? "New Conversation",
-            })
-            .$returningId();
-          conversationId = inserted?.id;
+        // Call LLM with error handling
+        let assistantContent: string;
+        try {
+          const response = await invokeLLM({ messages: llmMessages });
+          const rawContent = response.choices[0]?.message?.content;
+          assistantContent = typeof rawContent === "string" ? rawContent : "I'm sorry, I couldn't generate a response. Please try again.";
+        } catch (llmError) {
+          console.error("[Manus AI] LLM invocation failed:", llmError instanceof Error ? llmError.message : String(llmError));
+          assistantContent = "I encountered a temporary issue processing your request. Please try again in a moment.";
         }
-      }
 
-      return {
-        reply: assistantContent,
-        conversationId,
-        messageCount: updatedMessages.length,
-      };
+        // Persist conversation
+        const now = Date.now();
+        const userMsg: ConvoMessage = { role: "user", content: input.message, timestamp: now };
+        const assistantMsg: ConvoMessage = { role: "assistant", content: assistantContent, timestamp: now + 1 };
+        const updatedMessages = [...existingMessages, userMsg, assistantMsg];
+
+        // Auto-generate title from first user message
+        const title = existingMessages.length === 0
+          ? input.message.slice(0, 80) + (input.message.length > 80 ? "…" : "")
+          : undefined;
+
+        if (db) {
+          if (conversationId) {
+            await db
+              .update(aiConversations)
+              .set({ messages: updatedMessages, updatedAt: new Date() })
+              .where(and(eq(aiConversations.id, conversationId), eq(aiConversations.userId, ctx.user.id)));
+          } else {
+            const [inserted] = await db
+              .insert(aiConversations)
+              .values({
+                userId: ctx.user.id,
+                context: input.context,
+                messages: updatedMessages,
+                title: title ?? "New Conversation",
+              })
+              .$returningId();
+            conversationId = inserted?.id;
+          }
+        }
+
+        return {
+          reply: assistantContent,
+          conversationId,
+          messageCount: updatedMessages.length,
+        };
+      } catch (error) {
+        console.error("[Manus AI] Chat mutation failed:", error instanceof Error ? error.message : String(error));
+        throw new Error("Failed to process chat message. Please try again.");
+      }
     }),
 
   /** Delete a conversation */
