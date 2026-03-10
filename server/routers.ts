@@ -30,6 +30,7 @@ import { manusAIRouter } from "./routers/manusAI";
 import { emailRouter } from "./routers/email";
 import { documentChatRouter } from "./routers/documentChat";
 import { governanceRouter } from "./routers/governance";
+import { claudeGovernanceRouter } from "./routers/claudeGovernance";
 
 export const appRouter = router({
   system: systemRouter,
@@ -71,6 +72,7 @@ export const appRouter = router({
   email: emailRouter,
   documentChat: documentChatRouter,
   governance: governanceRouter,
+  claudeGovernance: claudeGovernanceRouter,
 });
 
 export type AppRouter = typeof appRouter;
