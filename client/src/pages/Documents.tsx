@@ -120,6 +120,27 @@ export default function Documents() {
                         💬 Chat with Docs
                       </a>
                     </Link>
+                    <Link href="/resources">
+                      <a
+                        style={{
+                          display: "block",
+                          padding: "1.5rem",
+                          backgroundColor: "rgba(212,168,67,0.15)",
+                          border: "2px solid rgba(212,168,67,0.4)",
+                          color: "#D4A843",
+                          fontFamily: "'Cinzel', serif",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          letterSpacing: "0.05em",
+                          textAlign: "center",
+                          transition: "all 0.3s ease",
+                          textDecoration: "none",
+                        }}
+                        className="hover:bg-opacity-20"
+                      >
+                        📦 Operating Excellence Resources
+                      </a>
+                    </Link>
                     {TABS.filter(t => t.id !== "overview").map((tab) => (
                       <Link key={tab.id} href={`/documents/${tab.id}`}>
                         <a

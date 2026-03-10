@@ -238,6 +238,16 @@
 - [x] Theme Store sidebar nav items (Theme Store + My Themes) + routes in App.tsx
 - [x] Theme Store tests: 23 tests passing (helpers, filter logic, slug generation, pricing validation)
 
+## Phase 41 — Strategic Asset Integration: Operating Excellence Bundle + Video Production + Ad Copy
+
+- [x] Extract and catalog Operating Excellence Bundle (templates, guides, playbooks)
+- [x] Create Resources/Templates page with downloadable Excel dashboards (weekly execution, lead pipeline, revenue command center, content calendar)
+- [ ] Create Video Production showcase page with Kling cinematic footage
+- [ ] Integrate 1Commerce Ad Copy Matrix into marketing resources
+- [ ] Build OneStack brand showcase with video script and animation PDF
+- [x] Upload large video/PDF files to S3 CDN and reference via URLs (staged in /webdev-static-assets)
+- [ ] Deploy integrated assets and verify all resources load correctly
+
 ## Phase 14 — Meta Ads/CAPI + Rewards Keys + Revenue Streams + Affiliate Hub
 
 - [ ] Rewards Keys DB schema: reward_opportunities, reward_claims tables + migration
