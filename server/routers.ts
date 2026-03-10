@@ -29,6 +29,7 @@ import { mobileAutomationRouter } from "./routers/mobileAutomation";
 import { manusAIRouter } from "./routers/manusAI";
 import { emailRouter } from "./routers/email";
 import { documentChatRouter } from "./routers/documentChat";
+import { governanceRouter } from "./routers/governance";
 
 export const appRouter = router({
   system: systemRouter,
@@ -69,6 +70,7 @@ export const appRouter = router({
   manusAI: manusAIRouter,
   email: emailRouter,
   documentChat: documentChatRouter,
+  governance: governanceRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -8,6 +8,7 @@ import {
   decimal,
   boolean,
   json,
+  date,
 } from "drizzle-orm/mysql-core";
 
 // ── Users ─────────────────────────────────────────────────────────────────────
@@ -1041,3 +1042,110 @@ export const documentEmbeddings = mysqlTable("document_embeddings", {
 
 export type DocumentEmbedding = typeof documentEmbeddings.$inferSelect;
 export type InsertDocumentEmbedding = typeof documentEmbeddings.$inferInsert;
+
+// ── Governance: Audit Logs ─────────────────────────────────────────────────────
+export const auditLogs = mysqlTable("audit_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  action: varchar("action", { length: 255 }).notNull(),
+  entityType: varchar("entity_type", { length: 100 }),
+  entityId: int("entity_id"),
+  oldValue: json("old_value").$type<Record<string, unknown>>(),
+  newValue: json("new_value").$type<Record<string, unknown>>(),
+  decisionAuthority: varchar("decision_authority", { length: 100 }),
+  escalationTriggered: boolean("escalation_triggered").default(false).notNull(),
+  escalationReason: text("escalation_reason"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = typeof auditLogs.$inferInsert;
+
+// ── Governance: Escalation Queue ───────────────────────────────────────────────
+export const escalationQueue = mysqlTable("escalation_queue", {
+  id: int("id").autoincrement().primaryKey(),
+  auditLogId: int("audit_log_id").notNull(),
+  decisionType: varchar("decision_type", { length: 100 }).notNull(),
+  decisionContext: json("decision_context").$type<Record<string, unknown>>().notNull(),
+  thresholdExceeded: decimal("threshold_exceeded", { precision: 10, scale: 2 }),
+  thresholdLimit: decimal("threshold_limit", { precision: 10, scale: 2 }),
+  authorityLevel: varchar("authority_level", { length: 50 }),
+  requiredApprovals: int("required_approvals").default(1).notNull(),
+  approvalsReceived: int("approvals_received").default(0).notNull(),
+  status: mysqlEnum("status", ["pending", "approved", "rejected", "expired"]).default("pending").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at"),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: int("resolved_by"),
+  resolutionNotes: text("resolution_notes"),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type EscalationQueueItem = typeof escalationQueue.$inferSelect;
+export type InsertEscalationQueueItem = typeof escalationQueue.$inferInsert;
+
+// ── Governance: Decision Authority ─────────────────────────────────────────────
+export const decisionAuthority = mysqlTable("decision_authority", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  authorityLevel: mysqlEnum("authority_level", ["viewer", "operator", "architect", "cathedral"]).default("operator").notNull(),
+  approvalThreshold: decimal("approval_threshold", { precision: 10, scale: 2 }),
+  canOverrideDecisions: boolean("can_override_decisions").default(false).notNull(),
+  canModifyGovernance: boolean("can_modify_governance").default(false).notNull(),
+  canAccessAuditLogs: boolean("can_access_audit_logs").default(true).notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type DecisionAuthorityRecord = typeof decisionAuthority.$inferSelect;
+export type InsertDecisionAuthority = typeof decisionAuthority.$inferInsert;
+
+// ── Governance: Kill Switches ──────────────────────────────────────────────────
+export const killSwitches = mysqlTable("kill_switches", {
+  id: int("id").autoincrement().primaryKey(),
+  switchName: varchar("switch_name", { length: 100 }).notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(false).notNull(),
+  triggeredBy: int("triggered_by"),
+  triggeredAt: timestamp("triggered_at"),
+  reason: text("reason"),
+  autoResetEnabled: boolean("auto_reset_enabled").default(false).notNull(),
+  autoResetAt: timestamp("auto_reset_at"),
+  impactScope: varchar("impact_scope", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type KillSwitch = typeof killSwitches.$inferSelect;
+export type InsertKillSwitch = typeof killSwitches.$inferInsert;
+
+// ── Governance: Rules ──────────────────────────────────────────────────────────
+export const governanceRules = mysqlTable("governance_rules", {
+  id: int("id").autoincrement().primaryKey(),
+  ruleName: varchar("rule_name", { length: 100 }).notNull(),
+  ruleType: mysqlEnum("rule_type", ["approval_threshold", "rate_limit", "data_access", "operational_constraint"]).notNull(),
+  entityType: varchar("entity_type", { length: 100 }),
+  conditionJson: json("condition_json").$type<Record<string, unknown>>().notNull(),
+  actionOnViolation: mysqlEnum("action_on_violation", ["block", "escalate", "log", "warn"]).default("escalate").notNull(),
+  authorityLevelRequired: varchar("authority_level_required", { length: 50 }),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type GovernanceRule = typeof governanceRules.$inferSelect;
+export type InsertGovernanceRule = typeof governanceRules.$inferInsert;
+
+// ── Governance: Metrics ────────────────────────────────────────────────────────
+export const governanceMetrics = mysqlTable("governance_metrics", {
+  id: int("id").autoincrement().primaryKey(),
+  metricDate: date("metric_date").notNull(),
+  totalOperations: int("total_operations").default(0).notNull(),
+  escalationsTriggered: int("escalations_triggered").default(0).notNull(),
+  escalationsApproved: int("escalations_approved").default(0).notNull(),
+  escalationsRejected: int("escalations_rejected").default(0).notNull(),
+  killSwitchesActivated: int("kill_switches_activated").default(0).notNull(),
+  averageEscalationTimeMinutes: int("average_escalation_time_minutes"),
+  complianceScore: decimal("compliance_score", { precision: 5, scale: 2 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+export type GovernanceMetric = typeof governanceMetrics.$inferSelect;
