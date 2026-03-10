@@ -53,6 +53,8 @@ import CaseStudies from "./pages/CaseStudies";
 import IntegrationGuides from "./pages/IntegrationGuides";
 import WorkProof from "./pages/WorkProof";
 import Resources from "./pages/Resources";
+import VideoProduction from "./pages/VideoProduction";
+import AdCopyHub from "./pages/AdCopyHub";
 import { DocsChat } from "./pages/DocsChat";
 import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
@@ -154,6 +156,8 @@ function Router() {
       <Route path="/documents/work-proof" component={WorkProof} />
       <Route path="/docs-chat" component={DocsChat} />
       <Route path="/resources" component={Resources} />
+      <Route path="/video-production" component={VideoProduction} />
+      <Route path="/marketing/ad-copy" component={AdCopyHub} />
       {/* SEO Blog Routes */}
       <Route path="/blog/gig-economy-commerce-platform" component={GigEcommercePost} />
       <Route path="/blog/multi-tenant-ecommerce-saas" component={MultiTenantPost} />

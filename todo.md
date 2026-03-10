@@ -242,9 +242,10 @@
 
 - [x] Extract and catalog Operating Excellence Bundle (templates, guides, playbooks)
 - [x] Create Resources/Templates page with downloadable Excel dashboards (weekly execution, lead pipeline, revenue command center, content calendar)
-- [ ] Create Video Production showcase page with Kling cinematic footage
-- [ ] Integrate 1Commerce Ad Copy Matrix into marketing resources
-- [ ] Build OneStack brand showcase with video script and animation PDF
+- [x] /resources page deployed and tested on production (1commerce.online/resources)
+- [x] Create Video Production showcase page with Kling cinematic footage (/video-production)
+- [x] Integrate 1Commerce Ad Copy Matrix into marketing resources (9 ad copy templates extracted)
+- [x] Create Ad Copy Hub page with platform-specific templates (/marketing/ad-copy)
 - [x] Upload large video/PDF files to S3 CDN and reference via URLs (staged in /webdev-static-assets)
 - [ ] Deploy integrated assets and verify all resources load correctly
 
