@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import {
   Users, Search, Trophy, Swords, Bell, Star, Zap, Clock,
   UserPlus, UserCheck, UserX, Check, X, ChevronRight,
-  Award, TrendingUp, Crown, Shield, Flame
+  TrendingUp, Shield
 } from "lucide-react";
 
 // ── Rarity colour map ────────────────────────────────────────────────────────

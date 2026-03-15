@@ -12,7 +12,6 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import {
   Plus, Edit, Archive, Eye, Package, Star, Download, Sparkles,
   CheckCircle2, Clock, FileText, Tag, Globe, ShoppingBag,
