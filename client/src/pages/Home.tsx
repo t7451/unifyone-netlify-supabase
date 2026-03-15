@@ -396,8 +396,8 @@ export default function Home() {
                 key={pillar.glyph}
                 className="stone-card p-8 sm:p-10 group"
                 style={{
-                  borderRight: (i % 3 !== 2) ? "1px solid #242424" : "1px solid #242424",
-                  borderBottom: i < 3 ? "1px solid #242424" : "1px solid #242424",
+                  borderRight: "1px solid #242424",
+                  borderBottom: "1px solid #242424",
                 }}
               >
                 {/* Roman numeral glyph */}
@@ -519,7 +519,7 @@ export default function Home() {
               <div
                 key={feat.title}
                 className="stone-card p-8 group"
-                style={{ borderRight: i < 3 ? "1px solid #242424" : "1px solid #242424" }}
+                style={{ borderRight: "1px solid #242424" }}
               >
                 <div className="text-lg mb-4 animate-gold-beam" style={{ color: "#D4A843" }}>{feat.glyph}</div>
                 <div className="w-6 h-px mb-5 transition-all duration-300 group-hover:w-12" style={{ backgroundColor: "#D4A843" }} />

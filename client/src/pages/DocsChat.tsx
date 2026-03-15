@@ -3,7 +3,6 @@ import { Helmet } from "react-helmet-async";
 import PublicLayout from "@/components/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { Loader2, Send, FileText } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 

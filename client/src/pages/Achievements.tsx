@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import {
   Trophy, Star, Zap, Target, Flame, Award, Crown, Shield,
   TrendingUp, Users, Lock, CheckCircle2, Clock, Gift, Car,
-  DollarSign, MapPin, Settings,
+  DollarSign, MapPin,
 } from "lucide-react";
 
 const RARITY_COLORS: Record<string, string> = {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  ShoppingCart, Zap, Mail, Bell, BarChart3, ArrowRight,
+  ShoppingCart, Mail, Bell, BarChart3, ArrowRight,
   CheckCircle, Workflow, Globe, CreditCard
 } from "lucide-react";
 
