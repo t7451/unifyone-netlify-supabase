@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import {
-  Zap, Plus, Trash2, TestTube2, CheckCircle2, XCircle, RefreshCw,
-  Settings2, Mail, Globe, Activity, Clock, ToggleLeft, ToggleRight,
-} from "lucide-react";
+import { Zap, Plus, Trash2, TestTube2, CheckCircle2, XCircle, RefreshCw, Settings2, Mail, Globe, Activity, Clock, ToggleLeft, ToggleRight } from "lucide-react";
 
 // ── n8n Workflows Tab ─────────────────────────────────────────────────────────
 function N8nTab() {

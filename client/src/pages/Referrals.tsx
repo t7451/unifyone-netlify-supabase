@@ -4,14 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import {
-  Gift, Copy, Twitter, Instagram, Linkedin, Facebook,
-  TrendingUp, Users, Zap, Star, CheckCircle2, ArrowRight,
-  Coins, Share2, ExternalLink, ChevronRight,
-} from "lucide-react";
+import { Gift, Copy, Twitter, Instagram, Linkedin, Facebook, TrendingUp, Users, Zap, Star, CheckCircle2, ArrowRight, Coins, Share2, ExternalLink, ChevronRight} from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 const CREDIT_RATES = [

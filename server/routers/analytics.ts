@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { getAnalyticsSummary, getCustomerCount, getOrderCount, getProductCount, getRevenueByDay, getTopProducts, getWebhookEvents } from "../db";
+import { getAnalyticsSummary, getRevenueByDay, getTopProducts, getWebhookEvents } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 
 const requireTenant = (tenantId: number | null | undefined) => {

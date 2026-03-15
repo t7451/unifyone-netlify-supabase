@@ -6,16 +6,13 @@ import { MapView } from "@/components/Map";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import AIInsightsCard from "@/components/AIInsightsCard";
-import { Play, Square, MapPin, Navigation, Zap, TrendingUp,
-  DollarSign, Gauge, Clock, Route, Sparkles, RefreshCw,
-  AlertTriangle, ChevronUp, ChevronDown, Car, Bike, Truck
-} from "lucide-react";
+import { Play, Square, MapPin, Navigation, Zap, TrendingUp, DollarSign, Gauge, Clock, Route, Sparkles, RefreshCw, AlertTriangle, ChevronUp, ChevronDown, Car, Bike, Truck } from "lucide-react";
 
 const IRS_RATE = 0.70; // 2025 rate per mile
 const GIG_PLATFORMS = ["DoorDash", "Uber Eats", "Instacart", "Lyft", "Uber", "Amazon Flex", "Shipt", "Grubhub", "Other"];
