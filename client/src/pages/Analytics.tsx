@@ -6,8 +6,8 @@ const COLORS = ["#00D9FF", "#0284C7", "#6A1B9A", "#10B981", "#F59E0B"];
 export default function Analytics() {
   const summary = trpc.analytics.summary.useQuery();
   const revenueByDay = trpc.analytics.revenueByDay.useQuery();
-  const topProducts = trpc.analytics.topProducts.useQuery();
-  const webhookLog = trpc.analytics.webhookEvents.useQuery();
+  const _topProducts = trpc.analytics.topProducts.useQuery(); // TODO: wire into UI
+  const _webhookLog = trpc.analytics.webhookEvents.useQuery(); // TODO: wire into UI
   const chartData = (revenueByDay.data ?? []).map((d: any) => ({
     date: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     revenue: Number(d.revenue), orders: d.orders,

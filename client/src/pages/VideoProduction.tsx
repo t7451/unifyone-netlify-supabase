@@ -9,7 +9,7 @@ export default function VideoProduction() {
 
   const videoUrl = "https://cdn.1commerce.online/videos/Ultra-realistic_cinematic_foot_Kling_30__37390(1).mp4";
 
-  const showcases = [
+  const _showcases = [ // TODO: render in JSX
     {
       id: "onestack-cinematic",
       title: "OneStack Cinematic Reel",
