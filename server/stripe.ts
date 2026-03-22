@@ -6,23 +6,29 @@ import { tenants, plans, themeInstalls, themes } from "../drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { capi } from "./meta/capi";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-02-25.clover",
-});
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2026-02-25.clover",
+    })
+  : null;
 
 // Map Stripe subscription status → our enum
 function mapSubStatus(
   stripeStatus: Stripe.Subscription.Status
 ): "active" | "past_due" | "cancelled" | "trialing" | "none" {
   switch (stripeStatus) {
-    case "active": return "active";
-    case "trialing": return "trialing";
-    case "past_due": return "past_due";
+    case "active":
+      return "active";
+    case "trialing":
+      return "trialing";
+    case "past_due":
+      return "past_due";
     case "canceled":
     case "unpaid":
     case "paused":
       return "cancelled";
-    default: return "none";
+    default:
+      return "none";
   }
 }
 
@@ -43,7 +49,7 @@ async function syncSubscription(sub: Stripe.Subscription) {
   if (priceId) {
     const allPlans = await db.select().from(plans);
     const matched = allPlans.find(
-      (p) =>
+      p =>
         (p.stripePriceIdMonthly && p.stripePriceIdMonthly === priceId) ||
         (p.stripePriceIdYearly && p.stripePriceIdYearly === priceId)
     );
@@ -71,6 +77,11 @@ export function registerStripeRoutes(app: Express) {
     "/api/stripe/webhook",
     express.raw({ type: "application/json" }),
     async (req: Request, res: Response) => {
+      if (!stripe) {
+        console.error("[Stripe Webhook] STRIPE_SECRET_KEY not configured");
+        return res.status(503).json({ error: "Stripe not configured" });
+      }
+
       const sig = req.headers["stripe-signature"] as string;
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
 
@@ -79,17 +90,24 @@ export function registerStripeRoutes(app: Express) {
       try {
         event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
       } catch (err: any) {
-        console.error("[Stripe Webhook] Signature verification failed:", err.message);
+        console.error(
+          "[Stripe Webhook] Signature verification failed:",
+          err.message
+        );
         return res.status(400).json({ error: `Webhook Error: ${err.message}` });
       }
 
       // Handle test events for webhook verification
       if (event.id.startsWith("evt_test_")) {
-        console.log("[Stripe Webhook] Test event detected, returning verification response");
+        console.log(
+          "[Stripe Webhook] Test event detected, returning verification response"
+        );
         return res.json({ verified: true });
       }
 
-      console.log(`[Stripe Webhook] Received event: ${event.type} (${event.id})`);
+      console.log(
+        `[Stripe Webhook] Received event: ${event.type} (${event.id})`
+      );
 
       try {
         switch (event.type) {
@@ -99,36 +117,63 @@ export function registerStripeRoutes(app: Express) {
             const customerId = session.customer as string;
 
             // ── Theme purchase fulfillment ─────────────────────────────────
-            if (session.metadata?.purchase_type === "theme" && session.metadata?.theme_id && session.metadata?.user_id) {
+            if (
+              session.metadata?.purchase_type === "theme" &&
+              session.metadata?.theme_id &&
+              session.metadata?.user_id
+            ) {
               const themeId = parseInt(session.metadata.theme_id);
               const userId = parseInt(session.metadata.user_id);
-              const amountPaid = session.amount_total ? (session.amount_total / 100).toFixed(2) : "0.00";
+              const amountPaid = session.amount_total
+                ? (session.amount_total / 100).toFixed(2)
+                : "0.00";
               const db = await getDb();
               if (db) {
-                const existing = await db.select().from(themeInstalls)
-                  .where(and(eq(themeInstalls.themeId, themeId), eq(themeInstalls.userId, userId)))
+                const existing = await db
+                  .select()
+                  .from(themeInstalls)
+                  .where(
+                    and(
+                      eq(themeInstalls.themeId, themeId),
+                      eq(themeInstalls.userId, userId)
+                    )
+                  )
                   .limit(1);
                 if (!existing.length) {
                   await db.insert(themeInstalls).values({
                     themeId,
                     userId,
                     amountPaid,
-                    stripePaymentIntentId: session.payment_intent as string ?? null,
+                    stripePaymentIntentId:
+                      (session.payment_intent as string) ?? null,
                   });
-                  await db.update(themes)
+                  await db
+                    .update(themes)
                     .set({ installCount: sql`${themes.installCount} + 1` })
                     .where(eq(themes.id, themeId));
-                  console.log(`[Stripe] Theme ${themeId} purchased by user ${userId}, amount: $${amountPaid}`);
+                  console.log(
+                    `[Stripe] Theme ${themeId} purchased by user ${userId}, amount: $${amountPaid}`
+                  );
 
                   // Fire CAPI Purchase event for theme purchase
-                  const themeEmail = session.customer_details?.email || session.metadata?.customer_email || "";
-                  capi.purchase(
-                    `stripe_theme_${session.id}`,
-                    { email: themeEmail },
-                    `${process.env.VITE_OAUTH_PORTAL_URL || "https://unify0ne.manus.space"}/checkout`,
-                    parseFloat(amountPaid),
-                    (session.currency || "USD").toUpperCase()
-                  ).catch((err: Error) => console.error("[CAPI] Purchase event failed:", err.message));
+                  const themeEmail =
+                    session.customer_details?.email ||
+                    session.metadata?.customer_email ||
+                    "";
+                  capi
+                    .purchase(
+                      `stripe_theme_${session.id}`,
+                      { email: themeEmail },
+                      `${process.env.VITE_OAUTH_PORTAL_URL || "https://unify0ne.manus.space"}/checkout`,
+                      parseFloat(amountPaid),
+                      (session.currency || "USD").toUpperCase()
+                    )
+                    .catch((err: Error) =>
+                      console.error(
+                        "[CAPI] Purchase event failed:",
+                        err.message
+                      )
+                    );
                 }
               }
               break;
@@ -156,16 +201,25 @@ export function registerStripeRoutes(app: Express) {
             }
 
             // Fire CAPI Purchase event for subscription checkout
-            const sessionAmount = session.amount_total ? session.amount_total / 100 : 0;
-            const sessionEmail = session.customer_details?.email || session.metadata?.customer_email || "";
+            const sessionAmount = session.amount_total
+              ? session.amount_total / 100
+              : 0;
+            const sessionEmail =
+              session.customer_details?.email ||
+              session.metadata?.customer_email ||
+              "";
             if (sessionAmount > 0 && sessionEmail) {
-              capi.purchase(
-                `stripe_sub_${session.id}`,
-                { email: sessionEmail },
-                `${process.env.VITE_OAUTH_PORTAL_URL || "https://unify0ne.manus.space"}/checkout`,
-                sessionAmount,
-                (session.currency || "USD").toUpperCase()
-              ).catch((err: Error) => console.error("[CAPI] Purchase event failed:", err.message));
+              capi
+                .purchase(
+                  `stripe_sub_${session.id}`,
+                  { email: sessionEmail },
+                  `${process.env.VITE_OAUTH_PORTAL_URL || "https://unify0ne.manus.space"}/checkout`,
+                  sessionAmount,
+                  (session.currency || "USD").toUpperCase()
+                )
+                .catch((err: Error) =>
+                  console.error("[CAPI] Purchase event failed:", err.message)
+                );
             }
 
             console.log(
@@ -206,7 +260,9 @@ export function registerStripeRoutes(app: Express) {
               const sub = await stripe.subscriptions.retrieve(subId);
               await syncSubscription(sub);
             }
-            console.log(`[Stripe] Invoice paid: ${invoice.id}, amount: ${invoice.amount_paid}`);
+            console.log(
+              `[Stripe] Invoice paid: ${invoice.id}, amount: ${invoice.amount_paid}`
+            );
             break;
           }
 
@@ -217,7 +273,9 @@ export function registerStripeRoutes(app: Express) {
               await db
                 .update(tenants)
                 .set({ subscriptionStatus: "past_due" })
-                .where(eq(tenants.stripeCustomerId, invoice.customer as string));
+                .where(
+                  eq(tenants.stripeCustomerId, invoice.customer as string)
+                );
             }
             console.error(`[Stripe] Invoice payment failed: ${invoice.id}`);
             break;
@@ -225,7 +283,9 @@ export function registerStripeRoutes(app: Express) {
 
           case "customer.subscription.trial_will_end": {
             const sub = event.data.object as Stripe.Subscription;
-            console.log(`[Stripe] Trial ending soon for subscription: ${sub.id}`);
+            console.log(
+              `[Stripe] Trial ending soon for subscription: ${sub.id}`
+            );
             // Could trigger owner notification here
             break;
           }
@@ -247,9 +307,19 @@ export function registerStripeRoutes(app: Express) {
     "/api/stripe/create-checkout",
     express.json(),
     async (req: Request, res: Response) => {
+      if (!stripe)
+        return res.status(503).json({ error: "Stripe not configured" });
       try {
-        const { priceId, tenantId, userId, userEmail, userName, origin, amount, description } =
-          req.body;
+        const {
+          priceId,
+          tenantId,
+          userId,
+          userEmail,
+          userName,
+          origin,
+          amount,
+          description,
+        } = req.body;
 
         const baseUrl = origin || "http://localhost:3000";
 
@@ -276,7 +346,9 @@ export function registerStripeRoutes(app: Express) {
 
         // Otherwise, create a one-time payment session
         if (!amount || isNaN(parseFloat(amount))) {
-          return res.status(400).json({ error: "Either priceId or amount is required" });
+          return res
+            .status(400)
+            .json({ error: "Either priceId or amount is required" });
         }
 
         const amountCents = Math.round(parseFloat(amount) * 100);
@@ -322,6 +394,8 @@ export function registerStripeRoutes(app: Express) {
     "/api/stripe/customer-portal",
     express.json(),
     async (req: Request, res: Response) => {
+      if (!stripe)
+        return res.status(503).json({ error: "Stripe not configured" });
       try {
         const { customerId, origin } = req.body;
 
@@ -346,10 +420,15 @@ export function registerStripeRoutes(app: Express) {
   app.get(
     "/api/stripe/subscription/:subscriptionId",
     async (req: Request, res: Response) => {
+      if (!stripe)
+        return res.status(503).json({ error: "Stripe not configured" });
       try {
-        const sub = await stripe.subscriptions.retrieve(req.params.subscriptionId, {
-          expand: ["latest_invoice", "items.data.price.product"],
-        });
+        const sub = await stripe.subscriptions.retrieve(
+          req.params.subscriptionId,
+          {
+            expand: ["latest_invoice", "items.data.price.product"],
+          }
+        );
         res.json(sub);
       } catch (err: any) {
         res.status(500).json({ error: err.message });
@@ -361,6 +440,8 @@ export function registerStripeRoutes(app: Express) {
   app.get(
     "/api/stripe/invoices/:customerId",
     async (req: Request, res: Response) => {
+      if (!stripe)
+        return res.status(503).json({ error: "Stripe not configured" });
       try {
         const invoices = await stripe.invoices.list({
           customer: req.params.customerId,
