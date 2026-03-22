@@ -12,7 +12,7 @@ export function registerOAuthRoutes(app: Express) {
   app.get("/api/oauth/start", async (req: Request, res: Response) => {
     const returnTo = getQueryParam(req, "returnTo");
     try {
-      const authorizeUrl = sdk.createOAuthStartUrl(req, returnTo);
+      const authorizeUrl = await sdk.createOAuthStartUrl(req, res, returnTo);
       res.redirect(302, authorizeUrl);
     } catch (error) {
       console.error("[OAuth] Start failed", error);
@@ -32,6 +32,7 @@ export function registerOAuthRoutes(app: Express) {
     try {
       const { sessionToken, returnTo } = await sdk.completeOAuthCallback({
         req,
+        res,
         code,
         state,
       });

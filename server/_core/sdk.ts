@@ -3,7 +3,7 @@ import { ForbiddenError } from "@shared/_core/errors";
 import axios from "axios";
 import { parse as parseCookieHeader } from "cookie";
 import { createHash, randomBytes } from "crypto";
-import type { Request } from "express";
+import type { Request, Response } from "express";
 import { jwtVerify, SignJWT } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
@@ -25,16 +25,15 @@ type OAuthUserInfo = {
 };
 
 export type OAuthStartState = {
+  state: string;
   nonce: string;
   returnTo: string;
   codeVerifier: string;
 };
 
-const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
-const stateStore = new Map<
-  string,
-  { value: OAuthStartState; expiresAt: number }
->();
+// Cookie name for the PKCE state — short-lived, httpOnly
+const PKCE_COOKIE_NAME = "oauth_pkce_state";
+const OAUTH_STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 function base64Url(input: Buffer | string) {
   return Buffer.from(input)
@@ -46,10 +45,6 @@ function base64Url(input: Buffer | string) {
 
 function randomUrlSafe(size = 32) {
   return base64Url(randomBytes(size));
-}
-
-function now() {
-  return Date.now();
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -85,23 +80,40 @@ class SDKServer {
     return new TextEncoder().encode(ENV.cookieSecret);
   }
 
-  private putState(stateKey: string, value: OAuthStartState) {
-    stateStore.set(stateKey, { value, expiresAt: now() + OAUTH_STATE_TTL_MS });
+  private async signPkceState(payload: OAuthStartState): Promise<string> {
+    const secret = this.getSessionSecret();
+    const expiresAt = Math.floor((Date.now() + OAUTH_STATE_TTL_MS) / 1000);
+    return new SignJWT({ ...payload })
+      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+      .setExpirationTime(expiresAt)
+      .sign(secret);
   }
 
-  private takeState(stateKey: string): OAuthStartState | null {
-    const entry = stateStore.get(stateKey);
-    stateStore.delete(stateKey);
-    if (!entry) return null;
-    if (entry.expiresAt < now()) return null;
-    return entry.value;
-  }
-
-  private pruneStateStore() {
-    const t = now();
-    stateStore.forEach((entry, key) => {
-      if (entry.expiresAt < t) stateStore.delete(key);
-    });
+  private async verifyPkceState(
+    token: string | undefined
+  ): Promise<OAuthStartState | null> {
+    if (!token) return null;
+    try {
+      const secret = this.getSessionSecret();
+      const { payload } = await jwtVerify(token, secret, {
+        algorithms: ["HS256"],
+      });
+      const { state, nonce, returnTo, codeVerifier } = payload as Record<
+        string,
+        unknown
+      >;
+      if (
+        !isNonEmptyString(state) ||
+        !isNonEmptyString(nonce) ||
+        !isNonEmptyString(returnTo) ||
+        !isNonEmptyString(codeVerifier)
+      ) {
+        return null;
+      }
+      return { state, nonce, returnTo, codeVerifier };
+    } catch {
+      return null;
+    }
   }
 
   private async exchangeCodeForToken(args: {
@@ -271,8 +283,11 @@ class SDKServer {
     return user;
   }
 
-  createOAuthStartUrl(req: Request, returnTo: string | undefined): string {
-    this.pruneStateStore();
+  async createOAuthStartUrl(
+    req: Request,
+    res: Response,
+    returnTo: string | undefined
+  ): Promise<string> {
     if (!ENV.oauthAuthorizeUrl || !ENV.oauthClientId) {
       throw new Error("OAuth authorize endpoint config missing");
     }
@@ -285,10 +300,25 @@ class SDKServer {
     const state = randomUrlSafe(24);
     const redirectUri = buildRedirectUri(req);
 
-    this.putState(state, {
+    // Persist PKCE state in a signed cookie — survives across serverless invocations
+    const pkceToken = await this.signPkceState({
+      state,
       nonce,
       returnTo: normalizeReturnTo(returnTo),
       codeVerifier,
+    });
+
+    const isSecure =
+      req.protocol === "https" ||
+      req.headers["x-forwarded-proto"]?.toString().split(",")[0]?.trim() ===
+        "https";
+
+    res.cookie(PKCE_COOKIE_NAME, pkceToken, {
+      httpOnly: true,
+      path: "/",
+      sameSite: "none",
+      secure: isSecure,
+      maxAge: OAUTH_STATE_TTL_MS,
     });
 
     const url = new URL(ENV.oauthAuthorizeUrl);
@@ -306,13 +336,28 @@ class SDKServer {
 
   async completeOAuthCallback(args: {
     req: Request;
+    res: Response;
     code: string;
     state: string;
   }) {
-    const statePayload = this.takeState(args.state);
+    // Read PKCE state from signed cookie (stateless — works across serverless instances)
+    const cookies = this.parseCookies(args.req.headers.cookie);
+    const pkceToken = cookies.get(PKCE_COOKIE_NAME);
+    const statePayload = await this.verifyPkceState(pkceToken);
+
     if (!statePayload) {
       throw new Error("OAuth state is invalid or expired");
     }
+    if (statePayload.state !== args.state) {
+      throw new Error("OAuth state mismatch");
+    }
+
+    // Clear the PKCE cookie — one-time use
+    args.res.clearCookie(PKCE_COOKIE_NAME, {
+      httpOnly: true,
+      path: "/",
+      sameSite: "none",
+    });
 
     const redirectUri = buildRedirectUri(args.req);
     const token = await this.exchangeCodeForToken({
