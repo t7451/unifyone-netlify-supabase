@@ -57,14 +57,44 @@ function normalizeReturnTo(returnTo: string | undefined): string {
   return returnTo;
 }
 
-function buildRedirectUri(req: Request): string {
+function normalizeAbsoluteUrl(url: string | undefined): string | null {
+  if (!isNonEmptyString(url)) return null;
+
+  try {
+    return new URL(url).origin;
+  } catch {
+    return null;
+  }
+}
+
+function getRequestOrigin(req: Request): string {
   const host = req.get("host");
   if (!host) {
     throw new Error("Missing host header for OAuth callback");
   }
   const protoHeader = req.header("x-forwarded-proto");
   const proto = protoHeader?.split(",")[0]?.trim() || req.protocol || "https";
-  return `${proto}://${host}/api/oauth/callback`;
+  return `${proto}://${host}`;
+}
+
+export function resolveAppOrigin(req: Request): string {
+  return normalizeAbsoluteUrl(ENV.appBaseUrl) ?? getRequestOrigin(req);
+}
+
+export function buildRedirectUri(req: Request): string {
+  return new URL("/api/oauth/callback", resolveAppOrigin(req)).toString();
+}
+
+function isSecureRequest(req: Request): boolean {
+  const protoHeader = req.headers["x-forwarded-proto"];
+  const forwardedProto = Array.isArray(protoHeader)
+    ? protoHeader
+    : (protoHeader?.toString().split(",") ?? []);
+
+  return (
+    req.protocol === "https" ||
+    forwardedProto.some(proto => proto.trim().toLowerCase() === "https")
+  );
 }
 
 class SDKServer {
@@ -308,10 +338,7 @@ class SDKServer {
       codeVerifier,
     });
 
-    const isSecure =
-      req.protocol === "https" ||
-      req.headers["x-forwarded-proto"]?.toString().split(",")[0]?.trim() ===
-        "https";
+    const isSecure = isSecureRequest(req);
 
     res.cookie(PKCE_COOKIE_NAME, pkceToken, {
       httpOnly: true,
@@ -357,6 +384,7 @@ class SDKServer {
       httpOnly: true,
       path: "/",
       sameSite: "none",
+      secure: isSecureRequest(args.req),
     });
 
     const redirectUri = buildRedirectUri(args.req);

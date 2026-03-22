@@ -1,5 +1,12 @@
 export const ENV = {
   appId: process.env.VITE_APP_ID ?? process.env.OAUTH_CLIENT_ID ?? "",
+  appBaseUrl:
+    process.env.PUBLIC_APP_URL ??
+    process.env.APP_URL ??
+    process.env.URL ??
+    process.env.DEPLOY_PRIME_URL ??
+    process.env.DEPLOY_URL ??
+    "",
   cookieSecret: process.env.JWT_SECRET ?? "",
   databaseUrl: process.env.DATABASE_URL ?? "",
   oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? "",
