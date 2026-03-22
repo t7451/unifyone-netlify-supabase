@@ -7,7 +7,18 @@
  */
 import { describe, it, expect } from "vitest";
 
-describe("Meta CAPI credentials", () => {
+const shouldRunLiveMetaTest =
+  process.env.RUN_LIVE_INTEGRATION_TESTS === "true" &&
+  typeof process.env.VITE_META_PIXEL_ID === "string" &&
+  process.env.VITE_META_PIXEL_ID.length > 0 &&
+  typeof process.env.META_PIXEL_ID === "string" &&
+  process.env.META_PIXEL_ID.length > 0 &&
+  typeof process.env.META_CAPI_ACCESS_TOKEN === "string" &&
+  process.env.META_CAPI_ACCESS_TOKEN.length > 0;
+
+const metaDescribe = shouldRunLiveMetaTest ? describe : describe.skip;
+
+metaDescribe("Meta CAPI credentials", () => {
   it("VITE_META_PIXEL_ID is set and matches META_PIXEL_ID", () => {
     const vitePixelId = process.env.VITE_META_PIXEL_ID;
     const serverPixelId = process.env.META_PIXEL_ID;

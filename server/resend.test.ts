@@ -1,7 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { Resend } from "resend";
 
-describe("Resend configuration", () => {
+const shouldRunLiveResendTest =
+  process.env.RUN_LIVE_INTEGRATION_TESTS === "true" &&
+  typeof process.env.RESEND_API_KEY === "string" &&
+  process.env.RESEND_API_KEY.length > 0;
+
+const resendDescribe = shouldRunLiveResendTest ? describe : describe.skip;
+
+resendDescribe("Resend configuration", () => {
   it("can authenticate with Resend API using provided key", async () => {
     const apiKey = process.env.RESEND_API_KEY;
     expect(apiKey).toBeDefined();
@@ -28,7 +35,10 @@ describe("Resend configuration", () => {
         console.log("[Resend] Test email sent successfully:", result.data.id);
       } else if (result.error) {
         // Some errors are expected (like invalid recipient), but they prove auth worked
-        console.log("[Resend] API responded with error (auth successful):", result.error);
+        console.log(
+          "[Resend] API responded with error (auth successful):",
+          result.error
+        );
       }
     } catch (error) {
       // If we get a 401 or auth error, the key is invalid
