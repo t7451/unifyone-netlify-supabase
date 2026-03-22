@@ -1,4 +1,4 @@
-import { Client, Environment } from "square";
+import { SquareClient, SquareEnvironment } from "square";
 import type { Express, Request, Response } from "express";
 import express from "express";
 import { getDb } from "./db";
@@ -10,111 +10,151 @@ import crypto from "crypto";
 // Lazy client — null if not configured
 function getSquareClient() {
   if (!ENV.squareAccessToken) return null;
-  return new Client({
-    bearerAuthCredentials: { accessToken: ENV.squareAccessToken },
-    environment: ENV.squareEnvironment === "sandbox" ? Environment.Sandbox : Environment.Production,
+  return new SquareClient({
+    token: ENV.squareAccessToken,
+    environment:
+      ENV.squareEnvironment === "sandbox"
+        ? SquareEnvironment.Sandbox
+        : SquareEnvironment.Production,
   });
 }
 
 export function registerSquareRoutes(app: Express) {
   // POST /api/square/create-checkout
   // Creates a Square hosted payment link (buyer redirected to Square)
-  app.post("/api/square/create-checkout", express.json(), async (req: Request, res: Response) => {
-    const client = getSquareClient();
-    if (!client) return res.status(503).json({ error: "Square not configured" });
+  app.post(
+    "/api/square/create-checkout",
+    express.json(),
+    async (req: Request, res: Response) => {
+      const client = getSquareClient();
+      if (!client)
+        return res.status(503).json({ error: "Square not configured" });
 
-    try {
-      const { amount, currency = "USD", description, orderId, origin } = req.body;
-      if (!amount || isNaN(parseFloat(amount))) {
-        return res.status(400).json({ error: "amount is required" });
+      try {
+        const {
+          amount,
+          currency = "USD",
+          description,
+          orderId,
+          origin,
+        } = req.body;
+        if (!amount || isNaN(parseFloat(amount))) {
+          return res.status(400).json({ error: "amount is required" });
+        }
+        if (!ENV.squareLocationId) {
+          return res
+            .status(503)
+            .json({ error: "SQUARE_LOCATION_ID not configured" });
+        }
+
+        const amountMoney = BigInt(Math.round(parseFloat(amount) * 100));
+        const idempotencyKey = crypto.randomUUID();
+        const baseUrl = origin || "https://unifyone.netlify.app";
+
+        const response = await client.checkout.paymentLinks.create({
+          idempotencyKey,
+          order: {
+            locationId: ENV.squareLocationId,
+            lineItems: [
+              {
+                name: description || "UnifyOne Order",
+                quantity: "1",
+                basePriceMoney: {
+                  amount: amountMoney,
+                  currency: currency.toUpperCase(),
+                },
+              },
+            ],
+            metadata: orderId
+              ? { internal_order_id: String(orderId) }
+              : undefined,
+          },
+          checkoutOptions: {
+            redirectUrl: `${baseUrl}/dashboard?square=success`,
+          },
+        });
+
+        const link = response.paymentLink;
+        if (!link?.url) throw new Error("Square did not return a checkout URL");
+
+        res.json({ checkoutUrl: link.url, squareOrderId: link.orderId });
+      } catch (err: any) {
+        console.error("[Square] Create checkout error:", err.message);
+        res.status(500).json({ error: err.message });
       }
-      if (!ENV.squareLocationId) {
-        return res.status(503).json({ error: "SQUARE_LOCATION_ID not configured" });
-      }
-
-      const amountMoney = BigInt(Math.round(parseFloat(amount) * 100));
-      const idempotencyKey = crypto.randomUUID();
-      const baseUrl = origin || "https://unifyone.netlify.app";
-
-      const response = await client.checkoutApi.createPaymentLink({
-        idempotencyKey,
-        order: {
-          locationId: ENV.squareLocationId,
-          lineItems: [{
-            name: description || "UnifyOne Order",
-            quantity: "1",
-            basePriceMoney: { amount: amountMoney, currency: currency.toUpperCase() },
-          }],
-          metadata: orderId ? { internal_order_id: String(orderId) } : undefined,
-        },
-        checkoutOptions: {
-          redirectUrl: `${baseUrl}/dashboard?square=success`,
-        },
-      });
-
-      const link = response.result.paymentLink;
-      if (!link?.url) throw new Error("Square did not return a checkout URL");
-
-      res.json({ checkoutUrl: link.url, squareOrderId: link.orderId });
-    } catch (err: any) {
-      console.error("[Square] Create checkout error:", err.message);
-      res.status(500).json({ error: err.message });
     }
-  });
+  );
 
   // POST /api/square/capture-payment
   // Retrieve a Square payment and mark the internal order as paid
-  app.post("/api/square/capture-payment", express.json(), async (req: Request, res: Response) => {
-    const client = getSquareClient();
-    if (!client) return res.status(503).json({ error: "Square not configured" });
+  app.post(
+    "/api/square/capture-payment",
+    express.json(),
+    async (req: Request, res: Response) => {
+      const client = getSquareClient();
+      if (!client)
+        return res.status(503).json({ error: "Square not configured" });
 
-    try {
-      const { squarePaymentId, internalOrderId } = req.body;
-      if (!squarePaymentId) return res.status(400).json({ error: "squarePaymentId is required" });
+      try {
+        const { squarePaymentId, internalOrderId } = req.body;
+        if (!squarePaymentId)
+          return res.status(400).json({ error: "squarePaymentId is required" });
 
-      const response = await client.paymentsApi.getPayment(squarePaymentId);
-      const payment = response.result.payment;
+        const response = await client.payments.get({
+          paymentId: squarePaymentId,
+        });
+        const payment = response.payment;
 
-      if (!payment) throw new Error("Payment not found");
+        if (!payment) throw new Error("Payment not found");
 
-      if (internalOrderId) {
-        const db = await getDb();
-        if (db) {
-          await db.update(orders)
-            .set({
-              paymentStatus: "paid",
-              paymentMethod: "square",
-              squarePaymentId: payment.id ?? null,
-              squareOrderId: payment.orderId ?? null,
-            })
-            .where(eq(orders.id, parseInt(internalOrderId)));
+        if (internalOrderId) {
+          const db = await getDb();
+          if (db) {
+            await db
+              .update(orders)
+              .set({
+                paymentStatus: "paid",
+                paymentMethod: "square",
+                squarePaymentId: payment.id ?? null,
+                squareOrderId: payment.orderId ?? null,
+              })
+              .where(eq(orders.id, parseInt(internalOrderId)));
+          }
         }
-      }
 
-      const amountMoney = payment.amountMoney;
-      res.json({
-        status: payment.status,
-        squarePaymentId: payment.id,
-        amount: amountMoney ? (Number(amountMoney.amount) / 100).toFixed(2) : "0.00",
-        currency: amountMoney?.currency ?? "USD",
-      });
-    } catch (err: any) {
-      console.error("[Square] Capture payment error:", err.message);
-      res.status(500).json({ error: err.message });
+        const amountMoney = payment.amountMoney;
+        res.json({
+          status: payment.status,
+          squarePaymentId: payment.id,
+          amount: amountMoney
+            ? (Number(amountMoney.amount) / 100).toFixed(2)
+            : "0.00",
+          currency: amountMoney?.currency ?? "USD",
+        });
+      } catch (err: any) {
+        console.error("[Square] Capture payment error:", err.message);
+        res.status(500).json({ error: err.message });
+      }
     }
-  });
+  );
 
   // GET /api/square/payment/:paymentId
-  app.get("/api/square/payment/:paymentId", async (req: Request, res: Response) => {
-    const client = getSquareClient();
-    if (!client) return res.status(503).json({ error: "Square not configured" });
-    try {
-      const response = await client.paymentsApi.getPayment(req.params.paymentId);
-      res.json(response.result.payment);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+  app.get(
+    "/api/square/payment/:paymentId",
+    async (req: Request, res: Response) => {
+      const client = getSquareClient();
+      if (!client)
+        return res.status(503).json({ error: "Square not configured" });
+      try {
+        const response = await client.payments.get({
+          paymentId: req.params.paymentId,
+        });
+        res.json(response.payment);
+      } catch (err: any) {
+        res.status(500).json({ error: err.message });
+      }
     }
-  });
+  );
 
   // POST /api/square/webhook
   // Verify Square webhook signature and process payment.completed events
@@ -123,10 +163,14 @@ export function registerSquareRoutes(app: Express) {
     express.raw({ type: "application/json" }),
     async (req: Request, res: Response) => {
       if (!ENV.squareWebhookSignatureKey) {
-        console.warn("[Square Webhook] No signature key configured, skipping verification");
+        console.warn(
+          "[Square Webhook] No signature key configured, skipping verification"
+        );
       } else {
         // Square signature: HMAC-SHA256 of (url + body) with signature key
-        const squareSignature = req.headers["x-square-hmacsha256-signature"] as string;
+        const squareSignature = req.headers[
+          "x-square-hmacsha256-signature"
+        ] as string;
         const webhookUrl = `https://${req.headers.host}/api/square/webhook`;
         const bodyString = req.body.toString("utf8");
         const hmac = crypto.createHmac("sha256", ENV.squareWebhookSignatureKey);
@@ -149,7 +193,10 @@ export function registerSquareRoutes(app: Express) {
       console.log(`[Square Webhook] Event: ${event.type} (${event.event_id})`);
 
       try {
-        if (event.type === "payment.completed" || event.type === "payment.updated") {
+        if (
+          event.type === "payment.completed" ||
+          event.type === "payment.updated"
+        ) {
           const payment = event.data?.object?.payment;
           if (payment?.status === "COMPLETED" && payment.id) {
             const db = await getDb();
@@ -157,7 +204,8 @@ export function registerSquareRoutes(app: Express) {
               const internalOrderId = payment.metadata?.internal_order_id;
 
               if (internalOrderId) {
-                await db.update(orders)
+                await db
+                  .update(orders)
                   .set({
                     paymentStatus: "paid",
                     paymentMethod: "square",
@@ -165,7 +213,9 @@ export function registerSquareRoutes(app: Express) {
                     squareOrderId: payment.order_id ?? null,
                   })
                   .where(eq(orders.id, parseInt(internalOrderId)));
-                console.log(`[Square] Order ${internalOrderId} marked as paid via webhook`);
+                console.log(
+                  `[Square] Order ${internalOrderId} marked as paid via webhook`
+                );
               }
             }
           }
