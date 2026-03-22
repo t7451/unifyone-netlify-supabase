@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 
+const AUTH_REFRESH_INTERVAL_MS = 900;
+const MAX_AUTH_REFRESH_ATTEMPTS = 5;
+
 // ── Animated logo mark ────────────────────────────────────────────────────────
 function LogoMark({ size = 48 }: { size?: number }) {
   return (
@@ -45,8 +48,9 @@ const STEPS = [
 
 export default function AuthCallback() {
   const [location, navigate] = useLocation();
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, refresh } = useAuth();
   const [stepIdx, setStepIdx] = useState(0);
+  const [refreshAttempts, setRefreshAttempts] = useState(0);
 
   // Cycle through status messages
   useEffect(() => {
@@ -71,11 +75,24 @@ export default function AuthCallback() {
 
     if (!loading && isAuthenticated) {
       navigate(returnTo);
-    } else if (!loading && !isAuthenticated) {
-      // Auth failed — redirect back to login
-      navigate("/login");
     }
   }, [loading, isAuthenticated, location, navigate]);
+
+  useEffect(() => {
+    if (loading || isAuthenticated) return;
+
+    if (refreshAttempts >= MAX_AUTH_REFRESH_ATTEMPTS) {
+      navigate("/login");
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setRefreshAttempts(current => current + 1);
+      void refresh();
+    }, AUTH_REFRESH_INTERVAL_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [isAuthenticated, loading, navigate, refresh, refreshAttempts]);
 
   return (
     <div className="min-h-screen bg-[#060D1F] flex flex-col items-center justify-center gap-8">
@@ -98,7 +115,9 @@ export default function AuthCallback() {
         <div className="text-center space-y-1">
           <h2 className="text-xl font-bold text-white">UnifyOne</h2>
           <p className="text-sm text-[#00D9FF] animate-pulse min-h-[20px]">
-            {STEPS[stepIdx]}
+            {refreshAttempts > 0 && !isAuthenticated
+              ? `Finalizing your session${".".repeat(Math.min(refreshAttempts, 3))}`
+              : STEPS[stepIdx]}
           </p>
         </div>
       </div>

@@ -22,4 +22,8 @@ export const ENV = {
   isProduction: process.env.NODE_ENV === "production",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  squareAccessToken: process.env.SQUARE_ACCESS_TOKEN ?? "",
+  squareLocationId: process.env.SQUARE_LOCATION_ID ?? "",
+  squareWebhookSignatureKey: process.env.SQUARE_WEBHOOK_SIGNATURE_KEY ?? "",
+  squareEnvironment: (process.env.SQUARE_ENVIRONMENT ?? "production") as "sandbox" | "production",
 };

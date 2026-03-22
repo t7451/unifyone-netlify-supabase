@@ -28,7 +28,7 @@ const ShopifyLogo = () => (
   </svg>
 );
 
-type PaymentRail = "stripe" | "paypal" | "shopify";
+type PaymentRail = "stripe" | "paypal" | "shopify" | "square";
 
 interface CheckoutItem {
   name: string;
@@ -173,6 +173,31 @@ export default function Checkout() {
     }
   }, [paypalLoaded, selectedRail, amount, description]);
 
+  const handleSquareCheckout = async () => {
+    setIsProcessing(true);
+    try {
+      const response = await fetch("/api/square/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: parseFloat(amount),
+          currency: "USD",
+          description,
+          orderId: linkedOrderId,
+          origin: window.location.origin,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      toast.info("Redirecting to Square Checkout...");
+      window.location.href = data.checkoutUrl;
+    } catch (err: any) {
+      toast.error(`Square error: ${err.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleStripeCheckout = async () => {
     setIsProcessing(true);
     try {
@@ -242,6 +267,15 @@ export default function Checkout() {
       color: "#96BF48",
       badge: shopifyCheckoutUrl ? "Configured" : "Setup Required",
       available: !!shopifyCheckoutUrl,
+    },
+    {
+      id: "square" as PaymentRail,
+      name: "Square",
+      description: "Pay with card via Square hosted checkout",
+      icon: CreditCard,
+      color: "#3E4348",
+      badge: "Available",
+      available: true,
     },
   ];
 
@@ -461,6 +495,28 @@ export default function Checkout() {
                   </Button>
                 </div>
               )}
+            </div>
+          )}
+
+          {selectedRail === "square" && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-gray-400 text-xs mb-3">
+                <Shield className="w-3.5 h-3.5 text-[#3E4348]" />
+                <span>Secured by Square — PCI DSS compliant payment processing</span>
+              </div>
+              <Button
+                onClick={handleSquareCheckout}
+                disabled={isProcessing || !amount}
+                className="w-full h-12 font-bold text-white"
+                style={{ backgroundColor: "#3E4348" }}
+              >
+                {isProcessing
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</>
+                  : <><CreditCard className="w-4 h-4 mr-2" />Pay ${amount} with Square</>}
+              </Button>
+              <p className="text-gray-600 text-xs text-center">
+                You'll be redirected to Square's secure hosted checkout page.
+              </p>
             </div>
           )}
         </div>

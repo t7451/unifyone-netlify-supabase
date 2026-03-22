@@ -10,6 +10,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "../../server/_core/oauth";
 import { registerStripeRoutes } from "../../server/stripe";
 import { registerPayPalRoutes } from "../../server/paypal";
+import { registerSquareRoutes } from "../../server/square";
 import { appRouter } from "../../server/routers";
 import { createContext } from "../../server/_core/context";
 
@@ -20,6 +21,9 @@ registerStripeRoutes(app);
 
 // PayPal REST routes
 registerPayPalRoutes(app);
+
+// Square payment routes (webhook needs raw body — register before json middleware)
+registerSquareRoutes(app);
 
 // Body parsers
 app.use(express.json({ limit: "50mb" }));
