@@ -4,7 +4,18 @@ import { emailSubscribers } from "../../drizzle/schema";
 import { eq, and, lt } from "drizzle-orm";
 import { emailTemplates } from "./emailTemplates";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResendClient(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    return null;
+  }
+
+  return new Resend(apiKey);
+}
+
+function getMissingApiKeyError(scope: "Drip" | "Welcome") {
+  return `${scope} email disabled: RESEND_API_KEY is not configured`;
+}
 
 /**
  * Drip sequence schedule
@@ -32,6 +43,13 @@ async function sendDripEmail(
   templateKey: keyof typeof emailTemplates
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const resend = getResendClient();
+    if (!resend) {
+      const error = getMissingApiKeyError("Drip");
+      console.warn(`[Drip] ${error}`);
+      return { success: false, error };
+    }
+
     const db = await getDb();
     if (!db) return { success: false, error: "Database connection failed" };
 
@@ -73,7 +91,10 @@ async function sendDripEmail(
     });
 
     if (result.error) {
-      console.error(`[Drip] Failed to send drip ${dripNumber} to ${sub.email}:`, result.error);
+      console.error(
+        `[Drip] Failed to send drip ${dripNumber} to ${sub.email}:`,
+        result.error
+      );
       return { success: false, error: result.error.message };
     }
 
@@ -86,7 +107,9 @@ async function sendDripEmail(
       })
       .where(eq(emailSubscribers.id, subscriberId));
 
-    console.log(`[Drip] Sent drip ${dripNumber} to ${sub.email} (ID: ${result.data?.id})`);
+    console.log(
+      `[Drip] Sent drip ${dripNumber} to ${sub.email} (ID: ${result.data?.id})`
+    );
     return { success: true };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
@@ -101,7 +124,11 @@ async function sendDripEmail(
  * Called by a cron job (e.g., every hour). Checks all subscribers and sends
  * any drips that are due based on their createdAt timestamp.
  */
-export async function processPendingDrips(): Promise<{ processed: number; sent: number; errors: number }> {
+export async function processPendingDrips(): Promise<{
+  processed: number;
+  sent: number;
+  errors: number;
+}> {
   try {
     const db = await getDb();
     if (!db) {
@@ -134,7 +161,11 @@ export async function processPendingDrips(): Promise<{ processed: number; sent: 
 
       // Send drip to each due subscriber
       for (const subscriber of dueSubscribers) {
-        const result = await sendDripEmail(subscriber.id, dripNumber, templateKey);
+        const result = await sendDripEmail(
+          subscriber.id,
+          dripNumber,
+          templateKey
+        );
         if (result.success) {
           sent++;
         } else {
@@ -156,8 +187,17 @@ export async function processPendingDrips(): Promise<{ processed: number; sent: 
  *
  * Called directly from the emailCapture mutation.
  */
-export async function sendWelcomeEmail(email: string): Promise<{ success: boolean; error?: string }> {
+export async function sendWelcomeEmail(
+  email: string
+): Promise<{ success: boolean; error?: string }> {
   try {
+    const resend = getResendClient();
+    if (!resend) {
+      const error = getMissingApiKeyError("Welcome");
+      console.warn(`[Welcome] ${error}`);
+      return { success: false, error };
+    }
+
     const template = emailTemplates.welcome;
 
     const result = await resend.emails.send({
