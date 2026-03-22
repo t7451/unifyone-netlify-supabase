@@ -1,6 +1,5 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
-import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
@@ -10,6 +9,17 @@ function getQueryParam(req: Request, key: string): string | undefined {
 }
 
 export function registerOAuthRoutes(app: Express) {
+  app.get("/api/oauth/start", async (req: Request, res: Response) => {
+    const returnTo = getQueryParam(req, "returnTo");
+    try {
+      const authorizeUrl = sdk.createOAuthStartUrl(req, returnTo);
+      res.redirect(302, authorizeUrl);
+    } catch (error) {
+      console.error("[OAuth] Start failed", error);
+      res.status(500).json({ error: "OAuth start failed" });
+    }
+  });
+
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
     const state = getQueryParam(req, "state");
@@ -20,32 +30,23 @@ export function registerOAuthRoutes(app: Express) {
     }
 
     try {
-      const tokenResponse = await sdk.exchangeCodeForToken(code, state);
-      const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
-
-      if (!userInfo.openId) {
-        res.status(400).json({ error: "openId missing from user info" });
-        return;
-      }
-
-      await db.upsertUser({
-        openId: userInfo.openId,
-        name: userInfo.name || null,
-        email: userInfo.email ?? null,
-        loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-        lastSignedIn: new Date(),
-      });
-
-      const sessionToken = await sdk.createSessionToken(userInfo.openId, {
-        name: userInfo.name || "",
-        expiresInMs: ONE_YEAR_MS,
+      const { sessionToken, returnTo } = await sdk.completeOAuthCallback({
+        req,
+        code,
+        state,
       });
 
       const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      res.cookie(COOKIE_NAME, sessionToken, {
+        ...cookieOptions,
+        maxAge: ONE_YEAR_MS,
+      });
 
-      // Redirect to UnifyOne branded loading screen which then navigates to /dashboard
-      res.redirect(302, "/auth/callback");
+      const safeReturnTo = returnTo.startsWith("/") ? returnTo : "/dashboard";
+      res.redirect(
+        302,
+        `/auth/callback?returnTo=${encodeURIComponent(safeReturnTo)}`
+      );
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });

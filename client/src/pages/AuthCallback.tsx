@@ -5,11 +5,30 @@ import { useAuth } from "@/_core/hooks/useAuth";
 // ── Animated logo mark ────────────────────────────────────────────────────────
 function LogoMark({ size = 48 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <rect width="40" height="40" rx="10" fill="url(#lg2)" />
-      <path d="M10 14 L20 26 L30 14" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M10 14 L20 26 L30 14"
+        stroke="white"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       <defs>
-        <linearGradient id="lg2" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+        <linearGradient
+          id="lg2"
+          x1="0"
+          y1="0"
+          x2="40"
+          y2="40"
+          gradientUnits="userSpaceOnUse"
+        >
           <stop stopColor="#00D9FF" />
           <stop offset="1" stopColor="#0066FF" />
         </linearGradient>
@@ -25,27 +44,38 @@ const STEPS = [
 ];
 
 export default function AuthCallback() {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { isAuthenticated, loading } = useAuth();
   const [stepIdx, setStepIdx] = useState(0);
 
   // Cycle through status messages
   useEffect(() => {
     const interval = setInterval(() => {
-      setStepIdx((i) => Math.min(i + 1, STEPS.length - 1));
+      setStepIdx(i => Math.min(i + 1, STEPS.length - 1));
     }, 900);
     return () => clearInterval(interval);
   }, []);
 
   // Once auth resolves, redirect to dashboard
   useEffect(() => {
+    const returnTo = (() => {
+      try {
+        const url = new URL(window.location.origin + location);
+        const path = url.searchParams.get("returnTo");
+        if (!path || !path.startsWith("/")) return "/dashboard";
+        return path;
+      } catch {
+        return "/dashboard";
+      }
+    })();
+
     if (!loading && isAuthenticated) {
-      navigate("/dashboard");
+      navigate(returnTo);
     } else if (!loading && !isAuthenticated) {
       // Auth failed — redirect back to login
       navigate("/login");
     }
-  }, [loading, isAuthenticated, navigate]);
+  }, [loading, isAuthenticated, location, navigate]);
 
   return (
     <div className="min-h-screen bg-[#060D1F] flex flex-col items-center justify-center gap-8">
@@ -59,7 +89,10 @@ export default function AuthCallback() {
         <div className="relative">
           <LogoMark size={56} />
           {/* Spinning ring around logo */}
-          <div className="absolute inset-0 -m-2 rounded-[14px] border-2 border-transparent border-t-[#00D9FF] animate-spin" style={{ borderRadius: "16px" }} />
+          <div
+            className="absolute inset-0 -m-2 rounded-[14px] border-2 border-transparent border-t-[#00D9FF] animate-spin"
+            style={{ borderRadius: "16px" }}
+          />
         </div>
 
         <div className="text-center space-y-1">
@@ -83,7 +116,8 @@ export default function AuthCallback() {
       </div>
 
       <p className="text-xs text-slate-600 text-center max-w-xs">
-        Establishing a secure connection to your workspace. This only takes a moment.
+        Establishing a secure connection to your workspace. This only takes a
+        moment.
       </p>
     </div>
   );
