@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { sitemapPlugin } from "./vite-plugin-sitemap";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -150,7 +151,24 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const plugins = [
+  react(),
+  tailwindcss(),
+  jsxLocPlugin(),
+  vitePluginManusRuntime(),
+  vitePluginManusDebugCollector(),
+  sitemapPlugin({
+    hostname: 'https://1commerce.online',
+    outDir: path.resolve(import.meta.dirname, 'dist/public'),
+    routes: [
+      { path: '/',                                       changefreq: 'weekly',  priority: 1.0 },
+      { path: '/platform',                               changefreq: 'monthly', priority: 0.9 },
+      { path: '/pricing',                                changefreq: 'monthly', priority: 0.9 },
+      { path: '/cathedral-framework',                    changefreq: 'monthly', priority: 0.8 },
+      { path: '/blog/gig-economy-commerce-platform',     changefreq: 'weekly',  priority: 0.7 },
+    ],
+  }),
+];
 
 export default defineConfig({
   plugins,
