@@ -167,7 +167,7 @@ export const leadsRouter = router({
         await capi.lead(
           eventId,
           { email: input.email },
-          "https://unifyone.1commercesolutions.com"
+          `${process.env.PUBLIC_APP_URL || process.env.APP_URL || process.env.URL || "https://1commerce.online"}`
         );
       } catch (_) { /* CAPI failure is non-critical */ }
 

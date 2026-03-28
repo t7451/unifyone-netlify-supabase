@@ -343,7 +343,7 @@ class SDKServer {
     res.cookie(PKCE_COOKIE_NAME, pkceToken, {
       httpOnly: true,
       path: "/",
-      sameSite: "none",
+      sameSite: "lax",
       secure: isSecure,
       maxAge: OAUTH_STATE_TTL_MS,
     });
@@ -383,7 +383,7 @@ class SDKServer {
     args.res.clearCookie(PKCE_COOKIE_NAME, {
       httpOnly: true,
       path: "/",
-      sameSite: "none",
+      sameSite: "lax",
       secure: isSecureRequest(args.req),
     });
 

@@ -96,7 +96,7 @@ export const metaRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      const url = input.eventSourceUrl ?? "https://unifyone.1commercesolutions.com/rewards";
+      const url = input.eventSourceUrl ?? `${process.env.PUBLIC_APP_URL || process.env.APP_URL || process.env.URL || "https://1commerce.online"}/rewards`;
 
       const userData: CAPIUserData = {
         externalId: String(ctx.user.id),

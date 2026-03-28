@@ -48,7 +48,7 @@
               "event_name": "={{ $json.eventName }}",
               "event_id": "={{ $json.eventId }}",
               "event_time": "={{ $json.eventTime }}",
-              "event_source_url": "={{ $json.eventSourceUrl || 'https://unifyone.1commercesolutions.com' }}",
+              "event_source_url": "={{ $json.eventSourceUrl || 'https://1commerce.online' }}",
               "action_source": "website",
               "user_data": {
                 "em": "={{ $json.userData?.hashedEmail || '' }}",
