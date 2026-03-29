@@ -164,7 +164,7 @@ export function registerStripeRoutes(app: Express) {
                     .purchase(
                       `stripe_theme_${session.id}`,
                       { email: themeEmail },
-                      `${process.env.VITE_OAUTH_PORTAL_URL || "https://unify0ne.manus.space"}/checkout`,
+                      `${process.env.PUBLIC_APP_URL || process.env.APP_URL || process.env.URL || "https://1commerce.online"}/checkout`,
                       parseFloat(amountPaid),
                       (session.currency || "USD").toUpperCase()
                     )
@@ -213,7 +213,7 @@ export function registerStripeRoutes(app: Express) {
                 .purchase(
                   `stripe_sub_${session.id}`,
                   { email: sessionEmail },
-                  `${process.env.VITE_OAUTH_PORTAL_URL || "https://unify0ne.manus.space"}/checkout`,
+                  `${process.env.PUBLIC_APP_URL || process.env.APP_URL || process.env.URL || "https://1commerce.online"}/checkout`,
                   sessionAmount,
                   (session.currency || "USD").toUpperCase()
                 )
