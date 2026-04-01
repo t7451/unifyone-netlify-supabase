@@ -1,6 +1,6 @@
 # ============================================================================
 # UnifyOne — 1Commerce / PNW Enterprises
-# https://1commerce.online
+# __APP_URL__
 # Last updated: 2026-03-06
 # ============================================================================
 
@@ -107,5 +107,5 @@ Disallow: /dashboard
 Crawl-delay: 1
 
 # ── Sitemaps ──────────────────────────────────────────────────────────────
-Sitemap: https://1commerce.online/sitemap.xml
-Sitemap: https://www.1commerce.online/sitemap.xml
+Sitemap: __APP_URL__/sitemap.xml
+Sitemap: __APP_URL__/sitemap.xml

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { Helmet } from "react-helmet-async";
 import PublicLayout from "@/components/PublicLayout";
+import { SITE_URL } from "@/lib/siteConfig";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: "📋" },
@@ -18,10 +19,10 @@ export default function Documents() {
       <Helmet>
         <title>Documentation | UnifyOne</title>
         <meta name="description" content="Complete documentation, case studies, integration guides, and proof of work for UnifyOne platform." />
-        <link rel="canonical" href="https://1commerce.online/documents" />
+        <link rel="canonical" href={`${SITE_URL}/documents`} />
         <meta property="og:title" content="Documentation | UnifyOne" />
         <meta property="og:description" content="Complete documentation, case studies, integration guides, and proof of work." />
-        <meta property="og:url" content="https://1commerce.online/documents" />
+        <meta property="og:url" content={`${SITE_URL}/documents`} />
         <meta name="twitter:title" content="Documentation | UnifyOne" />
         <meta name="twitter:description" content="Complete documentation, case studies, integration guides, and proof of work." />
         <script type="application/ld+json">
@@ -30,12 +31,12 @@ export default function Documents() {
             "@type": "WebPage",
             name: "UnifyOne Documentation",
             description: "Complete documentation, case studies, integration guides, and proof of work.",
-            url: "https://1commerce.online/documents",
+            url: `${SITE_URL}/documents`,
             breadcrumb: {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Home", item: "https://1commerce.online" },
-                { "@type": "ListItem", position: 2, name: "Documentation", item: "https://1commerce.online/documents" },
+                { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+                { "@type": "ListItem", position: 2, name: "Documentation", item: `${SITE_URL}/documents` },
               ],
             },
           })}

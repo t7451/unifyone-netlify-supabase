@@ -5,6 +5,7 @@ import { leads, n8nWorkflows, zapierHooks, mailchimpConfig } from "../../drizzle
 import { eq, desc, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { notifyOwner } from "../_core/notification";
+import { getAppUrl } from "../_core/env";
 
 async function requireDb() {
   const db = await getDb();
@@ -167,7 +168,7 @@ export const leadsRouter = router({
         await capi.lead(
           eventId,
           { email: input.email },
-          `${process.env.PUBLIC_APP_URL || process.env.APP_URL || process.env.URL || "https://1commerce.online"}`
+          getAppUrl()
         );
       } catch (_) { /* CAPI failure is non-critical */ }
 

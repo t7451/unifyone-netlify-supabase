@@ -27,3 +27,24 @@ export const ENV = {
   squareWebhookSignatureKey: process.env.SQUARE_WEBHOOK_SIGNATURE_KEY ?? "",
   squareEnvironment: (process.env.SQUARE_ENVIRONMENT ?? "production") as "sandbox" | "production",
 };
+
+/**
+ * Canonical app URL for use in server-side links (emails, redirects, webhooks).
+ * Resolution order:
+ *   1. PUBLIC_APP_URL  (explicit override in Netlify env vars)
+ *   2. APP_URL         (Netlify branch alias)
+ *   3. URL             (Netlify primary URL — auto-set by Netlify)
+ *   4. DEPLOY_PRIME_URL (Netlify deploy preview URL)
+ *   5. Hardcoded fallback
+ *
+ * Always returns a URL **without** a trailing slash.
+ */
+export function getAppUrl(): string {
+  const raw =
+    process.env.PUBLIC_APP_URL ||
+    process.env.APP_URL ||
+    process.env.URL ||
+    process.env.DEPLOY_PRIME_URL ||
+    "https://1commerce.online";
+  return raw.replace(/\/+$/, "");
+}

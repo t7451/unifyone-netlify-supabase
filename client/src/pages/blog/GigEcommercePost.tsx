@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
+import { SITE_URL } from "@/lib/siteConfig";
 
 const ARTICLE_SCHEMA = {
   "@context": "https://schema.org",
@@ -10,16 +11,16 @@ const ARTICLE_SCHEMA = {
   "author": {
     "@type": "Organization",
     "name": "1Commerce Solutions",
-    "url": "https://1commerce.online"
+    "url": SITE_URL
   },
   "publisher": {
     "@type": "Organization",
     "name": "1Commerce Solutions",
-    "logo": { "@type": "ImageObject", "url": "https://1commerce.online/favicon.ico" }
+    "logo": { "@type": "ImageObject", "url": `${SITE_URL}/favicon.ico` }
   },
   "datePublished": "2026-03-06",
   "dateModified": "2026-03-06",
-  "mainEntityOfPage": { "@type": "WebPage", "@id": "https://1commerce.online/blog/gig-economy-commerce-platform" },
+  "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/blog/gig-economy-commerce-platform` },
   "keywords": ["gig economy commerce", "gig worker platform", "DoorDash earnings tracker", "multi-tenant ecommerce", "gig economy SaaS", "Uber Eats analytics"],
   "articleSection": "Commerce Infrastructure",
   "wordCount": 1200
@@ -31,7 +32,7 @@ export default function GigEcommercePost() {
     const desc = document.querySelector('meta[name="description"]');
     if (desc) desc.setAttribute("content", "A deep-dive into how gig operators on DoorDash, Uber Eats, Instacart, and Amazon Flex can leverage multi-tenant commerce infrastructure to maximize earnings and automate tax tracking.");
     const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) canonical.setAttribute("href", "https://1commerce.online/blog/gig-economy-commerce-platform");
+    if (canonical) canonical.setAttribute("href", `${SITE_URL}/blog/gig-economy-commerce-platform`);
     // Inject article schema
     const script = document.createElement("script");
     script.type = "application/ld+json";

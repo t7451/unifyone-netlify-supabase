@@ -3,8 +3,9 @@ import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { getLoginUrl } from "@/const";
+import { SITE_URL } from "@/lib/siteConfig";
 
-const CANONICAL = "https://1commerce.online/tithes";
+const CANONICAL = `${SITE_URL}/tithes`;
 
 const JSON_LD = [
   {
@@ -14,14 +15,14 @@ const JSON_LD = [
     "url": CANONICAL,
     "name": "Tithes — Pricing | UnifyOne",
     "description": "UnifyOne pricing: Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). All plans include multi-tenant commerce infrastructure. Manus AI included in Architect and above.",
-    "isPartOf": { "@id": "https://1commerce.online/#website" },
+    "isPartOf": { "@id": `${SITE_URL}/#website` },
     "inLanguage": "en-US"
   },
   {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://1commerce.online/" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": `${SITE_URL}/` },
       { "@type": "ListItem", "position": 2, "name": "Tithes", "item": CANONICAL }
     ]
   },
