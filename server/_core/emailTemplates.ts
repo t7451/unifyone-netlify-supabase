@@ -9,7 +9,10 @@
  * 5. Limited Offer (day 14)
  */
 
-export const emailTemplates = {
+import { getAppUrl } from "./env";
+
+function buildEmailTemplates(baseUrl: string) {
+  return {
   welcome: {
     subject: "Welcome to UnifyOne — Built to Endure",
     html: `
@@ -45,14 +48,14 @@ export const emailTemplates = {
                 <li>How Manus AI becomes your commerce co-pilot</li>
                 <li>Exclusive pricing for early adopters</li>
               </ul>
-              <p>Start here: explore the <a href="https://1commerce.online/architecture" style="color: #D4A843; text-decoration: none;">Cathedral Framework</a> and see how commerce infrastructure should be built.</p>
+              <p>Start here: explore the <a href="${baseUrl}/architecture" style="color: #D4A843; text-decoration: none;">Cathedral Framework</a> and see how commerce infrastructure should be built.</p>
             </div>
             <div class="cta">
-              <a href="https://1commerce.online/begin">BEGIN CONSTRUCTION</a>
+              <a href="${baseUrl}/begin">BEGIN CONSTRUCTION</a>
             </div>
             <div class="footer">
               <p>© 2024 PNW Enterprises. Built to endure.</p>
-              <p><a href="https://1commerce.online/unsubscribe" style="color: #7A7A7A; text-decoration: none;">Unsubscribe</a></p>
+              <p><a href="${baseUrl}/unsubscribe" style="color: #7A7A7A; text-decoration: none;">Unsubscribe</a></p>
             </div>
           </div>
         </body>
@@ -118,7 +121,7 @@ export const emailTemplates = {
               </div>
             </div>
             <div class="cta">
-              <a href="https://1commerce.online/architecture">EXPLORE THE ARCHITECTURE</a>
+              <a href="${baseUrl}/architecture">EXPLORE THE ARCHITECTURE</a>
             </div>
             <div class="footer">
               <p>© 2024 PNW Enterprises. Built to endure.</p>
@@ -177,7 +180,7 @@ export const emailTemplates = {
               </div>
             </div>
             <div class="cta">
-              <a href="https://1commerce.online/begin">START NOW</a>
+              <a href="${baseUrl}/begin">START NOW</a>
             </div>
             <div class="footer">
               <p>© 2024 PNW Enterprises. Built to endure.</p>
@@ -231,7 +234,7 @@ export const emailTemplates = {
               </div>
             </div>
             <div class="cta">
-              <a href="https://1commerce.online/the-system">SEE HOW IT WORKS</a>
+              <a href="${baseUrl}/the-system">SEE HOW IT WORKS</a>
             </div>
             <div class="footer">
               <p>© 2024 PNW Enterprises. Built to endure.</p>
@@ -282,7 +285,7 @@ export const emailTemplates = {
               <p>No catch. No hidden fees. Just honest pricing for builders who are in it for the endurance.</p>
             </div>
             <div class="cta">
-              <a href="https://1commerce.online/tithes">CLAIM YOUR PRICING</a>
+              <a href="${baseUrl}/tithes">CLAIM YOUR PRICING</a>
             </div>
             <div class="footer">
               <p>© 2024 PNW Enterprises. Built to endure.</p>
@@ -292,4 +295,8 @@ export const emailTemplates = {
       </html>
     `,
   },
-};
+  };
+}
+
+/** Lazily-built email templates using the resolved app URL */
+export const emailTemplates = buildEmailTemplates(getAppUrl());

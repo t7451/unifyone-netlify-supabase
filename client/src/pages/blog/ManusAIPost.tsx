@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
+import { SITE_URL } from "@/lib/siteConfig";
 
 const ARTICLE_SCHEMA = {
   "@context": "https://schema.org",
@@ -10,16 +11,16 @@ const ARTICLE_SCHEMA = {
   "author": {
     "@type": "Organization",
     "name": "1Commerce Solutions",
-    "url": "https://1commerce.online"
+    "url": SITE_URL
   },
   "publisher": {
     "@type": "Organization",
     "name": "1Commerce Solutions",
-    "logo": { "@type": "ImageObject", "url": "https://1commerce.online/favicon.ico" }
+    "logo": { "@type": "ImageObject", "url": `${SITE_URL}/favicon.ico` }
   },
   "datePublished": "2026-03-06",
   "dateModified": "2026-03-06",
-  "mainEntityOfPage": { "@type": "WebPage", "@id": "https://1commerce.online/blog/manus-ai-gig-workers" },
+  "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/blog/manus-ai-gig-workers` },
   "keywords": ["Manus AI gig workers", "AI earnings insights", "gig worker AI assistant", "DoorDash AI optimization", "Uber Eats route AI", "gig economy artificial intelligence"],
   "articleSection": "AI Integration",
   "wordCount": 1050
@@ -31,7 +32,7 @@ export default function ManusAIPost() {
     const desc = document.querySelector('meta[name="description"]');
     if (desc) desc.setAttribute("content", "How Manus AI embedded inside UnifyOne transforms raw gig earnings data into actionable route optimization, tax deduction tracking, and challenge strategy — without leaving the dashboard.");
     const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) canonical.setAttribute("href", "https://1commerce.online/blog/manus-ai-gig-workers");
+    if (canonical) canonical.setAttribute("href", `${SITE_URL}/blog/manus-ai-gig-workers`);
     const script = document.createElement("script");
     script.type = "application/ld+json";
     script.text = JSON.stringify(ARTICLE_SCHEMA);

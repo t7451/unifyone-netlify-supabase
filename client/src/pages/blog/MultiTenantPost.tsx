@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
+import { SITE_URL } from "@/lib/siteConfig";
 
 const ARTICLE_SCHEMA = {
   "@context": "https://schema.org",
@@ -10,16 +11,16 @@ const ARTICLE_SCHEMA = {
   "author": {
     "@type": "Organization",
     "name": "1Commerce Solutions",
-    "url": "https://1commerce.online"
+    "url": SITE_URL
   },
   "publisher": {
     "@type": "Organization",
     "name": "1Commerce Solutions",
-    "logo": { "@type": "ImageObject", "url": "https://1commerce.online/favicon.ico" }
+    "logo": { "@type": "ImageObject", "url": `${SITE_URL}/favicon.ico` }
   },
   "datePublished": "2026-03-06",
   "dateModified": "2026-03-06",
-  "mainEntityOfPage": { "@type": "WebPage", "@id": "https://1commerce.online/blog/multi-tenant-ecommerce-saas" },
+  "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/blog/multi-tenant-ecommerce-saas` },
   "keywords": ["multi-tenant ecommerce", "SaaS architecture", "white-label commerce platform", "ecommerce agency tools", "multi-brand commerce", "tenant isolation"],
   "articleSection": "Commerce Architecture",
   "wordCount": 1100
@@ -31,7 +32,7 @@ export default function MultiTenantPost() {
     const desc = document.querySelector('meta[name="description"]');
     if (desc) desc.setAttribute("content", "A technical and strategic breakdown of multi-tenant commerce architecture — why it outperforms single-tenant deployments for agencies, franchises, and holding companies managing multiple brands.");
     const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) canonical.setAttribute("href", "https://1commerce.online/blog/multi-tenant-ecommerce-saas");
+    if (canonical) canonical.setAttribute("href", `${SITE_URL}/blog/multi-tenant-ecommerce-saas`);
     const script = document.createElement("script");
     script.type = "application/ld+json";
     script.text = JSON.stringify(ARTICLE_SCHEMA);

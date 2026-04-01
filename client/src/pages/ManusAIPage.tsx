@@ -2,8 +2,9 @@ import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { getLoginUrl } from "@/const";
+import { SITE_URL } from "@/lib/siteConfig";
 
-const CANONICAL = "https://1commerce.online/manus-ai";
+const CANONICAL = `${SITE_URL}/manus-ai`;
 
 const JSON_LD = [
   {
@@ -13,14 +14,14 @@ const JSON_LD = [
     "url": CANONICAL,
     "name": "Manus AI — Your Gig Commerce Co-Pilot | UnifyOne",
     "description": "Manus AI embedded in UnifyOne: context-aware insights on every dashboard page, route optimization, tax intelligence, and a full conversational assistant powered by your actual operational data.",
-    "isPartOf": { "@id": "https://1commerce.online/#website" },
+    "isPartOf": { "@id": `${SITE_URL}/#website` },
     "inLanguage": "en-US"
   },
   {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://1commerce.online/" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": `${SITE_URL}/` },
       { "@type": "ListItem", "position": 2, "name": "Manus AI", "item": CANONICAL }
     ]
   },

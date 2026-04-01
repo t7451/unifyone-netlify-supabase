@@ -151,14 +151,42 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
+const SITE_HOSTNAME = (process.env.PUBLIC_APP_URL || process.env.APP_URL || process.env.URL || 'https://1commerce.online').replace(/\/+$/, '');
+
+/**
+ * Replace __APP_URL__ placeholder in index.html with the resolved site hostname.
+ * This allows SEO metadata and structured data (JSON-LD) to use the correct
+ * canonical domain at build time without hardcoding.
+ */
+function vitePluginAppUrl(): Plugin {
+  return {
+    name: 'app-url-replace',
+    transformIndexHtml(html) {
+      return html.replaceAll('__APP_URL__', SITE_HOSTNAME);
+    },
+    closeBundle() {
+      // Replace __APP_URL__ in static public files copied to dist
+      const outDir = path.resolve(import.meta.dirname, 'dist/public');
+      for (const file of ['robots.txt', 'sitemap.xml']) {
+        const filePath = path.join(outDir, file);
+        if (fs.existsSync(filePath)) {
+          const content = fs.readFileSync(filePath, 'utf-8');
+          fs.writeFileSync(filePath, content.replaceAll('__APP_URL__', SITE_HOSTNAME), 'utf-8');
+        }
+      }
+    },
+  };
+}
+
 const plugins = [
   react(),
   tailwindcss(),
   jsxLocPlugin(),
   vitePluginManusRuntime(),
   vitePluginManusDebugCollector(),
+  vitePluginAppUrl(),
   sitemapPlugin({
-    hostname: 'https://1commerce.online',
+    hostname: SITE_HOSTNAME,
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     routes: [
       { path: '/',                                       changefreq: 'weekly',  priority: 1.0 },

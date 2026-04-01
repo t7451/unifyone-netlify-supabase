@@ -8,6 +8,7 @@ import {
 } from "../../drizzle/schema";
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
 import { checkAndResolveFriendChallenge } from "../challengeCompletion";
+import { getAppUrl } from "../_core/env";
 import { invokeLLM } from "../_core/llm";
 
 // IRS 2025 standard mileage rate (cents per mile)
@@ -183,7 +184,7 @@ export const moneyManagerRouter = router({
           "GigShiftCompleted",
           capiEventId,
           { externalId: String(ctx.user.id), email: ctx.user.email ?? undefined },
-          `${process.env.PUBLIC_APP_URL || process.env.APP_URL || process.env.URL || "https://1commerce.online"}/gig-command`,
+          `${getAppUrl()}/gig-command`,
           { duration_minutes: durationMinutes, gross_earnings: input.grossEarnings, platform: existing.platform }
         );
       } catch (_) { /* CAPI failure is non-critical */ }
@@ -315,7 +316,7 @@ export const moneyManagerRouter = router({
           "MileageLogged",
           capiEventId,
           { externalId: String(ctx.user.id), email: ctx.user.email ?? undefined },
-          `${process.env.PUBLIC_APP_URL || process.env.APP_URL || process.env.URL || "https://1commerce.online"}/gig-command`,
+          `${getAppUrl()}/gig-command`,
           { miles: input.miles, deduction_dollars: deductionCents / 100 }
         );
       } catch (_) { /* CAPI failure is non-critical */ }

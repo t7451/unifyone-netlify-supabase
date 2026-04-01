@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import PublicLayout from "@/components/PublicLayout";
+import { SITE_URL } from "@/lib/siteConfig";
 
 const SECTIONS = [
   { id: "overview", label: "Overview" },
@@ -216,13 +217,13 @@ export default function IntegrationGuides() {
           name="description"
           content="Complete integration guides for Manus AI, Claude, n8n, and payment processors."
         />
-        <link rel="canonical" href="https://1commerce.online/documents/integrations" />
+        <link rel="canonical" href={`${SITE_URL}/documents/integrations`} />
         <meta property="og:title" content="Integration Guides | UnifyOne Documentation" />
         <meta
           property="og:description"
           content="Complete integration guides for Manus AI, Claude, n8n, and payment processors."
         />
-        <meta property="og:url" content="https://1commerce.online/documents/integrations" />
+        <meta property="og:url" content={`${SITE_URL}/documents/integrations`} />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",

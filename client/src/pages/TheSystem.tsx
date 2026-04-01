@@ -3,8 +3,9 @@ import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { getLoginUrl } from "@/const";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { SITE_URL } from "@/lib/siteConfig";
 
-const CANONICAL = "https://1commerce.online/the-system";
+const CANONICAL = `${SITE_URL}/the-system`;
 
 const JSON_LD = [
   {
@@ -14,14 +15,14 @@ const JSON_LD = [
     "url": CANONICAL,
     "name": "The System — How UnifyOne Works | UnifyOne",
     "description": "How UnifyOne works: four sequential construction phases, ten integrations, and six platform features that replace three separate SaaS tools.",
-    "isPartOf": { "@id": "https://1commerce.online/#website" },
+    "isPartOf": { "@id": `${SITE_URL}/#website` },
     "inLanguage": "en-US"
   },
   {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://1commerce.online/" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": `${SITE_URL}/` },
       { "@type": "ListItem", "position": 2, "name": "The System", "item": CANONICAL }
     ]
   },

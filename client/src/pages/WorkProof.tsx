@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import PublicLayout from "@/components/PublicLayout";
+import { SITE_URL } from "@/lib/siteConfig";
 
 const PHASES = [
   { phase: 1, title: "Project Initialization", status: "complete", deliverables: ["Project scaffold", "Tech stack setup", "Initial checkpoint"] },
@@ -64,23 +65,23 @@ export default function WorkProof() {
       <Helmet>
         <title>Work Proof | UnifyOne Documentation</title>
         <meta name="description" content="Complete timeline of 36 development phases, deliverables, and technical achievements for UnifyOne platform." />
-        <link rel="canonical" href="https://1commerce.online/documents/work-proof" />
+        <link rel="canonical" href={`${SITE_URL}/documents/work-proof`} />
         <meta property="og:title" content="Work Proof | UnifyOne Documentation" />
         <meta property="og:description" content="Complete timeline of 36 development phases and technical achievements." />
-        <meta property="og:url" content="https://1commerce.online/documents/work-proof" />
+        <meta property="og:url" content={`${SITE_URL}/documents/work-proof`} />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebPage",
             name: "UnifyOne Work Proof",
             description: "Complete timeline of 36 development phases and technical achievements",
-            url: "https://1commerce.online/documents/work-proof",
+            url: `${SITE_URL}/documents/work-proof`,
             breadcrumb: {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Home", item: "https://1commerce.online" },
-                { "@type": "ListItem", position: 2, name: "Documentation", item: "https://1commerce.online/documents" },
-                { "@type": "ListItem", position: 3, name: "Work Proof", item: "https://1commerce.online/documents/work-proof" },
+                { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+                { "@type": "ListItem", position: 2, name: "Documentation", item: `${SITE_URL}/documents` },
+                { "@type": "ListItem", position: 3, name: "Work Proof", item: `${SITE_URL}/documents/work-proof` },
               ],
             },
           })}

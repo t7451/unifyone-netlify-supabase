@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import PublicLayout from "@/components/PublicLayout";
+import { SITE_URL } from "@/lib/siteConfig";
 
 const CASE_STUDIES = [
   {
@@ -160,10 +161,10 @@ export default function CaseStudies() {
       <Helmet>
         <title>Case Studies | UnifyOne Documentation</title>
         <meta name="description" content="Detailed case studies of UnifyOne platform features: Cathedral Framework, Manus AI, multi-tenant architecture, Stripe CAPI bridge, and scroll reveals." />
-        <link rel="canonical" href="https://1commerce.online/documents/case-studies" />
+        <link rel="canonical" href={`${SITE_URL}/documents/case-studies`} />
         <meta property="og:title" content="Case Studies | UnifyOne Documentation" />
         <meta property="og:description" content="Detailed case studies of major platform features and integrations." />
-        <meta property="og:url" content="https://1commerce.online/documents/case-studies" />
+        <meta property="og:url" content={`${SITE_URL}/documents/case-studies`} />
         <meta name="twitter:title" content="Case Studies | UnifyOne Documentation" />
         <meta name="twitter:description" content="Detailed case studies of major platform features and integrations." />
         <script type="application/ld+json">
@@ -172,13 +173,13 @@ export default function CaseStudies() {
             "@type": "CollectionPage",
             name: "UnifyOne Case Studies",
             description: "Detailed case studies of major platform features and integrations.",
-            url: "https://1commerce.online/documents/case-studies",
+            url: `${SITE_URL}/documents/case-studies`,
             breadcrumb: {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Home", item: "https://1commerce.online" },
-                { "@type": "ListItem", position: 2, name: "Documentation", item: "https://1commerce.online/documents" },
-                { "@type": "ListItem", position: 3, name: "Case Studies", item: "https://1commerce.online/documents/case-studies" },
+                { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+                { "@type": "ListItem", position: 2, name: "Documentation", item: `${SITE_URL}/documents` },
+                { "@type": "ListItem", position: 3, name: "Case Studies", item: `${SITE_URL}/documents/case-studies` },
               ],
             },
           })}

@@ -7,7 +7,7 @@
 
   <!-- ── Homepage ─────────────────────────────────────────────────────── -->
   <url>
-    <loc>https://1commerce.online/</loc>
+    <loc>__APP_URL__/</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -20,25 +20,25 @@
 
   <!-- ── Core Public Pages ──────────────────────────────────────────────── -->
   <url>
-    <loc>https://1commerce.online/architecture</loc>
+    <loc>__APP_URL__/architecture</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.92</priority>
   </url>
   <url>
-    <loc>https://1commerce.online/the-system</loc>
+    <loc>__APP_URL__/the-system</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.90</priority>
   </url>
   <url>
-    <loc>https://1commerce.online/manus-ai</loc>
+    <loc>__APP_URL__/manus-ai</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://1commerce.online/tithes</loc>
+    <loc>__APP_URL__/tithes</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.92</priority>
@@ -46,13 +46,13 @@
 
   <!-- ── Legal ─────────────────────────────────────────────────────────── -->
   <url>
-    <loc>https://1commerce.online/privacy</loc>
+    <loc>__APP_URL__/privacy</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://1commerce.online/terms</loc>
+    <loc>__APP_URL__/terms</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
@@ -60,25 +60,25 @@
 
   <!-- ── Documentation ───────────────────────────────────────────────────── -->
   <url>
-    <loc>https://1commerce.online/documents</loc>
+    <loc>__APP_URL__/documents</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://1commerce.online/documents/case-studies</loc>
+    <loc>__APP_URL__/documents/case-studies</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://1commerce.online/documents/integrations</loc>
+    <loc>__APP_URL__/documents/integrations</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://1commerce.online/documents/work-proof</loc>
+    <loc>__APP_URL__/documents/work-proof</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
@@ -86,19 +86,19 @@
 
   <!-- ── Blog / Content Marketing ──────────────────────────────────────── -->
   <url>
-    <loc>https://1commerce.online/blog/gig-economy-commerce-platform</loc>
+    <loc>__APP_URL__/blog/gig-economy-commerce-platform</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.90</priority>
   </url>
   <url>
-    <loc>https://1commerce.online/blog/multi-tenant-ecommerce-saas</loc>
+    <loc>__APP_URL__/blog/multi-tenant-ecommerce-saas</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.90</priority>
   </url>
   <url>
-    <loc>https://1commerce.online/blog/manus-ai-gig-workers</loc>
+    <loc>__APP_URL__/blog/manus-ai-gig-workers</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.90</priority>

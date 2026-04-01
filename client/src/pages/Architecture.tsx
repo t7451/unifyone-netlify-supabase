@@ -3,8 +3,9 @@ import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { getLoginUrl } from "@/const";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { SITE_URL } from "@/lib/siteConfig";
 
-const CANONICAL = "https://1commerce.online/architecture";
+const CANONICAL = `${SITE_URL}/architecture`;
 
 const JSON_LD = [
   {
@@ -14,19 +15,19 @@ const JSON_LD = [
     "url": CANONICAL,
     "name": "Architecture — UnifyOne Cathedral Framework",
     "description": "Explore the six structural pillars of UnifyOne: multi-tenant foundation, commerce infrastructure, payment orchestration, automation mesh, social intelligence, and Manus AI. Built on the Cathedral Framework — sequential, structural, built to endure.",
-    "isPartOf": { "@id": "https://1commerce.online/#website" },
+    "isPartOf": { "@id": `${SITE_URL}/#website` },
     "inLanguage": "en-US",
     "publisher": {
       "@type": "Organization",
       "name": "1Commerce / PNW Enterprises",
-      "url": "https://1commerce.online"
+      "url": SITE_URL
     }
   },
   {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://1commerce.online/" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": `${SITE_URL}/` },
       { "@type": "ListItem", "position": 2, "name": "Architecture", "item": CANONICAL }
     ]
   },
@@ -37,7 +38,7 @@ const JSON_LD = [
     "description": "A deep-dive into the architectural principles behind UnifyOne — multi-tenant isolation, payment orchestration, automation mesh, and Manus AI integration.",
     "url": CANONICAL,
     "author": { "@type": "Organization", "name": "1Commerce / PNW Enterprises" },
-    "publisher": { "@type": "Organization", "name": "1Commerce", "url": "https://1commerce.online" },
+    "publisher": { "@type": "Organization", "name": "1Commerce", "url": SITE_URL },
     "keywords": "multi-tenant commerce architecture, Cathedral Framework, gig economy platform, commerce infrastructure, tRPC, Drizzle ORM",
     "datePublished": "2026-03-06",
     "dateModified": "2026-03-06"

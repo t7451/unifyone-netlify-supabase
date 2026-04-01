@@ -5,6 +5,7 @@ import { getDb } from "./db";
 import { tenants, plans, themeInstalls, themes } from "../drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { capi } from "./meta/capi";
+import { getAppUrl } from "./_core/env";
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -164,7 +165,7 @@ export function registerStripeRoutes(app: Express) {
                     .purchase(
                       `stripe_theme_${session.id}`,
                       { email: themeEmail },
-                      `${process.env.PUBLIC_APP_URL || process.env.APP_URL || process.env.URL || "https://1commerce.online"}/checkout`,
+                      `${getAppUrl()}/checkout`,
                       parseFloat(amountPaid),
                       (session.currency || "USD").toUpperCase()
                     )
@@ -213,7 +214,7 @@ export function registerStripeRoutes(app: Express) {
                 .purchase(
                   `stripe_sub_${session.id}`,
                   { email: sessionEmail },
-                  `${process.env.PUBLIC_APP_URL || process.env.APP_URL || process.env.URL || "https://1commerce.online"}/checkout`,
+                  `${getAppUrl()}/checkout`,
                   sessionAmount,
                   (session.currency || "USD").toUpperCase()
                 )
