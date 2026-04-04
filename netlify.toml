@@ -23,6 +23,13 @@
   to = "/.netlify/functions/server/:splat"
   status = 200
 
+# MCP (Model Context Protocol) server endpoint
+[[redirects]]
+  from = "/mcp"
+  to = "/.netlify/functions/mcp-server/mcp"
+  status = 200
+  force = true
+
 # SPA fallback — all non-API routes serve the React app
 [[redirects]]
   from = "/*"
