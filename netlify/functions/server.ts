@@ -11,13 +11,18 @@ import { registerOAuthRoutes } from "../../server/_core/oauth";
 import { registerStripeRoutes } from "../../server/stripe";
 import { registerPayPalRoutes } from "../../server/paypal";
 import { registerSquareRoutes } from "../../server/square";
+import { registerBillingRoutes } from "../../server/billing";
 import { appRouter } from "../../server/routers";
 import { createContext } from "../../server/_core/context";
 
 const app = express();
 
-// Stripe webhook MUST be before json middleware (needs raw body for sig verification)
+// Raw-body routes MUST be registered before express.json()
+// Stripe subscription webhook
 registerStripeRoutes(app);
+
+// Credit top-up billing webhook + APIs (Supabase Cathy-backed)
+registerBillingRoutes(app);
 
 // PayPal REST routes
 registerPayPalRoutes(app);
@@ -43,7 +48,7 @@ app.use(
 
 // Health check
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", version: "1.9.0", env: process.env.NODE_ENV });
+  res.json({ status: "ok", version: "1.9.1", env: process.env.NODE_ENV });
 });
 
 export const handler = serverless(app);
