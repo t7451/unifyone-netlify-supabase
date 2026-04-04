@@ -3,155 +3,15 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
-import { defineConfig, type Plugin, type ViteDevServer } from "vite";
-import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { defineConfig, type Plugin } from "vite";
 import { sitemapPlugin } from "./vite-plugin-sitemap";
 
-// =============================================================================
-// Manus Debug Collector - Vite Plugin
-// Writes browser logs directly to files, trimmed when exceeding size limit
-// =============================================================================
-
-const PROJECT_ROOT = import.meta.dirname;
-const LOG_DIR = path.join(PROJECT_ROOT, ".manus-logs");
-const MAX_LOG_SIZE_BYTES = 1 * 1024 * 1024; // 1MB per log file
-const TRIM_TARGET_BYTES = Math.floor(MAX_LOG_SIZE_BYTES * 0.6); // Trim to 60% to avoid constant re-trimming
-
-type LogSource = "browserConsole" | "networkRequests" | "sessionReplay";
-
-function ensureLogDir() {
-  if (!fs.existsSync(LOG_DIR)) {
-    fs.mkdirSync(LOG_DIR, { recursive: true });
-  }
-}
-
-function trimLogFile(logPath: string, maxSize: number) {
-  try {
-    if (!fs.existsSync(logPath) || fs.statSync(logPath).size <= maxSize) {
-      return;
-    }
-
-    const lines = fs.readFileSync(logPath, "utf-8").split("\n");
-    const keptLines: string[] = [];
-    let keptBytes = 0;
-
-    // Keep newest lines (from end) that fit within 60% of maxSize
-    const targetSize = TRIM_TARGET_BYTES;
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const lineBytes = Buffer.byteLength(`${lines[i]}\n`, "utf-8");
-      if (keptBytes + lineBytes > targetSize) break;
-      keptLines.unshift(lines[i]);
-      keptBytes += lineBytes;
-    }
-
-    fs.writeFileSync(logPath, keptLines.join("\n"), "utf-8");
-  } catch {
-    /* ignore trim errors */
-  }
-}
-
-function writeToLogFile(source: LogSource, entries: unknown[]) {
-  if (entries.length === 0) return;
-
-  ensureLogDir();
-  const logPath = path.join(LOG_DIR, `${source}.log`);
-
-  // Format entries with timestamps
-  const lines = entries.map((entry) => {
-    const ts = new Date().toISOString();
-    return `[${ts}] ${JSON.stringify(entry)}`;
-  });
-
-  // Append to log file
-  fs.appendFileSync(logPath, `${lines.join("\n")}\n`, "utf-8");
-
-  // Trim if exceeds max size
-  trimLogFile(logPath, MAX_LOG_SIZE_BYTES);
-}
-
-/**
- * Vite plugin to collect browser debug logs
- * - POST /__manus__/logs: Browser sends logs, written directly to files
- * - Files: browserConsole.log, networkRequests.log, sessionReplay.log
- * - Auto-trimmed when exceeding 1MB (keeps newest entries)
- */
-function vitePluginManusDebugCollector(): Plugin {
-  return {
-    name: "manus-debug-collector",
-
-    transformIndexHtml(html) {
-      if (process.env.NODE_ENV === "production") {
-        return html;
-      }
-      return {
-        html,
-        tags: [
-          {
-            tag: "script",
-            attrs: {
-              src: "/__manus__/debug-collector.js",
-              defer: true,
-            },
-            injectTo: "head",
-          },
-        ],
-      };
-    },
-
-    configureServer(server: ViteDevServer) {
-      // POST /__manus__/logs: Browser sends logs (written directly to files)
-      server.middlewares.use("/__manus__/logs", (req, res, next) => {
-        if (req.method !== "POST") {
-          return next();
-        }
-
-        const handlePayload = (payload: any) => {
-          // Write logs directly to files
-          if (payload.consoleLogs?.length > 0) {
-            writeToLogFile("browserConsole", payload.consoleLogs);
-          }
-          if (payload.networkRequests?.length > 0) {
-            writeToLogFile("networkRequests", payload.networkRequests);
-          }
-          if (payload.sessionEvents?.length > 0) {
-            writeToLogFile("sessionReplay", payload.sessionEvents);
-          }
-
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ success: true }));
-        };
-
-        const reqBody = (req as { body?: unknown }).body;
-        if (reqBody && typeof reqBody === "object") {
-          try {
-            handlePayload(reqBody);
-          } catch (e) {
-            res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ success: false, error: String(e) }));
-          }
-          return;
-        }
-
-        let body = "";
-        req.on("data", (chunk) => {
-          body += chunk.toString();
-        });
-
-        req.on("end", () => {
-          try {
-            const payload = JSON.parse(body);
-            handlePayload(payload);
-          } catch (e) {
-            res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ success: false, error: String(e) }));
-          }
-        });
-      });
-    },
-  };
-}
-
-const SITE_HOSTNAME = (process.env.PUBLIC_APP_URL || process.env.APP_URL || process.env.URL || 'https://1commerce.online').replace(/\/+$/, '');
+const SITE_HOSTNAME = (
+  process.env.PUBLIC_APP_URL ||
+  process.env.APP_URL ||
+  process.env.URL ||
+  "https://1commerce.online"
+).replace(/\/+$/, "");
 
 /**
  * Replace __APP_URL__ placeholder in index.html with the resolved site hostname.
@@ -160,18 +20,22 @@ const SITE_HOSTNAME = (process.env.PUBLIC_APP_URL || process.env.APP_URL || proc
  */
 function vitePluginAppUrl(): Plugin {
   return {
-    name: 'app-url-replace',
+    name: "app-url-replace",
     transformIndexHtml(html) {
-      return html.replaceAll('__APP_URL__', SITE_HOSTNAME);
+      return html.replaceAll("__APP_URL__", SITE_HOSTNAME);
     },
     closeBundle() {
       // Replace __APP_URL__ in static public files copied to dist
-      const outDir = path.resolve(import.meta.dirname, 'dist/public');
-      for (const file of ['robots.txt', 'sitemap.xml']) {
+      const outDir = path.resolve(import.meta.dirname, "dist/public");
+      for (const file of ["robots.txt", "sitemap.xml"]) {
         const filePath = path.join(outDir, file);
         if (fs.existsSync(filePath)) {
-          const content = fs.readFileSync(filePath, 'utf-8');
-          fs.writeFileSync(filePath, content.replaceAll('__APP_URL__', SITE_HOSTNAME), 'utf-8');
+          const content = fs.readFileSync(filePath, "utf-8");
+          fs.writeFileSync(
+            filePath,
+            content.replaceAll("__APP_URL__", SITE_HOSTNAME),
+            "utf-8"
+          );
         }
       }
     },
@@ -182,18 +46,20 @@ const plugins = [
   react(),
   tailwindcss(),
   jsxLocPlugin(),
-  vitePluginManusRuntime(),
-  vitePluginManusDebugCollector(),
   vitePluginAppUrl(),
   sitemapPlugin({
     hostname: SITE_HOSTNAME,
-    outDir: path.resolve(import.meta.dirname, 'dist/public'),
+    outDir: path.resolve(import.meta.dirname, "dist/public"),
     routes: [
-      { path: '/',                                       changefreq: 'weekly',  priority: 1.0 },
-      { path: '/platform',                               changefreq: 'monthly', priority: 0.9 },
-      { path: '/pricing',                                changefreq: 'monthly', priority: 0.9 },
-      { path: '/cathedral-framework',                    changefreq: 'monthly', priority: 0.8 },
-      { path: '/blog/gig-economy-commerce-platform',     changefreq: 'weekly',  priority: 0.7 },
+      { path: "/", changefreq: "weekly", priority: 1.0 },
+      { path: "/platform", changefreq: "monthly", priority: 0.9 },
+      { path: "/pricing", changefreq: "monthly", priority: 0.9 },
+      { path: "/cathedral-framework", changefreq: "monthly", priority: 0.8 },
+      {
+        path: "/blog/gig-economy-commerce-platform",
+        changefreq: "weekly",
+        priority: 0.7,
+      },
     ],
   }),
 ];
