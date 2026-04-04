@@ -25,7 +25,12 @@ export const ENV = {
   squareAccessToken: process.env.SQUARE_ACCESS_TOKEN ?? "",
   squareLocationId: process.env.SQUARE_LOCATION_ID ?? "",
   squareWebhookSignatureKey: process.env.SQUARE_WEBHOOK_SIGNATURE_KEY ?? "",
-  squareEnvironment: (process.env.SQUARE_ENVIRONMENT ?? "production") as "sandbox" | "production",
+  squareEnvironment: (process.env.SQUARE_ENVIRONMENT ?? "production") as
+    | "sandbox"
+    | "production",
+  supabaseUrl: process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "",
+  supabaseJwtSecret: process.env.SUPABASE_JWT_SECRET ?? "",
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
 };
 
 /**

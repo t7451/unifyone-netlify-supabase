@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { supabase } from "@/lib/supabaseClient";
 
-const AUTH_REFRESH_INTERVAL_MS = 900;
-const MAX_AUTH_REFRESH_ATTEMPTS = 5;
-
-// ── Animated logo mark ────────────────────────────────────────────────────────
 function LogoMark({ size = 48 }: { size?: number }) {
   return (
     <svg
@@ -41,16 +37,30 @@ function LogoMark({ size = 48 }: { size?: number }) {
 }
 
 const STEPS = [
-  "Verifying your identity…",
-  "Securing your session…",
-  "Loading your workspace…",
+  "Verifying your identity...",
+  "Securing your session...",
+  "Loading your workspace...",
 ];
 
+async function exchangeSupabaseSession(): Promise<boolean> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.access_token) return false;
+
+  const res = await fetch("/api/auth/supabase-session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ access_token: session.access_token }),
+  });
+  return res.ok;
+}
+
 export default function AuthCallback() {
-  const [location, navigate] = useLocation();
-  const { isAuthenticated, loading, refresh } = useAuth();
+  const [, navigate] = useLocation();
   const [stepIdx, setStepIdx] = useState(0);
-  const [refreshAttempts, setRefreshAttempts] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   // Cycle through status messages
   useEffect(() => {
@@ -60,52 +70,96 @@ export default function AuthCallback() {
     return () => clearInterval(interval);
   }, []);
 
-  // Once auth resolves, redirect to dashboard
   useEffect(() => {
-    const returnTo = (() => {
+    let cancelled = false;
+
+    async function handleCallback() {
       try {
-        const url = new URL(window.location.origin + location);
-        const path = url.searchParams.get("returnTo");
-        if (!path || !path.startsWith("/")) return "/dashboard";
-        return path;
-      } catch {
-        return "/dashboard";
+        const params = new URLSearchParams(window.location.search);
+        const tokenHash = params.get("token_hash");
+        const type = params.get("type");
+        const code = params.get("code");
+
+        // Handle magic link token_hash verification
+        if (tokenHash) {
+          const { error: verifyError } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: (type as "magiclink" | "email" | "signup") || "magiclink",
+          });
+
+          if (verifyError) {
+            if (!cancelled) {
+              navigate("/login?error=invalid_link");
+            }
+            return;
+          }
+        }
+
+        // Handle PKCE code exchange (Supabase's detectSessionInUrl handles this
+        // automatically, but we wait for the session to be available)
+        if (code) {
+          const { error: exchangeError } =
+            await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) {
+            if (!cancelled) {
+              navigate("/login?error=invalid_link");
+            }
+            return;
+          }
+        }
+
+        // Exchange the Supabase session for the app's session cookie
+        const exchanged = await exchangeSupabaseSession();
+
+        if (cancelled) return;
+
+        if (exchanged) {
+          navigate("/dashboard");
+        } else {
+          setError("Failed to create session. Please try signing in again.");
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("[AuthCallback] Error:", err);
+          setError("An error occurred during sign-in. Please try again.");
+        }
       }
-    })();
-
-    if (!loading && isAuthenticated) {
-      navigate(returnTo);
-    }
-  }, [loading, isAuthenticated, location, navigate]);
-
-  useEffect(() => {
-    if (loading || isAuthenticated) return;
-
-    if (refreshAttempts >= MAX_AUTH_REFRESH_ATTEMPTS) {
-      navigate("/login");
-      return;
     }
 
-    const timeout = window.setTimeout(() => {
-      setRefreshAttempts(current => current + 1);
-      void refresh();
-    }, AUTH_REFRESH_INTERVAL_MS);
+    handleCallback();
 
-    return () => window.clearTimeout(timeout);
-  }, [isAuthenticated, loading, navigate, refresh, refreshAttempts]);
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#060D1F] flex flex-col items-center justify-center gap-6">
+        <LogoMark size={56} />
+        <div className="text-center space-y-2">
+          <h2 className="text-xl font-bold text-white">Sign-in failed</h2>
+          <p className="text-sm text-red-400 max-w-xs">{error}</p>
+        </div>
+        <button
+          onClick={() => navigate("/login")}
+          className="text-sm text-[#00D9FF] hover:text-[#00C4E8] font-medium transition-colors"
+        >
+          Back to sign in
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#060D1F] flex flex-col items-center justify-center gap-8">
-      {/* Glow background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#00D9FF]/5 rounded-full blur-3xl" />
       </div>
 
-      {/* Logo + spinner */}
       <div className="relative flex flex-col items-center gap-6">
         <div className="relative">
           <LogoMark size={56} />
-          {/* Spinning ring around logo */}
           <div
             className="absolute inset-0 -m-2 rounded-[14px] border-2 border-transparent border-t-[#00D9FF] animate-spin"
             style={{ borderRadius: "16px" }}
@@ -115,14 +169,11 @@ export default function AuthCallback() {
         <div className="text-center space-y-1">
           <h2 className="text-xl font-bold text-white">UnifyOne</h2>
           <p className="text-sm text-[#00D9FF] animate-pulse min-h-[20px]">
-            {refreshAttempts > 0 && !isAuthenticated
-              ? `Finalizing your session${".".repeat(Math.min(refreshAttempts, 3))}`
-              : STEPS[stepIdx]}
+            {STEPS[stepIdx]}
           </p>
         </div>
       </div>
 
-      {/* Progress dots */}
       <div className="flex items-center gap-2">
         {STEPS.map((_, i) => (
           <div

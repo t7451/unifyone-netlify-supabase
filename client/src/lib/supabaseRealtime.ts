@@ -1,34 +1,24 @@
 /**
  * Supabase Realtime client for live order and inventory updates.
  *
- * NOTE: This module gracefully degrades when VITE_SUPABASE_URL and
- * VITE_SUPABASE_ANON_KEY are not set — the app works fully without them,
- * real-time features simply won't activate.
- *
- * To enable: add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your
- * environment variables (Settings → Secrets in the Manus UI).
+ * Uses the shared Supabase client from supabaseClient.ts.
+ * Real-time features activate when VITE_SUPABASE_URL and
+ * VITE_SUPABASE_ANON_KEY are set.
  */
 
-import { createClient, RealtimeChannel } from "@supabase/supabase-js";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useRef } from "react";
+import { supabase } from "./supabaseClient";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-export const supabase =
-  supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
-    : null;
+export { supabase };
 
-export const isRealtimeEnabled = !!supabase;
+export const isRealtimeEnabled = !!supabaseUrl;
 
 /**
  * Subscribe to real-time INSERT/UPDATE/DELETE events on a Supabase table.
  * Calls `onEvent` with the changed row whenever a change is broadcast.
- *
- * @param table   - Supabase table name (must have Realtime enabled in Supabase dashboard)
- * @param filter  - Optional Postgres filter string, e.g. "tenant_id=eq.42"
- * @param onEvent - Callback receiving the changed payload
  */
 export function useRealtimeTable(
   table: string,
@@ -38,7 +28,7 @@ export function useRealtimeTable(
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
-    if (!supabase) return; // Realtime not configured — silent no-op
+    if (!supabaseUrl) return; // Realtime not configured — silent no-op
 
     const channelName = filter ? `${table}:${filter}` : table;
 
@@ -73,9 +63,11 @@ export function useRealtimeTable(
 
 /**
  * Subscribe to live order updates for a specific tenant.
- * Calls `onOrderChange` whenever an order row changes.
  */
-export function useRealtimeOrders(tenantId: number | undefined, onOrderChange: (payload: any) => void) {
+export function useRealtimeOrders(
+  tenantId: number | undefined,
+  onOrderChange: (payload: any) => void
+) {
   useRealtimeTable(
     "orders",
     tenantId ? `tenant_id=eq.${tenantId}` : undefined,
@@ -85,9 +77,11 @@ export function useRealtimeOrders(tenantId: number | undefined, onOrderChange: (
 
 /**
  * Subscribe to live inventory updates for a specific tenant.
- * Calls `onInventoryChange` whenever an inventory row changes.
  */
-export function useRealtimeInventory(tenantId: number | undefined, onInventoryChange: (payload: any) => void) {
+export function useRealtimeInventory(
+  tenantId: number | undefined,
+  onInventoryChange: (payload: any) => void
+) {
   useRealtimeTable(
     "inventory",
     tenantId ? `tenant_id=eq.${tenantId}` : undefined,
