@@ -144,7 +144,8 @@ export const rewardsRouter = router({
         balanceAfter: newBalance,
       });
 
-      // Fire Meta CAPI CompleteRegistration event for reward key claim (non-blocking)
+      // Fire Meta CAPI CompleteRegistration event for reward key claim (non-blocking).
+      // Intentionally skips DB logging — fire-and-forget so CAPI failures never block the claim flow.
       try {
         const { capi } = await import("../meta/capi");
         await capi.completeRegistration(

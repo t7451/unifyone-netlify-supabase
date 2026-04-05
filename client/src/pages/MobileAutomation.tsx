@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -75,6 +75,17 @@ function formatRelative(date: Date | null | undefined): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+const CRON_PRESETS = [
+  { label: "Every day at 9am", value: "0 9 * * *" },
+  { label: "Daily 10am", value: "0 10 * * *" },
+  { label: "Every hour", value: "0 * * * *" },
+  { label: "Every Monday 8am", value: "0 8 * * 1" },
+  { label: "Weekly Mon 9am", value: "0 9 * * 1" },
+  { label: "Every 15 minutes", value: "*/15 * * * *" },
+  { label: "Twice daily", value: "0 9,18 * * *" },
+  { label: "First of month", value: "0 0 1 * *" },
+];
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SchedulerTab() {
@@ -118,14 +129,6 @@ function SchedulerTab() {
       }
     },
   });
-
-  const CRON_PRESETS = [
-    { label: "Every day at 9am", value: "0 9 * * *" },
-    { label: "Every hour", value: "0 * * * *" },
-    { label: "Every Monday 8am", value: "0 8 * * 1" },
-    { label: "Every 15 minutes", value: "*/15 * * * *" },
-    { label: "First of month", value: "0 0 1 * *" },
-  ];
 
   return (
     <div className="space-y-4">
@@ -298,7 +301,6 @@ function AttributionTab() {
 
   return (
     <div className="space-y-6">
-      {/* KPI row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Total Clicks", value: stats?.total ?? 0, icon: Link2, color: "text-violet-400" },
@@ -316,7 +318,6 @@ function AttributionTab() {
         ))}
       </div>
 
-      {/* Source breakdown */}
       {stats?.bySource && stats.bySource.length > 0 && (
         <Card className="bg-slate-800/40 border-slate-700">
           <CardHeader className="pb-2">
@@ -343,7 +344,6 @@ function AttributionTab() {
         </Card>
       )}
 
-      {/* Recent attributions */}
       <Card className="bg-slate-800/40 border-slate-700">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm text-slate-300">Recent Deep Link Clicks</CardTitle>
@@ -408,7 +408,6 @@ function CapiLogTab() {
 
   return (
     <div className="space-y-6">
-      {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Card className="bg-slate-800/40 border-slate-700">
           <CardContent className="p-4">
@@ -435,7 +434,6 @@ function CapiLogTab() {
         )}
       </div>
 
-      {/* Event type breakdown */}
       {summary?.byEvent && summary.byEvent.length > 0 && (
         <Card className="bg-slate-800/40 border-slate-700">
           <CardHeader className="pb-2">
@@ -456,7 +454,6 @@ function CapiLogTab() {
         </Card>
       )}
 
-      {/* Event log */}
       <Card className="bg-slate-800/40 border-slate-700">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm text-slate-300">Recent CAPI Events</CardTitle>
@@ -538,13 +535,6 @@ const AUDIENCE_LABELS: Record<string, string> = {
   custom: "Custom Segment",
 };
 
-const PUSH_CRON_PRESETS = [
-  { label: "Daily 10am", value: "0 10 * * *" },
-  { label: "Weekly Mon 9am", value: "0 9 * * 1" },
-  { label: "Twice daily", value: "0 9,18 * * *" },
-  { label: "First of month", value: "0 10 1 * *" },
-];
-
 function PushScheduleTab() {
   const utils = trpc.useUtils();
   const [open, setOpen] = useState(false);
@@ -601,6 +591,18 @@ function PushScheduleTab() {
       default: return <Badge variant="secondary" className="text-xs">Draft</Badge>;
     }
   }
+
+  const pushSummary = useMemo(() => {
+    const typed = schedules as PushSchedule[];
+    return typed.reduce(
+      (acc, s) => ({
+        total: acc.total + 1,
+        totalSends: acc.totalSends + (s.sentCount ?? 0),
+        active: acc.active + (s.enabled && (s.status === "scheduled" || s.status === "recurring") ? 1 : 0),
+      }),
+      { total: 0, totalSends: 0, active: 0 },
+    );
+  }, [schedules]);
 
   return (
     <div className="space-y-4">
@@ -681,7 +683,7 @@ function PushScheduleTab() {
                     onChange={e => setForm(f => ({ ...f, cronExpression: e.target.value }))}
                   />
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {PUSH_CRON_PRESETS.map(p => (
+                    {CRON_PRESETS.map(p => (
                       <button
                         key={p.value}
                         onClick={() => setForm(f => ({ ...f, cronExpression: p.value }))}
@@ -726,30 +728,25 @@ function PushScheduleTab() {
         </Dialog>
       </div>
 
-      {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Card className="bg-slate-800/40 border-slate-700">
           <CardContent className="p-4">
             <Bell className="w-5 h-5 text-violet-400 mb-1" />
-            <p className="text-2xl font-bold text-white">{(schedules as PushSchedule[]).length}</p>
+            <p className="text-2xl font-bold text-white">{pushSummary.total}</p>
             <p className="text-xs text-slate-400">Total Schedules</p>
           </CardContent>
         </Card>
         <Card className="bg-slate-800/40 border-slate-700">
           <CardContent className="p-4">
             <Send className="w-5 h-5 text-emerald-400 mb-1" />
-            <p className="text-2xl font-bold text-white">
-              {(schedules as PushSchedule[]).reduce((sum, s) => sum + (s.sentCount ?? 0), 0)}
-            </p>
+            <p className="text-2xl font-bold text-white">{pushSummary.totalSends}</p>
             <p className="text-xs text-slate-400">Total Sends</p>
           </CardContent>
         </Card>
         <Card className="bg-slate-800/40 border-slate-700">
           <CardContent className="p-4">
             <Users className="w-5 h-5 text-blue-400 mb-1" />
-            <p className="text-2xl font-bold text-white">
-              {(schedules as PushSchedule[]).filter(s => s.enabled && (s.status === "scheduled" || s.status === "recurring")).length}
-            </p>
+            <p className="text-2xl font-bold text-white">{pushSummary.active}</p>
             <p className="text-xs text-slate-400">Active Schedules</p>
           </CardContent>
         </Card>
@@ -871,7 +868,6 @@ export default function MobileAutomation() {
   return (
     <DashboardLayout>
       <div className="max-w-5xl mx-auto space-y-6 p-4 sm:p-6">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -897,7 +893,6 @@ export default function MobileAutomation() {
           </div>
         </div>
 
-        {/* Deep Link Quick-Copy */}
         <Card className="bg-gradient-to-r from-violet-900/30 to-indigo-900/30 border-violet-700/40">
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -931,7 +926,6 @@ export default function MobileAutomation() {
           </CardContent>
         </Card>
 
-        {/* Tabs */}
         <Tabs defaultValue="scheduler">
           <TabsList className="bg-slate-800 border border-slate-700">
             <TabsTrigger value="scheduler" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 text-xs sm:text-sm">

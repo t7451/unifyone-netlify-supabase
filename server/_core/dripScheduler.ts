@@ -132,25 +132,23 @@ async function sendDripEmail(
 export async function processPendingDrips(): Promise<{
   processed: number;
   sent: number;
-  skipped: number;
   errors: number;
 }> {
   // Early exit if Resend is not configured — avoid querying DB unnecessarily
   const resendCheck = getResendClient();
   if (!resendCheck) {
     console.warn("[Drip] RESEND_API_KEY is not configured — skipping drip processing. Set the env var to enable email drips.");
-    return { processed: 0, sent: 0, skipped: 0, errors: 0 };
+    return { processed: 0, sent: 0, errors: 0 };
   }
 
   try {
     const db = await getDb();
     if (!db) {
       console.error("[Drip] Database connection failed");
-      return { processed: 0, sent: 0, skipped: 0, errors: 0 };
+      return { processed: 0, sent: 0, errors: 0 };
     }
 
     let sent = 0;
-    let skipped = 0;
     let errors = 0;
 
     // For each drip in the schedule
@@ -175,12 +173,6 @@ export async function processPendingDrips(): Promise<{
 
       // Send drip to each due subscriber, isolating errors per-subscriber
       for (const subscriber of dueSubscribers) {
-        // Double-check subscription status (could have changed since query)
-        if (subscriber.status !== "subscribed") {
-          skipped++;
-          continue;
-        }
-
         try {
           const result = await sendDripEmail(
             subscriber.id,
@@ -189,9 +181,6 @@ export async function processPendingDrips(): Promise<{
           );
           if (result.success) {
             sent++;
-          } else if (result.error === "Subscriber unsubscribed") {
-            skipped++;
-            console.log(`[Drip] Skipped unsubscribed user ${subscriber.email} for drip ${dripNumber}`);
           } else {
             errors++;
             console.warn(`[Drip] Failed drip ${dripNumber} for ${subscriber.email}: ${result.error}`);
@@ -205,11 +194,11 @@ export async function processPendingDrips(): Promise<{
       }
     }
 
-    console.log(`[Drip] Batch complete — sent: ${sent}, skipped: ${skipped}, errors: ${errors}`);
-    return { processed: DRIP_SCHEDULE.length, sent, skipped, errors };
+    console.log(`[Drip] Batch complete — sent: ${sent}, errors: ${errors}`);
+    return { processed: DRIP_SCHEDULE.length, sent, errors };
   } catch (error) {
     console.error("[Drip] Fatal error in processPendingDrips:", error);
-    return { processed: 0, sent: 0, skipped: 0, errors: 1 };
+    return { processed: 0, sent: 0, errors: 1 };
   }
 }
 

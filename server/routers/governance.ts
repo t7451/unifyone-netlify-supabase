@@ -13,28 +13,59 @@ import {
 } from "../../drizzle/schema";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-const requireAdmin = (role: string | undefined) => {
-  if (role !== "admin") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required for governance operations." });
-  }
-};
+/** Escape LIKE-pattern wildcards so user input is treated literally. */
+const escapeLikeWildcards = (input: string): string =>
+  input.replace(/%/g, "\\%").replace(/_/g, "\\_");
 
 // ── Governance Router ──────────────────────────────────────────────────────────
 export const governanceRouter = router({
   // ── Audit Logs ──────────────────────────────────────────────────────────────
-  getAuditLogs: protectedProcedure
-    .input(z.object({ limit: z.number().default(50), offset: z.number().default(0) }).optional())
-    .query(async ({ ctx, input }) => {
-      requireAdmin(ctx.user.role);
+  getAuditLogs: adminProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(200).default(50),
+        offset: z.number().min(0).default(0),
+        dateRange: z.object({
+          from: z.string().datetime(),
+          to: z.string().datetime(),
+        }).optional(),
+        actor: z.string().optional(),
+        action: z.string().optional(),
+      }).optional()
+    )
+    .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return { logs: [], total: 0 };
-      const logs = await db
-        .select()
-        .from(auditLogs)
-        .orderBy(desc(auditLogs.createdAt))
-        .limit(input?.limit ?? 50)
-        .offset(input?.offset ?? 0);
-      return { logs, total: logs.length };
+
+      const conditions = [];
+      if (input?.dateRange) {
+        conditions.push(gte(auditLogs.createdAt, new Date(input.dateRange.from)));
+        conditions.push(lte(auditLogs.createdAt, new Date(input.dateRange.to)));
+      }
+      if (input?.actor) {
+        conditions.push(like(auditLogs.decisionAuthority, `%${escapeLikeWildcards(input.actor)}%`));
+      }
+      if (input?.action) {
+        conditions.push(like(auditLogs.action, `%${escapeLikeWildcards(input.action)}%`));
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const [logs, [countResult]] = await Promise.all([
+        db
+          .select()
+          .from(auditLogs)
+          .where(whereClause)
+          .orderBy(desc(auditLogs.createdAt))
+          .limit(input?.limit ?? 50)
+          .offset(input?.offset ?? 0),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(auditLogs)
+          .where(whereClause),
+      ]);
+
+      return { logs, total: (countResult as any)?.count ?? logs.length };
     }),
 
   createAuditLog: protectedProcedure
@@ -93,55 +124,6 @@ export const governanceRouter = router({
       return { success: true, id: (result as any).insertId };
     }),
 
-  // listAuditLogs — Query audit logs with pagination and filters
-  listAuditLogs: protectedProcedure
-    .input(
-      z.object({
-        limit: z.number().min(1).max(200).default(50),
-        offset: z.number().min(0).default(0),
-        dateRange: z.object({
-          from: z.string().datetime(),
-          to: z.string().datetime(),
-        }).optional(),
-        actor: z.string().optional(),
-        action: z.string().optional(),
-      }).optional()
-    )
-    .query(async ({ ctx, input }) => {
-      requireAdmin(ctx.user.role);
-      const db = await getDb();
-      if (!db) return { logs: [], total: 0 };
-
-      const conditions = [];
-      if (input?.dateRange) {
-        conditions.push(gte(auditLogs.createdAt, new Date(input.dateRange.from)));
-        conditions.push(lte(auditLogs.createdAt, new Date(input.dateRange.to)));
-      }
-      if (input?.actor) {
-        conditions.push(like(auditLogs.decisionAuthority, `%${input.actor}%`));
-      }
-      if (input?.action) {
-        conditions.push(like(auditLogs.action, `%${input.action}%`));
-      }
-
-      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-      const logs = await db
-        .select()
-        .from(auditLogs)
-        .where(whereClause)
-        .orderBy(desc(auditLogs.createdAt))
-        .limit(input?.limit ?? 50)
-        .offset(input?.offset ?? 0);
-
-      const [countResult] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(auditLogs)
-        .where(whereClause);
-
-      return { logs, total: (countResult as any)?.count ?? logs.length };
-    }),
-
   // ── Escalation Queue ─────────────────────────────────────────────────────────
   // createEscalation — Add items to escalation queue with priority, description, assignee
   createEscalation: protectedProcedure
@@ -191,8 +173,8 @@ export const governanceRouter = router({
       return { success: true, id: (result as any).insertId };
     }),
 
-  // listEscalations — Query escalation queue with status filter
-  listEscalations: protectedProcedure
+  // getEscalations — Query escalation queue with status filter and pagination
+  getEscalations: adminProcedure
     .input(
       z.object({
         status: z.enum(["pending", "approved", "rejected", "expired", "all"]).default("all"),
@@ -200,8 +182,7 @@ export const governanceRouter = router({
         offset: z.number().min(0).default(0),
       }).optional()
     )
-    .query(async ({ ctx, input }) => {
-      requireAdmin(ctx.user.role);
+    .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return { escalations: [], total: 0 };
 
@@ -210,42 +191,21 @@ export const governanceRouter = router({
         ? eq(escalationQueue.status, status as "pending" | "approved" | "rejected" | "expired")
         : undefined;
 
-      const escalations = await db
-        .select()
-        .from(escalationQueue)
-        .where(whereClause)
-        .orderBy(desc(escalationQueue.createdAt))
-        .limit(input?.limit ?? 50)
-        .offset(input?.offset ?? 0);
-
-      const [countResult] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(escalationQueue)
-        .where(whereClause);
-
-      return { escalations, total: (countResult as any)?.count ?? escalations.length };
-    }),
-
-  getEscalations: protectedProcedure
-    .input(z.object({
-      status: z.enum(["pending", "approved", "rejected", "expired", "all"]).default("all"),
-      limit: z.number().default(20),
-    }).optional())
-    .query(async ({ ctx, input }) => {
-      requireAdmin(ctx.user.role);
-      const db = await getDb();
-      if (!db) return [];
-      const query = db.select().from(escalationQueue).orderBy(desc(escalationQueue.createdAt));
-      const status = input?.status ?? "all";
-      if (status !== "all") {
-        return db
+      const [escalations, [countResult]] = await Promise.all([
+        db
           .select()
           .from(escalationQueue)
-          .where(eq(escalationQueue.status, status as "pending" | "approved" | "rejected" | "expired"))
+          .where(whereClause)
           .orderBy(desc(escalationQueue.createdAt))
-          .limit(input?.limit ?? 20);
-      }
-      return query.limit(input?.limit ?? 20);
+          .limit(input?.limit ?? 50)
+          .offset(input?.offset ?? 0),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(escalationQueue)
+          .where(whereClause),
+      ]);
+
+      return { escalations, total: (countResult as any)?.count ?? escalations.length };
     }),
 
   resolveEscalation: adminProcedure
@@ -272,8 +232,7 @@ export const governanceRouter = router({
     }),
 
   // ── Kill Switches ─────────────────────────────────────────────────────────────
-  getKillSwitches: protectedProcedure.query(async ({ ctx }) => {
-    requireAdmin(ctx.user.role);
+  getKillSwitches: adminProcedure.query(async () => {
     const db = await getDb();
     if (!db) {
       // Return default kill switches when DB is unavailable
@@ -336,8 +295,7 @@ export const governanceRouter = router({
     }),
 
   // ── Governance Rules ──────────────────────────────────────────────────────────
-  getRules: protectedProcedure.query(async ({ ctx }) => {
-    requireAdmin(ctx.user.role);
+  getRules: adminProcedure.query(async () => {
     const db = await getDb();
     if (!db) {
       // Return default rules when DB is unavailable
@@ -378,8 +336,7 @@ export const governanceRouter = router({
     }),
 
   // ── Governance Metrics ────────────────────────────────────────────────────────
-  getMetrics: protectedProcedure.query(async ({ ctx }) => {
-    requireAdmin(ctx.user.role);
+  getMetrics: adminProcedure.query(async () => {
     const db = await getDb();
     if (!db) {
       return {
@@ -420,8 +377,7 @@ export const governanceRouter = router({
   }),
 
   // ── Decision Authority ────────────────────────────────────────────────────────
-  getDecisionAuthority: protectedProcedure.query(async ({ ctx }) => {
-    requireAdmin(ctx.user.role);
+  getDecisionAuthority: adminProcedure.query(async () => {
     const db = await getDb();
     if (!db) {
       return [

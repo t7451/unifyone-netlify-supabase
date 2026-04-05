@@ -396,9 +396,9 @@ function TriggerConfig() {
     const updated = { ...configs };
     triggers.forEach((t) => {
       updated[t.event] = {
-        inAppEnabled: (t as any).inAppEnabled ?? true,
+        inAppEnabled: t.inAppEnabled ?? true,
         n8nEnabled: t.n8nEnabled,
-        n8nWebhookUrl: (t as any).n8nWebhookUrl ?? "",
+        n8nWebhookUrl: t.n8nWebhookUrl ?? "",
         zapierEnabled: t.zapierEnabled,
         mailchimpEnabled: t.mailchimpEnabled,
         slackEnabled: t.slackEnabled,

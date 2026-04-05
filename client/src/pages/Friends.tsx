@@ -506,7 +506,7 @@ function ChallengesTab() {
   const activeSent = sent.filter((fc) => fc.status !== "completed");
   const activeReceived = received.filter((fc) => fc.status !== "completed");
 
-  if (challenges.isLoading) return <div className="text-center text-gray-500 py-12">Loading challenges...</div>;
+  if (challenges.isLoading || results.isLoading) return <div className="text-center text-gray-500 py-12">Loading challenges...</div>;
 
   const statusBadge = (status: string) => {
     const map: Record<string, { label: string; className: string }> = {

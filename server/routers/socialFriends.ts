@@ -508,7 +508,8 @@ export const socialFriendsRouter = router({
         link: "/friends?tab=challenges",
       });
 
-      // Fire Meta CAPI FriendChallengeAccepted event when accepted (non-blocking)
+      // Fire Meta CAPI FriendChallengeAccepted event when accepted (non-blocking).
+      // Intentionally skips DB logging — fire-and-forget so CAPI failures never block the acceptance flow.
       if (input.action === "accept") {
         try {
           const { capi } = await import("../meta/capi");

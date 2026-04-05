@@ -1,6 +1,6 @@
-import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import { SITE_URL } from "@/lib/siteConfig";
+import BlogPostHead from "@/components/BlogPostHead";
 
 const CANONICAL = `${SITE_URL}/blog/manus-ai-gig-workers`;
 const TITLE = "Manus AI for Gig Workers: From Data to Decisions in Seconds | 1Commerce";
@@ -45,23 +45,14 @@ const JSON_LD = [
 export default function ManusAIPost() {
   return (
     <div style={{ backgroundColor: "#020202", color: "#F0E8D0", minHeight: "100vh" }}>
-      <Helmet>
-        <title>{TITLE}</title>
-        <meta name="description" content={DESCRIPTION} />
-        <link rel="canonical" href={CANONICAL} />
-        <meta property="og:title" content={TITLE} />
-        <meta property="og:description" content={DESCRIPTION} />
-        <meta property="og:image" content={OG_IMAGE} />
-        <meta property="og:type" content="article" />
-        <meta property="og:url" content={CANONICAL} />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={TITLE} />
-        <meta name="twitter:description" content={DESCRIPTION} />
-        <meta name="twitter:image" content={OG_IMAGE} />
-        {JSON_LD.map((schema, i) => (
-          <script key={i} type="application/ld+json">{JSON.stringify(schema)}</script>
-        ))}
-      </Helmet>
+      <BlogPostHead
+        canonical={CANONICAL}
+        title={TITLE}
+        description={DESCRIPTION}
+        ogImage={OG_IMAGE}
+        breadcrumbName="Manus AI for Gig Workers"
+        jsonLd={JSON_LD}
+      />
 
       <nav className="fixed top-0 left-0 right-0 z-50" style={{ backgroundColor: "rgba(2,2,2,0.97)", borderBottom: "1px solid rgba(212,168,67,0.12)", backdropFilter: "blur(12px)" }}>
         <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">

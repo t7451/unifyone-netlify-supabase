@@ -428,7 +428,6 @@ function OwnerAlertComposer() {
           </div>
         </div>
 
-        {/* Title */}
         <div className="space-y-1.5">
           <Label className="text-gray-300 text-sm">Title</Label>
           <Input
@@ -439,7 +438,6 @@ function OwnerAlertComposer() {
           />
         </div>
 
-        {/* Body */}
         <div className="space-y-1.5">
           <Label className="text-gray-300 text-sm">Message Body (optional)</Label>
           <Textarea
@@ -451,7 +449,6 @@ function OwnerAlertComposer() {
           />
         </div>
 
-        {/* Link */}
         <div className="space-y-1.5">
           <Label className="text-gray-300 text-sm">Link (optional)</Label>
           <Input
@@ -462,7 +459,6 @@ function OwnerAlertComposer() {
           />
         </div>
 
-        {/* Preview + Send */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
           {selectedMember && title.trim() ? (
             <div className="flex-1 p-3 rounded-lg bg-white/5 border border-white/10">
