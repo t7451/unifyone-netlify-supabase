@@ -285,7 +285,9 @@ export const notificationsRouter = router({
       z.object({
         tenantId: z.number(),
         event: z.string().min(1).max(100),
+        inAppEnabled: z.boolean().default(true),
         n8nEnabled: z.boolean().default(false),
+        n8nWebhookUrl: z.string().optional(),
         zapierEnabled: z.boolean().default(false),
         mailchimpEnabled: z.boolean().default(false),
         slackWebhookUrl: z.string().optional(),
@@ -311,7 +313,9 @@ export const notificationsRouter = router({
       const values = {
         tenantId: input.tenantId,
         event: input.event,
+        inAppEnabled: input.inAppEnabled,
         n8nEnabled: input.n8nEnabled,
+        n8nWebhookUrl: input.n8nWebhookUrl || null,
         zapierEnabled: input.zapierEnabled,
         mailchimpEnabled: input.mailchimpEnabled,
         slackWebhookUrl: input.slackWebhookUrl || null,

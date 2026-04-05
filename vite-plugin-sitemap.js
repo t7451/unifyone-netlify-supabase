@@ -22,7 +22,7 @@
 //     ],
 //   })
 
-import { writeFileSync } from 'fs'
+import { existsSync, writeFileSync } from 'fs'
 import { resolve } from 'path'
 
 /**
@@ -62,6 +62,15 @@ export function sitemapPlugin(options) {
       const outDir = options.outDir || 'dist'
       const today = new Date().toISOString().split('T')[0]
 
+      const sitemapPath = resolve(outDir, 'sitemap.xml')
+      const robotsPath = resolve(outDir, 'robots.txt')
+
+      // Skip generation if hand-crafted files already exist (copied from public/)
+      if (existsSync(sitemapPath) && existsSync(robotsPath)) {
+        console.log('[sitemap] Existing sitemap.xml and robots.txt found — skipping generation')
+        return
+      }
+
       // ── Build sitemap.xml ──────────────────────────────────────────
       const urls = routes
         .map((r) => {
@@ -88,7 +97,6 @@ export function sitemapPlugin(options) {
         '',
       ].join('\n')
 
-      const sitemapPath = resolve(outDir, 'sitemap.xml')
       writeFileSync(sitemapPath, sitemap, 'utf-8')
       console.log(`[sitemap] Generated ${sitemapPath}`)
 
@@ -101,7 +109,6 @@ export function sitemapPlugin(options) {
         '',
       ].join('\n')
 
-      const robotsPath = resolve(outDir, 'robots.txt')
       writeFileSync(robotsPath, robots, 'utf-8')
       console.log(`[sitemap] Generated ${robotsPath}`)
     },

@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { desc, eq, and } from "drizzle-orm";
+import { desc, eq, and, gte, lte, like, sql } from "drizzle-orm";
 import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
@@ -67,7 +67,165 @@ export const governanceRouter = router({
       return { success: true };
     }),
 
+  // logAuditEvent — Create audit log entries with actor, target, metadata
+  logAuditEvent: protectedProcedure
+    .input(
+      z.object({
+        action: z.string().min(1).max(255),
+        actor: z.string().min(1).max(255),
+        target: z.string().max(255).optional(),
+        metadata: z.record(z.string(), z.unknown()).optional(),
+        timestamp: z.string().datetime().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const [result] = await db.insert(auditLogs).values({
+        userId: ctx.user.id,
+        action: input.action,
+        entityType: input.target ?? null,
+        decisionAuthority: input.actor,
+        newValue: input.metadata ?? null,
+        escalationTriggered: false,
+        createdAt: input.timestamp ? new Date(input.timestamp) : new Date(),
+      });
+      return { success: true, id: (result as any).insertId };
+    }),
+
+  // listAuditLogs — Query audit logs with pagination and filters
+  listAuditLogs: protectedProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(200).default(50),
+        offset: z.number().min(0).default(0),
+        dateRange: z.object({
+          from: z.string().datetime(),
+          to: z.string().datetime(),
+        }).optional(),
+        actor: z.string().optional(),
+        action: z.string().optional(),
+      }).optional()
+    )
+    .query(async ({ ctx, input }) => {
+      requireAdmin(ctx.user.role);
+      const db = await getDb();
+      if (!db) return { logs: [], total: 0 };
+
+      const conditions = [];
+      if (input?.dateRange) {
+        conditions.push(gte(auditLogs.createdAt, new Date(input.dateRange.from)));
+        conditions.push(lte(auditLogs.createdAt, new Date(input.dateRange.to)));
+      }
+      if (input?.actor) {
+        conditions.push(like(auditLogs.decisionAuthority, `%${input.actor}%`));
+      }
+      if (input?.action) {
+        conditions.push(like(auditLogs.action, `%${input.action}%`));
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const logs = await db
+        .select()
+        .from(auditLogs)
+        .where(whereClause)
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(input?.limit ?? 50)
+        .offset(input?.offset ?? 0);
+
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(auditLogs)
+        .where(whereClause);
+
+      return { logs, total: (countResult as any)?.count ?? logs.length };
+    }),
+
   // ── Escalation Queue ─────────────────────────────────────────────────────────
+  // createEscalation — Add items to escalation queue with priority, description, assignee
+  createEscalation: protectedProcedure
+    .input(
+      z.object({
+        priority: z.enum(["low", "medium", "high", "critical"]),
+        description: z.string().min(1).max(1000),
+        assignee: z.string().max(255).optional(),
+        decisionType: z.string().max(100).default("manual"),
+        authorityLevel: z.string().max(50).default("architect"),
+        thresholdExceeded: z.string().optional(),
+        thresholdLimit: z.string().optional(),
+        expiresInHours: z.number().default(24),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      // First create an audit log entry for the escalation
+      const [auditResult] = await db.insert(auditLogs).values({
+        userId: ctx.user.id,
+        action: `Escalation created: ${input.description.substring(0, 100)}`,
+        entityType: input.decisionType,
+        decisionAuthority: input.assignee ?? "unassigned",
+        escalationTriggered: true,
+        escalationReason: input.description,
+      });
+      const auditLogId = (auditResult as any).insertId ?? 0;
+
+      const [result] = await db.insert(escalationQueue).values({
+        auditLogId,
+        decisionType: input.decisionType,
+        decisionContext: {
+          priority: input.priority,
+          description: input.description,
+          assignee: input.assignee ?? null,
+          createdBy: ctx.user.id,
+        },
+        thresholdExceeded: input.thresholdExceeded,
+        thresholdLimit: input.thresholdLimit,
+        authorityLevel: input.authorityLevel,
+        status: "pending",
+        expiresAt: new Date(Date.now() + input.expiresInHours * 60 * 60 * 1000),
+      });
+
+      return { success: true, id: (result as any).insertId };
+    }),
+
+  // listEscalations — Query escalation queue with status filter
+  listEscalations: protectedProcedure
+    .input(
+      z.object({
+        status: z.enum(["pending", "approved", "rejected", "expired", "all"]).default("all"),
+        limit: z.number().min(1).max(200).default(50),
+        offset: z.number().min(0).default(0),
+      }).optional()
+    )
+    .query(async ({ ctx, input }) => {
+      requireAdmin(ctx.user.role);
+      const db = await getDb();
+      if (!db) return { escalations: [], total: 0 };
+
+      const status = input?.status ?? "all";
+      const whereClause = status !== "all"
+        ? eq(escalationQueue.status, status as "pending" | "approved" | "rejected" | "expired")
+        : undefined;
+
+      const escalations = await db
+        .select()
+        .from(escalationQueue)
+        .where(whereClause)
+        .orderBy(desc(escalationQueue.createdAt))
+        .limit(input?.limit ?? 50)
+        .offset(input?.offset ?? 0);
+
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(escalationQueue)
+        .where(whereClause);
+
+      return { escalations, total: (countResult as any)?.count ?? escalations.length };
+    }),
+
   getEscalations: protectedProcedure
     .input(z.object({
       status: z.enum(["pending", "approved", "rejected", "expired", "all"]).default("all"),

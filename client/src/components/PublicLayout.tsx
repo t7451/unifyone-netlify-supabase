@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
+import { usePixelPageView } from "@/hooks/usePixelPageView";
 
 const NAV_LINKS = [
   { label: "Architecture", href: "/architecture" },
@@ -18,6 +19,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [location] = useLocation();
+
+  // Fire Meta Pixel PageView on every route change
+  usePixelPageView();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);

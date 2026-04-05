@@ -3,7 +3,7 @@ import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import {
-  n8nSchedules, deepLinkAttributions, metaPixelEvents,
+  n8nSchedules, deepLinkAttributions, metaPixelEvents, mobilePushSchedules,
 } from "../../drizzle/schema";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
 
@@ -284,4 +284,110 @@ export const mobileAutomationRouter = router({
       .sort((a, b) => b.count - a.count);
     return { total: events.length, byEvent };
   }),
+
+  // ── Mobile Push Schedules ──────────────────────────────────────────────────────
+  listPushSchedules: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+    return db
+      .select()
+      .from(mobilePushSchedules)
+      .where(eq(mobilePushSchedules.tenantId, ctx.user.id))
+      .orderBy(desc(mobilePushSchedules.createdAt));
+  }),
+
+  createPushSchedule: protectedProcedure
+    .input(z.object({
+      title: z.string().min(1).max(255),
+      body: z.string().min(1),
+      targetAudience: z.enum(["all", "active_users", "inactive_users", "new_users", "custom"]).default("all"),
+      scheduledAt: z.string().datetime().optional(),
+      cronExpression: z.string().max(100).optional(),
+      recurring: z.boolean().default(false),
+      deepLinkPath: z.string().max(500).optional(),
+      imageUrl: z.string().url().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const status = input.recurring ? "recurring" as const : input.scheduledAt ? "scheduled" as const : "draft" as const;
+      await db.insert(mobilePushSchedules).values({
+        tenantId: ctx.user.id,
+        title: input.title,
+        body: input.body,
+        targetAudience: input.targetAudience,
+        ...(input.scheduledAt ? { scheduledAt: new Date(input.scheduledAt) } : {}),
+        ...(input.cronExpression ? { cronExpression: input.cronExpression } : {}),
+        recurring: input.recurring,
+        ...(input.deepLinkPath ? { deepLinkPath: input.deepLinkPath } : {}),
+        ...(input.imageUrl ? { imageUrl: input.imageUrl } : {}),
+        status,
+        enabled: true,
+      });
+      return { success: true };
+    }),
+
+  updatePushSchedule: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      title: z.string().min(1).max(255).optional(),
+      body: z.string().min(1).optional(),
+      targetAudience: z.enum(["all", "active_users", "inactive_users", "new_users", "custom"]).optional(),
+      scheduledAt: z.string().datetime().optional(),
+      cronExpression: z.string().max(100).optional(),
+      recurring: z.boolean().optional(),
+      deepLinkPath: z.string().max(500).optional(),
+      enabled: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const { id, scheduledAt, ...updates } = input;
+      await db
+        .update(mobilePushSchedules)
+        .set({
+          ...updates,
+          ...(scheduledAt ? { scheduledAt: new Date(scheduledAt) } : {}),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(mobilePushSchedules.id, id), eq(mobilePushSchedules.tenantId, ctx.user.id)));
+      return { success: true };
+    }),
+
+  deletePushSchedule: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      await db
+        .delete(mobilePushSchedules)
+        .where(and(eq(mobilePushSchedules.id, input.id), eq(mobilePushSchedules.tenantId, ctx.user.id)));
+      return { success: true };
+    }),
+
+  sendPushNow: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const [schedule] = await db
+        .select()
+        .from(mobilePushSchedules)
+        .where(and(eq(mobilePushSchedules.id, input.id), eq(mobilePushSchedules.tenantId, ctx.user.id)))
+        .limit(1);
+      if (!schedule) throw new TRPCError({ code: "NOT_FOUND", message: "Push schedule not found" });
+
+      // In production this would call FCM/APNs. For now, mark as sent.
+      await db
+        .update(mobilePushSchedules)
+        .set({
+          lastSentAt: new Date(),
+          sentCount: (schedule.sentCount ?? 0) + 1,
+          status: "sent",
+          updatedAt: new Date(),
+        })
+        .where(eq(mobilePushSchedules.id, input.id));
+
+      return { success: true, sentCount: (schedule.sentCount ?? 0) + 1 };
+    }),
 });

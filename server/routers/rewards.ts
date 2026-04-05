@@ -9,6 +9,7 @@ import {
   creditTransactions,
   users,
 } from "../../drizzle/schema";
+import { getAppUrl } from "../_core/env";
 
 function generateEventId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
@@ -142,6 +143,16 @@ export const rewardsRouter = router({
         description: `Reward: ${opp.title}`,
         balanceAfter: newBalance,
       });
+
+      // Fire Meta CAPI CompleteRegistration event for reward key claim (non-blocking)
+      try {
+        const { capi } = await import("../meta/capi");
+        await capi.completeRegistration(
+          metaEventId,
+          { externalId: String(ctx.user.id), email: ctx.user.email ?? undefined },
+          `${getAppUrl()}/rewards`
+        );
+      } catch (_) { /* CAPI failure is non-critical */ }
 
       return {
         success: true,

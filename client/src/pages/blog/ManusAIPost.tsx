@@ -1,48 +1,68 @@
-import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import { SITE_URL } from "@/lib/siteConfig";
 
-const ARTICLE_SCHEMA = {
-  "@context": "https://schema.org",
-  "@type": "Article",
-  "headline": "Manus AI for Gig Workers: From Data to Decisions in Seconds",
-  "description": "How Manus AI embedded inside UnifyOne transforms raw gig earnings data into actionable route optimization, tax deduction tracking, and challenge strategy — without leaving the dashboard.",
-  "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-og-card-gmKaF7wnfK9eUMpcMfEqQ4.png",
-  "author": {
-    "@type": "Organization",
-    "name": "1Commerce Solutions",
-    "url": SITE_URL
+const CANONICAL = `${SITE_URL}/blog/manus-ai-gig-workers`;
+const TITLE = "Manus AI for Gig Workers: From Data to Decisions in Seconds | 1Commerce";
+const DESCRIPTION = "How Manus AI embedded inside UnifyOne transforms raw gig earnings data into actionable route optimization, tax deduction tracking, and challenge strategy — without leaving the dashboard.";
+const OG_IMAGE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-og-card-gmKaF7wnfK9eUMpcMfEqQ4.png";
+
+const JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Manus AI for Gig Workers: From Data to Decisions in Seconds",
+    "description": DESCRIPTION,
+    "image": OG_IMAGE,
+    "author": {
+      "@type": "Organization",
+      "name": "1Commerce",
+      "url": SITE_URL
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "1Commerce",
+      "logo": { "@type": "ImageObject", "url": `${SITE_URL}/favicon.ico` }
+    },
+    "datePublished": "2026-03-06",
+    "dateModified": "2026-04-04",
+    "mainEntityOfPage": { "@type": "WebPage", "@id": CANONICAL },
+    "keywords": ["Manus AI gig workers", "AI earnings insights", "gig worker AI assistant", "DoorDash AI optimization", "Uber Eats route AI", "gig economy artificial intelligence"],
+    "articleSection": "AI Integration",
+    "wordCount": 1050
   },
-  "publisher": {
-    "@type": "Organization",
-    "name": "1Commerce Solutions",
-    "logo": { "@type": "ImageObject", "url": `${SITE_URL}/favicon.ico` }
-  },
-  "datePublished": "2026-03-06",
-  "dateModified": "2026-03-06",
-  "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/blog/manus-ai-gig-workers` },
-  "keywords": ["Manus AI gig workers", "AI earnings insights", "gig worker AI assistant", "DoorDash AI optimization", "Uber Eats route AI", "gig economy artificial intelligence"],
-  "articleSection": "AI Integration",
-  "wordCount": 1050
-};
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": `${SITE_URL}/` },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": `${SITE_URL}/blog` },
+      { "@type": "ListItem", "position": 3, "name": "Manus AI for Gig Workers", "item": CANONICAL }
+    ]
+  }
+];
 
 export default function ManusAIPost() {
-  useEffect(() => {
-    document.title = "Manus AI for Gig Workers: From Data to Decisions in Seconds | UnifyOne";
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", "How Manus AI embedded inside UnifyOne transforms raw gig earnings data into actionable route optimization, tax deduction tracking, and challenge strategy — without leaving the dashboard.");
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) canonical.setAttribute("href", `${SITE_URL}/blog/manus-ai-gig-workers`);
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.text = JSON.stringify(ARTICLE_SCHEMA);
-    script.id = "article-schema";
-    document.head.appendChild(script);
-    return () => { document.getElementById("article-schema")?.remove(); };
-  }, []);
-
   return (
     <div style={{ backgroundColor: "#020202", color: "#F0E8D0", minHeight: "100vh" }}>
+      <Helmet>
+        <title>{TITLE}</title>
+        <meta name="description" content={DESCRIPTION} />
+        <link rel="canonical" href={CANONICAL} />
+        <meta property="og:title" content={TITLE} />
+        <meta property="og:description" content={DESCRIPTION} />
+        <meta property="og:image" content={OG_IMAGE} />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={CANONICAL} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={TITLE} />
+        <meta name="twitter:description" content={DESCRIPTION} />
+        <meta name="twitter:image" content={OG_IMAGE} />
+        {JSON_LD.map((schema, i) => (
+          <script key={i} type="application/ld+json">{JSON.stringify(schema)}</script>
+        ))}
+      </Helmet>
+
       <nav className="fixed top-0 left-0 right-0 z-50" style={{ backgroundColor: "rgba(2,2,2,0.97)", borderBottom: "1px solid rgba(212,168,67,0.12)", backdropFilter: "blur(12px)" }}>
         <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
           <Link href="/"><span className="font-cinzel text-xs font-700 tracking-widest cursor-pointer" style={{ color: "#D4A843", letterSpacing: "0.2em" }}>← UNIFYONE</span></Link>
@@ -132,6 +152,7 @@ export default function ManusAIPost() {
           </div>
         </div>
 
+        {/* Related */}
         <div className="mt-16 pt-12" style={{ borderTop: "1px solid rgba(212,168,67,0.08)" }}>
           <span className="inscription block mb-6">Further Reading</span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

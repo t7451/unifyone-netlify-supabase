@@ -1,7 +1,7 @@
 # ============================================================================
 # UnifyOne — 1Commerce / PNW Enterprises
 # __APP_URL__
-# Last updated: 2026-03-06
+# Last updated: 2026-04-04
 # ============================================================================
 
 # ── Google Search crawlers ────────────────────────────────────────────────
@@ -26,9 +26,7 @@ Disallow: /referrals
 Disallow: /leads
 Disallow: /automations
 Disallow: /ai-assistant
-Disallow: /friends
-Disallow: /gig-command
-Disallow: /money-manager
+Disallow: /notifications
 
 # ── Google Images ─────────────────────────────────────────────────────────
 User-agent: Googlebot-Image
@@ -107,5 +105,4 @@ Disallow: /dashboard
 Crawl-delay: 1
 
 # ── Sitemaps ──────────────────────────────────────────────────────────────
-Sitemap: __APP_URL__/sitemap.xml
 Sitemap: __APP_URL__/sitemap.xml
