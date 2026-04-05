@@ -3,7 +3,7 @@
 
 [build]
   base = ""
-  command = "echo '=== NODE ===' && node -v && echo '=== PNPM ===' && pnpm -v && echo '=== INSTALL ===' && pnpm install --no-frozen-lockfile 2>&1 && echo '=== VITE BUILD ===' && pnpm exec vite build 2>&1 && echo '=== ESBUILD ===' && pnpm exec esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist 2>&1 && echo '=== DONE ==='"
+  command = "pnpm install --no-frozen-lockfile && pnpm build"
   publish = "dist/public"
   functions = "netlify/functions"
 
