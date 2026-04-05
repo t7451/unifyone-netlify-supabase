@@ -3,7 +3,7 @@
 
 [build]
   base = ""
-  command = "pnpm install && pnpm build"
+  command = "pnpm config set onlyBuiltDependencies '@tailwindcss/oxide' 'esbuild' 'es5-ext' && pnpm install --no-frozen-lockfile && pnpm build"
   publish = "dist/public"
   functions = "netlify/functions"
 
