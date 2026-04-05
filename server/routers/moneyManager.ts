@@ -392,6 +392,18 @@ export const moneyManagerRouter = router({
       await awardPoints(db, ctx.user.id, "rule_created", POINTS.rule_created,
         `Created financial rule: ${input.name}`);
 
+      // Auto-detect friend challenge completion for rule-based challenges
+      try {
+        const { challengeProgress: cpTable } = await import("../../drizzle/schema");
+        const joined = await db
+          .select({ challengeId: cpTable.challengeId })
+          .from(cpTable)
+          .where(eq(cpTable.userId, ctx.user.id));
+        for (const { challengeId } of joined) {
+          await checkAndResolveFriendChallenge(challengeId, ctx.user.id);
+        }
+      } catch (_) { /* non-critical */ }
+
       return { success: true };
     }),
 
