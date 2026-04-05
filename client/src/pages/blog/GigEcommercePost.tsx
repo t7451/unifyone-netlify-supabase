@@ -1,49 +1,59 @@
-import { useEffect } from "react";
 import { Link } from "wouter";
 import { SITE_URL } from "@/lib/siteConfig";
+import BlogPostHead from "@/components/BlogPostHead";
 
-const ARTICLE_SCHEMA = {
-  "@context": "https://schema.org",
-  "@type": "Article",
-  "headline": "How Gig Economy Workers Can Build a Commerce Platform That Scales",
-  "description": "A deep-dive into how gig operators on DoorDash, Uber Eats, Instacart, and Amazon Flex can leverage multi-tenant commerce infrastructure to maximize earnings, automate tax tracking, and build a scalable side business.",
-  "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-hero-v2-3tFDpV7FHQo4P2qJjERF7q.png",
-  "author": {
-    "@type": "Organization",
-    "name": "1Commerce Solutions",
-    "url": SITE_URL
+const CANONICAL = `${SITE_URL}/blog/gig-economy-commerce-platform`;
+const TITLE = "How Gig Economy Workers Can Build a Commerce Platform That Scales | 1Commerce";
+const DESCRIPTION = "A deep-dive into how gig operators on DoorDash, Uber Eats, Instacart, and Amazon Flex can leverage multi-tenant commerce infrastructure to maximize earnings, automate tax tracking, and build a scalable side business.";
+const OG_IMAGE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-hero-v2-3tFDpV7FHQo4P2qJjERF7q.png";
+
+const JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "How Gig Economy Workers Can Build a Commerce Platform That Scales",
+    "description": DESCRIPTION,
+    "image": OG_IMAGE,
+    "author": {
+      "@type": "Organization",
+      "name": "1Commerce",
+      "url": SITE_URL
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "1Commerce",
+      "logo": { "@type": "ImageObject", "url": `${SITE_URL}/favicon.ico` }
+    },
+    "datePublished": "2026-03-06",
+    "dateModified": "2026-04-04",
+    "mainEntityOfPage": { "@type": "WebPage", "@id": CANONICAL },
+    "keywords": ["gig economy commerce", "gig worker platform", "DoorDash earnings tracker", "multi-tenant ecommerce", "gig economy SaaS", "Uber Eats analytics"],
+    "articleSection": "Commerce Infrastructure",
+    "wordCount": 1200
   },
-  "publisher": {
-    "@type": "Organization",
-    "name": "1Commerce Solutions",
-    "logo": { "@type": "ImageObject", "url": `${SITE_URL}/favicon.ico` }
-  },
-  "datePublished": "2026-03-06",
-  "dateModified": "2026-03-06",
-  "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/blog/gig-economy-commerce-platform` },
-  "keywords": ["gig economy commerce", "gig worker platform", "DoorDash earnings tracker", "multi-tenant ecommerce", "gig economy SaaS", "Uber Eats analytics"],
-  "articleSection": "Commerce Infrastructure",
-  "wordCount": 1200
-};
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": `${SITE_URL}/` },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": `${SITE_URL}/blog` },
+      { "@type": "ListItem", "position": 3, "name": "Gig Economy Commerce", "item": CANONICAL }
+    ]
+  }
+];
 
 export default function GigEcommercePost() {
-  useEffect(() => {
-    document.title = "How Gig Economy Workers Can Build a Commerce Platform That Scales | UnifyOne";
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", "A deep-dive into how gig operators on DoorDash, Uber Eats, Instacart, and Amazon Flex can leverage multi-tenant commerce infrastructure to maximize earnings and automate tax tracking.");
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) canonical.setAttribute("href", `${SITE_URL}/blog/gig-economy-commerce-platform`);
-    // Inject article schema
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.text = JSON.stringify(ARTICLE_SCHEMA);
-    script.id = "article-schema";
-    document.head.appendChild(script);
-    return () => { document.getElementById("article-schema")?.remove(); };
-  }, []);
-
   return (
     <div style={{ backgroundColor: "#020202", color: "#F0E8D0", minHeight: "100vh" }}>
+      <BlogPostHead
+        canonical={CANONICAL}
+        title={TITLE}
+        description={DESCRIPTION}
+        ogImage={OG_IMAGE}
+        breadcrumbName="Gig Economy Commerce"
+        jsonLd={JSON_LD}
+      />
+
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50" style={{ backgroundColor: "rgba(2,2,2,0.97)", borderBottom: "1px solid rgba(212,168,67,0.12)", backdropFilter: "blur(12px)" }}>
         <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">

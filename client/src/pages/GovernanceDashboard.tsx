@@ -74,7 +74,7 @@ export default function GovernanceDashboard() {
 
   // ── Derived data ──────────────────────────────────────────────────────────────
   const auditLogs = auditQuery.data?.logs ?? [];
-  const escalations = escalationsQuery.data ?? [];
+  const escalations = escalationsQuery.data?.escalations ?? [];
   const killSwitches = killSwitchesQuery.data ?? [];
   const rules = rulesQuery.data ?? [];
   const metrics = metricsQuery.data;

@@ -489,6 +489,7 @@ function FeedTab() {
 // ── Challenges Tab ───────────────────────────────────────────────────────────
 function ChallengesTab() {
   const challenges = trpc.socialFriends.listFriendChallenges.useQuery();
+  const results = trpc.socialFriends.getChallengeResults.useQuery();
   const respond = trpc.socialFriends.respondToChallenge.useMutation({
     onSuccess: (_, vars) => {
       toast.success(vars.action === "accept" ? "Challenge accepted! May the best gig worker win." : "Challenge declined.");
@@ -499,8 +500,13 @@ function ChallengesTab() {
 
   const received = challenges.data?.received ?? [];
   const sent = challenges.data?.sent ?? [];
+  const resolved = results.data ?? [];
 
-  if (challenges.isLoading) return <div className="text-center text-gray-500 py-12">Loading challenges…</div>;
+  // Filter out completed challenges from sent/received since they appear in the results section
+  const activeSent = sent.filter((fc) => fc.status !== "completed");
+  const activeReceived = received.filter((fc) => fc.status !== "completed");
+
+  if (challenges.isLoading || results.isLoading) return <div className="text-center text-gray-500 py-12">Loading challenges...</div>;
 
   const statusBadge = (status: string) => {
     const map: Record<string, { label: string; className: string }> = {
@@ -513,7 +519,7 @@ function ChallengesTab() {
     return <Badge className={`text-xs ${s.className}`}>{s.label}</Badge>;
   };
 
-  if (!received.length && !sent.length) {
+  if (!activeReceived.length && !activeSent.length && !resolved.length) {
     return (
       <div className="text-center py-16 space-y-3">
         <Swords className="w-12 h-12 text-gray-600 mx-auto" />
@@ -527,14 +533,101 @@ function ChallengesTab() {
 
   return (
     <div className="space-y-6">
-      {received.length > 0 && (
+      {/* Resolved Challenges Results */}
+      {resolved.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-yellow-400" />
+            Results ({resolved.length})
+          </h3>
+          <div className="space-y-3">
+            {resolved.map((r) => (
+              <Card
+                key={r.id}
+                className={`border ${
+                  r.isTie
+                    ? "bg-purple-900/10 border-purple-500/30"
+                    : r.iWon
+                    ? "bg-yellow-900/10 border-yellow-500/30"
+                    : "bg-[#0D1B3E]/40 border-white/10"
+                }`}
+              >
+                <CardContent className="p-4 space-y-3">
+                  {/* Result banner */}
+                  <div
+                    className={`rounded-lg px-3 py-2 text-center text-sm font-semibold ${
+                      r.isTie
+                        ? "bg-purple-600/20 text-purple-300"
+                        : r.iWon
+                        ? "bg-yellow-600/20 text-yellow-300"
+                        : "bg-gray-700/30 text-gray-300"
+                    }`}
+                  >
+                    {r.isTie ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Tie -- You both completed it at the same time!
+                      </span>
+                    ) : r.iWon ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Trophy className="w-4 h-4" />
+                        You Won! +50 bonus points
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <Star className="w-4 h-4" />
+                        Challenge Complete -- better luck next time
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-white text-sm">{r.challengeName}</p>
+                        {r.iWon && (
+                          <Badge className="bg-yellow-600/30 text-yellow-300 border-yellow-500/40 text-[10px] px-1.5">
+                            Winner
+                          </Badge>
+                        )}
+                        {r.isTie && (
+                          <Badge className="bg-purple-600/30 text-purple-300 border-purple-500/40 text-[10px] px-1.5">
+                            Tied
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        vs <span className="text-white">{r.opponentName}</span>
+                        {" -- "}
+                        {r.myRole === "challenger" ? "you challenged them" : "they challenged you"}
+                      </p>
+                    </div>
+                    <Badge className="bg-green-900/20 text-green-400 border-green-700/30 text-xs">
+                      Completed
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-[#00D9FF]">+{r.pointsReward} pts</span>
+                    {r.resolvedAt && (
+                      <span className="text-xs text-gray-600">Resolved {timeAgo(r.resolvedAt)}</span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeReceived.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
             <Swords className="w-4 h-4 text-purple-400" />
-            Challenges Received ({received.length})
+            Challenges Received ({activeReceived.length})
           </h3>
           <div className="space-y-3">
-            {received.map((fc) => (
+            {activeReceived.map((fc) => (
               <Card key={fc.id} className="bg-[#0D1B3E]/60 border border-purple-500/20">
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">
@@ -583,14 +676,14 @@ function ChallengesTab() {
         </div>
       )}
 
-      {sent.length > 0 && (
+      {activeSent.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
             <ChevronRight className="w-4 h-4 text-blue-400" />
-            Challenges Sent ({sent.length})
+            Challenges Sent ({activeSent.length})
           </h3>
           <div className="space-y-3">
-            {sent.map((fc) => (
+            {activeSent.map((fc) => (
               <Card key={fc.id} className="bg-[#0D1B3E]/40 border border-white/10">
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-3">

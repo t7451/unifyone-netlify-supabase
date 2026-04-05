@@ -366,7 +366,9 @@ function TriggerConfig() {
   // Local state for each event's config
   const [configs, setConfigs] = useState<
     Record<string, {
+      inAppEnabled: boolean;
       n8nEnabled: boolean;
+      n8nWebhookUrl: string;
       zapierEnabled: boolean;
       mailchimpEnabled: boolean;
       slackEnabled: boolean;
@@ -378,7 +380,9 @@ function TriggerConfig() {
     const defaults: Record<string, any> = {};
     TRIGGER_EVENTS.forEach((e) => {
       defaults[e.event] = {
-        n8nEnabled: false, zapierEnabled: false, mailchimpEnabled: false,
+        inAppEnabled: true,
+        n8nEnabled: false, n8nWebhookUrl: "",
+        zapierEnabled: false, mailchimpEnabled: false,
         slackEnabled: false, slackWebhookUrl: "",
         emailEnabled: false, emailRecipients: "",
       };
@@ -392,7 +396,9 @@ function TriggerConfig() {
     const updated = { ...configs };
     triggers.forEach((t) => {
       updated[t.event] = {
+        inAppEnabled: t.inAppEnabled ?? true,
         n8nEnabled: t.n8nEnabled,
+        n8nWebhookUrl: t.n8nWebhookUrl ?? "",
         zapierEnabled: t.zapierEnabled,
         mailchimpEnabled: t.mailchimpEnabled,
         slackEnabled: t.slackEnabled,
@@ -449,7 +455,24 @@ function TriggerConfig() {
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <p className="text-sm font-medium text-white">{label}</p>
-                          <p className="text-xs text-slate-500 font-mono">{event}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <p className="text-xs text-slate-500 font-mono">{event}</p>
+                            {(() => {
+                              const active = [
+                                cfg.inAppEnabled && "In-app",
+                                cfg.n8nEnabled && "n8n",
+                                cfg.zapierEnabled && "Zapier",
+                                cfg.mailchimpEnabled && "Mailchimp",
+                                cfg.slackEnabled && "Slack",
+                                cfg.emailEnabled && "Email",
+                              ].filter(Boolean);
+                              return active.length > 0 ? (
+                                <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-[10px] px-1.5 py-0">
+                                  {active.length} channel{active.length !== 1 ? "s" : ""} active
+                                </Badge>
+                              ) : null;
+                            })()}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           {existingTrigger && (
@@ -476,7 +499,19 @@ function TriggerConfig() {
                       </div>
 
                       {/* Channel toggles */}
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">
+                        {/* In-App */}
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={cfg.inAppEnabled}
+                            onCheckedChange={(v) => setConfigs((c) => ({ ...c, [event]: { ...c[event], inAppEnabled: v } }))}
+                          />
+                          <div className="flex items-center gap-1.5">
+                            <Bell className="h-3.5 w-3.5 text-cyan-400" />
+                            <span className="text-xs text-slate-300">In-app</span>
+                          </div>
+                        </div>
+
                         {/* n8n */}
                         <div className="flex items-center gap-2">
                           <Switch
@@ -539,6 +574,17 @@ function TriggerConfig() {
                       </div>
 
                       {/* Conditional inputs */}
+                      {cfg.n8nEnabled && (
+                        <div className="mt-3 space-y-1.5">
+                          <Label className="text-xs text-slate-400">n8n Webhook URL</Label>
+                          <Input
+                            placeholder="https://your-n8n.example.com/webhook/..."
+                            value={cfg.n8nWebhookUrl}
+                            onChange={(e) => setConfigs((c) => ({ ...c, [event]: { ...c[event], n8nWebhookUrl: e.target.value } }))}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                      )}
                       {cfg.slackEnabled && (
                         <div className="mt-3 space-y-1.5">
                           <Label className="text-xs text-slate-400">Slack Webhook URL</Label>

@@ -54,7 +54,7 @@ function buildEmailTemplates(baseUrl: string) {
               <a href="${baseUrl}/begin">BEGIN CONSTRUCTION</a>
             </div>
             <div class="footer">
-              <p>© 2024 PNW Enterprises. Built to endure.</p>
+              <p>© 2025 PNW Enterprises. Built to endure.</p>
               <p><a href="${baseUrl}/unsubscribe" style="color: #7A7A7A; text-decoration: none;">Unsubscribe</a></p>
             </div>
           </div>
@@ -124,7 +124,7 @@ function buildEmailTemplates(baseUrl: string) {
               <a href="${baseUrl}/architecture">EXPLORE THE ARCHITECTURE</a>
             </div>
             <div class="footer">
-              <p>© 2024 PNW Enterprises. Built to endure.</p>
+              <p>© 2025 PNW Enterprises. Built to endure.</p>
             </div>
           </div>
         </body>
@@ -183,7 +183,7 @@ function buildEmailTemplates(baseUrl: string) {
               <a href="${baseUrl}/begin">START NOW</a>
             </div>
             <div class="footer">
-              <p>© 2024 PNW Enterprises. Built to endure.</p>
+              <p>© 2025 PNW Enterprises. Built to endure.</p>
             </div>
           </div>
         </body>
@@ -237,7 +237,7 @@ function buildEmailTemplates(baseUrl: string) {
               <a href="${baseUrl}/the-system">SEE HOW IT WORKS</a>
             </div>
             <div class="footer">
-              <p>© 2024 PNW Enterprises. Built to endure.</p>
+              <p>© 2025 PNW Enterprises. Built to endure.</p>
             </div>
           </div>
         </body>
@@ -288,7 +288,7 @@ function buildEmailTemplates(baseUrl: string) {
               <a href="${baseUrl}/tithes">CLAIM YOUR PRICING</a>
             </div>
             <div class="footer">
-              <p>© 2024 PNW Enterprises. Built to endure.</p>
+              <p>© 2025 PNW Enterprises. Built to endure.</p>
             </div>
           </div>
         </body>

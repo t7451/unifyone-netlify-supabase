@@ -487,7 +487,9 @@ export const notificationTriggers = mysqlTable("notification_triggers", {
   tenantId: int("tenantId").notNull(),
   event: varchar("event", { length: 100 }).notNull(),
   // event: order.created | order.status_changed | payment.received | lead.submitted | team.invite_accepted | social.post_published
+  inAppEnabled: boolean("inAppEnabled").default(true).notNull(),
   n8nEnabled: boolean("n8nEnabled").default(false).notNull(),
+  n8nWebhookUrl: text("n8nWebhookUrl"),
   zapierEnabled: boolean("zapierEnabled").default(false).notNull(),
   mailchimpEnabled: boolean("mailchimpEnabled").default(false).notNull(),
   slackWebhookUrl: text("slackWebhookUrl"),
@@ -1000,6 +1002,28 @@ export const n8nSchedules = mysqlTable("n8n_schedules", {
 });
 export type N8nSchedule = typeof n8nSchedules.$inferSelect;
 export type InsertN8nSchedule = typeof n8nSchedules.$inferInsert;
+
+// ─── Mobile: Push Notification Schedules ─────────────────────────────────────
+export const mobilePushSchedules = mysqlTable("mobile_push_schedules", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  targetAudience: mysqlEnum("targetAudience", ["all", "active_users", "inactive_users", "new_users", "custom"]).default("all").notNull(),
+  scheduledAt: timestamp("scheduledAt"),
+  cronExpression: varchar("cronExpression", { length: 100 }),
+  recurring: boolean("recurring").default(false).notNull(),
+  deepLinkPath: varchar("deepLinkPath", { length: 500 }),
+  imageUrl: text("imageUrl"),
+  enabled: boolean("enabled").default(true).notNull(),
+  sentCount: int("sentCount").default(0).notNull(),
+  lastSentAt: timestamp("lastSentAt"),
+  status: mysqlEnum("status", ["draft", "scheduled", "sent", "failed", "recurring"]).default("draft").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type MobilePushSchedule = typeof mobilePushSchedules.$inferSelect;
+export type InsertMobilePushSchedule = typeof mobilePushSchedules.$inferInsert;
 
 // ─── AI Conversations ─────────────────────────────────────────────────────────
 export const aiConversations = mysqlTable("ai_conversations", {

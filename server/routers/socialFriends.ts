@@ -13,6 +13,7 @@ import {
   notifications,
 } from "../../drizzle/schema";
 import { eq, and, or, desc, ne, like, sql } from "drizzle-orm";
+import { getAppUrl } from "../_core/env";
 
 // ── Helper: create an in-app notification for a user ─────────────────────────
 async function createNotification(
@@ -506,6 +507,22 @@ export const socialFriendsRouter = router({
 
         link: "/friends?tab=challenges",
       });
+
+      // Fire Meta CAPI FriendChallengeAccepted event when accepted (non-blocking).
+      // Intentionally skips DB logging — fire-and-forget so CAPI failures never block the acceptance flow.
+      if (input.action === "accept") {
+        try {
+          const { capi } = await import("../meta/capi");
+          const capiEventId = `challenge-accepted-${input.friendChallengeId}-${Date.now()}`;
+          await capi.custom(
+            "FriendChallengeAccepted",
+            capiEventId,
+            { externalId: String(ctx.user.id), email: ctx.user.email ?? undefined },
+            `${getAppUrl()}/friends`,
+            { challenge_id: fc.challengeId, challenge_name: challenge?.name ?? "Unknown" }
+          );
+        } catch (_) { /* CAPI failure is non-critical */ }
+      }
 
       return { success: true };
     }),

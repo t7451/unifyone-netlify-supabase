@@ -123,12 +123,24 @@ async function sendDripEmail(
  *
  * Called by a cron job (e.g., every hour). Checks all subscribers and sends
  * any drips that are due based on their createdAt timestamp.
+ *
+ * Edge-case handling:
+ * - Skips subscribers who have unsubscribed or bounced
+ * - Gracefully handles missing RESEND_API_KEY (logs warning, returns early)
+ * - Isolates per-subscriber errors so one failure doesn't abort the batch
  */
 export async function processPendingDrips(): Promise<{
   processed: number;
   sent: number;
   errors: number;
 }> {
+  // Early exit if Resend is not configured — avoid querying DB unnecessarily
+  const resendCheck = getResendClient();
+  if (!resendCheck) {
+    console.warn("[Drip] RESEND_API_KEY is not configured — skipping drip processing. Set the env var to enable email drips.");
+    return { processed: 0, sent: 0, errors: 0 };
+  }
+
   try {
     const db = await getDb();
     if (!db) {
@@ -147,7 +159,7 @@ export async function processPendingDrips(): Promise<{
       // Find subscribers who:
       // 1. Have createdAt before the cutoff (enough time has passed)
       // 2. Have dripsCompleted < dripNumber (haven't received this drip yet)
-      // 3. Are subscribed
+      // 3. Are subscribed (excludes unsubscribed and bounced)
       const dueSubscribers = await db
         .select()
         .from(emailSubscribers)
@@ -159,22 +171,30 @@ export async function processPendingDrips(): Promise<{
           )
         );
 
-      // Send drip to each due subscriber
+      // Send drip to each due subscriber, isolating errors per-subscriber
       for (const subscriber of dueSubscribers) {
-        const result = await sendDripEmail(
-          subscriber.id,
-          dripNumber,
-          templateKey
-        );
-        if (result.success) {
-          sent++;
-        } else {
+        try {
+          const result = await sendDripEmail(
+            subscriber.id,
+            dripNumber,
+            templateKey
+          );
+          if (result.success) {
+            sent++;
+          } else {
+            errors++;
+            console.warn(`[Drip] Failed drip ${dripNumber} for ${subscriber.email}: ${result.error}`);
+          }
+        } catch (subscriberError) {
+          // Isolate per-subscriber errors so one crash doesn't abort the entire batch
           errors++;
+          const msg = subscriberError instanceof Error ? subscriberError.message : String(subscriberError);
+          console.error(`[Drip] Unexpected error processing subscriber ${subscriber.id} (drip ${dripNumber}): ${msg}`);
         }
       }
     }
 
-    console.log(`[Drip] Processed: sent ${sent}, errors ${errors}`);
+    console.log(`[Drip] Batch complete — sent: ${sent}, errors: ${errors}`);
     return { processed: DRIP_SCHEDULE.length, sent, errors };
   } catch (error) {
     console.error("[Drip] Fatal error in processPendingDrips:", error);
