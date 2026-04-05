@@ -135,7 +135,12 @@
       "fast-xml-parser": ">=5.3.6",
       "rollup": ">=4.59.0",
       "tar": ">=7.5.8"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@tailwindcss/oxide",
+      "esbuild",
+      "es5-ext"
+    ]
   },
   "lint-staged": {
     "*.{ts,tsx}": [
