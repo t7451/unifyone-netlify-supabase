@@ -13,11 +13,74 @@ import serverless from "serverless-http";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
+import { meterCredits, CREDIT_COST_MODEL } from "../../server/creditMeter";
+
+// Per-request context extracted from headers (set by the MCP client)
+// X-UnifyOne-User-Id / X-UnifyOne-Tenant-Id — optional, used for
+// attribution and credit metering.
+function extractMcpContext(req: Request) {
+  return {
+    userId: (req.headers["x-unifyone-user-id"] as string) || null,
+    tenantId: (req.headers["x-unifyone-tenant-id"] as string) || null,
+    requestId:
+      (req.headers["x-request-id"] as string) ||
+      (req.headers["x-unifyone-request-id"] as string) ||
+      null,
+  };
+}
+
+/**
+ * Wrap an MCP tool handler so every call is metered against the
+ * caller's credit balance. If the user has no credits and no active
+ * subscription with overage, the tool returns an error payload.
+ */
+function meteredTool<TArgs>(
+  toolName: string,
+  handler: (args: TArgs) => Promise<any>,
+  getCtx: () => { userId: string | null; tenantId: string | null; requestId: string | null }
+) {
+  return async (args: TArgs) => {
+    const { userId, tenantId, requestId } = getCtx();
+    if (userId) {
+      const result = await meterCredits({
+        userId,
+        tenantId: tenantId ?? undefined,
+        amount: CREDIT_COST_MODEL.mcp_tool,
+        source: "mcp_tool",
+        action: `mcp:${toolName}`,
+        requestId: requestId ?? undefined,
+        metadata: { args },
+      });
+      if (!result.success) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(
+                {
+                  error: "insufficient_credits",
+                  message: result.error ?? "Insufficient credits for this tool call",
+                  balance_after: result.balanceAfter,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+    return handler(args);
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Helper: create a fresh MCP server instance per request (stateless)
 // ---------------------------------------------------------------------------
-function createMcpServer(): McpServer {
+function createMcpServer(
+  getCtx: () => { userId: string | null; tenantId: string | null; requestId: string | null }
+): McpServer {
   const server = new McpServer({
     name: "UnifyOne MCP Server",
     version: "1.0.0",
@@ -29,7 +92,7 @@ function createMcpServer(): McpServer {
     "get-platform-status",
     "Check the health and status of the UnifyOne platform",
     {},
-    async () => {
+    meteredTool("get-platform-status", async () => {
       return {
         content: [
           {
@@ -50,14 +113,14 @@ function createMcpServer(): McpServer {
           },
         ],
       };
-    },
+    }, getCtx),
   );
 
   server.tool(
     "list-integrations",
     "List available third-party integrations on the UnifyOne platform",
     {},
-    async () => {
+    meteredTool("list-integrations", async () => {
       const integrations = [
         { name: "Stripe", category: "payments", status: "active" },
         { name: "PayPal", category: "payments", status: "active" },
@@ -73,14 +136,14 @@ function createMcpServer(): McpServer {
           { type: "text" as const, text: JSON.stringify(integrations, null, 2) },
         ],
       };
-    },
+    }, getCtx),
   );
 
   server.tool(
     "search-products",
     "Search products in the UnifyOne catalog",
     { query: z.string().describe("Search term for products") },
-    async ({ query }) => {
+    meteredTool<{ query: string }>("search-products", async ({ query }) => {
       return {
         content: [
           {
@@ -99,7 +162,7 @@ function createMcpServer(): McpServer {
           },
         ],
       };
-    },
+    }, getCtx),
   );
 
   server.tool(
@@ -110,7 +173,7 @@ function createMcpServer(): McpServer {
         .enum(["day", "week", "month", "year"])
         .describe("Time period for the summary"),
     },
-    async ({ period }) => {
+    meteredTool<{ period: "day" | "week" | "month" | "year" }>("get-analytics-summary", async ({ period }) => {
       return {
         content: [
           {
@@ -132,7 +195,7 @@ function createMcpServer(): McpServer {
           },
         ],
       };
-    },
+    }, getCtx),
   );
 
   server.tool(
@@ -146,7 +209,7 @@ function createMcpServer(): McpServer {
         .describe("Notification message (required for send)"),
       userId: z.string().optional().describe("Target user ID (required for send)"),
     },
-    async ({ action, message, userId }) => {
+    meteredTool<{ action: "list" | "send"; message?: string; userId?: string }>("manage-notifications", async ({ action, message, userId }) => {
       if (action === "send") {
         if (!message || !userId) {
           return {
@@ -200,7 +263,7 @@ function createMcpServer(): McpServer {
           },
         ],
       };
-    },
+    }, getCtx),
   );
 
   // --- Resources -----------------------------------------------------------
@@ -243,7 +306,8 @@ app.use(express.json());
 
 // Stateless Streamable-HTTP handler (one transport per request)
 app.post("/mcp", async (req: Request, res: Response) => {
-  const server = createMcpServer();
+  const mcpCtx = extractMcpContext(req);
+  const server = createMcpServer(() => mcpCtx);
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: undefined, // stateless
   });

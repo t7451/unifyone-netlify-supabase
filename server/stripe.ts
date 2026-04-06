@@ -7,6 +7,7 @@ import { tenants, plans, themeInstalls, themes } from "../drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { capi } from "./meta/capi";
 import { getAppUrl } from "./_core/env";
+import { flushAllOverages, flushUserOverages } from "./creditMeter";
 
 // Supabase admin client for subscription/credit sync (service role — no RLS)
 function getSupabaseAdmin() {
@@ -427,6 +428,29 @@ export function registerStripeRoutes(app: Express) {
             break;
           }
 
+          // Flush pending credit overages BEFORE the invoice finalizes,
+          // so they appear as line items on the current period's invoice.
+          case "invoice.created":
+          case "invoice.upcoming": {
+            const invoice = event.data.object as Stripe.Invoice;
+            const supabase = getSupabaseAdmin();
+            if (supabase && invoice.customer) {
+              const { data: sub } = await supabase
+                .from("stripe_subscriptions")
+                .select("user_id")
+                .eq("stripe_customer_id", invoice.customer as string)
+                .in("status", ["trialing", "active"])
+                .maybeSingle();
+              if (sub?.user_id) {
+                await flushUserOverages(sub.user_id);
+              }
+            }
+            console.log(
+              `[Stripe] Invoice ${event.type}: ${invoice.id}, flushed overages`
+            );
+            break;
+          }
+
           case "invoice.payment_succeeded":
           case "invoice.paid": {
             const invoice = event.data.object as Stripe.Invoice;
@@ -708,6 +732,47 @@ export function registerStripeRoutes(app: Express) {
         res.json(updated);
       } catch (err: any) {
         console.error("[Stripe] Cancel subscription error:", err.message);
+        res.status(500).json({ error: err.message });
+      }
+    }
+  );
+
+  // Flush all pending credit overages to Stripe as invoice items
+  // (intended for scheduled cron / admin trigger).
+  app.post(
+    "/api/stripe/flush-overages",
+    express.json(),
+    async (req: Request, res: Response) => {
+      const adminKey = req.headers["x-admin-key"] as string | undefined;
+      if (
+        process.env.ADMIN_API_KEY &&
+        adminKey !== process.env.ADMIN_API_KEY
+      ) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      try {
+        const result = await flushAllOverages();
+        res.json(result);
+      } catch (err: any) {
+        console.error("[Stripe] Flush overages error:", err.message);
+        res.status(500).json({ error: err.message });
+      }
+    }
+  );
+
+  // Flush pending credit overages for a specific user
+  app.post(
+    "/api/stripe/flush-overages/:userId",
+    express.json(),
+    async (req: Request, res: Response) => {
+      try {
+        const result = await flushUserOverages(req.params.userId);
+        res.json(result);
+      } catch (err: any) {
+        console.error(
+          "[Stripe] Flush user overages error:",
+          err.message
+        );
         res.status(500).json({ error: err.message });
       }
     }
