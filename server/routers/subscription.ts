@@ -1,7 +1,15 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { createClient } from "@supabase/supabase-js";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getProductCount, getOrderCount, getCustomerCount, getTenantById, getPlans, getPlanBySlug } from "../db";
+
+function getSupabaseAdmin() {
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
+}
 
 export const subscriptionRouter = router({
   /**
@@ -160,6 +168,70 @@ export const subscriptionRouter = router({
       const data = await res.json() as { url?: string };
       return { url: data.url ?? null };
     }),
+
+  /**
+   * Get credit balance from Supabase credit_balances table.
+   */
+  getCreditBalance: protectedProcedure.query(async ({ ctx }) => {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) return { balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
+
+    const userId = ctx.user.id?.toString();
+    if (!userId) return { balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
+
+    const { data } = await supabase
+      .from("credit_balances")
+      .select("balance, lifetime_earned, lifetime_spent, last_refill_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    return {
+      balance: data?.balance ?? 0,
+      lifetime_earned: data?.lifetime_earned ?? 0,
+      lifetime_spent: data?.lifetime_spent ?? 0,
+      last_refill_at: data?.last_refill_at ?? null,
+    };
+  }),
+
+  /**
+   * Get subscription tier info from Supabase.
+   */
+  getSubscriptionTier: protectedProcedure.query(async ({ ctx }) => {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) return null;
+
+    const userId = ctx.user.id?.toString();
+    if (!userId) return null;
+
+    const { data } = await supabase
+      .from("stripe_subscriptions")
+      .select(`
+        id, status, current_period_end,
+        stripe_prices!inner(id, unit_amount, interval),
+        subscription_tiers!inner(name, monthly_credits, features)
+      `)
+      .eq("user_id", userId)
+      .in("status", ["trialing", "active"])
+      .maybeSingle();
+
+    return data;
+  }),
+
+  /**
+   * List available subscription tiers for the pricing page.
+   */
+  getSubscriptionTiers: publicProcedure.query(async () => {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) return [];
+
+    const { data } = await supabase
+      .from("subscription_tiers")
+      .select("*")
+      .eq("is_active", true)
+      .order("monthly_price_cents", { ascending: true });
+
+    return data ?? [];
+  }),
 
   /**
    * Returns invoice history from Stripe for the current tenant.
