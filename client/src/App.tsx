@@ -46,7 +46,6 @@ import MultiTenantPost from "./pages/blog/MultiTenantPost";
 import ManusAIPost from "./pages/blog/ManusAIPost";
 import Architecture from "./pages/Architecture";
 import TheSystem from "./pages/TheSystem";
-import ManusAIPage from "./pages/ManusAIPage";
 import Tithes from "./pages/Tithes";
 import Documents from "./pages/Documents";
 import CaseStudies from "./pages/CaseStudies";
@@ -148,7 +147,6 @@ function Router() {
       {/* Public Multi-Page Routes */}
       <Route path="/architecture" component={Architecture} />
       <Route path="/the-system" component={TheSystem} />
-      <Route path="/manus-ai" component={ManusAIPage} />
       <Route path="/tithes" component={Tithes} />
       {/* Documentation Routes */}
       <Route path="/documents" component={Documents} />

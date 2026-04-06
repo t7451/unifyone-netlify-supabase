@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import {
   Zap, Play, Pause, Plus, Trash2, RefreshCw, Link2, BarChart3,
   Radio, Clock, CheckCircle2, XCircle, AlertCircle, ExternalLink,
-  Smartphone, Globe, TrendingUp, Activity, Calendar
+  Smartphone, Globe, TrendingUp, Activity, Calendar, Bell, Send, Users
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -75,6 +75,17 @@ function formatRelative(date: Date | null | undefined): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+const CRON_PRESETS = [
+  { label: "Every day at 9am", value: "0 9 * * *" },
+  { label: "Daily 10am", value: "0 10 * * *" },
+  { label: "Every hour", value: "0 * * * *" },
+  { label: "Every Monday 8am", value: "0 8 * * 1" },
+  { label: "Weekly Mon 9am", value: "0 9 * * 1" },
+  { label: "Every 15 minutes", value: "*/15 * * * *" },
+  { label: "Twice daily", value: "0 9,18 * * *" },
+  { label: "First of month", value: "0 0 1 * *" },
+];
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SchedulerTab() {
@@ -118,14 +129,6 @@ function SchedulerTab() {
       }
     },
   });
-
-  const CRON_PRESETS = [
-    { label: "Every day at 9am", value: "0 9 * * *" },
-    { label: "Every hour", value: "0 * * * *" },
-    { label: "Every Monday 8am", value: "0 8 * * 1" },
-    { label: "Every 15 minutes", value: "*/15 * * * *" },
-    { label: "First of month", value: "0 0 1 * *" },
-  ];
 
   return (
     <div className="space-y-4">
@@ -298,7 +301,6 @@ function AttributionTab() {
 
   return (
     <div className="space-y-6">
-      {/* KPI row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Total Clicks", value: stats?.total ?? 0, icon: Link2, color: "text-violet-400" },
@@ -316,7 +318,6 @@ function AttributionTab() {
         ))}
       </div>
 
-      {/* Source breakdown */}
       {stats?.bySource && stats.bySource.length > 0 && (
         <Card className="bg-slate-800/40 border-slate-700">
           <CardHeader className="pb-2">
@@ -343,7 +344,6 @@ function AttributionTab() {
         </Card>
       )}
 
-      {/* Recent attributions */}
       <Card className="bg-slate-800/40 border-slate-700">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm text-slate-300">Recent Deep Link Clicks</CardTitle>
@@ -408,7 +408,6 @@ function CapiLogTab() {
 
   return (
     <div className="space-y-6">
-      {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Card className="bg-slate-800/40 border-slate-700">
           <CardContent className="p-4">
@@ -435,7 +434,6 @@ function CapiLogTab() {
         )}
       </div>
 
-      {/* Event type breakdown */}
       {summary?.byEvent && summary.byEvent.length > 0 && (
         <Card className="bg-slate-800/40 border-slate-700">
           <CardHeader className="pb-2">
@@ -456,7 +454,6 @@ function CapiLogTab() {
         </Card>
       )}
 
-      {/* Event log */}
       <Card className="bg-slate-800/40 border-slate-700">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm text-slate-300">Recent CAPI Events</CardTitle>
@@ -513,6 +510,335 @@ function CapiLogTab() {
   );
 }
 
+// ─── Push Schedule Types & Tab ───────────────────────────────────────────────
+
+interface PushSchedule {
+  id: number;
+  title: string;
+  body: string;
+  targetAudience: string;
+  scheduledAt?: Date | null;
+  cronExpression?: string | null;
+  recurring: boolean;
+  deepLinkPath?: string | null;
+  enabled: boolean;
+  sentCount: number;
+  lastSentAt?: Date | null;
+  status: string;
+}
+
+const AUDIENCE_LABELS: Record<string, string> = {
+  all: "All Users",
+  active_users: "Active Users",
+  inactive_users: "Inactive Users",
+  new_users: "New Users",
+  custom: "Custom Segment",
+};
+
+function PushScheduleTab() {
+  const utils = trpc.useUtils();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    title: "",
+    body: "",
+    targetAudience: "all" as const,
+    scheduledAt: "",
+    cronExpression: "",
+    recurring: false,
+    deepLinkPath: "",
+  });
+
+  const { data: schedules = [], isLoading } = trpc.mobileAutomation.listPushSchedules.useQuery();
+
+  const create = trpc.mobileAutomation.createPushSchedule.useMutation({
+    onSuccess: () => {
+      utils.mobileAutomation.listPushSchedules.invalidate();
+      setOpen(false);
+      setForm({ title: "", body: "", targetAudience: "all", scheduledAt: "", cronExpression: "", recurring: false, deepLinkPath: "" });
+      toast.success("Push notification scheduled");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const update = trpc.mobileAutomation.updatePushSchedule.useMutation({
+    onSuccess: () => {
+      utils.mobileAutomation.listPushSchedules.invalidate();
+      toast.success("Push schedule updated");
+    },
+  });
+
+  const del = trpc.mobileAutomation.deletePushSchedule.useMutation({
+    onSuccess: () => {
+      utils.mobileAutomation.listPushSchedules.invalidate();
+      toast.success("Push schedule deleted");
+    },
+  });
+
+  const sendNow = trpc.mobileAutomation.sendPushNow.useMutation({
+    onSuccess: (data) => {
+      utils.mobileAutomation.listPushSchedules.invalidate();
+      toast.success(`Push sent! Total sends: ${data.sentCount}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  function pushStatusBadge(status: string) {
+    switch (status) {
+      case "sent": return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Sent</Badge>;
+      case "scheduled": return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">Scheduled</Badge>;
+      case "recurring": return <Badge className="bg-violet-500/20 text-violet-400 border-violet-500/30 text-xs">Recurring</Badge>;
+      case "failed": return <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">Failed</Badge>;
+      default: return <Badge variant="secondary" className="text-xs">Draft</Badge>;
+    }
+  }
+
+  const pushSummary = useMemo(() => {
+    const typed = schedules as PushSchedule[];
+    return typed.reduce(
+      (acc, s) => ({
+        total: acc.total + 1,
+        totalSends: acc.totalSends + (s.sentCount ?? 0),
+        active: acc.active + (s.enabled && (s.status === "scheduled" || s.status === "recurring") ? 1 : 0),
+      }),
+      { total: 0, totalSends: 0, active: 0 },
+    );
+  }, [schedules]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-white">Mobile Push Scheduling</h3>
+          <p className="text-sm text-slate-400">Schedule push notifications for your mobile app users</p>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="bg-violet-600 hover:bg-violet-700">
+              <Plus className="w-4 h-4 mr-1" /> New Push
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-slate-900 border-slate-700 text-white max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-violet-400" /> Schedule Push Notification
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Title</Label>
+                <Input
+                  className="bg-slate-800 border-slate-600 mt-1"
+                  placeholder="New rewards available!"
+                  value={form.title}
+                  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>Message Body</Label>
+                <textarea
+                  className="w-full bg-slate-800 border border-slate-600 rounded-md p-2 mt-1 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  rows={3}
+                  placeholder="Check out your new rewards and claim them before they expire..."
+                  value={form.body}
+                  onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>Target Audience</Label>
+                <select
+                  className="w-full bg-slate-800 border border-slate-600 rounded-md p-2 mt-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  value={form.targetAudience}
+                  onChange={e => setForm(f => ({ ...f, targetAudience: e.target.value as typeof f.targetAudience }))}
+                >
+                  <option value="all">All Users</option>
+                  <option value="active_users">Active Users (7d)</option>
+                  <option value="inactive_users">Inactive Users (30d+)</option>
+                  <option value="new_users">New Users (this week)</option>
+                  <option value="custom">Custom Segment</option>
+                </select>
+              </div>
+              <div>
+                <Label>Deep Link Path (optional)</Label>
+                <Input
+                  className="bg-slate-800 border-slate-600 mt-1 font-mono"
+                  placeholder="unifyone://rewards"
+                  value={form.deepLinkPath}
+                  onChange={e => setForm(f => ({ ...f, deepLinkPath: e.target.value }))}
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={form.recurring}
+                  onCheckedChange={v => setForm(f => ({ ...f, recurring: v }))}
+                />
+                <Label className="text-sm">Recurring schedule</Label>
+              </div>
+              {form.recurring ? (
+                <div>
+                  <Label>Cron Expression</Label>
+                  <Input
+                    className="bg-slate-800 border-slate-600 mt-1 font-mono"
+                    placeholder="0 10 * * *"
+                    value={form.cronExpression}
+                    onChange={e => setForm(f => ({ ...f, cronExpression: e.target.value }))}
+                  />
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {CRON_PRESETS.map(p => (
+                      <button
+                        key={p.value}
+                        onClick={() => setForm(f => ({ ...f, cronExpression: p.value }))}
+                        className="text-xs px-2 py-0.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition"
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <Label>Scheduled Date/Time</Label>
+                  <Input
+                    type="datetime-local"
+                    className="bg-slate-800 border-slate-600 mt-1"
+                    value={form.scheduledAt}
+                    onChange={e => setForm(f => ({ ...f, scheduledAt: e.target.value }))}
+                  />
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button
+                className="bg-violet-600 hover:bg-violet-700"
+                disabled={!form.title || !form.body || create.isPending}
+                onClick={() => create.mutate({
+                  title: form.title,
+                  body: form.body,
+                  targetAudience: form.targetAudience,
+                  recurring: form.recurring,
+                  ...(form.scheduledAt ? { scheduledAt: new Date(form.scheduledAt).toISOString() } : {}),
+                  ...(form.cronExpression ? { cronExpression: form.cronExpression } : {}),
+                  ...(form.deepLinkPath ? { deepLinkPath: form.deepLinkPath } : {}),
+                })}
+              >
+                {create.isPending ? "Scheduling..." : "Schedule"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <Card className="bg-slate-800/40 border-slate-700">
+          <CardContent className="p-4">
+            <Bell className="w-5 h-5 text-violet-400 mb-1" />
+            <p className="text-2xl font-bold text-white">{pushSummary.total}</p>
+            <p className="text-xs text-slate-400">Total Schedules</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-slate-800/40 border-slate-700">
+          <CardContent className="p-4">
+            <Send className="w-5 h-5 text-emerald-400 mb-1" />
+            <p className="text-2xl font-bold text-white">{pushSummary.totalSends}</p>
+            <p className="text-xs text-slate-400">Total Sends</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-slate-800/40 border-slate-700">
+          <CardContent className="p-4">
+            <Users className="w-5 h-5 text-blue-400 mb-1" />
+            <p className="text-2xl font-bold text-white">{pushSummary.active}</p>
+            <p className="text-xs text-slate-400">Active Schedules</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-20 rounded-xl bg-slate-800/50 animate-pulse" />
+          ))}
+        </div>
+      ) : schedules.length === 0 ? (
+        <Card className="bg-slate-800/40 border-slate-700 text-center py-12">
+          <Bell className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+          <p className="text-slate-400">No push notifications scheduled yet.</p>
+          <p className="text-slate-600 text-xs mt-1">Create a schedule to start sending mobile push notifications.</p>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {(schedules as PushSchedule[]).map(s => (
+            <Card key={s.id} className="bg-slate-800/40 border-slate-700">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-white truncate">{s.title}</span>
+                      {pushStatusBadge(s.status)}
+                      <Badge variant="outline" className="text-xs border-slate-600 text-slate-400">
+                        {AUDIENCE_LABELS[s.targetAudience] ?? s.targetAudience}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-slate-400 mt-0.5 line-clamp-1">{s.body}</p>
+                    <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                      <span className="flex items-center gap-1">
+                        <Send className="w-3 h-3" /> {s.sentCount} sends
+                      </span>
+                      {s.lastSentAt && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> Last: {formatRelative(s.lastSentAt)}
+                        </span>
+                      )}
+                      {s.scheduledAt && !s.recurring && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" /> {new Date(s.scheduledAt).toLocaleString()}
+                        </span>
+                      )}
+                      {s.cronExpression && s.recurring && (
+                        <span className="flex items-center gap-1 font-mono">
+                          <RefreshCw className="w-3 h-3" /> {s.cronExpression}
+                        </span>
+                      )}
+                      {s.deepLinkPath && (
+                        <span className="flex items-center gap-1 font-mono">
+                          <Link2 className="w-3 h-3" /> {s.deepLinkPath}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Switch
+                      checked={s.enabled}
+                      onCheckedChange={(v) => update.mutate({ id: s.id, enabled: v })}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700 h-8 px-2"
+                      disabled={sendNow.isPending}
+                      onClick={() => sendNow.mutate({ id: s.id })}
+                      title="Send now"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 px-2"
+                      onClick={() => del.mutate({ id: s.id })}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function MobileAutomation() {
@@ -542,7 +868,6 @@ export default function MobileAutomation() {
   return (
     <DashboardLayout>
       <div className="max-w-5xl mx-auto space-y-6 p-4 sm:p-6">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -568,7 +893,6 @@ export default function MobileAutomation() {
           </div>
         </div>
 
-        {/* Deep Link Quick-Copy */}
         <Card className="bg-gradient-to-r from-violet-900/30 to-indigo-900/30 border-violet-700/40">
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -602,7 +926,6 @@ export default function MobileAutomation() {
           </CardContent>
         </Card>
 
-        {/* Tabs */}
         <Tabs defaultValue="scheduler">
           <TabsList className="bg-slate-800 border border-slate-700">
             <TabsTrigger value="scheduler" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 text-xs sm:text-sm">
@@ -617,6 +940,10 @@ export default function MobileAutomation() {
               <Radio className="w-3.5 h-3.5 mr-1 sm:mr-1.5" />
               CAPI Log
             </TabsTrigger>
+            <TabsTrigger value="push" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white text-slate-400 text-xs sm:text-sm">
+              <Bell className="w-3.5 h-3.5 mr-1 sm:mr-1.5" />
+              <span className="hidden sm:inline">Push </span>Notify
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="scheduler" className="mt-4">
@@ -627,6 +954,9 @@ export default function MobileAutomation() {
           </TabsContent>
           <TabsContent value="capi" className="mt-4">
             <CapiLogTab />
+          </TabsContent>
+          <TabsContent value="push" className="mt-4">
+            <PushScheduleTab />
           </TabsContent>
         </Tabs>
       </div>

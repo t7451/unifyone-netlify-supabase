@@ -1,48 +1,59 @@
-import { useEffect } from "react";
 import { Link } from "wouter";
 import { SITE_URL } from "@/lib/siteConfig";
+import BlogPostHead from "@/components/BlogPostHead";
 
-const ARTICLE_SCHEMA = {
-  "@context": "https://schema.org",
-  "@type": "Article",
-  "headline": "Why Multi-Tenant SaaS Is the Right Architecture for Commerce Teams",
-  "description": "A technical and strategic breakdown of multi-tenant commerce architecture — why it outperforms single-tenant deployments for agencies, franchises, and holding companies managing multiple brands or client accounts.",
-  "image": "https://files.manuscdn.com/user_upload_by_module/session_file/310519663412766662/uBzlkALhOZxeuTyR.jpg",
-  "author": {
-    "@type": "Organization",
-    "name": "1Commerce Solutions",
-    "url": SITE_URL
+const CANONICAL = `${SITE_URL}/blog/multi-tenant-ecommerce-saas`;
+const TITLE = "Why Multi-Tenant SaaS Is the Right Architecture for Commerce Teams | 1Commerce";
+const DESCRIPTION = "A technical and strategic breakdown of multi-tenant commerce architecture — why it outperforms single-tenant deployments for agencies, franchises, and holding companies managing multiple brands or client accounts.";
+const OG_IMAGE = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663412766662/uBzlkALhOZxeuTyR.jpg";
+
+const JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Why Multi-Tenant SaaS Is the Right Architecture for Commerce Teams",
+    "description": DESCRIPTION,
+    "image": OG_IMAGE,
+    "author": {
+      "@type": "Organization",
+      "name": "1Commerce",
+      "url": SITE_URL
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "1Commerce",
+      "logo": { "@type": "ImageObject", "url": `${SITE_URL}/favicon.ico` }
+    },
+    "datePublished": "2026-03-06",
+    "dateModified": "2026-04-04",
+    "mainEntityOfPage": { "@type": "WebPage", "@id": CANONICAL },
+    "keywords": ["multi-tenant ecommerce", "SaaS architecture", "white-label commerce platform", "ecommerce agency tools", "multi-brand commerce", "tenant isolation"],
+    "articleSection": "Commerce Architecture",
+    "wordCount": 1100
   },
-  "publisher": {
-    "@type": "Organization",
-    "name": "1Commerce Solutions",
-    "logo": { "@type": "ImageObject", "url": `${SITE_URL}/favicon.ico` }
-  },
-  "datePublished": "2026-03-06",
-  "dateModified": "2026-03-06",
-  "mainEntityOfPage": { "@type": "WebPage", "@id": `${SITE_URL}/blog/multi-tenant-ecommerce-saas` },
-  "keywords": ["multi-tenant ecommerce", "SaaS architecture", "white-label commerce platform", "ecommerce agency tools", "multi-brand commerce", "tenant isolation"],
-  "articleSection": "Commerce Architecture",
-  "wordCount": 1100
-};
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": `${SITE_URL}/` },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": `${SITE_URL}/blog` },
+      { "@type": "ListItem", "position": 3, "name": "Multi-Tenant Architecture", "item": CANONICAL }
+    ]
+  }
+];
 
 export default function MultiTenantPost() {
-  useEffect(() => {
-    document.title = "Why Multi-Tenant SaaS Is the Right Architecture for Commerce Teams | UnifyOne";
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", "A technical and strategic breakdown of multi-tenant commerce architecture — why it outperforms single-tenant deployments for agencies, franchises, and holding companies managing multiple brands.");
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) canonical.setAttribute("href", `${SITE_URL}/blog/multi-tenant-ecommerce-saas`);
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.text = JSON.stringify(ARTICLE_SCHEMA);
-    script.id = "article-schema";
-    document.head.appendChild(script);
-    return () => { document.getElementById("article-schema")?.remove(); };
-  }, []);
-
   return (
     <div style={{ backgroundColor: "#020202", color: "#F0E8D0", minHeight: "100vh" }}>
+      <BlogPostHead
+        canonical={CANONICAL}
+        title={TITLE}
+        description={DESCRIPTION}
+        ogImage={OG_IMAGE}
+        breadcrumbName="Multi-Tenant Architecture"
+        jsonLd={JSON_LD}
+      />
+
       <nav className="fixed top-0 left-0 right-0 z-50" style={{ backgroundColor: "rgba(2,2,2,0.97)", borderBottom: "1px solid rgba(212,168,67,0.12)", backdropFilter: "blur(12px)" }}>
         <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
           <Link href="/"><span className="font-cinzel text-xs font-700 tracking-widest cursor-pointer" style={{ color: "#D4A843", letterSpacing: "0.2em" }}>← UNIFYONE</span></Link>
@@ -92,7 +103,7 @@ export default function MultiTenantPost() {
           </section>
 
           <section>
-            <h2 className="font-cinzel text-xl sm:text-2hz font-bold mb-4" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>White-Label: The Reseller Multiplier</h2>
+            <h2 className="font-cinzel text-xl sm:text-2xl font-bold mb-4" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>White-Label: The Reseller Multiplier</h2>
             <p>Multi-tenant architecture enables white-labeling at zero marginal cost. UnifyOne's Cathedral tier includes custom domain support and full brand customization per tenant. An agency can deploy UnifyOne under their own brand — "PoweredBy YourAgency Commerce" — and resell it to clients as a proprietary product. The underlying infrastructure is UnifyOne; the brand experience is entirely theirs.</p>
             <p className="mt-4">This is the reseller multiplier: you buy infrastructure at $149/month and sell it as a branded product at $500/month per client. The margin is the brand. The brand is built on someone else's infrastructure. This is how software companies are built without engineering teams.</p>
           </section>
@@ -113,6 +124,7 @@ export default function MultiTenantPost() {
           </div>
         </div>
 
+        {/* Related */}
         <div className="mt-16 pt-12" style={{ borderTop: "1px solid rgba(212,168,67,0.08)" }}>
           <span className="inscription block mb-6">Further Reading</span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

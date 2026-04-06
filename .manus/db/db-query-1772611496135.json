@@ -1,9 +1,0 @@
-{
-  "query": "CREATE TABLE `team_invites` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`tenantId` int NOT NULL,\n\t`email` varchar(320) NOT NULL,\n\t`role` enum('user','admin') NOT NULL DEFAULT 'user',\n\t`token` varchar(128) NOT NULL,\n\t`invitedBy` int NOT NULL,\n\t`status` enum('pending','accepted','expired','revoked') NOT NULL DEFAULT 'pending',\n\t`expiresAt` timestamp NOT NULL,\n\t`acceptedAt` timestamp,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `team_invites_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `team_invites_token_unique` UNIQUE(`token`)\n);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 372pgni6FByAp3r.b99b1625eed2 --database VyofXqD3FvrztXonjtHUZp --execute CREATE TABLE `team_invites` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`tenantId` int NOT NULL,\n\t`email` varchar(320) NOT NULL,\n\t`role` enum('user','admin') NOT NULL DEFAULT 'user',\n\t`token` varchar(128) NOT NULL,\n\t`invitedBy` int NOT NULL,\n\t`status` enum('pending','accepted','expired','revoked') NOT NULL DEFAULT 'pending',\n\t`expiresAt` timestamp NOT NULL,\n\t`acceptedAt` timestamp,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `team_invites_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `team_invites_token_unique` UNIQUE(`token`)\n);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 629
-}

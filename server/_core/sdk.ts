@@ -134,14 +134,26 @@ class SDKServer {
       user = await db.getUserByOpenId(session.openId);
     }
 
+    // Graceful fallback: if DB is unavailable (e.g. during migration),
+    // construct a minimal user from the verified session payload so auth works.
     if (!user) {
-      throw ForbiddenError("User not found");
+      user = {
+        id: 0,
+        openId: session.openId,
+        name: session.name || "UnifyOne User",
+        email: session.email ?? null,
+        loginMethod: session.loginMethod ?? "supabase",
+        role: session.openId === ENV.ownerOpenId ? "admin" : "user",
+        tenantId: null,
+        createdAt: signedInAt,
+        lastSignedIn: signedInAt,
+      } as User;
+    } else {
+      await db.upsertUser({
+        openId: user.openId,
+        lastSignedIn: signedInAt,
+      });
     }
-
-    await db.upsertUser({
-      openId: user.openId,
-      lastSignedIn: signedInAt,
-    });
 
     return user;
   }

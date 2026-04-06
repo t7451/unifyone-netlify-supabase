@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { desc, eq, and } from "drizzle-orm";
+import { desc, eq, and, gte, lte, like, sql } from "drizzle-orm";
 import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
@@ -13,28 +13,59 @@ import {
 } from "../../drizzle/schema";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-const requireAdmin = (role: string | undefined) => {
-  if (role !== "admin") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required for governance operations." });
-  }
-};
+/** Escape LIKE-pattern wildcards so user input is treated literally. */
+const escapeLikeWildcards = (input: string): string =>
+  input.replace(/%/g, "\\%").replace(/_/g, "\\_");
 
 // ── Governance Router ──────────────────────────────────────────────────────────
 export const governanceRouter = router({
   // ── Audit Logs ──────────────────────────────────────────────────────────────
-  getAuditLogs: protectedProcedure
-    .input(z.object({ limit: z.number().default(50), offset: z.number().default(0) }).optional())
-    .query(async ({ ctx, input }) => {
-      requireAdmin(ctx.user.role);
+  getAuditLogs: adminProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(200).default(50),
+        offset: z.number().min(0).default(0),
+        dateRange: z.object({
+          from: z.string().datetime(),
+          to: z.string().datetime(),
+        }).optional(),
+        actor: z.string().optional(),
+        action: z.string().optional(),
+      }).optional()
+    )
+    .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return { logs: [], total: 0 };
-      const logs = await db
-        .select()
-        .from(auditLogs)
-        .orderBy(desc(auditLogs.createdAt))
-        .limit(input?.limit ?? 50)
-        .offset(input?.offset ?? 0);
-      return { logs, total: logs.length };
+
+      const conditions = [];
+      if (input?.dateRange) {
+        conditions.push(gte(auditLogs.createdAt, new Date(input.dateRange.from)));
+        conditions.push(lte(auditLogs.createdAt, new Date(input.dateRange.to)));
+      }
+      if (input?.actor) {
+        conditions.push(like(auditLogs.decisionAuthority, `%${escapeLikeWildcards(input.actor)}%`));
+      }
+      if (input?.action) {
+        conditions.push(like(auditLogs.action, `%${escapeLikeWildcards(input.action)}%`));
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const [logs, [countResult]] = await Promise.all([
+        db
+          .select()
+          .from(auditLogs)
+          .where(whereClause)
+          .orderBy(desc(auditLogs.createdAt))
+          .limit(input?.limit ?? 50)
+          .offset(input?.offset ?? 0),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(auditLogs)
+          .where(whereClause),
+      ]);
+
+      return { logs, total: (countResult as any)?.count ?? logs.length };
     }),
 
   createAuditLog: protectedProcedure
@@ -67,27 +98,114 @@ export const governanceRouter = router({
       return { success: true };
     }),
 
-  // ── Escalation Queue ─────────────────────────────────────────────────────────
-  getEscalations: protectedProcedure
-    .input(z.object({
-      status: z.enum(["pending", "approved", "rejected", "expired", "all"]).default("all"),
-      limit: z.number().default(20),
-    }).optional())
-    .query(async ({ ctx, input }) => {
-      requireAdmin(ctx.user.role);
+  // logAuditEvent — Create audit log entries with actor, target, metadata
+  logAuditEvent: protectedProcedure
+    .input(
+      z.object({
+        action: z.string().min(1).max(255),
+        actor: z.string().min(1).max(255),
+        target: z.string().max(255).optional(),
+        metadata: z.record(z.string(), z.unknown()).optional(),
+        timestamp: z.string().datetime().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) return [];
-      const query = db.select().from(escalationQueue).orderBy(desc(escalationQueue.createdAt));
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const [result] = await db.insert(auditLogs).values({
+        userId: ctx.user.id,
+        action: input.action,
+        entityType: input.target ?? null,
+        decisionAuthority: input.actor,
+        newValue: input.metadata ?? null,
+        escalationTriggered: false,
+        createdAt: input.timestamp ? new Date(input.timestamp) : new Date(),
+      });
+      return { success: true, id: (result as any).insertId };
+    }),
+
+  // ── Escalation Queue ─────────────────────────────────────────────────────────
+  // createEscalation — Add items to escalation queue with priority, description, assignee
+  createEscalation: protectedProcedure
+    .input(
+      z.object({
+        priority: z.enum(["low", "medium", "high", "critical"]),
+        description: z.string().min(1).max(1000),
+        assignee: z.string().max(255).optional(),
+        decisionType: z.string().max(100).default("manual"),
+        authorityLevel: z.string().max(50).default("architect"),
+        thresholdExceeded: z.string().optional(),
+        thresholdLimit: z.string().optional(),
+        expiresInHours: z.number().default(24),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      // First create an audit log entry for the escalation
+      const [auditResult] = await db.insert(auditLogs).values({
+        userId: ctx.user.id,
+        action: `Escalation created: ${input.description.substring(0, 100)}`,
+        entityType: input.decisionType,
+        decisionAuthority: input.assignee ?? "unassigned",
+        escalationTriggered: true,
+        escalationReason: input.description,
+      });
+      const auditLogId = (auditResult as any).insertId ?? 0;
+
+      const [result] = await db.insert(escalationQueue).values({
+        auditLogId,
+        decisionType: input.decisionType,
+        decisionContext: {
+          priority: input.priority,
+          description: input.description,
+          assignee: input.assignee ?? null,
+          createdBy: ctx.user.id,
+        },
+        thresholdExceeded: input.thresholdExceeded,
+        thresholdLimit: input.thresholdLimit,
+        authorityLevel: input.authorityLevel,
+        status: "pending",
+        expiresAt: new Date(Date.now() + input.expiresInHours * 60 * 60 * 1000),
+      });
+
+      return { success: true, id: (result as any).insertId };
+    }),
+
+  // getEscalations — Query escalation queue with status filter and pagination
+  getEscalations: adminProcedure
+    .input(
+      z.object({
+        status: z.enum(["pending", "approved", "rejected", "expired", "all"]).default("all"),
+        limit: z.number().min(1).max(200).default(50),
+        offset: z.number().min(0).default(0),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return { escalations: [], total: 0 };
+
       const status = input?.status ?? "all";
-      if (status !== "all") {
-        return db
+      const whereClause = status !== "all"
+        ? eq(escalationQueue.status, status as "pending" | "approved" | "rejected" | "expired")
+        : undefined;
+
+      const [escalations, [countResult]] = await Promise.all([
+        db
           .select()
           .from(escalationQueue)
-          .where(eq(escalationQueue.status, status as "pending" | "approved" | "rejected" | "expired"))
+          .where(whereClause)
           .orderBy(desc(escalationQueue.createdAt))
-          .limit(input?.limit ?? 20);
-      }
-      return query.limit(input?.limit ?? 20);
+          .limit(input?.limit ?? 50)
+          .offset(input?.offset ?? 0),
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(escalationQueue)
+          .where(whereClause),
+      ]);
+
+      return { escalations, total: (countResult as any)?.count ?? escalations.length };
     }),
 
   resolveEscalation: adminProcedure
@@ -114,8 +232,7 @@ export const governanceRouter = router({
     }),
 
   // ── Kill Switches ─────────────────────────────────────────────────────────────
-  getKillSwitches: protectedProcedure.query(async ({ ctx }) => {
-    requireAdmin(ctx.user.role);
+  getKillSwitches: adminProcedure.query(async () => {
     const db = await getDb();
     if (!db) {
       // Return default kill switches when DB is unavailable
@@ -178,8 +295,7 @@ export const governanceRouter = router({
     }),
 
   // ── Governance Rules ──────────────────────────────────────────────────────────
-  getRules: protectedProcedure.query(async ({ ctx }) => {
-    requireAdmin(ctx.user.role);
+  getRules: adminProcedure.query(async () => {
     const db = await getDb();
     if (!db) {
       // Return default rules when DB is unavailable
@@ -220,8 +336,7 @@ export const governanceRouter = router({
     }),
 
   // ── Governance Metrics ────────────────────────────────────────────────────────
-  getMetrics: protectedProcedure.query(async ({ ctx }) => {
-    requireAdmin(ctx.user.role);
+  getMetrics: adminProcedure.query(async () => {
     const db = await getDb();
     if (!db) {
       return {
@@ -262,8 +377,7 @@ export const governanceRouter = router({
   }),
 
   // ── Decision Authority ────────────────────────────────────────────────────────
-  getDecisionAuthority: protectedProcedure.query(async ({ ctx }) => {
-    requireAdmin(ctx.user.role);
+  getDecisionAuthority: adminProcedure.query(async () => {
     const db = await getDb();
     if (!db) {
       return [

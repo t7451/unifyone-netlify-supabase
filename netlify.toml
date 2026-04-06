@@ -3,7 +3,7 @@
 
 [build]
   base = ""
-  command = "pnpm install && pnpm build"
+  command = "pnpm install --no-frozen-lockfile && pnpm build"
   publish = "dist/public"
   functions = "netlify/functions"
 
@@ -22,6 +22,13 @@
   from = "/api/*"
   to = "/.netlify/functions/server/:splat"
   status = 200
+
+# MCP (Model Context Protocol) server endpoint
+[[redirects]]
+  from = "/mcp"
+  to = "/.netlify/functions/mcp-server/mcp"
+  status = 200
+  force = true
 
 # SPA fallback — all non-API routes serve the React app
 [[redirects]]

@@ -1,9 +1,0 @@
-{
-  "query": "CREATE TABLE `document_embeddings` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`docId` varchar(100) NOT NULL,\n\t`docTitle` varchar(255) NOT NULL,\n\t`chunk` text NOT NULL,\n\t`chunkIndex` int NOT NULL,\n\t`embedding` json NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `document_embeddings_id` PRIMARY KEY(`id`)\n);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 372pgni6FByAp3r.b99b1625eed2 --database VyofXqD3FvrztXonjtHUZp --execute CREATE TABLE `document_embeddings` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`docId` varchar(100) NOT NULL,\n\t`docTitle` varchar(255) NOT NULL,\n\t`chunk` text NOT NULL,\n\t`chunkIndex` int NOT NULL,\n\t`embedding` json NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `document_embeddings_id` PRIMARY KEY(`id`)\n);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 460
-}

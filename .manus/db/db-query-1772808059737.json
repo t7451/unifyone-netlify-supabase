@@ -1,9 +1,0 @@
-{
-  "query": "CREATE TABLE `email_subscribers` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`email` varchar(320) NOT NULL,\n\t`firstName` varchar(255),\n\t`lastName` varchar(255),\n\t`status` enum('subscribed','unsubscribed','bounced') NOT NULL DEFAULT 'subscribed',\n\t`source` varchar(50) NOT NULL DEFAULT 'landing_page',\n\t`dripsCompleted` int NOT NULL DEFAULT 0,\n\t`lastDripSentAt` timestamp,\n\t`metadata` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `email_subscribers_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `email_subscribers_email_unique` UNIQUE(`email`)\n);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 372pgni6FByAp3r.b99b1625eed2 --database VyofXqD3FvrztXonjtHUZp --execute CREATE TABLE `email_subscribers` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`email` varchar(320) NOT NULL,\n\t`firstName` varchar(255),\n\t`lastName` varchar(255),\n\t`status` enum('subscribed','unsubscribed','bounced') NOT NULL DEFAULT 'subscribed',\n\t`source` varchar(50) NOT NULL DEFAULT 'landing_page',\n\t`dripsCompleted` int NOT NULL DEFAULT 0,\n\t`lastDripSentAt` timestamp,\n\t`metadata` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `email_subscribers_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `email_subscribers_email_unique` UNIQUE(`email`)\n);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 693
-}

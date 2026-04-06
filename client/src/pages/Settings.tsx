@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   Building2, CreditCard, Users, CheckCircle, ExternalLink,
-  Loader2, Shield, Zap, Crown, ArrowUpRight, Settings2, FlaskConical
+  Loader2, Shield, Zap, Crown, ArrowUpRight, Settings2, FlaskConical,
+  Bell, Send, AlertTriangle, Info, AlertCircle, CheckCircle2
 } from "lucide-react";
 
 const PLAN_ICONS: Record<string, React.ReactNode> = {
@@ -319,9 +322,179 @@ export default function Settings() {
         </CardContent>
       </Card>
 
+      {/* Owner Alert Composer (admin only) */}
+      {user?.role === "admin" && <OwnerAlertComposer />}
+
       {/* Demo Data */}
       <DemoDataCard />
     </div>
+  );
+}
+
+// ── Notification type metadata for the alert composer ──────────────────────
+const ALERT_TYPES = [
+  { value: "info", label: "Info", icon: Info, color: "text-blue-400" },
+  { value: "success", label: "Success", icon: CheckCircle2, color: "text-emerald-400" },
+  { value: "warning", label: "Warning", icon: AlertTriangle, color: "text-amber-400" },
+  { value: "error", label: "Urgent", icon: AlertCircle, color: "text-red-400" },
+] as const;
+
+function OwnerAlertComposer() {
+  const { data: members = [], isLoading: membersLoading } = trpc.team.listMembers.useQuery();
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [alertType, setAlertType] = useState("info");
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [link, setLink] = useState("");
+
+  const sendToUser = trpc.notifications.sendToUser.useMutation({
+    onSuccess: () => {
+      toast.success("Push notification sent successfully.");
+      setSelectedUserId("");
+      setAlertType("info");
+      setTitle("");
+      setBody("");
+      setLink("");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const handleSend = () => {
+    if (!selectedUserId) { toast.error("Please select a recipient."); return; }
+    if (!title.trim()) { toast.error("Title is required."); return; }
+    sendToUser.mutate({
+      userId: parseInt(selectedUserId),
+      type: alertType as any,
+      title: title.trim(),
+      body: body.trim() || undefined,
+      link: link.trim() || undefined,
+    });
+  };
+
+  const selectedMember = members.find((m: any) => String(m.id) === selectedUserId);
+
+  return (
+    <Card className="bg-card border-border">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-white text-base flex items-center gap-2">
+          <Bell className="w-4 h-4 text-[#00D9FF]" />
+          Owner Alert Composer
+        </CardTitle>
+        <CardDescription className="text-gray-400 text-sm">
+          Send on-demand push notifications to individual team members.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Recipient + Type row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-gray-300 text-sm">Recipient</Label>
+            <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+              <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50">
+                <SelectValue placeholder={membersLoading ? "Loading team..." : "Select a user"} />
+              </SelectTrigger>
+              <SelectContent>
+                {members.map((m: any) => (
+                  <SelectItem key={m.id} value={String(m.id)}>
+                    <span className="flex items-center gap-2">
+                      <span>{m.name || m.email}</span>
+                      <span className="text-xs text-gray-500">#{m.id}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-gray-300 text-sm">Alert Type</Label>
+            <Select value={alertType} onValueChange={setAlertType}>
+              <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ALERT_TYPES.map((t) => {
+                  const Icon = t.icon;
+                  return (
+                    <SelectItem key={t.value} value={t.value}>
+                      <span className="flex items-center gap-2">
+                        <Icon className={`w-3.5 h-3.5 ${t.color}`} />
+                        {t.label}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-gray-300 text-sm">Title</Label>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Action required on order #1042"
+            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-gray-300 text-sm">Message Body (optional)</Label>
+          <Textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Additional context or instructions..."
+            rows={3}
+            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50 resize-none"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-gray-300 text-sm">Link (optional)</Label>
+          <Input
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+            placeholder="/orders/1042 or https://..."
+            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+          />
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
+          {selectedMember && title.trim() ? (
+            <div className="flex-1 p-3 rounded-lg bg-white/5 border border-white/10">
+              <p className="text-xs text-gray-500 mb-1">Preview</p>
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const typeInfo = ALERT_TYPES.find((t) => t.value === alertType);
+                  const Icon = typeInfo?.icon ?? Info;
+                  return <Icon className={`w-4 h-4 ${typeInfo?.color ?? "text-blue-400"}`} />;
+                })()}
+                <div>
+                  <p className="text-sm text-white font-medium">{title}</p>
+                  {body && <p className="text-xs text-gray-400 mt-0.5">{body}</p>}
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                To: {selectedMember.name || selectedMember.email}
+              </p>
+            </div>
+          ) : (
+            <div className="flex-1" />
+          )}
+          <Button
+            onClick={handleSend}
+            disabled={sendToUser.isPending || !selectedUserId || !title.trim()}
+            className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold shrink-0"
+          >
+            {sendToUser.isPending ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Sending...</>
+            ) : (
+              <><Send className="w-4 h-4 mr-2" />Send Notification</>
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
