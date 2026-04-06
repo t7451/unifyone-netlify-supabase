@@ -10,6 +10,7 @@ import { registerShopifyRoutes } from "../shopify";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { registerDockerRoutes, registerGracefulShutdown } from "./docker";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -33,6 +34,8 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  // Docker health/readiness/metrics routes (no auth, no body parsing needed)
+  registerDockerRoutes(app);
   // Register Stripe webhook BEFORE json middleware (requires raw body for signature verification)
   registerStripeRoutes(app);
   // Register PayPal REST API routes
@@ -69,6 +72,9 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
+
+  // Graceful shutdown for Docker stop / SIGTERM
+  registerGracefulShutdown(server);
 }
 
 startServer().catch(console.error);
