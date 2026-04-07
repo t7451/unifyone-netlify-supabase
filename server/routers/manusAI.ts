@@ -166,10 +166,18 @@ export const manusAIRouter = router({
           { role: "user" as const, content: input.message },
         ];
 
-        // Call LLM with error handling
+        // Call LLM with error handling + credit metering
         let assistantContent: string;
         try {
-          const response = await invokeLLM({ messages: llmMessages });
+          const response = await invokeLLM({
+            messages: llmMessages,
+            meter: {
+              userId: ctx.user.id,
+              source: "ai_chat",
+              action: `manusAI.chat:${input.context}`,
+              tenantId: ctx.user.tenantId ?? undefined,
+            },
+          });
           const rawContent = response.choices[0]?.message?.content;
           assistantContent = typeof rawContent === "string" ? rawContent : "I'm sorry, I couldn't generate a response. Please try again.";
         } catch (llmError) {
