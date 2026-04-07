@@ -84,9 +84,14 @@ async function exchangeSupabaseSession(): Promise<boolean> {
   return res.ok;
 }
 
-export default function Login() {
+type LoginIntent = "signin" | "signup";
+
+export default function Login({
+  initialIntent = "signin",
+}: { initialIntent?: LoginIntent } = {}) {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
+  const [intent, setIntent] = useState<LoginIntent>(initialIntent);
   const [mode, setMode] = useState<AuthMode>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -350,9 +355,13 @@ export default function Login() {
 
         <div className="w-full max-w-[400px] space-y-8">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-1">Welcome back</h2>
+            <h2 className="text-2xl font-bold text-white mb-1">
+              {intent === "signup" ? "Create your workspace" : "Welcome back"}
+            </h2>
             <p className="text-slate-400 text-sm">
-              Sign in to your UnifyOne workspace
+              {intent === "signup"
+                ? "Start free. No credit card required."
+                : "Sign in to your UnifyOne workspace"}
             </p>
           </div>
 
@@ -436,7 +445,11 @@ export default function Login() {
 
             <Button
               onClick={
-                mode === "password" ? handlePasswordSignIn : handleMagicLink
+                mode === "password"
+                  ? intent === "signup"
+                    ? handlePasswordSignUp
+                    : handlePasswordSignIn
+                  : handleMagicLink
               }
               disabled={isSubmitting}
               className={cn(
@@ -450,12 +463,18 @@ export default function Login() {
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   {mode === "password"
-                    ? "Signing in..."
+                    ? intent === "signup"
+                      ? "Creating account..."
+                      : "Signing in..."
                     : "Sending magic link..."}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  {mode === "password" ? "Sign in" : "Send magic link"}
+                  {mode === "password"
+                    ? intent === "signup"
+                      ? "Create account"
+                      : "Sign in"
+                    : "Send magic link"}
                   <ArrowRight className="w-4 h-4" />
                 </span>
               )}
@@ -466,14 +485,35 @@ export default function Login() {
             <>
               <Separator className="bg-white/10" />
               <p className="text-center text-sm text-slate-500">
-                New to UnifyOne?{" "}
-                <button
-                  onClick={handlePasswordSignUp}
-                  disabled={isSubmitting}
-                  className="text-[#00D9FF] hover:text-[#00C4E8] font-medium transition-colors"
-                >
-                  Create an account
-                </button>
+                {intent === "signup" ? (
+                  <>
+                    Already have an account?{" "}
+                    <button
+                      onClick={() => {
+                        setIntent("signin");
+                        setError(null);
+                      }}
+                      disabled={isSubmitting}
+                      className="text-[#00D9FF] hover:text-[#00C4E8] font-medium transition-colors"
+                    >
+                      Sign in
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    New to UnifyOne?{" "}
+                    <button
+                      onClick={() => {
+                        setIntent("signup");
+                        setError(null);
+                      }}
+                      disabled={isSubmitting}
+                      className="text-[#00D9FF] hover:text-[#00C4E8] font-medium transition-colors"
+                    >
+                      Create an account
+                    </button>
+                  </>
+                )}
               </p>
             </>
           )}

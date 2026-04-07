@@ -2,14 +2,14 @@
 
 ## Architecture Overview
 
-| Layer            | Technology                | Notes                                      |
-|------------------|---------------------------|--------------------------------------------|
-| Frontend         | React 19 SPA (Vite)      | Built to `dist/public`, served by Netlify CDN |
-| Backend API      | Express + tRPC 11        | Runs as Netlify Function via `serverless-http` |
-| Database         | MySQL (Drizzle ORM)      | External — connection via `DATABASE_URL`   |
-| Real-time        | Supabase (optional)      | Graceful degradation if not configured     |
-| Auth             | Custom OAuth + PKCE + JWT | Session cookies, dynamic redirect URIs     |
-| Payments         | Stripe, PayPal, Square   | Webhook routes registered before JSON middleware |
+| Layer       | Technology                | Notes                                            |
+| ----------- | ------------------------- | ------------------------------------------------ |
+| Frontend    | React 19 SPA (Vite)       | Built to `dist/public`, served by Netlify CDN    |
+| Backend API | Express + tRPC 11         | Runs as Netlify Function via `serverless-http`   |
+| Database    | MySQL (Drizzle ORM)       | External — connection via `DATABASE_URL`         |
+| Real-time   | Supabase (optional)       | Graceful degradation if not configured           |
+| Auth        | Custom OAuth + PKCE + JWT | Session cookies, dynamic redirect URIs           |
+| Payments    | Stripe, PayPal, Square    | Webhook routes registered before JSON middleware |
 
 ## Phase 1: DNS Migration (from legacy Manus infrastructure)
 
@@ -49,6 +49,7 @@ PUBLIC_APP_URL=https://1commerce.online
 ```
 
 This is the canonical URL used by:
+
 - OAuth redirect URIs (dynamically built from request origin or this env var)
 - Email template links
 - Meta CAPI event source URLs
@@ -59,30 +60,30 @@ This is the canonical URL used by:
 
 ### Server-side (set in Netlify dashboard)
 
-| Variable                | Required | Description                                    |
-|-------------------------|----------|------------------------------------------------|
-| `DATABASE_URL`          | Yes      | MySQL connection string                        |
-| `JWT_SECRET`            | Yes      | Session cookie signing secret                  |
+| Variable                | Required | Description                                         |
+| ----------------------- | -------- | --------------------------------------------------- |
+| `DATABASE_URL`          | Yes      | MySQL connection string                             |
+| `JWT_SECRET`            | Yes      | Session cookie signing secret                       |
 | `PUBLIC_APP_URL`        | Yes      | Canonical app URL (e.g. `https://1commerce.online`) |
-| `OAUTH_CLIENT_ID`       | Yes      | OAuth provider client ID                       |
-| `OAUTH_CLIENT_SECRET`   | Yes      | OAuth provider client secret                   |
-| `OAUTH_AUTHORIZE_URL`   | Yes      | OAuth authorization endpoint                   |
-| `OAUTH_TOKEN_URL`       | Yes      | OAuth token endpoint                           |
-| `OAUTH_USERINFO_URL`    | Yes      | OAuth userinfo endpoint                        |
-| `OAUTH_ISSUER`          | No       | OAuth issuer URL                               |
-| `OAUTH_JWKS_URL`        | No       | JWKS endpoint for token verification           |
-| `OWNER_OPEN_ID`         | No       | Admin user's OpenID `sub` claim                |
-| `STRIPE_SECRET_KEY`     | No       | Stripe API secret key                          |
-| `STRIPE_WEBHOOK_SECRET` | No       | Stripe webhook signing secret                  |
-| `RESEND_API_KEY`        | No       | Resend email service API key                   |
+| `OAUTH_CLIENT_ID`       | Yes      | OAuth provider client ID                            |
+| `OAUTH_CLIENT_SECRET`   | Yes      | OAuth provider client secret                        |
+| `OAUTH_AUTHORIZE_URL`   | Yes      | OAuth authorization endpoint                        |
+| `OAUTH_TOKEN_URL`       | Yes      | OAuth token endpoint                                |
+| `OAUTH_USERINFO_URL`    | Yes      | OAuth userinfo endpoint                             |
+| `OAUTH_ISSUER`          | No       | OAuth issuer URL                                    |
+| `OAUTH_JWKS_URL`        | No       | JWKS endpoint for token verification                |
+| `OWNER_OPEN_ID`         | No       | Admin user's OpenID `sub` claim                     |
+| `STRIPE_SECRET_KEY`     | No       | Stripe API secret key                               |
+| `STRIPE_WEBHOOK_SECRET` | No       | Stripe webhook signing secret                       |
+| `RESEND_API_KEY`        | No       | Resend email service API key                        |
 
 ### Client-side (prefixed with `VITE_`)
 
-| Variable                    | Required | Description                       |
-|-----------------------------|----------|-----------------------------------|
-| `VITE_SUPABASE_URL`        | No       | Supabase project URL              |
-| `VITE_SUPABASE_ANON_KEY`   | No       | Supabase anonymous key            |
-| `VITE_PAYPAL_CLIENT_ID`    | No       | PayPal client-side SDK ID         |
+| Variable                 | Required | Description               |
+| ------------------------ | -------- | ------------------------- |
+| `VITE_SUPABASE_URL`      | No       | Supabase project URL      |
+| `VITE_SUPABASE_ANON_KEY` | No       | Supabase anonymous key    |
+| `VITE_PAYPAL_CLIENT_ID`  | No       | PayPal client-side SDK ID |
 
 ## Phase 3: OAuth Redirect URLs
 
@@ -139,3 +140,23 @@ After DNS migration, verify:
 - [ ] `https://1commerce.online/robots.txt` references correct domain
 - [ ] HTTPS certificate is active (green lock)
 - [ ] Stripe/PayPal webhooks reach the function endpoint
+- [ ] `https://www.1commerce.online` 301-redirects to `https://1commerce.online`
+- [ ] Contact form on `/contact` succeeds (CONTACT_WEBHOOK_URL set)
+
+## Required Environment Variables (Netlify dashboard)
+
+In addition to `DATABASE_URL`, OAuth secrets, and payment keys, set:
+
+| Variable                  | Purpose                                                                                         | If unset                                                                                                  |
+| ------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `VITE_META_PIXEL_ID`      | Meta CAPI / Pixel for ad attribution                                                            | Pixel block in `client/index.html` no-ops silently — ad campaigns will look like they have "no analytics" |
+| `VITE_ANALYTICS_ENDPOINT` | Umami self-hosted analytics endpoint                                                            | Secondary analytics block no-ops                                                                          |
+| `CONTACT_WEBHOOK_URL`     | Webhook (Slack/n8n/Zapier) for `/contact` form submissions                                      | Submissions are accepted but only logged server-side                                                      |
+| `PUBLIC_APP_URL`          | Canonical hostname used for `__APP_URL__` rewrites in `index.html`, `sitemap.xml`, `robots.txt` | Defaults to `https://1commerce.online`                                                                    |
+
+## Domain Aliases
+
+For the `www → apex` redirect in `netlify.toml` to fire, the `www.1commerce.online`
+subdomain **must be added as a domain alias** in Netlify → Site settings → Domain
+management. Without the alias, `www` will fail DNS resolution before the redirect
+rule is reached.

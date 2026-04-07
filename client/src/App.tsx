@@ -56,18 +56,26 @@ import VideoProduction from "./pages/VideoProduction";
 import AdCopyHub from "./pages/AdCopyHub";
 import GovernanceDashboard from "./pages/GovernanceDashboard";
 import { DocsChat } from "./pages/DocsChat";
+import Pricing from "./pages/Pricing";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
 import { getLoginUrl } from "./const";
 import { trpc } from "./lib/trpc";
 
-function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+function ProtectedRoute({
+  component: Component,
+}: {
+  component: React.ComponentType;
+}) {
   const { isAuthenticated, loading } = useAuth();
-  if (loading) return (
-    <div className="min-h-screen bg-[#0A1128] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#00D9FF] border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="min-h-screen bg-[#0A1128] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#00D9FF] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   if (!isAuthenticated) {
     window.location.href = getLoginUrl();
     return null;
@@ -75,23 +83,32 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   return <Component />;
 }
 
-function DashboardRoute({ component: Component }: { component: React.ComponentType }) {
+function DashboardRoute({
+  component: Component,
+}: {
+  component: React.ComponentType;
+}) {
   return (
     <ProtectedRoute component={() => <TenantGuard component={Component} />} />
   );
 }
 
-function TenantGuard({ component: Component }: { component: React.ComponentType }) {
+function TenantGuard({
+  component: Component,
+}: {
+  component: React.ComponentType;
+}) {
   const [, navigate] = useLocation();
   const tenants = trpc.tenant.list.useQuery();
   const hasTenant = tenants.data && tenants.data.length > 0;
   const isLoading = tenants.isLoading;
 
-  if (isLoading) return (
-    <div className="min-h-screen bg-[#0A1128] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#00D9FF] border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
+  if (isLoading)
+    return (
+      <div className="min-h-screen bg-[#0A1128] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#00D9FF] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
 
   if (!hasTenant) {
     navigate("/setup");
@@ -110,37 +127,122 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
+      <Route path="/signup">{() => <Login initialIntent="signup" />}</Route>
       <Route path="/auth/callback" component={AuthCallback} />
-      <Route path="/setup" component={() => <ProtectedRoute component={TenantSetup} />} />
-      <Route path="/dashboard" component={() => <DashboardRoute component={Dashboard} />} />
-      <Route path="/products" component={() => <DashboardRoute component={Products} />} />
-      <Route path="/orders" component={() => <DashboardRoute component={Orders} />} />
-      <Route path="/customers" component={() => <DashboardRoute component={Customers} />} />
-      <Route path="/analytics" component={() => <DashboardRoute component={Analytics} />} />
-      <Route path="/integrations" component={() => <DashboardRoute component={Integrations} />} />
-      <Route path="/settings" component={() => <DashboardRoute component={Settings} />} />
-      <Route path="/billing" component={() => <DashboardRoute component={Billing} />} />
-      <Route path="/team" component={() => <DashboardRoute component={Team} />} />
-      <Route path="/social" component={() => <DashboardRoute component={Social} />} />
-      <Route path="/referrals" component={() => <DashboardRoute component={Referrals} />} />
-      <Route path="/leads" component={() => <DashboardRoute component={Leads} />} />
-      <Route path="/automations" component={() => <DashboardRoute component={Automations} />} />
-      <Route path="/notifications" component={() => <DashboardRoute component={Notifications} />} />
+      <Route path="/pricing" component={Pricing} />
+      <Route path="/about" component={About} />
+      <Route path="/contact" component={Contact} />
+      <Route
+        path="/setup"
+        component={() => <ProtectedRoute component={TenantSetup} />}
+      />
+      <Route
+        path="/dashboard"
+        component={() => <DashboardRoute component={Dashboard} />}
+      />
+      <Route
+        path="/products"
+        component={() => <DashboardRoute component={Products} />}
+      />
+      <Route
+        path="/orders"
+        component={() => <DashboardRoute component={Orders} />}
+      />
+      <Route
+        path="/customers"
+        component={() => <DashboardRoute component={Customers} />}
+      />
+      <Route
+        path="/analytics"
+        component={() => <DashboardRoute component={Analytics} />}
+      />
+      <Route
+        path="/integrations"
+        component={() => <DashboardRoute component={Integrations} />}
+      />
+      <Route
+        path="/settings"
+        component={() => <DashboardRoute component={Settings} />}
+      />
+      <Route
+        path="/billing"
+        component={() => <DashboardRoute component={Billing} />}
+      />
+      <Route
+        path="/team"
+        component={() => <DashboardRoute component={Team} />}
+      />
+      <Route
+        path="/social"
+        component={() => <DashboardRoute component={Social} />}
+      />
+      <Route
+        path="/referrals"
+        component={() => <DashboardRoute component={Referrals} />}
+      />
+      <Route
+        path="/leads"
+        component={() => <DashboardRoute component={Leads} />}
+      />
+      <Route
+        path="/automations"
+        component={() => <DashboardRoute component={Automations} />}
+      />
+      <Route
+        path="/notifications"
+        component={() => <DashboardRoute component={Notifications} />}
+      />
       <Route path="/themes" component={ThemeStore} />
-      <Route path="/my-themes" component={() => <DashboardRoute component={MyThemes} />} />
-      <Route path="/admin/themes" component={() => <DashboardRoute component={AdminThemes} />} />
-      <Route path="/rewards" component={() => <DashboardRoute component={Rewards} />} />
-      <Route path="/revenue-streams" component={() => <DashboardRoute component={RevenueStreams} />} />
-      <Route path="/affiliates" component={() => <DashboardRoute component={Affiliates} />} />
+      <Route
+        path="/my-themes"
+        component={() => <DashboardRoute component={MyThemes} />}
+      />
+      <Route
+        path="/admin/themes"
+        component={() => <DashboardRoute component={AdminThemes} />}
+      />
+      <Route
+        path="/rewards"
+        component={() => <DashboardRoute component={Rewards} />}
+      />
+      <Route
+        path="/revenue-streams"
+        component={() => <DashboardRoute component={RevenueStreams} />}
+      />
+      <Route
+        path="/affiliates"
+        component={() => <DashboardRoute component={Affiliates} />}
+      />
       <Route path="/shopify/install" component={ShopifyInstall} />
       <Route path="/shopify/success" component={ShopifySuccess} />
-      <Route path="/sync-monitor" component={() => <DashboardRoute component={SyncMonitor} />} />
-      <Route path="/money-manager" component={() => <DashboardRoute component={MoneyManager} />} />
-      <Route path="/achievements" component={() => <DashboardRoute component={Achievements} />} />
-      <Route path="/friends" component={() => <DashboardRoute component={Friends} />} />
-      <Route path="/gig-command" component={() => <DashboardRoute component={GigCommand} />} />
-      <Route path="/mobile-automation" component={() => <DashboardRoute component={MobileAutomation} />} />
-      <Route path="/ai-assistant" component={() => <DashboardRoute component={AIAssistant} />} />
+      <Route
+        path="/sync-monitor"
+        component={() => <DashboardRoute component={SyncMonitor} />}
+      />
+      <Route
+        path="/money-manager"
+        component={() => <DashboardRoute component={MoneyManager} />}
+      />
+      <Route
+        path="/achievements"
+        component={() => <DashboardRoute component={Achievements} />}
+      />
+      <Route
+        path="/friends"
+        component={() => <DashboardRoute component={Friends} />}
+      />
+      <Route
+        path="/gig-command"
+        component={() => <DashboardRoute component={GigCommand} />}
+      />
+      <Route
+        path="/mobile-automation"
+        component={() => <DashboardRoute component={MobileAutomation} />}
+      />
+      <Route
+        path="/ai-assistant"
+        component={() => <DashboardRoute component={AIAssistant} />}
+      />
       <Route path="/sovereign" component={Sovereign} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
@@ -159,12 +261,27 @@ function Router() {
       <Route path="/marketing/ad-copy" component={AdCopyHub} />
       <Route path="/governance" component={GovernanceDashboard} />
       {/* SEO Blog Routes */}
-      <Route path="/blog/gig-economy-commerce-platform" component={GigEcommercePost} />
-      <Route path="/blog/multi-tenant-ecommerce-saas" component={MultiTenantPost} />
+      <Route
+        path="/blog/gig-economy-commerce-platform"
+        component={GigEcommercePost}
+      />
+      <Route
+        path="/blog/multi-tenant-ecommerce-saas"
+        component={MultiTenantPost}
+      />
       <Route path="/blog/manus-ai-gig-workers" component={ManusAIPost} />
-      <Route path="/checkout" component={() => <ProtectedRoute component={Checkout} />} />
-      <Route path="/checkout/paypal-return" component={() => <ProtectedRoute component={Checkout} />} />
-      <Route path="/checkout/paypal-cancel" component={() => <ProtectedRoute component={Checkout} />} />
+      <Route
+        path="/checkout"
+        component={() => <ProtectedRoute component={Checkout} />}
+      />
+      <Route
+        path="/checkout/paypal-return"
+        component={() => <ProtectedRoute component={Checkout} />}
+      />
+      <Route
+        path="/checkout/paypal-cancel"
+        component={() => <ProtectedRoute component={Checkout} />}
+      />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
