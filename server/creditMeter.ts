@@ -202,11 +202,27 @@ export async function meterCredits(
     error: row.error_message ?? undefined,
   };
 
-  // Fire-and-forget overage flush if we queued a charge
+  // Fire-and-forget: trigger background function to flush overages async
+  // Hands off to a 15-min background worker instead of blocking the sync function
   if (result.success && result.overageCredits > 0) {
-    flushUserOverages(userId).catch((err) =>
-      console.error("[CreditMeter] Flush error:", err.message)
-    );
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.VITE_APP_URL ||
+      "";
+    if (appUrl) {
+      fetch(`${appUrl}/api/flush-overages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: String(userId) }),
+      }).catch((err) =>
+        console.error("[CreditMeter] Background flush trigger error:", err.message)
+      );
+    } else {
+      // Fallback: flush inline if app URL not configured
+      flushUserOverages(String(userId)).catch((err) =>
+        console.error("[CreditMeter] Flush error:", err.message)
+      );
+    }
   }
 
   return result;
