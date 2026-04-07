@@ -204,7 +204,8 @@ export async function meterCredits(
     error: row.error_message ?? undefined,
   };
 
-  // Fire-and-forget overage flush if we queued a charge
+  // Fire-and-forget: trigger background function to flush overages async
+  // Hands off to a 15-min background worker instead of blocking the sync function
   if (result.success && result.overageCredits > 0) {
     flushUserOverages(userId).catch(err =>
       console.error("[CreditMeter] Flush error:", errMsg(err))
