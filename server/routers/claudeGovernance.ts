@@ -3,7 +3,11 @@ import { z } from "zod";
 import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { invokeLLM } from "../_core/llm";
-import { auditLogs, escalationQueue, governanceRules } from "../../drizzle/schema";
+import {
+  auditLogs,
+  escalationQueue,
+  governanceRules,
+} from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 
 // ── Claude Governance Reasoning Engine ──────────────────────────────────────────
@@ -32,7 +36,9 @@ export const claudeGovernanceRouter = router({
         description: z.string().min(10).max(1000),
         affectedEntities: z.record(z.string(), z.unknown()).optional(),
         estimatedValue: z.number().optional(),
-        urgency: z.enum(["low", "medium", "high", "critical"]).default("medium"),
+        urgency: z
+          .enum(["low", "medium", "high", "critical"])
+          .default("medium"),
         context: z.record(z.string(), z.unknown()).optional(),
       })
     )
@@ -49,10 +55,12 @@ export const claudeGovernanceRouter = router({
       const rules = await db
         .select()
         .from(governanceRules)
-        .where(and(
-          eq(governanceRules.isActive, true),
-          eq(governanceRules.entityType, input.actionType)
-        ));
+        .where(
+          and(
+            eq(governanceRules.isActive, true),
+            eq(governanceRules.entityType, input.actionType)
+          )
+        );
 
       // ── Build Claude prompt for decision reasoning ──────────────────────────
       const systemPrompt = `You are an autonomous governance AI assistant for UnifyOne, a Cathedral Framework-based commerce platform. Your role is to evaluate proposed autonomous actions against governance rules and organizational policies.
@@ -91,7 +99,15 @@ Consider factors like:
 - Compliance requirements`;
 
       // ── Invoke Claude for decision reasoning ────────────────────────────────
-      let claudeDecision: any = {
+      type ClaudeDecision = {
+        allowed: boolean;
+        requiresEscalation: boolean;
+        riskLevel: "low" | "medium" | "high" | string;
+        violations: string[];
+        reasoning: string;
+        recommendedAuthority: string;
+      };
+      let claudeDecision: ClaudeDecision = {
         allowed: true,
         requiresEscalation: false,
         riskLevel: "low",
@@ -115,12 +131,25 @@ Consider factors like:
                 properties: {
                   allowed: { type: "boolean" },
                   requiresEscalation: { type: "boolean" },
-                  riskLevel: { type: "string", enum: ["low", "medium", "high", "critical"] },
+                  riskLevel: {
+                    type: "string",
+                    enum: ["low", "medium", "high", "critical"],
+                  },
                   violations: { type: "array", items: { type: "string" } },
                   reasoning: { type: "string" },
-                  recommendedAuthority: { type: "string", enum: ["operator", "architect", "cathedral"] },
+                  recommendedAuthority: {
+                    type: "string",
+                    enum: ["operator", "architect", "cathedral"],
+                  },
                 },
-                required: ["allowed", "requiresEscalation", "riskLevel", "violations", "reasoning", "recommendedAuthority"],
+                required: [
+                  "allowed",
+                  "requiresEscalation",
+                  "riskLevel",
+                  "violations",
+                  "reasoning",
+                  "recommendedAuthority",
+                ],
               },
             },
           },
@@ -143,9 +172,10 @@ Consider factors like:
         entityType: input.actionType,
         decisionAuthority: claudeDecision.recommendedAuthority,
         escalationTriggered: claudeDecision.requiresEscalation,
-        escalationReason: claudeDecision.violations.length > 0
-          ? `Claude governance evaluation: ${claudeDecision.violations.join("; ")}`
-          : undefined,
+        escalationReason:
+          claudeDecision.violations.length > 0
+            ? `Claude governance evaluation: ${claudeDecision.violations.join("; ")}`
+            : undefined,
         newValue: {
           actionType: input.actionType,
           estimatedValue: input.estimatedValue,
@@ -167,19 +197,28 @@ Consider factors like:
           thresholdExceeded: input.estimatedValue?.toString(),
           authorityLevel: claudeDecision.recommendedAuthority,
           status: "pending",
-          expiresAt: new Date(Date.now() + (input.urgency === "critical" ? 1 : 12) * 60 * 60 * 1000),
+          expiresAt: new Date(
+            Date.now() +
+              (input.urgency === "critical" ? 1 : 12) * 60 * 60 * 1000
+          ),
         });
       }
 
       return {
-        decision: claudeDecision.allowed ? "ALLOWED" : claudeDecision.requiresEscalation ? "ESCALATED" : "BLOCKED",
+        decision: claudeDecision.allowed
+          ? "ALLOWED"
+          : claudeDecision.requiresEscalation
+            ? "ESCALATED"
+            : "BLOCKED",
         allowed: claudeDecision.allowed,
         requiresEscalation: claudeDecision.requiresEscalation,
         riskLevel: claudeDecision.riskLevel,
         violations: claudeDecision.violations,
         reasoning: claudeDecision.reasoning,
         recommendedAuthority: claudeDecision.recommendedAuthority,
-        escalationId: claudeDecision.requiresEscalation ? (auditResult as any)?.insertId : null,
+        escalationId: claudeDecision.requiresEscalation
+          ? (auditResult as any)?.insertId
+          : null,
       };
     }),
 
@@ -270,7 +309,9 @@ Provide a detailed response considering:
         ],
       });
 
-      const analysis = response.choices?.[0]?.message?.content ?? "Unable to generate analysis";
+      const analysis =
+        response.choices?.[0]?.message?.content ??
+        "Unable to generate analysis";
 
       return {
         escalationId: input.escalationId,
@@ -304,8 +345,13 @@ function evaluateRulesBased(
     const threshold = condition.threshold as number | undefined;
 
     if (threshold && input.estimatedValue && input.estimatedValue > threshold) {
-      violations.push(`${rule.ruleName}: Amount $${input.estimatedValue} exceeds threshold $${threshold}`);
-      if (rule.actionOnViolation === "escalate" || rule.actionOnViolation === "block") {
+      violations.push(
+        `${rule.ruleName}: Amount $${input.estimatedValue} exceeds threshold $${threshold}`
+      );
+      if (
+        rule.actionOnViolation === "escalate" ||
+        rule.actionOnViolation === "block"
+      ) {
         requiresEscalation = true;
         riskLevel = "high";
       }
@@ -325,9 +371,15 @@ function evaluateRulesBased(
     requiresEscalation,
     riskLevel,
     violations,
-    reasoning: violations.length > 0
-      ? `Rule violations detected: ${violations.join("; ")}`
-      : "No governance violations detected",
-    recommendedAuthority: riskLevel === "critical" ? "cathedral" : riskLevel === "high" ? "architect" : "operator",
+    reasoning:
+      violations.length > 0
+        ? `Rule violations detected: ${violations.join("; ")}`
+        : "No governance violations detected",
+    recommendedAuthority:
+      riskLevel === "critical"
+        ? "cathedral"
+        : riskLevel === "high"
+          ? "architect"
+          : "operator",
   };
 }

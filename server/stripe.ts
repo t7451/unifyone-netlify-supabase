@@ -8,13 +8,12 @@ import { eq, and, sql } from "drizzle-orm";
 import { capi } from "./meta/capi";
 import { getAppUrl } from "./_core/env";
 import { flushAllOverages, flushUserOverages } from "./creditMeter";
+import { errMsg } from "./_core/errors";
 
 // Supabase admin client for subscription/credit sync (service role — no RLS)
 function getSupabaseAdmin() {
   const url =
-    process.env.SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    "";
+    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
   if (!url || !key) return null;
   return createClient(url, key, { auth: { persistSession: false } });
@@ -100,7 +99,8 @@ async function syncSubscription(sub: Stripe.Subscription) {
         current_period_start: subAny.current_period_start
           ? new Date(subAny.current_period_start * 1000).toISOString()
           : new Date().toISOString(),
-        current_period_end: periodEnd?.toISOString() || new Date().toISOString(),
+        current_period_end:
+          periodEnd?.toISOString() || new Date().toISOString(),
         created: new Date(sub.created * 1000).toISOString(),
         ended_at: sub.ended_at
           ? new Date(sub.ended_at * 1000).toISOString()
@@ -191,8 +191,7 @@ async function grantSubscriptionCredits(
   }
 
   // Resolve user_id from subscription metadata or customer lookup
-  const userId =
-    sub.metadata?.user_id || sub.metadata?.tenant_id || "";
+  const userId = sub.metadata?.user_id || sub.metadata?.tenant_id || "";
   if (!userId) {
     console.warn(
       `[Stripe] No user_id in subscription metadata for ${sub.id}, skipping credit grant`
@@ -239,12 +238,12 @@ export function registerStripeRoutes(app: Express) {
 
       try {
         event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(
           "[Stripe Webhook] Signature verification failed:",
-          err.message
+          errMsg(err)
         );
-        return res.status(400).json({ error: `Webhook Error: ${err.message}` });
+        return res.status(400).json({ error: `Webhook Error: ${errMsg(err)}` });
       }
 
       // Handle test events for webhook verification
@@ -335,7 +334,7 @@ export function registerStripeRoutes(app: Express) {
                     .catch((err: Error) =>
                       console.error(
                         "[CAPI] Purchase event failed:",
-                        err.message
+                        errMsg(err)
                       )
                     );
                 }
@@ -382,7 +381,7 @@ export function registerStripeRoutes(app: Express) {
                   (session.currency || "USD").toUpperCase()
                 )
                 .catch((err: Error) =>
-                  console.error("[CAPI] Purchase event failed:", err.message)
+                  console.error("[CAPI] Purchase event failed:", errMsg(err))
                 );
             }
 
@@ -591,9 +590,9 @@ export function registerStripeRoutes(app: Express) {
         });
 
         res.json({ url: session.url });
-      } catch (err: any) {
-        console.error("[Stripe] Create checkout error:", err.message);
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        console.error("[Stripe] Create checkout error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -628,12 +627,9 @@ export function registerStripeRoutes(app: Express) {
           return_url: `${origin}/dashboard?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
         });
         res.json({ clientSecret: session.client_secret });
-      } catch (err: any) {
-        console.error(
-          "[Stripe] Create embedded checkout error:",
-          err.message
-        );
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        console.error("[Stripe] Create embedded checkout error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -658,9 +654,9 @@ export function registerStripeRoutes(app: Express) {
         });
 
         res.json({ url: session.url });
-      } catch (err: any) {
-        console.error("[Stripe] Customer portal error:", err.message);
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        console.error("[Stripe] Customer portal error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -679,8 +675,8 @@ export function registerStripeRoutes(app: Express) {
           }
         );
         res.json(sub);
-      } catch (err: any) {
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -705,9 +701,9 @@ export function registerStripeRoutes(app: Express) {
           proration_behavior: "create_prorations",
         });
         res.json(updated);
-      } catch (err: any) {
-        console.error("[Stripe] Change plan error:", err.message);
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        console.error("[Stripe] Change plan error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -722,17 +718,15 @@ export function registerStripeRoutes(app: Express) {
       try {
         const { subscriptionId } = req.body;
         if (!subscriptionId) {
-          return res
-            .status(400)
-            .json({ error: "subscriptionId is required" });
+          return res.status(400).json({ error: "subscriptionId is required" });
         }
         const updated = await stripe.subscriptions.update(subscriptionId, {
           cancel_at_period_end: true,
         });
         res.json(updated);
-      } catch (err: any) {
-        console.error("[Stripe] Cancel subscription error:", err.message);
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        console.error("[Stripe] Cancel subscription error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -744,18 +738,15 @@ export function registerStripeRoutes(app: Express) {
     express.json(),
     async (req: Request, res: Response) => {
       const adminKey = req.headers["x-admin-key"] as string | undefined;
-      if (
-        process.env.ADMIN_API_KEY &&
-        adminKey !== process.env.ADMIN_API_KEY
-      ) {
+      if (process.env.ADMIN_API_KEY && adminKey !== process.env.ADMIN_API_KEY) {
         return res.status(401).json({ error: "Unauthorized" });
       }
       try {
         const result = await flushAllOverages();
         res.json(result);
-      } catch (err: any) {
-        console.error("[Stripe] Flush overages error:", err.message);
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        console.error("[Stripe] Flush overages error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -768,12 +759,9 @@ export function registerStripeRoutes(app: Express) {
       try {
         const result = await flushUserOverages(req.params.userId);
         res.json(result);
-      } catch (err: any) {
-        console.error(
-          "[Stripe] Flush user overages error:",
-          err.message
-        );
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        console.error("[Stripe] Flush user overages error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -790,8 +778,8 @@ export function registerStripeRoutes(app: Express) {
           limit: 20,
         });
         res.json(invoices.data);
-      } catch (err: any) {
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
