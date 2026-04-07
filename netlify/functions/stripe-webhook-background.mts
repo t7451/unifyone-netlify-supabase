@@ -55,9 +55,10 @@ export default async (req: Request, _context: Context) => {
       case "customer.subscription.created":
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
-        // Dynamic import to keep bundle light — reuse existing sync logic
-        const { syncSubscription } = await import("../../server/stripe-sync");
-        await syncSubscription(event.data.object as Stripe.Subscription);
+        // Log for audit — full sync handled by existing /api/stripe/webhook (server.ts)
+        // This background endpoint is the fast-ACK path; server.ts does the heavy sync
+        const sub = event.data.object as Stripe.Subscription;
+        console.log(`[stripe-webhook-bg] Subscription event: ${event.type} id=${sub.id} status=${sub.status}`);
         break;
       }
 
