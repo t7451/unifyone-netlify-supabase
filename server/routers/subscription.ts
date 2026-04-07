@@ -1,7 +1,15 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { createClient } from "@supabase/supabase-js";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getProductCount, getOrderCount, getCustomerCount, getTenantById, getPlans, getPlanBySlug } from "../db";
+
+function getSupabaseAdmin() {
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
+}
 
 export const subscriptionRouter = router({
   /**
@@ -160,6 +168,161 @@ export const subscriptionRouter = router({
       const data = await res.json() as { url?: string };
       return { url: data.url ?? null };
     }),
+
+  /**
+   * Get credit balance from Supabase credit_balances table.
+   */
+  getCreditBalance: protectedProcedure.query(async ({ ctx }) => {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) return { balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
+
+    const userId = ctx.user.id?.toString();
+    if (!userId) return { balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
+
+    const { data } = await supabase
+      .from("credit_balances")
+      .select("balance, lifetime_earned, lifetime_spent, last_refill_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    return {
+      balance: data?.balance ?? 0,
+      lifetime_earned: data?.lifetime_earned ?? 0,
+      lifetime_spent: data?.lifetime_spent ?? 0,
+      last_refill_at: data?.last_refill_at ?? null,
+    };
+  }),
+
+  /**
+   * Get subscription tier info from Supabase.
+   */
+  getSubscriptionTier: protectedProcedure.query(async ({ ctx }) => {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) return null;
+
+    const userId = ctx.user.id?.toString();
+    if (!userId) return null;
+
+    const { data } = await supabase
+      .from("stripe_subscriptions")
+      .select(`
+        id, status, current_period_end,
+        stripe_prices!inner(id, unit_amount, interval),
+        subscription_tiers!inner(name, monthly_credits, features)
+      `)
+      .eq("user_id", userId)
+      .in("status", ["trialing", "active"])
+      .maybeSingle();
+
+    return data;
+  }),
+
+  /**
+   * List available subscription tiers for the pricing page.
+   */
+  getSubscriptionTiers: publicProcedure.query(async () => {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) return [];
+
+    const { data } = await supabase
+      .from("subscription_tiers")
+      .select("*")
+      .eq("is_active", true)
+      .order("monthly_price_cents", { ascending: true });
+
+    return data ?? [];
+  }),
+
+  /**
+   * Credit usage history — paginated, with source filter.
+   * Reads from Supabase credit_usage_events (the full payment-flow log).
+   */
+  getCreditUsage: protectedProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(200).default(50),
+        offset: z.number().min(0).default(0),
+        source: z.string().optional(),
+        onlyOverages: z.boolean().default(false),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const supabase = getSupabaseAdmin();
+      if (!supabase) return { events: [], total: 0 };
+
+      const userId = ctx.user.id?.toString();
+      if (!userId) return { events: [], total: 0 };
+
+      let query = supabase
+        .from("credit_usage_events")
+        .select(
+          "id, source, action, amount_credits, cost_cents, balance_after, tokens_in, tokens_out, model, overage, stripe_invoice_item_id, metadata, created_at",
+          { count: "exact" }
+        )
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .range(input.offset, input.offset + input.limit - 1);
+
+      if (input.source) query = query.eq("source", input.source);
+      if (input.onlyOverages) query = query.eq("overage", true);
+
+      const { data, count } = await query;
+      return { events: data ?? [], total: count ?? 0 };
+    }),
+
+  /**
+   * Aggregated credit usage summary by source, over a period.
+   * Uses the credit_usage_summary RPC.
+   */
+  getCreditUsageSummary: protectedProcedure
+    .input(
+      z.object({
+        days: z.number().min(1).max(365).default(30),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const supabase = getSupabaseAdmin();
+      if (!supabase) return { summary: [] };
+
+      const userId = ctx.user.id?.toString();
+      if (!userId) return { summary: [] };
+
+      const since = new Date(
+        Date.now() - input.days * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      const { data, error } = await supabase.rpc("credit_usage_summary", {
+        p_user_id: userId,
+        p_since: since,
+      });
+
+      if (error) {
+        console.error("[Subscription] usage summary error:", error.message);
+        return { summary: [] };
+      }
+      return { summary: data ?? [] };
+    }),
+
+  /**
+   * Pending overage queue for the current user — shows which charges
+   * are waiting to be reported to Stripe as invoice items.
+   */
+  getPendingOverages: protectedProcedure.query(async ({ ctx }) => {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) return { pending: [] };
+
+    const userId = ctx.user.id?.toString();
+    if (!userId) return { pending: [] };
+
+    const { data } = await supabase
+      .from("credit_overage_queue")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    return { pending: data ?? [] };
+  }),
 
   /**
    * Returns invoice history from Stripe for the current tenant.

@@ -47,6 +47,21 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
+# Ensure webhook routes accept Stripe POST requests
+[[headers]]
+  for = "/api/stripe/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "POST, GET, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, stripe-signature"
+
+[[headers]]
+  for = "/api/billing/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "POST, GET, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, stripe-signature"
+
 # Cache static assets aggressively
 [[headers]]
   for = "/assets/*"

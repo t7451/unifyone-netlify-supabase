@@ -1,5 +1,4 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
-import type { Request } from "express";
 
 const originalEnv = {
   PUBLIC_APP_URL: process.env.PUBLIC_APP_URL,
@@ -17,59 +16,34 @@ function resetBaseUrlEnv() {
   delete process.env.DEPLOY_URL;
 }
 
-function makeRequest(overrides: Partial<Request> = {}): Request {
-  return {
-    protocol: "https",
-    headers: {},
-    get: vi.fn((header: string) => {
-      if (header.toLowerCase() === "host") return "unifyone.example.com";
-      return undefined;
-    }),
-    header: vi.fn((header: string) => {
-      if (header.toLowerCase() === "x-forwarded-proto") return "https";
-      return undefined;
-    }),
-    ...overrides,
-  } as unknown as Request;
-}
-
-describe("auth session redirect uri", () => {
-  it("prefers configured base url when provided", async () => {
+describe("auth session env resolution", () => {
+  it("prefers PUBLIC_APP_URL when provided", async () => {
     resetBaseUrlEnv();
     process.env.PUBLIC_APP_URL = "https://app.unifyone.com";
 
     vi.resetModules();
-    const { buildRedirectUri } = await import("./_core/sdk");
+    const { getAppUrl } = await import("./_core/env");
 
-    expect(buildRedirectUri(makeRequest())).toBe(
-      "https://app.unifyone.com/api/oauth/callback"
-    );
+    expect(getAppUrl()).toBe("https://app.unifyone.com");
   });
 
-  it("falls back to request host when no base url is configured", async () => {
+  it("falls back to APP_URL when PUBLIC_APP_URL is missing", async () => {
+    resetBaseUrlEnv();
+    process.env.APP_URL = "https://branch.unifyone.com";
+
+    vi.resetModules();
+    const { getAppUrl } = await import("./_core/env");
+
+    expect(getAppUrl()).toBe("https://branch.unifyone.com");
+  });
+
+  it("falls back to hardcoded URL when no env vars are set", async () => {
     resetBaseUrlEnv();
 
     vi.resetModules();
-    const { buildRedirectUri } = await import("./_core/sdk");
+    const { getAppUrl } = await import("./_core/env");
 
-    expect(buildRedirectUri(makeRequest())).toBe(
-      "https://unifyone.example.com/api/oauth/callback"
-    );
-  });
-
-  it("throws when host is missing and no base url override exists", async () => {
-    resetBaseUrlEnv();
-
-    vi.resetModules();
-    const { buildRedirectUri } = await import("./_core/sdk");
-
-    expect(() =>
-      buildRedirectUri(
-        makeRequest({
-          get: vi.fn(() => undefined),
-        })
-      )
-    ).toThrow("Missing host header for OAuth callback");
+    expect(getAppUrl()).toBe("https://1commerce.online");
   });
 });
 

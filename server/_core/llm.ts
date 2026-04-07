@@ -1,4 +1,9 @@
 import { ENV } from "./env";
+import {
+  meterCredits,
+  tokensToCredits,
+  type CreditSource,
+} from "../creditMeter";
 
 export type Role = "system" | "user" | "assistant" | "tool" | "function";
 
@@ -66,6 +71,21 @@ export type InvokeParams = {
   output_schema?: OutputSchema;
   responseFormat?: ResponseFormat;
   response_format?: ResponseFormat;
+  /**
+   * Optional credit metering context. When provided, the LLM call is
+   * metered via server/creditMeter after completion using actual
+   * token usage. Throws BEFORE the network request if the user has
+   * insufficient credits AND no active subscription with overage.
+   */
+  meter?: {
+    userId: string | number;
+    source?: CreditSource;
+    action: string;
+    tenantId?: string | number;
+    requestId?: string;
+    /** Override automatic token→credit conversion */
+    fixedCredits?: number;
+  };
 };
 
 export type ToolCall = {
@@ -328,5 +348,29 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     );
   }
 
-  return (await response.json()) as InvokeResult;
+  const result = (await response.json()) as InvokeResult;
+
+  // ── Credit metering: log & debit this call ────────────────────────
+  if (params.meter) {
+    const tokensIn = result.usage?.prompt_tokens ?? 0;
+    const tokensOut = result.usage?.completion_tokens ?? 0;
+    const amount =
+      params.meter.fixedCredits ?? tokensToCredits(tokensIn, tokensOut);
+    meterCredits({
+      userId: params.meter.userId,
+      amount,
+      source: params.meter.source ?? "ai_chat",
+      action: params.meter.action,
+      tokensIn,
+      tokensOut,
+      model: String(payload.model ?? ""),
+      tenantId: params.meter.tenantId,
+      requestId: params.meter.requestId,
+      metadata: { finish_reason: result.choices[0]?.finish_reason ?? null },
+    }).catch((err) =>
+      console.error("[LLM] Credit metering failed:", err.message)
+    );
+  }
+
+  return result;
 }
