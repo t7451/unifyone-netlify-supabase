@@ -30,6 +30,20 @@
   status = 200
   force = true
 
+# Canonical host: redirect www → apex (requires www.1commerce.online to be
+# added as a domain alias in the Netlify dashboard for this rule to fire).
+[[redirects]]
+  from = "https://www.1commerce.online/*"
+  to = "https://1commerce.online/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://www.1commerce.online/*"
+  to = "https://1commerce.online/:splat"
+  status = 301
+  force = true
+
 # SPA fallback — all non-API routes serve the React app
 [[redirects]]
   from = "/*"

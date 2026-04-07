@@ -56,6 +56,9 @@ import VideoProduction from "./pages/VideoProduction";
 import AdCopyHub from "./pages/AdCopyHub";
 import GovernanceDashboard from "./pages/GovernanceDashboard";
 import { DocsChat } from "./pages/DocsChat";
+import Pricing from "./pages/Pricing";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
 import { getLoginUrl } from "./const";
@@ -67,7 +70,6 @@ function ProtectedRoute({
   component: React.ComponentType;
 }) {
   const { isAuthenticated, loading } = useAuth();
-  const [location] = useLocation();
   if (loading)
     return (
       <div className="min-h-screen bg-[#0A1128] flex items-center justify-center">
@@ -129,7 +131,11 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
+      <Route path="/signup">{() => <Login initialIntent="signup" />}</Route>
       <Route path="/auth/callback" component={AuthCallback} />
+      <Route path="/pricing" component={Pricing} />
+      <Route path="/about" component={About} />
+      <Route path="/contact" component={Contact} />
       <Route
         path="/setup"
         component={() => <ProtectedRoute component={TenantSetup} />}

@@ -84,19 +84,15 @@ async function exchangeSupabaseSession(): Promise<boolean> {
   return res.ok;
 }
 
-function getReturnTo(): string {
-  const params = new URLSearchParams(window.location.search);
-  const returnTo = params.get("returnTo");
-  if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
-    return returnTo;
-  }
-  return "/dashboard";
-}
+type LoginIntent = "signin" | "signup";
 
-export default function Login() {
+export default function Login({
+  initialIntent = "signin",
+}: { initialIntent?: LoginIntent } = {}) {
   const { isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
-  const [mode, setMode] = useState<AuthMode>("sign-in");
+  const [intent, setIntent] = useState<LoginIntent>(initialIntent);
+  const [mode, setMode] = useState<AuthMode>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -439,18 +435,12 @@ export default function Login() {
         <div className="w-full max-w-[400px] space-y-6">
           <div>
             <h2 className="text-2xl font-bold text-white mb-1">
-              {mode === "sign-up"
-                ? "Create your account"
-                : mode === "forgot-password"
-                  ? "Reset your password"
-                  : "Welcome back"}
+              {intent === "signup" ? "Create your workspace" : "Welcome back"}
             </h2>
             <p className="text-slate-400 text-sm">
-              {mode === "sign-up"
-                ? "Get started with UnifyOne"
-                : mode === "forgot-password"
-                  ? "Enter your email to receive a reset link"
-                  : "Sign in to your UnifyOne workspace"}
+              {intent === "signup"
+                ? "Start free. No credit card required."
+                : "Sign in to your UnifyOne workspace"}
             </p>
           </div>
 
@@ -545,7 +535,13 @@ export default function Login() {
             )}
 
             <Button
-              onClick={handleSubmit}
+              onClick={
+                mode === "password"
+                  ? intent === "signup"
+                    ? handlePasswordSignUp
+                    : handlePasswordSignIn
+                  : handleMagicLink
+              }
               disabled={isSubmitting}
               className={cn(
                 "w-full h-11 font-semibold text-sm transition-all",
@@ -557,53 +553,60 @@ export default function Login() {
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  {submitLoadingLabel}
+                  {mode === "password"
+                    ? intent === "signup"
+                      ? "Creating account..."
+                      : "Signing in..."
+                    : "Sending magic link..."}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  {submitLabel}
+                  {mode === "password"
+                    ? intent === "signup"
+                      ? "Create account"
+                      : "Sign in"
+                    : "Send magic link"}
                   <ArrowRight className="w-4 h-4" />
                 </span>
               )}
             </Button>
           </div>
 
-          {/* Footer links */}
-          <Separator className="bg-white/10" />
-
-          {mode === "sign-in" && (
-            <p className="text-center text-sm text-slate-500">
-              New to UnifyOne?{" "}
-              <button
-                onClick={() => switchMode("sign-up")}
-                className="text-[#00D9FF] hover:text-[#00C4E8] font-medium transition-colors"
-              >
-                Create an account
-              </button>
-            </p>
-          )}
-
-          {mode === "sign-up" && (
-            <p className="text-center text-sm text-slate-500">
-              Already have an account?{" "}
-              <button
-                onClick={() => switchMode("sign-in")}
-                className="text-[#00D9FF] hover:text-[#00C4E8] font-medium transition-colors"
-              >
-                Sign in
-              </button>
-            </p>
-          )}
-
-          {(mode === "magic-link" || mode === "forgot-password") && (
-            <p className="text-center text-sm text-slate-500">
-              <button
-                onClick={() => switchMode("sign-in")}
-                className="text-[#00D9FF] hover:text-[#00C4E8] font-medium transition-colors"
-              >
-                Back to sign in
-              </button>
-            </p>
+          {mode === "password" && (
+            <>
+              <Separator className="bg-white/10" />
+              <p className="text-center text-sm text-slate-500">
+                {intent === "signup" ? (
+                  <>
+                    Already have an account?{" "}
+                    <button
+                      onClick={() => {
+                        setIntent("signin");
+                        setError(null);
+                      }}
+                      disabled={isSubmitting}
+                      className="text-[#00D9FF] hover:text-[#00C4E8] font-medium transition-colors"
+                    >
+                      Sign in
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    New to UnifyOne?{" "}
+                    <button
+                      onClick={() => {
+                        setIntent("signup");
+                        setError(null);
+                      }}
+                      disabled={isSubmitting}
+                      className="text-[#00D9FF] hover:text-[#00C4E8] font-medium transition-colors"
+                    >
+                      Create an account
+                    </button>
+                  </>
+                )}
+              </p>
+            </>
           )}
 
           {/* Security note */}

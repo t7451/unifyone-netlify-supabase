@@ -32,10 +32,22 @@
     <priority>0.90</priority>
   </url>
   <url>
-    <loc>__APP_URL__/manus-ai</loc>
-    <lastmod>2026-03-06</lastmod>
+    <loc>__APP_URL__/pricing</loc>
+    <lastmod>2026-04-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>__APP_URL__/about</loc>
+    <lastmod>2026-04-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>__APP_URL__/contact</loc>
+    <lastmod>2026-04-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.70</priority>
   </url>
   <url>
     <loc>__APP_URL__/tithes</loc>
