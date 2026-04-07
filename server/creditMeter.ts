@@ -32,6 +32,7 @@
  */
 import Stripe from "stripe";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { errMsg } from "./_core/errors";
 
 // ── Types ─────────────────────────────────────────────────────────────
 export type CreditSource =
@@ -101,7 +102,8 @@ export function tokensToCredits(tokensIn = 0, tokensOut = 0): number {
 let _supabase: SupabaseClient | null = null;
 function getSupabase(): SupabaseClient | null {
   if (_supabase) return _supabase;
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const url =
+    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
   if (!url || !key) return null;
   _supabase = createClient(url, key, { auth: { persistSession: false } });
@@ -205,24 +207,9 @@ export async function meterCredits(
   // Fire-and-forget: trigger background function to flush overages async
   // Hands off to a 15-min background worker instead of blocking the sync function
   if (result.success && result.overageCredits > 0) {
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.VITE_APP_URL ||
-      "";
-    if (appUrl) {
-      fetch(`${appUrl}/api/flush-overages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: String(userId) }),
-      }).catch((err) =>
-        console.error("[CreditMeter] Background flush trigger error:", err.message)
-      );
-    } else {
-      // Fallback: flush inline if app URL not configured
-      flushUserOverages(String(userId)).catch((err) =>
-        console.error("[CreditMeter] Flush error:", err.message)
-      );
-    }
+    flushUserOverages(userId).catch(err =>
+      console.error("[CreditMeter] Flush error:", errMsg(err))
+    );
   }
 
   return result;
@@ -304,14 +291,14 @@ export async function flushUserOverages(
         `[CreditMeter] Reported overage: user=${userId} credits=${row.overage_credits} cents=${row.amount_cents} item=${item.id}`
       );
       reported++;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(
         `[CreditMeter] Failed to report overage ${row.id}:`,
-        err.message
+        errMsg(err)
       );
       await supabase
         .from("credit_overage_queue")
-        .update({ status: "failed", error: err.message })
+        .update({ status: "failed", error: errMsg(err) })
         .eq("id", row.id);
       failed++;
     }
@@ -336,7 +323,7 @@ export async function flushAllOverages(): Promise<{
     .select("user_id")
     .eq("status", "pending");
 
-  const userIds = Array.from(new Set((data ?? []).map((r) => r.user_id)));
+  const userIds = Array.from(new Set((data ?? []).map(r => r.user_id)));
   let totalReported = 0;
   let totalFailed = 0;
 
@@ -346,7 +333,11 @@ export async function flushAllOverages(): Promise<{
     totalFailed += res.failed;
   }
 
-  return { users: userIds.length, reported: totalReported, failed: totalFailed };
+  return {
+    users: userIds.length,
+    reported: totalReported,
+    failed: totalFailed,
+  };
 }
 
 // ── Convenience wrapper: meter a function call ────────────────────────

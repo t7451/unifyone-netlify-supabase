@@ -3,7 +3,6 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { documentEmbeddings } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
-import { sql } from "drizzle-orm";
 
 // Helper: Compute cosine similarity between two vectors
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -25,9 +24,9 @@ async function getQueryEmbedding(query: string): Promise<number[]> {
   // For now, use a simple hash-based approach (in production, call Claude embeddings API)
   // This is a placeholder - you'd normally call Claude's embeddings endpoint
   const hash = Array.from(query).reduce((acc, char) => {
-    return ((acc << 5) - acc) + char.charCodeAt(0);
+    return (acc << 5) - acc + char.charCodeAt(0);
   }, 0);
-  
+
   // Generate a 1536-dimensional vector from the hash
   const embedding: number[] = [];
   let seed = hash;
@@ -43,38 +42,48 @@ export const documentChatRouter = router({
     .input(
       z.object({
         question: z.string().min(1).max(1000),
-        conversationHistory: z.array(
-          z.object({
-            role: z.enum(["user", "assistant"]),
-            content: z.string(),
-          })
-        ).default([]),
+        conversationHistory: z
+          .array(
+            z.object({
+              role: z.enum(["user", "assistant"]),
+              content: z.string(),
+            })
+          )
+          .default([]),
       })
     )
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database unavailable");
-      
+
       // Get embedding for the question
       const queryEmbedding = await getQueryEmbedding(input.question);
-      
+
       // Retrieve all document chunks
       const allChunks = await db.select().from(documentEmbeddings);
-      
+
       // Compute similarity scores and sort
-      const scoredChunks = allChunks.map((chunk: typeof documentEmbeddings.$inferSelect) => ({
-        ...chunk,
-        similarity: cosineSimilarity(queryEmbedding, chunk.embedding as number[]),
-      })).sort((a: any, b: any) => b.similarity - a.similarity);
-      
+      const scoredChunks = allChunks
+        .map((chunk: typeof documentEmbeddings.$inferSelect) => ({
+          ...chunk,
+          similarity: cosineSimilarity(
+            queryEmbedding,
+            chunk.embedding as number[]
+          ),
+        }))
+        .sort((a, b) => b.similarity - a.similarity);
+
       // Get top 5 most relevant chunks
       const relevantChunks = scoredChunks.slice(0, 5);
-      
+
       // Build context from relevant chunks
       const context = relevantChunks
-        .map((chunk: typeof scoredChunks[0]) => `[${chunk.docTitle}]\n${chunk.chunk}`)
+        .map(
+          (chunk: (typeof scoredChunks)[0]) =>
+            `[${chunk.docTitle}]\n${chunk.chunk}`
+        )
         .join("\n\n---\n\n");
-      
+
       // Build system prompt
       const systemPrompt = `You are a helpful assistant for UnifyOne, a Cathedral Framework-based commerce platform powered by Manus AI. 
       
@@ -82,7 +91,7 @@ Answer user questions based on the following documentation context. Be concise, 
 
 DOCUMENTATION CONTEXT:
 ${context}`;
-      
+
       // Build messages array
       const messages = [
         ...input.conversationHistory.map(msg => ({
@@ -91,21 +100,20 @@ ${context}`;
         })),
         { role: "user" as const, content: input.question },
       ];
-      
+
       // Call Claude
       const response = await invokeLLM({
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
+        messages: [{ role: "system", content: systemPrompt }, ...messages],
       });
-      
-      const assistantMessage = response.choices[0]?.message?.content || "I couldn't generate a response.";
-      
+
+      const assistantMessage =
+        response.choices[0]?.message?.content ||
+        "I couldn't generate a response.";
+
       // Return response with source documents
       return {
         answer: assistantMessage,
-        sources: relevantChunks.map((chunk: typeof scoredChunks[0]) => ({
+        sources: relevantChunks.map((chunk: (typeof scoredChunks)[0]) => ({
           docId: chunk.docId,
           docTitle: chunk.docTitle,
           chunk: chunk.chunk.substring(0, 200) + "...",
