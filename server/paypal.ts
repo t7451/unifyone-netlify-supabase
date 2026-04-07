@@ -1,7 +1,8 @@
 import express, { type Express, type Request, type Response } from "express";
 import { getDb } from "./db";
-import { orders, tenants } from "../drizzle/schema";
+import { orders } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { errMsg } from "./_core/errors";
 
 const PAYPAL_BASE = "https://api-m.paypal.com";
 
@@ -13,7 +14,9 @@ async function getPayPalAccessToken(): Promise<string> {
     throw new Error("PayPal credentials not configured");
   }
 
-  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString(
+    "base64"
+  );
 
   const response = await fetch(`${PAYPAL_BASE}/v1/oauth2/token`, {
     method: "POST",
@@ -27,7 +30,9 @@ async function getPayPalAccessToken(): Promise<string> {
   const data = (await response.json()) as any;
 
   if (!response.ok) {
-    throw new Error(`PayPal auth failed: ${data.error_description || data.error}`);
+    throw new Error(
+      `PayPal auth failed: ${data.error_description || data.error}`
+    );
   }
 
   return data.access_token as string;
@@ -45,7 +50,7 @@ export async function createPayPalOrder(params: {
   const currency = params.currency || "USD";
   const amountStr = params.amount.toFixed(2);
 
-  const body: any = {
+  const body: Record<string, unknown> = {
     intent: "CAPTURE",
     purchase_units: [
       {
@@ -82,17 +87,25 @@ export async function createPayPalOrder(params: {
     body: JSON.stringify(body),
   });
 
-  const data = (await response.json()) as any;
+  type PayPalOrderResponse = {
+    id: string;
+    links?: Array<{ rel: string; href: string }>;
+  };
+  const data = (await response.json()) as PayPalOrderResponse;
 
   if (!response.ok) {
     throw new Error(`PayPal create order failed: ${JSON.stringify(data)}`);
   }
 
-  const approveLink = data.links?.find((l: any) => l.rel === "payer-action" || l.rel === "approve");
+  const approveLink = data.links?.find(
+    l => l.rel === "payer-action" || l.rel === "approve"
+  );
 
   return {
     id: data.id,
-    approveUrl: approveLink?.href || `https://www.paypal.com/checkoutnow?token=${data.id}`,
+    approveUrl:
+      approveLink?.href ||
+      `https://www.paypal.com/checkoutnow?token=${data.id}`,
   };
 }
 
@@ -104,13 +117,16 @@ export async function capturePayPalOrder(paypalOrderId: string): Promise<{
 }> {
   const token = await getPayPalAccessToken();
 
-  const response = await fetch(`${PAYPAL_BASE}/v2/checkout/orders/${paypalOrderId}/capture`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await fetch(
+    `${PAYPAL_BASE}/v2/checkout/orders/${paypalOrderId}/capture`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   const data = (await response.json()) as any;
 
@@ -130,78 +146,91 @@ export async function capturePayPalOrder(paypalOrderId: string): Promise<{
 
 export function registerPayPalRoutes(app: Express) {
   // Create PayPal order — returns approve URL for redirect
-  app.post("/api/paypal/create-order", express.json(), async (req: Request, res: Response) => {
-    try {
-      const { amount, currency, description, orderId, origin } = req.body;
+  app.post(
+    "/api/paypal/create-order",
+    express.json(),
+    async (req: Request, res: Response) => {
+      try {
+        const { amount, currency, description, orderId, origin } = req.body;
 
-      if (!amount || isNaN(parseFloat(amount))) {
-        return res.status(400).json({ error: "Valid amount is required" });
+        if (!amount || isNaN(parseFloat(amount))) {
+          return res.status(400).json({ error: "Valid amount is required" });
+        }
+
+        const baseUrl = origin || "http://localhost:3000";
+
+        const result = await createPayPalOrder({
+          amount: parseFloat(amount),
+          currency: currency || "USD",
+          description: description || "UnifyOne Order",
+          orderId,
+          returnUrl: `${baseUrl}/checkout/paypal-return`,
+          cancelUrl: `${baseUrl}/checkout/paypal-cancel`,
+        });
+
+        console.log(`[PayPal] Order created: ${result.id}`);
+        res.json({ orderId: result.id, approveUrl: result.approveUrl });
+      } catch (err: unknown) {
+        console.error("[PayPal] Create order error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
       }
-
-      const baseUrl = origin || "http://localhost:3000";
-
-      const result = await createPayPalOrder({
-        amount: parseFloat(amount),
-        currency: currency || "USD",
-        description: description || "UnifyOne Order",
-        orderId,
-        returnUrl: `${baseUrl}/checkout/paypal-return`,
-        cancelUrl: `${baseUrl}/checkout/paypal-cancel`,
-      });
-
-      console.log(`[PayPal] Order created: ${result.id}`);
-      res.json({ orderId: result.id, approveUrl: result.approveUrl });
-    } catch (err: any) {
-      console.error("[PayPal] Create order error:", err.message);
-      res.status(500).json({ error: err.message });
     }
-  });
+  );
 
   // Capture PayPal order after buyer approves
-  app.post("/api/paypal/capture-order", express.json(), async (req: Request, res: Response) => {
-    try {
-      const { paypalOrderId, internalOrderId } = req.body;
+  app.post(
+    "/api/paypal/capture-order",
+    express.json(),
+    async (req: Request, res: Response) => {
+      try {
+        const { paypalOrderId, internalOrderId } = req.body;
 
-      if (!paypalOrderId) {
-        return res.status(400).json({ error: "paypalOrderId is required" });
-      }
-
-      const result = await capturePayPalOrder(paypalOrderId);
-
-      // Update internal order payment status if an internal order ID was provided
-      if (internalOrderId && result.status === "COMPLETED") {
-        const db = await getDb();
-        if (db) {
-          await db
-            .update(orders)
-            .set({
-              paymentStatus: "paid",
-              paymentMethod: "paypal",
-              paypalOrderId: paypalOrderId,
-            })
-            .where(eq(orders.id, parseInt(internalOrderId)));
+        if (!paypalOrderId) {
+          return res.status(400).json({ error: "paypalOrderId is required" });
         }
-      }
 
-      console.log(`[PayPal] Order captured: ${paypalOrderId} — status: ${result.status}`);
-      res.json(result);
-    } catch (err: any) {
-      console.error("[PayPal] Capture error:", err.message);
-      res.status(500).json({ error: err.message });
+        const result = await capturePayPalOrder(paypalOrderId);
+
+        // Update internal order payment status if an internal order ID was provided
+        if (internalOrderId && result.status === "COMPLETED") {
+          const db = await getDb();
+          if (db) {
+            await db
+              .update(orders)
+              .set({
+                paymentStatus: "paid",
+                paymentMethod: "paypal",
+                paypalOrderId: paypalOrderId,
+              })
+              .where(eq(orders.id, parseInt(internalOrderId)));
+          }
+        }
+
+        console.log(
+          `[PayPal] Order captured: ${paypalOrderId} — status: ${result.status}`
+        );
+        res.json(result);
+      } catch (err: unknown) {
+        console.error("[PayPal] Capture error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
+      }
     }
-  });
+  );
 
   // Get PayPal order details
   app.get("/api/paypal/order/:orderId", async (req: Request, res: Response) => {
     try {
       const token = await getPayPalAccessToken();
-      const response = await fetch(`${PAYPAL_BASE}/v2/checkout/orders/${req.params.orderId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `${PAYPAL_BASE}/v2/checkout/orders/${req.params.orderId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       const data = await response.json();
       res.json(data);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      res.status(500).json({ error: errMsg(err) });
     }
   });
 }

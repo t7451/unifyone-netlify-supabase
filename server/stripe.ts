@@ -1,15 +1,27 @@
 import Stripe from "stripe";
 import { Express, Request, Response } from "express";
 import express from "express";
+import { createClient } from "@supabase/supabase-js";
 import { getDb } from "./db";
 import { tenants, plans, themeInstalls, themes } from "../drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { capi } from "./meta/capi";
 import { getAppUrl } from "./_core/env";
+import { flushAllOverages, flushUserOverages } from "./creditMeter";
+import { errMsg } from "./_core/errors";
+
+// Supabase admin client for subscription/credit sync (service role — no RLS)
+function getSupabaseAdmin() {
+  const url =
+    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
+}
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2026-02-25.clover",
+      apiVersion: "2026-03-25.dahlia" as any,
     })
   : null;
 
@@ -67,9 +79,145 @@ async function syncSubscription(sub: Stripe.Subscription) {
     })
     .where(eq(tenants.stripeCustomerId, sub.customer as string));
 
+  // Also sync to Supabase stripe_subscriptions table
+  const supabase = getSupabaseAdmin();
+  if (supabase) {
+    const customerId = sub.customer as string;
+    // Look up user_id from metadata or tenant's owner
+    const userId =
+      sub.metadata?.user_id || sub.metadata?.tenant_id || customerId;
+    await supabase.from("stripe_subscriptions").upsert([
+      {
+        id: sub.id,
+        user_id: userId,
+        stripe_customer_id: customerId,
+        status: sub.status,
+        metadata: sub.metadata,
+        price_id: priceId || null,
+        quantity: sub.items.data[0]?.quantity ?? 1,
+        cancel_at_period_end: sub.cancel_at_period_end,
+        current_period_start: subAny.current_period_start
+          ? new Date(subAny.current_period_start * 1000).toISOString()
+          : new Date().toISOString(),
+        current_period_end:
+          periodEnd?.toISOString() || new Date().toISOString(),
+        created: new Date(sub.created * 1000).toISOString(),
+        ended_at: sub.ended_at
+          ? new Date(sub.ended_at * 1000).toISOString()
+          : null,
+        cancel_at: sub.cancel_at
+          ? new Date(sub.cancel_at * 1000).toISOString()
+          : null,
+        canceled_at: sub.canceled_at
+          ? new Date(sub.canceled_at * 1000).toISOString()
+          : null,
+        trial_start: sub.trial_start
+          ? new Date(sub.trial_start * 1000).toISOString()
+          : null,
+        trial_end: sub.trial_end
+          ? new Date(sub.trial_end * 1000).toISOString()
+          : null,
+      },
+    ]);
+  }
+
   console.log(
     `[Stripe] Subscription synced: ${sub.id} → status=${status}, periodEnd=${periodEnd?.toISOString()}`
   );
+}
+
+// Sync Stripe product to Supabase
+async function syncProduct(product: Stripe.Product) {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return;
+  await supabase.from("stripe_products").upsert([
+    {
+      id: product.id,
+      active: product.active,
+      name: product.name,
+      description: product.description,
+      image: product.images?.[0] ?? null,
+      metadata: product.metadata,
+      updated_at: new Date().toISOString(),
+    },
+  ]);
+  console.log(`[Stripe] Product synced: ${product.id} (${product.name})`);
+}
+
+// Sync Stripe price to Supabase
+async function syncPrice(price: Stripe.Price) {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return;
+  await supabase.from("stripe_prices").upsert([
+    {
+      id: price.id,
+      product_id: typeof price.product === "string" ? price.product : "",
+      active: price.active,
+      currency: price.currency,
+      type: price.type,
+      unit_amount: price.unit_amount,
+      interval: price.recurring?.interval ?? null,
+      interval_count: price.recurring?.interval_count ?? null,
+      trial_period_days: price.recurring?.trial_period_days ?? 0,
+      updated_at: new Date().toISOString(),
+    },
+  ]);
+  console.log(`[Stripe] Price synced: ${price.id}`);
+}
+
+// Grant monthly credits on successful invoice payment
+async function grantSubscriptionCredits(
+  invoice: Stripe.Invoice,
+  sub: Stripe.Subscription
+) {
+  const supabase = getSupabaseAdmin();
+  if (!supabase || !stripe) return;
+
+  const priceId = sub.items.data[0]?.price.id;
+  if (!priceId) return;
+
+  // Look up tier credits from subscription_tiers table
+  const { data: tier } = await supabase
+    .from("subscription_tiers")
+    .select("monthly_credits, name")
+    .eq("stripe_price_id", priceId)
+    .single();
+
+  if (!tier) {
+    console.log(
+      `[Stripe] No subscription tier found for price ${priceId}, skipping credit grant`
+    );
+    return;
+  }
+
+  // Resolve user_id from subscription metadata or customer lookup
+  const userId = sub.metadata?.user_id || sub.metadata?.tenant_id || "";
+  if (!userId) {
+    console.warn(
+      `[Stripe] No user_id in subscription metadata for ${sub.id}, skipping credit grant`
+    );
+    return;
+  }
+
+  // Grant credits idempotently (keyed by invoice ID)
+  const { data: newBalance, error } = await supabase.rpc(
+    "grant_subscription_credits",
+    {
+      p_user_id: userId,
+      p_amount: tier.monthly_credits,
+      p_description: `Monthly ${tier.monthly_credits} credits (${tier.name})`,
+      p_idempotency_key: `sub_grant_${invoice.id}`,
+      p_metadata: { stripe_invoice_id: invoice.id, tier: tier.name },
+    }
+  );
+
+  if (error) {
+    console.error(`[Stripe] Credit grant failed:`, error.message);
+  } else {
+    console.log(
+      `[Stripe] Granted ${tier.monthly_credits} credits to user ${userId}, new balance: ${newBalance}`
+    );
+  }
 }
 
 export function registerStripeRoutes(app: Express) {
@@ -90,12 +238,12 @@ export function registerStripeRoutes(app: Express) {
 
       try {
         event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(
           "[Stripe Webhook] Signature verification failed:",
-          err.message
+          errMsg(err)
         );
-        return res.status(400).json({ error: `Webhook Error: ${err.message}` });
+        return res.status(400).json({ error: `Webhook Error: ${errMsg(err)}` });
       }
 
       // Handle test events for webhook verification
@@ -112,6 +260,20 @@ export function registerStripeRoutes(app: Express) {
 
       try {
         switch (event.type) {
+          // ── Product & Price sync to Supabase ────────────────────────────
+          case "product.created":
+          case "product.updated": {
+            const product = event.data.object as Stripe.Product;
+            await syncProduct(product);
+            break;
+          }
+          case "price.created":
+          case "price.updated": {
+            const price = event.data.object as Stripe.Price;
+            await syncPrice(price);
+            break;
+          }
+
           case "checkout.session.completed": {
             const session = event.data.object as Stripe.Checkout.Session;
             const tenantId = session.metadata?.tenant_id;
@@ -172,7 +334,7 @@ export function registerStripeRoutes(app: Express) {
                     .catch((err: Error) =>
                       console.error(
                         "[CAPI] Purchase event failed:",
-                        err.message
+                        errMsg(err)
                       )
                     );
                 }
@@ -219,7 +381,7 @@ export function registerStripeRoutes(app: Express) {
                   (session.currency || "USD").toUpperCase()
                 )
                 .catch((err: Error) =>
-                  console.error("[CAPI] Purchase event failed:", err.message)
+                  console.error("[CAPI] Purchase event failed:", errMsg(err))
                 );
             }
 
@@ -249,17 +411,55 @@ export function registerStripeRoutes(app: Express) {
                 })
                 .where(eq(tenants.stripeCustomerId, sub.customer as string));
             }
+            // Also update Supabase subscription record
+            const supabase = getSupabaseAdmin();
+            if (supabase) {
+              await supabase
+                .from("stripe_subscriptions")
+                .update({
+                  status: "canceled",
+                  ended_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", sub.id);
+            }
             console.log(`[Stripe] Subscription cancelled: ${sub.id}`);
             break;
           }
 
-          case "invoice.payment_succeeded": {
+          // Flush pending credit overages BEFORE the invoice finalizes,
+          // so they appear as line items on the current period's invoice.
+          case "invoice.created":
+          case "invoice.upcoming": {
             const invoice = event.data.object as Stripe.Invoice;
-            // Re-sync subscription to refresh period end
+            const supabase = getSupabaseAdmin();
+            if (supabase && invoice.customer) {
+              const { data: sub } = await supabase
+                .from("stripe_subscriptions")
+                .select("user_id")
+                .eq("stripe_customer_id", invoice.customer as string)
+                .in("status", ["trialing", "active"])
+                .maybeSingle();
+              if (sub?.user_id) {
+                await flushUserOverages(sub.user_id);
+              }
+            }
+            console.log(
+              `[Stripe] Invoice ${event.type}: ${invoice.id}, flushed overages`
+            );
+            break;
+          }
+
+          case "invoice.payment_succeeded":
+          case "invoice.paid": {
+            const invoice = event.data.object as Stripe.Invoice;
+            // Re-sync subscription to refresh period end and grant credits
             const subId = (invoice as any).subscription as string | undefined;
             if (subId) {
               const sub = await stripe.subscriptions.retrieve(subId);
               await syncSubscription(sub);
+              // Grant monthly credits for the subscription tier
+              await grantSubscriptionCredits(invoice, sub);
             }
             console.log(
               `[Stripe] Invoice paid: ${invoice.id}, amount: ${invoice.amount_paid}`
@@ -332,6 +532,12 @@ export function registerStripeRoutes(app: Express) {
             customer_email: userEmail,
             allow_promotion_codes: true,
             line_items: [{ price: priceId, quantity: 1 }],
+            subscription_data: {
+              metadata: {
+                tenant_id: tenantId?.toString() || "",
+                user_id: userId?.toString() || "",
+              },
+            },
             client_reference_id: userId?.toString(),
             metadata: {
               tenant_id: tenantId?.toString() || "",
@@ -339,6 +545,7 @@ export function registerStripeRoutes(app: Express) {
               customer_email: userEmail || "",
               customer_name: userName || "",
             },
+            automatic_tax: { enabled: true },
             success_url: `${baseUrl}/dashboard?stripe=success`,
             cancel_url: `${baseUrl}/checkout?stripe=cancelled`,
           });
@@ -383,9 +590,46 @@ export function registerStripeRoutes(app: Express) {
         });
 
         res.json({ url: session.url });
-      } catch (err: any) {
-        console.error("[Stripe] Create checkout error:", err.message);
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        console.error("[Stripe] Create checkout error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
+      }
+    }
+  );
+
+  // Create embedded checkout session (returns clientSecret for iframe checkout)
+  app.post(
+    "/api/stripe/create-embedded-checkout",
+    express.json(),
+    async (req: Request, res: Response) => {
+      if (!stripe)
+        return res.status(503).json({ error: "Stripe not configured" });
+      try {
+        const { priceId, userEmail, userId, tenantId } = req.body;
+        if (!priceId) {
+          return res.status(400).json({ error: "priceId is required" });
+        }
+        const origin =
+          req.headers.origin || getAppUrl() || "http://localhost:3000";
+        const session = await stripe.checkout.sessions.create({
+          ui_mode: "embedded",
+          mode: "subscription",
+          line_items: [{ price: priceId, quantity: 1 }],
+          subscription_data: {
+            metadata: {
+              tenant_id: tenantId?.toString() || "",
+              user_id: userId?.toString() || "",
+            },
+          },
+          customer_email: userEmail,
+          automatic_tax: { enabled: true },
+          allow_promotion_codes: true,
+          return_url: `${origin}/dashboard?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
+        });
+        res.json({ clientSecret: session.client_secret });
+      } catch (err: unknown) {
+        console.error("[Stripe] Create embedded checkout error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -410,9 +654,9 @@ export function registerStripeRoutes(app: Express) {
         });
 
         res.json({ url: session.url });
-      } catch (err: any) {
-        console.error("[Stripe] Customer portal error:", err.message);
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        console.error("[Stripe] Customer portal error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -431,8 +675,93 @@ export function registerStripeRoutes(app: Express) {
           }
         );
         res.json(sub);
-      } catch (err: any) {
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        res.status(500).json({ error: errMsg(err) });
+      }
+    }
+  );
+
+  // Change subscription plan (upgrade/downgrade with proration)
+  app.post(
+    "/api/stripe/change-plan",
+    express.json(),
+    async (req: Request, res: Response) => {
+      if (!stripe)
+        return res.status(503).json({ error: "Stripe not configured" });
+      try {
+        const { subscriptionId, newPriceId } = req.body;
+        if (!subscriptionId || !newPriceId) {
+          return res
+            .status(400)
+            .json({ error: "subscriptionId and newPriceId are required" });
+        }
+        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        const updated = await stripe.subscriptions.update(subscriptionId, {
+          items: [{ id: sub.items.data[0].id, price: newPriceId }],
+          proration_behavior: "create_prorations",
+        });
+        res.json(updated);
+      } catch (err: unknown) {
+        console.error("[Stripe] Change plan error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
+      }
+    }
+  );
+
+  // Cancel subscription at period end
+  app.post(
+    "/api/stripe/cancel-subscription",
+    express.json(),
+    async (req: Request, res: Response) => {
+      if (!stripe)
+        return res.status(503).json({ error: "Stripe not configured" });
+      try {
+        const { subscriptionId } = req.body;
+        if (!subscriptionId) {
+          return res.status(400).json({ error: "subscriptionId is required" });
+        }
+        const updated = await stripe.subscriptions.update(subscriptionId, {
+          cancel_at_period_end: true,
+        });
+        res.json(updated);
+      } catch (err: unknown) {
+        console.error("[Stripe] Cancel subscription error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
+      }
+    }
+  );
+
+  // Flush all pending credit overages to Stripe as invoice items
+  // (intended for scheduled cron / admin trigger).
+  app.post(
+    "/api/stripe/flush-overages",
+    express.json(),
+    async (req: Request, res: Response) => {
+      const adminKey = req.headers["x-admin-key"] as string | undefined;
+      if (process.env.ADMIN_API_KEY && adminKey !== process.env.ADMIN_API_KEY) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      try {
+        const result = await flushAllOverages();
+        res.json(result);
+      } catch (err: unknown) {
+        console.error("[Stripe] Flush overages error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
+      }
+    }
+  );
+
+  // Flush pending credit overages for a specific user
+  app.post(
+    "/api/stripe/flush-overages/:userId",
+    express.json(),
+    async (req: Request, res: Response) => {
+      try {
+        const result = await flushUserOverages(req.params.userId);
+        res.json(result);
+      } catch (err: unknown) {
+        console.error("[Stripe] Flush user overages error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -449,8 +778,8 @@ export function registerStripeRoutes(app: Express) {
           limit: 20,
         });
         res.json(invoices.data);
-      } catch (err: any) {
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );

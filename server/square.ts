@@ -3,6 +3,7 @@ import type { Express, Request, Response } from "express";
 import express from "express";
 import { getDb } from "./db";
 import { orders } from "../drizzle/schema";
+import { errMsg } from "./_core/errors";
 import { eq } from "drizzle-orm";
 import { ENV } from "./_core/env";
 import crypto from "crypto";
@@ -78,9 +79,9 @@ export function registerSquareRoutes(app: Express) {
         if (!link?.url) throw new Error("Square did not return a checkout URL");
 
         res.json({ checkoutUrl: link.url, squareOrderId: link.orderId });
-      } catch (err: any) {
-        console.error("[Square] Create checkout error:", err.message);
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        console.error("[Square] Create checkout error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -131,9 +132,9 @@ export function registerSquareRoutes(app: Express) {
             : "0.00",
           currency: amountMoney?.currency ?? "USD",
         });
-      } catch (err: any) {
-        console.error("[Square] Capture payment error:", err.message);
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        console.error("[Square] Capture payment error:", errMsg(err));
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -150,8 +151,8 @@ export function registerSquareRoutes(app: Express) {
           paymentId: req.params.paymentId,
         });
         res.json(response.payment);
-      } catch (err: any) {
-        res.status(500).json({ error: err.message });
+      } catch (err: unknown) {
+        res.status(500).json({ error: errMsg(err) });
       }
     }
   );
@@ -183,7 +184,21 @@ export function registerSquareRoutes(app: Express) {
         }
       }
 
-      let event: any;
+      type SquareWebhookEvent = {
+        type: string;
+        event_id: string;
+        data?: {
+          object?: {
+            payment?: {
+              status: string;
+              id: string;
+              order_id?: string;
+              metadata?: { internal_order_id?: string };
+            };
+          };
+        };
+      };
+      let event: SquareWebhookEvent;
       try {
         event = JSON.parse(req.body.toString("utf8"));
       } catch {

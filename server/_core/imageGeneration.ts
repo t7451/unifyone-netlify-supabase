@@ -17,6 +17,7 @@
  */
 import { storagePut } from "server/storage";
 import { ENV } from "./env";
+import { meterCredits, CREDIT_COST_MODEL } from "../creditMeter";
 
 export type GenerateImageOptions = {
   prompt: string;
@@ -25,6 +26,13 @@ export type GenerateImageOptions = {
     b64Json?: string;
     mimeType?: string;
   }>;
+  /** Optional credit metering context */
+  meter?: {
+    userId: string | number;
+    tenantId?: string | number;
+    action?: string;
+    requestId?: string;
+  };
 };
 
 export type GenerateImageResponse = {
@@ -86,6 +94,25 @@ export async function generateImage(
     buffer,
     result.image.mimeType
   );
+
+  // Credit metering — fire-and-forget to keep user latency low
+  if (options.meter?.userId !== undefined) {
+    meterCredits({
+      userId: options.meter.userId,
+      tenantId: options.meter.tenantId,
+      amount: CREDIT_COST_MODEL.image_generation,
+      source: "image_generation",
+      action: options.meter.action ?? "generateImage",
+      requestId: options.meter.requestId,
+      metadata: {
+        prompt: options.prompt.slice(0, 200),
+        has_original: (options.originalImages?.length ?? 0) > 0,
+      },
+    }).catch((err) =>
+      console.error("[ImageGen] Credit metering failed:", err.message)
+    );
+  }
+
   return {
     url,
   };

@@ -67,7 +67,7 @@ function LogoMark({ size = 40 }: { size?: number }) {
   );
 }
 
-type AuthMode = "password" | "magic-link";
+type AuthMode = "sign-in" | "sign-up" | "magic-link" | "forgot-password";
 
 async function exchangeSupabaseSession(): Promise<boolean> {
   const {
@@ -97,13 +97,15 @@ export default function Login({
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const returnTo = getReturnTo();
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      navigate("/dashboard");
+      navigate(returnTo);
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading, navigate, returnTo]);
 
   // Check URL for error params (e.g., from failed magic link)
   useEffect(() => {
@@ -114,7 +116,13 @@ export default function Login({
     }
   }, []);
 
-  const handlePasswordSignIn = async () => {
+  const switchMode = (newMode: AuthMode) => {
+    setMode(newMode);
+    setError(null);
+    setSuccessMessage(null);
+  };
+
+  const handleSignIn = async () => {
     if (!email || !password) {
       setError("Please enter your email and password.");
       return;
@@ -131,7 +139,11 @@ export default function Login({
 
       if (authError) {
         if (authError.message.includes("Invalid login credentials")) {
-          setError("Invalid email or password. Please try again.");
+          setError("Invalid email or password.");
+        } else if (authError.message.includes("Email not confirmed")) {
+          setError(
+            "Please confirm your email address first. Check your inbox for the confirmation link."
+          );
         } else {
           setError(authError.message);
         }
@@ -140,7 +152,7 @@ export default function Login({
 
       const exchanged = await exchangeSupabaseSession();
       if (exchanged) {
-        navigate("/dashboard");
+        navigate(returnTo);
       } else {
         setError("Failed to create session. Please try again.");
       }
@@ -151,9 +163,13 @@ export default function Login({
     }
   };
 
-  const handlePasswordSignUp = async () => {
+  const handleSignUp = async () => {
     if (!email || !password) {
       setError("Please enter your email and password.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
       return;
     }
 
@@ -161,33 +177,36 @@ export default function Login({
     setError(null);
 
     try {
-      const { error: authError } = await supabase.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`,
         },
       });
 
       if (authError) {
-        setError(authError.message);
+        if (authError.message.includes("already registered")) {
+          setError("This email is already registered. Try signing in instead.");
+        } else {
+          setError(authError.message);
+        }
         return;
       }
 
-      // If email confirmation is required, Supabase won't return a session
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
+      // If session is returned immediately (no email confirmation required)
+      if (data.session) {
         const exchanged = await exchangeSupabaseSession();
         if (exchanged) {
-          navigate("/dashboard");
+          navigate(returnTo);
           return;
         }
       }
 
-      setError(null);
-      setMagicLinkSent(true); // Reuse the "check your email" UI
+      // Email confirmation required
+      setSuccessMessage(
+        "Check your email for a confirmation link to complete your account setup."
+      );
     } catch {
       setError("An unexpected error occurred. Please try again.");
     } finally {
@@ -208,17 +227,25 @@ export default function Login({
       const { error: authError } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`,
           shouldCreateUser: true,
         },
       });
 
       if (authError) {
-        setError(authError.message);
+        if (authError.message.includes("rate limit")) {
+          setError(
+            "Too many requests. Please wait a few minutes before trying again."
+          );
+        } else {
+          setError(authError.message);
+        }
         return;
       }
 
-      setMagicLinkSent(true);
+      setSuccessMessage(
+        `We sent a sign-in link to ${email}. Click the link in the email to sign in.`
+      );
     } catch {
       setError("An unexpected error occurred. Please try again.");
     } finally {
@@ -226,13 +253,53 @@ export default function Login({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key !== "Enter") return;
-    if (mode === "password") {
-      handlePasswordSignIn();
-    } else {
-      handleMagicLink();
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError("Please enter your email address.");
+      return;
     }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const { error: authError } = await supabase.auth.resetPasswordForEmail(
+        email,
+        {
+          redirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`,
+        }
+      );
+
+      if (authError) {
+        setError(authError.message);
+        return;
+      }
+
+      setSuccessMessage(
+        "If an account exists for that email, we sent a password reset link. Check your inbox."
+      );
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmit = () => {
+    switch (mode) {
+      case "sign-in":
+        return handleSignIn();
+      case "sign-up":
+        return handleSignUp();
+      case "magic-link":
+        return handleMagicLink();
+      case "forgot-password":
+        return handleForgotPassword();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleSubmit();
   };
 
   if (loading) {
@@ -246,19 +313,15 @@ export default function Login({
     );
   }
 
-  if (magicLinkSent) {
+  // Success message (magic link sent, confirmation sent, etc.)
+  if (successMessage) {
     return (
       <div className="min-h-screen bg-[#060D1F] flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center space-y-6">
           <LogoMark size={48} />
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-white">Check your email</h2>
-            <p className="text-slate-400 text-sm">
-              We sent a sign-in link to{" "}
-              <span className="text-white font-medium">{email}</span>.
-              <br />
-              Click the link in the email to sign in to your workspace.
-            </p>
+            <p className="text-slate-400 text-sm">{successMessage}</p>
           </div>
           <div className="flex items-start gap-2 p-3 rounded-lg bg-white/3 border border-white/5">
             <Mail className="w-4 h-4 text-[#00D9FF] mt-0.5 flex-shrink-0" />
@@ -270,7 +333,7 @@ export default function Login({
           <Button
             variant="outline"
             onClick={() => {
-              setMagicLinkSent(false);
+              setSuccessMessage(null);
               setError(null);
             }}
             className="border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-sm"
@@ -281,6 +344,22 @@ export default function Login({
       </div>
     );
   }
+
+  const submitLabel = {
+    "sign-in": "Sign in",
+    "sign-up": "Create account",
+    "magic-link": "Send magic link",
+    "forgot-password": "Send reset link",
+  }[mode];
+
+  const submitLoadingLabel = {
+    "sign-in": "Signing in...",
+    "sign-up": "Creating account...",
+    "magic-link": "Sending magic link...",
+    "forgot-password": "Sending reset link...",
+  }[mode];
+
+  const showPasswordField = mode === "sign-in" || mode === "sign-up";
 
   return (
     <div className="min-h-screen bg-[#060D1F] flex">
@@ -353,7 +432,7 @@ export default function Login({
           <span className="text-xl font-bold text-white">UnifyOne</span>
         </div>
 
-        <div className="w-full max-w-[400px] space-y-8">
+        <div className="w-full max-w-[400px] space-y-6">
           <div>
             <h2 className="text-2xl font-bold text-white mb-1">
               {intent === "signup" ? "Create your workspace" : "Welcome back"}
@@ -365,39 +444,35 @@ export default function Login({
             </p>
           </div>
 
-          {/* Mode tabs */}
-          <div className="flex gap-1 p-1 rounded-lg bg-white/5 border border-white/10">
-            <button
-              onClick={() => {
-                setMode("password");
-                setError(null);
-              }}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
-                mode === "password"
-                  ? "bg-white/10 text-white"
-                  : "text-slate-500 hover:text-slate-300"
-              )}
-            >
-              <KeyRound className="w-3.5 h-3.5" />
-              Password
-            </button>
-            <button
-              onClick={() => {
-                setMode("magic-link");
-                setError(null);
-              }}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
-                mode === "magic-link"
-                  ? "bg-white/10 text-white"
-                  : "text-slate-500 hover:text-slate-300"
-              )}
-            >
-              <Mail className="w-3.5 h-3.5" />
-              Magic Link
-            </button>
-          </div>
+          {/* Mode tabs (only for sign-in modes) */}
+          {(mode === "sign-in" || mode === "magic-link") && (
+            <div className="flex gap-1 p-1 rounded-lg bg-white/5 border border-white/10">
+              <button
+                onClick={() => switchMode("sign-in")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
+                  mode === "sign-in"
+                    ? "bg-white/10 text-white"
+                    : "text-slate-500 hover:text-slate-300"
+                )}
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                Password
+              </button>
+              <button
+                onClick={() => switchMode("magic-link")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
+                  mode === "magic-link"
+                    ? "bg-white/10 text-white"
+                    : "text-slate-500 hover:text-slate-300"
+                )}
+              >
+                <Mail className="w-3.5 h-3.5" />
+                Magic Link
+              </button>
+            </div>
+          )}
 
           {/* Error display */}
           {error && (
@@ -425,12 +500,26 @@ export default function Login({
               />
             </div>
 
-            {mode === "password" && (
+            {showPasswordField && (
               <div className="space-y-1.5">
-                <Label className="text-slate-300 text-sm">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-slate-300 text-sm">Password</Label>
+                  {mode === "sign-in" && (
+                    <button
+                      onClick={() => switchMode("forgot-password")}
+                      className="text-xs text-[#00D9FF] hover:text-[#00C4E8] transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
                 <Input
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder={
+                    mode === "sign-up"
+                      ? "At least 6 characters"
+                      : "Enter your password"
+                  }
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -438,7 +527,9 @@ export default function Login({
                     "bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-11 transition-all",
                     "focus:border-[#00D9FF]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#00D9FF]/20"
                   )}
-                  autoComplete="current-password"
+                  autoComplete={
+                    mode === "sign-up" ? "new-password" : "current-password"
+                  }
                 />
               </div>
             )}

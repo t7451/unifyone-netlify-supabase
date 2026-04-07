@@ -57,12 +57,20 @@ async function exchangeSupabaseSession(): Promise<boolean> {
   return res.ok;
 }
 
+function getReturnTo(): string {
+  const params = new URLSearchParams(window.location.search);
+  const returnTo = params.get("returnTo");
+  if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+    return returnTo;
+  }
+  return "/dashboard";
+}
+
 export default function AuthCallback() {
   const [, navigate] = useLocation();
   const [stepIdx, setStepIdx] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  // Cycle through status messages
   useEffect(() => {
     const interval = setInterval(() => {
       setStepIdx(i => Math.min(i + 1, STEPS.length - 1));
@@ -79,12 +87,16 @@ export default function AuthCallback() {
         const tokenHash = params.get("token_hash");
         const type = params.get("type");
         const code = params.get("code");
+        const returnTo = getReturnTo();
 
-        // Handle magic link token_hash verification
+        // Handle magic link / email confirmation via token_hash
         if (tokenHash) {
+          const otpType =
+            (type as "magiclink" | "email" | "signup" | "recovery") ||
+            "magiclink";
           const { error: verifyError } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
-            type: (type as "magiclink" | "email" | "signup") || "magiclink",
+            type: otpType,
           });
 
           if (verifyError) {
@@ -93,10 +105,21 @@ export default function AuthCallback() {
             }
             return;
           }
+
+          // Password recovery: user clicked reset link in email.
+          // Supabase sets the session; redirect to settings where they can
+          // update their password, or back to login if you prefer a
+          // dedicated reset page.
+          if (otpType === "recovery") {
+            const exchanged = await exchangeSupabaseSession();
+            if (!cancelled) {
+              navigate(exchanged ? "/settings" : "/login?error=invalid_link");
+            }
+            return;
+          }
         }
 
-        // Handle PKCE code exchange (Supabase's detectSessionInUrl handles this
-        // automatically, but we wait for the session to be available)
+        // Handle PKCE code exchange
         if (code) {
           const { error: exchangeError } =
             await supabase.auth.exchangeCodeForSession(code);
@@ -114,7 +137,7 @@ export default function AuthCallback() {
         if (cancelled) return;
 
         if (exchanged) {
-          navigate("/dashboard");
+          navigate(returnTo);
         } else {
           setError("Failed to create session. Please try signing in again.");
         }

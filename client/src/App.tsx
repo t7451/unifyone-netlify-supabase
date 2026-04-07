@@ -77,7 +77,11 @@ function ProtectedRoute({
       </div>
     );
   if (!isAuthenticated) {
-    window.location.href = getLoginUrl();
+    const returnTo =
+      location && location !== "/login"
+        ? `?returnTo=${encodeURIComponent(location)}`
+        : "";
+    window.location.href = `${getLoginUrl()}${returnTo}`;
     return null;
   }
   return <Component />;
