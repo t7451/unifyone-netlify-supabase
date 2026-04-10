@@ -13,6 +13,7 @@ import {
   Bot, Zap, TrendingUp, Map, Trophy, Users, Smartphone, BarChart3
 } from "lucide-react";
 import { toast } from "sonner";
+import MCPStatusWidget from "@/components/MCPStatusWidget";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 
@@ -177,7 +178,7 @@ export default function AIAssistant() {
           <div className="flex items-center justify-between p-4 border-b border-border">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="font-semibold text-sm">Manus AI</span>
+              <span className="font-semibold text-sm">Kai</span>
             </div>
             <Button variant="ghost" size="sm" onClick={startNewConversation} className="h-7 w-7 p-0">
               <Plus className="h-4 w-4" />
@@ -286,7 +287,7 @@ export default function AIAssistant() {
                 <ContextIcon className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-semibold leading-none">Manus AI</p>
+                <p className="text-sm font-semibold leading-none">Kai</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {CONTEXT_LABELS[activeContext] ?? "General"} context
                 </p>
@@ -295,7 +296,7 @@ export default function AIAssistant() {
             <div className="ml-auto flex items-center gap-2">
               <Badge variant="secondary" className="text-xs">
                 <Sparkles className="h-3 w-3 mr-1" />
-                Powered by Manus
+                Powered by Kai
               </Badge>
               <Button variant="ghost" size="sm" onClick={startNewConversation} className="text-xs h-7">
                 <Plus className="h-3.5 w-3.5 mr-1" />
@@ -310,10 +311,10 @@ export default function AIAssistant() {
               messages={messages}
               onSendMessage={handleSendMessage}
               isLoading={chatMutation.isPending}
-              placeholder={`Ask Manus anything about your ${CONTEXT_LABELS[activeContext] ?? "business"}…`}
+              placeholder={`Ask Kai anything about your ${CONTEXT_LABELS[activeContext] ?? "business"}…`}
               height="100%"
               className="h-full"
-              emptyStateMessage={`Hi ${user.name?.split(" ")[0] ?? "there"}! I'm Manus, your UnifyOne AI assistant. Ask me anything about your ${CONTEXT_LABELS[activeContext] ?? "business"}.`}
+              emptyStateMessage={`Hi ${user.name?.split(" ")[0] ?? "there"}! I'm Kai, your UnifyOne AI assistant. Ask me anything about your ${CONTEXT_LABELS[activeContext] ?? "business"}.`}
               suggestedPrompts={suggestions}
             />
           </div>
