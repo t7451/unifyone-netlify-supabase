@@ -1,5 +1,5 @@
 import { and, desc, eq, gte, like, lt, sql, sum } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+// drizzle/mysql2 loaded dynamically in getDb() to prevent cold-start crash
 import {
   analyticsEvents,
   cartItems,
@@ -25,7 +25,8 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith("mysql")) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const { drizzle: drizzleFn } = await import("drizzle-orm/mysql2");
+      _db = drizzleFn(process.env.DATABASE_URL);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
