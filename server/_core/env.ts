@@ -7,7 +7,7 @@ export const ENV = {
     process.env.DEPLOY_PRIME_URL ??
     process.env.DEPLOY_URL ??
     "",
-  cookieSecret: process.env.JWT_SECRET ?? "",
+  cookieSecret: process.env.JWT_SECRET ?? process.env.SUPABASE_JWT_SECRET ?? "",
   databaseUrl: process.env.DATABASE_URL ?? "",
   ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
   isProduction: process.env.NODE_ENV === "production",
