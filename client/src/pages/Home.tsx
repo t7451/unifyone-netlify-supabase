@@ -1,1367 +1,1344 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Link } from "wouter";
 import { getLoginUrl } from "@/const";
-import { trpc } from "@/lib/trpc";
-import { TIERS } from "@/content/pricing";
 
-// ── Cathedral Framework Asset URLs ──────────────────────────────────────────
-const CATHEDRAL_HERO_BG =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-hero-v2-3N4uGvSKiz77L95UQXYYxJ.webp";
-const CATHEDRAL_FEATURES_BG =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-features-v2-TQVRMkNdoVVuwphEqVNwpV.webp";
-const CATHEDRAL_CTA_BG =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-cta-v2-SHGs9wAatFAKqbC6k4GcCb.webp";
-const CATHEDRAL_MANUS_BG =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-manus-v2-LMRaCZwgmBR3hoFULMA6gG.webp";
-const MANUS_AI_BANNER =
-  "https://files.manuscdn.com/user_upload_by_module/session_file/310519663412766662/NtFplUgYjHyrzGzn.jpg";
+// ── Brand constants ───────────────────────────────────────────────────────────
+const UNIFY_AI_ENDPOINT = "https://api.1commerce.online/v1";
 
-// ── Navigation ───────────────────────────────────────────────────────────────
-const NAV_LINKS = [
-  { label: "Architecture", href: "/architecture" },
-  { label: "The System", href: "/the-system" },
-  { label: "Manus AI", href: "/blog/manus-ai-gig-workers" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Tithes", href: "/tithes" },
+// ── Animated ticker data ──────────────────────────────────────────────────────
+const TICKER_INSIGHTS = [
+  { label: "SHIFT INTELLIGENCE", value: "Tue evening Zone 4 avg $24.80/hr vs $18.20/hr in Zone 2", delta: "+$340/mo shifting 2hrs/wk" },
+  { label: "TAX AUTOPILOT", value: "12,847 miles logged YTD at $0.67/mile IRS rate", delta: "$8,607 in deductions tracked" },
+  { label: "EARNINGS FORECAST", value: "At current pace you'll finish April at $3,870", delta: "+$130 above your $3,740 goal" },
+  { label: "PLATFORM COMPARE", value: "Uber Eats up 12% this month, DoorDash down 8%", delta: "Shift 3hrs to Uber = +$156/mo" },
+  { label: "MULTI-MODEL AI", value: "Route to Claude for analysis, GPT for code, Gemini for speed", delta: "One API key. Zero lock-in." },
 ];
 
-// ── Feature Pillars ──────────────────────────────────────────────────────────
+// ── Kai demo interactions by persona ─────────────────────────────────────────
+const KAI_DEMOS: Record<string, { question: string; answer: string; color: string }> = {
+  "Gig Worker": {
+    question: "Which of my shifts this week were most profitable after expenses?",
+    answer: "Your Thursday 5–9pm shifts averaged $31.20/hr after fuel — 42% higher than Monday mornings at $21.90/hr. Shifting those 3 Monday hours to Thursday evenings adds approximately $120/month to your net.",
+    color: "#F0D080",
+  },
+  Freelancer: {
+    question: "What should I charge Client X based on my last 6 months of similar work?",
+    answer: "Based on 14 comparable projects, your effective rate averages $87/hr. Client X projects have historically run 18% over estimate. I'd quote $102/hr or add a 20% buffer to the fixed price.",
+    color: "#6EE7B7",
+  },
+  "Small Business": {
+    question: "Show me which products had the highest margin this quarter.",
+    answer: "Your top 3 by margin: Digital Template Pack (91%), Coaching Bundle (78%), and Starter Kit (64%). Physical goods averaged 34%. Shifting 10% of ad spend to the top 3 would increase blended margin by ~8 points.",
+    color: "#93C5FD",
+  },
+  Developer: {
+    question: "Route this prompt to the lowest-latency model for code generation.",
+    answer: "Routing to claude-sonnet-4-6 — 340ms avg latency for code tasks in your last 200 calls vs 890ms for gpt-4o. Your monthly cost at current volume: $0.38. Want me to set this as default for code tasks?",
+    color: "#C4B5FD",
+  },
+};
+
+// ── Feature pillars ───────────────────────────────────────────────────────────
 const PILLARS = [
   {
-    glyph: "I",
-    title: "Multi-Tenant Foundation",
-    body: "Every store is an isolated vault. Tenant data, billing, and access controls are structurally separated at the schema level — not by convention.",
+    icon: "◈",
+    name: "GigIQ",
+    title: "Shift Intelligence",
+    body: "See which hours, zones, and platforms actually pay the most. Real earnings data. Specific recommendations. Not generic advice.",
+    color: "#F0D080",
   },
   {
-    glyph: "II",
-    title: "Commerce Infrastructure",
-    body: "Products, orders, inventory, and fulfillment built as load-bearing walls. No plugin dependencies. No single points of failure.",
+    icon: "◎",
+    name: "Tax Autopilot",
+    title: "IRS Deduction Tracker",
+    body: "Auto-captures mileage from every logged shift at the current IRS rate. Real-time YTD deduction figure. Quarterly estimate alerts.",
+    color: "#6EE7B7",
   },
   {
-    glyph: "III",
-    title: "Payment Orchestration",
-    body: "Stripe, PayPal, and Shopify Checkout unified under one roof. Webhooks are verified, idempotent, and fire into your automation layer.",
+    icon: "⬡",
+    name: "UnifyAI",
+    title: "Multi-Model API Router",
+    body: "One set of credentials routes to Claude, GPT, Gemini and more. Credit-based billing. Full MCP config dashboard. Zero vendor lock-in.",
+    color: "#93C5FD",
   },
   {
-    glyph: "IV",
-    title: "Automation Nave",
-    body: "n8n workflows, Zapier hooks, and Mailchimp drip sequences triggered by real commerce events — not scheduled polling.",
+    icon: "◇",
+    name: "MoneyPulse",
+    title: "Money Manager",
+    body: "Budgeting, goal tracking, earnings forecasts, and spending analysis — all connected to your actual gig income streams.",
+    color: "#C4B5FD",
   },
   {
-    glyph: "V",
-    title: "Analytics Clerestory",
-    body: "Revenue, orders, and customer data illuminated in real time. Supabase Realtime keeps every panel current without a page refresh.",
+    icon: "▣",
+    name: "1Commerce",
+    title: "Commerce Engine",
+    body: "Multi-tenant storefront management, Shopify sync, affiliate network tools, and order fulfillment under one dashboard.",
+    color: "#FCA5A5",
   },
   {
-    glyph: "VI",
-    title: "Manus AI Spire",
-    body: "An intelligent co-pilot built into every page. Context-aware insights drawn from your actual shift, earnings, and route data.",
+    icon: "◉",
+    name: "Kai",
+    title: "AI Sidekick",
+    body: "Powered by UnifyAI. Reads your actual data. Works whether you deliver food, run a store, or just want smarter money.",
+    color: "#FCD34D",
   },
 ];
 
-// ── How It Works ─────────────────────────────────────────────────────────────
-const CONSTRUCTION_PHASES = [
+// ── Pricing tiers ─────────────────────────────────────────────────────────────
+const TIERS = [
   {
-    phase: "Phase I",
-    title: "Lay the Foundation",
-    body: "Create your tenant, configure your store identity, and connect your payment rails. The crypt is sealed before the nave rises.",
+    id: "starter",
+    name: "Starter",
+    price: "$0",
+    period: "forever",
+    tagline: "See what you're missing.",
+    features: [
+      "2 gig platform connections",
+      "Full shift earnings history",
+      "Auto mileage deduction tracking",
+      "50 Kai queries / month",
+      "Money Manager dashboard",
+      "MoneyGenerator gig tools",
+    ],
+    cta: "Start Free",
+    highlight: false,
   },
   {
-    phase: "Phase II",
-    title: "Raise the Walls",
-    body: "Import your product catalog, configure inventory thresholds, and define your order processing rules. Structure before decoration.",
+    id: "pro",
+    name: "Pro",
+    price: "$19",
+    period: "per month",
+    tagline: "Pay for itself in week one.",
+    features: [
+      "Unlimited gig connections",
+      "Advanced zone / time optimization",
+      "Quarterly estimates + 1099 prep",
+      "500 Kai queries / month",
+      "UnifyAI API — 1,000 credits included",
+      "Full MCP config dashboard",
+      "1 commerce storefront",
+      "Priority support",
+    ],
+    cta: "Go Pro",
+    highlight: true,
   },
   {
-    phase: "Phase III",
-    title: "Install the Vaults",
-    body: "Wire your automation layer — n8n workflows, Zapier hooks, and Mailchimp sequences fire on real commerce events.",
-  },
-  {
-    phase: "Phase IV",
-    title: "Light the Spire",
-    body: "Activate Manus AI. Your co-pilot reads your actual data and surfaces insights, route optimizations, and earnings projections.",
+    id: "scale",
+    name: "Scale",
+    price: "$99",
+    period: "per month",
+    tagline: "For operators building at scale.",
+    features: [
+      "Multi-tenant management",
+      "Affiliate storefront network",
+      "UnifyAI API — 10,000 credits",
+      "API reselling + white-label",
+      "Custom MCP routing rules",
+      "Role-based team access",
+      "Slack support + 4hr SLA",
+    ],
+    cta: "Contact Sales",
+    highlight: false,
   },
 ];
 
-// Pricing tiers are defined in @/content/pricing and shared with /pricing.
-
-// ── Testimonials ─────────────────────────────────────────────────────────────
-const TESTIMONIALS = [
-  {
-    quote:
-      "UnifyOne replaced three separate SaaS tools. The automation layer alone saves us four hours a week.",
-    name: "Marcus T.",
-    role: "DoorDash Fleet Operator",
-    city: "Seattle, WA",
-  },
-  {
-    quote:
-      "The Manus AI insights are genuinely useful. It told me my Tuesday routes were underperforming before I noticed.",
-    name: "Priya K.",
-    role: "Multi-platform Gig Operator",
-    city: "Portland, OR",
-  },
-  {
-    quote:
-      "I've used Shopify, WooCommerce, and three others. UnifyOne is the first platform that feels engineered, not assembled.",
-    name: "Jordan M.",
-    role: "E-commerce Director",
-    city: "Boise, ID",
-  },
+// ── Platform stats (live feel) ────────────────────────────────────────────────
+const STATS = [
+  { value: "76M+", label: "US gig workers underserved by existing tools" },
+  { value: "$3,200", label: "avg additional deductions tracked per user annually" },
+  { value: "300+", label: "AI models accessible through one UnifyAI key" },
+  { value: "$556B", label: "gig economy market with no unified intelligence layer" },
 ];
 
-// ── Integrations ─────────────────────────────────────────────────────────────
-const INTEGRATIONS = [
-  "Stripe",
-  "PayPal",
-  "Shopify",
-  "Manus AI",
-  "n8n",
-  "Zapier",
-  "Supabase",
-  "Meta Ads",
-  "Google Analytics",
-  "Resend",
+// ── Nav links ─────────────────────────────────────────────────────────────────
+const NAV_LINKS = [
+  { label: "Platform", href: "/#platform" },
+  { label: "Kai", href: "/#kai" },
+  { label: "UnifyAI", href: "/#unifyai" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "Docs", href: "/integration-guides" },
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  const [, navigate] = useLocation();
-  const [emailInput, setEmailInput] = useState("");
-  const [emailStatus, setEmailStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
-  const [emailMessage, setEmailMessage] = useState("");
-  const emailCapture = trpc.email.capture.useMutation();
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [tickerIdx, setTickerIdx] = useState(0);
+  const [tickerVisible, setTickerVisible] = useState(true);
+  const [activePersona, setActivePersona] = useState<keyof typeof KAI_DEMOS>("Gig Worker");
+  const [typedAnswer, setTypedAnswer] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [navScrolled, setNavScrolled] = useState(false);
+  const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
   const heroRef = useRef<HTMLDivElement>(null);
+  const typeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Nav scroll shadow
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => setNavScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleNavClick = () => setMobileMenuOpen(false);
+  // Ticker rotation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTickerVisible(false);
+      setTimeout(() => {
+        setTickerIdx((i) => (i + 1) % TICKER_INSIGHTS.length);
+        setTickerVisible(true);
+      }, 400);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Kai typewriter
+  const typeAnswer = useCallback((text: string) => {
+    if (typeRef.current) clearTimeout(typeRef.current);
+    setTypedAnswer("");
+    setIsTyping(true);
+    let i = 0;
+    const type = () => {
+      if (i < text.length) {
+        setTypedAnswer(text.slice(0, i + 1));
+        i++;
+        typeRef.current = setTimeout(type, 18);
+      } else {
+        setIsTyping(false);
+      }
+    };
+    typeRef.current = setTimeout(type, 300);
+  }, []);
+
+  useEffect(() => {
+    typeAnswer(KAI_DEMOS[activePersona].answer);
+    return () => { if (typeRef.current) clearTimeout(typeRef.current); };
+  }, [activePersona, typeAnswer]);
+
+  // Scroll reveal
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.target.id) {
+            setVisibleSections((prev) => new Set([...prev, entry.target.id]));
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    document.querySelectorAll("[data-reveal]").forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  const reveal = (id: string) =>
+    visibleSections.has(id)
+      ? "opacity-100 translate-y-0 transition-all duration-700"
+      : "opacity-0 translate-y-8";
+
+  const currentTicker = TICKER_INSIGHTS[tickerIdx];
+  const currentDemo = KAI_DEMOS[activePersona];
 
   return (
     <div
       style={{
-        backgroundColor: "#020202",
-        color: "#F0E8D0",
+        background: "#020202",
+        color: "#E8E0D0",
+        fontFamily: "'Sora', 'DM Sans', system-ui, sans-serif",
         minHeight: "100vh",
+        overflowX: "hidden",
       }}
     >
-      {/* ── NAVIGATION ─────────────────────────────────────────────────── */}
+      {/* Google Fonts */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Cinzel:wght@600;700&display=swap');
+
+        * { box-sizing: border-box; }
+
+        ::selection { background: #F0D08033; color: #F0D080; }
+
+        .kai-cursor::after {
+          content: '▋';
+          animation: blink 1s step-end infinite;
+          color: #F0D080;
+        }
+        @keyframes blink { 0%,100% { opacity:1 } 50% { opacity:0 } }
+
+        .ticker-slide-enter { animation: tickerSlide 0.4s ease forwards; }
+        @keyframes tickerSlide {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .grid-bg {
+          background-image:
+            linear-gradient(rgba(240,208,128,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(240,208,128,0.03) 1px, transparent 1px);
+          background-size: 60px 60px;
+        }
+
+        .glow-gold { box-shadow: 0 0 40px rgba(240,208,128,0.12), 0 0 80px rgba(240,208,128,0.05); }
+        .glow-green { box-shadow: 0 0 40px rgba(110,231,183,0.1); }
+        .glow-blue  { box-shadow: 0 0 40px rgba(147,197,253,0.1); }
+
+        .pill {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 4px 12px; border-radius: 99px;
+          font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .stat-card:hover { transform: translateY(-2px); }
+        .pillar-card:hover { border-color: rgba(240,208,128,0.3) !important; transform: translateY(-3px); }
+        .tier-card:hover { transform: translateY(-4px); }
+        .transition-all { transition: all 0.25s ease; }
+
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
+        }
+        .float { animation: float 6s ease-in-out infinite; }
+
+        @keyframes pulse-ring {
+          0% { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(1.4); opacity: 0; }
+        }
+        .pulse-ring::after {
+          content: '';
+          position: absolute; inset: -8px; border-radius: 50%;
+          border: 1px solid #F0D080;
+          animation: pulse-ring 2s ease-out infinite;
+        }
+
+        .data-line {
+          font-family: 'DM Mono', monospace;
+          font-size: 12px;
+          color: #5A5A5A;
+          letter-spacing: 0.05em;
+        }
+
+        .hero-headline {
+          font-family: 'Cinzel', serif;
+          line-height: 1.05;
+          letter-spacing: -0.01em;
+        }
+
+        @media (max-width: 768px) {
+          .hero-headline { font-size: 2.4rem !important; }
+          .hero-sub { font-size: 1rem !important; }
+          .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .pillar-grid { grid-template-columns: 1fr !important; }
+          .tier-grid { grid-template-columns: 1fr !important; }
+          .kai-grid { grid-template-columns: 1fr !important; }
+          .nav-links { display: none !important; }
+        }
+      `}</style>
+
+      {/* ── NAV ──────────────────────────────────────────────────────────────── */}
       <nav
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
         style={{
-          backgroundColor: scrolled ? "rgba(2,2,2,0.97)" : "transparent",
-          borderBottom: scrolled
-            ? "1px solid rgba(212,168,67,0.12)"
-            : "1px solid transparent",
-          backdropFilter: scrolled ? "blur(12px)" : "none",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          padding: "0 32px",
+          height: 64,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: navScrolled
+            ? "rgba(2,2,2,0.92)"
+            : "transparent",
+          backdropFilter: navScrolled ? "blur(12px)" : "none",
+          borderBottom: navScrolled ? "1px solid rgba(240,208,128,0.08)" : "none",
+          transition: "all 0.3s ease",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
-          {/* Wordmark */}
-          <div className="flex items-center gap-3">
-            {/* Cathedral cross glyph */}
-            <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
-              <div
-                className="absolute inset-0"
-                style={{ border: "1px solid rgba(212,168,67,0.4)" }}
-              />
-              <div
-                className="absolute inset-[3px]"
-                style={{ border: "1px solid rgba(212,168,67,0.15)" }}
-              />
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <line
-                  x1="7"
-                  y1="1"
-                  x2="7"
-                  y2="13"
-                  stroke="#D4A843"
-                  strokeWidth="1.5"
-                />
-                <line
-                  x1="1"
-                  y1="5"
-                  x2="13"
-                  y2="5"
-                  stroke="#D4A843"
-                  strokeWidth="1.5"
-                />
-              </svg>
-            </div>
-            <div>
-              <span
-                className="font-cinzel text-sm font-700 tracking-widest"
-                style={{ color: "#D4A843", letterSpacing: "0.2em" }}
-              >
-                UNIFYONE
-              </span>
-              <span
-                className="hidden sm:inline text-xs ml-2"
-                style={{
-                  color: "#5A5A5A",
-                  letterSpacing: "0.1em",
-                  fontFamily: "Cinzel, serif",
-                }}
-              >
-                BY 1COMMERCE
-              </span>
-            </div>
-          </div>
-
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-8">
-            {NAV_LINKS.map(link => (
-              <Link key={link.href} href={link.href}>
-                <span
-                  className="cursor-pointer transition-colors duration-200"
-                  style={{
-                    fontFamily: "Cinzel, serif",
-                    fontSize: "0.65rem",
-                    fontWeight: 600,
-                    letterSpacing: "0.2em",
-                    textTransform: "uppercase" as const,
-                    color: "#5A5A5A",
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "#D4A843")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "#5A5A5A")}
-                >
-                  {link.label}
-                </span>
-              </Link>
-            ))}
-          </div>
-
-          {/* CTA */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="hidden sm:block transition-all duration-200"
-              style={{
-                fontFamily: "Cinzel, serif",
-                fontSize: "0.65rem",
-                fontWeight: 600,
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                color: "#5A5A5A",
-                background: "none",
-                border: "none",
-                padding: "0.5rem 0",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#D4A843")}
-              onMouseLeave={e => (e.currentTarget.style.color = "#5A5A5A")}
-            >
-              Enter
-            </button>
-            <a
-              href={getLoginUrl()}
-              className="btn-illuminate"
-              style={{ padding: "0.5rem 1.25rem", fontSize: "0.65rem" }}
-            >
-              Begin
-            </a>
-            {/* Mobile menu toggle */}
-            <button
-              className="md:hidden p-2"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              style={{ color: "#5A5A5A" }}
-            >
-              <div
-                className="w-5 h-px mb-1.5 transition-all"
-                style={{
-                  backgroundColor: mobileMenuOpen ? "#D4A843" : "#5A5A5A",
-                }}
-              />
-              <div
-                className="w-5 h-px mb-1.5"
-                style={{ backgroundColor: "#3A3A3A" }}
-              />
-              <div
-                className="w-5 h-px transition-all"
-                style={{
-                  backgroundColor: mobileMenuOpen ? "#D4A843" : "#5A5A5A",
-                }}
-              />
-            </button>
-          </div>
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div
+            style={{
+              width: 32, height: 32, borderRadius: 8,
+              background: "linear-gradient(135deg, #F0D080, #B8872A)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontFamily: "Cinzel, serif", fontSize: 14, fontWeight: 700, color: "#020202",
+            }}
+          >U1</div>
+          <span style={{ fontFamily: "Cinzel, serif", fontWeight: 700, fontSize: 16, color: "#F0D080", letterSpacing: "0.05em" }}>
+            UnifyOne
+          </span>
+          <span
+            className="pill"
+            style={{ background: "rgba(240,208,128,0.1)", color: "#F0D080", border: "1px solid rgba(240,208,128,0.2)", marginLeft: 4 }}
+          >
+            Beta
+          </span>
         </div>
 
-        {/* Mobile menu */}
-        {mobileMenuOpen && (
-          <div
-            className="md:hidden"
-            style={{
-              borderTop: "1px solid rgba(212,168,67,0.1)",
-              backgroundColor: "rgba(2,2,2,0.98)",
-            }}
-          >
-            {NAV_LINKS.map(link => (
-              <Link key={link.href} href={link.href}>
-                <span
-                  onClick={handleNavClick}
-                  className="block px-6 py-4 cursor-pointer"
-                  style={{
-                    fontFamily: "Cinzel, serif",
-                    fontSize: "0.7rem",
-                    letterSpacing: "0.2em",
-                    textTransform: "uppercase" as const,
-                    color: "#5A5A5A",
-                    borderBottom: "1px solid rgba(212,168,67,0.06)",
-                  }}
-                >
-                  {link.label}
-                </span>
-              </Link>
-            ))}
-            <div className="px-6 py-4">
-              <a
-                href={getLoginUrl()}
-                className="btn-illuminate block text-center"
-                style={{ padding: "0.75rem 1.5rem", fontSize: "0.7rem" }}
+        {/* Nav links */}
+        <div className="nav-links" style={{ display: "flex", gap: 32, alignItems: "center" }}>
+          {NAV_LINKS.map((link) => (
+            <Link key={link.label} href={link.href}>
+              <span
+                style={{
+                  fontSize: 13, fontWeight: 500, color: "#9A9A9A",
+                  cursor: "pointer", letterSpacing: "0.02em",
+                  transition: "color 0.2s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#E8E0D0")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#9A9A9A")}
               >
-                Begin Construction
-              </a>
-            </div>
-          </div>
-        )}
+                {link.label}
+              </span>
+            </Link>
+          ))}
+        </div>
+
+        {/* CTA */}
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <Link href={getLoginUrl()}>
+            <span
+              style={{
+                fontSize: 13, fontWeight: 600, color: "#9A9A9A",
+                cursor: "pointer", letterSpacing: "0.02em",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#E8E0D0")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#9A9A9A")}
+            >
+              Sign in
+            </span>
+          </Link>
+          <Link href={getLoginUrl()}>
+            <span
+              style={{
+                padding: "8px 20px", borderRadius: 8, cursor: "pointer",
+                background: "linear-gradient(135deg, #F0D080, #D4A843)",
+                color: "#020202", fontSize: 13, fontWeight: 700,
+                letterSpacing: "0.02em",
+                transition: "opacity 0.2s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              Start Free
+            </span>
+          </Link>
+        </div>
       </nav>
 
-      {/* ── HERO ────────────────────────────────────────────────────────── */}
+      {/* ── HERO ─────────────────────────────────────────────────────────────── */}
       <section
         ref={heroRef}
-        className="relative min-h-screen flex flex-col justify-end overflow-hidden"
+        className="grid-bg"
+        style={{
+          paddingTop: 140,
+          paddingBottom: 120,
+          paddingLeft: 32,
+          paddingRight: 32,
+          textAlign: "center",
+          position: "relative",
+          overflow: "hidden",
+        }}
       >
-        {/* Cathedral vault background */}
-        <div className="absolute inset-0">
-          <img
-            src={CATHEDRAL_HERO_BG}
-            alt=""
-            className="w-full h-full object-cover"
-            style={{ opacity: 0.75 }}
-          />
-          {/* Dark overlay — heavier at bottom for text legibility, lighter on mobile for contrast */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(to bottom, rgba(2,2,2,0.25) 0%, rgba(2,2,2,0.4) 35%, rgba(2,2,2,0.88) 70%, rgba(2,2,2,1) 100%)",
-            }}
-          />
-          {/* Apex light beam — gold radial from top center */}
-          <div
-            className="absolute inset-0 animate-gold-beam"
-            style={{
-              background:
-                "radial-gradient(ellipse 35% 55% at 50% 0%, rgba(212,168,67,0.18) 0%, transparent 65%)",
-            }}
-          />
-          {/* Side vignette for ultra-wide screens */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(to right, rgba(2,2,2,0.5) 0%, transparent 20%, transparent 80%, rgba(2,2,2,0.5) 100%)",
-            }}
-          />
-        </div>
+        {/* Radial glow */}
+        <div
+          style={{
+            position: "absolute", top: "20%", left: "50%",
+            transform: "translateX(-50%)",
+            width: 800, height: 400,
+            background: "radial-gradient(ellipse, rgba(240,208,128,0.07) 0%, transparent 70%)",
+            pointerEvents: "none",
+          }}
+        />
 
-        {/* Hero content — positioned at bottom of viewport */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 pb-20 sm:pb-28 pt-32">
-          {/* Inscription label */}
-          <div className="flex items-center gap-4 mb-8">
-            <div
-              className="h-px flex-1 max-w-12"
-              style={{ backgroundColor: "rgba(212,168,67,0.4)" }}
-            />
-            <span className="inscription">
-              PNW Enterprises · Est. 2025 · Cathedral Framework
-            </span>
-            <div
-              className="h-px flex-1 max-w-12"
-              style={{ backgroundColor: "rgba(212,168,67,0.4)" }}
-            />
+        <div style={{ maxWidth: 840, margin: "0 auto", position: "relative" }}>
+          {/* Badge */}
+          <div
+            className="pill"
+            style={{
+              background: "rgba(240,208,128,0.08)",
+              border: "1px solid rgba(240,208,128,0.25)",
+              color: "#F0D080",
+              marginBottom: 32,
+              display: "inline-flex",
+            }}
+          >
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6EE7B7", display: "inline-block" }} />
+            Kai is live — your AI sidekick is ready
           </div>
 
-          {/* Main headline — Cinzel, massive */}
-          <h1 className="font-cinzel mb-6" style={{ lineHeight: 1.05 }}>
-            <span
-              className="block text-5xl sm:text-7xl lg:text-8xl font-black"
-              style={{ color: "#F0E8D0", letterSpacing: "-0.01em" }}
-            >
-              Built to
-            </span>
-            <span
-              className="block text-5xl sm:text-7xl lg:text-8xl font-black gradient-gold"
-              style={{ letterSpacing: "-0.01em" }}
-            >
-              Endure.
-            </span>
+          {/* Headline */}
+          <h1
+            className="hero-headline"
+            style={{
+              fontSize: "clamp(2.8rem, 6vw, 5rem)",
+              fontWeight: 700,
+              marginBottom: 28,
+              background: "linear-gradient(135deg, #FFFFFF 0%, #E8E0D0 40%, #D4A843 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            Your AI knows<br />what you actually earn
           </h1>
 
-          {/* Subheadline — Crimson Pro, editorial */}
+          {/* Subheadline */}
           <p
-            className="font-crimson text-xl sm:text-2xl mb-10 max-w-2xl"
-            style={{ color: "#9A9A9A", lineHeight: 1.6, fontStyle: "italic" }}
+            className="hero-sub"
+            style={{
+              fontSize: "1.15rem",
+              lineHeight: 1.7,
+              color: "#9A9A9A",
+              maxWidth: 620,
+              margin: "0 auto 48px",
+              fontWeight: 400,
+            }}
           >
-            Commerce infrastructure engineered like a cathedral — sequential,
-            structural, and built to outlast every platform trend.
+            UnifyOne reads your real shift data, tracks every deduction, and tells you exactly where you're leaving money on the table.{" "}
+            <span style={{ color: "#E8E0D0" }}>Not generic advice — intelligence built on YOUR numbers.</span>
           </p>
 
-          {/* CTA row */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-16">
-            <a
-              href={getLoginUrl()}
-              className="btn-illuminate inline-block text-center"
-            >
-              Begin Construction
-            </a>
-            <Link href="/architecture">
-              <span className="btn-ghost-gold inline-block text-center cursor-pointer">
-                View the Architecture
+          {/* CTAs */}
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 64 }}>
+            <Link href={getLoginUrl()}>
+              <span
+                style={{
+                  padding: "14px 32px", borderRadius: 10, cursor: "pointer",
+                  background: "linear-gradient(135deg, #F0D080, #D4A843)",
+                  color: "#020202", fontSize: 15, fontWeight: 700,
+                  letterSpacing: "0.02em", display: "inline-block",
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                  boxShadow: "0 8px 32px rgba(240,208,128,0.25)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 12px 40px rgba(240,208,128,0.35)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 8px 32px rgba(240,208,128,0.25)";
+                }}
+              >
+                Start free — connect in 60 seconds
+              </span>
+            </Link>
+            <Link href="/integration-guides">
+              <span
+                style={{
+                  padding: "14px 32px", borderRadius: 10, cursor: "pointer",
+                  border: "1px solid rgba(240,208,128,0.25)",
+                  color: "#F0D080", fontSize: 15, fontWeight: 600,
+                  letterSpacing: "0.02em", display: "inline-block",
+                  transition: "background 0.2s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(240,208,128,0.06)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                See developer tools →
               </span>
             </Link>
           </div>
 
-          {/* Stat row — separated by pillar lines */}
+          {/* Live Ticker */}
           <div
-            className="flex items-stretch gap-0"
-            style={{ borderTop: "1px solid rgba(212,168,67,0.15)" }}
-          >
-            {[
-              { value: "99.9%", label: "Uptime" },
-              { value: "< 200ms", label: "Response" },
-              { value: "SOC 2", label: "Compliant" },
-              { value: "GDPR", label: "Ready" },
-            ].map((stat, i) => (
-              <div
-                key={stat.label}
-                className="flex-1 py-6 px-4 sm:px-6"
-                style={{
-                  borderRight:
-                    i < 3 ? "1px solid rgba(212,168,67,0.1)" : "none",
-                }}
-              >
-                <div className="stat-value text-2xl sm:text-3xl">
-                  {stat.value}
-                </div>
-                <div className="inscription mt-1" style={{ color: "#3A3A3A" }}>
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Arch SVG divider at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none">
-          <svg
-            viewBox="0 0 1440 64"
-            fill="none"
-            preserveAspectRatio="none"
-            className="w-full h-full"
-          >
-            <path
-              d="M0 64 L0 32 Q360 0 720 32 Q1080 64 1440 32 L1440 64 Z"
-              fill="#020202"
-            />
-          </svg>
-        </div>
-      </section>
-
-      {/* ── FEATURES / PILLARS ──────────────────────────────────────────── */}
-      <section
-        id="features"
-        className="relative py-24 sm:py-32 overflow-hidden"
-      >
-        {/* Cathedral lancet windows background */}
-        <div className="absolute inset-0">
-          <img
-            src={CATHEDRAL_FEATURES_BG}
-            alt=""
-            className="w-full h-full object-cover"
-            style={{ opacity: 0.22 }}
-          />
-          <div
-            className="absolute inset-0"
             style={{
-              background:
-                "linear-gradient(to bottom, #020202 0%, rgba(2,2,2,0.6) 15%, rgba(2,2,2,0.55) 85%, #020202 100%)",
+              background: "#0E0E0E",
+              border: "1px solid #242424",
+              borderRadius: 12,
+              padding: "20px 28px",
+              maxWidth: 680,
+              margin: "0 auto",
+              textAlign: "left",
             }}
-          />
-        </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8">
-          {/* Section header */}
-          <div className="mb-16 sm:mb-20">
-            <span className="inscription block mb-4">The Six Pillars</span>
-            <h2
-              className="font-cinzel text-3xl sm:text-5xl font-bold mb-4"
-              style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
-            >
-              The Architecture
-            </h2>
+          >
+            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#6EE7B7", animation: "pulse-ring 2s ease-out infinite", position: "relative" }} />
+              <span className="data-line">KAI LIVE INSIGHT</span>
+              <span style={{ marginLeft: "auto", fontSize: 11, color: "#3A3A3A", fontFamily: "'DM Mono', monospace" }}>
+                {tickerIdx + 1}/{TICKER_INSIGHTS.length}
+              </span>
+            </div>
             <div
-              className="h-px max-w-xs"
-              style={{
-                background: "linear-gradient(to right, #D4A843, transparent)",
-              }}
-            />
-          </div>
-
-          {/* 3-column pillar grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0">
-            {PILLARS.map(pillar => (
+              className={tickerVisible ? "ticker-slide-enter" : ""}
+              style={{ minHeight: 52 }}
+            >
               <div
-                key={pillar.glyph}
-                className="stone-card p-8 sm:p-10 group"
+                className="pill"
                 style={{
-                  borderRight: "1px solid #242424",
-                  borderBottom: "1px solid #242424",
+                  background: "rgba(240,208,128,0.08)",
+                  border: "1px solid rgba(240,208,128,0.15)",
+                  color: "#F0D080",
+                  marginBottom: 8,
+                  fontSize: 10,
                 }}
               >
-                {/* Roman numeral glyph */}
-                <div
-                  className="font-cinzel text-xs font-600 mb-6"
-                  style={{
-                    color: "rgba(212,168,67,0.35)",
-                    letterSpacing: "0.3em",
-                  }}
-                >
-                  {pillar.glyph}
-                </div>
-                {/* Arch-top accent line */}
-                <div
-                  className="w-8 h-px mb-6 transition-all duration-300 group-hover:w-16"
-                  style={{ backgroundColor: "#D4A843" }}
-                />
-                <h3
-                  className="font-cinzel text-base font-600 mb-4"
-                  style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
-                >
-                  {pillar.title}
-                </h3>
-                <p
-                  className="font-crimson text-base leading-relaxed"
-                  style={{ color: "#6A6A6A" }}
-                >
-                  {pillar.body}
-                </p>
+                {currentTicker.label}
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS / CONSTRUCTION PHASES ──────────────────────────── */}
-      <section id="how-it-works" className="py-24 sm:py-32 cathedral-bg">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8">
-          <div className="mb-16 sm:mb-20">
-            <span className="inscription block mb-4">
-              The Cathedral Principle
-            </span>
-            <h2
-              className="font-cinzel text-3xl sm:text-5xl font-bold mb-4"
-              style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
-            >
-              Sequential Construction
-            </h2>
-            <div
-              className="h-px max-w-xs"
-              style={{
-                background: "linear-gradient(to right, #D4A843, transparent)",
-              }}
-            />
-          </div>
-
-          {/* Vertical timeline — cathedral nave columns */}
-          <div className="relative">
-            {/* Central pillar line */}
-            <div
-              className="absolute left-6 sm:left-1/2 top-0 bottom-0 w-px hidden sm:block"
-              style={{
-                background:
-                  "linear-gradient(to bottom, transparent, rgba(212,168,67,0.3), transparent)",
-              }}
-            />
-
-            <div className="space-y-0">
-              {CONSTRUCTION_PHASES.map((phase, i) => (
-                <div
-                  key={phase.phase}
-                  className={`relative flex flex-col sm:flex-row gap-8 sm:gap-16 ${i % 2 === 0 ? "sm:flex-row" : "sm:flex-row-reverse"}`}
-                  style={{
-                    paddingBottom:
-                      i < CONSTRUCTION_PHASES.length - 1 ? "4rem" : 0,
-                  }}
-                >
-                  {/* Content */}
-                  <div
-                    className="flex-1 sm:text-right"
-                    style={{ textAlign: i % 2 === 0 ? undefined : "left" }}
-                  >
-                    <div
-                      className={`stone-card p-8 ${i % 2 === 0 ? "sm:mr-8" : "sm:ml-8"}`}
-                    >
-                      <span
-                        className="inscription block mb-3"
-                        style={{ color: "rgba(212,168,67,0.5)" }}
-                      >
-                        {phase.phase}
-                      </span>
-                      <h3
-                        className="font-cinzel text-lg font-600 mb-3"
-                        style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
-                      >
-                        {phase.title}
-                      </h3>
-                      <p
-                        className="font-crimson text-base leading-relaxed"
-                        style={{ color: "#6A6A6A" }}
-                      >
-                        {phase.body}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Center node — keystone */}
-                  <div className="hidden sm:flex items-start justify-center w-12 shrink-0 pt-8">
-                    <div
-                      className="w-8 h-8 flex items-center justify-center font-cinzel text-xs font-700"
-                      style={{
-                        backgroundColor: "#020202",
-                        border: "1px solid rgba(212,168,67,0.5)",
-                        color: "#D4A843",
-                        letterSpacing: "0.1em",
-                      }}
-                    >
-                      {i + 1}
-                    </div>
-                  </div>
-
-                  {/* Spacer */}
-                  <div className="flex-1 hidden sm:block" />
-                </div>
-              ))}
+              <div style={{ fontSize: 14, color: "#E8E0D0", marginBottom: 6, fontWeight: 500 }}>
+                {currentTicker.value}
+              </div>
+              <div style={{ fontSize: 13, color: "#6EE7B7", fontFamily: "'DM Mono', monospace" }}>
+                → {currentTicker.delta}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── MANUS AI SECTION ────────────────────────────────────────────── */}
-      <section
-        id="manus-ai"
-        className="relative py-24 sm:py-32 overflow-hidden"
-      >
-        <div className="absolute inset-0">
-          <img
-            src={CATHEDRAL_MANUS_BG}
-            alt=""
-            className="w-full h-full object-cover"
-            style={{ opacity: 0.18 }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(2,2,2,0.88) 0%, rgba(2,2,2,0.72) 50%, rgba(2,2,2,0.88) 100%)",
-            }}
-          />
-        </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8">
-          {/* Header */}
-          <div className="mb-12">
-            <span className="inscription block mb-4">New — The Spire</span>
-            <h2
-              className="font-cinzel text-3xl sm:text-5xl font-bold mb-4"
-              style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
-            >
-              Manus AI
-            </h2>
-            <p
-              className="font-crimson text-xl sm:text-2xl max-w-2xl"
-              style={{ color: "#6A6A6A", fontStyle: "italic" }}
-            >
-              An intelligence layer that reads your actual commerce data — not
-              generic advice, but specific insight drawn from your shifts,
-              routes, and earnings.
-            </p>
+      {/* ── STATS BAND ───────────────────────────────────────────────────────── */}
+      <section style={{ borderTop: "1px solid #161616", borderBottom: "1px solid #161616", padding: "48px 32px" }}>
+        <div
+          className="stat-grid"
+          style={{
+            maxWidth: 1100, margin: "0 auto",
+            display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 24,
+          }}
+        >
+          {STATS.map((stat, i) => (
             <div
-              className="h-px max-w-xs mt-6"
+              key={i}
+              className="stat-card transition-all"
               style={{
-                background: "linear-gradient(to right, #D4A843, transparent)",
+                textAlign: "center", padding: "24px 16px",
+                borderRadius: 10,
+                border: "1px solid #161616",
+                background: "#0A0A0A",
               }}
-            />
-          </div>
-
-          {/* Banner image */}
-          <div
-            className="mb-12 overflow-hidden"
-            style={{ border: "1px solid rgba(212,168,67,0.12)" }}
-          >
-            <img
-              src={MANUS_AI_BANNER}
-              alt="Manus AI — Your AI Gig Co-Pilot"
-              className="w-full object-cover"
-              style={{ maxHeight: "320px", objectPosition: "center" }}
-            />
-          </div>
-
-          {/* Feature grid — 4 columns */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0">
-            {[
-              {
-                glyph: "✦",
-                title: "Contextual Chat",
-                body: "Every page has a dedicated AI context. The assistant on Gig Command knows your routes. The one on Money Manager knows your tax position.",
-              },
-              {
-                glyph: "✦",
-                title: "Route Intelligence",
-                body: "Analyzes your historical mileage and earnings per platform to surface which routes and time windows yield the highest $/hr.",
-              },
-              {
-                glyph: "✦",
-                title: "Earnings Illumination",
-                body: "Reads your shift data and projects YTD earnings, tax deductions, and platform performance — updated on every session.",
-              },
-              {
-                glyph: "✦",
-                title: "Challenge Strategy",
-                body: "Monitors your active challenges and suggests optimal completion paths based on your current platform and location data.",
-              },
-            ].map(feat => (
+            >
               <div
-                key={feat.title}
-                className="stone-card p-8 group"
-                style={{ borderRight: "1px solid #242424" }}
+                style={{
+                  fontFamily: "Cinzel, serif", fontSize: "2.2rem", fontWeight: 700,
+                  color: "#F0D080", marginBottom: 8, letterSpacing: "-0.02em",
+                }}
               >
-                <div
-                  className="text-lg mb-4 animate-gold-beam"
-                  style={{ color: "#D4A843" }}
-                >
-                  {feat.glyph}
-                </div>
-                <div
-                  className="w-6 h-px mb-5 transition-all duration-300 group-hover:w-12"
-                  style={{ backgroundColor: "#D4A843" }}
-                />
-                <h3
-                  className="font-cinzel text-sm font-600 mb-3"
-                  style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
-                >
-                  {feat.title}
-                </h3>
-                <p
-                  className="font-crimson text-sm leading-relaxed"
-                  style={{ color: "#5A5A5A" }}
-                >
-                  {feat.body}
-                </p>
+                {stat.value}
               </div>
-            ))}
-          </div>
-
-          {/* CTA */}
-          <div className="mt-10">
-            <a href={getLoginUrl()} className="btn-illuminate inline-block">
-              Activate the Spire
-            </a>
-          </div>
+              <div style={{ fontSize: 12, color: "#5A5A5A", lineHeight: 1.5, maxWidth: 180, margin: "0 auto" }}>
+                {stat.label}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* ── INTEGRATIONS ────────────────────────────────────────────────── */}
+      {/* ── FINANCIAL INTELLIGENCE (deductions) ──────────────────────────────── */}
       <section
-        className="py-16 sm:py-20"
-        style={{
-          borderTop: "1px solid rgba(212,168,67,0.08)",
-          borderBottom: "1px solid rgba(212,168,67,0.08)",
-        }}
+        id="money-section"
+        data-reveal
+        style={{ padding: "100px 32px" }}
       >
-        <div className="max-w-7xl mx-auto px-6 sm:px-8">
-          <span
-            className="inscription block text-center mb-10"
-            style={{ color: "#3A3A3A" }}
+        <div
+          className={reveal("money-section")}
+          style={{ maxWidth: 1100, margin: "0 auto" }}
+        >
+          {/* Section label */}
+          <div className="data-line" style={{ marginBottom: 20, textAlign: "center" }}>
+            ── FINANCIAL INTELLIGENCE ──
+          </div>
+
+          <h2
+            style={{
+              fontFamily: "Cinzel, serif", fontSize: "clamp(2rem, 4vw, 3rem)",
+              fontWeight: 700, textAlign: "center", marginBottom: 16,
+              color: "#E8E0D0",
+            }}
           >
-            Integrated Infrastructure
-          </span>
-          <div className="flex flex-wrap justify-center gap-0">
-            {INTEGRATIONS.map((name, i) => (
+            The average gig worker leaves{" "}
+            <span style={{ color: "#F0D080" }}>$2,000–$4,000</span>{" "}
+            in deductions<br />on the table every year
+          </h2>
+
+          <p style={{ textAlign: "center", color: "#5A5A5A", maxWidth: 580, margin: "0 auto 64px", lineHeight: 1.7 }}>
+            Most drivers use spreadsheets or nothing at all. The IRS standard mileage deduction ($0.67/mile) means a driver doing
+            15,000 miles/year has <strong style={{ color: "#E8E0D0" }}>$10,050 in potential deductions</strong> — but only if every mile is tracked.
+          </p>
+
+          {/* Feature cards */}
+          <div
+            className="pillar-grid"
+            id="platform"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3,1fr)",
+              gap: 20,
+            }}
+          >
+            {PILLARS.map((p, i) => (
               <div
-                key={name}
-                className="px-6 py-4 transition-colors duration-200"
+                key={i}
+                className="pillar-card transition-all"
                 style={{
-                  borderRight:
-                    i < INTEGRATIONS.length - 1
-                      ? "1px solid rgba(212,168,67,0.08)"
-                      : "none",
-                  fontFamily: "Cinzel, serif",
-                  fontSize: "0.65rem",
-                  letterSpacing: "0.2em",
-                  textTransform: "uppercase",
-                  color: "#3A3A3A",
+                  background: "#0A0A0A",
+                  border: "1px solid #161616",
+                  borderRadius: 14,
+                  padding: "28px 24px",
                   cursor: "default",
                 }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#D4A843")}
-                onMouseLeave={e => (e.currentTarget.style.color = "#3A3A3A")}
               >
-                {name}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── TESTIMONIALS ────────────────────────────────────────────────── */}
-      <section className="py-24 sm:py-32 cathedral-bg">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8">
-          <div className="mb-16">
-            <span className="inscription block mb-4">
-              From the Congregation
-            </span>
-            <h2
-              className="font-cinzel text-3xl sm:text-4xl font-bold"
-              style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
-            >
-              Testimonials
-            </h2>
-            <div
-              className="h-px max-w-xs mt-4"
-              style={{
-                background: "linear-gradient(to right, #D4A843, transparent)",
-              }}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
-            {TESTIMONIALS.map((t, i) => (
-              <div
-                key={t.name}
-                className="p-8 sm:p-10"
-                style={{
-                  borderRight:
-                    i < 2 ? "1px solid rgba(212,168,67,0.1)" : "none",
-                  borderTop: "1px solid rgba(212,168,67,0.1)",
-                }}
-              >
-                {/* Quotation mark — manuscript style */}
-                <div
-                  className="font-cinzel text-5xl leading-none mb-6"
-                  style={{ color: "rgba(212,168,67,0.2)" }}
-                >
-                  "
-                </div>
-                <p
-                  className="font-crimson text-lg leading-relaxed mb-8"
-                  style={{ color: "#9A9A9A", fontStyle: "italic" }}
-                >
-                  {t.quote}
-                </p>
-                <div>
-                  <div
-                    className="font-cinzel text-xs font-600"
-                    style={{ color: "#D4A843", letterSpacing: "0.15em" }}
-                  >
-                    {t.name}
-                  </div>
-                  <div
-                    className="inscription mt-1"
-                    style={{ color: "#3A3A3A" }}
-                  >
-                    {t.role} · {t.city}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── PRICING ─────────────────────────────────────────────────────── */}
-      <section id="pricing" className="py-24 sm:py-32">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8">
-          <div className="mb-16">
-            <span className="inscription block mb-4">Investment</span>
-            <h2
-              className="font-cinzel text-3xl sm:text-5xl font-bold mb-4"
-              style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
-            >
-              Tithes & Offerings
-            </h2>
-            <p
-              className="font-crimson text-xl"
-              style={{ color: "#5A5A5A", fontStyle: "italic" }}
-            >
-              No hidden fees. No platform tax. Cancel at the solstice.
-            </p>
-            <div
-              className="h-px max-w-xs mt-6"
-              style={{
-                background: "linear-gradient(to right, #D4A843, transparent)",
-              }}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
-            {TIERS.map((tier, i) => (
-              <div
-                key={tier.id}
-                className="relative p-8 sm:p-10 transition-all duration-300 group"
-                style={{
-                  backgroundColor: tier.highlight ? "#0A0A0A" : "#020202",
-                  border: tier.highlight
-                    ? "1px solid rgba(212,168,67,0.4)"
-                    : "1px solid #242424",
-                  borderRight:
-                    i < 2
-                      ? tier.highlight
-                        ? "1px solid rgba(212,168,67,0.4)"
-                        : "1px solid #242424"
-                      : undefined,
-                  boxShadow: tier.highlight
-                    ? "0 0 60px rgba(212,168,67,0.08), inset 0 1px 0 rgba(212,168,67,0.2)"
-                    : "none",
-                }}
-              >
-                {tier.highlight && (
-                  <div
-                    className="absolute -top-px left-0 right-0 h-px"
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                  <span
                     style={{
-                      background:
-                        "linear-gradient(to right, transparent, #D4A843, transparent)",
+                      fontSize: 22, width: 44, height: 44, borderRadius: 10,
+                      background: `${p.color}12`,
+                      border: `1px solid ${p.color}25`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: p.color,
                     }}
-                  />
-                )}
-                {tier.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span
-                      className="inscription px-3 py-1"
-                      style={{ backgroundColor: "#D4A843", color: "#020202" }}
-                    >
-                      Most Chosen
-                    </span>
+                  >
+                    {p.icon}
+                  </span>
+                  <div>
+                    <div style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: p.color, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                      {p.name}
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: "#E8E0D0" }}>{p.title}</div>
                   </div>
-                )}
+                </div>
+                <p style={{ fontSize: 13, color: "#5A5A5A", lineHeight: 1.7, margin: 0 }}>{p.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
+      {/* ── KAI DEMO ─────────────────────────────────────────────────────────── */}
+      <section
+        id="kai"
+        data-reveal
+        style={{
+          padding: "100px 32px",
+          background: "#080808",
+          borderTop: "1px solid #161616",
+          borderBottom: "1px solid #161616",
+        }}
+      >
+        <div className={reveal("kai")} style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div className="data-line" style={{ marginBottom: 20, textAlign: "center" }}>── KAI AI SIDEKICK ──</div>
+
+          <h2
+            style={{
+              fontFamily: "Cinzel, serif", fontSize: "clamp(2rem, 4vw, 3rem)",
+              fontWeight: 700, textAlign: "center", marginBottom: 16, color: "#E8E0D0",
+            }}
+          >
+            Works whether you deliver food,{" "}
+            <span style={{ color: "#F0D080" }}>run a store,</span>
+            <br />or just want smarter money
+          </h2>
+          <p style={{ textAlign: "center", color: "#5A5A5A", maxWidth: 520, margin: "0 auto 56px", lineHeight: 1.7 }}>
+            Not a chatbot. An intelligence layer that reads your actual data and responds in specific numbers.
+          </p>
+
+          <div
+            className="kai-grid"
+            style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 32, alignItems: "start" }}
+          >
+            {/* Persona selector */}
+            <div>
+              <div style={{ marginBottom: 16, fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#3A3A3A", letterSpacing: "0.08em" }}>
+                SELECT PERSONA
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {(Object.keys(KAI_DEMOS) as Array<keyof typeof KAI_DEMOS>).map((persona) => {
+                  const active = persona === activePersona;
+                  const demo = KAI_DEMOS[persona];
+                  return (
+                    <button
+                      key={persona}
+                      onClick={() => setActivePersona(persona)}
+                      style={{
+                        background: active ? `${demo.color}10` : "#0A0A0A",
+                        border: `1px solid ${active ? demo.color + "40" : "#161616"}`,
+                        borderRadius: 10,
+                        padding: "16px 20px",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 8, height: 8, borderRadius: "50%",
+                          background: active ? demo.color : "#3A3A3A",
+                          transition: "background 0.2s",
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span style={{ fontSize: 14, fontWeight: active ? 600 : 400, color: active ? demo.color : "#5A5A5A" }}>
+                        {persona}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Tagline */}
+              <div
+                style={{
+                  marginTop: 32, padding: "20px",
+                  background: "#0A0A0A", border: "1px solid #161616", borderRadius: 10,
+                }}
+              >
+                <div style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#3A3A3A", marginBottom: 8 }}>POWERED BY</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#E8E0D0", marginBottom: 4 }}>UnifyAI</div>
+                <div style={{ fontSize: 12, color: "#5A5A5A", lineHeight: 1.5 }}>
+                  Routes to Claude, GPT, Gemini, and future models through one credential set.
+                </div>
+              </div>
+            </div>
+
+            {/* Chat window */}
+            <div
+              className="glow-gold"
+              style={{
+                background: "#080808",
+                border: "1px solid #242424",
+                borderRadius: 16,
+                overflow: "hidden",
+              }}
+            >
+              {/* Chat header */}
+              <div
+                style={{
+                  padding: "16px 20px",
+                  borderBottom: "1px solid #161616",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <div style={{ position: "relative" }} className="pulse-ring">
+                  <div
+                    style={{
+                      width: 32, height: 32, borderRadius: "50%",
+                      background: "linear-gradient(135deg, #F0D080, #D4A843)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontFamily: "Cinzel, serif", fontSize: 13, fontWeight: 700, color: "#020202",
+                    }}
+                  >K</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#E8E0D0" }}>Kai</div>
+                  <div style={{ fontSize: 11, color: "#6EE7B7", fontFamily: "'DM Mono', monospace" }}>● online</div>
+                </div>
+                <div style={{ marginLeft: "auto", fontSize: 11, fontFamily: "'DM Mono', monospace", color: "#3A3A3A" }}>
+                  UnifyAI /{" "}
+                  <span style={{ color: currentDemo.color }}>
+                    {activePersona.toLowerCase().replace(" ", "-")} mode
+                  </span>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div style={{ padding: "24px 20px", minHeight: 260 }}>
+                {/* User message */}
                 <div
-                  className="font-cinzel text-xs font-600 mb-6"
                   style={{
-                    color: "rgba(212,168,67,0.4)",
-                    letterSpacing: "0.3em",
+                    background: "#0E0E0E",
+                    border: "1px solid #242424",
+                    borderRadius: "12px 12px 4px 12px",
+                    padding: "12px 16px",
+                    marginBottom: 20,
+                    marginLeft: "auto",
+                    maxWidth: "85%",
                   }}
                 >
-                  {tier.name.toUpperCase()}
+                  <div style={{ fontSize: 13, color: "#E8E0D0", lineHeight: 1.6 }}>
+                    {currentDemo.question}
+                  </div>
                 </div>
-                <div className="mb-2">
-                  <span
-                    className="font-cinzel text-4xl font-black"
-                    style={{ color: tier.highlight ? "#F0D080" : "#F0E8D0" }}
+
+                {/* Kai response */}
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <div
+                    style={{
+                      width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                      background: "linear-gradient(135deg, #F0D080, #D4A843)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontFamily: "Cinzel, serif", fontSize: 11, fontWeight: 700, color: "#020202",
+                    }}
+                  >K</div>
+                  <div
+                    style={{
+                      background: `${currentDemo.color}08`,
+                      border: `1px solid ${currentDemo.color}20`,
+                      borderRadius: "12px 12px 12px 4px",
+                      padding: "12px 16px",
+                      maxWidth: "90%",
+                    }}
                   >
+                    <div
+                      className={isTyping ? "kai-cursor" : ""}
+                      style={{ fontSize: 13, color: "#E8E0D0", lineHeight: 1.7 }}
+                    >
+                      {typedAnswer}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fake input */}
+              <div
+                style={{
+                  padding: "12px 20px",
+                  borderTop: "1px solid #161616",
+                  display: "flex",
+                  gap: 10,
+                }}
+              >
+                <div
+                  style={{
+                    flex: 1, background: "#0A0A0A", border: "1px solid #242424",
+                    borderRadius: 8, padding: "10px 14px",
+                    fontSize: 13, color: "#3A3A3A",
+                  }}
+                >
+                  Ask Kai anything about your data...
+                </div>
+                <div
+                  style={{
+                    width: 36, height: 36, borderRadius: 8, cursor: "pointer",
+                    background: "linear-gradient(135deg, #F0D080, #D4A843)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 16, color: "#020202",
+                  }}
+                >
+                  ↑
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── UNIFYAI DEVELOPER SECTION ─────────────────────────────────────────── */}
+      <section
+        id="unifyai"
+        data-reveal
+        style={{ padding: "100px 32px" }}
+      >
+        <div className={reveal("unifyai")} style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div className="data-line" style={{ marginBottom: 20, textAlign: "center" }}>── UNIFYAI API ROUTER ──</div>
+
+          <h2
+            style={{
+              fontFamily: "Cinzel, serif", fontSize: "clamp(2rem, 4vw, 3rem)",
+              fontWeight: 700, textAlign: "center", marginBottom: 16, color: "#E8E0D0",
+            }}
+          >
+            One API key.{" "}
+            <span style={{ color: "#93C5FD" }}>Every major model.</span>
+            <br />Zero vendor lock-in.
+          </h2>
+          <p style={{ textAlign: "center", color: "#5A5A5A", maxWidth: 520, margin: "0 auto 64px", lineHeight: 1.7 }}>
+            UnifyAI routes to Claude, GPT, Gemini, and future models through a single endpoint. Credit-based billing. Full MCP config dashboard. Production-ready from day one.
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "start" }}>
+            {/* Code block */}
+            <div
+              style={{
+                background: "#080808",
+                border: "1px solid #242424",
+                borderRadius: 14,
+                overflow: "hidden",
+                fontFamily: "'DM Mono', monospace",
+              }}
+            >
+              <div
+                style={{
+                  padding: "12px 20px",
+                  borderBottom: "1px solid #161616",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#FF5F56" }} />
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#FFBD2E" }} />
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#27C93F" }} />
+                <span style={{ marginLeft: 8, fontSize: 11, color: "#3A3A3A" }}>unifyai_example.ts</span>
+              </div>
+              <div style={{ padding: "24px 20px", fontSize: 12, lineHeight: 2 }}>
+                <div style={{ color: "#5A5A5A" }}>// One endpoint. Any model.</div>
+                <div>
+                  <span style={{ color: "#C4B5FD" }}>const</span>{" "}
+                  <span style={{ color: "#93C5FD" }}>response</span>{" "}
+                  <span style={{ color: "#9A9A9A" }}>= await </span>
+                  <span style={{ color: "#6EE7B7" }}>fetch</span>
+                  <span style={{ color: "#9A9A9A" }}>(</span>
+                </div>
+                <div style={{ paddingLeft: 20 }}>
+                  <span style={{ color: "#FCD34D" }}>"https://api.1commerce.online/v1/chat"</span>
+                  <span style={{ color: "#9A9A9A" }}>,</span>
+                </div>
+                <div style={{ paddingLeft: 20 }}>
+                  <span style={{ color: "#9A9A9A" }}>{"{"}</span>
+                </div>
+                <div style={{ paddingLeft: 40 }}>
+                  <span style={{ color: "#E8E0D0" }}>method</span>
+                  <span style={{ color: "#9A9A9A" }}>: </span>
+                  <span style={{ color: "#FCD34D" }}>"POST"</span><span style={{ color: "#9A9A9A" }}>,</span>
+                </div>
+                <div style={{ paddingLeft: 40 }}>
+                  <span style={{ color: "#E8E0D0" }}>headers</span>
+                  <span style={{ color: "#9A9A9A" }}>: {"{"}</span>
+                </div>
+                <div style={{ paddingLeft: 60 }}>
+                  <span style={{ color: "#E8E0D0" }}>Authorization</span>
+                  <span style={{ color: "#9A9A9A" }}>: </span>
+                  <span style={{ color: "#FCD34D" }}>`Bearer ${"{"}YOUR_KEY{"}"}`</span>
+                </div>
+                <div style={{ paddingLeft: 40 }}>
+                  <span style={{ color: "#9A9A9A" }}>{"}"}</span><span style={{ color: "#9A9A9A" }}>,</span>
+                </div>
+                <div style={{ paddingLeft: 40 }}>
+                  <span style={{ color: "#E8E0D0" }}>body</span>
+                  <span style={{ color: "#9A9A9A" }}>: </span>
+                  <span style={{ color: "#6EE7B7" }}>JSON.stringify</span>
+                  <span style={{ color: "#9A9A9A" }}>({"{"}</span>
+                </div>
+                <div style={{ paddingLeft: 60 }}>
+                  <span style={{ color: "#E8E0D0" }}>model</span>
+                  <span style={{ color: "#9A9A9A" }}>: </span>
+                  <span style={{ color: "#FCD34D" }}>"auto"</span>
+                  <span style={{ color: "#5A5A5A" }}>{" "}// or "claude", "gpt-4o", "gemini"</span>
+                </div>
+                <div style={{ paddingLeft: 60 }}>
+                  <span style={{ color: "#E8E0D0" }}>messages</span>
+                  <span style={{ color: "#9A9A9A" }}>: [...]</span>
+                </div>
+                <div style={{ paddingLeft: 40 }}>
+                  <span style={{ color: "#9A9A9A" }}>{"}),"}</span>
+                </div>
+                <div style={{ paddingLeft: 20 }}>
+                  <span style={{ color: "#9A9A9A" }}>{"}"}</span>
+                </div>
+                <div><span style={{ color: "#9A9A9A" }}>);</span></div>
+                <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid #161616" }}>
+                  <span style={{ color: "#5A5A5A" }}>// Response includes model used, tokens, cost</span>
+                </div>
+                <div style={{ color: "#6EE7B7" }}>
+                  {`// { model: "claude-sonnet-4-6", cost: 0.0012, tokens: 840 }`}
+                </div>
+              </div>
+            </div>
+
+            {/* Feature list */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {[
+                { icon: "⬡", label: "Multi-model routing", desc: "Claude, GPT, Gemini, and 300+ models through one endpoint. Smart routing by task type, cost, or latency.", color: "#93C5FD" },
+                { icon: "◈", label: "MCP config dashboard", desc: "Visual Model Context Protocol configuration. Set routing rules, context limits, and tool permissions from the UI.", color: "#C4B5FD" },
+                { icon: "◎", label: "Credit-based billing", desc: "Pay per call at transparent per-token rates. No subscriptions. Full usage analytics by model and task.", color: "#6EE7B7" },
+                { icon: "▣", label: "Rate limiting + key management", desc: "Production-grade API keys with per-tenant rate limits and real-time usage monitoring.", color: "#FCA5A5" },
+              ].map((feat, i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: "#0A0A0A",
+                    border: "1px solid #161616",
+                    borderRadius: 12,
+                    padding: "20px",
+                    display: "flex",
+                    gap: 16,
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 20, width: 40, height: 40, borderRadius: 8,
+                      background: `${feat.color}12`,
+                      border: `1px solid ${feat.color}25`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: feat.color, flexShrink: 0,
+                    }}
+                  >
+                    {feat.icon}
+                  </span>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#E8E0D0", marginBottom: 6 }}>{feat.label}</div>
+                    <div style={{ fontSize: 12, color: "#5A5A5A", lineHeight: 1.6 }}>{feat.desc}</div>
+                  </div>
+                </div>
+              ))}
+
+              <Link href={getLoginUrl()}>
+                <span
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    padding: "14px 24px", borderRadius: 10, cursor: "pointer",
+                    border: "1px solid rgba(147,197,253,0.3)",
+                    color: "#93C5FD", fontSize: 14, fontWeight: 600,
+                    transition: "background 0.2s",
+                    gap: 8,
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(147,197,253,0.06)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  Get API credentials → 100 free credits to start
+                </span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── TRUST / PRIVACY BAND ─────────────────────────────────────────────── */}
+      <section
+        style={{
+          padding: "64px 32px",
+          background: "#080808",
+          borderTop: "1px solid #161616",
+          borderBottom: "1px solid #161616",
+        }}
+      >
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexWrap: "wrap", gap: 32, justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontFamily: "Cinzel, serif", fontSize: "1.4rem", fontWeight: 700, color: "#E8E0D0", marginBottom: 10 }}>
+              Your data trains your insights,<br />
+              <span style={{ color: "#6EE7B7" }}>not our models.</span>
+            </div>
+            <p style={{ fontSize: 13, color: "#5A5A5A", maxWidth: 440, lineHeight: 1.7, margin: 0 }}>
+              82% of consumers see AI data handling as a serious personal threat. We agree. Bank-grade encryption. You control every connection. Disconnect any platform in one click.
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+            {[
+              { label: "End-to-end encrypted", icon: "🔒" },
+              { label: "You own your data", icon: "◈" },
+              { label: "No model training on your data", icon: "⊘" },
+              { label: "Disconnect any time", icon: "↩" },
+            ].map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#9A9A9A" }}>
+                <span style={{ fontSize: 16 }}>{item.icon}</span>
+                {item.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRICING ──────────────────────────────────────────────────────────── */}
+      <section
+        id="pricing-section"
+        data-reveal
+        style={{ padding: "100px 32px" }}
+      >
+        <div className={reveal("pricing-section")} style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div className="data-line" style={{ marginBottom: 20, textAlign: "center" }}>── PRICING ──</div>
+
+          <h2
+            style={{
+              fontFamily: "Cinzel, serif", fontSize: "clamp(2rem, 4vw, 3rem)",
+              fontWeight: 700, textAlign: "center", marginBottom: 12, color: "#E8E0D0",
+            }}
+          >
+            Start free. Upgrade when{" "}
+            <span style={{ color: "#F0D080" }}>UnifyOne pays for itself.</span>
+          </h2>
+          <p style={{ textAlign: "center", color: "#5A5A5A", marginBottom: 56, lineHeight: 1.7 }}>
+            Gig workers who track deductions claim an average of $3,200 more per year. That's 168× the cost of Pro.
+          </p>
+
+          <div
+            className="tier-grid"
+            style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }}
+          >
+            {TIERS.map((tier) => (
+              <div
+                key={tier.id}
+                className="tier-card transition-all"
+                style={{
+                  background: tier.highlight ? "#0E0E0E" : "#0A0A0A",
+                  border: tier.highlight ? "1px solid rgba(240,208,128,0.35)" : "1px solid #161616",
+                  borderRadius: 16,
+                  padding: "32px 28px",
+                  position: "relative",
+                  ...(tier.highlight ? { boxShadow: "0 0 60px rgba(240,208,128,0.08)" } : {}),
+                }}
+              >
+                {tier.highlight && (
+                  <div
+                    className="pill"
+                    style={{
+                      position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)",
+                      background: "linear-gradient(135deg, #F0D080, #D4A843)",
+                      color: "#020202", fontSize: 10,
+                    }}
+                  >
+                    Most Popular
+                  </div>
+                )}
+
+                <div style={{ marginBottom: 8, fontSize: 12, fontFamily: "'DM Mono', monospace", color: "#3A3A3A", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  {tier.name}
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 6 }}>
+                  <span style={{ fontFamily: "Cinzel, serif", fontSize: "2.5rem", fontWeight: 700, color: tier.highlight ? "#F0D080" : "#E8E0D0" }}>
                     {tier.price}
                   </span>
-                  <span
-                    className="font-crimson text-sm ml-2"
-                    style={{ color: "#5A5A5A" }}
-                  >
-                    / {tier.period}
-                  </span>
+                  <span style={{ fontSize: 13, color: "#5A5A5A" }}>/{tier.period}</span>
                 </div>
-                <p
-                  className="font-crimson text-base mb-8"
-                  style={{ color: "#5A5A5A", fontStyle: "italic" }}
-                >
-                  {tier.description}
-                </p>
+                <div style={{ fontSize: 13, color: "#5A5A5A", marginBottom: 28, lineHeight: 1.5 }}>{tier.tagline}</div>
 
-                <div className="space-y-3 mb-10">
-                  {tier.features.map(f => (
-                    <div key={f} className="flex items-center gap-3">
-                      <div
-                        className="w-3 h-px shrink-0"
-                        style={{ backgroundColor: "#D4A843" }}
-                      />
-                      <span
-                        className="font-crimson text-sm"
-                        style={{ color: "#6A6A6A" }}
-                      >
-                        {f}
-                      </span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
+                  {tier.features.map((feat, i) => (
+                    <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13, color: "#9A9A9A" }}>
+                      <span style={{ color: "#6EE7B7", marginTop: 2, flexShrink: 0 }}>✓</span>
+                      {feat}
                     </div>
                   ))}
                 </div>
 
-                <a
-                  href={getLoginUrl()}
-                  className={
-                    tier.highlight
-                      ? "btn-illuminate block text-center"
-                      : "btn-ghost-gold block text-center"
-                  }
-                >
-                  {tier.cta}
-                </a>
+                <Link href={tier.id === "scale" ? "/contact" : getLoginUrl()}>
+                  <span
+                    style={{
+                      display: "block", textAlign: "center",
+                      padding: "13px 20px", borderRadius: 9, cursor: "pointer",
+                      ...(tier.highlight
+                        ? { background: "linear-gradient(135deg, #F0D080, #D4A843)", color: "#020202", fontWeight: 700 }
+                        : { border: "1px solid #242424", color: "#9A9A9A", fontWeight: 600 }
+                      ),
+                      fontSize: 14,
+                      transition: "opacity 0.2s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                  >
+                    {tier.cta}
+                  </span>
+                </Link>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── FINAL CTA ────────────────────────────────────────────────────── */}
-      <section className="relative py-24 sm:py-40 overflow-hidden">
-        {/* Rose window background */}
-        <div className="absolute inset-0">
-          <img
-            src={CATHEDRAL_CTA_BG}
-            alt=""
-            className="w-full h-full object-cover"
-            style={{ opacity: 0.35 }}
-          />
-          {/* Dark radial overlay — lighter center to let rose window breathe */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(ellipse 70% 70% at 50% 50%, rgba(2,2,2,0.3) 0%, rgba(2,2,2,0.92) 75%)",
-            }}
-          />
-          {/* Edge vignette */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(to bottom, rgba(2,2,2,0.8) 0%, transparent 20%, transparent 80%, rgba(2,2,2,0.8) 100%)",
-            }}
-          />
-        </div>
-
-        <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-8 text-center">
-          {/* Decorative cross */}
-          <div className="flex justify-center mb-10">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <line
-                x1="16"
-                y1="2"
-                x2="16"
-                y2="30"
-                stroke="#D4A843"
-                strokeWidth="1"
-              />
-              <line
-                x1="2"
-                y1="12"
-                x2="30"
-                y2="12"
-                stroke="#D4A843"
-                strokeWidth="1"
-              />
-              <rect
-                x="1"
-                y="1"
-                width="30"
-                height="30"
-                stroke="rgba(212,168,67,0.2)"
-                strokeWidth="1"
-              />
-            </svg>
-          </div>
-
-          <span className="inscription block mb-6">The Foundation Awaits</span>
-          <h2
-            className="font-cinzel text-4xl sm:text-6xl font-black mb-6"
-            style={{
-              color: "#F0E8D0",
-              letterSpacing: "0.02em",
-              lineHeight: 1.1,
-            }}
-          >
-            Begin Construction
-            <br />
-            <span className="gradient-gold">Today.</span>
-          </h2>
-          <p
-            className="font-crimson text-xl sm:text-2xl mb-12 max-w-2xl mx-auto"
-            style={{ color: "#5A5A5A", fontStyle: "italic" }}
-          >
-            Cathedrals are not built in a day. But every one begins with the
-            same first stone. Yours is waiting.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href={getLoginUrl()}
-              className="btn-illuminate inline-block"
-              style={{ padding: "1rem 2.5rem" }}
-            >
-              Lay the First Stone
-            </a>
-            <Link href="/architecture">
-              <span
-                className="btn-ghost-gold inline-block cursor-pointer"
-                style={{ padding: "1rem 2.5rem" }}
-              >
-                Study the Plans
-              </span>
-            </Link>
-          </div>
-
-          <p className="font-crimson text-sm mt-8" style={{ color: "#3A3A3A" }}>
-            14-day free trial · No credit card required · Cancel at any time
-          </p>
-        </div>
-      </section>
-
-      {/* ── EMAIL CAPTURE ───────────────────────────────────────────────── */}
+      {/* ── FINAL CTA ─────────────────────────────────────────────────────────── */}
       <section
+        className="grid-bg"
         style={{
-          backgroundColor: "#020202",
-          borderTop: "1px solid rgba(212,168,67,0.1)",
+          padding: "120px 32px",
+          textAlign: "center",
+          borderTop: "1px solid #161616",
+          position: "relative",
+          overflow: "hidden",
         }}
-        className="py-24"
       >
-        <div className="max-w-2xl mx-auto px-6 sm:px-8">
-          <div className="text-center mb-12">
-            <span className="inscription block mb-4">STAY CONNECTED</span>
-            <h2
-              className="font-cinzel text-3xl sm:text-4xl font-bold"
-              style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
-            >
-              Join the Cathedral
-            </h2>
-            <p
-              className="font-crimson text-lg mt-6"
-              style={{ color: "#9A9A9A", lineHeight: 1.8 }}
-            >
-              Get exclusive insights, early access to features, and the
-              Cathedral Principle delivered to your inbox.
-            </p>
+        <div
+          style={{
+            position: "absolute", top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 600, height: 300,
+            background: "radial-gradient(ellipse, rgba(240,208,128,0.06) 0%, transparent 70%)",
+            pointerEvents: "none",
+          }}
+        />
+        <div style={{ maxWidth: 680, margin: "0 auto", position: "relative" }}>
+          <div
+            className="float"
+            style={{
+              width: 80, height: 80, borderRadius: 20,
+              background: "linear-gradient(135deg, #F0D080, #D4A843)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontFamily: "Cinzel, serif", fontSize: 28, fontWeight: 700, color: "#020202",
+              margin: "0 auto 32px",
+            }}
+          >
+            K
           </div>
 
-          <form
-            onSubmit={async e => {
-              e.preventDefault();
-              if (!emailInput.trim()) return;
-
-              setEmailStatus("loading");
-              setEmailMessage("");
-
-              try {
-                const result = await emailCapture.mutateAsync({
-                  email: emailInput,
-                  source: "landing_page",
-                });
-
-                if (result.success) {
-                  setEmailStatus("success");
-                  setEmailMessage(result.message);
-                  setEmailInput("");
-                  setTimeout(() => setEmailStatus("idle"), 5000);
-                } else {
-                  setEmailStatus("error");
-                  setEmailMessage(result.message || "An error occurred");
-                }
-              } catch {
-                setEmailStatus("error");
-                setEmailMessage("Failed to subscribe. Please try again.");
-              }
+          <h2
+            style={{
+              fontFamily: "Cinzel, serif",
+              fontSize: "clamp(2rem, 5vw, 3.5rem)",
+              fontWeight: 700,
+              marginBottom: 20,
+              background: "linear-gradient(135deg, #FFFFFF 0%, #F0D080 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
             }}
-            className="flex flex-col sm:flex-row gap-3 mb-6"
           >
-            <input
-              type="email"
-              placeholder="your@email.com"
-              value={emailInput}
-              onChange={e => setEmailInput(e.target.value)}
-              disabled={emailStatus === "loading" || emailStatus === "success"}
-              style={{
-                flex: 1,
-                padding: "12px 16px",
-                backgroundColor: "rgba(212,168,67,0.05)",
-                border: "1px solid rgba(212,168,67,0.2)",
-                color: "#F0E8D0",
-                fontFamily: "'Crimson Pro', serif",
-                fontSize: "16px",
-              }}
-              className="focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={emailStatus === "loading" || emailStatus === "success"}
-              className="btn-gold"
-              style={{
-                padding: "12px 32px",
-                fontFamily: "'Cinzel', serif",
-                fontSize: "14px",
-                letterSpacing: "0.1em",
-                fontWeight: 600,
-                opacity: emailStatus === "success" ? 0.7 : 1,
-              }}
-            >
-              {emailStatus === "loading"
-                ? "Subscribing..."
-                : emailStatus === "success"
-                  ? "✓ Subscribed"
-                  : "SUBSCRIBE"}
-            </button>
-          </form>
+            Your money. Your AI.<br />One platform.
+          </h2>
 
-          {emailMessage && (
-            <div
-              style={{
-                padding: "12px 16px",
-                backgroundColor:
-                  emailStatus === "success"
-                    ? "rgba(212,168,67,0.1)"
-                    : "rgba(200,100,100,0.1)",
-                border: `1px solid ${emailStatus === "success" ? "rgba(212,168,67,0.3)" : "rgba(200,100,100,0.3)"}`,
-                color: emailStatus === "success" ? "#D4A843" : "#FF6B6B",
-                fontFamily: "'Crimson Pro', serif",
-                fontSize: "14px",
-                textAlign: "center",
-              }}
-            >
-              {emailMessage}
-            </div>
-          )}
-
-          <p
-            className="font-crimson text-sm text-center mt-6"
-            style={{ color: "#5A5A5A" }}
-          >
-            We respect your inbox. Unsubscribe anytime.
+          <p style={{ fontSize: "1.1rem", color: "#5A5A5A", marginBottom: 48, lineHeight: 1.7 }}>
+            The gig economy runs on fragmented tools. UnifyOne is the intelligence layer that connects them.
+            <br />
+            <span style={{ color: "#9A9A9A" }}>Start tracking your first shift in 60 seconds.</span>
           </p>
+
+          <Link href={getLoginUrl()}>
+            <span
+              style={{
+                padding: "16px 40px", borderRadius: 12, cursor: "pointer",
+                background: "linear-gradient(135deg, #F0D080, #D4A843)",
+                color: "#020202", fontSize: 16, fontWeight: 700,
+                letterSpacing: "0.02em", display: "inline-block",
+                boxShadow: "0 12px 48px rgba(240,208,128,0.3)",
+                transition: "transform 0.2s, box-shadow 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-3px)";
+                e.currentTarget.style.boxShadow = "0 18px 60px rgba(240,208,128,0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 12px 48px rgba(240,208,128,0.3)";
+              }}
+            >
+              Start free — no credit card required
+            </span>
+          </Link>
         </div>
       </section>
 
-      {/* ── FOOTER ──────────────────────────────────────────────────────── */}
+      {/* ── FOOTER ───────────────────────────────────────────────────────────── */}
       <footer
         style={{
-          borderTop: "1px solid rgba(212,168,67,0.1)",
-          backgroundColor: "#020202",
+          borderTop: "1px solid #161616",
+          padding: "48px 32px",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 32,
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12">
-          <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-            {/* Brand */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div
-                  className="w-6 h-6 flex items-center justify-center"
-                  style={{ border: "1px solid rgba(212,168,67,0.3)" }}
-                >
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <line
-                      x1="5"
-                      y1="1"
-                      x2="5"
-                      y2="9"
-                      stroke="#D4A843"
-                      strokeWidth="1"
-                    />
-                    <line
-                      x1="1"
-                      y1="4"
-                      x2="9"
-                      y2="4"
-                      stroke="#D4A843"
-                      strokeWidth="1"
-                    />
-                  </svg>
-                </div>
-                <span
-                  className="font-cinzel text-xs font-600"
-                  style={{ color: "#D4A843", letterSpacing: "0.2em" }}
-                >
-                  UNIFYONE
-                </span>
-              </div>
-              <p
-                className="font-crimson text-sm"
-                style={{ color: "#3A3A3A", maxWidth: "240px" }}
-              >
-                Commerce infrastructure built on the Cathedral Principle. By
-                1Commerce · PNW Enterprises.
-              </p>
-            </div>
-
-            {/* Links */}
-            <div className="flex flex-wrap gap-8">
-              {[
-                { label: "Privacy Policy", href: "/privacy" },
-                { label: "Terms of Service", href: "/terms" },
-                { label: "Dashboard", href: "/dashboard" },
-                {
-                  label: "skdev@1commercesolutions.com",
-                  href: "mailto:skdev@1commercesolutions.com",
-                },
-              ].map(link => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="transition-colors duration-200"
-                  style={{
-                    fontFamily: "Cinzel, serif",
-                    fontSize: "0.6rem",
-                    letterSpacing: "0.2em",
-                    textTransform: "uppercase",
-                    color: "#3A3A3A",
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "#D4A843")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "#3A3A3A")}
-                >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          </div>
-
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div
-            className="mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4"
-            style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}
-          >
-            <span className="inscription" style={{ color: "#2A2A2A" }}>
-              © 2025 1Commerce Solutions · PNW Enterprises · All rights
-              reserved
-            </span>
-            <span className="inscription" style={{ color: "#2A2A2A" }}>
-              Cathedral Framework v1.6
-            </span>
-          </div>
+            style={{
+              width: 28, height: 28, borderRadius: 7,
+              background: "linear-gradient(135deg, #F0D080, #B8872A)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontFamily: "Cinzel, serif", fontSize: 12, fontWeight: 700, color: "#020202",
+            }}
+          >U1</div>
+          <span style={{ fontFamily: "Cinzel, serif", fontWeight: 700, fontSize: 14, color: "#F0D080" }}>UnifyOne</span>
+          <span style={{ fontSize: 12, color: "#3A3A3A", marginLeft: 8 }}>© 2025 1Commerce LLC / PNW Enterprises</span>
+        </div>
+        <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
+          {[
+            { label: "Privacy", href: "/privacy-policy" },
+            { label: "Terms", href: "/terms-of-service" },
+            { label: "API Docs", href: "/integration-guides" },
+            { label: "About", href: "/about" },
+            { label: "Contact", href: "/contact" },
+          ].map((link) => (
+            <Link key={link.label} href={link.href}>
+              <span style={{ fontSize: 13, color: "#3A3A3A", cursor: "pointer", transition: "color 0.2s" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#9A9A9A")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#3A3A3A")}
+              >{link.label}</span>
+            </Link>
+          ))}
         </div>
       </footer>
-
-      {/* ── MOBILE STICKY CTA ───────────────────────────────────────────── */}
-      <div
-        className="fixed bottom-0 left-0 right-0 z-40 sm:hidden flex gap-0"
-        style={{
-          borderTop: "1px solid rgba(212,168,67,0.2)",
-          backgroundColor: "rgba(2,2,2,0.98)",
-        }}
-      >
-        <a
-          href={getLoginUrl()}
-          className="flex-1 py-4 text-center btn-illuminate"
-          style={{ fontSize: "0.65rem" }}
-        >
-          Begin Construction
-        </a>
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="px-6 py-4 btn-ghost-gold"
-          style={{
-            fontSize: "0.65rem",
-            borderLeft: "1px solid rgba(212,168,67,0.2)",
-          }}
-        >
-          Enter
-        </button>
-      </div>
     </div>
   );
 }
