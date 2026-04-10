@@ -17,16 +17,19 @@
   node_bundler = "esbuild"
   included_files = ["drizzle/**", "server/**"]
 
-# Redirect API calls to the Express server function
+# Redirect API calls to the server function
+# server.ts uses in-code config { path: "/api/*" } — Netlify auto-routes it
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/server/:splat"
+  to = "/.netlify/functions/server"
   status = 200
 
 # MCP (Model Context Protocol) server endpoint
+# mcp-server.ts uses in-code config { path: "/mcp" } — Netlify auto-routes it
+# This redirect is kept as a belt-and-suspenders fallback
 [[redirects]]
   from = "/mcp"
-  to = "/.netlify/functions/mcp-server/mcp"
+  to = "/.netlify/functions/mcp-server"
   status = 200
   force = true
 
