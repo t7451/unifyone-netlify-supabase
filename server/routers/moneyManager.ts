@@ -704,4 +704,259 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
         return [];
       }
     }),
+
+  // ── GigIQ Intelligence Layer ──────────────────────────────────────────────
+  // These procedures power the shift intelligence + deduction dashboard.
+  // They read from existing gigShifts + mileageLogs data — no new tables needed.
+
+  /**
+   * Per-platform, per-hour, per-day breakdown.
+   * Returns the data Kai needs to give dollar-specific recommendations:
+   * "Your Thursday 5–9pm shifts average $31.20/hr vs $21.90/hr Monday mornings."
+   */
+  getShiftBreakdown: protectedProcedure
+    .input(z.object({
+      period: z.enum(["week", "month", "year", "all"]).default("month"),
+    }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { byPlatform: [], byHour: [], byDayOfWeek: [], topInsight: null };
+
+      const now = new Date();
+      let startDate: Date;
+      if (input.period === "week") startDate = new Date(now.getTime() - 7 * 86400000);
+      else if (input.period === "month") startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      else if (input.period === "year") startDate = new Date(now.getFullYear(), 0, 1);
+      else startDate = new Date(0);
+
+      const shifts = await db
+        .select()
+        .from(gigShifts)
+        .where(and(
+          eq(gigShifts.userId, ctx.user.id),
+          eq(gigShifts.status, "completed"),
+          gte(gigShifts.startTime, startDate)
+        ))
+        .orderBy(desc(gigShifts.startTime));
+
+      if (shifts.length === 0) {
+        return { byPlatform: [], byHour: [], byDayOfWeek: [], topInsight: null };
+      }
+
+      // Per-platform aggregation
+      const platformMap: Record<string, { earnings: number; hours: number; shifts: number; miles: number }> = {};
+      for (const s of shifts) {
+        const p = s.platform;
+        if (!platformMap[p]) platformMap[p] = { earnings: 0, hours: 0, shifts: 0, miles: 0 };
+        const totalEarned = Number(s.grossEarnings) + Number(s.tips) + Number(s.bonuses);
+        const hours = (s.durationMinutes ?? 0) / 60;
+        platformMap[p].earnings += totalEarned;
+        platformMap[p].hours += hours;
+        platformMap[p].shifts += 1;
+        platformMap[p].miles += Number(s.totalMiles);
+      }
+      const byPlatform = Object.entries(platformMap).map(([platform, v]) => ({
+        platform,
+        totalEarnings: Math.round(v.earnings * 100) / 100,
+        totalHours: Math.round(v.hours * 10) / 10,
+        avgPerHour: v.hours > 0 ? Math.round((v.earnings / v.hours) * 100) / 100 : 0,
+        totalShifts: v.shifts,
+        totalMiles: Math.round(v.miles * 10) / 10,
+      })).sort((a, b) => b.avgPerHour - a.avgPerHour);
+
+      // Per-hour-of-day aggregation (0-23)
+      const hourMap: Record<number, { earnings: number; hours: number; count: number }> = {};
+      for (const s of shifts) {
+        const h = s.startTime.getHours();
+        if (!hourMap[h]) hourMap[h] = { earnings: 0, hours: 0, count: 0 };
+        hourMap[h].earnings += Number(s.grossEarnings) + Number(s.tips) + Number(s.bonuses);
+        hourMap[h].hours += (s.durationMinutes ?? 0) / 60;
+        hourMap[h].count += 1;
+      }
+      const byHour = Object.entries(hourMap).map(([hour, v]) => ({
+        hour: Number(hour),
+        label: `${Number(hour) % 12 || 12}${Number(hour) < 12 ? "am" : "pm"}`,
+        avgPerHour: v.hours > 0 ? Math.round((v.earnings / v.hours) * 100) / 100 : 0,
+        totalEarnings: Math.round(v.earnings * 100) / 100,
+        shiftCount: v.count,
+      })).sort((a, b) => a.hour - b.hour);
+
+      // Per-day-of-week aggregation (0=Sun, 6=Sat)
+      const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const dayMap: Record<number, { earnings: number; hours: number; count: number }> = {};
+      for (const s of shifts) {
+        const d = s.startTime.getDay();
+        if (!dayMap[d]) dayMap[d] = { earnings: 0, hours: 0, count: 0 };
+        dayMap[d].earnings += Number(s.grossEarnings) + Number(s.tips) + Number(s.bonuses);
+        dayMap[d].hours += (s.durationMinutes ?? 0) / 60;
+        dayMap[d].count += 1;
+      }
+      const byDayOfWeek = Object.entries(dayMap).map(([day, v]) => ({
+        day: Number(day),
+        label: DAYS[Number(day)],
+        avgPerHour: v.hours > 0 ? Math.round((v.earnings / v.hours) * 100) / 100 : 0,
+        totalEarnings: Math.round(v.earnings * 100) / 100,
+        shiftCount: v.count,
+      })).sort((a, b) => a.day - b.day);
+
+      // Top insight: best vs worst platform/time for Kai context
+      let topInsight: string | null = null;
+      if (byPlatform.length >= 2) {
+        const best = byPlatform[0];
+        const worst = byPlatform[byPlatform.length - 1];
+        if (best.avgPerHour > 0 && worst.avgPerHour > 0) {
+          const diff = best.avgPerHour - worst.avgPerHour;
+          topInsight = `Your ${best.platform} shifts average $${best.avgPerHour}/hr vs $${worst.avgPerHour}/hr on ${worst.platform} — a $${diff.toFixed(2)}/hr gap.`;
+        }
+      } else if (byHour.length >= 2) {
+        const bestHour = [...byHour].sort((a, b) => b.avgPerHour - a.avgPerHour)[0];
+        topInsight = `Your best earning hour is ${bestHour.label} at $${bestHour.avgPerHour}/hr average.`;
+      }
+
+      return { byPlatform, byHour, byDayOfWeek, topInsight };
+    }),
+
+  /**
+   * YTD deduction widget — the "aha moment" stat.
+   * Returns current year mileage deduction, quarterly estimate,
+   * and whether the user should be prompted to upgrade.
+   */
+  getYTDDeduction: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    const IRS_RATE = 0.70; // 2025
+    if (!db) return {
+      ytdMiles: 0, ytdDeduction: 0, projectedYearlyDeduction: 0,
+      projectedYearlyMiles: 0, quarterlyEstimate: 0,
+      missedDeduction: 0, shouldUpgradePrompt: false,
+    };
+
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+    // Pull completed shifts for miles from gigShifts (more accurate than mileageLogs)
+    const shifts = await db
+      .select({
+        totalMiles: gigShifts.totalMiles,
+        startTime: gigShifts.startTime,
+      })
+      .from(gigShifts)
+      .where(and(
+        eq(gigShifts.userId, ctx.user.id),
+        eq(gigShifts.status, "completed"),
+        gte(gigShifts.startTime, startOfYear)
+      ));
+
+    // Also pull mileageLogs for manually logged miles
+    const { mileageLogs } = await import("../../drizzle/schema");
+    const manualLogs = await db
+      .select({ miles: mileageLogs.miles })
+      .from(mileageLogs)
+      .where(and(
+        eq(mileageLogs.userId, ctx.user.id),
+        gte(mileageLogs.date, startOfYear)
+      ));
+
+    const shiftMiles = shifts.reduce((s, r) => s + Number(r.totalMiles), 0);
+    const manualMiles = manualLogs.reduce((s, r) => s + Number(r.miles), 0);
+    const ytdMiles = Math.round((shiftMiles + manualMiles) * 10) / 10;
+    const ytdDeduction = Math.round(ytdMiles * IRS_RATE * 100) / 100;
+
+    // Project to year end based on pace so far
+    const dayOfYear = Math.ceil((now.getTime() - startOfYear.getTime()) / 86400000);
+    const daysInYear = now.getFullYear() % 4 === 0 ? 366 : 365;
+    const dailyRate = dayOfYear > 0 ? ytdMiles / dayOfYear : 0;
+    const projectedYearlyMiles = Math.round(dailyRate * daysInYear * 10) / 10;
+    const projectedYearlyDeduction = Math.round(projectedYearlyMiles * IRS_RATE * 100) / 100;
+
+    // Quarterly estimate (simple: YTD / quarters elapsed * 4)
+    const quarterElapsed = Math.ceil((now.getMonth() + 1) / 3);
+    const quarterlyEstimate = Math.round((ytdDeduction / Math.max(quarterElapsed, 1)) * 100) / 100;
+
+    // Missed deduction estimate: average gig worker claims $3,200/yr
+    // If they're on track for less than $1,000, prompt upgrade for full tracking
+    const missedDeduction = Math.max(0, Math.round((3200 - projectedYearlyDeduction) * 100) / 100);
+    const shouldUpgradePrompt = shifts.length >= 5 && projectedYearlyDeduction < 1000;
+
+    return {
+      ytdMiles,
+      ytdDeduction,
+      projectedYearlyMiles,
+      projectedYearlyDeduction,
+      quarterlyEstimate,
+      missedDeduction,
+      shouldUpgradePrompt,
+    };
+  }),
+
+  /**
+   * Kai-ready data context for gig-command and money-manager pages.
+   * Returns a compact JSON string the AI system prompt can inject directly.
+   */
+  getKaiContext: protectedProcedure
+    .input(z.object({ context: z.enum(["gig-command", "money-manager", "dashboard"]) }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { contextJson: "{}", hasSufficientData: false };
+
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const IRS_RATE = 0.70;
+
+      // Core stats
+      const allShifts = await db
+        .select()
+        .from(gigShifts)
+        .where(and(eq(gigShifts.userId, ctx.user.id), eq(gigShifts.status, "completed")))
+        .orderBy(desc(gigShifts.startTime))
+        .limit(50);
+
+      if (allShifts.length === 0) {
+        return { contextJson: JSON.stringify({ message: "No shifts logged yet." }), hasSufficientData: false };
+      }
+
+      const monthShifts = allShifts.filter(s => s.startTime >= startOfMonth);
+      const yearShifts = allShifts.filter(s => s.startTime >= startOfYear);
+
+      const earnings = (arr: typeof allShifts) =>
+        arr.reduce((s, r) => s + Number(r.grossEarnings) + Number(r.tips) + Number(r.bonuses), 0);
+      const hours = (arr: typeof allShifts) =>
+        arr.reduce((s, r) => s + (r.durationMinutes ?? 0), 0) / 60;
+      const miles = (arr: typeof allShifts) =>
+        arr.reduce((s, r) => s + Number(r.totalMiles), 0);
+
+      // Per-platform this month
+      const platformMap: Record<string, { e: number; h: number }> = {};
+      for (const s of monthShifts) {
+        if (!platformMap[s.platform]) platformMap[s.platform] = { e: 0, h: 0 };
+        platformMap[s.platform].e += Number(s.grossEarnings) + Number(s.tips) + Number(s.bonuses);
+        platformMap[s.platform].h += (s.durationMinutes ?? 0) / 60;
+      }
+      const platforms = Object.entries(platformMap)
+        .map(([p, v]) => ({ platform: p, avgPerHour: v.h > 0 ? Math.round(v.e / v.h * 100) / 100 : 0 }))
+        .sort((a, b) => b.avgPerHour - a.avgPerHour);
+
+      const monthEarnings = earnings(monthShifts);
+      const monthHours = hours(monthShifts);
+      const yearMiles = miles(yearShifts);
+
+      const ctx_data = {
+        period: "this month",
+        totalEarnings: Math.round(monthEarnings * 100) / 100,
+        totalHours: Math.round(monthHours * 10) / 10,
+        avgPerHour: monthHours > 0 ? Math.round(monthEarnings / monthHours * 100) / 100 : 0,
+        totalShifts: monthShifts.length,
+        ytdMiles: Math.round(yearMiles * 10) / 10,
+        ytdDeduction: Math.round(yearMiles * IRS_RATE * 100) / 100,
+        platforms,
+        topPlatform: platforms[0]?.platform ?? null,
+        lowestPlatform: platforms[platforms.length - 1]?.platform ?? null,
+        lifetimeShifts: allShifts.length,
+      };
+
+      return {
+        contextJson: JSON.stringify(ctx_data, null, 2),
+        hasSufficientData: allShifts.length >= 3,
+      };
+    }),
 });
