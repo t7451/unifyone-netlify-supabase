@@ -1,11 +1,13 @@
 // Shared pricing tier definitions used by Home and Pricing pages.
 // Update prices/features here in one place.
+// Tiers: Starter (free) / Pro ($19/mo) / Scale ($99/mo)
 
 export type PricingTier = {
-  id: "acolyte" | "architect" | "cathedral";
+  id: "starter" | "pro" | "scale";
   name: string;
   price: string;
   period: string;
+  tagline: string;
   description: string;
   features: string[];
   cta: string;
@@ -14,55 +16,65 @@ export type PricingTier = {
 
 export const TIERS: PricingTier[] = [
   {
-    id: "acolyte",
-    name: "Acolyte",
+    id: "starter",
+    name: "Starter",
     price: "$0",
     period: "forever",
-    description: "For builders proving the concept.",
+    tagline: "See what you're missing.",
+    description: "For gig workers ready to see their real numbers.",
     features: [
-      "1 tenant",
-      "100 products",
-      "500 orders/mo",
-      "Stripe checkout",
-      "Basic analytics",
+      "2 gig platform connections",
+      "Full shift earnings history",
+      "Auto mileage deduction tracking",
+      "50 Kai queries / month",
+      "Money Manager dashboard",
+      "MoneyGenerator gig tools",
     ],
-    cta: "Begin Construction",
+    cta: "Start Free",
     highlight: false,
   },
   {
-    id: "architect",
-    name: "Architect",
-    price: "$49",
+    id: "pro",
+    name: "Pro",
+    price: "$19",
     period: "per month",
-    description: "For operators running real commerce.",
+    tagline: "Pay for itself in week one.",
+    description: "For power operators, freelancers, and developers.",
     features: [
-      "5 tenants",
-      "Unlimited products",
-      "Unlimited orders",
-      "All payment rails",
-      "Manus AI included",
-      "Automation layer",
-      "Priority support",
+      "Unlimited gig platform connections",
+      "Advanced zone / time optimization",
+      "Quarterly estimates + 1099 prep",
+      "500 Kai queries / month",
+      "UnifyAI API — 1,000 credits included",
+      "Full MCP config dashboard",
+      "Multi-model selection (Claude, GPT, Gemini)",
+      "1 commerce storefront",
+      "Developer API key management",
+      "Priority support (24hr response)",
     ],
-    cta: "Claim Your Nave",
+    cta: "Go Pro",
     highlight: true,
   },
   {
-    id: "cathedral",
-    name: "Cathedral",
-    price: "$149",
+    id: "scale",
+    name: "Scale",
+    price: "$99",
     period: "per month",
-    description: "For enterprises building at scale.",
+    tagline: "For operators building at scale.",
+    description: "For agencies, white-label partners, and API resellers.",
     features: [
-      "Unlimited tenants",
-      "White-label ready",
-      "Custom domains",
-      "SLA guarantee",
-      "Dedicated infrastructure",
-      "API access",
-      "Concierge onboarding",
+      "Unlimited multi-tenant management",
+      "Affiliate storefront network tools",
+      "UnifyAI API — 10,000 credits / month",
+      "API reselling + white-label",
+      "Custom MCP routing rules",
+      "Role-based team access + audit logs",
+      "Shopify sync + inventory management",
+      "Webhook configs + custom data pipelines",
+      "Slack support + 4hr SLA",
+      "Volume API discounts",
     ],
-    cta: "Commission the Build",
+    cta: "Contact Sales",
     highlight: false,
   },
 ];
