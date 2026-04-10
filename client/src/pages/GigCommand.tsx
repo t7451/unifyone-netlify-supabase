@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import AIInsightsCard from "@/components/AIInsightsCard";
+import GigIQDashboard from "@/components/GigIQDashboard";
 import { Play, Square, MapPin, Navigation, Zap, TrendingUp, DollarSign, Gauge, Clock, Route, Sparkles, RefreshCw, AlertTriangle, ChevronUp, ChevronDown, Car, Bike, Truck } from "lucide-react";
 
 const IRS_RATE = 0.70; // 2025 rate per mile
@@ -425,7 +426,9 @@ export default function GigCommand() {
             </div>
 
             {/* AI Insights Panel */}
-            <AIInsightsCard
+            <GigIQDashboard period="month" className="mb-6" />
+
+      <AIInsightsCard
               context="gig-command"
               title="Gig Command AI"
               dataContext={`Platform: ${platform}. Avg $/hour (last 5 shifts): $${earningsPerHour.toFixed(2)}. YTD miles: ${(mileageSummary?.totalMiles ?? 0).toFixed(1)}. YTD tax deduction: $${ytdDeduction.toFixed(2)} (IRS 2025 $0.70/mile). Recent shifts: ${recentShifts.length}. Shift currently ${timerActive ? `active (${formatDuration(elapsed)} elapsed)` : 'not active'}.`}
