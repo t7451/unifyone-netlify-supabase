@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { DollarSign, ShoppingCart, Users, Package, TrendingUp, AlertTriangle, ArrowRight } from "lucide-react";
+import MCPStatusWidget from "@/components/MCPStatusWidget";
 
 export default function Dashboard() {
   const { user } = useAuth();
