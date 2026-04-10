@@ -1,208 +1,133 @@
 /**
  * Netlify Functions — UnifyOne MCP Server (stateless JSON-RPC 2.0)
+ * runtimeAPIVersion 1 compatible — uses export { handler } format.
  *
- * Stateless implementation — no StreamableHTTPServerTransport (that requires
- * persistent SSE sessions incompatible with Netlify Functions).
- *
- * Each POST to /mcp is a complete JSON-RPC exchange:
- *   initialize → returns server capabilities
- *   tools/list  → returns 18 tool schemas
- *   tools/call  → dispatches to handler, returns result
- *
- * Routes: /mcp (via netlify.toml redirect)
+ * Stateless per-request JSON-RPC: no sessions, no SSE, no StreamableHTTP.
+ * Routes via netlify.toml redirect: /mcp → /.netlify/functions/mcp-server
  */
+import type { Handler, HandlerEvent, HandlerContext } from "@netlify/functions";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-interface JsonRpcRequest {
-  jsonrpc: "2.0";
-  id: string | number | null;
-  method: string;
-  params?: Record<string, unknown>;
-}
-
-interface JsonRpcResponse {
-  jsonrpc: "2.0";
-  id: string | number | null;
-  result?: unknown;
-  error?: { code: number; message: string };
-}
-
-function ok(id: string | number | null, result: unknown): Response {
-  return Response.json({ jsonrpc: "2.0", id, result } satisfies JsonRpcResponse, {
+// ── JSON-RPC helpers ──────────────────────────────────────────────────────────
+function jsonRpcOk(id: string | number | null, result: unknown) {
+  return {
+    statusCode: 200,
     headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-  });
+    body: JSON.stringify({ jsonrpc: "2.0", id, result }),
+  };
 }
 
-function rpcErr(id: string | number | null, code: number, message: string): Response {
-  return Response.json(
-    { jsonrpc: "2.0", id, error: { code, message } } satisfies JsonRpcResponse,
-    { status: 200, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
-  );
+function jsonRpcErr(id: string | number | null, code: number, message: string) {
+  return {
+    statusCode: 200,
+    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    body: JSON.stringify({ jsonrpc: "2.0", id, error: { code, message } }),
+  };
 }
 
-// ── Tool definitions ──────────────────────────────────────────────────────────
+// ── Tool definitions (18 tools, 4 Cathedral phases) ──────────────────────────
 const TOOLS = [
-  // Foundation
-  { name: "listStores", description: "List all stores/tenants in the platform", inputSchema: { type: "object", properties: { limit: { type: "number" } } } },
-  { name: "getTenantInfo", description: "Get details for a specific tenant", inputSchema: { type: "object", properties: { tenantId: { type: "string" } }, required: ["tenantId"] } },
-  // Walls
-  { name: "listProducts", description: "List products with optional filters", inputSchema: { type: "object", properties: { tenantId: { type: "string" }, limit: { type: "number" }, category: { type: "string" } } } },
-  { name: "getProduct", description: "Get a specific product by ID", inputSchema: { type: "object", properties: { productId: { type: "string" } }, required: ["productId"] } },
-  { name: "searchProducts", description: "Search products by keyword", inputSchema: { type: "object", properties: { query: { type: "string" }, tenantId: { type: "string" } }, required: ["query"] } },
-  { name: "listOrders", description: "List orders with filters", inputSchema: { type: "object", properties: { tenantId: { type: "string" }, status: { type: "string" }, limit: { type: "number" } } } },
-  { name: "getOrder", description: "Get a specific order with line items", inputSchema: { type: "object", properties: { orderId: { type: "string" } }, required: ["orderId"] } },
+  // Foundation (2)
+  { name: "listStores", description: "List all stores/tenants", inputSchema: { type: "object", properties: { limit: { type: "number" } } } },
+  { name: "getTenantInfo", description: "Get tenant details by ID", inputSchema: { type: "object", required: ["tenantId"], properties: { tenantId: { type: "string" } } } },
+  // Walls (11)
+  { name: "listProducts", description: "List products with filters", inputSchema: { type: "object", properties: { tenantId: { type: "string" }, limit: { type: "number" } } } },
+  { name: "getProduct", description: "Get product by ID", inputSchema: { type: "object", required: ["productId"], properties: { productId: { type: "string" } } } },
+  { name: "searchProducts", description: "Search products by keyword", inputSchema: { type: "object", required: ["query"], properties: { query: { type: "string" }, tenantId: { type: "string" } } } },
+  { name: "listOrders", description: "List orders", inputSchema: { type: "object", properties: { tenantId: { type: "string" }, limit: { type: "number" } } } },
+  { name: "getOrder", description: "Get order with line items", inputSchema: { type: "object", required: ["orderId"], properties: { orderId: { type: "string" } } } },
   { name: "listCustomers", description: "List customers", inputSchema: { type: "object", properties: { tenantId: { type: "string" }, limit: { type: "number" } } } },
-  { name: "getCustomer", description: "Get a specific customer by ID", inputSchema: { type: "object", properties: { customerId: { type: "string" } }, required: ["customerId"] } },
+  { name: "getCustomer", description: "Get customer by ID", inputSchema: { type: "object", required: ["customerId"], properties: { customerId: { type: "string" } } } },
   { name: "getInventory", description: "Get inventory levels", inputSchema: { type: "object", properties: { tenantId: { type: "string" } } } },
-  { name: "getLowStockProducts", description: "Get products below stock threshold", inputSchema: { type: "object", properties: { threshold: { type: "number" } } } },
-  { name: "getAnalyticsSummary", description: "Get revenue, order, and customer summary", inputSchema: { type: "object", properties: { tenantId: { type: "string" } } } },
-  { name: "getRevenueByDay", description: "Get daily revenue breakdown", inputSchema: { type: "object", properties: { tenantId: { type: "string" }, days: { type: "number" } } } },
-  { name: "getTopProducts", description: "Get top-performing products by revenue", inputSchema: { type: "object", properties: { limit: { type: "number" } } } },
-  // Vaults
-  { name: "getWebhookEvents", description: "Get recent webhook event log", inputSchema: { type: "object", properties: { limit: { type: "number" } } } },
-  { name: "getNotifications", description: "Get platform notifications", inputSchema: { type: "object", properties: { limit: { type: "number" } } } },
-  { name: "getCategories", description: "Get product categories", inputSchema: { type: "object", properties: { tenantId: { type: "string" } } } },
-  // Spire
-  { name: "getPlatformStats", description: "Get aggregated platform statistics", inputSchema: { type: "object", properties: {} } },
+  { name: "getLowStockProducts", description: "Products below stock threshold", inputSchema: { type: "object", properties: { threshold: { type: "number" } } } },
+  { name: "getAnalyticsSummary", description: "Revenue, order, customer summary", inputSchema: { type: "object", properties: { tenantId: { type: "string" } } } },
+  { name: "getRevenueByDay", description: "Daily revenue breakdown", inputSchema: { type: "object", properties: { tenantId: { type: "string" } } } },
+  // Vaults (3)
+  { name: "getTopProducts", description: "Top products by revenue", inputSchema: { type: "object", properties: { limit: { type: "number" } } } },
+  { name: "getWebhookEvents", description: "Recent webhook events", inputSchema: { type: "object", properties: { limit: { type: "number" } } } },
+  { name: "getCategories", description: "Product categories", inputSchema: { type: "object", properties: { tenantId: { type: "string" } } } },
+  // Spire (2)
+  { name: "getNotifications", description: "Platform notifications", inputSchema: { type: "object", properties: { limit: { type: "number" } } } },
+  { name: "getPlatformStats", description: "Aggregated platform statistics", inputSchema: { type: "object", properties: {} } },
 ];
 
 // ── Tool dispatcher ───────────────────────────────────────────────────────────
 async function callTool(name: string, args: Record<string, unknown>): Promise<unknown> {
-  try {
-    const {
-      getDb, getProducts, getProductById, getCategories, getOrders,
-      getOrderWithItems, getCustomers, getCustomerById, getAnalyticsSummary,
-      getRevenueByDay, getTopProducts, getInventory, getLowStockProducts,
-      getWebhookEvents, getAllTenants, getTenantById,
-    } = await import("../../server/db");
-
-    const db = await getDb();
-
-    switch (name) {
-      case "listStores":
-        return await getAllTenants();
-      case "getTenantInfo":
-        return await getTenantById(args.tenantId as string);
-      case "listProducts":
-        return await getProducts(args.tenantId as string | undefined, args.limit as number | undefined);
-      case "getProduct":
-        return await getProductById(args.productId as string);
-      case "searchProducts": {
-        const products = await getProducts(args.tenantId as string | undefined);
-        const q = (args.query as string).toLowerCase();
-        return (products as any[]).filter((p: any) =>
-          p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
-        );
-      }
-      case "listOrders":
-        return await getOrders(args.tenantId as string | undefined, args.limit as number | undefined);
-      case "getOrder":
-        return await getOrderWithItems(args.orderId as string);
-      case "listCustomers":
-        return await getCustomers(args.tenantId as string | undefined, args.limit as number | undefined);
-      case "getCustomer":
-        return await getCustomerById(args.customerId as string);
-      case "getInventory":
-        return await getInventory(args.tenantId as string | undefined);
-      case "getLowStockProducts":
-        return await getLowStockProducts(args.threshold as number | undefined);
-      case "getAnalyticsSummary":
-        return await getAnalyticsSummary(args.tenantId as string | undefined);
-      case "getRevenueByDay":
-        return await getRevenueByDay(args.tenantId as string | undefined);
-      case "getTopProducts":
-        return await getTopProducts(args.limit as number | undefined);
-      case "getWebhookEvents":
-        return await getWebhookEvents(args.limit as number | undefined);
-      case "getCategories":
-        return await getCategories(args.tenantId as string | undefined);
-      case "getNotifications": {
-        if (!db) return [];
-        const { notifications } = await import("../../drizzle/schema");
-        const { desc } = await import("drizzle-orm");
-        return await db.select().from(notifications).orderBy(desc(notifications.createdAt)).limit((args.limit as number) ?? 20);
-      }
-      case "getPlatformStats": {
-        const [tenants, summary] = await Promise.all([
-          getAllTenants(),
-          getAnalyticsSummary(undefined),
-        ]);
-        return {
-          tenantCount: (tenants as any[]).length,
-          ...((summary as any) ?? {}),
-          timestamp: new Date().toISOString(),
-        };
-      }
-      default:
-        throw new Error(`Unknown tool: ${name}`);
+  const db = await import("../../server/db");
+  switch (name) {
+    case "listStores": return db.getAllTenants();
+    case "getTenantInfo": return db.getTenantById(args.tenantId as string);
+    case "listProducts": return db.getProducts(args.tenantId as string | undefined, args.limit as number | undefined);
+    case "getProduct": return db.getProductById(args.productId as string);
+    case "searchProducts": {
+      const all = await db.getProducts(args.tenantId as string | undefined) as any[];
+      const q = (args.query as string).toLowerCase();
+      return all.filter((p: any) => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
     }
-  } catch (err: any) {
-    throw new Error(`Tool ${name} failed: ${err.message}`);
+    case "listOrders": return db.getOrders(args.tenantId as string | undefined, args.limit as number | undefined);
+    case "getOrder": return db.getOrderWithItems(args.orderId as string);
+    case "listCustomers": return db.getCustomers(args.tenantId as string | undefined, args.limit as number | undefined);
+    case "getCustomer": return db.getCustomerById(args.customerId as string);
+    case "getInventory": return db.getInventory(args.tenantId as string | undefined);
+    case "getLowStockProducts": return db.getLowStockProducts(args.threshold as number | undefined);
+    case "getAnalyticsSummary": return db.getAnalyticsSummary(args.tenantId as string | undefined);
+    case "getRevenueByDay": return db.getRevenueByDay(args.tenantId as string | undefined);
+    case "getTopProducts": return db.getTopProducts(args.limit as number | undefined);
+    case "getWebhookEvents": return db.getWebhookEvents(args.limit as number | undefined);
+    case "getCategories": return db.getCategories(args.tenantId as string | undefined);
+    case "getNotifications": {
+      const drizzle = await db.getDb();
+      if (!drizzle) return [];
+      const { notifications } = await import("../../drizzle/schema");
+      const { desc } = await import("drizzle-orm");
+      return drizzle.select().from(notifications).orderBy(desc(notifications.createdAt)).limit((args.limit as number) ?? 20);
+    }
+    case "getPlatformStats": {
+      const [tenants, summary] = await Promise.all([db.getAllTenants(), db.getAnalyticsSummary(undefined)]);
+      return { tenantCount: (tenants as any[]).length, ...(summary as any ?? {}), ts: new Date().toISOString() };
+    }
+    default: throw new Error(`Unknown tool: ${name}`);
   }
 }
 
-// ── Main handler ──────────────────────────────────────────────────────────────
-export default async (req: Request): Promise<Response> => {
+// ── Netlify Function handler ──────────────────────────────────────────────────
+export const handler: Handler = async (event: HandlerEvent, _ctx: HandlerContext) => {
   // CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
-    });
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 204, headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization" }, body: "" };
   }
 
-  if (req.method !== "POST") {
-    return Response.json({ error: "Method not allowed" }, { status: 405 });
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
   }
 
-  let body: JsonRpcRequest;
+  let body: { jsonrpc: string; id: string | number | null; method: string; params?: Record<string, unknown> };
   try {
-    body = await req.json() as JsonRpcRequest;
+    body = JSON.parse(event.body ?? "{}");
   } catch {
-    return rpcErr(null, -32700, "Parse error: invalid JSON");
+    return jsonRpcErr(null, -32700, "Parse error");
   }
 
   const { id, method, params = {} } = body;
 
   switch (method) {
     case "initialize":
-      return ok(id, {
-        protocolVersion: "2024-11-05",
-        serverInfo: { name: "unifyone-mcp", version: "2.0.0" },
-        capabilities: { tools: { listChanged: false } },
-      });
+      return jsonRpcOk(id, { protocolVersion: "2024-11-05", serverInfo: { name: "unifyone-mcp", version: "2.0.0" }, capabilities: { tools: { listChanged: false } } });
 
     case "tools/list":
-      return ok(id, { tools: TOOLS });
+      return jsonRpcOk(id, { tools: TOOLS });
 
     case "tools/call": {
       const toolName = params.name as string;
-      const toolArgs = (params.arguments ?? {}) as Record<string, unknown>;
-
-      if (!toolName) return rpcErr(id, -32602, "Missing tool name");
-
+      if (!toolName) return jsonRpcErr(id, -32602, "Missing tool name");
       try {
-        const result = await callTool(toolName, toolArgs);
-        return ok(id, {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-        });
-      } catch (err: any) {
-        return ok(id, {
-          content: [{ type: "text", text: err.message }],
-          isError: true,
-        });
+        const result = await callTool(toolName, (params.arguments ?? {}) as Record<string, unknown>);
+        return jsonRpcOk(id, { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] });
+      } catch (e: any) {
+        return jsonRpcOk(id, { content: [{ type: "text", text: e.message }], isError: true });
       }
     }
 
     default:
-      return rpcErr(id, -32601, `Method not found: ${method}`);
+      return jsonRpcErr(id, -32601, `Method not found: ${method}`);
   }
-};
-
-export const config = {
-  path: "/mcp",
 };
