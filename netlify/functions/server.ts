@@ -1,67 +1,92 @@
 /**
- * Netlify Functions — Express server wrapper
- * Wraps the UnifyOne Express app with serverless-http so it runs
- * as a Netlify Function. All /api/* traffic is routed here via netlify.toml.
+ * Netlify Functions — UnifyOne API server
+ *
+ * Uses tRPC fetchRequestHandler (no Express adapter, no serverless-http,
+ * no path-to-regexp dependency) to eliminate the "pathRegexp is not a
+ * function" crash on Netlify Functions with tRPC v11.
+ *
+ * Non-tRPC routes (Stripe, PayPal, Square, billing webhooks, OAuth) are
+ * handled by a lightweight inline router BEFORE tRPC so raw-body parsing
+ * is preserved for webhook signature verification.
  */
-import "dotenv/config";
-import express from "express";
-import serverless from "serverless-http";
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
-let _handler: ReturnType<typeof serverless> | null = null;
+// ── Lazy singletons — avoid re-importing on every warm invocation ───────────
+let _routerModule: any = null;
+let _nonTrpcHandler: ((req: Request) => Promise<Response | null>) | null = null;
 
-async function buildApp() {
-  if (_handler) return _handler;
-  
-  try {
-    const app = express();
-
-    // Dynamic imports to catch module-level crashes
-    const { createExpressMiddleware } = await import("@trpc/server/adapters/express");
-    const { registerOAuthRoutes } = await import("../../server/_core/oauth");
-    const { registerStripeRoutes } = await import("../../server/stripe");
-    const { registerPayPalRoutes } = await import("../../server/paypal");
-    const { registerSquareRoutes } = await import("../../server/square");
-    const { registerBillingRoutes } = await import("../../server/billing");
-    const { appRouter } = await import("../../server/routers");
-    const { createContext } = await import("../../server/_core/context");
-
-    // Raw-body routes MUST be registered before express.json()
-    registerStripeRoutes(app);
-    registerBillingRoutes(app);
-    registerPayPalRoutes(app);
-    registerSquareRoutes(app);
-
-    app.use(express.json({ limit: "50mb" }));
-    app.use(express.urlencoded({ limit: "50mb", extended: true }));
-    registerOAuthRoutes(app);
-
-    app.use(
-      "/api/trpc",
-      createExpressMiddleware({ router: appRouter, createContext })
-    );
-
-    app.get("/api/health", (_req, res) => {
-      res.json({ status: "ok", version: "1.9.1", env: process.env.NODE_ENV });
-    });
-
-    _handler = serverless(app);
-    return _handler;
-  } catch (err: any) {
-    console.error("[server] App build failed:", err?.message ?? err);
-    throw err;
-  }
+async function getRouter() {
+  if (_routerModule) return _routerModule;
+  const [{ appRouter }, { createFetchContext }] = await Promise.all([
+    import("../../server/routers"),
+    import("../../server/_core/fetchContext"),
+  ]);
+  _routerModule = { appRouter, createFetchContext };
+  return _routerModule;
 }
 
-export const handler = async (event: any, context: any) => {
-  try {
-    const h = await buildApp();
-    return h(event, context);
-  } catch (err: any) {
-    console.error("[server] Handler error:", err?.message ?? err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Server initialization failed", message: err?.message }),
-      headers: { "Content-Type": "application/json" },
-    };
+async function getNonTrpcHandler() {
+  if (_nonTrpcHandler) return _nonTrpcHandler;
+  const { buildNonTrpcHandler } = await import("../../server/_core/nonTrpcRoutes");
+  _nonTrpcHandler = await buildNonTrpcHandler();
+  return _nonTrpcHandler;
+}
+
+// ── Main handler ─────────────────────────────────────────────────────────────
+
+export default async (req: Request): Promise<Response> => {
+  const url = new URL(req.url);
+
+  // Health check — no auth required
+  if (url.pathname === "/api/health" || url.pathname.endsWith("/api/health")) {
+    return Response.json({
+      status: "ok",
+      version: "2.0.0",
+      jwt_secret_set: !!(process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET),
+      database_url_set: !!process.env.DATABASE_URL,
+      stripe_key_set: !!process.env.STRIPE_SECRET_KEY,
+      ts: new Date().toISOString(),
+    });
   }
+
+  // CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, stripe-signature",
+      },
+    });
+  }
+
+  try {
+    // Non-tRPC routes first (webhooks need raw body before any JSON parsing)
+    const nonTrpc = await getNonTrpcHandler();
+    const nonTrpcResponse = await nonTrpc(req.clone());
+    if (nonTrpcResponse) return nonTrpcResponse;
+
+    // tRPC — handles /api/trpc/*
+    const { appRouter, createFetchContext } = await getRouter();
+    return fetchRequestHandler({
+      endpoint: "/api/trpc",
+      req,
+      router: appRouter,
+      createContext: createFetchContext,
+      onError: ({ error, path }) => {
+        console.error(`[tRPC] ${path ?? "unknown"}: ${error.message}`);
+      },
+    });
+  } catch (err: any) {
+    console.error("[server] Unhandled error:", err?.message ?? err);
+    return Response.json(
+      { error: "Internal server error", message: err?.message ?? "Unknown error" },
+      { status: 500 }
+    );
+  }
+};
+
+export const config = {
+  path: "/api/*",
 };
