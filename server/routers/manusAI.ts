@@ -138,16 +138,33 @@ export const manusAIRouter = router({
         // Build system prompt with optional data context + live MCP data
         const baseSystemPrompt = CONTEXT_PROMPTS[input.context] ?? CONTEXT_PROMPTS.general;
 
-        // Optionally enrich with live MCP analytics if in a data context
+        // Enrich with real shift data from getKaiContext for gig-related pages.
+        // This is what makes Kai answer in actual dollars instead of generalities.
         let mcpContext = "";
-        if (["dashboard", "money-manager", "gig-command"].includes(input.context)) {
+        if (["money-manager", "gig-command", "dashboard"].includes(input.context)) {
           try {
-            const analytics = await mcpClient.getAnalytics(
-              ctx.user.tenantId ? String(ctx.user.tenantId) : undefined
-            );
-            mcpContext = `\n\nLive platform data from UnifyAI MCP:\n${JSON.stringify(analytics, null, 2)}`;
+            const { moneyManagerRouter } = await import("./moneyManager");
+            // Call getKaiContext as a server-side function directly (no HTTP roundtrip)
+            const kaiCtx = await moneyManagerRouter._def.procedures.getKaiContext._def.query({
+              ctx: ctx as any,
+              input: { context: input.context as "gig-command" | "money-manager" | "dashboard" },
+              rawInput: { context: input.context },
+              path: "moneyManager.getKaiContext",
+              type: "query",
+            }).catch(() => null);
+            if (kaiCtx?.hasSufficientData) {
+              mcpContext = `\n\nUser's actual gig performance data (use these exact numbers in your response):\n${kaiCtx.contextJson}`;
+            }
           } catch {
-            // Non-blocking — Kai still works without live MCP data
+            // Non-blocking — Kai still works without live shift data
+            try {
+              const analytics = await mcpClient.getAnalytics(
+                ctx.user.tenantId ? String(ctx.user.tenantId) : undefined
+              );
+              if (analytics) {
+                mcpContext = `\n\nPlatform analytics:\n${JSON.stringify(analytics, null, 2)}`;
+              }
+            } catch { /* silently skip */ }
           }
         }
 
