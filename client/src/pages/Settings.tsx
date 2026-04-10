@@ -15,6 +15,7 @@ import {
   Loader2, Shield, Zap, Crown, ArrowUpRight, Settings2, FlaskConical,
   Bell, Send, AlertTriangle, Info, AlertCircle, CheckCircle2
 } from "lucide-react";
+import MCPStatusWidget from "@/components/MCPStatusWidget";
 
 const PLAN_ICONS: Record<string, React.ReactNode> = {
   starter: <Zap className="w-4 h-4 text-blue-400" />,
@@ -324,6 +325,9 @@ export default function Settings() {
 
       {/* Owner Alert Composer (admin only) */}
       {user?.role === "admin" && <OwnerAlertComposer />}
+
+      {/* MCP Server */}
+      <MCPStatusWidget variant="settings" />
 
       {/* Demo Data */}
       <DemoDataCard />
