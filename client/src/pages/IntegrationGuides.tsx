@@ -6,7 +6,7 @@ import { SITE_URL } from "@/lib/siteConfig";
 const SECTIONS = [
   { id: "overview", label: "Overview" },
   { id: "setup", label: "API Setup" },
-  { id: "mcp", label: "MCP Server" },
+  { id: "mcp", label: "MCP Server (Live)" },
   { id: "webhook", label: "Webhooks" },
   { id: "tasks", label: "Task Patterns" },
   { id: "n8n", label: "n8n Bridge" },
@@ -14,24 +14,27 @@ const SECTIONS = [
 ];
 
 const CODE_BLOCKS = {
-  envSetup: `# .env (UnifyOne / Cloud Run)
-MANUS_API_KEY=your_manus_api_key_here
-MANUS_WEBHOOK_SECRET=your_webhook_secret_here
-MANUS_BASE_URL=https://open.manus.ai/v1`,
+  envSetup: `# .env (UnifyOne / Netlify)
+MCP_WORKER_URL=https://unify0ne-mcp.skdev-371.workers.dev
+ONECOMMERCE_API_KEY=your_api_key_here
 
-  mcpConfig: `// ~/.claude/manus-mcp.json
+# UnifyAI Router (api.1commerce.online)
+UNIFYAI_ENDPOINT=https://api.1commerce.online/v1
+UNIFYAI_API_KEY=your_unifyone_api_key`,
+
+  mcpConfig: `// Claude Desktop config (claude_desktop_config.json)
+// Or paste into Settings > Developer > MCP Servers in claude.ai
 {
   "mcpServers": {
-    "manus-mcp": {
-      "command": "npx",
-      "args": ["manus-mcp"],
-      "env": {
-        "MANUS_MCP_API_KEY": "\${MANUS_API_KEY}"
-      },
-      "autoStart": true
+    "unify0ne": {
+      "url": "https://unify0ne-mcp.skdev-371.workers.dev/mcp"
     }
   }
-}`,
+}
+
+// Alternative: use npx mcp-remote for SSE transport
+// npx @modelcontextprotocol/inspector \\
+//   https://unify0ne-mcp.skdev-371.workers.dev/mcp`,
 
   createTask: `// server/manus.ts
 const MANUS_BASE = process.env.MANUS_BASE_URL;
