@@ -32,6 +32,7 @@ import { documentChatRouter } from "./routers/documentChat";
 import { governanceRouter } from "./routers/governance";
 import { claudeGovernanceRouter } from "./routers/claudeGovernance";
 import { contactRouter } from "./routers/contact";
+import { mcpRouter } from "./routers/mcp";
 
 export const appRouter = router({
   system: systemRouter,
@@ -70,6 +71,7 @@ export const appRouter = router({
   socialFriends: socialFriendsRouter,
   mobileAutomation: mobileAutomationRouter,
   manusAI: manusAIRouter,
+  mcp: mcpRouter,
   email: emailRouter,
   documentChat: documentChatRouter,
   governance: governanceRouter,
