@@ -21,6 +21,14 @@ import {
   KeyRound,
 } from "lucide-react";
 
+function getReturnTo(): string {
+  if (typeof window === "undefined") return "/dashboard";
+  const params = new URLSearchParams(window.location.search);
+  const returnTo = params.get("returnTo");
+  if (returnTo && returnTo.startsWith("/")) return returnTo;
+  return "/dashboard";
+}
+
 const FEATURES = [
   {
     icon: ShoppingBag,
