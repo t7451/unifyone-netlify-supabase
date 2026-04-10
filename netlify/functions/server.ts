@@ -39,11 +39,12 @@ export default async (req: Request): Promise<Response> => {
 
   // Health check — no auth required
   if (url.pathname === "/api/health" || url.pathname.endsWith("/api/health")) {
+    const jwtSecret = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET || "";
     return Response.json({
       status: "ok",
-      version: "2.0.0",
-      jwt_secret_set: !!(process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET),
-      database_url_set: !!process.env.DATABASE_URL,
+      version: "2.1.0",
+      jwt_secret_set: jwtSecret.length > 0,
+      database_url_set: !!(process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL),
       stripe_key_set: !!process.env.STRIPE_SECRET_KEY,
       ts: new Date().toISOString(),
     });
