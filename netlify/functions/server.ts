@@ -6,49 +6,62 @@
 import "dotenv/config";
 import express from "express";
 import serverless from "serverless-http";
-import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "../../server/_core/oauth";
-import { registerStripeRoutes } from "../../server/stripe";
-import { registerPayPalRoutes } from "../../server/paypal";
-import { registerSquareRoutes } from "../../server/square";
-import { registerBillingRoutes } from "../../server/billing";
-import { appRouter } from "../../server/routers";
-import { createContext } from "../../server/_core/context";
 
-const app = express();
+let _handler: ReturnType<typeof serverless> | null = null;
 
-// Raw-body routes MUST be registered before express.json()
-// Stripe subscription webhook
-registerStripeRoutes(app);
+async function buildApp() {
+  if (_handler) return _handler;
+  
+  try {
+    const app = express();
 
-// Credit top-up billing webhook + APIs (Supabase Cathy-backed)
-registerBillingRoutes(app);
+    // Dynamic imports to catch module-level crashes
+    const { createExpressMiddleware } = await import("@trpc/server/adapters/express");
+    const { registerOAuthRoutes } = await import("../../server/_core/oauth");
+    const { registerStripeRoutes } = await import("../../server/stripe");
+    const { registerPayPalRoutes } = await import("../../server/paypal");
+    const { registerSquareRoutes } = await import("../../server/square");
+    const { registerBillingRoutes } = await import("../../server/billing");
+    const { appRouter } = await import("../../server/routers");
+    const { createContext } = await import("../../server/_core/context");
 
-// PayPal REST routes
-registerPayPalRoutes(app);
+    // Raw-body routes MUST be registered before express.json()
+    registerStripeRoutes(app);
+    registerBillingRoutes(app);
+    registerPayPalRoutes(app);
+    registerSquareRoutes(app);
 
-// Square payment routes (webhook needs raw body — register before json middleware)
-registerSquareRoutes(app);
+    app.use(express.json({ limit: "50mb" }));
+    app.use(express.urlencoded({ limit: "50mb", extended: true }));
+    registerOAuthRoutes(app);
 
-// Body parsers
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+    app.use(
+      "/api/trpc",
+      createExpressMiddleware({ router: appRouter, createContext })
+    );
 
-// OAuth callback
-registerOAuthRoutes(app);
+    app.get("/api/health", (_req, res) => {
+      res.json({ status: "ok", version: "1.9.1", env: process.env.NODE_ENV });
+    });
 
-// tRPC API
-app.use(
-  "/api/trpc",
-  createExpressMiddleware({
-    router: appRouter,
-    createContext,
-  })
-);
+    _handler = serverless(app);
+    return _handler;
+  } catch (err: any) {
+    console.error("[server] App build failed:", err?.message ?? err);
+    throw err;
+  }
+}
 
-// Health check
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", version: "1.9.1", env: process.env.NODE_ENV });
-});
-
-export const handler = serverless(app);
+export const handler = async (event: any, context: any) => {
+  try {
+    const h = await buildApp();
+    return h(event, context);
+  } catch (err: any) {
+    console.error("[server] Handler error:", err?.message ?? err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Server initialization failed", message: err?.message }),
+      headers: { "Content-Type": "application/json" },
+    };
+  }
+};
