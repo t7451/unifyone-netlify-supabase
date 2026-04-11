@@ -16,8 +16,10 @@ export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
-  email: varchar("email", { length: 320 }),
+  email: varchar("email", { length: 320 }).unique(),
+  passwordHash: varchar("passwordHash", { length: 255 }), // bcrypt/scrypt hash
   loginMethod: varchar("loginMethod", { length: 64 }),
+  emailVerified: boolean("emailVerified").default(false),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   tenantId: int("tenantId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

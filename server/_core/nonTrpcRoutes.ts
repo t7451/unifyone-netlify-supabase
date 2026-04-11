@@ -16,12 +16,14 @@ export async function buildNonTrpcHandler(): Promise<
     { registerPayPalFetchRoutes },
     { registerSquareFetchRoutes },
     { registerOAuthFetchRoutes },
+    { registerCustomAuthFetchRoutes },
   ] = await Promise.all([
     import("../stripe").catch(() => ({ registerStripeFetchRoutes: null })),
     import("../billing").catch(() => ({ registerBillingFetchRoutes: null })),
     import("../paypal").catch(() => ({ registerPayPalFetchRoutes: null })),
     import("../square").catch(() => ({ registerSquareFetchRoutes: null })),
     import("./oauth").catch(() => ({ registerOAuthFetchRoutes: null })),
+    import("./customAuthRoutes").catch(() => ({ registerCustomAuthFetchRoutes: null })),
   ]);
 
   return async (req: Request): Promise<Response | null> => {
@@ -64,7 +66,18 @@ export async function buildNonTrpcHandler(): Promise<
       }
     }
 
-    // OAuth callback
+    // Custom Auth (signup/signin/logout) — check BEFORE legacy OAuth
+    if (path.startsWith("/api/auth/") && registerCustomAuthFetchRoutes) {
+      try {
+        const result = await (registerCustomAuthFetchRoutes as any)(req);
+        if (result) return result;
+        // Fall through to OAuth if not handled
+      } catch (e: any) {
+        return Response.json({ error: e.message }, { status: 500 });
+      }
+    }
+
+    // OAuth callback (legacy Supabase flow)
     if (path.startsWith("/api/auth/") && registerOAuthFetchRoutes) {
       try {
         return await (registerOAuthFetchRoutes as any)(req);

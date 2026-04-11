@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
-import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +17,6 @@ import {
   CreditCard,
   Users,
   Mail,
-  KeyRound,
 } from "lucide-react";
 
 function getReturnTo(): string {
@@ -79,23 +77,7 @@ type AuthMode =
   | "password"
   | "sign-in"
   | "sign-up"
-  | "magic-link"
   | "forgot-password";
-
-async function exchangeSupabaseSession(): Promise<boolean> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session?.access_token) return false;
-
-  const res = await fetch("/api/auth/supabase-session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ access_token: session.access_token }),
-  });
-  return res.ok;
-}
 
 type LoginIntent = "signin" | "signup";
 
@@ -145,30 +127,22 @@ export default function Login({
     setError(null);
 
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const res = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
       });
 
-      if (authError) {
-        if (authError.message.includes("Invalid login credentials")) {
-          setError("Invalid email or password.");
-        } else if (authError.message.includes("Email not confirmed")) {
-          setError(
-            "Please confirm your email address first. Check your inbox for the confirmation link."
-          );
-        } else {
-          setError(authError.message);
-        }
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setError(data.error || "Invalid email or password.");
         return;
       }
 
-      const exchanged = await exchangeSupabaseSession();
-      if (exchanged) {
-        navigate(returnTo);
-      } else {
-        setError("Failed to create session. Please try again.");
-      }
+      // Session cookie set by server — redirect
+      navigate(returnTo);
     } catch {
       setError("An unexpected error occurred. Please try again.");
     } finally {
@@ -181,8 +155,8 @@ export default function Login({
       setError("Please enter your email and password.");
       return;
     }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
       return;
     }
 
@@ -190,75 +164,22 @@ export default function Login({
     setError(null);
 
     try {
-      const { data, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`,
-        },
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
       });
 
-      if (authError) {
-        if (authError.message.includes("already registered")) {
-          setError("This email is already registered. Try signing in instead.");
-        } else {
-          setError(authError.message);
-        }
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setError(data.error || "Failed to create account.");
         return;
       }
 
-      // If session is returned immediately (no email confirmation required)
-      if (data.session) {
-        const exchanged = await exchangeSupabaseSession();
-        if (exchanged) {
-          navigate(returnTo);
-          return;
-        }
-      }
-
-      // Email confirmation required
-      setSuccessMessage(
-        "Check your email for a confirmation link to complete your account setup."
-      );
-    } catch {
-      setError("An unexpected error occurred. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleMagicLink = async () => {
-    if (!email) {
-      setError("Please enter your email address.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const { error: authError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`,
-          shouldCreateUser: true,
-        },
-      });
-
-      if (authError) {
-        if (authError.message.includes("rate limit")) {
-          setError(
-            "Too many requests. Please wait a few minutes before trying again."
-          );
-        } else {
-          setError(authError.message);
-        }
-        return;
-      }
-
-      setSuccessMessage(
-        `We sent a sign-in link to ${email}. Click the link in the email to sign in.`
-      );
+      // Session cookie set by server — redirect directly
+      navigate(returnTo);
     } catch {
       setError("An unexpected error occurred. Please try again.");
     } finally {
@@ -275,37 +196,22 @@ export default function Login({
     setIsSubmitting(true);
     setError(null);
 
-    try {
-      const { error: authError } = await supabase.auth.resetPasswordForEmail(
-        email,
-        {
-          redirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`,
-        }
-      );
-
-      if (authError) {
-        setError(authError.message);
-        return;
-      }
-
-      setSuccessMessage(
-        "If an account exists for that email, we sent a password reset link. Check your inbox."
-      );
-    } catch {
-      setError("An unexpected error occurred. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    // TODO: Implement password reset email flow
+    // For now, show a message to contact support
+    setSuccessMessage(
+      "Password reset is not yet available. Please contact support@1commerce.online for assistance."
+    );
+    setIsSubmitting(false);
   };
 
   const handleSubmit = () => {
     switch (mode) {
+      case "password":
+        return intent === "signup" ? handleSignUp() : handleSignIn();
       case "sign-in":
         return handleSignIn();
       case "sign-up":
         return handleSignUp();
-      case "magic-link":
-        return handleMagicLink();
       case "forgot-password":
         return handleForgotPassword();
     }
@@ -444,36 +350,6 @@ export default function Login({
             </p>
           </div>
 
-          {/* Mode tabs (only for sign-in modes) */}
-          {(mode === "sign-in" || mode === "magic-link") && (
-            <div className="flex gap-1 p-1 rounded-lg bg-white/5 border border-white/10">
-              <button
-                onClick={() => switchMode("sign-in")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
-                  mode === "sign-in"
-                    ? "bg-white/10 text-white"
-                    : "text-slate-500 hover:text-slate-300"
-                )}
-              >
-                <KeyRound className="w-3.5 h-3.5" />
-                Password
-              </button>
-              <button
-                onClick={() => switchMode("magic-link")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
-                  mode === "magic-link"
-                    ? "bg-white/10 text-white"
-                    : "text-slate-500 hover:text-slate-300"
-                )}
-              >
-                <Mail className="w-3.5 h-3.5" />
-                Magic Link
-              </button>
-            </div>
-          )}
-
           {/* Error display */}
           {error && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
@@ -516,8 +392,8 @@ export default function Login({
                 <Input
                   type="password"
                   placeholder={
-                    mode === "sign-up"
-                      ? "At least 6 characters"
+                    intent === "signup"
+                      ? "At least 8 characters"
                       : "Enter your password"
                   }
                   value={password}
@@ -535,13 +411,7 @@ export default function Login({
             )}
 
             <Button
-              onClick={
-                mode === "password"
-                  ? intent === "signup"
-                    ? handleSignUp
-                    : handleSignIn
-                  : handleMagicLink
-              }
+              onClick={intent === "signup" ? handleSignUp : handleSignIn}
               disabled={isSubmitting}
               className={cn(
                 "w-full h-11 font-semibold text-sm transition-all",
@@ -553,19 +423,11 @@ export default function Login({
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  {mode === "password"
-                    ? intent === "signup"
-                      ? "Creating account..."
-                      : "Signing in..."
-                    : "Sending magic link..."}
+                  {intent === "signup" ? "Creating account..." : "Signing in..."}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  {mode === "password"
-                    ? intent === "signup"
-                      ? "Create account"
-                      : "Sign in"
-                    : "Send magic link"}
+                  {intent === "signup" ? "Create account" : "Sign in"}
                   <ArrowRight className="w-4 h-4" />
                 </span>
               )}
@@ -613,8 +475,8 @@ export default function Login({
           <div className="flex items-start gap-2 p-3 rounded-lg bg-white/3 border border-white/5">
             <Shield className="w-4 h-4 text-[#00D9FF] mt-0.5 flex-shrink-0" />
             <p className="text-xs text-slate-500 leading-relaxed">
-              Your sign-in is protected by Supabase Auth with PKCE flow.
-              UnifyOne never stores your password directly.
+              Your password is securely hashed with scrypt. UnifyOne never
+              stores your password in plain text.
             </p>
           </div>
         </div>
