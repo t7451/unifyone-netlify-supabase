@@ -27,7 +27,8 @@ async function getRouter() {
 
 async function getNonTrpcHandler() {
   if (_nonTrpcHandler) return _nonTrpcHandler;
-  const { buildNonTrpcHandler } = await import("../../server/_core/nonTrpcRoutes");
+  const { buildNonTrpcHandler } =
+    await import("../../server/_core/nonTrpcRoutes");
   _nonTrpcHandler = await buildNonTrpcHandler();
   return _nonTrpcHandler;
 }
@@ -39,12 +40,15 @@ export default async (req: Request): Promise<Response> => {
 
   // Health check — no auth required
   if (url.pathname === "/api/health" || url.pathname.endsWith("/api/health")) {
-    const jwtSecret = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET || "";
+    const jwtSecret =
+      process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET || "";
     return Response.json({
       status: "ok",
-      version: "2.1.0",
+      version: "2.2.0",
       jwt_secret_set: jwtSecret.length > 0,
-      database_url_set: !!(process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL),
+      database_url_set: !!(
+        process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL
+      ),
       stripe_key_set: !!process.env.STRIPE_SECRET_KEY,
       ts: new Date().toISOString(),
     });
@@ -57,7 +61,8 @@ export default async (req: Request): Promise<Response> => {
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization, stripe-signature",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, stripe-signature",
       },
     });
   }
@@ -82,7 +87,10 @@ export default async (req: Request): Promise<Response> => {
   } catch (err: any) {
     console.error("[server] Unhandled error:", err?.message ?? err);
     return Response.json(
-      { error: "Internal server error", message: err?.message ?? "Unknown error" },
+      {
+        error: "Internal server error",
+        message: err?.message ?? "Unknown error",
+      },
       { status: 500 }
     );
   }
