@@ -21,6 +21,7 @@
     "@aws-sdk/s3-request-presigner": "^3.693.0",
     "@hookform/resolvers": "^5.2.2",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@neondatabase/serverless": "^1.0.2",
     "@paypal/paypal-server-sdk": "^2.2.0",
     "@plausible-analytics/tracker": "^0.4.4",
     "@radix-ui/react-accordion": "^1.2.12",

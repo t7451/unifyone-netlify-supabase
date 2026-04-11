@@ -52,15 +52,17 @@ export async function verifyPassword(
   return timingSafeEqual(derivedKey, storedKey);
 }
 
-// ── Database Connection (use existing MySQL connection) ─────────────────────
+// ── Database Connection (use Neon PostgreSQL) ───────────────────────────────
 
 let _db: any = null;
 
 async function getDb() {
-  if (!_db && process.env.DATABASE_URL?.startsWith("mysql")) {
+  if (!_db && process.env.DATABASE_URL) {
     try {
-      const { drizzle } = await import("drizzle-orm/mysql2");
-      _db = drizzle(process.env.DATABASE_URL);
+      const { neon } = await import("@neondatabase/serverless");
+      const { drizzle } = await import("drizzle-orm/neon-http");
+      const sql = neon(process.env.DATABASE_URL);
+      _db = drizzle(sql);
     } catch (error) {
       console.warn("[customAuth] Database connection failed:", error);
       return null;
