@@ -75,7 +75,12 @@ function LogoMark({ size = 40 }: { size?: number }) {
   );
 }
 
-type AuthMode = "sign-in" | "sign-up" | "magic-link" | "forgot-password";
+type AuthMode =
+  | "password"
+  | "sign-in"
+  | "sign-up"
+  | "magic-link"
+  | "forgot-password";
 
 async function exchangeSupabaseSession(): Promise<boolean> {
   const {
@@ -353,21 +358,8 @@ export default function Login({
     );
   }
 
-  const submitLabel = {
-    "sign-in": "Sign in",
-    "sign-up": "Create account",
-    "magic-link": "Send magic link",
-    "forgot-password": "Send reset link",
-  }[mode];
-
-  const submitLoadingLabel = {
-    "sign-in": "Signing in...",
-    "sign-up": "Creating account...",
-    "magic-link": "Sending magic link...",
-    "forgot-password": "Sending reset link...",
-  }[mode];
-
-  const showPasswordField = mode === "sign-in" || mode === "sign-up";
+  const showPasswordField =
+    mode === "password" || mode === "sign-in" || mode === "sign-up";
 
   return (
     <div className="min-h-screen bg-[#060D1F] flex">
@@ -546,8 +538,8 @@ export default function Login({
               onClick={
                 mode === "password"
                   ? intent === "signup"
-                    ? handlePasswordSignUp
-                    : handlePasswordSignIn
+                    ? handleSignUp
+                    : handleSignIn
                   : handleMagicLink
               }
               disabled={isSubmitting}
