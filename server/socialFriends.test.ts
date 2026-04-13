@@ -17,8 +17,17 @@ const mockDb = {
 // Helper to chain drizzle-style calls
 function chainable(returnValue: unknown = []) {
   const obj: Record<string, unknown> = {};
-  const methods = ["from", "where", "limit", "orderBy", "innerJoin", "values", "$returningId", "set"];
-  methods.forEach((m) => {
+  const methods = [
+    "from",
+    "where",
+    "limit",
+    "orderBy",
+    "innerJoin",
+    "values",
+    "returning",
+    "set",
+  ];
+  methods.forEach(m => {
     obj[m] = vi.fn(() => obj);
   });
   // Terminal calls
@@ -34,7 +43,7 @@ function chainable(returnValue: unknown = []) {
   // Override the last method to return a resolved value
   obj["limit"] = vi.fn(() => Promise.resolve(returnValue));
   obj["orderBy"] = vi.fn(() => Promise.resolve(returnValue));
-  obj["$returningId"] = vi.fn(() => Promise.resolve([{ id: 99 }]));
+  obj["returning"] = vi.fn(() => Promise.resolve([{ id: 99 }]));
   return obj;
 }
 
@@ -61,7 +70,9 @@ describe("socialFriends router logic", () => {
   describe("friendship status mapping", () => {
     it("maps accepted status correctly", () => {
       const status = "accepted";
-      expect(["pending", "accepted", "declined", "blocked"].includes(status)).toBe(true);
+      expect(
+        ["pending", "accepted", "declined", "blocked"].includes(status)
+      ).toBe(true);
     });
 
     it("maps pending status correctly", () => {
@@ -117,13 +128,15 @@ describe("socialFriends router logic", () => {
 
     it("generates correct accept notification title", () => {
       const action = "accept";
-      const title = action === "accept" ? "Challenge Accepted!" : "Challenge Declined";
+      const title =
+        action === "accept" ? "Challenge Accepted!" : "Challenge Declined";
       expect(title).toBe("Challenge Accepted!");
     });
 
     it("generates correct decline notification title", () => {
       const action = "decline";
-      const title = action === "accept" ? "Challenge Accepted!" : "Challenge Declined";
+      const title =
+        action === "accept" ? "Challenge Accepted!" : "Challenge Declined";
       expect(title).toBe("Challenge Declined");
     });
   });
@@ -131,11 +144,13 @@ describe("socialFriends router logic", () => {
   describe("feed sorting", () => {
     it("sorts feed items by most recent first", () => {
       const feed = [
-        { unlockedAt: new Date(2025, 0, 1), userId: 1, achievementId: 1 },  // Jan
-        { unlockedAt: new Date(2025, 2, 1), userId: 2, achievementId: 2 },  // Mar
-        { unlockedAt: new Date(2025, 1, 1), userId: 3, achievementId: 3 },  // Feb
+        { unlockedAt: new Date(2025, 0, 1), userId: 1, achievementId: 1 }, // Jan
+        { unlockedAt: new Date(2025, 2, 1), userId: 2, achievementId: 2 }, // Mar
+        { unlockedAt: new Date(2025, 1, 1), userId: 3, achievementId: 3 }, // Feb
       ];
-      const sorted = [...feed].sort((a, b) => b.unlockedAt.getTime() - a.unlockedAt.getTime());
+      const sorted = [...feed].sort(
+        (a, b) => b.unlockedAt.getTime() - a.unlockedAt.getTime()
+      );
       expect(sorted[0].unlockedAt.getFullYear()).toBe(2025);
       expect(sorted[0].unlockedAt.getMonth()).toBe(2); // March = index 2
       // Verify descending order
@@ -182,14 +197,16 @@ describe("socialFriends router logic", () => {
     it("returns addresseeId when current user is requester", () => {
       const currentUserId = 1;
       const f = { requesterId: 1, addresseeId: 2 };
-      const friendId = f.requesterId === currentUserId ? f.addresseeId : f.requesterId;
+      const friendId =
+        f.requesterId === currentUserId ? f.addresseeId : f.requesterId;
       expect(friendId).toBe(2);
     });
 
     it("returns requesterId when current user is addressee", () => {
       const currentUserId = 2;
       const f = { requesterId: 1, addresseeId: 2 };
-      const friendId = f.requesterId === currentUserId ? f.addresseeId : f.requesterId;
+      const friendId =
+        f.requesterId === currentUserId ? f.addresseeId : f.requesterId;
       expect(friendId).toBe(1);
     });
   });

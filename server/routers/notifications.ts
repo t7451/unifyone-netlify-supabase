@@ -14,7 +14,10 @@ import { eq, and, desc, isNull, or, gte, lte, sql } from "drizzle-orm";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const adminGuard = (role: string) => {
   if (role !== "admin") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Admin access required",
+    });
   }
 };
 
@@ -25,7 +28,9 @@ export const notificationsRouter = router({
 
   /** List notifications for current user (most recent first, limit 50) */
   list: protectedProcedure
-    .input(z.object({ limit: z.number().min(1).max(100).default(50) }).optional())
+    .input(
+      z.object({ limit: z.number().min(1).max(100).default(50) }).optional()
+    )
     .query(async ({ ctx, input }) => {
       const limit = input?.limit ?? 50;
       const db = await getDb();
@@ -45,7 +50,12 @@ export const notificationsRouter = router({
     const [row] = await db
       .select({ count: sql<number>`COUNT(*)` })
       .from(notifications)
-      .where(and(eq(notifications.userId, ctx.user.id), eq(notifications.read, false)));
+      .where(
+        and(
+          eq(notifications.userId, ctx.user.id),
+          eq(notifications.read, false)
+        )
+      );
     return { count: Number(row?.count ?? 0) };
   }),
 
@@ -58,7 +68,12 @@ export const notificationsRouter = router({
       await db
         .update(notifications)
         .set({ read: true, readAt: new Date() })
-        .where(and(eq(notifications.id, input.id), eq(notifications.userId, ctx.user.id)));
+        .where(
+          and(
+            eq(notifications.id, input.id),
+            eq(notifications.userId, ctx.user.id)
+          )
+        );
       return { success: true };
     }),
 
@@ -69,7 +84,12 @@ export const notificationsRouter = router({
     await db
       .update(notifications)
       .set({ read: true, readAt: new Date() })
-      .where(and(eq(notifications.userId, ctx.user.id), eq(notifications.read, false)));
+      .where(
+        and(
+          eq(notifications.userId, ctx.user.id),
+          eq(notifications.read, false)
+        )
+      );
     return { success: true };
   }),
 
@@ -81,7 +101,12 @@ export const notificationsRouter = router({
       if (!db) return { success: false };
       await db
         .delete(notifications)
-        .where(and(eq(notifications.id, input.id), eq(notifications.userId, ctx.user.id)));
+        .where(
+          and(
+            eq(notifications.id, input.id),
+            eq(notifications.userId, ctx.user.id)
+          )
+        );
       return { success: true };
     }),
 
@@ -94,7 +119,17 @@ export const notificationsRouter = router({
       z.object({
         userId: z.number(),
         type: z
-          .enum(["info", "success", "warning", "error", "order", "payment", "team", "social", "lead"])
+          .enum([
+            "info",
+            "success",
+            "warning",
+            "error",
+            "order",
+            "payment",
+            "team",
+            "social",
+            "lead",
+          ])
           .default("info"),
         title: z.string().min(1).max(255),
         body: z.string().optional(),
@@ -104,7 +139,11 @@ export const notificationsRouter = router({
     .mutation(async ({ ctx, input }) => {
       adminGuard(ctx.user.role);
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
       await db.insert(notifications).values({
         userId: input.userId,
         tenantId: ctx.user.tenantId ?? undefined,
@@ -123,7 +162,17 @@ export const notificationsRouter = router({
       z.object({
         tenantId: z.number(),
         type: z
-          .enum(["info", "success", "warning", "error", "order", "payment", "team", "social", "lead"])
+          .enum([
+            "info",
+            "success",
+            "warning",
+            "error",
+            "order",
+            "payment",
+            "team",
+            "social",
+            "lead",
+          ])
           .default("info"),
         title: z.string().min(1).max(255),
         body: z.string().optional(),
@@ -133,14 +182,18 @@ export const notificationsRouter = router({
     .mutation(async ({ ctx, input }) => {
       adminGuard(ctx.user.role);
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
       // Get all users in tenant
       const tenantUsers = await db
         .select({ id: users.id })
         .from(users)
         .where(eq(users.tenantId, input.tenantId));
       if (!tenantUsers || tenantUsers.length === 0) return { sent: 0 };
-      const rows = tenantUsers.map((u) => ({
+      const rows = tenantUsers.map(u => ({
         userId: u.id,
         tenantId: input.tenantId,
         type: input.type,
@@ -166,7 +219,7 @@ export const notificationsRouter = router({
       .select({ announcementId: announcementDismissals.announcementId })
       .from(announcementDismissals)
       .where(eq(announcementDismissals.userId, ctx.user.id));
-    const dismissedIds = new Set(dismissed.map((d) => d.announcementId));
+    const dismissedIds = new Set(dismissed.map(d => d.announcementId));
 
     const rows = await db
       .select()
@@ -180,7 +233,7 @@ export const notificationsRouter = router({
       )
       .orderBy(desc(announcements.createdAt));
 
-    return rows.filter((a) => !dismissedIds.has(a.id));
+    return rows.filter(a => !dismissedIds.has(a.id));
   }),
 
   /** Admin: create announcement */
@@ -190,7 +243,9 @@ export const notificationsRouter = router({
         title: z.string().min(1).max(255),
         body: z.string().min(1),
         type: z.enum(["banner", "toast", "modal"]).default("banner"),
-        severity: z.enum(["info", "success", "warning", "error"]).default("info"),
+        severity: z
+          .enum(["info", "success", "warning", "error"])
+          .default("info"),
         dismissible: z.boolean().default(true),
         startsAt: z.string().optional(),
         endsAt: z.string().optional(),
@@ -199,19 +254,26 @@ export const notificationsRouter = router({
     .mutation(async ({ ctx, input }) => {
       adminGuard(ctx.user.role);
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-      const [result] = await db.insert(announcements).values({
-        adminId: ctx.user.id,
-        title: input.title,
-        body: input.body,
-        type: input.type,
-        severity: input.severity,
-        dismissible: input.dismissible,
-        startsAt: input.startsAt ? new Date(input.startsAt) : new Date(),
-        endsAt: input.endsAt ? new Date(input.endsAt) : undefined,
-        active: true,
-      });
-      return { id: (result as { insertId: number }).insertId, success: true };
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
+      const [result] = await db
+        .insert(announcements)
+        .values({
+          adminId: ctx.user.id,
+          title: input.title,
+          body: input.body,
+          type: input.type,
+          severity: input.severity,
+          dismissible: input.dismissible,
+          startsAt: input.startsAt ? new Date(input.startsAt) : new Date(),
+          endsAt: input.endsAt ? new Date(input.endsAt) : undefined,
+          active: true,
+        })
+        .returning();
+      return { id: result.id, success: true };
     }),
 
   /** Admin: list all announcements */
@@ -219,7 +281,10 @@ export const notificationsRouter = router({
     adminGuard(ctx.user.role);
     const db = await getDb();
     if (!db) return [];
-    return db.select().from(announcements).orderBy(desc(announcements.createdAt));
+    return db
+      .select()
+      .from(announcements)
+      .orderBy(desc(announcements.createdAt));
   }),
 
   /** Admin: toggle announcement active state */
@@ -270,7 +335,7 @@ export const notificationsRouter = router({
   /** List notification triggers for tenant */
   listTriggers: protectedProcedure
     .input(z.object({ tenantId: z.number() }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return [];
       return db
@@ -296,9 +361,13 @@ export const notificationsRouter = router({
         emailRecipients: z.string().optional(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
       const [existing] = await db
         .select()
         .from(notificationTriggers)
@@ -331,18 +400,23 @@ export const notificationsRouter = router({
           .where(eq(notificationTriggers.id, existing.id));
         return { id: existing.id, success: true };
       } else {
-        const [result] = await db.insert(notificationTriggers).values(values);
-        return { id: (result as { insertId: number }).insertId, success: true };
+        const [result] = await db
+          .insert(notificationTriggers)
+          .values(values)
+          .returning();
+        return { id: result.id, success: true };
       }
     }),
 
   /** Delete a notification trigger */
   deleteTrigger: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) return { success: false };
-      await db.delete(notificationTriggers).where(eq(notificationTriggers.id, input.id));
+      await db
+        .delete(notificationTriggers)
+        .where(eq(notificationTriggers.id, input.id));
       return { success: true };
     }),
 });

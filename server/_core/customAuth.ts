@@ -24,11 +24,7 @@ const KEY_LENGTH = 64;
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(SALT_LENGTH);
-  const derivedKey = (await scryptAsync(
-    password,
-    salt,
-    KEY_LENGTH
-  )) as Buffer;
+  const derivedKey = (await scryptAsync(password, salt, KEY_LENGTH)) as Buffer;
   // Format: salt$derivedKey (both hex-encoded)
   return `${salt.toString("hex")}$${derivedKey.toString("hex")}`;
 }
@@ -43,11 +39,7 @@ export async function verifyPassword(
   const salt = Buffer.from(saltHex, "hex");
   const storedKey = Buffer.from(keyHex, "hex");
 
-  const derivedKey = (await scryptAsync(
-    password,
-    salt,
-    KEY_LENGTH
-  )) as Buffer;
+  const derivedKey = (await scryptAsync(password, salt, KEY_LENGTH)) as Buffer;
 
   return timingSafeEqual(derivedKey, storedKey);
 }
@@ -125,7 +117,10 @@ export async function signUp(
       .limit(1);
 
     if (existing.length > 0) {
-      return { success: false, error: "An account with this email already exists" };
+      return {
+        success: false,
+        error: "An account with this email already exists",
+      };
     }
 
     // Hash password and create user
@@ -157,7 +152,10 @@ export async function signUp(
     };
   } catch (err: any) {
     console.error("[customAuth] signUp error:", err);
-    return { success: false, error: "Failed to create account. Please try again." };
+    return {
+      success: false,
+      error: "Failed to create account. Please try again.",
+    };
   }
 }
 
@@ -196,7 +194,8 @@ export async function signIn(
     if (!user.passwordHash) {
       return {
         success: false,
-        error: "This account uses a different sign-in method (magic link or social)",
+        error:
+          "This account uses a different sign-in method (magic link or social)",
       };
     }
 
@@ -327,7 +326,8 @@ export async function verifyClerkSession(
         emailVerified: true,
         role: "user",
       })
-      .onDuplicateKeyUpdate({
+      .onConflictDoUpdate({
+        target: users.openId,
         set: { lastSignedIn: new Date(), loginMethod: "clerk" },
       });
 
@@ -355,7 +355,7 @@ export async function verifyFirebaseIdToken(
 ): Promise<AuthResult> {
   const firebaseProjectId = process.env.FIREBASE_PROJECT_ID;
   const firebaseApiKey = process.env.FIREBASE_API_KEY;
-  
+
   if (!firebaseProjectId || !firebaseApiKey) {
     return { success: false, error: "Firebase is not configured" };
   }
@@ -382,7 +382,8 @@ export async function verifyFirebaseIdToken(
       return { success: false, error: "Firebase user not found" };
     }
 
-    const email = firebaseUser.email || `${firebaseUser.localId}@firebase.local`;
+    const email =
+      firebaseUser.email || `${firebaseUser.localId}@firebase.local`;
     const name = firebaseUser.displayName || email.split("@")[0];
     const openId = `firebase_${firebaseUser.localId}`;
 
@@ -402,7 +403,8 @@ export async function verifyFirebaseIdToken(
         emailVerified: firebaseUser.emailVerified ?? false,
         role: "user",
       })
-      .onDuplicateKeyUpdate({
+      .onConflictDoUpdate({
+        target: users.openId,
         set: { lastSignedIn: new Date(), loginMethod: "firebase" },
       });
 

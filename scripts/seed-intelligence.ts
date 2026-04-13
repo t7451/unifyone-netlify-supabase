@@ -13,7 +13,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import mysql from "mysql2/promise";
+import { neon } from "@neondatabase/serverless";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -24,21 +24,30 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-const url = new URL(DATABASE_URL);
-const dbConfig = {
-  host: url.hostname,
-  user: url.username,
-  password: url.password,
-  database: url.pathname.slice(1),
-  port: Number(url.port) || 3306,
-};
+const sql = neon(DATABASE_URL);
 
 /** The 6 master intelligence documents to seed */
 const MASTER_DOCS = [
-  { file: "00_Master_Intelligence.md", id: "master-intelligence", title: "Master Intelligence" },
-  { file: "01_Governance_and_Compliance.md", id: "governance-compliance", title: "Governance and Compliance" },
-  { file: "02_Investor_and_Board.md", id: "investor-board", title: "Investor and Board" },
-  { file: "03_Technical_Architecture.md", id: "technical-architecture", title: "Technical Architecture" },
+  {
+    file: "00_Master_Intelligence.md",
+    id: "master-intelligence",
+    title: "Master Intelligence",
+  },
+  {
+    file: "01_Governance_and_Compliance.md",
+    id: "governance-compliance",
+    title: "Governance and Compliance",
+  },
+  {
+    file: "02_Investor_and_Board.md",
+    id: "investor-board",
+    title: "Investor and Board",
+  },
+  {
+    file: "03_Technical_Architecture.md",
+    id: "technical-architecture",
+    title: "Technical Architecture",
+  },
   { file: "04_Brand_Canon.md", id: "brand-canon", title: "Brand Canon" },
   { file: "05_Chain_Prompt.md", id: "chain-prompt", title: "Chain Prompt" },
 ];
@@ -67,7 +76,10 @@ function chunkText(text: string, targetWords: number): string[] {
 
     // If adding this paragraph would exceed the target by a significant margin,
     // flush the current chunk first (unless it's empty).
-    if (currentWordCount > 0 && currentWordCount + paraWordCount > targetWords * 1.3) {
+    if (
+      currentWordCount > 0 &&
+      currentWordCount + paraWordCount > targetWords * 1.3
+    ) {
       chunks.push(currentChunk.trim());
       currentChunk = "";
       currentWordCount = 0;
@@ -126,18 +138,14 @@ async function main() {
     process.exit(1);
   }
 
-  let connection: mysql.Connection | undefined;
-
   try {
     console.log("Connecting to database...");
-    connection = await mysql.createConnection(dbConfig);
-    console.log("Connected to database");
 
     // Clear existing intelligence embeddings to make script re-runnable
-    const docIds = MASTER_DOCS.map((d) => d.id);
-    const placeholders = docIds.map(() => "?").join(", ");
-    await connection.execute(
-      `DELETE FROM document_embeddings WHERE docId IN (${placeholders})`,
+    const docIds = MASTER_DOCS.map(d => d.id);
+    const placeholders = docIds.map((_, i) => `$${i + 1}`).join(", ");
+    await sql(
+      `DELETE FROM document_embeddings WHERE "docId" IN (${placeholders})`,
       docIds
     );
     console.log("Cleared existing intelligence embeddings");
@@ -161,12 +169,14 @@ async function main() {
         const chunk = chunks[idx];
         const embedding = generatePlaceholderEmbedding(chunk);
 
-        await connection.execute(
-          `INSERT INTO document_embeddings (docId, docTitle, chunk, chunkIndex, embedding, createdAt)
-           VALUES (?, ?, ?, ?, ?, NOW())`,
+        await sql(
+          `INSERT INTO document_embeddings ("docId", "docTitle", chunk, "chunkIndex", embedding, "createdAt")
+           VALUES ($1, $2, $3, $4, $5, NOW())`,
           [doc.id, doc.title, chunk, idx, JSON.stringify(embedding)]
         );
-        console.log(`  Chunk ${idx + 1}/${chunks.length} (${chunk.split(/\s+/).length} words)`);
+        console.log(
+          `  Chunk ${idx + 1}/${chunks.length} (${chunk.split(/\s+/).length} words)`
+        );
       }
 
       totalChunks += chunks.length;
@@ -176,15 +186,15 @@ async function main() {
     console.log(`  Documents processed: ${MASTER_DOCS.length}`);
     console.log(`  Total chunks inserted: ${totalChunks}`);
     console.log(`  Embedding dimensions: ${EMBEDDING_DIM}`);
-    console.log(`  Note: Embeddings are placeholder vectors. Replace with real`);
-    console.log(`        embeddings from an API for production similarity search.`);
+    console.log(
+      `  Note: Embeddings are placeholder vectors. Replace with real`
+    );
+    console.log(
+      `        embeddings from an API for production similarity search.`
+    );
   } catch (error: any) {
     console.error("Error seeding intelligence:", error.message);
     process.exit(1);
-  } finally {
-    if (connection) {
-      await connection.end();
-    }
   }
 }
 
