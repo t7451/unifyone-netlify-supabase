@@ -63,14 +63,20 @@ export const socialFriendsRouter = router({
 
       // For each result, determine friendship status with the current user
       const enriched = await Promise.all(
-        results.map(async (u) => {
+        results.map(async u => {
           const existing = await db
             .select()
             .from(friendships)
             .where(
               or(
-                and(eq(friendships.requesterId, ctx.user.id), eq(friendships.addresseeId, u.id)),
-                and(eq(friendships.requesterId, u.id), eq(friendships.addresseeId, ctx.user.id))
+                and(
+                  eq(friendships.requesterId, ctx.user.id),
+                  eq(friendships.addresseeId, u.id)
+                ),
+                and(
+                  eq(friendships.requesterId, u.id),
+                  eq(friendships.addresseeId, ctx.user.id)
+                )
               )
             )
             .limit(1);
@@ -91,10 +97,17 @@ export const socialFriendsRouter = router({
     .input(z.object({ addresseeId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       if (input.addresseeId === ctx.user.id) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot friend yourself" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot friend yourself",
+        });
       }
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
 
       // Check for existing friendship
       const existing = await db
@@ -102,19 +115,42 @@ export const socialFriendsRouter = router({
         .from(friendships)
         .where(
           or(
-            and(eq(friendships.requesterId, ctx.user.id), eq(friendships.addresseeId, input.addresseeId)),
-            and(eq(friendships.requesterId, input.addresseeId), eq(friendships.addresseeId, ctx.user.id))
+            and(
+              eq(friendships.requesterId, ctx.user.id),
+              eq(friendships.addresseeId, input.addresseeId)
+            ),
+            and(
+              eq(friendships.requesterId, input.addresseeId),
+              eq(friendships.addresseeId, ctx.user.id)
+            )
           )
         )
         .limit(1);
 
       if (existing.length > 0) {
         const f = existing[0];
-        if (f.status === "accepted") throw new TRPCError({ code: "CONFLICT", message: "Already friends" });
-        if (f.status === "pending") throw new TRPCError({ code: "CONFLICT", message: "Request already sent" });
-        if (f.status === "blocked") throw new TRPCError({ code: "FORBIDDEN", message: "Cannot send request" });
+        if (f.status === "accepted")
+          throw new TRPCError({ code: "CONFLICT", message: "Already friends" });
+        if (f.status === "pending")
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Request already sent",
+          });
+        if (f.status === "blocked")
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Cannot send request",
+          });
         // Declined — allow re-request by updating
-        await db.update(friendships).set({ status: "pending", requesterId: ctx.user.id, addresseeId: input.addresseeId, updatedAt: new Date() }).where(eq(friendships.id, f.id));
+        await db
+          .update(friendships)
+          .set({
+            status: "pending",
+            requesterId: ctx.user.id,
+            addresseeId: input.addresseeId,
+            updatedAt: new Date(),
+          })
+          .where(eq(friendships.id, f.id));
         return { success: true };
       }
 
@@ -142,18 +178,38 @@ export const socialFriendsRouter = router({
     .input(z.object({ friendshipId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
 
       const [friendship] = await db
         .select()
         .from(friendships)
-        .where(and(eq(friendships.id, input.friendshipId), eq(friendships.addresseeId, ctx.user.id)))
+        .where(
+          and(
+            eq(friendships.id, input.friendshipId),
+            eq(friendships.addresseeId, ctx.user.id)
+          )
+        )
         .limit(1);
 
-      if (!friendship) throw new TRPCError({ code: "NOT_FOUND", message: "Friend request not found" });
-      if (friendship.status !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "Request is not pending" });
+      if (!friendship)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Friend request not found",
+        });
+      if (friendship.status !== "pending")
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Request is not pending",
+        });
 
-      await db.update(friendships).set({ status: "accepted", updatedAt: new Date() }).where(eq(friendships.id, input.friendshipId));
+      await db
+        .update(friendships)
+        .set({ status: "accepted", updatedAt: new Date() })
+        .where(eq(friendships.id, input.friendshipId));
 
       // Notify the requester
       const acceptorName = ctx.user.name ?? "Someone";
@@ -173,17 +229,33 @@ export const socialFriendsRouter = router({
     .input(z.object({ friendshipId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
 
       const [friendship] = await db
         .select()
         .from(friendships)
-        .where(and(eq(friendships.id, input.friendshipId), eq(friendships.addresseeId, ctx.user.id)))
+        .where(
+          and(
+            eq(friendships.id, input.friendshipId),
+            eq(friendships.addresseeId, ctx.user.id)
+          )
+        )
         .limit(1);
 
-      if (!friendship) throw new TRPCError({ code: "NOT_FOUND", message: "Friend request not found" });
+      if (!friendship)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Friend request not found",
+        });
 
-      await db.update(friendships).set({ status: "declined", updatedAt: new Date() }).where(eq(friendships.id, input.friendshipId));
+      await db
+        .update(friendships)
+        .set({ status: "declined", updatedAt: new Date() })
+        .where(eq(friendships.id, input.friendshipId));
       return { success: true };
     }),
 
@@ -192,7 +264,11 @@ export const socialFriendsRouter = router({
     .input(z.object({ friendshipId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
 
       const [friendship] = await db
         .select()
@@ -200,14 +276,23 @@ export const socialFriendsRouter = router({
         .where(
           and(
             eq(friendships.id, input.friendshipId),
-            or(eq(friendships.requesterId, ctx.user.id), eq(friendships.addresseeId, ctx.user.id))
+            or(
+              eq(friendships.requesterId, ctx.user.id),
+              eq(friendships.addresseeId, ctx.user.id)
+            )
           )
         )
         .limit(1);
 
-      if (!friendship) throw new TRPCError({ code: "NOT_FOUND", message: "Friendship not found" });
+      if (!friendship)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Friendship not found",
+        });
 
-      await db.delete(friendships).where(eq(friendships.id, input.friendshipId));
+      await db
+        .delete(friendships)
+        .where(eq(friendships.id, input.friendshipId));
       return { success: true };
     }),
 
@@ -221,7 +306,10 @@ export const socialFriendsRouter = router({
       .from(friendships)
       .where(
         and(
-          or(eq(friendships.requesterId, ctx.user.id), eq(friendships.addresseeId, ctx.user.id)),
+          or(
+            eq(friendships.requesterId, ctx.user.id),
+            eq(friendships.addresseeId, ctx.user.id)
+          ),
           eq(friendships.status, "accepted")
         )
       )
@@ -229,11 +317,26 @@ export const socialFriendsRouter = router({
 
     // Resolve friend user details
     const friends = await Promise.all(
-      accepted.map(async (f) => {
-        const friendId = f.requesterId === ctx.user.id ? f.addresseeId : f.requesterId;
-        const [friendUser] = await db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(eq(users.id, friendId)).limit(1);
-        const [pts] = await db.select({ totalPoints: userPoints.totalPoints, level: userPoints.level }).from(userPoints).where(eq(userPoints.userId, friendId)).limit(1);
-        const unlockedCount = await db.select({ count: sql<number>`count(*)` }).from(userAchievements).where(eq(userAchievements.userId, friendId));
+      accepted.map(async f => {
+        const friendId =
+          f.requesterId === ctx.user.id ? f.addresseeId : f.requesterId;
+        const [friendUser] = await db
+          .select({ id: users.id, name: users.name, email: users.email })
+          .from(users)
+          .where(eq(users.id, friendId))
+          .limit(1);
+        const [pts] = await db
+          .select({
+            totalPoints: userPoints.totalPoints,
+            level: userPoints.level,
+          })
+          .from(userPoints)
+          .where(eq(userPoints.userId, friendId))
+          .limit(1);
+        const unlockedCount = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(userAchievements)
+          .where(eq(userAchievements.userId, friendId));
         return {
           friendshipId: f.id,
           friendId,
@@ -257,25 +360,55 @@ export const socialFriendsRouter = router({
     const incoming = await db
       .select()
       .from(friendships)
-      .where(and(eq(friendships.addresseeId, ctx.user.id), eq(friendships.status, "pending")))
+      .where(
+        and(
+          eq(friendships.addresseeId, ctx.user.id),
+          eq(friendships.status, "pending")
+        )
+      )
       .orderBy(desc(friendships.createdAt));
 
     const outgoing = await db
       .select()
       .from(friendships)
-      .where(and(eq(friendships.requesterId, ctx.user.id), eq(friendships.status, "pending")))
+      .where(
+        and(
+          eq(friendships.requesterId, ctx.user.id),
+          eq(friendships.status, "pending")
+        )
+      )
       .orderBy(desc(friendships.createdAt));
 
     const enrichIncoming = await Promise.all(
-      incoming.map(async (f) => {
-        const [u] = await db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(eq(users.id, f.requesterId)).limit(1);
-        return { friendshipId: f.id, userId: f.requesterId, name: u?.name ?? "Unknown", email: u?.email ?? "", sentAt: f.createdAt };
+      incoming.map(async f => {
+        const [u] = await db
+          .select({ id: users.id, name: users.name, email: users.email })
+          .from(users)
+          .where(eq(users.id, f.requesterId))
+          .limit(1);
+        return {
+          friendshipId: f.id,
+          userId: f.requesterId,
+          name: u?.name ?? "Unknown",
+          email: u?.email ?? "",
+          sentAt: f.createdAt,
+        };
       })
     );
     const enrichOutgoing = await Promise.all(
-      outgoing.map(async (f) => {
-        const [u] = await db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(eq(users.id, f.addresseeId)).limit(1);
-        return { friendshipId: f.id, userId: f.addresseeId, name: u?.name ?? "Unknown", email: u?.email ?? "", sentAt: f.createdAt };
+      outgoing.map(async f => {
+        const [u] = await db
+          .select({ id: users.id, name: users.name, email: users.email })
+          .from(users)
+          .where(eq(users.id, f.addresseeId))
+          .limit(1);
+        return {
+          friendshipId: f.id,
+          userId: f.addresseeId,
+          name: u?.name ?? "Unknown",
+          email: u?.email ?? "",
+          sentAt: f.createdAt,
+        };
       })
     );
 
@@ -294,14 +427,19 @@ export const socialFriendsRouter = router({
       .from(friendships)
       .where(
         and(
-          or(eq(friendships.requesterId, ctx.user.id), eq(friendships.addresseeId, ctx.user.id)),
+          or(
+            eq(friendships.requesterId, ctx.user.id),
+            eq(friendships.addresseeId, ctx.user.id)
+          ),
           eq(friendships.status, "accepted")
         )
       );
 
     if (accepted.length === 0) return [];
 
-    const friendIds = accepted.map((f) => (f.requesterId === ctx.user.id ? f.addresseeId : f.requesterId));
+    const friendIds = accepted.map(f =>
+      f.requesterId === ctx.user.id ? f.addresseeId : f.requesterId
+    );
 
     // Fetch recent unlocks for all friends
     const feed: Array<{
@@ -316,7 +454,11 @@ export const socialFriendsRouter = router({
     }> = [];
 
     for (const friendId of friendIds) {
-      const [friendUser] = await db.select({ name: users.name }).from(users).where(eq(users.id, friendId)).limit(1);
+      const [friendUser] = await db
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, friendId))
+        .limit(1);
       const unlocks = await db
         .select({
           achievementId: userAchievements.achievementId,
@@ -327,7 +469,10 @@ export const socialFriendsRouter = router({
           pointsReward: achievements.pointsReward,
         })
         .from(userAchievements)
-        .innerJoin(achievements, eq(achievements.id, userAchievements.achievementId))
+        .innerJoin(
+          achievements,
+          eq(achievements.id, userAchievements.achievementId)
+        )
         .where(eq(userAchievements.userId, friendId))
         .orderBy(desc(userAchievements.unlockedAt))
         .limit(10);
@@ -365,22 +510,49 @@ export const socialFriendsRouter = router({
         .where(
           and(
             or(
-              and(eq(friendships.requesterId, ctx.user.id), eq(friendships.addresseeId, input.friendId)),
-              and(eq(friendships.requesterId, input.friendId), eq(friendships.addresseeId, ctx.user.id))
+              and(
+                eq(friendships.requesterId, ctx.user.id),
+                eq(friendships.addresseeId, input.friendId)
+              ),
+              and(
+                eq(friendships.requesterId, input.friendId),
+                eq(friendships.addresseeId, ctx.user.id)
+              )
             ),
             eq(friendships.status, "accepted")
           )
         )
         .limit(1);
 
-      if (!friendship) throw new TRPCError({ code: "FORBIDDEN", message: "Not friends with this user" });
+      if (!friendship)
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Not friends with this user",
+        });
 
-      const [friendUser] = await db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(eq(users.id, input.friendId)).limit(1);
-      const [pts] = await db.select().from(userPoints).where(eq(userPoints.userId, input.friendId)).limit(1);
+      const [friendUser] = await db
+        .select({ id: users.id, name: users.name, email: users.email })
+        .from(users)
+        .where(eq(users.id, input.friendId))
+        .limit(1);
+      const [pts] = await db
+        .select()
+        .from(userPoints)
+        .where(eq(userPoints.userId, input.friendId))
+        .limit(1);
       const unlockedAchievements = await db
-        .select({ achievementId: userAchievements.achievementId, unlockedAt: userAchievements.unlockedAt, name: achievements.name, icon: achievements.icon, rarity: achievements.rarity })
+        .select({
+          achievementId: userAchievements.achievementId,
+          unlockedAt: userAchievements.unlockedAt,
+          name: achievements.name,
+          icon: achievements.icon,
+          rarity: achievements.rarity,
+        })
         .from(userAchievements)
-        .innerJoin(achievements, eq(achievements.id, userAchievements.achievementId))
+        .innerJoin(
+          achievements,
+          eq(achievements.id, userAchievements.achievementId)
+        )
         .where(eq(userAchievements.userId, input.friendId))
         .orderBy(desc(userAchievements.unlockedAt));
 
@@ -406,7 +578,11 @@ export const socialFriendsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
 
       // Verify friendship
       const [friendship] = await db
@@ -415,19 +591,41 @@ export const socialFriendsRouter = router({
         .where(
           and(
             or(
-              and(eq(friendships.requesterId, ctx.user.id), eq(friendships.addresseeId, input.friendId)),
-              and(eq(friendships.requesterId, input.friendId), eq(friendships.addresseeId, ctx.user.id))
+              and(
+                eq(friendships.requesterId, ctx.user.id),
+                eq(friendships.addresseeId, input.friendId)
+              ),
+              and(
+                eq(friendships.requesterId, input.friendId),
+                eq(friendships.addresseeId, ctx.user.id)
+              )
             ),
             eq(friendships.status, "accepted")
           )
         )
         .limit(1);
 
-      if (!friendship) throw new TRPCError({ code: "FORBIDDEN", message: "You must be friends to challenge someone" });
+      if (!friendship)
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You must be friends to challenge someone",
+        });
 
       // Verify challenge exists
-      const [challenge] = await db.select({ id: challenges.id, name: challenges.name, pointsReward: challenges.pointsReward }).from(challenges).where(eq(challenges.id, input.challengeId)).limit(1);
-      if (!challenge) throw new TRPCError({ code: "NOT_FOUND", message: "Challenge not found" });
+      const [challenge] = await db
+        .select({
+          id: challenges.id,
+          name: challenges.name,
+          pointsReward: challenges.pointsReward,
+        })
+        .from(challenges)
+        .where(eq(challenges.id, input.challengeId))
+        .limit(1);
+      if (!challenge)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Challenge not found",
+        });
 
       // Check for existing pending challenge between these users for this challenge
       const [existing] = await db
@@ -437,23 +635,36 @@ export const socialFriendsRouter = router({
           and(
             eq(friendChallenges.challengeId, input.challengeId),
             or(
-              and(eq(friendChallenges.challengerId, ctx.user.id), eq(friendChallenges.challengeeId, input.friendId)),
-              and(eq(friendChallenges.challengerId, input.friendId), eq(friendChallenges.challengeeId, ctx.user.id))
+              and(
+                eq(friendChallenges.challengerId, ctx.user.id),
+                eq(friendChallenges.challengeeId, input.friendId)
+              ),
+              and(
+                eq(friendChallenges.challengerId, input.friendId),
+                eq(friendChallenges.challengeeId, ctx.user.id)
+              )
             ),
             eq(friendChallenges.status, "pending")
           )
         )
         .limit(1);
 
-      if (existing) throw new TRPCError({ code: "CONFLICT", message: "A pending challenge already exists for this challenge" });
+      if (existing)
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "A pending challenge already exists for this challenge",
+        });
 
-      const [inserted] = await db.insert(friendChallenges).values({
-        challengerId: ctx.user.id,
-        challengeeId: input.friendId,
-        challengeId: input.challengeId,
-        message: input.message,
-        status: "pending",
-      }).$returningId();
+      const [inserted] = await db
+        .insert(friendChallenges)
+        .values({
+          challengerId: ctx.user.id,
+          challengeeId: input.friendId,
+          challengeId: input.challengeId,
+          message: input.message,
+          status: "pending",
+        })
+        .returning({ id: friendChallenges.id });
 
       // Notify the challengee
       const challengerName = ctx.user.name ?? "Someone";
@@ -479,30 +690,58 @@ export const socialFriendsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
 
       const [fc] = await db
         .select()
         .from(friendChallenges)
-        .where(and(eq(friendChallenges.id, input.friendChallengeId), eq(friendChallenges.challengeeId, ctx.user.id)))
+        .where(
+          and(
+            eq(friendChallenges.id, input.friendChallengeId),
+            eq(friendChallenges.challengeeId, ctx.user.id)
+          )
+        )
         .limit(1);
 
-      if (!fc) throw new TRPCError({ code: "NOT_FOUND", message: "Challenge not found" });
-      if (fc.status !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "Challenge is no longer pending" });
+      if (!fc)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Challenge not found",
+        });
+      if (fc.status !== "pending")
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Challenge is no longer pending",
+        });
 
       const newStatus = input.action === "accept" ? "accepted" : "declined";
       await db
         .update(friendChallenges)
-        .set({ status: newStatus, acceptedAt: input.action === "accept" ? new Date() : undefined, updatedAt: new Date() })
+        .set({
+          status: newStatus,
+          acceptedAt: input.action === "accept" ? new Date() : undefined,
+          updatedAt: new Date(),
+        })
         .where(eq(friendChallenges.id, input.friendChallengeId));
 
       // Notify the challenger
-      const [challenge] = await db.select({ name: challenges.name }).from(challenges).where(eq(challenges.id, fc.challengeId)).limit(1);
+      const [challenge] = await db
+        .select({ name: challenges.name })
+        .from(challenges)
+        .where(eq(challenges.id, fc.challengeId))
+        .limit(1);
       const responderName = ctx.user.name ?? "Someone";
       await createNotification(db, {
         userId: fc.challengerId,
         type: "social",
-        title: input.action === "accept" ? "Challenge Accepted!" : "Challenge Declined",
+        title:
+          input.action === "accept"
+            ? "Challenge Accepted!"
+            : "Challenge Declined",
         body: `${responderName} ${input.action === "accept" ? "accepted" : "declined"} your challenge: "${challenge?.name ?? "Unknown"}"`,
 
         link: "/friends?tab=challenges",
@@ -517,11 +756,19 @@ export const socialFriendsRouter = router({
           await capi.custom(
             "FriendChallengeAccepted",
             capiEventId,
-            { externalId: String(ctx.user.id), email: ctx.user.email ?? undefined },
+            {
+              externalId: String(ctx.user.id),
+              email: ctx.user.email ?? undefined,
+            },
             `${getAppUrl()}/friends`,
-            { challenge_id: fc.challengeId, challenge_name: challenge?.name ?? "Unknown" }
+            {
+              challenge_id: fc.challengeId,
+              challenge_name: challenge?.name ?? "Unknown",
+            }
           );
-        } catch (_) { /* CAPI failure is non-critical */ }
+        } catch {
+          /* CAPI failure is non-critical */
+        }
       }
 
       return { success: true };
@@ -546,9 +793,24 @@ export const socialFriendsRouter = router({
       .orderBy(desc(friendChallenges.createdAt))
       .limit(50);
 
-    const enrichChallenge = async (fc: typeof sent[0], otherUserId: number) => {
-      const [u] = await db.select({ name: users.name }).from(users).where(eq(users.id, otherUserId)).limit(1);
-      const [ch] = await db.select({ name: challenges.name, description: challenges.description, pointsReward: challenges.pointsReward }).from(challenges).where(eq(challenges.id, fc.challengeId)).limit(1);
+    const enrichChallenge = async (
+      fc: (typeof sent)[0],
+      otherUserId: number
+    ) => {
+      const [u] = await db
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, otherUserId))
+        .limit(1);
+      const [ch] = await db
+        .select({
+          name: challenges.name,
+          description: challenges.description,
+          pointsReward: challenges.pointsReward,
+        })
+        .from(challenges)
+        .where(eq(challenges.id, fc.challengeId))
+        .limit(1);
       return {
         ...fc,
         otherUserName: u?.name ?? "Unknown",
@@ -559,8 +821,12 @@ export const socialFriendsRouter = router({
       };
     };
 
-    const enrichedSent = await Promise.all(sent.map((fc) => enrichChallenge(fc, fc.challengeeId)));
-    const enrichedReceived = await Promise.all(received.map((fc) => enrichChallenge(fc, fc.challengerId)));
+    const enrichedSent = await Promise.all(
+      sent.map(fc => enrichChallenge(fc, fc.challengeeId))
+    );
+    const enrichedReceived = await Promise.all(
+      received.map(fc => enrichChallenge(fc, fc.challengerId))
+    );
 
     return { sent: enrichedSent, received: enrichedReceived };
   }),
@@ -587,15 +853,21 @@ export const socialFriendsRouter = router({
       .limit(20);
 
     const enriched = await Promise.all(
-      completed.map(async (fc) => {
-        const opponentId = fc.challengerId === ctx.user.id ? fc.challengeeId : fc.challengerId;
+      completed.map(async fc => {
+        const opponentId =
+          fc.challengerId === ctx.user.id ? fc.challengeeId : fc.challengerId;
         const [u] = await db
           .select({ name: users.name })
           .from(users)
           .where(eq(users.id, opponentId))
           .limit(1);
         const [ch] = await db
-          .select({ name: challenges.name, pointsReward: challenges.pointsReward, unit: challenges.unit, goal: challenges.goal })
+          .select({
+            name: challenges.name,
+            pointsReward: challenges.pointsReward,
+            unit: challenges.unit,
+            goal: challenges.goal,
+          })
           .from(challenges)
           .where(eq(challenges.id, fc.challengeId))
           .limit(1);
@@ -615,7 +887,10 @@ export const socialFriendsRouter = router({
           isTie,
           resolvedAt: fc.resolvedAt,
           completedAt: fc.completedAt,
-          myRole: fc.challengerId === ctx.user.id ? "challenger" as const : "challengee" as const,
+          myRole:
+            fc.challengerId === ctx.user.id
+              ? ("challenger" as const)
+              : ("challengee" as const),
         };
       })
     );

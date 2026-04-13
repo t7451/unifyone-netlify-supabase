@@ -3,8 +3,12 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import {
-  gigShifts, mileageLogs, financialRules, subscriptionEntitlements,
-  userPoints, pointsTransactions,
+  gigShifts,
+  mileageLogs,
+  financialRules,
+  subscriptionEntitlements,
+  userPoints,
+  pointsTransactions,
 } from "../../drizzle/schema";
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
 import { checkAndResolveFriendChallenge } from "../challengeCompletion";
@@ -78,68 +82,96 @@ async function awardPoints(
 export const moneyManagerRouter = router({
   // ── Gig Shifts ──────────────────────────────────────────────────────────────
   startShift: protectedProcedure
-    .input(z.object({
-      platform: z.string().min(1).max(100),
-      startLat: z.number().optional(),
-      startLng: z.number().optional(),
-    }))
+    .input(
+      z.object({
+        platform: z.string().min(1).max(100),
+        startLat: z.number().optional(),
+        startLng: z.number().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
 
-      const [shift] = await db.insert(gigShifts).values({
-        userId: ctx.user.id,
-        platform: input.platform,
-        startTime: new Date(),
-        startLat: input.startLat?.toFixed(7),
-        startLng: input.startLng?.toFixed(7),
-        status: "active",
-      }).$returningId();
+      const [shift] = await db
+        .insert(gigShifts)
+        .values({
+          userId: ctx.user.id,
+          platform: input.platform,
+          startTime: new Date(),
+          startLat: input.startLat?.toFixed(7),
+          startLng: input.startLng?.toFixed(7),
+          status: "active",
+        })
+        .returning({ id: gigShifts.id });
 
       return { id: shift.id, startTime: new Date() };
     }),
 
   endShift: protectedProcedure
-    .input(z.object({
-      shiftId: z.number(),
-      grossEarnings: z.number().min(0),
-      tips: z.number().min(0).default(0),
-      bonuses: z.number().min(0).default(0),
-      totalMiles: z.number().min(0).default(0),
-      endLat: z.number().optional(),
-      endLng: z.number().optional(),
-      notes: z.string().max(1000).optional(),
-    }))
+    .input(
+      z.object({
+        shiftId: z.number(),
+        grossEarnings: z.number().min(0),
+        tips: z.number().min(0).default(0),
+        bonuses: z.number().min(0).default(0),
+        totalMiles: z.number().min(0).default(0),
+        endLat: z.number().optional(),
+        endLng: z.number().optional(),
+        notes: z.string().max(1000).optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
 
       const [existing] = await db
         .select()
         .from(gigShifts)
-        .where(and(eq(gigShifts.id, input.shiftId), eq(gigShifts.userId, ctx.user.id)))
+        .where(
+          and(
+            eq(gigShifts.id, input.shiftId),
+            eq(gigShifts.userId, ctx.user.id)
+          )
+        )
         .limit(1);
 
-      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Shift not found" });
-      if (existing.status !== "active") throw new TRPCError({ code: "BAD_REQUEST", message: "Shift already ended" });
+      if (!existing)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Shift not found" });
+      if (existing.status !== "active")
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Shift already ended",
+        });
 
       const endTime = new Date();
       const durationMinutes = Math.round(
         (endTime.getTime() - new Date(existing.startTime).getTime()) / 60000
       );
 
-      await db.update(gigShifts).set({
-        endTime,
-        durationMinutes,
-        grossEarnings: input.grossEarnings.toFixed(2),
-        tips: input.tips.toFixed(2),
-        bonuses: input.bonuses.toFixed(2),
-        totalMiles: input.totalMiles.toFixed(2),
-        endLat: input.endLat?.toFixed(7),
-        endLng: input.endLng?.toFixed(7),
-        notes: input.notes,
-        status: "completed",
-      }).where(eq(gigShifts.id, input.shiftId));
+      await db
+        .update(gigShifts)
+        .set({
+          endTime,
+          durationMinutes,
+          grossEarnings: input.grossEarnings.toFixed(2),
+          tips: input.tips.toFixed(2),
+          bonuses: input.bonuses.toFixed(2),
+          totalMiles: input.totalMiles.toFixed(2),
+          endLat: input.endLat?.toFixed(7),
+          endLng: input.endLng?.toFixed(7),
+          notes: input.notes,
+          status: "completed",
+        })
+        .where(eq(gigShifts.id, input.shiftId));
 
       // Auto-log mileage if provided
       if (input.totalMiles > 0) {
@@ -157,7 +189,8 @@ export const moneyManagerRouter = router({
 
       // Award points
       await awardPoints(
-        db, ctx.user.id,
+        db,
+        ctx.user.id,
         "shift_completed",
         POINTS.shift_completed,
         `Completed ${existing.platform} shift — $${input.grossEarnings.toFixed(2)} earned`,
@@ -166,7 +199,9 @@ export const moneyManagerRouter = router({
 
       // Auto-detect friend challenge completion for any challenge the user has joined
       try {
-        const { challengeProgress: cpTable } = await import("../../drizzle/schema");
+        const { challengeProgress: cpTable } = await import(
+          "../../drizzle/schema"
+        );
         const joined = await db
           .select({ challengeId: cpTable.challengeId })
           .from(cpTable)
@@ -174,7 +209,9 @@ export const moneyManagerRouter = router({
         for (const { challengeId } of joined) {
           await checkAndResolveFriendChallenge(challengeId, ctx.user.id);
         }
-      } catch (_) { /* non-critical: don't fail shift end if completion check errors */ }
+      } catch {
+        /* non-critical: don't fail shift end if completion check errors */
+      }
 
       // Fire Meta CAPI GigShiftCompleted event (non-blocking)
       try {
@@ -183,31 +220,45 @@ export const moneyManagerRouter = router({
         await capi.custom(
           "GigShiftCompleted",
           capiEventId,
-          { externalId: String(ctx.user.id), email: ctx.user.email ?? undefined },
+          {
+            externalId: String(ctx.user.id),
+            email: ctx.user.email ?? undefined,
+          },
           `${getAppUrl()}/gig-command`,
-          { duration_minutes: durationMinutes, gross_earnings: input.grossEarnings, platform: existing.platform }
+          {
+            duration_minutes: durationMinutes,
+            gross_earnings: input.grossEarnings,
+            platform: existing.platform,
+          }
         );
-      } catch (_) { /* CAPI failure is non-critical */ }
+      } catch {
+        /* CAPI failure is non-critical */
+      }
 
       return { success: true, durationMinutes };
     }),
 
   listShifts: protectedProcedure
-    .input(z.object({
-      platform: z.string().optional(),
-      startDate: z.string().optional(),
-      endDate: z.string().optional(),
-      limit: z.number().min(1).max(100).default(20),
-      offset: z.number().min(0).default(0),
-    }))
+    .input(
+      z.object({
+        platform: z.string().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        limit: z.number().min(1).max(100).default(20),
+        offset: z.number().min(0).default(0),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return { shifts: [], total: 0 };
 
       const conditions = [eq(gigShifts.userId, ctx.user.id)];
-      if (input.platform) conditions.push(eq(gigShifts.platform, input.platform));
-      if (input.startDate) conditions.push(gte(gigShifts.startTime, new Date(input.startDate)));
-      if (input.endDate) conditions.push(lte(gigShifts.startTime, new Date(input.endDate)));
+      if (input.platform)
+        conditions.push(eq(gigShifts.platform, input.platform));
+      if (input.startDate)
+        conditions.push(gte(gigShifts.startTime, new Date(input.startDate)));
+      if (input.endDate)
+        conditions.push(lte(gigShifts.startTime, new Date(input.endDate)));
 
       const shifts = await db
         .select()
@@ -226,33 +277,54 @@ export const moneyManagerRouter = router({
     }),
 
   getShiftStats: protectedProcedure
-    .input(z.object({
-      period: z.enum(["week", "month", "year", "all"]).default("month"),
-    }))
+    .input(
+      z.object({
+        period: z.enum(["week", "month", "year", "all"]).default("month"),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) return { totalEarnings: 0, totalMiles: 0, totalShifts: 0, totalHours: 0, avgPerHour: 0, taxDeduction: 0 };
+      if (!db)
+        return {
+          totalEarnings: 0,
+          totalMiles: 0,
+          totalShifts: 0,
+          totalHours: 0,
+          avgPerHour: 0,
+          taxDeduction: 0,
+        };
 
       const now = new Date();
       let startDate: Date;
-      if (input.period === "week") startDate = new Date(now.getTime() - 7 * 86400000);
-      else if (input.period === "month") startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      else if (input.period === "year") startDate = new Date(now.getFullYear(), 0, 1);
+      if (input.period === "week")
+        startDate = new Date(now.getTime() - 7 * 86400000);
+      else if (input.period === "month")
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      else if (input.period === "year")
+        startDate = new Date(now.getFullYear(), 0, 1);
       else startDate = new Date(0);
 
       const shifts = await db
         .select()
         .from(gigShifts)
-        .where(and(
-          eq(gigShifts.userId, ctx.user.id),
-          eq(gigShifts.status, "completed"),
-          gte(gigShifts.startTime, startDate)
-        ));
+        .where(
+          and(
+            eq(gigShifts.userId, ctx.user.id),
+            eq(gigShifts.status, "completed"),
+            gte(gigShifts.startTime, startDate)
+          )
+        );
 
-      const totalEarnings = shifts.reduce((s, r) =>
-        s + Number(r.grossEarnings) + Number(r.tips) + Number(r.bonuses), 0);
+      const totalEarnings = shifts.reduce(
+        (s, r) =>
+          s + Number(r.grossEarnings) + Number(r.tips) + Number(r.bonuses),
+        0
+      );
       const totalMiles = shifts.reduce((s, r) => s + Number(r.totalMiles), 0);
-      const totalMinutes = shifts.reduce((s, r) => s + (r.durationMinutes ?? 0), 0);
+      const totalMinutes = shifts.reduce(
+        (s, r) => s + (r.durationMinutes ?? 0),
+        0
+      );
       const totalHours = totalMinutes / 60;
       const taxDeduction = (totalMiles * IRS_RATE_CENTS) / 100;
 
@@ -261,24 +333,33 @@ export const moneyManagerRouter = router({
         totalMiles: Math.round(totalMiles * 10) / 10,
         totalShifts: shifts.length,
         totalHours: Math.round(totalHours * 10) / 10,
-        avgPerHour: totalHours > 0 ? Math.round((totalEarnings / totalHours) * 100) / 100 : 0,
+        avgPerHour:
+          totalHours > 0
+            ? Math.round((totalEarnings / totalHours) * 100) / 100
+            : 0,
         taxDeduction: Math.round(taxDeduction * 100) / 100,
       };
     }),
 
   // ── Mileage Logs ────────────────────────────────────────────────────────────
   logMileage: protectedProcedure
-    .input(z.object({
-      miles: z.number().min(0.1),
-      purpose: z.string().default("business"),
-      date: z.string().optional(),
-      startAddress: z.string().max(500).optional(),
-      endAddress: z.string().max(500).optional(),
-      notes: z.string().max(1000).optional(),
-    }))
+    .input(
+      z.object({
+        miles: z.number().min(0.1),
+        purpose: z.string().default("business"),
+        date: z.string().optional(),
+        startAddress: z.string().max(500).optional(),
+        endAddress: z.string().max(500).optional(),
+        notes: z.string().max(1000).optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
 
       const deductionCents = Math.round(input.miles * IRS_RATE_CENTS);
       await db.insert(mileageLogs).values({
@@ -293,12 +374,19 @@ export const moneyManagerRouter = router({
         notes: input.notes,
       });
 
-      await awardPoints(db, ctx.user.id, "mileage_logged", POINTS.mileage_logged,
-        `Logged ${input.miles} miles — $${(deductionCents / 100).toFixed(2)} deduction`);
+      await awardPoints(
+        db,
+        ctx.user.id,
+        "mileage_logged",
+        POINTS.mileage_logged,
+        `Logged ${input.miles} miles — $${(deductionCents / 100).toFixed(2)} deduction`
+      );
 
       // Auto-detect friend challenge completion for mileage-based challenges
       try {
-        const { challengeProgress: cpTable } = await import("../../drizzle/schema");
+        const { challengeProgress: cpTable } = await import(
+          "../../drizzle/schema"
+        );
         const joined = await db
           .select({ challengeId: cpTable.challengeId })
           .from(cpTable)
@@ -306,7 +394,9 @@ export const moneyManagerRouter = router({
         for (const { challengeId } of joined) {
           await checkAndResolveFriendChallenge(challengeId, ctx.user.id);
         }
-      } catch (_) { /* non-critical */ }
+      } catch {
+        /* non-critical */
+      }
 
       // Fire Meta CAPI MileageLogged event (non-blocking)
       try {
@@ -315,11 +405,16 @@ export const moneyManagerRouter = router({
         await capi.custom(
           "MileageLogged",
           capiEventId,
-          { externalId: String(ctx.user.id), email: ctx.user.email ?? undefined },
+          {
+            externalId: String(ctx.user.id),
+            email: ctx.user.email ?? undefined,
+          },
           `${getAppUrl()}/gig-command`,
           { miles: input.miles, deduction_dollars: deductionCents / 100 }
         );
-      } catch (_) { /* CAPI failure is non-critical */ }
+      } catch {
+        /* CAPI failure is non-critical */
+      }
 
       return { deductionCents, deductionDollars: deductionCents / 100 };
     }),
@@ -336,44 +431,72 @@ export const moneyManagerRouter = router({
       const logs = await db
         .select()
         .from(mileageLogs)
-        .where(and(
-          eq(mileageLogs.userId, ctx.user.id),
-          gte(mileageLogs.date, startOfYear),
-          lte(mileageLogs.date, endOfYear)
-        ))
+        .where(
+          and(
+            eq(mileageLogs.userId, ctx.user.id),
+            gte(mileageLogs.date, startOfYear),
+            lte(mileageLogs.date, endOfYear)
+          )
+        )
         .orderBy(desc(mileageLogs.date));
 
       const totalMiles = logs.reduce((s, r) => s + Number(r.miles), 0);
-      const totalDeduction = logs.reduce((s, r) => s + r.deductionCents, 0) / 100;
+      const totalDeduction =
+        logs.reduce((s, r) => s + r.deductionCents, 0) / 100;
 
-      return { totalMiles: Math.round(totalMiles * 10) / 10, totalDeduction, logs };
+      return {
+        totalMiles: Math.round(totalMiles * 10) / 10,
+        totalDeduction,
+        logs,
+      };
     }),
 
   // ── Financial Rules ──────────────────────────────────────────────────────────
   listRules: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return [];
-    return db.select().from(financialRules)
+    return db
+      .select()
+      .from(financialRules)
       .where(eq(financialRules.userId, ctx.user.id))
       .orderBy(desc(financialRules.createdAt));
   }),
 
   createRule: protectedProcedure
-    .input(z.object({
-      name: z.string().min(1).max(200),
-      description: z.string().optional(),
-      type: z.enum(["auto_save", "budget_cap", "alert", "allocation", "goal"]),
-      triggerType: z.enum(["income_received", "expense_over", "balance_below", "balance_above", "scheduled", "manual"]),
-      triggerValue: z.number().optional(),
-      actionType: z.enum(["transfer", "notify", "block", "tag", "save"]),
-      actionValue: z.number().optional(),
-      actionPercent: z.number().min(0).max(100).optional(),
-      category: z.string().optional(),
-      platform: z.string().optional(),
-    }))
+    .input(
+      z.object({
+        name: z.string().min(1).max(200),
+        description: z.string().optional(),
+        type: z.enum([
+          "auto_save",
+          "budget_cap",
+          "alert",
+          "allocation",
+          "goal",
+        ]),
+        triggerType: z.enum([
+          "income_received",
+          "expense_over",
+          "balance_below",
+          "balance_above",
+          "scheduled",
+          "manual",
+        ]),
+        triggerValue: z.number().optional(),
+        actionType: z.enum(["transfer", "notify", "block", "tag", "save"]),
+        actionValue: z.number().optional(),
+        actionPercent: z.number().min(0).max(100).optional(),
+        category: z.string().optional(),
+        platform: z.string().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
 
       await db.insert(financialRules).values({
         userId: ctx.user.id,
@@ -389,12 +512,19 @@ export const moneyManagerRouter = router({
         platform: input.platform,
       });
 
-      await awardPoints(db, ctx.user.id, "rule_created", POINTS.rule_created,
-        `Created financial rule: ${input.name}`);
+      await awardPoints(
+        db,
+        ctx.user.id,
+        "rule_created",
+        POINTS.rule_created,
+        `Created financial rule: ${input.name}`
+      );
 
       // Auto-detect friend challenge completion for rule-based challenges
       try {
-        const { challengeProgress: cpTable } = await import("../../drizzle/schema");
+        const { challengeProgress: cpTable } = await import(
+          "../../drizzle/schema"
+        );
         const joined = await db
           .select({ challengeId: cpTable.challengeId })
           .from(cpTable)
@@ -402,7 +532,9 @@ export const moneyManagerRouter = router({
         for (const { challengeId } of joined) {
           await checkAndResolveFriendChallenge(challengeId, ctx.user.id);
         }
-      } catch (_) { /* non-critical */ }
+      } catch {
+        /* non-critical */
+      }
 
       return { success: true };
     }),
@@ -411,10 +543,20 @@ export const moneyManagerRouter = router({
     .input(z.object({ ruleId: z.number(), enabled: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-      await db.update(financialRules)
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
+      await db
+        .update(financialRules)
         .set({ enabled: input.enabled })
-        .where(and(eq(financialRules.id, input.ruleId), eq(financialRules.userId, ctx.user.id)));
+        .where(
+          and(
+            eq(financialRules.id, input.ruleId),
+            eq(financialRules.userId, ctx.user.id)
+          )
+        );
       return { success: true };
     }),
 
@@ -422,9 +564,19 @@ export const moneyManagerRouter = router({
     .input(z.object({ ruleId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-      await db.delete(financialRules)
-        .where(and(eq(financialRules.id, input.ruleId), eq(financialRules.userId, ctx.user.id)));
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
+      await db
+        .delete(financialRules)
+        .where(
+          and(
+            eq(financialRules.id, input.ruleId),
+            eq(financialRules.userId, ctx.user.id)
+          )
+        );
       return { success: true };
     }),
 
@@ -435,10 +587,12 @@ export const moneyManagerRouter = router({
     const [ent] = await db
       .select()
       .from(subscriptionEntitlements)
-      .where(and(
-        eq(subscriptionEntitlements.userId, ctx.user.id),
-        eq(subscriptionEntitlements.status, "active")
-      ))
+      .where(
+        and(
+          eq(subscriptionEntitlements.userId, ctx.user.id),
+          eq(subscriptionEntitlements.status, "active")
+        )
+      )
       .orderBy(desc(subscriptionEntitlements.createdAt))
       .limit(1);
     return ent ?? null;
@@ -447,21 +601,28 @@ export const moneyManagerRouter = router({
   // ── Points Balance ───────────────────────────────────────────────────────────
   getPointsBalance: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
-    if (!db) return { totalPoints: 0, lifetimePoints: 0, level: 1, streakDays: 0 };
+    if (!db)
+      return { totalPoints: 0, lifetimePoints: 0, level: 1, streakDays: 0 };
     const [pts] = await db
       .select()
       .from(userPoints)
       .where(eq(userPoints.userId, ctx.user.id))
       .limit(1);
-    return pts ?? { totalPoints: 0, lifetimePoints: 0, level: 1, streakDays: 0 };
+    return (
+      pts ?? { totalPoints: 0, lifetimePoints: 0, level: 1, streakDays: 0 }
+    );
   }),
 
   getPointsHistory: protectedProcedure
-    .input(z.object({ limit: z.number().default(20), offset: z.number().default(0) }))
+    .input(
+      z.object({ limit: z.number().default(20), offset: z.number().default(0) })
+    )
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
-      return db.select().from(pointsTransactions)
+      return db
+        .select()
+        .from(pointsTransactions)
         .where(eq(pointsTransactions.userId, ctx.user.id))
         .orderBy(desc(pointsTransactions.createdAt))
         .limit(input.limit)
@@ -475,22 +636,23 @@ export const moneyManagerRouter = router({
     const [shift] = await db
       .select()
       .from(gigShifts)
-      .where(and(
-        eq(gigShifts.userId, ctx.user.id),
-        eq(gigShifts.status, "active")
-      ))
+      .where(
+        and(eq(gigShifts.userId, ctx.user.id), eq(gigShifts.status, "active"))
+      )
       .orderBy(desc(gigShifts.startTime))
       .limit(1);
     return shift ?? null;
   }),
 
   updateShiftGPS: protectedProcedure
-    .input(z.object({
-      shiftId: z.number(),
-      lat: z.number(),
-      lng: z.number(),
-      appendWaypoint: z.boolean().default(true),
-    }))
+    .input(
+      z.object({
+        shiftId: z.number(),
+        lat: z.number(),
+        lng: z.number(),
+        appendWaypoint: z.boolean().default(true),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -498,17 +660,27 @@ export const moneyManagerRouter = router({
       const [shift] = await db
         .select()
         .from(gigShifts)
-        .where(and(
-          eq(gigShifts.id, input.shiftId),
-          eq(gigShifts.userId, ctx.user.id),
-          eq(gigShifts.status, "active")
-        ))
+        .where(
+          and(
+            eq(gigShifts.id, input.shiftId),
+            eq(gigShifts.userId, ctx.user.id),
+            eq(gigShifts.status, "active")
+          )
+        )
         .limit(1);
 
-      if (!shift) throw new TRPCError({ code: "NOT_FOUND", message: "Active shift not found" });
+      if (!shift)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Active shift not found",
+        });
 
       const waypoints: Array<{ lat: number; lng: number; ts: number }> =
-        (shift.routeWaypoints as Array<{ lat: number; lng: number; ts: number }>) ?? [];
+        (shift.routeWaypoints as Array<{
+          lat: number;
+          lng: number;
+          ts: number;
+        }>) ?? [];
 
       if (input.appendWaypoint) {
         waypoints.push({ lat: input.lat, lng: input.lng, ts: Date.now() });
@@ -523,12 +695,14 @@ export const moneyManagerRouter = router({
     }),
 
   getRouteIntelligence: protectedProcedure
-    .input(z.object({
-      lat: z.number(),
-      lng: z.number(),
-      platform: z.string().default("any"),
-      radiusMiles: z.number().default(5),
-    }))
+    .input(
+      z.object({
+        lat: z.number(),
+        lng: z.number(),
+        platform: z.string().default("any"),
+        radiusMiles: z.number().default(5),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return null;
@@ -537,22 +711,34 @@ export const moneyManagerRouter = router({
       const recentShifts = await db
         .select()
         .from(gigShifts)
-        .where(and(
-          eq(gigShifts.userId, ctx.user.id),
-          eq(gigShifts.status, "completed")
-        ))
+        .where(
+          and(
+            eq(gigShifts.userId, ctx.user.id),
+            eq(gigShifts.status, "completed")
+          )
+        )
         .orderBy(desc(gigShifts.startTime))
         .limit(30);
 
-      const avgEarnings = recentShifts.length > 0
-        ? recentShifts.reduce((s, r) => s + parseFloat(r.grossEarnings as string), 0) / recentShifts.length
-        : 0;
-      const avgMiles = recentShifts.length > 0
-        ? recentShifts.reduce((s, r) => s + parseFloat(r.totalMiles as string), 0) / recentShifts.length
-        : 0;
+      const avgEarnings =
+        recentShifts.length > 0
+          ? recentShifts.reduce(
+              (s, r) => s + parseFloat(r.grossEarnings as string),
+              0
+            ) / recentShifts.length
+          : 0;
+      const avgMiles =
+        recentShifts.length > 0
+          ? recentShifts.reduce(
+              (s, r) => s + parseFloat(r.totalMiles as string),
+              0
+            ) / recentShifts.length
+          : 0;
 
       const hour = new Date().getHours();
-      const dayOfWeek = new Date().toLocaleDateString("en-US", { weekday: "long" });
+      const dayOfWeek = new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+      });
 
       const prompt = `You are a gig economy route intelligence assistant. Based on the following data, provide actionable zone recommendations and tips.
 
@@ -574,7 +760,11 @@ Provide a JSON response with:
       try {
         const response = await invokeLLM({
           messages: [
-            { role: "system", content: "You are a gig economy intelligence assistant. Always respond with valid JSON only." },
+            {
+              role: "system",
+              content:
+                "You are a gig economy intelligence assistant. Always respond with valid JSON only.",
+            },
             { role: "user", content: prompt },
           ],
           response_format: {
@@ -591,7 +781,10 @@ Provide a JSON response with:
                       type: "object",
                       properties: {
                         name: { type: "string" },
-                        demand: { type: "string", enum: ["high", "medium", "low"] },
+                        demand: {
+                          type: "string",
+                          enum: ["high", "medium", "low"],
+                        },
                         reason: { type: "string" },
                       },
                       required: ["name", "demand", "reason"],
@@ -601,15 +794,24 @@ Provide a JSON response with:
                   timingTip: { type: "string" },
                   earningsTip: { type: "string" },
                   weatherAlert: { type: ["string", "null"] },
-                  estimatedDemand: { type: "string", enum: ["high", "medium", "low"] },
+                  estimatedDemand: {
+                    type: "string",
+                    enum: ["high", "medium", "low"],
+                  },
                 },
-                required: ["hotZones", "timingTip", "earningsTip", "weatherAlert", "estimatedDemand"],
+                required: [
+                  "hotZones",
+                  "timingTip",
+                  "earningsTip",
+                  "weatherAlert",
+                  "estimatedDemand",
+                ],
                 additionalProperties: false,
               },
             },
           },
         });
-         const content = response?.choices?.[0]?.message?.content;
+        const content = response?.choices?.[0]?.message?.content;
         const contentStr = typeof content === "string" ? content : null;
         return contentStr ? JSON.parse(contentStr) : null;
       } catch {
@@ -625,10 +827,12 @@ Provide a JSON response with:
       const recentShifts = await db
         .select()
         .from(gigShifts)
-        .where(and(
-          eq(gigShifts.userId, ctx.user.id),
-          eq(gigShifts.status, "completed")
-        ))
+        .where(
+          and(
+            eq(gigShifts.userId, ctx.user.id),
+            eq(gigShifts.status, "completed")
+          )
+        )
         .orderBy(desc(gigShifts.startTime))
         .limit(20);
 
@@ -639,9 +843,16 @@ Provide a JSON response with:
         .orderBy(desc(mileageLogs.date))
         .limit(10);
 
-      const totalEarnings = recentShifts.reduce((s, r) => s + parseFloat(r.grossEarnings as string), 0);
-      const totalMiles = recentMileage.reduce((s, r) => s + parseFloat(r.miles as string), 0);
-      const totalHours = recentShifts.reduce((s, r) => s + (r.durationMinutes ?? 0), 0) / 60;
+      const totalEarnings = recentShifts.reduce(
+        (s, r) => s + parseFloat(r.grossEarnings as string),
+        0
+      );
+      const totalMiles = recentMileage.reduce(
+        (s, r) => s + parseFloat(r.miles as string),
+        0
+      );
+      const totalHours =
+        recentShifts.reduce((s, r) => s + (r.durationMinutes ?? 0), 0) / 60;
       const earningsPerHour = totalHours > 0 ? totalEarnings / totalHours : 0;
 
       const prompt = `You are a gig economy coach. Based on this driver's recent performance, generate 5 specific, actionable shortcuts or tips.
@@ -662,7 +873,11 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
       try {
         const response = await invokeLLM({
           messages: [
-            { role: "system", content: "You are a gig economy performance coach. Always respond with valid JSON only." },
+            {
+              role: "system",
+              content:
+                "You are a gig economy performance coach. Always respond with valid JSON only.",
+            },
             { role: "user", content: prompt },
           ],
           response_format: {
@@ -680,11 +895,29 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
                       properties: {
                         title: { type: "string" },
                         description: { type: "string" },
-                        category: { type: "string", enum: ["earnings", "efficiency", "tax", "timing", "safety"] },
-                        impact: { type: "string", enum: ["high", "medium", "low"] },
+                        category: {
+                          type: "string",
+                          enum: [
+                            "earnings",
+                            "efficiency",
+                            "tax",
+                            "timing",
+                            "safety",
+                          ],
+                        },
+                        impact: {
+                          type: "string",
+                          enum: ["high", "medium", "low"],
+                        },
                         emoji: { type: "string" },
                       },
-                      required: ["title", "description", "category", "impact", "emoji"],
+                      required: [
+                        "title",
+                        "description",
+                        "category",
+                        "impact",
+                        "emoji",
+                      ],
                       additionalProperties: false,
                     },
                   },
@@ -715,89 +948,137 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
    * "Your Thursday 5–9pm shifts average $31.20/hr vs $21.90/hr Monday mornings."
    */
   getShiftBreakdown: protectedProcedure
-    .input(z.object({
-      period: z.enum(["week", "month", "year", "all"]).default("month"),
-    }))
+    .input(
+      z.object({
+        period: z.enum(["week", "month", "year", "all"]).default("month"),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) return { byPlatform: [], byHour: [], byDayOfWeek: [], topInsight: null };
+      if (!db)
+        return {
+          byPlatform: [],
+          byHour: [],
+          byDayOfWeek: [],
+          topInsight: null,
+        };
 
       const now = new Date();
       let startDate: Date;
-      if (input.period === "week") startDate = new Date(now.getTime() - 7 * 86400000);
-      else if (input.period === "month") startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      else if (input.period === "year") startDate = new Date(now.getFullYear(), 0, 1);
+      if (input.period === "week")
+        startDate = new Date(now.getTime() - 7 * 86400000);
+      else if (input.period === "month")
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      else if (input.period === "year")
+        startDate = new Date(now.getFullYear(), 0, 1);
       else startDate = new Date(0);
 
       const shifts = await db
         .select()
         .from(gigShifts)
-        .where(and(
-          eq(gigShifts.userId, ctx.user.id),
-          eq(gigShifts.status, "completed"),
-          gte(gigShifts.startTime, startDate)
-        ))
+        .where(
+          and(
+            eq(gigShifts.userId, ctx.user.id),
+            eq(gigShifts.status, "completed"),
+            gte(gigShifts.startTime, startDate)
+          )
+        )
         .orderBy(desc(gigShifts.startTime));
 
       if (shifts.length === 0) {
-        return { byPlatform: [], byHour: [], byDayOfWeek: [], topInsight: null };
+        return {
+          byPlatform: [],
+          byHour: [],
+          byDayOfWeek: [],
+          topInsight: null,
+        };
       }
 
       // Per-platform aggregation
-      const platformMap: Record<string, { earnings: number; hours: number; shifts: number; miles: number }> = {};
+      const platformMap: Record<
+        string,
+        { earnings: number; hours: number; shifts: number; miles: number }
+      > = {};
       for (const s of shifts) {
         const p = s.platform;
-        if (!platformMap[p]) platformMap[p] = { earnings: 0, hours: 0, shifts: 0, miles: 0 };
-        const totalEarned = Number(s.grossEarnings) + Number(s.tips) + Number(s.bonuses);
+        if (!platformMap[p])
+          platformMap[p] = { earnings: 0, hours: 0, shifts: 0, miles: 0 };
+        const totalEarned =
+          Number(s.grossEarnings) + Number(s.tips) + Number(s.bonuses);
         const hours = (s.durationMinutes ?? 0) / 60;
         platformMap[p].earnings += totalEarned;
         platformMap[p].hours += hours;
         platformMap[p].shifts += 1;
         platformMap[p].miles += Number(s.totalMiles);
       }
-      const byPlatform = Object.entries(platformMap).map(([platform, v]) => ({
-        platform,
-        totalEarnings: Math.round(v.earnings * 100) / 100,
-        totalHours: Math.round(v.hours * 10) / 10,
-        avgPerHour: v.hours > 0 ? Math.round((v.earnings / v.hours) * 100) / 100 : 0,
-        totalShifts: v.shifts,
-        totalMiles: Math.round(v.miles * 10) / 10,
-      })).sort((a, b) => b.avgPerHour - a.avgPerHour);
+      const byPlatform = Object.entries(platformMap)
+        .map(([platform, v]) => ({
+          platform,
+          totalEarnings: Math.round(v.earnings * 100) / 100,
+          totalHours: Math.round(v.hours * 10) / 10,
+          avgPerHour:
+            v.hours > 0 ? Math.round((v.earnings / v.hours) * 100) / 100 : 0,
+          totalShifts: v.shifts,
+          totalMiles: Math.round(v.miles * 10) / 10,
+        }))
+        .sort((a, b) => b.avgPerHour - a.avgPerHour);
 
       // Per-hour-of-day aggregation (0-23)
-      const hourMap: Record<number, { earnings: number; hours: number; count: number }> = {};
+      const hourMap: Record<
+        number,
+        { earnings: number; hours: number; count: number }
+      > = {};
       for (const s of shifts) {
         const h = s.startTime.getHours();
         if (!hourMap[h]) hourMap[h] = { earnings: 0, hours: 0, count: 0 };
-        hourMap[h].earnings += Number(s.grossEarnings) + Number(s.tips) + Number(s.bonuses);
+        hourMap[h].earnings +=
+          Number(s.grossEarnings) + Number(s.tips) + Number(s.bonuses);
         hourMap[h].hours += (s.durationMinutes ?? 0) / 60;
         hourMap[h].count += 1;
       }
-      const byHour = Object.entries(hourMap).map(([hour, v]) => ({
-        hour: Number(hour),
-        label: `${Number(hour) % 12 || 12}${Number(hour) < 12 ? "am" : "pm"}`,
-        avgPerHour: v.hours > 0 ? Math.round((v.earnings / v.hours) * 100) / 100 : 0,
-        totalEarnings: Math.round(v.earnings * 100) / 100,
-        shiftCount: v.count,
-      })).sort((a, b) => a.hour - b.hour);
+      const byHour = Object.entries(hourMap)
+        .map(([hour, v]) => ({
+          hour: Number(hour),
+          label: `${Number(hour) % 12 || 12}${Number(hour) < 12 ? "am" : "pm"}`,
+          avgPerHour:
+            v.hours > 0 ? Math.round((v.earnings / v.hours) * 100) / 100 : 0,
+          totalEarnings: Math.round(v.earnings * 100) / 100,
+          shiftCount: v.count,
+        }))
+        .sort((a, b) => a.hour - b.hour);
 
       // Per-day-of-week aggregation (0=Sun, 6=Sat)
-      const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-      const dayMap: Record<number, { earnings: number; hours: number; count: number }> = {};
+      const DAYS = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      const dayMap: Record<
+        number,
+        { earnings: number; hours: number; count: number }
+      > = {};
       for (const s of shifts) {
         const d = s.startTime.getDay();
         if (!dayMap[d]) dayMap[d] = { earnings: 0, hours: 0, count: 0 };
-        dayMap[d].earnings += Number(s.grossEarnings) + Number(s.tips) + Number(s.bonuses);
+        dayMap[d].earnings +=
+          Number(s.grossEarnings) + Number(s.tips) + Number(s.bonuses);
         dayMap[d].hours += (s.durationMinutes ?? 0) / 60;
         dayMap[d].count += 1;
       }
-      const byDayOfWeek = Object.entries(dayMap).map(([day, v]) => ({
-        day: Number(day),
-        label: DAYS[Number(day)],
-        avgPerHour: v.hours > 0 ? Math.round((v.earnings / v.hours) * 100) / 100 : 0,
-        totalEarnings: Math.round(v.earnings * 100) / 100,
-        shiftCount: v.count,
-      })).sort((a, b) => a.day - b.day);
+      const byDayOfWeek = Object.entries(dayMap)
+        .map(([day, v]) => ({
+          day: Number(day),
+          label: DAYS[Number(day)],
+          avgPerHour:
+            v.hours > 0 ? Math.round((v.earnings / v.hours) * 100) / 100 : 0,
+          totalEarnings: Math.round(v.earnings * 100) / 100,
+          shiftCount: v.count,
+        }))
+        .sort((a, b) => a.day - b.day);
 
       // Top insight: best vs worst platform/time for Kai context
       let topInsight: string | null = null;
@@ -809,7 +1090,9 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
           topInsight = `Your ${best.platform} shifts average $${best.avgPerHour}/hr vs $${worst.avgPerHour}/hr on ${worst.platform} — a $${diff.toFixed(2)}/hr gap.`;
         }
       } else if (byHour.length >= 2) {
-        const bestHour = [...byHour].sort((a, b) => b.avgPerHour - a.avgPerHour)[0];
+        const bestHour = [...byHour].sort(
+          (a, b) => b.avgPerHour - a.avgPerHour
+        )[0];
         topInsight = `Your best earning hour is ${bestHour.label} at $${bestHour.avgPerHour}/hr average.`;
       }
 
@@ -823,12 +1106,17 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
    */
   getYTDDeduction: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
-    const IRS_RATE = 0.70; // 2025
-    if (!db) return {
-      ytdMiles: 0, ytdDeduction: 0, projectedYearlyDeduction: 0,
-      projectedYearlyMiles: 0, quarterlyEstimate: 0,
-      missedDeduction: 0, shouldUpgradePrompt: false,
-    };
+    const IRS_RATE = 0.7; // 2025
+    if (!db)
+      return {
+        ytdMiles: 0,
+        ytdDeduction: 0,
+        projectedYearlyDeduction: 0,
+        projectedYearlyMiles: 0,
+        quarterlyEstimate: 0,
+        missedDeduction: 0,
+        shouldUpgradePrompt: false,
+      };
 
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1);
@@ -840,21 +1128,25 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
         startTime: gigShifts.startTime,
       })
       .from(gigShifts)
-      .where(and(
-        eq(gigShifts.userId, ctx.user.id),
-        eq(gigShifts.status, "completed"),
-        gte(gigShifts.startTime, startOfYear)
-      ));
+      .where(
+        and(
+          eq(gigShifts.userId, ctx.user.id),
+          eq(gigShifts.status, "completed"),
+          gte(gigShifts.startTime, startOfYear)
+        )
+      );
 
     // Also pull mileageLogs for manually logged miles
     const { mileageLogs } = await import("../../drizzle/schema");
     const manualLogs = await db
       .select({ miles: mileageLogs.miles })
       .from(mileageLogs)
-      .where(and(
-        eq(mileageLogs.userId, ctx.user.id),
-        gte(mileageLogs.date, startOfYear)
-      ));
+      .where(
+        and(
+          eq(mileageLogs.userId, ctx.user.id),
+          gte(mileageLogs.date, startOfYear)
+        )
+      );
 
     const shiftMiles = shifts.reduce((s, r) => s + Number(r.totalMiles), 0);
     const manualMiles = manualLogs.reduce((s, r) => s + Number(r.miles), 0);
@@ -862,20 +1154,28 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
     const ytdDeduction = Math.round(ytdMiles * IRS_RATE * 100) / 100;
 
     // Project to year end based on pace so far
-    const dayOfYear = Math.ceil((now.getTime() - startOfYear.getTime()) / 86400000);
+    const dayOfYear = Math.ceil(
+      (now.getTime() - startOfYear.getTime()) / 86400000
+    );
     const daysInYear = now.getFullYear() % 4 === 0 ? 366 : 365;
     const dailyRate = dayOfYear > 0 ? ytdMiles / dayOfYear : 0;
     const projectedYearlyMiles = Math.round(dailyRate * daysInYear * 10) / 10;
-    const projectedYearlyDeduction = Math.round(projectedYearlyMiles * IRS_RATE * 100) / 100;
+    const projectedYearlyDeduction =
+      Math.round(projectedYearlyMiles * IRS_RATE * 100) / 100;
 
     // Quarterly estimate (simple: YTD / quarters elapsed * 4)
     const quarterElapsed = Math.ceil((now.getMonth() + 1) / 3);
-    const quarterlyEstimate = Math.round((ytdDeduction / Math.max(quarterElapsed, 1)) * 100) / 100;
+    const quarterlyEstimate =
+      Math.round((ytdDeduction / Math.max(quarterElapsed, 1)) * 100) / 100;
 
     // Missed deduction estimate: average gig worker claims $3,200/yr
     // If they're on track for less than $1,000, prompt upgrade for full tracking
-    const missedDeduction = Math.max(0, Math.round((3200 - projectedYearlyDeduction) * 100) / 100);
-    const shouldUpgradePrompt = shifts.length >= 5 && projectedYearlyDeduction < 1000;
+    const missedDeduction = Math.max(
+      0,
+      Math.round((3200 - projectedYearlyDeduction) * 100) / 100
+    );
+    const shouldUpgradePrompt =
+      shifts.length >= 5 && projectedYearlyDeduction < 1000;
 
     return {
       ytdMiles,
@@ -893,33 +1193,49 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
    * Returns a compact JSON string the AI system prompt can inject directly.
    */
   getKaiContext: protectedProcedure
-    .input(z.object({ context: z.enum(["gig-command", "money-manager", "dashboard"]) }))
-    .query(async ({ ctx, input }) => {
+    .input(
+      z.object({
+        context: z.enum(["gig-command", "money-manager", "dashboard"]),
+      })
+    )
+    .query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) return { contextJson: "{}", hasSufficientData: false };
 
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const startOfYear = new Date(now.getFullYear(), 0, 1);
-      const IRS_RATE = 0.70;
+      const IRS_RATE = 0.7;
 
       // Core stats
       const allShifts = await db
         .select()
         .from(gigShifts)
-        .where(and(eq(gigShifts.userId, ctx.user.id), eq(gigShifts.status, "completed")))
+        .where(
+          and(
+            eq(gigShifts.userId, ctx.user.id),
+            eq(gigShifts.status, "completed")
+          )
+        )
         .orderBy(desc(gigShifts.startTime))
         .limit(50);
 
       if (allShifts.length === 0) {
-        return { contextJson: JSON.stringify({ message: "No shifts logged yet." }), hasSufficientData: false };
+        return {
+          contextJson: JSON.stringify({ message: "No shifts logged yet." }),
+          hasSufficientData: false,
+        };
       }
 
       const monthShifts = allShifts.filter(s => s.startTime >= startOfMonth);
       const yearShifts = allShifts.filter(s => s.startTime >= startOfYear);
 
       const earnings = (arr: typeof allShifts) =>
-        arr.reduce((s, r) => s + Number(r.grossEarnings) + Number(r.tips) + Number(r.bonuses), 0);
+        arr.reduce(
+          (s, r) =>
+            s + Number(r.grossEarnings) + Number(r.tips) + Number(r.bonuses),
+          0
+        );
       const hours = (arr: typeof allShifts) =>
         arr.reduce((s, r) => s + (r.durationMinutes ?? 0), 0) / 60;
       const miles = (arr: typeof allShifts) =>
@@ -929,11 +1245,15 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
       const platformMap: Record<string, { e: number; h: number }> = {};
       for (const s of monthShifts) {
         if (!platformMap[s.platform]) platformMap[s.platform] = { e: 0, h: 0 };
-        platformMap[s.platform].e += Number(s.grossEarnings) + Number(s.tips) + Number(s.bonuses);
+        platformMap[s.platform].e +=
+          Number(s.grossEarnings) + Number(s.tips) + Number(s.bonuses);
         platformMap[s.platform].h += (s.durationMinutes ?? 0) / 60;
       }
       const platforms = Object.entries(platformMap)
-        .map(([p, v]) => ({ platform: p, avgPerHour: v.h > 0 ? Math.round(v.e / v.h * 100) / 100 : 0 }))
+        .map(([p, v]) => ({
+          platform: p,
+          avgPerHour: v.h > 0 ? Math.round((v.e / v.h) * 100) / 100 : 0,
+        }))
         .sort((a, b) => b.avgPerHour - a.avgPerHour);
 
       const monthEarnings = earnings(monthShifts);
@@ -944,7 +1264,10 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
         period: "this month",
         totalEarnings: Math.round(monthEarnings * 100) / 100,
         totalHours: Math.round(monthHours * 10) / 10,
-        avgPerHour: monthHours > 0 ? Math.round(monthEarnings / monthHours * 100) / 100 : 0,
+        avgPerHour:
+          monthHours > 0
+            ? Math.round((monthEarnings / monthHours) * 100) / 100
+            : 0,
         totalShifts: monthShifts.length,
         ytdMiles: Math.round(yearMiles * 10) / 10,
         ytdDeduction: Math.round(yearMiles * IRS_RATE * 100) / 100,

@@ -7,7 +7,7 @@ import type { TrpcContext } from "./_core/context";
 // Instead we use a module-level object that the factory captures by reference.
 const _dbState = {
   selectResult: [] as any[],
-  insertResult: [{ insertId: 1 }] as any[],
+  insertResult: [{ id: 1 }] as any[],
   updateResult: undefined as any,
   deleteResult: undefined as any,
 };
@@ -21,7 +21,7 @@ vi.mock("./db", () => {
       orderBy: () => chain,
       limit: () => Promise.resolve(finalResult()),
       set: () => chain,
-      values: () => Promise.resolve(_dbState.insertResult),
+      values: () => chain,
       returning: () => Promise.resolve(_dbState.insertResult),
     };
     // Make the chain itself awaitable (for .where().then())
@@ -41,31 +41,105 @@ vi.mock("./db", () => {
     // Keep legacy named exports so other test files still work
     getTenantByOwnerId: vi.fn().mockResolvedValue(null),
     getTenantById: vi.fn().mockResolvedValue(null),
-    createTenant: vi.fn().mockResolvedValue({ id: 1, name: "T", slug: "t", status: "active", planId: 1, ownerId: 1, createdAt: new Date(), updatedAt: new Date() }),
+    createTenant: vi
+      .fn()
+      .mockResolvedValue({
+        id: 1,
+        name: "T",
+        slug: "t",
+        status: "active",
+        planId: 1,
+        ownerId: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
     updateTenant: vi.fn().mockResolvedValue(undefined),
     getProducts: vi.fn().mockResolvedValue([]),
     getProductById: vi.fn().mockResolvedValue(null),
-    createProduct: vi.fn().mockResolvedValue({ id: 1, name: "P", price: "9.99", tenantId: 1, status: "active", createdAt: new Date(), updatedAt: new Date() }),
+    createProduct: vi
+      .fn()
+      .mockResolvedValue({
+        id: 1,
+        name: "P",
+        price: "9.99",
+        tenantId: 1,
+        status: "active",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
     updateProduct: vi.fn().mockResolvedValue(undefined),
     deleteProduct: vi.fn().mockResolvedValue(undefined),
     getOrders: vi.fn().mockResolvedValue([]),
     getOrderById: vi.fn().mockResolvedValue(null),
-    createOrder: vi.fn().mockResolvedValue({ id: 1, orderNumber: "ORD-001", status: "pending", total: "9.99", tenantId: 1, createdAt: new Date(), updatedAt: new Date() }),
+    createOrder: vi
+      .fn()
+      .mockResolvedValue({
+        id: 1,
+        orderNumber: "ORD-001",
+        status: "pending",
+        total: "9.99",
+        tenantId: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
     updateOrderStatus: vi.fn().mockResolvedValue(undefined),
     getCustomers: vi.fn().mockResolvedValue([]),
-    getAnalyticsSummary: vi.fn().mockResolvedValue({ totalRevenue: "0", orderCount: 0, customerCount: 0, productCount: 0 }),
+    getAnalyticsSummary: vi
+      .fn()
+      .mockResolvedValue({
+        totalRevenue: "0",
+        orderCount: 0,
+        customerCount: 0,
+        productCount: 0,
+      }),
     getRevenueByDay: vi.fn().mockResolvedValue([]),
     getTopProducts: vi.fn().mockResolvedValue([]),
     getWebhookEvents: vi.fn().mockResolvedValue([]),
     getPlans: vi.fn().mockResolvedValue([
-      { id: 1, name: "Starter", slug: "starter", price: "0", maxProducts: 50, maxOrders: 100, maxUsers: 1, features: null, createdAt: new Date() },
-      { id: 2, name: "Pro", slug: "pro", price: "49", maxProducts: 500, maxOrders: 1000, maxUsers: 5, features: null, createdAt: new Date() },
-      { id: 3, name: "Enterprise", slug: "enterprise", price: "199", maxProducts: 9999, maxOrders: 99999, maxUsers: 25, features: null, createdAt: new Date() },
+      {
+        id: 1,
+        name: "Starter",
+        slug: "starter",
+        price: "0",
+        maxProducts: 50,
+        maxOrders: 100,
+        maxUsers: 1,
+        features: null,
+        createdAt: new Date(),
+      },
+      {
+        id: 2,
+        name: "Pro",
+        slug: "pro",
+        price: "49",
+        maxProducts: 500,
+        maxOrders: 1000,
+        maxUsers: 5,
+        features: null,
+        createdAt: new Date(),
+      },
+      {
+        id: 3,
+        name: "Enterprise",
+        slug: "enterprise",
+        price: "199",
+        maxProducts: 9999,
+        maxOrders: 99999,
+        maxUsers: 25,
+        features: null,
+        createdAt: new Date(),
+      },
     ]),
     upsertUser: vi.fn().mockResolvedValue(undefined),
     getUserByOpenId: vi.fn().mockResolvedValue(undefined),
     logWebhookEvent: vi.fn().mockResolvedValue(undefined),
-    getIntegrationStatus: vi.fn().mockResolvedValue({ stripe: { connected: false }, shopify: { connected: false, shopDomain: null }, n8n: { configured: false, webhookUrl: null } }),
+    getIntegrationStatus: vi
+      .fn()
+      .mockResolvedValue({
+        stripe: { connected: false },
+        shopify: { connected: false, shopDomain: null },
+        n8n: { configured: false, webhookUrl: null },
+      }),
     getTenantsByOwner: vi.fn().mockResolvedValue([]),
     getAllTenants: vi.fn().mockResolvedValue([]),
     updateUserTenant: vi.fn().mockResolvedValue(undefined),
@@ -76,7 +150,16 @@ vi.mock("./db", () => {
     getInventory: vi.fn().mockResolvedValue([]),
     getLowStockProducts: vi.fn().mockResolvedValue([]),
     upsertInventory: vi.fn().mockResolvedValue(undefined),
-    createCategory: vi.fn().mockResolvedValue({ id: 1, name: "Test", slug: "test", tenantId: 1, parentId: null, createdAt: new Date() }),
+    createCategory: vi
+      .fn()
+      .mockResolvedValue({
+        id: 1,
+        name: "Test",
+        slug: "test",
+        tenantId: 1,
+        parentId: null,
+        createdAt: new Date(),
+      }),
   };
 });
 
@@ -105,8 +188,30 @@ function makeCtx(overrides: Partial<TrpcContext> = {}): TrpcContext {
 describe("notifications router — Tier 1: In-app notification center", () => {
   beforeEach(() => {
     _dbState.selectResult = [
-      { id: 1, userId: 1, tenantId: 1, type: "info", title: "Welcome", body: null, link: null, read: false, readAt: null, createdAt: new Date() },
-      { id: 2, userId: 1, tenantId: 1, type: "order", title: "Order placed", body: null, link: null, read: true, readAt: new Date(), createdAt: new Date() },
+      {
+        id: 1,
+        userId: 1,
+        tenantId: 1,
+        type: "info",
+        title: "Welcome",
+        body: null,
+        link: null,
+        read: false,
+        readAt: null,
+        createdAt: new Date(),
+      },
+      {
+        id: 2,
+        userId: 1,
+        tenantId: 1,
+        type: "order",
+        title: "Order placed",
+        body: null,
+        link: null,
+        read: true,
+        readAt: new Date(),
+        createdAt: new Date(),
+      },
     ];
     _dbState.insertResult = [{ insertId: 1 }];
     _dbState.updateResult = undefined;
@@ -174,7 +279,11 @@ describe("notifications router — Tier 2: Admin broadcast", () => {
     const ctx = makeCtx({ user: { ...makeCtx().user!, role: "user" } as any });
     const caller = appRouter.createCaller(ctx);
     await expect(
-      caller.notifications.sendToUser({ userId: 2, type: "info", title: "Test" })
+      caller.notifications.sendToUser({
+        userId: 2,
+        type: "info",
+        title: "Test",
+      })
     ).rejects.toThrow();
   });
 
@@ -219,21 +328,32 @@ describe("notifications router — Tier 3: Announcements", () => {
     const ctx = makeCtx({ user: { ...makeCtx().user!, role: "user" } as any });
     const caller = appRouter.createCaller(ctx);
     await expect(
-      caller.notifications.createAnnouncement({ title: "T", body: "B", type: "banner", severity: "info", dismissible: true })
+      caller.notifications.createAnnouncement({
+        title: "T",
+        body: "B",
+        type: "banner",
+        severity: "info",
+        dismissible: true,
+      })
     ).rejects.toThrow();
   });
 
   it("admin can toggle announcement active state", async () => {
     const ctx = makeCtx();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.notifications.toggleAnnouncement({ id: 1, active: false });
+    const result = await caller.notifications.toggleAnnouncement({
+      id: 1,
+      active: false,
+    });
     expect(result.success).toBe(true);
   });
 
   it("user can dismiss an announcement", async () => {
     const ctx = makeCtx();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.notifications.dismissAnnouncement({ announcementId: 1 });
+    const result = await caller.notifications.dismissAnnouncement({
+      announcementId: 1,
+    });
     expect(result.success).toBe(true);
   });
 });
@@ -243,10 +363,18 @@ describe("notifications router — Tier 4: Trigger config", () => {
   beforeEach(() => {
     _dbState.selectResult = [
       {
-        id: 1, tenantId: 1, event: "order.created", n8nEnabled: true, zapierEnabled: false,
-        mailchimpEnabled: false, slackWebhookUrl: null, slackEnabled: false,
-        emailEnabled: true, emailRecipients: "admin@example.com",
-        createdAt: new Date(), updatedAt: new Date(),
+        id: 1,
+        tenantId: 1,
+        event: "order.created",
+        n8nEnabled: true,
+        zapierEnabled: false,
+        mailchimpEnabled: false,
+        slackWebhookUrl: null,
+        slackEnabled: false,
+        emailEnabled: true,
+        emailRecipients: "admin@example.com",
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     ];
     _dbState.insertResult = [{ insertId: 1 }];

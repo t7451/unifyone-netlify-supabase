@@ -166,27 +166,30 @@ Consider factors like:
       }
 
       // ── Create audit log entry ──────────────────────────────────────────────
-      const [auditResult] = await db.insert(auditLogs).values({
-        userId: ctx.user.id,
-        action: `Autonomous ${input.actionType} evaluation`,
-        entityType: input.actionType,
-        decisionAuthority: claudeDecision.recommendedAuthority,
-        escalationTriggered: claudeDecision.requiresEscalation,
-        escalationReason:
-          claudeDecision.violations.length > 0
-            ? `Claude governance evaluation: ${claudeDecision.violations.join("; ")}`
-            : undefined,
-        newValue: {
-          actionType: input.actionType,
-          estimatedValue: input.estimatedValue,
-          claudeDecision,
-        },
-      });
+      const [auditResult] = await db
+        .insert(auditLogs)
+        .values({
+          userId: ctx.user.id,
+          action: `Autonomous ${input.actionType} evaluation`,
+          entityType: input.actionType,
+          decisionAuthority: claudeDecision.recommendedAuthority,
+          escalationTriggered: claudeDecision.requiresEscalation,
+          escalationReason:
+            claudeDecision.violations.length > 0
+              ? `Claude governance evaluation: ${claudeDecision.violations.join("; ")}`
+              : undefined,
+          newValue: {
+            actionType: input.actionType,
+            estimatedValue: input.estimatedValue,
+            claudeDecision,
+          },
+        })
+        .returning();
 
       // ── Create escalation queue entry if needed ─────────────────────────────
-      if (claudeDecision.requiresEscalation && (auditResult as any)?.insertId) {
+      if (claudeDecision.requiresEscalation && auditResult?.id) {
         await db.insert(escalationQueue).values({
-          auditLogId: (auditResult as any).insertId,
+          auditLogId: auditResult.id,
           decisionType: input.actionType,
           decisionContext: {
             description: input.description,

@@ -1,5 +1,5 @@
 import { getDb } from "../db";
-import { escalationQueue, auditLogs } from "../../drizzle/schema";
+import { escalationQueue } from "../../drizzle/schema";
 import { eq, and, lte } from "drizzle-orm";
 
 /**
@@ -20,7 +20,10 @@ export interface EscalationTriggerConfig {
 }
 
 // ── Default Escalation Triggers ────────────────────────────────────────────────
-export const DEFAULT_ESCALATION_TRIGGERS: Record<string, EscalationTriggerConfig> = {
+export const DEFAULT_ESCALATION_TRIGGERS: Record<
+  string,
+  EscalationTriggerConfig
+> = {
   // Payment Processing
   payment_over_10k: {
     actionType: "payment_processing",
@@ -141,7 +144,9 @@ export async function evaluateEscalationTriggers(
   let maxAuthorityRequired: "operator" | "architect" | "cathedral" = "operator";
 
   // ── Check all applicable triggers ──────────────────────────────────────────
-  for (const [triggerKey, trigger] of Object.entries(DEFAULT_ESCALATION_TRIGGERS)) {
+  for (const [triggerKey, trigger] of Object.entries(
+    DEFAULT_ESCALATION_TRIGGERS
+  )) {
     if (trigger.actionType !== actionType) continue;
     if (trigger.thresholdUnit !== unit) continue;
     if (!value || value < (trigger.threshold ?? 0)) continue;
@@ -155,17 +160,22 @@ export async function evaluateEscalationTriggers(
       cathedral: 3,
     };
 
-    if (authorityHierarchy[trigger.authorityLevel] > authorityHierarchy[maxAuthorityRequired]) {
+    if (
+      authorityHierarchy[trigger.authorityLevel] >
+      authorityHierarchy[maxAuthorityRequired]
+    ) {
       maxAuthorityRequired = trigger.authorityLevel;
     }
   }
 
   return {
     shouldEscalate: triggeredRules.length > 0,
-    authorityLevel: triggeredRules.length > 0 ? maxAuthorityRequired : undefined,
+    authorityLevel:
+      triggeredRules.length > 0 ? maxAuthorityRequired : undefined,
     reason:
       triggeredRules.length > 0
-        ? DEFAULT_ESCALATION_TRIGGERS[triggeredRules[triggeredRules.length - 1]]?.reason
+        ? DEFAULT_ESCALATION_TRIGGERS[triggeredRules[triggeredRules.length - 1]]
+            ?.reason
         : undefined,
     triggeredRules,
   };
@@ -187,14 +197,17 @@ export async function createEscalation(
 
   const expiresAt = new Date(Date.now() + expiresIn);
 
-  const [result] = await db.insert(escalationQueue).values({
-    auditLogId,
-    decisionType,
-    decisionContext: context,
-    authorityLevel,
-    status: "pending",
-    expiresAt,
-  });
+  const [result] = await db
+    .insert(escalationQueue)
+    .values({
+      auditLogId,
+      decisionType,
+      decisionContext: context,
+      authorityLevel,
+      status: "pending",
+      expiresAt,
+    })
+    .returning();
 
   return result;
 }
@@ -281,14 +294,18 @@ export async function getEscalationStats() {
   };
 
   // ── Calculate average resolution time ───────────────────────────────────
-  const resolved = escalations.filter(e => e.status !== "pending" && e.resolvedAt);
+  const resolved = escalations.filter(
+    e => e.status !== "pending" && e.resolvedAt
+  );
   if (resolved.length > 0) {
     const totalTime = resolved.reduce((sum, e) => {
       const created = new Date(e.createdAt).getTime();
       const resolved = new Date(e.resolvedAt!).getTime();
       return sum + (resolved - created);
     }, 0);
-    stats.avgResolutionTime = Math.round(totalTime / resolved.length / 1000 / 60); // minutes
+    stats.avgResolutionTime = Math.round(
+      totalTime / resolved.length / 1000 / 60
+    ); // minutes
   }
 
   return stats;

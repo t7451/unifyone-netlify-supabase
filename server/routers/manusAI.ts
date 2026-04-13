@@ -80,7 +80,8 @@ export const manusAIRouter = router({
   getSuggestions: protectedProcedure
     .input(z.object({ context: z.string().default("general") }))
     .query(({ input }) => {
-      const suggestions = CONTEXT_SUGGESTIONS[input.context] ?? CONTEXT_SUGGESTIONS.general;
+      const suggestions =
+        CONTEXT_SUGGESTIONS[input.context] ?? CONTEXT_SUGGESTIONS.general;
       return { suggestions, context: input.context };
     }),
 
@@ -114,7 +115,12 @@ export const manusAIRouter = router({
       const [convo] = await db
         .select()
         .from(aiConversations)
-        .where(and(eq(aiConversations.id, input.id), eq(aiConversations.userId, ctx.user.id)))
+        .where(
+          and(
+            eq(aiConversations.id, input.id),
+            eq(aiConversations.userId, ctx.user.id)
+          )
+        )
         .limit(1);
       if (!convo) throw new Error("Conversation not found");
       return { conversation: convo };
@@ -136,22 +142,33 @@ export const manusAIRouter = router({
         const db = await getDb();
 
         // Build system prompt with optional data context + live MCP data
-        const baseSystemPrompt = CONTEXT_PROMPTS[input.context] ?? CONTEXT_PROMPTS.general;
+        const baseSystemPrompt =
+          CONTEXT_PROMPTS[input.context] ?? CONTEXT_PROMPTS.general;
 
         // Enrich with real shift data from getKaiContext for gig-related pages.
         // This is what makes Kai answer in actual dollars instead of generalities.
         let mcpContext = "";
-        if (["money-manager", "gig-command", "dashboard"].includes(input.context)) {
+        if (
+          ["money-manager", "gig-command", "dashboard"].includes(input.context)
+        ) {
           try {
             const { moneyManagerRouter } = await import("./moneyManager");
             // Call getKaiContext as a server-side function directly (no HTTP roundtrip)
-            const kaiCtx = await moneyManagerRouter._def.procedures.getKaiContext._def.query({
-              ctx: ctx as any,
-              input: { context: input.context as "gig-command" | "money-manager" | "dashboard" },
-              rawInput: { context: input.context },
-              path: "moneyManager.getKaiContext",
-              type: "query",
-            }).catch(() => null);
+            const kaiCtx =
+              await moneyManagerRouter._def.procedures.getKaiContext._def
+                .query({
+                  ctx: ctx as any,
+                  input: {
+                    context: input.context as
+                      | "gig-command"
+                      | "money-manager"
+                      | "dashboard",
+                  },
+                  rawInput: { context: input.context },
+                  path: "moneyManager.getKaiContext",
+                  type: "query",
+                })
+                .catch(() => null);
             if (kaiCtx?.hasSufficientData) {
               mcpContext = `\n\nUser's actual gig performance data (use these exact numbers in your response):\n${kaiCtx.contextJson}`;
             }
@@ -164,18 +181,28 @@ export const manusAIRouter = router({
               if (analytics) {
                 mcpContext = `\n\nPlatform analytics:\n${JSON.stringify(analytics, null, 2)}`;
               }
-            } catch { /* silently skip */ }
+            } catch {
+              /* silently skip */
+            }
           }
         }
 
         const systemPrompt = [
           baseSystemPrompt,
-          input.dataContext ? `\nUser-provided context:\n${input.dataContext}` : "",
+          input.dataContext
+            ? `\nUser-provided context:\n${input.dataContext}`
+            : "",
           mcpContext,
-        ].filter(Boolean).join("\n");
+        ]
+          .filter(Boolean)
+          .join("\n");
 
         // Load or create conversation
-        type ConvoMessage = { role: "user" | "assistant" | "system"; content: string; timestamp: number };
+        type ConvoMessage = {
+          role: "user" | "assistant" | "system";
+          content: string;
+          timestamp: number;
+        };
         let conversationId = input.conversationId;
         let existingMessages: ConvoMessage[] = [];
 
@@ -183,7 +210,12 @@ export const manusAIRouter = router({
           const [existing] = await db
             .select()
             .from(aiConversations)
-            .where(and(eq(aiConversations.id, conversationId), eq(aiConversations.userId, ctx.user.id)))
+            .where(
+              and(
+                eq(aiConversations.id, conversationId),
+                eq(aiConversations.userId, ctx.user.id)
+              )
+            )
             .limit(1);
           if (existing) {
             existingMessages = (existing.messages as ConvoMessage[]) ?? [];
@@ -215,29 +247,51 @@ export const manusAIRouter = router({
             },
           });
           const rawContent = response.choices[0]?.message?.content;
-          assistantContent = typeof rawContent === "string" ? rawContent : "I'm sorry, I couldn't generate a response. Please try again.";
+          assistantContent =
+            typeof rawContent === "string"
+              ? rawContent
+              : "I'm sorry, I couldn't generate a response. Please try again.";
         } catch (llmError) {
-          console.error("[Manus AI] LLM invocation failed:", llmError instanceof Error ? llmError.message : String(llmError));
-          assistantContent = "I encountered a temporary issue processing your request. Please try again in a moment.";
+          console.error(
+            "[Manus AI] LLM invocation failed:",
+            llmError instanceof Error ? llmError.message : String(llmError)
+          );
+          assistantContent =
+            "I encountered a temporary issue processing your request. Please try again in a moment.";
         }
 
         // Persist conversation
         const now = Date.now();
-        const userMsg: ConvoMessage = { role: "user", content: input.message, timestamp: now };
-        const assistantMsg: ConvoMessage = { role: "assistant", content: assistantContent, timestamp: now + 1 };
+        const userMsg: ConvoMessage = {
+          role: "user",
+          content: input.message,
+          timestamp: now,
+        };
+        const assistantMsg: ConvoMessage = {
+          role: "assistant",
+          content: assistantContent,
+          timestamp: now + 1,
+        };
         const updatedMessages = [...existingMessages, userMsg, assistantMsg];
 
         // Auto-generate title from first user message
-        const title = existingMessages.length === 0
-          ? input.message.slice(0, 80) + (input.message.length > 80 ? "…" : "")
-          : undefined;
+        const title =
+          existingMessages.length === 0
+            ? input.message.slice(0, 80) +
+              (input.message.length > 80 ? "…" : "")
+            : undefined;
 
         if (db) {
           if (conversationId) {
             await db
               .update(aiConversations)
               .set({ messages: updatedMessages, updatedAt: new Date() })
-              .where(and(eq(aiConversations.id, conversationId), eq(aiConversations.userId, ctx.user.id)));
+              .where(
+                and(
+                  eq(aiConversations.id, conversationId),
+                  eq(aiConversations.userId, ctx.user.id)
+                )
+              );
           } else {
             const [inserted] = await db
               .insert(aiConversations)
@@ -247,7 +301,7 @@ export const manusAIRouter = router({
                 messages: updatedMessages,
                 title: title ?? "New Conversation",
               })
-              .$returningId();
+              .returning({ id: aiConversations.id });
             conversationId = inserted?.id;
           }
         }
@@ -258,7 +312,10 @@ export const manusAIRouter = router({
           messageCount: updatedMessages.length,
         };
       } catch (error) {
-        console.error("[Manus AI] Chat mutation failed:", error instanceof Error ? error.message : String(error));
+        console.error(
+          "[Manus AI] Chat mutation failed:",
+          error instanceof Error ? error.message : String(error)
+        );
         throw new Error("Failed to process chat message. Please try again.");
       }
     }),
@@ -271,7 +328,12 @@ export const manusAIRouter = router({
       if (!db) throw new Error("DB unavailable");
       await db
         .delete(aiConversations)
-        .where(and(eq(aiConversations.id, input.id), eq(aiConversations.userId, ctx.user.id)));
+        .where(
+          and(
+            eq(aiConversations.id, input.id),
+            eq(aiConversations.userId, ctx.user.id)
+          )
+        );
       return { success: true };
     }),
 
@@ -279,7 +341,9 @@ export const manusAIRouter = router({
   clearAllConversations: protectedProcedure.mutation(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new Error("DB unavailable");
-    await db.delete(aiConversations).where(eq(aiConversations.userId, ctx.user.id));
+    await db
+      .delete(aiConversations)
+      .where(eq(aiConversations.userId, ctx.user.id));
     return { success: true };
   }),
 });
