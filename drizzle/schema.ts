@@ -82,6 +82,12 @@ export const users = pgTable("users", {
   emailVerificationToken: varchar("emailVerificationToken", { length: 128 }).unique(),
   passwordResetToken: varchar("passwordResetToken", { length: 128 }).unique(),
   passwordResetExpiresAt: timestamp("passwordResetExpiresAt"),
+  /**
+   * Set whenever the user successfully resets their password.
+   * Any JWT with iat < passwordChangedAt (seconds) is treated as invalidated —
+   * this is the mechanism for session revocation after a password reset.
+   */
+  passwordChangedAt: timestamp("passwordChangedAt"),
   role: roleEnum("role").default("user").notNull(),
   tenantId: integer("tenantId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

@@ -565,6 +565,8 @@ export async function resetPassword(
   }
 
   const passwordHash = await hashPassword(newPassword);
+  // Stamp passwordChangedAt so the SDK rejects any JWT issued before this moment.
+  const passwordChangedAt = new Date();
 
   await db
     .update(users)
@@ -572,6 +574,7 @@ export async function resetPassword(
       passwordHash,
       passwordResetToken: null,
       passwordResetExpiresAt: null,
+      passwordChangedAt,
     })
     .where(eq(users.openId, user.openId));
 
