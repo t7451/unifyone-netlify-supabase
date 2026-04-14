@@ -11,6 +11,8 @@ import {
   date,
   serial,
   jsonb,
+  uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
 
 // ── PostgreSQL Enums ─────────────────────────────────────────────────────────
@@ -77,6 +79,15 @@ export const users = pgTable("users", {
   passwordHash: varchar("passwordHash", { length: 255 }), // bcrypt/scrypt hash
   loginMethod: varchar("loginMethod", { length: 64 }),
   emailVerified: boolean("emailVerified").default(false),
+  emailVerificationToken: varchar("emailVerificationToken", { length: 128 }).unique(),
+  passwordResetToken: varchar("passwordResetToken", { length: 128 }).unique(),
+  passwordResetExpiresAt: timestamp("passwordResetExpiresAt"),
+  /**
+   * Set whenever the user successfully resets their password.
+   * Any JWT with iat < passwordChangedAt (seconds) is treated as invalidated —
+   * this is the mechanism for session revocation after a password reset.
+   */
+  passwordChangedAt: timestamp("passwordChangedAt"),
   role: roleEnum("role").default("user").notNull(),
   tenantId: integer("tenantId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -195,25 +206,35 @@ export const inventory = pgTable("inventory", {
 export type Inventory = typeof inventory.$inferSelect;
 
 // ── Customers ─────────────────────────────────────────────────────────────────
-export const customers = pgTable("customers", {
-  id: serial("id").primaryKey(),
-  tenantId: integer("tenantId").notNull(),
-  email: varchar("email", { length: 320 }).notNull(),
-  firstName: varchar("firstName", { length: 255 }),
-  lastName: varchar("lastName", { length: 255 }),
-  phone: varchar("phone", { length: 50 }),
-  stripeCustomerId: varchar("stripeCustomerId", { length: 100 }),
-  shopifyCustomerId: varchar("shopifyCustomerId", { length: 100 }),
-  totalOrders: integer("totalOrders").default(0),
-  totalSpent: decimal("totalSpent", { precision: 12, scale: 2 }).default("0.00"),
-  tags: json("tags").$type<string[]>(),
-  address: json("address").$type<{
-    line1?: string; line2?: string; city?: string;
-    state?: string; zip?: string; country?: string;
-  }>(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
+export const customers = pgTable(
+  "customers",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull(),
+    email: varchar("email", { length: 320 }).notNull(),
+    firstName: varchar("firstName", { length: 255 }),
+    lastName: varchar("lastName", { length: 255 }),
+    phone: varchar("phone", { length: 50 }),
+    stripeCustomerId: varchar("stripeCustomerId", { length: 100 }),
+    shopifyCustomerId: varchar("shopifyCustomerId", { length: 100 }),
+    totalOrders: integer("totalOrders").default(0),
+    totalSpent: decimal("totalSpent", { precision: 12, scale: 2 }).default("0.00"),
+    tags: json("tags").$type<string[]>(),
+    address: json("address").$type<{
+      line1?: string; line2?: string; city?: string;
+      state?: string; zip?: string; country?: string;
+    }>(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    // Unique customer per (tenant, email) — enables safe upsertCustomer
+    tenantEmailIdx: uniqueIndex("customers_tenantId_email_idx").on(
+      table.tenantId,
+      table.email
+    ),
+  })
+);
 
 export type Customer = typeof customers.$inferSelect;
 

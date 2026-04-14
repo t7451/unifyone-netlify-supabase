@@ -1,7 +1,7 @@
 import express, { type Express, type Request, type Response } from "express";
-import { getDb } from "./db";
+import { getDb, getOrderById } from "./db";
 import { orders } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { errMsg } from "./_core/errors";
 
 const PAYPAL_BASE = "https://api-m.paypal.com";
@@ -27,7 +27,7 @@ async function getPayPalAccessToken(): Promise<string> {
     body: "grant_type=client_credentials",
   });
 
-  const data = (await response.json()) as any;
+  const data = (await response.json()) as Record<string, unknown>;
 
   if (!response.ok) {
     throw new Error(
@@ -128,7 +128,18 @@ export async function capturePayPalOrder(paypalOrderId: string): Promise<{
     }
   );
 
-  const data = (await response.json()) as any;
+  type PayPalCaptureResponse = {
+    status?: string;
+    purchase_units?: Array<{
+      payments?: {
+        captures?: Array<{
+          id?: string;
+          amount?: { value?: string; currency_code?: string };
+        }>;
+      };
+    }>;
+  };
+  const data = (await response.json()) as PayPalCaptureResponse;
 
   if (!response.ok) {
     throw new Error(`PayPal capture failed: ${JSON.stringify(data)}`);
@@ -137,7 +148,7 @@ export async function capturePayPalOrder(paypalOrderId: string): Promise<{
   const capture = data.purchase_units?.[0]?.payments?.captures?.[0];
 
   return {
-    status: data.status,
+    status: data.status ?? "",
     captureId: capture?.id || "",
     amount: capture?.amount?.value || "0",
     currency: capture?.amount?.currency_code || "USD",
@@ -195,6 +206,31 @@ export function registerPayPalRoutes(app: Express) {
         if (internalOrderId && result.status === "COMPLETED") {
           const db = await getDb();
           if (db) {
+            const parsedOrderId = parseInt(internalOrderId);
+            // Look up the order to obtain its tenantId, then re-validate ownership
+            // atomically using getOrderById(id, tenantId) before updating.
+            const [orderRow] = await db
+              .select({ tenantId: orders.tenantId })
+              .from(orders)
+              .where(eq(orders.id, parsedOrderId))
+              .limit(1);
+            if (!orderRow) {
+              console.warn(
+                `[PayPal] Capture rejected: internalOrderId ${parsedOrderId} not found`
+              );
+              return res.status(400).json({ error: "Order not found" });
+            }
+            // Re-validate: getOrderById enforces tenantId in the WHERE clause
+            const validatedOrder = await getOrderById(
+              parsedOrderId,
+              orderRow.tenantId
+            );
+            if (!validatedOrder) {
+              console.warn(
+                `[PayPal] Capture rejected: tenantId mismatch for order ${parsedOrderId}`
+              );
+              return res.status(400).json({ error: "Order not found" });
+            }
             await db
               .update(orders)
               .set({
@@ -202,7 +238,12 @@ export function registerPayPalRoutes(app: Express) {
                 paymentMethod: "paypal",
                 paypalOrderId: paypalOrderId,
               })
-              .where(eq(orders.id, parseInt(internalOrderId)));
+              .where(
+                and(
+                  eq(orders.id, parsedOrderId),
+                  eq(orders.tenantId, orderRow.tenantId)
+                )
+              );
           }
         }
 

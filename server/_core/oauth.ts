@@ -96,11 +96,11 @@ export async function registerOAuthFetchRoutes(
 
       // Determine if request is secure (for cookie flags)
       const forwardedProto = req.headers.get("x-forwarded-proto");
-      const isSecure =
-        forwardedProto === "https" || url.protocol === "https:";
+      const isSecure = forwardedProto === "https" || url.protocol === "https:";
 
       // Build Set-Cookie header
       const maxAgeSeconds = Math.floor(ONE_YEAR_MS / 1000);
+      const cookieDomain = ENV.cookieDomain;
       const cookieParts = [
         `${COOKIE_NAME}=${sessionToken}`,
         "Path=/",
@@ -108,9 +108,8 @@ export async function registerOAuthFetchRoutes(
         "SameSite=Lax",
         `Max-Age=${maxAgeSeconds}`,
       ];
-      if (isSecure) {
-        cookieParts.push("Secure");
-      }
+      if (isSecure) cookieParts.push("Secure");
+      if (cookieDomain) cookieParts.push(`Domain=${cookieDomain}`);
       const setCookieHeader = cookieParts.join("; ");
 
       return new Response(JSON.stringify({ success: true }), {

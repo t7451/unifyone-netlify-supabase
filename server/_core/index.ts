@@ -11,6 +11,24 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerDockerRoutes, registerGracefulShutdown } from "./docker";
+import { ENV } from "./env";
+import { logger, requestLogger } from "./logger";
+import { securityHeaders } from "./securityHeaders";
+
+/** Validate critical environment variables before the server accepts traffic. */
+function validateEnv() {
+  if (!ENV.cookieSecret || ENV.cookieSecret.length < 32) {
+    throw new Error(
+      "[startup] JWT_SECRET (or SUPABASE_JWT_SECRET) must be set and at least 32 characters long. " +
+        "Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
+    );
+  }
+  if (!ENV.databaseUrl) {
+    console.warn(
+      "[startup] DATABASE_URL is not set — database features will be unavailable."
+    );
+  }
+}
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -32,8 +50,11 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  validateEnv();
   const app = express();
   const server = createServer(app);
+  // Security headers on every response (before all route handlers)
+  app.use(securityHeaders);
   // Docker health/readiness/metrics routes (no auth, no body parsing needed)
   registerDockerRoutes(app);
   // Register Stripe webhook BEFORE json middleware (requires raw body for signature verification)
@@ -45,6 +66,8 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Structured request/response logging (attaches X-Request-Id header)
+  app.use(requestLogger);
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API
@@ -66,15 +89,27 @@ async function startServer() {
   const port = await findAvailablePort(preferredPort);
 
   if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
+    logger.warn("Preferred port busy, using alternate", {
+      preferred: preferredPort,
+      actual: port,
+    });
   }
 
   server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+    logger.info("Server started", {
+      port,
+      env: process.env.NODE_ENV ?? "development",
+      url: `http://localhost:${port}/`,
+    });
   });
 
   // Graceful shutdown for Docker stop / SIGTERM
   registerGracefulShutdown(server);
 }
 
-startServer().catch(console.error);
+startServer().catch(err => {
+  logger.error("Fatal startup error", {
+    error: err instanceof Error ? err.message : String(err),
+  });
+  process.exit(1);
+});

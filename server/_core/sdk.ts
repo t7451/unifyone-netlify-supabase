@@ -136,6 +136,8 @@ class SDKServer {
 
     // Graceful fallback: if DB is unavailable (e.g. during migration),
     // construct a minimal user from the verified session payload so auth works.
+    // Role is intentionally conservative (user) in this fallback — the DB is
+    // the authoritative source of truth for roles.
     if (!user) {
       user = {
         id: 0,
@@ -143,16 +145,25 @@ class SDKServer {
         name: session.name || "UnifyOne User",
         email: session.email ?? null,
         loginMethod: session.loginMethod ?? "supabase",
-        role: session.openId === ENV.ownerOpenId ? "admin" : "user",
+        // Never grant admin via JWT fallback — DB is the source of truth for roles.
+        role: "user",
         tenantId: null,
         createdAt: signedInAt,
         lastSignedIn: signedInAt,
       } as User;
     } else {
-      await db.upsertUser({
-        openId: user.openId,
-        lastSignedIn: signedInAt,
-      });
+      // Only write lastSignedIn if it's been more than 5 minutes since the last
+      // update — avoids a DB write on every single authenticated request.
+      const FIVE_MINUTES_MS = 5 * 60 * 1000;
+      const lastSignedInMs = user.lastSignedIn
+        ? new Date(user.lastSignedIn).getTime()
+        : 0;
+      if (signedInAt.getTime() - lastSignedInMs > FIVE_MINUTES_MS) {
+        await db.upsertUser({
+          openId: user.openId,
+          lastSignedIn: signedInAt,
+        });
+      }
     }
 
     return user;
