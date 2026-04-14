@@ -103,14 +103,7 @@ function initializeApp() {
       const refreshButton = document.createElement("button");
       refreshButton.textContent = "Refresh Page";
       refreshButton.style.cssText = "margin-top: 1.5rem; padding: 0.75rem 2rem; background: #D4A843; color: #020202; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; letter-spacing: 0.05em;";
-      refreshButton.setAttribute("tabindex", "0");
       refreshButton.onclick = () => window.location.reload();
-      refreshButton.onkeydown = (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          window.location.reload();
-        }
-      };
       
       errorContent.appendChild(heading);
       errorContent.appendChild(description);
