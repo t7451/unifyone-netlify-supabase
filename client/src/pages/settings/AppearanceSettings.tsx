@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   Card,
   CardContent,
@@ -16,20 +17,20 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Palette, Sun, Moon, Globe, Clock } from "lucide-react";
+import { Palette, Sun, Moon, Globe, Clock, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SettingsLayout from "./SettingsLayout";
 
 const THEMES = [
   {
-    value: "dark",
+    value: "dark" as const,
     label: "Dark",
     icon: Moon,
     description: "Dark background, easy on the eyes",
     colors: ["#0A1128", "#1A1A2E", "#00D9FF"],
   },
   {
-    value: "light",
+    value: "light" as const,
     label: "Light",
     icon: Sun,
     description: "Bright and clean interface",
@@ -61,6 +62,7 @@ const TIMEZONES = [
 ];
 
 export default function AppearanceSettings() {
+  const { theme, setTheme } = useTheme();
   const prefs = trpc.user.getPreferences.useQuery();
   const utils = trpc.useUtils();
 
@@ -71,6 +73,11 @@ export default function AppearanceSettings() {
     },
     onError: (e: { message: string }) => toast.error(e.message),
   });
+
+  const handleThemeChange = (value: "light" | "dark") => {
+    setTheme(value);
+    updatePrefs.mutate({ theme: value });
+  };
 
   if (prefs.isLoading) {
     return (
@@ -88,6 +95,27 @@ export default function AppearanceSettings() {
             </CardContent>
           </Card>
         </div>
+      </SettingsLayout>
+    );
+  }
+
+  if (prefs.isError) {
+    return (
+      <SettingsLayout>
+        <Card className="bg-card border-border">
+          <CardContent className="py-8">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <AlertCircle className="w-8 h-8 text-red-400" />
+              <p className="text-white font-medium">
+                Failed to load preferences
+              </p>
+              <p className="text-gray-500 text-sm max-w-md">
+                {prefs.error?.message ||
+                  "Could not connect to the server. Please try again later."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </SettingsLayout>
     );
   }
@@ -110,17 +138,13 @@ export default function AppearanceSettings() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {THEMES.map(theme => {
-                const isActive = (p?.theme ?? "dark") === theme.value;
-                const Icon = theme.icon;
+              {THEMES.map(t => {
+                const isActive = theme === t.value;
+                const Icon = t.icon;
                 return (
                   <button
-                    key={theme.value}
-                    onClick={() =>
-                      updatePrefs.mutate({
-                        theme: theme.value as "light" | "dark",
-                      })
-                    }
+                    key={t.value}
+                    onClick={() => handleThemeChange(t.value)}
                     disabled={updatePrefs.isPending}
                     className={cn(
                       "p-4 rounded-xl border text-left transition-all",
@@ -150,16 +174,14 @@ export default function AppearanceSettings() {
                             isActive ? "text-white" : "text-gray-400"
                           )}
                         >
-                          {theme.label}
+                          {t.label}
                         </p>
-                        <p className="text-xs text-gray-600">
-                          {theme.description}
-                        </p>
+                        <p className="text-xs text-gray-600">{t.description}</p>
                       </div>
                     </div>
                     {/* Color preview */}
                     <div className="flex gap-1.5">
-                      {theme.colors.map((color, i) => (
+                      {t.colors.map((color, i) => (
                         <div
                           key={i}
                           className="w-6 h-6 rounded border border-white/10"
@@ -172,9 +194,8 @@ export default function AppearanceSettings() {
               })}
             </div>
             <p className="text-xs text-gray-600 mt-3">
-              Theme preference is saved to your account and syncs across
-              devices. Note: Light mode is coming soon, dark mode is currently
-              the default.
+              Theme preference is saved to your account and synced across
+              devices.
             </p>
           </CardContent>
         </Card>

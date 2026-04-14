@@ -113,4 +113,24 @@ export const userRouter = router({
         .limit(1);
       return result[0];
     }),
+
+  /**
+   * Revoke all sessions by setting passwordChangedAt to now.
+   * Any JWT with iat < passwordChangedAt is rejected by the SDK.
+   */
+  revokeAllSessions: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db)
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "DB unavailable",
+      });
+
+    await db
+      .update(users)
+      .set({ passwordChangedAt: new Date() })
+      .where(eq(users.id, ctx.user.id));
+
+    return { success: true };
+  }),
 });

@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -31,13 +30,9 @@ import {
   AlertTriangle,
   AlertCircle,
   CreditCard,
-  ExternalLink,
-  Zap,
-  Shield,
-  Crown,
-  ArrowUpRight,
-  CheckCircle,
+  ArrowRight,
 } from "lucide-react";
+import { useLocation } from "wouter";
 import MCPStatusWidget from "@/components/MCPStatusWidget";
 import SettingsLayout from "./SettingsLayout";
 
@@ -63,250 +58,39 @@ const ALERT_TYPES = [
   },
 ] as const;
 
-const PLAN_ICONS: Record<string, React.ReactNode> = {
-  starter: <Zap className="w-4 h-4 text-blue-400" />,
-  pro: <Shield className="w-4 h-4 text-[#00D9FF]" />,
-  enterprise: <Crown className="w-4 h-4 text-amber-400" />,
-};
-
-const PLAN_GRADIENTS: Record<string, string> = {
-  starter: "from-blue-500/10 to-blue-600/5",
-  pro: "from-[#00D9FF]/10 to-[#0284C7]/5",
-  enterprise: "from-amber-500/10 to-amber-600/5",
-};
-
 export default function AdvancedSettings() {
   const { user } = useAuth();
-  const tenantList = trpc.tenant.list.useQuery();
-  const tenant = tenantList.data?.[0];
-  const plans = trpc.tenant.getPlans.useQuery();
-  const [checkoutLoading, setCheckoutLoading] = useState<number | null>(null);
-  const [portalLoading, setPortalLoading] = useState(false);
-
-  const handleUpgrade = async (plan: Record<string, unknown>) => {
-    if (!plan.stripePriceIdMonthly && !plan.stripePriceId) {
-      toast.error("No Stripe price configured for this plan. Contact support.");
-      return;
-    }
-    const priceId = (plan.stripePriceIdMonthly || plan.stripePriceId) as string;
-    setCheckoutLoading(plan.id as number);
-    try {
-      const res = await fetch("/api/stripe/create-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          priceId,
-          tenantId: tenant?.id,
-          userId: user?.id,
-          userEmail: user?.email,
-          userName: user?.name,
-          origin: window.location.origin,
-        }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        toast.success("Redirecting to Stripe Checkout...");
-        window.open(data.url, "_blank");
-      } else {
-        toast.error(data.error || "Failed to create checkout session");
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Checkout failed");
-    } finally {
-      setCheckoutLoading(null);
-    }
-  };
-
-  const handleManageBilling = async () => {
-    if (!tenant?.stripeCustomerId) {
-      toast.info("No active subscription found. Upgrade a plan first.");
-      return;
-    }
-    setPortalLoading(true);
-    try {
-      const res = await fetch("/api/stripe/customer-portal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerId: tenant.stripeCustomerId,
-          origin: window.location.origin,
-        }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        toast.success("Opening billing portal...");
-        window.open(data.url, "_blank");
-      } else {
-        toast.error(data.error || "Failed to open billing portal");
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Billing portal failed");
-    } finally {
-      setPortalLoading(false);
-    }
-  };
+  const [, navigate] = useLocation();
 
   return (
     <SettingsLayout>
       <div className="space-y-6">
-        {/* Subscription Plans */}
+        {/* Billing link card */}
         <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-[#10B981]" />
-              Subscription Plans
-            </CardTitle>
-            <CardDescription className="text-gray-400">
-              {tenant?.stripeCustomerId
-                ? "Manage your current plan or upgrade"
-                : "Choose a plan to unlock more features"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Billing management */}
-            {tenant?.stripeCustomerId && (
-              <div className="mb-4 space-y-2">
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                  <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="text-emerald-400 text-sm">
-                    Active subscription
-                  </span>
+          <CardContent className="py-5">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                  <CreditCard className="w-5 h-5 text-emerald-400" />
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full border border-white/10 text-gray-300 hover:text-white hover:border-white/20"
-                  onClick={handleManageBilling}
-                  disabled={portalLoading}
-                >
-                  {portalLoading ? (
-                    <>
-                      <Loader2 className="w-3 h-3 mr-2 animate-spin" />
-                      Opening Portal...
-                    </>
-                  ) : (
-                    <>
-                      <ExternalLink className="w-3 h-3 mr-2" />
-                      Manage Billing
-                    </>
-                  )}
-                </Button>
+                <div>
+                  <p className="text-white font-medium">
+                    Billing & Subscription
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    Manage your plan, payment method, and invoices
+                  </p>
+                </div>
               </div>
-            )}
-
-            {plans.isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[1, 2, 3].map(i => (
-                  <div
-                    key={i}
-                    className="h-52 rounded-xl bg-white/5 animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {(plans.data ?? []).map((plan: Record<string, unknown>) => {
-                  const isCurrent = plan.id === tenant?.planId;
-                  const slug = plan.slug?.toLowerCase() ?? "starter";
-                  const icon = PLAN_ICONS[slug] ?? (
-                    <Zap className="w-4 h-4 text-gray-400" />
-                  );
-                  const gradient = PLAN_GRADIENTS[slug] ?? "";
-                  const isUpgrading = checkoutLoading === plan.id;
-
-                  return (
-                    <div
-                      key={plan.id}
-                      className={`rounded-xl p-5 border transition-all ${
-                        isCurrent
-                          ? "border-[#00D9FF]/50 bg-gradient-to-br " + gradient
-                          : "border-white/10 bg-white/3 hover:border-white/20"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          {icon}
-                          <h3 className="text-white font-semibold">
-                            {plan.name}
-                          </h3>
-                        </div>
-                        {isCurrent && (
-                          <Badge
-                            variant="outline"
-                            className="border-[#00D9FF]/40 text-[#00D9FF] text-xs"
-                          >
-                            Current
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="mb-4">
-                        <span className="text-3xl font-bold text-white">
-                          {plan.price === "0"
-                            ? "Free"
-                            : `$${Number(plan.price).toFixed(0)}`}
-                        </span>
-                        {plan.price !== "0" && (
-                          <span className="text-gray-400 text-sm font-normal">
-                            /mo
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-gray-400 text-xs space-y-1.5 mb-5">
-                        <div className="flex items-center gap-1.5">
-                          <CheckCircle className="w-3 h-3 text-gray-500" />
-                          Up to{" "}
-                          {plan.maxProducts === 9999
-                            ? "Unlimited"
-                            : plan.maxProducts}{" "}
-                          products
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <CheckCircle className="w-3 h-3 text-gray-500" />
-                          Up to{" "}
-                          {plan.maxOrders === 99999
-                            ? "Unlimited"
-                            : plan.maxOrders}{" "}
-                          orders/mo
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <CheckCircle className="w-3 h-3 text-gray-500" />
-                          {plan.maxUsers === 25 ? "25+" : plan.maxUsers} team
-                          member{plan.maxUsers !== 1 ? "s" : ""}
-                        </div>
-                      </div>
-                      {isCurrent ? (
-                        <div className="w-full py-2 text-center text-[#00D9FF] text-sm font-medium">
-                          Active Plan
-                        </div>
-                      ) : (
-                        <Button
-                          size="sm"
-                          className="w-full bg-white/5 border border-white/20 text-white hover:bg-[#00D9FF]/10 hover:border-[#00D9FF]/40 hover:text-[#00D9FF] transition-all text-xs font-medium"
-                          onClick={() => handleUpgrade(plan)}
-                          disabled={isUpgrading || !!checkoutLoading}
-                        >
-                          {isUpgrading ? (
-                            <>
-                              <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
-                              Processing...
-                            </>
-                          ) : (
-                            <>
-                              <ArrowUpRight className="w-3 h-3 mr-1.5" />
-                              Upgrade to {plan.name}
-                            </>
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            <p className="text-gray-500 text-xs mt-4 text-center">
-              Payments are processed securely by Stripe. All transactions are
-              encrypted and PCI-compliant.
-            </p>
+              <Button
+                variant="outline"
+                className="border-white/10 text-gray-300 hover:text-white hover:border-white/20 shrink-0"
+                onClick={() => navigate("/billing")}
+              >
+                Manage
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -391,10 +175,12 @@ function OwnerAlertComposer() {
               </SelectTrigger>
               <SelectContent>
                 {members.map((m: Record<string, unknown>) => (
-                  <SelectItem key={m.id} value={String(m.id)}>
+                  <SelectItem key={String(m.id)} value={String(m.id)}>
                     <span className="flex items-center gap-2">
-                      <span>{m.name || m.email}</span>
-                      <span className="text-xs text-gray-500">#{m.id}</span>
+                      <span>{(m.name as string) || (m.email as string)}</span>
+                      <span className="text-xs text-gray-500">
+                        #{String(m.id)}
+                      </span>
                     </span>
                   </SelectItem>
                 ))}
@@ -479,7 +265,9 @@ function OwnerAlertComposer() {
                 </div>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                To: {selectedMember.name || selectedMember.email}
+                To:{" "}
+                {(selectedMember.name as string) ||
+                  (selectedMember.email as string)}
               </p>
             </div>
           ) : (

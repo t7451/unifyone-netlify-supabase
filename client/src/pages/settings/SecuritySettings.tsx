@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 import {
   Card,
   CardContent,
@@ -18,20 +19,30 @@ import {
   LogOut,
   CheckCircle,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import SettingsLayout from "./SettingsLayout";
 
 export default function SecuritySettings() {
   const { user, logout } = useAuth();
 
+  const revokeAll = trpc.user.revokeAllSessions.useMutation({
+    onSuccess: () => {
+      toast.success(
+        "All other sessions have been revoked. You will need to sign in again."
+      );
+      // Current session is also invalidated, sign out after brief delay
+      setTimeout(() => logout(), 1500);
+    },
+    onError: (e: { message: string }) => toast.error(e.message),
+  });
+
   const handlePasswordReset = () => {
     window.location.href = "/reset-password";
   };
 
   const handleSignOutAll = () => {
-    toast.info(
-      "To sign out all sessions, reset your password. This invalidates all active tokens."
-    );
+    revokeAll.mutate();
   };
 
   const userRecord = user as Record<string, unknown> | undefined;
@@ -87,8 +98,14 @@ export default function SecuritySettings() {
               className="border-white/10 text-gray-300 hover:text-white hover:border-white/20"
             >
               <Key className="w-4 h-4 mr-2" />
-              {hasPassword ? "Change Password" : "Set Password"}
+              {hasPassword ? "Reset Password" : "Set Password"}
             </Button>
+            {hasPassword && (
+              <p className="text-xs text-gray-600">
+                Opens the password reset flow. A reset link will be sent to your
+                email.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -219,11 +236,21 @@ export default function SecuritySettings() {
             <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 onClick={handleSignOutAll}
+                disabled={revokeAll.isPending}
                 variant="outline"
                 className="border-white/10 text-gray-300 hover:text-white hover:border-white/20"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out All Sessions
+                {revokeAll.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Revoking...
+                  </>
+                ) : (
+                  <>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Revoke All Sessions
+                  </>
+                )}
               </Button>
               <Button
                 onClick={logout}
@@ -234,6 +261,10 @@ export default function SecuritySettings() {
                 Sign Out
               </Button>
             </div>
+            <p className="text-xs text-gray-600">
+              Revoking all sessions invalidates every active login token,
+              including this one. You will be signed out.
+            </p>
           </CardContent>
         </Card>
       </div>

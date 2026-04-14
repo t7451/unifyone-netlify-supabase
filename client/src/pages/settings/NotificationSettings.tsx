@@ -19,6 +19,7 @@ import {
   Users,
   Megaphone,
   BarChart3,
+  AlertCircle,
 } from "lucide-react";
 import SettingsLayout from "./SettingsLayout";
 
@@ -54,6 +55,27 @@ export default function NotificationSettings() {
             </CardContent>
           </Card>
         </div>
+      </SettingsLayout>
+    );
+  }
+
+  if (prefs.isError) {
+    return (
+      <SettingsLayout>
+        <Card className="bg-card border-border">
+          <CardContent className="py-8">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <AlertCircle className="w-8 h-8 text-red-400" />
+              <p className="text-white font-medium">
+                Failed to load preferences
+              </p>
+              <p className="text-gray-500 text-sm max-w-md">
+                {prefs.error?.message ||
+                  "Could not connect to the server. Please try again later."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </SettingsLayout>
     );
   }
