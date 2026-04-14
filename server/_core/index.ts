@@ -13,6 +13,7 @@ import { serveStatic, setupVite } from "./vite";
 import { registerDockerRoutes, registerGracefulShutdown } from "./docker";
 import { ENV } from "./env";
 import { logger, requestLogger } from "./logger";
+import { securityHeaders } from "./securityHeaders";
 
 /** Validate critical environment variables before the server accepts traffic. */
 function validateEnv() {
@@ -52,6 +53,8 @@ async function startServer() {
   validateEnv();
   const app = express();
   const server = createServer(app);
+  // Security headers on every response (before all route handlers)
+  app.use(securityHeaders);
   // Docker health/readiness/metrics routes (no auth, no body parsing needed)
   registerDockerRoutes(app);
   // Register Stripe webhook BEFORE json middleware (requires raw body for signature verification)

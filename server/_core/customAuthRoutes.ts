@@ -22,6 +22,9 @@ import {
 } from "./customAuth";
 import { authRateLimiter, passwordResetLimiter } from "./rateLimiter";
 import { ENV, getAppUrl } from "./env";
+import { getDb } from "../db";
+import { users as usersTable } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 function getClientIp(req: Request): string {
   // Standard forwarded-for header (Netlify / proxies set this)
@@ -418,17 +421,15 @@ export async function registerCustomAuthFetchRoutes(
       }
 
       // Look up user — always return success to prevent enumeration
-      const db = await (await import("../db")).getDb();
+      const db = await getDb();
       if (db) {
-        const { users: usersTable } = await import("../../drizzle/schema");
-        const { eq: eqFn } = await import("drizzle-orm");
         const rows = await db
           .select({
             openId: usersTable.openId,
             emailVerified: usersTable.emailVerified,
           })
           .from(usersTable)
-          .where(eqFn(usersTable.email, email.toLowerCase().trim()))
+          .where(eq(usersTable.email, email.toLowerCase().trim()))
           .limit(1);
         const user = rows[0];
         if (user && user.emailVerified === false) {
