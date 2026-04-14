@@ -4,9 +4,9 @@ This document outlines the steps to deploy the governance system (Phases 40-44) 
 
 ## Prerequisites
 
-- Production database access (MySQL/TiDB)
+- Production database access (PostgreSQL / Neon)
 - Environment variables configured:
-  - `DATABASE_URL` — MySQL connection string
+  - `DATABASE_URL` — PostgreSQL (Neon) connection string
   - `OPENAI_API_KEY` — Claude API key for governance decisions
   - `RESEND_API_KEY` — Email service for notifications
   - `META_PIXEL_ID` — Meta pixel for tracking
@@ -202,7 +202,7 @@ Add these to your cron/scheduler:
 
 ```bash
 # Backup governance tables (daily)
-mysqldump -u user -p database audit_logs escalation_queue decision_authority > backup.sql
+pg_dump -t audit_logs -t escalation_queue -t decision_authority $DATABASE_URL > backup.sql
 
 # Archive old audit logs (monthly)
 DELETE FROM audit_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY);

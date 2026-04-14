@@ -6,7 +6,7 @@
 | ----------- | ------------------------- | ------------------------------------------------ |
 | Frontend    | React 19 SPA (Vite)       | Built to `dist/public`, served by Netlify CDN    |
 | Backend API | Express + tRPC 11         | Runs as Netlify Function via `serverless-http`   |
-| Database    | MySQL (Drizzle ORM)       | External — connection via `DATABASE_URL`         |
+| Database    | PostgreSQL / Neon (Drizzle ORM) | External — connection via `DATABASE_URL`    |
 | Real-time   | Supabase (optional)       | Graceful degradation if not configured           |
 | Auth        | Custom OAuth + PKCE + JWT | Session cookies, dynamic redirect URIs           |
 | Payments    | Stripe, PayPal, Square    | Webhook routes registered before JSON middleware |
@@ -62,7 +62,7 @@ This is the canonical URL used by:
 
 | Variable                | Required | Description                                         |
 | ----------------------- | -------- | --------------------------------------------------- |
-| `DATABASE_URL`          | Yes      | MySQL connection string                             |
+| `DATABASE_URL`          | Yes      | PostgreSQL (Neon) connection string                 |
 | `JWT_SECRET`            | Yes      | Session cookie signing secret                       |
 | `PUBLIC_APP_URL`        | Yes      | Canonical app URL (e.g. `https://1commerce.online`) |
 | `OAUTH_CLIENT_ID`       | Yes      | OAuth provider client ID                            |

@@ -13,7 +13,7 @@
 We have proven the Cathedral Principle works: sequential construction of foundational systems before scaling traffic. The result is a platform with zero technical debt, full governance automation, and a defensible integration moat.
 
 **What We Have Built:**
-- Full-stack commerce platform: React + tRPC + Supabase (MySQL) + Netlify
+- Full-stack commerce platform: React + tRPC + PostgreSQL (Neon) + Netlify
 - 25+ functional modules: Products, Orders, Payments (Stripe/PayPal/Square), Shopify sync, CRM, Social Media, Gamification, Theme Marketplace
 - AI copilot (Manus AI) with per-page context awareness across 10+ surfaces
 - Claude-powered governance engine with 3-tier escalation (automated -> admin -> owner)

@@ -6,7 +6,7 @@ It unifies Shopify, Stripe, PayPal, n8n, and Supabase Realtime under one dashboa
 
 ## Tech Stack
 - **Frontend**: React 19, Tailwind CSS 4, shadcn/ui, Wouter (routing), tRPC client
-- **Backend**: Express 4, tRPC 11, Drizzle ORM, MySQL/TiDB
+- **Backend**: Express 4, tRPC 11, Drizzle ORM, PostgreSQL (Neon)
 - **Auth**: Manus OAuth (session cookie, `protectedProcedure`)
 - **Payments**: Stripe (subscriptions + one-time), PayPal REST API (live)
 - **Realtime**: Supabase Realtime WebSocket channels

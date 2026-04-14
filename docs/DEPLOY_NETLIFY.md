@@ -29,7 +29,7 @@ Go to **Site settings → Environment variables** and add:
 
 | Variable                      | Value                                         |
 | ----------------------------- | --------------------------------------------- |
-| `DATABASE_URL`                | Your MySQL/TiDB connection string             |
+| `DATABASE_URL`                | Your PostgreSQL (Neon) connection string             |
 | `JWT_SECRET`                  | Your JWT signing secret                       |
 | `OAUTH_CLIENT_ID`             | OAuth client ID from your identity provider   |
 | `OAUTH_CLIENT_SECRET`         | OAuth client secret (if required by provider) |
