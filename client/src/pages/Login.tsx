@@ -88,6 +88,8 @@ export default function Login({
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const returnTo = getReturnTo();
@@ -110,7 +112,32 @@ export default function Login({
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
     setError(null);
+    setErrorCode(null);
     setSuccessMessage(null);
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      setError("Please enter your email address first.");
+      return;
+    }
+    setIsResendingVerification(true);
+    try {
+      await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setSuccessMessage(
+        "A new verification link has been sent to your email. Please check your inbox."
+      );
+      setError(null);
+      setErrorCode(null);
+    } catch {
+      setError("Failed to resend verification email. Please try again.");
+    } finally {
+      setIsResendingVerification(false);
+    }
   };
 
   const handleSignIn = async () => {
@@ -121,6 +148,7 @@ export default function Login({
 
     setIsSubmitting(true);
     setError(null);
+    setErrorCode(null);
 
     try {
       const res = await fetch("/api/auth/signin", {
@@ -134,6 +162,7 @@ export default function Login({
 
       if (!res.ok || !data.success) {
         setError(data.error || "Invalid email or password.");
+        if (data.code) setErrorCode(data.code);
         return;
       }
 
@@ -363,8 +392,19 @@ export default function Login({
 
           {/* Error display */}
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-              {error}
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm space-y-2">
+              <p>{error}</p>
+              {errorCode === "email_not_verified" && (
+                <button
+                  onClick={handleResendVerification}
+                  disabled={isResendingVerification}
+                  className="text-[#00D9FF] hover:text-[#00C4E8] transition-colors text-xs underline underline-offset-2 disabled:opacity-50"
+                >
+                  {isResendingVerification
+                    ? "Sending..."
+                    : "Resend verification email"}
+                </button>
+              )}
             </div>
           )}
 

@@ -52,12 +52,12 @@ async function syncSubscription(sub: Stripe.Subscription) {
 
   const status = mapSubStatus(sub.status);
   // current_period_end exists on the subscription object at runtime but
-  // may not be in the type definition for all API versions — cast narrowly.
-  const periodEnd = (sub as { current_period_end?: number }).current_period_end
-    ? new Date(
-        (sub as { current_period_end: number }).current_period_end * 1000
-      )
-    : null;
+  // may not be in the type definition for all API versions — cast via unknown.
+  const subRecord = sub as unknown as Record<string, unknown>;
+  const periodEnd =
+    typeof subRecord.current_period_end === "number"
+      ? new Date(subRecord.current_period_end * 1000)
+      : null;
 
   // Try to find matching plan by Stripe price ID
   const priceId = sub.items.data[0]?.price?.id;
@@ -99,9 +99,10 @@ async function syncSubscription(sub: Stripe.Subscription) {
         price_id: priceId || null,
         quantity: sub.items.data[0]?.quantity ?? 1,
         cancel_at_period_end: sub.cancel_at_period_end,
-        current_period_start: subAny.current_period_start
-          ? new Date(subAny.current_period_start * 1000).toISOString()
-          : new Date().toISOString(),
+        current_period_start:
+          typeof subRecord.current_period_start === "number"
+            ? new Date(subRecord.current_period_start * 1000).toISOString()
+            : new Date().toISOString(),
         current_period_end:
           periodEnd?.toISOString() || new Date().toISOString(),
         created: new Date(sub.created * 1000).toISOString(),

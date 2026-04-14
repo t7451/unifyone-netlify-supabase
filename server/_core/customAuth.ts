@@ -76,6 +76,8 @@ function generateOpenId(): string {
 export type AuthResult = {
   success: boolean;
   error?: string;
+  /** Machine-readable code — lets clients branch without parsing error strings. */
+  code?: "email_not_verified";
   sessionToken?: string;
   user?: {
     openId: string;
@@ -204,6 +206,18 @@ export async function signIn(
     const isValid = await verifyPassword(password, user.passwordHash);
     if (!isValid) {
       return { success: false, error: "Invalid email or password" };
+    }
+
+    // Require email verification before granting a session.
+    // The client should check for code === "email_not_verified" and offer
+    // a "Resend verification email" button.
+    if (user.emailVerified === false) {
+      return {
+        success: false,
+        code: "email_not_verified",
+        error:
+          "Please verify your email address before signing in. Check your inbox for a verification link.",
+      };
     }
 
     // Update last signed in

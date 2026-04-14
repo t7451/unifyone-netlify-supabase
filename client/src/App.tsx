@@ -26,6 +26,8 @@ import MyThemes from "./pages/MyThemes";
 import AdminThemes from "./pages/AdminThemes";
 import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import Rewards from "./pages/Rewards";
 import RevenueStreams from "./pages/RevenueStreams";
 import Affiliates from "./pages/Affiliates";
@@ -133,6 +135,8 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/signup">{() => <Login initialIntent="signup" />}</Route>
       <Route path="/auth/callback" component={AuthCallback} />
+      <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/verify-email" component={VerifyEmail} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/about" component={About} />
       <Route path="/contact" component={Contact} />

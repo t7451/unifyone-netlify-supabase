@@ -5,10 +5,21 @@ import { shopifyStores } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 
 export const shopifyStoresRouter = router({
-  // List all Shopify stores connected by the current user (or all stores for admin)
+  // List all Shopify stores connected by the current user's tenant
   listStores: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new Error("Database unavailable");
+    const isAdmin = ctx.user.role === "admin";
+    // Non-admins: filter by both userId AND tenantId so a user can never see
+    // stores belonging to a different tenant they happen to share a userId with.
+    const whereClause = isAdmin
+      ? undefined
+      : ctx.user.tenantId !== null
+        ? and(
+            eq(shopifyStores.userId, ctx.user.id),
+            eq(shopifyStores.tenantId, ctx.user.tenantId)
+          )
+        : eq(shopifyStores.userId, ctx.user.id);
     const stores = await db
       .select({
         id: shopifyStores.id,
@@ -24,11 +35,7 @@ export const shopifyStoresRouter = router({
         tenantId: shopifyStores.tenantId,
       })
       .from(shopifyStores)
-      .where(
-        ctx.user.role === "admin"
-          ? undefined
-          : eq(shopifyStores.userId, ctx.user.id)
-      )
+      .where(whereClause)
       .orderBy(desc(shopifyStores.installedAt));
     return stores;
   }),
@@ -39,17 +46,23 @@ export const shopifyStoresRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database unavailable");
+      const isAdmin = ctx.user.role === "admin";
+      const whereClause = isAdmin
+        ? eq(shopifyStores.id, input.storeId)
+        : ctx.user.tenantId !== null
+          ? and(
+              eq(shopifyStores.id, input.storeId),
+              eq(shopifyStores.userId, ctx.user.id),
+              eq(shopifyStores.tenantId, ctx.user.tenantId)
+            )
+          : and(
+              eq(shopifyStores.id, input.storeId),
+              eq(shopifyStores.userId, ctx.user.id)
+            );
       const stores = await db
         .select()
         .from(shopifyStores)
-        .where(
-          and(
-            eq(shopifyStores.id, input.storeId),
-            ctx.user.role === "admin"
-              ? undefined
-              : eq(shopifyStores.userId, ctx.user.id)
-          )
-        )
+        .where(whereClause)
         .limit(1);
       if (!stores.length) throw new Error("Store not found");
       // Never return the access token to the client

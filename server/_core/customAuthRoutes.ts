@@ -174,8 +174,10 @@ export async function registerCustomAuthFetchRoutes(
       const result = await signIn(email || "", password || "");
 
       if (!result.success) {
+        // Pass through the machine-readable code so the client can branch
+        // (e.g. show "Resend verification" when code === "email_not_verified")
         return Response.json(
-          { success: false, error: result.error },
+          { success: false, error: result.error, code: result.code },
           { status: 401, headers: corsHeaders }
         );
       }
@@ -383,6 +385,63 @@ export async function registerCustomAuthFetchRoutes(
 
       return Response.json(
         { success: true, message: "Email verified successfully." },
+        { status: 200, headers: corsHeaders }
+      );
+    }
+
+    // ── Resend Verification Email ──────────────────────────────────────────
+    if (path === "/api/auth/resend-verification") {
+      const rateCheck = passwordResetLimiter.check(clientIp); // reuse same bucket
+      if (!rateCheck.allowed) {
+        return Response.json(
+          {
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          },
+          {
+            status: 429,
+            headers: {
+              ...corsHeaders,
+              "Retry-After": String(Math.ceil(rateCheck.retryAfterMs / 1000)),
+            },
+          }
+        );
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const { email } = body as { email?: string };
+      if (!email) {
+        return Response.json(
+          { success: false, error: "Email is required" },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+
+      // Look up user — always return success to prevent enumeration
+      const db = await (await import("../db")).getDb();
+      if (db) {
+        const { users: usersTable } = await import("../../drizzle/schema");
+        const { eq: eqFn } = await import("drizzle-orm");
+        const rows = await db
+          .select({
+            openId: usersTable.openId,
+            emailVerified: usersTable.emailVerified,
+          })
+          .from(usersTable)
+          .where(eqFn(usersTable.email, email.toLowerCase().trim()))
+          .limit(1);
+        const user = rows[0];
+        if (user && user.emailVerified === false) {
+          await sendVerificationEmail(user.openId, email.toLowerCase().trim());
+        }
+      }
+
+      return Response.json(
+        {
+          success: true,
+          message:
+            "If an unverified account with that email exists, a new verification link has been sent.",
+        },
         { status: 200, headers: corsHeaders }
       );
     }

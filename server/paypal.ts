@@ -27,7 +27,7 @@ async function getPayPalAccessToken(): Promise<string> {
     body: "grant_type=client_credentials",
   });
 
-  const data = (await response.json()) as Record<string, string>;
+  const data = (await response.json()) as Record<string, unknown>;
 
   if (!response.ok) {
     throw new Error(
@@ -128,7 +128,18 @@ export async function capturePayPalOrder(paypalOrderId: string): Promise<{
     }
   );
 
-  const data = (await response.json()) as Record<string, string>;
+  type PayPalCaptureResponse = {
+    status?: string;
+    purchase_units?: Array<{
+      payments?: {
+        captures?: Array<{
+          id?: string;
+          amount?: { value?: string; currency_code?: string };
+        }>;
+      };
+    }>;
+  };
+  const data = (await response.json()) as PayPalCaptureResponse;
 
   if (!response.ok) {
     throw new Error(`PayPal capture failed: ${JSON.stringify(data)}`);
@@ -137,7 +148,7 @@ export async function capturePayPalOrder(paypalOrderId: string): Promise<{
   const capture = data.purchase_units?.[0]?.payments?.captures?.[0];
 
   return {
-    status: data.status,
+    status: data.status ?? "",
     captureId: capture?.id || "",
     amount: capture?.amount?.value || "0",
     currency: capture?.amount?.currency_code || "USD",

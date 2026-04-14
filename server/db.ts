@@ -521,10 +521,16 @@ export async function upsertCustomer(
 ) {
   const db = await getDb();
   if (!db) return;
+  // Conflict target is the (tenantId, email) unique index added in migration 0023.
+  // Previously this used customers.id (the PK) which never conflicted on INSERT,
+  // causing duplicate customer rows per email per tenant.
   await db
     .insert(customers)
     .values({ tenantId, email, ...data })
-    .onConflictDoUpdate({ target: customers.id, set: { ...data } });
+    .onConflictDoUpdate({
+      target: [customers.tenantId, customers.email],
+      set: { ...data, updatedAt: new Date() },
+    });
 }
 
 export async function getCustomerCount(tenantId: number) {

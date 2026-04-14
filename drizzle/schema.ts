@@ -11,6 +11,8 @@ import {
   date,
   serial,
   jsonb,
+  uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
 
 // ── PostgreSQL Enums ─────────────────────────────────────────────────────────
@@ -198,25 +200,35 @@ export const inventory = pgTable("inventory", {
 export type Inventory = typeof inventory.$inferSelect;
 
 // ── Customers ─────────────────────────────────────────────────────────────────
-export const customers = pgTable("customers", {
-  id: serial("id").primaryKey(),
-  tenantId: integer("tenantId").notNull(),
-  email: varchar("email", { length: 320 }).notNull(),
-  firstName: varchar("firstName", { length: 255 }),
-  lastName: varchar("lastName", { length: 255 }),
-  phone: varchar("phone", { length: 50 }),
-  stripeCustomerId: varchar("stripeCustomerId", { length: 100 }),
-  shopifyCustomerId: varchar("shopifyCustomerId", { length: 100 }),
-  totalOrders: integer("totalOrders").default(0),
-  totalSpent: decimal("totalSpent", { precision: 12, scale: 2 }).default("0.00"),
-  tags: json("tags").$type<string[]>(),
-  address: json("address").$type<{
-    line1?: string; line2?: string; city?: string;
-    state?: string; zip?: string; country?: string;
-  }>(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
+export const customers = pgTable(
+  "customers",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull(),
+    email: varchar("email", { length: 320 }).notNull(),
+    firstName: varchar("firstName", { length: 255 }),
+    lastName: varchar("lastName", { length: 255 }),
+    phone: varchar("phone", { length: 50 }),
+    stripeCustomerId: varchar("stripeCustomerId", { length: 100 }),
+    shopifyCustomerId: varchar("shopifyCustomerId", { length: 100 }),
+    totalOrders: integer("totalOrders").default(0),
+    totalSpent: decimal("totalSpent", { precision: 12, scale: 2 }).default("0.00"),
+    tags: json("tags").$type<string[]>(),
+    address: json("address").$type<{
+      line1?: string; line2?: string; city?: string;
+      state?: string; zip?: string; country?: string;
+    }>(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    // Unique customer per (tenant, email) — enables safe upsertCustomer
+    tenantEmailIdx: uniqueIndex("customers_tenantId_email_idx").on(
+      table.tenantId,
+      table.email
+    ),
+  })
+);
 
 export type Customer = typeof customers.$inferSelect;
 
