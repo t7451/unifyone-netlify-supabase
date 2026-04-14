@@ -3,14 +3,13 @@
 
 [build]
   base = ""
-  command = "pnpm install --no-frozen-lockfile && pnpm build"
+  command = "pnpm install --no-frozen-lockfile && NODE_ENV=production pnpm build"
   publish = "dist/public"
   functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "22"
   PNPM_VERSION = "10"
-  NODE_ENV = "production"
 
 # Netlify Functions — use esbuild to bundle the TypeScript server function
 [functions]
