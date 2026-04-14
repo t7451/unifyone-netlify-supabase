@@ -144,10 +144,29 @@ export async function getTenantsByOwner(ownerId: number) {
   return db.select().from(tenants).where(eq(tenants.ownerId, ownerId));
 }
 
-export async function updateTenant(id: number, data: Partial<InsertTenant>) {
+export async function updateTenant(
+  id: number,
+  data: Partial<InsertTenant>,
+  ownerId?: number
+) {
   const db = await getDb();
   if (!db) return;
-  await db.update(tenants).set(data).where(eq(tenants.id, id));
+  const condition =
+    ownerId !== undefined
+      ? and(eq(tenants.id, id), eq(tenants.ownerId, ownerId))
+      : eq(tenants.id, id);
+  await db.update(tenants).set(data).where(condition);
+}
+
+export async function getTenantByStripeCustomerId(stripeCustomerId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(tenants)
+    .where(eq(tenants.stripeCustomerId, stripeCustomerId))
+    .limit(1);
+  return result[0];
 }
 
 export async function getAllTenants() {
@@ -322,7 +341,20 @@ export async function getOrders(
   const db = await getDb();
   if (!db) return [];
   const conditions = [eq(orders.tenantId, tenantId)];
-  if (opts?.status) conditions.push(eq(orders.status, opts.status as any));
+  if (opts?.status)
+    conditions.push(
+      eq(
+        orders.status,
+        opts.status as
+          | "pending"
+          | "confirmed"
+          | "processing"
+          | "shipped"
+          | "delivered"
+          | "cancelled"
+          | "refunded"
+      )
+    );
   if (opts?.search)
     conditions.push(like(orders.orderNumber, `%${opts.search}%`));
   return db
@@ -613,11 +645,17 @@ export async function getTopProducts(tenantId: number, limit = 5) {
 }
 
 // ── Webhooks ──────────────────────────────────────────────────────────────────
+
+/**
+ * Log a webhook event scoped to a specific tenant.
+ * `tenantId` is required to prevent cross-tenant data leakage when querying events.
+ * For system-level events with no tenant context, use `logSystemWebhookEvent`.
+ */
 export async function logWebhookEvent(
   source: "stripe" | "shopify" | "n8n" | "internal",
   eventType: string,
   payload: Record<string, unknown>,
-  tenantId?: number
+  tenantId: number
 ) {
   const db = await getDb();
   if (!db) return;
@@ -626,14 +664,46 @@ export async function logWebhookEvent(
     .values({ source, eventType, payload, tenantId });
 }
 
-export async function getWebhookEvents(tenantId?: number, limit = 50) {
+/**
+ * Log a system-level webhook event that has no tenant association
+ * (e.g. Stripe events before tenant is resolved).
+ * Only use this for events that genuinely cannot be scoped to a tenant.
+ */
+export async function logSystemWebhookEvent(
+  source: "stripe" | "shopify" | "n8n" | "internal",
+  eventType: string,
+  payload: Record<string, unknown>
+) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(webhookEvents).values({ source, eventType, payload });
+}
+
+/**
+ * Retrieve webhook events for a specific tenant.
+ * Always requires tenantId — callers must not pass undefined.
+ */
+export async function getWebhookEvents(tenantId: number, limit = 50) {
   const db = await getDb();
   if (!db) return [];
-  const conditions = tenantId ? [eq(webhookEvents.tenantId, tenantId)] : [];
   return db
     .select()
     .from(webhookEvents)
-    .where(conditions.length ? and(...conditions) : undefined)
+    .where(eq(webhookEvents.tenantId, tenantId))
+    .orderBy(desc(webhookEvents.createdAt))
+    .limit(limit);
+}
+
+/**
+ * Admin-only: retrieve webhook events across all tenants.
+ * Do NOT expose this to non-admin users.
+ */
+export async function getAllWebhookEventsAdmin(limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(webhookEvents)
     .orderBy(desc(webhookEvents.createdAt))
     .limit(limit);
 }

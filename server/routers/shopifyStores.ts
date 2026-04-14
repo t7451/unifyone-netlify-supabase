@@ -63,20 +63,41 @@ export const shopifyStoresRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database unavailable");
-      // Verify ownership
+      // Verify ownership — select both userId and tenantId for cross-tenant isolation.
       const stores = await db
-        .select({ userId: shopifyStores.userId })
+        .select({
+          userId: shopifyStores.userId,
+          tenantId: shopifyStores.tenantId,
+        })
         .from(shopifyStores)
         .where(eq(shopifyStores.id, input.storeId))
         .limit(1);
       if (!stores.length) throw new Error("Store not found");
-      if (stores[0].userId !== ctx.user.id && ctx.user.role !== "admin") {
-        throw new Error("Forbidden");
+      const store = stores[0];
+      const isAdmin = ctx.user.role === "admin";
+      if (!isAdmin) {
+        if (store.userId !== ctx.user.id) throw new Error("Forbidden");
+        // Enforce tenant isolation: store must belong to the caller's tenant
+        if (
+          store.tenantId !== null &&
+          ctx.user.tenantId !== null &&
+          store.tenantId !== ctx.user.tenantId
+        ) {
+          throw new Error("Forbidden");
+        }
       }
+      // Atomic update: include tenantId (or userId) in WHERE to prevent TOCTOU cross-tenant writes
       await db
         .update(shopifyStores)
         .set({ status: "uninstalled" })
-        .where(eq(shopifyStores.id, input.storeId));
+        .where(
+          isAdmin
+            ? eq(shopifyStores.id, input.storeId)
+            : and(
+                eq(shopifyStores.id, input.storeId),
+                eq(shopifyStores.userId, ctx.user.id)
+              )
+        );
       return { success: true };
     }),
 
@@ -87,18 +108,39 @@ export const shopifyStoresRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database unavailable");
       const stores = await db
-        .select({ userId: shopifyStores.userId, shopDomain: shopifyStores.shopDomain })
+        .select({
+          userId: shopifyStores.userId,
+          tenantId: shopifyStores.tenantId,
+          shopDomain: shopifyStores.shopDomain,
+        })
         .from(shopifyStores)
         .where(eq(shopifyStores.id, input.storeId))
         .limit(1);
       if (!stores.length) throw new Error("Store not found");
-      if (stores[0].userId !== ctx.user.id && ctx.user.role !== "admin") {
-        throw new Error("Forbidden");
+      const store = stores[0];
+      const isAdmin = ctx.user.role === "admin";
+      if (!isAdmin) {
+        if (store.userId !== ctx.user.id) throw new Error("Forbidden");
+        if (
+          store.tenantId !== null &&
+          ctx.user.tenantId !== null &&
+          store.tenantId !== ctx.user.tenantId
+        ) {
+          throw new Error("Forbidden");
+        }
       }
+      // Atomic update: include userId in WHERE to prevent TOCTOU cross-tenant writes
       await db
         .update(shopifyStores)
         .set({ lastSyncAt: new Date() })
-        .where(eq(shopifyStores.id, input.storeId));
+        .where(
+          isAdmin
+            ? eq(shopifyStores.id, input.storeId)
+            : and(
+                eq(shopifyStores.id, input.storeId),
+                eq(shopifyStores.userId, ctx.user.id)
+              )
+        );
       return { success: true, syncedAt: new Date().toISOString() };
     }),
 
@@ -109,21 +151,40 @@ export const shopifyStoresRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database unavailable");
       const stores = await db
-        .select({ scopes: shopifyStores.scopes, userId: shopifyStores.userId })
+        .select({
+          scopes: shopifyStores.scopes,
+          userId: shopifyStores.userId,
+          tenantId: shopifyStores.tenantId,
+        })
         .from(shopifyStores)
         .where(eq(shopifyStores.id, input.storeId))
         .limit(1);
       if (!stores.length) throw new Error("Store not found");
-      if (stores[0].userId !== ctx.user.id && ctx.user.role !== "admin") {
-        throw new Error("Forbidden");
+      const store = stores[0];
+      const isAdmin = ctx.user.role === "admin";
+      if (!isAdmin) {
+        if (store.userId !== ctx.user.id) throw new Error("Forbidden");
+        if (
+          store.tenantId !== null &&
+          ctx.user.tenantId !== null &&
+          store.tenantId !== ctx.user.tenantId
+        ) {
+          throw new Error("Forbidden");
+        }
       }
-      const scopes = stores[0].scopes.split(",").map((s) => s.trim());
+      const scopes = store.scopes.split(",").map(s => s.trim());
       return { scopes };
     }),
 
   // Admin: link a store to a specific user
   linkToUser: adminProcedure
-    .input(z.object({ storeId: z.number(), userId: z.number(), tenantId: z.number().optional() }))
+    .input(
+      z.object({
+        storeId: z.number(),
+        userId: z.number(),
+        tenantId: z.number().optional(),
+      })
+    )
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database unavailable");

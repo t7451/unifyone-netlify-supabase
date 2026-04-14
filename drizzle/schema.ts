@@ -77,6 +77,9 @@ export const users = pgTable("users", {
   passwordHash: varchar("passwordHash", { length: 255 }), // bcrypt/scrypt hash
   loginMethod: varchar("loginMethod", { length: 64 }),
   emailVerified: boolean("emailVerified").default(false),
+  emailVerificationToken: varchar("emailVerificationToken", { length: 128 }).unique(),
+  passwordResetToken: varchar("passwordResetToken", { length: 128 }).unique(),
+  passwordResetExpiresAt: timestamp("passwordResetExpiresAt"),
   role: roleEnum("role").default("user").notNull(),
   tenantId: integer("tenantId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

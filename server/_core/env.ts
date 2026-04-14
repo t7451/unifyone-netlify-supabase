@@ -8,6 +8,15 @@ export const ENV = {
     process.env.DEPLOY_URL ??
     "",
   cookieSecret: process.env.JWT_SECRET ?? process.env.SUPABASE_JWT_SECRET ?? "",
+  /**
+   * Explicit cookie domain — restricts the session cookie to your root domain
+   * and prevents it leaking to unrelated subdomains.
+   *
+   * Set COOKIE_DOMAIN=.1commerce.online (note the leading dot) to allow the
+   * cookie on the apex domain and all first-party subdomains.
+   * Leave unset in local development (cookie will be scoped to localhost).
+   */
+  cookieDomain: process.env.COOKIE_DOMAIN ?? "",
   databaseUrl: process.env.DATABASE_URL ?? "",
   ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
   isProduction: process.env.NODE_ENV === "production",

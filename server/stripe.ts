@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { Express, Request, Response } from "express";
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
-import { getDb } from "./db";
+import { getDb, getTenantByStripeCustomerId } from "./db";
 import { tenants, plans, themeInstalls, themes } from "../drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { capi } from "./meta/capi";
@@ -21,7 +21,7 @@ function getSupabaseAdmin() {
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2026-03-25.dahlia" as any,
+      apiVersion: "2026-03-25.dahlia" as Stripe.LatestApiVersion,
     })
   : null;
 
@@ -51,9 +51,12 @@ async function syncSubscription(sub: Stripe.Subscription) {
   if (!db) return;
 
   const status = mapSubStatus(sub.status);
-  const subAny = sub as any;
-  const periodEnd = subAny.current_period_end
-    ? new Date(subAny.current_period_end * 1000)
+  // current_period_end exists on the subscription object at runtime but
+  // may not be in the type definition for all API versions — cast narrowly.
+  const periodEnd = (sub as { current_period_end?: number }).current_period_end
+    ? new Date(
+        (sub as { current_period_end: number }).current_period_end * 1000
+      )
     : null;
 
   // Try to find matching plan by Stripe price ID
@@ -276,8 +279,12 @@ export function registerStripeRoutes(app: Express) {
 
           case "checkout.session.completed": {
             const session = event.data.object as Stripe.Checkout.Session;
-            const tenantId = session.metadata?.tenant_id;
             const customerId = session.customer as string;
+            // Resolve tenant from the verified Stripe customer ID, NOT user-supplied metadata.
+            // This prevents a user from crafting metadata.tenant_id to hijack another tenant's subscription.
+            const checkoutTenant = customerId
+              ? await getTenantByStripeCustomerId(customerId)
+              : undefined;
 
             // ── Theme purchase fulfillment ─────────────────────────────────
             if (
@@ -342,7 +349,9 @@ export function registerStripeRoutes(app: Express) {
               break;
             }
 
-            if (tenantId && customerId) {
+            if (checkoutTenant && customerId) {
+              // Tenant is already verified via stripeCustomerId lookup above.
+              // Update subscription status — WHERE clause keys on the verified tenant ID.
               const db = await getDb();
               if (db) {
                 await db
@@ -351,8 +360,15 @@ export function registerStripeRoutes(app: Express) {
                     stripeCustomerId: customerId,
                     subscriptionStatus: "active",
                   })
-                  .where(eq(tenants.id, parseInt(tenantId)));
+                  .where(eq(tenants.id, checkoutTenant.id));
               }
+            } else if (!checkoutTenant && customerId) {
+              // New customer completing checkout for the first time — no existing tenant row
+              // tied to this stripeCustomerId yet. The tenant link will be established via
+              // customer.subscription.created → syncSubscription, which looks up by stripeCustomerId.
+              console.log(
+                `[Stripe] checkout.session.completed: no tenant found for customer ${customerId}; subscription sync will handle the link.`
+              );
             }
 
             // If subscription was created, sync it
@@ -386,7 +402,7 @@ export function registerStripeRoutes(app: Express) {
             }
 
             console.log(
-              `[Stripe] Checkout completed for tenant ${tenantId}, customer: ${customerId}`
+              `[Stripe] Checkout completed for tenant ${checkoutTenant?.id ?? "unknown"}, customer: ${customerId}`
             );
             break;
           }
@@ -454,7 +470,9 @@ export function registerStripeRoutes(app: Express) {
           case "invoice.paid": {
             const invoice = event.data.object as Stripe.Invoice;
             // Re-sync subscription to refresh period end and grant credits
-            const subId = (invoice as any).subscription as string | undefined;
+            const subId = (
+              invoice as Stripe.Invoice & { subscription?: string }
+            ).subscription;
             if (subId) {
               const sub = await stripe.subscriptions.retrieve(subId);
               await syncSubscription(sub);

@@ -144,6 +144,18 @@ export const notificationsRouter = router({
           code: "INTERNAL_SERVER_ERROR",
           message: "DB unavailable",
         });
+      // Verify the target user belongs to the same tenant as the calling admin
+      const [targetUser] = await db
+        .select({ tenantId: users.tenantId })
+        .from(users)
+        .where(eq(users.id, input.userId))
+        .limit(1);
+      if (!targetUser || targetUser.tenantId !== ctx.user.tenantId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot send notifications to users outside your tenant",
+        });
+      }
       await db.insert(notifications).values({
         userId: input.userId,
         tenantId: ctx.user.tenantId ?? undefined,
@@ -181,6 +193,12 @@ export const notificationsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       adminGuard(ctx.user.role);
+      if (input.tenantId !== ctx.user.tenantId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot send notifications to users outside your tenant",
+        });
+      }
       const db = await getDb();
       if (!db)
         throw new TRPCError({
@@ -335,7 +353,13 @@ export const notificationsRouter = router({
   /** List notification triggers for tenant */
   listTriggers: protectedProcedure
     .input(z.object({ tenantId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      if (input.tenantId !== ctx.user.tenantId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot access triggers outside your tenant",
+        });
+      }
       const db = await getDb();
       if (!db) return [];
       return db
@@ -361,7 +385,13 @@ export const notificationsRouter = router({
         emailRecipients: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      if (input.tenantId !== ctx.user.tenantId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot modify triggers outside your tenant",
+        });
+      }
       const db = await getDb();
       if (!db)
         throw new TRPCError({

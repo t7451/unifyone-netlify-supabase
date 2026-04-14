@@ -73,11 +73,7 @@ function LogoMark({ size = 40 }: { size?: number }) {
   );
 }
 
-type AuthMode =
-  | "password"
-  | "sign-in"
-  | "sign-up"
-  | "forgot-password";
+type AuthMode = "password" | "sign-in" | "sign-up" | "forgot-password";
 
 type LoginIntent = "signin" | "signup";
 
@@ -196,12 +192,27 @@ export default function Login({
     setIsSubmitting(true);
     setError(null);
 
-    // TODO: Implement password reset email flow
-    // For now, show a message to contact support
-    setSuccessMessage(
-      "Password reset is not yet available. Please contact support@1commerce.online for assistance."
-    );
-    setIsSubmitting(false);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok && res.status !== 200) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? "Something went wrong. Please try again.");
+        return;
+      }
+
+      setSuccessMessage(
+        "If an account with that email exists, a password reset link has been sent. Please check your inbox (and spam folder)."
+      );
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = () => {
@@ -423,7 +434,9 @@ export default function Login({
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  {intent === "signup" ? "Creating account..." : "Signing in..."}
+                  {intent === "signup"
+                    ? "Creating account..."
+                    : "Signing in..."}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">

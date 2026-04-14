@@ -23,6 +23,13 @@ async function fireAutomations(
   event: string,
   payload: Record<string, unknown>
 ): Promise<{ n8n: boolean; zapier: boolean }> {
+  if (tenantId === null) {
+    console.warn(
+      "[fireAutomations] tenantId is null — skipping automations to prevent cross-tenant broadcast"
+    );
+    return { n8n: false, zapier: false };
+  }
+
   const db = await getDb();
   if (!db) return { n8n: false, zapier: false };
 
@@ -30,17 +37,12 @@ async function fireAutomations(
 
   try {
     // n8n workflows matching this event
-    const n8nQuery = tenantId
-      ? db
-          .select()
-          .from(n8nWorkflows)
-          .where(
-            and(
-              eq(n8nWorkflows.enabled, true),
-              eq(n8nWorkflows.tenantId, tenantId)
-            )
-          )
-      : db.select().from(n8nWorkflows).where(eq(n8nWorkflows.enabled, true));
+    const n8nQuery = db
+      .select()
+      .from(n8nWorkflows)
+      .where(
+        and(eq(n8nWorkflows.enabled, true), eq(n8nWorkflows.tenantId, tenantId))
+      );
     const workflows = await n8nQuery;
 
     for (const wf of workflows) {
@@ -71,17 +73,12 @@ async function fireAutomations(
     }
 
     // Zapier hooks matching this event
-    const zapQuery = tenantId
-      ? db
-          .select()
-          .from(zapierHooks)
-          .where(
-            and(
-              eq(zapierHooks.enabled, true),
-              eq(zapierHooks.tenantId, tenantId)
-            )
-          )
-      : db.select().from(zapierHooks).where(eq(zapierHooks.enabled, true));
+    const zapQuery = db
+      .select()
+      .from(zapierHooks)
+      .where(
+        and(eq(zapierHooks.enabled, true), eq(zapierHooks.tenantId, tenantId))
+      );
     const hooks = await zapQuery;
 
     for (const hook of hooks) {
