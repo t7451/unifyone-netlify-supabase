@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { desc, eq } from "drizzle-orm";
-import { TRPCError } from "@trpc/server";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+
+import {
+  adminProcedure,
+  protectedProcedure,
+  publicProcedure,
+  router,
+} from "../_core/trpc";
 import { getDb } from "../db";
 import { metaPixelEvents } from "../../drizzle/schema";
 import { sendCAPIEvent, capi, type CAPIUserData } from "../meta/capi";
@@ -95,7 +100,10 @@ export const metaRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const userData = buildUserDataFromHeaders(ctx.req.headers, input.userData);
+      const userData = buildUserDataFromHeaders(
+        ctx.req.headers,
+        input.userData
+      );
 
       return fireAndLogCAPIEvent({
         userId: (ctx.user as { id: number } | null)?.id ?? null,
@@ -178,15 +186,20 @@ export const metaRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const url = input.eventSourceUrl ?? getAppUrl();
-      const userData = buildUserDataFromHeaders(ctx.req.headers, { email: input.email });
+      const userData = buildUserDataFromHeaders(ctx.req.headers, {
+        email: input.email,
+      });
 
       return fireAndLogCAPIEvent({
         userId: (ctx.user as { id: number } | null)?.id ?? null,
         eventName: "Lead",
         eventId: input.eventId,
         eventSourceUrl: url,
-        customData: input.contentName ? { content_name: input.contentName } : null,
-        capiCall: () => capi.lead(input.eventId, userData, url, input.contentName),
+        customData: input.contentName
+          ? { content_name: input.contentName }
+          : null,
+        capiCall: () =>
+          capi.lead(input.eventId, userData, url, input.contentName),
       });
     }),
 
@@ -215,7 +228,14 @@ export const metaRouter = router({
         eventId: input.eventId,
         eventSourceUrl: url,
         customData: { value: input.value, currency: input.currency },
-        capiCall: () => capi.purchase(input.eventId, userData, url, input.value, input.currency),
+        capiCall: () =>
+          capi.purchase(
+            input.eventId,
+            userData,
+            url,
+            input.value,
+            input.currency
+          ),
       });
     }),
 
@@ -271,7 +291,14 @@ export const metaRouter = router({
         eventId: input.eventId,
         eventSourceUrl: url,
         customData: input.customData,
-        capiCall: () => capi.custom(input.eventName, input.eventId, userData, url, input.customData),
+        capiCall: () =>
+          capi.custom(
+            input.eventName,
+            input.eventId,
+            userData,
+            url,
+            input.customData
+          ),
       });
     }),
 
@@ -301,10 +328,9 @@ export const metaRouter = router({
     }),
 
   /** Admin: view recent CAPI event log */
-  getEventLog: protectedProcedure
+  getEventLog: adminProcedure
     .input(z.object({ limit: z.number().min(1).max(200).default(50) }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    .query(async ({ ctx: _ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
 
@@ -316,15 +342,14 @@ export const metaRouter = router({
     }),
 
   /** Admin: get CAPI event stats */
-  getEventStats: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+  getEventStats: adminProcedure.query(async ({ ctx: _ctx }) => {
     const db = await getDb();
     if (!db) return { total: 0, sent: 0, failed: 0, skipped: 0 };
 
     const all = await db.select().from(metaPixelEvents);
-    const sent = all.filter((e) => e.status === "sent").length;
-    const failed = all.filter((e) => e.status === "failed").length;
-    const skipped = all.filter((e) => e.status === "skipped").length;
+    const sent = all.filter(e => e.status === "sent").length;
+    const failed = all.filter(e => e.status === "failed").length;
+    const skipped = all.filter(e => e.status === "skipped").length;
 
     return { total: all.length, sent, failed, skipped };
   }),

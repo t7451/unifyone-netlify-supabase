@@ -12,6 +12,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerDockerRoutes, registerGracefulShutdown } from "./docker";
 import { ENV } from "./env";
+import { logger, requestLogger } from "./logger";
 
 /** Validate critical environment variables before the server accepts traffic. */
 function validateEnv() {
@@ -62,6 +63,8 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Structured request/response logging (attaches X-Request-Id header)
+  app.use(requestLogger);
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API
@@ -83,15 +86,27 @@ async function startServer() {
   const port = await findAvailablePort(preferredPort);
 
   if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
+    logger.warn("Preferred port busy, using alternate", {
+      preferred: preferredPort,
+      actual: port,
+    });
   }
 
   server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+    logger.info("Server started", {
+      port,
+      env: process.env.NODE_ENV ?? "development",
+      url: `http://localhost:${port}/`,
+    });
   });
 
   // Graceful shutdown for Docker stop / SIGTERM
   registerGracefulShutdown(server);
 }
 
-startServer().catch(console.error);
+startServer().catch(err => {
+  logger.error("Fatal startup error", {
+    error: err instanceof Error ? err.message : String(err),
+  });
+  process.exit(1);
+});

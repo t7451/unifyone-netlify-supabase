@@ -15,6 +15,7 @@ import { users } from "../../drizzle/schema";
 import { sdk } from "./sdk";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getAppUrl } from "./env";
+import { logger } from "./logger";
 
 const scryptAsync = promisify(scrypt);
 
@@ -58,7 +59,9 @@ async function getDb() {
       const sql = neon(process.env.DATABASE_URL);
       _db = drizzle(sql);
     } catch (error) {
-      console.warn("[customAuth] Database connection failed:", error);
+      logger.error("customAuth: database connection failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return null;
     }
   }
@@ -155,7 +158,9 @@ export async function signUp(
       user: { openId, email: emailLower, name: displayName },
     };
   } catch (err: unknown) {
-    console.error("[customAuth] signUp error:", err);
+    logger.error("customAuth: signUp failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return {
       success: false,
       error: "Failed to create account. Please try again.",
@@ -243,7 +248,9 @@ export async function signIn(
       },
     };
   } catch (err: unknown) {
-    console.error("[customAuth] signIn error:", err);
+    logger.error("customAuth: signIn failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { success: false, error: "Sign in failed. Please try again." };
   }
 }
@@ -362,7 +369,9 @@ export async function verifyClerkSession(
       user: { openId, email, name },
     };
   } catch (err: unknown) {
-    console.error("[customAuth] Clerk verification error:", err);
+    logger.error("customAuth: Clerk verification failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { success: false, error: "Clerk authentication failed" };
   }
 }
@@ -376,7 +385,7 @@ async function sendEmail(opts: {
 }): Promise<{ success: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    console.warn("[customAuth] RESEND_API_KEY not set — skipping email send.");
+    logger.warn("customAuth: RESEND_API_KEY not set, email send skipped");
     return { success: false, error: "Email service not configured" };
   }
 
@@ -390,12 +399,16 @@ async function sendEmail(opts: {
       html: opts.html,
     });
     if (result.error) {
-      console.error("[customAuth] Resend error:", result.error);
+      logger.error("customAuth: Resend API error", {
+        error: result.error.message,
+      });
       return { success: false, error: result.error.message };
     }
     return { success: true };
   } catch (err: unknown) {
-    console.error("[customAuth] sendEmail exception:", err);
+    logger.error("customAuth: email send exception", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { success: false, error: "Failed to send email" };
   }
 }
@@ -637,7 +650,9 @@ export async function verifyFirebaseIdToken(
       user: { openId, email, name },
     };
   } catch (err: unknown) {
-    console.error("[customAuth] Firebase verification error:", err);
+    logger.error("customAuth: Firebase verification failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { success: false, error: "Firebase authentication failed" };
   }
 }

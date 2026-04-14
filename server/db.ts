@@ -1,5 +1,6 @@
 import { and, desc, eq, gte, like, sql, sum } from "drizzle-orm";
 import type { NeonHttpDatabase } from "drizzle-orm/neon-http";
+import { logger } from "./_core/logger";
 // drizzle/neon-http loaded dynamically in getDb() to prevent cold-start crash
 import {
   analyticsEvents,
@@ -30,7 +31,9 @@ export async function getDb() {
       const queryClient = neon(process.env.DATABASE_URL);
       _db = drizzleFn(queryClient);
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      logger.error("Database connection failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       _db = null;
     }
   }

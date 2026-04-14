@@ -3,7 +3,8 @@ import { ENV } from "./env";
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 
-function isIpAddress(host: string) {
+function isIpAddress(host: string | undefined): boolean {
+  if (!host) return false;
   // Basic IPv4 check and IPv6 presence detection.
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
   return host.includes(":");
@@ -25,8 +26,9 @@ function isSecureRequest(req: Request) {
 export function getSessionCookieOptions(
   req: Request
 ): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
-  const hostname = req.hostname;
-  const isLocal = LOCAL_HOSTS.has(hostname) || isIpAddress(hostname);
+  const hostname = req.hostname ?? "";
+  const isLocal =
+    !hostname || LOCAL_HOSTS.has(hostname) || isIpAddress(hostname);
 
   // Prefer explicit COOKIE_DOMAIN env var; fall back to auto-detecting from
   // the request hostname for production requests.

@@ -144,13 +144,21 @@ export const notificationsRouter = router({
           code: "INTERNAL_SERVER_ERROR",
           message: "DB unavailable",
         });
-      // Verify the target user belongs to the same tenant as the calling admin
+      // Verify the target user exists, and for non-super-admins enforce same tenant.
+      // Super-admins (ctx.user.tenantId === null) can send cross-tenant notifications.
       const [targetUser] = await db
         .select({ tenantId: users.tenantId })
         .from(users)
         .where(eq(users.id, input.userId))
         .limit(1);
-      if (!targetUser || targetUser.tenantId !== ctx.user.tenantId) {
+      if (!targetUser) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Target user not found",
+        });
+      }
+      const isSuperAdmin = ctx.user.tenantId === null;
+      if (!isSuperAdmin && targetUser.tenantId !== ctx.user.tenantId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Cannot send notifications to users outside your tenant",

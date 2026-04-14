@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { adminProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { leads, n8nWorkflows, zapierHooks } from "../../drizzle/schema";
 import { eq, desc, and } from "drizzle-orm";
@@ -231,7 +231,7 @@ export const leadsRouter = router({
     }),
 
   // Admin: list all leads with optional status filter
-  list: protectedProcedure
+  list: adminProcedure
     .input(
       z
         .object({
@@ -241,13 +241,7 @@ export const leadsRouter = router({
         })
         .optional()
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Admin access required",
-        });
-      }
+    .query(async ({ ctx: _ctx, input }) => {
       const db = await requireDb();
       const query = input?.status
         ? db
@@ -260,20 +254,14 @@ export const leadsRouter = router({
     }),
 
   // Admin: update lead status
-  updateStatus: protectedProcedure
+  updateStatus: adminProcedure
     .input(
       z.object({
         id: z.number(),
         status: z.enum(["new", "contacted", "qualified", "converted", "lost"]),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Admin access required",
-        });
-      }
+    .mutation(async ({ ctx: _ctx, input }) => {
       const db = await requireDb();
       await db
         .update(leads)
@@ -290,20 +278,14 @@ export const leadsRouter = router({
     }),
 
   // Admin: add a note to a lead
-  addNote: protectedProcedure
+  addNote: adminProcedure
     .input(
       z.object({
         id: z.number(),
         note: z.string().min(1),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Admin access required",
-        });
-      }
+    .mutation(async ({ ctx: _ctx, input }) => {
       const db = await requireDb();
       const [lead] = await db
         .select({ notes: leads.notes })
@@ -322,13 +304,7 @@ export const leadsRouter = router({
     }),
 
   // Admin: get lead stats
-  stats: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Admin access required",
-      });
-    }
+  stats: adminProcedure.query(async ({ ctx: _ctx }) => {
     const db = await requireDb();
     const allLeads = await db.select({ status: leads.status }).from(leads);
     const counts = {

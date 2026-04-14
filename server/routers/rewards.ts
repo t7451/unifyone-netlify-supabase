@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { protectedProcedure, router } from "../_core/trpc";
+import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   rewardOpportunities,
@@ -55,9 +55,11 @@ export const rewardsRouter = router({
       )
       .groupBy(rewardClaims.opportunityId);
 
-    const claimMap = new Map(userClaims.map((c) => [c.opportunityId, Number(c.count)]));
+    const claimMap = new Map(
+      userClaims.map(c => [c.opportunityId, Number(c.count)])
+    );
 
-    return opportunities.map((opp) => ({
+    return opportunities.map(opp => ({
       ...opp,
       userClaimCount: claimMap.get(opp.id) ?? 0,
       canClaim:
@@ -72,7 +74,11 @@ export const rewardsRouter = router({
     .input(z.object({ opportunityId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
 
       const [opp] = await db
         .select()
@@ -81,15 +87,24 @@ export const rewardsRouter = router({
         .limit(1);
 
       if (!opp || !opp.active) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Opportunity not found or inactive" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Opportunity not found or inactive",
+        });
       }
 
       if (opp.expiresAt && new Date(opp.expiresAt) <= new Date()) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "This opportunity has expired" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This opportunity has expired",
+        });
       }
 
       if (opp.totalMaxClaims !== null && opp.claimCount >= opp.totalMaxClaims) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "This opportunity has reached its claim limit" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This opportunity has reached its claim limit",
+        });
       }
 
       const [userClaimRow] = await db
@@ -104,7 +119,10 @@ export const rewardsRouter = router({
         );
 
       if (Number(userClaimRow?.count ?? 0) >= opp.maxClaimsPerUser) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "You have already claimed this reward" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You have already claimed this reward",
+        });
       }
 
       const metaEventId = generateEventId();
@@ -150,10 +168,15 @@ export const rewardsRouter = router({
         const { capi } = await import("../meta/capi");
         await capi.completeRegistration(
           metaEventId,
-          { externalId: String(ctx.user.id), email: ctx.user.email ?? undefined },
+          {
+            externalId: String(ctx.user.id),
+            email: ctx.user.email ?? undefined,
+          },
           `${getAppUrl()}/rewards`
         );
-      } catch (_) { /* CAPI failure is non-critical */ }
+      } catch {
+        /* CAPI failure is non-critical */
+      }
 
       return {
         success: true,
@@ -207,8 +230,7 @@ export const rewardsRouter = router({
 
   // ─── Admin ────────────────────────────────────────────────────────────────
 
-  adminListOpportunities: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+  adminListOpportunities: adminProcedure.query(async ({ ctx: _ctx }) => {
     const db = await getDb();
     if (!db) return [];
 
@@ -218,22 +240,34 @@ export const rewardsRouter = router({
       .orderBy(desc(rewardOpportunities.createdAt));
   }),
 
-  adminCreateOpportunity: protectedProcedure
+  adminCreateOpportunity: adminProcedure
     .input(
       z.object({
         title: z.string().min(1).max(200),
         description: z.string().optional(),
         credits: z.number().min(1),
-        category: z.enum(["signup", "referral", "purchase", "engagement", "milestone", "promotion"]).default("engagement"),
+        category: z
+          .enum([
+            "signup",
+            "referral",
+            "purchase",
+            "engagement",
+            "milestone",
+            "promotion",
+          ])
+          .default("engagement"),
         maxClaimsPerUser: z.number().min(1).default(1),
         totalMaxClaims: z.number().optional(),
         expiresAt: z.string().optional(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    .mutation(async ({ ctx: _ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
 
       await db.insert(rewardOpportunities).values({
         title: input.title,
@@ -248,12 +282,15 @@ export const rewardsRouter = router({
       return { success: true };
     }),
 
-  adminToggleOpportunity: protectedProcedure
+  adminToggleOpportunity: adminProcedure
     .input(z.object({ id: z.number(), active: z.boolean() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+    .mutation(async ({ ctx: _ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
 
       await db
         .update(rewardOpportunities)
@@ -263,10 +300,15 @@ export const rewardsRouter = router({
       return { success: true };
     }),
 
-  adminGetStats: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+  adminGetStats: adminProcedure.query(async ({ ctx: _ctx }) => {
     const db = await getDb();
-    if (!db) return { totalClaims: 0, totalCreditsIssued: 0, activeOpportunities: 0, claimsLast7Days: 0 };
+    if (!db)
+      return {
+        totalClaims: 0,
+        totalCreditsIssued: 0,
+        activeOpportunities: 0,
+        claimsLast7Days: 0,
+      };
 
     const [totalClaims] = await db
       .select({ count: sql<number>`COUNT(*)`.as("count") })

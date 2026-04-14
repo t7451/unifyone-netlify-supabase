@@ -41,57 +41,49 @@ vi.mock("./db", () => {
     // Keep legacy named exports so other test files still work
     getTenantByOwnerId: vi.fn().mockResolvedValue(null),
     getTenantById: vi.fn().mockResolvedValue(null),
-    createTenant: vi
-      .fn()
-      .mockResolvedValue({
-        id: 1,
-        name: "T",
-        slug: "t",
-        status: "active",
-        planId: 1,
-        ownerId: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
+    createTenant: vi.fn().mockResolvedValue({
+      id: 1,
+      name: "T",
+      slug: "t",
+      status: "active",
+      planId: 1,
+      ownerId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }),
     updateTenant: vi.fn().mockResolvedValue(undefined),
     getProducts: vi.fn().mockResolvedValue([]),
     getProductById: vi.fn().mockResolvedValue(null),
-    createProduct: vi
-      .fn()
-      .mockResolvedValue({
-        id: 1,
-        name: "P",
-        price: "9.99",
-        tenantId: 1,
-        status: "active",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
+    createProduct: vi.fn().mockResolvedValue({
+      id: 1,
+      name: "P",
+      price: "9.99",
+      tenantId: 1,
+      status: "active",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }),
     updateProduct: vi.fn().mockResolvedValue(undefined),
     deleteProduct: vi.fn().mockResolvedValue(undefined),
     getOrders: vi.fn().mockResolvedValue([]),
     getOrderById: vi.fn().mockResolvedValue(null),
-    createOrder: vi
-      .fn()
-      .mockResolvedValue({
-        id: 1,
-        orderNumber: "ORD-001",
-        status: "pending",
-        total: "9.99",
-        tenantId: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
+    createOrder: vi.fn().mockResolvedValue({
+      id: 1,
+      orderNumber: "ORD-001",
+      status: "pending",
+      total: "9.99",
+      tenantId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }),
     updateOrderStatus: vi.fn().mockResolvedValue(undefined),
     getCustomers: vi.fn().mockResolvedValue([]),
-    getAnalyticsSummary: vi
-      .fn()
-      .mockResolvedValue({
-        totalRevenue: "0",
-        orderCount: 0,
-        customerCount: 0,
-        productCount: 0,
-      }),
+    getAnalyticsSummary: vi.fn().mockResolvedValue({
+      totalRevenue: "0",
+      orderCount: 0,
+      customerCount: 0,
+      productCount: 0,
+    }),
     getRevenueByDay: vi.fn().mockResolvedValue([]),
     getTopProducts: vi.fn().mockResolvedValue([]),
     getWebhookEvents: vi.fn().mockResolvedValue([]),
@@ -133,13 +125,11 @@ vi.mock("./db", () => {
     upsertUser: vi.fn().mockResolvedValue(undefined),
     getUserByOpenId: vi.fn().mockResolvedValue(undefined),
     logWebhookEvent: vi.fn().mockResolvedValue(undefined),
-    getIntegrationStatus: vi
-      .fn()
-      .mockResolvedValue({
-        stripe: { connected: false },
-        shopify: { connected: false, shopDomain: null },
-        n8n: { configured: false, webhookUrl: null },
-      }),
+    getIntegrationStatus: vi.fn().mockResolvedValue({
+      stripe: { connected: false },
+      shopify: { connected: false, shopDomain: null },
+      n8n: { configured: false, webhookUrl: null },
+    }),
     getTenantsByOwner: vi.fn().mockResolvedValue([]),
     getAllTenants: vi.fn().mockResolvedValue([]),
     updateUserTenant: vi.fn().mockResolvedValue(undefined),
@@ -150,16 +140,14 @@ vi.mock("./db", () => {
     getInventory: vi.fn().mockResolvedValue([]),
     getLowStockProducts: vi.fn().mockResolvedValue([]),
     upsertInventory: vi.fn().mockResolvedValue(undefined),
-    createCategory: vi
-      .fn()
-      .mockResolvedValue({
-        id: 1,
-        name: "Test",
-        slug: "test",
-        tenantId: 1,
-        parentId: null,
-        createdAt: new Date(),
-      }),
+    createCategory: vi.fn().mockResolvedValue({
+      id: 1,
+      name: "Test",
+      slug: "test",
+      tenantId: 1,
+      parentId: null,
+      createdAt: new Date(),
+    }),
   };
 });
 
@@ -264,6 +252,8 @@ describe("notifications router — Tier 2: Admin broadcast", () => {
   });
 
   it("admin can send a notification to a specific user", async () => {
+    // Mock the target user DB lookup — must return a user in the same tenant
+    _dbState.selectResult = [{ id: 2, tenantId: 1 }];
     const ctx = makeCtx();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.notifications.sendToUser({
@@ -276,7 +266,9 @@ describe("notifications router — Tier 2: Admin broadcast", () => {
   });
 
   it("non-admin cannot send notifications to users", async () => {
-    const ctx = makeCtx({ user: { ...makeCtx().user!, role: "user" } as any });
+    const ctx = makeCtx({
+      user: { ...makeCtx().user, role: "user" } as TrpcContext["user"],
+    });
     const caller = appRouter.createCaller(ctx);
     await expect(
       caller.notifications.sendToUser({
@@ -325,7 +317,9 @@ describe("notifications router — Tier 3: Announcements", () => {
   });
 
   it("non-admin cannot create announcements", async () => {
-    const ctx = makeCtx({ user: { ...makeCtx().user!, role: "user" } as any });
+    const ctx = makeCtx({
+      user: { ...makeCtx().user, role: "user" } as TrpcContext["user"],
+    });
     const caller = appRouter.createCaller(ctx);
     await expect(
       caller.notifications.createAnnouncement({
