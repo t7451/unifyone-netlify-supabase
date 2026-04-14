@@ -2,12 +2,12 @@
 
 /**
  * Seed Governance Rules Script
- * 
+ *
  * This script seeds the initial governance rules into the database.
  * Run after database migration: DATABASE_URL=<your-db> node scripts/seed-governance-rules.mjs
  */
 
-import mysql from 'mysql2/promise';
+import { neon } from '@neondatabase/serverless';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -16,15 +16,7 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-// Parse DATABASE_URL
-const url = new URL(DATABASE_URL);
-const dbConfig = {
-  host: url.hostname,
-  user: url.username,
-  password: url.password,
-  database: url.pathname.slice(1),
-  port: url.port || 3306,
-};
+const sql = neon(DATABASE_URL);
 
 const GOVERNANCE_RULES = [
   // Payment Processing Rules
@@ -216,31 +208,20 @@ const KILL_SWITCHES = [
 ];
 
 async function seedDatabase() {
-  let connection;
-
   try {
     console.log('🔌 Connecting to database...');
-    connection = await mysql.createConnection(dbConfig);
+    await sql`SELECT 1`;
     console.log('✅ Connected to database');
 
     // Seed Governance Rules
     console.log('\n📋 Seeding governance rules...');
     for (const rule of GOVERNANCE_RULES) {
-      const query = `
-        INSERT INTO governance_rules 
+      await sql`
+        INSERT INTO governance_rules
         (rule_name, rule_type, entity_type, condition_json, action_on_violation, authority_level_required, is_active, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-        ON DUPLICATE KEY UPDATE updated_at = NOW()
+        VALUES (${rule.ruleName}, ${rule.ruleType}, ${rule.entityType}, ${rule.conditionJson}, ${rule.actionOnViolation}, ${rule.authorityLevelRequired}, ${rule.isActive}, NOW(), NOW())
+        ON CONFLICT (id) DO UPDATE SET updated_at = NOW()
       `;
-      await connection.execute(query, [
-        rule.ruleName,
-        rule.ruleType,
-        rule.entityType,
-        rule.conditionJson,
-        rule.actionOnViolation,
-        rule.authorityLevelRequired,
-        rule.isActive ? 1 : 0,
-      ]);
       console.log(`  ✓ ${rule.ruleName}`);
     }
     console.log(`✅ Seeded ${GOVERNANCE_RULES.length} governance rules`);
@@ -248,21 +229,12 @@ async function seedDatabase() {
     // Seed Decision Authority
     console.log('\n👥 Seeding decision authority matrix...');
     for (const auth of DECISION_AUTHORITY_DEFAULTS) {
-      const query = `
-        INSERT INTO decision_authority 
+      await sql`
+        INSERT INTO decision_authority
         (user_id, authority_level, approval_threshold, can_access_audit_logs, can_override_decisions, can_modify_governance, active, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-        ON DUPLICATE KEY UPDATE updated_at = NOW()
+        VALUES (${auth.userId}, ${auth.authorityLevel}, ${auth.approvalThreshold}, ${auth.canAccessAuditLogs}, ${auth.canOverrideDecisions}, ${auth.canModifyGovernance}, ${auth.active}, NOW(), NOW())
+        ON CONFLICT (id) DO UPDATE SET updated_at = NOW()
       `;
-      await connection.execute(query, [
-        auth.userId,
-        auth.authorityLevel,
-        auth.approvalThreshold,
-        auth.canAccessAuditLogs ? 1 : 0,
-        auth.canOverrideDecisions ? 1 : 0,
-        auth.canModifyGovernance ? 1 : 0,
-        auth.active ? 1 : 0,
-      ]);
       console.log(`  ✓ User ${auth.userId} - ${auth.authorityLevel}`);
     }
     console.log(`✅ Seeded ${DECISION_AUTHORITY_DEFAULTS.length} authority records`);
@@ -270,31 +242,24 @@ async function seedDatabase() {
     // Seed Kill Switches
     console.log('\n🔌 Seeding kill switches...');
     for (const ks of KILL_SWITCHES) {
-      const query = `
-        INSERT INTO kill_switches 
+      await sql`
+        INSERT INTO kill_switches
         (switch_name, description, impact_scope, is_active, created_at, updated_at)
-        VALUES (?, ?, ?, ?, NOW(), NOW())
-        ON DUPLICATE KEY UPDATE updated_at = NOW()
+        VALUES (${ks.switchName}, ${ks.description}, ${ks.impactScope}, ${ks.isActive}, NOW(), NOW())
+        ON CONFLICT (id) DO UPDATE SET updated_at = NOW()
       `;
-      await connection.execute(query, [
-        ks.switchName,
-        ks.description,
-        ks.impactScope,
-        ks.isActive ? 1 : 0,
-      ]);
       console.log(`  ✓ ${ks.switchName}`);
     }
     console.log(`✅ Seeded ${KILL_SWITCHES.length} kill switches`);
 
     // Initialize Governance Metrics
     console.log('\n📊 Initializing governance metrics...');
-    const metricsQuery = `
-      INSERT INTO governance_metrics 
-      (compliance_score, total_escalations, pending_escalations, average_resolution_time_minutes, last_computed_at)
-      VALUES (?, ?, ?, ?, NOW())
-      ON DUPLICATE KEY UPDATE last_computed_at = NOW()
+    await sql`
+      INSERT INTO governance_metrics
+      (metric_date, total_operations, escalations_triggered, escalations_approved, escalations_rejected,
+       kill_switches_activated, compliance_score, created_at)
+      VALUES (CURRENT_DATE, ${0}, ${0}, ${0}, ${0}, ${0}, ${100}, NOW())
     `;
-    await connection.execute(metricsQuery, [100, 0, 0, 0]);
     console.log('  ✓ Governance metrics initialized');
 
     console.log('\n✅ Database seeding completed successfully!');
@@ -306,10 +271,6 @@ async function seedDatabase() {
   } catch (error) {
     console.error('❌ Error seeding database:', error.message);
     process.exit(1);
-  } finally {
-    if (connection) {
-      await connection.end();
-    }
   }
 }
 

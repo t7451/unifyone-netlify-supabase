@@ -1,19 +1,21 @@
-import mysql from "mysql2/promise";
+import { neon } from "@neondatabase/serverless";
 
 const url = process.env.DATABASE_URL;
 if (!url) { console.error("DATABASE_URL not set"); process.exit(1); }
 
-const conn = await mysql.createConnection(url);
+const sql = neon(url);
 try {
-  const [rows] = await conn.query(
-    "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'gig_shifts' AND COLUMN_NAME = 'routeWaypoints'"
-  );
+  const rows = await sql`
+    SELECT column_name FROM information_schema.columns
+    WHERE table_name = 'gig_shifts' AND column_name = 'routeWaypoints'
+  `;
   if (rows.length > 0) {
     console.log("Column routeWaypoints already exists — skipping.");
   } else {
-    await conn.query("ALTER TABLE `gig_shifts` ADD `routeWaypoints` json");
+    await sql`ALTER TABLE gig_shifts ADD COLUMN "routeWaypoints" jsonb`;
     console.log("✓ Added routeWaypoints column to gig_shifts");
   }
-} finally {
-  await conn.end();
+} catch (error) {
+  console.error("❌ Error:", error.message);
+  process.exit(1);
 }

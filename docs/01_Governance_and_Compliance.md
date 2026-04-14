@@ -250,7 +250,7 @@ Expired escalations are marked as `expired` with resolution notes `"Auto-resolve
 
 1. **Data Minimization** -- Only collect data necessary for commerce operations. No behavioral tracking beyond analytics events.
 2. **Right to Erasure** -- `data_deletion` action type in governance rules. Bulk deletion requires Architect approval (>1K records) or Cathedral approval (>100 sensitive records).
-3. **Data Portability** -- Tenant data exportable via tRPC procedures. All data stored in structured MySQL tables with Drizzle ORM.
+3. **Data Portability** -- Tenant data exportable via tRPC procedures. All data stored in structured PostgreSQL tables with Drizzle ORM.
 4. **Consent Management** -- Cookie consent for Meta Pixel (`_fbp`, `_fbc` cookies). CAPI events include user consent status.
 5. **Privacy by Design** -- PII is SHA-256 hashed before transmission to Meta CAPI. Logs exclude raw PII.
 
@@ -271,10 +271,10 @@ UnifyOne maintains PCI compliance through **SAQ A** (Self-Assessment Questionnai
 
 | Classification | Examples | Storage | Access | Retention |
 |---------------|----------|---------|--------|-----------|
-| **Public** | Product names, prices, theme listings | MySQL (Supabase) | All users | Indefinite |
-| **Internal** | Analytics events, audit logs, workflow configs | MySQL (Supabase) | Tenant admins | 3 years |
-| **Confidential** | Customer emails, addresses, order details | MySQL (Supabase) | Tenant admins + system | 7 years |
-| **Restricted** | Payment tokens, OAuth access tokens, API keys | MySQL (encrypted) | System only | Until revoked |
+| **Public** | Product names, prices, theme listings | PostgreSQL (Neon) | All users | Indefinite |
+| **Internal** | Analytics events, audit logs, workflow configs | PostgreSQL (Neon) | Tenant admins | 3 years |
+| **Confidential** | Customer emails, addresses, order details | PostgreSQL (Neon) | Tenant admins + system | 7 years |
+| **Restricted** | Payment tokens, OAuth access tokens, API keys | PostgreSQL (encrypted) | System only | Until revoked |
 
 ### Data Isolation
 
@@ -290,7 +290,7 @@ Tables without `tenantId` (platform-level):
 - **In Transit:** TLS 1.3+ enforced by Netlify edge network. HSTS preload enabled.
 - **At Rest:** AES-256 encryption via Supabase/PlanetScale managed database encryption.
 - **PII Hashing:** SHA-256 for all PII sent to external services (Meta CAPI, analytics).
-- **Token Storage:** Shopify access tokens, Square tokens, and OAuth secrets stored as encrypted text in MySQL.
+- **Token Storage:** Shopify access tokens, Square tokens, and OAuth secrets stored as encrypted text in PostgreSQL.
 
 ---
 

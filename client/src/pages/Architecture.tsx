@@ -53,7 +53,7 @@ const PILLARS = [
     title: "Multi-Tenant Foundation",
     subtitle: "Schema-level isolation",
     body: "Every store is an isolated vault. Tenant data, billing, and access controls are structurally separated at the schema level — not by convention, not by middleware, not by row-level filtering alone. Each tenant is a load-bearing wall in the system's foundation.",
-    tech: ["Drizzle ORM", "MySQL/TiDB", "JWT sessions", "Role-based access control"],
+    tech: ["Drizzle ORM", "PostgreSQL (Neon)", "JWT sessions", "Role-based access control"],
   },
   {
     glyph: "II",
@@ -95,7 +95,7 @@ const PILLARS = [
 const TECH_STACK = [
   { layer: "Frontend", items: ["React 19", "Vite 6", "Tailwind CSS 4", "shadcn/ui", "Recharts"] },
   { layer: "API Layer", items: ["tRPC 11", "Superjson", "Zod validation", "Express 4"] },
-  { layer: "Database", items: ["Drizzle ORM", "MySQL/TiDB", "Supabase Realtime", "Schema migrations"] },
+  { layer: "Database", items: ["Drizzle ORM", "PostgreSQL (Neon)", "Supabase Realtime", "Schema migrations"] },
   { layer: "Auth", items: ["Manus OAuth", "JWT sessions", "Role-based access", "Protected procedures"] },
   { layer: "Payments", items: ["Stripe Checkout", "PayPal SDK", "Shopify redirect", "Webhook verification"] },
   { layer: "Automation", items: ["n8n webhooks", "Zapier hooks", "Resend email", "Event queue"] },

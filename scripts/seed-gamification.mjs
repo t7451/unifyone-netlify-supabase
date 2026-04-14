@@ -1,14 +1,14 @@
-import mysql from "mysql2/promise";
+import { neon } from "@neondatabase/serverless";
 
 const url = process.env.DATABASE_URL;
 if (!url) { console.error("DATABASE_URL not set"); process.exit(1); }
 
-const conn = await mysql.createConnection(url);
+const sql = neon(url);
 
 try {
   // Seed achievements — requirement is a JSON column
-  const [existing] = await conn.query("SELECT COUNT(*) as cnt FROM achievements");
-  if (existing[0].cnt === 0) {
+  const existing = await sql`SELECT COUNT(*) as cnt FROM achievements`;
+  if (Number(existing[0].cnt) === 0) {
     const achievements = [
       { key: "first_shift",   name: "First Shift",       description: "Complete your first gig shift",              category: "gig",     rarity: "common",    pointsReward: 50,   icon: "Car",    requirement: { type: "shift_count", value: 1 } },
       { key: "shift_veteran", name: "Shift Veteran",     description: "Complete 10 gig shifts",                     category: "gig",     rarity: "uncommon",  pointsReward: 150,  icon: "Trophy", requirement: { type: "shift_count", value: 10 } },
@@ -25,10 +25,10 @@ try {
     ];
 
     for (const a of achievements) {
-      await conn.execute(
-        "INSERT INTO achievements (`key`, name, description, category, rarity, pointsReward, icon, requirement) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        [a.key, a.name, a.description, a.category, a.rarity, a.pointsReward, a.icon, JSON.stringify(a.requirement)]
-      );
+      await sql`
+        INSERT INTO achievements ("key", name, description, category, rarity, "pointsReward", icon, requirement)
+        VALUES (${a.key}, ${a.name}, ${a.description}, ${a.category}, ${a.rarity}, ${a.pointsReward}, ${a.icon}, ${JSON.stringify(a.requirement)})
+      `;
     }
     console.log(`✓ Seeded ${achievements.length} achievements`);
   } else {
@@ -36,19 +36,20 @@ try {
   }
 
   // Seed a sample challenge
-  const [existingChallenges] = await conn.query("SELECT COUNT(*) as cnt FROM challenges");
-  if (existingChallenges[0].cnt === 0) {
+  const existingChallenges = await sql`SELECT COUNT(*) as cnt FROM challenges`;
+  if (Number(existingChallenges[0].cnt) === 0) {
     const now = new Date();
     const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    await conn.execute(
-      "INSERT INTO challenges (name, description, type, category, goal, unit, pointsReward, startsAt, endsAt, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      ["Week Hustle", "Complete 5 gig shifts this week", "weekly", "gig", 5, "shifts", 200, now, weekFromNow, 1]
-    );
+    await sql`
+      INSERT INTO challenges (name, description, type, category, goal, unit, "pointsReward", "startsAt", "endsAt", active)
+      VALUES (${"Week Hustle"}, ${"Complete 5 gig shifts this week"}, ${"weekly"}, ${"gig"}, ${5}, ${"shifts"}, ${200}, ${now}, ${weekFromNow}, ${true})
+    `;
     console.log("✓ Seeded 1 sample challenge");
   } else {
     console.log(`Challenges already seeded: ${existingChallenges[0].cnt}`);
   }
 
-} finally {
-  await conn.end();
+} catch (error) {
+  console.error("❌ Error:", error.message);
+  process.exit(1);
 }

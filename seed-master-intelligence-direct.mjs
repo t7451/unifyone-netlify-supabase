@@ -2,14 +2,14 @@
 
 /**
  * Seed Script: Master Intelligence Documents → documentEmbeddings (Direct SQL)
- * 
- * Uses direct database connection instead of Supabase client to avoid schema cache issues
+ *
+ * Uses direct database connection via Neon PostgreSQL
  */
 
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import mysql from 'mysql2/promise';
+import { neon } from '@neondatabase/serverless';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -20,14 +20,7 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-// Parse DATABASE_URL: mysql://user:password@host:port/database?ssl=...
-const urlMatch = DATABASE_URL.match(/mysql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/([^?]+)/);
-if (!urlMatch) {
-  console.error('❌ Invalid DATABASE_URL format');
-  process.exit(1);
-}
-
-const [, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME] = urlMatch;
+const sql = neon(DATABASE_URL);
 
 const CHUNK_SIZE = 500; // tokens per chunk (approximate)
 
@@ -95,7 +88,7 @@ function generateEmbedding(text) {
 /**
  * Seed a single document
  */
-async function seedDocument(connection, docName) {
+async function seedDocument(docName) {
   const docPath = path.join(__dirname, 'docs', docName);
 
   if (!fs.existsSync(docPath)) {
@@ -125,11 +118,10 @@ async function seedDocument(connection, docName) {
         const docTitle = docName.replace('.md', '').replace(/_/g, ' ');
         const embeddingJson = JSON.stringify(embedding);
 
-        await connection.execute(
-          `INSERT INTO document_embeddings (docId, docTitle, chunk, chunkIndex, embedding) 
-           VALUES (?, ?, ?, ?, ?)`,
-          [docId, docTitle, chunk, i, embeddingJson]
-        );
+        await sql`
+          INSERT INTO document_embeddings ("docId", "docTitle", chunk, "chunkIndex", embedding)
+          VALUES (${docId}, ${docTitle}, ${chunk}, ${i}, ${embeddingJson})
+        `;
 
         console.log(`   ✓ Chunk ${i}/${chunks.length - 1}`);
         successCount++;
@@ -159,32 +151,19 @@ async function seedDocument(connection, docName) {
 async function main() {
   console.log('🚀 Seeding Master Intelligence Documents (Direct SQL)\n');
   console.log(`Configuration:`);
-  console.log(`  Database: ${DB_NAME} @ ${DB_HOST}:${DB_PORT}`);
+  console.log(`  Database: Neon PostgreSQL`);
   console.log(`  Chunk Size: ~${CHUNK_SIZE} tokens`);
   console.log(`  Documents: ${DOCS.length}`);
 
-  let connection;
-
   try {
-    // Create connection with SSL for TiDB Cloud
-    connection = await mysql.createConnection({
-      host: DB_HOST,
-      user: DB_USER,
-      password: DB_PASSWORD,
-      database: DB_NAME,
-      port: parseInt(DB_PORT),
-      ssl: {
-        rejectUnauthorized: false,
-      },
-      enableKeepAlive: true,
-    });
-
+    // Test connection
+    await sql`SELECT 1`;
     console.log(`\n✓ Connected to database\n`);
 
     const results = [];
 
     for (const doc of DOCS) {
-      const result = await seedDocument(connection, doc);
+      const result = await seedDocument(doc);
       results.push(result);
     }
 
@@ -209,10 +188,6 @@ async function main() {
   } catch (error) {
     console.error('Fatal error:', error.message);
     process.exit(1);
-  } finally {
-    if (connection) {
-      await connection.end();
-    }
   }
 }
 
