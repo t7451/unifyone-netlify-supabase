@@ -54,20 +54,45 @@ const trpcClient = trpc.createClient({
 });
 
 function initializeApp() {
-  const rootElement = document.getElementById("root");
-  if (!rootElement) {
-    throw new Error("[UnifyOne] Root DOM element #root not found. Check index.html.");
-  }
+  try {
+    const rootElement = document.getElementById("root");
+    if (!rootElement) {
+      console.error("[UnifyOne] Root DOM element #root not found. Check index.html.");
+      throw new Error("[UnifyOne] Root DOM element #root not found. Check index.html.");
+    }
 
-  createRoot(rootElement).render(
-    <HelmetProvider>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <App />
-        </QueryClientProvider>
-      </trpc.Provider>
-    </HelmetProvider>
-  );
+    console.log("[UnifyOne] Initializing React application...");
+
+    createRoot(rootElement).render(
+      <HelmetProvider>
+        <trpc.Provider client={trpcClient} queryClient={queryClient}>
+          <QueryClientProvider client={queryClient}>
+            <App />
+          </QueryClientProvider>
+        </trpc.Provider>
+      </HelmetProvider>
+    );
+
+    console.log("[UnifyOne] React application initialized successfully");
+  } catch (error) {
+    console.error("[UnifyOne] Failed to initialize application:", error);
+    // Display a user-friendly error message on the page
+    const rootElement = document.getElementById("root");
+    if (rootElement) {
+      rootElement.innerHTML = `
+        <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #020202; color: #F0D080; font-family: system-ui, sans-serif;">
+          <div style="max-width: 600px; padding: 2rem; text-align: center;">
+            <h1 style="font-size: 2rem; margin-bottom: 1rem;">Application Error</h1>
+            <p style="margin-bottom: 1rem; color: #9A9A9A;">We encountered an error while loading the application. Please try refreshing the page.</p>
+            <p style="font-size: 0.875rem; color: #5A5A5A; font-family: monospace;">${error instanceof Error ? error.message : String(error)}</p>
+            <button onclick="window.location.reload()" style="margin-top: 1.5rem; padding: 0.75rem 2rem; background: #D4A843; color: #020202; border: none; cursor: pointer; font-weight: 600; letter-spacing: 0.05em;">
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  }
 }
 
 // Ensure DOM is ready before initializing React
