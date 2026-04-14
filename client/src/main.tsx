@@ -57,7 +57,6 @@ function initializeApp() {
   try {
     const rootElement = document.getElementById("root");
     if (!rootElement) {
-      console.error("[UnifyOne] Root DOM element #root not found. Check index.html.");
       throw new Error("[UnifyOne] Root DOM element #root not found. Check index.html.");
     }
 
@@ -79,18 +78,48 @@ function initializeApp() {
     // Display a user-friendly error message on the page
     const rootElement = document.getElementById("root");
     if (rootElement) {
-      rootElement.innerHTML = `
-        <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #020202; color: #F0D080; font-family: system-ui, sans-serif;">
-          <div style="max-width: 600px; padding: 2rem; text-align: center;">
-            <h1 style="font-size: 2rem; margin-bottom: 1rem;">Application Error</h1>
-            <p style="margin-bottom: 1rem; color: #9A9A9A;">We encountered an error while loading the application. Please try refreshing the page.</p>
-            <p style="font-size: 0.875rem; color: #5A5A5A; font-family: monospace;">${error instanceof Error ? error.message : String(error)}</p>
-            <button onclick="window.location.reload()" style="margin-top: 1.5rem; padding: 0.75rem 2rem; background: #D4A843; color: #020202; border: none; cursor: pointer; font-weight: 600; letter-spacing: 0.05em;">
-              Refresh Page
-            </button>
-          </div>
-        </div>
-      `;
+      // Sanitize error message to prevent XSS
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const sanitizedMessage = document.createTextNode(errorMessage);
+      
+      const errorContainer = document.createElement("div");
+      errorContainer.style.cssText = "min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #020202; color: #F0D080; font-family: system-ui, sans-serif;";
+      
+      const errorContent = document.createElement("div");
+      errorContent.style.cssText = "max-width: 600px; padding: 2rem; text-align: center;";
+      
+      const heading = document.createElement("h1");
+      heading.style.cssText = "font-size: 2rem; margin-bottom: 1rem;";
+      heading.textContent = "Application Error";
+      
+      const description = document.createElement("p");
+      description.style.cssText = "margin-bottom: 1rem; color: #9A9A9A;";
+      description.textContent = "We encountered an error while loading the application. Please try refreshing the page.";
+      
+      const errorDetails = document.createElement("p");
+      errorDetails.style.cssText = "font-size: 0.875rem; color: #5A5A5A; font-family: monospace;";
+      errorDetails.appendChild(sanitizedMessage);
+      
+      const refreshButton = document.createElement("button");
+      refreshButton.textContent = "Refresh Page";
+      refreshButton.style.cssText = "margin-top: 1.5rem; padding: 0.75rem 2rem; background: #D4A843; color: #020202; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; letter-spacing: 0.05em;";
+      refreshButton.setAttribute("tabindex", "0");
+      refreshButton.onclick = () => window.location.reload();
+      refreshButton.onkeydown = (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          window.location.reload();
+        }
+      };
+      
+      errorContent.appendChild(heading);
+      errorContent.appendChild(description);
+      errorContent.appendChild(errorDetails);
+      errorContent.appendChild(refreshButton);
+      errorContainer.appendChild(errorContent);
+      
+      rootElement.innerHTML = "";
+      rootElement.appendChild(errorContainer);
     }
   }
 }
