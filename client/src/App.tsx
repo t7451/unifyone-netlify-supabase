@@ -12,6 +12,13 @@ import Customers from "./pages/Customers";
 import Analytics from "./pages/Analytics";
 import Integrations from "./pages/Integrations";
 import Settings from "./pages/Settings";
+import {
+  AccountSettings,
+  NotificationSettings,
+  SecuritySettings,
+  AppearanceSettings,
+  AdvancedSettings,
+} from "./pages/settings";
 import TenantSetup from "./pages/TenantSetup";
 import Checkout from "./pages/Checkout";
 import Billing from "./pages/Billing";
@@ -167,6 +174,26 @@ function Router() {
       <Route
         path="/integrations"
         component={() => <DashboardRoute component={Integrations} />}
+      />
+      <Route
+        path="/settings/account"
+        component={() => <DashboardRoute component={AccountSettings} />}
+      />
+      <Route
+        path="/settings/notifications"
+        component={() => <DashboardRoute component={NotificationSettings} />}
+      />
+      <Route
+        path="/settings/security"
+        component={() => <DashboardRoute component={SecuritySettings} />}
+      />
+      <Route
+        path="/settings/appearance"
+        component={() => <DashboardRoute component={AppearanceSettings} />}
+      />
+      <Route
+        path="/settings/advanced"
+        component={() => <DashboardRoute component={AdvancedSettings} />}
       />
       <Route
         path="/settings"

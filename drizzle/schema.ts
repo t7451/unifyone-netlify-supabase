@@ -1257,3 +1257,23 @@ export const governanceMetrics = pgTable("governance_metrics", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 export type GovernanceMetric = typeof governanceMetrics.$inferSelect;
+
+// ── User Preferences ─────────────────────────────────────────────────────────
+export const userPreferences = pgTable("user_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().unique(),
+  emailNotifications: boolean("emailNotifications").default(true).notNull(),
+  pushNotifications: boolean("pushNotifications").default(true).notNull(),
+  orderUpdates: boolean("orderUpdates").default(true).notNull(),
+  teamAlerts: boolean("teamAlerts").default(true).notNull(),
+  marketingEmails: boolean("marketingEmails").default(false).notNull(),
+  weeklyDigest: boolean("weeklyDigest").default(true).notNull(),
+  analyticsSharing: boolean("analyticsSharing").default(true).notNull(),
+  theme: varchar("theme", { length: 20 }).default("dark").notNull(),
+  language: varchar("language", { length: 10 }).default("en").notNull(),
+  timezone: varchar("timezone", { length: 64 }).default("UTC").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type UserPreferences = typeof userPreferences.$inferSelect;
+export type InsertUserPreferences = typeof userPreferences.$inferInsert;
