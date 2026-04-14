@@ -1,4 +1,5 @@
 import "dotenv/config";
+import "./sentry"; // Initialize Sentry before anything else
 import express from "express";
 import { createServer } from "http";
 import net from "net";
@@ -7,6 +8,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStripeRoutes } from "../stripe";
 import { registerPayPalRoutes } from "../paypal";
 import { registerShopifyRoutes } from "../shopify";
+import { registerSquareRoutes } from "../square";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -14,6 +16,7 @@ import { registerDockerRoutes, registerGracefulShutdown } from "./docker";
 import { ENV } from "./env";
 import { logger, requestLogger } from "./logger";
 import { securityHeaders } from "./securityHeaders";
+import { Sentry } from "./sentry";
 
 /** Validate critical environment variables before the server accepts traffic. */
 function validateEnv() {
@@ -63,6 +66,8 @@ async function startServer() {
   registerPayPalRoutes(app);
   // Register Shopify OAuth + webhook routes (webhook needs raw body BEFORE json middleware)
   registerShopifyRoutes(app);
+  // Register Square payment + webhook routes (webhook needs raw body for signature verification)
+  registerSquareRoutes(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -76,6 +81,12 @@ async function startServer() {
     createExpressMiddleware({
       router: appRouter,
       createContext,
+      onError: ({ error, path }) => {
+        logger.error(`[tRPC] ${path ?? "unknown"}: ${error.message}`);
+        if (error.code === "INTERNAL_SERVER_ERROR") {
+          Sentry.captureException(error);
+        }
+      },
     })
   );
   // development mode uses Vite, production mode uses static files
