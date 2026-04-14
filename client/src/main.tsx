@@ -53,17 +53,27 @@ const trpcClient = trpc.createClient({
   ],
 });
 
-const rootElement = document.getElementById("root");
-if (!rootElement) {
-  throw new Error("[UnifyOne] Root DOM element #root not found. Check index.html.");
+function initializeApp() {
+  const rootElement = document.getElementById("root");
+  if (!rootElement) {
+    throw new Error("[UnifyOne] Root DOM element #root not found. Check index.html.");
+  }
+
+  createRoot(rootElement).render(
+    <HelmetProvider>
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </trpc.Provider>
+    </HelmetProvider>
+  );
 }
 
-createRoot(rootElement).render(
-  <HelmetProvider>
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </trpc.Provider>
-  </HelmetProvider>
-);
+// Ensure DOM is ready before initializing React
+// Module scripts are deferred, but add extra safety for Netlify deployments
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeApp);
+} else {
+  initializeApp();
+}
