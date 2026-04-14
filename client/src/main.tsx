@@ -118,8 +118,7 @@ function initializeApp() {
       errorContent.appendChild(refreshButton);
       errorContainer.appendChild(errorContent);
       
-      rootElement.innerHTML = "";
-      rootElement.appendChild(errorContainer);
+      rootElement.replaceChildren(errorContainer);
     }
   }
 }
@@ -127,7 +126,7 @@ function initializeApp() {
 // Ensure DOM is ready before initializing React
 // Module scripts are deferred, but add extra safety for Netlify deployments
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initializeApp);
+  document.addEventListener("DOMContentLoaded", initializeApp, { once: true });
 } else {
   initializeApp();
 }
