@@ -9,14 +9,29 @@ import { Badge } from "@/components/ui/badge";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import AIInsightsCard from "@/components/AIInsightsCard";
 import GigIQDashboard from "@/components/GigIQDashboard";
-import { Play, Square, MapPin, Navigation, Zap, TrendingUp, DollarSign, Gauge, Clock, Route, Sparkles, RefreshCw, AlertTriangle, ChevronUp, ChevronDown, Car, Bike, Truck } from "lucide-react";
 
-const IRS_RATE = 0.70; // 2025 rate per mile
-const GIG_PLATFORMS = ["DoorDash", "Uber Eats", "Instacart", "Lyft", "Uber", "Amazon Flex", "Shipt", "Grubhub", "Other"];
+const IRS_RATE = 0.7; // 2025 rate per mile
+const GIG_PLATFORMS = [
+  "DoorDash",
+  "Uber Eats",
+  "Instacart",
+  "Lyft",
+  "Uber",
+  "Amazon Flex",
+  "Shipt",
+  "Grubhub",
+  "Other",
+];
 
 function formatDuration(ms: number) {
   const s = Math.floor(ms / 1000);
@@ -32,20 +47,24 @@ function DemandBadge({ level }: { level: "high" | "medium" | "low" }) {
   const map = {
     high: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
     medium: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-    low: "bg-slate-500/20 text-slate-400 border-slate-500/30",
+    low: "bg-gray-500/20 text-gray-400 border-gray-500/30",
   };
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${map[level]}`}>
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${map[level]}`}
+    >
       {level.charAt(0).toUpperCase() + level.slice(1)} Demand
     </span>
   );
 }
 
 export default function GigCommand() {
-  const { user } = useAuth();
+  useAuth();
   const mapRef = useRef<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
-  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
+  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
+    null
+  );
   const watchIdRef = useRef<number | null>(null);
   const gpsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -53,11 +72,19 @@ export default function GigCommand() {
   const [timerActive, setTimerActive] = useState(false);
   const [startTs, setStartTs] = useState<number | null>(null);
   const [platform, setPlatform] = useState("DoorDash");
-  const [currentPos, setCurrentPos] = useState<{ lat: number; lng: number } | null>(null);
-  const [routePath, setRoutePath] = useState<Array<{ lat: number; lng: number }>>([]);
+  const [currentPos, setCurrentPos] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [routePath, setRoutePath] = useState<
+    Array<{ lat: number; lng: number }>
+  >([]);
   const [gpsEnabled, setGpsEnabled] = useState(false);
-  const [intelligencePos, setIntelligencePos] = useState<{ lat: number; lng: number } | null>(null);
-  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [intelligencePos, setIntelligencePos] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [_showShortcuts, setShowShortcuts] = useState(false);
 
   // Shift end form state
   const [endEarnings, setEndEarnings] = useState("");
@@ -66,24 +93,45 @@ export default function GigCommand() {
   const [showEndForm, setShowEndForm] = useState(false);
 
   // tRPC queries
-  const { data: activeShift, refetch: refetchActive } = trpc.moneyManager.getActiveShift.useQuery(undefined, {
-    refetchInterval: timerActive ? 30000 : false,
+  const { data: activeShift, refetch: refetchActive } =
+    trpc.moneyManager.getActiveShift.useQuery(undefined, {
+      refetchInterval: timerActive ? 30000 : false,
+    });
+  const { data: mileageSummary } = trpc.moneyManager.getMileageSummary.useQuery(
+    { year: new Date().getFullYear() }
+  );
+  const { data: shiftsData } = trpc.moneyManager.listShifts.useQuery({
+    limit: 10,
+    offset: 0,
   });
-  const { data: mileageSummary } = trpc.moneyManager.getMileageSummary.useQuery({ year: new Date().getFullYear() });
-  const { data: shiftsData } = trpc.moneyManager.listShifts.useQuery({ limit: 10, offset: 0 });
   const recentShifts = shiftsData?.shifts ?? [];
-  const { data: routeIntelligence, refetch: refetchIntelligence, isFetching: fetchingIntel } =
-    trpc.moneyManager.getRouteIntelligence.useQuery(
-      { lat: intelligencePos?.lat ?? 47.6062, lng: intelligencePos?.lng ?? -122.3321, platform },
-      { enabled: !!intelligencePos, staleTime: 5 * 60 * 1000 }
-    );
+  const {
+    data: routeIntelligence,
+    refetch: refetchIntelligence,
+    isFetching: fetchingIntel,
+  } = trpc.moneyManager.getRouteIntelligence.useQuery(
+    {
+      lat: intelligencePos?.lat ?? 47.6062,
+      lng: intelligencePos?.lng ?? -122.3321,
+      platform,
+    },
+    { enabled: !!intelligencePos, staleTime: 5 * 60 * 1000 }
+  );
 
   // tRPC mutations
   const startShift = trpc.moneyManager.startShift.useMutation();
   const endShift = trpc.moneyManager.endShift.useMutation();
   const updateGPS = trpc.moneyManager.updateShiftGPS.useMutation();
   const generateShortcuts = trpc.moneyManager.generateAIShortcuts.useMutation();
-  const [shortcuts, setShortcuts] = useState<Array<{ title: string; description: string; category: string; impact: string; emoji: string }>>([]);
+  const [shortcuts, setShortcuts] = useState<
+    Array<{
+      title: string;
+      description: string;
+      category: string;
+      impact: string;
+      emoji: string;
+    }>
+  >([]);
 
   // Restore active shift timer on mount
   useEffect(() => {
@@ -109,10 +157,10 @@ export default function GigCommand() {
     if (!navigator.geolocation) return;
     setGpsEnabled(true);
     watchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => {
+      pos => {
         const { latitude: lat, longitude: lng } = pos.coords;
         setCurrentPos({ lat, lng });
-        setRoutePath((prev) => [...prev, { lat, lng }]);
+        setRoutePath(prev => [...prev, { lat, lng }]);
         if (mapRef.current) {
           mapRef.current.panTo({ lat, lng });
           if (markerRef.current) {
@@ -124,9 +172,9 @@ export default function GigCommand() {
           }
         }
         // Set intelligence position on first fix
-        setIntelligencePos((prev) => prev ?? { lat, lng });
+        setIntelligencePos(prev => prev ?? { lat, lng });
       },
-      (err) => console.warn("GPS error:", err.message),
+      err => console.warn("GPS error:", err.message),
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
     );
   }, []);
@@ -163,7 +211,9 @@ export default function GigCommand() {
   const handleStartShift = async () => {
     try {
       const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 8000,
+        })
       ).catch(() => null);
 
       await startShift.mutateAsync({
@@ -220,16 +270,25 @@ export default function GigCommand() {
   };
 
   const ytdDeduction = (mileageSummary?.totalMiles ?? 0) * IRS_RATE;
-  const earningsPerHour = recentShifts.length > 0
-    ? recentShifts.slice(0, 5).reduce((s, r) => s + parseFloat(String(r.grossEarnings)), 0) /
-      Math.max(recentShifts.slice(0, 5).reduce((s, r) => s + (r.durationMinutes ?? 0), 0) / 60, 0.1)
-    : 0;
+  const earningsPerHour =
+    recentShifts.length > 0
+      ? recentShifts
+          .slice(0, 5)
+          .reduce((s, r) => s + parseFloat(String(r.grossEarnings)), 0) /
+        Math.max(
+          recentShifts
+            .slice(0, 5)
+            .reduce((s, r) => s + (r.durationMinutes ?? 0), 0) / 60,
+          0.1
+        )
+      : 0;
 
-  const impactColor = (impact: string) => ({
-    high: "text-emerald-400",
-    medium: "text-amber-400",
-    low: "text-slate-400",
-  }[impact] ?? "text-slate-400");
+  const impactColor = (impact: string) =>
+    ({
+      high: "text-emerald-400",
+      medium: "text-amber-400",
+      low: "text-gray-400",
+    })[impact] ?? "text-gray-400";
 
   return (
     <DashboardLayout>
@@ -241,11 +300,16 @@ export default function GigCommand() {
               <Navigation className="h-6 w-6 text-primary" />
               Gig Command Center
             </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">GPS-aware shift control, route intelligence, and AI optimization</p>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              GPS-aware shift control, route intelligence, and AI optimization
+            </p>
           </div>
           <div className="flex items-center gap-2">
             {timerActive && (
-              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-sm px-3 py-1 font-mono">
+              <Badge
+                variant="outline"
+                className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-sm px-3 py-1 font-mono"
+              >
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-2 inline-block" />
                 {formatDuration(elapsed)}
               </Badge>
@@ -268,14 +332,18 @@ export default function GigCommand() {
                 {!timerActive ? (
                   <>
                     <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Platform</Label>
+                      <Label className="text-xs text-muted-foreground">
+                        Platform
+                      </Label>
                       <Select value={platform} onValueChange={setPlatform}>
                         <SelectTrigger className="h-9">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {GIG_PLATFORMS.map((p) => (
-                            <SelectItem key={p} value={p}>{p}</SelectItem>
+                          {GIG_PLATFORMS.map(p => (
+                            <SelectItem key={p} value={p}>
+                              {p}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -296,7 +364,9 @@ export default function GigCommand() {
                       <div className="font-mono text-4xl font-bold text-foreground tabular-nums">
                         {formatDuration(elapsed)}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">{platform} shift in progress</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {platform} shift in progress
+                      </p>
                     </div>
 
                     {/* GPS indicator */}
@@ -311,7 +381,12 @@ export default function GigCommand() {
                           Active · {routePath.length} pts
                         </span>
                       ) : (
-                        <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={startGPS}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs px-2"
+                          onClick={startGPS}
+                        >
                           Enable
                         </Button>
                       )}
@@ -328,35 +403,43 @@ export default function GigCommand() {
                       </Button>
                     ) : (
                       <div className="space-y-3 border border-border/50 rounded-lg p-3">
-                        <p className="text-xs font-medium text-muted-foreground">Log shift results</p>
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Log shift results
+                        </p>
                         <div className="grid grid-cols-3 gap-2">
                           <div>
-                            <Label className="text-xs text-muted-foreground">Earnings $</Label>
+                            <Label className="text-xs text-muted-foreground">
+                              Earnings $
+                            </Label>
                             <Input
                               type="number"
                               placeholder="0.00"
                               value={endEarnings}
-                              onChange={(e) => setEndEarnings(e.target.value)}
+                              onChange={e => setEndEarnings(e.target.value)}
                               className="h-8 text-sm mt-1"
                             />
                           </div>
                           <div>
-                            <Label className="text-xs text-muted-foreground">Tips $</Label>
+                            <Label className="text-xs text-muted-foreground">
+                              Tips $
+                            </Label>
                             <Input
                               type="number"
                               placeholder="0.00"
                               value={endTips}
-                              onChange={(e) => setEndTips(e.target.value)}
+                              onChange={e => setEndTips(e.target.value)}
                               className="h-8 text-sm mt-1"
                             />
                           </div>
                           <div>
-                            <Label className="text-xs text-muted-foreground">Miles</Label>
+                            <Label className="text-xs text-muted-foreground">
+                              Miles
+                            </Label>
                             <Input
                               type="number"
                               placeholder="0.0"
                               value={endMiles}
-                              onChange={(e) => setEndMiles(e.target.value)}
+                              onChange={e => setEndMiles(e.target.value)}
                               className="h-8 text-sm mt-1"
                             />
                           </div>
@@ -370,7 +453,11 @@ export default function GigCommand() {
                           >
                             {endShift.isPending ? "Saving…" : "Confirm End"}
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setShowEndForm(false)}>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setShowEndForm(false)}
+                          >
                             Cancel
                           </Button>
                         </div>
@@ -387,9 +474,13 @@ export default function GigCommand() {
                 <CardContent className="pt-4 pb-3 px-4">
                   <div className="flex items-center gap-2 mb-1">
                     <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
-                    <span className="text-xs text-muted-foreground">Avg $/hr</span>
+                    <span className="text-xs text-muted-foreground">
+                      Avg $/hr
+                    </span>
                   </div>
-                  <p className="text-xl font-bold text-foreground">${earningsPerHour.toFixed(2)}</p>
+                  <p className="text-xl font-bold text-foreground">
+                    ${earningsPerHour.toFixed(2)}
+                  </p>
                   <p className="text-xs text-muted-foreground">last 5 shifts</p>
                 </CardContent>
               </Card>
@@ -397,9 +488,13 @@ export default function GigCommand() {
                 <CardContent className="pt-4 pb-3 px-4">
                   <div className="flex items-center gap-2 mb-1">
                     <Route className="h-3.5 w-3.5 text-blue-400" />
-                    <span className="text-xs text-muted-foreground">YTD Miles</span>
+                    <span className="text-xs text-muted-foreground">
+                      YTD Miles
+                    </span>
                   </div>
-                  <p className="text-xl font-bold text-foreground">{(mileageSummary?.totalMiles ?? 0).toFixed(0)}</p>
+                  <p className="text-xl font-bold text-foreground">
+                    {(mileageSummary?.totalMiles ?? 0).toFixed(0)}
+                  </p>
                   <p className="text-xs text-muted-foreground">miles logged</p>
                 </CardContent>
               </Card>
@@ -407,19 +502,29 @@ export default function GigCommand() {
                 <CardContent className="pt-4 pb-3 px-4">
                   <div className="flex items-center gap-2 mb-1">
                     <TrendingUp className="h-3.5 w-3.5 text-amber-400" />
-                    <span className="text-xs text-muted-foreground">Tax Deduction</span>
+                    <span className="text-xs text-muted-foreground">
+                      Tax Deduction
+                    </span>
                   </div>
-                  <p className="text-xl font-bold text-foreground">${ytdDeduction.toFixed(0)}</p>
-                  <p className="text-xs text-muted-foreground">YTD @ $0.70/mi</p>
+                  <p className="text-xl font-bold text-foreground">
+                    ${ytdDeduction.toFixed(0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    YTD @ $0.70/mi
+                  </p>
                 </CardContent>
               </Card>
               <Card className="border-border/50 bg-card/80">
                 <CardContent className="pt-4 pb-3 px-4">
                   <div className="flex items-center gap-2 mb-1">
                     <Clock className="h-3.5 w-3.5 text-purple-400" />
-                    <span className="text-xs text-muted-foreground">Total Shifts</span>
+                    <span className="text-xs text-muted-foreground">
+                      Total Shifts
+                    </span>
                   </div>
-                    <p className="text-xl font-bold text-foreground">{recentShifts.length}</p>
+                  <p className="text-xl font-bold text-foreground">
+                    {recentShifts.length}
+                  </p>
                   <p className="text-xs text-muted-foreground">recent shifts</p>
                 </CardContent>
               </Card>
@@ -428,10 +533,10 @@ export default function GigCommand() {
             {/* AI Insights Panel */}
             <GigIQDashboard period="month" className="mb-6" />
 
-      <AIInsightsCard
+            <AIInsightsCard
               context="gig-command"
               title="Gig Command AI"
-              dataContext={`Platform: ${platform}. Avg $/hour (last 5 shifts): $${earningsPerHour.toFixed(2)}. YTD miles: ${(mileageSummary?.totalMiles ?? 0).toFixed(1)}. YTD tax deduction: $${ytdDeduction.toFixed(2)} (IRS 2025 $0.70/mile). Recent shifts: ${recentShifts.length}. Shift currently ${timerActive ? `active (${formatDuration(elapsed)} elapsed)` : 'not active'}.`}
+              dataContext={`Platform: ${platform}. Avg $/hour (last 5 shifts): $${earningsPerHour.toFixed(2)}. YTD miles: ${(mileageSummary?.totalMiles ?? 0).toFixed(1)}. YTD tax deduction: $${ytdDeduction.toFixed(2)} (IRS 2025 $0.70/mile). Recent shifts: ${recentShifts.length}. Shift currently ${timerActive ? `active (${formatDuration(elapsed)} elapsed)` : "not active"}.`}
               defaultCollapsed={false}
             />
 
@@ -450,7 +555,9 @@ export default function GigCommand() {
                     onClick={handleGenerateShortcuts}
                     disabled={generateShortcuts.isPending}
                   >
-                    <RefreshCw className={`h-3.5 w-3.5 mr-1 ${generateShortcuts.isPending ? "animate-spin" : ""}`} />
+                    <RefreshCw
+                      className={`h-3.5 w-3.5 mr-1 ${generateShortcuts.isPending ? "animate-spin" : ""}`}
+                    />
                     {generateShortcuts.isPending ? "Generating…" : "Generate"}
                   </Button>
                 </div>
@@ -458,21 +565,33 @@ export default function GigCommand() {
               <CardContent>
                 {shortcuts.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-4">
-                    Click Generate to get AI-powered tips based on your shift history.
+                    Click Generate to get AI-powered tips based on your shift
+                    history.
                   </p>
                 ) : (
                   <div className="space-y-2">
                     {shortcuts.map((s, i) => (
-                      <div key={i} className="flex gap-2.5 p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                        <span className="text-lg leading-none mt-0.5">{s.emoji}</span>
+                      <div
+                        key={i}
+                        className="flex gap-2.5 p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                      >
+                        <span className="text-lg leading-none mt-0.5">
+                          {s.emoji}
+                        </span>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-xs font-medium text-foreground">{s.title}</p>
-                            <span className={`text-xs font-medium ${impactColor(s.impact)}`}>
+                            <p className="text-xs font-medium text-foreground">
+                              {s.title}
+                            </p>
+                            <span
+                              className={`text-xs font-medium ${impactColor(s.impact)}`}
+                            >
                               {s.impact} impact
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{s.description}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                            {s.description}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -491,7 +610,10 @@ export default function GigCommand() {
                   <Navigation className="h-4 w-4 text-primary" />
                   Route Map
                   {gpsEnabled && (
-                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-xs">
+                    <Badge
+                      variant="outline"
+                      className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-xs"
+                    >
                       Live GPS
                     </Badge>
                   )}
@@ -505,9 +627,11 @@ export default function GigCommand() {
               <CardContent className="p-0">
                 <div className="h-[340px] md:h-[400px]">
                   <MapView
-                    initialCenter={currentPos ?? { lat: 47.6062, lng: -122.3321 }}
+                    initialCenter={
+                      currentPos ?? { lat: 47.6062, lng: -122.3321 }
+                    }
                     initialZoom={13}
-                    onMapReady={(map) => {
+                    onMapReady={map => {
                       mapRef.current = map;
 
                       // Draw route polyline
@@ -521,11 +645,12 @@ export default function GigCommand() {
 
                       // Current position marker
                       if (currentPos) {
-                        markerRef.current = new google.maps.marker.AdvancedMarkerElement({
-                          map,
-                          position: currentPos,
-                          title: "Current Position",
-                        });
+                        markerRef.current =
+                          new google.maps.marker.AdvancedMarkerElement({
+                            map,
+                            position: currentPos,
+                            title: "Current Position",
+                          });
                       }
                     }}
                   />
@@ -550,8 +675,11 @@ export default function GigCommand() {
                     className="h-7 text-xs"
                     onClick={() => {
                       if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition((pos) => {
-                          setIntelligencePos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                        navigator.geolocation.getCurrentPosition(pos => {
+                          setIntelligencePos({
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude,
+                          });
                           setTimeout(() => refetchIntelligence(), 100);
                         });
                       } else {
@@ -560,7 +688,9 @@ export default function GigCommand() {
                     }}
                     disabled={fetchingIntel}
                   >
-                    <RefreshCw className={`h-3.5 w-3.5 mr-1 ${fetchingIntel ? "animate-spin" : ""}`} />
+                    <RefreshCw
+                      className={`h-3.5 w-3.5 mr-1 ${fetchingIntel ? "animate-spin" : ""}`}
+                    />
                     Refresh
                   </Button>
                 </div>
@@ -569,7 +699,9 @@ export default function GigCommand() {
                 {!intelligencePos ? (
                   <div className="text-center py-6 text-muted-foreground text-sm">
                     <MapPin className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                    <p>Enable GPS or start a shift to load route intelligence.</p>
+                    <p>
+                      Enable GPS or start a shift to load route intelligence.
+                    </p>
                   </div>
                 ) : fetchingIntel ? (
                   <div className="text-center py-6 text-muted-foreground text-sm animate-pulse">
@@ -583,13 +715,17 @@ export default function GigCommand() {
                         <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
                           <Clock className="h-3 w-3" /> Timing
                         </p>
-                        <p className="text-sm text-foreground">{routeIntelligence.timingTip}</p>
+                        <p className="text-sm text-foreground">
+                          {routeIntelligence.timingTip}
+                        </p>
                       </div>
                       <div className="bg-muted/30 rounded-lg p-3">
                         <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
                           <TrendingUp className="h-3 w-3" /> Earnings
                         </p>
-                        <p className="text-sm text-foreground">{routeIntelligence.earningsTip}</p>
+                        <p className="text-sm text-foreground">
+                          {routeIntelligence.earningsTip}
+                        </p>
                       </div>
                     </div>
 
@@ -597,26 +733,46 @@ export default function GigCommand() {
                     {routeIntelligence.weatherAlert && (
                       <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
                         <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                        <p className="text-sm text-amber-300">{routeIntelligence.weatherAlert}</p>
+                        <p className="text-sm text-amber-300">
+                          {routeIntelligence.weatherAlert}
+                        </p>
                       </div>
                     )}
 
                     {/* Hot zones */}
                     <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-2">Hot Zones Near You</p>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">
+                        Hot Zones Near You
+                      </p>
                       <div className="space-y-2">
-                        {routeIntelligence.hotZones?.map((zone: { name: string; demand: "high" | "medium" | "low"; reason: string }, i: number) => (
-                          <div key={i} className="flex items-start gap-3 bg-muted/20 rounded-lg px-3 py-2.5">
-                            <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-sm font-medium text-foreground">{zone.name}</span>
-                                <DemandBadge level={zone.demand} />
+                        {routeIntelligence.hotZones?.map(
+                          (
+                            zone: {
+                              name: string;
+                              demand: "high" | "medium" | "low";
+                              reason: string;
+                            },
+                            i: number
+                          ) => (
+                            <div
+                              key={i}
+                              className="flex items-start gap-3 bg-muted/20 rounded-lg px-3 py-2.5"
+                            >
+                              <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-sm font-medium text-foreground">
+                                    {zone.name}
+                                  </span>
+                                  <DemandBadge level={zone.demand} />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {zone.reason}
+                                </p>
                               </div>
-                              <p className="text-xs text-muted-foreground mt-0.5">{zone.reason}</p>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        )}
                       </div>
                     </div>
                   </div>
@@ -641,7 +797,9 @@ export default function GigCommand() {
                 <div className="grid grid-cols-3 gap-3 mb-4">
                   <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-center">
                     <p className="text-xs text-muted-foreground">YTD Miles</p>
-                    <p className="text-lg font-bold text-blue-400">{(mileageSummary?.totalMiles ?? 0).toFixed(1)}</p>
+                    <p className="text-lg font-bold text-blue-400">
+                      {(mileageSummary?.totalMiles ?? 0).toFixed(1)}
+                    </p>
                   </div>
                   <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-center">
                     <p className="text-xs text-muted-foreground">IRS Rate</p>
@@ -649,8 +807,12 @@ export default function GigCommand() {
                     <p className="text-xs text-muted-foreground">per mile</p>
                   </div>
                   <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-center">
-                    <p className="text-xs text-muted-foreground">Tax Deduction</p>
-                    <p className="text-lg font-bold text-amber-400">${ytdDeduction.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Tax Deduction
+                    </p>
+                    <p className="text-lg font-bold text-amber-400">
+                      ${ytdDeduction.toFixed(2)}
+                    </p>
                   </div>
                 </div>
 
@@ -659,33 +821,62 @@ export default function GigCommand() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-border/50">
-                        <th className="text-left py-2 px-2 text-muted-foreground font-medium">Date</th>
-                        <th className="text-left py-2 px-2 text-muted-foreground font-medium">Platform</th>
-                        <th className="text-right py-2 px-2 text-muted-foreground font-medium">Miles</th>
-                        <th className="text-right py-2 px-2 text-muted-foreground font-medium">Earnings</th>
-                        <th className="text-right py-2 px-2 text-muted-foreground font-medium">Deduction</th>
+                        <th className="text-left py-2 px-2 text-muted-foreground font-medium">
+                          Date
+                        </th>
+                        <th className="text-left py-2 px-2 text-muted-foreground font-medium">
+                          Platform
+                        </th>
+                        <th className="text-right py-2 px-2 text-muted-foreground font-medium">
+                          Miles
+                        </th>
+                        <th className="text-right py-2 px-2 text-muted-foreground font-medium">
+                          Earnings
+                        </th>
+                        <th className="text-right py-2 px-2 text-muted-foreground font-medium">
+                          Deduction
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {recentShifts.slice(0, 8).map((shift) => {
+                      {recentShifts.slice(0, 8).map(shift => {
                         const miles = parseFloat(String(shift.totalMiles));
-                        const earnings = parseFloat(String(shift.grossEarnings)) + parseFloat(String(shift.tips));
+                        const earnings =
+                          parseFloat(String(shift.grossEarnings)) +
+                          parseFloat(String(shift.tips));
                         const deduction = miles * IRS_RATE;
                         return (
-                          <tr key={shift.id} className="border-b border-border/20 hover:bg-muted/20 transition-colors">
+                          <tr
+                            key={shift.id}
+                            className="border-b border-border/20 hover:bg-muted/20 transition-colors"
+                          >
                             <td className="py-2 px-2 text-muted-foreground">
-                              {new Date(shift.startTime).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                              {new Date(shift.startTime).toLocaleDateString(
+                                "en-US",
+                                { month: "short", day: "numeric" }
+                              )}
                             </td>
-                            <td className="py-2 px-2 text-foreground">{shift.platform}</td>
-                            <td className="py-2 px-2 text-right text-foreground">{miles.toFixed(1)}</td>
-                            <td className="py-2 px-2 text-right text-emerald-400">${earnings.toFixed(2)}</td>
-                            <td className="py-2 px-2 text-right text-amber-400">${deduction.toFixed(2)}</td>
+                            <td className="py-2 px-2 text-foreground">
+                              {shift.platform}
+                            </td>
+                            <td className="py-2 px-2 text-right text-foreground">
+                              {miles.toFixed(1)}
+                            </td>
+                            <td className="py-2 px-2 text-right text-emerald-400">
+                              ${earnings.toFixed(2)}
+                            </td>
+                            <td className="py-2 px-2 text-right text-amber-400">
+                              ${deduction.toFixed(2)}
+                            </td>
                           </tr>
                         );
                       })}
                       {(!recentShifts || recentShifts.length === 0) && (
                         <tr>
-                          <td colSpan={5} className="py-6 text-center text-muted-foreground">
+                          <td
+                            colSpan={5}
+                            className="py-6 text-center text-muted-foreground"
+                          >
                             No shifts logged yet. Start your first shift above.
                           </td>
                         </tr>

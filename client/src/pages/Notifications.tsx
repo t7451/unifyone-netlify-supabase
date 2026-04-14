@@ -1,32 +1,92 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { AnnouncementBanner, AdminAnnouncementComposer } from "@/components/AnnouncementBanner";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  AnnouncementBanner,
+  AdminAnnouncementComposer,
+} from "@/components/AnnouncementBanner";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import {
-  Bell, Megaphone, Webhook, Users, ShoppingCart, CreditCard, UserPlus,
-  Share2, Target, Save, Plus, Trash2, CheckCheck, Info, AlertTriangle,
-  AlertCircle, CheckCircle2, Zap, Mail, Slack
+  Bell,
+  Megaphone,
+  Webhook,
+  Users,
+  ShoppingCart,
+  CreditCard,
+  UserPlus,
+  Share2,
+  Target,
+  Save,
+  Trash2,
+  CheckCheck,
+  Info,
+  AlertTriangle,
+  AlertCircle,
+  CheckCircle2,
+  Zap,
+  Mail,
+  Slack,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Supported trigger events ──────────────────────────────────────────────────
 const TRIGGER_EVENTS = [
-  { event: "order.created", label: "Order Created", icon: ShoppingCart, color: "text-cyan-400" },
-  { event: "order.status_changed", label: "Order Status Changed", icon: ShoppingCart, color: "text-blue-400" },
-  { event: "payment.received", label: "Payment Received", icon: CreditCard, color: "text-emerald-400" },
-  { event: "lead.submitted", label: "Lead Submitted", icon: Target, color: "text-orange-400" },
-  { event: "team.invite_accepted", label: "Team Invite Accepted", icon: UserPlus, color: "text-indigo-400" },
-  { event: "social.post_published", label: "Social Post Published", icon: Share2, color: "text-pink-400" },
+  {
+    event: "order.created",
+    label: "Order Created",
+    icon: ShoppingCart,
+    color: "text-cyan-400",
+  },
+  {
+    event: "order.status_changed",
+    label: "Order Status Changed",
+    icon: ShoppingCart,
+    color: "text-blue-400",
+  },
+  {
+    event: "payment.received",
+    label: "Payment Received",
+    icon: CreditCard,
+    color: "text-emerald-400",
+  },
+  {
+    event: "lead.submitted",
+    label: "Lead Submitted",
+    icon: Target,
+    color: "text-orange-400",
+  },
+  {
+    event: "team.invite_accepted",
+    label: "Team Invite Accepted",
+    icon: UserPlus,
+    color: "text-indigo-400",
+  },
+  {
+    event: "social.post_published",
+    label: "Social Post Published",
+    icon: Share2,
+    color: "text-pink-400",
+  },
 ];
 
 // ── Notification type icon map ─────────────────────────────────────────────────
@@ -56,17 +116,28 @@ function timeAgo(date: Date | string): string {
 // ── NotificationList (Tier 1 full view) ──────────────────────────────────────
 function NotificationList() {
   const utils = trpc.useUtils();
-  const { data: notifs = [], isLoading } = trpc.notifications.list.useQuery({ limit: 50 });
+  const { data: notifs = [], isLoading } = trpc.notifications.list.useQuery({
+    limit: 50,
+  });
   const { data: unread } = trpc.notifications.unreadCount.useQuery();
 
   const markRead = trpc.notifications.markRead.useMutation({
-    onSuccess: () => { utils.notifications.list.invalidate(); utils.notifications.unreadCount.invalidate(); },
+    onSuccess: () => {
+      utils.notifications.list.invalidate();
+      utils.notifications.unreadCount.invalidate();
+    },
   });
   const markAllRead = trpc.notifications.markAllRead.useMutation({
-    onSuccess: () => { utils.notifications.list.invalidate(); utils.notifications.unreadCount.invalidate(); },
+    onSuccess: () => {
+      utils.notifications.list.invalidate();
+      utils.notifications.unreadCount.invalidate();
+    },
   });
   const deleteNotif = trpc.notifications.delete.useMutation({
-    onSuccess: () => { utils.notifications.list.invalidate(); utils.notifications.unreadCount.invalidate(); },
+    onSuccess: () => {
+      utils.notifications.list.invalidate();
+      utils.notifications.unreadCount.invalidate();
+    },
   });
 
   return (
@@ -97,7 +168,7 @@ function NotificationList() {
 
       {isLoading ? (
         <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map(i => (
             <div key={i} className="h-16 rounded-lg bg-white/5 animate-pulse" />
           ))}
         </div>
@@ -105,11 +176,13 @@ function NotificationList() {
         <div className="flex flex-col items-center justify-center py-16 text-slate-500">
           <Bell className="h-10 w-10 mb-3 opacity-20" />
           <p className="text-sm">No notifications yet</p>
-          <p className="text-xs mt-1 opacity-60">Activity from orders, payments, and team events will appear here.</p>
+          <p className="text-xs mt-1 opacity-60">
+            Activity from orders, payments, and team events will appear here.
+          </p>
         </div>
       ) : (
         <div className="space-y-1">
-          {notifs.map((n) => {
+          {notifs.map(n => {
             const typeInfo = TYPE_ICONS[n.type] ?? TYPE_ICONS.info;
             const Icon = typeInfo.icon;
             return (
@@ -127,13 +200,24 @@ function NotificationList() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start gap-2">
-                    <p className={cn("text-sm leading-tight", n.read ? "text-slate-300" : "text-white font-medium")}>
+                    <p
+                      className={cn(
+                        "text-sm leading-tight",
+                        n.read ? "text-slate-300" : "text-white font-medium"
+                      )}
+                    >
                       {n.title}
                     </p>
-                    {!n.read && <span className="flex-shrink-0 h-2 w-2 rounded-full bg-cyan-400 mt-1.5" />}
+                    {!n.read && (
+                      <span className="flex-shrink-0 h-2 w-2 rounded-full bg-cyan-400 mt-1.5" />
+                    )}
                   </div>
-                  {n.body && <p className="text-xs text-slate-500 mt-0.5">{n.body}</p>}
-                  <p className="text-[11px] text-slate-600 mt-1">{timeAgo(n.createdAt)}</p>
+                  {n.body && (
+                    <p className="text-xs text-slate-500 mt-0.5">{n.body}</p>
+                  )}
+                  <p className="text-[11px] text-slate-600 mt-1">
+                    {timeAgo(n.createdAt)}
+                  </p>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   {!n.read && (
@@ -187,15 +271,15 @@ function AdminBroadcast() {
       toast.success("Notification sent to user.");
       setForm({ userId: "", type: "info", title: "", body: "", link: "" });
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
   const broadcast = trpc.notifications.broadcastToTenant.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       toast.success(`Broadcast sent to ${data.sent} user(s).`);
       setBroadcastForm({ type: "info", title: "", body: "" });
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
   const tenantId = user?.tenantId;
@@ -209,7 +293,9 @@ function AdminBroadcast() {
             <Users className="h-5 w-5 text-indigo-400" />
             <CardTitle className="text-base">Send to Specific User</CardTitle>
           </div>
-          <CardDescription>Push a targeted notification to a specific user by their ID.</CardDescription>
+          <CardDescription>
+            Push a targeted notification to a specific user by their ID.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -219,16 +305,23 @@ function AdminBroadcast() {
                 placeholder="e.g. 42"
                 type="number"
                 value={form.userId}
-                onChange={(e) => setForm((f) => ({ ...f, userId: e.target.value }))}
+                onChange={e => setForm(f => ({ ...f, userId: e.target.value }))}
               />
             </div>
             <div className="space-y-1.5">
               <Label>Type</Label>
-              <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.type}
+                onValueChange={v => setForm(f => ({ ...f, type: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {Object.keys(TYPE_ICONS).map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  {Object.keys(TYPE_ICONS).map(t => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -238,7 +331,7 @@ function AdminBroadcast() {
               <Input
                 placeholder="Notification title"
                 value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               />
             </div>
             <div className="col-span-2 space-y-1.5">
@@ -246,7 +339,7 @@ function AdminBroadcast() {
               <Input
                 placeholder="Additional details"
                 value={form.body}
-                onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
+                onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
               />
             </div>
             <div className="col-span-2 space-y-1.5">
@@ -254,13 +347,16 @@ function AdminBroadcast() {
               <Input
                 placeholder="/dashboard or https://..."
                 value={form.link}
-                onChange={(e) => setForm((f) => ({ ...f, link: e.target.value }))}
+                onChange={e => setForm(f => ({ ...f, link: e.target.value }))}
               />
             </div>
           </div>
           <Button
             onClick={() => {
-              if (!form.userId || !form.title) { toast.error("User ID and title are required."); return; }
+              if (!form.userId || !form.title) {
+                toast.error("User ID and title are required.");
+                return;
+              }
               sendToUser.mutate({
                 userId: parseInt(form.userId),
                 type: form.type as any,
@@ -283,19 +379,30 @@ function AdminBroadcast() {
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
             <Megaphone className="h-5 w-5 text-cyan-400" />
-            <CardTitle className="text-base">Broadcast to All Tenant Users</CardTitle>
+            <CardTitle className="text-base">
+              Broadcast to All Tenant Users
+            </CardTitle>
           </div>
-          <CardDescription>Send a notification to every user in your current tenant workspace.</CardDescription>
+          <CardDescription>
+            Send a notification to every user in your current tenant workspace.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Type</Label>
-              <Select value={broadcastForm.type} onValueChange={(v) => setBroadcastForm((f) => ({ ...f, type: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={broadcastForm.type}
+                onValueChange={v => setBroadcastForm(f => ({ ...f, type: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {Object.keys(TYPE_ICONS).map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  {Object.keys(TYPE_ICONS).map(t => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -305,7 +412,9 @@ function AdminBroadcast() {
               <Input
                 placeholder="e.g. New feature available!"
                 value={broadcastForm.title}
-                onChange={(e) => setBroadcastForm((f) => ({ ...f, title: e.target.value }))}
+                onChange={e =>
+                  setBroadcastForm(f => ({ ...f, title: e.target.value }))
+                }
               />
             </div>
             <div className="col-span-2 space-y-1.5">
@@ -313,14 +422,22 @@ function AdminBroadcast() {
               <Input
                 placeholder="Brief description"
                 value={broadcastForm.body}
-                onChange={(e) => setBroadcastForm((f) => ({ ...f, body: e.target.value }))}
+                onChange={e =>
+                  setBroadcastForm(f => ({ ...f, body: e.target.value }))
+                }
               />
             </div>
           </div>
           <Button
             onClick={() => {
-              if (!tenantId) { toast.error("No active tenant."); return; }
-              if (!broadcastForm.title) { toast.error("Title is required."); return; }
+              if (!tenantId) {
+                toast.error("No active tenant.");
+                return;
+              }
+              if (!broadcastForm.title) {
+                toast.error("Title is required.");
+                return;
+              }
               broadcast.mutate({
                 tenantId,
                 type: broadcastForm.type as any,
@@ -346,17 +463,18 @@ function TriggerConfig() {
   const tenantId = user?.tenantId;
   const utils = trpc.useUtils();
 
-  const { data: triggers = [], isLoading } = trpc.notifications.listTriggers.useQuery(
-    { tenantId: tenantId! },
-    { enabled: !!tenantId }
-  );
+  const { data: triggers = [], isLoading } =
+    trpc.notifications.listTriggers.useQuery(
+      { tenantId: tenantId! },
+      { enabled: !!tenantId }
+    );
 
   const upsert = trpc.notifications.upsertTrigger.useMutation({
     onSuccess: () => {
       toast.success("Trigger configuration saved.");
       utils.notifications.listTriggers.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
   const deleteTrigger = trpc.notifications.deleteTrigger.useMutation({
@@ -365,26 +483,33 @@ function TriggerConfig() {
 
   // Local state for each event's config
   const [configs, setConfigs] = useState<
-    Record<string, {
-      inAppEnabled: boolean;
-      n8nEnabled: boolean;
-      n8nWebhookUrl: string;
-      zapierEnabled: boolean;
-      mailchimpEnabled: boolean;
-      slackEnabled: boolean;
-      slackWebhookUrl: string;
-      emailEnabled: boolean;
-      emailRecipients: string;
-    }>
+    Record<
+      string,
+      {
+        inAppEnabled: boolean;
+        n8nEnabled: boolean;
+        n8nWebhookUrl: string;
+        zapierEnabled: boolean;
+        mailchimpEnabled: boolean;
+        slackEnabled: boolean;
+        slackWebhookUrl: string;
+        emailEnabled: boolean;
+        emailRecipients: string;
+      }
+    >
   >(() => {
     const defaults: Record<string, any> = {};
-    TRIGGER_EVENTS.forEach((e) => {
+    TRIGGER_EVENTS.forEach(e => {
       defaults[e.event] = {
         inAppEnabled: true,
-        n8nEnabled: false, n8nWebhookUrl: "",
-        zapierEnabled: false, mailchimpEnabled: false,
-        slackEnabled: false, slackWebhookUrl: "",
-        emailEnabled: false, emailRecipients: "",
+        n8nEnabled: false,
+        n8nWebhookUrl: "",
+        zapierEnabled: false,
+        mailchimpEnabled: false,
+        slackEnabled: false,
+        slackWebhookUrl: "",
+        emailEnabled: false,
+        emailRecipients: "",
       };
     });
     return defaults;
@@ -394,7 +519,7 @@ function TriggerConfig() {
   const [synced, setSynced] = useState(false);
   if (!synced && triggers.length > 0) {
     const updated = { ...configs };
-    triggers.forEach((t) => {
+    triggers.forEach(t => {
       updated[t.event] = {
         inAppEnabled: t.inAppEnabled ?? true,
         n8nEnabled: t.n8nEnabled,
@@ -412,7 +537,10 @@ function TriggerConfig() {
   }
 
   const handleSave = (event: string) => {
-    if (!tenantId) { toast.error("No active tenant."); return; }
+    if (!tenantId) {
+      toast.error("No active tenant.");
+      return;
+    }
     upsert.mutate({ tenantId, event, ...configs[event] });
   };
 
@@ -428,21 +556,26 @@ function TriggerConfig() {
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-2">
         <Webhook className="h-5 w-5 text-cyan-400" />
-        <h3 className="font-semibold text-white">Event Trigger Configuration</h3>
+        <h3 className="font-semibold text-white">
+          Event Trigger Configuration
+        </h3>
       </div>
       <p className="text-sm text-slate-500 mb-4">
-        Configure which channels receive notifications when each platform event fires. Changes are saved per-event.
+        Configure which channels receive notifications when each platform event
+        fires. Changes are saved per-event.
       </p>
 
       {isLoading ? (
         <div className="space-y-3">
-          {[1, 2, 3].map((i) => <div key={i} className="h-24 rounded-lg bg-white/5 animate-pulse" />)}
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-24 rounded-lg bg-white/5 animate-pulse" />
+          ))}
         </div>
       ) : (
         <div className="space-y-3">
           {TRIGGER_EVENTS.map(({ event, label, icon: EventIcon, color }) => {
             const cfg = configs[event] ?? {};
-            const existingTrigger = triggers.find((t) => t.event === event);
+            const existingTrigger = triggers.find(t => t.event === event);
 
             return (
               <Card key={event} className="border-white/10 bg-white/5">
@@ -454,9 +587,13 @@ function TriggerConfig() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-3">
                         <div>
-                          <p className="text-sm font-medium text-white">{label}</p>
+                          <p className="text-sm font-medium text-white">
+                            {label}
+                          </p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <p className="text-xs text-slate-500 font-mono">{event}</p>
+                            <p className="text-xs text-slate-500 font-mono">
+                              {event}
+                            </p>
                             {(() => {
                               const active = [
                                 cfg.inAppEnabled && "In-app",
@@ -468,7 +605,8 @@ function TriggerConfig() {
                               ].filter(Boolean);
                               return active.length > 0 ? (
                                 <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-[10px] px-1.5 py-0">
-                                  {active.length} channel{active.length !== 1 ? "s" : ""} active
+                                  {active.length} channel
+                                  {active.length !== 1 ? "s" : ""} active
                                 </Badge>
                               ) : null;
                             })()}
@@ -480,7 +618,9 @@ function TriggerConfig() {
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7 text-slate-500 hover:text-red-400"
-                              onClick={() => deleteTrigger.mutate({ id: existingTrigger.id })}
+                              onClick={() =>
+                                deleteTrigger.mutate({ id: existingTrigger.id })
+                              }
                               title="Remove config"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -504,11 +644,18 @@ function TriggerConfig() {
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={cfg.inAppEnabled}
-                            onCheckedChange={(v) => setConfigs((c) => ({ ...c, [event]: { ...c[event], inAppEnabled: v } }))}
+                            onCheckedChange={v =>
+                              setConfigs(c => ({
+                                ...c,
+                                [event]: { ...c[event], inAppEnabled: v },
+                              }))
+                            }
                           />
                           <div className="flex items-center gap-1.5">
                             <Bell className="h-3.5 w-3.5 text-cyan-400" />
-                            <span className="text-xs text-slate-300">In-app</span>
+                            <span className="text-xs text-slate-300">
+                              In-app
+                            </span>
                           </div>
                         </div>
 
@@ -516,11 +663,18 @@ function TriggerConfig() {
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={cfg.n8nEnabled}
-                            onCheckedChange={(v) => setConfigs((c) => ({ ...c, [event]: { ...c[event], n8nEnabled: v } }))}
+                            onCheckedChange={v =>
+                              setConfigs(c => ({
+                                ...c,
+                                [event]: { ...c[event], n8nEnabled: v },
+                              }))
+                            }
                           />
                           <div className="flex items-center gap-1.5">
                             <Zap className="h-3.5 w-3.5 text-orange-400" />
-                            <span className="text-xs text-slate-300">n8n webhook</span>
+                            <span className="text-xs text-slate-300">
+                              n8n webhook
+                            </span>
                           </div>
                         </div>
 
@@ -528,11 +682,18 @@ function TriggerConfig() {
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={cfg.zapierEnabled}
-                            onCheckedChange={(v) => setConfigs((c) => ({ ...c, [event]: { ...c[event], zapierEnabled: v } }))}
+                            onCheckedChange={v =>
+                              setConfigs(c => ({
+                                ...c,
+                                [event]: { ...c[event], zapierEnabled: v },
+                              }))
+                            }
                           />
                           <div className="flex items-center gap-1.5">
                             <Zap className="h-3.5 w-3.5 text-amber-400" />
-                            <span className="text-xs text-slate-300">Zapier</span>
+                            <span className="text-xs text-slate-300">
+                              Zapier
+                            </span>
                           </div>
                         </div>
 
@@ -540,11 +701,18 @@ function TriggerConfig() {
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={cfg.mailchimpEnabled}
-                            onCheckedChange={(v) => setConfigs((c) => ({ ...c, [event]: { ...c[event], mailchimpEnabled: v } }))}
+                            onCheckedChange={v =>
+                              setConfigs(c => ({
+                                ...c,
+                                [event]: { ...c[event], mailchimpEnabled: v },
+                              }))
+                            }
                           />
                           <div className="flex items-center gap-1.5">
                             <Mail className="h-3.5 w-3.5 text-yellow-400" />
-                            <span className="text-xs text-slate-300">Mailchimp</span>
+                            <span className="text-xs text-slate-300">
+                              Mailchimp
+                            </span>
                           </div>
                         </div>
 
@@ -552,11 +720,18 @@ function TriggerConfig() {
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={cfg.slackEnabled}
-                            onCheckedChange={(v) => setConfigs((c) => ({ ...c, [event]: { ...c[event], slackEnabled: v } }))}
+                            onCheckedChange={v =>
+                              setConfigs(c => ({
+                                ...c,
+                                [event]: { ...c[event], slackEnabled: v },
+                              }))
+                            }
                           />
                           <div className="flex items-center gap-1.5">
                             <Slack className="h-3.5 w-3.5 text-purple-400" />
-                            <span className="text-xs text-slate-300">Slack</span>
+                            <span className="text-xs text-slate-300">
+                              Slack
+                            </span>
                           </div>
                         </div>
 
@@ -564,11 +739,18 @@ function TriggerConfig() {
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={cfg.emailEnabled}
-                            onCheckedChange={(v) => setConfigs((c) => ({ ...c, [event]: { ...c[event], emailEnabled: v } }))}
+                            onCheckedChange={v =>
+                              setConfigs(c => ({
+                                ...c,
+                                [event]: { ...c[event], emailEnabled: v },
+                              }))
+                            }
                           />
                           <div className="flex items-center gap-1.5">
                             <Mail className="h-3.5 w-3.5 text-blue-400" />
-                            <span className="text-xs text-slate-300">Email alerts</span>
+                            <span className="text-xs text-slate-300">
+                              Email alerts
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -576,33 +758,63 @@ function TriggerConfig() {
                       {/* Conditional inputs */}
                       {cfg.n8nEnabled && (
                         <div className="mt-3 space-y-1.5">
-                          <Label className="text-xs text-slate-400">n8n Webhook URL</Label>
+                          <Label className="text-xs text-slate-400">
+                            n8n Webhook URL
+                          </Label>
                           <Input
                             placeholder="https://your-n8n.example.com/webhook/..."
                             value={cfg.n8nWebhookUrl}
-                            onChange={(e) => setConfigs((c) => ({ ...c, [event]: { ...c[event], n8nWebhookUrl: e.target.value } }))}
+                            onChange={e =>
+                              setConfigs(c => ({
+                                ...c,
+                                [event]: {
+                                  ...c[event],
+                                  n8nWebhookUrl: e.target.value,
+                                },
+                              }))
+                            }
                             className="h-8 text-xs"
                           />
                         </div>
                       )}
                       {cfg.slackEnabled && (
                         <div className="mt-3 space-y-1.5">
-                          <Label className="text-xs text-slate-400">Slack Webhook URL</Label>
+                          <Label className="text-xs text-slate-400">
+                            Slack Webhook URL
+                          </Label>
                           <Input
                             placeholder="https://hooks.slack.com/services/..."
                             value={cfg.slackWebhookUrl}
-                            onChange={(e) => setConfigs((c) => ({ ...c, [event]: { ...c[event], slackWebhookUrl: e.target.value } }))}
+                            onChange={e =>
+                              setConfigs(c => ({
+                                ...c,
+                                [event]: {
+                                  ...c[event],
+                                  slackWebhookUrl: e.target.value,
+                                },
+                              }))
+                            }
                             className="h-8 text-xs"
                           />
                         </div>
                       )}
                       {cfg.emailEnabled && (
                         <div className="mt-3 space-y-1.5">
-                          <Label className="text-xs text-slate-400">Email Recipients (comma-separated)</Label>
+                          <Label className="text-xs text-slate-400">
+                            Email Recipients (comma-separated)
+                          </Label>
                           <Input
                             placeholder="admin@example.com, ops@example.com"
                             value={cfg.emailRecipients}
-                            onChange={(e) => setConfigs((c) => ({ ...c, [event]: { ...c[event], emailRecipients: e.target.value } }))}
+                            onChange={e =>
+                              setConfigs(c => ({
+                                ...c,
+                                [event]: {
+                                  ...c[event],
+                                  emailRecipients: e.target.value,
+                                },
+                              }))
+                            }
                             className="h-8 text-xs"
                           />
                         </div>
@@ -625,12 +837,13 @@ export default function Notifications() {
   const isAdmin = user?.role === "admin";
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold text-white">Notification Center</h1>
-        <p className="text-slate-400 text-sm mt-1">
-          Manage your in-app alerts, admin broadcasts, announcements, and event-driven webhook triggers.
+        <p className="text-gray-400 text-sm mt-1">
+          Manage your in-app alerts, admin broadcasts, announcements, and
+          event-driven webhook triggers.
         </p>
       </div>
 
@@ -640,23 +853,35 @@ export default function Notifications() {
       {/* Tabs */}
       <Tabs defaultValue="inbox">
         <TabsList className="bg-white/5 border border-white/10">
-          <TabsTrigger value="inbox" className="data-[state=active]:bg-white/10">
+          <TabsTrigger
+            value="inbox"
+            className="data-[state=active]:bg-white/10"
+          >
             <Bell className="h-3.5 w-3.5 mr-1.5" />
             Inbox
           </TabsTrigger>
           {isAdmin && (
             <>
-              <TabsTrigger value="broadcast" className="data-[state=active]:bg-white/10">
+              <TabsTrigger
+                value="broadcast"
+                className="data-[state=active]:bg-white/10"
+              >
                 <Megaphone className="h-3.5 w-3.5 mr-1.5" />
                 Broadcast
               </TabsTrigger>
-              <TabsTrigger value="announcements" className="data-[state=active]:bg-white/10">
+              <TabsTrigger
+                value="announcements"
+                className="data-[state=active]:bg-white/10"
+              >
                 <Megaphone className="h-3.5 w-3.5 mr-1.5" />
                 Announcements
               </TabsTrigger>
             </>
           )}
-          <TabsTrigger value="triggers" className="data-[state=active]:bg-white/10">
+          <TabsTrigger
+            value="triggers"
+            className="data-[state=active]:bg-white/10"
+          >
             <Webhook className="h-3.5 w-3.5 mr-1.5" />
             Triggers
           </TabsTrigger>
