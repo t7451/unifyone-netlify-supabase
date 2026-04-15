@@ -18,7 +18,6 @@ import {
 import {
   TrendingUp,
   Plus,
-  DollarSign,
   Link2,
   AlertTriangle,
   CheckCircle2,
@@ -30,7 +29,6 @@ import {
   BarChart3,
   Zap,
   Users,
-  ShoppingBag,
   Box,
   Download,
   Repeat,

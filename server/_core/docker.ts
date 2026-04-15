@@ -8,6 +8,7 @@
  */
 import type { Express, Request, Response } from "express";
 import type { Server } from "http";
+import * as fs from "fs";
 import { getDb } from "../db";
 
 // ── Runtime state ────────────────────────────────────────────────────────────
@@ -136,7 +137,6 @@ function metricsHandler(_req: Request, res: Response) {
 function isRunningInDocker(): boolean {
   try {
     // Check for .dockerenv file (standard Docker indicator)
-    const fs = require("fs");
     if (fs.existsSync("/.dockerenv")) return true;
     // Check cgroup for "docker" or "containerd"
     const cgroup = fs.readFileSync("/proc/1/cgroup", "utf8");

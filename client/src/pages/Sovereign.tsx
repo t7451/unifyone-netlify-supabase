@@ -12,7 +12,7 @@ import { SITE_URL } from "@/lib/siteConfig";
 const SOV_CANONICAL = `${SITE_URL}/sovereign`;
 import { Link } from "wouter";
 import {
-  Shield, Layers, Zap, Lock, TrendingUp, ChevronRight,
+  Shield, Zap, Lock, ChevronRight,
   CheckCircle, ArrowRight, Building2, Cpu, Globe, Users,
   Star, Quote
 } from "lucide-react";

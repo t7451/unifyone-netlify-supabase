@@ -19,7 +19,6 @@ import {
 import {
   Link2,
   Plus,
-  DollarSign,
   Zap,
   Pencil,
   Trash2,

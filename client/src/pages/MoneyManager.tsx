@@ -1,6 +1,5 @@
 import { useState } from "react";
 import AIInsightsCard from "@/components/AIInsightsCard";
-import GigIQDashboard from "@/components/GigIQDashboard";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

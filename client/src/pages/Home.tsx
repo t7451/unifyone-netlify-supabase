@@ -37,9 +37,6 @@ const HOME_JSON_LD = [
   },
 ];
 
-// ── Brand constants ───────────────────────────────────────────────────────────
-const UNIFY_AI_ENDPOINT = "https://api.1commerce.online/v1";
-
 // ── Animated ticker data ──────────────────────────────────────────────────────
 const TICKER_INSIGHTS = [
   { label: "SHIFT INTELLIGENCE", value: "Tue evening Zone 4 avg $24.80/hr vs $18.20/hr in Zone 2", delta: "+$340/mo shifting 2hrs/wk" },

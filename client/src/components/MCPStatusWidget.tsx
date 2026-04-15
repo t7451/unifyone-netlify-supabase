@@ -18,8 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Zap, Copy, Check, ExternalLink, ChevronDown, ChevronUp,
-  Radio, Cpu, Wrench, AlertTriangle,
+  Copy, Check, ExternalLink, ChevronDown, ChevronUp,
+  Radio, Cpu, Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";

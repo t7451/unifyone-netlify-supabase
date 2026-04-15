@@ -4,7 +4,6 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
@@ -12,29 +11,7 @@ import {
   ShoppingBag, Zap, Shield, AlertCircle
 } from "lucide-react";
 
-// PayPal logo SVG inline
-const PayPalLogo = () => (
-  <svg viewBox="0 0 100 28" className="h-5 w-auto" fill="none">
-    <path d="M12.5 4h8.2c4.5 0 7.5 2.5 6.8 7.2-.8 5.4-4.8 7.5-9 7.5h-2.3l-1.5 7.3H9.2L12.5 4z" fill="#009cde"/>
-    <path d="M15.8 4h8.2c4.5 0 7.5 2.5 6.8 7.2-.8 5.4-4.8 7.5-9 7.5h-2.3l-1.5 7.3h-5.5L15.8 4z" fill="#012169"/>
-    <text x="35" y="20" fontFamily="Arial" fontWeight="bold" fontSize="14" fill="#003087">Pay</text>
-    <text x="58" y="20" fontFamily="Arial" fontWeight="bold" fontSize="14" fill="#009cde">Pal</text>
-  </svg>
-);
-
-const ShopifyLogo = () => (
-  <svg viewBox="0 0 100 28" className="h-5 w-auto" fill="none">
-    <text x="5" y="20" fontFamily="Arial" fontWeight="bold" fontSize="15" fill="#96BF48">shopify</text>
-  </svg>
-);
-
 type PaymentRail = "stripe" | "paypal" | "shopify" | "square";
-
-interface CheckoutItem {
-  name: string;
-  quantity: number;
-  price: number;
-}
 
 export default function Checkout() {
   const [, navigate] = useLocation();

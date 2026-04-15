@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
-  Activity, AlertTriangle, CheckCircle2, Clock, RefreshCw, Zap,
-  ChevronDown, Filter, BarChart2, Database, ShoppingBag, TrendingUp
+  Activity, AlertTriangle, CheckCircle2, Clock, RefreshCw,
+  BarChart2, Database, ShoppingBag, TrendingUp
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
