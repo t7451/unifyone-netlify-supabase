@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -301,16 +301,43 @@ export default function TenantSetup() {
             {/* Quick feature highlights */}
             <div className="grid grid-cols-3 gap-3 mb-8">
               {[
-                { icon: Package, label: "Products", desc: "Add your catalog" },
-                { icon: ShoppingCart, label: "Orders", desc: "Track sales" },
-                { icon: BarChart3, label: "Analytics", desc: "View insights" },
+                { icon: Package, label: "Products", desc: "Add your catalog", href: "/products" },
+                { icon: ShoppingCart, label: "Orders", desc: "Track sales", href: "/orders" },
+                { icon: BarChart3, label: "Analytics", desc: "View insights", href: "/analytics" },
               ].map(item => (
-                <div key={item.label} className="rounded-xl p-3 bg-white/5 border border-white/5">
-                  <item.icon className="w-5 h-5 text-[#00D9FF] mx-auto mb-1.5" />
-                  <div className="text-white text-xs font-medium">{item.label}</div>
-                  <div className="text-gray-500 text-[10px] mt-0.5">{item.desc}</div>
-                </div>
+                <Link key={item.label} href={item.href}>
+                  <a
+                    className="block rounded-xl p-3 bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-colors"
+                    aria-label={`Go to ${item.label}`}
+                  >
+                    <item.icon className="w-5 h-5 text-[#00D9FF] mx-auto mb-1.5" />
+                    <div className="text-white text-xs font-medium">{item.label}</div>
+                    <div className="text-gray-500 text-[10px] mt-0.5">{item.desc}</div>
+                  </a>
+                </Link>
               ))}
+            </div>
+
+            {/* Next steps checklist */}
+            <div className="text-left mb-8 p-4 rounded-xl bg-white/3 border border-white/10">
+              <p className="text-gray-400 text-xs font-medium mb-3">Getting started checklist</p>
+              <div className="space-y-2">
+                {[
+                  { step: "Add your first product", href: "/products" },
+                  { step: "Connect a payment method (Stripe/PayPal)", href: "/integrations" },
+                  { step: "Customize your store settings", href: "/settings" },
+                ].map((item) => (
+                  <Link key={item.step} href={item.href}>
+                    <a
+                      className="flex items-center gap-2 text-xs text-gray-400 hover:text-[#00D9FF] transition-colors"
+                      aria-label={item.step}
+                    >
+                      <div className="w-4 h-4 rounded border border-white/20 shrink-0" role="presentation" />
+                      {item.step}
+                    </a>
+                  </Link>
+                ))}
+              </div>
             </div>
 
             <Button

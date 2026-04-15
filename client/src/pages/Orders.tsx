@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
   Search, ShoppingCart, Plus, Eye, Package, Truck, CheckCircle,
-  Clock, XCircle, RefreshCw, Loader2, ChevronRight, DollarSign, User, CreditCard
+  Clock, XCircle, RefreshCw, Loader2, ChevronRight, DollarSign, User, CreditCard, Download
 } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -150,6 +150,43 @@ export default function Orders() {
     setShowDetail(true);
   };
 
+  const exportToCSV = () => {
+    const rows = orders.data ?? [];
+    if (!rows.length) return toast.error("No orders to export");
+    const headers = ["Order #", "Customer", "Email", "Status", "Payment", "Total", "Created"];
+    type OrderRow = {
+      orderNumber?: string | number;
+      id: number;
+      customerName?: string;
+      customerEmail?: string;
+      status: string;
+      paymentStatus?: string;
+      totalAmount?: number | string;
+      createdAt: string;
+    };
+    const csvRows = [
+      headers.join(","),
+      ...(rows as OrderRow[]).map((o) =>
+        [
+          o.orderNumber ?? o.id,
+          JSON.stringify(o.customerName ?? ""),
+          JSON.stringify(o.customerEmail ?? ""),
+          o.status,
+          o.paymentStatus ?? "",
+          `$${Number(o.totalAmount ?? 0).toFixed(2)}`,
+          new Date(o.createdAt).toLocaleDateString(),
+        ].join(",")
+      ),
+    ];
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -163,12 +200,22 @@ export default function Orders() {
             <RealtimeStatus />
           </div>
         </div>
-        <Button
-          onClick={() => setShowCreate(true)}
-          className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
-        >
-          <Plus className="w-4 h-4 mr-2" /> New Order
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportToCSV}
+            className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
+          >
+            <Download className="w-4 h-4 mr-2" /> Export CSV
+          </Button>
+          <Button
+            onClick={() => setShowCreate(true)}
+            className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+          >
+            <Plus className="w-4 h-4 mr-2" /> New Order
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

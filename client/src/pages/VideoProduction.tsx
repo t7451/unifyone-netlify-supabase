@@ -9,7 +9,7 @@ export default function VideoProduction() {
 
   const videoUrl = "https://cdn.1commerce.online/videos/Ultra-realistic_cinematic_foot_Kling_30__37390(1).mp4";
 
-  const _showcases = [ // TODO: render in JSX
+  const showcases = [
     {
       id: "onestack-cinematic",
       title: "OneStack Cinematic Reel",
@@ -125,6 +125,38 @@ export default function VideoProduction() {
                 </Button>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Showcase Library */}
+      <section className="py-16 border-t border-border">
+        <div className="container max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-foreground mb-4">Showcase Library</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Production-grade video assets ready to deploy across your marketing channels.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {showcases.map((showcase) => (
+              <Card key={showcase.id} className="p-6 hover:shadow-lg transition-shadow">
+                <div className="text-4xl mb-4">{showcase.thumbnail}</div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">{showcase.title}</h3>
+                <p className="text-sm text-muted-foreground mb-4">{showcase.description}</p>
+                <div className="flex gap-2 flex-wrap mb-4">
+                  <Badge variant="outline">{showcase.format}</Badge>
+                  <Badge variant="outline">{showcase.duration}</Badge>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {showcase.tags.map((tag) => (
+                    <span key={tag} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
