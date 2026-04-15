@@ -282,3 +282,6 @@ export function registerBillingRoutes(app: Express) {
     });
   });
 } // end registerBillingRoutes
+
+// Fetch-based route handler stub (for Netlify serverless; not yet implemented)
+export const registerBillingFetchRoutes: null = null;

@@ -23,26 +23,10 @@ export async function buildNonTrpcHandler(): Promise<
     { registerOAuthFetchRoutes },
     { registerCustomAuthFetchRoutes },
   ] = await Promise.all([
-    (
-      import("../stripe") as unknown as Promise<{
-        registerStripeFetchRoutes: FetchHandler | null;
-      }>
-    ).catch(() => ({ registerStripeFetchRoutes: null })),
-    (
-      import("../billing") as unknown as Promise<{
-        registerBillingFetchRoutes: FetchHandler | null;
-      }>
-    ).catch(() => ({ registerBillingFetchRoutes: null })),
-    (
-      import("../paypal") as unknown as Promise<{
-        registerPayPalFetchRoutes: FetchHandler | null;
-      }>
-    ).catch(() => ({ registerPayPalFetchRoutes: null })),
-    (
-      import("../square") as unknown as Promise<{
-        registerSquareFetchRoutes: FetchHandler | null;
-      }>
-    ).catch(() => ({ registerSquareFetchRoutes: null })),
+    import("../stripe").catch(() => ({ registerStripeFetchRoutes: null })),
+    import("../billing").catch(() => ({ registerBillingFetchRoutes: null })),
+    import("../paypal").catch(() => ({ registerPayPalFetchRoutes: null })),
+    import("../square").catch(() => ({ registerSquareFetchRoutes: null })),
     import("./oauth").catch(() => ({ registerOAuthFetchRoutes: null })),
     import("./customAuthRoutes").catch(() => ({
       registerCustomAuthFetchRoutes: null,

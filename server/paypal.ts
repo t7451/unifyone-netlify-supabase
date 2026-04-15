@@ -277,3 +277,6 @@ export function registerPayPalRoutes(app: Express) {
 }
 
 export { getPayPalAccessToken };
+
+// Fetch-based route handler stub (for Netlify serverless; not yet implemented)
+export const registerPayPalFetchRoutes: null = null;

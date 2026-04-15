@@ -236,7 +236,7 @@ export default function AccountSettings() {
                   Login Method
                 </p>
                 <p className="text-white text-sm mt-0.5 capitalize">
-                  {(user as Record<string, unknown>)?.loginMethod as string ?? "OAuth"}
+                  {(user as { loginMethod?: string | null })?.loginMethod ?? "OAuth"}
                 </p>
               </div>
             </div>
