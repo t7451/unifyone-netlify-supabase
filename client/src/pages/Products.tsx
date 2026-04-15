@@ -29,6 +29,7 @@ const EMPTY_FORM = {
   lowStockThreshold: "5",
   weight: "",
   categoryId: "none",
+  imageUrl: "",
 };
 
 type ProductForm = typeof EMPTY_FORM;
@@ -174,6 +175,25 @@ function ProductFormFields({ form, setForm }: { form: ProductForm; setForm: (f: 
           className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
         />
       </div>
+      <div>
+        <Label className="text-gray-300 text-sm">Image URL</Label>
+        <Input
+          value={form.imageUrl}
+          onChange={e => setForm({ ...form, imageUrl: e.target.value })}
+          placeholder="https://example.com/image.jpg"
+          className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
+        />
+        {form.imageUrl && (
+          <div className="mt-2">
+            <img
+              src={form.imageUrl}
+              alt="Product preview"
+              className="w-24 h-24 object-cover rounded-lg border border-white/10"
+              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -233,6 +253,7 @@ export default function Products() {
       initialStock: Number(form.initialStock),
       lowStockThreshold: Number(form.lowStockThreshold),
       categoryId: form.categoryId ? Number(form.categoryId) : undefined,
+      imageUrl: form.imageUrl || undefined,
     });
   };
 
@@ -250,6 +271,7 @@ export default function Products() {
       lowStockThreshold: String(p.inventory?.lowStockThreshold ?? 5),
       weight: String(p.weight ?? ""),
       categoryId: String(p.categoryId ?? ""),
+      imageUrl: p.imageUrl ?? "",
     });
   };
 
@@ -264,6 +286,7 @@ export default function Products() {
       sku: editForm.sku || undefined,
       status: editForm.status,
       categoryId: editForm.categoryId ? Number(editForm.categoryId) : undefined,
+      imageUrl: editForm.imageUrl || undefined,
     });
   };
 
