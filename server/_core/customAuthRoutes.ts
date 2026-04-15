@@ -337,6 +337,23 @@ export async function registerCustomAuthFetchRoutes(
 
     // ── Reset Password ─────────────────────────────────────────────────────
     if (path === "/api/auth/reset-password") {
+      const rateCheck = passwordResetLimiter.check(clientIp);
+      if (!rateCheck.allowed) {
+        return Response.json(
+          {
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          },
+          {
+            status: 429,
+            headers: {
+              ...corsHeaders,
+              "Retry-After": String(Math.ceil(rateCheck.retryAfterMs / 1000)),
+            },
+          }
+        );
+      }
+
       const body = await req.json().catch(() => ({}));
       const { token, password } = body as { token?: string; password?: string };
 

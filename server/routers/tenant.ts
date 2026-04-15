@@ -6,6 +6,7 @@ import {
   getPlans,
   getTenantById,
   getTenantsByOwner,
+  getTenantBySlug,
   updateTenant,
   updateUserTenant,
   createProduct,
@@ -39,6 +40,22 @@ export const tenantRouter = router({
       )
         throw new TRPCError({ code: "NOT_FOUND" });
       return tenant;
+    }),
+
+  // Check if a slug is available (called while logged in during store setup)
+  checkSlugAvailable: protectedProcedure
+    .input(
+      z.object({
+        slug: z
+          .string()
+          .min(2)
+          .max(100)
+          .regex(/^[a-z0-9-]+$/),
+      })
+    )
+    .query(async ({ input }) => {
+      const existing = await getTenantBySlug(input.slug);
+      return { available: !existing };
     }),
 
   // Create a new tenant (store/workspace)

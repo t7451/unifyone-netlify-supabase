@@ -65,7 +65,10 @@ export default async (req: Request, _context: Context) => {
       case "invoice.payment_succeeded": {
         const invoice = event.data.object as Stripe.Invoice;
         console.log(`[stripe-webhook-bg] Invoice paid: ${invoice.id} — $${(invoice.amount_paid / 100).toFixed(2)}`);
-        // Credit top-up handled by existing stripe.ts — future: move here
+        // TODO (post-launch): Move credit top-up fulfillment from server/billing.ts
+        // to here for better reliability and idempotency. This background function
+        // already verifies the signature; moving fulfillment here prevents Stripe
+        // retries caused by slow DB writes under load.  See POST_LAUNCH_ROADMAP.md.
         break;
       }
 
