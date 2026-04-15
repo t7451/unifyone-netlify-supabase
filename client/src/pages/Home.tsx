@@ -1,6 +1,41 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "wouter";
 import { getLoginUrl } from "@/const";
+import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
+import { SITE_URL } from "@/lib/siteConfig";
+
+const CANONICAL = `${SITE_URL}/`;
+const HOME_JSON_LD = [
+  ...buildWebPageJsonLd({
+    canonical: CANONICAL,
+    name: "UnifyOne | AI-Powered Multi-Tenant Commerce Platform",
+    description:
+      "UnifyOne is the multi-tenant commerce platform for gig operators and e-commerce teams. AI-powered earnings insights, order management, and Shopify integration.",
+    breadcrumbs: [],
+  }),
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${SITE_URL}/#organization`,
+    name: "1Commerce / PNW Enterprises",
+    url: SITE_URL,
+    logo: `${SITE_URL}/favicon.svg`,
+    sameAs: ["https://twitter.com/1CommerceSol"],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${SITE_URL}/#website`,
+    url: SITE_URL,
+    name: "UnifyOne",
+    publisher: { "@id": `${SITE_URL}/#organization` },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/docs-chat?q={search_term_string}` },
+      "query-input": "required name=search_term_string",
+    },
+  },
+];
 
 // ── Brand constants ───────────────────────────────────────────────────────────
 const UNIFY_AI_ENDPOINT = "https://api.1commerce.online/v1";
@@ -250,6 +285,12 @@ export default function Home() {
         overflowX: "hidden",
       }}
     >
+      <PageHead
+        title="UnifyOne | AI-Powered Multi-Tenant Commerce Platform"
+        description="UnifyOne is the multi-tenant commerce platform for gig operators and e-commerce teams. AI-powered earnings insights, order management, and Shopify integration."
+        canonical={CANONICAL}
+        jsonLd={HOME_JSON_LD}
+      />
       {/* Google Fonts */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Cinzel:wght@600;700&display=swap');

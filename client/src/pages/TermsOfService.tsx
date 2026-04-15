@@ -1,6 +1,23 @@
+import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
+import { SITE_URL } from "@/lib/siteConfig";
+
+const TOS_CANONICAL = `${SITE_URL}/terms`;
+
 export default function TermsOfService() {
   return (
     <div className="min-h-screen bg-background">
+      <PageHead
+        title="Terms of Service | UnifyOne"
+        description="UnifyOne Terms of Service — usage terms, subscription billing, the Promote & Earn program, data ownership, and liability limits. 1Commerce LLC / PNW Enterprises."
+        canonical={TOS_CANONICAL}
+        jsonLd={buildWebPageJsonLd({
+          canonical: TOS_CANONICAL,
+          name: "Terms of Service | UnifyOne",
+          description:
+            "Usage terms, subscription billing, the Promote & Earn program, data ownership, and liability limits for UnifyOne by 1Commerce LLC.",
+          breadcrumbs: [{ name: "Terms of Service", item: TOS_CANONICAL }],
+        })}
+      />
       <div className="max-w-4xl mx-auto px-6 py-16">
         <div className="mb-10">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Terms of Service</h1>

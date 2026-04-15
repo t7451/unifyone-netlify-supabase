@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
+import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
+import { SITE_URL } from "@/lib/siteConfig";
+
+const CANONICAL = `${SITE_URL}/contact`;
 
 export default function Contact() {
   const [name, setName] = useState("");
@@ -53,6 +57,18 @@ export default function Contact() {
         minHeight: "100vh",
       }}
     >
+      <PageHead
+        title="Contact | UnifyOne"
+        description="Get in touch with the UnifyOne team. Questions about pricing, enterprise plans, or integrations? We respond within one business day."
+        canonical={CANONICAL}
+        jsonLd={buildWebPageJsonLd({
+          canonical: CANONICAL,
+          name: "Contact | UnifyOne",
+          description:
+            "Get in touch with the UnifyOne team. Questions about pricing, enterprise plans, or integrations? We respond within one business day.",
+          breadcrumbs: [{ name: "Contact", item: CANONICAL }],
+        })}
+      />
       <header className="border-b" style={{ borderColor: "#242424" }}>
         <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
           <Link href="/">

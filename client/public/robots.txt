@@ -27,6 +27,13 @@ Disallow: /leads
 Disallow: /automations
 Disallow: /ai-assistant
 Disallow: /notifications
+Disallow: /gig-command
+Disallow: /money-manager
+Disallow: /achievements
+Disallow: /friends
+Disallow: /mobile-automation
+Disallow: /my-themes
+Disallow: /sync-monitor
 
 # ── Google Images ─────────────────────────────────────────────────────────
 User-agent: Googlebot-Image
@@ -55,6 +62,13 @@ Allow: /
 Allow: /blog/
 Disallow: /api/
 Disallow: /dashboard
+Disallow: /gig-command
+Disallow: /money-manager
+Disallow: /achievements
+Disallow: /friends
+Disallow: /mobile-automation
+Disallow: /my-themes
+Disallow: /sync-monitor
 
 # ── DuckDuckGo ────────────────────────────────────────────────────────────
 User-agent: DuckDuckBot
@@ -102,6 +116,13 @@ Allow: /privacy
 Allow: /terms
 Disallow: /api/
 Disallow: /dashboard
+Disallow: /gig-command
+Disallow: /money-manager
+Disallow: /achievements
+Disallow: /friends
+Disallow: /mobile-automation
+Disallow: /my-themes
+Disallow: /sync-monitor
 Crawl-delay: 1
 
 # ── Sitemaps ──────────────────────────────────────────────────────────────

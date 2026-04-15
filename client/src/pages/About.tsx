@@ -1,4 +1,15 @@
 import { Link } from "wouter";
+import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
+import { SITE_URL } from "@/lib/siteConfig";
+
+const CANONICAL = `${SITE_URL}/about`;
+const ABOUT_JSON_LD = buildWebPageJsonLd({
+  canonical: CANONICAL,
+  name: "About | UnifyOne by 1Commerce",
+  description:
+    "Learn about 1Commerce / PNW Enterprises — the team building UnifyOne, a multi-tenant commerce platform engineered on the Cathedral Framework for gig operators and e-commerce teams.",
+  breadcrumbs: [{ name: "About", item: CANONICAL }],
+});
 
 export default function About() {
   return (
@@ -9,6 +20,12 @@ export default function About() {
         minHeight: "100vh",
       }}
     >
+      <PageHead
+        title="About | UnifyOne by 1Commerce"
+        description="1Commerce / PNW Enterprises builds UnifyOne — a multi-tenant commerce platform on the Cathedral Framework for gig operators and e-commerce teams. Built to endure."
+        canonical={CANONICAL}
+        jsonLd={ABOUT_JSON_LD}
+      />
       <header className="border-b" style={{ borderColor: "#242424" }}>
         <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
           <Link href="/">

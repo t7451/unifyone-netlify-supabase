@@ -6,6 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
+import { SITE_URL } from "@/lib/siteConfig";
+
+const GOV_CANONICAL = `${SITE_URL}/governance`;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function formatDate(dateStr: string | Date | null | undefined): string {
@@ -86,6 +90,18 @@ export default function GovernanceDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageHead
+        title="Governance | UnifyOne Platform"
+        description="Platform governance dashboard — audit logs, escalation queues, decision authority matrix, emergency controls, and governance rules for UnifyOne commerce infrastructure."
+        canonical={GOV_CANONICAL}
+        jsonLd={buildWebPageJsonLd({
+          canonical: GOV_CANONICAL,
+          name: "Governance | UnifyOne Platform",
+          description:
+            "Platform governance — audit logs, escalation queues, decision authority matrix, emergency controls, and governance rules.",
+          breadcrumbs: [{ name: "Governance", item: GOV_CANONICAL }],
+        })}
+      />
       {/* Header */}
       <div
         style={{
