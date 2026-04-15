@@ -1,17 +1,17 @@
 import { useState } from "react";
-import { Play, Zap, Film, Award } from "lucide-react";
+import { Play, Zap, Film, Award, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
+import { toast } from "sonner";
 
 const VP_CANONICAL = `${SITE_URL}/video-production`;
 
 export default function VideoProduction() {
   const [videoPlaying, setVideoPlaying] = useState(false);
-
-  const videoUrl = "https://cdn.1commerce.online/videos/Ultra-realistic_cinematic_foot_Kling_30__37390(1).mp4";
+  const [activeShowcaseId, setActiveShowcaseId] = useState("onestack-cinematic");
 
   const showcases = [
     {
@@ -22,8 +22,34 @@ export default function VideoProduction() {
       format: "4K Cinematic",
       tags: ["Enterprise AI", "Cinematic", "Autonomous Operations"],
       thumbnail: "🎬",
+      videoUrl: "https://cdn.1commerce.online/videos/Ultra-realistic_cinematic_foot_Kling_30__37390(1).mp4",
     },
   ];
+
+  const activeShowcase = showcases.find(s => s.id === activeShowcaseId) ?? showcases[0];
+  const videoUrl = activeShowcase.videoUrl;
+
+  const handleSelectShowcase = (id: string) => {
+    setActiveShowcaseId(id);
+    setVideoPlaying(false);
+  };
+
+  const handleDownload = () => {
+    const a = document.createElement("a");
+    a.href = videoUrl;
+    a.download = `${activeShowcase.title.replace(/\s+/g, "-").toLowerCase()}.mp4`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleCopyEmbed = () => {
+    const embedCode = `<video src="${videoUrl}" autoplay loop muted playsinline style="width:100%;height:auto"></video>`;
+    navigator.clipboard.writeText(embedCode).then(
+      () => toast.success("Embed code copied to clipboard!"),
+      () => toast.error("Failed to copy embed code"),
+    );
+  };
 
   const productionStats = [
     { label: "Production Quality", value: "4K Ultra-Realistic" },
@@ -131,11 +157,11 @@ export default function VideoProduction() {
               </div>
 
               <div className="flex gap-3">
-                <Button size="lg" className="gap-2">
-                  <Zap className="w-4 h-4" />
+                <Button size="lg" className="gap-2" onClick={handleDownload}>
+                  <Download className="w-4 h-4" />
                   Download Video
                 </Button>
-                <Button variant="outline" size="lg">
+                <Button variant="outline" size="lg" onClick={handleCopyEmbed}>
                   Copy Embed Code
                 </Button>
               </div>
@@ -155,7 +181,13 @@ export default function VideoProduction() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {showcases.map((showcase) => (
-              <Card key={showcase.id} className="p-6 hover:shadow-lg transition-shadow">
+              <Card
+                key={showcase.id}
+                className={`p-6 hover:shadow-lg transition-shadow cursor-pointer ${
+                  showcase.id === activeShowcaseId ? "ring-2 ring-primary" : ""
+                }`}
+                onClick={() => handleSelectShowcase(showcase.id)}
+              >
                 <div className="text-4xl mb-4">{showcase.thumbnail}</div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">{showcase.title}</h3>
                 <p className="text-sm text-muted-foreground mb-4">{showcase.description}</p>
@@ -235,12 +267,12 @@ export default function VideoProduction() {
             Download the cinematic reel and integrate it into your marketing channels. This production-grade asset is ready to deploy immediately.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="gap-2">
+            <Button size="lg" className="gap-2" onClick={handleDownload}>
               <Film className="w-4 h-4" />
               Download Video (5 MB)
             </Button>
-            <Button variant="outline" size="lg">
-              View Production Guide
+            <Button variant="outline" size="lg" onClick={handleCopyEmbed}>
+              Copy Embed Code
             </Button>
           </div>
         </div>

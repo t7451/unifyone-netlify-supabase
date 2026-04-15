@@ -10,8 +10,11 @@ import {
   CartesianGrid,
   BarChart,
   Bar,
+  Line,
+  ComposedChart,
+  Legend,
 } from "recharts";
-import { TrendingUp, DollarSign, ShoppingCart, Users } from "lucide-react";
+import { TrendingUp, DollarSign, ShoppingCart, Users, Package } from "lucide-react";
 
 const COLORS = ["#00D9FF", "#0284C7", "#6A1B9A", "#10B981", "#F59E0B"];
 
@@ -74,6 +77,12 @@ export default function Analytics() {
       icon: TrendingUp,
       color: "#10B981",
     },
+    {
+      label: "Total Products",
+      value: summary.data?.productCount ?? 0,
+      icon: Package,
+      color: "#F59E0B",
+    },
   ];
 
   const recentWebhooks = (webhookLog.data ?? []).slice(0, 10);
@@ -88,7 +97,7 @@ export default function Analytics() {
       </div>
 
       {/* Metrics cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {metrics.map(m => (
           <Card key={m.label} className="bg-card border-border">
             <CardContent className="p-5">
@@ -112,13 +121,13 @@ export default function Analytics() {
         <Card className="lg:col-span-2 bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-base">
-              Revenue Trend (30 Days)
+              Revenue &amp; Orders (30 Days)
             </CardTitle>
           </CardHeader>
           <CardContent>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={240}>
-                <AreaChart data={chartData}>
+                <ComposedChart data={chartData}>
                   <defs>
                     <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#00D9FF" stopOpacity={0.3} />
@@ -133,6 +142,14 @@ export default function Analytics() {
                     tickLine={false}
                   />
                   <YAxis
+                    yAxisId="revenue"
+                    tick={{ fill: "#9CA3AF", fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    yAxisId="orders"
+                    orientation="right"
                     tick={{ fill: "#9CA3AF", fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
@@ -145,14 +162,28 @@ export default function Analytics() {
                       color: "#fff",
                     }}
                   />
+                  <Legend
+                    wrapperStyle={{ color: "#9CA3AF", fontSize: 12 }}
+                  />
                   <Area
+                    yAxisId="revenue"
                     type="monotone"
                     dataKey="revenue"
                     stroke="#00D9FF"
                     strokeWidth={2}
                     fill="url(#revGrad)"
+                    name="Revenue ($)"
                   />
-                </AreaChart>
+                  <Line
+                    yAxisId="orders"
+                    type="monotone"
+                    dataKey="orders"
+                    stroke="#F59E0B"
+                    strokeWidth={2}
+                    dot={false}
+                    name="Orders"
+                  />
+                </ComposedChart>
               </ResponsiveContainer>
             ) : (
               <div className="h-[240px] flex items-center justify-center text-gray-500">
