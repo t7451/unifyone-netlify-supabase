@@ -162,7 +162,7 @@ export default function TenantSetup() {
 
               <p className="text-xs text-gray-500 text-center">
                 All stores start on the free <span className="text-[#00D9FF]">Acolyte</span> tier. You can upgrade anytime from{" "}
-                <Link href="/billing"><a className="text-[#00D9FF] hover:underline">Billing</a></Link>.
+                <Link href="/billing" className="text-[#00D9FF] hover:underline">Billing</Link>.
               </p>
 
               <Button
@@ -193,59 +193,60 @@ export default function TenantSetup() {
             </p>
 
             {/* Quick feature highlights */}
-            <div className="grid grid-cols-3 gap-3 mb-8">
-              {[
-                { icon: Package, label: "Products", desc: "Add your catalog", href: "/products" },
-                { icon: ShoppingCart, label: "Orders", desc: "Track sales", href: "/orders" },
-                { icon: BarChart3, label: "Analytics", desc: "View insights", href: "/analytics" },
-              ].map(item => (
-                <Link key={item.label} href={item.href}>
-                  <a
+              <div className="grid grid-cols-3 gap-3 mb-8">
+                {[
+                  { icon: Package, label: "Products", desc: "Add your catalog", href: "/products" },
+                  { icon: ShoppingCart, label: "Orders", desc: "Track sales", href: "/orders" },
+                  { icon: BarChart3, label: "Analytics", desc: "View insights", href: "/analytics" },
+                ].map(item => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
                     className="block rounded-xl p-3 bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-colors"
                     aria-label={`Go to ${item.label}`}
                   >
                     <item.icon className="w-5 h-5 text-[#00D9FF] mx-auto mb-1.5" />
                     <div className="text-white text-xs font-medium">{item.label}</div>
                     <div className="text-gray-500 text-[10px] mt-0.5">{item.desc}</div>
-                  </a>
-                </Link>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
 
-            {/* Next steps checklist */}
-            <div className="text-left mb-6 p-4 rounded-xl bg-white/3 border border-white/10">
-              <p className="text-gray-400 text-xs font-medium mb-3">Getting started checklist</p>
-              <div className="space-y-2">
-                {[
-                  { step: "Add your first product", href: "/products" },
-                  { step: "Connect a payment method (Stripe/PayPal)", href: "/integrations" },
-                  { step: "Customize your store settings", href: "/settings" },
-                ].map((item) => (
-                  <Link key={item.step} href={item.href}>
-                    <a
+              {/* Next steps checklist */}
+              <div className="text-left mb-6 p-4 rounded-xl bg-white/3 border border-white/10">
+                <p className="text-gray-400 text-xs font-medium mb-3">Getting started checklist</p>
+                <div className="space-y-2">
+                  {[
+                    { step: "Add your first product", href: "/products" },
+                    { step: "Connect a payment method (Stripe/PayPal)", href: "/integrations" },
+                    { step: "Customize your store settings", href: "/settings" },
+                  ].map((item) => (
+                    <Link
+                      key={item.step}
+                      href={item.href}
                       className="flex items-center gap-2 text-xs text-gray-400 hover:text-[#00D9FF] transition-colors"
                       aria-label={item.step}
                     >
                       <div className="w-4 h-4 rounded border border-white/20 shrink-0" role="presentation" />
                       {item.step}
-                    </a>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Billing upgrade CTA */}
-            <div className="mb-6 p-4 rounded-xl bg-[#00D9FF]/5 border border-[#00D9FF]/20 text-left">
-              <p className="text-[#00D9FF] text-xs font-medium mb-1">You're on the free Acolyte tier</p>
-              <p className="text-gray-400 text-xs mb-3">
-                Unlock unlimited products, advanced analytics, and AI automation by upgrading your plan.
-              </p>
-              <Link href="/billing">
-                <a className="inline-flex items-center gap-1.5 text-xs text-[#00D9FF] font-semibold hover:underline">
+              {/* Billing upgrade CTA */}
+              <div className="mb-6 p-4 rounded-xl bg-[#00D9FF]/5 border border-[#00D9FF]/20 text-left">
+                <p className="text-[#00D9FF] text-xs font-medium mb-1">You're on the free Acolyte tier</p>
+                <p className="text-gray-400 text-xs mb-3">
+                  Unlock unlimited products, advanced analytics, and AI automation by upgrading your plan.
+                </p>
+                <Link
+                  href="/billing"
+                  className="inline-flex items-center gap-1.5 text-xs text-[#00D9FF] font-semibold hover:underline"
+                >
                   View plans &amp; upgrade <ArrowRight className="w-3 h-3" />
-                </a>
-              </Link>
-            </div>
+                </Link>
+              </div>
 
             <Button
               onClick={handleFinish}

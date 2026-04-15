@@ -42,7 +42,7 @@ export const tenantRouter = router({
       return tenant;
     }),
 
-  // Check if a slug is available (public — called before login is required)
+  // Check if a slug is available (called while logged in during store setup)
   checkSlugAvailable: protectedProcedure
     .input(
       z.object({
