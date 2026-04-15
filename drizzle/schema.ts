@@ -1264,7 +1264,7 @@ export const apiKeys = pgTable("api_keys", {
   tenantId: integer("tenantId").notNull(),
   userId: integer("userId").notNull(),
   name: varchar("name", { length: 100 }).notNull(),
-  keyPrefix: varchar("keyPrefix", { length: 12 }).notNull(), // e.g. "uo_live_a1b2"
+  keyPrefix: varchar("keyPrefix", { length: 16 }).notNull(), // e.g. "uo_live_a1b2c3d4"
   keyHash: varchar("keyHash", { length: 64 }).notNull(),     // SHA-256 hex of full key
   scopes: json("scopes").$type<string[]>().notNull().default([]),
   lastUsedAt: timestamp("lastUsedAt"),

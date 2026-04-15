@@ -248,14 +248,14 @@ export const developerRouter = router({
         code: `import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import type { AppRouter } from "@unifyone/server";
 
+// Authentication uses session cookies (set automatically after login).
+// Ensure credentials: "include" is set so the cookie is sent with requests.
 const trpc = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
       url: "${baseUrl}/trpc",
-      headers: () => ({
-        // Pass your session cookie or API key
-        "x-api-key": process.env.UNIFYONE_API_KEY,
-      }),
+      fetch: (url, options) =>
+        fetch(url, { ...options, credentials: "include" }),
     }),
   ],
 });
@@ -308,7 +308,7 @@ await trpc.integrations.shopifyConnect.mutate({
         code: `// Get analytics summary via MCP
 const analytics = await trpc.mcp.callTool.mutate({
   tool: "getAnalyticsSummary",
-  args: { tenantId: "${tenantSlug}" },
+  args: {},
 });
 
 // List low-stock products

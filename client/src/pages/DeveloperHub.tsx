@@ -119,6 +119,7 @@ function OverviewTab() {
   const health = trpc.developer.health.useQuery(undefined, { refetchInterval: 30_000 });
   const keys = trpc.developer.listApiKeys.useQuery();
   const mcpHealth = trpc.mcp.health.useQuery(undefined, { refetchInterval: 60_000, retry: 1 });
+  const mcpHealthData = mcpHealth.data as (Record<string, unknown> & { tools?: number }) | undefined;
 
   const checks = health.data?.checks ?? {};
   const allOk = Object.values(checks).every(Boolean);
@@ -195,9 +196,7 @@ function OverviewTab() {
           },
           {
             label: "MCP Tools",
-            value: (mcpHealth.data as Record<string, unknown>)?.tools != null
-              ? String((mcpHealth.data as Record<string, unknown>).tools)
-              : "—",
+            value: mcpHealthData?.tools != null ? String(mcpHealthData.tools) : "—",
             icon: Cpu,
             color: "text-violet-400",
           },
@@ -292,6 +291,7 @@ function ApiKeysTab() {
   const [newKeyScopes, setNewKeyScopes] = useState<string[]>(["read"]);
   const [newKeyExpiry, setNewKeyExpiry] = useState<string>("never");
   const [createdKey, setCreatedKey] = useState<string | null>(null);
+  const [revokeTarget, setRevokeTarget] = useState<{ id: number; name: string } | null>(null);
   const { copied, copy } = useCopy();
 
   const generate = trpc.developer.generateApiKey.useMutation({
@@ -365,6 +365,48 @@ function ApiKeysTab() {
             >
               <Copy className="w-4 h-4 mr-2" />
               Copy & Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Revoke confirm dialog */}
+      <Dialog open={!!revokeTarget} onOpenChange={() => setRevokeTarget(null)}>
+        <DialogContent className="bg-[#0A1128] border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Trash2 className="w-4 h-4 text-red-400" />
+              Revoke API Key
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Are you sure you want to revoke{" "}
+              <span className="text-white font-medium">"{revokeTarget?.name}"</span>? Any
+              applications using this key will lose access immediately. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setRevokeTarget(null)}
+              className="border-white/10 text-gray-400"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (revokeTarget) {
+                  revoke.mutate({ id: revokeTarget.id });
+                  setRevokeTarget(null);
+                }
+              }}
+              disabled={revoke.isPending}
+              className="bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20"
+            >
+              {revoke.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Revoking…</>
+              ) : (
+                <>Revoke Key</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -523,11 +565,7 @@ function ApiKeysTab() {
                       </Badge>
                     )}
                     <button
-                      onClick={() => {
-                        if (confirm(`Revoke "${k.name}"? This cannot be undone.`)) {
-                          revoke.mutate({ id: k.id });
-                        }
-                      }}
+                      onClick={() => setRevokeTarget({ id: k.id, name: k.name })}
                       className="text-gray-600 hover:text-red-400 transition-colors ml-1"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
