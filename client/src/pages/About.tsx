@@ -1,59 +1,57 @@
+import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
-import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
+import PublicLayout from "@/components/PublicLayout";
+import { getLoginUrl } from "@/const";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/about`;
-const ABOUT_JSON_LD = buildWebPageJsonLd({
-  canonical: CANONICAL,
+
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "@id": CANONICAL,
+  url: CANONICAL,
   name: "About | UnifyOne by 1Commerce",
   description:
     "Learn about 1Commerce / PNW Enterprises — the team building UnifyOne, a multi-tenant commerce platform engineered on the Cathedral Framework for gig operators and e-commerce teams.",
-  breadcrumbs: [{ name: "About", item: CANONICAL }],
-});
+  isPartOf: { "@id": `${SITE_URL}/#website` },
+  inLanguage: "en-US",
+  breadcrumb: {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name: "About", item: CANONICAL },
+    ],
+  },
+};
 
 export default function About() {
   return (
-    <div
-      style={{
-        backgroundColor: "#020202",
-        color: "#F0E8D0",
-        minHeight: "100vh",
-      }}
-    >
-      <PageHead
-        title="About | UnifyOne by 1Commerce"
-        description="1Commerce / PNW Enterprises builds UnifyOne — a multi-tenant commerce platform on the Cathedral Framework for gig operators and e-commerce teams. Built to endure."
-        canonical={CANONICAL}
-        jsonLd={ABOUT_JSON_LD}
-      />
-      <header className="border-b" style={{ borderColor: "#242424" }}>
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
-          <Link href="/">
-            <span
-              className="cursor-pointer font-cinzel text-sm font-700"
-              style={{ color: "#D4A843", letterSpacing: "0.2em" }}
-            >
-              UNIFYONE
-            </span>
-          </Link>
-          <Link href="/">
-            <span
-              className="cursor-pointer font-cinzel text-xs"
-              style={{ color: "#5A5A5A", letterSpacing: "0.2em" }}
-            >
-              ← BACK TO HOME
-            </span>
-          </Link>
-        </div>
-      </header>
+    <PublicLayout>
+      <Helmet>
+        <title>About | UnifyOne by 1Commerce</title>
+        <meta
+          name="description"
+          content="1Commerce / PNW Enterprises builds UnifyOne — a multi-tenant commerce platform on the Cathedral Framework for gig operators and e-commerce teams. Built to endure."
+        />
+        <link rel="canonical" href={CANONICAL} />
+        <meta property="og:title" content="About | UnifyOne by 1Commerce" />
+        <meta
+          property="og:description"
+          content="1Commerce / PNW Enterprises builds UnifyOne — a multi-tenant commerce platform on the Cathedral Framework for gig operators and e-commerce teams. Built to endure."
+        />
+        <meta property="og:url" content={CANONICAL} />
+        <script type="application/ld+json">{JSON.stringify(JSON_LD)}</script>
+      </Helmet>
 
-      <article className="max-w-3xl mx-auto px-6 sm:px-8 py-24">
-        <div
-          className="font-cinzel text-xs mb-6"
-          style={{ color: "#D4A843", letterSpacing: "0.3em" }}
-        >
+      <article
+        className="max-w-3xl mx-auto px-6 sm:px-8"
+        style={{ paddingTop: "8rem", paddingBottom: "6rem" }}
+      >
+        <div className="inscription mb-6" style={{ color: "#D4A843" }}>
           ABOUT
         </div>
+
         <h1
           className="font-cinzel text-4xl sm:text-5xl font-black mb-8"
           style={{ color: "#F0E8D0" }}
@@ -63,7 +61,7 @@ export default function About() {
 
         <div
           className="font-crimson text-lg space-y-6"
-          style={{ color: "#A0A0A0", lineHeight: 1.7 }}
+          style={{ color: "#6A6A6A", lineHeight: 1.7 }}
         >
           <p>
             <strong style={{ color: "#F0E8D0" }}>UnifyOne</strong> is the
@@ -76,9 +74,9 @@ export default function About() {
 
           <p>
             We started with one frustration: every existing commerce stack is
-            assembled from plugins, integrations, and middleware that nobody
-            owns end-to-end. When something breaks, you debug across four
-            vendors. When you scale, the seams pull apart.
+            assembled from plugins, integrations, and middleware that nobody owns
+            end-to-end. When something breaks, you debug across four vendors.
+            When you scale, the seams pull apart.
           </p>
 
           <p>
@@ -117,35 +115,41 @@ export default function About() {
           <p>
             See{" "}
             <Link href="/architecture">
-              <span
-                className="cursor-pointer underline"
-                style={{ color: "#D4A843" }}
-              >
+              <span className="cursor-pointer underline" style={{ color: "#D4A843" }}>
                 the architecture
               </span>
             </Link>
             ,{" "}
             <Link href="/pricing">
-              <span
-                className="cursor-pointer underline"
-                style={{ color: "#D4A843" }}
-              >
+              <span className="cursor-pointer underline" style={{ color: "#D4A843" }}>
                 the pricing
               </span>
             </Link>
             , or{" "}
             <Link href="/contact">
-              <span
-                className="cursor-pointer underline"
-                style={{ color: "#D4A843" }}
-              >
+              <span className="cursor-pointer underline" style={{ color: "#D4A843" }}>
                 send us a note
               </span>
             </Link>
             .
           </p>
         </div>
+
+        {/* CTA strip */}
+        <div
+          className="mt-16 pt-10 flex flex-col sm:flex-row gap-4"
+          style={{ borderTop: "1px solid #242424" }}
+        >
+          <a href={getLoginUrl()} className="btn-illuminate">
+            Begin Construction — Free
+          </a>
+          <Link href="/the-system">
+            <span className="btn-ghost-gold cursor-pointer">
+              See How It Works →
+            </span>
+          </Link>
+        </div>
       </article>
-    </div>
+    </PublicLayout>
   );
 }
