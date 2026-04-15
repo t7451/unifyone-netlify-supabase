@@ -655,16 +655,16 @@ const STATUS_COLORS: Record<string, string> = {
 function WebhooksTab() {
   const utils = trpc.useUtils();
   const [limit, setLimit] = useState(50);
-  const [filterSource, setFilterSource] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterSource, setFilterSource] = useState<"all" | "stripe" | "shopify" | "n8n" | "internal">("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "processed" | "failed" | "skipped">("all");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const logs = trpc.developer.webhookLogs.useQuery(
     {
       limit,
-      source: filterSource !== "all" ? (filterSource as "stripe" | "shopify" | "n8n" | "internal") : undefined,
-      status: filterStatus !== "all" ? (filterStatus as "pending" | "processed" | "failed" | "skipped") : undefined,
+      source: filterSource !== "all" ? filterSource : undefined,
+      status: filterStatus !== "all" ? filterStatus : undefined,
       search: search.trim() || undefined,
     },
     { refetchInterval: 10_000 }
@@ -719,7 +719,7 @@ function WebhooksTab() {
           {/* Filter row */}
           <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-white/5">
             <Filter className="w-3.5 h-3.5 text-gray-500 shrink-0" />
-            <Select value={filterSource} onValueChange={setFilterSource}>
+            <Select value={filterSource} onValueChange={v => setFilterSource(v as typeof filterSource)}>
               <SelectTrigger className="bg-white/5 border-white/10 text-white w-32 h-7 text-xs focus:border-[#00D9FF]/50">
                 <SelectValue placeholder="Source" />
               </SelectTrigger>
@@ -731,7 +731,7 @@ function WebhooksTab() {
                 <SelectItem value="internal">Internal</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <Select value={filterStatus} onValueChange={v => setFilterStatus(v as typeof filterStatus)}>
               <SelectTrigger className="bg-white/5 border-white/10 text-white w-32 h-7 text-xs focus:border-[#00D9FF]/50">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>

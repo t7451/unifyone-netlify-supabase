@@ -726,8 +726,8 @@ export async function getFilteredWebhookEvents(
   tenantId: number,
   opts: {
     limit?: number;
-    source?: string;
-    status?: string;
+    source?: "stripe" | "shopify" | "n8n" | "internal";
+    status?: "pending" | "processed" | "failed" | "skipped";
     search?: string;
   } = {}
 ) {
@@ -736,8 +736,8 @@ export async function getFilteredWebhookEvents(
   const { limit = 50, source, status, search } = opts;
 
   const conditions = [eq(webhookEvents.tenantId, tenantId)];
-  if (source) conditions.push(eq(webhookEvents.source, source as "stripe" | "shopify" | "n8n" | "internal"));
-  if (status) conditions.push(eq(webhookEvents.status, status as "pending" | "processed" | "failed" | "skipped"));
+  if (source) conditions.push(eq(webhookEvents.source, source));
+  if (status) conditions.push(eq(webhookEvents.status, status));
   if (search) conditions.push(ilike(webhookEvents.eventType, `%${search}%`));
 
   return db
