@@ -6,6 +6,7 @@ import { jwtVerify, SignJWT } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
+import { getCookieHeader } from "../lib/cookieHeader";
 
 type SessionPayload = {
   openId: string;
@@ -111,22 +112,8 @@ class SDKServer {
     }
   }
 
-  /**
-   * Read the Cookie header from either an Express Request (headers is a plain
-   * object) or a WHATWG fetch Request (headers is a Headers object that
-   * requires `.get()`). Netlify Functions always provide a fetch Request.
-   */
-  private getCookieHeader(req: Request): string | undefined {
-    const h = req.headers as unknown as Record<string, unknown>;
-    if (typeof h["get"] === "function") {
-      const val = (h as { get(name: string): string | null }).get("cookie");
-      return val ?? undefined;
-    }
-    return h["cookie"] as string | undefined;
-  }
-
   async authenticateRequest(req: Request): Promise<User> {
-    const cookies = this.parseCookies(this.getCookieHeader(req));
+    const cookies = this.parseCookies(getCookieHeader(req));
     const sessionCookie = cookies.get(COOKIE_NAME);
     const session = await this.verifySession(sessionCookie);
 

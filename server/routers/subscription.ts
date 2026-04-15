@@ -10,6 +10,7 @@ import {
   getPlans,
   getPlanBySlug,
 } from "../db";
+import { getCookieHeader } from "../lib/cookieHeader";
 
 function getSupabaseAdmin() {
   const url =
@@ -17,21 +18,6 @@ function getSupabaseAdmin() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
   if (!url || !key) return null;
   return createClient(url, key, { auth: { persistSession: false } });
-}
-
-/**
- * Read the Cookie header from either an Express Request (plain object) or a
- * WHATWG fetch Request (Headers object). The fetch adapter used by Netlify
- * Functions requires `.get('cookie')` instead of direct property access.
- */
-function getCookieHeader(req: { headers: unknown }): string {
-  const h = req.headers as Record<string, unknown>;
-  if (typeof h["get"] === "function") {
-    return (
-      (h as { get(name: string): string | null }).get("cookie") ?? ""
-    );
-  }
-  return (h["cookie"] as string | undefined) ?? "";
 }
 
 export const subscriptionRouter = router({
@@ -151,7 +137,7 @@ export const subscriptionRouter = router({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Cookie: getCookieHeader(ctx.req),
+          Cookie: getCookieHeader(ctx.req) ?? "",
         },
         body: JSON.stringify({
           priceId: resolvedPriceId,
@@ -200,7 +186,7 @@ export const subscriptionRouter = router({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Cookie: getCookieHeader(ctx.req),
+          Cookie: getCookieHeader(ctx.req) ?? "",
         },
         body: JSON.stringify({
           customerId: tenant.stripeCustomerId,
