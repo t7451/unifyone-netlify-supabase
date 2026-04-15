@@ -15,7 +15,9 @@
 export function initMetaPixel(): void {
   const pixelId = import.meta.env.VITE_META_PIXEL_ID as string | undefined;
 
-  // Skip if not configured or the env var was not substituted at build time.
+  // Meta Pixel IDs are 15-16 digit numeric strings. Reject anything shorter
+  // than 5 characters as obviously invalid, and skip unsubstituted Vite
+  // placeholders (e.g. "%VITE_META_PIXEL_ID%" when the env var is not set).
   if (!pixelId || pixelId.length < 5 || pixelId.startsWith("%VITE_")) return;
 
   if (typeof window === "undefined") return;

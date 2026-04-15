@@ -31,6 +31,9 @@ export type RateLimitResult =
 
 let _redis: Redis | null = null;
 
+/** Key prefix used for both the Ratelimit instance and manual key deletion. */
+const RATE_LIMIT_PREFIX = "rl";
+
 function getRedis(): Redis | null {
   if (_redis !== null) return _redis;
   const url = process.env.UPSTASH_REDIS_REST_URL;
@@ -57,7 +60,7 @@ export function createRateLimiter(opts: {
       redis,
       limiter: Ratelimit.slidingWindow(maxAttempts, `${windowSeconds} s`),
       analytics: false,
-      prefix: "rl",
+      prefix: RATE_LIMIT_PREFIX,
     });
 
     return {
@@ -68,8 +71,9 @@ export function createRateLimiter(opts: {
         return { allowed: false, retryAfterMs };
       },
       async reset(key: string): Promise<void> {
-        // Upstash Ratelimit doesn't expose a direct reset; delete the key.
-        await redis.del(`rl:${key}`);
+        // Upstash Ratelimit stores the sliding-window ZSET at `{prefix}:{key}`.
+        // Deleting this key resets the counter for that identifier.
+        await redis.del(`${RATE_LIMIT_PREFIX}:${key}`);
       },
     };
   }
