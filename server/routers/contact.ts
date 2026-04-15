@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
+import { createRateLimiter } from "../_core/rateLimiter";
 
 /**
  * Public contact form router.
@@ -8,23 +9,14 @@ import { publicProcedure, router } from "../_core/trpc";
  * if configured. Falls back to logging the submission server-side so
  * it isn't lost when the webhook env var is missing.
  *
- * Lightweight in-memory IP rate limit (5/min) to deter form spam.
- * For production scale, replace with a Redis-backed limiter.
+ * Uses the shared createRateLimiter (Upstash Redis in production,
+ * in-memory fallback for local dev) — 5 submissions per minute per IP.
  */
 
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 5;
-const ipHits = new Map<string, number[]>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const hits = (ipHits.get(ip) ?? []).filter(
-    t => now - t < RATE_LIMIT_WINDOW_MS
-  );
-  hits.push(now);
-  ipHits.set(ip, hits);
-  return hits.length > RATE_LIMIT_MAX;
-}
+const contactLimiter = createRateLimiter({
+  maxAttempts: 5,
+  windowMs: 60_000,
+});
 
 export const contactRouter = router({
   send: publicProcedure
@@ -44,7 +36,8 @@ export const contactRouter = router({
         "unknown"
       ).trim();
 
-      if (isRateLimited(ip)) {
+      const result = await contactLimiter.check(ip);
+      if (!result.allowed) {
         return {
           success: false,
           message: "Too many submissions. Please try again in a minute.",

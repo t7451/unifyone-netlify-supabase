@@ -8,7 +8,7 @@
  */
 import type { Express, Request, Response } from "express";
 import type { Server } from "http";
-import * as fs from "fs";
+import fs from "fs";
 import { getDb } from "../db";
 
 // ── Runtime state ────────────────────────────────────────────────────────────

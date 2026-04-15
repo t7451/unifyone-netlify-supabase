@@ -21,9 +21,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   TrendingUp, Car, Clock, Zap, ArrowRight,
-  AlertTriangle, Sparkles,
+  AlertTriangle, Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

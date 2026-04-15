@@ -27,7 +27,7 @@ import {
   Clock,
   TrendingUp,
   CheckCircle2,
-  XCircle,
+  XCircle
 } from "lucide-react";
 
 // ─── Form ─────────────────────────────────────────────────────────────────────

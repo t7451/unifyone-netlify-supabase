@@ -4,16 +4,18 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
   ShoppingBag, Search, Star, Download, Sparkles, ArrowRight,
   Filter, Grid3X3, List, Package, Globe, Zap, Tag,
-  Lock, CheckCircle2, ExternalLink,
+  Lock, CheckCircle2, ExternalLink
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
 
 // ── Complexity badge colors ───────────────────────────────────────────────────
 const COMPLEXITY_STYLES: Record<string, string> = {
@@ -331,6 +333,7 @@ export default function ThemeStore() {
   const [selectedTheme, setSelectedTheme] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
+  const { data: _categories = [] } = trpc.themes.listCategories.useQuery();
   const { data: themes = [], isLoading } = trpc.themes.list.useQuery({
     search: search || undefined,
     priceType: priceFilter !== "all" ? (priceFilter as any) : undefined,

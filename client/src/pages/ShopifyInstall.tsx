@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
+
 const SCOPES = [
   { label: "Products & Inventory", desc: "Read and write products, variants, inventory levels", icon: "📦" },
   { label: "Orders & Fulfillments", desc: "Sync orders, update fulfillment status, tracking numbers", icon: "🛒" },

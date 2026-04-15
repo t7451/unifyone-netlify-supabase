@@ -11,7 +11,7 @@ import {
   Bar,
   Line,
   ComposedChart,
-  Legend,
+  Legend
 } from "recharts";
 import { TrendingUp, DollarSign, ShoppingCart, Users, Package } from "lucide-react";
 

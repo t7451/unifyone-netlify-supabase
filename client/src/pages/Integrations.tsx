@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Zap, Globe, Workflow, CheckCircle, CreditCard, ShoppingBag, ExternalLink } from "lucide-react";
 
+
 export default function Integrations() {
   const [, navigate] = useLocation();
   const [shopifyDomain, setShopifyDomain] = useState("");

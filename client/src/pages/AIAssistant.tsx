@@ -7,13 +7,17 @@ import type { Message } from "@/components/AIChatBox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
 import {
   Sparkles, Plus, Trash2, MessageSquare, ChevronRight, Loader2,
   Bot, Zap, TrendingUp, Map, Trophy, Users, Smartphone, BarChart3
 } from "lucide-react";
 import { toast } from "sonner";
+
+
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
+
 
 // Context icons for the sidebar
 const CONTEXT_ICONS: Record<string, React.ElementType> = {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,21 +16,7 @@ import {
   Shield
 } from "lucide-react";
 
-// ── Rarity colour map ────────────────────────────────────────────────────────
-const RARITY_COLORS: Record<string, string> = {
-  common: "text-gray-400 border-gray-600",
-  uncommon: "text-green-400 border-green-600",
-  rare: "text-blue-400 border-blue-600",
-  epic: "text-purple-400 border-purple-600",
-  legendary: "text-yellow-400 border-yellow-600",
-};
-const RARITY_BG: Record<string, string> = {
-  common: "bg-gray-800/40",
-  uncommon: "bg-green-900/20",
-  rare: "bg-blue-900/20",
-  epic: "bg-purple-900/20",
-  legendary: "bg-yellow-900/20",
-};
+
 
 function timeAgo(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;

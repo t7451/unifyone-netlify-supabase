@@ -1,10 +1,29 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Helmet } from "react-helmet-async";
 import { trpc } from "@/lib/trpc";
-import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
+import PublicLayout from "@/components/PublicLayout";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/contact`;
+
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "ContactPage",
+  "@id": CANONICAL,
+  url: CANONICAL,
+  name: "Contact | UnifyOne",
+  description:
+    "Get in touch with the UnifyOne team. Questions about pricing, enterprise plans, or integrations? We respond within one business day.",
+  isPartOf: { "@id": `${SITE_URL}/#website` },
+  inLanguage: "en-US",
+  breadcrumb: {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name: "Contact", item: CANONICAL },
+    ],
+  },
+};
 
 export default function Contact() {
   const [name, setName] = useState("");
@@ -31,81 +50,56 @@ export default function Contact() {
       });
       if (res.success) {
         setStatus("sent");
-        setFeedback(res.message);
+        setFeedback("Your message was received. We'll respond within one business day.");
         setName("");
         setEmail("");
         setMessage("");
       } else {
         setStatus("error");
-        setFeedback(res.message);
+        setFeedback("Something went wrong. Please email us directly at hello@1commerce.online");
       }
-    } catch (err) {
+    } catch {
       setStatus("error");
-      setFeedback(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong. Try email instead."
-      );
+      setFeedback("Something went wrong. Please email us directly at hello@1commerce.online");
     }
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: "#020202",
-        color: "#F0E8D0",
-        minHeight: "100vh",
-      }}
-    >
-      <PageHead
-        title="Contact | UnifyOne"
-        description="Get in touch with the UnifyOne team. Questions about pricing, enterprise plans, or integrations? We respond within one business day."
-        canonical={CANONICAL}
-        jsonLd={buildWebPageJsonLd({
-          canonical: CANONICAL,
-          name: "Contact | UnifyOne",
-          description:
-            "Get in touch with the UnifyOne team. Questions about pricing, enterprise plans, or integrations? We respond within one business day.",
-          breadcrumbs: [{ name: "Contact", item: CANONICAL }],
-        })}
-      />
-      <header className="border-b" style={{ borderColor: "#242424" }}>
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
-          <Link href="/">
-            <span
-              className="cursor-pointer font-cinzel text-sm font-700"
-              style={{ color: "#D4A843", letterSpacing: "0.2em" }}
-            >
-              UNIFYONE
-            </span>
-          </Link>
-          <Link href="/">
-            <span
-              className="cursor-pointer font-cinzel text-xs"
-              style={{ color: "#5A5A5A", letterSpacing: "0.2em" }}
-            >
-              ← BACK TO HOME
-            </span>
-          </Link>
-        </div>
-      </header>
+    <PublicLayout>
+      <Helmet>
+        <title>Contact | UnifyOne</title>
+        <meta
+          name="description"
+          content="Get in touch with the UnifyOne team. Questions about pricing, enterprise plans, or integrations? We respond within one business day."
+        />
+        <link rel="canonical" href={CANONICAL} />
+        <meta property="og:title" content="Contact | UnifyOne" />
+        <meta
+          property="og:description"
+          content="Get in touch with the UnifyOne team. We respond within one business day."
+        />
+        <meta property="og:url" content={CANONICAL} />
+        <script type="application/ld+json">{JSON.stringify(JSON_LD)}</script>
+      </Helmet>
 
-      <section className="max-w-2xl mx-auto px-6 sm:px-8 py-24">
-        <div
-          className="font-cinzel text-xs mb-6"
-          style={{ color: "#D4A843", letterSpacing: "0.3em" }}
-        >
+      <section
+        className="max-w-2xl mx-auto px-6 sm:px-8"
+        style={{ paddingTop: "8rem", paddingBottom: "6rem" }}
+      >
+        <div className="inscription mb-6" style={{ color: "#D4A843" }}>
           CONTACT
         </div>
+
         <h1
           className="font-cinzel text-4xl sm:text-5xl font-black mb-6"
           style={{ color: "#F0E8D0" }}
         >
           Talk to a human.
         </h1>
+
         <p
           className="font-crimson text-lg mb-12"
-          style={{ color: "#8A8A8A", fontStyle: "italic" }}
+          style={{ color: "#6A6A6A", fontStyle: "italic", lineHeight: 1.7 }}
         >
           Sales questions, partnership ideas, support escalations — write to us
           and we'll respond within one business day. Or email{" "}
@@ -122,8 +116,8 @@ export default function Contact() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label
-              className="block font-cinzel text-xs mb-2"
-              style={{ color: "#8A8A8A", letterSpacing: "0.2em" }}
+              className="block inscription mb-2"
+              style={{ color: "#5A5A5A" }}
             >
               NAME
             </label>
@@ -144,8 +138,8 @@ export default function Contact() {
 
           <div>
             <label
-              className="block font-cinzel text-xs mb-2"
-              style={{ color: "#8A8A8A", letterSpacing: "0.2em" }}
+              className="block inscription mb-2"
+              style={{ color: "#5A5A5A" }}
             >
               EMAIL
             </label>
@@ -166,8 +160,8 @@ export default function Contact() {
 
           <div>
             <label
-              className="block font-cinzel text-xs mb-2"
-              style={{ color: "#8A8A8A", letterSpacing: "0.2em" }}
+              className="block inscription mb-2"
+              style={{ color: "#5A5A5A" }}
             >
               MESSAGE
             </label>
@@ -212,11 +206,15 @@ export default function Contact() {
 
           <button
             type="submit"
-            disabled={status === "sending"}
+            disabled={status === "sending" || status === "sent"}
             className="btn-illuminate"
             style={{ opacity: status === "sending" ? 0.6 : 1 }}
           >
-            {status === "sending" ? "Sending..." : "Send Message"}
+            {status === "sending"
+              ? "Sending..."
+              : status === "sent"
+                ? "Message Sent"
+                : "Send Message"}
           </button>
 
           {feedback && (
@@ -231,6 +229,6 @@ export default function Contact() {
           )}
         </form>
       </section>
-    </div>
+    </PublicLayout>
   );
 }

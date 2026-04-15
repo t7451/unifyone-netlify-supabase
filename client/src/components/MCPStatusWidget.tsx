@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Copy, Check, ExternalLink, ChevronDown, ChevronUp,
-  Radio, Cpu, Wrench,
+  Radio, Cpu, Wrench
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";

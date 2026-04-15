@@ -231,7 +231,7 @@ async function resolveOneFriendChallenge(
 
   // Fetch user names for notification bodies
   const participantIds = [fc.challengerId, fc.challengeeId];
-  const participantUsers = await db
+  const _participantUsers = await db
     .select({ id: users.id, name: users.name })
     .from(users)
     .where(inArray(users.id, participantIds))
