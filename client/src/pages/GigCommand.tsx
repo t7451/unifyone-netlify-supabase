@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -138,6 +139,7 @@ export default function GigCommand() {
   const endShift = trpc.moneyManager.endShift.useMutation();
   const updateGPS = trpc.moneyManager.updateShiftGPS.useMutation();
   const generateShortcuts = trpc.moneyManager.generateAIShortcuts.useMutation();
+  const { data: gigSubscription } = trpc.gigWorker.getSubscription.useQuery();
   const [shortcuts, setShortcuts] = useState<
     Array<{
       title: string;
@@ -331,6 +333,26 @@ export default function GigCommand() {
             )}
           </div>
         </div>
+
+        {/* Gig subscription upgrade banner (shown only on Starter plan) */}
+        {gigSubscription && gigSubscription.plan?.tier === "starter" && (
+          <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-lg bg-violet-900/30 border border-violet-500/40">
+            <div className="flex items-center gap-2 text-sm text-violet-200">
+              <span className="text-violet-400">⚡</span>
+              <span>
+                <strong>{gigSubscription.plan.name}</strong> — {gigSubscription.aiCreditsRemaining} AI credits remaining this month.
+                Upgrade for route optimizer, tax export &amp; more AI credits.
+              </span>
+            </div>
+            <Button
+              asChild
+              size="sm"
+              className="bg-violet-600 hover:bg-violet-700 text-white shrink-0"
+            >
+              <Link href="/gig-worker-plans">Upgrade</Link>
+            </Button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Left column: Shift Control + Stats */}

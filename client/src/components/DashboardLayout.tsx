@@ -53,6 +53,7 @@ import {
   Navigation,
   Smartphone,
   Sparkles,
+  Star,
   X,
   Code2,
 } from "lucide-react";
@@ -90,6 +91,7 @@ const menuItems = [
   { icon: Plug, label: "Connect Shopify", path: "/shopify/install" },
   { icon: DollarSign, label: "Money Manager", path: "/money-manager" },
   { icon: Navigation, label: "Gig Command", path: "/gig-command" },
+  { icon: Star, label: "Gig Worker Plans", path: "/gig-worker-plans" },
   { icon: Trophy, label: "Achievements", path: "/achievements" },
   { icon: UserRound, label: "Friends & Social", path: "/friends" },
   { icon: Smartphone, label: "Mobile Automation", path: "/mobile-automation" },

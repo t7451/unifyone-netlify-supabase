@@ -71,6 +71,8 @@ export const escalationStatusEnum = pgEnum("escalation_status", ["pending", "app
 export const authorityLevelEnum = pgEnum("authority_level", ["viewer", "operator", "architect", "cathedral"]);
 export const governanceRuleTypeEnum = pgEnum("governance_rule_type", ["approval_threshold", "rate_limit", "data_access", "operational_constraint"]);
 export const violationActionEnum = pgEnum("violation_action", ["block", "escalate", "log", "warn"]);
+export const gigWorkerPlanTierEnum = pgEnum("gig_worker_plan_tier", ["starter", "pro", "elite"]);
+export const gigWorkerSubStatusEnum = pgEnum("gig_worker_sub_status", ["active", "trialing", "past_due", "cancelled", "none"]);
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 export const users = pgTable("users", {
@@ -1348,3 +1350,75 @@ export const userPreferences = pgTable("user_preferences", {
 });
 export type UserPreferences = typeof userPreferences.$inferSelect;
 export type InsertUserPreferences = typeof userPreferences.$inferInsert;
+
+// ─── Gig Worker Plans ─────────────────────────────────────────────────────────
+// A separate plan catalog for individual gig workers (per-user, not per-tenant).
+// Tiers: starter (free), pro ($9.99/mo), elite ($24.99/mo).
+export const gigWorkerPlans = pgTable("gig_worker_plans", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 50 }).notNull().unique(),
+  tier: gigWorkerPlanTierEnum("tier").notNull(),
+  description: text("description"),
+  priceMonthly: decimal("priceMonthly", { precision: 10, scale: 2 }).notNull().default("0.00"),
+  priceYearly: decimal("priceYearly", { precision: 10, scale: 2 }).notNull().default("0.00"),
+  stripePriceIdMonthly: varchar("stripePriceIdMonthly", { length: 100 }),
+  stripePriceIdYearly: varchar("stripePriceIdYearly", { length: 100 }),
+  // Monthly AI credit quota (number of LLM requests)
+  monthlyAICredits: integer("monthlyAICredits").notNull().default(50),
+  // Feature flags as JSON array, e.g. ["route_optimizer","tax_export","earnings_forecast"]
+  features: json("features").$type<string[]>().notNull().default([]),
+  isActive: boolean("isActive").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type GigWorkerPlan = typeof gigWorkerPlans.$inferSelect;
+export type InsertGigWorkerPlan = typeof gigWorkerPlans.$inferInsert;
+
+// ─── Gig Worker Subscriptions ─────────────────────────────────────────────────
+// One active subscription row per user for the gig worker add-on.
+export const gigWorkerSubscriptions = pgTable("gig_worker_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().unique(),
+  planId: integer("planId").notNull(),
+  status: gigWorkerSubStatusEnum("status").notNull().default("none"),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 100 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 100 }),
+  currentPeriodStart: timestamp("currentPeriodStart"),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  trialEnd: timestamp("trialEnd"),
+  cancelAtPeriodEnd: boolean("cancelAtPeriodEnd").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type GigWorkerSubscription = typeof gigWorkerSubscriptions.$inferSelect;
+export type InsertGigWorkerSubscription = typeof gigWorkerSubscriptions.$inferInsert;
+
+// ─── Gig AI Usage ─────────────────────────────────────────────────────────────
+// Tracks AI LLM call consumption per user within each billing period.
+export const gigAIUsage = pgTable(
+  "gig_ai_usage",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("userId").notNull(),
+    // ISO date string for the billing month, e.g. "2025-04"
+    billingPeriod: varchar("billingPeriod", { length: 7 }).notNull(),
+    // Number of AI requests consumed
+    requestsUsed: integer("requestsUsed").notNull().default(0),
+    // Total tokens consumed (input + output)
+    tokensUsed: integer("tokensUsed").notNull().default(0),
+    // Context that triggered the usage (gig-command, money-manager, etc.)
+    lastContext: varchar("lastContext", { length: 100 }),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    // Enforces one row per user per billing month; required for the atomic
+    // INSERT … ON CONFLICT DO UPDATE upsert in incrementGigAIUsage.
+    gigAIUsageUserPeriodIdx: uniqueIndex("gig_ai_usage_user_billing_period_idx").on(
+      table.userId,
+      table.billingPeriod,
+    ),
+  }),
+);
+export type GigAIUsage = typeof gigAIUsage.$inferSelect;
+export type InsertGigAIUsage = typeof gigAIUsage.$inferInsert;

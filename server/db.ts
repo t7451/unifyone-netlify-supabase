@@ -18,7 +18,13 @@ import {
   apiKeys,
   categories,
   customers,
+  gigAIUsage,
+  gigWorkerPlans,
+  gigWorkerSubscriptions,
   InsertApiKey,
+  InsertGigAIUsage,
+  InsertGigWorkerPlan,
+  InsertGigWorkerSubscription,
   InsertOrder,
   InsertProduct,
   InsertTenant,
@@ -865,4 +871,194 @@ export async function touchApiKeyLastUsed(id: number) {
     .update(apiKeys)
     .set({ lastUsedAt: new Date() })
     .where(eq(apiKeys.id, id));
+}
+
+// ── Gig Worker Plans ──────────────────────────────────────────────────────────
+export async function getGigWorkerPlans() {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(gigWorkerPlans)
+    .where(eq(gigWorkerPlans.isActive, true))
+    .orderBy(gigWorkerPlans.priceMonthly);
+}
+
+export async function getGigWorkerPlanBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(gigWorkerPlans)
+    .where(eq(gigWorkerPlans.slug, slug))
+    .limit(1);
+  return rows[0];
+}
+
+export async function getGigWorkerPlanById(planId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(gigWorkerPlans)
+    .where(eq(gigWorkerPlans.id, planId))
+    .limit(1);
+  return rows[0];
+}
+
+// ── Gig Worker Subscriptions ──────────────────────────────────────────────────
+export async function getGigWorkerSubscription(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(gigWorkerSubscriptions)
+    .where(eq(gigWorkerSubscriptions.userId, userId))
+    .limit(1);
+  return rows[0];
+}
+
+export async function upsertGigWorkerSubscription(
+  data: InsertGigWorkerSubscription
+) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .insert(gigWorkerSubscriptions)
+    .values(data)
+    .onConflictDoUpdate({
+      target: gigWorkerSubscriptions.userId,
+      set: {
+        planId: data.planId,
+        status: data.status,
+        stripeCustomerId: data.stripeCustomerId,
+        stripeSubscriptionId: data.stripeSubscriptionId,
+        currentPeriodStart: data.currentPeriodStart,
+        currentPeriodEnd: data.currentPeriodEnd,
+        trialEnd: data.trialEnd,
+        cancelAtPeriodEnd: data.cancelAtPeriodEnd,
+        updatedAt: new Date(),
+      },
+    });
+}
+
+// ── Gig AI Usage ──────────────────────────────────────────────────────────────
+/** Returns or initialises the usage row for the given user + billing period. */
+export async function getGigAIUsage(userId: number, billingPeriod: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(gigAIUsage)
+    .where(
+      and(
+        eq(gigAIUsage.userId, userId),
+        eq(gigAIUsage.billingPeriod, billingPeriod)
+      )
+    )
+    .limit(1);
+  return rows[0];
+}
+
+/** Increments the requestsUsed and tokensUsed counters for the current period. */
+export async function incrementGigAIUsage(
+  userId: number,
+  billingPeriod: string,
+  tokens: number,
+  context?: string
+) {
+  const db = await getDb();
+  if (!db) return;
+
+  // Use INSERT … ON CONFLICT DO UPDATE so both the initial-insert and
+  // the subsequent-increment paths are a single atomic DB round-trip.
+  // This eliminates the race condition where two concurrent callers both
+  // observe "no row" and both insert, creating a duplicate.
+  await db
+    .insert(gigAIUsage)
+    .values({
+      userId,
+      billingPeriod,
+      requestsUsed: 1,
+      tokensUsed: tokens,
+      ...(context !== undefined ? { lastContext: context } : {}),
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [gigAIUsage.userId, gigAIUsage.billingPeriod],
+      set: {
+        requestsUsed: sql`${gigAIUsage.requestsUsed} + 1`,
+        tokensUsed: sql`${gigAIUsage.tokensUsed} + ${tokens}`,
+        ...(context !== undefined ? { lastContext: context } : {}),
+        updatedAt: new Date(),
+      },
+    });
+}
+
+/** Seed the gig worker default plans if the table is empty. */
+export async function seedGigWorkerPlans(): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  // onConflictDoNothing makes this safe under concurrent first-hit traffic —
+  // if two requests race to seed simultaneously, the second insert silently
+  // skips the conflicting rows instead of erroring or duplicating.
+  const defaults: InsertGigWorkerPlan[] = [
+    {
+      name: "Gig Starter",
+      slug: "gig-starter",
+      tier: "starter",
+      description: "Free forever — track shifts, log mileage, basic AI tips.",
+      priceMonthly: "0.00",
+      priceYearly: "0.00",
+      monthlyAICredits: 25,
+      features: ["shift_tracker", "mileage_log", "basic_ai"],
+      isActive: true,
+    },
+    {
+      name: "Gig Pro",
+      slug: "gig-pro",
+      tier: "pro",
+      description:
+        "For serious gig workers — route optimizer, tax export, unlimited rule engine.",
+      priceMonthly: "9.99",
+      priceYearly: "95.88",
+      monthlyAICredits: 250,
+      features: [
+        "shift_tracker",
+        "mileage_log",
+        "basic_ai",
+        "route_optimizer",
+        "tax_export",
+        "unlimited_rules",
+        "advanced_analytics",
+      ],
+      isActive: true,
+    },
+    {
+      name: "Gig Elite",
+      slug: "gig-elite",
+      tier: "elite",
+      description:
+        "Maximum earnings — unlimited AI, earnings forecast, priority support.",
+      priceMonthly: "24.99",
+      priceYearly: "239.88",
+      monthlyAICredits: 1000,
+      features: [
+        "shift_tracker",
+        "mileage_log",
+        "basic_ai",
+        "route_optimizer",
+        "tax_export",
+        "unlimited_rules",
+        "advanced_analytics",
+        "earnings_forecast",
+        "ai_strategy",
+        "priority_support",
+      ],
+      isActive: true,
+    },
+  ];
+
+  await db.insert(gigWorkerPlans).values(defaults).onConflictDoNothing();
 }
