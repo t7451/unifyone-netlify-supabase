@@ -153,22 +153,16 @@ export const manusAIRouter = router({
         ) {
           try {
             const { moneyManagerRouter } = await import("./moneyManager");
-            // Call getKaiContext as a server-side function directly (no HTTP roundtrip)
-            const kaiCtx =
-              await moneyManagerRouter._def.procedures.getKaiContext._def
-                .query({
-                  ctx: ctx as any,
-                  input: {
-                    context: input.context as
-                      | "gig-command"
-                      | "money-manager"
-                      | "dashboard",
-                  },
-                  rawInput: { context: input.context },
-                  path: "moneyManager.getKaiContext",
-                  type: "query",
-                })
-                .catch(() => null);
+            // Call getKaiContext server-side via the router caller (no HTTP roundtrip)
+            const caller = moneyManagerRouter.createCaller(ctx as Parameters<typeof moneyManagerRouter.createCaller>[0]);
+            const kaiCtx = await caller
+              .getKaiContext({
+                context: input.context as
+                  | "gig-command"
+                  | "money-manager"
+                  | "dashboard",
+              })
+              .catch(() => null);
             if (kaiCtx?.hasSufficientData) {
               mcpContext = `\n\nUser's actual gig performance data (use these exact numbers in your response):\n${kaiCtx.contextJson}`;
             }

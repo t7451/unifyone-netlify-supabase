@@ -188,7 +188,7 @@ export default function GeneralSettings() {
                 <div className="mt-2 p-3 rounded-lg bg-white/5 border border-white/10 inline-flex items-center gap-3">
                   <Image className="w-4 h-4 text-gray-500" />
                   <img
-                    src={logoUrl || tenant?.logoUrl}
+                    src={logoUrl || (tenant?.logoUrl ?? undefined)}
                     alt="Store logo"
                     className="h-10 w-10 object-contain rounded"
                     onError={e => {

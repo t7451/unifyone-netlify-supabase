@@ -17,6 +17,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import {
+  Navigation,
+  Car,
+  Play,
+  MapPin,
+  Square,
+  DollarSign,
+  Route,
+  TrendingUp,
+  Clock,
+  Sparkles,
+  RefreshCw,
+  Gauge,
+  AlertTriangle,
+} from "lucide-react";
 import AIInsightsCard from "@/components/AIInsightsCard";
 import GigIQDashboard from "@/components/GigIQDashboard";
 
