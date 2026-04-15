@@ -95,8 +95,8 @@ function ProtectedRoute({
   // to login so the user is never stuck on a perpetual spinner.
   if (!isAuthenticated) {
     const returnTo =
-      location && location !== "/login"
-        ? `?returnTo=${encodeURIComponent(location)}`
+      window.location.pathname && window.location.pathname !== "/login"
+        ? `?returnTo=${encodeURIComponent(window.location.pathname)}`
         : "";
     window.location.href = `${getLoginUrl()}${returnTo}`;
     return null;
@@ -153,7 +153,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/login" component={Login} />
+      <Route path="/login" component={() => <Login />} />
       <Route path="/signup">{() => <Login initialIntent="signup" />}</Route>
       <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/reset-password" component={ResetPassword} />

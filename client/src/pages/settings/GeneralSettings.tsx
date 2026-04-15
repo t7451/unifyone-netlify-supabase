@@ -187,14 +187,30 @@ export default function GeneralSettings() {
               {(logoUrl || tenant?.logoUrl) && (
                 <div className="mt-2 p-3 rounded-lg bg-white/5 border border-white/10 inline-flex items-center gap-3">
                   <Image className="w-4 h-4 text-gray-500" />
-                  <img
-                    src={logoUrl || tenant?.logoUrl}
-                    alt="Store logo"
-                    className="h-10 w-10 object-contain rounded"
-                    onError={e => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
+                  {(() => {
+                    const rawSrc = logoUrl || tenant?.logoUrl;
+                    // Use URL constructor to reject malformed or non-http(s) URLs
+                    let safeSrc: string | undefined;
+                    try {
+                      const parsed = new URL(rawSrc ?? "");
+                      safeSrc =
+                        parsed.protocol === "https:" || parsed.protocol === "http:"
+                          ? parsed.href
+                          : undefined;
+                    } catch {
+                      safeSrc = undefined;
+                    }
+                    return safeSrc ? (
+                      <img
+                        src={safeSrc}
+                        alt="Store logo"
+                        className="h-10 w-10 object-contain rounded"
+                        onError={e => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    ) : null;
+                  })()}
                 </div>
               )}
             </div>

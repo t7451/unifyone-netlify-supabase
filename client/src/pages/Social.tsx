@@ -44,6 +44,9 @@ import {
   CheckCircle2,
   AlertCircle,
   FileEdit,
+  Globe,
+  TrendingUp,
+  Zap,
 } from "lucide-react";
 
 const PLATFORMS = [

@@ -22,6 +22,7 @@ import {
   Clock,
   Gift,
   Car,
+  DollarSign,
 } from "lucide-react";
 
 const RARITY_COLORS: Record<string, string> = {

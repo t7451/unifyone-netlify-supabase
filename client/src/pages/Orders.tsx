@@ -162,7 +162,7 @@ export default function Orders() {
       status: string;
       paymentStatus?: string;
       totalAmount?: number | string;
-      createdAt: string;
+      createdAt: Date | string;
     };
     const csvRows = [
       headers.join(","),

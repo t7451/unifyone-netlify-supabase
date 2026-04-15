@@ -802,3 +802,6 @@ export function registerStripeRoutes(app: Express) {
 }
 
 export { stripe };
+
+// Fetch-based route handler stub (for Netlify serverless; not yet implemented)
+export const registerStripeFetchRoutes: null = null;
