@@ -5,11 +5,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Search, Package, Edit, Trash2, AlertTriangle, Loader2, BarChart3 } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Package,
+  Edit,
+  Trash2,
+  AlertTriangle,
+  Loader2,
+  BarChart3,
+} from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
@@ -34,7 +56,13 @@ const EMPTY_FORM = {
 
 type ProductForm = typeof EMPTY_FORM;
 
-function ProductFormFields({ form, setForm }: { form: ProductForm; setForm: (f: ProductForm) => void }) {
+function ProductFormFields({
+  form,
+  setForm,
+}: {
+  form: ProductForm;
+  setForm: (f: ProductForm) => void;
+}) {
   const categories = trpc.products.categories.useQuery();
   const [imgBroken, setImgBroken] = useState(false);
   return (
@@ -62,7 +90,9 @@ function ProductFormFields({ form, setForm }: { form: ProductForm; setForm: (f: 
         <div>
           <Label className="text-gray-300 text-sm">Price *</Label>
           <div className="relative mt-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+              $
+            </span>
             <Input
               type="number"
               step="0.01"
@@ -77,13 +107,17 @@ function ProductFormFields({ form, setForm }: { form: ProductForm; setForm: (f: 
         <div>
           <Label className="text-gray-300 text-sm">Compare-at Price</Label>
           <div className="relative mt-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+              $
+            </span>
             <Input
               type="number"
               step="0.01"
               min="0"
               value={form.compareAtPrice}
-              onChange={e => setForm({ ...form, compareAtPrice: e.target.value })}
+              onChange={e =>
+                setForm({ ...form, compareAtPrice: e.target.value })
+              }
               placeholder="0.00"
               className="bg-white/5 border-white/10 text-white pl-7 focus:border-[#00D9FF]/50"
             />
@@ -113,7 +147,10 @@ function ProductFormFields({ form, setForm }: { form: ProductForm; setForm: (f: 
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label className="text-gray-300 text-sm">Status</Label>
-          <Select value={form.status} onValueChange={v => setForm({ ...form, status: v as any })}>
+          <Select
+            value={form.status}
+            onValueChange={v => setForm({ ...form, status: v as any })}
+          >
             <SelectTrigger className="bg-white/5 border-white/10 text-white mt-1">
               <SelectValue />
             </SelectTrigger>
@@ -126,21 +163,28 @@ function ProductFormFields({ form, setForm }: { form: ProductForm; setForm: (f: 
         </div>
         <div>
           <Label className="text-gray-300 text-sm">Category</Label>
-          <Select value={form.categoryId} onValueChange={v => setForm({ ...form, categoryId: v })}>
+          <Select
+            value={form.categoryId}
+            onValueChange={v => setForm({ ...form, categoryId: v })}
+          >
             <SelectTrigger className="bg-white/5 border-white/10 text-white mt-1">
               <SelectValue placeholder="None" />
             </SelectTrigger>
             <SelectContent className="bg-[#0F172A] border-white/10">
               <SelectItem value="none">None</SelectItem>
               {(categories.data ?? []).map((c: any) => (
-                <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                <SelectItem key={c.id} value={String(c.id)}>
+                  {c.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
       </div>
       <div className="border-t border-white/10 pt-4">
-        <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-3">Inventory</p>
+        <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-3">
+          Inventory
+        </p>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label className="text-gray-300 text-sm">Stock Quantity</Label>
@@ -158,7 +202,9 @@ function ProductFormFields({ form, setForm }: { form: ProductForm; setForm: (f: 
               type="number"
               min="0"
               value={form.lowStockThreshold}
-              onChange={e => setForm({ ...form, lowStockThreshold: e.target.value })}
+              onChange={e =>
+                setForm({ ...form, lowStockThreshold: e.target.value })
+              }
               className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
             />
           </div>
@@ -180,7 +226,10 @@ function ProductFormFields({ form, setForm }: { form: ProductForm; setForm: (f: 
         <Label className="text-gray-300 text-sm">Image URL</Label>
         <Input
           value={form.imageUrl}
-          onChange={e => { setForm({ ...form, imageUrl: e.target.value }); setImgBroken(false); }}
+          onChange={e => {
+            setForm({ ...form, imageUrl: e.target.value });
+            setImgBroken(false);
+          }}
           placeholder="https://example.com/image.jpg"
           className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
         />
@@ -202,6 +251,7 @@ function ProductFormFields({ form, setForm }: { form: ProductForm; setForm: (f: 
 export default function Products() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<any>(null);
   const [deleteProduct, setDeleteProduct] = useState<any>(null);
@@ -221,7 +271,7 @@ export default function Products() {
       setForm({ ...EMPTY_FORM });
       utils.products.list.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
   const updateMutation = trpc.products.update.useMutation({
@@ -230,7 +280,7 @@ export default function Products() {
       setEditProduct(null);
       utils.products.list.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
   const deleteMutation = trpc.products.delete.useMutation({
@@ -239,16 +289,37 @@ export default function Products() {
       setDeleteProduct(null);
       utils.products.list.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
+  });
+
+  const bulkUpdateStatusMutation = trpc.products.bulkUpdateStatus.useMutation({
+    onSuccess: data => {
+      toast.success(`Updated ${data.updatedCount} product(s)`);
+      setSelectedIds([]);
+      utils.products.list.invalidate();
+    },
+    onError: e => toast.error(e.message),
+  });
+
+  const bulkArchiveMutation = trpc.products.bulkArchive.useMutation({
+    onSuccess: data => {
+      toast.success(`Archived ${data.updatedCount} product(s)`);
+      setSelectedIds([]);
+      utils.products.list.invalidate();
+    },
+    onError: e => toast.error(e.message),
   });
 
   const handleCreate = () => {
-    if (!form.name || !form.price) return toast.error("Name and price are required");
+    if (!form.name || !form.price)
+      return toast.error("Name and price are required");
     createMutation.mutate({
       name: form.name,
       description: form.description || undefined,
       price: Number(form.price),
-      compareAtPrice: form.compareAtPrice ? Number(form.compareAtPrice) : undefined,
+      compareAtPrice: form.compareAtPrice
+        ? Number(form.compareAtPrice)
+        : undefined,
       sku: form.sku || undefined,
       status: form.status,
       initialStock: Number(form.initialStock),
@@ -277,13 +348,16 @@ export default function Products() {
   };
 
   const handleUpdate = () => {
-    if (!editForm.name || !editForm.price) return toast.error("Name and price are required");
+    if (!editForm.name || !editForm.price)
+      return toast.error("Name and price are required");
     updateMutation.mutate({
       id: editProduct.id,
       name: editForm.name,
       description: editForm.description || undefined,
       price: Number(editForm.price),
-      compareAtPrice: editForm.compareAtPrice ? Number(editForm.compareAtPrice) : undefined,
+      compareAtPrice: editForm.compareAtPrice
+        ? Number(editForm.compareAtPrice)
+        : undefined,
       sku: editForm.sku || undefined,
       status: editForm.status,
       categoryId: editForm.categoryId ? Number(editForm.categoryId) : undefined,
@@ -292,7 +366,33 @@ export default function Products() {
   };
 
   const productList = (products.data ?? []) as any[];
-  const lowStockCount = productList.filter((p: any) => p.inventory && p.inventory.quantity <= p.inventory.lowStockThreshold).length;
+  const lowStockCount = productList.filter(
+    (p: any) =>
+      p.inventory && p.inventory.quantity <= p.inventory.lowStockThreshold
+  ).length;
+  const allVisibleSelected =
+    productList.length > 0 &&
+    productList.every(p => selectedIds.includes(p.id));
+  const isBulkPending =
+    bulkUpdateStatusMutation.isPending || bulkArchiveMutation.isPending;
+
+  const toggleSelection = (id: number) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAllVisible = () => {
+    if (allVisibleSelected) {
+      setSelectedIds(prev =>
+        prev.filter(id => !productList.some(p => p.id === id))
+      );
+      return;
+    }
+    setSelectedIds(prev =>
+      Array.from(new Set([...prev, ...productList.map(p => p.id)]))
+    );
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -318,11 +418,17 @@ export default function Products() {
           </DialogTrigger>
           <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-white text-lg">New Product</DialogTitle>
+              <DialogTitle className="text-white text-lg">
+                New Product
+              </DialogTitle>
             </DialogHeader>
             <ProductFormFields form={form} setForm={setForm} />
             <DialogFooter className="mt-4 gap-2">
-              <Button variant="ghost" className="text-gray-400 hover:text-white" onClick={() => setCreateOpen(false)}>
+              <Button
+                variant="ghost"
+                className="text-gray-400 hover:text-white"
+                onClick={() => setCreateOpen(false)}
+              >
                 Cancel
               </Button>
               <Button
@@ -330,7 +436,14 @@ export default function Products() {
                 disabled={createMutation.isPending || !form.name || !form.price}
                 className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold"
               >
-                {createMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</> : "Create Product"}
+                {createMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Product"
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -359,56 +472,149 @@ export default function Products() {
             <SelectItem value="archived">Archived</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          onClick={toggleSelectAllVisible}
+          disabled={productList.length === 0}
+          className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
+        >
+          {allVisibleSelected ? "Clear Visible" : "Select Visible"}
+        </Button>
       </div>
 
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-3">
+          <p className="text-sm text-gray-300 mr-2">
+            {selectedIds.length} selected
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={isBulkPending}
+            className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
+            onClick={() =>
+              bulkUpdateStatusMutation.mutate({
+                ids: selectedIds,
+                status: "active",
+              })
+            }
+          >
+            Mark Active
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={isBulkPending}
+            className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
+            onClick={() =>
+              bulkUpdateStatusMutation.mutate({
+                ids: selectedIds,
+                status: "draft",
+              })
+            }
+          >
+            Mark Draft
+          </Button>
+          <Button
+            size="sm"
+            disabled={isBulkPending}
+            className="bg-red-500/90 hover:bg-red-500 text-white"
+            onClick={() => bulkArchiveMutation.mutate({ ids: selectedIds })}
+          >
+            Archive Selected
+          </Button>
+        </div>
+      )}
       {/* Product Grid */}
       {products.isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => <div key={i} className="h-44 rounded-xl bg-white/5 animate-pulse" />)}
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-44 rounded-xl bg-white/5 animate-pulse" />
+          ))}
         </div>
       ) : productList.length === 0 ? (
         <div className="text-center py-20">
           <Package className="w-12 h-12 text-gray-600 mx-auto mb-4" />
           <p className="text-gray-400 text-lg">No products found</p>
           <p className="text-gray-500 text-sm mt-1">
-            {search ? "Try a different search term." : "Add your first product to get started."}
+            {search
+              ? "Try a different search term."
+              : "Add your first product to get started."}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {productList.map((p: any) => {
-            const isLowStock = p.inventory && p.inventory.quantity <= p.inventory.lowStockThreshold;
-            const hasDiscount = p.compareAtPrice && Number(p.compareAtPrice) > Number(p.price);
+            const isLowStock =
+              p.inventory &&
+              p.inventory.quantity <= p.inventory.lowStockThreshold;
+            const hasDiscount =
+              p.compareAtPrice && Number(p.compareAtPrice) > Number(p.price);
             return (
-              <Card key={p.id} className="bg-card border-border hover:border-[#00D9FF]/30 transition-all group">
+              <Card
+                key={p.id}
+                className="bg-card border-border hover:border-[#00D9FF]/30 transition-all group"
+              >
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-white font-semibold truncate">{p.name}</h3>
-                      {p.sku && <p className="text-gray-500 text-xs mt-0.5 font-mono">{p.sku}</p>}
+                    <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(p.id)}
+                        onChange={() => toggleSelection(p.id)}
+                        className="mt-1 h-4 w-4 rounded border-white/30 bg-transparent accent-[#00D9FF]"
+                        aria-label={`Select ${p.name}`}
+                      />
+                      <div className="min-w-0">
+                        <h3 className="text-white font-semibold truncate">
+                          {p.name}
+                        </h3>
+                        {p.sku && (
+                          <p className="text-gray-500 text-xs mt-0.5 font-mono">
+                            {p.sku}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <Badge variant="outline" className={`ml-2 text-xs shrink-0 ${STATUS_COLORS[p.status] ?? ""}`}>
+                    <Badge
+                      variant="outline"
+                      className={`ml-2 text-xs shrink-0 ${STATUS_COLORS[p.status] ?? ""}`}
+                    >
                       {p.status}
                     </Badge>
                   </div>
 
                   {p.description && (
-                    <p className="text-gray-400 text-xs mb-3 line-clamp-2">{p.description}</p>
+                    <p className="text-gray-400 text-xs mb-3 line-clamp-2">
+                      {p.description}
+                    </p>
                   )}
 
                   <div className="flex items-baseline gap-2 mb-3">
-                    <span className="text-2xl font-bold text-[#00D9FF]">${Number(p.price).toFixed(2)}</span>
+                    <span className="text-2xl font-bold text-[#00D9FF]">
+                      ${Number(p.price).toFixed(2)}
+                    </span>
                     {hasDiscount && (
-                      <span className="text-gray-500 text-sm line-through">${Number(p.compareAtPrice).toFixed(2)}</span>
+                      <span className="text-gray-500 text-sm line-through">
+                        ${Number(p.compareAtPrice).toFixed(2)}
+                      </span>
                     )}
                   </div>
 
                   {p.inventory && (
-                    <div className={`flex items-center gap-1.5 text-xs mb-4 px-2 py-1 rounded-md ${isLowStock ? "bg-amber-500/10 text-amber-400" : "bg-white/5 text-gray-400"}`}>
-                      {isLowStock && <AlertTriangle className="w-3 h-3 shrink-0" />}
+                    <div
+                      className={`flex items-center gap-1.5 text-xs mb-4 px-2 py-1 rounded-md ${isLowStock ? "bg-amber-500/10 text-amber-400" : "bg-white/5 text-gray-400"}`}
+                    >
+                      {isLowStock && (
+                        <AlertTriangle className="w-3 h-3 shrink-0" />
+                      )}
                       <BarChart3 className="w-3 h-3 shrink-0" />
                       <span>{p.inventory.quantity} in stock</span>
-                      {isLowStock && <span className="text-amber-500 font-medium">— Low Stock</span>}
+                      {isLowStock && (
+                        <span className="text-amber-500 font-medium">
+                          — Low Stock
+                        </span>
+                      )}
                     </div>
                   )}
 
@@ -438,7 +644,10 @@ export default function Products() {
       )}
 
       {/* Edit Modal */}
-      <Dialog open={!!editProduct} onOpenChange={open => !open && setEditProduct(null)}>
+      <Dialog
+        open={!!editProduct}
+        onOpenChange={open => !open && setEditProduct(null)}
+      >
         <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white text-lg flex items-center gap-2">
@@ -448,22 +657,38 @@ export default function Products() {
           </DialogHeader>
           <ProductFormFields form={editForm} setForm={setEditForm} />
           <DialogFooter className="mt-4 gap-2">
-            <Button variant="ghost" className="text-gray-400 hover:text-white" onClick={() => setEditProduct(null)}>
+            <Button
+              variant="ghost"
+              className="text-gray-400 hover:text-white"
+              onClick={() => setEditProduct(null)}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleUpdate}
-              disabled={updateMutation.isPending || !editForm.name || !editForm.price}
+              disabled={
+                updateMutation.isPending || !editForm.name || !editForm.price
+              }
               className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold"
             >
-              {updateMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : "Save Changes"}
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation Modal */}
-      <Dialog open={!!deleteProduct} onOpenChange={open => !open && setDeleteProduct(null)}>
+      <Dialog
+        open={!!deleteProduct}
+        onOpenChange={open => !open && setDeleteProduct(null)}
+      >
         <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
@@ -473,14 +698,23 @@ export default function Products() {
           </DialogHeader>
           <div className="py-2">
             <p className="text-gray-300">
-              Are you sure you want to delete <span className="text-white font-semibold">"{deleteProduct?.name}"</span>?
+              Are you sure you want to delete{" "}
+              <span className="text-white font-semibold">
+                "{deleteProduct?.name}"
+              </span>
+              ?
             </p>
             <p className="text-gray-500 text-sm mt-2">
-              This will permanently remove the product and its inventory records. This action cannot be undone.
+              This will permanently remove the product and its inventory
+              records. This action cannot be undone.
             </p>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="ghost" className="text-gray-400 hover:text-white" onClick={() => setDeleteProduct(null)}>
+            <Button
+              variant="ghost"
+              className="text-gray-400 hover:text-white"
+              onClick={() => setDeleteProduct(null)}
+            >
               Cancel
             </Button>
             <Button
@@ -488,7 +722,14 @@ export default function Products() {
               disabled={deleteMutation.isPending}
               className="bg-red-500 hover:bg-red-600 text-white font-bold"
             >
-              {deleteMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting...</> : "Delete Product"}
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Product"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

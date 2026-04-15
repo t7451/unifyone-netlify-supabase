@@ -1,4 +1,15 @@
-import { and, count, desc, eq, gte, ilike, like, sql, sum } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  like,
+  sql,
+  sum,
+} from "drizzle-orm";
 import type { NeonHttpDatabase } from "drizzle-orm/neon-http";
 import { logger } from "./_core/logger";
 // drizzle/neon-http loaded dynamically in getDb() to prevent cold-start crash
@@ -255,6 +266,24 @@ export async function deleteProduct(id: number, tenantId: number) {
     .update(products)
     .set({ status: "archived" })
     .where(and(eq(products.id, id), eq(products.tenantId, tenantId)));
+}
+
+export async function bulkUpdateProductStatus(
+  tenantId: number,
+  ids: number[],
+  status: "active" | "draft" | "archived"
+) {
+  const db = await getDb();
+  if (!db || ids.length === 0) return 0;
+  const result = await db
+    .update(products)
+    .set({ status, updatedAt: new Date() })
+    .where(and(eq(products.tenantId, tenantId), inArray(products.id, ids)));
+  return result.rowCount ?? 0;
+}
+
+export async function bulkArchiveProducts(tenantId: number, ids: number[]) {
+  return bulkUpdateProductStatus(tenantId, ids, "archived");
 }
 
 export async function getProductCount(tenantId: number) {
@@ -803,7 +832,9 @@ export async function getApiKeysByTenant(tenantId: number) {
   return db
     .select()
     .from(apiKeys)
-    .where(and(eq(apiKeys.tenantId, tenantId), sql`${apiKeys.revokedAt} IS NULL`))
+    .where(
+      and(eq(apiKeys.tenantId, tenantId), sql`${apiKeys.revokedAt} IS NULL`)
+    )
     .orderBy(desc(apiKeys.createdAt));
 }
 
@@ -830,5 +861,8 @@ export async function revokeApiKey(id: number, tenantId: number) {
 export async function touchApiKeyLastUsed(id: number) {
   const db = await getDb();
   if (!db) return;
-  await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, id));
+  await db
+    .update(apiKeys)
+    .set({ lastUsedAt: new Date() })
+    .where(eq(apiKeys.id, id));
 }
