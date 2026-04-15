@@ -6,6 +6,8 @@ import { getLoginUrl } from "@/const";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { TIERS } from "@/content/pricing";
 import { SITE_URL } from "@/lib/siteConfig";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 const CANONICAL = `${SITE_URL}/`;
 
@@ -89,6 +91,15 @@ function EmailCapture() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
+  const submitLead = trpc.leads.submit.useMutation({
+    onSuccess: () => {
+      setSubmitted(true);
+    },
+    onError: (err) => {
+      toast.error(err.message ?? "Something went wrong. Please try again.");
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -96,8 +107,7 @@ function EmailCapture() {
       setError("Please enter a valid email address.");
       return;
     }
-    // Store email locally; in production this would POST to a leads endpoint
-    setSubmitted(true);
+    submitLead.mutate({ email, source: "landing_page_blueprint" });
   };
 
   return (
@@ -162,10 +172,11 @@ function EmailCapture() {
             </div>
             <button
               type="submit"
-              className="btn-illuminate shrink-0"
+              disabled={submitLead.isPending}
+              className="btn-illuminate shrink-0 disabled:opacity-70"
               style={{ whiteSpace: "nowrap" }}
             >
-              Send My Blueprint
+              {submitLead.isPending ? "Sending…" : "Send My Blueprint"}
             </button>
           </form>
         )}
