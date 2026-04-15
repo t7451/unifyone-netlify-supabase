@@ -1195,7 +1195,7 @@ export default function Home() {
                   ))}
                 </div>
 
-                <Link href={tier.id === "scale" ? "/contact" : getLoginUrl()}>
+                <Link href={tier.id === "scale" ? "/contact" : `${getLoginUrl()}?plan=${tier.id}`}>
                   <span
                     style={{
                       display: "block", textAlign: "center",
@@ -1213,6 +1213,33 @@ export default function Home() {
                     {tier.cta}
                   </span>
                 </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TRUST BADGES ──────────────────────────────────────────────────────── */}
+      <section style={{ padding: "40px 32px", borderTop: "1px solid #161616", borderBottom: "1px solid #161616", textAlign: "center" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <p style={{ fontFamily: "Cinzel, serif", fontSize: 11, letterSpacing: "0.2em", color: "#3A3A3A", marginBottom: 24, textTransform: "uppercase" }}>
+            Secured by industry-leading infrastructure
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: "32px 48px" }}>
+            {[
+              { label: "Stripe", icon: "💳", desc: "Payments" },
+              { label: "PayPal", icon: "🅿️", desc: "Checkout" },
+              { label: "Shopify", icon: "🛍️", desc: "Commerce" },
+              { label: "Supabase", icon: "🔒", desc: "Data & Realtime" },
+              { label: "Netlify", icon: "☁️", desc: "Deployment" },
+              { label: "256-bit SSL", icon: "🔐", desc: "Encryption" },
+            ].map((badge) => (
+              <div key={badge.label} style={{ display: "flex", alignItems: "center", gap: 8, color: "#5A5A5A" }}>
+                <span style={{ fontSize: 18 }}>{badge.icon}</span>
+                <div style={{ textAlign: "left" }}>
+                  <div style={{ fontFamily: "Cinzel, serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", color: "#7A7A7A" }}>{badge.label}</div>
+                  <div style={{ fontSize: 10, color: "#3A3A3A" }}>{badge.desc}</div>
+                </div>
               </div>
             ))}
           </div>
