@@ -1,15 +1,23 @@
 /**
- * Simple in-memory sliding-window rate limiter.
+ * Rate limiter — sliding-window, production-safe.
  *
- * Works for both the Express server and Netlify Functions (single-process).
- * Best-effort for multi-instance deployments — no cross-process state, but
- * still meaningfully limits single-IP brute-force attempts per instance.
+ * When UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are set the limiter
+ * uses Upstash Redis as a shared, distributed counter that survives across
+ * Netlify Function invocations (serverless / multi-instance / ephemeral).
+ *
+ * Without those env vars it falls back to a single-process in-memory sliding
+ * window. The in-memory fallback is fine for local development and single-
+ * instance Docker deployments, but provides no cross-process protection on
+ * serverless platforms — see .env.example for setup instructions.
  *
  * Usage:
  *   const limiter = createRateLimiter({ maxAttempts: 5, windowMs: 15 * 60 * 1000 });
- *   const result = limiter.check(ipAddress);
+ *   const result = await limiter.check(ipAddress);
  *   if (!result.allowed) return 429 response;
  */
+
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 type RateLimitEntry = {
   attempts: number[]; // timestamps (ms) of recent attempts within the window
@@ -19,11 +27,54 @@ export type RateLimitResult =
   | { allowed: true }
   | { allowed: false; retryAfterMs: number };
 
+// ── Shared Upstash Redis client (lazy singleton) ──────────────────────────────
+
+let _redis: Redis | null = null;
+
+function getRedis(): Redis | null {
+  if (_redis !== null) return _redis;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (url && token) {
+    _redis = new Redis({ url, token });
+  }
+  return _redis;
+}
+
+// ── Factory ───────────────────────────────────────────────────────────────────
+
 export function createRateLimiter(opts: {
   maxAttempts: number;
   windowMs: number;
 }) {
   const { maxAttempts, windowMs } = opts;
+
+  // ── Upstash path ────────────────────────────────────────────────────────────
+  const redis = getRedis();
+  if (redis) {
+    const windowSeconds = Math.ceil(windowMs / 1000);
+    const upstash = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(maxAttempts, `${windowSeconds} s`),
+      analytics: false,
+      prefix: "rl",
+    });
+
+    return {
+      async check(key: string): Promise<RateLimitResult> {
+        const { success, reset } = await upstash.limit(key);
+        if (success) return { allowed: true };
+        const retryAfterMs = Math.max(0, reset - Date.now());
+        return { allowed: false, retryAfterMs };
+      },
+      async reset(key: string): Promise<void> {
+        // Upstash Ratelimit doesn't expose a direct reset; delete the key.
+        await redis.del(`rl:${key}`);
+      },
+    };
+  }
+
+  // ── In-memory fallback (local dev / single-process Docker) ──────────────────
   const store = new Map<string, RateLimitEntry>();
 
   // Prune expired keys every 10 minutes to prevent unbounded memory growth
@@ -46,7 +97,7 @@ export function createRateLimiter(opts: {
   if (pruneInterval.unref) pruneInterval.unref();
 
   return {
-    check(key: string): RateLimitResult {
+    async check(key: string): Promise<RateLimitResult> {
       const now = Date.now();
       const entry = store.get(key) ?? { attempts: [] };
 
@@ -65,7 +116,7 @@ export function createRateLimiter(opts: {
       return { allowed: true };
     },
 
-    reset(key: string): void {
+    async reset(key: string): Promise<void> {
       store.delete(key);
     },
   };

@@ -4,17 +4,49 @@
  * Applied early (before any route handlers) so every response — including
  * 404s, tRPC errors, and static files — carries the headers.
  *
- * Inline CSP is intentionally omitted here; Vite dev mode injects inline
- * scripts that would be blocked by a strict CSP. A separate nonce-based CSP
- * can be layered on once the build pipeline supports it.
+ * Content-Security-Policy is applied in production only. Vite dev mode
+ * injects inline HMR scripts that would be blocked by a strict CSP.
+ * All inline executable scripts have been moved to JS modules so that
+ * script-src does not require 'unsafe-inline'.
  */
 
 import type { Request, Response, NextFunction } from "express";
 
 /**
+ * Strict CSP for production.
+ *
+ * Directives chosen to cover the app's known external dependencies:
+ *  - Plausible Analytics CDN
+ *  - Meta Pixel SDK (dynamically injected by metaPixelInit.ts)
+ *  - Stripe.js + checkout iframes
+ *  - PayPal checkout iframes
+ *  - Google Fonts (stylesheet + font files)
+ *  - Supabase HTTPS + WebSocket endpoints
+ *  - PayPal API
+ *  - Facebook Graph API (Meta Pixel event calls)
+ *
+ * 'unsafe-inline' is allowed for style-src only because React components
+ * and Tailwind CSS use inline styles at runtime. It is intentionally
+ * excluded from script-src.
+ */
+const PRODUCTION_CSP = [
+  "default-src 'self'",
+  "script-src 'self' https://plausible.io https://connect.facebook.net https://js.stripe.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://checkout.stripe.com https://api.paypal.com https://www.facebook.com https://plausible.io",
+  "frame-src https://js.stripe.com https://hooks.stripe.com https://www.paypal.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join("; ");
+
+/**
  * Middleware that attaches security response headers to every reply.
  *
  * Headers set:
+ *  - Content-Security-Policy (prod only)      — XSS mitigation
  *  - X-Content-Type-Options: nosniff          — prevents MIME-type sniffing
  *  - X-Frame-Options: DENY                    — blocks clickjacking in iframes
  *  - X-XSS-Protection: 0                      — disables legacy XSS filter (modern browsers don't need it; it can be exploited)
@@ -30,6 +62,11 @@ export function securityHeaders(
   next: NextFunction
 ) {
   const isProd = process.env.NODE_ENV === "production";
+
+  // Strict CSP — only in production; Vite dev HMR uses inline scripts
+  if (isProd) {
+    res.setHeader("Content-Security-Policy", PRODUCTION_CSP);
+  }
 
   // Prevent MIME-type sniffing (e.g. serving a PNG as JS)
   res.setHeader("X-Content-Type-Options", "nosniff");
