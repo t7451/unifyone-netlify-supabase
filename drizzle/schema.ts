@@ -1258,6 +1258,23 @@ export const governanceMetrics = pgTable("governance_metrics", {
 });
 export type GovernanceMetric = typeof governanceMetrics.$inferSelect;
 
+// ── Developer API Keys ────────────────────────────────────────────────────────
+export const apiKeys = pgTable("api_keys", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenantId").notNull(),
+  userId: integer("userId").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  keyPrefix: varchar("keyPrefix", { length: 16 }).notNull(), // e.g. "uo_live_a1b2c3d4"
+  keyHash: varchar("keyHash", { length: 64 }).notNull(),     // SHA-256 hex of full key
+  scopes: json("scopes").$type<string[]>().notNull().default([]),
+  lastUsedAt: timestamp("lastUsedAt"),
+  expiresAt: timestamp("expiresAt"),
+  revokedAt: timestamp("revokedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type InsertApiKey = typeof apiKeys.$inferInsert;
+
 // ── User Preferences ─────────────────────────────────────────────────────────
 export const userPreferences = pgTable("user_preferences", {
   id: serial("id").primaryKey(),
