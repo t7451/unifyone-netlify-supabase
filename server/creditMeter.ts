@@ -33,6 +33,7 @@
 import Stripe from "stripe";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { errMsg } from "./_core/errors";
+import { getStripe as getSharedStripe } from "./_core/stripeClient";
 
 // ── Types ─────────────────────────────────────────────────────────────
 export type CreditSource =
@@ -113,10 +114,7 @@ function getSupabase(): SupabaseClient | null {
 let _stripe: Stripe | null = null;
 function getStripe(): Stripe | null {
   if (_stripe) return _stripe;
-  if (!process.env.STRIPE_SECRET_KEY) return null;
-  _stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2026-03-25.dahlia" as any,
-  });
+  _stripe = getSharedStripe();
   return _stripe;
 }
 
