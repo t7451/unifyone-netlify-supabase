@@ -9,6 +9,7 @@ import { capi } from "./meta/capi";
 import { getAppUrl } from "./_core/env";
 import { flushAllOverages, flushUserOverages } from "./creditMeter";
 import { errMsg } from "./_core/errors";
+import { getStripe } from "./_core/stripeClient";
 
 // Supabase admin client for subscription/credit sync (service role — no RLS)
 function getSupabaseAdmin() {
@@ -19,11 +20,7 @@ function getSupabaseAdmin() {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2026-03-25.dahlia" as Stripe.LatestApiVersion,
-    })
-  : null;
+const stripe = getStripe();
 
 // Map Stripe subscription status → our enum
 function mapSubStatus(

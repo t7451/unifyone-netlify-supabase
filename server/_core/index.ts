@@ -31,6 +31,26 @@ function validateEnv() {
       "[startup] DATABASE_URL is not set — database features will be unavailable."
     );
   }
+
+  if (ENV.isProduction) {
+    const missing: string[] = [];
+
+    if (!process.env.STRIPE_SECRET_KEY) missing.push("STRIPE_SECRET_KEY");
+    if (!process.env.STRIPE_WEBHOOK_SECRET) missing.push("STRIPE_WEBHOOK_SECRET");
+    if (!process.env.PAYPAL_CLIENT_ID) missing.push("PAYPAL_CLIENT_ID");
+    if (!process.env.PAYPAL_CLIENT_SECRET) missing.push("PAYPAL_CLIENT_SECRET");
+    if (!process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL)
+      missing.push("SUPABASE_URL");
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY)
+      missing.push("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (missing.length > 0) {
+      console.warn(
+        `[startup] Production environment is missing recommended vars: ${missing.join(", ")}. ` +
+          "Some features may be unavailable."
+      );
+    }
+  }
 }
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -68,9 +88,10 @@ async function startServer() {
   registerShopifyRoutes(app);
   // Register Square payment + webhook routes (webhook needs raw body for signature verification)
   registerSquareRoutes(app);
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // 4 MB body limit — sufficient for JSON API payloads. File uploads should
+  // use presigned S3 URLs (storagePut) and never pass file bytes through this server.
+  app.use(express.json({ limit: "4mb" }));
+  app.use(express.urlencoded({ limit: "4mb", extended: true }));
   // Structured request/response logging (attaches X-Request-Id header)
   app.use(requestLogger);
   // OAuth callback under /api/oauth/callback

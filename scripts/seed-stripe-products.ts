@@ -6,9 +6,10 @@
  */
 import "dotenv/config";
 import Stripe from "stripe";
+import { STRIPE_API_VERSION } from "../server/_core/stripeClient";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-03-25.dahlia" as any,
+  apiVersion: STRIPE_API_VERSION,
 });
 
 const tiers = [

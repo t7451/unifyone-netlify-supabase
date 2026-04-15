@@ -9,27 +9,29 @@
  *   POST /api/billing/webhook   ← register as separate Stripe webhook endpoint
  *   GET  /api/billing/credits
  */
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import express, { Express, Request, Response } from "express";
 import { createClient } from "@supabase/supabase-js";
 import { errMsg } from "./_core/errors";
 import { sdk } from "./_core/sdk";
 import { COOKIE_NAME } from "../shared/const";
 import { parse as parseCookieHeader } from "cookie";
+import { getStripe } from "./_core/stripeClient";
 
 // Mirror the stripe.ts pattern: fail gracefully when the key is absent.
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2026-03-25.dahlia" as any,
-    })
-  : null;
+const stripe = getStripe();
 
 function getBillingDb() {
   const url =
     process.env.SUPABASE_URL ||
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    "https://denxakpahfmlsekxmubs.supabase.co";
+    "";
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  if (!url || !key) {
+    throw new Error(
+      "[billing] SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set to use billing features"
+    );
+  }
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
