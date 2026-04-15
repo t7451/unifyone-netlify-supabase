@@ -2,7 +2,7 @@
 
 **Generated:** 2026-04-15  
 **Repository:** t7451/unifyone-netlify-supabase  
-**Current Status:** CI workflows failing due to pnpm version mismatch
+**Current Status:** CI passing. Most items below have been completed. See individual checkboxes for current state.
 
 ---
 
@@ -19,10 +19,11 @@
 
 ### Code TODOs Found in Codebase
 
-- [ ] **VideoProduction.tsx (line 12)** — Render `_showcases` data in JSX
-  - Currently defined but not displayed
-  - Has complete showcase data structure ready to use
-  - Should add a showcase section to the page
+- [x] **VideoProduction.tsx** — `_showcases` data is fully rendered in the Showcase Library section ✅
+- [x] **Analytics.tsx** — `topProducts` and `webhookEvents` are wired into the UI ✅
+- [x] **auth.logout.test.ts** — `sameSite: "lax"` assertion already correct ✅
+- [x] **Home.tsx EmailCapture** — Wired to `trpc.leads.submit` mutation (was a no-op placeholder) ✅
+- [x] **documentChat.ts embedding** — Clarified comment; Voyage AI is the path for production embeddings ✅
 
 ---
 
@@ -535,18 +536,18 @@
 ## 📅 ROADMAP PRIORITIES
 
 ### High Priority (Next Sprint)
-1. **Fix CI/CD** — Monitor next workflow run after pnpm fix
-2. **Complete Analytics Dashboard** — Wire topProducts and webhookEvents (PLAN.md Unit 2)
-3. **Render VideoProduction showcases** — Remove TODO on line 12 (PLAN.md Unit 9)
-4. **Fix auth.logout.test.ts** — sameSite cookie assertion (PLAN.md Unit 3)
-5. **Implement Governance tRPC procedures** — Complete Phase 42
+1. ~~**Fix CI/CD** — Monitor next workflow run after pnpm fix~~ ✅ Done
+2. ~~**Complete Analytics Dashboard** — Wire topProducts and webhookEvents~~ ✅ Done
+3. ~~**Render VideoProduction showcases** — Remove TODO on line 12~~ ✅ Done
+4. ~~**Fix auth.logout.test.ts** — sameSite cookie assertion~~ ✅ Done
+5. ~~**Implement Governance tRPC procedures** — Complete Phase 42~~ ✅ Done
+6. ~~**Wire EmailCapture to leads.submit**~~ ✅ Done
+7. **Wire Voyage AI embeddings** — Replace hash-based embedding in documentChat.ts with `voyage-3-large` model call when `VOYAGE_API_KEY` is available
 
 ### Medium Priority (2-4 Weeks)
-1. **Landing Page Conversion Optimization** — PLAN.md Unit 1
-2. **Onboarding Flow Enhancement** — PLAN.md Unit 4
-3. **SEO & Sitemap Alignment** — PLAN.md Unit 5
-4. **Blog Structured Data** — PLAN.md Unit 6
-5. **Automated Challenge Completion** — Phase 20
+1. **Automated Challenge Completion** — Phase 20 (backend engine + notifications)
+2. **Meta CAPI Event Loop** — Phase 23 (meta_capi_events table + capiRouter)
+3. **Mobile Automation Scheduling** — Phase 23 n8n_schedules table + scheduler UI
 
 ### Low Priority (Backlog)
 1. **E2E Testing Framework** — Playwright setup
@@ -583,11 +584,14 @@
 
 ## ✅ NEXT IMMEDIATE ACTIONS
 
-1. **Monitor CI Fix** — Verify next GitHub Actions workflow run passes
-2. **Fix VideoProduction TODO** — Render _showcases array in JSX
-3. **Wire Analytics Dashboard** — Connect topProducts and webhookEvents to UI
-4. **Fix Test** — Update auth.logout.test.ts sameSite cookie assertion
-5. **Complete Governance** — Implement missing tRPC procedures
+1. ~~**Monitor CI Fix** — Verify next GitHub Actions workflow run passes~~ ✅ Done
+2. ~~**Fix VideoProduction TODO** — Render _showcases array in JSX~~ ✅ Done
+3. ~~**Wire Analytics Dashboard** — Connect topProducts and webhookEvents to UI~~ ✅ Done
+4. ~~**Fix Test** — Update auth.logout.test.ts sameSite cookie assertion~~ ✅ Done
+5. ~~**Complete Governance** — Implement missing tRPC procedures~~ ✅ Done
+6. ~~**Wire EmailCapture** — Connect Home.tsx email form to `trpc.leads.submit`~~ ✅ Done
+
+**Remaining:** Wire Voyage AI embeddings in documentChat.ts for production-grade semantic search.
 
 ---
 
