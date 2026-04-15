@@ -1,6 +1,23 @@
+import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
+import { SITE_URL } from "@/lib/siteConfig";
+
+const PP_CANONICAL = `${SITE_URL}/privacy`;
+
 export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-background">
+      <PageHead
+        title="Privacy Policy | UnifyOne"
+        description="UnifyOne Privacy Policy — how 1Commerce LLC collects, uses, and protects your data in compliance with CCPA and GDPR. Last updated March 2026."
+        canonical={PP_CANONICAL}
+        jsonLd={buildWebPageJsonLd({
+          canonical: PP_CANONICAL,
+          name: "Privacy Policy | UnifyOne",
+          description:
+            "How 1Commerce LLC collects, uses, and protects your data in compliance with CCPA and GDPR.",
+          breadcrumbs: [{ name: "Privacy Policy", item: PP_CANONICAL }],
+        })}
+      />
       <div className="max-w-4xl mx-auto px-6 py-16">
         <div className="mb-10">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Privacy Policy</h1>

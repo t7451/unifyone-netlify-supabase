@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
+import { SITE_URL } from "@/lib/siteConfig";
+
+const AD_COPY_CANONICAL = `${SITE_URL}/marketing/ad-copy`;
 
 interface AdCopy {
   id: string;
@@ -185,6 +189,21 @@ export default function AdCopyHub() {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageHead
+        title="Ad Copy Hub | UnifyOne Marketing"
+        description="Platform-specific ad copy templates optimized for awareness, consideration, decision, retention, and retargeting campaigns. Copy, customize, and deploy."
+        canonical={AD_COPY_CANONICAL}
+        jsonLd={buildWebPageJsonLd({
+          canonical: AD_COPY_CANONICAL,
+          name: "Ad Copy Hub | UnifyOne Marketing",
+          description:
+            "Platform-specific ad copy templates for commerce campaigns — awareness, consideration, decision, retention, and retargeting.",
+          breadcrumbs: [
+            { name: "Marketing", item: `${SITE_URL}/marketing` },
+            { name: "Ad Copy Hub", item: AD_COPY_CANONICAL },
+          ],
+        })}
+      />
       {/* Hero Section */}
       <section className="border-b border-border bg-card py-12">
         <div className="container max-w-6xl mx-auto px-4">

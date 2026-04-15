@@ -3,6 +3,10 @@ import { Play, Zap, Film, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
+import { SITE_URL } from "@/lib/siteConfig";
+
+const VP_CANONICAL = `${SITE_URL}/video-production`;
 
 export default function VideoProduction() {
   const [videoPlaying, setVideoPlaying] = useState(false);
@@ -53,7 +57,18 @@ export default function VideoProduction() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section with Video */}
+      <PageHead
+        title="Video Production | UnifyOne"
+        description="OneStack Cinematic — professional AI-generated video assets for landing pages, social media, pitch decks, and email campaigns. Ultra-realistic production quality."
+        canonical={VP_CANONICAL}
+        jsonLd={buildWebPageJsonLd({
+          canonical: VP_CANONICAL,
+          name: "Video Production | UnifyOne",
+          description:
+            "OneStack Cinematic — professional AI-generated video assets for landing pages, social media, pitch decks, and email campaigns.",
+          breadcrumbs: [{ name: "Video Production", item: VP_CANONICAL }],
+        })}
+      />
       <section className="relative bg-gradient-to-b from-card to-background py-16">
         <div className="container max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">

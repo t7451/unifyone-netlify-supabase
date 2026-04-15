@@ -1,6 +1,69 @@
 import { Link } from "wouter";
 import { TIERS } from "@/content/pricing";
 import { getLoginUrl } from "@/const";
+import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
+import { SITE_URL } from "@/lib/siteConfig";
+
+const CANONICAL = `${SITE_URL}/pricing`;
+const PRICING_JSON_LD = [
+  ...buildWebPageJsonLd({
+    canonical: CANONICAL,
+    name: "Pricing | UnifyOne",
+    description:
+      "Three plans for every stage — Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). All plans include multi-tenant commerce infrastructure.",
+    breadcrumbs: [{ name: "Pricing", item: CANONICAL }],
+  }),
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "UnifyOne Pricing Plans",
+    url: CANONICAL,
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        item: {
+          "@type": "Offer",
+          name: "Acolyte",
+          description:
+            "Free forever. 1 store, 50 products, 100 orders/month, 2 team members. Stripe + PayPal rails.",
+          price: "0",
+          priceCurrency: "USD",
+          availability: "https://schema.org/InStock",
+          url: CANONICAL,
+        },
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        item: {
+          "@type": "Offer",
+          name: "Architect",
+          description:
+            "$49/month. 5 stores, 500 products, unlimited orders, 10 team members, Manus AI, social suite, referral engine.",
+          price: "49",
+          priceCurrency: "USD",
+          availability: "https://schema.org/InStock",
+          url: CANONICAL,
+        },
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        item: {
+          "@type": "Offer",
+          name: "Cathedral",
+          description:
+            "$149/month. Unlimited stores and products, unlimited team members, white-label, SLA, dedicated support.",
+          price: "149",
+          priceCurrency: "USD",
+          availability: "https://schema.org/InStock",
+          url: CANONICAL,
+        },
+      },
+    ],
+  },
+];
 
 const FAQ = [
   {
@@ -30,7 +93,12 @@ export default function Pricing() {
         minHeight: "100vh",
       }}
     >
-      {/* Header */}
+      <PageHead
+        title="Pricing | UnifyOne"
+        description="Three plans for every stage — Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). All include multi-tenant commerce infrastructure and AI-powered earnings insights."
+        canonical={CANONICAL}
+        jsonLd={PRICING_JSON_LD}
+      />
       <header className="border-b" style={{ borderColor: "#242424" }}>
         <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
           <Link href="/">
