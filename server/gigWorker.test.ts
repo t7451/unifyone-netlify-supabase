@@ -93,6 +93,8 @@ describe("GigWorker router — feature access gates", () => {
   it("unknown feature defaults to starter-accessible (open by default)", () => {
     // Unknown features fall back to "starter" requirement
     expect(hasFeatureAccess("starter", "nonexistent_feature")).toBe(true);
+    expect(hasFeatureAccess("pro", "nonexistent_feature")).toBe(true);
+    expect(hasFeatureAccess("elite", "nonexistent_feature")).toBe(true);
   });
 });
 

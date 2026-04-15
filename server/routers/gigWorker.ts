@@ -162,8 +162,8 @@ export const gigWorkerRouter = router({
 
       const resolvedPriceId =
         input.billingPeriod === "yearly"
-          ? (plan.stripePriceIdYearly ?? undefined)
-          : (plan.stripePriceIdMonthly ?? undefined);
+          ? plan.stripePriceIdYearly
+          : plan.stripePriceIdMonthly;
 
       // Fallback one-time charge if no Stripe price IDs configured yet
       const priceVal =

@@ -122,7 +122,7 @@ function PlanCard({
               </div>
               {billingPeriod === "yearly" && (
                 <p className="text-xs text-emerald-400 mt-1">
-                  Billed ${yearlyTotal.toFixed(2)}/yr · 2 months free
+                  Billed ${yearlyTotal.toFixed(2)}/yr · Save 20%
                 </p>
               )}
             </div>

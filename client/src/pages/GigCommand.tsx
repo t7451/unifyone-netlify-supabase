@@ -325,8 +325,8 @@ export default function GigCommand() {
             <div className="flex items-center gap-2 text-sm text-violet-200">
               <span className="text-violet-400">⚡</span>
               <span>
-                <strong>Gig Starter</strong> — {gigSubscription.aiCreditsRemaining} AI credits remaining this month.
-                Upgrade to <strong>Gig Pro</strong> for route optimizer, tax export &amp; 250 AI credits.
+                <strong>{gigSubscription.plan.name}</strong> — {gigSubscription.aiCreditsRemaining} AI credits remaining this month.
+                Upgrade for route optimizer, tax export &amp; more AI credits.
               </span>
             </div>
             <Link href="/gig-worker-plans">
