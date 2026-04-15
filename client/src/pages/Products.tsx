@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Search, Package, Edit, Trash2, AlertTriangle, Loader2, X, BarChart3 } from "lucide-react";
+import { Plus, Search, Package, Edit, Trash2, AlertTriangle, Loader2, BarChart3 } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",

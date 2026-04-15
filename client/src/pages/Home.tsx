@@ -4,6 +4,7 @@ import { getLoginUrl } from "@/const";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 
+
 const CANONICAL = `${SITE_URL}/`;
 const HOME_JSON_LD = [
   ...buildWebPageJsonLd({
@@ -36,9 +37,6 @@ const HOME_JSON_LD = [
     },
   },
 ];
-
-// ── Brand constants ───────────────────────────────────────────────────────────
-const UNIFY_AI_ENDPOINT = "https://api.1commerce.online/v1";
 
 // ── Animated ticker data ──────────────────────────────────────────────────────
 const TICKER_INSIGHTS = [

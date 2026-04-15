@@ -4,7 +4,7 @@ import { ShoppingBag, ArrowRight, CheckCircle2, Shield, Zap, RefreshCw, ChevronL
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 
 const SCOPES = [
   { label: "Products & Inventory", desc: "Read and write products, variants, inventory levels", icon: "📦" },
