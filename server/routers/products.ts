@@ -162,7 +162,7 @@ export const productsRouter = router({
   bulkUpdateStatus: protectedProcedure
     .input(
       z.object({
-        ids: z.array(z.number()).min(1),
+        ids: z.array(z.number()).min(1).max(500),
         status: z.enum(["active", "draft", "archived"]),
       })
     )
@@ -179,7 +179,7 @@ export const productsRouter = router({
   bulkArchive: protectedProcedure
     .input(
       z.object({
-        ids: z.array(z.number()).min(1),
+        ids: z.array(z.number()).min(1).max(500),
       })
     )
     .mutation(async ({ ctx, input }) => {

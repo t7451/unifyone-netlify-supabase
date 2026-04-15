@@ -313,6 +313,12 @@ export default function Products() {
   const handleCreate = () => {
     if (!form.name || !form.price)
       return toast.error("Name and price are required");
+
+    const parsedCategoryId =
+      form.categoryId && form.categoryId !== "none"
+        ? Number(form.categoryId)
+        : undefined;
+
     createMutation.mutate({
       name: form.name,
       description: form.description || undefined,
@@ -324,7 +330,9 @@ export default function Products() {
       status: form.status,
       initialStock: Number(form.initialStock),
       lowStockThreshold: Number(form.lowStockThreshold),
-      categoryId: form.categoryId ? Number(form.categoryId) : undefined,
+      categoryId: Number.isFinite(parsedCategoryId)
+        ? parsedCategoryId
+        : undefined,
       imageUrl: form.imageUrl || undefined,
     });
   };
@@ -350,6 +358,12 @@ export default function Products() {
   const handleUpdate = () => {
     if (!editForm.name || !editForm.price)
       return toast.error("Name and price are required");
+
+    const parsedCategoryId =
+      editForm.categoryId && editForm.categoryId !== "none"
+        ? Number(editForm.categoryId)
+        : undefined;
+
     updateMutation.mutate({
       id: editProduct.id,
       name: editForm.name,
@@ -360,7 +374,9 @@ export default function Products() {
         : undefined,
       sku: editForm.sku || undefined,
       status: editForm.status,
-      categoryId: editForm.categoryId ? Number(editForm.categoryId) : undefined,
+      categoryId: Number.isFinite(parsedCategoryId)
+        ? parsedCategoryId
+        : undefined,
       imageUrl: editForm.imageUrl || undefined,
     });
   };
