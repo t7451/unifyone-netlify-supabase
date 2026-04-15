@@ -13,7 +13,9 @@ import {
   jsonb,
   uniqueIndex,
   index,
+  check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // ── PostgreSQL Enums ─────────────────────────────────────────────────────────
 export const roleEnum = pgEnum("role", ["user", "admin"]);
@@ -164,29 +166,48 @@ export const categories = pgTable("categories", {
 export type Category = typeof categories.$inferSelect;
 
 // ── Products ──────────────────────────────────────────────────────────────────
-export const products = pgTable("products", {
-  id: serial("id").primaryKey(),
-  tenantId: integer("tenantId").notNull(),
-  categoryId: integer("categoryId"),
-  name: varchar("name", { length: 500 }).notNull(),
-  slug: varchar("slug", { length: 500 }).notNull(),
-  description: text("description"),
-  sku: varchar("sku", { length: 100 }),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull().default("0.00"),
-  compareAtPrice: decimal("compareAtPrice", { precision: 10, scale: 2 }),
-  costPrice: decimal("costPrice", { precision: 10, scale: 2 }),
-  imageUrl: text("imageUrl"),
-  images: json("images").$type<string[]>(),
-  tags: json("tags").$type<string[]>(),
-  status: productStatusEnum("status").default("draft").notNull(),
-  trackInventory: boolean("trackInventory").default(true),
-  weight: decimal("weight", { precision: 8, scale: 3 }),
-  shopifyProductId: varchar("shopifyProductId", { length: 100 }),
-  metaTitle: varchar("metaTitle", { length: 255 }),
-  metaDescription: text("metaDescription"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
+export const products = pgTable(
+  "products",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull(),
+    categoryId: integer("categoryId"),
+    name: varchar("name", { length: 500 }).notNull(),
+    slug: varchar("slug", { length: 500 }).notNull(),
+    description: text("description"),
+    sku: varchar("sku", { length: 100 }),
+    price: decimal("price", { precision: 10, scale: 2 }).notNull().default("0.00"),
+    compareAtPrice: decimal("compareAtPrice", { precision: 10, scale: 2 }),
+    costPrice: decimal("costPrice", { precision: 10, scale: 2 }),
+    imageUrl: text("imageUrl"),
+    images: json("images").$type<string[]>(),
+    tags: json("tags").$type<string[]>(),
+    status: productStatusEnum("status").default("draft").notNull(),
+    trackInventory: boolean("trackInventory").default(true),
+    weight: decimal("weight", { precision: 8, scale: 3 }),
+    shopifyProductId: varchar("shopifyProductId", { length: 100 }),
+    metaTitle: varchar("metaTitle", { length: 255 }),
+    metaDescription: text("metaDescription"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    tenantSlugIdx: uniqueIndex("products_tenant_slug_idx").on(
+      table.tenantId,
+      table.slug
+    ),
+    tenantSkuIdx: uniqueIndex("products_tenant_sku_idx").on(
+      table.tenantId,
+      table.sku
+    ),
+    tenantStatusCreatedIdx: index("products_tenant_status_created_idx").on(
+      table.tenantId,
+      table.status,
+      table.createdAt
+    ),
+    priceNonNegative: check("products_price_non_negative", sql`${table.price} >= 0`),
+  })
+);
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = typeof products.$inferInsert;
@@ -271,7 +292,22 @@ export const orders = pgTable("orders", {
   metadata: json("metadata").$type<Record<string, unknown>>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
+}, table => ({
+  tenantOrderNumberIdx: uniqueIndex("orders_tenant_order_number_idx").on(
+    table.tenantId,
+    table.orderNumber
+  ),
+  tenantStatusCreatedIdx: index("orders_tenant_status_created_idx").on(
+    table.tenantId,
+    table.status,
+    table.createdAt
+  ),
+  tenantPaymentStatusIdx: index("orders_tenant_payment_status_idx").on(
+    table.tenantId,
+    table.paymentStatus
+  ),
+  totalNonNegative: check("orders_total_non_negative", sql`${table.total} >= 0`),
+}));
 
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
@@ -288,7 +324,18 @@ export const orderItems = pgTable("order_items", {
   unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).notNull(),
   totalPrice: decimal("totalPrice", { precision: 12, scale: 2 }).notNull(),
   imageUrl: text("imageUrl"),
-});
+}, table => ({
+  orderItemsOrderIdx: index("order_items_order_idx").on(table.orderId),
+  orderItemsTenantOrderIdx: index("order_items_tenant_order_idx").on(
+    table.tenantId,
+    table.orderId
+  ),
+  quantityPositive: check("order_items_quantity_positive", sql`${table.quantity} > 0`),
+  unitPriceNonNegative: check(
+    "order_items_unit_price_non_negative",
+    sql`${table.unitPrice} >= 0`
+  ),
+}));
 
 export type OrderItem = typeof orderItems.$inferSelect;
 
@@ -301,7 +348,14 @@ export const cartItems = pgTable("cart_items", {
   quantity: integer("quantity").notNull().default(1),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
+}, table => ({
+  tenantSessionProductIdx: uniqueIndex("cart_items_tenant_session_product_idx").on(
+    table.tenantId,
+    table.sessionId,
+    table.productId
+  ),
+  quantityPositive: check("cart_items_quantity_positive", sql`${table.quantity} > 0`),
+}));
 
 // ── Analytics Events ──────────────────────────────────────────────────────────
 export const analyticsEvents = pgTable("analytics_events", {
