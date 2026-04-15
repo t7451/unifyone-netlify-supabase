@@ -112,7 +112,18 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
-    const cookies = this.parseCookies(req.headers.cookie);
+    // Support both Express (IncomingHttpHeaders — plain object where
+    // req.headers.cookie is a string) and the Fetch API (Headers object where
+    // property access doesn't work; use .get('cookie') instead).
+    const rawHeaders = req.headers as unknown as {
+      cookie?: string;
+      get?: (name: string) => string | null;
+    };
+    const cookieHeader: string | undefined =
+      typeof rawHeaders.get === "function"
+        ? (rawHeaders.get("cookie") ?? undefined)
+        : rawHeaders.cookie;
+    const cookies = this.parseCookies(cookieHeader);
     const sessionCookie = cookies.get(COOKIE_NAME);
     const session = await this.verifySession(sessionCookie);
 
