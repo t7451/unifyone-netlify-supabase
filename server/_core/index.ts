@@ -88,7 +88,8 @@ async function startServer() {
   registerShopifyRoutes(app);
   // Register Square payment + webhook routes (webhook needs raw body for signature verification)
   registerSquareRoutes(app);
-  // Configure body parser — 4 MB limit matches typical API payload requirements
+  // 4 MB body limit — sufficient for JSON API payloads. File uploads should
+  // use presigned S3 URLs (storagePut) and never pass file bytes through this server.
   app.use(express.json({ limit: "4mb" }));
   app.use(express.urlencoded({ limit: "4mb", extended: true }));
   // Structured request/response logging (attaches X-Request-Id header)
