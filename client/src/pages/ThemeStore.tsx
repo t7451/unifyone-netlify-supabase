@@ -333,7 +333,6 @@ export default function ThemeStore() {
   const [selectedTheme, setSelectedTheme] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const { data: _categories = [] } = trpc.themes.listCategories.useQuery();
   const { data: themes = [], isLoading } = trpc.themes.list.useQuery({
     search: search || undefined,
     priceType: priceFilter !== "all" ? (priceFilter as any) : undefined,
