@@ -48,7 +48,7 @@ export default function Contact() {
         message,
         company,
       });
-      if (res.ok) {
+      if (res.success) {
         setStatus("sent");
         setFeedback("Your message was received. We'll respond within one business day.");
         setName("");

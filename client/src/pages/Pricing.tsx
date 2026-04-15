@@ -40,7 +40,7 @@ const JSON_LD = [
           "@type": "Offer",
           name: "Starter",
           description:
-            "Free forever. 2 gig platform connections, shift history, mileage tracking, 50 Kai queries/month.",
+            "Free forever. 2 gig platform connections, full shift earnings history, auto mileage deduction tracking, 50 Kai queries/month, Money Manager dashboard, MoneyGenerator gig tools.",
           price: "0",
           priceCurrency: "USD",
           availability: "https://schema.org/InStock",
@@ -54,7 +54,7 @@ const JSON_LD = [
           "@type": "Offer",
           name: "Pro",
           description:
-            "$19/month. Unlimited gig connections, zone optimization, 500 Kai queries, UnifyAI API, 1 commerce storefront.",
+            "$19/month. Unlimited gig platform connections, advanced zone/time optimization, quarterly estimates + 1099 prep, 500 Kai queries/month, UnifyAI API with 1,000 credits, full MCP config dashboard, 1 commerce storefront, developer API key management, priority support.",
           price: "19",
           priceCurrency: "USD",
           availability: "https://schema.org/InStock",
@@ -68,7 +68,7 @@ const JSON_LD = [
           "@type": "Offer",
           name: "Scale",
           description:
-            "$99/month. Multi-tenant management, white-label, UnifyAI 10,000 credits, API reselling, Slack SLA.",
+            "$99/month. Unlimited multi-tenant management, affiliate storefront network, UnifyAI API with 10,000 credits/month, API reselling + white-label, custom MCP routing rules, role-based team access + audit logs, Shopify sync, webhook configs, Slack support + 4hr SLA, volume API discounts.",
           price: "99",
           priceCurrency: "USD",
           availability: "https://schema.org/InStock",
