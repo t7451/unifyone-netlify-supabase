@@ -15,7 +15,9 @@ import { protectedProcedure, router } from "../_core/trpc";
 import {
   createApiKey,
   getApiKeysByTenant,
-  getWebhookEvents,
+  getFilteredWebhookEvents,
+  getWebhookStats,
+  retryWebhookEvent,
   revokeApiKey,
   getTenantById,
 } from "../db";
@@ -106,13 +108,39 @@ export const developerRouter = router({
 
   // ── Webhook Logs ────────────────────────────────────────────────────────────
 
-  /** Retrieve recent webhook events for the current tenant. */
+  /** Retrieve recent webhook events for the current tenant, with optional filters. */
   webhookLogs: protectedProcedure
-    .input(z.object({ limit: z.number().min(1).max(200).default(50) }))
+    .input(
+      z.object({
+        limit: z.number().min(1).max(200).default(50),
+        source: z.enum(["stripe", "shopify", "n8n", "internal"]).optional(),
+        status: z.enum(["pending", "processed", "failed", "skipped"]).optional(),
+        search: z.string().max(100).optional(),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenantId(ctx.user.tenantId);
-      const events = await getWebhookEvents(tenantId, input.limit);
-      return events;
+      return getFilteredWebhookEvents(tenantId, {
+        limit: input.limit,
+        source: input.source,
+        status: input.status,
+        search: input.search,
+      });
+    }),
+
+  /** Aggregated webhook event counts by status for the current tenant. */
+  webhookStats: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = requireTenantId(ctx.user.tenantId);
+    return getWebhookStats(tenantId);
+  }),
+
+  /** Mark a failed webhook event as pending so it is retried on next processing run. */
+  retryWebhook: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = requireTenantId(ctx.user.tenantId);
+      await retryWebhookEvent(input.id, tenantId);
+      return { success: true };
     }),
 
   // ── Platform Health ─────────────────────────────────────────────────────────
@@ -222,8 +250,60 @@ export const developerRouter = router({
             { name: "developer.listApiKeys", type: "query", description: "List tenant API keys" },
             { name: "developer.generateApiKey", type: "mutation", description: "Generate a new API key" },
             { name: "developer.revokeApiKey", type: "mutation", description: "Revoke an API key" },
-            { name: "developer.webhookLogs", type: "query", description: "Recent webhook events" },
+            { name: "developer.webhookLogs", type: "query", description: "Recent webhook events (filterable)" },
+            { name: "developer.webhookStats", type: "query", description: "Webhook event counts by status" },
+            { name: "developer.retryWebhook", type: "mutation", description: "Re-queue a failed webhook event" },
             { name: "developer.health", type: "query", description: "Platform health check" },
+            { name: "developer.codeSnippets", type: "query", description: "Ready-to-use integration snippets" },
+            { name: "developer.endpointReference", type: "query", description: "tRPC procedure reference" },
+          ],
+        },
+        {
+          name: "tenant",
+          description: "Tenant management and configuration",
+          procedures: [
+            { name: "tenant.get", type: "query", description: "Get current tenant profile" },
+            { name: "tenant.update", type: "mutation", description: "Update tenant name, slug, etc." },
+            { name: "tenant.setup", type: "mutation", description: "First-time tenant setup wizard" },
+            { name: "tenant.seedDemo", type: "mutation", description: "Seed demo products and orders" },
+          ],
+        },
+        {
+          name: "subscription",
+          description: "Billing plans and subscription lifecycle",
+          procedures: [
+            { name: "subscription.getPlans", type: "query", description: "List all available plans" },
+            { name: "subscription.getStatus", type: "query", description: "Current subscription status" },
+            { name: "subscription.createCheckout", type: "mutation", description: "Create Stripe checkout session" },
+            { name: "subscription.createPortalSession", type: "mutation", description: "Open Stripe billing portal" },
+          ],
+        },
+        {
+          name: "customers",
+          description: "Customer profiles and order history",
+          procedures: [
+            { name: "customers.list", type: "query", description: "List customers with search/filter" },
+            { name: "customers.get", type: "query", description: "Get a single customer profile" },
+            { name: "customers.update", type: "mutation", description: "Update customer profile" },
+          ],
+        },
+        {
+          name: "team",
+          description: "Team members and role-based access",
+          procedures: [
+            { name: "team.list", type: "query", description: "List team members" },
+            { name: "team.invite", type: "mutation", description: "Send a team invite email" },
+            { name: "team.updateRole", type: "mutation", description: "Change a member's role" },
+            { name: "team.remove", type: "mutation", description: "Remove a team member" },
+          ],
+        },
+        {
+          name: "notifications",
+          description: "In-app notification management",
+          procedures: [
+            { name: "notifications.list", type: "query", description: "List notifications for current user" },
+            { name: "notifications.markRead", type: "mutation", description: "Mark notifications as read" },
+            { name: "notifications.markAllRead", type: "mutation", description: "Mark all notifications read" },
           ],
         },
       ],
@@ -381,6 +461,97 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req,
 
   res.json({ received: true });
 });`,
+      },
+      {
+        id: "paypal-order",
+        title: "PayPal Order (Create & Capture)",
+        language: "typescript",
+        description: "Create and capture a PayPal order via the UnifyOne API",
+        code: `// Step 1: Create a PayPal order
+const createRes = await fetch("${baseUrl}/api/paypal/create-order", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  credentials: "include",
+  body: JSON.stringify({ amount: "49.99", currency: "USD" }),
+});
+const { id: orderId } = await createRes.json();
+
+// Step 2: Redirect buyer to PayPal approval URL or use the JS SDK
+// After buyer approves, capture the order:
+const captureRes = await fetch("${baseUrl}/api/paypal/capture-order", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  credentials: "include",
+  body: JSON.stringify({ orderID: orderId }),
+});
+const captureData = await captureRes.json();
+console.log("Capture status:", captureData.status); // "COMPLETED"`,
+      },
+      {
+        id: "analytics-polling",
+        title: "Analytics Polling",
+        language: "typescript",
+        description: "Fetch revenue and order analytics via tRPC",
+        code: `// Fetch a 30-day revenue + order summary
+const summary = await trpc.analytics.summary.query({ days: 30 });
+console.log("Revenue:", summary.revenue);
+console.log("Orders:", summary.orderCount);
+console.log("Avg order value:", summary.avgOrderValue);
+
+// Daily revenue time series for charting
+const daily = await trpc.analytics.revenueByDay.query({ days: 30 });
+// daily = [{ date: "2025-04-01", revenue: 1234.56 }, ...]
+
+// Top-selling products
+const top = await trpc.analytics.topProducts.query({ limit: 5 });
+// top = [{ productId, name, totalSold, revenue }, ...]`,
+      },
+      {
+        id: "customer-management",
+        title: "Customer Management",
+        language: "typescript",
+        description: "List and update customer profiles via tRPC",
+        code: `// List customers (paginated, searchable)
+const customers = await trpc.customers.list.query({
+  limit: 20,
+  search: "john",
+});
+
+// Get a single customer with order history
+const customer = await trpc.customers.get.query({ id: 42 });
+console.log(customer.email, customer.orderCount);
+
+// Update a customer profile
+await trpc.customers.update.mutate({
+  id: 42,
+  firstName: "John",
+  lastName: "Smith",
+  phone: "+15555550100",
+});`,
+      },
+      {
+        id: "webhook-stats",
+        title: "Webhook Stats & Retry",
+        language: "typescript",
+        description: "Fetch webhook event statistics and retry failed events",
+        code: `// Get aggregated webhook stats
+const stats = await trpc.developer.webhookStats.query();
+console.log("Total events:", stats.total);
+console.log("Failed events:", stats.failed);
+console.log("Processed:", stats.processed);
+
+// Fetch filtered webhook logs
+const failedEvents = await trpc.developer.webhookLogs.query({
+  limit: 50,
+  status: "failed",
+  source: "stripe",
+});
+
+// Retry a specific failed event
+for (const evt of failedEvents) {
+  await trpc.developer.retryWebhook.mutate({ id: evt.id });
+  console.log("Queued for retry:", evt.eventType);
+}`,
       },
     ];
   }),

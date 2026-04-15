@@ -47,9 +47,7 @@ import {
   Trash2,
   RefreshCw,
   ExternalLink,
-  CheckCircle2,
   AlertTriangle,
-  XCircle,
   ChevronDown,
   ChevronRight,
   BookOpen,
@@ -60,6 +58,9 @@ import {
   ShoppingBag,
   Link2,
   Loader2,
+  RotateCcw,
+  Search,
+  Filter,
 } from "lucide-react";
 import MCPStatusWidget from "@/components/MCPStatusWidget";
 import { cn } from "@/lib/utils";
@@ -120,6 +121,7 @@ function OverviewTab() {
   const keys = trpc.developer.listApiKeys.useQuery();
   const mcpHealth = trpc.mcp.health.useQuery(undefined, { refetchInterval: 60_000, retry: 1 });
   const mcpHealthData = mcpHealth.data as (Record<string, unknown> & { tools?: number }) | undefined;
+  const stats = trpc.developer.webhookStats.useQuery(undefined, { refetchInterval: 60_000 });
 
   const checks = health.data?.checks ?? {};
   const allOk = Object.values(checks).every(Boolean);
@@ -241,6 +243,41 @@ function OverviewTab() {
           </CardContent>
         </Card>
       )}
+
+      {/* Webhook Stats */}
+      <Card className="bg-card border-border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <Webhook className="w-4 h-4 text-[#00D9FF]" />
+            Webhook Event Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {stats.isLoading ? (
+            <div className="flex items-center gap-2 text-gray-500 text-sm">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Loading stats…
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: "Total", value: stats.data?.total ?? 0, color: "text-gray-300" },
+                { label: "Processed", value: stats.data?.processed ?? 0, color: "text-emerald-400" },
+                { label: "Pending", value: stats.data?.pending ?? 0, color: "text-amber-400" },
+                { label: "Failed", value: stats.data?.failed ?? 0, color: "text-red-400" },
+              ].map(s => (
+                <div
+                  key={s.label}
+                  className="flex flex-col items-center justify-center px-3 py-3 rounded-lg bg-white/5 border border-white/5"
+                >
+                  <span className={cn("text-2xl font-bold", s.color)}>{s.value}</span>
+                  <span className="text-xs text-gray-500 mt-0.5">{s.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Quick Links */}
       <Card className="bg-card border-border">
@@ -616,11 +653,30 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function WebhooksTab() {
+  const utils = trpc.useUtils();
   const [limit, setLimit] = useState(50);
+  const [filterSource, setFilterSource] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
 
-  const logs = trpc.developer.webhookLogs.useQuery({ limit }, {
-    refetchInterval: 10_000,
+  const logs = trpc.developer.webhookLogs.useQuery(
+    {
+      limit,
+      source: filterSource !== "all" ? (filterSource as "stripe" | "shopify" | "n8n" | "internal") : undefined,
+      status: filterStatus !== "all" ? (filterStatus as "pending" | "processed" | "failed" | "skipped") : undefined,
+      search: search.trim() || undefined,
+    },
+    { refetchInterval: 10_000 }
+  );
+
+  const retry = trpc.developer.retryWebhook.useMutation({
+    onSuccess: () => {
+      toast.success("Queued for retry");
+      utils.developer.webhookLogs.invalidate();
+      utils.developer.webhookStats.invalidate();
+    },
+    onError: e => toast.error(e.message),
   });
 
   return (
@@ -659,6 +715,52 @@ function WebhooksTab() {
               </button>
             </div>
           </div>
+
+          {/* Filter row */}
+          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-white/5">
+            <Filter className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+            <Select value={filterSource} onValueChange={setFilterSource}>
+              <SelectTrigger className="bg-white/5 border-white/10 text-white w-32 h-7 text-xs focus:border-[#00D9FF]/50">
+                <SelectValue placeholder="Source" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All sources</SelectItem>
+                <SelectItem value="stripe">Stripe</SelectItem>
+                <SelectItem value="shopify">Shopify</SelectItem>
+                <SelectItem value="n8n">n8n</SelectItem>
+                <SelectItem value="internal">Internal</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="bg-white/5 border-white/10 text-white w-32 h-7 text-xs focus:border-[#00D9FF]/50">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="processed">Processed</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+                <SelectItem value="skipped">Skipped</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="relative flex-1 min-w-[160px]">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search event type…"
+                className="pl-6 h-7 text-xs bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+              />
+            </div>
+            {(filterSource !== "all" || filterStatus !== "all" || search) && (
+              <button
+                onClick={() => { setFilterSource("all"); setFilterStatus("all"); setSearch(""); }}
+                className="text-xs text-gray-500 hover:text-white transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {logs.isLoading ? (
@@ -669,7 +771,7 @@ function WebhooksTab() {
           ) : !logs.data?.length ? (
             <div className="text-center py-10">
               <Webhook className="w-8 h-8 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">No webhook events yet.</p>
+              <p className="text-gray-500 text-sm">No webhook events match your filters.</p>
               <p className="text-gray-600 text-xs mt-1">
                 Configure Shopify, Stripe, or n8n to see events here.
               </p>
@@ -712,12 +814,22 @@ function WebhooksTab() {
                       )}
                     </button>
                     {expanded === evt.id && (
-                      <div className="px-4 pb-3">
+                      <div className="px-4 pb-3 space-y-2">
                         <pre className="bg-black/40 border border-white/5 rounded-lg p-3 text-xs font-mono text-gray-300 overflow-auto max-h-48">
                           {JSON.stringify(evt.payload, null, 2)}
                         </pre>
                         {evt.error && (
-                          <p className="text-xs text-red-400 mt-2 font-mono">{evt.error}</p>
+                          <p className="text-xs text-red-400 font-mono">{evt.error}</p>
+                        )}
+                        {evt.status === "failed" && (
+                          <button
+                            disabled={retry.isPending}
+                            onClick={() => retry.mutate({ id: evt.id })}
+                            className="flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 transition-colors disabled:opacity-50"
+                          >
+                            <RotateCcw className={cn("w-3 h-3", retry.isPending && "animate-spin")} />
+                            Retry this event
+                          </button>
                         )}
                       </div>
                     )}
