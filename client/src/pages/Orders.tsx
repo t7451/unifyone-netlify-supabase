@@ -154,15 +154,25 @@ export default function Orders() {
     const rows = orders.data ?? [];
     if (!rows.length) return toast.error("No orders to export");
     const headers = ["Order #", "Customer", "Email", "Status", "Payment", "Total", "Created"];
+    type OrderRow = {
+      orderNumber?: string | number;
+      id: number;
+      customerName?: string;
+      customerEmail?: string;
+      status: string;
+      paymentStatus?: string;
+      totalAmount?: number | string;
+      createdAt: string;
+    };
     const csvRows = [
       headers.join(","),
-      ...rows.map((o: any) =>
+      ...(rows as OrderRow[]).map((o) =>
         [
           o.orderNumber ?? o.id,
           JSON.stringify(o.customerName ?? ""),
           JSON.stringify(o.customerEmail ?? ""),
           o.status,
-          o.paymentStatus,
+          o.paymentStatus ?? "",
           `$${Number(o.totalAmount ?? 0).toFixed(2)}`,
           new Date(o.createdAt).toLocaleDateString(),
         ].join(",")

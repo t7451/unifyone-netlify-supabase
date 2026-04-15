@@ -36,6 +36,7 @@ type ProductForm = typeof EMPTY_FORM;
 
 function ProductFormFields({ form, setForm }: { form: ProductForm; setForm: (f: ProductForm) => void }) {
   const categories = trpc.products.categories.useQuery();
+  const [imgBroken, setImgBroken] = useState(false);
   return (
     <div className="space-y-4">
       <div>
@@ -179,17 +180,17 @@ function ProductFormFields({ form, setForm }: { form: ProductForm; setForm: (f: 
         <Label className="text-gray-300 text-sm">Image URL</Label>
         <Input
           value={form.imageUrl}
-          onChange={e => setForm({ ...form, imageUrl: e.target.value })}
+          onChange={e => { setForm({ ...form, imageUrl: e.target.value }); setImgBroken(false); }}
           placeholder="https://example.com/image.jpg"
           className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
         />
-        {form.imageUrl && (
+        {form.imageUrl && !imgBroken && (
           <div className="mt-2">
             <img
               src={form.imageUrl}
               alt="Product preview"
               className="w-24 h-24 object-cover rounded-lg border border-white/10"
-              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+              onError={() => setImgBroken(true)}
             />
           </div>
         )}
