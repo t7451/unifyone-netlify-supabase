@@ -34,8 +34,9 @@ export function useAuth(options?: UseAuthOptions) {
       await fetch("/api/auth/logout", {
         method: "GET",
         credentials: "include",
-      }).catch(() => {
+      }).catch((err: unknown) => {
         // Best-effort — don't fail logout if the REST call errors
+        console.warn("[logout] REST cookie-clear request failed:", err);
       });
       // Also call the tRPC mutation so Express-hosted envs clear the cookie
       // through the Express res object (falls back gracefully on Netlify).
