@@ -29,7 +29,17 @@ export function useAuth(options?: UseAuthOptions) {
     try {
       // Sign out of Supabase (clears client-side tokens)
       await supabase.auth.signOut();
-      // Clear the server-side session cookie
+      // Clear the server-side session cookie via the REST endpoint.
+      // This works in both Express and Netlify fetch environments.
+      await fetch("/api/auth/logout", {
+        method: "GET",
+        credentials: "include",
+      }).catch((err: unknown) => {
+        // Best-effort — don't fail logout if the REST call errors
+        console.warn("[logout] REST cookie-clear request failed:", err);
+      });
+      // Also call the tRPC mutation so Express-hosted envs clear the cookie
+      // through the Express res object (falls back gracefully on Netlify).
       await logoutMutation.mutateAsync();
     } catch (error: unknown) {
       if (
