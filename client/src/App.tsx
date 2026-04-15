@@ -65,6 +65,7 @@ import VideoProduction from "./pages/VideoProduction";
 import AdCopyHub from "./pages/AdCopyHub";
 import GovernanceDashboard from "./pages/GovernanceDashboard";
 import { DocsChat } from "./pages/DocsChat";
+import DeveloperHub from "./pages/DeveloperHub";
 import Pricing from "./pages/Pricing";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -277,6 +278,10 @@ function Router() {
       <Route
         path="/ai-assistant"
         component={() => <DashboardRoute component={AIAssistant} />}
+      />
+      <Route
+        path="/developer"
+        component={() => <DashboardRoute component={DeveloperHub} />}
       />
       <Route path="/sovereign" component={Sovereign} />
       <Route path="/privacy" component={PrivacyPolicy} />
