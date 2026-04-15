@@ -81,7 +81,7 @@ export const mcpRouter = router({
     .input(
       z.object({
         tool: z.string().min(1).max(64),
-        args: z.record(z.unknown()).default({}),
+        args: z.record(z.string(), z.unknown()).default({}),
       })
     )
     .mutation(async ({ input, ctx }) => {

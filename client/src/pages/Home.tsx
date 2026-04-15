@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
@@ -82,6 +83,102 @@ const PILLARS = [
     color: "#FCD34D",
   },
 ];
+
+function EmailCapture() {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    // Store email locally; in production this would POST to a leads endpoint
+    setSubmitted(true);
+  };
+
+  return (
+    <section
+      className="cathedral-bg"
+      style={{
+        padding: "5rem 0",
+        borderTop: "1px solid #242424",
+        borderBottom: "1px solid #242424",
+      }}
+    >
+      <div className="max-w-xl mx-auto px-6 sm:px-8 text-center">
+        <span className="inscription" style={{ color: "#D4A843" }}>
+          FREE RESOURCE
+        </span>
+        <h2
+          className="font-cinzel text-2xl sm:text-3xl font-black mt-4 mb-3"
+          style={{ color: "#F0E8D0" }}
+        >
+          Get the Cathedral Blueprint — free.
+        </h2>
+        <p
+          className="font-crimson text-lg mb-8"
+          style={{ color: "#6A6A6A", fontStyle: "italic" }}
+        >
+          The architecture guide behind UnifyOne: multi-tenant design, AI
+          routing, and gig income intelligence — all in one downloadable PDF.
+        </p>
+        {submitted ? (
+          <div
+            className="rounded-xl p-6 text-center"
+            style={{ border: "1px solid rgba(212,168,67,0.3)", backgroundColor: "rgba(212,168,67,0.05)" }}
+          >
+            <p className="font-cinzel text-sm" style={{ color: "#D4A843", letterSpacing: "0.1em" }}>
+              ✦ BLUEPRINT SENT
+            </p>
+            <p className="font-crimson mt-2" style={{ color: "#6A6A6A" }}>
+              Check your inbox — the PDF is on its way.
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <div className="flex-1">
+              <input
+                type="email"
+                value={email}
+                onChange={e => { setEmail(e.target.value); setError(""); }}
+                placeholder="your@email.com"
+                aria-label="Email address"
+                className="w-full px-4 py-3 rounded-lg text-sm"
+                style={{
+                  backgroundColor: "#0A0A0A",
+                  border: error ? "1px solid #EF4444" : "1px solid #242424",
+                  color: "#F0E8D0",
+                  outline: "none",
+                }}
+                required
+              />
+              {error && (
+                <p className="text-left text-xs mt-1" style={{ color: "#EF4444" }}>{error}</p>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="btn-illuminate shrink-0"
+              style={{ whiteSpace: "nowrap" }}
+            >
+              Send My Blueprint
+            </button>
+          </form>
+        )}
+        <p className="font-crimson text-xs mt-4" style={{ color: "#3A3A3A" }}>
+          No spam. Unsubscribe anytime. We respect your privacy.{" "}
+          <Link href="/privacy">
+            <span className="underline cursor-pointer" style={{ color: "#4A4A4A" }}>Privacy Policy</span>
+          </Link>
+        </p>
+      </div>
+    </section>
+  );
+}
 
 export default function Home() {
   const heroRef = useScrollReveal();
@@ -196,6 +293,42 @@ export default function Home() {
               </p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── TRUST BADGES ─────────────────────────────────────────────────── */}
+      <section
+        style={{
+          borderBottom: "1px solid #242424",
+          padding: "2.5rem 0",
+          backgroundColor: "#030303",
+        }}
+      >
+        <div className="max-w-5xl mx-auto px-6 sm:px-8">
+          <p
+            className="text-center font-crimson text-sm mb-6"
+            style={{ color: "#3A3A3A", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "Cinzel, serif", fontSize: "0.65rem" }}
+          >
+            Payments &amp; Integrations Powered By
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+            {[
+              { name: "Stripe", color: "#6772E5" },
+              { name: "PayPal", color: "#003087" },
+              { name: "Square", color: "#3E4348" },
+              { name: "Shopify", color: "#96BF48" },
+              { name: "Anthropic", color: "#D4A843" },
+              { name: "Supabase", color: "#3ECF8E" },
+            ].map(brand => (
+              <span
+                key={brand.name}
+                className="font-cinzel text-sm tracking-widest font-bold"
+                style={{ color: brand.color, opacity: 0.55, letterSpacing: "0.15em" }}
+              >
+                {brand.name.toUpperCase()}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -531,6 +664,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── EMAIL CAPTURE ────────────────────────────────────────────────── */}
+      <EmailCapture />
 
       {/* ── FINAL CTA ────────────────────────────────────────────────────── */}
       <section

@@ -39,6 +39,13 @@ import {
   Bell,
   Send,
   Users,
+  Plus,
+  Zap,
+  Play,
+  Trash2,
+  Link2,
+  BarChart3,
+  RefreshCw,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────

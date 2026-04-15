@@ -242,7 +242,6 @@ async function resolveOneFriendChallenge(
   for (const participantUser of participantUsers) {
     nameMap.set(participantUser.id, participantUser.name ?? "Your opponent");
   }
-  if (u2) nameMap.set(u2.id, u2.name ?? "Your opponent");
 
   const challengerName = nameMap.get(fc.challengerId) ?? "Your opponent";
   const challengeeName = nameMap.get(fc.challengeeId) ?? "Your opponent";
