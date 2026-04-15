@@ -45,6 +45,7 @@ import MoneyManager from "./pages/MoneyManager";
 import Achievements from "./pages/Achievements";
 import Friends from "./pages/Friends";
 import GigCommand from "./pages/GigCommand";
+import GigWorkerPlans from "./pages/GigWorkerPlans";
 import MobileAutomation from "./pages/MobileAutomation";
 import AIAssistant from "./pages/AIAssistant";
 import ShopifyInstall from "./pages/ShopifyInstall";
@@ -269,6 +270,10 @@ function Router() {
       <Route
         path="/gig-command"
         component={() => <DashboardRoute component={GigCommand} />}
+      />
+      <Route
+        path="/gig-worker-plans"
+        component={() => <DashboardRoute component={GigWorkerPlans} />}
       />
       <Route
         path="/mobile-automation"

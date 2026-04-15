@@ -34,6 +34,7 @@ import { claudeGovernanceRouter } from "./routers/claudeGovernance";
 import { contactRouter } from "./routers/contact";
 import { mcpRouter } from "./routers/mcp";
 import { userRouter } from "./routers/user";
+import { gigWorkerRouter } from "./routers/gigWorker";
 
 export const appRouter = router({
   system: systemRouter,
@@ -79,6 +80,7 @@ export const appRouter = router({
   claudeGovernance: claudeGovernanceRouter,
   contact: contactRouter,
   user: userRouter,
+  gigWorker: gigWorkerRouter,
 });
 
 export type AppRouter = typeof appRouter;
