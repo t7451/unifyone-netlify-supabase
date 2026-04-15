@@ -189,8 +189,17 @@ export default function GeneralSettings() {
                   <Image className="w-4 h-4 text-gray-500" />
                   {(() => {
                     const rawSrc = logoUrl || tenant?.logoUrl;
-                    const safeSrc =
-                      rawSrc && /^https?:\/\//i.test(rawSrc) ? rawSrc : undefined;
+                    // Use URL constructor to reject malformed or non-http(s) URLs
+                    let safeSrc: string | undefined;
+                    try {
+                      const parsed = new URL(rawSrc ?? "");
+                      safeSrc =
+                        parsed.protocol === "https:" || parsed.protocol === "http:"
+                          ? parsed.href
+                          : undefined;
+                    } catch {
+                      safeSrc = undefined;
+                    }
                     return safeSrc ? (
                       <img
                         src={safeSrc}
