@@ -25,7 +25,7 @@ export default function Integrations() {
     if (intStatus.data?.shopifyCheckoutUrl && !shopifyCheckoutUrlInput) {
       setShopifyCheckoutUrlInput(intStatus.data.shopifyCheckoutUrl);
     }
-  }, [intStatus.data?.shopifyCheckoutUrl]);
+  }, [intStatus.data?.shopifyCheckoutUrl, shopifyCheckoutUrlInput]);
 
   const shopifyConnect = trpc.integrations.shopifyConnect.useMutation({
     onSuccess: () => { toast.success("Shopify connected"); setShopifyDomain(""); setShopifyToken(""); utils.integrations.status.invalidate(); },
