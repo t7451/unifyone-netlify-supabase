@@ -21,16 +21,49 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, ShoppingBag, ShoppingCart, BarChart3, Zap, Settings, Building2, ChevronDown, CreditCard, UserPlus, Share2, Gift, Target, Workflow, Bell, Store, Package, Key, TrendingUp, Link2, Activity, Plug, DollarSign, Trophy, UserRound, Navigation, Smartphone, Sparkles, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  LogOut,
+  PanelLeft,
+  Users,
+  ShoppingBag,
+  ShoppingCart,
+  BarChart3,
+  Zap,
+  Settings,
+  Building2,
+  ChevronDown,
+  CreditCard,
+  UserPlus,
+  Share2,
+  Gift,
+  Target,
+  Workflow,
+  Bell,
+  Store,
+  Package,
+  Key,
+  TrendingUp,
+  Link2,
+  Activity,
+  Plug,
+  DollarSign,
+  Trophy,
+  UserRound,
+  Navigation,
+  Smartphone,
+  Sparkles,
+  X,
+  Code2,
+} from "lucide-react";
 import { AIChatBox } from "@/components/AIChatBox";
 import type { Message } from "@/components/AIChatBox";
-import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
-import { SubscriptionWidget } from './SubscriptionWidget';
-import { NotificationCenter } from './NotificationCenter';
+import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
+import { SubscriptionWidget } from "./SubscriptionWidget";
+import { NotificationCenter } from "./NotificationCenter";
 import { Button } from "./ui/button";
 
 const menuItems = [
@@ -61,6 +94,7 @@ const menuItems = [
   { icon: UserRound, label: "Friends & Social", path: "/friends" },
   { icon: Smartphone, label: "Mobile Automation", path: "/mobile-automation" },
   { icon: Sparkles, label: "AI Assistant", path: "/ai-assistant" },
+  { icon: Code2, label: "Developer Hub", path: "/developer" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -84,7 +118,7 @@ export default function DashboardLayout({
   }, [sidebarWidth]);
 
   if (loading) {
-    return <DashboardLayoutSkeleton />
+    return <DashboardLayoutSkeleton />;
   }
 
   if (!user) {
@@ -96,7 +130,8 @@ export default function DashboardLayout({
               Sign in to continue
             </h1>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Access to this dashboard requires authentication. Continue to launch the login flow.
+              Access to this dashboard requires authentication. Continue to
+              launch the login flow.
             </p>
           </div>
           <Button
@@ -146,7 +181,10 @@ function DashboardLayoutContent({
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
   const tenantQuery = trpc.tenant.list.useQuery(undefined, { retry: false });
-  const tenantName = (tenantQuery.data && tenantQuery.data.length > 0 ? tenantQuery.data[0].name : null) ?? "My Store";
+  const tenantName =
+    (tenantQuery.data && tenantQuery.data.length > 0
+      ? tenantQuery.data[0].name
+      : null) ?? "My Store";
 
   useEffect(() => {
     if (isCollapsed) {
@@ -192,7 +230,10 @@ function DashboardLayoutContent({
           className="border-r-0"
           disableTransition={isResizing}
         >
-          <SidebarHeader className="h-16 justify-center" style={{ borderBottom: "1px solid rgba(212,168,67,0.1)" }}>
+          <SidebarHeader
+            className="h-16 justify-center"
+            style={{ borderBottom: "1px solid rgba(212,168,67,0.1)" }}
+          >
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
                 onClick={toggleSidebar}
@@ -205,22 +246,61 @@ function DashboardLayoutContent({
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   {/* Cathedral cross glyph + wordmark */}
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className="w-5 h-5 flex items-center justify-center shrink-0" style={{ border: "1px solid rgba(212,168,67,0.35)" }}>
+                    <div
+                      className="w-5 h-5 flex items-center justify-center shrink-0"
+                      style={{ border: "1px solid rgba(212,168,67,0.35)" }}
+                    >
                       <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
-                        <line x1="4.5" y1="1" x2="4.5" y2="8" stroke="#D4A843" strokeWidth="1"/>
-                        <line x1="1" y1="3.5" x2="8" y2="3.5" stroke="#D4A843" strokeWidth="1"/>
+                        <line
+                          x1="4.5"
+                          y1="1"
+                          x2="4.5"
+                          y2="8"
+                          stroke="#D4A843"
+                          strokeWidth="1"
+                        />
+                        <line
+                          x1="1"
+                          y1="3.5"
+                          x2="8"
+                          y2="3.5"
+                          stroke="#D4A843"
+                          strokeWidth="1"
+                        />
                       </svg>
                     </div>
-                    <span className="font-cinzel text-xs font-700 truncate" style={{ color: "#D4A843", letterSpacing: "0.2em" }}>UNIFYONE</span>
+                    <span
+                      className="font-cinzel text-xs font-700 truncate"
+                      style={{ color: "#D4A843", letterSpacing: "0.2em" }}
+                    >
+                      UNIFYONE
+                    </span>
                   </div>
                   <NotificationCenter />
                 </div>
               ) : null}
               {isCollapsed ? (
-                <div className="w-7 h-7 flex items-center justify-center shrink-0" style={{ border: "1px solid rgba(212,168,67,0.3)" }}>
+                <div
+                  className="w-7 h-7 flex items-center justify-center shrink-0"
+                  style={{ border: "1px solid rgba(212,168,67,0.3)" }}
+                >
                   <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                    <line x1="5.5" y1="1" x2="5.5" y2="10" stroke="#D4A843" strokeWidth="1"/>
-                    <line x1="1" y1="4" x2="10" y2="4" stroke="#D4A843" strokeWidth="1"/>
+                    <line
+                      x1="5.5"
+                      y1="1"
+                      x2="5.5"
+                      y2="10"
+                      stroke="#D4A843"
+                      strokeWidth="1"
+                    />
+                    <line
+                      x1="1"
+                      y1="4"
+                      x2="10"
+                      y2="4"
+                      stroke="#D4A843"
+                      strokeWidth="1"
+                    />
                   </svg>
                 </div>
               ) : null}
@@ -229,17 +309,34 @@ function DashboardLayoutContent({
 
           {!isCollapsed && (
             <div className="px-3 pb-2 pt-2">
-              <button className="w-full flex items-center gap-2 px-2 py-1.5 transition-colors text-left hover:opacity-80" style={{ borderBottom: "1px solid rgba(212,168,67,0.08)" }}>
-                <Building2 className="w-3 h-3 shrink-0" style={{ color: "rgba(212,168,67,0.4)" }} />
-                <span className="font-cinzel text-xs truncate flex-1" style={{ color: "#4A4A4A", letterSpacing: "0.1em" }}>{tenantName}</span>
-                <ChevronDown className="w-3 h-3 shrink-0" style={{ color: "#2A2A2A" }} />
+              <button
+                className="w-full flex items-center gap-2 px-2 py-1.5 transition-colors text-left hover:opacity-80"
+                style={{ borderBottom: "1px solid rgba(212,168,67,0.08)" }}
+              >
+                <Building2
+                  className="w-3 h-3 shrink-0"
+                  style={{ color: "rgba(212,168,67,0.4)" }}
+                />
+                <span
+                  className="font-cinzel text-xs truncate flex-1"
+                  style={{ color: "#4A4A4A", letterSpacing: "0.1em" }}
+                >
+                  {tenantName}
+                </span>
+                <ChevronDown
+                  className="w-3 h-3 shrink-0"
+                  style={{ color: "#2A2A2A" }}
+                />
               </button>
             </div>
           )}
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
               {menuItems.map(item => {
-                const isActive = location === item.path;
+                const isActive =
+                  location === item.path ||
+                  (item.path === "/settings" &&
+                    location.startsWith("/settings/"));
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
@@ -247,16 +344,33 @@ function DashboardLayoutContent({
                       onClick={() => setLocation(item.path)}
                       tooltip={item.label}
                       className="h-9 transition-all font-normal rounded-none"
-                      style={isActive
-                        ? { backgroundColor: "rgba(212,168,67,0.06)", borderLeft: "2px solid #D4A843", borderBottom: "1px solid rgba(212,168,67,0.08)" }
-                        : { borderLeft: "2px solid transparent", borderBottom: "1px solid transparent" }
+                      style={
+                        isActive
+                          ? {
+                              backgroundColor: "rgba(212,168,67,0.06)",
+                              borderLeft: "2px solid #D4A843",
+                              borderBottom: "1px solid rgba(212,168,67,0.08)",
+                            }
+                          : {
+                              borderLeft: "2px solid transparent",
+                              borderBottom: "1px solid transparent",
+                            }
                       }
                     >
                       <item.icon
                         className="h-3.5 w-3.5"
                         style={{ color: isActive ? "#D4A843" : "#3A3A3A" }}
                       />
-                      <span className="font-cinzel" style={{ color: isActive ? "#D4A843" : "#4A4A4A", fontSize: "0.6rem", letterSpacing: "0.12em" }}>{item.label}</span>
+                      <span
+                        className="font-cinzel"
+                        style={{
+                          color: isActive ? "#D4A843" : "#4A4A4A",
+                          fontSize: "0.6rem",
+                          letterSpacing: "0.12em",
+                        }}
+                      >
+                        {item.label}
+                      </span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -313,10 +427,22 @@ function DashboardLayoutContent({
 
       <SidebarInset>
         {isMobile && (
-          <div className="flex h-14 items-center justify-between px-2 sticky top-0 z-40" style={{ borderBottom: "1px solid #1A1A1A", backgroundColor: "rgba(0,0,0,0.97)" }}>
+          <div
+            className="flex h-14 items-center justify-between px-2 sticky top-0 z-40"
+            style={{
+              borderBottom: "1px solid #1A1A1A",
+              backgroundColor: "rgba(0,0,0,0.97)",
+            }}
+          >
             <div className="flex items-center gap-2">
-              <SidebarTrigger className="h-9 w-9" style={{ color: "#4A4A4A" }} />
-              <span className="text-sm font-medium tracking-wide" style={{ color: "#9A9A9A" }}>
+              <SidebarTrigger
+                className="h-9 w-9"
+                style={{ color: "#4A4A4A" }}
+              />
+              <span
+                className="text-sm font-medium tracking-wide"
+                style={{ color: "#9A9A9A" }}
+              >
                 {activeMenuItem?.label ?? "Menu"}
               </span>
             </div>
@@ -350,15 +476,21 @@ function FloatingAIWidget() {
   );
 
   const chatMutation = trpc.manusAI.chat.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       setConversationId(data.conversationId);
-      setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      setMessages(prev => [
+        ...prev,
+        { role: "assistant", content: data.reply },
+      ]);
       if (!open) setUnread(n => n + 1);
     },
     onError: () => {
       setMessages(prev => [
         ...prev,
-        { role: "assistant", content: "Sorry, I encountered an error. Please try again." },
+        {
+          role: "assistant",
+          content: "Sorry, I encountered an error. Please try again.",
+        },
       ]);
     },
   });
@@ -383,13 +515,33 @@ function FloatingAIWidget() {
       {open && (
         <div
           className="w-80 sm:w-96 flex flex-col overflow-hidden shadow-2xl"
-          style={{ height: "480px", border: "1px solid rgba(201,168,76,0.25)", backgroundColor: "#000" }}
+          style={{
+            height: "480px",
+            border: "1px solid rgba(201,168,76,0.25)",
+            backgroundColor: "#000",
+          }}
         >
           {/* Widget header */}
-          <div className="flex items-center gap-2 px-4 py-3 shrink-0" style={{ borderBottom: "1px solid #1A1A1A", backgroundColor: "#060606" }}>
+          <div
+            className="flex items-center gap-2 px-4 py-3 shrink-0"
+            style={{
+              borderBottom: "1px solid #1A1A1A",
+              backgroundColor: "#060606",
+            }}
+          >
             <Sparkles className="h-4 w-4" style={{ color: "#C9A84C" }} />
-            <span className="font-semibold text-sm flex-1 font-serif-display" style={{ color: "#C9A84C" }}>Manus AI</span>
-            <span className="text-xs capitalize uppercase tracking-widest" style={{ color: "#4A4A4A" }}>{contextLabel}</span>
+            <span
+              className="font-semibold text-sm flex-1 font-serif-display"
+              style={{ color: "#C9A84C" }}
+            >
+              Manus AI
+            </span>
+            <span
+              className="text-xs capitalize uppercase tracking-widest"
+              style={{ color: "#4A4A4A" }}
+            >
+              {contextLabel}
+            </span>
             <button
               onClick={() => setOpen(false)}
               className="ml-2 transition-opacity hover:opacity-100 opacity-50"
@@ -421,18 +573,46 @@ function FloatingAIWidget() {
         style={{ backgroundColor: "#D4A843", border: "1px solid #F0D080" }}
         aria-label="Open AI Assistant"
       >
-        {open
-          ? <X className="h-4 w-4" style={{ color: "#020202" }} />
-          : (
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <line x1="8" y1="1" x2="8" y2="15" stroke="#020202" strokeWidth="1.5"/>
-              <line x1="1" y1="6" x2="15" y2="6" stroke="#020202" strokeWidth="1.5"/>
-              <rect x="0.5" y="0.5" width="15" height="15" stroke="rgba(2,2,2,0.3)" strokeWidth="0.5"/>
-            </svg>
-          )
-        }
+        {open ? (
+          <X className="h-4 w-4" style={{ color: "#020202" }} />
+        ) : (
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <line
+              x1="8"
+              y1="1"
+              x2="8"
+              y2="15"
+              stroke="#020202"
+              strokeWidth="1.5"
+            />
+            <line
+              x1="1"
+              y1="6"
+              x2="15"
+              y2="6"
+              stroke="#020202"
+              strokeWidth="1.5"
+            />
+            <rect
+              x="0.5"
+              y="0.5"
+              width="15"
+              height="15"
+              stroke="rgba(2,2,2,0.3)"
+              strokeWidth="0.5"
+            />
+          </svg>
+        )}
         {!open && unread > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 h-4 w-4 text-xs flex items-center justify-center font-bold font-cinzel" style={{ backgroundColor: "#020202", color: "#D4A843", border: "1px solid #D4A843", fontSize: "0.5rem" }}>
+          <span
+            className="absolute -top-1.5 -right-1.5 h-4 w-4 text-xs flex items-center justify-center font-bold font-cinzel"
+            style={{
+              backgroundColor: "#020202",
+              color: "#D4A843",
+              border: "1px solid #D4A843",
+              fontSize: "0.5rem",
+            }}
+          >
             {unread > 9 ? "9+" : unread}
           </span>
         )}

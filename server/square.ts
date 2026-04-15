@@ -243,3 +243,6 @@ export function registerSquareRoutes(app: Express) {
     }
   );
 }
+
+// Fetch-based route handler stub (for Netlify serverless; not yet implemented)
+export const registerSquareFetchRoutes: null = null;

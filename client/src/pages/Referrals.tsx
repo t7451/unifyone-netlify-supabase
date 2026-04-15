@@ -151,10 +151,10 @@ export default function Referrals() {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
           <Gift className="h-6 w-6 text-violet-400" /> Promote & Earn
         </h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <p className="text-gray-400 text-sm mt-1">
           Share UnifyOne and earn credits redeemable against your subscription
         </p>
       </div>

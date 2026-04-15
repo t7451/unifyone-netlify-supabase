@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
+import { SITE_URL } from "@/lib/siteConfig";
+
+const RESOURCES_CANONICAL = `${SITE_URL}/resources`;
 
 interface Resource {
   id: string;
@@ -170,6 +174,18 @@ export default function Resources() {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageHead
+        title="Resources | UnifyOne"
+        description="Operating excellence resources for gig operators and commerce teams — playbooks, templates, analytics guides, and video walkthroughs. Download free."
+        canonical={RESOURCES_CANONICAL}
+        jsonLd={buildWebPageJsonLd({
+          canonical: RESOURCES_CANONICAL,
+          name: "Resources | UnifyOne",
+          description:
+            "Operating excellence resources for gig operators and commerce teams — playbooks, templates, analytics guides, and video walkthroughs. Download free.",
+          breadcrumbs: [{ name: "Resources", item: RESOURCES_CANONICAL }],
+        })}
+      />
       {/* Hero Section */}
       <section className="border-b border-border bg-card py-12">
         <div className="container max-w-6xl mx-auto px-4">

@@ -19,7 +19,6 @@ import {
 import {
   Link2,
   Plus,
-  DollarSign,
   Zap,
   Pencil,
   Trash2,
@@ -28,7 +27,7 @@ import {
   Clock,
   TrendingUp,
   CheckCircle2,
-  XCircle,
+  XCircle
 } from "lucide-react";
 
 // ─── Form ─────────────────────────────────────────────────────────────────────

@@ -2,10 +2,18 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createClient } from "@supabase/supabase-js";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
-import { getProductCount, getOrderCount, getCustomerCount, getTenantById, getPlans, getPlanBySlug } from "../db";
+import {
+  getProductCount,
+  getOrderCount,
+  getCustomerCount,
+  getTenantById,
+  getPlans,
+  getPlanBySlug,
+} from "../db";
 
 function getSupabaseAdmin() {
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const url =
+    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
   if (!url || !key) return null;
   return createClient(url, key, { auth: { persistSession: false } });
@@ -43,12 +51,14 @@ export const subscriptionRouter = router({
     let plan = null;
     if (tenant.planId) {
       const allPlans = await getPlans();
-      plan = allPlans.find((p) => p.id === tenant.planId) ?? null;
+      plan = allPlans.find(p => p.id === tenant.planId) ?? null;
     }
 
     let trialDaysLeft: number | null = null;
     if (tenant.status === "trial") {
-      const trialEnd = new Date(tenant.createdAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+      const trialEnd = new Date(
+        tenant.createdAt.getTime() + 14 * 24 * 60 * 60 * 1000
+      );
       const now = new Date();
       const diff = trialEnd.getTime() - now.getTime();
       trialDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
@@ -85,12 +95,14 @@ export const subscriptionRouter = router({
    * Falls back to one-time payment if no Stripe price ID is configured yet.
    */
   createCheckout: protectedProcedure
-    .input(z.object({
-      planSlug: z.string().optional(),
-      priceId: z.string().optional(),
-      billingPeriod: z.enum(["monthly", "yearly"]).default("monthly"),
-      origin: z.string(),
-    }))
+    .input(
+      z.object({
+        planSlug: z.string().optional(),
+        priceId: z.string().optional(),
+        billingPeriod: z.enum(["monthly", "yearly"]).default("monthly"),
+        origin: z.string(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       let resolvedPriceId = input.priceId;
       let fallbackAmount: number | undefined;
@@ -99,16 +111,19 @@ export const subscriptionRouter = router({
       // Resolve price ID from plan slug if not provided directly
       if (!resolvedPriceId && input.planSlug) {
         const plan = await getPlanBySlug(input.planSlug);
-        if (!plan) throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
-        resolvedPriceId = input.billingPeriod === "yearly"
-          ? plan.stripePriceIdYearly ?? undefined
-          : plan.stripePriceIdMonthly ?? undefined;
+        if (!plan)
+          throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
+        resolvedPriceId =
+          input.billingPeriod === "yearly"
+            ? (plan.stripePriceIdYearly ?? undefined)
+            : (plan.stripePriceIdMonthly ?? undefined);
 
         // Fallback: use plan price as one-time amount if no Stripe price ID configured
         if (!resolvedPriceId) {
-          const priceVal = input.billingPeriod === "yearly"
-            ? Number(plan.priceYearly)
-            : Number(plan.priceMonthly);
+          const priceVal =
+            input.billingPeriod === "yearly"
+              ? Number(plan.priceYearly)
+              : Number(plan.priceMonthly);
           fallbackAmount = Math.round(priceVal * 100); // cents
           fallbackDescription = `UnifyOne ${plan.name} Plan (${input.billingPeriod})`;
         }
@@ -121,7 +136,7 @@ export const subscriptionRouter = router({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Cookie": ctx.req.headers.cookie ?? "",
+          Cookie: ctx.req.headers.cookie ?? "",
         },
         body: JSON.stringify({
           priceId: resolvedPriceId,
@@ -137,10 +152,13 @@ export const subscriptionRouter = router({
 
       if (!res.ok) {
         const err = await res.text();
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `Stripe checkout failed: ${err}` });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Stripe checkout failed: ${err}`,
+        });
       }
 
-      const data = await res.json() as { url?: string };
+      const data = (await res.json()) as { url?: string };
       return { url: data.url ?? null };
     }),
 
@@ -151,33 +169,54 @@ export const subscriptionRouter = router({
     .input(z.object({ origin: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.user.tenantId;
-      if (!tenantId) throw new TRPCError({ code: "BAD_REQUEST", message: "No active tenant" });
+      if (!tenantId)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No active tenant",
+        });
       const tenant = await getTenantById(tenantId);
       if (!tenant?.stripeCustomerId) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "No Stripe customer found. Please subscribe first." });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No Stripe customer found. Please subscribe first.",
+        });
       }
       const res = await fetch(`${input.origin}/api/stripe/portal`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Cookie": ctx.req.headers.cookie ?? "",
+          Cookie: ctx.req.headers.cookie ?? "",
         },
-        body: JSON.stringify({ customerId: tenant.stripeCustomerId, origin: input.origin }),
+        body: JSON.stringify({
+          customerId: tenant.stripeCustomerId,
+          origin: input.origin,
+        }),
       });
-      if (!res.ok) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Portal session failed" });
-      const data = await res.json() as { url?: string };
+      if (!res.ok)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Portal session failed",
+        });
+      const data = (await res.json()) as { url?: string };
       return { url: data.url ?? null };
     }),
 
   /**
    * Get credit balance from Supabase credit_balances table.
+   *
+   * Security: `ctx.user.id` is sourced exclusively from the verified JWT session
+   * (set by `protectedProcedure`). It is never taken from user input, so querying
+   * Supabase with it is safe — the caller can only retrieve their own balance.
    */
   getCreditBalance: protectedProcedure.query(async ({ ctx }) => {
     const supabase = getSupabaseAdmin();
     if (!supabase) return { balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
 
-    const userId = ctx.user.id?.toString();
-    if (!userId) return { balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
+    // Guard: id must be a positive integer from the session (not user-supplied)
+    if (!ctx.user.id || !Number.isInteger(ctx.user.id) || ctx.user.id <= 0) {
+      return { balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
+    }
+    const userId = ctx.user.id.toString();
 
     const { data } = await supabase
       .from("credit_balances")
@@ -195,21 +234,27 @@ export const subscriptionRouter = router({
 
   /**
    * Get subscription tier info from Supabase.
+   *
+   * Security: same as getCreditBalance — `ctx.user.id` is from the verified session.
    */
   getSubscriptionTier: protectedProcedure.query(async ({ ctx }) => {
     const supabase = getSupabaseAdmin();
     if (!supabase) return null;
 
-    const userId = ctx.user.id?.toString();
-    if (!userId) return null;
+    if (!ctx.user.id || !Number.isInteger(ctx.user.id) || ctx.user.id <= 0) {
+      return null;
+    }
+    const userId = ctx.user.id.toString();
 
     const { data } = await supabase
       .from("stripe_subscriptions")
-      .select(`
+      .select(
+        `
         id, status, current_period_end,
         stripe_prices!inner(id, unit_amount, interval),
         subscription_tiers!inner(name, monthly_credits, features)
-      `)
+      `
+      )
       .eq("user_id", userId)
       .in("status", ["trialing", "active"])
       .maybeSingle();
@@ -236,6 +281,9 @@ export const subscriptionRouter = router({
   /**
    * Credit usage history — paginated, with source filter.
    * Reads from Supabase credit_usage_events (the full payment-flow log).
+   *
+   * Security: same as getCreditBalance — `ctx.user.id` is from the verified session.
+   * The `userId` is never taken from request input.
    */
   getCreditUsage: protectedProcedure
     .input(
@@ -250,8 +298,10 @@ export const subscriptionRouter = router({
       const supabase = getSupabaseAdmin();
       if (!supabase) return { events: [], total: 0 };
 
-      const userId = ctx.user.id?.toString();
-      if (!userId) return { events: [], total: 0 };
+      if (!ctx.user.id || !Number.isInteger(ctx.user.id) || ctx.user.id <= 0) {
+        return { events: [], total: 0 };
+      }
+      const userId = ctx.user.id.toString();
 
       let query = supabase
         .from("credit_usage_events")

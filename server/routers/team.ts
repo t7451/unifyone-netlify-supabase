@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { teamInvites, users } from "../../drizzle/schema";
 import { eq, and, gt } from "drizzle-orm";
@@ -10,7 +10,11 @@ const INVITE_EXPIRY_DAYS = 7;
 
 async function requireDb() {
   const db = await getDb();
-  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+  if (!db)
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Database unavailable",
+    });
   return db;
 }
 
@@ -18,7 +22,8 @@ export const teamRouter = router({
   // List all team members for the current tenant
   listMembers: protectedProcedure.query(async ({ ctx }) => {
     const tenantId = ctx.user.tenantId;
-    if (!tenantId) throw new TRPCError({ code: "BAD_REQUEST", message: "No active tenant" });
+    if (!tenantId)
+      throw new TRPCError({ code: "BAD_REQUEST", message: "No active tenant" });
     const db = await requireDb();
 
     return db
@@ -37,7 +42,8 @@ export const teamRouter = router({
   // List all invites (all statuses) for the current tenant
   listInvites: protectedProcedure.query(async ({ ctx }) => {
     const tenantId = ctx.user.tenantId;
-    if (!tenantId) throw new TRPCError({ code: "BAD_REQUEST", message: "No active tenant" });
+    if (!tenantId)
+      throw new TRPCError({ code: "BAD_REQUEST", message: "No active tenant" });
     const db = await requireDb();
 
     return db
@@ -48,13 +54,19 @@ export const teamRouter = router({
 
   // Send an invite to an email address
   invite: protectedProcedure
-    .input(z.object({
-      email: z.string().email(),
-      role: z.enum(["user", "admin"]).default("user"),
-    }))
+    .input(
+      z.object({
+        email: z.string().email(),
+        role: z.enum(["user", "admin"]).default("user"),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.user.tenantId;
-      if (!tenantId) throw new TRPCError({ code: "BAD_REQUEST", message: "No active tenant" });
+      if (!tenantId)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No active tenant",
+        });
       const db = await requireDb();
 
       // Check if already a member
@@ -63,22 +75,29 @@ export const teamRouter = router({
         .from(users)
         .where(and(eq(users.email, input.email), eq(users.tenantId, tenantId)));
       if (existing.length > 0) {
-        throw new TRPCError({ code: "CONFLICT", message: "User is already a team member" });
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "User is already a team member",
+        });
       }
 
       // Revoke any existing pending invite for this email
       await db
         .update(teamInvites)
         .set({ status: "revoked" })
-        .where(and(
-          eq(teamInvites.tenantId, tenantId),
-          eq(teamInvites.email, input.email),
-          eq(teamInvites.status, "pending"),
-        ));
+        .where(
+          and(
+            eq(teamInvites.tenantId, tenantId),
+            eq(teamInvites.email, input.email),
+            eq(teamInvites.status, "pending")
+          )
+        );
 
       // Create new invite
       const token = crypto.randomBytes(48).toString("hex");
-      const expiresAt = new Date(Date.now() + INVITE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+      const expiresAt = new Date(
+        Date.now() + INVITE_EXPIRY_DAYS * 24 * 60 * 60 * 1000
+      );
 
       await db.insert(teamInvites).values({
         tenantId,
@@ -98,15 +117,22 @@ export const teamRouter = router({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.user.tenantId;
-      if (!tenantId) throw new TRPCError({ code: "BAD_REQUEST", message: "No active tenant" });
+      if (!tenantId)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No active tenant",
+        });
       const db = await requireDb();
 
       const invite = await db
         .select()
         .from(teamInvites)
-        .where(and(eq(teamInvites.id, input.id), eq(teamInvites.tenantId, tenantId)));
+        .where(
+          and(eq(teamInvites.id, input.id), eq(teamInvites.tenantId, tenantId))
+        );
 
-      if (!invite[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found" });
+      if (!invite[0])
+        throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found" });
 
       await db
         .update(teamInvites)
@@ -117,16 +143,25 @@ export const teamRouter = router({
     }),
 
   // Update a team member's role (admin only)
-  updateMemberRole: protectedProcedure
-    .input(z.object({
-      userId: z.number(),
-      role: z.enum(["user", "admin"]),
-    }))
+  updateMemberRole: adminProcedure
+    .input(
+      z.object({
+        userId: z.number(),
+        role: z.enum(["user", "admin"]),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.user.tenantId;
-      if (!tenantId) throw new TRPCError({ code: "BAD_REQUEST", message: "No active tenant" });
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
-      if (input.userId === ctx.user.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot change your own role" });
+      if (!tenantId)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No active tenant",
+        });
+      if (input.userId === ctx.user.id)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot change your own role",
+        });
       const db = await requireDb();
 
       const member = await db
@@ -134,7 +169,8 @@ export const teamRouter = router({
         .from(users)
         .where(and(eq(users.id, input.userId), eq(users.tenantId, tenantId)));
 
-      if (!member[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Member not found" });
+      if (!member[0])
+        throw new TRPCError({ code: "NOT_FOUND", message: "Member not found" });
 
       await db
         .update(users)
@@ -145,13 +181,20 @@ export const teamRouter = router({
     }),
 
   // Remove a team member (unlink from tenant, admin only)
-  removeMember: protectedProcedure
+  removeMember: adminProcedure
     .input(z.object({ userId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = ctx.user.tenantId;
-      if (!tenantId) throw new TRPCError({ code: "BAD_REQUEST", message: "No active tenant" });
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
-      if (input.userId === ctx.user.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot remove yourself" });
+      if (!tenantId)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No active tenant",
+        });
+      if (input.userId === ctx.user.id)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot remove yourself",
+        });
       const db = await requireDb();
 
       const member = await db
@@ -159,12 +202,13 @@ export const teamRouter = router({
         .from(users)
         .where(and(eq(users.id, input.userId), eq(users.tenantId, tenantId)));
 
-      if (!member[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Member not found" });
+      if (!member[0])
+        throw new TRPCError({ code: "NOT_FOUND", message: "Member not found" });
 
       // Unlink from tenant (don't delete the user account)
       await db
         .update(users)
-        .set({ tenantId: null } as any)
+        .set({ tenantId: null as unknown as number })
         .where(eq(users.id, input.userId));
 
       return { success: true };
@@ -179,14 +223,19 @@ export const teamRouter = router({
       const invite = await db
         .select()
         .from(teamInvites)
-        .where(and(
-          eq(teamInvites.token, input.token),
-          eq(teamInvites.status, "pending"),
-          gt(teamInvites.expiresAt, new Date()),
-        ));
+        .where(
+          and(
+            eq(teamInvites.token, input.token),
+            eq(teamInvites.status, "pending"),
+            gt(teamInvites.expiresAt, new Date())
+          )
+        );
 
       if (!invite[0]) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Invite not found or expired" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Invite not found or expired",
+        });
       }
 
       // Link user to tenant with the invited role

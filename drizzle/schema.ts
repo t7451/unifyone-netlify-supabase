@@ -11,7 +11,11 @@ import {
   date,
   serial,
   jsonb,
+  uniqueIndex,
+  index,
+  check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // ── PostgreSQL Enums ─────────────────────────────────────────────────────────
 export const roleEnum = pgEnum("role", ["user", "admin"]);
@@ -77,6 +81,15 @@ export const users = pgTable("users", {
   passwordHash: varchar("passwordHash", { length: 255 }), // bcrypt/scrypt hash
   loginMethod: varchar("loginMethod", { length: 64 }),
   emailVerified: boolean("emailVerified").default(false),
+  emailVerificationToken: varchar("emailVerificationToken", { length: 128 }).unique(),
+  passwordResetToken: varchar("passwordResetToken", { length: 128 }).unique(),
+  passwordResetExpiresAt: timestamp("passwordResetExpiresAt"),
+  /**
+   * Set whenever the user successfully resets their password.
+   * Any JWT with iat < passwordChangedAt (seconds) is treated as invalidated —
+   * this is the mechanism for session revocation after a password reset.
+   */
+  passwordChangedAt: timestamp("passwordChangedAt"),
   role: roleEnum("role").default("user").notNull(),
   tenantId: integer("tenantId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -153,29 +166,48 @@ export const categories = pgTable("categories", {
 export type Category = typeof categories.$inferSelect;
 
 // ── Products ──────────────────────────────────────────────────────────────────
-export const products = pgTable("products", {
-  id: serial("id").primaryKey(),
-  tenantId: integer("tenantId").notNull(),
-  categoryId: integer("categoryId"),
-  name: varchar("name", { length: 500 }).notNull(),
-  slug: varchar("slug", { length: 500 }).notNull(),
-  description: text("description"),
-  sku: varchar("sku", { length: 100 }),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull().default("0.00"),
-  compareAtPrice: decimal("compareAtPrice", { precision: 10, scale: 2 }),
-  costPrice: decimal("costPrice", { precision: 10, scale: 2 }),
-  imageUrl: text("imageUrl"),
-  images: json("images").$type<string[]>(),
-  tags: json("tags").$type<string[]>(),
-  status: productStatusEnum("status").default("draft").notNull(),
-  trackInventory: boolean("trackInventory").default(true),
-  weight: decimal("weight", { precision: 8, scale: 3 }),
-  shopifyProductId: varchar("shopifyProductId", { length: 100 }),
-  metaTitle: varchar("metaTitle", { length: 255 }),
-  metaDescription: text("metaDescription"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
+export const products = pgTable(
+  "products",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull(),
+    categoryId: integer("categoryId"),
+    name: varchar("name", { length: 500 }).notNull(),
+    slug: varchar("slug", { length: 500 }).notNull(),
+    description: text("description"),
+    sku: varchar("sku", { length: 100 }),
+    price: decimal("price", { precision: 10, scale: 2 }).notNull().default("0.00"),
+    compareAtPrice: decimal("compareAtPrice", { precision: 10, scale: 2 }),
+    costPrice: decimal("costPrice", { precision: 10, scale: 2 }),
+    imageUrl: text("imageUrl"),
+    images: json("images").$type<string[]>(),
+    tags: json("tags").$type<string[]>(),
+    status: productStatusEnum("status").default("draft").notNull(),
+    trackInventory: boolean("trackInventory").default(true),
+    weight: decimal("weight", { precision: 8, scale: 3 }),
+    shopifyProductId: varchar("shopifyProductId", { length: 100 }),
+    metaTitle: varchar("metaTitle", { length: 255 }),
+    metaDescription: text("metaDescription"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    tenantSlugIdx: uniqueIndex("products_tenant_slug_idx").on(
+      table.tenantId,
+      table.slug
+    ),
+    tenantSkuIdx: uniqueIndex("products_tenant_sku_idx").on(
+      table.tenantId,
+      table.sku
+    ),
+    tenantStatusCreatedIdx: index("products_tenant_status_created_idx").on(
+      table.tenantId,
+      table.status,
+      table.createdAt
+    ),
+    priceNonNegative: check("products_price_non_negative", sql`${table.price} >= 0`),
+  })
+);
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = typeof products.$inferInsert;
@@ -195,25 +227,35 @@ export const inventory = pgTable("inventory", {
 export type Inventory = typeof inventory.$inferSelect;
 
 // ── Customers ─────────────────────────────────────────────────────────────────
-export const customers = pgTable("customers", {
-  id: serial("id").primaryKey(),
-  tenantId: integer("tenantId").notNull(),
-  email: varchar("email", { length: 320 }).notNull(),
-  firstName: varchar("firstName", { length: 255 }),
-  lastName: varchar("lastName", { length: 255 }),
-  phone: varchar("phone", { length: 50 }),
-  stripeCustomerId: varchar("stripeCustomerId", { length: 100 }),
-  shopifyCustomerId: varchar("shopifyCustomerId", { length: 100 }),
-  totalOrders: integer("totalOrders").default(0),
-  totalSpent: decimal("totalSpent", { precision: 12, scale: 2 }).default("0.00"),
-  tags: json("tags").$type<string[]>(),
-  address: json("address").$type<{
-    line1?: string; line2?: string; city?: string;
-    state?: string; zip?: string; country?: string;
-  }>(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
+export const customers = pgTable(
+  "customers",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull(),
+    email: varchar("email", { length: 320 }).notNull(),
+    firstName: varchar("firstName", { length: 255 }),
+    lastName: varchar("lastName", { length: 255 }),
+    phone: varchar("phone", { length: 50 }),
+    stripeCustomerId: varchar("stripeCustomerId", { length: 100 }),
+    shopifyCustomerId: varchar("shopifyCustomerId", { length: 100 }),
+    totalOrders: integer("totalOrders").default(0),
+    totalSpent: decimal("totalSpent", { precision: 12, scale: 2 }).default("0.00"),
+    tags: json("tags").$type<string[]>(),
+    address: json("address").$type<{
+      line1?: string; line2?: string; city?: string;
+      state?: string; zip?: string; country?: string;
+    }>(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    // Unique customer per (tenant, email) — enables safe upsertCustomer
+    tenantEmailIdx: uniqueIndex("customers_tenantId_email_idx").on(
+      table.tenantId,
+      table.email
+    ),
+  })
+);
 
 export type Customer = typeof customers.$inferSelect;
 
@@ -250,7 +292,22 @@ export const orders = pgTable("orders", {
   metadata: json("metadata").$type<Record<string, unknown>>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
+}, table => ({
+  tenantOrderNumberIdx: uniqueIndex("orders_tenant_order_number_idx").on(
+    table.tenantId,
+    table.orderNumber
+  ),
+  tenantStatusCreatedIdx: index("orders_tenant_status_created_idx").on(
+    table.tenantId,
+    table.status,
+    table.createdAt
+  ),
+  tenantPaymentStatusIdx: index("orders_tenant_payment_status_idx").on(
+    table.tenantId,
+    table.paymentStatus
+  ),
+  totalNonNegative: check("orders_total_non_negative", sql`${table.total} >= 0`),
+}));
 
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
@@ -267,7 +324,18 @@ export const orderItems = pgTable("order_items", {
   unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).notNull(),
   totalPrice: decimal("totalPrice", { precision: 12, scale: 2 }).notNull(),
   imageUrl: text("imageUrl"),
-});
+}, table => ({
+  orderItemsOrderIdx: index("order_items_order_idx").on(table.orderId),
+  orderItemsTenantOrderIdx: index("order_items_tenant_order_idx").on(
+    table.tenantId,
+    table.orderId
+  ),
+  quantityPositive: check("order_items_quantity_positive", sql`${table.quantity} > 0`),
+  unitPriceNonNegative: check(
+    "order_items_unit_price_non_negative",
+    sql`${table.unitPrice} >= 0`
+  ),
+}));
 
 export type OrderItem = typeof orderItems.$inferSelect;
 
@@ -280,7 +348,14 @@ export const cartItems = pgTable("cart_items", {
   quantity: integer("quantity").notNull().default(1),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
+}, table => ({
+  tenantSessionProductIdx: uniqueIndex("cart_items_tenant_session_product_idx").on(
+    table.tenantId,
+    table.sessionId,
+    table.productId
+  ),
+  quantityPositive: check("cart_items_quantity_positive", sql`${table.quantity} > 0`),
+}));
 
 // ── Analytics Events ──────────────────────────────────────────────────────────
 export const analyticsEvents = pgTable("analytics_events", {
@@ -1236,3 +1311,40 @@ export const governanceMetrics = pgTable("governance_metrics", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 export type GovernanceMetric = typeof governanceMetrics.$inferSelect;
+
+// ── Developer API Keys ────────────────────────────────────────────────────────
+export const apiKeys = pgTable("api_keys", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenantId").notNull(),
+  userId: integer("userId").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  keyPrefix: varchar("keyPrefix", { length: 16 }).notNull(), // e.g. "uo_live_a1b2c3d4"
+  keyHash: varchar("keyHash", { length: 64 }).notNull(),     // SHA-256 hex of full key
+  scopes: json("scopes").$type<string[]>().notNull().default([]),
+  lastUsedAt: timestamp("lastUsedAt"),
+  expiresAt: timestamp("expiresAt"),
+  revokedAt: timestamp("revokedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type InsertApiKey = typeof apiKeys.$inferInsert;
+
+// ── User Preferences ─────────────────────────────────────────────────────────
+export const userPreferences = pgTable("user_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().unique(),
+  emailNotifications: boolean("emailNotifications").default(true).notNull(),
+  pushNotifications: boolean("pushNotifications").default(true).notNull(),
+  orderUpdates: boolean("orderUpdates").default(true).notNull(),
+  teamAlerts: boolean("teamAlerts").default(true).notNull(),
+  marketingEmails: boolean("marketingEmails").default(false).notNull(),
+  weeklyDigest: boolean("weeklyDigest").default(true).notNull(),
+  analyticsSharing: boolean("analyticsSharing").default(true).notNull(),
+  theme: varchar("theme", { length: 20 }).default("dark").notNull(),
+  language: varchar("language", { length: 10 }).default("en").notNull(),
+  timezone: varchar("timezone", { length: 64 }).default("UTC").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type UserPreferences = typeof userPreferences.$inferSelect;
+export type InsertUserPreferences = typeof userPreferences.$inferInsert;

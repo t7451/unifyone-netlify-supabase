@@ -9,21 +9,29 @@
  *   POST /api/billing/webhook   ← register as separate Stripe webhook endpoint
  *   GET  /api/billing/credits
  */
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import express, { Express, Request, Response } from "express";
 import { createClient } from "@supabase/supabase-js";
 import { errMsg } from "./_core/errors";
+import { sdk } from "./_core/sdk";
+import { COOKIE_NAME } from "../shared/const";
+import { parse as parseCookieHeader } from "cookie";
+import { getStripe } from "./_core/stripeClient";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-03-25.dahlia" as any,
-});
+// Mirror the stripe.ts pattern: fail gracefully when the key is absent.
+const stripe = getStripe();
 
 function getBillingDb() {
   const url =
     process.env.SUPABASE_URL ||
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    "https://denxakpahfmlsekxmubs.supabase.co";
+    "";
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  if (!url || !key) {
+    throw new Error(
+      "[billing] SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set to use billing features"
+    );
+  }
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
@@ -76,17 +84,12 @@ function findPackage(id: string) {
   return CREDIT_PACKAGES.find(p => p.id === id);
 }
 
-function extractUserId(req: Request): string | null {
-  const auth = req.headers.authorization || "";
-  if (!auth.startsWith("Bearer ")) return null;
-  try {
-    const payload = JSON.parse(
-      Buffer.from(auth.split(".")[1], "base64url").toString()
-    );
-    return payload.sub || payload.user_id || null;
-  } catch {
-    return null;
-  }
+/** Verify the session cookie and return the session's openId, or null. */
+async function getSessionOpenId(req: Request): Promise<string | null> {
+  const cookies = parseCookieHeader(req.headers.cookie ?? "");
+  const cookieValue = cookies[COOKIE_NAME];
+  const session = await sdk.verifySession(cookieValue);
+  return session?.openId ?? null;
 }
 
 export function registerBillingRoutes(app: Express) {
@@ -100,6 +103,8 @@ export function registerBillingRoutes(app: Express) {
     "/api/billing/checkout",
     express.json(),
     async (req: Request, res: Response) => {
+      if (!stripe)
+        return res.status(503).json({ error: "Stripe not configured" });
       try {
         const { packageId, userEmail, userId, origin } = req.body as {
           packageId: PackageId;
@@ -160,6 +165,8 @@ export function registerBillingRoutes(app: Express) {
     "/api/billing/webhook",
     express.raw({ type: "application/json" }),
     async (req: Request, res: Response) => {
+      if (!stripe)
+        return res.status(503).json({ error: "Stripe not configured" });
       const sig = req.headers["stripe-signature"] as string;
       let event: Stripe.Event;
       try {
@@ -242,7 +249,7 @@ export function registerBillingRoutes(app: Express) {
 
   // GET /api/billing/credits — balance or history
   app.get("/api/billing/credits", async (req: Request, res: Response) => {
-    const userId = extractUserId(req) || (req.query.user_id as string);
+    const userId = await getSessionOpenId(req);
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
     const db = getBillingDb();
@@ -275,3 +282,6 @@ export function registerBillingRoutes(app: Express) {
     });
   });
 } // end registerBillingRoutes
+
+// Fetch-based route handler stub (for Netlify serverless; not yet implemented)
+export const registerBillingFetchRoutes: null = null;

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Zap, Globe, Workflow, CheckCircle, CreditCard, ShoppingBag, ExternalLink } from "lucide-react";
 
+
 export default function Integrations() {
   const [, navigate] = useLocation();
   const [shopifyDomain, setShopifyDomain] = useState("");
@@ -24,7 +25,7 @@ export default function Integrations() {
     if (intStatus.data?.shopifyCheckoutUrl && !shopifyCheckoutUrlInput) {
       setShopifyCheckoutUrlInput(intStatus.data.shopifyCheckoutUrl);
     }
-  }, [intStatus.data?.shopifyCheckoutUrl]);
+  }, [intStatus.data?.shopifyCheckoutUrl, shopifyCheckoutUrlInput]);
 
   const shopifyConnect = trpc.integrations.shopifyConnect.useMutation({
     onSuccess: () => { toast.success("Shopify connected"); setShopifyDomain(""); setShopifyToken(""); utils.integrations.status.invalidate(); },
@@ -40,10 +41,6 @@ export default function Integrations() {
   });
   const n8nTrigger = trpc.integrations.n8nTrigger.useMutation({
     onSuccess: () => toast.success("n8n workflow triggered"),
-    onError: (e: any) => toast.error(e.message),
-  });
-  const stripeCheckout = trpc.integrations.stripeCreateCheckout.useMutation({
-    onSuccess: (data: any) => { if (data?.url) window.open(data.url, "_blank"); },
     onError: (e: any) => toast.error(e.message),
   });
 

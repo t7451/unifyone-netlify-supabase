@@ -73,11 +73,7 @@ function LogoMark({ size = 40 }: { size?: number }) {
   );
 }
 
-type AuthMode =
-  | "password"
-  | "sign-in"
-  | "sign-up"
-  | "forgot-password";
+type AuthMode = "password" | "sign-in" | "sign-up" | "forgot-password";
 
 type LoginIntent = "signin" | "signup";
 
@@ -92,6 +88,8 @@ export default function Login({
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const returnTo = getReturnTo();
@@ -114,7 +112,32 @@ export default function Login({
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
     setError(null);
+    setErrorCode(null);
     setSuccessMessage(null);
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      setError("Please enter your email address first.");
+      return;
+    }
+    setIsResendingVerification(true);
+    try {
+      await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setSuccessMessage(
+        "A new verification link has been sent to your email. Please check your inbox."
+      );
+      setError(null);
+      setErrorCode(null);
+    } catch {
+      setError("Failed to resend verification email. Please try again.");
+    } finally {
+      setIsResendingVerification(false);
+    }
   };
 
   const handleSignIn = async () => {
@@ -125,6 +148,7 @@ export default function Login({
 
     setIsSubmitting(true);
     setError(null);
+    setErrorCode(null);
 
     try {
       const res = await fetch("/api/auth/signin", {
@@ -138,6 +162,7 @@ export default function Login({
 
       if (!res.ok || !data.success) {
         setError(data.error || "Invalid email or password.");
+        if (data.code) setErrorCode(data.code);
         return;
       }
 
@@ -196,12 +221,27 @@ export default function Login({
     setIsSubmitting(true);
     setError(null);
 
-    // TODO: Implement password reset email flow
-    // For now, show a message to contact support
-    setSuccessMessage(
-      "Password reset is not yet available. Please contact support@1commerce.online for assistance."
-    );
-    setIsSubmitting(false);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok && res.status !== 200) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? "Something went wrong. Please try again.");
+        return;
+      }
+
+      setSuccessMessage(
+        "If an account with that email exists, a password reset link has been sent. Please check your inbox (and spam folder)."
+      );
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = () => {
@@ -352,8 +392,19 @@ export default function Login({
 
           {/* Error display */}
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-              {error}
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm space-y-2">
+              <p>{error}</p>
+              {errorCode === "email_not_verified" && (
+                <button
+                  onClick={handleResendVerification}
+                  disabled={isResendingVerification}
+                  className="text-[#00D9FF] hover:text-[#00C4E8] transition-colors text-xs underline underline-offset-2 disabled:opacity-50"
+                >
+                  {isResendingVerification
+                    ? "Sending..."
+                    : "Resend verification email"}
+                </button>
+              )}
             </div>
           )}
 
@@ -423,7 +474,9 @@ export default function Login({
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  {intent === "signup" ? "Creating account..." : "Signing in..."}
+                  {intent === "signup"
+                    ? "Creating account..."
+                    : "Signing in..."}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">

@@ -3,14 +3,13 @@
 
 [build]
   base = ""
-  command = "pnpm install --no-frozen-lockfile && pnpm build"
+  command = "pnpm install --no-frozen-lockfile && NODE_ENV=production pnpm build"
   publish = "dist/public"
   functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "22"
   PNPM_VERSION = "10"
-  NODE_ENV = "production"
 
 # Netlify Functions — use esbuild to bundle the TypeScript server function
 [functions]
@@ -59,23 +58,26 @@
   [headers.values]
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
     X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
+    X-XSS-Protection = "0"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(self)"
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Resource-Policy = "same-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://plausible.io https://connect.facebook.net https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://checkout.stripe.com https://api.paypal.com https://www.facebook.com https://plausible.io; frame-src https://js.stripe.com https://hooks.stripe.com https://www.paypal.com; object-src 'none'; base-uri 'self'; form-action 'self';"
 
 # Ensure webhook routes accept Stripe POST requests
 [[headers]]
   for = "/api/stripe/*"
   [headers.values]
-    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Origin = "https://1commerce.online"
     Access-Control-Allow-Methods = "POST, GET, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, stripe-signature"
 
 [[headers]]
   for = "/api/billing/*"
   [headers.values]
-    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Origin = "https://1commerce.online"
     Access-Control-Allow-Methods = "POST, GET, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, stripe-signature"
 

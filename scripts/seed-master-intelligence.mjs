@@ -108,7 +108,7 @@ async function generateEmbedding(text) {
  * Seed a single document
  */
 async function seedDocument(docName) {
-  const docPath = path.join(__dirname, 'docs', docName);
+  const docPath = path.join(__dirname, '..', 'docs', docName);
 
   if (!fs.existsSync(docPath)) {
     console.error(`❌ Document not found: ${docPath}`);

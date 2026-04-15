@@ -14,6 +14,8 @@ import { eq } from "drizzle-orm";
 import { users } from "../../drizzle/schema";
 import { sdk } from "./sdk";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { getAppUrl } from "./env";
+import { logger } from "./logger";
 
 const scryptAsync = promisify(scrypt);
 
@@ -46,7 +48,8 @@ export async function verifyPassword(
 
 // ── Database Connection (use Neon PostgreSQL) ───────────────────────────────
 
-let _db: any = null;
+let _db: ReturnType<typeof import("drizzle-orm/neon-http").drizzle> | null =
+  null;
 
 async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -56,7 +59,9 @@ async function getDb() {
       const sql = neon(process.env.DATABASE_URL);
       _db = drizzle(sql);
     } catch (error) {
-      console.warn("[customAuth] Database connection failed:", error);
+      logger.error("customAuth: database connection failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return null;
     }
   }
@@ -74,6 +79,8 @@ function generateOpenId(): string {
 export type AuthResult = {
   success: boolean;
   error?: string;
+  /** Machine-readable code — lets clients branch without parsing error strings. */
+  code?: "email_not_verified";
   sessionToken?: string;
   user?: {
     openId: string;
@@ -150,8 +157,10 @@ export async function signUp(
       sessionToken,
       user: { openId, email: emailLower, name: displayName },
     };
-  } catch (err: any) {
-    console.error("[customAuth] signUp error:", err);
+  } catch (err: unknown) {
+    logger.error("customAuth: signUp failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return {
       success: false,
       error: "Failed to create account. Please try again.",
@@ -204,6 +213,18 @@ export async function signIn(
       return { success: false, error: "Invalid email or password" };
     }
 
+    // Require email verification before granting a session.
+    // The client should check for code === "email_not_verified" and offer
+    // a "Resend verification email" button.
+    if (user.emailVerified === false) {
+      return {
+        success: false,
+        code: "email_not_verified",
+        error:
+          "Please verify your email address before signing in. Check your inbox for a verification link.",
+      };
+    }
+
     // Update last signed in
     await db
       .update(users)
@@ -226,8 +247,10 @@ export async function signIn(
         name: user.name || emailLower.split("@")[0],
       },
     };
-  } catch (err: any) {
-    console.error("[customAuth] signIn error:", err);
+  } catch (err: unknown) {
+    logger.error("customAuth: signIn failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { success: false, error: "Sign in failed. Please try again." };
   }
 }
@@ -236,7 +259,8 @@ export async function signIn(
 
 export function buildSessionCookie(
   sessionToken: string,
-  secure: boolean
+  secure: boolean,
+  domain?: string
 ): string {
   const flags = [
     `${COOKIE_NAME}=${sessionToken}`,
@@ -246,10 +270,11 @@ export function buildSessionCookie(
     `Max-Age=${Math.floor(ONE_YEAR_MS / 1000)}`,
   ];
   if (secure) flags.push("Secure");
+  if (domain) flags.push(`Domain=${domain}`);
   return flags.join("; ");
 }
 
-export function buildLogoutCookie(secure: boolean): string {
+export function buildLogoutCookie(secure: boolean, domain?: string): string {
   const flags = [
     `${COOKIE_NAME}=`,
     "Path=/",
@@ -258,6 +283,7 @@ export function buildLogoutCookie(secure: boolean): string {
     "Max-Age=0",
   ];
   if (secure) flags.push("Secure");
+  if (domain) flags.push(`Domain=${domain}`);
   return flags.join("; ");
 }
 
@@ -342,10 +368,217 @@ export async function verifyClerkSession(
       sessionToken: appSessionToken,
       user: { openId, email, name },
     };
-  } catch (err: any) {
-    console.error("[customAuth] Clerk verification error:", err);
+  } catch (err: unknown) {
+    logger.error("customAuth: Clerk verification failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { success: false, error: "Clerk authentication failed" };
   }
+}
+
+// ── Email Sending Helper ─────────────────────────────────────────────────────
+
+async function sendEmail(opts: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    logger.warn("customAuth: RESEND_API_KEY not set, email send skipped");
+    return { success: false, error: "Email service not configured" };
+  }
+
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+    const result = await resend.emails.send({
+      from: "UnifyOne <hello@unifyonecommerce.com>",
+      to: opts.to,
+      subject: opts.subject,
+      html: opts.html,
+    });
+    if (result.error) {
+      logger.error("customAuth: Resend API error", {
+        error: result.error.message,
+      });
+      return { success: false, error: result.error.message };
+    }
+    return { success: true };
+  } catch (err: unknown) {
+    logger.error("customAuth: email send exception", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return { success: false, error: "Failed to send email" };
+  }
+}
+
+// ── Email Verification ───────────────────────────────────────────────────────
+
+export async function sendVerificationEmail(
+  userId: string,
+  email: string
+): Promise<{ success: boolean; error?: string }> {
+  const token = randomBytes(32).toString("hex");
+
+  const db = await getDb();
+  if (!db) return { success: false, error: "Database unavailable" };
+
+  await db
+    .update(users)
+    .set({ emailVerificationToken: token })
+    .where(eq(users.openId, userId));
+
+  const appUrl = getAppUrl();
+  const link = `${appUrl}/verify-email?token=${token}`;
+
+  return sendEmail({
+    to: email,
+    subject: "Verify your UnifyOne email address",
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#0a0f1e;color:#f0e8d0;border-radius:8px;">
+        <h2 style="color:#00d9ff;margin-top:0;">Verify your email</h2>
+        <p>Thanks for signing up for UnifyOne. Please verify your email address by clicking the button below.</p>
+        <p style="margin:32px 0;">
+          <a href="${link}" style="background:#00d9ff;color:#020202;padding:12px 28px;text-decoration:none;border-radius:4px;font-weight:bold;display:inline-block;">
+            Verify Email Address
+          </a>
+        </p>
+        <p style="font-size:12px;color:#6b7280;">This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.</p>
+        <p style="font-size:12px;color:#6b7280;">Or copy and paste this URL into your browser:<br>${link}</p>
+      </div>
+    `,
+  });
+}
+
+export async function verifyEmailToken(
+  token: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!token) return { success: false, error: "Token is required" };
+
+  const db = await getDb();
+  if (!db) return { success: false, error: "Database unavailable" };
+
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.emailVerificationToken, token))
+    .limit(1);
+
+  const user = result[0];
+  if (!user) return { success: false, error: "Invalid or expired token" };
+
+  await db
+    .update(users)
+    .set({ emailVerified: true, emailVerificationToken: null })
+    .where(eq(users.openId, user.openId));
+
+  return { success: true };
+}
+
+// ── Password Reset ───────────────────────────────────────────────────────────
+
+const PASSWORD_RESET_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+
+export async function requestPasswordReset(
+  email: string
+): Promise<{ success: boolean; error?: string }> {
+  const emailLower = email.toLowerCase().trim();
+
+  const db = await getDb();
+  if (!db) return { success: false, error: "Database unavailable" };
+
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, emailLower))
+    .limit(1);
+
+  // Always return success to avoid email enumeration
+  if (!result[0] || !result[0].passwordHash) {
+    return { success: true };
+  }
+
+  const user = result[0];
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + PASSWORD_RESET_EXPIRY_MS);
+
+  await db
+    .update(users)
+    .set({ passwordResetToken: token, passwordResetExpiresAt: expiresAt })
+    .where(eq(users.openId, user.openId));
+
+  const appUrl = getAppUrl();
+  const link = `${appUrl}/reset-password?token=${token}`;
+
+  await sendEmail({
+    to: emailLower,
+    subject: "Reset your UnifyOne password",
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#0a0f1e;color:#f0e8d0;border-radius:8px;">
+        <h2 style="color:#00d9ff;margin-top:0;">Reset your password</h2>
+        <p>We received a request to reset the password for your UnifyOne account. Click the button below to choose a new password.</p>
+        <p style="margin:32px 0;">
+          <a href="${link}" style="background:#00d9ff;color:#020202;padding:12px 28px;text-decoration:none;border-radius:4px;font-weight:bold;display:inline-block;">
+            Reset Password
+          </a>
+        </p>
+        <p style="font-size:12px;color:#6b7280;">This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>
+        <p style="font-size:12px;color:#6b7280;">Or copy and paste this URL into your browser:<br>${link}</p>
+      </div>
+    `,
+  });
+
+  return { success: true };
+}
+
+export async function resetPassword(
+  token: string,
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!token) return { success: false, error: "Token is required" };
+  if (!newPassword || newPassword.length < 8) {
+    return { success: false, error: "Password must be at least 8 characters" };
+  }
+
+  const db = await getDb();
+  if (!db) return { success: false, error: "Database unavailable" };
+
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.passwordResetToken, token))
+    .limit(1);
+
+  const user = result[0];
+  if (!user) return { success: false, error: "Invalid or expired token" };
+
+  // Check expiry
+  if (
+    !user.passwordResetExpiresAt ||
+    new Date() > user.passwordResetExpiresAt
+  ) {
+    return {
+      success: false,
+      error: "Reset link has expired. Please request a new one.",
+    };
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+  // Stamp passwordChangedAt so the SDK rejects any JWT issued before this moment.
+  const passwordChangedAt = new Date();
+
+  await db
+    .update(users)
+    .set({
+      passwordHash,
+      passwordResetToken: null,
+      passwordResetExpiresAt: null,
+      passwordChangedAt,
+    })
+    .where(eq(users.openId, user.openId));
+
+  return { success: true };
 }
 
 // ── Firebase Fallback (when FIREBASE_PROJECT_ID is set) ──────────────────────
@@ -419,8 +652,10 @@ export async function verifyFirebaseIdToken(
       sessionToken,
       user: { openId, email, name },
     };
-  } catch (err: any) {
-    console.error("[customAuth] Firebase verification error:", err);
+  } catch (err: unknown) {
+    logger.error("customAuth: Firebase verification failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { success: false, error: "Firebase authentication failed" };
   }
 }

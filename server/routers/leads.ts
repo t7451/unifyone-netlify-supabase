@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { adminProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { leads, n8nWorkflows, zapierHooks } from "../../drizzle/schema";
 import { eq, desc, and } from "drizzle-orm";
@@ -23,6 +23,13 @@ async function fireAutomations(
   event: string,
   payload: Record<string, unknown>
 ): Promise<{ n8n: boolean; zapier: boolean }> {
+  if (tenantId === null) {
+    console.warn(
+      "[fireAutomations] tenantId is null — skipping automations to prevent cross-tenant broadcast"
+    );
+    return { n8n: false, zapier: false };
+  }
+
   const db = await getDb();
   if (!db) return { n8n: false, zapier: false };
 
@@ -30,17 +37,12 @@ async function fireAutomations(
 
   try {
     // n8n workflows matching this event
-    const n8nQuery = tenantId
-      ? db
-          .select()
-          .from(n8nWorkflows)
-          .where(
-            and(
-              eq(n8nWorkflows.enabled, true),
-              eq(n8nWorkflows.tenantId, tenantId)
-            )
-          )
-      : db.select().from(n8nWorkflows).where(eq(n8nWorkflows.enabled, true));
+    const n8nQuery = db
+      .select()
+      .from(n8nWorkflows)
+      .where(
+        and(eq(n8nWorkflows.enabled, true), eq(n8nWorkflows.tenantId, tenantId))
+      );
     const workflows = await n8nQuery;
 
     for (const wf of workflows) {
@@ -71,17 +73,12 @@ async function fireAutomations(
     }
 
     // Zapier hooks matching this event
-    const zapQuery = tenantId
-      ? db
-          .select()
-          .from(zapierHooks)
-          .where(
-            and(
-              eq(zapierHooks.enabled, true),
-              eq(zapierHooks.tenantId, tenantId)
-            )
-          )
-      : db.select().from(zapierHooks).where(eq(zapierHooks.enabled, true));
+    const zapQuery = db
+      .select()
+      .from(zapierHooks)
+      .where(
+        and(eq(zapierHooks.enabled, true), eq(zapierHooks.tenantId, tenantId))
+      );
     const hooks = await zapQuery;
 
     for (const hook of hooks) {
@@ -234,7 +231,7 @@ export const leadsRouter = router({
     }),
 
   // Admin: list all leads with optional status filter
-  list: protectedProcedure
+  list: adminProcedure
     .input(
       z
         .object({
@@ -244,13 +241,7 @@ export const leadsRouter = router({
         })
         .optional()
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Admin access required",
-        });
-      }
+    .query(async ({ ctx: _ctx, input }) => {
       const db = await requireDb();
       const query = input?.status
         ? db
@@ -263,20 +254,14 @@ export const leadsRouter = router({
     }),
 
   // Admin: update lead status
-  updateStatus: protectedProcedure
+  updateStatus: adminProcedure
     .input(
       z.object({
         id: z.number(),
         status: z.enum(["new", "contacted", "qualified", "converted", "lost"]),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Admin access required",
-        });
-      }
+    .mutation(async ({ ctx: _ctx, input }) => {
       const db = await requireDb();
       await db
         .update(leads)
@@ -293,20 +278,14 @@ export const leadsRouter = router({
     }),
 
   // Admin: add a note to a lead
-  addNote: protectedProcedure
+  addNote: adminProcedure
     .input(
       z.object({
         id: z.number(),
         note: z.string().min(1),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Admin access required",
-        });
-      }
+    .mutation(async ({ ctx: _ctx, input }) => {
       const db = await requireDb();
       const [lead] = await db
         .select({ notes: leads.notes })
@@ -325,13 +304,7 @@ export const leadsRouter = router({
     }),
 
   // Admin: get lead stats
-  stats: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Admin access required",
-      });
-    }
+  stats: adminProcedure.query(async ({ ctx: _ctx }) => {
     const db = await requireDb();
     const allLeads = await db.select({ status: leads.status }).from(leads);
     const counts = {

@@ -20,10 +20,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  TrendingUp, DollarSign, Car, Clock, Zap, ArrowRight,
-  ChevronUp, ChevronDown, Minus, AlertTriangle, Sparkles,
+  TrendingUp, Car, Clock, Zap, ArrowRight,
+  AlertTriangle, Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -33,18 +34,6 @@ function fmt(n: number, prefix = "$") {
 
 function fmtMiles(n: number) {
   return `${n.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi`;
-}
-
-function DeltaBadge({ value, suffix = "/hr" }: { value: number; suffix?: string }) {
-  if (Math.abs(value) < 0.01) return <Minus className="w-3 h-3 text-gray-500" />;
-  const up = value > 0;
-  return (
-    <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold",
-      up ? "text-emerald-400" : "text-red-400")}>
-      {up ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-      {fmt(Math.abs(value), "$")}{suffix}
-    </span>
-  );
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────

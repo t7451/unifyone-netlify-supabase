@@ -6,9 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
+import { SITE_URL } from "@/lib/siteConfig";
+
+const SOV_CANONICAL = `${SITE_URL}/sovereign`;
 import { Link } from "wouter";
 import {
-  Shield, Layers, Zap, Lock, TrendingUp, ChevronRight,
+  Shield, Zap, Lock, ChevronRight,
   CheckCircle, ArrowRight, Building2, Cpu, Globe, Users,
   Star, Quote
 } from "lucide-react";
@@ -202,7 +206,18 @@ export default function Sovereign() {
 
   return (
     <div className="min-h-screen bg-[#030712] text-white overflow-x-hidden">
-      {/* Nav */}
+      <PageHead
+        title="The Sovereign Stack | 1Commerce"
+        description="Break free from platform dependency. The Sovereign Stack gives solopreneur gig operators legal protection, operational resilience, and financial independence. Join the waitlist."
+        canonical={SOV_CANONICAL}
+        jsonLd={buildWebPageJsonLd({
+          canonical: SOV_CANONICAL,
+          name: "The Sovereign Stack | 1Commerce",
+          description:
+            "Break free from platform dependency. The Sovereign Stack gives solopreneur gig operators legal protection, operational resilience, and financial independence.",
+          breadcrumbs: [{ name: "Sovereign", item: SOV_CANONICAL }],
+        })}
+      />
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#030712]/90 backdrop-blur-sm border-b border-[#1E3A5F]/50">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/">

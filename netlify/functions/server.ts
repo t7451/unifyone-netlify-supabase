@@ -10,6 +10,7 @@
  * is preserved for webhook signature verification.
  */
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import "../../server/_core/sentry";
 
 // ── Lazy singletons — avoid re-importing on every warm invocation ───────────
 let _routerModule: any = null;
@@ -27,8 +28,9 @@ async function getRouter() {
 
 async function getNonTrpcHandler() {
   if (_nonTrpcHandler) return _nonTrpcHandler;
-  const { buildNonTrpcHandler } =
-    await import("../../server/_core/nonTrpcRoutes");
+  const { buildNonTrpcHandler } = await import(
+    "../../server/_core/nonTrpcRoutes"
+  );
   _nonTrpcHandler = await buildNonTrpcHandler();
   return _nonTrpcHandler;
 }
@@ -86,6 +88,12 @@ export default async (req: Request): Promise<Response> => {
     });
   } catch (err: any) {
     console.error("[server] Unhandled error:", err?.message ?? err);
+    try {
+      const { Sentry } = await import("../../server/_core/sentry");
+      Sentry.captureException(err);
+    } catch {
+      // Sentry may not be configured
+    }
     return Response.json(
       {
         error: "Internal server error",

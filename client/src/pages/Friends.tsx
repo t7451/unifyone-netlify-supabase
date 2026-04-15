@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,26 +11,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
-  Users, Search, Trophy, Swords, Bell, Star, Zap, Clock,
+  Users, Search, Trophy, Swords, Bell, Star, Clock,
   UserPlus, UserCheck, UserX, Check, X, ChevronRight,
-  TrendingUp, Shield
+  Shield
 } from "lucide-react";
 
-// ── Rarity colour map ────────────────────────────────────────────────────────
-const RARITY_COLORS: Record<string, string> = {
-  common: "text-gray-400 border-gray-600",
-  uncommon: "text-green-400 border-green-600",
-  rare: "text-blue-400 border-blue-600",
-  epic: "text-purple-400 border-purple-600",
-  legendary: "text-yellow-400 border-yellow-600",
-};
-const RARITY_BG: Record<string, string> = {
-  common: "bg-gray-800/40",
-  uncommon: "bg-green-900/20",
-  rare: "bg-blue-900/20",
-  epic: "bg-purple-900/20",
-  legendary: "bg-yellow-900/20",
-};
+
 
 function timeAgo(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
@@ -429,63 +415,6 @@ function RequestsTab() {
   );
 }
 
-// ── Achievement Feed Tab ─────────────────────────────────────────────────────
-function FeedTab() {
-  const feed = trpc.socialFriends.getFriendAchievementFeed.useQuery();
-
-  if (feed.isLoading) return <div className="text-center text-gray-500 py-12">Loading feed…</div>;
-
-  if (!feed.data?.length) {
-    return (
-      <div className="text-center py-16 space-y-3">
-        <Trophy className="w-12 h-12 text-gray-600 mx-auto" />
-        <p className="text-gray-400 font-medium">Nothing in the feed yet</p>
-        <p className="text-gray-600 text-sm">
-          Add friends and their achievement unlocks will appear here in real time.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {feed.data.map((item, i) => (
-        <Card
-          key={`${item.userId}-${item.achievementId}-${i}`}
-          className={`border ${RARITY_COLORS[item.rarity] ?? "border-white/10"} ${RARITY_BG[item.rarity] ?? "bg-white/5"}`}
-        >
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                <Trophy className={`w-6 h-6 ${RARITY_COLORS[item.rarity]?.split(" ")[0] ?? "text-gray-400"}`} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-white text-sm">{item.userName}</span>
-                  <span className="text-gray-500 text-xs">unlocked</span>
-                  <span className={`font-medium text-sm ${RARITY_COLORS[item.rarity]?.split(" ")[0] ?? "text-gray-300"}`}>
-                    {item.achievementName}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 mt-1">
-                  <Badge
-                    variant="outline"
-                    className={`text-xs capitalize ${RARITY_COLORS[item.rarity] ?? "border-gray-600 text-gray-400"}`}
-                  >
-                    {item.rarity}
-                  </Badge>
-                  <span className="text-xs text-[#00D9FF]">+{item.pointsReward} pts</span>
-                  <span className="text-xs text-gray-600">{timeAgo(item.unlockedAt)}</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
 // ── Challenges Tab ───────────────────────────────────────────────────────────
 function ChallengesTab() {
   const challenges = trpc.socialFriends.listFriendChallenges.useQuery();
@@ -713,7 +642,6 @@ function ChallengesTab() {
 
 // ── Main Page ────────────────────────────────────────────────────────────────
 export default function Friends() {
-  const { user } = useAuth();
   const friends = trpc.socialFriends.listFriends.useQuery();
   const requests = trpc.socialFriends.listPendingRequests.useQuery();
   const challenges = trpc.socialFriends.listFriendChallenges.useQuery();

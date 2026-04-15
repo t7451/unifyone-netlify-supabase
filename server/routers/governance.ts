@@ -78,7 +78,7 @@ export const governanceRouter = router({
           .where(whereClause),
       ]);
 
-      return { logs, total: (countResult as any)?.count ?? logs.length };
+      return { logs, total: countResult?.count ?? logs.length };
     }),
 
   createAuditLog: protectedProcedure
@@ -251,7 +251,7 @@ export const governanceRouter = router({
 
       return {
         escalations,
-        total: (countResult as any)?.count ?? escalations.length,
+        total: countResult?.count ?? escalations.length,
       };
     }),
 

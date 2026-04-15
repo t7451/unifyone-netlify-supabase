@@ -1,10 +1,24 @@
-import { and, desc, eq, gte, like, sql, sum } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  like,
+  sql,
+  sum,
+} from "drizzle-orm";
 import type { NeonHttpDatabase } from "drizzle-orm/neon-http";
+import { logger } from "./_core/logger";
 // drizzle/neon-http loaded dynamically in getDb() to prevent cold-start crash
 import {
   analyticsEvents,
+  apiKeys,
   categories,
   customers,
+  InsertApiKey,
   InsertOrder,
   InsertProduct,
   InsertTenant,
@@ -30,7 +44,9 @@ export async function getDb() {
       const queryClient = neon(process.env.DATABASE_URL);
       _db = drizzleFn(queryClient);
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      logger.error("Database connection failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       _db = null;
     }
   }
@@ -144,10 +160,29 @@ export async function getTenantsByOwner(ownerId: number) {
   return db.select().from(tenants).where(eq(tenants.ownerId, ownerId));
 }
 
-export async function updateTenant(id: number, data: Partial<InsertTenant>) {
+export async function updateTenant(
+  id: number,
+  data: Partial<InsertTenant>,
+  ownerId?: number
+) {
   const db = await getDb();
   if (!db) return;
-  await db.update(tenants).set(data).where(eq(tenants.id, id));
+  const condition =
+    ownerId !== undefined
+      ? and(eq(tenants.id, id), eq(tenants.ownerId, ownerId))
+      : eq(tenants.id, id);
+  await db.update(tenants).set(data).where(condition);
+}
+
+export async function getTenantByStripeCustomerId(stripeCustomerId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(tenants)
+    .where(eq(tenants.stripeCustomerId, stripeCustomerId))
+    .limit(1);
+  return result[0];
 }
 
 export async function getAllTenants() {
@@ -231,6 +266,24 @@ export async function deleteProduct(id: number, tenantId: number) {
     .update(products)
     .set({ status: "archived" })
     .where(and(eq(products.id, id), eq(products.tenantId, tenantId)));
+}
+
+export async function bulkUpdateProductStatus(
+  tenantId: number,
+  ids: number[],
+  status: "active" | "draft" | "archived"
+) {
+  const db = await getDb();
+  if (!db || ids.length === 0) return 0;
+  const result = await db
+    .update(products)
+    .set({ status, updatedAt: new Date() })
+    .where(and(eq(products.tenantId, tenantId), inArray(products.id, ids)));
+  return result.rowCount ?? 0;
+}
+
+export async function bulkArchiveProducts(tenantId: number, ids: number[]) {
+  return bulkUpdateProductStatus(tenantId, ids, "archived");
 }
 
 export async function getProductCount(tenantId: number) {
@@ -322,7 +375,20 @@ export async function getOrders(
   const db = await getDb();
   if (!db) return [];
   const conditions = [eq(orders.tenantId, tenantId)];
-  if (opts?.status) conditions.push(eq(orders.status, opts.status as any));
+  if (opts?.status)
+    conditions.push(
+      eq(
+        orders.status,
+        opts.status as
+          | "pending"
+          | "confirmed"
+          | "processing"
+          | "shipped"
+          | "delivered"
+          | "cancelled"
+          | "refunded"
+      )
+    );
   if (opts?.search)
     conditions.push(like(orders.orderNumber, `%${opts.search}%`));
   return db
@@ -489,10 +555,16 @@ export async function upsertCustomer(
 ) {
   const db = await getDb();
   if (!db) return;
+  // Conflict target is the (tenantId, email) unique index added in migration 0023.
+  // Previously this used customers.id (the PK) which never conflicted on INSERT,
+  // causing duplicate customer rows per email per tenant.
   await db
     .insert(customers)
     .values({ tenantId, email, ...data })
-    .onConflictDoUpdate({ target: customers.id, set: { ...data } });
+    .onConflictDoUpdate({
+      target: [customers.tenantId, customers.email],
+      set: { ...data, updatedAt: new Date() },
+    });
 }
 
 export async function getCustomerCount(tenantId: number) {
@@ -613,11 +685,17 @@ export async function getTopProducts(tenantId: number, limit = 5) {
 }
 
 // ── Webhooks ──────────────────────────────────────────────────────────────────
+
+/**
+ * Log a webhook event scoped to a specific tenant.
+ * `tenantId` is required to prevent cross-tenant data leakage when querying events.
+ * For system-level events with no tenant context, use `logSystemWebhookEvent`.
+ */
 export async function logWebhookEvent(
   source: "stripe" | "shopify" | "n8n" | "internal",
   eventType: string,
   payload: Record<string, unknown>,
-  tenantId?: number
+  tenantId: number
 ) {
   const db = await getDb();
   if (!db) return;
@@ -626,14 +704,165 @@ export async function logWebhookEvent(
     .values({ source, eventType, payload, tenantId });
 }
 
-export async function getWebhookEvents(tenantId?: number, limit = 50) {
+/**
+ * Log a system-level webhook event that has no tenant association
+ * (e.g. Stripe events before tenant is resolved).
+ * Only use this for events that genuinely cannot be scoped to a tenant.
+ */
+export async function logSystemWebhookEvent(
+  source: "stripe" | "shopify" | "n8n" | "internal",
+  eventType: string,
+  payload: Record<string, unknown>
+) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(webhookEvents).values({ source, eventType, payload });
+}
+
+/**
+ * Retrieve webhook events for a specific tenant.
+ * Always requires tenantId — callers must not pass undefined.
+ */
+export async function getWebhookEvents(tenantId: number, limit = 50) {
   const db = await getDb();
   if (!db) return [];
-  const conditions = tenantId ? [eq(webhookEvents.tenantId, tenantId)] : [];
   return db
     .select()
     .from(webhookEvents)
-    .where(conditions.length ? and(...conditions) : undefined)
+    .where(eq(webhookEvents.tenantId, tenantId))
     .orderBy(desc(webhookEvents.createdAt))
     .limit(limit);
+}
+
+/**
+ * Admin-only: retrieve webhook events across all tenants.
+ * Do NOT expose this to non-admin users.
+ */
+export async function getAllWebhookEventsAdmin(limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(webhookEvents)
+    .orderBy(desc(webhookEvents.createdAt))
+    .limit(limit);
+}
+
+/**
+ * Retrieve webhook events for a tenant with optional source/status/eventType filters.
+ */
+export async function getFilteredWebhookEvents(
+  tenantId: number,
+  opts: {
+    limit?: number;
+    source?: "stripe" | "shopify" | "n8n" | "internal";
+    status?: "pending" | "processed" | "failed" | "skipped";
+    search?: string;
+  } = {}
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const { limit = 50, source, status, search } = opts;
+
+  const conditions = [eq(webhookEvents.tenantId, tenantId)];
+  if (source) conditions.push(eq(webhookEvents.source, source));
+  if (status) conditions.push(eq(webhookEvents.status, status));
+  if (search) conditions.push(ilike(webhookEvents.eventType, `%${search}%`));
+
+  return db
+    .select()
+    .from(webhookEvents)
+    .where(and(...conditions))
+    .orderBy(desc(webhookEvents.createdAt))
+    .limit(limit);
+}
+
+/**
+ * Aggregate webhook event counts by status for a tenant.
+ */
+export async function getWebhookStats(tenantId: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, pending: 0, processed: 0, failed: 0, skipped: 0 };
+
+  const rows = await db
+    .select({
+      status: webhookEvents.status,
+      cnt: count(webhookEvents.id),
+    })
+    .from(webhookEvents)
+    .where(eq(webhookEvents.tenantId, tenantId))
+    .groupBy(webhookEvents.status);
+
+  const result = { total: 0, pending: 0, processed: 0, failed: 0, skipped: 0 };
+  for (const row of rows) {
+    const n = Number(row.cnt);
+    result.total += n;
+    if (row.status === "pending") result.pending = n;
+    else if (row.status === "processed") result.processed = n;
+    else if (row.status === "failed") result.failed = n;
+    else if (row.status === "skipped") result.skipped = n;
+  }
+  return result;
+}
+
+/**
+ * Mark a failed webhook event as pending so it can be retried.
+ * Only allows retrying events that belong to the given tenant.
+ */
+export async function retryWebhookEvent(id: number, tenantId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db
+    .update(webhookEvents)
+    .set({ status: "pending", error: null, processedAt: null })
+    .where(and(eq(webhookEvents.id, id), eq(webhookEvents.tenantId, tenantId)));
+}
+
+// ── API Keys ──────────────────────────────────────────────────────────────────
+export async function createApiKey(data: InsertApiKey) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(apiKeys).values(data).returning();
+  return result[0];
+}
+
+export async function getApiKeysByTenant(tenantId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(apiKeys)
+    .where(
+      and(eq(apiKeys.tenantId, tenantId), sql`${apiKeys.revokedAt} IS NULL`)
+    )
+    .orderBy(desc(apiKeys.createdAt));
+}
+
+export async function getApiKeyByHash(keyHash: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(apiKeys)
+    .where(and(eq(apiKeys.keyHash, keyHash), sql`${apiKeys.revokedAt} IS NULL`))
+    .limit(1);
+  return result[0];
+}
+
+export async function revokeApiKey(id: number, tenantId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(apiKeys)
+    .set({ revokedAt: new Date() })
+    .where(and(eq(apiKeys.id, id), eq(apiKeys.tenantId, tenantId)));
+}
+
+export async function touchApiKeyLastUsed(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(apiKeys)
+    .set({ lastUsedAt: new Date() })
+    .where(eq(apiKeys.id, id));
 }
