@@ -820,44 +820,39 @@ export async function incrementGigAIUsage(
   const db = await getDb();
   if (!db) return;
 
-  const updatedRows = await db
-    .update(gigAIUsage)
-    .set({
-      requestsUsed: sql`${gigAIUsage.requestsUsed} + 1`,
-      tokensUsed: sql`${gigAIUsage.tokensUsed} + ${tokens}`,
+  // Use INSERT … ON CONFLICT DO UPDATE so both the initial-insert and
+  // the subsequent-increment paths are a single atomic DB round-trip.
+  // This eliminates the race condition where two concurrent callers both
+  // observe "no row" and both insert, creating a duplicate.
+  await db
+    .insert(gigAIUsage)
+    .values({
+      userId,
+      billingPeriod,
+      requestsUsed: 1,
+      tokensUsed: tokens,
       ...(context !== undefined ? { lastContext: context } : {}),
       updatedAt: new Date(),
     })
-    .where(
-      and(
-        eq(gigAIUsage.userId, userId),
-        eq(gigAIUsage.billingPeriod, billingPeriod)
-      )
-    )
-    .returning({ id: gigAIUsage.id });
-
-  if (updatedRows.length > 0) {
-    return;
-  }
-
-  const newRow: InsertGigAIUsage = {
-    userId,
-    billingPeriod,
-    requestsUsed: 1,
-    tokensUsed: tokens,
-    lastContext: context,
-    updatedAt: new Date(),
-  };
-  await db.insert(gigAIUsage).values(newRow);
+    .onConflictDoUpdate({
+      target: [gigAIUsage.userId, gigAIUsage.billingPeriod],
+      set: {
+        requestsUsed: sql`${gigAIUsage.requestsUsed} + 1`,
+        tokensUsed: sql`${gigAIUsage.tokensUsed} + ${tokens}`,
+        ...(context !== undefined ? { lastContext: context } : {}),
+        updatedAt: new Date(),
+      },
+    });
 }
 
 /** Seed the gig worker default plans if the table is empty. */
 export async function seedGigWorkerPlans(): Promise<void> {
   const db = await getDb();
   if (!db) return;
-  const existing = await db.select().from(gigWorkerPlans).limit(1);
-  if (existing.length > 0) return;
 
+  // onConflictDoNothing makes this safe under concurrent first-hit traffic —
+  // if two requests race to seed simultaneously, the second insert silently
+  // skips the conflicting rows instead of erroring or duplicating.
   const defaults: InsertGigWorkerPlan[] = [
     {
       name: "Gig Starter",
@@ -915,5 +910,5 @@ export async function seedGigWorkerPlans(): Promise<void> {
     },
   ];
 
-  await db.insert(gigWorkerPlans).values(defaults);
+  await db.insert(gigWorkerPlans).values(defaults).onConflictDoNothing();
 }

@@ -329,11 +329,13 @@ export default function GigCommand() {
                 Upgrade for route optimizer, tax export &amp; more AI credits.
               </span>
             </div>
-            <Link href="/gig-worker-plans">
-              <Button size="sm" className="bg-violet-600 hover:bg-violet-700 text-white shrink-0">
-                Upgrade
-              </Button>
-            </Link>
+            <Button
+              asChild
+              size="sm"
+              className="bg-violet-600 hover:bg-violet-700 text-white shrink-0"
+            >
+              <Link href="/gig-worker-plans">Upgrade</Link>
+            </Button>
           </div>
         )}
 

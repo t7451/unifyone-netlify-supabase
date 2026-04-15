@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { getAppUrl } from "../_core/env";
+import { stripe } from "../stripe";
 import {
   getGigWorkerPlans,
   getGigWorkerPlanBySlug,
@@ -50,6 +52,7 @@ export const gigWorkerRouter = router({
   getSubscription: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.user.id;
 
+    await seedGigWorkerPlans();
     const [sub, allPlans] = await Promise.all([
       getGigWorkerSubscription(userId),
       getGigWorkerPlans(),
@@ -66,7 +69,9 @@ export const gigWorkerRouter = router({
         plan: starterPlan,
         subscription: null,
         aiUsage: usage ?? null,
-        aiCreditsRemaining: starterPlan ? starterPlan.monthlyAICredits - (usage?.requestsUsed ?? 0) : 0,
+        aiCreditsRemaining: starterPlan
+          ? Math.max(0, starterPlan.monthlyAICredits - (usage?.requestsUsed ?? 0))
+          : 0,
         features: starterPlan?.features ?? [],
       };
     }
@@ -175,11 +180,14 @@ export const gigWorkerRouter = router({
         ? undefined
         : `UnifyOne ${plan.name} (${input.billingPeriod})`;
 
-      const res = await fetch(`${input.origin}/api/stripe/create-checkout`, {
+      // Use the server-side canonical URL for the internal API call to prevent
+      // SSRF / cookie exfiltration via a user-supplied origin.
+      const internalBase = getAppUrl() || `${ctx.req.protocol}://${ctx.req.headers.host}`;
+
+      const res = await fetch(`${internalBase}/api/stripe/create-checkout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Cookie: ctx.req.headers.cookie ?? "",
         },
         body: JSON.stringify({
           priceId: resolvedPriceId,
@@ -285,48 +293,42 @@ export const gigWorkerRouter = router({
 
   /**
    * Protected: cancel (at period end) the current gig worker subscription.
-   * Calls Stripe cancel API via the existing billing endpoint.
+   * Calls the Stripe SDK directly — no HTTP round-trip to an origin-derived URL.
    */
-  cancelSubscription: protectedProcedure
-    .input(z.object({ origin: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.user.id;
-      const sub = await getGigWorkerSubscription(userId);
-      if (!sub?.stripeSubscriptionId) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "No active gig subscription found.",
-        });
-      }
-
-      const res = await fetch(
-        `${input.origin}/api/stripe/cancel-subscription`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Cookie: ctx.req.headers.cookie ?? "",
-          },
-          body: JSON.stringify({
-            subscriptionId: sub.stripeSubscriptionId,
-          }),
-        }
-      );
-
-      if (!res.ok) {
-        const err = await res.text();
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Cancel failed: ${err}`,
-        });
-      }
-
-      await upsertGigWorkerSubscription({
-        ...sub,
-        cancelAtPeriodEnd: true,
-        updatedAt: new Date(),
+  cancelSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.user.id;
+    const sub = await getGigWorkerSubscription(userId);
+    if (!sub?.stripeSubscriptionId) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "No active gig subscription found.",
       });
+    }
 
-      return { success: true };
-    }),
+    if (!stripe) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Payment provider not configured.",
+      });
+    }
+
+    try {
+      await stripe.subscriptions.update(sub.stripeSubscriptionId, {
+        cancel_at_period_end: true,
+      });
+    } catch (err) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: `Cancel failed: ${err instanceof Error ? err.message : String(err)}`,
+      });
+    }
+
+    await upsertGigWorkerSubscription({
+      ...sub,
+      cancelAtPeriodEnd: true,
+      updatedAt: new Date(),
+    });
+
+    return { success: true };
+  }),
 });

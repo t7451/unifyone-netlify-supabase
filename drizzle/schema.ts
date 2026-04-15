@@ -1325,18 +1325,29 @@ export type InsertGigWorkerSubscription = typeof gigWorkerSubscriptions.$inferIn
 
 // ─── Gig AI Usage ─────────────────────────────────────────────────────────────
 // Tracks AI LLM call consumption per user within each billing period.
-export const gigAIUsage = pgTable("gig_ai_usage", {
-  id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
-  // ISO date string for the billing month, e.g. "2025-04"
-  billingPeriod: varchar("billingPeriod", { length: 7 }).notNull(),
-  // Number of AI requests consumed
-  requestsUsed: integer("requestsUsed").notNull().default(0),
-  // Total tokens consumed (input + output)
-  tokensUsed: integer("tokensUsed").notNull().default(0),
-  // Context that triggered the usage (gig-command, money-manager, etc.)
-  lastContext: varchar("lastContext", { length: 100 }),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
+export const gigAIUsage = pgTable(
+  "gig_ai_usage",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("userId").notNull(),
+    // ISO date string for the billing month, e.g. "2025-04"
+    billingPeriod: varchar("billingPeriod", { length: 7 }).notNull(),
+    // Number of AI requests consumed
+    requestsUsed: integer("requestsUsed").notNull().default(0),
+    // Total tokens consumed (input + output)
+    tokensUsed: integer("tokensUsed").notNull().default(0),
+    // Context that triggered the usage (gig-command, money-manager, etc.)
+    lastContext: varchar("lastContext", { length: 100 }),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    // Enforces one row per user per billing month; required for the atomic
+    // INSERT … ON CONFLICT DO UPDATE upsert in incrementGigAIUsage.
+    gigAIUsageUserPeriodIdx: uniqueIndex("gig_ai_usage_user_billing_period_idx").on(
+      table.userId,
+      table.billingPeriod,
+    ),
+  }),
+);
 export type GigAIUsage = typeof gigAIUsage.$inferSelect;
 export type InsertGigAIUsage = typeof gigAIUsage.$inferInsert;
