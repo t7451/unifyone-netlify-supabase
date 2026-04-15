@@ -9,8 +9,19 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 import "./lib/metaPixelInit";
+import "./lib/analyticsInit";
 
-const queryClient = new QueryClient();
+const FETCH_TIMEOUT_MS = 15_000;
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      // 30 s stale window — prevents redundant background refetches
+      staleTime: 30_000,
+    },
+  },
+});
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
@@ -48,6 +59,7 @@ const trpcClient = trpc.createClient({
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
         });
       },
     }),

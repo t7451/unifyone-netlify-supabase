@@ -11,7 +11,7 @@
  * log, rule create, etc.).
  */
 
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { getDb } from "./db";
 import {
   friendChallenges,
@@ -234,23 +234,14 @@ async function resolveOneFriendChallenge(
   const participantUsers = await db
     .select({ id: users.id, name: users.name })
     .from(users)
-    .where(
-      participantIds.length === 2
-        ? and(
-            eq(users.id, participantIds[0]),
-            eq(users.id, participantIds[1])
-          )
-        : eq(users.id, participantIds[0])
-    )
+    .where(inArray(users.id, participantIds))
     .limit(2);
 
   // Build a name lookup
   const nameMap = new Map<number, string>();
-  // Fetch both users individually since OR isn't trivially available here
-  const [u1] = await db.select({ id: users.id, name: users.name }).from(users).where(eq(users.id, fc.challengerId)).limit(1);
-  const [u2] = await db.select({ id: users.id, name: users.name }).from(users).where(eq(users.id, fc.challengeeId)).limit(1);
-  if (u1) nameMap.set(u1.id, u1.name ?? "Your opponent");
-  if (u2) nameMap.set(u2.id, u2.name ?? "Your opponent");
+  for (const participantUser of participantUsers) {
+    nameMap.set(participantUser.id, participantUser.name ?? "Your opponent");
+  }
 
   const challengerName = nameMap.get(fc.challengerId) ?? "Your opponent";
   const challengeeName = nameMap.get(fc.challengeeId) ?? "Your opponent";

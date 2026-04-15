@@ -1,14 +1,27 @@
-import { and, desc, eq, gte, like, sql, sum } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  like,
+  sql,
+  sum,
+} from "drizzle-orm";
 import type { NeonHttpDatabase } from "drizzle-orm/neon-http";
 import { logger } from "./_core/logger";
 // drizzle/neon-http loaded dynamically in getDb() to prevent cold-start crash
 import {
   analyticsEvents,
+  apiKeys,
   categories,
   customers,
   gigAIUsage,
   gigWorkerPlans,
   gigWorkerSubscriptions,
+  InsertApiKey,
   InsertGigAIUsage,
   InsertGigWorkerPlan,
   InsertGigWorkerSubscription,
@@ -259,6 +272,24 @@ export async function deleteProduct(id: number, tenantId: number) {
     .update(products)
     .set({ status: "archived" })
     .where(and(eq(products.id, id), eq(products.tenantId, tenantId)));
+}
+
+export async function bulkUpdateProductStatus(
+  tenantId: number,
+  ids: number[],
+  status: "active" | "draft" | "archived"
+) {
+  const db = await getDb();
+  if (!db || ids.length === 0) return 0;
+  const result = await db
+    .update(products)
+    .set({ status, updatedAt: new Date() })
+    .where(and(eq(products.tenantId, tenantId), inArray(products.id, ids)));
+  return result.rowCount ?? 0;
+}
+
+export async function bulkArchiveProducts(tenantId: number, ids: number[]) {
+  return bulkUpdateProductStatus(tenantId, ids, "archived");
 }
 
 export async function getProductCount(tenantId: number) {
@@ -721,6 +752,125 @@ export async function getAllWebhookEventsAdmin(limit = 50) {
     .from(webhookEvents)
     .orderBy(desc(webhookEvents.createdAt))
     .limit(limit);
+}
+
+/**
+ * Retrieve webhook events for a tenant with optional source/status/eventType filters.
+ */
+export async function getFilteredWebhookEvents(
+  tenantId: number,
+  opts: {
+    limit?: number;
+    source?: "stripe" | "shopify" | "n8n" | "internal";
+    status?: "pending" | "processed" | "failed" | "skipped";
+    search?: string;
+  } = {}
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const { limit = 50, source, status, search } = opts;
+
+  const conditions = [eq(webhookEvents.tenantId, tenantId)];
+  if (source) conditions.push(eq(webhookEvents.source, source));
+  if (status) conditions.push(eq(webhookEvents.status, status));
+  if (search) conditions.push(ilike(webhookEvents.eventType, `%${search}%`));
+
+  return db
+    .select()
+    .from(webhookEvents)
+    .where(and(...conditions))
+    .orderBy(desc(webhookEvents.createdAt))
+    .limit(limit);
+}
+
+/**
+ * Aggregate webhook event counts by status for a tenant.
+ */
+export async function getWebhookStats(tenantId: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, pending: 0, processed: 0, failed: 0, skipped: 0 };
+
+  const rows = await db
+    .select({
+      status: webhookEvents.status,
+      cnt: count(webhookEvents.id),
+    })
+    .from(webhookEvents)
+    .where(eq(webhookEvents.tenantId, tenantId))
+    .groupBy(webhookEvents.status);
+
+  const result = { total: 0, pending: 0, processed: 0, failed: 0, skipped: 0 };
+  for (const row of rows) {
+    const n = Number(row.cnt);
+    result.total += n;
+    if (row.status === "pending") result.pending = n;
+    else if (row.status === "processed") result.processed = n;
+    else if (row.status === "failed") result.failed = n;
+    else if (row.status === "skipped") result.skipped = n;
+  }
+  return result;
+}
+
+/**
+ * Mark a failed webhook event as pending so it can be retried.
+ * Only allows retrying events that belong to the given tenant.
+ */
+export async function retryWebhookEvent(id: number, tenantId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db
+    .update(webhookEvents)
+    .set({ status: "pending", error: null, processedAt: null })
+    .where(and(eq(webhookEvents.id, id), eq(webhookEvents.tenantId, tenantId)));
+}
+
+// ── API Keys ──────────────────────────────────────────────────────────────────
+export async function createApiKey(data: InsertApiKey) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(apiKeys).values(data).returning();
+  return result[0];
+}
+
+export async function getApiKeysByTenant(tenantId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(apiKeys)
+    .where(
+      and(eq(apiKeys.tenantId, tenantId), sql`${apiKeys.revokedAt} IS NULL`)
+    )
+    .orderBy(desc(apiKeys.createdAt));
+}
+
+export async function getApiKeyByHash(keyHash: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(apiKeys)
+    .where(and(eq(apiKeys.keyHash, keyHash), sql`${apiKeys.revokedAt} IS NULL`))
+    .limit(1);
+  return result[0];
+}
+
+export async function revokeApiKey(id: number, tenantId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(apiKeys)
+    .set({ revokedAt: new Date() })
+    .where(and(eq(apiKeys.id, id), eq(apiKeys.tenantId, tenantId)));
+}
+
+export async function touchApiKeyLastUsed(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(apiKeys)
+    .set({ lastUsedAt: new Date() })
+    .where(eq(apiKeys.id, id));
 }
 
 // ── Gig Worker Plans ──────────────────────────────────────────────────────────

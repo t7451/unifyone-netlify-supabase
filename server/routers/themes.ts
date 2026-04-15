@@ -1,16 +1,15 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import type Stripe from "stripe";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   themes, themeCategories, themeInstalls, themeReviews,
 } from "../../drizzle/schema";
 import { eq, and, desc, sql, asc } from "drizzle-orm";
-import Stripe from "stripe";
+import { getStripe } from "../_core/stripeClient";
 
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2025-01-27.acacia" as any })
-  : null;
+const stripe = getStripe();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function safeArray(val: unknown): string[] {
@@ -272,10 +271,10 @@ export const themesRouter = router({
       await db.insert(themes).values({
         ...input,
         authorId: ctx.user.id,
-        screenshotUrls: input.screenshotUrls as any,
-        tags: input.tags as any,
-        features: input.features as any,
-        techStack: input.techStack as any,
+        screenshotUrls: input.screenshotUrls,
+        tags: input.tags,
+        features: input.features,
+        techStack: input.techStack,
       });
       return { success: true };
     }),
@@ -310,7 +309,7 @@ export const themesRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const { id, ...rest } = input;
-      await db.update(themes).set(rest as any).where(eq(themes.id, id));
+      await db.update(themes).set(rest as Partial<typeof themes.$inferInsert>).where(eq(themes.id, id));
       return { success: true };
     }),
 

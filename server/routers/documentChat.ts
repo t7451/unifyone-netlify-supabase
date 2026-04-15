@@ -19,10 +19,11 @@ function cosineSimilarity(a: number[], b: number[]): number {
   return denominator === 0 ? 0 : dotProduct / denominator;
 }
 
-// Helper: Get embedding from Claude for a query
+// Helper: Get embedding for a query using a deterministic hash-based approach.
+// Claude does not expose a native embeddings API; for production-grade semantic
+// search use Voyage AI (voyageai.com) — Anthropic's recommended embeddings
+// provider — by calling their `voyage-3-large` model with the query text.
 async function getQueryEmbedding(query: string): Promise<number[]> {
-  // For now, use a simple hash-based approach (in production, call Claude embeddings API)
-  // This is a placeholder - you'd normally call Claude's embeddings endpoint
   const hash = Array.from(query).reduce((acc, char) => {
     return (acc << 5) - acc + char.charCodeAt(0);
   }, 0);

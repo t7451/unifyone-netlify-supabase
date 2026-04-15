@@ -66,6 +66,7 @@ import VideoProduction from "./pages/VideoProduction";
 import AdCopyHub from "./pages/AdCopyHub";
 import GovernanceDashboard from "./pages/GovernanceDashboard";
 import { DocsChat } from "./pages/DocsChat";
+import DeveloperHub from "./pages/DeveloperHub";
 import Pricing from "./pages/Pricing";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -80,20 +81,28 @@ function ProtectedRoute({
   component: React.ComponentType;
 }) {
   const { isAuthenticated, loading } = useAuth();
+
+  // Show spinner only while the initial auth check is in flight.
+  // A fetch timeout (set in main.tsx) guarantees this resolves within 15 s.
   if (loading)
     return (
       <div className="min-h-screen bg-[#0A1128] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-[#00D9FF] border-t-transparent rounded-full animate-spin" />
       </div>
     );
+
+  // After loading completes, if the user is not authenticated (including when
+  // the auth check failed / timed out and returned no cached data), redirect
+  // to login so the user is never stuck on a perpetual spinner.
   if (!isAuthenticated) {
     const returnTo =
-      location && location !== "/login"
-        ? `?returnTo=${encodeURIComponent(location)}`
+      window.location.pathname && window.location.pathname !== "/login"
+        ? `?returnTo=${encodeURIComponent(window.location.pathname)}`
         : "";
     window.location.href = `${getLoginUrl()}${returnTo}`;
     return null;
   }
+
   return <Component />;
 }
 
@@ -117,6 +126,8 @@ function TenantGuard({
   const hasTenant = tenants.data && tenants.data.length > 0;
   const isLoading = tenants.isLoading;
 
+  // Show spinner only while the initial fetch is in flight.
+  // A fetch timeout (set in main.tsx) guarantees this resolves within 15 s.
   if (isLoading)
     return (
       <div className="min-h-screen bg-[#0A1128] flex items-center justify-center">
@@ -124,6 +135,9 @@ function TenantGuard({
       </div>
     );
 
+  // On error or empty tenant list, redirect to setup.
+  // If the query errored (network/timeout), hasTenant is false and we fall
+  // through to the redirect — the user can retry from the setup page.
   if (!hasTenant) {
     navigate("/setup");
     return null;
@@ -140,7 +154,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/login" component={Login} />
+      <Route path="/login" component={() => <Login />} />
       <Route path="/signup">{() => <Login initialIntent="signup" />}</Route>
       <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/reset-password" component={ResetPassword} />
@@ -282,6 +296,10 @@ function Router() {
       <Route
         path="/ai-assistant"
         component={() => <DashboardRoute component={AIAssistant} />}
+      />
+      <Route
+        path="/developer"
+        component={() => <DashboardRoute component={DeveloperHub} />}
       />
       <Route path="/sovereign" component={Sovereign} />
       <Route path="/privacy" component={PrivacyPolicy} />

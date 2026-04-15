@@ -1,7 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  AreaChart,
   Area,
   XAxis,
   YAxis,
@@ -12,7 +11,7 @@ import {
   Bar,
   Line,
   ComposedChart,
-  Legend,
+  Legend
 } from "recharts";
 import { TrendingUp, DollarSign, ShoppingCart, Users, Package } from "lucide-react";
 

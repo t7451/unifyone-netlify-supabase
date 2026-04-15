@@ -110,7 +110,7 @@ export function registerShopifyRoutes(app: Express) {
 
   // ── Step 2: OAuth Callback (/api/shopify/callback) ─────────────────────────
   app.get("/api/shopify/callback", async (req: Request, res: Response) => {
-    const { shop, code, state, hmac } = req.query as Record<string, string>;
+    const { shop, code, state, hmac: _hmac } = req.query as Record<string, string>;
 
     // CSRF check
     const storedState = req.cookies?.shopify_oauth_state;

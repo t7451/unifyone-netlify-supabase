@@ -337,7 +337,7 @@ export async function registerCustomAuthFetchRoutes(
 
     // ── Reset Password ─────────────────────────────────────────────────────
     if (path === "/api/auth/reset-password") {
-      const rateCheck = passwordResetLimiter.check(clientIp);
+      const rateCheck = await passwordResetLimiter.check(clientIp);
       if (!rateCheck.allowed) {
         return Response.json(
           {
