@@ -9,6 +9,7 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 import "./lib/metaPixelInit";
+import "./lib/analyticsInit";
 
 const queryClient = new QueryClient();
 
