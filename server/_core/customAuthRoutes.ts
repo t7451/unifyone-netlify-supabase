@@ -91,7 +91,7 @@ export async function registerCustomAuthFetchRoutes(
   try {
     // ── Sign Up ────────────────────────────────────────────────────────────
     if (path === "/api/auth/signup") {
-      const rateCheck = authRateLimiter.check(clientIp);
+      const rateCheck = await authRateLimiter.check(clientIp);
       if (!rateCheck.allowed) {
         return Response.json(
           {
@@ -151,7 +151,7 @@ export async function registerCustomAuthFetchRoutes(
 
     // ── Sign In ────────────────────────────────────────────────────────────
     if (path === "/api/auth/signin") {
-      const rateCheck = authRateLimiter.check(clientIp);
+      const rateCheck = await authRateLimiter.check(clientIp);
       if (!rateCheck.allowed) {
         return Response.json(
           {
@@ -186,7 +186,7 @@ export async function registerCustomAuthFetchRoutes(
       }
 
       // On successful login reset the rate limit for this IP
-      authRateLimiter.reset(clientIp);
+      await authRateLimiter.reset(clientIp);
 
       const response = Response.json(
         {
@@ -295,7 +295,7 @@ export async function registerCustomAuthFetchRoutes(
 
     // ── Forgot Password ────────────────────────────────────────────────────
     if (path === "/api/auth/forgot-password") {
-      const rateCheck = passwordResetLimiter.check(clientIp);
+      const rateCheck = await passwordResetLimiter.check(clientIp);
       if (!rateCheck.allowed) {
         return Response.json(
           {
@@ -411,7 +411,7 @@ export async function registerCustomAuthFetchRoutes(
 
     // ── Resend Verification Email ──────────────────────────────────────────
     if (path === "/api/auth/resend-verification") {
-      const rateCheck = passwordResetLimiter.check(clientIp); // reuse same bucket
+      const rateCheck = await passwordResetLimiter.check(clientIp); // reuse same bucket
       if (!rateCheck.allowed) {
         return Response.json(
           {
