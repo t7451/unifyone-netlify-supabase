@@ -819,28 +819,36 @@ export async function incrementGigAIUsage(
 ) {
   const db = await getDb();
   if (!db) return;
-  const existing = await getGigAIUsage(userId, billingPeriod);
-  if (existing) {
-    await db
-      .update(gigAIUsage)
-      .set({
-        requestsUsed: existing.requestsUsed + 1,
-        tokensUsed: existing.tokensUsed + tokens,
-        lastContext: context ?? existing.lastContext,
-        updatedAt: new Date(),
-      })
-      .where(eq(gigAIUsage.id, existing.id));
-  } else {
-    const newRow: InsertGigAIUsage = {
-      userId,
-      billingPeriod,
-      requestsUsed: 1,
-      tokensUsed: tokens,
-      lastContext: context,
+
+  const updatedRows = await db
+    .update(gigAIUsage)
+    .set({
+      requestsUsed: sql`${gigAIUsage.requestsUsed} + 1`,
+      tokensUsed: sql`${gigAIUsage.tokensUsed} + ${tokens}`,
+      ...(context !== undefined ? { lastContext: context } : {}),
       updatedAt: new Date(),
-    };
-    await db.insert(gigAIUsage).values(newRow);
+    })
+    .where(
+      and(
+        eq(gigAIUsage.userId, userId),
+        eq(gigAIUsage.billingPeriod, billingPeriod)
+      )
+    )
+    .returning({ id: gigAIUsage.id });
+
+  if (updatedRows.length > 0) {
+    return;
   }
+
+  const newRow: InsertGigAIUsage = {
+    userId,
+    billingPeriod,
+    requestsUsed: 1,
+    tokensUsed: tokens,
+    lastContext: context,
+    updatedAt: new Date(),
+  };
+  await db.insert(gigAIUsage).values(newRow);
 }
 
 /** Seed the gig worker default plans if the table is empty. */
