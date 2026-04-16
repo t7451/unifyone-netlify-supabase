@@ -374,6 +374,11 @@ function ApiKeyDialog({
 }) {
   const [key, setKey] = useState("");
 
+  const handleClose = () => {
+    setKey("");
+    onClose();
+  };
+
   const handleSave = () => {
     if (!key.trim()) {
       toast.error("Please enter an API key");
@@ -384,7 +389,7 @@ function ApiKeyDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={v => { if (!v) { setKey(""); onClose(); } }}>
+    <Dialog open={open} onOpenChange={v => { if (!v) handleClose(); }}>
       <DialogContent className="sm:max-w-md bg-[#0F1729] border-white/10">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
@@ -430,7 +435,7 @@ function ApiKeyDialog({
           <Button
             variant="outline"
             className="border-white/10 text-gray-300"
-            onClick={() => { setKey(""); onClose(); }}
+            onClick={handleClose}
           >
             Cancel
           </Button>
@@ -557,7 +562,7 @@ export default function AuthorizationHub() {
 
   const handleApiKeySave = (key: string) => {
     if (!apiKeyDialog) return;
-    const hint = key.slice(-4);
+    const hint = key.length >= 4 ? key.slice(-4) : "****";
     setConnecting(apiKeyDialog.id);
     // Simulate a short async save (replace with real trpc call when wired)
     setTimeout(() => {
@@ -624,10 +629,11 @@ export default function AuthorizationHub() {
             Connection states shown here are UI-only indicators. To enable real
             OAuth flows and API calls, add the listed environment variables to
             your server&apos;s secrets vault (Netlify environment variables,
-            Docker env, or <code className="bg-amber-500/20 px-1 rounded font-mono">.env</code>
-            ) and wire the corresponding tRPC / backend handlers. Nothing in this
-            page makes live network requests to providers until that wiring is
-            complete.
+            Docker env, or{" "}
+            <code className="bg-amber-500/20 px-1 rounded font-mono">.env</code>
+            {" "}and wire the corresponding tRPC / backend handlers). Nothing in
+            this page makes live network requests to providers until that wiring
+            is complete.
           </p>
         </div>
       </div>
