@@ -1,9 +1,19 @@
 /**
  * Simple in-memory sliding-window rate limiter.
  *
- * Works for both the Express server and Netlify Functions (single-process).
- * Best-effort for multi-instance deployments — no cross-process state, but
- * still meaningfully limits single-IP brute-force attempts per instance.
+ * ⚠️ PRODUCTION WARNING: This in-memory rate limiter is NOT suitable for
+ * serverless deployments (Netlify Functions, AWS Lambda, etc.) because each
+ * function invocation starts a fresh process with empty memory.
+ *
+ * For production on Netlify:
+ * - Use Netlify's built-in rate limiting rules in netlify.toml
+ * - OR replace with Redis/Upstash-backed limiter for persistent state
+ * - OR use Cloudflare in front of Netlify for advanced rate limiting
+ *
+ * This implementation is acceptable for:
+ * - Local development
+ * - Single-server Docker deployments
+ * - Testing/staging environments
  *
  * Usage:
  *   const limiter = createRateLimiter({ maxAttempts: 5, windowMs: 15 * 60 * 1000 });
