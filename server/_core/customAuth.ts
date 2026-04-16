@@ -135,13 +135,17 @@ export async function signUp(
     const openId = generateOpenId();
     const displayName = name?.trim() || emailLower.split("@")[0];
 
+    // Auto-verify email if RESEND_API_KEY is not configured (dev mode / no email service)
+    const hasEmailService = Boolean(process.env.RESEND_API_KEY);
+    const emailVerified = !hasEmailService;
+
     await db.insert(users).values({
       openId,
       email: emailLower,
       passwordHash,
       name: displayName,
       loginMethod: "password",
-      emailVerified: false,
+      emailVerified,
       role: "user",
     });
 
@@ -216,7 +220,9 @@ export async function signIn(
     // Require email verification before granting a session.
     // The client should check for code === "email_not_verified" and offer
     // a "Resend verification email" button.
-    if (user.emailVerified === false) {
+    // ONLY enforce when email service is configured (RESEND_API_KEY is set)
+    const hasEmailService = Boolean(process.env.RESEND_API_KEY);
+    if (user.emailVerified === false && hasEmailService) {
       return {
         success: false,
         code: "email_not_verified",
