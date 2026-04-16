@@ -24,11 +24,11 @@
   status = 200
 
 # MCP (Model Context Protocol) server endpoint
-# mcp-server.ts uses in-code config { path: "/mcp" } — Netlify auto-routes it
-# This redirect is kept as a belt-and-suspenders fallback
+# mcp.mjs uses in-code config { path: "/mcp" } — Netlify auto-routes it.
+# This redirect is kept as a belt-and-suspenders fallback.
 [[redirects]]
   from = "/mcp"
-  to = "/.netlify/functions/mcp-server"
+  to = "/.netlify/functions/mcp"
   status = 200
   force = true
 
