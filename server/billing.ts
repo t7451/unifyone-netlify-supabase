@@ -14,16 +14,18 @@ import express, { Express, Request, Response } from "express";
 import { createClient } from "@supabase/supabase-js";
 import { errMsg } from "./_core/errors";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-03-25.dahlia" as any,
-});
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2026-03-25.dahlia" as Stripe.LatestApiVersion,
+    })
+  : null;
 
 function getBillingDb() {
-  const url =
-    process.env.SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    "https://denxakpahfmlsekxmubs.supabase.co";
+  const url = process.env.SUPABASE_URL || "";
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  if (!url || !key) {
+    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for billing features");
+  }
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
@@ -101,6 +103,10 @@ export function registerBillingRoutes(app: Express) {
     express.json(),
     async (req: Request, res: Response) => {
       try {
+        if (!stripe) {
+          return res.status(503).json({ error: "Stripe is not configured" });
+        }
+
         const { packageId, userEmail, userId, origin } = req.body as {
           packageId: PackageId;
           userEmail?: string;
@@ -112,7 +118,7 @@ export function registerBillingRoutes(app: Express) {
 
         const baseUrl =
           origin ||
-          process.env.NEXT_PUBLIC_APP_URL ||
+          process.env.PUBLIC_APP_URL ||
           "https://1commerce.online";
         const totalCredits = pkg.credits + pkg.bonus;
 
@@ -160,6 +166,10 @@ export function registerBillingRoutes(app: Express) {
     "/api/billing/webhook",
     express.raw({ type: "application/json" }),
     async (req: Request, res: Response) => {
+      if (!stripe) {
+        return res.status(503).json({ error: "Stripe is not configured" });
+      }
+
       const sig = req.headers["stripe-signature"] as string;
       let event: Stripe.Event;
       try {

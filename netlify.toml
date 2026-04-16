@@ -64,17 +64,19 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
 # Ensure webhook routes accept Stripe POST requests
+# Note: In production, these should be locked down to Stripe's IP ranges
+# For now, allowing all origins for webhook endpoints (verified by signature)
 [[headers]]
   for = "/api/stripe/*"
   [headers.values]
-    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Origin = "https://1commerce.online"
     Access-Control-Allow-Methods = "POST, GET, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, stripe-signature"
 
 [[headers]]
   for = "/api/billing/*"
   [headers.values]
-    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Origin = "https://1commerce.online"
     Access-Control-Allow-Methods = "POST, GET, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, stripe-signature"
 

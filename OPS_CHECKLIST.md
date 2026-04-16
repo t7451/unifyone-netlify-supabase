@@ -9,6 +9,7 @@ Use this checklist before shipping auth, billing, routing, or infrastructure cha
 - [ ] Confirm database connectivity values are present and current: DATABASE_URL
 - [ ] Confirm payment keys exist and are intentionally test or live: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, VITE_STRIPE_PUBLISHABLE_KEY, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET
 - [ ] Confirm Netlify base URL settings are correct for the active environment if a custom origin override is used: PUBLIC_APP_URL or APP_URL
+- [ ] Confirm COOKIE_DOMAIN is set correctly for production (e.g., .1commerce.online) to enable cross-subdomain sessions
 
 ## 2. Local Quality Gate
 

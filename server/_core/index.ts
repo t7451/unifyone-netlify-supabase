@@ -31,6 +31,41 @@ function validateEnv() {
       "[startup] DATABASE_URL is not set — database features will be unavailable."
     );
   }
+
+  // Production-only validation: warn about missing payment/OAuth keys
+  if (ENV.isProduction) {
+    const warnings: string[] = [];
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      warnings.push("STRIPE_SECRET_KEY is not set — Stripe payments will be unavailable");
+    }
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      warnings.push("STRIPE_WEBHOOK_SECRET is not set — Stripe webhooks will fail verification");
+    }
+    if (!process.env.PAYPAL_CLIENT_ID || !process.env.PAYPAL_CLIENT_SECRET) {
+      warnings.push("PAYPAL_CLIENT_ID/PAYPAL_CLIENT_SECRET not set — PayPal payments unavailable");
+    }
+    if (!process.env.SHOPIFY_API_KEY || !process.env.SHOPIFY_API_SECRET) {
+      warnings.push("SHOPIFY_API_KEY/SHOPIFY_API_SECRET not set — Shopify integration unavailable");
+    }
+
+    // OAuth validation (if these are set in env.ts, check them)
+    const oauthVars = [
+      'OAUTH_CLIENT_ID',
+      'OAUTH_CLIENT_SECRET', 
+      'OAUTH_AUTHORIZE_URL',
+      'OAUTH_TOKEN_URL',
+      'OAUTH_USERINFO_URL'
+    ];
+    const missingOAuth = oauthVars.filter(v => !process.env[v]);
+    if (missingOAuth.length > 0) {
+      warnings.push(`OAuth not configured (missing: ${missingOAuth.join(', ')}) — custom OAuth login unavailable`);
+    }
+
+    if (warnings.length > 0) {
+      logger.warn("[startup] Production environment warnings:", { warnings });
+    }
+  }
 }
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -68,9 +103,9 @@ async function startServer() {
   registerShopifyRoutes(app);
   // Register Square payment + webhook routes (webhook needs raw body for signature verification)
   registerSquareRoutes(app);
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Configure body parser with size limit (4MB for API calls; use presigned S3 URLs for large uploads)
+  app.use(express.json({ limit: "4mb" }));
+  app.use(express.urlencoded({ limit: "4mb", extended: true }));
   // Structured request/response logging (attaches X-Request-Id header)
   app.use(requestLogger);
   // OAuth callback under /api/oauth/callback
