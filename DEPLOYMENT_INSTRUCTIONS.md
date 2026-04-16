@@ -7,7 +7,8 @@ This document outlines the steps to deploy the governance system (Phases 40-44) 
 - Production database access (PostgreSQL / Neon)
 - Environment variables configured:
   - `DATABASE_URL` — PostgreSQL (Neon) connection string
-  - `OPENAI_API_KEY` — Claude API key for governance decisions
+  - `BUILT_IN_FORGE_API_KEY` — AI API key for governance decisions (replaces OPENAI_API_KEY)
+  - `BUILT_IN_FORGE_API_URL` — AI API endpoint (optional, defaults to Forge)
   - `RESEND_API_KEY` — Email service for notifications
   - `META_PIXEL_ID` — Meta pixel for tracking
   - `META_CAPI_ACCESS_TOKEN` — Meta CAPI token
@@ -16,24 +17,27 @@ This document outlines the steps to deploy the governance system (Phases 40-44) 
 
 ### Step 1: Database Migration
 
-Run the Drizzle schema migration to create the new governance tables:
+The governance tables are already defined in `drizzle/schema.ts`. Run the Drizzle push command to sync them to your database:
 
 ```bash
 # In production environment
-DATABASE_URL=<your-production-db-url> pnpm drizzle-kit push
+DATABASE_URL=<your-production-db-url> pnpm drizzle-kit push:pg
 ```
 
-This will create the following tables:
+This will create the following tables if they don't exist:
 - `audit_logs` — Operation audit trail
 - `escalation_queue` — Pending decisions requiring human approval
 - `decision_authority` — User permission matrix
 - `kill_switches` — Emergency operational controls
 - `governance_rules` — Governance rule definitions
+- `approval_workflows` — Multi-level approval tracking
 - `governance_metrics` — Computed metrics snapshots
+
+**Note:** The legacy `drizzle/governance-schema.sql` file contains MySQL syntax and should NOT be run directly. The governance tables are already in the TypeScript schema and will be created via `drizzle-kit push`.
 
 **Expected output:**
 ```
-✅ 6 tables created successfully
+✅ 7 tables created successfully
 ✅ All indexes created
 ✅ Foreign key constraints applied
 ```
@@ -221,8 +225,8 @@ DELETE FROM audit_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY);
 ### Issue: "Escalations not being created"
 
 **Solution:**
-1. Verify OPENAI_API_KEY is set
-2. Check server logs for Claude API errors
+1. Verify BUILT_IN_FORGE_API_KEY is set
+2. Check server logs for AI API errors
 3. Verify governance rules are seeded
 4. Test Claude integration directly:
    ```bash

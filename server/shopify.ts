@@ -36,8 +36,21 @@ function validateHmac(query: Record<string, string>): boolean {
 }
 
 // ─── Validate Webhook Signature ───────────────────────────────────────────────
+/**
+ * Validates Shopify webhook signature using HMAC-SHA256.
+ * IMPORTANT: Returns false if SHOPIFY_API_SECRET is not configured, which will
+ * reject all webhooks. This is intentional - webhooks should not be accepted
+ * if signature verification is not possible.
+ */
 export function validateShopifyWebhook(rawBody: Buffer, hmacHeader: string): boolean {
-  if (!SHOPIFY_API_SECRET) return false;
+  if (!SHOPIFY_API_SECRET) {
+    console.error("[Shopify] SHOPIFY_API_SECRET not configured - webhook rejected");
+    return false;
+  }
+  if (!hmacHeader) {
+    console.warn("[Shopify] Webhook missing x-shopify-hmac-sha256 header");
+    return false;
+  }
   const digest = crypto
     .createHmac("sha256", SHOPIFY_API_SECRET)
     .update(rawBody)
