@@ -12,9 +12,6 @@ export const API_BASE_URL =
 /** MCP JSON-RPC endpoint derived from the base URL. */
 export const MCP_ENDPOINT = `${API_BASE_URL}/mcp`;
 
-/** Health-probe endpoint derived from the base URL. */
-export const HEALTH_ENDPOINT = `${API_BASE_URL}/mcp/health`;
-
 /** Inbound / outbound API key — read from env at runtime. */
 export const MCP_API_KEY = process.env.MCP_API_KEY ?? "";
 

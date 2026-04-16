@@ -247,7 +247,7 @@ async function callTool(name, args) {
       // Stub: real implementation would call the LLM service / claudeGovernance router.
       // Returns a structured placeholder so callers can verify the tool is wired.
       return {
-        answer: `Kai received your question: "${args.question}". Connect BUILT_IN_FORGE_API_KEY to enable full AI responses.`,
+        answer: `Kai received your question: "${args.question}". Connect MCP_API_KEY and BUILT_IN_FORGE_API_KEY to enable full AI responses.`,
         model: "kai-stub",
         ts: new Date().toISOString(),
       };

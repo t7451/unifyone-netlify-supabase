@@ -19,6 +19,7 @@ export { registerOrderTools } from "./orders.js";
 export { registerCustomerTools } from "./customers.js";
 export { registerAnalyticsTools } from "./analytics.js";
 export { registerPlatformTools } from "./platform.js";
+export { apiFetch } from "./utils.js";
 
 /** Register every UnifyOne MCP tool on the provided server instance. */
 export function registerAllTools(server: McpServer): void {

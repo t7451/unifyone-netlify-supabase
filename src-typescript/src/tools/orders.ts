@@ -11,22 +11,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { API_BASE_URL, MCP_API_KEY } from "../constants.js";
-
-async function apiFetch(toolName: string, args: Record<string, unknown>) {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (MCP_API_KEY) headers["Authorization"] = `Bearer ${MCP_API_KEY}`;
-
-  const res = await fetch(`${API_BASE_URL}/mcp`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: toolName, arguments: args } }),
-  });
-  if (!res.ok) throw new Error(`API error ${res.status}`);
-  const json = (await res.json()) as { result?: { content?: Array<{ text: string }> } };
-  const text = json.result?.content?.[0]?.text ?? "{}";
-  return JSON.parse(text);
-}
+import { apiFetch } from "./utils.js";
 
 const orderItemSchema = z.object({
   product_id: z.number().int().positive(),
