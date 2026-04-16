@@ -6,6 +6,7 @@ import { jwtVerify, SignJWT } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
+import { getCookieHeader } from "../lib/cookieHeader";
 
 type SessionPayload = {
   openId: string;
@@ -112,18 +113,7 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
-    // Support both Express (IncomingHttpHeaders — plain object where
-    // req.headers.cookie is a string) and the Fetch API (Headers object where
-    // property access doesn't work; use .get('cookie') instead).
-    const rawHeaders = req.headers as unknown as {
-      cookie?: string;
-      get?: (name: string) => string | null;
-    };
-    const cookieHeader: string | undefined =
-      typeof rawHeaders.get === "function"
-        ? (rawHeaders.get("cookie") ?? undefined)
-        : rawHeaders.cookie;
-    const cookies = this.parseCookies(cookieHeader);
+    const cookies = this.parseCookies(getCookieHeader(req));
     const sessionCookie = cookies.get(COOKIE_NAME);
     const session = await this.verifySession(sessionCookie);
 

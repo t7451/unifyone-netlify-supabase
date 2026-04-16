@@ -10,6 +10,7 @@ import {
   getPlans,
   getPlanBySlug,
 } from "../db";
+import { getCookieHeader } from "../lib/cookieHeader";
 
 function getSupabaseAdmin() {
   const url =
@@ -136,7 +137,7 @@ export const subscriptionRouter = router({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Cookie: ctx.req.headers.cookie ?? "",
+          Cookie: getCookieHeader(ctx.req) ?? "",
         },
         body: JSON.stringify({
           priceId: resolvedPriceId,
@@ -185,7 +186,7 @@ export const subscriptionRouter = router({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Cookie: ctx.req.headers.cookie ?? "",
+          Cookie: getCookieHeader(ctx.req) ?? "",
         },
         body: JSON.stringify({
           customerId: tenant.stripeCustomerId,
