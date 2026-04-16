@@ -43,10 +43,10 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
-      // ctx.res is only available in the Express adapter.
-      // In the Netlify fetch adapter ctx.res is undefined — cookie clearing
-      // is handled client-side via the REST DELETE /api/auth/logout endpoint.
-      if (ctx.res && typeof (ctx.res as { clearCookie?: unknown }).clearCookie === "function") {
+      // ctx.res is only available in the Express adapter (local/Docker).
+      // In the Netlify fetch adapter ctx.res is undefined; the cookie is
+      // cleared by the /api/auth/logout non-tRPC route instead.
+      if (ctx.res && typeof ctx.res.clearCookie === "function") {
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       }
