@@ -157,7 +157,7 @@ export const manusAIRouter = router({
             const kaiCtx =
               await moneyManagerRouter._def.procedures.getKaiContext._def
                 .query({
-                  ctx: ctx as any,
+                  ctx: ctx,
                   input: {
                     context: input.context as
                       | "gig-command"

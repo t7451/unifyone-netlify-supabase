@@ -219,8 +219,8 @@ Consider factors like:
         violations: claudeDecision.violations,
         reasoning: claudeDecision.reasoning,
         recommendedAuthority: claudeDecision.recommendedAuthority,
-        escalationId: claudeDecision.requiresEscalation
-          ? (auditResult as any)?.insertId
+        escalationId: claudeDecision.requiresEscalation && auditResult
+          ? auditResult.id
           : null,
       };
     }),

@@ -55,7 +55,7 @@ export const emailRouter = router({
         }
 
         // Insert new subscriber
-        const result = await db.insert(emailSubscribers).values({
+        const [insertedSubscriber] = await db.insert(emailSubscribers).values({
           email: input.email,
           firstName: input.firstName || undefined,
           lastName: input.lastName || undefined,
@@ -63,7 +63,7 @@ export const emailRouter = router({
           metadata: input.metadata || undefined,
           status: "subscribed",
           dripsCompleted: 0,
-        });
+        }).returning({ id: emailSubscribers.id });
 
         // Send welcome email immediately
         await sendWelcomeEmail(input.email);
@@ -71,7 +71,7 @@ export const emailRouter = router({
         return {
           success: true,
           message: "Successfully subscribed! Check your email for a welcome message.",
-          subscriberId: (result as any).insertId,
+          subscriberId: insertedSubscriber?.id ?? null,
         };
       } catch (error) {
         console.error("[Email] Capture error:", error);

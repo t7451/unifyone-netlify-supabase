@@ -123,7 +123,7 @@ export const ordersRouter = router({
   })).mutation(async ({ ctx, input }) => {
     const tenantId = requireTenant(ctx.user.tenantId);
     const { id, ...data } = input;
-    await updateCustomer(id, tenantId, data as any);
+    await updateCustomer(id, tenantId, data);
     return { success: true };
   }),
 });

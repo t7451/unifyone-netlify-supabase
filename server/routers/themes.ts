@@ -272,10 +272,10 @@ export const themesRouter = router({
       await db.insert(themes).values({
         ...input,
         authorId: ctx.user.id,
-        screenshotUrls: input.screenshotUrls as any,
-        tags: input.tags as any,
-        features: input.features as any,
-        techStack: input.techStack as any,
+        screenshotUrls: input.screenshotUrls,
+        tags: input.tags,
+        features: input.features,
+        techStack: input.techStack,
       });
       return { success: true };
     }),
@@ -310,7 +310,7 @@ export const themesRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const { id, ...rest } = input;
-      await db.update(themes).set(rest as any).where(eq(themes.id, id));
+      await db.update(themes).set(rest).where(eq(themes.id, id));
       return { success: true };
     }),
 
