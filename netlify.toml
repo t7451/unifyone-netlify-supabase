@@ -64,8 +64,7 @@
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
 
 # Ensure webhook routes accept Stripe POST requests
-# Note: In production, these should be locked down to Stripe's IP ranges
-# For now, allowing all origins for webhook endpoints (verified by signature)
+# CORS is locked down to production domain - webhooks are verified by signature
 [[headers]]
   for = "/api/stripe/*"
   [headers.values]

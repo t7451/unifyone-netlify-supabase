@@ -51,11 +51,27 @@ export function validateShopifyWebhook(rawBody: Buffer, hmacHeader: string): boo
     console.warn("[Shopify] Webhook missing x-shopify-hmac-sha256 header");
     return false;
   }
-  const digest = crypto
-    .createHmac("sha256", SHOPIFY_API_SECRET)
-    .update(rawBody)
-    .digest("base64");
-  return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(hmacHeader));
+  
+  try {
+    const digest = crypto
+      .createHmac("sha256", SHOPIFY_API_SECRET)
+      .update(rawBody)
+      .digest("base64");
+    
+    // Both values must be base64-decoded for safe comparison
+    const digestBuffer = Buffer.from(digest, "base64");
+    const hmacBuffer = Buffer.from(hmacHeader, "base64");
+    
+    // timingSafeEqual requires buffers of equal length
+    if (digestBuffer.length !== hmacBuffer.length) {
+      return false;
+    }
+    
+    return crypto.timingSafeEqual(digestBuffer, hmacBuffer);
+  } catch (err) {
+    console.error("[Shopify] Webhook validation error:", err);
+    return false;
+  }
 }
 
 // ─── Log Sync Event Helper ────────────────────────────────────────────────────

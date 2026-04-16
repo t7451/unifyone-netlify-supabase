@@ -24,7 +24,7 @@ function getBillingDb() {
   const url = process.env.SUPABASE_URL || "";
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
   if (!url || !key) {
-    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for billing features");
+    return null;
   }
   return createClient(url, key, { auth: { persistSession: false } });
 }
@@ -116,10 +116,17 @@ export function registerBillingRoutes(app: Express) {
         const pkg = findPackage(packageId);
         if (!pkg) return res.status(400).json({ error: "Invalid packageId" });
 
-        const baseUrl =
-          origin ||
-          process.env.PUBLIC_APP_URL ||
-          "https://1commerce.online";
+        // Security: Validate origin against allowlist to prevent redirect attacks
+        const allowedOrigins = [
+          process.env.PUBLIC_APP_URL,
+          "https://1commerce.online",
+          "https://unifyone.netlify.app",
+        ].filter(Boolean);
+        
+        const baseUrl = (origin && allowedOrigins.includes(origin))
+          ? origin
+          : (process.env.PUBLIC_APP_URL || "https://1commerce.online");
+        
         const totalCredits = pkg.credits + pkg.bonus;
 
         const session = await stripe.checkout.sessions.create({
@@ -191,6 +198,11 @@ export function registerBillingRoutes(app: Express) {
 
       try {
         const db = getBillingDb();
+        if (!db) {
+          console.error("[Billing Webhook] Billing service not configured");
+          return res.status(503).json({ error: "Billing service not configured" });
+        }
+        
         const userId = session.metadata?.user_id;
         const credits = parseFloat(session.metadata?.credits || "0");
         const bonus = parseFloat(session.metadata?.bonus || "0");
@@ -256,6 +268,10 @@ export function registerBillingRoutes(app: Express) {
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
     const db = getBillingDb();
+    if (!db) {
+      return res.status(503).json({ error: "Billing service not configured" });
+    }
+    
     if (req.query.view === "history") {
       const limit = Math.min(
         parseInt((req.query.limit as string) || "50"),

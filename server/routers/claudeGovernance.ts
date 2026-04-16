@@ -187,8 +187,9 @@ Consider factors like:
         .returning();
 
       // ── Create escalation queue entry if needed ─────────────────────────────
+      let escalationQueueId: number | null = null;
       if (claudeDecision.requiresEscalation && auditResult?.id) {
-        await db.insert(escalationQueue).values({
+        const [escalationRecord] = await db.insert(escalationQueue).values({
           auditLogId: auditResult.id,
           decisionType: input.actionType,
           decisionContext: {
@@ -204,7 +205,8 @@ Consider factors like:
             Date.now() +
               (input.urgency === "critical" ? 1 : 12) * 60 * 60 * 1000
           ),
-        });
+        }).returning({ id: escalationQueue.id });
+        escalationQueueId = escalationRecord?.id ?? null;
       }
 
       return {
@@ -219,9 +221,7 @@ Consider factors like:
         violations: claudeDecision.violations,
         reasoning: claudeDecision.reasoning,
         recommendedAuthority: claudeDecision.recommendedAuthority,
-        escalationId: claudeDecision.requiresEscalation && auditResult
-          ? auditResult.id
-          : null,
+        escalationId: escalationQueueId,
       };
     }),
 
