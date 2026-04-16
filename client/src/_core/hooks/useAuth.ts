@@ -29,7 +29,10 @@ export function useAuth(options?: UseAuthOptions) {
     try {
       // Sign out of Supabase (clears client-side tokens)
       await supabase.auth.signOut();
-      // Clear the server-side session cookie
+      // Clear the server-side session cookie. In Express (local/Docker) the
+      // tRPC mutation clears it via ctx.res.clearCookie. In the Netlify fetch
+      // adapter ctx.res is unavailable, so the /api/auth/logout non-tRPC route
+      // handles cookie clearing; the mutation still returns { success: true }.
       await logoutMutation.mutateAsync();
     } catch (error: unknown) {
       if (
