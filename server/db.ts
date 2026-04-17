@@ -22,7 +22,6 @@ import {
   gigWorkerPlans,
   gigWorkerSubscriptions,
   InsertApiKey,
-  InsertGigAIUsage,
   InsertGigWorkerPlan,
   InsertGigWorkerSubscription,
   InsertOrder,

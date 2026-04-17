@@ -6,6 +6,7 @@ import { jwtVerify, SignJWT } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
+import { getCookieHeader } from "../lib/cookieHeader";
 
 type SessionPayload = {
   openId: string;
@@ -112,7 +113,7 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
-    const cookies = this.parseCookies(req.headers.cookie);
+    const cookies = this.parseCookies(getCookieHeader(req));
     const sessionCookie = cookies.get(COOKIE_NAME);
     const session = await this.verifySession(sessionCookie);
 

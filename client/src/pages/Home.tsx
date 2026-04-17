@@ -8,6 +8,7 @@ import { TIERS } from "@/content/pricing";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import BuildProcessAnimation from "@/components/BuildProcessAnimation";
 
 const CANONICAL = `${SITE_URL}/`;
 
@@ -304,6 +305,20 @@ export default function Home() {
               </p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── BUILD PROCESS ANIMATION ──────────────────────────────────────── */}
+      <section
+        style={{
+          padding: "6rem 0",
+          borderTop: "1px solid #242424",
+          borderBottom: "1px solid #242424",
+          backgroundColor: "#030303",
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <BuildProcessAnimation />
         </div>
       </section>
 

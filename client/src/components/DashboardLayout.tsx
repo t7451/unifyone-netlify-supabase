@@ -56,6 +56,7 @@ import {
   Star,
   X,
   Code2,
+  ShieldCheck,
 } from "lucide-react";
 import { AIChatBox } from "@/components/AIChatBox";
 import type { Message } from "@/components/AIChatBox";
@@ -96,6 +97,7 @@ const menuItems = [
   { icon: UserRound, label: "Friends & Social", path: "/friends" },
   { icon: Smartphone, label: "Mobile Automation", path: "/mobile-automation" },
   { icon: Sparkles, label: "AI Assistant", path: "/ai-assistant" },
+  { icon: ShieldCheck, label: "Authorization Hub", path: "/auth-hub" },
   { icon: Code2, label: "Developer Hub", path: "/developer" },
 ];
 
