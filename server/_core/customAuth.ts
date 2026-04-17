@@ -14,7 +14,7 @@ import { eq } from "drizzle-orm";
 import { users } from "../../drizzle/schema";
 import { sdk } from "./sdk";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import { getAppUrl } from "./env";
+import { getAppUrl, ENV } from "./env";
 import { logger } from "./logger";
 
 const scryptAsync = promisify(scrypt);
@@ -86,6 +86,7 @@ export type AuthResult = {
     openId: string;
     email: string;
     name: string;
+    emailVerified?: boolean;
   };
 };
 
@@ -135,9 +136,17 @@ export async function signUp(
     const openId = generateOpenId();
     const displayName = name?.trim() || emailLower.split("@")[0];
 
-    // Auto-verify email if RESEND_API_KEY is not configured (dev mode / no email service)
+    // Auto-verify email if email service is not configured AND we're not in production
+    // This prevents accidental email verification bypass in production due to misconfiguration
     const hasEmailService = Boolean(process.env.RESEND_API_KEY);
-    const emailVerified = !hasEmailService;
+    const shouldAutoVerify = !hasEmailService && !ENV.isProduction;
+    const emailVerified = shouldAutoVerify;
+
+    if (shouldAutoVerify) {
+      logger.warn(
+        "customAuth: Email verification disabled (RESEND_API_KEY not set in non-production environment). Users will be auto-verified."
+      );
+    }
 
     await db.insert(users).values({
       openId,
@@ -159,7 +168,7 @@ export async function signUp(
     return {
       success: true,
       sessionToken,
-      user: { openId, email: emailLower, name: displayName },
+      user: { openId, email: emailLower, name: displayName, emailVerified },
     };
   } catch (err: unknown) {
     logger.error("customAuth: signUp failed", {
@@ -220,15 +229,24 @@ export async function signIn(
     // Require email verification before granting a session.
     // The client should check for code === "email_not_verified" and offer
     // a "Resend verification email" button.
-    // ONLY enforce when email service is configured (RESEND_API_KEY is set)
+    // ONLY enforce when email service is configured OR in production mode
     const hasEmailService = Boolean(process.env.RESEND_API_KEY);
-    if (user.emailVerified === false && hasEmailService) {
+    const shouldEnforceVerification = hasEmailService || ENV.isProduction;
+    
+    if (user.emailVerified === false && shouldEnforceVerification) {
       return {
         success: false,
         code: "email_not_verified",
         error:
           "Please verify your email address before signing in. Check your inbox for a verification link.",
       };
+    }
+
+    if (user.emailVerified === false && !shouldEnforceVerification) {
+      logger.warn(
+        "customAuth: Allowing unverified user to sign in (email verification disabled in non-production without RESEND_API_KEY)",
+        { email: emailLower }
+      );
     }
 
     // Update last signed in

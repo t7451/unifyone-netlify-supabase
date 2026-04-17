@@ -71,14 +71,15 @@ export default function AuthCallback() {
         const returnTo = getReturnTo();
 
         // Check for error param from failed auth attempts
-        if (params.get("error")) {
+        const errorParam = params.get("error");
+        if (errorParam) {
           if (!cancelled) {
-            navigate(`/login?error=${params.get("error")}`);
+            navigate(`/login?error=${encodeURIComponent(errorParam)}`);
           }
           return;
         }
 
-        // If no special params, just redirect to login
+        // If no special params, redirect to returnTo (defaults to /dashboard)
         // Email verification is handled by /verify-email route
         // Password reset is handled by /reset-password route
         if (!cancelled) {

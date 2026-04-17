@@ -29,7 +29,7 @@ UnifyOne uses **custom JWT-based authentication** with email/password as the pri
 
 - **Login Page**: `client/src/pages/Login.tsx` — calls `/api/auth/signin` or `/api/auth/signup`
 - **Auth Hook**: `client/src/_core/hooks/useAuth.ts` — provides `user`, `loading`, `logout()`, `isAuthenticated`
-- **Session Storage**: HTTP-only cookie (`unifyone-session`)
+- **Session Storage**: HTTP-only cookie (`app_session_id`)
 
 ## Email Verification Behavior
 
