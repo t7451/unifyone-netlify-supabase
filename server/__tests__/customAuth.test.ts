@@ -185,6 +185,34 @@ describe("signUp", () => {
     });
     expect(typeof result.user?.openId).toBe("string");
   });
+
+  it("auto-verifies email when RESEND_API_KEY is NOT set and NODE_ENV is NOT production", async () => {
+    delete process.env.RESEND_API_KEY;
+    process.env.NODE_ENV = "development";
+    _dbState.selectResult = [];
+    const result = await signUp("new@example.com", "securepass", "New User");
+    expect(result.success).toBe(true);
+    expect(result.user?.emailVerified).toBe(true);
+  });
+
+  it("does NOT auto-verify email when RESEND_API_KEY is set", async () => {
+    process.env.RESEND_API_KEY = "re_mock_key";
+    _dbState.selectResult = [];
+    const result = await signUp("new@example.com", "securepass", "New User");
+    expect(result.success).toBe(true);
+    expect(result.user?.emailVerified).toBe(false);
+    delete process.env.RESEND_API_KEY;
+  });
+
+  it("does NOT auto-verify email in production mode even without RESEND_API_KEY", async () => {
+    delete process.env.RESEND_API_KEY;
+    process.env.NODE_ENV = "production";
+    _dbState.selectResult = [];
+    const result = await signUp("new@example.com", "securepass", "New User");
+    expect(result.success).toBe(true);
+    expect(result.user?.emailVerified).toBe(false);
+    delete process.env.NODE_ENV;
+  });
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -243,7 +271,9 @@ describe("signIn", () => {
     expect(result.error).toMatch(/invalid/i);
   });
 
-  it("returns { success: false, code: 'email_not_verified' } when emailVerified === false", async () => {
+  it("returns { success: false, code: 'email_not_verified' } when emailVerified === false and RESEND_API_KEY is set", async () => {
+    // Set RESEND_API_KEY to enable verification enforcement
+    process.env.RESEND_API_KEY = "re_mock_key";
     const realHash = await hashPassword("mypassword");
     _dbState.selectResult = [
       {
@@ -257,6 +287,46 @@ describe("signIn", () => {
     const result = await signIn("unverified@example.com", "mypassword");
     expect(result.success).toBe(false);
     expect(result.code).toBe("email_not_verified");
+    delete process.env.RESEND_API_KEY;
+  });
+
+  it("allows unverified users to sign in when RESEND_API_KEY is NOT set and NODE_ENV is NOT production", async () => {
+    // Ensure we're not in production and no email service
+    delete process.env.RESEND_API_KEY;
+    process.env.NODE_ENV = "development";
+    const realHash = await hashPassword("mypassword");
+    _dbState.selectResult = [
+      {
+        openId: "unverified-user",
+        email: "unverified@example.com",
+        passwordHash: realHash,
+        emailVerified: false,
+        name: "Unverified",
+      },
+    ];
+    const result = await signIn("unverified@example.com", "mypassword");
+    expect(result.success).toBe(true);
+    expect(result.sessionToken).toBe("mock-session-token");
+  });
+
+  it("returns { success: false, code: 'email_not_verified' } when emailVerified === false in production even without RESEND_API_KEY", async () => {
+    // Production mode should enforce verification regardless of RESEND_API_KEY
+    delete process.env.RESEND_API_KEY;
+    process.env.NODE_ENV = "production";
+    const realHash = await hashPassword("mypassword");
+    _dbState.selectResult = [
+      {
+        openId: "unverified-user",
+        email: "unverified@example.com",
+        passwordHash: realHash,
+        emailVerified: false,
+        name: "Unverified",
+      },
+    ];
+    const result = await signIn("unverified@example.com", "mypassword");
+    expect(result.success).toBe(false);
+    expect(result.code).toBe("email_not_verified");
+    delete process.env.NODE_ENV;
   });
 
   it("returns { success: true, sessionToken, user } on happy path", async () => {

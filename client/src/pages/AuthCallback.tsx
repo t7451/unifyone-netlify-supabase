@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { supabase } from "@/lib/supabaseClient";
 
 function LogoMark({ size = 48 }: { size?: number }) {
   return (
@@ -42,21 +41,6 @@ const STEPS = [
   "Loading your workspace...",
 ];
 
-async function exchangeSupabaseSession(): Promise<boolean> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session?.access_token) return false;
-
-  const res = await fetch("/api/auth/supabase-session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ access_token: session.access_token }),
-  });
-  return res.ok;
-}
-
 function getReturnTo(): string {
   const params = new URLSearchParams(window.location.search);
   const returnTo = params.get("returnTo");
@@ -84,62 +68,22 @@ export default function AuthCallback() {
     async function handleCallback() {
       try {
         const params = new URLSearchParams(window.location.search);
-        const tokenHash = params.get("token_hash");
-        const type = params.get("type");
-        const code = params.get("code");
         const returnTo = getReturnTo();
 
-        // Handle magic link / email confirmation via token_hash
-        if (tokenHash) {
-          const otpType =
-            (type as "magiclink" | "email" | "signup" | "recovery") ||
-            "magiclink";
-          const { error: verifyError } = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: otpType,
-          });
-
-          if (verifyError) {
-            if (!cancelled) {
-              navigate("/login?error=invalid_link");
-            }
-            return;
+        // Check for error param from failed auth attempts
+        const errorParam = params.get("error");
+        if (errorParam) {
+          if (!cancelled) {
+            navigate(`/login?error=${encodeURIComponent(errorParam)}`);
           }
-
-          // Password recovery: user clicked reset link in email.
-          // Supabase sets the session; redirect to settings where they can
-          // update their password, or back to login if you prefer a
-          // dedicated reset page.
-          if (otpType === "recovery") {
-            const exchanged = await exchangeSupabaseSession();
-            if (!cancelled) {
-              navigate(exchanged ? "/settings" : "/login?error=invalid_link");
-            }
-            return;
-          }
+          return;
         }
 
-        // Handle PKCE code exchange
-        if (code) {
-          const { error: exchangeError } =
-            await supabase.auth.exchangeCodeForSession(code);
-          if (exchangeError) {
-            if (!cancelled) {
-              navigate("/login?error=invalid_link");
-            }
-            return;
-          }
-        }
-
-        // Exchange the Supabase session for the app's session cookie
-        const exchanged = await exchangeSupabaseSession();
-
-        if (cancelled) return;
-
-        if (exchanged) {
+        // If no special params, redirect to returnTo (defaults to /dashboard)
+        // Email verification is handled by /verify-email route
+        // Password reset is handled by /reset-password route
+        if (!cancelled) {
           navigate(returnTo);
-        } else {
-          setError("Failed to create session. Please try signing in again.");
         }
       } catch (err) {
         if (!cancelled) {
