@@ -1,0 +1,83 @@
+---
+import Base from "../layouts/Base.astro";
+import FAQ from "../components/astro/FAQ.astro";
+import { breadcrumb, canonical, faqPage, type FaqItem } from "../lib/seo";
+
+const faqs: FaqItem[] = [
+  {
+    question: "Which apps can UnifyOne pull from?",
+    answer:
+      "Uber, Lyft, DoorDash, Instacart, Grubhub, and Spark. We read earnings, payouts, and trip-level data — never card numbers or driver licenses.",
+  },
+  {
+    question: "Can Kai tell me my real hourly?",
+    answer:
+      "Yes. Kai nets out gas, mileage depreciation, platform fees, and tips to give you a true $/hr across apps and time ranges.",
+  },
+  {
+    question: "Does it handle multi-app days?",
+    answer:
+      "Yes. Kai stitches shifts across platforms so you see total take-home per day, not per-app silos.",
+  },
+];
+
+const bc = breadcrumb([
+  { name: "Home", url: canonical("/") },
+  { name: "Gig workers", url: canonical("/gig-workers") },
+]);
+---
+
+<Base
+  title="Gig workers — UnifyOne"
+  description="One app to see your real earnings across Uber, Lyft, DoorDash, Instacart, and more. Kai tracks every deduction so you know your true hourly."
+  canonicalUrl={canonical("/gig-workers")}
+  jsonLd={[bc, faqPage(faqs)]}
+>
+  <section class="bg-navy-500 text-white py-20">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <p class="text-xs uppercase tracking-[0.2em] text-teal-300 mb-4">
+        For drivers & gig workers
+      </p>
+      <h1 class="text-4xl md:text-5xl font-bold">
+        Know your real hourly across every app
+      </h1>
+      <p class="mt-6 text-navy-100 text-lg">
+        Uber said you earned $240. After gas, fees, and mileage — was it really
+        $14/hr or $28/hr? Kai does the math with your actual numbers.
+      </p>
+      <a
+        href="/sign-up"
+        class="inline-block mt-8 bg-teal-400 hover:bg-teal-500 text-white font-semibold px-6 py-3 rounded-md transition-colors"
+      >
+        Start free
+      </a>
+    </div>
+  </section>
+
+  <section class="bg-white py-20">
+    <div class="max-w-4xl mx-auto px-4 grid md:grid-cols-3 gap-8">
+      <article>
+        <h3 class="font-semibold text-navy-500">Per-app P&amp;L</h3>
+        <p class="mt-2 text-navy-400 text-sm">
+          See which platform pays best in your zone, at what time, after fees.
+        </p>
+      </article>
+      <article>
+        <h3 class="font-semibold text-navy-500">Mileage-aware math</h3>
+        <p class="mt-2 text-navy-400 text-sm">
+          Auto-tracks miles and depreciation so Kai's numbers match your tax
+          return.
+        </p>
+      </article>
+      <article>
+        <h3 class="font-semibold text-navy-500">Quarterly-tax heads-up</h3>
+        <p class="mt-2 text-navy-400 text-sm">
+          Kai warns you before 1099 estimated payments come due — never get
+          surprised by the IRS.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <FAQ faqs={faqs} />
+</Base>

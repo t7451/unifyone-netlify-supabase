@@ -1,0 +1,52 @@
+---
+import Base from "../layouts/Base.astro";
+import PricingTable from "../components/astro/PricingTable.astro";
+import FAQ from "../components/astro/FAQ.astro";
+import { breadcrumb, canonical, faqPage, type FaqItem } from "../lib/seo";
+
+const faqs: FaqItem[] = [
+  {
+    question: "Can I change plans later?",
+    answer:
+      "Yes — upgrade or downgrade anytime. Proration is handled automatically.",
+  },
+  {
+    question: "What counts as a Kai credit?",
+    answer:
+      "One credit = one Kai query or API call up to the standard context size. Deep analysis runs may consume more credits.",
+  },
+  {
+    question: "Do credits roll over?",
+    answer:
+      "Credits reset monthly on Starter and Pro. Scale includes a rollover buffer.",
+  },
+  {
+    question: "Is there a free trial on paid plans?",
+    answer:
+      "Pro includes a 14-day free trial. Scale customers can request a longer pilot — contact sales.",
+  },
+];
+
+const bc = breadcrumb([
+  { name: "Home", url: canonical("/") },
+  { name: "Pricing", url: canonical("/pricing") },
+]);
+---
+
+<Base
+  title="Pricing — UnifyOne"
+  description="Simple monthly plans. Starter is free. Pro is $19/mo. Scale is $99/mo with API access. Every plan includes the same Kai intelligence."
+  canonicalUrl={canonical("/pricing")}
+  jsonLd={[bc, faqPage(faqs)]}
+>
+  <div class="bg-navy-500 text-white py-16">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <h1 class="text-4xl md:text-5xl font-bold">Pricing</h1>
+      <p class="mt-4 text-navy-100 text-lg">
+        Pick the volume that fits. Upgrade, downgrade, or cancel anytime.
+      </p>
+    </div>
+  </div>
+  <PricingTable />
+  <FAQ faqs={faqs} />
+</Base>

@@ -1,0 +1,15 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@seo/*": ["../../packages/seo/src/*"]
+    },
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "types": ["astro/client", "node"]
+  },
+  "include": ["src/**/*", "./astro.config.mjs", "./drizzle.config.ts"],
+  "exclude": ["dist", "node_modules"]
+}

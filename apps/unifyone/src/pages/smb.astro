@@ -1,0 +1,83 @@
+---
+import Base from "../layouts/Base.astro";
+import FAQ from "../components/astro/FAQ.astro";
+import { breadcrumb, canonical, faqPage, type FaqItem } from "../lib/seo";
+
+const faqs: FaqItem[] = [
+  {
+    question: "Does this work for Shopify stores?",
+    answer:
+      "Yes — Shopify is a primary integration. Kai pulls orders, payouts, and fees into a single margin view.",
+  },
+  {
+    question: "Can Kai attribute ad spend?",
+    answer:
+      "Meta and Google Ads are supported at SKU / campaign granularity. Kai tells you when a SKU stops being profitable after ads.",
+  },
+  {
+    question: "How many team seats are included?",
+    answer:
+      "Scale includes 5 seats. Additional seats are $10/mo. Enterprise plans are available — contact sales.",
+  },
+];
+
+const bc = breadcrumb([
+  { name: "Home", url: canonical("/") },
+  { name: "SMB", url: canonical("/smb") },
+]);
+---
+
+<Base
+  title="Small business — UnifyOne"
+  description="True margin on every SKU after Stripe fees, returns, and ad spend. UnifyOne's Kai answers the questions your Shopify dashboard doesn't."
+  canonicalUrl={canonical("/smb")}
+  jsonLd={[bc, faqPage(faqs)]}
+>
+  <section class="bg-navy-500 text-white py-20">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <p class="text-xs uppercase tracking-[0.2em] text-teal-300 mb-4">
+        For small business owners
+      </p>
+      <h1 class="text-4xl md:text-5xl font-bold">
+        Know your real margin, not the top-line number
+      </h1>
+      <p class="mt-6 text-navy-100 text-lg">
+        Shopify says you did $50k last month. After Stripe fees, returns, and
+        Meta Ads, was it actually profitable? Kai shows you.
+      </p>
+      <a
+        href="/sign-up"
+        class="inline-block mt-8 bg-teal-400 hover:bg-teal-500 text-white font-semibold px-6 py-3 rounded-md transition-colors"
+      >
+        Start free
+      </a>
+    </div>
+  </section>
+
+  <section class="bg-white py-20">
+    <div class="max-w-4xl mx-auto px-4 grid md:grid-cols-3 gap-8">
+      <article>
+        <h3 class="font-semibold text-navy-500">True SKU margin</h3>
+        <p class="mt-2 text-navy-400 text-sm">
+          Per-SKU profitability after fees, returns, and attributed ad spend.
+        </p>
+      </article>
+      <article>
+        <h3 class="font-semibold text-navy-500">Cash timing</h3>
+        <p class="mt-2 text-navy-400 text-sm">
+          Kai maps payout cadences (Stripe, Shopify, PayPal) to predict
+          available cash on any future date.
+        </p>
+      </article>
+      <article>
+        <h3 class="font-semibold text-navy-500">Anomaly alerts</h3>
+        <p class="mt-2 text-navy-400 text-sm">
+          Refund spike, chargeback anomaly, or ad efficiency drop — Kai pings
+          you before the month ends.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <FAQ faqs={faqs} />
+</Base>

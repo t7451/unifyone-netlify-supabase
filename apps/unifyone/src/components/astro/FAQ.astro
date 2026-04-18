@@ -1,0 +1,75 @@
+---
+interface Props {
+  faqs?: { question: string; answer: string }[];
+}
+
+const defaultFaqs = [
+  {
+    question: "What makes Kai different from ChatGPT for money?",
+    answer:
+      "Kai is grounded in your actual earnings data — shift payouts, deductions, platform fees, tax withholdings. Generic chatbots guess; Kai cites YOUR numbers.",
+  },
+  {
+    question: "Which platforms do you connect to?",
+    answer:
+      "At launch: Uber, Lyft, DoorDash, Instacart, Shopify, Stripe, Square, PayPal. More gig and e-commerce platforms are added each month.",
+  },
+  {
+    question: "Is my financial data safe?",
+    answer:
+      "Yes. Data is encrypted at rest and in transit, stored on isolated Neon Postgres instances, and never sold or shared. You can export or delete everything at any time.",
+  },
+  {
+    question: "Do I need to be a developer to use UnifyOne?",
+    answer:
+      "No. The consumer app is built for drivers, freelancers, and SMB owners. The API is a separate product for developers who want to embed Kai in their own tools.",
+  },
+  {
+    question: "How does billing work?",
+    answer:
+      "Monthly subscription with a Kai credit allowance per tier. Credits cover API calls and deep analysis runs. Unused credits reset monthly on Starter and Pro; Scale includes a rollover buffer.",
+  },
+  {
+    question: "Can I cancel anytime?",
+    answer:
+      "Yes — one click in settings, no phone calls, no retention dance. Your data remains exportable for 30 days after cancellation.",
+  },
+  {
+    question: "When is general availability?",
+    answer:
+      "We're in private beta now, rolling out to waitlist in priority order. Join the waitlist to reserve your spot and lock in launch pricing.",
+  },
+  {
+    question: "Do you have a refund policy?",
+    answer:
+      "14-day money-back guarantee on Pro and Scale. Starter is free forever.",
+  },
+];
+
+const { faqs = defaultFaqs } = Astro.props as Props;
+---
+
+<section class="bg-white py-20">
+  <div class="max-w-3xl mx-auto px-4">
+    <h2 class="text-3xl md:text-4xl font-bold text-navy-500 text-center">
+      Frequently asked
+    </h2>
+    <div class="mt-12 space-y-3">
+      {
+        faqs.map((f) => (
+          <details class="group rounded-xl border border-navy-100 open:border-teal-300">
+            <summary class="cursor-pointer list-none p-5 flex items-center justify-between text-navy-500 font-semibold">
+              <span>{f.question}</span>
+              <span class="text-teal-400 transition-transform group-open:rotate-45 text-2xl leading-none">
+                +
+              </span>
+            </summary>
+            <div class="px-5 pb-5 text-navy-400 leading-relaxed">
+              {f.answer}
+            </div>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>

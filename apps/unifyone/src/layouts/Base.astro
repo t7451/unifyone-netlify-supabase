@@ -1,0 +1,71 @@
+---
+import "../styles/global.css";
+import Nav from "../components/astro/Nav.astro";
+import Footer from "../components/astro/Footer.astro";
+import { buildMeta, organization, website } from "../lib/seo";
+
+interface Props {
+  title: string;
+  description: string;
+  canonicalUrl: string;
+  ogImage?: string;
+  jsonLd?: unknown[];
+  type?: "website" | "article";
+}
+
+const { title, description, canonicalUrl, ogImage, jsonLd = [], type } =
+  Astro.props;
+
+const meta = buildMeta({ title, description, canonicalUrl, ogImage, type });
+
+// Always emit Organization + WebSite; page-specific entries come via jsonLd prop
+const allJsonLd = [organization(), website(), ...jsonLd];
+
+// Escape characters that could break out of the <script> tag or terminate
+// JSON in line-separator contexts. JSON.stringify alone is NOT safe here.
+function serializeJsonLd(entry: unknown): string {
+  const json = JSON.stringify(entry);
+  if (json === undefined) return "null";
+  return json
+    .replace(/</g, "\\u003c")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{meta.title}</title>
+    {
+      meta.tags.map((t) =>
+        t.name ? (
+          <meta name={t.name} content={t.content} />
+        ) : (
+          <meta property={t.property} content={t.content} />
+        )
+      )
+    }
+    {meta.links.map((l) => <link {...l} />)}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="preconnect" href="https://neon.tech" crossorigin />
+    <link rel="preconnect" href="https://clerk.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    {
+      allJsonLd.map((entry) => (
+        <script
+          type="application/ld+json"
+          set:html={serializeJsonLd(entry)}
+        />
+      ))
+    }
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <Nav />
+    <main class="flex-1"><slot /></main>
+    <Footer />
+  </body>
+</html>
