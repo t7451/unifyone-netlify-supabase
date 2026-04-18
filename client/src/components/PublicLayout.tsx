@@ -183,7 +183,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 </svg>
                 <span className="font-cinzel text-xs font-700 tracking-widest" style={{ color: "#D4A843", letterSpacing: "0.2em" }}>UNIFYONE</span>
               </div>
-              <p className="font-crimson text-sm" style={{ color: "#3A3A3A", lineHeight: 1.7 }}>
+              <p className="font-crimson text-sm" style={{ color: "#8A8A8A", lineHeight: 1.7 }}>
                 Commerce infrastructure engineered like a cathedral — sequential, structural, and built to outlast every platform trend.
               </p>
             </div>
@@ -200,9 +200,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 ].map(item => (
                   <Link key={item.href} href={item.href}>
                     <span className="block cursor-pointer font-cinzel text-xs tracking-widest transition-colors duration-200"
-                      style={{ color: "#3A3A3A", letterSpacing: "0.15em" }}
+                      style={{ color: "#8A8A8A", letterSpacing: "0.15em" }}
                       onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#D4A843"}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#3A3A3A"}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#8A8A8A"}
                     >{item.label}</span>
                   </Link>
                 ))}
@@ -221,9 +221,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 ].map(item => (
                   <Link key={item.href} href={item.href}>
                     <span className="block cursor-pointer font-cinzel text-xs tracking-widest transition-colors duration-200"
-                      style={{ color: "#3A3A3A", letterSpacing: "0.15em" }}
+                      style={{ color: "#8A8A8A", letterSpacing: "0.15em" }}
                       onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#D4A843"}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#3A3A3A"}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#8A8A8A"}
                     >{item.label}</span>
                   </Link>
                 ))}
@@ -241,9 +241,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 ].map(item => (
                   <Link key={item.href} href={item.href}>
                     <span className="block cursor-pointer font-cinzel text-xs tracking-widest transition-colors duration-200"
-                      style={{ color: "#3A3A3A", letterSpacing: "0.15em" }}
+                      style={{ color: "#8A8A8A", letterSpacing: "0.15em" }}
                       onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#D4A843"}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#3A3A3A"}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#8A8A8A"}
                     >{item.label}</span>
                   </Link>
                 ))}
@@ -253,10 +253,10 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
           {/* Bottom bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8" style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}>
-            <span className="inscription" style={{ color: "#242424" }}>
+            <span className="inscription" style={{ color: "#5A5A5A" }}>
               © {new Date().getFullYear()} PNW Enterprises / 1Commerce Solutions LLC
             </span>
-            <span className="inscription" style={{ color: "#242424" }}>
+            <span className="inscription" style={{ color: "#5A5A5A" }}>
               Cathedral Framework · Built to Endure
             </span>
           </div>
