@@ -1,5 +1,4 @@
 import { getLoginUrl } from "@/const";
-import { supabase } from "@/lib/supabaseClient";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
@@ -27,8 +26,6 @@ export function useAuth(options?: UseAuthOptions) {
 
   const logout = useCallback(async () => {
     try {
-      // Sign out of Supabase (clears client-side tokens)
-      await supabase.auth.signOut();
       // Clear the server-side session cookie. In Express (local/Docker) the
       // tRPC mutation clears it via ctx.res.clearCookie. In the Netlify fetch
       // adapter ctx.res is unavailable, so the /api/auth/logout non-tRPC route

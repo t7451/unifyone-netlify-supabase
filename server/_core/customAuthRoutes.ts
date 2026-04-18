@@ -124,19 +124,23 @@ export async function registerCustomAuthFetchRoutes(
         );
       }
 
-      // Send verification email (non-blocking — don't fail signup if email fails)
-      if (result.user?.email) {
+      // Send verification email only if user is not already verified
+      // (non-blocking — don't fail signup if email fails)
+      if (result.user?.email && result.user.emailVerified === false) {
         sendVerificationEmail(result.user.openId, result.user.email).catch(
           err => console.error("[auth] Failed to send verification email:", err)
         );
       }
 
+      const message = result.user?.emailVerified
+        ? "Account created successfully. You can now sign in."
+        : "Account created. Please check your email to verify your address.";
+
       const response = Response.json(
         {
           success: true,
           user: result.user,
-          message:
-            "Account created. Please check your email to verify your address.",
+          message,
         },
         { status: 201, headers: corsHeaders }
       );
