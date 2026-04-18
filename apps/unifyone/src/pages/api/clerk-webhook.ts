@@ -1,12 +1,8 @@
 import type { APIRoute } from "astro";
 import { Webhook } from "svix";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "../../lib/db/client";
-import {
-  primaryEmail,
-  primaryOrgId,
-  type ClerkUserEvent,
-} from "../../lib/clerk";
+import { getDb, schema } from "@/lib/db/client";
+import { primaryEmail, primaryOrgId, type ClerkUserEvent } from "@/lib/clerk";
 
 export const prerender = false;
 

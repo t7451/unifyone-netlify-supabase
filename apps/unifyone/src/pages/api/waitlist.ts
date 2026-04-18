@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { getDb, schema } from "../../lib/db/client";
+import { getDb, schema } from "@/lib/db/client";
 
 export const prerender = false;
 
