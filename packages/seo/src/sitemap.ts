@@ -21,6 +21,11 @@ export function buildSitemapXml(urls: SitemapUrl[]): string {
       if (u.changefreq)
         parts.push(`    <changefreq>${u.changefreq}</changefreq>`);
       if (u.priority !== undefined) {
+        if (!Number.isFinite(u.priority)) {
+          throw new RangeError(
+            "sitemap priority must be a finite number between 0 and 1"
+          );
+        }
         const clamped = Math.min(1, Math.max(0, u.priority));
         parts.push(`    <priority>${clamped.toFixed(1)}</priority>`);
       }

@@ -24,7 +24,9 @@ const allJsonLd = [organization(), website(), ...jsonLd];
 // Escape characters that could break out of the <script> tag or terminate
 // JSON in line-separator contexts. JSON.stringify alone is NOT safe here.
 function serializeJsonLd(entry: unknown): string {
-  return JSON.stringify(entry)
+  const json = JSON.stringify(entry);
+  if (json === undefined) return "null";
+  return json
     .replace(/</g, "\\u003c")
     .replace(/\u2028/g, "\\u2028")
     .replace(/\u2029/g, "\\u2029");

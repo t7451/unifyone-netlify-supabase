@@ -45,7 +45,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     if (event.type === "user.created" || event.type === "user.updated") {
-      const email = primaryEmail(event.data);
+      const email = primaryEmail(event.data)?.trim().toLowerCase();
       if (!email) return new Response("no email on user", { status: 400 });
 
       await getDb()

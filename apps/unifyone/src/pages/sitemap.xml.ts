@@ -2,7 +2,9 @@ import type { APIRoute } from "astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 import { buildSitemapXml, type SitemapUrl } from "@1commerce/seo";
 
-const SITE = "https://1commerce.online";
+const SITE = (
+  import.meta.env.PUBLIC_SITE_URL ?? "https://1commerce.online"
+).replace(/\/$/, "");
 
 const STATIC_ROUTES: SitemapUrl[] = [
   { loc: `${SITE}/`, changefreq: "weekly", priority: 1.0 },
