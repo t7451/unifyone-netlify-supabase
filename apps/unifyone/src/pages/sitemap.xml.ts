@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getCollection } from "astro:content";
+import { getCollection, type CollectionEntry } from "astro:content";
 import { buildSitemapXml, type SitemapUrl } from "@1commerce/seo";
 
 const SITE = "https://1commerce.online";
@@ -15,8 +15,11 @@ const STATIC_ROUTES: SitemapUrl[] = [
 ];
 
 export const GET: APIRoute = async () => {
-  const posts = await getCollection("blog", ({ data }) => !data.draft);
-  const postUrls: SitemapUrl[] = posts.map((p) => ({
+  const posts = await getCollection(
+    "blog",
+    ({ data }: CollectionEntry<"blog">) => !data.draft
+  );
+  const postUrls: SitemapUrl[] = posts.map((p: CollectionEntry<"blog">) => ({
     loc: `${SITE}/blog/${p.slug}`,
     lastmod: (p.data.updatedAt ?? p.data.publishedAt)
       .toISOString()

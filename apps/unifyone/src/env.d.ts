@@ -7,7 +7,7 @@ interface ImportMetaEnv {
   readonly CLERK_WEBHOOK_SECRET: string;
   readonly PUBLIC_CLERK_PUBLISHABLE_KEY: string;
   readonly PUBLIC_SITE_URL: string;
-  readonly WAITLIST_N8N_WEBHOOK_URL: string;
+  readonly WAITLIST_N8N_WEBHOOK_URL?: string;
 }
 
 interface ImportMeta {

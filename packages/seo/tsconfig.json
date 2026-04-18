@@ -9,7 +9,6 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
-    "declaration": true,
     "noEmit": true,
     "lib": ["ES2022"]
   },

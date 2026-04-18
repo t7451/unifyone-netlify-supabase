@@ -7,6 +7,7 @@ import {
   uuid,
   jsonb,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -49,7 +50,7 @@ export const creditLedger = pgTable(
       .defaultNow()
       .notNull(),
   },
-  (t) => ({
+  t => ({
     userCreatedIdx: index("credit_ledger_user_created_idx").on(
       t.userId,
       t.createdAt
@@ -57,11 +58,22 @@ export const creditLedger = pgTable(
   })
 );
 
-export const waitlist = pgTable("waitlist", {
-  email: text("email").primaryKey(),
-  source: text("source"),
-  utm: jsonb("utm"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
+export const waitlist = pgTable(
+  "waitlist",
+  {
+    email: text("email").primaryKey(),
+    source: text("source"),
+    utm: jsonb("utm"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  t => ({
+    // The API normalizes to lowercase on write; this belt-and-suspenders
+    // index prevents Alice@ and alice@ ever coexisting if the normalization
+    // regresses.
+    emailLowerUniq: uniqueIndex("waitlist_email_lower_idx").on(
+      sql`lower(${t.email})`
+    ),
+  })
+);

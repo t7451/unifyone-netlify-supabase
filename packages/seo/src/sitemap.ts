@@ -14,13 +14,16 @@ export interface SitemapUrl {
 
 export function buildSitemapXml(urls: SitemapUrl[]): string {
   const body = urls
-    .map((u) => {
+    .map(u => {
       const parts = [`    <loc>${escapeXml(u.loc)}</loc>`];
-      if (u.lastmod) parts.push(`    <lastmod>${u.lastmod}</lastmod>`);
+      if (u.lastmod)
+        parts.push(`    <lastmod>${escapeXml(u.lastmod)}</lastmod>`);
       if (u.changefreq)
         parts.push(`    <changefreq>${u.changefreq}</changefreq>`);
-      if (u.priority !== undefined)
-        parts.push(`    <priority>${u.priority.toFixed(1)}</priority>`);
+      if (u.priority !== undefined) {
+        const clamped = Math.min(1, Math.max(0, u.priority));
+        parts.push(`    <priority>${clamped.toFixed(1)}</priority>`);
+      }
       return `  <url>\n${parts.join("\n")}\n  </url>`;
     })
     .join("\n");

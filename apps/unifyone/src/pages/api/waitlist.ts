@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { db, schema } from "../../lib/db/client";
+import { getDb, schema } from "../../lib/db/client";
 
 export const prerender = false;
 
@@ -26,26 +26,31 @@ export const POST: APIRoute = async ({ request }) => {
     );
   }
 
-  const { email, source, utm } = parsed.data;
+  // Normalize so Alice@ / alice@ collapse to one row. Combined with the
+  // unique index on lower(email), this also future-proofs against races.
+  const email = parsed.data.email.trim().toLowerCase();
+  const { source, utm } = parsed.data;
 
+  let inserted: { email: string }[];
   try {
-    await db
+    inserted = await getDb()
       .insert(schema.waitlist)
       .values({ email, source, utm: utm ?? null })
-      .onConflictDoNothing();
+      .onConflictDoNothing()
+      .returning({ email: schema.waitlist.email });
   } catch (err) {
     console.error("waitlist insert failed", err);
     return json({ ok: false, error: "db error" }, 500);
   }
 
-  // Fire-and-forget n8n hook — never block the response.
+  // Only ping n8n on genuinely new signups — duplicates should be silent.
   const hook = import.meta.env.WAITLIST_N8N_WEBHOOK_URL;
-  if (hook) {
+  if (hook && inserted.length > 0) {
     void fetch(hook, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ email, source, utm }),
-    }).catch((err) => console.error("waitlist n8n hook failed", err));
+    }).catch(err => console.error("waitlist n8n hook failed", err));
   }
 
   return json({ ok: true });

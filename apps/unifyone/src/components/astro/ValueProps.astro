@@ -1,5 +1,5 @@
 ---
-const props = [
+const valueProps = [
   {
     title: "Contextual Financial AI",
     body: "Kai learns from your actual earnings, payouts, taxes, and fees — not generic budgeting rules. Every answer is grounded in your real numbers.",
@@ -22,7 +22,7 @@ const props = [
     </h2>
     <div class="mt-12 grid md:grid-cols-3 gap-8">
       {
-        props.map((p) => (
+        valueProps.map((p) => (
           <article class="p-6 rounded-xl border border-navy-100 hover:border-teal-300 transition-colors">
             <h3 class="text-xl font-semibold text-navy-500">{p.title}</h3>
             <p class="mt-3 text-navy-400 leading-relaxed">{p.body}</p>

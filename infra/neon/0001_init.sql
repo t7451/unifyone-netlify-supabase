@@ -43,3 +43,8 @@ create table if not exists waitlist (
   utm jsonb,
   created_at timestamptz not null default now()
 );
+
+-- Case-insensitive uniqueness: the API normalizes on write, and this index
+-- prevents Alice@ and alice@ ever coexisting if normalization regresses.
+create unique index if not exists waitlist_email_lower_idx
+  on waitlist (lower(email));

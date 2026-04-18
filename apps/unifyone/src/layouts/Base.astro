@@ -20,6 +20,15 @@ const meta = buildMeta({ title, description, canonicalUrl, ogImage, type });
 
 // Always emit Organization + WebSite; page-specific entries come via jsonLd prop
 const allJsonLd = [organization(), website(), ...jsonLd];
+
+// Escape characters that could break out of the <script> tag or terminate
+// JSON in line-separator contexts. JSON.stringify alone is NOT safe here.
+function serializeJsonLd(entry: unknown): string {
+  return JSON.stringify(entry)
+    .replace(/</g, "\\u003c")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
 ---
 
 <!doctype html>
@@ -47,7 +56,7 @@ const allJsonLd = [organization(), website(), ...jsonLd];
       allJsonLd.map((entry) => (
         <script
           type="application/ld+json"
-          set:html={JSON.stringify(entry)}
+          set:html={serializeJsonLd(entry)}
         />
       ))
     }

@@ -17,7 +17,7 @@ const { Content } = await post.render();
 
 const url = canonical(`/blog/${post.slug}`);
 const wordCount = post.body.trim().split(/\s+/).length;
-const readingMinutes = Math.max(1, Math.round(wordCount / 220));
+const readingMinutes = Math.max(1, Math.ceil(wordCount / 220));
 
 const articleJsonLd = article({
   title: post.data.title,

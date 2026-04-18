@@ -1,8 +1,12 @@
 import type { APIRoute } from "astro";
 import { Webhook } from "svix";
 import { eq } from "drizzle-orm";
-import { db, schema } from "../../lib/db/client";
-import { primaryEmail, primaryOrgId, type ClerkUserEvent } from "../../lib/clerk";
+import { getDb, schema } from "../../lib/db/client";
+import {
+  primaryEmail,
+  primaryOrgId,
+  type ClerkUserEvent,
+} from "../../lib/clerk";
 
 export const prerender = false;
 
@@ -44,7 +48,7 @@ export const POST: APIRoute = async ({ request }) => {
       const email = primaryEmail(event.data);
       if (!email) return new Response("no email on user", { status: 400 });
 
-      await db
+      await getDb()
         .insert(schema.users)
         .values({
           id: event.data.id,
@@ -56,9 +60,10 @@ export const POST: APIRoute = async ({ request }) => {
           set: { email, orgId: primaryOrgId(event.data) },
         });
     } else if (event.type === "user.deleted") {
-      if (!event.data.id)
-        return new Response("no user id", { status: 400 });
-      await db.delete(schema.users).where(eq(schema.users.id, event.data.id));
+      if (!event.data.id) return new Response("no user id", { status: 400 });
+      await getDb()
+        .delete(schema.users)
+        .where(eq(schema.users.id, event.data.id));
     }
   } catch (err) {
     console.error("clerk webhook db op failed", err);
