@@ -1,0 +1,41 @@
+{
+  "name": "unifyone",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@1commerce/seo": "workspace:*",
+    "@astrojs/mdx": "^3.1.9",
+    "@astrojs/netlify": "^5.5.4",
+    "@astrojs/react": "^3.6.3",
+    "@astrojs/sitemap": "^3.2.1",
+    "@astrojs/tailwind": "^5.1.3",
+    "@clerk/astro": "^1.4.0",
+    "@neondatabase/serverless": "^0.10.4",
+    "astro": "^4.16.18",
+    "drizzle-orm": "^0.36.4",
+    "drizzle-zod": "^0.5.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "svix": "^1.42.0",
+    "tailwindcss": "^3.4.15",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "drizzle-kit": "^0.30.0",
+    "typescript": "^5.6.3"
+  }
+}

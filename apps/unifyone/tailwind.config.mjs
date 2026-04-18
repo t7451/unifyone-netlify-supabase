@@ -1,0 +1,61 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ["./src/**/*.{astro,html,js,jsx,md,mdx,ts,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        navy: {
+          DEFAULT: "#0B1E3F",
+          50: "#E6EAF2",
+          100: "#C2CCDE",
+          200: "#8497BD",
+          300: "#4C649B",
+          400: "#1D3670",
+          500: "#0B1E3F",
+          600: "#091932",
+          700: "#071326",
+          800: "#040D1A",
+          900: "#02070D",
+        },
+        teal: {
+          DEFAULT: "#14B8A6",
+          50: "#E6FAF8",
+          100: "#BDF1EB",
+          200: "#80E1D4",
+          300: "#42D0BD",
+          400: "#14B8A6",
+          500: "#0F9488",
+          600: "#0B7168",
+          700: "#074E48",
+          800: "#042B28",
+          900: "#02100F",
+        },
+        gold: {
+          DEFAULT: "#D4AF37",
+          50: "#FAF3DE",
+          100: "#F2E1A8",
+          200: "#E8CC74",
+          300: "#DDB84E",
+          400: "#D4AF37",
+          500: "#A88927",
+          600: "#7C651C",
+          700: "#504111",
+          800: "#241D07",
+          900: "#0A0801",
+        },
+      },
+      fontFamily: {
+        sans: [
+          "Inter",
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+          "sans-serif",
+        ],
+      },
+    },
+  },
+  plugins: [],
+};
