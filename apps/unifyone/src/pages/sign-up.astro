@@ -1,0 +1,19 @@
+---
+import Base from "../layouts/Base.astro";
+import { SignUp } from "@clerk/astro/components";
+import { canonical } from "../lib/seo";
+---
+
+<Base
+  title="Create your account — UnifyOne"
+  description="Start using UnifyOne. Free forever on Starter."
+  canonicalUrl={canonical("/sign-up")}
+>
+  <section class="min-h-[70vh] flex items-center justify-center py-16 bg-navy-50">
+    <SignUp
+      path="/sign-up"
+      signInUrl="/sign-in"
+      fallbackRedirectUrl="/dashboard"
+    />
+  </section>
+</Base>
