@@ -1,0 +1,107 @@
+---
+import Base from "../layouts/Base.astro";
+import FAQ from "../components/astro/FAQ.astro";
+import { breadcrumb, canonical, faqPage, type FaqItem } from "../lib/seo";
+
+const sampleCode = `import { UnifyAI } from "@unifyone/sdk";
+
+const client = new UnifyAI({
+  apiKey: process.env.UNIFYONE_API_KEY,
+});
+
+const insights = await client.insights.query({
+  context: "earnings",
+  period: "30d",
+  dimensions: ["platform", "weekday"],
+});
+
+for (const row of insights.rows) {
+  console.log(row.platform, row.netEarnings, row.effectiveHourly);
+}`;
+
+const faqs: FaqItem[] = [
+  {
+    question: "Is the API stable?",
+    answer:
+      "v1 is stable for /insights and /connectors. Breaking changes ship behind new version prefixes. Deprecations get 90 days' notice.",
+  },
+  {
+    question: "How does billing work for API calls?",
+    answer:
+      "Credit-based. Scale tier includes 10,000 credits/month. Overage is $0.008 per credit. Credits never expire on Scale.",
+  },
+  {
+    question: "Rate limits?",
+    answer:
+      "60 req/min per API key by default. Contact us for higher limits or streaming SSE endpoints.",
+  },
+  {
+    question: "Where's the SDK?",
+    answer:
+      "Typed Node/TS SDK ships at launch. Python and Go are on the roadmap.",
+  },
+];
+
+const bc = breadcrumb([
+  { name: "Home", url: canonical("/") },
+  { name: "Developers", url: canonical("/developers") },
+]);
+---
+
+<Base
+  title="Developers — UnifyOne"
+  description="REST + SDK access to the same Kai engine that powers UnifyOne. Contextual financial AI for your own apps, with a usage-based credit ledger."
+  canonicalUrl={canonical("/developers")}
+  jsonLd={[bc, faqPage(faqs)]}
+>
+  <section class="bg-navy-500 text-white py-20">
+    <div class="max-w-4xl mx-auto px-4">
+      <p class="text-xs uppercase tracking-[0.2em] text-teal-300 mb-4 text-center">
+        For developers
+      </p>
+      <h1 class="text-4xl md:text-5xl font-bold text-center">
+        Kai, as an API
+      </h1>
+      <p class="mt-6 text-navy-100 text-lg text-center max-w-2xl mx-auto">
+        Drop contextual financial reasoning into your own product. Same engine
+        Kai runs on — REST, SSE streaming, and a usage-based credit ledger.
+      </p>
+    </div>
+  </section>
+
+  <section class="bg-white py-20">
+    <div class="max-w-4xl mx-auto px-4">
+      <h2 class="text-2xl font-bold text-navy-500">A request in 20 lines</h2>
+      <pre class="mt-6 bg-navy-700 text-navy-50 p-6 rounded-xl overflow-x-auto text-sm leading-relaxed"><code set:html={sampleCode} /></pre>
+      <p class="mt-4 text-sm text-navy-400">
+        Every response is cited — Kai references the underlying shift, payout,
+        or invoice it drew from, so your app can render receipts, not vibes.
+      </p>
+    </div>
+  </section>
+
+  <section class="bg-navy-50 py-20">
+    <div class="max-w-4xl mx-auto px-4 grid md:grid-cols-3 gap-8">
+      <article>
+        <h3 class="font-semibold text-navy-500">REST + SSE</h3>
+        <p class="mt-2 text-navy-400 text-sm">
+          Synchronous queries for forms; server-sent events for chat UIs.
+        </p>
+      </article>
+      <article>
+        <h3 class="font-semibold text-navy-500">Typed SDK</h3>
+        <p class="mt-2 text-navy-400 text-sm">
+          <code>@unifyone/sdk</code> with full TypeScript types, zero-config.
+        </p>
+      </article>
+      <article>
+        <h3 class="font-semibold text-navy-500">Credit ledger</h3>
+        <p class="mt-2 text-navy-400 text-sm">
+          Inspect usage, pre-allocate budgets, set per-key soft caps.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <FAQ faqs={faqs} />
+</Base>

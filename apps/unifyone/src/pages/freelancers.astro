@@ -1,0 +1,83 @@
+---
+import Base from "../layouts/Base.astro";
+import FAQ from "../components/astro/FAQ.astro";
+import { breadcrumb, canonical, faqPage, type FaqItem } from "../lib/seo";
+
+const faqs: FaqItem[] = [
+  {
+    question: "Does it work with Stripe, Square, and invoiced retainers?",
+    answer:
+      "Yes — Stripe, Square, PayPal, and uploaded invoice CSVs are all first-class income sources.",
+  },
+  {
+    question: "Can Kai tell me which client is worst for me?",
+    answer:
+      "Yes. Kai computes effective hourly per client after scope creep, late payments, and processing fees.",
+  },
+  {
+    question: "Does it replace QuickBooks?",
+    answer:
+      "Not yet — UnifyOne focuses on earnings intelligence and tax readiness. You can export clean CSVs for your accountant.",
+  },
+];
+
+const bc = breadcrumb([
+  { name: "Home", url: canonical("/") },
+  { name: "Freelancers", url: canonical("/freelancers") },
+]);
+---
+
+<Base
+  title="Freelancers — UnifyOne"
+  description="See which clients are actually worth it. UnifyOne pulls Stripe, Square, PayPal, and invoiced retainers into one view and tells you your true hourly per client."
+  canonicalUrl={canonical("/freelancers")}
+  jsonLd={[bc, faqPage(faqs)]}
+>
+  <section class="bg-navy-500 text-white py-20">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <p class="text-xs uppercase tracking-[0.2em] text-teal-300 mb-4">
+        For freelancers & creators
+      </p>
+      <h1 class="text-4xl md:text-5xl font-bold">
+        Find out which clients are actually worth it
+      </h1>
+      <p class="mt-6 text-navy-100 text-lg">
+        Kai computes effective hourly per client after scope creep, late
+        payments, and processing fees. Spoiler: it's not who you think.
+      </p>
+      <a
+        href="/sign-up"
+        class="inline-block mt-8 bg-teal-400 hover:bg-teal-500 text-white font-semibold px-6 py-3 rounded-md transition-colors"
+      >
+        Start free
+      </a>
+    </div>
+  </section>
+
+  <section class="bg-white py-20">
+    <div class="max-w-4xl mx-auto px-4 grid md:grid-cols-3 gap-8">
+      <article>
+        <h3 class="font-semibold text-navy-500">Client P&amp;L</h3>
+        <p class="mt-2 text-navy-400 text-sm">
+          Per-client effective hourly, net of discounts, fees, and late
+          payments.
+        </p>
+      </article>
+      <article>
+        <h3 class="font-semibold text-navy-500">Runway forecasting</h3>
+        <p class="mt-2 text-navy-400 text-sm">
+          Kai projects cash on hand based on invoice aging and retainer
+          cadence.
+        </p>
+      </article>
+      <article>
+        <h3 class="font-semibold text-navy-500">Tax set-aside</h3>
+        <p class="mt-2 text-navy-400 text-sm">
+          Automatic quarterly estimate calculation based on YTD net earnings.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <FAQ faqs={faqs} />
+</Base>
