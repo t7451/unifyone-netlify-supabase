@@ -1,0 +1,67 @@
+---
+import Base from "../layouts/Base.astro";
+import Hero from "../components/astro/Hero.astro";
+import ValueProps from "../components/astro/ValueProps.astro";
+import AudienceTabs from "../components/astro/AudienceTabs.astro";
+import PricingTable from "../components/astro/PricingTable.astro";
+import FAQ from "../components/astro/FAQ.astro";
+import WaitlistForm from "../components/react/WaitlistForm.tsx";
+import { faqPage, canonical, type FaqItem } from "../lib/seo";
+
+const faqs: FaqItem[] = [
+  {
+    question: "What makes Kai different from ChatGPT for money?",
+    answer:
+      "Kai is grounded in your actual earnings data — shift payouts, deductions, platform fees, tax withholdings. Generic chatbots guess; Kai cites YOUR numbers.",
+  },
+  {
+    question: "Which platforms do you connect to?",
+    answer:
+      "At launch: Uber, Lyft, DoorDash, Instacart, Shopify, Stripe, Square, PayPal. More gig and e-commerce platforms are added each month.",
+  },
+  {
+    question: "Is my financial data safe?",
+    answer:
+      "Yes. Data is encrypted at rest and in transit, stored on isolated Neon Postgres instances, and never sold or shared. You can export or delete everything at any time.",
+  },
+  {
+    question: "Do I need to be a developer to use UnifyOne?",
+    answer:
+      "No. The consumer app is built for drivers, freelancers, and SMB owners. The API is a separate product for developers who want to embed Kai in their own tools.",
+  },
+  {
+    question: "How does billing work?",
+    answer:
+      "Monthly subscription with a Kai credit allowance per tier. Credits cover API calls and deep analysis runs. Unused credits expire at the end of the month.",
+  },
+  {
+    question: "Can I cancel anytime?",
+    answer:
+      "Yes — one click in settings, no phone calls, no retention dance. Your data remains exportable for 30 days after cancellation.",
+  },
+  {
+    question: "When is general availability?",
+    answer:
+      "We're in private beta now, rolling out to waitlist in priority order. Join the waitlist to reserve your spot and lock in launch pricing.",
+  },
+  {
+    question: "Do you have a refund policy?",
+    answer:
+      "14-day money-back guarantee on Pro and Scale. Starter is free forever.",
+  },
+];
+---
+
+<Base
+  title="UnifyOne — Your AI knows what you actually earn"
+  description="UnifyOne reads your real shift data, tracks every deduction, and tells you exactly where you're leaving money on the table. Contextual financial AI for gig workers, freelancers, and SMBs."
+  canonicalUrl={canonical("/")}
+  jsonLd={[faqPage(faqs)]}
+>
+  <Hero />
+  <ValueProps />
+  <AudienceTabs />
+  <PricingTable />
+  <FAQ faqs={faqs} />
+  <WaitlistForm client:load />
+</Base>

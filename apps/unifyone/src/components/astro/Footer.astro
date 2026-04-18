@@ -1,0 +1,45 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-navy-100 mt-16 bg-navy-500 text-navy-100">
+  <div class="max-w-6xl mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
+    <div>
+      <div class="flex items-center gap-2 text-white font-semibold">
+        <img src="/favicon.svg" alt="" width="24" height="24" />
+        UnifyOne
+      </div>
+      <p class="mt-3 text-sm text-navy-100/80">
+        Your AI knows what you actually earn.
+      </p>
+    </div>
+    <div>
+      <h3 class="text-white font-semibold text-sm mb-3">Product</h3>
+      <ul class="space-y-2 text-sm">
+        <li><a href="/pricing" class="hover:text-teal-300">Pricing</a></li>
+        <li><a href="/developers" class="hover:text-teal-300">Developers</a></li>
+        <li><a href="/blog" class="hover:text-teal-300">Blog</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="text-white font-semibold text-sm mb-3">Audiences</h3>
+      <ul class="space-y-2 text-sm">
+        <li><a href="/gig-workers" class="hover:text-teal-300">Gig workers</a></li>
+        <li><a href="/freelancers" class="hover:text-teal-300">Freelancers</a></li>
+        <li><a href="/smb" class="hover:text-teal-300">SMB</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="text-white font-semibold text-sm mb-3">Account</h3>
+      <ul class="space-y-2 text-sm">
+        <li><a href="/sign-in" class="hover:text-teal-300">Sign in</a></li>
+        <li><a href="/sign-up" class="hover:text-teal-300">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-navy-400/40 py-4">
+    <p class="max-w-6xl mx-auto px-4 text-xs text-navy-100/60">
+      © {year} UnifyOne. All rights reserved.
+    </p>
+  </div>
+</footer>

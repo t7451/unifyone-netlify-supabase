@@ -1,0 +1,78 @@
+---
+const audiences = [
+  {
+    slug: "gig",
+    label: "Gig workers",
+    prompts: [
+      "What's my real hourly after gas and depreciation last week?",
+      "Which platform paid me the most per mile in December?",
+      "How much should I set aside for quarterly taxes based on YTD?",
+    ],
+  },
+  {
+    slug: "freelancer",
+    label: "Freelancers",
+    prompts: [
+      "Which of my clients has the worst effective hourly rate?",
+      "What's my burn rate across Stripe, Square, and invoiced retainers?",
+      "When will I hit my quarterly tax threshold?",
+    ],
+  },
+  {
+    slug: "smb",
+    label: "Small business",
+    prompts: [
+      "What's my true margin on Shopify after Stripe fees and returns?",
+      "Which SKU is losing money once ad spend is attributed?",
+      "How much cash do I have available after 30-day payouts land?",
+    ],
+  },
+  {
+    slug: "developer",
+    label: "Developers",
+    prompts: [
+      "POST /v1/insights { context: 'earnings', period: '30d' }",
+      "Stream Kai's reasoning over SSE with usage-based credits.",
+      "Webhook: subscribe to anomaly detection on a user's payouts.",
+    ],
+  },
+];
+---
+
+<section class="bg-navy-50 py-20">
+  <div class="max-w-6xl mx-auto px-4">
+    <h2 class="text-3xl md:text-4xl font-bold text-navy-500 text-center">
+      Ask Kai anything
+    </h2>
+    <p class="mt-4 text-navy-400 text-center max-w-2xl mx-auto">
+      Sample prompts by who you are. Every answer uses your data, not a stock dataset.
+    </p>
+
+    <div class="mt-12 space-y-3">
+      {
+        audiences.map((a, idx) => (
+          <details
+            class="group bg-white rounded-xl border border-navy-100 open:border-teal-300"
+            open={idx === 0}
+          >
+            <summary class="cursor-pointer list-none p-5 flex items-center justify-between text-navy-500 font-semibold">
+              <span>{a.label}</span>
+              <span class="text-teal-400 transition-transform group-open:rotate-45 text-2xl leading-none">
+                +
+              </span>
+            </summary>
+            <div class="px-5 pb-5">
+              <ul class="space-y-2">
+                {a.prompts.map((p) => (
+                  <li class="bg-navy-50 rounded-md px-4 py-3 text-sm text-navy-500 font-mono">
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
