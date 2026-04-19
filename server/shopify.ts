@@ -26,7 +26,7 @@ function validateHmac(query: Record<string, string>): boolean {
   if (!hmac || !SHOPIFY_API_SECRET) return false;
   const message = Object.keys(rest)
     .sort()
-    .map((k) => `${k}=${rest[k]}`)
+    .map(k => `${k}=${rest[k]}`)
     .join("&");
   const digest = crypto
     .createHmac("sha256", SHOPIFY_API_SECRET)
@@ -36,13 +36,47 @@ function validateHmac(query: Record<string, string>): boolean {
 }
 
 // ─── Validate Webhook Signature ───────────────────────────────────────────────
-export function validateShopifyWebhook(rawBody: Buffer, hmacHeader: string): boolean {
-  if (!SHOPIFY_API_SECRET) return false;
-  const digest = crypto
-    .createHmac("sha256", SHOPIFY_API_SECRET)
-    .update(rawBody)
-    .digest("base64");
-  return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(hmacHeader));
+/**
+ * Validates Shopify webhook signature using HMAC-SHA256.
+ * IMPORTANT: Returns false if SHOPIFY_API_SECRET is not configured, which will
+ * reject all webhooks. This is intentional - webhooks should not be accepted
+ * if signature verification is not possible.
+ */
+export function validateShopifyWebhook(
+  rawBody: Buffer,
+  hmacHeader: string
+): boolean {
+  if (!SHOPIFY_API_SECRET) {
+    console.error(
+      "[Shopify] SHOPIFY_API_SECRET not configured - webhook rejected"
+    );
+    return false;
+  }
+  if (!hmacHeader) {
+    console.warn("[Shopify] Webhook missing x-shopify-hmac-sha256 header");
+    return false;
+  }
+
+  try {
+    const digest = crypto
+      .createHmac("sha256", SHOPIFY_API_SECRET)
+      .update(rawBody)
+      .digest("base64");
+
+    // Both values must be base64-decoded for safe comparison
+    const digestBuffer = Buffer.from(digest, "base64");
+    const hmacBuffer = Buffer.from(hmacHeader, "base64");
+
+    // timingSafeEqual requires buffers of equal length
+    if (digestBuffer.length !== hmacBuffer.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(digestBuffer, hmacBuffer);
+  } catch (err) {
+    console.error("[Shopify] Webhook validation error:", err);
+    return false;
+  }
 }
 
 // ─── Log Sync Event Helper ────────────────────────────────────────────────────
@@ -50,7 +84,13 @@ export async function logSyncEvent(params: {
   storeId: number;
   tenantId?: number;
   event: string;
-  entity: "product" | "order" | "customer" | "inventory" | "fulfillment" | "webhook";
+  entity:
+    | "product"
+    | "order"
+    | "customer"
+    | "inventory"
+    | "fulfillment"
+    | "webhook";
   entityId?: string;
   direction?: "inbound" | "outbound";
   status: "success" | "failed" | "skipped" | "retrying";
@@ -84,9 +124,11 @@ export async function logSyncEvent(params: {
 export function registerShopifyRoutes(app: Express) {
   // ── Step 1: Initiate OAuth (/api/shopify/install) ──────────────────────────
   app.get("/api/shopify/install", (req: Request, res: Response) => {
-    const shop = (req.query.shop as string || "").trim().toLowerCase();
+    const shop = ((req.query.shop as string) || "").trim().toLowerCase();
     if (!shop || !shop.includes(".myshopify.com")) {
-      return res.status(400).json({ error: "Invalid shop domain. Must end in .myshopify.com" });
+      return res
+        .status(400)
+        .json({ error: "Invalid shop domain. Must end in .myshopify.com" });
     }
     if (!SHOPIFY_API_KEY) {
       return res.status(500).json({ error: "SHOPIFY_API_KEY not configured" });
@@ -110,7 +152,12 @@ export function registerShopifyRoutes(app: Express) {
 
   // ── Step 2: OAuth Callback (/api/shopify/callback) ─────────────────────────
   app.get("/api/shopify/callback", async (req: Request, res: Response) => {
-    const { shop, code, state, hmac: _hmac } = req.query as Record<string, string>;
+    const {
+      shop,
+      code,
+      state,
+      hmac: _hmac,
+    } = req.query as Record<string, string>;
 
     // CSRF check
     const storedState = req.cookies?.shopify_oauth_state;
@@ -151,11 +198,23 @@ export function registerShopifyRoutes(app: Express) {
       };
 
       // ── Fetch shop details ──────────────────────────────────────────────────
-      const shopRes = await fetch(`https://${shop}/admin/api/2024-01/shop.json`, {
-        headers: { "X-Shopify-Access-Token": tokenData.access_token },
-      });
+      const shopRes = await fetch(
+        `https://${shop}/admin/api/2024-01/shop.json`,
+        {
+          headers: { "X-Shopify-Access-Token": tokenData.access_token },
+        }
+      );
       const shopData = shopRes.ok
-        ? ((await shopRes.json()) as { shop: { name: string; email: string; currency: string; plan_name: string } }).shop
+        ? (
+            (await shopRes.json()) as {
+              shop: {
+                name: string;
+                email: string;
+                currency: string;
+                plan_name: string;
+              };
+            }
+          ).shop
         : null;
 
       // ── Upsert store record ─────────────────────────────────────────────────
@@ -245,7 +304,15 @@ export function registerShopifyRoutes(app: Express) {
       }
 
       // Determine entity type from topic
-      const entityMap: Record<string, "product" | "order" | "customer" | "inventory" | "fulfillment" | "webhook"> = {
+      const entityMap: Record<
+        string,
+        | "product"
+        | "order"
+        | "customer"
+        | "inventory"
+        | "fulfillment"
+        | "webhook"
+      > = {
         "products/create": "product",
         "products/update": "product",
         "products/delete": "product",

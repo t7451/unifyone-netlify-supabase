@@ -36,16 +36,30 @@ function validateEnv() {
     const missing: string[] = [];
 
     if (!process.env.STRIPE_SECRET_KEY) missing.push("STRIPE_SECRET_KEY");
-    if (!process.env.STRIPE_WEBHOOK_SECRET) missing.push("STRIPE_WEBHOOK_SECRET");
+    if (!process.env.STRIPE_WEBHOOK_SECRET)
+      missing.push("STRIPE_WEBHOOK_SECRET");
     if (!process.env.PAYPAL_CLIENT_ID) missing.push("PAYPAL_CLIENT_ID");
     if (!process.env.PAYPAL_CLIENT_SECRET) missing.push("PAYPAL_CLIENT_SECRET");
-    if (!process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL)
-      missing.push("SUPABASE_URL");
+    if (!process.env.SHOPIFY_API_KEY) missing.push("SHOPIFY_API_KEY");
+    if (!process.env.SHOPIFY_API_SECRET) missing.push("SHOPIFY_API_SECRET");
+    if (!process.env.SUPABASE_URL) missing.push("SUPABASE_URL");
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY)
       missing.push("SUPABASE_SERVICE_ROLE_KEY");
 
+    const oauthVars = [
+      "OAUTH_CLIENT_ID",
+      "OAUTH_CLIENT_SECRET",
+      "OAUTH_AUTHORIZE_URL",
+      "OAUTH_TOKEN_URL",
+      "OAUTH_USERINFO_URL",
+    ];
+    const missingOAuth = oauthVars.filter(v => !process.env[v]);
+    if (missingOAuth.length > 0 && missingOAuth.length < oauthVars.length) {
+      missing.push(...missingOAuth);
+    }
+
     if (missing.length > 0) {
-      console.warn(
+      logger.warn(
         `[startup] Production environment is missing recommended vars: ${missing.join(", ")}. ` +
           "Some features may be unavailable."
       );

@@ -30,7 +30,9 @@ export const emailRouter = router({
         email: z.string().email("Invalid email address"),
         firstName: z.string().optional(),
         lastName: z.string().optional(),
-        source: z.enum(["landing_page", "blog", "referral", "other"]).default("landing_page"),
+        source: z
+          .enum(["landing_page", "blog", "referral", "other"])
+          .default("landing_page"),
         metadata: z.record(z.string(), z.unknown()).optional(),
       })
     )
@@ -55,23 +57,27 @@ export const emailRouter = router({
         }
 
         // Insert new subscriber
-        const result = await db.insert(emailSubscribers).values({
-          email: input.email,
-          firstName: input.firstName || undefined,
-          lastName: input.lastName || undefined,
-          source: input.source,
-          metadata: input.metadata || undefined,
-          status: "subscribed",
-          dripsCompleted: 0,
-        });
+        const [insertedSubscriber] = await db
+          .insert(emailSubscribers)
+          .values({
+            email: input.email,
+            firstName: input.firstName || undefined,
+            lastName: input.lastName || undefined,
+            source: input.source,
+            metadata: input.metadata || undefined,
+            status: "subscribed",
+            dripsCompleted: 0,
+          })
+          .returning({ id: emailSubscribers.id });
 
         // Send welcome email immediately
         await sendWelcomeEmail(input.email);
 
         return {
           success: true,
-          message: "Successfully subscribed! Check your email for a welcome message.",
-          subscriberId: (result as any).insertId,
+          message:
+            "Successfully subscribed! Check your email for a welcome message.",
+          subscriberId: insertedSubscriber?.id ?? null,
         };
       } catch (error) {
         console.error("[Email] Capture error:", error);

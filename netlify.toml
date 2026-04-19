@@ -67,6 +67,7 @@
     Content-Security-Policy = "default-src 'self'; script-src 'self' https://plausible.io https://connect.facebook.net https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://checkout.stripe.com https://api.paypal.com https://www.facebook.com https://plausible.io; frame-src https://js.stripe.com https://hooks.stripe.com https://www.paypal.com; object-src 'none'; base-uri 'self'; form-action 'self';"
 
 # Ensure webhook routes accept Stripe POST requests
+# CORS is locked down to production domain - webhooks are verified by signature
 [[headers]]
   for = "/api/stripe/*"
   [headers.values]
