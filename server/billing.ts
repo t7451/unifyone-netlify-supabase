@@ -100,11 +100,12 @@ export function registerBillingRoutes(app: Express) {
     async (req: Request, res: Response) => {
       if (!stripe)
         return res.status(503).json({ error: "Stripe not configured" });
+      if (!getBillingDb()) {
+        return res
+          .status(503)
+          .json({ error: "Billing service not configured" });
+      }
       try {
-        if (!stripe) {
-          return res.status(503).json({ error: "Stripe is not configured" });
-        }
-
         const { packageId, userEmail, userId, origin } = req.body as {
           packageId: PackageId;
           userEmail?: string;

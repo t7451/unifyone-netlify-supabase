@@ -54,9 +54,10 @@ function validateEnv() {
       "OAUTH_USERINFO_URL",
     ];
     const missingOAuth = oauthVars.filter(v => !process.env[v]);
-    if (missingOAuth.length > 0 && missingOAuth.length < oauthVars.length) {
+    if (missingOAuth.length > 0) {
       missing.push(...missingOAuth);
     }
+    if (!process.env.PUBLIC_APP_URL) missing.push("PUBLIC_APP_URL");
 
     if (missing.length > 0) {
       logger.warn(

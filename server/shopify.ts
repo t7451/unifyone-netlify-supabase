@@ -32,7 +32,10 @@ function validateHmac(query: Record<string, string>): boolean {
     .createHmac("sha256", SHOPIFY_API_SECRET)
     .update(message)
     .digest("hex");
-  return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(hmac));
+  const digestBuffer = Buffer.from(digest, "hex");
+  const hmacBuffer = Buffer.from(hmac, "hex");
+  if (digestBuffer.length !== hmacBuffer.length) return false;
+  return crypto.timingSafeEqual(digestBuffer, hmacBuffer);
 }
 
 // ─── Validate Webhook Signature ───────────────────────────────────────────────
@@ -125,7 +128,7 @@ export function registerShopifyRoutes(app: Express) {
   // ── Step 1: Initiate OAuth (/api/shopify/install) ──────────────────────────
   app.get("/api/shopify/install", (req: Request, res: Response) => {
     const shop = ((req.query.shop as string) || "").trim().toLowerCase();
-    if (!shop || !shop.includes(".myshopify.com")) {
+    if (!shop || !/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
       return res
         .status(400)
         .json({ error: "Invalid shop domain. Must end in .myshopify.com" });

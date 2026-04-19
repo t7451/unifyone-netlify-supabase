@@ -6,13 +6,13 @@ This document outlines additional security and reliability measures that should 
 
 ### 1. Content Security Policy (CSP)
 
-**Status:** ❌ Not Implemented
+**Status:** ⚠️ Static policy set — nonce support missing
 
-**Issue:** No CSP header is currently set, leaving the application vulnerable to XSS attacks.
+**Issue:** `server/_core/securityHeaders.ts` already emits a `Content-Security-Policy` header in production, but the policy is static and does not issue per-request nonces. Inline scripts and styles must therefore fall back to `'unsafe-inline'` (or equivalent), which weakens XSS protection.
 
 **Solution:**
 
-Add a strict Content Security Policy header. This requires:
+Add per-request nonces to the existing CSP. This requires:
 
 1. **Generate nonces in server responses** — Modify `server/_core/index.ts` to generate a unique nonce per request and inject it into the HTML response.
 
@@ -37,11 +37,13 @@ Add a strict Content Security Policy header. This requires:
 
 ### 2. Rate Limiting for Serverless
 
-**Status:** ⚠️ In-Memory (Not Production-Safe)
+**Status:** ⚠️ Configuration-dependent (Upstash if configured, in-memory fallback otherwise)
 
-**Issue:** Current rate limiter (`server/_core/rateLimiter.ts`) uses in-memory storage, which is reset on every Netlify Function invocation. This provides **zero protection** against brute-force attacks in production.
+**Issue:** `server/_core/rateLimiter.ts` uses Upstash Redis as a distributed sliding-window counter **when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set** — this is the recommended production configuration. Without those env vars, it falls back to a single-process in-memory store, which resets on every Netlify Function invocation and provides no cross-process protection against brute-force attacks.
 
-**Solution Options:**
+**Recommended production setup:** create an Upstash Redis database (https://console.upstash.com) and set both env vars. The fallback is acceptable only for local development and single-instance Docker deployments.
+
+**Alternative options if Upstash is not desired:**
 
 #### Option A: Netlify Rate Limiting Rules (Recommended)
 

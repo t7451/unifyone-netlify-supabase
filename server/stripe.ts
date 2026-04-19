@@ -6,15 +6,15 @@ import { getDb, getTenantByStripeCustomerId } from "./db";
 import { tenants, plans, themeInstalls, themes } from "../drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { capi } from "./meta/capi";
-import { getAppUrl } from "./_core/env";
+import { ENV, getAppUrl } from "./_core/env";
 import { flushAllOverages, flushUserOverages } from "./creditMeter";
 import { errMsg } from "./_core/errors";
 import { getStripe } from "./_core/stripeClient";
 
 // Supabase admin client for subscription/credit sync (service role — no RLS)
 function getSupabaseAdmin() {
-  const url = process.env.SUPABASE_URL || "";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const url = ENV.supabaseUrl;
+  const key = ENV.supabaseServiceRoleKey;
   if (!url || !key) return null;
   return createClient(url, key, { auth: { persistSession: false } });
 }

@@ -16,16 +16,16 @@ This document summarizes the production readiness fixes applied to the UnifyOne 
 
 ### 🔴 CRITICAL Priority (6/8 Complete)
 
-| Issue                                                      | Status        | Solution                                                                                                        |
-| ---------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------- |
-| Missing env vars in `.env.example`                         | ✅ Fixed      | Added 15+ missing variables (VITE_SUPABASE_ANON_KEY, Shopify, Meta, MCP, analytics, contact webhook, log level) |
-| Hardcoded Supabase URL in `billing.ts`                     | ✅ Fixed      | Removed hardcoded URL, now throws explicit error if SUPABASE_URL not set                                        |
-| Stripe API version mismatch                                | ✅ Fixed      | Standardized to `2026-03-25.dahlia` across all files (billing.ts, stripe.ts, themes.ts)                         |
-| LLM error message hardcodes "OPENAI_API_KEY"               | ✅ Fixed      | Now shows correct env var: `BUILT_IN_FORGE_API_KEY`                                                             |
-| Duplicate Stripe client in `billing.ts` without null guard | ✅ Fixed      | Added null guard, matches pattern in stripe.ts                                                                  |
-| Governance schema not in migration chain                   | ✅ Documented | Tables already in schema.ts; documented in DEPLOYMENT_INSTRUCTIONS.md                                           |
-| Missing Content Security Policy                            | ⏸️ Deferred   | Documented in PRODUCTION_HARDENING.md (requires Vite plugin + nonce generation)                                 |
-| In-memory rate limiter not production-safe                 | ⏸️ Deferred   | Documented in PRODUCTION_HARDENING.md (requires Netlify Edge Functions or Upstash Redis)                        |
+| Issue                                                      | Status        | Solution                                                                                                                                                              |
+| ---------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Missing env vars in `.env.example`                         | ✅ Fixed      | Added 15+ missing variables (VITE_SUPABASE_ANON_KEY, Shopify, Meta, MCP, analytics, contact webhook, log level)                                                       |
+| Hardcoded Supabase URL in `billing.ts`                     | ✅ Fixed      | Removed hardcoded URL; `getBillingDb()` returns `null` when `SUPABASE_URL` is missing and billing routes respond 503 (runtime/route-level failure, not startup crash) |
+| Stripe API version mismatch                                | ✅ Fixed      | Standardized to `2026-03-25.dahlia` across all files (billing.ts, stripe.ts, themes.ts)                                                                               |
+| LLM error message hardcodes "OPENAI_API_KEY"               | ✅ Fixed      | Now shows correct env var: `BUILT_IN_FORGE_API_KEY`                                                                                                                   |
+| Duplicate Stripe client in `billing.ts` without null guard | ✅ Fixed      | Added null guard, matches pattern in stripe.ts                                                                                                                        |
+| Governance schema not in migration chain                   | ✅ Documented | Tables already in schema.ts; documented in DEPLOYMENT_INSTRUCTIONS.md                                                                                                 |
+| Missing Content Security Policy                            | ⏸️ Deferred   | Documented in PRODUCTION_HARDENING.md (requires Vite plugin + nonce generation)                                                                                       |
+| In-memory rate limiter not production-safe                 | ⏸️ Deferred   | Documented in PRODUCTION_HARDENING.md (requires Netlify Edge Functions or Upstash Redis)                                                                              |
 
 ### 🟠 HIGH Priority (5/5 Complete)
 
@@ -179,7 +179,7 @@ Before merging to `main`:
 - [ ] Add CDN caching for public APIs (performance)
 - [ ] Forward logs to aggregation service (debugging)
 
-**Assessment:** Platform is **production-ready** for initial launch. CSP and rate limiter can be added in Week 2 after monitoring real traffic patterns.
+**Assessment:** Platform is cleared for a limited/staging rollout. CSP nonce support and production-safe rate limiting (see [PRODUCTION_HARDENING.md](./PRODUCTION_HARDENING.md)) remain required pre-production hardening before a full public launch.
 
 ---
 

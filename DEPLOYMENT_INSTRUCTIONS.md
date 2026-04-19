@@ -7,6 +7,9 @@ This document outlines the steps to deploy the governance system (Phases 40-44) 
 - Production database access (PostgreSQL / Neon)
 - Environment variables configured:
   - `DATABASE_URL` — PostgreSQL (Neon) connection string
+  - `JWT_SECRET` — 32+ char secret for session JWTs (required)
+  - `PUBLIC_APP_URL` — Canonical public URL of the app (required for OAuth callbacks and email links)
+  - `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET`, `OAUTH_AUTHORIZE_URL`, `OAUTH_TOKEN_URL`, `OAUTH_USERINFO_URL` — OAuth provider credentials (required for custom OAuth login)
   - `BUILT_IN_FORGE_API_KEY` — AI API key for governance decisions (replaces OPENAI_API_KEY)
   - `BUILT_IN_FORGE_API_URL` — AI API endpoint (optional, defaults to Forge)
   - `RESEND_API_KEY` — Email service for notifications
@@ -31,15 +34,14 @@ This will create the following tables if they don't exist:
 - `decision_authority` — User permission matrix
 - `kill_switches` — Emergency operational controls
 - `governance_rules` — Governance rule definitions
-- `approval_workflows` — Multi-level approval tracking
 - `governance_metrics` — Computed metrics snapshots
 
-**Note:** The legacy `drizzle/governance-schema.sql` file contains MySQL syntax and should NOT be run directly. The governance tables are already in the TypeScript schema and will be created via `drizzle-kit push`.
+**Note:** The legacy `drizzle/governance-schema.sql` file contains MySQL syntax and should NOT be run directly. The governance tables are already in the TypeScript schema and will be created via `drizzle-kit push`. The `approval_workflows` table appears only in the legacy SQL file and is **not** yet defined in `drizzle/schema.ts` — if multi-level approval workflows are needed, add that table to the TypeScript schema first.
 
 **Expected output:**
 
-```
-✅ 7 tables created successfully
+```text
+✅ 6 tables created successfully
 ✅ All indexes created
 ✅ Foreign key constraints applied
 ```
