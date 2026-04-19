@@ -39,13 +39,13 @@ This document summarizes the production readiness fixes applied to the UnifyOne 
 
 ### 🟡 MEDIUM Priority (5/5 Complete)
 
-| Issue                                    | Status   | Solution                                                       |
-| ---------------------------------------- | -------- | -------------------------------------------------------------- |
-| `continue-on-error` on CI type-check     | ✅ Fixed | Removed from `.github/workflows/build.yml`                     |
-| 50MB JSON body limit excessive           | ✅ Fixed | Reduced to 4MB; documented presigned S3 URLs for large uploads |
-| Legacy `NEXT_PUBLIC_*` env var fallbacks | ✅ Fixed | Removed from stripe.ts and billing.ts                          |
-| Missing HSTS `preload` directive         | ✅ N/A   | Already present in netlify.toml                                |
-| Seed scripts in root directory           | ✅ Fixed | Moved to `scripts/` directory                                  |
+| Issue                                    | Status   | Solution                                                                        |
+| ---------------------------------------- | -------- | ------------------------------------------------------------------------------- |
+| `continue-on-error` on CI type-check     | ✅ Fixed | Removed from `.github/workflows/build.yml`                                      |
+| 50MB JSON body limit excessive           | ✅ Fixed | Reduced to 4MB; documented presigned S3 URLs for large uploads                  |
+| Legacy `NEXT_PUBLIC_*` env var fallbacks | ✅ Fixed | Removed from stripe.ts, billing.ts, subscription.ts, creditMeter.ts, and env.ts |
+| Missing HSTS `preload` directive         | ✅ N/A   | Already present in netlify.toml                                                 |
+| Seed scripts in root directory           | ✅ Fixed | Moved to `scripts/` directory                                                   |
 
 ### 📝 Documentation Updates (3/3 Complete)
 

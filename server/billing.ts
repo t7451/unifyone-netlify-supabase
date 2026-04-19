@@ -17,6 +17,7 @@ import { sdk } from "./_core/sdk";
 import { COOKIE_NAME } from "../shared/const";
 import { parse as parseCookieHeader } from "cookie";
 import { getStripe } from "./_core/stripeClient";
+import { getAppUrl } from "./_core/env";
 
 // Mirror the stripe.ts pattern: fail gracefully when the key is absent.
 const stripe = getStripe();
@@ -115,17 +116,18 @@ export function registerBillingRoutes(app: Express) {
         const pkg = findPackage(packageId);
         if (!pkg) return res.status(400).json({ error: "Invalid packageId" });
 
-        // Security: Validate origin against allowlist to prevent redirect attacks
+        // Security: Validate origin against allowlist to prevent redirect attacks.
+        // getAppUrl() honors PUBLIC_APP_URL, APP_URL, URL, DEPLOY_PRIME_URL so
+        // Netlify preview/staging deploys work without falling back to prod.
+        const canonicalUrl = getAppUrl();
         const allowedOrigins = [
-          process.env.PUBLIC_APP_URL,
+          canonicalUrl,
           "https://1commerce.online",
           "https://unifyone.netlify.app",
         ].filter(Boolean);
 
         const baseUrl =
-          origin && allowedOrigins.includes(origin)
-            ? origin
-            : process.env.PUBLIC_APP_URL || "https://1commerce.online";
+          origin && allowedOrigins.includes(origin) ? origin : canonicalUrl;
 
         const totalCredits = pkg.credits + pkg.bonus;
 

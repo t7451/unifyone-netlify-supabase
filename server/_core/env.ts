@@ -30,7 +30,7 @@ export const ENV = {
   squareEnvironment: (process.env.SQUARE_ENVIRONMENT ?? "production") as
     | "sandbox"
     | "production",
-  supabaseUrl: process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "",
+  supabaseUrl: process.env.SUPABASE_URL ?? "",
   supabaseJwtSecret: process.env.SUPABASE_JWT_SECRET ?? "",
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
 };

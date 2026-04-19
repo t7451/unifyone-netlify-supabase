@@ -12,26 +12,35 @@ This document outlines additional security and reliability measures that should 
 
 **Solution:**
 
-Add per-request nonces to the existing CSP. This requires:
+Per-request nonces cannot be generated from static `netlify.toml` `[[headers]]` — those values are emitted literally at deploy time, so `nonce-${NONCE}` would ship as-is and match nothing. Use one of these approaches instead:
 
-1. **Generate nonces in server responses** — Modify `server/_core/index.ts` to generate a unique nonce per request and inject it into the HTML response.
+**Option A: `@netlify/plugin-csp-nonce` (recommended)**
 
-2. **Configure Vite to use nonces** — Update `vite.config.ts` to inject nonce attributes into inline `<script>` and `<style>` tags during build.
-
-3. **Set CSP header in Netlify** — Add to `netlify.toml`:
+Add to `netlify.toml`:
 
 ```toml
-[[headers]]
-  for = "/*"
-  [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'nonce-${NONCE}' https://js.stripe.com; style-src 'self' 'nonce-${NONCE}' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss://denxakpahfmlsekxmubs.supabase.co https://api.stripe.com; frame-src https://js.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
+[[plugins]]
+  package = "@netlify/plugin-csp-nonce"
 ```
+
+The plugin deploys a Netlify Edge Function that generates a fresh nonce per request, adds it to the `Content-Security-Policy` header, and rewrites `<script>` / `<style>` tags in the HTML response to carry the matching `nonce` attribute. Static directives (img-src, font-src, connect-src, frame-src, object-src, base-uri, form-action, frame-ancestors, upgrade-insecure-requests) can continue to live in `netlify.toml` `[[headers]]`.
+
+**Option B: Custom Netlify Edge Function**
+
+Write an Edge Function that:
+
+1. Generates a fresh nonce per request (`crypto.getRandomValues`).
+2. Sets the `Content-Security-Policy` response header using that nonce.
+3. Rewrites the HTML body to inject `nonce` attributes on inline `<script>` and `<style>` tags.
+
+Route it at `path = "/*"` in `netlify.toml` under `[[edge_functions]]`. Keep `[[headers]]` in `netlify.toml` for static directives only.
 
 **References:**
 
 - [MDN: Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
 - [Stripe CSP Guide](https://stripe.com/docs/security/guide#content-security-policy)
-- [Vite CSP Plugin](https://github.com/vitejs/vite-plugin-legacy#content-security-policy)
+- [@netlify/plugin-csp-nonce](https://github.com/netlify/plugin-csp-nonce)
+- [Netlify CSP integration announcement](https://www.netlify.com/blog/general-availability-content-security-policy-csp-nonce-integration/)
 
 ---
 
