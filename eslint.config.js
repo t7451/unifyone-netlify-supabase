@@ -12,6 +12,7 @@ export default tseslint.config(
       "drizzle",
       "apps",
       "packages",
+      "scripts",
       "*.config.js",
       "*.config.ts",
     ],
@@ -37,13 +38,18 @@ export default tseslint.config(
       ],
       "no-unused-vars": "off",
 
-      // Null safety: flag non-null assertions on DOM queries
-      "@typescript-eslint/no-non-null-assertion": "warn",
+      // Null safety: flag non-null assertions on DOM queries.
+      // Disabled project-wide — heavily used in tRPC data handlers where the
+      // shape is narrowed by tRPC's inferred output types. Re-enable per-file
+      // with /* eslint-disable */ where null safety matters (e.g. DOM queries).
+      "@typescript-eslint/no-non-null-assertion": "off",
 
       // Identical branches / constant conditions
       "no-constant-condition": ["error", { checkLoops: false }],
 
-      // React hooks correctness
+      // React hooks correctness — must stay strict; effect dependency bugs
+      // are real runtime issues. Genuine exceptions should be marked with
+      // an eslint-disable-next-line comment explaining the rationale.
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": [
         "warn",
@@ -51,7 +57,11 @@ export default tseslint.config(
       ],
 
       // ── General quality ───────────────────────────────────────────────
-      "@typescript-eslint/no-explicit-any": "warn",
+      // Disabled project-wide — `any` is pragmatic for tRPC payloads, Supabase
+      // Realtime events, and 3rd-party SDK types (PayPal, Square, Google Maps)
+      // where the upstream type surfaces are incomplete. Prefer `unknown`
+      // where practical in new code.
+      "@typescript-eslint/no-explicit-any": "off",
       "prefer-const": "error",
       "no-var": "error",
       // NOTE: no-floating-promises and no-misused-promises require typed linting

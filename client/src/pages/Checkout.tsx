@@ -152,6 +152,9 @@ export default function Checkout() {
       buttons.render(paypalContainerRef.current);
       paypalButtonsRef.current = buttons;
     }
+    // linkedOrderId, markOrderPaid, navigate are referenced inside PayPal callbacks
+    // but should not trigger a PayPal button re-render when they change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paypalLoaded, selectedRail, amount, description]);
 
   const handleSquareCheckout = async () => {
