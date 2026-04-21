@@ -103,8 +103,7 @@ export function tokensToCredits(tokensIn = 0, tokensOut = 0): number {
 let _supabase: SupabaseClient | null = null;
 function getSupabase(): SupabaseClient | null {
   if (_supabase) return _supabase;
-  const url =
-    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const url = process.env.SUPABASE_URL || "";
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
   if (!url || !key) return null;
   _supabase = createClient(url, key, { auth: { persistSession: false } });

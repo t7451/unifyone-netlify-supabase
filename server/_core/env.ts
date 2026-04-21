@@ -19,7 +19,9 @@ export const ENV = {
   cookieDomain: process.env.COOKIE_DOMAIN ?? "",
   databaseUrl: process.env.DATABASE_URL ?? "",
   ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
-  isProduction: process.env.NODE_ENV === "production",
+  get isProduction() {
+    return process.env.NODE_ENV === "production";
+  },
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   squareAccessToken: process.env.SQUARE_ACCESS_TOKEN ?? "",
@@ -28,7 +30,7 @@ export const ENV = {
   squareEnvironment: (process.env.SQUARE_ENVIRONMENT ?? "production") as
     | "sandbox"
     | "production",
-  supabaseUrl: process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "",
+  supabaseUrl: process.env.SUPABASE_URL ?? "",
   supabaseJwtSecret: process.env.SUPABASE_JWT_SECRET ?? "",
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
 };
