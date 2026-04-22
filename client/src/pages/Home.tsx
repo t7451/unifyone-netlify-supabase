@@ -284,19 +284,19 @@ export default function Home() {
   });
 
   useEffect(() => {
-    if (typeof window === "undefined" || !window.location.hash) {
+    if (!window.location.hash) {
       return;
     }
 
     const targetId = window.location.hash.slice(1);
-    const hashScrollTimer = window.setTimeout(() => {
+    const scrollTimeoutId = window.setTimeout(() => {
       document.getElementById(targetId)?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
     }, 0);
 
-    return () => window.clearTimeout(hashScrollTimer);
+    return () => window.clearTimeout(scrollTimeoutId);
   }, []);
 
   const scrollToSection =
