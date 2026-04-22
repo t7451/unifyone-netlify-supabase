@@ -35,7 +35,6 @@ corepack pnpm --version
 ### 1. Install dependencies
 
 ```bash
-cd /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase
 corepack pnpm install
 ```
 
@@ -44,7 +43,7 @@ corepack pnpm install
 For the legacy app:
 
 ```bash
-cp /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/.env.example /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/.env
+cp .env.example .env
 ```
 
 Minimum values to run the root app locally:
@@ -64,7 +63,7 @@ Optional but common:
 If you are working on the Astro app too:
 
 ```bash
-cp /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/apps/unifyone/.env.example /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/apps/unifyone/.env
+cp apps/unifyone/.env.example apps/unifyone/.env
 ```
 
 That app expects values such as `NEON_DATABASE_URL`, `CLERK_SECRET_KEY`,
@@ -75,7 +74,6 @@ That app expects values such as `NEON_DATABASE_URL`, `CLERK_SECRET_KEY`,
 ### Legacy root app
 
 ```bash
-cd /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase
 corepack pnpm dev
 ```
 
@@ -93,23 +91,20 @@ corepack pnpm build
 ### Astro workspace app
 
 ```bash
-cd /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase
 corepack pnpm --filter unifyone dev
 corepack pnpm --filter unifyone build
 ```
 
-See `/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/apps/unifyone/README.md`
-for Astro-specific details and
-`/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/infra/neon/README.md`
-for Neon bootstrap steps.
+See `apps/unifyone/README.md` for Astro-specific details and
+`infra/neon/README.md` for Neon bootstrap steps.
 
 ## Deployment and operations docs
 
-- `/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/DEPLOYMENT.md`
-- `/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/DEPLOYMENT_INSTRUCTIONS.md`
-- `/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/AUTHENTICATION.md`
-- `/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/PRODUCTION_CHECKLIST.md`
-- `/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/PRODUCTION_HARDENING.md`
+- `DEPLOYMENT.md`
+- `DEPLOYMENT_INSTRUCTIONS.md`
+- `AUTHENTICATION.md`
+- `PRODUCTION_CHECKLIST.md`
+- `PRODUCTION_HARDENING.md`
 
 ## MCP integration
 
@@ -171,7 +166,7 @@ Authorization: Bearer <MCP_API_KEY>
 The package in `src-typescript/` exposes a typed MCP server over stdio:
 
 ```bash
-cd /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/src-typescript
+cd src-typescript
 corepack pnpm install
 corepack pnpm build
 ```
