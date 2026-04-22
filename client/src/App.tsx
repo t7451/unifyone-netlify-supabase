@@ -79,11 +79,7 @@ const Resources = lazy(() => import("./pages/Resources"));
 const VideoProduction = lazy(() => import("./pages/VideoProduction"));
 const AdCopyHub = lazy(() => import("./pages/AdCopyHub"));
 const GovernanceDashboard = lazy(() => import("./pages/GovernanceDashboard"));
-const DocsChat = lazy(async () => {
-  const module = await import("./pages/DocsChat");
-
-  return { default: module.DocsChat };
-});
+const DocsChat = lazy(() => import("./pages/DocsChat"));
 const DeveloperHub = lazy(() => import("./pages/DeveloperHub"));
 const AuthorizationHub = lazy(() => import("./pages/AuthorizationHub"));
 const Pricing = lazy(() => import("./pages/Pricing"));

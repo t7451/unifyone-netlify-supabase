@@ -91,6 +91,10 @@ export default function LoadingExperience({
           fullScreen ? "min-h-screen py-16" : "py-10"
         )}
       >
+        <span className="sr-only">
+          {title}. {description}
+        </span>
+
         <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--loading-accent-soft)] bg-[var(--loading-surface)] px-4 py-2 text-xs font-medium uppercase tracking-[0.24em] text-[var(--loading-accent)]">
           <span className="h-2 w-2 rounded-full bg-[var(--loading-accent)] animate-pulse" />
           {label}
@@ -127,6 +131,7 @@ export default function LoadingExperience({
 
           <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-[1.25rem] border border-white/10 bg-[var(--loading-surface-strong)] backdrop-blur-md">
             <Sparkles
+              aria-hidden="true"
               className="h-7 w-7 text-[var(--loading-accent)]"
               style={{
                 filter: "drop-shadow(0 0 12px var(--loading-accent-soft))",
