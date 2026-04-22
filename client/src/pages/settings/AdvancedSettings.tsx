@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
@@ -31,6 +31,7 @@ import {
   AlertCircle,
   CreditCard,
   ArrowRight,
+  KeyRound,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import MCPStatusWidget from "@/components/MCPStatusWidget";
@@ -100,10 +101,171 @@ export default function AdvancedSettings() {
         {/* MCP Server */}
         <MCPStatusWidget variant="settings" />
 
+        <GoogleOAuthCard />
+
         {/* Demo Data */}
         <DemoDataCard />
       </div>
     </SettingsLayout>
+  );
+}
+
+function GoogleOAuthCard() {
+  const utils = trpc.useUtils();
+  const { data, isLoading } = trpc.tenant.getOAuthSettings.useQuery();
+  const [enabled, setEnabled] = useState(false);
+  const [clientId, setClientId] = useState("");
+  const [clientSecret, setClientSecret] = useState("");
+  const [redirectUri, setRedirectUri] = useState("");
+  const [scopes, setScopes] = useState("");
+
+  const saveOAuth = trpc.tenant.updateOAuthSettings.useMutation({
+    onSuccess: () => {
+      toast.success("Google OAuth settings saved.");
+      setClientSecret("");
+      utils.tenant.getOAuthSettings.invalidate();
+    },
+    onError: err => toast.error(err.message),
+  });
+
+  const resolvedGoogle = data?.google;
+
+  useEffect(() => {
+    if (!resolvedGoogle) return;
+    setEnabled(resolvedGoogle.enabled);
+    setClientId(resolvedGoogle.clientId);
+    setRedirectUri(resolvedGoogle.redirectUri);
+    setScopes(resolvedGoogle.scopes);
+  }, [resolvedGoogle]);
+
+  const handleSave = () => {
+    saveOAuth.mutate({
+      google: {
+        enabled,
+        clientId: clientId.trim(),
+        clientSecret: clientSecret.trim() || undefined,
+        redirectUri: redirectUri.trim(),
+        scopes: scopes.trim(),
+      },
+    });
+  };
+
+  return (
+    <Card className="bg-card border-border">
+      <CardHeader>
+        <CardTitle className="text-white text-base flex items-center gap-2">
+          <KeyRound className="w-4 h-4 text-[#00D9FF]" />
+          Google OAuth Scaffold
+        </CardTitle>
+        <CardDescription className="text-gray-400">
+          Save tenant-specific Google OAuth values after signing in with
+          email/password. The provider callback is scaffolded for later wiring.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-1.5">
+          <Label className="text-gray-300 text-sm">Enabled</Label>
+          <Select
+            value={String(enabled)}
+            onValueChange={value => setEnabled(value === "true")}
+          >
+            <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">Enabled</SelectItem>
+              <SelectItem value="false">Disabled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-gray-300 text-sm">Client ID</Label>
+          <Input
+            value={clientId}
+            onChange={e => setClientId(e.target.value)}
+            placeholder="Google OAuth client ID"
+            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-gray-300 text-sm">Client Secret</Label>
+          <Input
+            type="password"
+            value={clientSecret}
+            onChange={e => setClientSecret(e.target.value)}
+            placeholder={
+              resolvedGoogle?.hasClientSecret
+                ? "Saved — enter a new value to replace it"
+                : "Google OAuth client secret"
+            }
+            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+          />
+          {resolvedGoogle?.hasClientSecret && (
+            <p className="text-xs text-gray-500">
+              A client secret is already stored and is never sent back to the UI.
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-gray-300 text-sm">Redirect URI</Label>
+          <Input
+            value={redirectUri}
+            onChange={e => setRedirectUri(e.target.value)}
+            placeholder="https://your-app.com/api/auth/google/callback"
+            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+          />
+          <p className="text-xs text-gray-500">
+            This should match the callback configured in your Google app.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-gray-300 text-sm">Scopes</Label>
+          <Textarea
+            value={scopes}
+            onChange={e => setScopes(e.target.value)}
+            rows={3}
+            placeholder="openid email profile"
+            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50 resize-none"
+          />
+        </div>
+
+        <div className="rounded-lg bg-white/5 border border-white/10 p-3 space-y-1">
+          <p className="text-xs uppercase tracking-wider text-gray-500">
+            Scaffold usage
+          </p>
+          <p className="text-sm text-gray-300">
+            After saving, open the login page with
+            <span className="font-mono text-white"> ?tenant=your-store-slug</span>
+            and use the Google button to test the authorize redirect.
+          </p>
+          <p className="text-xs text-gray-500">
+            Callback status: the app redirects back to login with a scaffold
+            notice until the token exchange is implemented.
+          </p>
+        </div>
+
+        <div className="flex justify-end">
+          <Button
+            onClick={handleSave}
+            disabled={saveOAuth.isPending || isLoading}
+            className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+          >
+            {saveOAuth.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Google OAuth"
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

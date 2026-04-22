@@ -17,6 +17,7 @@ import {
   CreditCard,
   Users,
   Mail,
+  AtSign,
 } from "lucide-react";
 
 function getReturnTo(): string {
@@ -25,6 +26,12 @@ function getReturnTo(): string {
   const returnTo = params.get("returnTo");
   if (returnTo && returnTo.startsWith("/")) return returnTo;
   return "/dashboard";
+}
+
+function getTenantSlug(): string {
+  if (typeof window === "undefined") return "";
+  const params = new URLSearchParams(window.location.search);
+  return params.get("tenant")?.trim().toLowerCase() ?? "";
 }
 
 const FEATURES = [
@@ -85,14 +92,17 @@ export default function Login({
   const [intent, setIntent] = useState<LoginIntent>(initialIntent);
   const [mode, setMode] = useState<AuthMode>("password");
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const returnTo = getReturnTo();
+  const tenantSlug = getTenantSlug();
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
@@ -106,6 +116,10 @@ export default function Login({
     const urlError = params.get("error");
     if (urlError === "invalid_link") {
       setError("That link has expired or is invalid. Please try again.");
+    } else if (urlError === "google_oauth_not_ready") {
+      setError(
+        "Google OAuth returned to the app, but the callback exchange still needs to be implemented."
+      );
     }
   }, []);
 
@@ -142,7 +156,7 @@ export default function Login({
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      setError("Please enter your email and password.");
+      setError("Please enter your email or username and password.");
       return;
     }
 
@@ -155,7 +169,7 @@ export default function Login({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier: email, password }),
       });
 
       const data = await res.json();
@@ -176,8 +190,8 @@ export default function Login({
   };
 
   const handleSignUp = async () => {
-    if (!email || !password) {
-      setError("Please enter your email and password.");
+    if (!username || !email || !password) {
+      setError("Please enter a username, email, and password.");
       return;
     }
     if (password.length < 8) {
@@ -193,7 +207,7 @@ export default function Login({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, username, name: username, password }),
       });
 
       const data = await res.json();
@@ -209,6 +223,42 @@ export default function Login({
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleOAuth = async () => {
+    if (!tenantSlug) {
+      setError(
+        "Add ?tenant=your-store-slug to the login URL after configuring Google OAuth in Settings → Advanced."
+      );
+      return;
+    }
+
+    setIsGoogleSubmitting(true);
+    setError(null);
+    setErrorCode(null);
+
+    try {
+      const res = await fetch("/api/auth/google/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ tenantSlug }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success || !data.authorizationUrl) {
+        setError(
+          data.error || "Google OAuth is not configured for this workspace yet."
+        );
+        return;
+      }
+
+      window.location.href = data.authorizationUrl as string;
+    } catch {
+      setError("Failed to start Google OAuth. Please try again.");
+    } finally {
+      setIsGoogleSubmitting(false);
     }
   };
 
@@ -411,10 +461,16 @@ export default function Login({
           {/* Form */}
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Email</Label>
+              <Label className="text-slate-300 text-sm">
+                {intent === "signup" ? "Email" : "Email or username"}
+              </Label>
               <Input
-                type="email"
-                placeholder="you@yourcompany.com"
+                type={intent === "signup" ? "email" : "text"}
+                placeholder={
+                  intent === "signup"
+                    ? "you@yourcompany.com"
+                    : "you@yourcompany.com or yourname"
+                }
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -426,6 +482,30 @@ export default function Login({
                 autoFocus
               />
             </div>
+
+            {intent === "signup" && (
+              <div className="space-y-1.5">
+                <Label className="text-slate-300 text-sm">Username</Label>
+                <div className="relative">
+                  <AtSign className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Input
+                    type="text"
+                    placeholder="yourname"
+                    value={username}
+                    onChange={e => setUsername(e.target.value.toLowerCase())}
+                    onKeyDown={handleKeyDown}
+                    className={cn(
+                      "bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-11 pl-9 transition-all",
+                      "focus:border-[#00D9FF]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#00D9FF]/20"
+                    )}
+                    autoComplete="username"
+                  />
+                </div>
+                <p className="text-xs text-slate-500">
+                  Lowercase letters, numbers, dots, hyphens, and underscores.
+                </p>
+              </div>
+            )}
 
             {showPasswordField && (
               <div className="space-y-1.5">
@@ -487,9 +567,31 @@ export default function Login({
             </Button>
           </div>
 
+          <Separator className="bg-white/10" />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGoogleOAuth}
+            disabled={isGoogleSubmitting}
+            className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white"
+          >
+            {isGoogleSubmitting ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Redirecting to Google...
+              </span>
+            ) : (
+              "Continue with Google (scaffold)"
+            )}
+          </Button>
+          <p className="text-xs text-slate-500 text-center">
+            Configure Google OAuth after email/password sign-in in Settings →
+            Advanced. Use <span className="font-mono">?tenant=your-store-slug</span>{" "}
+            on this page to test the scaffold.
+          </p>
+
           {mode === "password" && (
             <>
-              <Separator className="bg-white/10" />
               <p className="text-center text-sm text-slate-500">
                 {intent === "signup" ? (
                   <>

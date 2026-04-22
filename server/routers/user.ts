@@ -5,12 +5,21 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { users, userPreferences } from "../../drizzle/schema";
 
+const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3)
+  .max(32)
+  .regex(/^[a-z0-9](?:[a-z0-9._-]{2,31})$/);
+
 export const userRouter = router({
   /** Update the current user's display name */
   updateProfile: protectedProcedure
     .input(
       z.object({
         name: z.string().min(1).max(255).optional(),
+        username: usernameSchema.optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -23,6 +32,23 @@ export const userRouter = router({
 
       const updateData: Record<string, unknown> = { updatedAt: new Date() };
       if (input.name !== undefined) updateData.name = input.name;
+
+      if (input.username !== undefined) {
+        const existingUsername = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.username, input.username))
+          .limit(1);
+
+        if (existingUsername[0] && existingUsername[0].id !== ctx.user.id) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "That username is already in use.",
+          });
+        }
+
+        updateData.username = input.username;
+      }
 
       await db.update(users).set(updateData).where(eq(users.id, ctx.user.id));
 

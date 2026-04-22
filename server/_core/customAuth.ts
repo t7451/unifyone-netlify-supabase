@@ -10,7 +10,7 @@
 
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { users } from "../../drizzle/schema";
 import { sdk } from "./sdk";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
@@ -23,6 +23,27 @@ const scryptAsync = promisify(scrypt);
 
 const SALT_LENGTH = 32;
 const KEY_LENGTH = 64;
+const USERNAME_REGEX = /^[a-z0-9](?:[a-z0-9._-]{2,31})$/;
+const USERNAME_MIN_LENGTH = 3;
+const USERNAME_MAX_LENGTH = 32;
+
+function normalizeUsername(username?: string | null): string | null {
+  const normalized = username?.trim().toLowerCase();
+  return normalized ? normalized : null;
+}
+
+function validateUsername(username: string): string | null {
+  if (username.length < USERNAME_MIN_LENGTH) {
+    return `Username must be at least ${USERNAME_MIN_LENGTH} characters`;
+  }
+  if (username.length > USERNAME_MAX_LENGTH) {
+    return `Username must be at most ${USERNAME_MAX_LENGTH} characters`;
+  }
+  if (!USERNAME_REGEX.test(username)) {
+    return "Username can only contain lowercase letters, numbers, dots, hyphens, and underscores";
+  }
+  return null;
+}
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(SALT_LENGTH);
@@ -86,6 +107,7 @@ export type AuthResult = {
     openId: string;
     email: string;
     name: string;
+    username?: string | null;
     emailVerified?: boolean;
   };
 };
@@ -95,7 +117,8 @@ export type AuthResult = {
 export async function signUp(
   email: string,
   password: string,
-  name?: string
+  name?: string,
+  username?: string
 ): Promise<AuthResult> {
   if (!email || !password) {
     return { success: false, error: "Email and password are required" };
@@ -106,9 +129,16 @@ export async function signUp(
   }
 
   const emailLower = email.toLowerCase().trim();
+  const usernameLower = normalizeUsername(username);
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(emailLower)) {
     return { success: false, error: "Invalid email format" };
+  }
+  if (usernameLower) {
+    const usernameError = validateUsername(usernameLower);
+    if (usernameError) {
+      return { success: false, error: usernameError };
+    }
   }
 
   try {
@@ -131,10 +161,25 @@ export async function signUp(
       };
     }
 
+    if (usernameLower) {
+      const existingUsername = await db
+        .select({ openId: users.openId })
+        .from(users)
+        .where(eq(users.username, usernameLower))
+        .limit(1);
+
+      if (existingUsername.length > 0) {
+        return {
+          success: false,
+          error: "That username is already in use",
+        };
+      }
+    }
+
     // Hash password and create user
     const passwordHash = await hashPassword(password);
     const openId = generateOpenId();
-    const displayName = name?.trim() || emailLower.split("@")[0];
+    const displayName = name?.trim() || usernameLower || emailLower.split("@")[0];
 
     // Auto-verify email if email service is not configured AND we're not in production
     // This prevents accidental email verification bypass in production due to misconfiguration
@@ -151,6 +196,7 @@ export async function signUp(
     await db.insert(users).values({
       openId,
       email: emailLower,
+      username: usernameLower,
       passwordHash,
       name: displayName,
       loginMethod: "password",
@@ -168,7 +214,13 @@ export async function signUp(
     return {
       success: true,
       sessionToken,
-      user: { openId, email: emailLower, name: displayName, emailVerified },
+      user: {
+        openId,
+        email: emailLower,
+        name: displayName,
+        username: usernameLower,
+        emailVerified,
+      },
     };
   } catch (err: unknown) {
     logger.error("customAuth: signUp failed", {
@@ -184,14 +236,17 @@ export async function signUp(
 // ── Sign In ──────────────────────────────────────────────────────────────────
 
 export async function signIn(
-  email: string,
+  identifier: string,
   password: string
 ): Promise<AuthResult> {
-  if (!email || !password) {
-    return { success: false, error: "Email and password are required" };
+  if (!identifier || !password) {
+    return {
+      success: false,
+      error: "Email or username and password are required",
+    };
   }
 
-  const emailLower = email.toLowerCase().trim();
+  const identifierLower = identifier.toLowerCase().trim();
 
   try {
     const db = await getDb();
@@ -202,7 +257,9 @@ export async function signIn(
     const result = await db
       .select()
       .from(users)
-      .where(eq(users.email, emailLower))
+      .where(
+        or(eq(users.email, identifierLower), eq(users.username, identifierLower))
+      )
       .limit(1);
 
     const user = result[0];
@@ -210,7 +267,7 @@ export async function signIn(
     if (!user) {
       // Timing-safe: still do a hash comparison to prevent timing attacks
       await hashPassword(password);
-      return { success: false, error: "Invalid email or password" };
+      return { success: false, error: "Invalid email, username, or password" };
     }
 
     if (!user.passwordHash) {
@@ -223,7 +280,7 @@ export async function signIn(
 
     const isValid = await verifyPassword(password, user.passwordHash);
     if (!isValid) {
-      return { success: false, error: "Invalid email or password" };
+      return { success: false, error: "Invalid email, username, or password" };
     }
 
     // Require email verification before granting a session.
@@ -245,7 +302,7 @@ export async function signIn(
     if (user.emailVerified === false && !shouldEnforceVerification) {
       logger.warn(
         "customAuth: Allowing unverified user to sign in (email verification disabled in non-production without RESEND_API_KEY)",
-        { email: emailLower }
+        { identifier: identifierLower }
       );
     }
 
@@ -257,8 +314,8 @@ export async function signIn(
 
     // Create session token
     const sessionToken = await sdk.createSessionToken(user.openId, {
-      name: user.name || emailLower.split("@")[0],
-      email: emailLower,
+      name: user.name || user.username || user.email?.split("@")[0] || "User",
+      email: user.email,
       loginMethod: "password",
     });
 
@@ -267,8 +324,9 @@ export async function signIn(
       sessionToken,
       user: {
         openId: user.openId,
-        email: emailLower,
-        name: user.name || emailLower.split("@")[0],
+        email: user.email || identifierLower,
+        name: user.name || user.username || user.email?.split("@")[0] || "User",
+        username: user.username,
       },
     };
   } catch (err: unknown) {

@@ -29,20 +29,27 @@ import SettingsLayout from "./SettingsLayout";
 export default function AccountSettings() {
   const { user, refresh } = useAuth();
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [copiedId, setCopiedId] = useState(false);
 
   const updateProfile = trpc.user.updateProfile.useMutation({
     onSuccess: () => {
       toast.success("Profile updated");
       setName("");
+      setUsername("");
       refresh();
     },
     onError: (e: { message: string }) => toast.error(e.message),
   });
 
   const handleSave = () => {
-    if (!name.trim()) return;
-    updateProfile.mutate({ name: name.trim() });
+    const nextName = name.trim();
+    const nextUsername = username.trim().toLowerCase();
+    if (!nextName && !nextUsername) return;
+    updateProfile.mutate({
+      name: nextName || undefined,
+      username: nextUsername || undefined,
+    });
   };
 
   const copyId = () => {
@@ -121,6 +128,23 @@ export default function AccountSettings() {
               />
             </div>
 
+            <div className="space-y-1.5">
+              <Label className="text-gray-300 text-sm">Username</Label>
+              <Input
+                value={
+                  username ||
+                  (user as { username?: string | null })?.username ||
+                  ""
+                }
+                onChange={e => setUsername(e.target.value)}
+                placeholder="yourname"
+                className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+              />
+              <p className="text-xs text-gray-500">
+                You can sign in with this username or your email address.
+              </p>
+            </div>
+
             {/* Email (read-only) */}
             <div className="space-y-1.5">
               <Label className="text-gray-300 text-sm flex items-center gap-2">
@@ -140,7 +164,9 @@ export default function AccountSettings() {
             <div className="flex justify-end">
               <Button
                 onClick={handleSave}
-                disabled={updateProfile.isPending || !name.trim()}
+                disabled={
+                  updateProfile.isPending || (!name.trim() && !username.trim())
+                }
                 className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
               >
                 {updateProfile.isPending ? (
@@ -237,6 +263,17 @@ export default function AccountSettings() {
                 </p>
                 <p className="text-white text-sm mt-0.5 capitalize">
                   {(user as { loginMethod?: string | null })?.loginMethod ?? "OAuth"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+              <div>
+                <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">
+                  Username
+                </p>
+                <p className="text-white text-sm mt-0.5">
+                  {(user as { username?: string | null })?.username ?? "Not set"}
                 </p>
               </div>
             </div>

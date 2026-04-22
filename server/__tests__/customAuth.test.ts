@@ -176,14 +176,32 @@ describe("signUp", () => {
   it("returns { success: true, sessionToken, user } on happy path", async () => {
     // DB returns empty for existing-check
     _dbState.selectResult = [];
-    const result = await signUp("new@example.com", "securepass", "New User");
+    const result = await signUp(
+      "new@example.com",
+      "securepass",
+      "New User",
+      "new-user"
+    );
     expect(result.success).toBe(true);
     expect(result.sessionToken).toBe("mock-session-token");
     expect(result.user).toMatchObject({
       email: "new@example.com",
       name: "New User",
+      username: "new-user",
     });
     expect(typeof result.user?.openId).toBe("string");
+  });
+
+  it("returns { success: false } when username format is invalid", async () => {
+    _dbState.selectResult = [];
+    const result = await signUp(
+      "new@example.com",
+      "securepass",
+      "New User",
+      "Bad Name!"
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/username/i);
   });
 
   it("auto-verifies email when RESEND_API_KEY is NOT set and NODE_ENV is NOT production", async () => {
@@ -335,6 +353,7 @@ describe("signIn", () => {
       {
         openId: "verified-user",
         email: "verified@example.com",
+        username: "verified-user",
         passwordHash: realHash,
         emailVerified: true,
         name: "Verified User",
@@ -347,6 +366,27 @@ describe("signIn", () => {
       openId: "verified-user",
       email: "verified@example.com",
       name: "Verified User",
+      username: "verified-user",
+    });
+  });
+
+  it("allows users to sign in with a username", async () => {
+    const realHash = await hashPassword("goodpassword");
+    _dbState.selectResult = [
+      {
+        openId: "verified-user",
+        email: "verified@example.com",
+        username: "verified-user",
+        passwordHash: realHash,
+        emailVerified: true,
+        name: "Verified User",
+      },
+    ];
+    const result = await signIn("verified-user", "goodpassword");
+    expect(result.success).toBe(true);
+    expect(result.user).toMatchObject({
+      email: "verified@example.com",
+      username: "verified-user",
     });
   });
 });
