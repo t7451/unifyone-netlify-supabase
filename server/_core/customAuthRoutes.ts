@@ -1,5 +1,5 @@
 /**
- * Custom Auth Fetch Routes
+ * Custom Auth Routes
  *
  * POST /api/auth/signup     - Create account with email/password
  * POST /api/auth/signin     - Sign in with email/password
@@ -8,6 +8,7 @@
  * POST /api/auth/firebase   - Verify Firebase ID token (fallback)
  */
 
+import type { Express, Request as ExpressRequest, Response as ExpressResponse } from "express";
 import {
   signUp,
   signIn,
@@ -22,9 +23,20 @@ import {
 } from "./customAuth";
 import { authRateLimiter, passwordResetLimiter } from "./rateLimiter";
 import { ENV, getAppUrl } from "./env";
-import { getDb } from "../db";
+import { getDb, getTenantBySlug } from "../db";
 import { users as usersTable } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
+
+const DEFAULT_GOOGLE_SCOPES =
+  "openid email profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
+
+type GoogleOAuthSettings = {
+  enabled: boolean;
+  clientId: string;
+  clientSecret?: string;
+  redirectUri: string;
+  scopes: string;
+};
 
 function getClientIp(req: Request): string {
   // Standard forwarded-for header (Netlify / proxies set this)
@@ -55,6 +67,98 @@ function getAllowedOrigin(req: Request): string {
   return appUrl;
 }
 
+function readGoogleOAuthSettings(
+  settings: Record<string, unknown> | null | undefined
+): GoogleOAuthSettings {
+  const settingsObject =
+    settings && typeof settings === "object" ? settings : undefined;
+  const raw =
+    settingsObject?.googleOAuth &&
+    typeof settingsObject.googleOAuth === "object" &&
+    !Array.isArray(settingsObject.googleOAuth)
+      ? (settingsObject.googleOAuth as Record<string, unknown>)
+      : {};
+
+  return {
+    enabled: raw.enabled === true,
+    clientId: typeof raw.clientId === "string" ? raw.clientId : "",
+    clientSecret:
+      typeof raw.clientSecret === "string" ? raw.clientSecret : undefined,
+    redirectUri:
+      typeof raw.redirectUri === "string" ? raw.redirectUri : "",
+    scopes:
+      typeof raw.scopes === "string" && raw.scopes.trim().length > 0
+        ? raw.scopes
+        : DEFAULT_GOOGLE_SCOPES,
+  };
+}
+
+async function buildGoogleOAuthScaffold(
+  tenantSlug?: string
+): Promise<
+  | {
+      success: true;
+      authorizationUrl: string;
+      callbackUrl: string;
+      message: string;
+    }
+  | {
+      success: false;
+      status: number;
+      error: string;
+    }
+> {
+  if (!tenantSlug) {
+    return {
+      success: false,
+      status: 400,
+      error:
+        "A tenant slug is required. Add ?tenant=your-store-slug to the login URL after configuring Google OAuth.",
+    };
+  }
+
+  const tenant = await getTenantBySlug(tenantSlug);
+  if (!tenant) {
+    return {
+      success: false,
+      status: 404,
+      error: "Workspace not found for that tenant slug.",
+    };
+  }
+
+  const google = readGoogleOAuthSettings(
+    (tenant.settings as Record<string, unknown> | null | undefined) ?? null
+  );
+
+  if (!google.enabled || !google.clientId) {
+    return {
+      success: false,
+      status: 400,
+      error:
+        "Google OAuth is not configured for this workspace yet. Sign in with email/password and add the provider settings first.",
+    };
+  }
+
+  const callbackUrl = google.redirectUri || `${getAppUrl()}/api/auth/google/callback`;
+  const state = Buffer.from(JSON.stringify({ tenantSlug })).toString("base64url");
+  const authorizationUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+  authorizationUrl.searchParams.set("client_id", google.clientId);
+  authorizationUrl.searchParams.set("redirect_uri", callbackUrl);
+  authorizationUrl.searchParams.set("response_type", "code");
+  authorizationUrl.searchParams.set("scope", google.scopes || DEFAULT_GOOGLE_SCOPES);
+  authorizationUrl.searchParams.set("access_type", "offline");
+  authorizationUrl.searchParams.set("prompt", "consent");
+  authorizationUrl.searchParams.set("state", state);
+
+  return {
+    success: true,
+    authorizationUrl: authorizationUrl.toString(),
+    callbackUrl,
+    message:
+      "Google OAuth authorize URL created. The callback exchange still needs to be finished later.",
+  };
+}
+
 export async function registerCustomAuthFetchRoutes(
   req: Request
 ): Promise<Response | null> {
@@ -71,16 +175,11 @@ export async function registerCustomAuthFetchRoutes(
       status: 204,
       headers: {
         "Access-Control-Allow-Origin": getAllowedOrigin(req),
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type",
         "Access-Control-Allow-Credentials": "true",
       },
     });
-  }
-
-  // Only handle POST requests
-  if (method !== "POST") {
-    return null;
   }
 
   const corsHeaders = {
@@ -89,6 +188,54 @@ export async function registerCustomAuthFetchRoutes(
   };
 
   try {
+    if (path === "/api/auth/google/callback" && method === "GET") {
+      const redirectUrl = new URL("/login?error=google_oauth_not_ready", getAppUrl());
+      return Response.redirect(redirectUrl.toString(), 302);
+    }
+
+    // Only handle POST requests for all other custom auth endpoints
+    if (method !== "POST") {
+      return null;
+    }
+
+    if (path === "/api/auth/google/start") {
+      const rateCheck = await authRateLimiter.check(clientIp);
+      if (!rateCheck.allowed) {
+        return Response.json(
+          {
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          },
+          {
+            status: 429,
+            headers: {
+              ...corsHeaders,
+              "Retry-After": String(Math.ceil(rateCheck.retryAfterMs / 1000)),
+            },
+          }
+        );
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const { tenantSlug } = body as { tenantSlug?: string };
+      const result = await buildGoogleOAuthScaffold(tenantSlug);
+
+      if (!result.success) {
+        return Response.json(
+          { success: false, error: result.error },
+          { status: result.status, headers: corsHeaders }
+        );
+      }
+
+      return Response.json(
+        result,
+        {
+          status: 200,
+          headers: corsHeaders,
+        }
+      );
+    }
+
     // ── Sign Up ────────────────────────────────────────────────────────────
     if (path === "/api/auth/signup") {
       const rateCheck = await authRateLimiter.check(clientIp);
@@ -109,13 +256,14 @@ export async function registerCustomAuthFetchRoutes(
       }
 
       const body = await req.json().catch(() => ({}));
-      const { email, password, name } = body as {
+      const { email, password, name, username } = body as {
         email?: string;
         password?: string;
         name?: string;
+        username?: string;
       };
 
-      const result = await signUp(email || "", password || "", name);
+      const result = await signUp(email || "", password || "", name, username);
 
       if (!result.success) {
         return Response.json(
@@ -173,12 +321,13 @@ export async function registerCustomAuthFetchRoutes(
       }
 
       const body = await req.json().catch(() => ({}));
-      const { email, password } = body as {
+      const { email, identifier, password } = body as {
         email?: string;
+        identifier?: string;
         password?: string;
       };
 
-      const result = await signIn(email || "", password || "");
+      const result = await signIn(identifier || email || "", password || "");
 
       if (!result.success) {
         // Pass through the machine-readable code so the client can branch
@@ -388,6 +537,23 @@ export async function registerCustomAuthFetchRoutes(
 
     // ── Verify Email ───────────────────────────────────────────────────────
     if (path === "/api/auth/verify-email") {
+      const rateCheck = await passwordResetLimiter.check(clientIp);
+      if (!rateCheck.allowed) {
+        return Response.json(
+          {
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          },
+          {
+            status: 429,
+            headers: {
+              ...corsHeaders,
+              "Retry-After": String(Math.ceil(rateCheck.retryAfterMs / 1000)),
+            },
+          }
+        );
+      }
+
       const body = await req.json().catch(() => ({}));
       const { token } = body as { token?: string };
 
@@ -476,4 +642,348 @@ export async function registerCustomAuthFetchRoutes(
       { status: 500, headers: corsHeaders }
     );
   }
+}
+
+function getExpressClientIp(req: ExpressRequest): string {
+  const forwarded = req.headers["x-forwarded-for"];
+  if (typeof forwarded === "string") return forwarded.split(",")[0].trim();
+  if (Array.isArray(forwarded) && forwarded[0]) return forwarded[0];
+  return req.ip || "unknown";
+}
+
+function isExpressRequestSecure(req: ExpressRequest): boolean {
+  const forwardedProto = req.headers["x-forwarded-proto"];
+  return req.secure || forwardedProto === "https";
+}
+
+export function registerCustomAuthExpressRoutes(app: Express) {
+  app.get("/api/auth/google/callback", (_req: ExpressRequest, res: ExpressResponse) => {
+    res.redirect(302, "/login?error=google_oauth_not_ready");
+  });
+
+  app.post("/api/auth/google/start", async (req: ExpressRequest, res: ExpressResponse) => {
+    const clientIp = getExpressClientIp(req);
+    try {
+      const rateCheck = await authRateLimiter.check(clientIp);
+      if (!rateCheck.allowed) {
+        res
+          .status(429)
+          .setHeader(
+            "Retry-After",
+            String(Math.ceil(rateCheck.retryAfterMs / 1000))
+          )
+          .json({
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          });
+        return;
+      }
+
+      const { tenantSlug } = (req.body ?? {}) as { tenantSlug?: string };
+      const result = await buildGoogleOAuthScaffold(tenantSlug);
+      if (!result.success) {
+        res.status(result.status).json({ success: false, error: result.error });
+        return;
+      }
+      res.json(result);
+    } catch (err) {
+      console.error("[customAuthRoutes] Error:", err);
+      res.status(500).json({ success: false, error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/auth/signup", async (req: ExpressRequest, res: ExpressResponse) => {
+    const clientIp = getExpressClientIp(req);
+    try {
+      const rateCheck = await authRateLimiter.check(clientIp);
+      if (!rateCheck.allowed) {
+        res
+          .status(429)
+          .setHeader(
+            "Retry-After",
+            String(Math.ceil(rateCheck.retryAfterMs / 1000))
+          )
+          .json({
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          });
+        return;
+      }
+
+      const { email, password, name, username } = (req.body ?? {}) as {
+        email?: string;
+        password?: string;
+        name?: string;
+        username?: string;
+      };
+
+      const result = await signUp(email || "", password || "", name, username);
+      if (!result.success) {
+        res.status(400).json({ success: false, error: result.error });
+        return;
+      }
+
+      if (result.user?.email && result.user.emailVerified === false) {
+        sendVerificationEmail(result.user.openId, result.user.email).catch(err =>
+          console.error("[auth] Failed to send verification email:", err)
+        );
+      }
+
+      res.append(
+        "Set-Cookie",
+        buildSessionCookie(
+          result.sessionToken ?? "",
+          isExpressRequestSecure(req),
+          ENV.cookieDomain || undefined
+        )
+      );
+      res.status(201).json({
+        success: true,
+        user: result.user,
+        message: result.user?.emailVerified
+          ? "Account created successfully. You can now sign in."
+          : "Account created. Please check your email to verify your address.",
+      });
+    } catch (err) {
+      console.error("[customAuthRoutes] Error:", err);
+      res.status(500).json({ success: false, error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/auth/signin", async (req: ExpressRequest, res: ExpressResponse) => {
+    const clientIp = getExpressClientIp(req);
+    try {
+      const rateCheck = await authRateLimiter.check(clientIp);
+      if (!rateCheck.allowed) {
+        res
+          .status(429)
+          .setHeader(
+            "Retry-After",
+            String(Math.ceil(rateCheck.retryAfterMs / 1000))
+          )
+          .json({
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          });
+        return;
+      }
+
+      const { email, identifier, password } = (req.body ?? {}) as {
+        email?: string;
+        identifier?: string;
+        password?: string;
+      };
+
+      const result = await signIn(identifier || email || "", password || "");
+      if (!result.success) {
+        res
+          .status(401)
+          .json({ success: false, error: result.error, code: result.code });
+        return;
+      }
+
+      await authRateLimiter.reset(clientIp);
+      res.append(
+        "Set-Cookie",
+        buildSessionCookie(
+          result.sessionToken ?? "",
+          isExpressRequestSecure(req),
+          ENV.cookieDomain || undefined
+        )
+      );
+      res.status(200).json({ success: true, user: result.user });
+    } catch (err) {
+      console.error("[customAuthRoutes] Error:", err);
+      res.status(500).json({ success: false, error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/auth/logout", (req: ExpressRequest, res: ExpressResponse) => {
+    res.append(
+      "Set-Cookie",
+      buildLogoutCookie(
+        isExpressRequestSecure(req),
+        ENV.cookieDomain || undefined
+      )
+    );
+    res.status(200).json({ success: true });
+  });
+
+  app.post(
+    "/api/auth/forgot-password",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const clientIp = getExpressClientIp(req);
+      try {
+        const rateCheck = await passwordResetLimiter.check(clientIp);
+        if (!rateCheck.allowed) {
+          res
+            .status(429)
+            .setHeader(
+              "Retry-After",
+              String(Math.ceil(rateCheck.retryAfterMs / 1000))
+            )
+            .json({
+              success: false,
+              error: "Too many attempts. Please try again later.",
+            });
+          return;
+        }
+
+        const { email } = (req.body ?? {}) as { email?: string };
+        if (!email) {
+          res.status(400).json({ success: false, error: "Email is required" });
+          return;
+        }
+
+        await requestPasswordReset(email);
+        res.status(200).json({
+          success: true,
+          message:
+            "If an account with that email exists, a reset link has been sent.",
+        });
+      } catch (err) {
+        console.error("[customAuthRoutes] Error:", err);
+        res.status(500).json({ success: false, error: "Internal server error" });
+      }
+    }
+  );
+
+  app.post(
+    "/api/auth/reset-password",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const clientIp = getExpressClientIp(req);
+      try {
+        const rateCheck = await passwordResetLimiter.check(clientIp);
+        if (!rateCheck.allowed) {
+          res
+            .status(429)
+            .setHeader(
+              "Retry-After",
+              String(Math.ceil(rateCheck.retryAfterMs / 1000))
+            )
+            .json({
+              success: false,
+              error: "Too many attempts. Please try again later.",
+            });
+          return;
+        }
+
+        const { token, password } = (req.body ?? {}) as {
+          token?: string;
+          password?: string;
+        };
+        if (!token || !password) {
+          res
+            .status(400)
+            .json({ success: false, error: "Token and new password are required" });
+          return;
+        }
+
+        const result = await resetPassword(token, password);
+        if (!result.success) {
+          res.status(400).json({ success: false, error: result.error });
+          return;
+        }
+
+        res.status(200).json({
+          success: true,
+          message: "Password updated successfully. You can now sign in.",
+        });
+      } catch (err) {
+        console.error("[customAuthRoutes] Error:", err);
+        res.status(500).json({ success: false, error: "Internal server error" });
+      }
+    }
+  );
+
+  app.post("/api/auth/verify-email", async (req: ExpressRequest, res: ExpressResponse) => {
+    const clientIp = getExpressClientIp(req);
+    try {
+      const rateCheck = await passwordResetLimiter.check(clientIp);
+      if (!rateCheck.allowed) {
+        res
+          .status(429)
+          .setHeader(
+            "Retry-After",
+            String(Math.ceil(rateCheck.retryAfterMs / 1000))
+          )
+          .json({
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          });
+        return;
+      }
+
+      const { token } = (req.body ?? {}) as { token?: string };
+      if (!token) {
+        res.status(400).json({ success: false, error: "Token is required" });
+        return;
+      }
+
+      const result = await verifyEmailToken(token);
+      if (!result.success) {
+        res.status(400).json({ success: false, error: result.error });
+        return;
+      }
+
+      res.status(200).json({ success: true, message: "Email verified successfully." });
+    } catch (err) {
+      console.error("[customAuthRoutes] Error:", err);
+      res.status(500).json({ success: false, error: "Internal server error" });
+    }
+  });
+
+  app.post(
+    "/api/auth/resend-verification",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const clientIp = getExpressClientIp(req);
+      try {
+        const rateCheck = await passwordResetLimiter.check(clientIp);
+        if (!rateCheck.allowed) {
+          res
+            .status(429)
+            .setHeader(
+              "Retry-After",
+              String(Math.ceil(rateCheck.retryAfterMs / 1000))
+            )
+            .json({
+              success: false,
+              error: "Too many attempts. Please try again later.",
+            });
+          return;
+        }
+
+        const { email } = (req.body ?? {}) as { email?: string };
+        if (!email) {
+          res.status(400).json({ success: false, error: "Email is required" });
+          return;
+        }
+
+        const db = await getDb();
+        if (db) {
+          const rows = await db
+            .select({
+              openId: usersTable.openId,
+              emailVerified: usersTable.emailVerified,
+            })
+            .from(usersTable)
+            .where(eq(usersTable.email, email.toLowerCase().trim()))
+            .limit(1);
+          const user = rows[0];
+          if (user && user.emailVerified === false) {
+            await sendVerificationEmail(user.openId, email.toLowerCase().trim());
+          }
+        }
+
+        res.status(200).json({
+          success: true,
+          message:
+            "If an unverified account with that email exists, a new verification link has been sent.",
+        });
+      } catch (err) {
+        console.error("[customAuthRoutes] Error:", err);
+        res.status(500).json({ success: false, error: "Internal server error" });
+      }
+    }
+  );
 }

@@ -17,6 +17,7 @@ import { ENV } from "./env";
 import { logger, requestLogger } from "./logger";
 import { securityHeaders } from "./securityHeaders";
 import { Sentry } from "./sentry";
+import { registerCustomAuthExpressRoutes } from "./customAuthRoutes";
 
 /** Validate critical environment variables before the server accepts traffic. */
 function validateEnv() {
@@ -111,6 +112,7 @@ async function startServer() {
   app.use(requestLogger);
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  registerCustomAuthExpressRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

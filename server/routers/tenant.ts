@@ -17,6 +17,64 @@ import {
 } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 
+const googleOAuthInputSchema = z.object({
+  enabled: z.boolean(),
+  clientId: z.string().trim().max(255),
+  clientSecret: z.string().trim().max(255).optional(),
+  redirectUri: z.string().trim().url().or(z.literal("")),
+  scopes: z.string().trim().max(500),
+});
+
+type GoogleOAuthSettings = {
+  enabled: boolean;
+  clientId: string;
+  clientSecret?: string;
+  redirectUri: string;
+  scopes: string;
+};
+
+const DEFAULT_GOOGLE_OAUTH_SCOPES =
+  "openid email profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
+
+function getTenantSettingsObject(
+  settings: Record<string, unknown> | null | undefined
+): Record<string, unknown> {
+  return settings && typeof settings === "object" ? { ...settings } : {};
+}
+
+function readGoogleOAuthSettings(
+  settings: Record<string, unknown> | null | undefined
+): GoogleOAuthSettings {
+  const settingsObject = getTenantSettingsObject(settings);
+  const raw =
+    settingsObject.googleOAuth &&
+    typeof settingsObject.googleOAuth === "object" &&
+    !Array.isArray(settingsObject.googleOAuth)
+      ? (settingsObject.googleOAuth as Record<string, unknown>)
+      : {};
+
+  return {
+    enabled: raw.enabled === true,
+    clientId: typeof raw.clientId === "string" ? raw.clientId : "",
+    clientSecret:
+      typeof raw.clientSecret === "string" ? raw.clientSecret : undefined,
+    redirectUri:
+      typeof raw.redirectUri === "string" ? raw.redirectUri : "",
+    scopes:
+      typeof raw.scopes === "string" && raw.scopes.trim().length > 0
+        ? raw.scopes
+        : DEFAULT_GOOGLE_OAUTH_SCOPES,
+  };
+}
+
+function canManageTenantSettings(
+  tenant: Awaited<ReturnType<typeof getTenantById>>,
+  userId: number,
+  role: string
+): boolean {
+  return Boolean(tenant && (tenant.ownerId === userId || role === "admin"));
+}
+
 export const tenantRouter = router({
   // Get all tenants owned by the current user
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -114,6 +172,98 @@ export const tenantRouter = router({
   getPlans: protectedProcedure.query(async () => {
     return getPlans();
   }),
+
+  getOAuthSettings: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = ctx.user.tenantId;
+    if (!tenantId) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "No active tenant. Create a store first.",
+      });
+    }
+
+    const tenant = await getTenantById(tenantId);
+    if (!tenant) throw new TRPCError({ code: "NOT_FOUND" });
+
+    const google = readGoogleOAuthSettings(
+      (tenant.settings as Record<string, unknown> | null | undefined) ?? null
+    );
+
+    return {
+      google: {
+        enabled: google.enabled,
+        clientId: google.clientId,
+        redirectUri: google.redirectUri,
+        scopes: google.scopes,
+        hasClientSecret: Boolean(google.clientSecret),
+        callbackUrl:
+          google.redirectUri || "Use your Google app callback URL here",
+      },
+    };
+  }),
+
+  updateOAuthSettings: protectedProcedure
+    .input(
+      z.object({
+        google: googleOAuthInputSchema,
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = ctx.user.tenantId;
+      if (!tenantId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No active tenant. Create a store first.",
+        });
+      }
+
+      const tenant = await getTenantById(tenantId);
+      if (!tenant) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!canManageTenantSettings(tenant, ctx.user.id, ctx.user.role)) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      const existingSettings = getTenantSettingsObject(
+        (tenant.settings as Record<string, unknown> | null | undefined) ?? null
+      );
+      const existingGoogle = readGoogleOAuthSettings(
+        (tenant.settings as Record<string, unknown> | null | undefined) ?? null
+      );
+
+      const nextGoogle = {
+        enabled: input.google.enabled,
+        clientId: input.google.clientId,
+        clientSecret:
+          input.google.clientSecret && input.google.clientSecret.length > 0
+            ? input.google.clientSecret
+            : existingGoogle.clientSecret,
+        redirectUri: input.google.redirectUri,
+        scopes: input.google.scopes || DEFAULT_GOOGLE_OAUTH_SCOPES,
+      };
+
+      await updateTenant(
+        tenantId,
+        {
+          settings: {
+            ...existingSettings,
+            googleOAuth: nextGoogle,
+          },
+          updatedAt: new Date(),
+        },
+        ctx.user.role !== "admin" ? ctx.user.id : undefined
+      );
+
+      return {
+        success: true,
+        google: {
+          enabled: nextGoogle.enabled,
+          clientId: nextGoogle.clientId,
+          redirectUri: nextGoogle.redirectUri,
+          scopes: nextGoogle.scopes,
+          hasClientSecret: Boolean(nextGoogle.clientSecret),
+        },
+      };
+    }),
 
   // Seed demo data for the current tenant
   seedDemo: protectedProcedure.mutation(async ({ ctx }) => {
