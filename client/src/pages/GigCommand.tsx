@@ -158,6 +158,9 @@ export default function GigCommand() {
       setTimerActive(true);
       setPlatform(activeShift.platform);
     }
+    // timerActive is intentionally omitted — we only want to restore state when
+    // activeShift is (re)loaded, not when the timer is toggled by user action.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeShift]);
 
   // Elapsed timer
@@ -223,6 +226,9 @@ export default function GigCommand() {
     }, 60000);
     gpsIntervalRef.current = interval;
     return () => clearInterval(interval);
+    // updateGPS mutation identity changes on every render; we only want to
+    // restart the interval when shift state or position changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timerActive, activeShift, currentPos]);
 
   const handleStartShift = async () => {

@@ -58,6 +58,9 @@ export function useRealtimeTable(
       channel.unsubscribe();
       channelRef.current = null;
     };
+    // onEvent is intentionally omitted — callback identity may change across renders
+    // but we only want to re-subscribe when the channel target (table/filter) changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, filter]);
 }
 

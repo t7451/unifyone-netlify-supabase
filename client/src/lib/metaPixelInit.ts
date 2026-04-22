@@ -10,7 +10,6 @@
 
 // pixel.ts already declares window.fbq as (...args: unknown[]) => void | undefined.
 // We cast to any when setting up the SDK stub to avoid redeclaring the type here.
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export function initMetaPixel(): void {
   const pixelId = import.meta.env.VITE_META_PIXEL_ID as string | undefined;
