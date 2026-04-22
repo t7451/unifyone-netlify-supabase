@@ -35,6 +35,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user && !user.tenantId) navigate("/setup");
+    // `navigate` from wouter is stable; omitted to avoid unnecessary re-runs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const stats = [

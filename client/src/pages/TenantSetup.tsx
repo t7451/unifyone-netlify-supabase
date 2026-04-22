@@ -44,6 +44,9 @@ export default function TenantSetup() {
     }
     const t = setTimeout(() => setVisible(true), 80);
     return () => clearTimeout(t);
+    // `name` is intentionally omitted — we only auto-populate when user loads,
+    // not when the user edits the name field.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const createTenant = trpc.tenant.create.useMutation({
