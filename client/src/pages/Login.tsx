@@ -22,8 +22,12 @@ import {
 function getReturnTo(): string {
   if (typeof window === "undefined") return "/dashboard";
   const params = new URLSearchParams(window.location.search);
-  const returnTo = params.get("returnTo");
+  const returnTo = params.get("returnTo") ?? params.get("next");
+  const plan = params.get("plan");
   if (returnTo && returnTo.startsWith("/")) return returnTo;
+  if (plan && ["starter", "pro", "scale"].includes(plan)) {
+    return `/checkout?plan=${plan}`;
+  }
   return "/dashboard";
 }
 
