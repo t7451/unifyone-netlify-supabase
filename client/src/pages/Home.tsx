@@ -289,14 +289,14 @@ export default function Home() {
     }
 
     const targetId = window.location.hash.slice(1);
-    const timer = window.setTimeout(() => {
+    const hashScrollTimer = window.setTimeout(() => {
       document.getElementById(targetId)?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
     }, 0);
 
-    return () => window.clearTimeout(timer);
+    return () => window.clearTimeout(hashScrollTimer);
   }, []);
 
   const scrollToSection =
@@ -305,7 +305,7 @@ export default function Home() {
       const target = document.getElementById(sectionId);
       if (!target) return;
       target.scrollIntoView({ behavior: "smooth", block: "start" });
-      window.history.replaceState(null, "", `#${sectionId}`);
+      window.history.replaceState({ sectionId }, "", `#${sectionId}`);
     };
 
   const liveMetricValues = {
