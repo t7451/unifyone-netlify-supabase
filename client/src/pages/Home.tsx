@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
@@ -35,12 +35,30 @@ const JSON_LD = [
   },
 ];
 
-const STATS = [
+const MARKET_SIGNALS = [
   { value: "76M+", label: "US gig workers underserved by existing tools" },
   { value: "$3,200", label: "avg additional deductions tracked per user annually" },
   { value: "300+", label: "AI models accessible through one UnifyAI key" },
   { value: "$556B", label: "gig economy market with no unified intelligence layer" },
 ];
+
+const LAUNCH_METRICS = [
+  {
+    key: "tenants",
+    label: "tenants launched",
+    accent: "#D4A843",
+  },
+  {
+    key: "ordersProcessed",
+    label: "orders processed",
+    accent: "#6EE7B7",
+  },
+  {
+    key: "integrations",
+    label: "integrations ready",
+    accent: "#93C5FD",
+  },
+] as const;
 
 const PILLARS = [
   {
@@ -113,6 +131,7 @@ function EmailCapture() {
 
   return (
     <section
+      id="blueprint"
       className="cathedral-bg"
       style={{
         padding: "5rem 0",
@@ -192,12 +211,108 @@ function EmailCapture() {
   );
 }
 
+function CountUpMetric({
+  value,
+  label,
+  accent,
+  loading = false,
+}: {
+  value: number;
+  label: string;
+  accent: string;
+  loading?: boolean;
+}) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    if (loading) {
+      setDisplayValue(0);
+      return;
+    }
+
+    const durationMs = 900;
+    const start = performance.now();
+    let frameId = 0;
+
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / durationMs, 1);
+      setDisplayValue(Math.round(value * progress));
+
+      if (progress < 1) {
+        frameId = window.requestAnimationFrame(tick);
+      }
+    };
+
+    frameId = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [loading, value]);
+
+  return (
+    <div
+      className="stone-card p-6 text-center"
+      style={{
+        borderColor: "rgba(36,36,36,0.9)",
+        background:
+          "linear-gradient(180deg, rgba(10,10,10,0.98), rgba(3,3,3,0.96))",
+      }}
+    >
+      <div
+        className="font-cinzel text-3xl sm:text-4xl font-black mb-2"
+        style={{ color: accent }}
+      >
+        {loading ? "…" : new Intl.NumberFormat("en-US").format(displayValue)}
+      </div>
+      <p
+        className="font-crimson text-sm uppercase tracking-[0.18em]"
+        style={{ color: "#6A6A6A" }}
+      >
+        {label}
+      </p>
+    </div>
+  );
+}
+
 export default function Home() {
   const heroRef = useScrollReveal();
   const statsRef = useScrollReveal();
   const pillarsRef = useScrollReveal();
   const pricingRef = useScrollReveal();
   const ctaRef = useScrollReveal();
+  const launchStats = trpc.system.launchStats.useQuery(undefined, {
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    if (!window.location.hash) {
+      return;
+    }
+
+    const targetId = window.location.hash.slice(1);
+    const scrollTimeoutId = window.setTimeout(() => {
+      document.getElementById(targetId)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 0);
+
+    return () => window.clearTimeout(scrollTimeoutId);
+  }, []);
+
+  const scrollToSection =
+    (sectionId: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault();
+      const target = document.getElementById(sectionId);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.history.replaceState({ sectionId }, "", `#${sectionId}`);
+    };
+
+  const liveMetricValues = {
+    tenants: launchStats.data?.tenants ?? 0,
+    ordersProcessed: launchStats.data?.ordersProcessed ?? 0,
+    integrations: launchStats.data?.integrations ?? 10,
+  };
 
   return (
     <PublicLayout>
@@ -232,6 +347,33 @@ export default function Home() {
             <span className="inscription" style={{ color: "#D4A843" }}>
               COMMERCE INFRASTRUCTURE
             </span>
+          </div>
+
+          <div
+            data-reveal
+            data-reveal-delay="50"
+            className="flex flex-wrap items-center justify-center gap-3 mt-6"
+          >
+            {[
+              "Launch your first tenant in under 10 minutes",
+              "Starter stays free until you need automation",
+              "Checkout-ready on day one",
+            ].map(item => (
+              <span
+                key={item}
+                className="rounded-full px-4 py-2 text-xs sm:text-sm"
+                style={{
+                  color: "#9A9A9A",
+                  border: "1px solid rgba(212,168,67,0.18)",
+                  backgroundColor: "rgba(212,168,67,0.04)",
+                  fontFamily: "Cinzel, serif",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {item}
+              </span>
+            ))}
           </div>
 
           <h1
@@ -274,11 +416,46 @@ export default function Home() {
             <a href={getLoginUrl()} className="btn-illuminate">
               Start Free — No Card Required
             </a>
+            <a
+              href="#pricing"
+              onClick={scrollToSection("pricing")}
+              className="btn-ghost-gold cursor-pointer"
+            >
+              See Live Plans ↓
+            </a>
+          </div>
+
+          <p
+            data-reveal
+            data-reveal-delay="350"
+            className="font-crimson text-sm mt-5"
+            style={{ color: "#5A5A5A", fontStyle: "italic" }}
+          >
+            Need proof first? Review{" "}
             <Link href="/the-system">
-              <span className="btn-ghost-gold cursor-pointer">
-                See How It Works →
+              <span
+                className="cursor-pointer underline"
+                style={{ color: "#D4A843" }}
+              >
+                how the full system works
               </span>
-            </Link>
+            </Link>{" "}
+            or jump straight to the blueprint.
+          </p>
+
+          <div
+            data-reveal
+            data-reveal-delay="400"
+            className="flex justify-center mt-4"
+          >
+            <a
+              href="#blueprint"
+              onClick={scrollToSection("blueprint")}
+              className="font-crimson text-sm underline"
+              style={{ color: "#D4A843" }}
+            >
+              Get the Cathedral Blueprint →
+            </a>
           </div>
         </div>
       </section>
@@ -287,24 +464,67 @@ export default function Home() {
       <section style={{ borderTop: "1px solid #242424", borderBottom: "1px solid #242424" }}>
         <div
           ref={statsRef}
-          className="max-w-7xl mx-auto px-6 sm:px-8 py-16 grid grid-cols-2 lg:grid-cols-4 gap-8"
+          className="max-w-7xl mx-auto px-6 sm:px-8 py-16"
         >
-          {STATS.map((stat, i) => (
-            <div
-              key={stat.value}
-              data-reveal
-              data-reveal-delay={String(i * 80)}
-              className="text-center"
+          <div className="text-center mb-10">
+            <span className="inscription" style={{ color: "#D4A843" }}>
+              LIVE LAUNCH STATS
+            </span>
+            <h2
+              className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
+              style={{ color: "#F0E8D0" }}
             >
-              <div className="stat-value mb-2">{stat.value}</div>
-              <p
-                className="font-crimson text-sm"
-                style={{ color: "#5A5A5A", lineHeight: 1.5 }}
+              Real traction, not vanity copy.
+            </h2>
+            <p
+              className="font-crimson text-lg"
+              style={{
+                color: "#6A6A6A",
+                fontStyle: "italic",
+                maxWidth: 560,
+                margin: "0 auto",
+              }}
+            >
+              These counters update from the platform footprint so you can see
+              what is already live before you start your own build.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {LAUNCH_METRICS.map((metric, index) => (
+              <div
+                key={metric.key}
+                data-reveal
+                data-reveal-delay={String(index * 100)}
               >
-                {stat.label}
-              </p>
-            </div>
-          ))}
+                <CountUpMetric
+                  value={liveMetricValues[metric.key]}
+                  label={metric.label}
+                  accent={metric.accent}
+                  loading={launchStats.isLoading}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {MARKET_SIGNALS.map((stat, i) => (
+              <div
+                key={stat.value}
+                data-reveal
+                data-reveal-delay={String(i * 80)}
+                className="text-center"
+              >
+                <div className="stat-value mb-2">{stat.value}</div>
+                <p
+                  className="font-crimson text-sm"
+                  style={{ color: "#5A5A5A", lineHeight: 1.5 }}
+                >
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -571,7 +791,7 @@ export default function Home() {
       </section>
 
       {/* ── PRICING PREVIEW ──────────────────────────────────────────────── */}
-      <section style={{ padding: "6rem 0" }}>
+      <section id="pricing" style={{ padding: "6rem 0" }}>
         <div className="max-w-7xl mx-auto px-6 sm:px-8">
           <div className="text-center mb-16">
             <span className="inscription" style={{ color: "#D4A843" }}>
@@ -669,7 +889,7 @@ export default function Home() {
                 </div>
 
                 <a
-                  href={`${getLoginUrl()}?next=${encodeURIComponent(`/checkout?plan=${tier.id}`)}`}
+                  href={`${getLoginUrl()}?plan=${tier.id}`}
                   className={tier.highlight ? "btn-illuminate block text-center" : "btn-ghost-gold block text-center"}
                 >
                   {tier.cta}
@@ -729,11 +949,13 @@ export default function Home() {
             <a href={getLoginUrl()} className="btn-illuminate">
               Begin Construction — Free
             </a>
-            <Link href="/architecture">
-              <span className="btn-ghost-gold cursor-pointer">
-                Read the Architecture →
-              </span>
-            </Link>
+            <a
+              href="#blueprint"
+              onClick={scrollToSection("blueprint")}
+              className="btn-ghost-gold cursor-pointer"
+            >
+              Claim the Blueprint →
+            </a>
           </div>
         </div>
       </section>

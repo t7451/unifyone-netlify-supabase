@@ -41,22 +41,6 @@ export const emailRouter = router({
         const db = await getDb();
         if (!db) throw new Error("Database connection failed");
 
-        // Check if email already exists
-        const existing = await db
-          .select()
-          .from(emailSubscribers)
-          .where(eq(emailSubscribers.email, input.email))
-          .limit(1);
-
-        if (existing.length > 0) {
-          return {
-            success: false,
-            message: "Email already subscribed",
-            alreadySubscribed: true,
-          };
-        }
-
-        // Insert new subscriber
         const [insertedSubscriber] = await db
           .insert(emailSubscribers)
           .values({
@@ -68,7 +52,16 @@ export const emailRouter = router({
             status: "subscribed",
             dripsCompleted: 0,
           })
+          .onConflictDoNothing({ target: emailSubscribers.email })
           .returning({ id: emailSubscribers.id });
+
+        if (!insertedSubscriber) {
+          return {
+            success: false,
+            message: "Email already subscribed",
+            alreadySubscribed: true,
+          };
+        }
 
         // Send welcome email immediately
         await sendWelcomeEmail(input.email);
