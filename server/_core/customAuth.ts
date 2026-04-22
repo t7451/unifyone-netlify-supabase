@@ -23,7 +23,6 @@ const scryptAsync = promisify(scrypt);
 
 const SALT_LENGTH = 32;
 const KEY_LENGTH = 64;
-const USERNAME_REGEX = /^[a-z0-9](?:[a-z0-9._-]{1,30})$/;
 const USERNAME_MIN_LENGTH = 3;
 const USERNAME_MAX_LENGTH = 32;
 
@@ -39,7 +38,25 @@ function validateUsername(username: string): string | null {
   if (username.length > USERNAME_MAX_LENGTH) {
     return `Username must be at most ${USERNAME_MAX_LENGTH} characters`;
   }
-  if (!USERNAME_REGEX.test(username)) {
+  for (const character of username) {
+    const isLowercaseLetter = character >= "a" && character <= "z";
+    const isDigit = character >= "0" && character <= "9";
+    const isAllowedSymbol =
+      character === "." || character === "-" || character === "_";
+    if (!isLowercaseLetter && !isDigit && !isAllowedSymbol) {
+      return "Username can only contain lowercase letters, numbers, dots, hyphens, and underscores";
+    }
+  }
+  const firstCharacter = username[0];
+  const lastCharacter = username[username.length - 1];
+  const startsOrEndsWithSymbol =
+    firstCharacter === "." ||
+    firstCharacter === "-" ||
+    firstCharacter === "_" ||
+    lastCharacter === "." ||
+    lastCharacter === "-" ||
+    lastCharacter === "_";
+  if (startsOrEndsWithSymbol) {
     return "Username can only contain lowercase letters, numbers, dots, hyphens, and underscores";
   }
   return null;

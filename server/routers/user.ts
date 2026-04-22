@@ -5,13 +5,33 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { users, userPreferences } from "../../drizzle/schema";
 
+function isValidUsername(username: string): boolean {
+  if (username.length < 3 || username.length > 32) return false;
+
+  for (const character of username) {
+    const isLowercaseLetter = character >= "a" && character <= "z";
+    const isDigit = character >= "0" && character <= "9";
+    const isAllowedSymbol =
+      character === "." || character === "-" || character === "_";
+    if (!isLowercaseLetter && !isDigit && !isAllowedSymbol) return false;
+  }
+
+  const firstCharacter = username[0];
+  const lastCharacter = username[username.length - 1];
+  return ![".", "-", "_"].includes(firstCharacter ?? "") &&
+    ![".", "-", "_"].includes(lastCharacter ?? "");
+}
+
 const usernameSchema = z
   .string()
   .trim()
   .toLowerCase()
   .min(3)
   .max(32)
-  .regex(/^[a-z0-9](?:[a-z0-9._-]{1,30})$/);
+  .refine(isValidUsername, {
+    message:
+      "Username can only contain lowercase letters, numbers, dots, hyphens, and underscores",
+  });
 
 export const userRouter = router({
   /** Update the current user's display name */
