@@ -1,94 +1,145 @@
-# UnifyOne — Platform Integration Guide
+# UnifyOne
 
-UnifyOne is a multi-tenant commerce SaaS platform built by PNW Enterprises / 1Commerce LLC.
-This document covers the **MCP (Model Context Protocol)** integration that lets AI assistants
-(Claude Desktop, custom agents, etc.) interact with your UnifyOne store data.
+UnifyOne is a multi-tenant commerce platform for PNW Enterprises / 1Commerce LLC.
+This repository currently contains:
 
----
+- the legacy React + Express application at the repo root
+- an Astro workspace app in `apps/unifyone/` for the next site iteration
+- shared SEO utilities in `packages/seo/`
+- MCP tooling that exposes UnifyOne data to Claude Desktop, n8n, and other agents
 
-## Platform Integration
+## Repository layout
 
-### MCP Server
+| Path              | Purpose                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------- |
+| `/`               | Legacy production app: React 19 + Vite frontend, Express + tRPC backend, Drizzle schema |
+| `/apps/unifyone`  | Astro app for the newer marketing / content experience                                  |
+| `/packages/seo`   | Shared SEO helpers used by the Astro app                                                |
+| `/infra/neon`     | Neon bootstrap SQL and setup notes                                                      |
+| `/netlify`        | Netlify function entrypoints and deployment wiring                                      |
+| `/src-typescript` | TypeScript MCP server package                                                           |
 
-The UnifyOne MCP server is a stateless JSON-RPC 2.0 endpoint that exposes 20 commerce tools
-to any MCP-compatible client.
+## Prerequisites
 
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `GET /mcp` | GET | Health probe — returns `McpHealthResponse` |
-| `POST /mcp` | POST | JSON-RPC 2.0 dispatcher (tools/list, tools/call, initialize) |
+- Node.js 22+
+- Corepack enabled
+- pnpm 10
+
+```bash
+corepack enable
+corepack pnpm --version
+```
+
+## Getting started
+
+### 1. Install dependencies
+
+```bash
+cd /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase
+corepack pnpm install
+```
+
+### 2. Configure environment variables
+
+For the legacy app:
+
+```bash
+cp /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/.env.example /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/.env
+```
+
+Minimum values to run the root app locally:
+
+| Variable         | Why it matters                                     |
+| ---------------- | -------------------------------------------------- |
+| `JWT_SECRET`     | Signs session JWTs; must be at least 32 characters |
+| `DATABASE_URL`   | Enables Drizzle / server data access               |
+| `PUBLIC_APP_URL` | Canonical app URL, used in auth, payments, and SEO |
+
+Optional but common:
+
+- `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` for realtime features
+- payment provider keys for Stripe, PayPal, Square, and Shopify
+- `MCP_API_KEY` for authenticated `/mcp` access
+
+If you are working on the Astro app too:
+
+```bash
+cp /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/apps/unifyone/.env.example /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/apps/unifyone/.env
+```
+
+That app expects values such as `NEON_DATABASE_URL`, `CLERK_SECRET_KEY`,
+`CLERK_WEBHOOK_SECRET`, and `PUBLIC_CLERK_PUBLISHABLE_KEY`.
+
+## Local development
+
+### Legacy root app
+
+```bash
+cd /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase
+corepack pnpm dev
+```
+
+The Express server defaults to `http://localhost:3000`.
+
+Useful root-level commands:
+
+```bash
+corepack pnpm check
+corepack pnpm lint
+corepack pnpm test
+corepack pnpm build
+```
+
+### Astro workspace app
+
+```bash
+cd /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase
+corepack pnpm --filter unifyone dev
+corepack pnpm --filter unifyone build
+```
+
+See `/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/apps/unifyone/README.md`
+for Astro-specific details and
+`/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/infra/neon/README.md`
+for Neon bootstrap steps.
+
+## Deployment and operations docs
+
+- `/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/DEPLOYMENT.md`
+- `/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/DEPLOYMENT_INSTRUCTIONS.md`
+- `/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/AUTHENTICATION.md`
+- `/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/PRODUCTION_CHECKLIST.md`
+- `/home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/PRODUCTION_HARDENING.md`
+
+## MCP integration
+
+The platform exposes an MCP server for Claude Desktop, custom agents, and workflow tools.
+
+### Endpoints
+
+| Endpoint    | Method | Purpose                     |
+| ----------- | ------ | --------------------------- |
+| `GET /mcp`  | GET    | Health probe                |
+| `POST /mcp` | POST   | JSON-RPC 2.0 MCP dispatcher |
 
 ### Authentication
 
-Inbound POST requests require a Bearer token when `MCP_API_KEY` is configured:
+When `MCP_API_KEY` is configured, send it as a bearer token:
 
 ```http
 Authorization: Bearer <MCP_API_KEY>
 ```
 
-Set `MCP_API_KEY` in your environment (see `.env.example`). Requests without a valid key
-receive a `401` response. Leave `MCP_API_KEY` empty to disable auth (local development only).
+### Core MCP tool groups
 
-### Available Tools
+- Foundation: `list_stores`, `get_tenant_info`
+- Products: `list_products`, `get_product`, `search_products`, `get_inventory`
+- Orders: `list_orders`, `get_order`, `create_order`
+- Customers: `list_customers`, `get_customer`
+- Analytics: `get_analytics_summary`, `get_revenue_by_day`, `get_webhook_events`
+- Platform / AI: `get_notifications`, `get_platform_stats`, `ask_kai`
 
-All tool names use **snake_case** (the platform's expected convention).
-
-#### Foundation tier
-
-| Tool | Description |
-|---|---|
-| `list_stores` | List all tenants registered on the platform |
-| `get_tenant_info` | Get tenant details by numeric ID |
-
-#### Walls — Products
-
-| Tool | Description |
-|---|---|
-| `list_products` | List products with optional tenant/limit filters |
-| `get_product` | Get a single product by ID |
-| `search_products` | Full-text search across product names and descriptions |
-| `get_inventory` | Current inventory levels for a tenant |
-| `get_low_stock_products` | Products at or below a stock threshold |
-| `get_categories` | Product categories for a tenant |
-| `get_top_products` | Top-selling products by revenue |
-
-#### Walls — Orders
-
-| Tool | Description |
-|---|---|
-| `list_orders` | List orders with optional filters |
-| `get_order` | Get a single order with its line items |
-| `create_order` | Create a new order for a tenant |
-
-#### Walls — Customers
-
-| Tool | Description |
-|---|---|
-| `list_customers` | List customers for a tenant |
-| `get_customer` | Get a customer by ID |
-
-#### Vaults — Analytics
-
-| Tool | Description |
-|---|---|
-| `get_analytics_summary` | Revenue, order count, and customer summary |
-| `get_revenue_by_day` | Daily revenue breakdown |
-| `get_webhook_events` | Recent webhook events for a tenant |
-
-#### Spire — Platform & AI
-
-| Tool | Description |
-|---|---|
-| `get_notifications` | Platform-wide notifications |
-| `get_platform_stats` | Aggregated cross-tenant statistics |
-| `ask_kai` | Ask Kai, the UnifyOne AI assistant |
-
----
-
-### Wiring Claude Desktop
-
-Add the following block to your Claude Desktop configuration
-(`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+### Claude Desktop (remote MCP)
 
 ```json
 {
@@ -103,7 +154,7 @@ Add the following block to your Claude Desktop configuration
 }
 ```
 
-For **local development** (Netlify Dev), use:
+### Claude Desktop (local MCP)
 
 ```json
 {
@@ -115,20 +166,17 @@ For **local development** (Netlify Dev), use:
 }
 ```
 
-### Wiring the TypeScript SDK (stdio transport)
+### TypeScript SDK
 
-The `src-typescript/` package provides a fully-typed MCP server over stdio that proxies
-all tool calls to your UnifyOne instance.
-
-**Install and build:**
+The package in `src-typescript/` exposes a typed MCP server over stdio:
 
 ```bash
-cd src-typescript
-pnpm install
-pnpm build
+cd /home/runner/work/unifyone-netlify-supabase/unifyone-netlify-supabase/src-typescript
+corepack pnpm install
+corepack pnpm build
 ```
 
-**Claude Desktop config (stdio):**
+Example Claude Desktop config:
 
 ```json
 {
@@ -145,56 +193,11 @@ pnpm build
 }
 ```
 
-### Wiring n8n / Zapier / Custom Agents
-
-Any HTTP client that speaks JSON-RPC 2.0 can call the MCP endpoint directly:
+### Raw JSON-RPC usage
 
 ```bash
-# List all tools
 curl -s -X POST https://1commerce.online/mcp \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $MCP_API_KEY" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | jq .
-
-# Call a tool
-curl -s -X POST https://1commerce.online/mcp \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $MCP_API_KEY" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"list_stores","arguments":{}}}' | jq .
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 ```
-
----
-
-### Environment Variables
-
-| Variable | Required | Description |
-|---|---|---|
-| `MCP_API_KEY` | Recommended | Inbound auth key for the `/mcp` endpoint |
-| `ONECOMMERCE_API_URL` | Optional | Override platform base URL (default: `https://1commerce.online`) |
-| `MCP_WORKER_URL` | Optional | Legacy Cloudflare Worker URL override |
-
----
-
-## Development
-
-```bash
-# Install dependencies
-pnpm install
-
-# Start dev server (hot reload)
-pnpm dev
-
-# Type-check
-pnpm check
-
-# Lint
-pnpm lint
-
-# Run tests
-pnpm test
-
-# Build production bundle
-pnpm build
-```
-
-See `DEPLOYMENT.md` for full Netlify deployment instructions.
