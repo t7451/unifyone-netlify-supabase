@@ -11,7 +11,7 @@ const usernameSchema = z
   .toLowerCase()
   .min(3)
   .max(32)
-  .regex(/^[a-z0-9](?:[a-z0-9._-]{2,31})$/);
+  .regex(/^[a-z0-9](?:[a-z0-9._-]{1,30})$/);
 
 export const userRouter = router({
   /** Update the current user's display name */

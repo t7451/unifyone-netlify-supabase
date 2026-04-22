@@ -23,7 +23,7 @@ const scryptAsync = promisify(scrypt);
 
 const SALT_LENGTH = 32;
 const KEY_LENGTH = 64;
-const USERNAME_REGEX = /^[a-z0-9](?:[a-z0-9._-]{2,31})$/;
+const USERNAME_REGEX = /^[a-z0-9](?:[a-z0-9._-]{1,30})$/;
 const USERNAME_MIN_LENGTH = 3;
 const USERNAME_MAX_LENGTH = 32;
 

@@ -199,6 +199,23 @@ export async function registerCustomAuthFetchRoutes(
     }
 
     if (path === "/api/auth/google/start") {
+      const rateCheck = await authRateLimiter.check(clientIp);
+      if (!rateCheck.allowed) {
+        return Response.json(
+          {
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          },
+          {
+            status: 429,
+            headers: {
+              ...corsHeaders,
+              "Retry-After": String(Math.ceil(rateCheck.retryAfterMs / 1000)),
+            },
+          }
+        );
+      }
+
       const body = await req.json().catch(() => ({}));
       const { tenantSlug } = body as { tenantSlug?: string };
       const result = await buildGoogleOAuthScaffold(tenantSlug);
@@ -520,6 +537,23 @@ export async function registerCustomAuthFetchRoutes(
 
     // ── Verify Email ───────────────────────────────────────────────────────
     if (path === "/api/auth/verify-email") {
+      const rateCheck = await passwordResetLimiter.check(clientIp);
+      if (!rateCheck.allowed) {
+        return Response.json(
+          {
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          },
+          {
+            status: 429,
+            headers: {
+              ...corsHeaders,
+              "Retry-After": String(Math.ceil(rateCheck.retryAfterMs / 1000)),
+            },
+          }
+        );
+      }
+
       const body = await req.json().catch(() => ({}));
       const { token } = body as { token?: string };
 
@@ -628,7 +662,23 @@ export function registerCustomAuthExpressRoutes(app: Express) {
   });
 
   app.post("/api/auth/google/start", async (req: ExpressRequest, res: ExpressResponse) => {
+    const clientIp = getExpressClientIp(req);
     try {
+      const rateCheck = await authRateLimiter.check(clientIp);
+      if (!rateCheck.allowed) {
+        res
+          .status(429)
+          .setHeader(
+            "Retry-After",
+            String(Math.ceil(rateCheck.retryAfterMs / 1000))
+          )
+          .json({
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          });
+        return;
+      }
+
       const { tenantSlug } = (req.body ?? {}) as { tenantSlug?: string };
       const result = await buildGoogleOAuthScaffold(tenantSlug);
       if (!result.success) {
@@ -847,7 +897,23 @@ export function registerCustomAuthExpressRoutes(app: Express) {
   );
 
   app.post("/api/auth/verify-email", async (req: ExpressRequest, res: ExpressResponse) => {
+    const clientIp = getExpressClientIp(req);
     try {
+      const rateCheck = await passwordResetLimiter.check(clientIp);
+      if (!rateCheck.allowed) {
+        res
+          .status(429)
+          .setHeader(
+            "Retry-After",
+            String(Math.ceil(rateCheck.retryAfterMs / 1000))
+          )
+          .json({
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          });
+        return;
+      }
+
       const { token } = (req.body ?? {}) as { token?: string };
       if (!token) {
         res.status(400).json({ success: false, error: "Token is required" });
