@@ -38,7 +38,7 @@ const JSON_LD = [
 const MARKET_SIGNALS = [
   { value: "76M+", label: "US gig workers underserved by existing tools" },
   { value: "$3,200", label: "avg additional deductions tracked per user annually" },
-  { value: "300+", label: "AI models accessible through one UnifyAI key" },
+  { value: "300+", label: "AI models accessible through one Kai unified API key" },
   { value: "$556B", label: "gig economy market with no unified intelligence layer" },
 ];
 
@@ -79,7 +79,7 @@ const PILLARS = [
     glyph: "⬡",
     name: "UnifyAI",
     title: "Multi-Model API Router",
-    body: "One set of credentials routes to Claude, GPT, Gemini and more. Credit-based billing. Full MCP config dashboard. Zero vendor lock-in.",
+    body: "One set of credentials routes to Claude, GPT, Gemini and more. Unified credit billing means one predictable cost across models. Full MCP config dashboard. Zero vendor lock-in.",
     color: "#93C5FD",
   },
   {
@@ -100,7 +100,7 @@ const PILLARS = [
     glyph: "◉",
     name: "Kai",
     title: "AI Sidekick",
-    body: "Powered by UnifyAI. Reads your actual data. Works whether you deliver food, run a store, or just want smarter money.",
+    body: "Kai is our in-house AI, powered by UnifyAI. It reads your actual data and routes across models while keeping one unified cost.",
     color: "#FCD34D",
   },
 ];
@@ -664,7 +664,7 @@ export default function Home() {
                 className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-6"
                 style={{ color: "#F0E8D0" }}
               >
-                Intelligence built on your actual numbers.
+                In-house intelligence on your actual numbers.
               </h2>
               <div
                 className="font-crimson text-lg space-y-4"
@@ -682,6 +682,10 @@ export default function Home() {
                     should I charge Client X?" "Route this prompt to the
                     lowest-latency model."
                   </em>
+                </p>
+                <p>
+                  Kai runs on our unified API layer, so your team can call any
+                  supported model and pay one consolidated Kai cost.
                 </p>
               </div>
               <div className="mt-8">
@@ -739,7 +743,7 @@ export default function Home() {
                     letterSpacing: "0.1em",
                   }}
                 >
-                  POWERED BY UNIFYAI · MULTI-MODEL · ZERO LOCK-IN
+                  POWERED BY KAI + UNIFYAI · ANY MODEL · ONE UNIFIED COST
                 </p>
               </div>
             </div>
@@ -765,15 +769,15 @@ export default function Home() {
             className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-6"
             style={{ color: "#F0E8D0" }}
           >
-            300+ AI models. One key.
+            300+ AI models. One key. One unified cost.
           </h2>
           <p
             className="font-crimson text-lg mb-8"
             style={{ color: "#6A6A6A", fontStyle: "italic", maxWidth: 520, margin: "0 auto 2rem" }}
           >
-            Route to Claude for analysis, GPT for code, Gemini for speed. Fully
-            configurable MCP dashboard. Credit-based billing with no per-model
-            vendor accounts required.
+            Route to Claude for analysis, GPT for code, Gemini for speed. Kai
+            keeps billing model-agnostic with one predictable credit system and
+            no per-model vendor accounts required.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/documents/integrations">
@@ -807,7 +811,8 @@ export default function Home() {
               className="font-crimson text-lg"
               style={{ color: "#6A6A6A", fontStyle: "italic" }}
             >
-              Clear, structural, no surprises. Start free. Upgrade when ready.
+              Clear, structural, no surprises. Kai unified API credits are
+              included in every paid tier.
             </p>
           </div>
 
@@ -943,7 +948,7 @@ export default function Home() {
           >
             Start free. No credit card. The Starter tier runs on the same
             infrastructure as every paid plan. When you're ready to scale, upgrade
-            in one click — no data migration, no platform switch.
+            in one click — including Kai unified API capacity with one cost model.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href={getLoginUrl()} className="btn-illuminate">

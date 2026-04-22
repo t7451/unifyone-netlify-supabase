@@ -302,7 +302,7 @@ export default function AIAssistant() {
             <div className="ml-auto flex items-center gap-2">
               <Badge variant="secondary" className="text-xs">
                 <Sparkles className="h-3 w-3 mr-1" />
-                Powered by Kai
+                Powered by Kai Unified API
               </Badge>
               <Button variant="ghost" size="sm" onClick={startNewConversation} className="text-xs h-7">
                 <Plus className="h-3.5 w-3.5 mr-1" />

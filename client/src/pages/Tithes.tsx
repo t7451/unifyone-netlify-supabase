@@ -14,7 +14,7 @@ const JSON_LD = [
     "@id": CANONICAL,
     "url": CANONICAL,
     "name": "Tithes — Pricing | UnifyOne",
-    "description": "UnifyOne pricing: Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). All plans include multi-tenant commerce infrastructure. Kai AI included in Architect and above.",
+    "description": "UnifyOne pricing: Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). Kai runs on unified API pricing so teams can call any model at one predictable cost.",
     "isPartOf": { "@id": `${SITE_URL}/#website` },
     "inLanguage": "en-US"
   },
@@ -51,7 +51,7 @@ const JSON_LD = [
         "item": {
           "@type": "Offer",
           "name": "Architect",
-          "description": "$49/month. 5 stores, 500 products, unlimited orders, 10 team members, Kai AI, social suite, referral engine.",
+          "description": "$49/month. 5 stores, 500 products, unlimited orders, 10 team members, 2,000 Kai unified API credits, social suite, referral engine.",
           "price": "49",
           "priceCurrency": "USD",
           "availability": "https://schema.org/InStock",
@@ -64,7 +64,7 @@ const JSON_LD = [
         "item": {
           "@type": "Offer",
           "name": "Cathedral",
-          "description": "$149/month. Unlimited stores, unlimited products, unlimited orders, unlimited team members, white-label, SLA, dedicated support.",
+          "description": "$149/month. Unlimited stores, unlimited products, unlimited orders, unlimited team members, 20,000 Kai unified API credits, white-label, SLA, dedicated support.",
           "price": "149",
           "priceCurrency": "USD",
           "availability": "https://schema.org/InStock",
@@ -88,6 +88,7 @@ const TIERS = [
       "100 products",
       "500 orders / month",
       "Stripe checkout",
+      "100 Kai unified API credits / month",
       "Basic analytics",
       "Community support",
     ],
@@ -105,7 +106,8 @@ const TIERS = [
       "Unlimited products",
       "Unlimited orders",
       "All payment rails (Stripe + PayPal + Shopify)",
-      "Kai AI included",
+      "2,000 Kai unified API credits / month",
+      "Unified model pricing ($0.04 per extra credit)",
       "Automation layer (n8n + Zapier + Mailchimp)",
       "Supabase Realtime",
       "Social commerce suite",
@@ -127,6 +129,8 @@ const TIERS = [
       "Custom domains",
       "SLA guarantee (99.9% uptime)",
       "Dedicated infrastructure",
+      "20,000 Kai unified API credits / month",
+      "Unified model pricing ($0.03 per extra credit)",
       "Full API access",
       "Concierge onboarding",
       "Everything in Architect",
@@ -141,6 +145,8 @@ const COMPARISON = [
   { feature: "Tenants", acolyte: "1", architect: "5", cathedral: "Unlimited" },
   { feature: "Products", acolyte: "100", architect: "Unlimited", cathedral: "Unlimited" },
   { feature: "Orders / month", acolyte: "500", architect: "Unlimited", cathedral: "Unlimited" },
+  { feature: "Kai credits / month", acolyte: "100", architect: "2,000", cathedral: "20,000" },
+  { feature: "Unified model pricing", acolyte: "—", architect: "$0.04 / credit", cathedral: "$0.03 / credit" },
   { feature: "Stripe Checkout", acolyte: "✓", architect: "✓", cathedral: "✓" },
   { feature: "PayPal + Shopify", acolyte: "—", architect: "✓", cathedral: "✓" },
   { feature: "Kai AI", acolyte: "—", architect: "✓", cathedral: "✓" },
@@ -171,7 +177,11 @@ const FAQ = [
   },
   {
     q: "Is Kai AI included in the Architect tier?",
-    a: "Yes. Kai AI is included in the Architect tier and above at no additional cost. This includes all four AI surfaces: the Gig Command panel, Money Manager panel, full AI Assistant (/ai-assistant), and the floating widget on every dashboard page.",
+    a: "Yes. Architect includes 2,000 Kai unified API credits per month, and Cathedral includes 20,000. Credits work across all supported models with one predictable overage rate for the tier.",
+  },
+  {
+    q: "Can we call any model with one Kai cost?",
+    a: "Yes. Kai sits on UnifyAI's unified API layer, so your team can route across supported models while staying on one consolidated credit bill instead of managing separate vendor invoices.",
   },
   {
     q: "What does 'white-label ready' mean in the Cathedral tier?",
@@ -199,14 +209,14 @@ export default function Tithes() {
     <PublicLayout>
       <Helmet>
         <title>Tithes — Pricing | UnifyOne</title>
-        <meta name="description" content="UnifyOne pricing: Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). All plans include multi-tenant commerce infrastructure. Kai AI included in Architect and above." />
+        <meta name="description" content="UnifyOne pricing: Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). Kai unified API credits included, with one predictable cost across models." />
         <link rel="canonical" href={CANONICAL} />
         <meta property="og:title" content="Tithes — Pricing | UnifyOne" />
-        <meta property="og:description" content="Free forever to $149/mo. Multi-tenant commerce infrastructure. Kai AI, social suite, and referral engine. No plugin dependencies." />
+        <meta property="og:description" content="Free forever to $149/mo. Kai unified API credits, one model-agnostic cost, social suite, and referral engine." />
         <meta property="og:url" content={CANONICAL} />
         <meta property="og:type" content="website" />
         <meta name="twitter:title" content="Tithes — Pricing | UnifyOne" />
-        <meta name="twitter:description" content="Free forever to $149/mo. Multi-tenant commerce infrastructure. Kai AI, social suite, and referral engine." />
+        <meta name="twitter:description" content="Free forever to $149/mo. Kai unified API credits and one predictable cost across models." />
         {JSON_LD.map((schema, i) => (
           <script key={i} type="application/ld+json">{JSON.stringify(schema)}</script>
         ))}
