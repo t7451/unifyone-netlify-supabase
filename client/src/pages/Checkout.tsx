@@ -4,16 +4,19 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   CreditCard, Loader2, CheckCircle, ArrowLeft, ExternalLink,
   ShoppingBag, Zap, Shield, AlertCircle
 } from "lucide-react";
 
-
-
+const PLAN_FEATURES: Record<string, string[]> = {
+  starter: ["1 tenant", "Up to 100 products", "500 orders/mo", "2 team members", "Core analytics"],
+  pro: ["5 tenants", "Unlimited products", "5,000 orders/mo", "10 team members", "Advanced analytics", "Manus AI insights", "Full automation layer"],
+  scale: ["Unlimited tenants", "Unlimited products", "Unlimited orders", "Unlimited team members", "White-label support", "Priority support"],
+};
 
 type PaymentRail = "stripe" | "paypal" | "shopify" | "square";
 
@@ -25,6 +28,7 @@ export default function Checkout() {
   const [amount, setAmount] = useState("29.00");
   const [description, setDescription] = useState("UnifyOne Pro Subscription");
   const [linkedOrderId, setLinkedOrderId] = useState<number | null>(null);
+  const [planSlug, setPlanSlug] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const markOrderPaid = trpc.orders.updateStatus.useMutation();
   const [paypalLoaded, setPaypalLoaded] = useState(false);
@@ -35,12 +39,36 @@ export default function Checkout() {
   const shopifyCheckoutUrl = intStatus.data?.shopifyCheckoutUrl;
   const paypalConfigured = intStatus.data?.paypal?.configured;
 
+  // Fetch plans when plan slug is present
+  const plansQuery = trpc.subscription.getPlans.useQuery(undefined, {
+    enabled: !!planSlug,
+  });
+  const activePlan = planSlug
+    ? (plansQuery.data ?? []).find((p: any) => p.slug === planSlug) ?? null
+    : null;
+
+  const createSubscriptionCheckout = trpc.subscription.createCheckout.useMutation({
+    onSuccess: (data) => {
+      if (data.url) {
+        toast.info("Redirecting to Stripe Checkout…");
+        window.location.href = data.url;
+      } else {
+        toast.error("Checkout session created but no URL returned.");
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   // Parse query params for pre-filled amount/description
   useEffect(() => {
     const params = new URLSearchParams(searchStr);
     if (params.get("amount")) setAmount(params.get("amount")!);
     if (params.get("desc")) setDescription(params.get("desc")!);
     if (params.get("orderId")) setLinkedOrderId(parseInt(params.get("orderId")!, 10));
+    const planParam = params.get("plan");
+    if (planParam && ["starter", "pro", "scale"].includes(planParam)) {
+      setPlanSlug(planParam);
+    }
     // Check for PayPal return
     if (params.get("paypal_return") === "1") {
       toast.success("Payment approved! Processing your order...");
@@ -271,18 +299,102 @@ export default function Checkout() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate(planSlug ? "/" : "/dashboard")}
             className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
             <h1 className="text-xl font-bold text-white">Checkout</h1>
-            <p className="text-gray-500 text-xs">Choose your payment method</p>
+            <p className="text-gray-500 text-xs">
+              {planSlug ? "Start your subscription" : "Choose your payment method"}
+            </p>
           </div>
         </div>
 
-        {/* Order Summary */}
+        {/* ── Plan Subscription Flow ──────────────────────────────────────── */}
+        {planSlug && (
+          <div className="space-y-4">
+            {/* Plan summary card */}
+            <div className="glass rounded-2xl p-5 border border-[#00D9FF]/20">
+              {plansQuery.isLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-5 w-32 bg-white/10" />
+                  <Skeleton className="h-8 w-20 bg-white/10" />
+                  <Skeleton className="h-4 w-full bg-white/10" />
+                </div>
+              ) : activePlan ? (
+                <>
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Selected Plan</p>
+                      <p className="text-white text-xl font-bold">{activePlan.name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[#00D9FF] text-2xl font-bold">
+                        ${Number(activePlan.priceMonthly ?? 0).toFixed(0)}
+                      </p>
+                      <p className="text-gray-500 text-xs">/ month</p>
+                    </div>
+                  </div>
+                  {(PLAN_FEATURES[planSlug] ?? []).length > 0 && (
+                    <ul className="space-y-1.5 mt-4">
+                      {(PLAN_FEATURES[planSlug] ?? []).map(f => (
+                        <li key={f} className="flex items-center gap-2 text-xs text-gray-400">
+                          <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              ) : (
+                <p className="text-gray-400 text-sm">Plan "{planSlug}" not found. Please go back and select a plan.</p>
+              )}
+            </div>
+
+            {/* Subscribe CTA */}
+            {activePlan && (
+              <div className="glass rounded-2xl p-5 border border-white/10 space-y-4">
+                <div className="flex items-center gap-2 text-gray-400 text-xs">
+                  <Shield className="w-3.5 h-3.5 text-[#635BFF]" />
+                  <span>Secured by Stripe — Cancel anytime, no lock-in</span>
+                </div>
+                <Button
+                  className="w-full h-12 font-bold text-white"
+                  style={{ backgroundColor: "#635BFF" }}
+                  disabled={createSubscriptionCheckout.isPending}
+                  onClick={() =>
+                    createSubscriptionCheckout.mutate({
+                      planSlug,
+                      billingPeriod: "monthly",
+                      origin: window.location.origin,
+                    })
+                  }
+                >
+                  {createSubscriptionCheckout.isPending
+                    ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating session…</>
+                    : <><CreditCard className="w-4 h-4 mr-2" />Subscribe — ${Number(activePlan.priceMonthly ?? 0).toFixed(0)}/mo</>}
+                </Button>
+                <p className="text-gray-600 text-xs text-center">
+                  You'll be redirected to Stripe's secure checkout. Test card: 4242 4242 4242 4242
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-center gap-4 mt-2">
+              {["SSL Encrypted", "PCI Compliant", "Cancel Anytime"].map(item => (
+                <div key={item} className="flex items-center gap-1 text-gray-600 text-xs">
+                  <CheckCircle className="w-3 h-3" />
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Order / One-time Payment Flow ──────────────────────────────── */}
+        {!planSlug && (<>
         <div className="glass rounded-2xl p-5 border border-white/10 mb-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-gray-400 text-sm font-medium">Order Summary</span>
@@ -511,6 +623,7 @@ export default function Checkout() {
             </div>
           ))}
         </div>
+        </>)}
       </div>
     </div>
   );
