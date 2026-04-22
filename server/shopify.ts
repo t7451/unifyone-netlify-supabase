@@ -1,7 +1,7 @@
 import express, { type Express, type Request, type Response } from "express";
 import crypto from "crypto";
 import { getDb } from "./db";
-import { shopifyStores, shopifySyncLog } from "../drizzle/schema";
+import { shopifyStores, shopifySyncLog, webhookEvents } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
 // ─── Shopify OAuth Config ─────────────────────────────────────────────────────
@@ -101,10 +101,54 @@ export async function logSyncEvent(params: {
   errorMsg?: string;
   retryCount?: number;
   payload?: unknown;
+  headers?: Record<string, string | string[]>;
+  rawBody?: string;
+  shopDomain?: string;
+  receivedAt?: string;
 }) {
   try {
     const db = await getDb();
     if (!db) return;
+
+    const payload =
+      params.payload &&
+      typeof params.payload === "object" &&
+      !Array.isArray(params.payload)
+        ? (params.payload as Record<string, unknown>)
+        : params.payload === undefined
+          ? undefined
+          : { value: params.payload };
+
+    const webhookStatus =
+      params.status === "success"
+        ? "processed"
+        : params.status === "failed"
+          ? "failed"
+          : params.status === "skipped"
+            ? "skipped"
+            : "pending";
+
+    await db.insert(webhookEvents).values({
+      tenantId: params.tenantId,
+      source: "shopify",
+      eventType: params.event,
+      payload: {
+        ...payload,
+        shopDomain: params.shopDomain,
+        entity: params.entity,
+        entityId: params.entityId,
+        direction: params.direction ?? "inbound",
+        storeId: params.storeId,
+        retryCount: params.retryCount ?? 0,
+        headers: params.headers,
+        rawBody: params.rawBody,
+        receivedAt: params.receivedAt ?? new Date().toISOString(),
+      },
+      status: webhookStatus,
+      error: params.errorMsg,
+      processedAt: webhookStatus === "pending" ? undefined : new Date(),
+    });
+
     await db.insert(shopifySyncLog).values({
       storeId: params.storeId,
       tenantId: params.tenantId,
@@ -276,18 +320,14 @@ export function registerShopifyRoutes(app: Express) {
     "/api/shopify/webhook",
     express.raw({ type: "application/json" }),
     async (req: Request, res: Response) => {
+      const startTime = Date.now();
+      const rawBody = (req.body as Buffer).toString();
       const hmacHeader = req.headers["x-shopify-hmac-sha256"] as string;
       const topic = req.headers["x-shopify-topic"] as string;
       const shopDomain = req.headers["x-shopify-shop-domain"] as string;
-
-      if (!validateShopifyWebhook(req.body as Buffer, hmacHeader)) {
-        return res.status(401).send("Unauthorized");
-      }
-
-      const startTime = Date.now();
       let payload: Record<string, unknown> = {};
       try {
-        payload = JSON.parse((req.body as Buffer).toString());
+        payload = JSON.parse(rawBody) as Record<string, unknown>;
       } catch {
         // non-JSON payload
       }
@@ -295,6 +335,7 @@ export function registerShopifyRoutes(app: Express) {
       // Find the store
       const db = await getDb();
       let storeId = 0;
+      let tenantId: number | undefined;
       if (db && shopDomain) {
         const stores = await db
           .select({ id: shopifyStores.id, tenantId: shopifyStores.tenantId })
@@ -303,7 +344,39 @@ export function registerShopifyRoutes(app: Express) {
           .limit(1);
         if (stores.length > 0) {
           storeId = stores[0].id;
+          tenantId = stores[0].tenantId ?? undefined;
         }
+      }
+
+      const webhookPayload = {
+        topic,
+        shopDomain,
+        id: payload.id,
+        payload,
+      };
+      const headers = Object.fromEntries(
+        Object.entries(req.headers).flatMap(([key, value]) =>
+          value === undefined ? [] : [[key, Array.isArray(value) ? value : value]]
+        )
+      );
+
+      if (!validateShopifyWebhook(req.body as Buffer, hmacHeader)) {
+        await logSyncEvent({
+          storeId,
+          tenantId,
+          event: topic || "webhook/unknown",
+          entity: "webhook",
+          entityId: (payload.id as string | number | undefined)?.toString(),
+          direction: "inbound",
+          status: "failed",
+          latencyMs: Date.now() - startTime,
+          errorMsg: "Invalid Shopify webhook signature",
+          payload: webhookPayload,
+          headers,
+          rawBody,
+          shopDomain,
+        });
+        return res.status(401).send("Unauthorized");
       }
 
       // Determine entity type from topic
@@ -335,13 +408,17 @@ export function registerShopifyRoutes(app: Express) {
 
       await logSyncEvent({
         storeId,
+        tenantId,
         event: topic,
         entity,
         entityId,
         direction: "inbound",
         status: "success",
         latencyMs: Date.now() - startTime,
-        payload: { topic, shopDomain, id: payload.id },
+        payload: webhookPayload,
+        headers,
+        rawBody,
+        shopDomain,
       });
 
       console.log(`[Shopify Webhook] ${topic} from ${shopDomain}`);
