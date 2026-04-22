@@ -3,21 +3,32 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { AIChatBox } from "@/components/AIChatBox";
+import LoadingExperience from "@/components/LoadingExperience";
 import type { Message } from "@/components/AIChatBox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import {
-  Sparkles, Plus, Trash2, MessageSquare, ChevronRight, Loader2,
-  Bot, Zap, TrendingUp, Map, Trophy, Users, Smartphone, BarChart3
+  Sparkles,
+  Plus,
+  Trash2,
+  MessageSquare,
+  ChevronRight,
+  Loader2,
+  Bot,
+  Zap,
+  TrendingUp,
+  Map,
+  Trophy,
+  Users,
+  Smartphone,
+  BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 
-
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
-
 
 // Context icons for the sidebar
 const CONTEXT_ICONS: Record<string, React.ElementType> = {
@@ -50,17 +61,17 @@ export default function AIAssistant() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
   const [activeContext, setActiveContext] = useState("general");
-  const [activeConversationId, setActiveConversationId] = useState<number | undefined>();
+  const [activeConversationId, setActiveConversationId] = useState<
+    number | undefined
+  >();
   const [messages, setMessages] = useState<Message[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const utils = trpc.useUtils();
 
   // Fetch conversation list
-  const { data: historyData, isLoading: historyLoading } = trpc.manusAI.listConversations.useQuery(
-    { limit: 20 },
-    { enabled: !!user }
-  );
+  const { data: historyData, isLoading: historyLoading } =
+    trpc.manusAI.listConversations.useQuery({ limit: 20 }, { enabled: !!user });
 
   // Fetch context suggestions
   const { data: suggestionsData } = trpc.manusAI.getSuggestions.useQuery(
@@ -70,7 +81,7 @@ export default function AIAssistant() {
 
   // Chat mutation
   const chatMutation = trpc.manusAI.chat.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       setActiveConversationId(data.conversationId);
       setMessages(prev => [
         ...prev,
@@ -78,11 +89,14 @@ export default function AIAssistant() {
       ]);
       utils.manusAI.listConversations.invalidate();
     },
-    onError: (err) => {
+    onError: err => {
       toast.error("AI response failed: " + err.message);
       setMessages(prev => [
         ...prev,
-        { role: "assistant", content: "I encountered an error. Please try again." },
+        {
+          role: "assistant",
+          content: "I encountered an error. Please try again.",
+        },
       ]);
     },
   });
@@ -150,9 +164,12 @@ export default function AIAssistant() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+        <LoadingExperience
+          title="Starting Kai"
+          description="Loading conversation history, assistant context, and recommended prompts."
+          label="AI workspace loading"
+          className="min-h-[24rem]"
+        />
       </DashboardLayout>
     );
   }
@@ -182,14 +199,21 @@ export default function AIAssistant() {
               <Sparkles className="h-4 w-4 text-primary" />
               <span className="font-semibold text-sm">Kai</span>
             </div>
-            <Button variant="ghost" size="sm" onClick={startNewConversation} className="h-7 w-7 p-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={startNewConversation}
+              className="h-7 w-7 p-0"
+            >
               <Plus className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Context selector */}
           <div className="p-3 border-b border-border">
-            <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">Context</p>
+            <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
+              Context
+            </p>
             <div className="space-y-1">
               {Object.entries(CONTEXT_LABELS).map(([ctx, label]) => {
                 const Icon = CONTEXT_ICONS[ctx] ?? Bot;
@@ -215,7 +239,9 @@ export default function AIAssistant() {
           {/* Conversation history */}
           <div className="flex-1 overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-3 py-2">
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">History</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                History
+              </p>
               {conversations.length > 0 && (
                 <Button
                   variant="ghost"
@@ -239,7 +265,7 @@ export default function AIAssistant() {
                 </p>
               ) : (
                 <div className="space-y-1 pb-4">
-                  {conversations.map((convo) => (
+                  {conversations.map(convo => (
                     <div
                       key={convo.id}
                       className={cn(
@@ -256,10 +282,11 @@ export default function AIAssistant() {
                       </span>
                       <button
                         className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:text-destructive"
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
                           deleteMutation.mutate({ id: convo.id });
-                          if (activeConversationId === convo.id) startNewConversation();
+                          if (activeConversationId === convo.id)
+                            startNewConversation();
                         }}
                       >
                         <Trash2 className="h-3 w-3" />
@@ -282,7 +309,12 @@ export default function AIAssistant() {
               className="h-7 w-7 p-0"
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
-              <ChevronRight className={cn("h-4 w-4 transition-transform", sidebarOpen && "rotate-180")} />
+              <ChevronRight
+                className={cn(
+                  "h-4 w-4 transition-transform",
+                  sidebarOpen && "rotate-180"
+                )}
+              />
             </Button>
             <div className="flex items-center gap-2">
               <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center">
@@ -300,7 +332,12 @@ export default function AIAssistant() {
                 <Sparkles className="h-3 w-3 mr-1" />
                 Powered by Kai
               </Badge>
-              <Button variant="ghost" size="sm" onClick={startNewConversation} className="text-xs h-7">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={startNewConversation}
+                className="text-xs h-7"
+              >
                 <Plus className="h-3.5 w-3.5 mr-1" />
                 New Chat
               </Button>
