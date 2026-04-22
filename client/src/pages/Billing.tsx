@@ -15,6 +15,9 @@ import {
   AlertTriangle,
   ArrowUpRight,
   Zap,
+  Package,
+  ShoppingCart,
+  Users,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -180,20 +183,55 @@ export default function Billing() {
           </div>
 
           {/* Plan details */}
-          {!subLoading && subStatus?.plan && (
-            <div className="mt-4 pt-4 border-t border-slate-700/50 grid grid-cols-3 gap-2 sm:gap-4 text-center">
-              <div>
-                <p className="text-lg font-semibold text-white">{subStatus.plan.maxProducts?.toLocaleString()}</p>
-                <p className="text-xs text-slate-500">Max Products</p>
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-white">{subStatus.plan.maxOrders?.toLocaleString()}</p>
-                <p className="text-xs text-slate-500">Max Orders/mo</p>
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-white">{subStatus.plan.maxUsers}</p>
-                <p className="text-xs text-slate-500">Team Members</p>
-              </div>
+          {/* Usage vs limits */}
+          {!subLoading && subStatus?.usage && (
+            <div className="mt-4 pt-4 border-t border-slate-700/50 space-y-4">
+              {[
+                {
+                  label: "Products",
+                  icon: Package,
+                  used: subStatus.usage.products,
+                  max: subStatus.usage.maxProducts,
+                  barColor: "bg-cyan-500",
+                },
+                {
+                  label: "Orders (total)",
+                  icon: ShoppingCart,
+                  used: subStatus.usage.orders,
+                  max: subStatus.usage.maxOrders,
+                  barColor: "bg-violet-500",
+                },
+                {
+                  label: "Team members",
+                  icon: Users,
+                  used: 1,
+                  max: subStatus.usage.maxUsers,
+                  barColor: "bg-emerald-500",
+                },
+              ].map(item => {
+                const pct = item.max > 0 ? Math.min(100, Math.round((item.used / item.max) * 100)) : 0;
+                const nearLimit = pct >= 80;
+                const Icon = item.icon;
+                return (
+                  <div key={item.label}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <Icon className="w-3 h-3" />
+                        {item.label}
+                      </div>
+                      <span className={`text-xs font-medium ${nearLimit ? "text-amber-400" : "text-slate-400"}`}>
+                        {item.used.toLocaleString()}&nbsp;/&nbsp;{item.max.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-slate-700/60 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${nearLimit ? "bg-amber-500" : item.barColor}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -203,7 +241,7 @@ export default function Billing() {
               <Button
                 size="sm"
                 className="bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-semibold"
-                onClick={() => navigate("/settings")}
+                onClick={() => navigate("/checkout")}
               >
                 <ArrowUpRight className="w-4 h-4 mr-1.5" />
                 Upgrade Plan

@@ -19,7 +19,6 @@ import {
   ShoppingCart,
   Users,
   Package,
-  TrendingUp,
   AlertTriangle,
   ArrowRight,
 } from "lucide-react";
@@ -43,28 +42,28 @@ export default function Dashboard() {
       value: `$${Number(summary.data?.totalRevenue ?? 0).toFixed(2)}`,
       icon: DollarSign,
       color: "#00D9FF",
-      change: "+12.5%",
+      sub: "30-day total",
     },
     {
       label: "Orders",
       value: summary.data?.orderCount ?? 0,
       icon: ShoppingCart,
       color: "#0284C7",
-      change: "+8.2%",
+      sub: "30-day total",
     },
     {
       label: "Customers",
       value: summary.data?.customerCount ?? 0,
       icon: Users,
       color: "#6A1B9A",
-      change: "+5.1%",
+      sub: "All time",
     },
     {
       label: "Products",
       value: summary.data?.productCount ?? 0,
       icon: Package,
       color: "#10B981",
-      change: "Active",
+      sub: "Active catalog",
     },
   ];
 
@@ -122,10 +121,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="text-2xl font-bold text-white">{s.value}</div>
-                  <div className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" />
-                    {s.change} this month
-                  </div>
+                  <div className="text-xs text-slate-500 mt-1">{s.sub}</div>
                 </CardContent>
               </Card>
             ))}
