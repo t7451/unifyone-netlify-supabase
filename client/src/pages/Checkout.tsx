@@ -18,6 +18,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
   scale: ["Unlimited tenants", "Unlimited products", "Unlimited orders", "Unlimited team members", "White-label support", "Priority support"],
 };
 
+type PlanSlug = "starter" | "pro" | "scale";
 type PaymentRail = "stripe" | "paypal" | "shopify" | "square";
 
 export default function Checkout() {
@@ -28,7 +29,7 @@ export default function Checkout() {
   const [amount, setAmount] = useState("29.00");
   const [description, setDescription] = useState("UnifyOne Pro Subscription");
   const [linkedOrderId, setLinkedOrderId] = useState<number | null>(null);
-  const [planSlug, setPlanSlug] = useState<string | null>(null);
+  const [planSlug, setPlanSlug] = useState<PlanSlug | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const markOrderPaid = trpc.orders.updateStatus.useMutation();
   const [paypalLoaded, setPaypalLoaded] = useState(false);
@@ -66,8 +67,8 @@ export default function Checkout() {
     if (params.get("desc")) setDescription(params.get("desc")!);
     if (params.get("orderId")) setLinkedOrderId(parseInt(params.get("orderId")!, 10));
     const planParam = params.get("plan");
-    if (planParam && ["starter", "pro", "scale"].includes(planParam)) {
-      setPlanSlug(planParam);
+    if (planParam && (["starter", "pro", "scale"] as PlanSlug[]).includes(planParam as PlanSlug)) {
+      setPlanSlug(planParam as PlanSlug);
     }
     // Check for PayPal return
     if (params.get("paypal_return") === "1") {
