@@ -591,9 +591,8 @@ export default function Login({
           </Button>
           <p className="text-xs text-slate-500 text-center">
             Configure Google OAuth after email/password sign-in in Settings →
-            Advanced. Use{" "}
-            <span className="font-mono">?tenant=your-store-slug</span> on this
-            page to test the scaffold.
+            Advanced. Use <span className="font-mono">?tenant=your-store-slug</span>{" "}
+            on this page to test the scaffold.
           </p>
 
           {mode === "password" && (
