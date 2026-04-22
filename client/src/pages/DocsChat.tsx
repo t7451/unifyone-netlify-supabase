@@ -100,7 +100,7 @@ export default function DocsChat() {
               </h1>
             </div>
             <p className="text-gray-300 max-w-2xl">
-              Ask questions about UnifyOne, the Cathedral Framework, Manus AI
+              Ask questions about UnifyOne, the Cathedral Framework, Kai
               integration, and more. Powered by Claude AI with access to our
               complete documentation.
             </p>

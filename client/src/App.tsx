@@ -67,7 +67,7 @@ const ShopifySuccess = lazy(() => import("./pages/ShopifySuccess"));
 const SyncMonitor = lazy(() => import("./pages/SyncMonitor"));
 const GigEcommercePost = lazy(() => import("./pages/blog/GigEcommercePost"));
 const MultiTenantPost = lazy(() => import("./pages/blog/MultiTenantPost"));
-const ManusAIPost = lazy(() => import("./pages/blog/ManusAIPost"));
+const AIGigWorkersPost = lazy(() => import("./pages/blog/AIGigWorkersPost"));
 const Architecture = lazy(() => import("./pages/Architecture"));
 const TheSystem = lazy(() => import("./pages/TheSystem"));
 const Tithes = lazy(() => import("./pages/Tithes"));
@@ -469,7 +469,7 @@ function Router() {
       />
       <Route
         path="/blog/manus-ai-gig-workers"
-        component={() => <ManusAIPost />}
+        component={() => <AIGigWorkersPost />}
       />
       <Route
         path="/checkout"

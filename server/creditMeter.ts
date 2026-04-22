@@ -22,7 +22,7 @@
  *     userId: ctx.user.id,
  *     amount: 1.5,
  *     source: "ai_chat",
- *     action: "manusAI.chat",
+ *     action: "ai.chat",
  *     tokensIn: usage.prompt_tokens,
  *     tokensOut: usage.completion_tokens,
  *     model: "gemini-2.5-flash",
@@ -344,7 +344,7 @@ export async function flushAllOverages(): Promise<{
  * insufficient.
  *
  *   const result = await withCreditMeter(
- *     { userId, source: "ai_chat", action: "manusAI.chat" },
+ *     { userId, source: "ai_chat", action: "ai.chat" },
  *     async () => invokeLLM({ messages })
  *   );
  */

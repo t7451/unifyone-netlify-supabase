@@ -14,7 +14,7 @@ import {
 
 const PLAN_FEATURES: Record<string, string[]> = {
   starter: ["1 tenant", "Up to 100 products", "500 orders/mo", "2 team members", "Core analytics"],
-  pro: ["5 tenants", "Unlimited products", "5,000 orders/mo", "10 team members", "Advanced analytics", "Manus AI insights", "Full automation layer"],
+  pro: ["5 tenants", "Unlimited products", "5,000 orders/mo", "10 team members", "Advanced analytics", "Kai AI insights", "Full automation layer"],
   scale: ["Unlimited tenants", "Unlimited products", "Unlimited orders", "Unlimited team members", "White-label support", "Priority support"],
 };
 

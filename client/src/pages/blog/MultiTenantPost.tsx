@@ -137,7 +137,7 @@ export default function MultiTenantPost() {
             <Link href="/blog/manus-ai-gig-workers">
               <div className="stone-card p-6 cursor-pointer group">
                 <span className="inscription block mb-2" style={{ color: "#3A3A3A" }}>AI Integration</span>
-                <h4 className="font-cinzel text-sm font-600 group-hover:text-amber-400 transition-colors" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>Manus AI for Gig Workers: From Data to Decisions in Seconds</h4>
+                <h4 className="font-cinzel text-sm font-600 group-hover:text-amber-400 transition-colors" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>Kai AI for Gig Workers: From Data to Decisions in Seconds</h4>
               </div>
             </Link>
           </div>

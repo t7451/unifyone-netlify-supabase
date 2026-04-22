@@ -14,7 +14,7 @@ const JSON_LD = [
     "@id": CANONICAL,
     "url": CANONICAL,
     "name": "Tithes — Pricing | UnifyOne",
-    "description": "UnifyOne pricing: Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). All plans include multi-tenant commerce infrastructure. Manus AI included in Architect and above.",
+    "description": "UnifyOne pricing: Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). All plans include multi-tenant commerce infrastructure. Kai AI included in Architect and above.",
     "isPartOf": { "@id": `${SITE_URL}/#website` },
     "inLanguage": "en-US"
   },
@@ -51,7 +51,7 @@ const JSON_LD = [
         "item": {
           "@type": "Offer",
           "name": "Architect",
-          "description": "$49/month. 5 stores, 500 products, unlimited orders, 10 team members, Manus AI, social suite, referral engine.",
+          "description": "$49/month. 5 stores, 500 products, unlimited orders, 10 team members, Kai AI, social suite, referral engine.",
           "price": "49",
           "priceCurrency": "USD",
           "availability": "https://schema.org/InStock",
@@ -105,7 +105,7 @@ const TIERS = [
       "Unlimited products",
       "Unlimited orders",
       "All payment rails (Stripe + PayPal + Shopify)",
-      "Manus AI included",
+      "Kai AI included",
       "Automation layer (n8n + Zapier + Mailchimp)",
       "Supabase Realtime",
       "Social commerce suite",
@@ -143,7 +143,7 @@ const COMPARISON = [
   { feature: "Orders / month", acolyte: "500", architect: "Unlimited", cathedral: "Unlimited" },
   { feature: "Stripe Checkout", acolyte: "✓", architect: "✓", cathedral: "✓" },
   { feature: "PayPal + Shopify", acolyte: "—", architect: "✓", cathedral: "✓" },
-  { feature: "Manus AI", acolyte: "—", architect: "✓", cathedral: "✓" },
+  { feature: "Kai AI", acolyte: "—", architect: "✓", cathedral: "✓" },
   { feature: "Automation Layer", acolyte: "—", architect: "✓", cathedral: "✓" },
   { feature: "Supabase Realtime", acolyte: "—", architect: "✓", cathedral: "✓" },
   { feature: "Social Commerce", acolyte: "—", architect: "✓", cathedral: "✓" },
@@ -170,8 +170,8 @@ const FAQ = [
     a: "All major credit and debit cards via Stripe. No PayPal for subscription billing — that rail is reserved for your customers' checkout experience.",
   },
   {
-    q: "Is Manus AI included in the Architect tier?",
-    a: "Yes. Manus AI is included in the Architect tier and above at no additional cost. This includes all four AI surfaces: the Gig Command panel, Money Manager panel, full AI Assistant (/ai-assistant), and the floating widget on every dashboard page.",
+    q: "Is Kai AI included in the Architect tier?",
+    a: "Yes. Kai AI is included in the Architect tier and above at no additional cost. This includes all four AI surfaces: the Gig Command panel, Money Manager panel, full AI Assistant (/ai-assistant), and the floating widget on every dashboard page.",
   },
   {
     q: "What does 'white-label ready' mean in the Cathedral tier?",
@@ -199,14 +199,14 @@ export default function Tithes() {
     <PublicLayout>
       <Helmet>
         <title>Tithes — Pricing | UnifyOne</title>
-        <meta name="description" content="UnifyOne pricing: Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). All plans include multi-tenant commerce infrastructure. Manus AI included in Architect and above." />
+        <meta name="description" content="UnifyOne pricing: Acolyte (free forever), Architect ($49/mo), Cathedral ($149/mo). All plans include multi-tenant commerce infrastructure. Kai AI included in Architect and above." />
         <link rel="canonical" href={CANONICAL} />
         <meta property="og:title" content="Tithes — Pricing | UnifyOne" />
-        <meta property="og:description" content="Free forever to $149/mo. Multi-tenant commerce infrastructure, Manus AI, social suite, and referral engine. No plugin dependencies." />
+        <meta property="og:description" content="Free forever to $149/mo. Multi-tenant commerce infrastructure. Kai AI, social suite, and referral engine. No plugin dependencies." />
         <meta property="og:url" content={CANONICAL} />
         <meta property="og:type" content="website" />
         <meta name="twitter:title" content="Tithes — Pricing | UnifyOne" />
-        <meta name="twitter:description" content="Free forever to $149/mo. Multi-tenant commerce infrastructure, Manus AI, social suite, and referral engine." />
+        <meta name="twitter:description" content="Free forever to $149/mo. Multi-tenant commerce infrastructure. Kai AI, social suite, and referral engine." />
         {JSON_LD.map((schema, i) => (
           <script key={i} type="application/ld+json">{JSON.stringify(schema)}</script>
         ))}

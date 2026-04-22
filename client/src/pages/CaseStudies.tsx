@@ -27,15 +27,15 @@ Result: A design language that is immediately recognizable, defensible, and impo
     ],
   },
   {
-    id: "manus-ai-integration",
-    title: "Manus AI Integration: Context-Aware Copilot",
+    id: "kai-ai-integration",
+    title: "Kai AI Integration: Context-Aware Copilot",
     subtitle: "AI as a Structural Component, Not an Afterthought",
     metrics: [
       { label: "AI Contexts", value: "10" },
       { label: "Drip Emails", value: "5" },
       { label: "Insight Panels", value: "3 pages" },
     ],
-    description: `Manus AI was integrated not as a chatbot overlay, but as a structural component of the platform. The integration spans three layers:
+    description: `Kai was integrated not as a chatbot overlay, but as a structural component of the platform. The integration spans three layers:
 
 1. **Floating Chat Widget** (DashboardLayout): Context-aware from current route (Dashboard, Money Manager, Gig Command). Injects live user data (earnings, shift count, miles, tax deduction) into AI prompts.
 
@@ -160,7 +160,7 @@ export default function CaseStudies() {
     <PublicLayout>
       <Helmet>
         <title>Case Studies | UnifyOne Documentation</title>
-        <meta name="description" content="Detailed case studies of UnifyOne platform features: Cathedral Framework, Manus AI, multi-tenant architecture, Stripe CAPI bridge, and scroll reveals." />
+        <meta name="description" content="Detailed case studies of UnifyOne platform features: Cathedral Framework, Kai, multi-tenant architecture, Stripe CAPI bridge, and scroll reveals." />
         <link rel="canonical" href={`${SITE_URL}/documents/case-studies`} />
         <meta property="og:title" content="Case Studies | UnifyOne Documentation" />
         <meta property="og:description" content="Detailed case studies of major platform features and integrations." />

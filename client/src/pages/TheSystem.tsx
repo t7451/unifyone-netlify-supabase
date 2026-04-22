@@ -36,7 +36,7 @@ const JSON_LD = [
       { "@type": "HowToStep", "position": 1, "name": "Lay the Foundation", "text": "Create your tenant, configure your store identity, and connect your payment rails." },
       { "@type": "HowToStep", "position": 2, "name": "Raise the Walls", "text": "Import your product catalog, configure inventory thresholds, and define your order processing rules." },
       { "@type": "HowToStep", "position": 3, "name": "Install the Vaults", "text": "Wire your automation layer — n8n workflows, Zapier hooks, and email sequences fire on real commerce events." },
-      { "@type": "HowToStep", "position": 4, "name": "Light the Spire", "text": "Activate Manus AI. Your co-pilot reads your actual operational data and surfaces insights and earnings projections." }
+      { "@type": "HowToStep", "position": 4, "name": "Light the Spire", "text": "Activate Kai. Your co-pilot reads your actual operational data and surfaces insights and earnings projections." }
     ]
   }
 ];
@@ -65,7 +65,7 @@ const CONSTRUCTION_PHASES = [
   {
     phase: "Phase IV",
     title: "Light the Spire",
-    body: "Activate Manus AI. Your co-pilot reads your actual operational data and surfaces insights, route optimizations, and earnings projections. The AI is context-aware — it knows which page you are on, what your last 30 days of data looks like, and what question you are most likely to ask next.",
+    body: "Activate Kai. Your co-pilot reads your actual operational data and surfaces insights, route optimizations, and earnings projections. The AI is context-aware — it knows which page you are on, what your last 30 days of data looks like, and what question you are most likely to ask next.",
     details: ["Context-aware AI on every dashboard page", "Conversation history across sessions", "Route optimization for gig operators", "Tax deduction tracking and projections"],
   },
 ];
@@ -74,7 +74,7 @@ const INTEGRATIONS = [
   { name: "Stripe", category: "Payments", desc: "Checkout sessions, customer portal, subscription billing, webhook verification." },
   { name: "PayPal", category: "Payments", desc: "Smart Buttons, order creation and capture, OAuth token management." },
   { name: "Shopify", category: "Commerce", desc: "Product sync, order webhook ingestion, checkout URL redirect." },
-  { name: "Manus AI", category: "Intelligence", desc: "Context-aware LLM, conversation history, streaming responses." },
+  { name: "Kai", category: "Intelligence", desc: "Context-aware LLM, conversation history, streaming responses." },
   { name: "n8n", category: "Automation", desc: "Workflow triggers on order, subscription, and customer events." },
   { name: "Zapier", category: "Automation", desc: "Hook manager for 5,000+ third-party app integrations." },
   { name: "Supabase", category: "Realtime", desc: "Live order and inventory updates without page refresh." },
@@ -257,8 +257,8 @@ export default function TheSystem() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href={getLoginUrl()} className="btn-illuminate">Begin Construction — Free</a>
-            <Link href="/manus-ai">
-              <span className="btn-ghost-gold cursor-pointer">Explore Manus AI →</span>
+            <Link href="/ai-assistant">
+              <span className="btn-ghost-gold cursor-pointer">Explore Kai →</span>
             </Link>
           </div>
         </div>

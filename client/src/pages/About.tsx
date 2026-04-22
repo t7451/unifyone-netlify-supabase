@@ -84,7 +84,7 @@ export default function About() {
             structural, built to outlast platform trends. Multi-tenant isolation
             at the schema level. Payment orchestration as a load-bearing wall,
             not a plugin. Automation triggered by real commerce events, not
-            scheduled polling. Manus AI built into every page from day one, not
+            scheduled polling. Kai built into every page from day one, not
             bolted on after launch.
           </p>
 

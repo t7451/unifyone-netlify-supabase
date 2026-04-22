@@ -26,7 +26,7 @@ import { moneyManagerRouter } from "./routers/moneyManager";
 import { gamificationRouter } from "./routers/gamification";
 import { socialFriendsRouter } from "./routers/socialFriends";
 import { mobileAutomationRouter } from "./routers/mobileAutomation";
-import { manusAIRouter } from "./routers/manusAI";
+import { aiRouter } from "./routers/ai";
 import { emailRouter } from "./routers/email";
 import { documentChatRouter } from "./routers/documentChat";
 import { governanceRouter } from "./routers/governance";
@@ -78,7 +78,7 @@ export const appRouter = router({
   gamification: gamificationRouter,
   socialFriends: socialFriendsRouter,
   mobileAutomation: mobileAutomationRouter,
-  manusAI: manusAIRouter,
+  ai: aiRouter,
   mcp: mcpRouter,
   email: emailRouter,
   documentChat: documentChatRouter,

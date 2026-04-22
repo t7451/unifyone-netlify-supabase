@@ -8,7 +8,6 @@ import { mcpClient } from "../lib/mcpClient";
 
 // ─── Context-aware system prompts per page ──────────────────────────────────
 // Kai is the UnifyOne AI sidekick — powered by UnifyAI (Cloudflare Workers MCP).
-// All "Manus" references updated to "Kai" per brand canon (April 2025).──
 const CONTEXT_PROMPTS: Record<string, string> = {
   general: `You are Kai, the UnifyOne AI sidekick — powered by UnifyAI, a Cloudflare Workers MCP server with 18 live tools covering stores, orders, products, analytics, inventory, and more. You have direct access to the user's real platform data through MCP tool calls. Be concise, tactical, and data-specific. Always respond with actual numbers when data is available. Never give generic advice when specific data exists.`,
   dashboard: `You are Kai, the UnifyOne AI assistant. The user is viewing their main dashboard. Help them interpret KPIs, identify revenue trends, suggest next actions for their store, and surface any anomalies in their orders or inventory. Be data-driven and direct.`,
@@ -75,8 +74,8 @@ const CONTEXT_SUGGESTIONS: Record<string, string[]> = {
   ],
 };
 
-export const manusAIRouter = router({
-  /** Get context-aware suggested prompts for the current page — Kai (formerly Manus) */
+export const aiRouter = router({
+  /** Get context-aware suggested prompts for the current page — Kai */
   getSuggestions: protectedProcedure
     .input(z.object({ context: z.string().default("general") }))
     .query(({ input }) => {
@@ -247,7 +246,7 @@ export const manusAIRouter = router({
               : "I'm sorry, I couldn't generate a response. Please try again.";
         } catch (llmError) {
           console.error(
-            "[Manus AI] LLM invocation failed:",
+            "[Kai] LLM invocation failed:",
             llmError instanceof Error ? llmError.message : String(llmError)
           );
           assistantContent =
@@ -307,7 +306,7 @@ export const manusAIRouter = router({
         };
       } catch (error) {
         console.error(
-          "[Manus AI] Chat mutation failed:",
+          "[Kai] Chat mutation failed:",
           error instanceof Error ? error.message : String(error)
         );
         throw new Error("Failed to process chat message. Please try again.");
