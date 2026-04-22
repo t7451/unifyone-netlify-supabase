@@ -110,14 +110,7 @@ export async function logSyncEvent(params: {
     const db = await getDb();
     if (!db) return;
 
-    const payload =
-      params.payload &&
-      typeof params.payload === "object" &&
-      !Array.isArray(params.payload)
-        ? (params.payload as Record<string, unknown>)
-        : params.payload === undefined
-          ? undefined
-          : { value: params.payload };
+    const payload = normalizePayloadForWebhookEvent(params.payload);
 
     const webhookStatus =
       params.status === "success"
@@ -356,7 +349,7 @@ export function registerShopifyRoutes(app: Express) {
       };
       const headers = Object.fromEntries(
         Object.entries(req.headers).flatMap(([key, value]) =>
-          value === undefined ? [] : [[key, Array.isArray(value) ? value : value]]
+          value === undefined ? [] : [[key, value]]
         )
       );
 
@@ -425,4 +418,18 @@ export function registerShopifyRoutes(app: Express) {
       return res.status(200).send("OK");
     }
   );
+}
+
+function normalizePayloadForWebhookEvent(
+  payload: unknown
+): Record<string, unknown> | undefined {
+  if (payload === undefined) {
+    return undefined;
+  }
+
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    return payload as Record<string, unknown>;
+  }
+
+  return { value: payload };
 }

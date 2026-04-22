@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const _state = {
+const mockState = {
   insertResult: [{ id: 1 }] as Array<{ id: number }>,
 };
 
@@ -8,7 +8,7 @@ const { sendWelcomeEmail } = vi.hoisted(() => ({
   sendWelcomeEmail: vi.fn(() => Promise.resolve()),
 }));
 
-const mockReturning = vi.fn(() => Promise.resolve(_state.insertResult));
+const mockReturning = vi.fn(() => Promise.resolve(mockState.insertResult));
 const mockOnConflictDoNothing = vi.fn(() => ({ returning: mockReturning }));
 const mockValues = vi.fn(() => ({
   onConflictDoNothing: mockOnConflictDoNothing,
@@ -31,7 +31,7 @@ import { emailRouter } from "./routers/email";
 
 describe("emailRouter.capture", () => {
   beforeEach(() => {
-    _state.insertResult = [{ id: 1 }];
+    mockState.insertResult = [{ id: 1 }];
     mockReturning.mockClear();
     mockOnConflictDoNothing.mockClear();
     mockValues.mockClear();
@@ -58,7 +58,7 @@ describe("emailRouter.capture", () => {
   });
 
   it("returns the existing duplicate response shape when the email already exists", async () => {
-    _state.insertResult = [];
+    mockState.insertResult = [];
     const caller = emailRouter.createCaller(
       {} as Parameters<typeof emailRouter.createCaller>[0]
     );
