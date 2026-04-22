@@ -7,7 +7,7 @@ import { Sparkles, ChevronDown, ChevronUp, RefreshCw, MessageSquare, Loader2 } f
 import { useLocation } from "wouter";
 
 interface AIInsightsCardProps {
-  /** Page context key — must match a key in CONTEXT_PROMPTS/CONTEXT_SUGGESTIONS in manusAIRouter */
+  /** Page context key — must match a key in CONTEXT_PROMPTS/CONTEXT_SUGGESTIONS in aiRouter */
   context: string;
   /** Optional serialized data context injected into the AI prompt (e.g. JSON-stringified KPI summary) */
   dataContext?: string;
@@ -23,7 +23,7 @@ interface AIInsightsCardProps {
  * AIInsightsCard — A compact, collapsible AI insight panel.
  *
  * Renders a card with:
- *  - Suggested prompts pulled from manusAI.getSuggestions
+ *  - Suggested prompts pulled from ai.getSuggestions
  *  - A "Generate Insights" button that fires a one-shot chat mutation
  *  - Markdown-rendered AI response
  *  - A "Open Full Chat" link to /ai-assistant
@@ -43,10 +43,10 @@ export default function AIInsightsCard({
   const [insight, setInsight] = useState<string | null>(null);
   const [activePrompt, setActivePrompt] = useState<string | null>(null);
 
-  const { data: suggestionsData } = trpc.manusAI.getSuggestions.useQuery({ context });
+  const { data: suggestionsData } = trpc.ai.getSuggestions.useQuery({ context });
   const suggestions = suggestionsData?.suggestions ?? [];
 
-  const chat = trpc.manusAI.chat.useMutation({
+  const chat = trpc.ai.chat.useMutation({
     onSuccess: (data) => {
       setInsight(data.reply);
     },
@@ -116,7 +116,7 @@ export default function AIInsightsCard({
           {/* Suggested prompts */}
           {!insight && !chat.isPending && (
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">Ask Manus about your data:</p>
+              <p className="text-xs text-muted-foreground">Ask Kai about your data:</p>
               <div className="flex flex-wrap gap-2">
                 {suggestions.map((s) => (
                   <button
@@ -135,7 +135,7 @@ export default function AIInsightsCard({
           {chat.isPending && (
             <div className="flex items-center gap-2 py-3 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin text-violet-400" />
-              <span className="text-sm">Manus is analyzing your data…</span>
+              <span className="text-sm">Kai is analyzing your data…</span>
             </div>
           )}
 

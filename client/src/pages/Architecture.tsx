@@ -14,7 +14,7 @@ const JSON_LD = [
     "@id": CANONICAL,
     "url": CANONICAL,
     "name": "Architecture — UnifyOne Cathedral Framework",
-    "description": "Explore the six structural pillars of UnifyOne: multi-tenant foundation, commerce infrastructure, payment orchestration, automation mesh, social intelligence, and Manus AI. Built on the Cathedral Framework — sequential, structural, built to endure.",
+    "description": "Explore the six structural pillars of UnifyOne: multi-tenant foundation, commerce infrastructure, payment orchestration, automation mesh, social intelligence, and Kai. Built on the Cathedral Framework — sequential, structural, built to endure.",
     "isPartOf": { "@id": `${SITE_URL}/#website` },
     "inLanguage": "en-US",
     "publisher": {
@@ -35,7 +35,7 @@ const JSON_LD = [
     "@context": "https://schema.org",
     "@type": "TechArticle",
     "headline": "The Cathedral Framework: Six Structural Pillars of UnifyOne",
-    "description": "A deep-dive into the architectural principles behind UnifyOne — multi-tenant isolation, payment orchestration, automation mesh, and Manus AI integration.",
+    "description": "A deep-dive into the architectural principles behind UnifyOne — multi-tenant isolation, payment orchestration, automation mesh, and Kai integration.",
     "url": CANONICAL,
     "author": { "@type": "Organization", "name": "1Commerce / PNW Enterprises" },
     "publisher": { "@type": "Organization", "name": "1Commerce", "url": SITE_URL },
@@ -85,10 +85,10 @@ const PILLARS = [
   },
   {
     glyph: "VI",
-    title: "Manus AI Spire",
+    title: "AI Spire",
     subtitle: "Context-aware intelligence",
     body: "An intelligent co-pilot built into every page. Context-aware insights drawn from your actual shift, earnings, and route data. The AI reads your operational data server-side and returns specific recommendations — not generic tips, not hallucinated metrics.",
-    tech: ["Manus AI (invokeLLM)", "Context injection", "Conversation history", "Floating widget"],
+    tech: ["UnifyAI (invokeLLM)", "Context injection", "Conversation history", "Floating widget"],
   },
 ];
 
@@ -96,10 +96,10 @@ const TECH_STACK = [
   { layer: "Frontend", items: ["React 19", "Vite 6", "Tailwind CSS 4", "shadcn/ui", "Recharts"] },
   { layer: "API Layer", items: ["tRPC 11", "Superjson", "Zod validation", "Express 4"] },
   { layer: "Database", items: ["Drizzle ORM", "PostgreSQL (Neon)", "Supabase Realtime", "Schema migrations"] },
-  { layer: "Auth", items: ["Manus OAuth", "JWT sessions", "Role-based access", "Protected procedures"] },
+  { layer: "Auth", items: ["OAuth", "JWT sessions", "Role-based access", "Protected procedures"] },
   { layer: "Payments", items: ["Stripe Checkout", "PayPal SDK", "Shopify redirect", "Webhook verification"] },
   { layer: "Automation", items: ["n8n webhooks", "Zapier hooks", "Resend email", "Event queue"] },
-  { layer: "AI", items: ["Manus AI (LLM)", "Context injection", "Streaming responses", "Conversation history"] },
+  { layer: "AI", items: ["Kai (LLM)", "Context injection", "Streaming responses", "Conversation history"] },
   { layer: "Infrastructure", items: ["Node.js 22", "pnpm workspaces", "GitHub Actions CI", "Vitest 100 tests"] },
 ];
 
@@ -110,7 +110,7 @@ export default function Architecture() {
     <PublicLayout>
       <Helmet>
         <title>Architecture — Cathedral Framework | UnifyOne</title>
-        <meta name="description" content="Explore the six structural pillars of UnifyOne: multi-tenant foundation, commerce infrastructure, payment orchestration, automation mesh, social intelligence, and Manus AI. Built on the Cathedral Framework — sequential, structural, built to endure." />
+        <meta name="description" content="Explore the six structural pillars of UnifyOne: multi-tenant foundation, commerce infrastructure, payment orchestration, automation mesh, social intelligence, and Kai. Built on the Cathedral Framework — sequential, structural, built to endure." />
         <link rel="canonical" href={CANONICAL} />
         <meta property="og:title" content="Architecture — Cathedral Framework | UnifyOne" />
         <meta property="og:description" content="Six structural pillars. Zero plugin dependencies. Built to outlast every platform trend." />

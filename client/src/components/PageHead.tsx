@@ -2,7 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const DEFAULT_OG_IMAGE =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/manus-ai-og-card-gmKaF7wnfK9eUMpcMfEqQ4.png";
+  "/og-image.png";
 
 interface PageHeadProps {
   /** <title> text — keep under 60 chars */

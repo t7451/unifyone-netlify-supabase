@@ -6,7 +6,6 @@ import { usePixelPageView } from "@/hooks/usePixelPageView";
 const NAV_LINKS = [
   { label: "Architecture", href: "/architecture" },
   { label: "The System",   href: "/the-system" },
-  { label: "Manus AI",     href: "/manus-ai" },
   { label: "Tithes",       href: "/tithes" },
   { label: "Documentation", href: "/documents" },
 ];
@@ -195,7 +194,6 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 {[
                   { label: "Architecture", href: "/architecture" },
                   { label: "The System", href: "/the-system" },
-                  { label: "Manus AI", href: "/manus-ai" },
                   { label: "Tithes", href: "/tithes" },
                 ].map(item => (
                   <Link key={item.href} href={item.href}>
@@ -216,7 +214,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 {[
                   { label: "Gig Commerce Guide", href: "/blog/gig-economy-commerce-platform" },
                   { label: "Multi-Tenant SaaS", href: "/blog/multi-tenant-ecommerce-saas" },
-                  { label: "Manus AI Guide", href: "/blog/manus-ai-gig-workers" },
+                  { label: "AI for Gig Workers", href: "/blog/manus-ai-gig-workers" },
                   { label: "Sovereign Access", href: "/sovereign" },
                 ].map(item => (
                   <Link key={item.href} href={item.href}>

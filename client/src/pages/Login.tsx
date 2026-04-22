@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import LoadingExperience from "@/components/LoadingExperience";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -317,12 +318,12 @@ export default function Login({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#060D1F] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <LogoMark size={48} />
-          <div className="w-6 h-6 border-2 border-[#00D9FF] border-t-transparent rounded-full animate-spin" />
-        </div>
-      </div>
+      <LoadingExperience
+        fullScreen
+        title="Checking your session"
+        description="Looking for an active account session so we can send you to the right workspace instantly."
+        label="Authentication loading"
+      />
     );
   }
 

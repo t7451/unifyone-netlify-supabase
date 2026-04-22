@@ -176,6 +176,9 @@ export function SubscriptionWidget() {
             <UsageMeter icon={Package} label="Products" used={usage.products} max={usage.maxProducts} />
             <UsageMeter icon={ShoppingCart} label="Orders" used={usage.orders} max={usage.maxOrders} />
             <UsageMeter icon={Users} label="Team Members" used={1} max={usage.maxUsers} />
+            <p className="text-[11px] text-slate-500">
+              Kai unified API usage is billed at one model-agnostic credit rate for your tier.
+            </p>
           </div>
         )}
 

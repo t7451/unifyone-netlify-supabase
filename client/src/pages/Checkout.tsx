@@ -13,9 +13,9 @@ import {
 } from "lucide-react";
 
 const PLAN_FEATURES: Record<string, string[]> = {
-  starter: ["1 tenant", "Up to 100 products", "500 orders/mo", "2 team members", "Core analytics"],
-  pro: ["5 tenants", "Unlimited products", "5,000 orders/mo", "10 team members", "Advanced analytics", "Manus AI insights", "Full automation layer"],
-  scale: ["Unlimited tenants", "Unlimited products", "Unlimited orders", "Unlimited team members", "White-label support", "Priority support"],
+  starter: ["1 tenant", "Up to 100 products", "500 orders/mo", "2 team members", "Core analytics", "100 Kai unified API credits/month"],
+  pro: ["5 tenants", "Unlimited products", "5,000 orders/mo", "10 team members", "Advanced analytics", "2,000 Kai unified API credits/month", "Unified model pricing ($0.04/credit overage)", "Full automation layer"],
+  scale: ["Unlimited tenants", "Unlimited products", "Unlimited orders", "Unlimited team members", "20,000 Kai unified API credits/month", "Unified model pricing ($0.03/credit overage)", "White-label support", "Priority support"],
 };
 
 type PlanSlug = "starter" | "pro" | "scale";

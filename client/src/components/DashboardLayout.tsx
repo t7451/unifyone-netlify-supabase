@@ -474,12 +474,12 @@ function FloatingAIWidget() {
   // Derive context from current route (strip leading /)
   const context = location.replace(/^\//, "") || "general";
 
-  const { data: suggestionsData } = trpc.manusAI.getSuggestions.useQuery(
+  const { data: suggestionsData } = trpc.ai.getSuggestions.useQuery(
     { context },
     { enabled: !!user }
   );
 
-  const chatMutation = trpc.manusAI.chat.useMutation({
+  const chatMutation = trpc.ai.chat.useMutation({
     onSuccess: data => {
       setConversationId(data.conversationId);
       setMessages(prev => [
@@ -538,7 +538,7 @@ function FloatingAIWidget() {
               className="font-semibold text-sm flex-1 font-serif-display"
               style={{ color: "#C9A84C" }}
             >
-              Manus AI
+              Kai
             </span>
             <span
               className="text-xs capitalize uppercase tracking-widest"
@@ -560,7 +560,7 @@ function FloatingAIWidget() {
               messages={messages}
               onSendMessage={handleSend}
               isLoading={chatMutation.isPending}
-              placeholder="Ask Manus anything…"
+              placeholder="Ask Kai anything…"
               height="100%"
               className="h-full"
               emptyStateMessage={`Hi ${user.name?.split(" ")[0] ?? "there"}! How can I help you?`}

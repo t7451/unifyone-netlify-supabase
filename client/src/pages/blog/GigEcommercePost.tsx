@@ -110,7 +110,7 @@ export default function GigEcommercePost() {
               {[
                 "Phase 1 — Instrumentation: Track every shift, every mile, every platform payout in a structured system.",
                 "Phase 2 — Analysis: Identify your highest-earning platform, zone, and time window using real data.",
-                "Phase 3 — Optimization: Use AI insights (Manus AI) to route toward high-value zones and avoid low-margin batches.",
+                "Phase 3 — Optimization: Use AI insights (Kai) to route toward high-value zones and avoid low-margin batches.",
                 "Phase 4 — Expansion: Once your primary platform is optimized, add a second tenant and apply the same framework.",
                 "Phase 5 — Compounding: Use your earnings data to build a product or service business alongside your gig activity."
               ].map((item, i) => (
@@ -123,9 +123,9 @@ export default function GigEcommercePost() {
           </section>
 
           <section>
-            <h2 className="font-cinzel text-xl sm:text-2xl font-bold mb-4" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>How Manus AI Changes the Equation</h2>
-            <p>Manus AI is embedded directly into UnifyOne's Gig Command and Money Manager modules. It does not give generic advice. It reads your actual shift data — your earnings per hour by platform, your mileage by zone, your tax deduction accumulation — and generates specific, actionable recommendations.</p>
-            <p className="mt-4">A typical Manus AI insight for a DoorDash operator might read: <em style={{ color: "#D4A843" }}>"Your Tuesday evening shifts in Zone 4 average $24.80/hr versus $18.20/hr in Zone 2. Shifting 2 hours per week to Zone 4 would add approximately $340/month to your net earnings."</em> That is not a generic tip. That is infrastructure-grade intelligence applied to your specific operation.</p>
+            <h2 className="font-cinzel text-xl sm:text-2xl font-bold mb-4" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>How Kai Changes the Equation</h2>
+            <p>Kai is embedded directly into UnifyOne's Gig Command and Money Manager modules. It does not give generic advice. It reads your actual shift data — your earnings per hour by platform, your mileage by zone, your tax deduction accumulation — and generates specific, actionable recommendations.</p>
+            <p className="mt-4">A typical Kai insight for a DoorDash operator might read: <em style={{ color: "#D4A843" }}>"Your Tuesday evening shifts in Zone 4 average $24.80/hr versus $18.20/hr in Zone 2. Shifting 2 hours per week to Zone 4 would add approximately $340/month to your net earnings."</em> That is not a generic tip. That is infrastructure-grade intelligence applied to your specific operation.</p>
           </section>
 
           <section>
@@ -136,7 +136,7 @@ export default function GigEcommercePost() {
 
           <section>
             <h2 className="font-cinzel text-xl sm:text-2xl font-bold mb-4" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>Getting Started</h2>
-            <p>UnifyOne's Acolyte tier is free — one tenant, core commerce tools, and access to the Gig Command shift tracker. The Architect tier ($49/month) unlocks Manus AI insights, advanced analytics, all payment rails, and up to five tenants. The Cathedral tier ($149/month) is for operators running a full commerce operation with white-label requirements.</p>
+            <p>UnifyOne's Acolyte tier is free — one tenant, core commerce tools, and access to the Gig Command shift tracker. The Architect tier ($49/month) unlocks Kai AI insights, advanced analytics, all payment rails, and up to five tenants. The Cathedral tier ($149/month) is for operators running a full commerce operation with white-label requirements.</p>
             <p className="mt-4">The first stone is free. The cathedral is built one phase at a time.</p>
           </section>
         </div>
@@ -149,8 +149,8 @@ export default function GigEcommercePost() {
             <Link href="/">
               <span className="btn-illuminate inline-block cursor-pointer">Start Free Trial</span>
             </Link>
-            <Link href="/#manus-ai">
-              <span className="btn-ghost-gold inline-block cursor-pointer">Explore Manus AI</span>
+            <Link href="/ai-assistant">
+              <span className="btn-ghost-gold inline-block cursor-pointer">Explore Kai AI</span>
             </Link>
           </div>
         </div>
@@ -168,7 +168,7 @@ export default function GigEcommercePost() {
             <Link href="/blog/manus-ai-gig-workers">
               <div className="stone-card p-6 cursor-pointer group">
                 <span className="inscription block mb-2" style={{ color: "#3A3A3A" }}>AI Integration</span>
-                <h4 className="font-cinzel text-sm font-600 group-hover:text-amber-400 transition-colors" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>Manus AI for Gig Workers: From Data to Decisions in Seconds</h4>
+                <h4 className="font-cinzel text-sm font-600 group-hover:text-amber-400 transition-colors" style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}>Kai AI for Gig Workers: From Data to Decisions in Seconds</h4>
               </div>
             </Link>
           </div>

@@ -36,47 +36,41 @@ UNIFYAI_API_KEY=your_unifyone_api_key`,
 // npx @modelcontextprotocol/inspector \\
 //   https://unify0ne-mcp.skdev-371.workers.dev/mcp`,
 
-  createTask: `// server/manus.ts
-const MANUS_BASE = process.env.MANUS_BASE_URL;
-const API_KEY = process.env.MANUS_API_KEY;
+  createTask: `// server/ai.ts — invoke the Kai chat endpoint from server-side
+import { invokeLLM } from "./_core/llm";
 
-export async function createManusTask({
-  prompt,
-  mode = "quality",
-  connectors = [],
-  attachments = [],
-  shareableLink = false,
+export async function runAITask({
+  systemPrompt,
+  userPrompt,
+  userId,
+  tenantId,
+}: {
+  systemPrompt: string;
+  userPrompt: string;
+  userId: number;
+  tenantId?: number;
 }) {
-  const res = await fetch(\`\${MANUS_BASE}/tasks\`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: \`Bearer \${API_KEY}\`,
+  const response = await invokeLLM({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    meter: {
+      userId,
+      source: "ai_task",
+      action: "kai.task",
+      tenantId,
     },
-    body: JSON.stringify({
-      prompt,
-      mode,
-      connectors,
-      attachments,
-      create_shareable_link: shareableLink,
-      hide_in_task_list: false,
-    }),
   });
 
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(\`Manus task creation failed: \${err.message}\`);
-  }
-
-  return res.json();
-  // Returns: { task_id, task_title, task_url, shareURL? }
+  return response.choices[0]?.message?.content ?? "";
 }`,
 
-  webhook: `// server/_core/manus-webhook.ts
+  webhook: `// server/_core/ai-webhook.ts — handle n8n automation callbacks
 import crypto from "crypto";
 import express from "express";
 
-function verifySignature(payload, sig, secret) {
+function verifySignature(payload: string, sig: string, secret: string) {
   const expected = crypto
     .createHmac("sha256", secret)
     .update(payload)
@@ -84,75 +78,81 @@ function verifySignature(payload, sig, secret) {
   return sig === \`sha256=\${expected}\`;
 }
 
-app.post("/api/webhooks/manus", async (req, res) => {
-  const sig = req.headers["x-manus-signature"] || "";
+app.post("/api/webhooks/automation", async (req, res) => {
+  const sig = req.headers["x-automation-signature"] as string || "";
   const valid = verifySignature(
     req.body,
     sig,
-    process.env.MANUS_WEBHOOK_SECRET
+    process.env.AUTOMATION_WEBHOOK_SECRET ?? ""
   );
 
   if (!valid) return res.status(401).json({ error: "Invalid signature" });
 
   const event = JSON.parse(req.body);
-  const { event_type, task_id, status, result } = event;
+  const { event_type, workflow_id, status, result } = event;
 
-  // Route completed tasks
-  if (event_type === "task.completed") {
-    await handleTaskComplete(task_id, result);
+  if (event_type === "workflow.completed") {
+    await handleWorkflowComplete(workflow_id, result);
   }
 
   res.status(200).json({ received: true });
 });`,
 
-  n8nBridge: `// n8n HTTP Request node → Manus
+  n8nBridge: `// n8n HTTP Request node → UnifyOne tRPC endpoint
 // Method: POST
-// URL: https://open.manus.ai/v1/tasks
-// Auth: Header → Authorization: Bearer {{$env.MANUS_API_KEY}}
+// URL: https://your-app.netlify.app/api/trpc/ai.chat
+// Auth: Header → Authorization: Bearer {{$env.UNIFYONE_API_KEY}}
 
 // Body (JSON):
 {
-  "prompt": "{{ $json.prompt }}",
-  "mode": "quality",
-  "connectors": ["gmail", "notion", "shopify"],
-  "hide_in_task_list": false
+  "json": {
+    "message": "{{ $json.prompt }}",
+    "context": "automations"
+  }
 }
 
-// n8n Webhook node (listens for Manus callbacks):
-// Path: /webhooks/manus
+// n8n Webhook node (listens for UnifyOne events):
+// Path: /webhooks/unifyone
 // Method: POST
 // Route by: {{ $json.event_type }}`,
 
-  taskExample: `// Example: Affiliate Research
-createManusTask({
-  prompt: \`Research the top 10 Shopify-compatible affiliate programs
-  paying 30%+ recurring commissions. Return as JSON with fields:
-  name, commission_pct, cookie_days, payout_threshold, signup_url.\`,
-  mode: "quality",
-  connectors: ["shopify"],
+  taskExample: `// Example: Trigger Kai insight from n8n schedule
+const response = await fetch("/api/trpc/ai.chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": \`Bearer \${process.env.UNIFYONE_API_KEY}\`,
+  },
+  body: JSON.stringify({
+    json: {
+      message: "Summarize this week's top revenue opportunities",
+      context: "dashboard",
+    },
+  }),
 });
 
-// Example: SEO Gap Analysis
-createManusTask({
-  prompt: \`Run an SEO gap analysis for 1commerce.online
-  targeting solopreneurs in the Pacific Northwest.
-  Identify striking-distance keywords (pos 7-12), topical gaps,
-  and produce 5 optimized title tags + meta descriptions.\`,
-  mode: "quality",
+// Example: Trigger automation on new order
+// n8n: Watch orders webhook → POST to ai.chat with order context
+const orderContext = JSON.stringify({ orderId, amount, product });
+await runAITask({
+  systemPrompt: "You are an order fulfillment assistant.",
+  userPrompt: \`Suggest next steps for order \${orderId}\`,
+  userId,
+  tenantId,
 });`,
 };
 
 const CHECKLIST = [
-  { id: "c1", text: "Obtain Manus API key from open.manus.ai", done: false },
-  { id: "c2", text: "Add MANUS_API_KEY + MANUS_WEBHOOK_SECRET to env", done: false },
-  { id: "c3", text: "Install manus-mcp: npx manus-mcp", done: false },
-  { id: "c4", text: "Update .mcp.json with manus-mcp block", done: false },
-  { id: "c5", text: "Deploy /api/webhooks/manus endpoint", done: false },
-  { id: "c6", text: "Register webhook URL in Manus dashboard", done: false },
-  { id: "c7", text: "Test with createManusTask() → affiliate_research", done: false },
-  { id: "c8", text: "Wire n8n HTTP node to Manus task creation", done: false },
-  { id: "c9", text: "Enable Shopify + Gmail connectors in Manus", done: false },
-  { id: "c10", text: "Verify webhook events in Manus dashboard", done: false },
+  { id: "c1", text: "Set MCP_WORKER_URL and ONECOMMERCE_API_KEY in .env", done: false },
+  { id: "c2", text: "Configure Claude Desktop MCP server (mcpConfig block)", done: false },
+  { id: "c3", text: "Deploy /api/webhooks/automation endpoint", done: false },
+  { id: "c4", text: "Add AUTOMATION_WEBHOOK_SECRET to env", done: false },
+  { id: "c5", text: "Test Kai chat endpoint with a manual prompt", done: false },
+  { id: "c6", text: "Wire n8n HTTP node to tRPC ai.chat endpoint", done: false },
+  { id: "c7", text: "Set up n8n Webhook node for order/lead events", done: false },
+  { id: "c8", text: "Verify credit metering in admin dashboard", done: false },
+  { id: "c9", text: "Enable Shopify + payment webhooks for automation triggers", done: false },
+  { id: "c10", text: "Test end-to-end: new order → n8n → Kai insight", done: false },
 ];
 
 function CodeBlock({ code }: { code: string }) {
@@ -218,36 +218,36 @@ export default function IntegrationGuides() {
         <title>Integration Guides | UnifyOne Documentation</title>
         <meta
           name="description"
-          content="Complete integration guides for Manus AI, Claude, n8n, and payment processors."
+          content="Complete integration guides for Kai, Claude, n8n, and payment processors."
         />
         <link rel="canonical" href={`${SITE_URL}/documents/integrations`} />
         <meta property="og:title" content="Integration Guides | UnifyOne Documentation" />
         <meta
           property="og:description"
-          content="Complete integration guides for Manus AI, Claude, n8n, and payment processors."
+          content="Complete integration guides for Kai, Claude, n8n, and payment processors."
         />
         <meta property="og:url" content={`${SITE_URL}/documents/integrations`} />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "HowTo",
-            name: "Manus AI Integration Guide",
-            description: "Complete guide to integrating Manus AI with UnifyOne platform",
+            name: "AI Integration Guide",
+            description: "Complete guide to integrating Kai AI and Claude with UnifyOne platform",
             step: [
               {
                 "@type": "HowToStep",
                 name: "API Setup",
-                text: "Configure MANUS_API_KEY and MANUS_WEBHOOK_SECRET",
+                text: "Configure MCP_WORKER_URL and ONECOMMERCE_API_KEY",
               },
               {
                 "@type": "HowToStep",
                 name: "MCP Server",
-                text: "Install and configure manus-mcp",
+                text: "Install and configure the UnifyOne MCP server",
               },
               {
                 "@type": "HowToStep",
                 name: "Webhooks",
-                text: "Deploy webhook endpoint and register with Manus",
+                text: "Deploy webhook endpoint for automation callbacks",
               },
               {
                 "@type": "HowToStep",
@@ -265,10 +265,10 @@ export default function IntegrationGuides() {
           <div className="text-center mb-12">
             <span className="inscription block mb-4">INTEGRATION GUIDES</span>
             <h1 className="font-cinzel text-4xl sm:text-5xl font-bold mb-6" style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}>
-              Manus AI + Claude Integration
+              Kai AI + Claude Integration
             </h1>
             <p className="font-crimson text-lg max-w-2xl mx-auto" style={{ color: "#9A9A9A", lineHeight: 1.8 }}>
-              Complete technical guide to integrating Manus AI for autonomous task execution and Claude for intelligent automation.
+              Complete technical guide to integrating Kai AI for autonomous task execution and Claude for intelligent automation.
             </p>
           </div>
 
@@ -305,7 +305,7 @@ export default function IntegrationGuides() {
                 </h2>
                 <div className="font-crimson text-base space-y-4" style={{ color: "#C0C0C0", lineHeight: 1.8 }}>
                   <p>
-                    Manus is a hands-on AI agent platform that <strong style={{ color: "#D4A843" }}>executes tasks</strong> — not just answers questions. Integrate Manus with UnifyOne to automate complex workflows: affiliate research, SEO audits, digital product fulfillment, store provisioning, and more.
+                    Kai is a context-aware AI sidekick that <strong style={{ color: "#D4A843" }}>executes tasks</strong> — not just answers questions. Integrate Kai with UnifyOne to automate complex workflows: affiliate research, SEO audits, digital product fulfillment, store provisioning, and more.
                   </p>
                   <p>
                     This guide covers: API setup, MCP server configuration, webhook handling, task patterns, and n8n bridge integration.
@@ -320,7 +320,7 @@ export default function IntegrationGuides() {
                   1. API Setup
                 </h2>
                 <p className="font-crimson text-base mb-4" style={{ color: "#C0C0C0" }}>
-                  Configure your Manus API credentials in your environment:
+                  Configure your UnifyAI credentials in your environment:
                 </p>
                 <CodeBlock code={CODE_BLOCKS.envSetup} />
               </div>
@@ -332,7 +332,7 @@ export default function IntegrationGuides() {
                   2. MCP Server
                 </h2>
                 <p className="font-crimson text-base mb-4" style={{ color: "#C0C0C0" }}>
-                  Install and configure the Manus MCP server for Claude integration:
+                  Install and configure the UnifyOne MCP server for Claude integration:
                 </p>
                 <CodeBlock code={CODE_BLOCKS.mcpConfig} />
               </div>
@@ -344,7 +344,7 @@ export default function IntegrationGuides() {
                   3. Webhooks
                 </h2>
                 <p className="font-crimson text-base mb-4" style={{ color: "#C0C0C0" }}>
-                  Deploy a webhook endpoint to receive Manus task completion events:
+                  Deploy a webhook endpoint to receive automation events:
                 </p>
                 <CodeBlock code={CODE_BLOCKS.webhook} />
               </div>
@@ -368,7 +368,7 @@ export default function IntegrationGuides() {
                   5. n8n Bridge
                 </h2>
                 <p className="font-crimson text-base mb-4" style={{ color: "#C0C0C0" }}>
-                  Wire Manus task creation through n8n workflows:
+                  Wire Kai task calls through n8n workflows:
                 </p>
                 <CodeBlock code={CODE_BLOCKS.n8nBridge} />
               </div>

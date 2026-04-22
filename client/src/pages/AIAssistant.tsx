@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { AIChatBox } from "@/components/AIChatBox";
+import LoadingExperience from "@/components/LoadingExperience";
 import type { Message } from "@/components/AIChatBox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -57,26 +58,26 @@ export default function AIAssistant() {
   const utils = trpc.useUtils();
 
   // Fetch conversation list
-  const { data: historyData, isLoading: historyLoading } = trpc.manusAI.listConversations.useQuery(
+  const { data: historyData, isLoading: historyLoading } = trpc.ai.listConversations.useQuery(
     { limit: 20 },
     { enabled: !!user }
   );
 
   // Fetch context suggestions
-  const { data: suggestionsData } = trpc.manusAI.getSuggestions.useQuery(
+  const { data: suggestionsData } = trpc.ai.getSuggestions.useQuery(
     { context: activeContext },
     { enabled: !!user }
   );
 
   // Chat mutation
-  const chatMutation = trpc.manusAI.chat.useMutation({
+  const chatMutation = trpc.ai.chat.useMutation({
     onSuccess: (data) => {
       setActiveConversationId(data.conversationId);
       setMessages(prev => [
         ...prev,
         { role: "assistant", content: data.reply },
       ]);
-      utils.manusAI.listConversations.invalidate();
+      utils.ai.listConversations.invalidate();
     },
     onError: (err) => {
       toast.error("AI response failed: " + err.message);
@@ -88,24 +89,24 @@ export default function AIAssistant() {
   });
 
   // Delete conversation mutation
-  const deleteMutation = trpc.manusAI.deleteConversation.useMutation({
+  const deleteMutation = trpc.ai.deleteConversation.useMutation({
     onSuccess: () => {
-      utils.manusAI.listConversations.invalidate();
+      utils.ai.listConversations.invalidate();
       toast.success("Conversation deleted");
     },
   });
 
   // Clear all conversations mutation
-  const clearAllMutation = trpc.manusAI.clearAllConversations.useMutation({
+  const clearAllMutation = trpc.ai.clearAllConversations.useMutation({
     onSuccess: () => {
-      utils.manusAI.listConversations.invalidate();
+      utils.ai.listConversations.invalidate();
       startNewConversation();
       toast.success("All conversations cleared");
     },
   });
 
   // Load a conversation
-  const _loadConversationQuery = trpc.manusAI.getConversation.useQuery(
+  const _loadConversationQuery = trpc.ai.getConversation.useQuery(
     { id: activeConversationId! },
     {
       enabled: false,
@@ -115,7 +116,7 @@ export default function AIAssistant() {
   const handleLoadConversation = async (id: number) => {
     setActiveConversationId(id);
     try {
-      const result = await utils.manusAI.getConversation.fetch({ id });
+      const result = await utils.ai.getConversation.fetch({ id });
       const msgs = (result.conversation.messages as Message[]) ?? [];
       setMessages(msgs.filter(m => m.role !== "system"));
       setActiveContext(result.conversation.context ?? "general");
@@ -150,9 +151,12 @@ export default function AIAssistant() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+        <LoadingExperience
+          title="Starting Kai"
+          description="Loading conversation history, assistant context, and recommended prompts."
+          label="AI workspace loading"
+          className="min-h-[24rem]"
+        />
       </DashboardLayout>
     );
   }
@@ -298,7 +302,7 @@ export default function AIAssistant() {
             <div className="ml-auto flex items-center gap-2">
               <Badge variant="secondary" className="text-xs">
                 <Sparkles className="h-3 w-3 mr-1" />
-                Powered by Kai
+                Powered by Kai Unified API
               </Badge>
               <Button variant="ghost" size="sm" onClick={startNewConversation} className="text-xs h-7">
                 <Plus className="h-3.5 w-3.5 mr-1" />

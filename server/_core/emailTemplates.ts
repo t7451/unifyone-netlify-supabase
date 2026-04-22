@@ -40,12 +40,12 @@ function buildEmailTemplates(baseUrl: string) {
             </div>
             <div class="content">
               <p>Welcome to UnifyOne.</p>
-              <p>You've joined a community of commerce builders who believe in infrastructure that endures. We've engineered a multi-tenant platform that replaces three separate SaaS tools with one cohesive system — built sequentially, structured like a cathedral, and powered by Manus AI.</p>
+              <p>You've joined a community of commerce builders who believe in infrastructure that endures. We've engineered a multi-tenant platform that replaces three separate SaaS tools with one cohesive system — built sequentially, structured like a cathedral, and powered by Kai.</p>
               <p>Over the next two weeks, we'll show you:</p>
               <ul>
                 <li>How the Six Pillars architecture eliminates operational drag</li>
                 <li>Why sequential construction beats feature bloat</li>
-                <li>How Manus AI becomes your commerce co-pilot</li>
+                <li>How Kai becomes your commerce co-pilot</li>
                 <li>Exclusive pricing for early adopters</li>
               </ul>
               <p>Start here: explore the <a href="${baseUrl}/architecture" style="color: #D4A843; text-decoration: none;">Cathedral Framework</a> and see how commerce infrastructure should be built.</p>
@@ -116,7 +116,7 @@ function buildEmailTemplates(baseUrl: string) {
               </div>
 
               <div class="pillar">
-                <div class="pillar-title">6. MANUS AI</div>
+                <div class="pillar-title">6. KAI AI</div>
                 <p>Your commerce co-pilot. Context-aware suggestions, automated insights, and intelligent automation.</p>
               </div>
             </div>
@@ -230,7 +230,7 @@ function buildEmailTemplates(baseUrl: string) {
 
               <div class="story">
                 <div class="story-title">DIRECT-TO-CONSUMER BRAND</div>
-                <p>"Manus AI suggested a pricing optimization that increased our AOV by 18%. The platform pays for itself in the first month."</p>
+                <p>"Kai suggested a pricing optimization that increased our AOV by 18%. The platform pays for itself in the first month."</p>
               </div>
             </div>
             <div class="cta">

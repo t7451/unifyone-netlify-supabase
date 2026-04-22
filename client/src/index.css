@@ -260,6 +260,83 @@
     );
 }
 
+@keyframes loading-grid-pan {
+  from {
+    background-position:
+      0 0,
+      0 0,
+      0 0;
+  }
+  to {
+    background-position:
+      48px 48px,
+      96px 96px,
+      96px 96px;
+  }
+}
+
+@keyframes loading-orbit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loading-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0) scale(1.08);
+  }
+}
+
+@keyframes loading-shimmer {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(120%);
+  }
+}
+
+.loading-grid {
+  background-image:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(rgba(0, 217, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(240, 208, 128, 0.06) 1px, transparent 1px);
+  background-size:
+    24px 24px,
+    72px 72px,
+    72px 72px;
+  animation: loading-grid-pan 14s linear infinite;
+}
+
+.loading-orbit {
+  animation: loading-orbit-spin 10s linear infinite;
+}
+
+.loading-float {
+  animation: loading-float 3.8s ease-in-out infinite;
+}
+
+.loading-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.08) 48%,
+    transparent 76%
+  );
+  transform: translateX(-120%);
+  animation: loading-shimmer 2.8s linear infinite;
+}
+
 /* Section inscription label — Cinzel, spaced, gold */
 .inscription {
   font-family: 'Cinzel', serif;

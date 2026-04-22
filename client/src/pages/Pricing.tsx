@@ -16,7 +16,7 @@ const JSON_LD = [
     url: CANONICAL,
     name: "Pricing | UnifyOne",
     description:
-      "Three plans for every stage — Starter (free forever), Pro ($19/mo), Scale ($99/mo). All plans include multi-tenant commerce infrastructure.",
+      "Three plans for every stage — Starter (free forever), Pro ($19/mo), Scale ($99/mo). Every tier includes Kai, our in-house AI on a unified API pricing model.",
     isPartOf: { "@id": `${SITE_URL}/#website` },
     inLanguage: "en-US",
     breadcrumb: {
@@ -40,7 +40,7 @@ const JSON_LD = [
           "@type": "Offer",
           name: "Starter",
           description:
-            "Free forever. 2 gig platform connections, full shift earnings history, auto mileage deduction tracking, 50 Kai queries/month, Money Manager dashboard, MoneyGenerator gig tools.",
+            "Free forever. 2 gig platform connections, full shift earnings history, auto mileage deduction tracking, 50 Kai unified API credits/month, any-model routing, and Money Manager dashboard.",
           price: "0",
           priceCurrency: "USD",
           availability: "https://schema.org/InStock",
@@ -54,7 +54,7 @@ const JSON_LD = [
           "@type": "Offer",
           name: "Pro",
           description:
-            "$19/month. Unlimited gig platform connections, advanced zone/time optimization, quarterly estimates + 1099 prep, 500 Kai queries/month, UnifyAI API with 1,000 credits, full MCP config dashboard, 1 commerce storefront, developer API key management, priority support.",
+            "$19/month. Unlimited gig platform connections, advanced zone/time optimization, quarterly estimates + 1099 prep, 500 Kai unified API credits/month, and one unified model cost ($0.04/extra credit).",
           price: "19",
           priceCurrency: "USD",
           availability: "https://schema.org/InStock",
@@ -68,7 +68,7 @@ const JSON_LD = [
           "@type": "Offer",
           name: "Scale",
           description:
-            "$99/month. Unlimited multi-tenant management, affiliate storefront network, UnifyAI API with 10,000 credits/month, API reselling + white-label, custom MCP routing rules, role-based team access + audit logs, Shopify sync, webhook configs, Slack support + 4hr SLA, volume API discounts.",
+            "$99/month. Unlimited multi-tenant management, affiliate storefront network, 10,000 Kai unified API credits/month, one unified model cost ($0.03/extra credit), API reselling + white-label, custom MCP routing rules, and 4hr SLA support.",
           price: "99",
           priceCurrency: "USD",
           availability: "https://schema.org/InStock",
@@ -99,6 +99,14 @@ const FAQ = [
   {
     q: "What is multi-tenant management on the Scale tier?",
     a: "Scale lets you manage unlimited independent stores (tenants) from one dashboard — each with isolated data, branding, and billing. Ideal for agencies, franchises, and white-label resellers.",
+  },
+  {
+    q: "How does Kai unified API pricing work?",
+    a: "Each tier includes a monthly Kai credit allocation that works across all supported models. You pay one unified overage rate per credit on your tier, instead of separate model-vendor bills.",
+  },
+  {
+    q: "Do different AI models have different prices?",
+    a: "No. Kai uses unified credit pricing across models, so your bill stays predictable even when you route prompts between Claude, GPT, Gemini, and other providers.",
   },
 ];
 
@@ -143,8 +151,8 @@ export default function Pricing() {
             className="font-crimson text-lg sm:text-xl mx-auto"
             style={{ color: "#6A6A6A", fontStyle: "italic", maxWidth: 520 }}
           >
-            Clear, structural, no surprises. Start free. Upgrade when the walls
-            are ready to bear weight.
+            Clear, structural, no surprises. One unified Kai cost across any
+            model. Start free, scale when your usage grows.
           </p>
         </div>
       </section>

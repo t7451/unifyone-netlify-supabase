@@ -92,7 +92,7 @@ export default function Documents() {
                     UnifyOne is a multi-tenant commerce platform engineered with the Cathedral Principle — sequential, structural construction that prioritizes foundational strength before scaling traffic. This documentation covers the complete architecture, integration patterns, and proof of work across 36 development phases.
                   </p>
                   <p>
-                    The platform combines <strong style={{ color: "#D4A843" }}>Manus AI integration</strong> for intelligent task automation, <strong style={{ color: "#D4A843" }}>multi-tenant isolation</strong> for SaaS scalability, and <strong style={{ color: "#D4A843" }}>payment infrastructure</strong> (Stripe, PayPal, Shopify) for global commerce.
+                    The platform combines <strong style={{ color: "#D4A843" }}>Kai AI integration</strong> for intelligent task automation, <strong style={{ color: "#D4A843" }}>multi-tenant isolation</strong> for SaaS scalability, and <strong style={{ color: "#D4A843" }}>payment infrastructure</strong> (Stripe, PayPal, Shopify) for global commerce.
                   </p>
                   <p>
                     Navigate to the sections below to explore detailed case studies, integration guides, and the complete work proof timeline.
@@ -221,7 +221,7 @@ export default function Documents() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                   {[
                     { icon: "🏛️", title: "Cathedral Framework", subtitle: "Design System Architecture", href: "/documents/case-studies#cathedral-framework" },
-                    { icon: "🤖", title: "Manus AI Integration", subtitle: "Context-Aware Copilot", href: "/documents/case-studies#manus-ai-integration" },
+                    { icon: "🤖", title: "Kai AI Integration", subtitle: "Context-Aware Copilot", href: "/documents/case-studies#kai-ai-integration" },
                     { icon: "🏢", title: "Multi-Tenant Commerce", subtitle: "Isolation & Scale", href: "/documents/case-studies#multi-tenant-commerce" },
                     { icon: "💳", title: "Stripe → Meta CAPI Bridge", subtitle: "Transactions to Algorithm", href: "/documents/case-studies#stripe-capi-bridge" },
                     { icon: "🎞️", title: "Scroll-Triggered Reveals", subtitle: "Performance-First Animation", href: "/documents/case-studies#scroll-reveals" },
@@ -262,7 +262,7 @@ export default function Documents() {
               <div>
                 <h2 className="font-cinzel text-2xl font-bold mb-6" style={{ color: "#D4A843" }}>Integration Guides</h2>
                 <p className="font-crimson text-base mb-8" style={{ color: "#C0C0C0", lineHeight: 1.8 }}>
-                  Complete step-by-step integration guides for Manus AI, Claude MCP, n8n automation, and payment processors.
+                  Complete step-by-step integration guides for Kai, Claude MCP, n8n automation, and payment processors.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                   {[
@@ -336,7 +336,7 @@ export default function Documents() {
                   {[
                     "Multi-tenant commerce platform (products, orders, customers)",
                     "Stripe, PayPal & Shopify payment rails",
-                    "Manus AI integration with context-aware copilot",
+                    "Kai AI integration with context-aware copilot",
                     "Social commerce: friends, challenges, gamification",
                     "Governance dashboard with audit logs & kill switches",
                     "Theme store marketplace with Stripe fulfillment",

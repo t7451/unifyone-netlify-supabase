@@ -86,7 +86,7 @@ export const documentChatRouter = router({
         .join("\n\n---\n\n");
 
       // Build system prompt
-      const systemPrompt = `You are a helpful assistant for UnifyOne, a Cathedral Framework-based commerce platform powered by Manus AI. 
+      const systemPrompt = `You are a helpful assistant for UnifyOne, a Cathedral Framework-based commerce platform powered by Kai. 
       
 Answer user questions based on the following documentation context. Be concise, accurate, and helpful. If the answer is not in the documentation, say so honestly.
 

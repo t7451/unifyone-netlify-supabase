@@ -18,7 +18,7 @@ interface Source {
   similarity: number;
 }
 
-export function DocsChat() {
+export default function DocsChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -50,14 +50,20 @@ export function DocsChat() {
         conversationHistory: messages,
       });
 
-      setMessages(prev => [...prev, { role: "assistant", content: String(result.answer) }]);
+      setMessages(prev => [
+        ...prev,
+        { role: "assistant", content: String(result.answer) },
+      ]);
       setSources(result.sources);
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
-      }]);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Sorry, I encountered an error. Please try again.",
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -67,11 +73,20 @@ export function DocsChat() {
     <PublicLayout>
       <Helmet>
         <title>Documentation Chat | UnifyOne</title>
-        <meta name="description" content="Ask questions about UnifyOne documentation powered by Claude AI" />
+        <meta
+          name="description"
+          content="Ask questions about UnifyOne documentation powered by Claude AI"
+        />
         <meta name="og:title" content="Documentation Chat | UnifyOne" />
-        <meta name="og:description" content="Ask questions about UnifyOne documentation powered by Claude AI" />
+        <meta
+          name="og:description"
+          content="Ask questions about UnifyOne documentation powered by Claude AI"
+        />
         <meta name="twitter:title" content="Documentation Chat | UnifyOne" />
-        <meta name="twitter:description" content="Ask questions about UnifyOne documentation powered by Claude AI" />
+        <meta
+          name="twitter:description"
+          content="Ask questions about UnifyOne documentation powered by Claude AI"
+        />
       </Helmet>
 
       <div className="min-h-screen bg-cathedral-bg flex flex-col">
@@ -80,11 +95,14 @@ export function DocsChat() {
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 mb-4">
               <FileText className="w-8 h-8 text-gold" />
-              <h1 className="text-4xl font-cinzel text-gold">Documentation Assistant</h1>
+              <h1 className="text-4xl font-cinzel text-gold">
+                Documentation Assistant
+              </h1>
             </div>
             <p className="text-gray-300 max-w-2xl">
-              Ask questions about UnifyOne, the Cathedral Framework, Manus AI integration, and more. 
-              Powered by Claude AI with access to our complete documentation.
+              Ask questions about UnifyOne, the Cathedral Framework, Kai
+              integration, and more. Powered by Claude AI with access to our
+              complete documentation.
             </p>
           </div>
         </div>
@@ -97,9 +115,12 @@ export function DocsChat() {
               <div className="flex items-center justify-center h-full text-center">
                 <div>
                   <FileText className="w-16 h-16 text-gold/30 mx-auto mb-4" />
-                  <h2 className="text-2xl font-cinzel text-gold mb-2">Start a Conversation</h2>
+                  <h2 className="text-2xl font-cinzel text-gold mb-2">
+                    Start a Conversation
+                  </h2>
                   <p className="text-gray-400 max-w-md">
-                    Ask me anything about UnifyOne's architecture, features, integrations, or how to get started.
+                    Ask me anything about UnifyOne's architecture, features,
+                    integrations, or how to get started.
                   </p>
                 </div>
               </div>
@@ -138,10 +159,17 @@ export function DocsChat() {
               <h3 className="text-sm font-cinzel text-gold mb-3">Sources</h3>
               <div className="space-y-2">
                 {sources.map((source, idx) => (
-                  <div key={idx} className="text-xs text-gray-400 border-l border-gold/30 pl-3">
-                    <div className="font-medium text-gold">{source.docTitle}</div>
+                  <div
+                    key={idx}
+                    className="text-xs text-gray-400 border-l border-gold/30 pl-3"
+                  >
+                    <div className="font-medium text-gold">
+                      {source.docTitle}
+                    </div>
                     <div className="text-gray-500">{source.chunk}</div>
-                    <div className="text-gold/50 mt-1">Relevance: {(source.similarity * 100).toFixed(0)}%</div>
+                    <div className="text-gold/50 mt-1">
+                      Relevance: {(source.similarity * 100).toFixed(0)}%
+                    </div>
                   </div>
                 ))}
               </div>
@@ -162,7 +190,11 @@ export function DocsChat() {
               disabled={isLoading || !input.trim()}
               className="bg-gold text-black hover:bg-gold/90 disabled:opacity-50"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
             </Button>
           </form>
         </div>
