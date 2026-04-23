@@ -149,6 +149,47 @@ export default function About() {
             </span>
           </Link>
         </div>
+
+        {/* Follow strip */}
+        <div
+          className="mt-10 pt-10 flex items-center gap-6"
+          style={{ borderTop: "1px solid #242424" }}
+        >
+          <a
+            href="https://www.instagram.com/1commerce_llc"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex-shrink-0"
+          >
+            <img
+              src="https://github.com/user-attachments/assets/6dbb3057-6f53-4fcd-9d50-edff38133fed"
+              alt="Follow @1COMMERCE_LLC on Instagram — scan QR code"
+              width={88}
+              height={88}
+              className="rounded-lg opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+              style={{ imageRendering: "pixelated" }}
+            />
+          </a>
+          <div>
+            <span className="inscription block mb-1" style={{ color: "#D4A843" }}>
+              FOLLOW THE BUILD
+            </span>
+            <a
+              href="https://www.instagram.com/1commerce_llc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-cinzel text-sm tracking-widest transition-colors duration-200"
+              style={{ color: "#8A8A8A", letterSpacing: "0.15em" }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#D4A843"}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#8A8A8A"}
+            >
+              @1COMMERCE_LLC
+            </a>
+            <p className="font-crimson text-sm mt-1" style={{ color: "#5A5A5A", fontStyle: "italic" }}>
+              Product updates, operator stories, and behind-the-scenes construction.
+            </p>
+          </div>
+        </div>
       </article>
     </PublicLayout>
   );
