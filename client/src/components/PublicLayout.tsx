@@ -257,6 +257,33 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             </div>
           </div>
 
+          {/* Instagram QR */}
+          <div className="flex flex-col items-center gap-3 mb-10">
+            <a
+              href="https://www.instagram.com/1commerce_llc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex flex-col items-center gap-3"
+            >
+              <img
+                src="https://github.com/user-attachments/assets/6dbb3057-6f53-4fcd-9d50-edff38133fed"
+                alt="Follow @1COMMERCE_LLC on Instagram — scan QR code"
+                width={96}
+                height={96}
+                className="rounded-lg opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ imageRendering: "pixelated" }}
+              />
+              <span
+                className="inscription transition-colors duration-200"
+                style={{ color: "#5A5A5A", letterSpacing: "0.2em", fontSize: "0.6rem" }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#D4A843"}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#5A5A5A"}
+              >
+                @1COMMERCE_LLC
+              </span>
+            </a>
+          </div>
+
           {/* Bottom bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8" style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}>
             <span className="inscription" style={{ color: "#5A5A5A" }}>
