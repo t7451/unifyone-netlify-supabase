@@ -123,7 +123,7 @@ export default function Login({
       setError("That link has expired or is invalid. Please try again.");
     } else if (urlError === "google_oauth_not_ready") {
       setError(
-        "Google OAuth returned to the app, but the callback exchange still needs to be implemented."
+        "Google sign-in is not available yet. Please sign in with your email and password, or contact support."
       );
     }
   }, []);
@@ -180,7 +180,18 @@ export default function Login({
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setError(data.error || "Invalid email or password.");
+        // For rate-limit responses include a human-readable retry hint
+        if (res.status === 429) {
+          const retryAfter = res.headers.get("Retry-After");
+          const seconds = retryAfter ? parseInt(retryAfter, 10) : null;
+          setError(
+            seconds && seconds > 0
+              ? `Too many sign-in attempts. Please wait ${seconds} second${seconds === 1 ? "" : "s"} before trying again.`
+              : "Too many sign-in attempts. Please wait a moment before trying again."
+          );
+        } else {
+          setError(data.error || "Invalid email or password.");
+        }
         if (data.code) setErrorCode(data.code);
         return;
       }
@@ -218,7 +229,27 @@ export default function Login({
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setError(data.error || "Failed to create account.");
+        if (res.status === 429) {
+          const retryAfter = res.headers.get("Retry-After");
+          const seconds = retryAfter ? parseInt(retryAfter, 10) : null;
+          setError(
+            seconds && seconds > 0
+              ? `Too many sign-up attempts. Please wait ${seconds} second${seconds === 1 ? "" : "s"} before trying again.`
+              : "Too many sign-up attempts. Please wait a moment before trying again."
+          );
+        } else {
+          setError(data.error || "Failed to create account.");
+        }
+        return;
+      }
+
+      // If the server requires email verification, surface the check-your-email
+      // screen instead of redirecting silently.
+      if (data.user?.emailVerified === false) {
+        setSuccessMessage(
+          data.message ||
+            "Account created! Please check your email to verify your address before signing in."
+        );
         return;
       }
 
@@ -516,7 +547,8 @@ export default function Login({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label className="text-slate-300 text-sm">Password</Label>
-                  {mode === "sign-in" && (
+                  {(mode === "sign-in" ||
+                    (mode === "password" && intent === "signin")) && (
                     <button
                       onClick={() => switchMode("forgot-password")}
                       className="text-xs text-[#00D9FF] hover:text-[#00C4E8] transition-colors"
@@ -586,13 +618,11 @@ export default function Login({
                 Redirecting to Google...
               </span>
             ) : (
-              "Continue with Google (scaffold)"
+              "Continue with Google"
             )}
           </Button>
           <p className="text-xs text-slate-500 text-center">
-            Configure Google OAuth after email/password sign-in in Settings →
-            Advanced. Use <span className="font-mono">?tenant=your-store-slug</span>{" "}
-            on this page to test the scaffold.
+            Google sign-in requires configuration in Settings → Advanced.
           </p>
 
           {mode === "password" && (

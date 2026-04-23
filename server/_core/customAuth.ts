@@ -198,15 +198,17 @@ export async function signUp(
     const openId = generateOpenId();
     const displayName = name?.trim() || usernameLower || emailLower.split("@")[0];
 
-    // Auto-verify email if email service is not configured AND we're not in production
-    // This prevents accidental email verification bypass in production due to misconfiguration
+    // Auto-verify email if no email service is configured.
+    // When RESEND_API_KEY is absent there is no way to deliver a verification
+    // link, so requiring verification would permanently lock users out.
+    // Enforcement is only meaningful (and safe) when we can actually send mail.
     const hasEmailService = Boolean(process.env.RESEND_API_KEY);
-    const shouldAutoVerify = !hasEmailService && !ENV.isProduction;
+    const shouldAutoVerify = !hasEmailService;
     const emailVerified = shouldAutoVerify;
 
     if (shouldAutoVerify) {
       logger.warn(
-        "customAuth: Email verification disabled (RESEND_API_KEY not set in non-production environment). Users will be auto-verified."
+        "customAuth: RESEND_API_KEY not set — new users will be auto-verified. Set RESEND_API_KEY to enable email verification."
       );
     }
 
@@ -303,9 +305,12 @@ export async function signIn(
     // Require email verification before granting a session.
     // The client should check for code === "email_not_verified" and offer
     // a "Resend verification email" button.
-    // ONLY enforce when email service is configured OR in production mode
+    // ONLY enforce when email service is configured — if we can't deliver a
+    // verification link there is no point blocking the user (and no way to
+    // unblock them), which would permanently lock out everyone who signed up
+    // without an email service in place.
     const hasEmailService = Boolean(process.env.RESEND_API_KEY);
-    const shouldEnforceVerification = hasEmailService || ENV.isProduction;
+    const shouldEnforceVerification = hasEmailService;
     
     if (user.emailVerified === false && shouldEnforceVerification) {
       return {
@@ -318,7 +323,7 @@ export async function signIn(
 
     if (user.emailVerified === false && !shouldEnforceVerification) {
       logger.warn(
-        "customAuth: Allowing unverified user to sign in (email verification disabled in non-production without RESEND_API_KEY)",
+        "customAuth: Allowing sign-in for unverified user (RESEND_API_KEY not set — email verification disabled)",
         { identifier: identifierLower }
       );
     }
