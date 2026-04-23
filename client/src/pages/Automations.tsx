@@ -631,7 +631,11 @@ function MailchimpTab() {
               disabled={testConn.isPending}
               className="gap-1.5"
             >
-              <TestTube2 className="w-3.5 h-3.5" /> Test
+              {testConn.isPending ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" />Testing...</>
+              ) : (
+                <><TestTube2 className="w-3.5 h-3.5" /> Test</>
+              )}
             </Button>
           )}
           <Button

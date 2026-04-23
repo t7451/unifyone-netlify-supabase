@@ -81,6 +81,7 @@ export default function Orders() {
   const [shippingAmount, setShippingAmount] = useState(0);
   const [taxAmount, setTaxAmount] = useState(0);
   const [notes, setNotes] = useState("");
+  const [itemsTouched, setItemsTouched] = useState<boolean[]>([]);
 
   const orders = trpc.orders.list.useQuery({
     search: search || undefined,
@@ -114,6 +115,7 @@ export default function Orders() {
   const resetCreateForm = () => {
     setCustomerEmail(""); setCustomerName(""); setItems([emptyItem()]);
     setShippingAmount(0); setTaxAmount(0); setNotes("");
+    setItemsTouched([]);
   };
 
   const addItem = () => setItems(prev => [...prev, emptyItem()]);
@@ -127,6 +129,8 @@ export default function Orders() {
 
   const handleCreate = () => {
     if (items.some(i => !i.productName || i.quantity < 1)) {
+      // Mark all items as touched so red borders appear
+      setItemsTouched(items.map(() => true));
       toast.error("All items need a name and quantity ≥ 1");
       return;
     }
@@ -264,6 +268,23 @@ export default function Orders() {
                   ))}
                 </tr>
               ))
+            ) : orders.isError ? (
+              <tr>
+                <td colSpan={8} className="text-center py-16">
+                  <div className="inline-flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+                      <ShoppingCart className="w-6 h-6 text-red-400" />
+                    </div>
+                    <div>
+                      <p className="text-red-400 font-medium">Failed to load orders</p>
+                      <p className="text-gray-500 text-sm mt-1">{orders.error?.message ?? "An unexpected error occurred"}</p>
+                    </div>
+                    <Button size="sm" variant="outline" className="border-white/10 text-gray-300 hover:text-white gap-1.5" onClick={() => orders.refetch()}>
+                      <RefreshCw className="w-3.5 h-3.5" /> Try again
+                    </Button>
+                  </div>
+                </td>
+              </tr>
             ) : (orders.data ?? []).length === 0 ? (
               <tr>
                 <td colSpan={8} className="text-center py-16">
@@ -550,9 +571,13 @@ export default function Orders() {
                       <Input
                         value={item.productName}
                         onChange={e => updateItem(i, "productName", e.target.value)}
+                        onBlur={() => setItemsTouched(prev => { const next = [...prev]; next[i] = true; return next; })}
                         placeholder="Product name *"
-                        className="bg-white/5 border-white/10 text-white text-sm"
+                        className={`bg-white/5 border-white/10 text-white text-sm ${itemsTouched[i] && !item.productName ? "border-red-500/70" : ""}`}
                       />
+                      {itemsTouched[i] && !item.productName && (
+                        <p className="text-red-400 text-xs mt-0.5">Required</p>
+                      )}
                     </div>
                     <div className="col-span-2">
                       <Input

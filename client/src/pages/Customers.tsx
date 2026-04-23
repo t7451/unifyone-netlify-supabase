@@ -11,7 +11,7 @@ import {
 import {
   Search, Users, Mail, Phone, MapPin, ShoppingBag,
   DollarSign, Calendar, Edit2, Tag, X, Plus, Loader2,
-  ChevronRight, Package,
+  ChevronRight, Package, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRealtimeTable } from "@/lib/supabaseRealtime";
@@ -79,7 +79,12 @@ export default function Customers() {
 
   function addTag() {
     const t = tagInput.trim();
-    if (t && !tags.includes(t)) setTags([...tags, t]);
+    if (!t) return;
+    if (tags.includes(t)) {
+      toast.error(`Tag "${t}" already exists`);
+      return;
+    }
+    setTags([...tags, t]);
     setTagInput("");
   }
 
@@ -153,6 +158,23 @@ export default function Customers() {
                   ))}
                 </tr>
               ))
+            ) : customers.isError ? (
+              <tr>
+                <td colSpan={8} className="text-center py-16">
+                  <div className="inline-flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+                      <Users className="w-6 h-6 text-red-400" />
+                    </div>
+                    <div>
+                      <p className="text-red-400 font-medium">Failed to load customers</p>
+                      <p className="text-gray-500 text-sm mt-1">{customers.error?.message ?? "An unexpected error occurred"}</p>
+                    </div>
+                    <Button size="sm" variant="outline" className="border-white/10 text-gray-300 hover:text-white gap-1.5" onClick={() => customers.refetch()}>
+                      <RefreshCw className="w-3.5 h-3.5" /> Try again
+                    </Button>
+                  </div>
+                </td>
+              </tr>
             ) : (customers.data ?? []).length === 0 ? (
               <tr>
                 <td colSpan={8} className="text-center py-16">
