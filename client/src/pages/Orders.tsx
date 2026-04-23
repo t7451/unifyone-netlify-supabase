@@ -129,7 +129,7 @@ export default function Orders() {
 
   const handleCreate = () => {
     if (items.some(i => !i.productName || i.quantity < 1)) {
-      // Mark all items as touched so red borders appear
+      // Mark all items as touched so validation errors appear immediately
       setItemsTouched(items.map(() => true));
       toast.error("All items need a name and quantity ≥ 1");
       return;
@@ -280,7 +280,11 @@ export default function Orders() {
                       <p className="text-gray-500 text-sm mt-1">{orders.error?.message ?? "An unexpected error occurred"}</p>
                     </div>
                     <Button size="sm" variant="outline" className="border-white/10 text-gray-300 hover:text-white gap-1.5" onClick={() => orders.refetch()}>
-                      <RefreshCw className="w-3.5 h-3.5" /> Try again
+                      {orders.isRefetching ? (
+                        <><Loader2 className="w-3.5 h-3.5 animate-spin" />Retrying...</>
+                      ) : (
+                        <><RefreshCw className="w-3.5 h-3.5" /> Try again</>
+                      )}
                     </Button>
                   </div>
                 </td>

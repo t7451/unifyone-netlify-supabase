@@ -170,7 +170,11 @@ export default function Customers() {
                       <p className="text-gray-500 text-sm mt-1">{customers.error?.message ?? "An unexpected error occurred"}</p>
                     </div>
                     <Button size="sm" variant="outline" className="border-white/10 text-gray-300 hover:text-white gap-1.5" onClick={() => customers.refetch()}>
-                      <RefreshCw className="w-3.5 h-3.5" /> Try again
+                      {customers.isRefetching ? (
+                        <><Loader2 className="w-3.5 h-3.5 animate-spin" />Retrying...</>
+                      ) : (
+                        <><RefreshCw className="w-3.5 h-3.5" /> Try again</>
+                      )}
                     </Button>
                   </div>
                 </td>

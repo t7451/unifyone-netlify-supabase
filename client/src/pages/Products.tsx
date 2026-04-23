@@ -608,7 +608,11 @@ export default function Products() {
               <p className="text-gray-500 text-sm mt-1">{products.error?.message ?? "An unexpected error occurred"}</p>
             </div>
             <Button size="sm" variant="outline" className="border-white/10 text-gray-300 hover:text-white gap-1.5" onClick={() => products.refetch()}>
-              <Loader2 className="w-3.5 h-3.5" /> Try again
+              {products.isRefetching ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" />Retrying...</>
+              ) : (
+                "Try again"
+              )}
             </Button>
           </div>
         </div>

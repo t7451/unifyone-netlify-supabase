@@ -217,11 +217,10 @@ function N8nTab() {
                       className="gap-1 text-xs"
                     >
                       {testingId === wf.id ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <><Loader2 className="w-3 h-3 animate-spin" /> Testing...</>
                       ) : (
-                        <TestTube2 className="w-3 h-3" />
-                      )}{" "}
-                      Test
+                        <><TestTube2 className="w-3 h-3" /> Test</>
+                      )}
                     </Button>
                     <Button
                       size="sm"
@@ -632,7 +631,7 @@ function MailchimpTab() {
               className="gap-1.5"
             >
               {testConn.isPending ? (
-                <><Loader2 className="w-3.5 h-3.5 animate-spin" />Testing...</>
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Testing...</>
               ) : (
                 <><TestTube2 className="w-3.5 h-3.5" /> Test</>
               )}
