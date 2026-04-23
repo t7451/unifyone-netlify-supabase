@@ -69,6 +69,7 @@ const SyncMonitor = lazy(() => import("./pages/SyncMonitor"));
 const GigEcommercePost = lazy(() => import("./pages/blog/GigEcommercePost"));
 const MultiTenantPost = lazy(() => import("./pages/blog/MultiTenantPost"));
 const AIGigWorkersPost = lazy(() => import("./pages/blog/AIGigWorkersPost"));
+const DynamicBlogPost = lazy(() => import("./pages/blog/DynamicBlogPost"));
 const Architecture = lazy(() => import("./pages/Architecture"));
 const TheSystem = lazy(() => import("./pages/TheSystem"));
 const Tithes = lazy(() => import("./pages/Tithes"));
@@ -474,6 +475,8 @@ function Router() {
         path="/blog/manus-ai-gig-workers"
         component={() => <AIGigWorkersPost />}
       />
+      {/* Dynamic AI-generated blog posts from the seo_content_jobs table */}
+      <Route path="/blog/:slug" component={() => <DynamicBlogPost />} />
       <Route path="/seo" component={() => <SeoIndex />} />
       <Route path="/seo/:slug" component={() => <SeoLanding />} />
       <Route
