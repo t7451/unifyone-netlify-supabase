@@ -160,4 +160,47 @@
     <priority>0.90</priority>
   </url>
 
+  <!-- ── SEO Landing Pages (brand variations + product keywords) ──────── -->
+  <url>
+    <loc>__APP_URL__/seo</loc>
+    <lastmod>2026-04-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url><loc>__APP_URL__/seo/unifyone</loc><lastmod>2026-04-23</lastmod><changefreq>weekly</changefreq><priority>0.95</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-solutions</loc><lastmod>2026-04-23</lastmod><changefreq>weekly</changefreq><priority>0.92</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-platform</loc><lastmod>2026-04-23</lastmod><changefreq>weekly</changefreq><priority>0.90</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-commerce</loc><lastmod>2026-04-23</lastmod><changefreq>weekly</changefreq><priority>0.90</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-login</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-pricing</loc><lastmod>2026-04-23</lastmod><changefreq>weekly</changefreq><priority>0.90</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-reviews</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>__APP_URL__/seo/unifone</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>__APP_URL__/seo/1-commerce</loc><lastmod>2026-04-23</lastmod><changefreq>weekly</changefreq><priority>0.95</priority></url>
+  <url><loc>__APP_URL__/seo/1commerce</loc><lastmod>2026-04-23</lastmod><changefreq>weekly</changefreq><priority>0.95</priority></url>
+  <url><loc>__APP_URL__/seo/1commerce-llc</loc><lastmod>2026-04-23</lastmod><changefreq>weekly</changefreq><priority>0.92</priority></url>
+  <url><loc>__APP_URL__/seo/1commerce-solutions</loc><lastmod>2026-04-23</lastmod><changefreq>weekly</changefreq><priority>0.90</priority></url>
+  <url><loc>__APP_URL__/seo/1commerce-login</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>__APP_URL__/seo/1commerce-pnw</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
+  <url><loc>__APP_URL__/seo/onecommerc</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>__APP_URL__/seo/onecommerce</loc><lastmod>2026-04-23</lastmod><changefreq>weekly</changefreq><priority>0.90</priority></url>
+  <url><loc>__APP_URL__/seo/onecommerce-platform</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>__APP_URL__/seo/onecommerce-solutions</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>__APP_URL__/seo/pnw-enterprises</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>__APP_URL__/seo/pnw-1commerce</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-vs-shopify</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-vs-squarespace</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-multi-tenant-commerce</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-gig-economy</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-ai-commerce</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-stripe</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-paypal</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-shopify-integration</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-square-integration</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-affiliates</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-analytics</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-subscription-billing</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-gamification</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.75</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-free-trial</loc><lastmod>2026-04-23</lastmod><changefreq>weekly</changefreq><priority>0.90</priority></url>
+  <url><loc>__APP_URL__/seo/unifyone-enterprise</loc><lastmod>2026-04-23</lastmod><changefreq>monthly</changefreq><priority>0.85</priority></url>
+
 </urlset>

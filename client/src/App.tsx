@@ -86,6 +86,8 @@ const AuthorizationHub = lazy(() => import("./pages/AuthorizationHub"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
+const SeoIndex = lazy(() => import("./pages/SeoIndex"));
+const SeoLanding = lazy(() => import("./pages/SeoLanding"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -472,6 +474,8 @@ function Router() {
         path="/blog/manus-ai-gig-workers"
         component={() => <AIGigWorkersPost />}
       />
+      <Route path="/seo" component={() => <SeoIndex />} />
+      <Route path="/seo/:slug" component={() => <SeoLanding />} />
       <Route
         path="/checkout"
         component={() => (
