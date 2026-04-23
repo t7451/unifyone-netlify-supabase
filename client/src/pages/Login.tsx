@@ -679,7 +679,7 @@ export default function Login({
             )}
 
             <Button
-              onClick={intent === "signup" ? handleSignUp : handleSignIn}
+              onClick={handleSubmit}
               disabled={isSubmitting}
               className={cn(
                 "w-full h-11 font-semibold text-sm transition-all",
@@ -691,13 +691,19 @@ export default function Login({
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  {intent === "signup"
-                    ? "Creating account..."
-                    : "Signing in..."}
+                  {mode === "forgot-password"
+                    ? "Sending..."
+                    : intent === "signup"
+                      ? "Creating account..."
+                      : "Signing in..."}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  {intent === "signup" ? "Create account" : "Sign in"}
+                  {mode === "forgot-password"
+                    ? "Send reset link"
+                    : intent === "signup"
+                      ? "Create account"
+                      : "Sign in"}
                   <ArrowRight className="w-4 h-4" />
                 </span>
               )}
