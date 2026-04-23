@@ -393,6 +393,8 @@ export default function Login({
   const showPasswordField =
     mode === "password" || mode === "sign-in" || mode === "sign-up";
 
+  const isSignInMode =
+    mode === "sign-in" || (mode === "password" && intent === "signin");
   return (
     <div className="min-h-screen bg-[#060D1F] flex">
       {/* Left panel: branding + features */}
@@ -547,8 +549,7 @@ export default function Login({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label className="text-slate-300 text-sm">Password</Label>
-                  {(mode === "sign-in" ||
-                    (mode === "password" && intent === "signin")) && (
+                  {isSignInMode && (
                     <button
                       onClick={() => switchMode("forgot-password")}
                       className="text-xs text-[#00D9FF] hover:text-[#00C4E8] transition-colors"

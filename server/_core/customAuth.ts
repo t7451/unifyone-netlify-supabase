@@ -203,7 +203,7 @@ export async function signUp(
     // link, so requiring verification would permanently lock users out.
     // Enforcement is only meaningful (and safe) when we can actually send mail.
     const hasEmailService = Boolean(process.env.RESEND_API_KEY);
-    const shouldAutoVerify = !hasEmailService;
+    const shouldAutoVerify = !hasEmailService; // true in production too when no email service
     const emailVerified = shouldAutoVerify;
 
     if (shouldAutoVerify) {
