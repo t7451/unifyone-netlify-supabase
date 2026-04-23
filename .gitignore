@@ -45,6 +45,9 @@ pids
 *.seed
 *.pid.lock
 *.bak
+__pycache__/
+.pytest_cache/
+.venv/
 
 # Coverage directory used by tools like istanbul
 coverage/
