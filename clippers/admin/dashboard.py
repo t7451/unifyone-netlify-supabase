@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import argparse
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
 
@@ -38,7 +38,7 @@ def _timestamp_fmt(ts: float | int | None) -> str:
     if ts is None:
         return "—"
     try:
-        return datetime.utcfromtimestamp(float(ts)).strftime("%Y-%m-%d %H:%M")
+        return datetime.fromtimestamp(float(ts), tz=timezone.utc).strftime("%Y-%m-%d %H:%M")
     except (ValueError, OSError, OverflowError):
         return "—"
 
@@ -97,7 +97,7 @@ async def create_test_job(
     registry.register(job)
 
     try:
-        process_job(job, engine_override=engine if engine else None)
+        process_job(job, engine_override=engine or None)
     except Exception as exc:  # noqa: BLE001
         logger.exception("Test job %s raised unexpectedly: %s", job.id, exc)
 
