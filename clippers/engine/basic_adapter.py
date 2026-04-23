@@ -99,7 +99,12 @@ class TranscriptionService:
                 )
                 parsed_segments = [self._parse_segment(segment) for segment in segments]
                 return [segment for segment in parsed_segments if segment.text.strip()]
-            except Exception:
+            except Exception as exc:
+                logger.warning(
+                    "Whisper transcription failed for model '%s': %s",
+                    model_size,
+                    exc,
+                )
                 continue
 
         return self._fallback_segments(video_path, target_duration)
@@ -175,7 +180,8 @@ class AudioEnergyAnalyzer:
                     normalized = min(1.0, float(strength) / max(float(rms.max()), 1e-6))
                     peaks.append((float(timestamp), normalized))
             return peaks
-        except Exception:
+        except Exception as exc:
+            logger.warning("Audio energy analysis failed for '%s': %s", video_path, exc)
             return []
 
 
@@ -204,7 +210,8 @@ class SceneDetectorService:
                 )
                 for start, end in scenes
             ]
-        except Exception:
+        except Exception as exc:
+            logger.warning("Scene detection failed for '%s': %s", video_path, exc)
             return []
 
 
@@ -431,6 +438,7 @@ class ClipExtractor:
             )
             ffmpeg.run(output, overwrite_output=True, quiet=True)
         except Exception:
+            logger.exception("Clip extraction failed for '%s'.", output_path)
             self._write_placeholder(output_path, clip)
 
     def _write_placeholder(self, output_path: Path, clip: ScoredClip) -> None:
