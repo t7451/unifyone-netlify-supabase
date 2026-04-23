@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useRealtimeOrders } from "@/lib/supabaseRealtime";
 import { RealtimeStatus } from "@/components/RealtimeStatus";
+import { QueryErrorState } from "@/components/QueryErrorState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,12 +95,35 @@ export default function Orders() {
   );
 
   const updateStatus = trpc.orders.updateStatus.useMutation({
+    onMutate: async ({ id, status }) => {
+      const queryInput = {
+        search: search || undefined,
+        status: statusFilter === "all" ? undefined : statusFilter,
+      };
+      // Cancel any in-flight refetch so it doesn't overwrite our optimistic update
+      await utils.orders.list.cancel(queryInput);
+      const previous = utils.orders.list.getData(queryInput);
+      // Optimistically apply the new status immediately
+      utils.orders.list.setData(queryInput, prev =>
+        prev?.map(o => o.id === id ? { ...o, status } : o)
+      );
+      return { previous, queryInput };
+    },
+    onError: (_err, _vars, ctx) => {
+      // Roll back on failure
+      if (ctx?.previous !== undefined) {
+        utils.orders.list.setData(ctx.queryInput, ctx.previous);
+      }
+      toast.error("Failed to update order status");
+    },
     onSuccess: () => {
       toast.success("Order status updated");
-      utils.orders.list.invalidate();
       if (showDetail) utils.orders.get.invalidate({ id: selectedOrder?.id });
     },
-    onError: (e) => toast.error(e.message),
+    onSettled: (_data, _err, _vars, ctx) => {
+      // Always revalidate to stay in sync with the server
+      if (ctx) utils.orders.list.invalidate(ctx.queryInput);
+    },
   });
 
   const createOrder = trpc.orders.create.useMutation({
@@ -271,22 +295,14 @@ export default function Orders() {
             ) : orders.isError ? (
               <tr>
                 <td colSpan={8} className="text-center py-16">
-                  <div className="inline-flex flex-col items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
-                      <ShoppingCart className="w-6 h-6 text-red-400" />
-                    </div>
-                    <div>
-                      <p className="text-red-400 font-medium">Failed to load orders</p>
-                      <p className="text-gray-500 text-sm mt-1">{orders.error?.message ?? "An unexpected error occurred"}</p>
-                    </div>
-                    <Button size="sm" variant="outline" className="border-white/10 text-gray-300 hover:text-white gap-1.5" onClick={() => orders.refetch()}>
-                      {orders.isRefetching ? (
-                        <><Loader2 className="w-3.5 h-3.5 animate-spin" />Retrying...</>
-                      ) : (
-                        <><RefreshCw className="w-3.5 h-3.5" /> Try again</>
-                      )}
-                    </Button>
-                  </div>
+                  <QueryErrorState
+                    icon={ShoppingCart}
+                    title="Failed to load orders"
+                    message={orders.error?.message}
+                    onRetry={() => orders.refetch()}
+                    isRetrying={orders.isRefetching}
+                    size="sm"
+                  />
                 </td>
               </tr>
             ) : (orders.data ?? []).length === 0 ? (
@@ -336,19 +352,20 @@ export default function Orders() {
                         size="sm"
                         variant="ghost"
                         className="h-7 w-7 p-0 text-gray-400 hover:text-[#00D9FF]"
+                        aria-label={`View details for order ${o.orderNumber}`}
                         onClick={() => openDetail(o)}
                       >
-                        <Eye className="w-3.5 h-3.5" />
+                        <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       </Button>
                       {(o.paymentStatus === "pending" || o.paymentStatus === "failed") && (
                         <Button
                           size="sm"
                           variant="ghost"
                           className="h-7 px-2 text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 gap-1"
-                          title="Pay Now"
+                          aria-label={`Pay now for order ${o.orderNumber}`}
                           onClick={() => navigate(`/checkout?orderId=${o.id}&amount=${Number(o.total).toFixed(2)}&desc=Order+${encodeURIComponent(o.orderNumber)}`)}
                         >
-                          <CreditCard className="w-3.5 h-3.5" />
+                          <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
                           Pay
                         </Button>
                       )}
@@ -356,7 +373,10 @@ export default function Orders() {
                         value={o.status}
                         onValueChange={v => updateStatus.mutate({ id: o.id, status: v as OrderStatus })}
                       >
-                        <SelectTrigger className="w-28 h-7 bg-white/5 border-white/10 text-gray-300 text-xs">
+                        <SelectTrigger
+                          className="w-28 h-7 bg-white/5 border-white/10 text-gray-300 text-xs"
+                          aria-label={`Change status for order ${o.orderNumber}`}
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#0F172A] border-white/10">

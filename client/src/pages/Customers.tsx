@@ -11,11 +11,12 @@ import {
 import {
   Search, Users, Mail, Phone, MapPin, ShoppingBag,
   DollarSign, Calendar, Edit2, Tag, X, Plus, Loader2,
-  ChevronRight, Package, RefreshCw,
+  ChevronRight, Package,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRealtimeTable } from "@/lib/supabaseRealtime";
 import { RealtimeStatus } from "@/components/RealtimeStatus";
+import { QueryErrorState } from "@/components/QueryErrorState";
 
 export default function Customers() {
   const [search, setSearch] = useState("");
@@ -161,22 +162,14 @@ export default function Customers() {
             ) : customers.isError ? (
               <tr>
                 <td colSpan={8} className="text-center py-16">
-                  <div className="inline-flex flex-col items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
-                      <Users className="w-6 h-6 text-red-400" />
-                    </div>
-                    <div>
-                      <p className="text-red-400 font-medium">Failed to load customers</p>
-                      <p className="text-gray-500 text-sm mt-1">{customers.error?.message ?? "An unexpected error occurred"}</p>
-                    </div>
-                    <Button size="sm" variant="outline" className="border-white/10 text-gray-300 hover:text-white gap-1.5" onClick={() => customers.refetch()}>
-                      {customers.isRefetching ? (
-                        <><Loader2 className="w-3.5 h-3.5 animate-spin" />Retrying...</>
-                      ) : (
-                        <><RefreshCw className="w-3.5 h-3.5" /> Try again</>
-                      )}
-                    </Button>
-                  </div>
+                  <QueryErrorState
+                    icon={Users}
+                    title="Failed to load customers"
+                    message={customers.error?.message}
+                    onRetry={() => customers.refetch()}
+                    isRetrying={customers.isRefetching}
+                    size="sm"
+                  />
                 </td>
               </tr>
             ) : (customers.data ?? []).length === 0 ? (
@@ -193,6 +186,10 @@ export default function Customers() {
                   key={c.id}
                   className="border-b border-border hover:bg-white/2 transition-colors cursor-pointer"
                   onClick={() => openProfile(c)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View profile for ${fullName(c)}`}
+                  onKeyDown={e => e.key === "Enter" && openProfile(c)}
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -232,9 +229,10 @@ export default function Customers() {
                       variant="ghost"
                       size="sm"
                       className="h-7 w-7 p-0 text-gray-400 hover:text-white"
+                      aria-label={`Edit ${fullName(c)}`}
                       onClick={e => { e.stopPropagation(); openEdit(c); }}
                     >
-                      <Edit2 className="w-3.5 h-3.5" />
+                      <Edit2 className="w-3.5 h-3.5" aria-hidden="true" />
                     </Button>
                   </td>
                 </tr>

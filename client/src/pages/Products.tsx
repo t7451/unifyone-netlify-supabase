@@ -32,6 +32,7 @@ import {
   Loader2,
   BarChart3,
 } from "lucide-react";
+import { QueryErrorState } from "@/components/QueryErrorState";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
@@ -599,22 +600,13 @@ export default function Products() {
         </div>
       ) : products.isError ? (
         <div className="text-center py-20">
-          <div className="inline-flex flex-col items-center gap-3">
-            <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center">
-              <Package className="w-7 h-7 text-red-400" />
-            </div>
-            <div>
-              <p className="text-red-400 font-medium">Failed to load products</p>
-              <p className="text-gray-500 text-sm mt-1">{products.error?.message ?? "An unexpected error occurred"}</p>
-            </div>
-            <Button size="sm" variant="outline" className="border-white/10 text-gray-300 hover:text-white gap-1.5" onClick={() => products.refetch()}>
-              {products.isRefetching ? (
-                <><Loader2 className="w-3.5 h-3.5 animate-spin" />Retrying...</>
-              ) : (
-                "Try again"
-              )}
-            </Button>
-          </div>
+          <QueryErrorState
+            icon={Package}
+            title="Failed to load products"
+            message={products.error?.message}
+            onRetry={() => products.refetch()}
+            isRetrying={products.isRefetching}
+          />
         </div>
       ) : productList.length === 0 ? (
         <div className="text-center py-20">
@@ -707,17 +699,19 @@ export default function Products() {
                       size="sm"
                       variant="ghost"
                       className="flex-1 text-gray-400 hover:text-white border border-white/10 hover:border-[#00D9FF]/40 hover:bg-[#00D9FF]/5 transition-colors"
+                      aria-label={`Edit ${p.name}`}
                       onClick={() => handleEdit(p)}
                     >
-                      <Edit className="w-3 h-3 mr-1.5" /> Edit
+                      <Edit className="w-3 h-3 mr-1.5" aria-hidden="true" /> Edit
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
                       className="text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 hover:bg-red-500/5 transition-colors"
+                      aria-label={`Delete ${p.name}`}
                       onClick={() => setDeleteProduct(p)}
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3 h-3" aria-hidden="true" />
                     </Button>
                   </div>
                 </CardContent>
