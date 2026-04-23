@@ -96,7 +96,7 @@ class StorageProxy:
         # concurrent job by using the ``.tmp`` swap-and-rename pattern.
         tmp_destination = destination.with_suffix(destination.suffix + ".tmp")
         if move:
-            shutil.move(str(source), tmp_destination)
+            shutil.move(source, tmp_destination)
         else:
             shutil.copy2(source, tmp_destination)
         tmp_destination.replace(destination)
