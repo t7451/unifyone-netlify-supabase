@@ -1,7 +1,7 @@
 # ============================================================================
 # UnifyOne — 1Commerce / PNW Enterprises
 # __APP_URL__
-# Last updated: 2026-04-04
+# Last updated: 2026-04-23
 # ============================================================================
 
 # ── Google Search crawlers ────────────────────────────────────────────────
@@ -11,8 +11,13 @@ Allow: /blog/
 Allow: /privacy
 Allow: /terms
 Disallow: /api/
-Disallow: /dashboard
+Disallow: /login
+Disallow: /signup
+Disallow: /auth/
+Disallow: /reset-password
+Disallow: /verify-email
 Disallow: /setup
+Disallow: /dashboard
 Disallow: /checkout
 Disallow: /billing
 Disallow: /team
@@ -28,11 +33,20 @@ Disallow: /automations
 Disallow: /ai-assistant
 Disallow: /notifications
 Disallow: /gig-command
+Disallow: /gig-worker-plans
 Disallow: /money-manager
 Disallow: /achievements
 Disallow: /friends
 Disallow: /mobile-automation
 Disallow: /my-themes
+Disallow: /admin/
+Disallow: /auth-hub
+Disallow: /developer
+Disallow: /revenue-streams
+Disallow: /rewards
+Disallow: /affiliates
+Disallow: /shopify/install
+Disallow: /shopify/success
 Disallow: /sync-monitor
 
 # ── Google Images ─────────────────────────────────────────────────────────
@@ -61,8 +75,13 @@ User-agent: Bingbot
 Allow: /
 Allow: /blog/
 Disallow: /api/
-Disallow: /dashboard
+Disallow: /login
+Disallow: /signup
+Disallow: /auth/
+Disallow: /reset-password
+Disallow: /verify-email
 Disallow: /setup
+Disallow: /dashboard
 Disallow: /checkout
 Disallow: /billing
 Disallow: /team
@@ -78,11 +97,20 @@ Disallow: /automations
 Disallow: /ai-assistant
 Disallow: /notifications
 Disallow: /gig-command
+Disallow: /gig-worker-plans
 Disallow: /money-manager
 Disallow: /achievements
 Disallow: /friends
 Disallow: /mobile-automation
 Disallow: /my-themes
+Disallow: /admin/
+Disallow: /auth-hub
+Disallow: /developer
+Disallow: /revenue-streams
+Disallow: /rewards
+Disallow: /affiliates
+Disallow: /shopify/install
+Disallow: /shopify/success
 Disallow: /sync-monitor
 
 # ── DuckDuckGo ────────────────────────────────────────────────────────────
@@ -130,8 +158,13 @@ Allow: /blog/
 Allow: /privacy
 Allow: /terms
 Disallow: /api/
-Disallow: /dashboard
+Disallow: /login
+Disallow: /signup
+Disallow: /auth/
+Disallow: /reset-password
+Disallow: /verify-email
 Disallow: /setup
+Disallow: /dashboard
 Disallow: /checkout
 Disallow: /billing
 Disallow: /team
@@ -147,11 +180,20 @@ Disallow: /automations
 Disallow: /ai-assistant
 Disallow: /notifications
 Disallow: /gig-command
+Disallow: /gig-worker-plans
 Disallow: /money-manager
 Disallow: /achievements
 Disallow: /friends
 Disallow: /mobile-automation
 Disallow: /my-themes
+Disallow: /admin/
+Disallow: /auth-hub
+Disallow: /developer
+Disallow: /revenue-streams
+Disallow: /rewards
+Disallow: /affiliates
+Disallow: /shopify/install
+Disallow: /shopify/success
 Disallow: /sync-monitor
 Crawl-delay: 1
 

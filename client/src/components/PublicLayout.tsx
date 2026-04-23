@@ -7,6 +7,7 @@ const NAV_LINKS = [
   { label: "Architecture", href: "/architecture" },
   { label: "The System",   href: "/the-system" },
   { label: "Tithes",       href: "/tithes" },
+  { label: "Pricing",      href: "/pricing" },
   { label: "Documentation", href: "/documents" },
 ];
 
@@ -195,6 +196,9 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                   { label: "Architecture", href: "/architecture" },
                   { label: "The System", href: "/the-system" },
                   { label: "Tithes", href: "/tithes" },
+                  { label: "Pricing", href: "/pricing" },
+                  { label: "Theme Store", href: "/themes" },
+                  { label: "Governance", href: "/governance" },
                 ].map(item => (
                   <Link key={item.href} href={item.href}>
                     <span className="block cursor-pointer font-cinzel text-xs tracking-widest transition-colors duration-200"
@@ -215,6 +219,8 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                   { label: "Gig Commerce Guide", href: "/blog/gig-economy-commerce-platform" },
                   { label: "Multi-Tenant SaaS", href: "/blog/multi-tenant-ecommerce-saas" },
                   { label: "AI for Gig Workers", href: "/blog/manus-ai-gig-workers" },
+                  { label: "Resources", href: "/resources" },
+                  { label: "Docs Chat", href: "/docs-chat" },
                   { label: "Sovereign Access", href: "/sovereign" },
                 ].map(item => (
                   <Link key={item.href} href={item.href}>
@@ -233,6 +239,8 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               <span className="inscription block mb-4">Foundation</span>
               <div className="space-y-3">
                 {[
+                  { label: "About", href: "/about" },
+                  { label: "Contact", href: "/contact" },
                   { label: "Privacy Policy", href: "/privacy" },
                   { label: "Terms of Service", href: "/terms" },
                   { label: "Enter Dashboard", href: "/dashboard" },

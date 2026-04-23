@@ -46,6 +46,13 @@
   status = 301
   force = true
 
+# Force HTTPS for non-www HTTP requests
+[[redirects]]
+  from = "http://1commerce.online/*"
+  to = "https://1commerce.online/:splat"
+  status = 301
+  force = true
+
 # SPA fallback — all non-API routes serve the React app
 [[redirects]]
   from = "/*"
