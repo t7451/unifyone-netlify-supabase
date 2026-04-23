@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -32,6 +33,7 @@ KEYWORD_BOOSTS = {
     "solution": 0.09,
 }
 OVERLAP_THRESHOLD = 0.4
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -217,9 +219,13 @@ class LLMViralityScorer:
 
         endpoint = os.getenv("OLLAMA_URL")
         model = os.getenv("OLLAMA_MODEL", "llama3.1")
-        if not endpoint or not transcript.strip():
+        if not transcript.strip():
+            return 0.0
+        if not endpoint:
+            logger.debug("Skipping LLM virality scoring because OLLAMA_URL is not set.")
             return 0.0
         if not is_safe_http_url(endpoint):
+            logger.debug("Skipping LLM virality scoring because OLLAMA_URL is not http(s).")
             return 0.0
 
         payload = json.dumps(
@@ -469,7 +475,8 @@ class BasicClipperEngine(IClipperEngine):
         if not source.exists():
             raise FileNotFoundError(
                 f"Video file not found at path: {source}. "
-                "Please verify the file exists and the path is correct."
+                "Please verify the file exists, the path format is correct, "
+                "and the process has permission to read it."
             )
 
         transcript_segments = self.transcriber.transcribe(source, target_duration)
