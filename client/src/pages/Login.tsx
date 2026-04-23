@@ -109,16 +109,24 @@ function ClerkSignInSection({
   const { isSignedIn, session } = useSession();
   const [isClerkSubmitting, setIsClerkSubmitting] = useState(false);
   const [clerkError, setClerkError] = useState<string | null>(null);
-  const exchangedRef = useRef(false);
+  // Tracks whether a token exchange is currently in-flight to prevent
+  // concurrent requests when Clerk session state changes mid-request.
+  const isExchangingRef = useRef(false);
+  // Tracks whether exchange has already succeeded, preventing re-exchange.
+  const hasExchangedTokenRef = useRef(false);
 
   // When Clerk reports a signed-in session, exchange it for an app cookie.
   useEffect(() => {
-    if (!isSignedIn || !session || exchangedRef.current) return;
-    exchangedRef.current = true;
+    if (!isSignedIn || !session) return;
+    if (hasExchangedTokenRef.current || isExchangingRef.current) return;
+    isExchangingRef.current = true;
+
+    let cancelled = false;
 
     session
       .getToken()
       .then(async token => {
+        if (cancelled) return;
         if (!token) throw new Error("No session token");
         const res = await fetch("/api/auth/clerk", {
           method: "POST",
@@ -126,19 +134,27 @@ function ClerkSignInSection({
           credentials: "include",
           body: JSON.stringify({ sessionToken: token }),
         });
+        if (cancelled) return;
         const data = await res.json();
         if (!res.ok || !data.success) {
           throw new Error(data.error || "Clerk exchange failed");
         }
+        hasExchangedTokenRef.current = true;
+        setIsClerkSubmitting(false);
         onSuccess();
       })
       .catch((err: unknown) => {
-        exchangedRef.current = false;
+        if (cancelled) return;
+        isExchangingRef.current = false;
         setClerkError(
           err instanceof Error ? err.message : "Clerk sign-in failed"
         );
         setIsClerkSubmitting(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [isSignedIn, session, onSuccess]);
 
   const handleClerkSignIn = () => {
