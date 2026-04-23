@@ -27,7 +27,7 @@ class ClipperEngineConfig:
     """Runtime configuration for clipper engines."""
 
     whisper_model_size: str = os.getenv("CLIPPERS_WHISPER_MODEL", "medium")
-    fallback_whisper_model_size: str = os.getenv(
+    fallback_whisper_model: str = os.getenv(
         "CLIPPERS_WHISPER_FALLBACK_MODEL", "large-v3"
     )
     whisper_compute_type: str = os.getenv("CLIPPERS_WHISPER_COMPUTE_TYPE", "int8")

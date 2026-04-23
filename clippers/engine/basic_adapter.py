@@ -80,7 +80,7 @@ class TranscriptionService:
 
         for model_size in (
             self.config.whisper_model_size,
-            self.config.fallback_whisper_model_size,
+            self.config.fallback_whisper_model,
         ):
             try:
                 model = WhisperModel(
@@ -167,7 +167,7 @@ class AudioEnergyAnalyzer:
             peak_threshold = float(rms.mean() + rms.std())
             timestamps = librosa.times_like(rms, sr=sample_rate)
             peaks: List[tuple[float, float]] = []
-            for timestamp, strength in zip(timestamps, rms, strict=False):
+            for timestamp, strength in zip(timestamps, rms, strict=True):
                 if float(strength) >= peak_threshold:
                     normalized = min(1.0, float(strength) / max(float(rms.max()), 1e-6))
                     peaks.append((float(timestamp), normalized))
