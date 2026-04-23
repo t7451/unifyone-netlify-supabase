@@ -10,6 +10,7 @@ import {
   Trash2,
   Settings2,
   Mail,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,11 +33,23 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 // ── n8n Workflows Tab ─────────────────────────────────────────────────────────
 function N8nTab() {
   const [showCreate, setShowCreate] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -66,16 +79,24 @@ function N8nTab() {
   const update = trpc.automation.n8n.update.useMutation({
     onSuccess: () => {
       refetch();
+      setUpdatingId(null);
       toast.success("Workflow updated");
     },
-    onError: e => toast.error(e.message),
+    onError: e => {
+      setUpdatingId(null);
+      toast.error(e.message);
+    },
   });
   const del = trpc.automation.n8n.delete.useMutation({
     onSuccess: () => {
       refetch();
+      setDeletingId(null);
       toast.success("Workflow deleted");
     },
-    onError: e => toast.error(e.message),
+    onError: e => {
+      setDeletingId(null);
+      toast.error(e.message);
+    },
   });
   const test = trpc.automation.n8n.test.useMutation({
     onSuccess: d => toast.success(`Test sent — HTTP ${d.status}`),
@@ -166,25 +187,36 @@ function N8nTab() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Switch
-                      checked={wf.enabled}
-                      onCheckedChange={v =>
-                        update.mutate({ id: wf.id, enabled: v })
-                      }
-                    />
+                    {updatingId === wf.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                    ) : (
+                      <Switch
+                        checked={wf.enabled}
+                        onCheckedChange={v => {
+                          setUpdatingId(wf.id);
+                          update.mutate({ id: wf.id, enabled: v });
+                        }}
+                        disabled={update.isPending}
+                      />
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => test.mutate({ id: wf.id })}
-                      disabled={test.isPending}
+                      disabled={test.isPending && test.variables?.id === wf.id}
                       className="gap-1 text-xs"
                     >
-                      <TestTube2 className="w-3 h-3" /> Test
+                      {test.isPending && test.variables?.id === wf.id ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <TestTube2 className="w-3 h-3" />
+                      )}{" "}
+                      Test
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => del.mutate({ id: wf.id })}
+                      onClick={() => setDeletingId(wf.id)}
                       className="text-red-400 hover:text-red-300 border-red-500/30"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -268,11 +300,41 @@ function N8nTab() {
                 create.isPending
               }
             >
-              Create Workflow
+              {create.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</>
+              ) : (
+                "Create Workflow"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deletingId !== null} onOpenChange={open => !open && setDeletingId(null)}>
+        <AlertDialogContent className="bg-card border-border text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Workflow?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              This will permanently remove the workflow and stop all future triggers. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/10 text-gray-300 hover:bg-white/5">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => deletingId !== null && del.mutate({ id: deletingId })}
+            >
+              {del.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting...</>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -280,6 +342,8 @@ function N8nTab() {
 // ── Zapier Hooks Tab ──────────────────────────────────────────────────────────
 function ZapierTab() {
   const [showCreate, setShowCreate] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     name: "",
     triggerEvent: "",
@@ -302,16 +366,24 @@ function ZapierTab() {
   const update = trpc.automation.zapier.update.useMutation({
     onSuccess: () => {
       refetch();
+      setUpdatingId(null);
       toast.success("Hook updated");
     },
-    onError: e => toast.error(e.message),
+    onError: e => {
+      setUpdatingId(null);
+      toast.error(e.message);
+    },
   });
   const del = trpc.automation.zapier.delete.useMutation({
     onSuccess: () => {
       refetch();
+      setDeletingId(null);
       toast.success("Hook deleted");
     },
-    onError: e => toast.error(e.message),
+    onError: e => {
+      setDeletingId(null);
+      toast.error(e.message);
+    },
   });
 
   return (
@@ -378,16 +450,22 @@ function ZapierTab() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Switch
-                      checked={hook.enabled}
-                      onCheckedChange={v =>
-                        update.mutate({ id: hook.id, enabled: v })
-                      }
-                    />
+                    {updatingId === hook.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                    ) : (
+                      <Switch
+                        checked={hook.enabled}
+                        onCheckedChange={v => {
+                          setUpdatingId(hook.id);
+                          update.mutate({ id: hook.id, enabled: v });
+                        }}
+                        disabled={update.isPending}
+                      />
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => del.mutate({ id: hook.id })}
+                      onClick={() => setDeletingId(hook.id)}
                       className="text-red-400 hover:text-red-300 border-red-500/30"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -460,11 +538,41 @@ function ZapierTab() {
                 create.isPending
               }
             >
-              Create Hook
+              {create.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</>
+              ) : (
+                "Create Hook"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deletingId !== null} onOpenChange={open => !open && setDeletingId(null)}>
+        <AlertDialogContent className="bg-card border-border text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Zapier Hook?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              This will permanently remove the hook and stop all future triggers. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/10 text-gray-300 hover:bg-white/5">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => deletingId !== null && del.mutate({ id: deletingId })}
+            >
+              {del.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting...</>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -647,7 +755,11 @@ function MailchimpTab() {
                 save.isPending
               }
             >
-              Save Configuration
+              {save.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+              ) : (
+                "Save Configuration"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
