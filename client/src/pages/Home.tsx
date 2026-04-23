@@ -12,6 +12,29 @@ import BuildProcessAnimation from "@/components/BuildProcessAnimation";
 
 const CANONICAL = `${SITE_URL}/`;
 
+const HOME_FAQ = [
+  {
+    q: "What is UnifyOne by 1Commerce?",
+    a: "UnifyOne is a multi-tenant commerce and gig economy intelligence platform built by 1Commerce LLC (PNW Enterprises). It unifies Shopify store management, Stripe and PayPal payment processing, AI-powered earnings analytics, and automatic IRS tax deduction tracking in one dashboard.",
+  },
+  {
+    q: "What platforms does 1Commerce integrate with?",
+    a: "UnifyOne integrates with Shopify, Stripe, PayPal, and Square for commerce and payments. The UnifyAI multi-model router provides access to 300+ AI models including Claude, GPT-4, and Gemini through a single unified API key.",
+  },
+  {
+    q: "Is UnifyOne free to start?",
+    a: "Yes — the Starter tier is permanently free and includes tenant setup, core analytics, and Kai AI access. Paid tiers unlock workflow automation, advanced multi-tenant analytics, and higher UnifyAI credit allocations.",
+  },
+  {
+    q: "What is GigIQ?",
+    a: "GigIQ is UnifyOne's shift intelligence module. It reads your real earnings data and identifies which working hours, delivery zones, and gig platforms generate the highest net income after expenses — giving you specific, actionable schedule recommendations.",
+  },
+  {
+    q: "Who is 1Commerce LLC / PNW Enterprises?",
+    a: "1Commerce LLC (also known as PNW Enterprises, 1-commerce, or OneCommerce) is the company behind UnifyOne. Founded to serve gig workers and multi-tenant e-commerce operators who are underserved by existing single-purpose tools.",
+  },
+];
+
 const JSON_LD = [
   {
     "@context": "https://schema.org",
@@ -32,6 +55,15 @@ const JSON_LD = [
     url: SITE_URL,
     logo: `${SITE_URL}/favicon.svg`,
     sameAs: ["https://twitter.com/1CommerceSol"],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: HOME_FAQ.map(item => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
   },
 ];
 
@@ -102,6 +134,48 @@ const PILLARS = [
     title: "AI Sidekick",
     body: "Kai is our in-house AI, powered by UnifyAI. It reads your actual data and routes across models while keeping one unified cost.",
     color: "#FCD34D",
+  },
+];
+
+const HOW_IT_WORKS = [
+  {
+    step: "01",
+    heading: "Connect Your Platforms",
+    body: "Link Shopify, Stripe, PayPal, Square, and your gig delivery apps in minutes. No developer required — UnifyOne handles every integration.",
+    color: "#D4A843",
+  },
+  {
+    step: "02",
+    heading: "AI Reads Your Real Data",
+    body: "Kai — UnifyOne's built-in AI — analyzes your actual shift earnings, mileage logs, and order history. Not industry benchmarks. Your numbers.",
+    color: "#6EE7B7",
+  },
+  {
+    step: "03",
+    heading: "Get Actionable Intelligence",
+    body: "Know which hours pay the most after expenses. Track every IRS-eligible deduction automatically. Manage all tenants from one unified dashboard.",
+    color: "#93C5FD",
+  },
+];
+
+const WHO_IT_FOR = [
+  {
+    icon: "⬡",
+    audience: "Gig Economy Operators",
+    body: "Working DoorDash, Uber Eats, Instacart, or any delivery platform? 1Commerce's GigIQ module shows which hours and zones generate the highest net pay after fuel and expenses — no spreadsheets required.",
+    color: "#F0D080",
+  },
+  {
+    icon: "▣",
+    audience: "Multi-Tenant Commerce Teams",
+    body: "Agencies and operators managing multiple Shopify stores get one UnifyOne dashboard with full tenant isolation, order management, affiliate tools, and real-time analytics across every storefront.",
+    color: "#FCA5A5",
+  },
+  {
+    icon: "◎",
+    audience: "Independent Contractors",
+    body: "Track mileage at the current IRS rate, forecast quarterly estimated taxes, and understand your true net income across every platform — all built into 1Commerce's core platform at no extra cost.",
+    color: "#6EE7B7",
   },
 ];
 
@@ -387,7 +461,7 @@ export default function Home() {
               color: "#F0E8D0",
             }}
           >
-            Your AI knows what<br />you actually earn.
+            UnifyOne: Your AI Knows<br />What You Actually Earn.
           </h1>
 
           <p
@@ -542,6 +616,82 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── HOW IT WORKS ─────────────────────────────────────────────────── */}
+      <section
+        id="how-it-works"
+        style={{
+          padding: "6rem 0",
+          borderTop: "1px solid #242424",
+          borderBottom: "1px solid #242424",
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-16">
+            <span className="inscription" style={{ color: "#D4A843" }}>
+              HOW IT WORKS
+            </span>
+            <h2
+              className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
+              style={{ color: "#F0E8D0" }}
+            >
+              Three steps to unified commerce intelligence.
+            </h2>
+            <p
+              className="font-crimson text-lg"
+              style={{
+                color: "#9A9A9A",
+                fontStyle: "italic",
+                maxWidth: 480,
+                margin: "0 auto",
+              }}
+            >
+              UnifyOne connects your data, processes it with AI, and surfaces
+              the insights that move the needle on your bottom line.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+            {HOW_IT_WORKS.map((step, i) => (
+              <div
+                key={step.step}
+                data-reveal
+                data-reveal-delay={String(i * 100)}
+                className="relative p-8 sm:p-10"
+                style={{
+                  border: "1px solid #242424",
+                  backgroundColor: "#020202",
+                }}
+              >
+                <div
+                  className="font-cinzel text-4xl font-black mb-4"
+                  style={{ color: step.color, opacity: 0.25 }}
+                >
+                  {step.step}
+                </div>
+                <h3
+                  className="font-cinzel text-lg font-bold mb-3"
+                  style={{ color: "#F0E8D0", letterSpacing: "0.04em" }}
+                >
+                  {step.heading}
+                </h3>
+                <p
+                  className="font-crimson text-base"
+                  style={{ color: "#9A9A9A", lineHeight: 1.75 }}
+                >
+                  {step.body}
+                </p>
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-px"
+                  style={{
+                    background: `linear-gradient(to right, ${step.color}33, transparent)`,
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── TRUST BADGES ─────────────────────────────────────────────────── */}
       <section
         style={{
@@ -646,6 +796,78 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── WHO IT'S FOR ─────────────────────────────────────────────────── */}
+      <section
+        id="who-its-for"
+        style={{
+          padding: "6rem 0",
+          borderTop: "1px solid #242424",
+          borderBottom: "1px solid #242424",
+          backgroundColor: "#030303",
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-16">
+            <span className="inscription" style={{ color: "#D4A843" }}>
+              WHO UNIFYONE IS BUILT FOR
+            </span>
+            <h2
+              className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
+              style={{ color: "#F0E8D0" }}
+            >
+              Built for operators, not analysts.
+            </h2>
+            <p
+              className="font-crimson text-lg"
+              style={{
+                color: "#9A9A9A",
+                fontStyle: "italic",
+                maxWidth: 500,
+                margin: "0 auto",
+              }}
+            >
+              1Commerce's UnifyOne serves three distinct operator types — each
+              with their own module stack, data flows, and intelligence layer.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {WHO_IT_FOR.map((item, i) => (
+              <div
+                key={item.audience}
+                data-reveal
+                data-reveal-delay={String(i * 100)}
+                className="stone-card p-8"
+                style={{ borderColor: "#242424" }}
+              >
+                <div
+                  className="font-cinzel text-2xl mb-4"
+                  style={{ color: item.color }}
+                >
+                  {item.icon}
+                </div>
+                <h3
+                  className="font-cinzel text-base font-bold mb-3"
+                  style={{
+                    color: "#F0E8D0",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {item.audience}
+                </h3>
+                <p
+                  className="font-crimson text-base"
+                  style={{ color: "#9A9A9A", lineHeight: 1.75 }}
+                >
+                  {item.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── KAI / AI SIDEKICK ────────────────────────────────────────────── */}
       <section
         id="kai"
@@ -668,7 +890,7 @@ export default function Home() {
               </h2>
               <div
                 className="font-crimson text-lg space-y-4"
-                style={{ color: "#6A6A6A", lineHeight: 1.7 }}
+                style={{ color: "#9A9A9A", lineHeight: 1.7 }}
               >
                 <p>
                   Kai isn't a generic chatbot. It reads your shift earnings, mileage
@@ -773,7 +995,7 @@ export default function Home() {
           </h2>
           <p
             className="font-crimson text-lg mb-8"
-            style={{ color: "#6A6A6A", fontStyle: "italic", maxWidth: 520, margin: "0 auto 2rem" }}
+            style={{ color: "#9A9A9A", fontStyle: "italic", maxWidth: 520, margin: "0 auto 2rem" }}
           >
             Route to Claude for analysis, GPT for code, Gemini for speed. Kai
             keeps billing model-agnostic with one predictable credit system and
@@ -918,6 +1140,77 @@ export default function Home() {
 
       {/* ── EMAIL CAPTURE ────────────────────────────────────────────────── */}
       <EmailCapture />
+
+      {/* ── FAQ ──────────────────────────────────────────────────────────── */}
+      <section
+        id="faq"
+        style={{
+          padding: "6rem 0",
+          borderTop: "1px solid #242424",
+          borderBottom: "1px solid #242424",
+          backgroundColor: "#030303",
+        }}
+      >
+        <div className="max-w-3xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-14">
+            <span className="inscription" style={{ color: "#D4A843" }}>
+              FAQ
+            </span>
+            <h2
+              className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
+              style={{ color: "#F0E8D0" }}
+            >
+              Frequently asked questions.
+            </h2>
+            <p
+              className="font-crimson text-lg"
+              style={{ color: "#9A9A9A", fontStyle: "italic" }}
+            >
+              Everything you need to know about UnifyOne and 1Commerce LLC.
+            </p>
+          </div>
+
+          <div className="space-y-0">
+            {HOME_FAQ.map((item) => (
+              <div
+                key={item.q}
+                style={{
+                  borderTop: "1px solid #242424",
+                  padding: "1.75rem 0",
+                }}
+              >
+                <h3
+                  className="font-cinzel text-base font-semibold mb-3"
+                  style={{
+                    color: "#F0E8D0",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {item.q}
+                </h3>
+                <p
+                  className="font-crimson text-base"
+                  style={{ color: "#9A9A9A", lineHeight: 1.8 }}
+                >
+                  {item.a}
+                </p>
+              </div>
+            ))}
+            <div style={{ borderTop: "1px solid #242424" }} />
+          </div>
+
+          <div className="text-center mt-12">
+            <Link href="/contact">
+              <span
+                className="font-crimson text-base cursor-pointer underline"
+                style={{ color: "#D4A843" }}
+              >
+                Have a different question? Contact 1Commerce →
+              </span>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* ── FINAL CTA ────────────────────────────────────────────────────── */}
       <section
