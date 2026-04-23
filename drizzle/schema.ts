@@ -73,6 +73,27 @@ export const governanceRuleTypeEnum = pgEnum("governance_rule_type", ["approval_
 export const violationActionEnum = pgEnum("violation_action", ["block", "escalate", "log", "warn"]);
 export const gigWorkerPlanTierEnum = pgEnum("gig_worker_plan_tier", ["starter", "pro", "elite"]);
 export const gigWorkerSubStatusEnum = pgEnum("gig_worker_sub_status", ["active", "trialing", "past_due", "cancelled", "none"]);
+export const clippingJobStatusEnum = pgEnum("clipping_job_status", [
+  "queued",
+  "processing",
+  "transcribing",
+  "detecting",
+  "extracting",
+  "captioning",
+  "uploading",
+  "completed",
+  "failed",
+  "cancelled",
+]);
+export const clippingPlanEnum = pgEnum("clipping_plan", [
+  "free",
+  "pro",
+  "creator",
+]);
+export const clippingSourceTypeEnum = pgEnum("clipping_source_type", [
+  "upload",
+  "url",
+]);
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 export const users = pgTable("users", {
@@ -1423,3 +1444,128 @@ export const gigAIUsage = pgTable(
 );
 export type GigAIUsage = typeof gigAIUsage.$inferSelect;
 export type InsertGigAIUsage = typeof gigAIUsage.$inferInsert;
+
+// ─── Clippers Jobs ─────────────────────────────────────────────────────────────
+export const clippingJobs = pgTable(
+  "clipping_jobs",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull(),
+    userId: integer("userId").notNull(),
+    sourceType: clippingSourceTypeEnum("sourceType").notNull().default("url"),
+    sourceUrl: text("sourceUrl"),
+    sourceStorageKey: text("sourceStorageKey"),
+    status: clippingJobStatusEnum("status").notNull().default("queued"),
+    progress: integer("progress").notNull().default(0),
+    currentStage: varchar("currentStage", { length: 64 })
+      .notNull()
+      .default("queued"),
+    errorMessage: text("errorMessage"),
+    requestedClipCount: integer("requestedClipCount").notNull().default(10),
+    options: jsonb("options")
+      .$type<{
+        aspectRatio?: "9:16" | "1:1";
+        captionStyle?: "default" | "bold" | "minimal";
+        language?: string;
+      }>()
+      .notNull()
+      .default({}),
+    startedAt: timestamp("startedAt"),
+    completedAt: timestamp("completedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    clipJobTenantCreatedIdx: index("clipping_jobs_tenant_created_idx").on(
+      table.tenantId,
+      table.createdAt
+    ),
+    clipJobTenantStatusIdx: index("clipping_jobs_tenant_status_idx").on(
+      table.tenantId,
+      table.status
+    ),
+    clipJobProgressRange: check(
+      "clipping_jobs_progress_range",
+      sql`${table.progress} >= 0 AND ${table.progress} <= 100`
+    ),
+    clipRequestedCountRange: check(
+      "clipping_jobs_requested_count_range",
+      sql`${table.requestedClipCount} >= 1 AND ${table.requestedClipCount} <= 20`
+    ),
+  })
+);
+export type ClippingJob = typeof clippingJobs.$inferSelect;
+export type InsertClippingJob = typeof clippingJobs.$inferInsert;
+
+// ─── Clippers Generated Clips ──────────────────────────────────────────────────
+export const clips = pgTable(
+  "clips",
+  {
+    id: serial("id").primaryKey(),
+    jobId: integer("jobId").notNull(),
+    tenantId: integer("tenantId").notNull(),
+    index: integer("index").notNull(),
+    title: varchar("title", { length: 255 }),
+    storageKey: text("storageKey").notNull(),
+    durationSec: integer("durationSec").notNull().default(0),
+    startSec: integer("startSec").notNull().default(0),
+    endSec: integer("endSec").notNull().default(0),
+    highlightScore: decimal("highlightScore", { precision: 6, scale: 3 }),
+    captionsStorageKey: text("captionsStorageKey"),
+    thumbnailStorageKey: text("thumbnailStorageKey"),
+    sizeBytes: integer("sizeBytes"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({
+    clipsJobIdx: index("clips_job_idx").on(table.jobId),
+    clipsTenantJobIdx: index("clips_tenant_job_idx").on(table.tenantId, table.jobId),
+    clipsUniqueJobIndex: uniqueIndex("clips_job_index_unique_idx").on(
+      table.jobId,
+      table.index
+    ),
+    clipsDurationNonNegative: check(
+      "clips_duration_non_negative",
+      sql`${table.durationSec} >= 0`
+    ),
+  })
+);
+export type Clip = typeof clips.$inferSelect;
+export type InsertClip = typeof clips.$inferInsert;
+
+// ─── Clippers Subscriptions ────────────────────────────────────────────────────
+export const clippingSubscriptions = pgTable(
+  "clipping_subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull().unique(),
+    userId: integer("userId").notNull(),
+    plan: clippingPlanEnum("plan").notNull().default("free"),
+    stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 100 }),
+    stripeCustomerId: varchar("stripeCustomerId", { length: 100 }),
+    stripePriceId: varchar("stripePriceId", { length: 100 }),
+    status: subscriptionStatusEnum("status").notNull().default("none"),
+    monthlyJobQuota: integer("monthlyJobQuota").notNull().default(3),
+    jobsUsedThisPeriod: integer("jobsUsedThisPeriod").notNull().default(0),
+    periodStart: timestamp("periodStart").notNull().defaultNow(),
+    periodEnd: timestamp("periodEnd").notNull().defaultNow(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    clippingSubStatusIdx: index("clipping_sub_status_idx").on(
+      table.status,
+      table.updatedAt
+    ),
+    clippingSubUsageNonNegative: check(
+      "clipping_sub_usage_non_negative",
+      sql`${table.jobsUsedThisPeriod} >= 0`
+    ),
+    clippingSubQuotaPositive: check(
+      "clipping_sub_quota_positive",
+      sql`${table.monthlyJobQuota} >= 0`
+    ),
+  })
+);
+export type ClippingSubscription = typeof clippingSubscriptions.$inferSelect;
+export type InsertClippingSubscription =
+  typeof clippingSubscriptions.$inferInsert;
