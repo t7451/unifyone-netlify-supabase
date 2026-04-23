@@ -3,7 +3,7 @@ ffmpeg-python==0.2.0
 librosa==0.11.0
 scenedetect==0.6.6
 moviepy==2.2.1
-Pillow==12.2.0
+Pillow==11.0.0
 # Admin dashboard
 fastapi==0.115.12
 uvicorn[standard]==0.34.2
