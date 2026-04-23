@@ -30,10 +30,15 @@ class ClipperEngineConfig:
     fallback_whisper_model_size: str = os.getenv(
         "CLIPPERS_WHISPER_FALLBACK_MODEL", "large-v3"
     )
+    whisper_compute_type: str = os.getenv("CLIPPERS_WHISPER_COMPUTE_TYPE", "int8")
     default_num_clips: int = int(os.getenv("CLIPPERS_DEFAULT_NUM_CLIPS", "12"))
     default_clip_length: int = int(os.getenv("CLIPPERS_DEFAULT_CLIP_LENGTH", "45"))
     min_clip_length: int = int(os.getenv("CLIPPERS_MIN_CLIP_LENGTH", "20"))
     max_clip_length: int = int(os.getenv("CLIPPERS_MAX_CLIP_LENGTH", "60"))
+    caption_words_per_group: int = int(
+        os.getenv("CLIPPERS_CAPTION_WORDS_PER_GROUP", "4")
+    )
+    ollama_timeout_seconds: int = int(os.getenv("CLIPPERS_OLLAMA_TIMEOUT_SECONDS", "10"))
     target_width: int = int(os.getenv("CLIPPERS_TARGET_WIDTH", "720"))
     target_height: int = int(os.getenv("CLIPPERS_TARGET_HEIGHT", "1280"))
     temp_root: Path = field(default_factory=_default_temp_root)

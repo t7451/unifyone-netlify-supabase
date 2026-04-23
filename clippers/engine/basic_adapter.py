@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import json
-import math
 import os
 import shutil
 import subprocess
+import socket
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Sequence
+from typing import Any, Dict, List, Sequence
 
 from .adapter import IClipperEngine
 from .config import ClipperEngineConfig, DEFAULT_ENGINE_CONFIG
@@ -82,7 +82,11 @@ class TranscriptionService:
             self.config.fallback_whisper_model_size,
         ):
             try:
-                model = WhisperModel(model_size, device="auto", compute_type="int8")
+                model = WhisperModel(
+                    model_size,
+                    device="auto",
+                    compute_type=self.config.whisper_compute_type,
+                )
                 segments, _ = model.transcribe(
                     str(video_path),
                     beam_size=5,
@@ -203,6 +207,9 @@ class SceneDetectorService:
 class LLMViralityScorer:
     """Optional local Ollama scoring for transcripts."""
 
+    def __init__(self, config: ClipperEngineConfig) -> None:
+        self.config = config
+
     def score(self, transcript: str) -> float:
         """Return a lightweight virality score in the 0..1 range."""
 
@@ -229,11 +236,20 @@ class LLMViralityScorer:
             method="POST",
         )
         try:
-            with urllib.request.urlopen(request, timeout=10) as response:
+            with urllib.request.urlopen(
+                request,
+                timeout=self.config.ollama_timeout_seconds,
+            ) as response:
                 body = json.loads(response.read().decode("utf-8"))
                 raw_score = str(body.get("response", "0")).strip()
                 return clamp(float(raw_score))
-        except (ValueError, urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+        except (
+            ValueError,
+            urllib.error.URLError,
+            socket.timeout,
+            TimeoutError,
+            json.JSONDecodeError,
+        ):
             return 0.0
 
 
@@ -242,7 +258,7 @@ class HighlightScorer:
 
     def __init__(self, config: ClipperEngineConfig) -> None:
         self.config = config
-        self.llm_scorer = LLMViralityScorer()
+        self.llm_scorer = LLMViralityScorer(config)
 
     def rank(
         self,
@@ -318,6 +334,9 @@ class HighlightScorer:
 class CaptionRenderer:
     """Create caption sidecars for ffmpeg subtitle burn-in."""
 
+    def __init__(self, config: ClipperEngineConfig) -> None:
+        self.config = config
+
     def create_srt(self, clip: ScoredClip, output_dir: Path) -> Path | None:
         """Write an SRT file for the clip words when timings are available."""
 
@@ -325,7 +344,7 @@ class CaptionRenderer:
             return None
 
         entries: List[str] = []
-        group_size = 4
+        group_size = max(1, self.config.caption_words_per_group)
         for index in range(0, len(clip.words), group_size):
             chunk = clip.words[index : index + group_size]
             start = max(0.0, chunk[0].start - clip.start)
@@ -430,7 +449,7 @@ class BasicClipperEngine(IClipperEngine):
         self.energy_analyzer = AudioEnergyAnalyzer()
         self.scene_detector = SceneDetectorService()
         self.highlight_scorer = HighlightScorer(self.config)
-        self.caption_renderer = CaptionRenderer()
+        self.caption_renderer = CaptionRenderer(self.config)
         self.extractor = ClipExtractor(self.config)
 
     def process_video(
