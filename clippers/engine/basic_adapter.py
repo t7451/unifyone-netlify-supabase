@@ -30,6 +30,7 @@ KEYWORD_BOOSTS = {
     "problem": 0.09,
     "solution": 0.09,
 }
+OVERLAP_THRESHOLD = 0.4
 
 
 @dataclass
@@ -601,7 +602,7 @@ def overlaps(left: ScoredClip, right: ScoredClip) -> bool:
 
     intersection = max(0.0, min(left.end, right.end) - max(left.start, right.start))
     shortest = max(min(left.end - left.start, right.end - right.start), 1.0)
-    return (intersection / shortest) >= 0.4
+    return (intersection / shortest) >= OVERLAP_THRESHOLD
 
 
 def format_srt_time(seconds: float) -> str:

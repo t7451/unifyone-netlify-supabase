@@ -11,6 +11,8 @@ from typing import Sequence
 
 from clippers.engine.adapter import get_clipper_engine
 
+SYNTHETIC_VIDEO_DURATION_SECONDS = 18
+
 
 def main() -> int:
     args = parse_args()
@@ -81,7 +83,7 @@ def build_synthetic_sample(output_path: Path) -> None:
         "-i",
         "sine=frequency=440:sample_rate=44100",
         "-t",
-        "18",
+        str(SYNTHETIC_VIDEO_DURATION_SECONDS),
         "-pix_fmt",
         "yuv420p",
         "-c:v",
