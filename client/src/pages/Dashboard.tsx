@@ -138,7 +138,20 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {chartData.length > 0 ? (
+            {revenueByDay.isLoading ? (
+              <div className="h-[220px] flex flex-col justify-end gap-2 px-2">
+                <div className="flex items-end gap-1.5 h-full">
+                  {[40, 65, 50, 80, 55, 90, 70, 45, 75, 60, 85, 50, 65, 80, 45].map((h, i) => (
+                    <div key={i} className="flex-1 bg-white/5 rounded-t animate-pulse" style={{ height: `${h}%` }} />
+                  ))}
+                </div>
+                <div className="flex justify-between px-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-3 w-10" />
+                  ))}
+                </div>
+              </div>
+            ) : chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
@@ -183,7 +196,18 @@ export default function Dashboard() {
             <CardTitle className="text-white text-base">Top Products</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {(topProducts.data ?? []).length === 0 ? (
+            {topProducts.isLoading ? (
+              [...Array(4)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="h-4 w-4" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-3.5 w-28" />
+                    <Skeleton className="h-3 w-14" />
+                  </div>
+                  <Skeleton className="h-4 w-12" />
+                </div>
+              ))
+            ) : (topProducts.data ?? []).length === 0 ? (
               <p className="text-gray-500 text-sm">No sales data yet.</p>
             ) : (
               (topProducts.data ?? []).map((p: any, i: number) => (

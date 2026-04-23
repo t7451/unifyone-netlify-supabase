@@ -32,6 +32,7 @@ import {
   Loader2,
   BarChart3,
 } from "lucide-react";
+import { QueryErrorState } from "@/components/QueryErrorState";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
@@ -59,9 +60,13 @@ type ProductForm = typeof EMPTY_FORM;
 function ProductFormFields({
   form,
   setForm,
+  errors,
+  onTouch,
 }: {
   form: ProductForm;
   setForm: (f: ProductForm) => void;
+  errors?: { name?: string; price?: string };
+  onTouch?: (field: string) => void;
 }) {
   const categories = trpc.products.categories.useQuery();
   const [imgBroken, setImgBroken] = useState(false);
@@ -72,9 +77,11 @@ function ProductFormFields({
         <Input
           value={form.name}
           onChange={e => setForm({ ...form, name: e.target.value })}
+          onBlur={() => onTouch?.("name")}
           placeholder="e.g. Premium Widget Pro"
-          className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
+          className={`bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50 ${errors?.name ? "border-red-500/70" : ""}`}
         />
+        {errors?.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
       </div>
       <div>
         <Label className="text-gray-300 text-sm">Description</Label>
@@ -99,10 +106,12 @@ function ProductFormFields({
               min="0"
               value={form.price}
               onChange={e => setForm({ ...form, price: e.target.value })}
+              onBlur={() => onTouch?.("price")}
               placeholder="0.00"
-              className="bg-white/5 border-white/10 text-white pl-7 focus:border-[#00D9FF]/50"
+              className={`bg-white/5 border-white/10 text-white pl-7 focus:border-[#00D9FF]/50 ${errors?.price ? "border-red-500/70" : ""}`}
             />
           </div>
+          {errors?.price && <p className="text-red-400 text-xs mt-1">{errors.price}</p>}
         </div>
         <div>
           <Label className="text-gray-300 text-sm">Compare-at Price</Label>
@@ -257,7 +266,22 @@ export default function Products() {
   const [deleteProduct, setDeleteProduct] = useState<any>(null);
   const [form, setForm] = useState<ProductForm>({ ...EMPTY_FORM });
   const [editForm, setEditForm] = useState<ProductForm>({ ...EMPTY_FORM });
+  const [createTouched, setCreateTouched] = useState<Record<string, boolean>>({});
+  const [editTouched, setEditTouched] = useState<Record<string, boolean>>({});
+  const [bulkAction, setBulkAction] = useState<"active" | "draft" | "archive" | null>(null);
   const utils = trpc.useUtils();
+
+  const getErrors = (f: ProductForm, touched: Record<string, boolean>) => {
+    const nameTouched = touched.name ?? false;
+    const priceTouched = touched.price ?? false;
+    const priceNum = Number(f.price);
+    return {
+      name: nameTouched && !f.name.trim() ? "Product name is required" : undefined,
+      price: priceTouched && !f.price ? "Price is required"
+        : priceTouched && priceNum <= 0 ? "Price must be greater than 0"
+        : undefined,
+    };
+  };
 
   const products = trpc.products.list.useQuery({
     search: search || undefined,
@@ -269,6 +293,7 @@ export default function Products() {
       toast.success("Product created successfully");
       setCreateOpen(false);
       setForm({ ...EMPTY_FORM });
+      setCreateTouched({});
       utils.products.list.invalidate();
     },
     onError: e => toast.error(e.message),
@@ -278,6 +303,7 @@ export default function Products() {
     onSuccess: () => {
       toast.success("Product updated");
       setEditProduct(null);
+      setEditTouched({});
       utils.products.list.invalidate();
     },
     onError: e => toast.error(e.message),
@@ -296,23 +322,33 @@ export default function Products() {
     onSuccess: data => {
       toast.success(`Updated ${data.updatedCount} product(s)`);
       setSelectedIds([]);
+      setBulkAction(null);
       utils.products.list.invalidate();
     },
-    onError: e => toast.error(e.message),
+    onError: e => {
+      setBulkAction(null);
+      toast.error(e.message);
+    },
   });
 
   const bulkArchiveMutation = trpc.products.bulkArchive.useMutation({
     onSuccess: data => {
       toast.success(`Archived ${data.updatedCount} product(s)`);
       setSelectedIds([]);
+      setBulkAction(null);
       utils.products.list.invalidate();
     },
-    onError: e => toast.error(e.message),
+    onError: e => {
+      setBulkAction(null);
+      toast.error(e.message);
+    },
   });
 
   const handleCreate = () => {
-    if (!form.name || !form.price)
-      return toast.error("Name and price are required");
+    const allTouched = { name: true, price: true };
+    setCreateTouched(allTouched);
+    if (!form.name || !form.price || Number(form.price) <= 0)
+      return toast.error("Name and a valid price are required");
 
     const parsedCategoryId =
       form.categoryId && form.categoryId !== "none"
@@ -339,6 +375,7 @@ export default function Products() {
 
   const handleEdit = (p: any) => {
     setEditProduct(p);
+    setEditTouched({});
     setEditForm({
       name: p.name ?? "",
       description: p.description ?? "",
@@ -356,8 +393,10 @@ export default function Products() {
   };
 
   const handleUpdate = () => {
-    if (!editForm.name || !editForm.price)
-      return toast.error("Name and price are required");
+    const allTouched = { name: true, price: true };
+    setEditTouched(allTouched);
+    if (!editForm.name || !editForm.price || Number(editForm.price) <= 0)
+      return toast.error("Name and a valid price are required");
 
     const parsedCategoryId =
       editForm.categoryId && editForm.categoryId !== "none"
@@ -438,7 +477,12 @@ export default function Products() {
                 New Product
               </DialogTitle>
             </DialogHeader>
-            <ProductFormFields form={form} setForm={setForm} />
+            <ProductFormFields
+              form={form}
+              setForm={setForm}
+              errors={getErrors(form, createTouched)}
+              onTouch={field => setCreateTouched(prev => ({ ...prev, [field]: true }))}
+            />
             <DialogFooter className="mt-4 gap-2">
               <Button
                 variant="ghost"
@@ -449,7 +493,7 @@ export default function Products() {
               </Button>
               <Button
                 onClick={handleCreate}
-                disabled={createMutation.isPending || !form.name || !form.price}
+                disabled={createMutation.isPending || !form.name || !form.price || Number(form.price) <= 0}
                 className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold"
               >
                 {createMutation.isPending ? (
@@ -508,36 +552,47 @@ export default function Products() {
             variant="outline"
             disabled={isBulkPending}
             className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
-            onClick={() =>
-              bulkUpdateStatusMutation.mutate({
-                ids: selectedIds,
-                status: "active",
-              })
-            }
+            onClick={() => {
+              setBulkAction("active");
+              bulkUpdateStatusMutation.mutate({ ids: selectedIds, status: "active" });
+            }}
           >
-            Mark Active
+            {bulkAction === "active" && bulkUpdateStatusMutation.isPending ? (
+              <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />Updating...</>
+            ) : (
+              "Mark Active"
+            )}
           </Button>
           <Button
             size="sm"
             variant="outline"
             disabled={isBulkPending}
             className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
-            onClick={() =>
-              bulkUpdateStatusMutation.mutate({
-                ids: selectedIds,
-                status: "draft",
-              })
-            }
+            onClick={() => {
+              setBulkAction("draft");
+              bulkUpdateStatusMutation.mutate({ ids: selectedIds, status: "draft" });
+            }}
           >
-            Mark Draft
+            {bulkAction === "draft" && bulkUpdateStatusMutation.isPending ? (
+              <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />Updating...</>
+            ) : (
+              "Mark Draft"
+            )}
           </Button>
           <Button
             size="sm"
             disabled={isBulkPending}
             className="bg-red-500/90 hover:bg-red-500 text-white"
-            onClick={() => bulkArchiveMutation.mutate({ ids: selectedIds })}
+            onClick={() => {
+              setBulkAction("archive");
+              bulkArchiveMutation.mutate({ ids: selectedIds });
+            }}
           >
-            Archive Selected
+            {bulkAction === "archive" && bulkArchiveMutation.isPending ? (
+              <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />Archiving...</>
+            ) : (
+              "Archive Selected"
+            )}
           </Button>
         </div>
       )}
@@ -547,6 +602,16 @@ export default function Products() {
           {[...Array(6)].map((_, i) => (
             <div key={i} className="h-44 rounded-xl bg-white/5 animate-pulse" />
           ))}
+        </div>
+      ) : products.isError ? (
+        <div className="text-center py-20">
+          <QueryErrorState
+            icon={Package}
+            title="Failed to load products"
+            message={products.error?.message}
+            onRetry={() => products.refetch()}
+            isRetrying={products.isRefetching}
+          />
         </div>
       ) : productList.length === 0 ? (
         <div className="text-center py-20">
@@ -639,17 +704,19 @@ export default function Products() {
                       size="sm"
                       variant="ghost"
                       className="flex-1 text-gray-400 hover:text-white border border-white/10 hover:border-[#00D9FF]/40 hover:bg-[#00D9FF]/5 transition-colors"
+                      aria-label={`Edit ${p.name}`}
                       onClick={() => handleEdit(p)}
                     >
-                      <Edit className="w-3 h-3 mr-1.5" /> Edit
+                      <Edit className="w-3 h-3 mr-1.5" aria-hidden="true" /> Edit
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
                       className="text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 hover:bg-red-500/5 transition-colors"
+                      aria-label={`Delete ${p.name}`}
                       onClick={() => setDeleteProduct(p)}
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3 h-3" aria-hidden="true" />
                     </Button>
                   </div>
                 </CardContent>
@@ -671,7 +738,12 @@ export default function Products() {
               Edit Product
             </DialogTitle>
           </DialogHeader>
-          <ProductFormFields form={editForm} setForm={setEditForm} />
+          <ProductFormFields
+            form={editForm}
+            setForm={setEditForm}
+            errors={getErrors(editForm, editTouched)}
+            onTouch={field => setEditTouched(prev => ({ ...prev, [field]: true }))}
+          />
           <DialogFooter className="mt-4 gap-2">
             <Button
               variant="ghost"
@@ -683,7 +755,7 @@ export default function Products() {
             <Button
               onClick={handleUpdate}
               disabled={
-                updateMutation.isPending || !editForm.name || !editForm.price
+                updateMutation.isPending || !editForm.name || !editForm.price || Number(editForm.price) <= 0
               }
               className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold"
             >

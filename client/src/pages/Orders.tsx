@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useRealtimeOrders } from "@/lib/supabaseRealtime";
 import { RealtimeStatus } from "@/components/RealtimeStatus";
+import { QueryErrorState } from "@/components/QueryErrorState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,6 +82,7 @@ export default function Orders() {
   const [shippingAmount, setShippingAmount] = useState(0);
   const [taxAmount, setTaxAmount] = useState(0);
   const [notes, setNotes] = useState("");
+  const [itemsTouched, setItemsTouched] = useState<boolean[]>([]);
 
   const orders = trpc.orders.list.useQuery({
     search: search || undefined,
@@ -93,12 +95,35 @@ export default function Orders() {
   );
 
   const updateStatus = trpc.orders.updateStatus.useMutation({
+    onMutate: async ({ id, status }) => {
+      const queryInput = {
+        search: search || undefined,
+        status: statusFilter === "all" ? undefined : statusFilter,
+      };
+      // Cancel any in-flight refetch so it doesn't overwrite our optimistic update
+      await utils.orders.list.cancel(queryInput);
+      const previous = utils.orders.list.getData(queryInput);
+      // Optimistically apply the new status immediately
+      utils.orders.list.setData(queryInput, prev =>
+        prev?.map(o => o.id === id ? { ...o, status } : o)
+      );
+      return { previous, queryInput };
+    },
+    onError: (_err, _vars, ctx) => {
+      // Roll back on failure
+      if (ctx?.previous !== undefined) {
+        utils.orders.list.setData(ctx.queryInput, ctx.previous);
+      }
+      toast.error("Failed to update order status");
+    },
     onSuccess: () => {
       toast.success("Order status updated");
-      utils.orders.list.invalidate();
       if (showDetail) utils.orders.get.invalidate({ id: selectedOrder?.id });
     },
-    onError: (e) => toast.error(e.message),
+    onSettled: (_data, _err, _vars, ctx) => {
+      // Always revalidate to stay in sync with the server
+      if (ctx) utils.orders.list.invalidate(ctx.queryInput);
+    },
   });
 
   const createOrder = trpc.orders.create.useMutation({
@@ -114,6 +139,7 @@ export default function Orders() {
   const resetCreateForm = () => {
     setCustomerEmail(""); setCustomerName(""); setItems([emptyItem()]);
     setShippingAmount(0); setTaxAmount(0); setNotes("");
+    setItemsTouched([]);
   };
 
   const addItem = () => setItems(prev => [...prev, emptyItem()]);
@@ -127,6 +153,8 @@ export default function Orders() {
 
   const handleCreate = () => {
     if (items.some(i => !i.productName || i.quantity < 1)) {
+      // Mark all items as touched so validation errors appear immediately
+      setItemsTouched(Array<boolean>(items.length).fill(true));
       toast.error("All items need a name and quantity ≥ 1");
       return;
     }
@@ -264,6 +292,19 @@ export default function Orders() {
                   ))}
                 </tr>
               ))
+            ) : orders.isError ? (
+              <tr>
+                <td colSpan={8} className="text-center py-16">
+                  <QueryErrorState
+                    icon={ShoppingCart}
+                    title="Failed to load orders"
+                    message={orders.error?.message}
+                    onRetry={() => orders.refetch()}
+                    isRetrying={orders.isRefetching}
+                    size="sm"
+                  />
+                </td>
+              </tr>
             ) : (orders.data ?? []).length === 0 ? (
               <tr>
                 <td colSpan={8} className="text-center py-16">
@@ -311,19 +352,20 @@ export default function Orders() {
                         size="sm"
                         variant="ghost"
                         className="h-7 w-7 p-0 text-gray-400 hover:text-[#00D9FF]"
+                        aria-label={`View details for order ${o.orderNumber}`}
                         onClick={() => openDetail(o)}
                       >
-                        <Eye className="w-3.5 h-3.5" />
+                        <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       </Button>
                       {(o.paymentStatus === "pending" || o.paymentStatus === "failed") && (
                         <Button
                           size="sm"
                           variant="ghost"
                           className="h-7 px-2 text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 gap-1"
-                          title="Pay Now"
+                          aria-label={`Pay now for order ${o.orderNumber}`}
                           onClick={() => navigate(`/checkout?orderId=${o.id}&amount=${Number(o.total).toFixed(2)}&desc=Order+${encodeURIComponent(o.orderNumber)}`)}
                         >
-                          <CreditCard className="w-3.5 h-3.5" />
+                          <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
                           Pay
                         </Button>
                       )}
@@ -331,7 +373,10 @@ export default function Orders() {
                         value={o.status}
                         onValueChange={v => updateStatus.mutate({ id: o.id, status: v as OrderStatus })}
                       >
-                        <SelectTrigger className="w-28 h-7 bg-white/5 border-white/10 text-gray-300 text-xs">
+                        <SelectTrigger
+                          className="w-28 h-7 bg-white/5 border-white/10 text-gray-300 text-xs"
+                          aria-label={`Change status for order ${o.orderNumber}`}
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#0F172A] border-white/10">
@@ -550,9 +595,13 @@ export default function Orders() {
                       <Input
                         value={item.productName}
                         onChange={e => updateItem(i, "productName", e.target.value)}
+                        onBlur={() => setItemsTouched(prev => { const next = [...prev]; next[i] = true; return next; })}
                         placeholder="Product name *"
-                        className="bg-white/5 border-white/10 text-white text-sm"
+                        className={`bg-white/5 border-white/10 text-white text-sm ${itemsTouched[i] && !item.productName ? "border-red-500/70" : ""}`}
                       />
+                      {itemsTouched[i] && !item.productName && (
+                        <p className="text-red-400 text-xs mt-0.5">Required</p>
+                      )}
                     </div>
                     <div className="col-span-2">
                       <Input

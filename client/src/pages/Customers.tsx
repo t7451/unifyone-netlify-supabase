@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { useRealtimeTable } from "@/lib/supabaseRealtime";
 import { RealtimeStatus } from "@/components/RealtimeStatus";
+import { QueryErrorState } from "@/components/QueryErrorState";
 
 export default function Customers() {
   const [search, setSearch] = useState("");
@@ -79,7 +80,13 @@ export default function Customers() {
 
   function addTag() {
     const t = tagInput.trim();
-    if (t && !tags.includes(t)) setTags([...tags, t]);
+    if (!t) return;
+    if (tags.includes(t)) {
+      toast.error(`Tag "${t}" already exists`);
+      setTagInput("");
+      return;
+    }
+    setTags([...tags, t]);
     setTagInput("");
   }
 
@@ -153,6 +160,19 @@ export default function Customers() {
                   ))}
                 </tr>
               ))
+            ) : customers.isError ? (
+              <tr>
+                <td colSpan={8} className="text-center py-16">
+                  <QueryErrorState
+                    icon={Users}
+                    title="Failed to load customers"
+                    message={customers.error?.message}
+                    onRetry={() => customers.refetch()}
+                    isRetrying={customers.isRefetching}
+                    size="sm"
+                  />
+                </td>
+              </tr>
             ) : (customers.data ?? []).length === 0 ? (
               <tr>
                 <td colSpan={8} className="text-center py-16">
@@ -167,6 +187,10 @@ export default function Customers() {
                   key={c.id}
                   className="border-b border-border hover:bg-white/2 transition-colors cursor-pointer"
                   onClick={() => openProfile(c)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View profile for ${fullName(c)}`}
+                  onKeyDown={e => e.key === "Enter" && openProfile(c)}
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -206,9 +230,10 @@ export default function Customers() {
                       variant="ghost"
                       size="sm"
                       className="h-7 w-7 p-0 text-gray-400 hover:text-white"
+                      aria-label={`Edit ${fullName(c)}`}
                       onClick={e => { e.stopPropagation(); openEdit(c); }}
                     >
-                      <Edit2 className="w-3.5 h-3.5" />
+                      <Edit2 className="w-3.5 h-3.5" aria-hidden="true" />
                     </Button>
                   </td>
                 </tr>

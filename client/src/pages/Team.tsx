@@ -4,12 +4,23 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
   Users, UserPlus, Mail, Shield, ShieldCheck, Clock, CheckCircle,
-  XCircle, Trash2, Copy, RefreshCw, Crown
+  XCircle, Trash2, Copy, RefreshCw, Crown, Loader2
 } from "lucide-react";
 
 const ROLE_COLORS: Record<string, string> = {
@@ -33,6 +44,8 @@ export default function Team() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"user" | "admin">("user");
   const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+  const [removingMemberName, setRemovingMemberName] = useState<string>("");
 
   const members = trpc.team.listMembers.useQuery();
   const invites = trpc.team.listInvites.useQuery();
@@ -66,9 +79,13 @@ export default function Team() {
   const removeMember = trpc.team.removeMember.useMutation({
     onSuccess: () => {
       utils.team.listMembers.invalidate();
+      setRemovingMemberId(null);
       toast.success("Member removed from team");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => {
+      setRemovingMemberId(null);
+      toast.error(e.message);
+    },
   });
 
   const handleSendInvite = () => {
@@ -112,9 +129,18 @@ export default function Team() {
           <span className="text-gray-300 text-sm font-medium">Team Members</span>
         </div>
         {members.isLoading ? (
-          <div className="p-8 text-center">
-            <RefreshCw className="w-5 h-5 text-gray-500 animate-spin mx-auto mb-2" />
-            <p className="text-gray-500 text-sm">Loading members...</p>
+          <div className="divide-y divide-border">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3">
+                <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3.5 w-32" />
+                  <Skeleton className="h-3 w-44" />
+                </div>
+                <Skeleton className="h-6 w-20 rounded-full" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            ))}
           </div>
         ) : (members.data ?? []).length === 0 ? (
           <div className="p-12 text-center">
@@ -180,9 +206,8 @@ export default function Team() {
                           variant="ghost"
                           className="h-7 w-7 p-0 text-gray-500 hover:text-red-400 hover:bg-red-500/10"
                           onClick={() => {
-                            if (confirm(`Remove ${m.name ?? m.email} from the team?`)) {
-                              removeMember.mutate({ userId: m.id });
-                            }
+                            setRemovingMemberId(m.id);
+                            setRemovingMemberName(m.name ?? m.email ?? "this member");
                           }}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -405,6 +430,32 @@ export default function Team() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={removingMemberId !== null} onOpenChange={open => !open && setRemovingMemberId(null)}>
+        <AlertDialogContent className="bg-[#0F172A] border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Team Member?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              This will remove <span className="text-white font-medium">{removingMemberName}</span> from the team. They will lose access immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/10 text-gray-300 hover:bg-white/5">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => removeMember.mutate({ userId: removingMemberId! })}
+            >
+              {removeMember.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Removing...</>
+              ) : (
+                "Remove Member"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
