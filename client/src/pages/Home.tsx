@@ -785,7 +785,7 @@ export default function Home() {
                 View Integration Guides
               </span>
             </Link>
-            <Link href="/developer-hub">
+            <Link href="/developer">
               <span className="btn-ghost-gold cursor-pointer">
                 Developer Hub →
               </span>

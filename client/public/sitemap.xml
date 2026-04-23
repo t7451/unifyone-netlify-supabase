@@ -8,7 +8,7 @@
   <!-- ── Homepage ─────────────────────────────────────────────────────── -->
   <url>
     <loc>__APP_URL__/</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -21,37 +21,37 @@
   <!-- ── Core Public Pages ──────────────────────────────────────────────── -->
   <url>
     <loc>__APP_URL__/architecture</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.92</priority>
   </url>
   <url>
     <loc>__APP_URL__/the-system</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.90</priority>
   </url>
   <url>
     <loc>__APP_URL__/pricing</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
     <loc>__APP_URL__/about</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>__APP_URL__/contact</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
     <loc>__APP_URL__/tithes</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.92</priority>
   </url>
@@ -59,13 +59,13 @@
   <!-- ── Legal ─────────────────────────────────────────────────────────── -->
   <url>
     <loc>__APP_URL__/privacy</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>__APP_URL__/terms</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
@@ -73,25 +73,25 @@
   <!-- ── Documentation ───────────────────────────────────────────────────── -->
   <url>
     <loc>__APP_URL__/documents</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>__APP_URL__/documents/case-studies</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>__APP_URL__/documents/integrations</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>__APP_URL__/documents/work-proof</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -99,43 +99,43 @@
   <!-- ── Feature Pages (public-facing) ──────────────────────────────────── -->
   <url>
     <loc>__APP_URL__/docs-chat</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>__APP_URL__/video-production</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>__APP_URL__/marketing/ad-copy</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>__APP_URL__/resources</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>__APP_URL__/sovereign</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
     <loc>__APP_URL__/governance</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
     <loc>__APP_URL__/themes</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.65</priority>
   </url>
@@ -143,19 +143,19 @@
   <!-- ── Blog / Content Marketing ──────────────────────────────────────── -->
   <url>
     <loc>__APP_URL__/blog/gig-economy-commerce-platform</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.90</priority>
   </url>
   <url>
     <loc>__APP_URL__/blog/multi-tenant-ecommerce-saas</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.90</priority>
   </url>
   <url>
     <loc>__APP_URL__/blog/manus-ai-gig-workers</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.90</priority>
   </url>

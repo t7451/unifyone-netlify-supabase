@@ -4,6 +4,8 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PageHead from "@/components/PageHead";
+import { SITE_URL } from "@/lib/siteConfig";
 
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -347,6 +349,32 @@ export default function ThemeStore() {
 
   return (
     <div className="min-h-screen bg-[#060D1F] text-white">
+      <PageHead
+        title="Theme Store | UnifyOne — Premium Commerce Templates"
+        description="Browse professionally designed website templates for your UnifyOne storefront. Free and paid themes for every industry — launch faster with premium commerce designs."
+        canonical={`${SITE_URL}/themes`}
+        ogType="website"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "@id": `${SITE_URL}/themes`,
+            url: `${SITE_URL}/themes`,
+            name: "Theme Store | UnifyOne",
+            description: "Browse professionally designed website templates for your UnifyOne storefront.",
+            isPartOf: { "@id": `${SITE_URL}/#website` },
+            inLanguage: "en-US",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+              { "@type": "ListItem", position: 2, name: "Theme Store", item: `${SITE_URL}/themes` },
+            ],
+          },
+        ]}
+      />
       {/* ── Hero banner ─────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[#0A1128] via-[#0D1A3A] to-[#060D1F] border-b border-white/5">
         <div className="absolute inset-0 pointer-events-none">
