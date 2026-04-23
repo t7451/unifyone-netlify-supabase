@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clippers Admin</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        min-height: 100vh;
+      }
+
+      /* ── Header ─────────────────────────────────────────────────────── */
+      .header {
+        background: #1e293b;
+        border-bottom: 1px solid #334155;
+        padding: 1rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .header-title { font-size: 1.25rem; font-weight: 700; color: #f8fafc; }
+      .header-sub { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+
+      /* ── Layout ──────────────────────────────────────────────────────── */
+      .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+      /* ── Stat cards ──────────────────────────────────────────────────── */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .stat-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 1.25rem 1.5rem;
+      }
+      .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; }
+      .stat-value { font-size: 2rem; font-weight: 700; margin-top: .25rem; }
+      .stat-card.total   .stat-value { color: #60a5fa; }
+      .stat-card.completed .stat-value { color: #34d399; }
+      .stat-card.processing .stat-value { color: #fbbf24; }
+      .stat-card.failed  .stat-value { color: #f87171; }
+      .stat-card.pending .stat-value { color: #94a3b8; }
+
+      /* ── Panel ───────────────────────────────────────────────────────── */
+      .panel {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+      }
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: .875rem 1.5rem;
+        border-bottom: 1px solid #334155;
+      }
+      .panel-title { font-size: 0.875rem; font-weight: 600; color: #f8fafc; }
+      .panel-badge {
+        background: #334155;
+        color: #94a3b8;
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 9999px;
+      }
+
+      /* ── New job form ────────────────────────────────────────────────── */
+      .new-job-form {
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: .75rem;
+        align-items: flex-end;
+        border-bottom: 1px solid #334155;
+      }
+      .field { display: flex; flex-direction: column; gap: 4px; }
+      .field label { font-size: 0.75rem; color: #94a3b8; }
+      .field input, .field select {
+        background: #0f172a;
+        border: 1px solid #334155;
+        color: #e2e8f0;
+        padding: .4rem .75rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        width: 180px;
+      }
+      .field input:focus, .field select:focus {
+        outline: none;
+        border-color: #60a5fa;
+      }
+      .btn {
+        padding: .45rem 1.1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+      }
+      .btn-primary { background: #3b82f6; color: #fff; }
+      .btn-primary:hover { background: #2563eb; }
+
+      /* ── Table ───────────────────────────────────────────────────────── */
+      .table-wrap { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+      thead th {
+        padding: .75rem 1.5rem;
+        text-align: left;
+        color: #64748b;
+        font-weight: 500;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        border-bottom: 1px solid #334155;
+      }
+      tbody tr { border-bottom: 1px solid #1e293b; transition: background .1s; }
+      tbody tr:hover { background: #0f172a; }
+      tbody td { padding: .875rem 1.5rem; color: #cbd5e1; }
+
+      /* ── Status badges ───────────────────────────────────────────────── */
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .badge-completed  { background: #064e3b; color: #34d399; }
+      .badge-processing { background: #451a03; color: #fbbf24; }
+      .badge-failed     { background: #450a0a; color: #f87171; }
+      .badge-pending    { background: #1e293b; color: #94a3b8; }
+      .badge-cancelled  { background: #1e293b; color: #64748b; }
+
+      /* ── Progress bar ────────────────────────────────────────────────── */
+      .progress-bar {
+        background: #0f172a;
+        border-radius: 9999px;
+        height: 6px;
+        width: 80px;
+        overflow: hidden;
+      }
+      .progress-fill { height: 100%; background: #3b82f6; border-radius: 9999px; }
+
+      /* ── View link ───────────────────────────────────────────────────── */
+      a.view-link { color: #60a5fa; text-decoration: none; font-size: 0.8rem; }
+      a.view-link:hover { text-decoration: underline; }
+
+      /* ── Empty state ─────────────────────────────────────────────────── */
+      .empty {
+        text-align: center;
+        padding: 3rem;
+        color: #475569;
+      }
+      .empty-icon { font-size: 2.5rem; margin-bottom: .75rem; }
+
+      /* ── Toast ───────────────────────────────────────────────────────── */
+      #toast {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        background: #1e293b;
+        border: 1px solid #334155;
+        color: #e2e8f0;
+        padding: .75rem 1.25rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        opacity: 0;
+        transition: opacity .2s;
+        pointer-events: none;
+        z-index: 100;
+      }
+      #toast.show { opacity: 1; }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div>
+        <div class="header-title">⚡ Clippers Admin</div>
+        <div class="header-sub">Python Orchestration Layer</div>
+      </div>
+      <button class="btn btn-primary" onclick="document.getElementById('new-job').scrollIntoView({behavior:'smooth'})">
+        + New Test Job
+      </button>
+    </header>
+
+    <div class="container">
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat-card total">
+          <div class="stat-label">Total Jobs</div>
+          <div class="stat-value">{{ stats.total }}</div>
+        </div>
+        <div class="stat-card completed">
+          <div class="stat-label">Completed</div>
+          <div class="stat-value">{{ stats.completed }}</div>
+        </div>
+        <div class="stat-card processing">
+          <div class="stat-label">Processing</div>
+          <div class="stat-value">{{ stats.processing }}</div>
+        </div>
+        <div class="stat-card failed">
+          <div class="stat-label">Failed</div>
+          <div class="stat-value">{{ stats.failed }}</div>
+        </div>
+        <div class="stat-card pending">
+          <div class="stat-label">Pending</div>
+          <div class="stat-value">{{ stats.pending }}</div>
+        </div>
+      </div>
+
+      <!-- New Test Job -->
+      <div class="panel" id="new-job">
+        <div class="panel-header">
+          <span class="panel-title">Create Test Job</span>
+          <span class="panel-badge">Runs synchronously</span>
+        </div>
+        <form class="new-job-form" onsubmit="submitJob(event)">
+          <div class="field">
+            <label>Video URL (optional)</label>
+            <input type="url" id="video-url" placeholder="https://example.com/video.mp4" />
+          </div>
+          <div class="field">
+            <label>Num Clips</label>
+            <input type="number" id="num-clips" value="3" min="1" max="20" style="width:100px" />
+          </div>
+          <div class="field">
+            <label>Target Duration (s)</label>
+            <input type="number" id="target-dur" value="45" min="15" max="60" style="width:120px" />
+          </div>
+          <div class="field">
+            <label>Engine</label>
+            <select id="engine" style="width:120px">
+              <option value="stub" selected>stub (fast)</option>
+              <option value="basic">basic (full)</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">▶ Run Job</button>
+        </form>
+      </div>
+
+      <!-- Jobs Table -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Recent Jobs</span>
+          <span class="panel-badge">Last 20</span>
+        </div>
+        <div class="table-wrap">
+          {% if jobs %}
+          <table>
+            <thead>
+              <tr>
+                <th>Job ID</th>
+                <th>Status</th>
+                <th>Engine</th>
+                <th>Clips</th>
+                <th>Progress</th>
+                <th>Stage</th>
+                <th>Created</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in jobs %}
+              <tr>
+                <td style="font-family:monospace;font-size:.8rem;color:#94a3b8">{{ job.id }}</td>
+                <td>
+                  {% if job.status == "completed" %}
+                    <span class="badge badge-completed">Completed</span>
+                  {% elif job.status == "processing" %}
+                    <span class="badge badge-processing">Processing</span>
+                  {% elif job.status == "failed" %}
+                    <span class="badge badge-failed">Failed</span>
+                  {% elif job.status == "cancelled" %}
+                    <span class="badge badge-cancelled">Cancelled</span>
+                  {% else %}
+                    <span class="badge badge-pending">{{ job.status }}</span>
+                  {% endif %}
+                </td>
+                <td>{{ job.engine or "—" }}</td>
+                <td>{{ job.clips | length }}</td>
+                <td>
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width:{{ job.progress_percentage }}%"></div>
+                  </div>
+                  <span style="font-size:.75rem;color:#64748b;margin-top:2px;display:block">
+                    {{ job.progress_percentage }}%
+                  </span>
+                </td>
+                <td style="color:#64748b;font-size:.8rem">{{ job.current_stage }}</td>
+                <td style="color:#64748b;font-size:.8rem">
+                  {{ job.created_at | timestamp_fmt }}
+                </td>
+                <td>
+                  <a class="view-link" href="/jobs/{{ job.id }}" target="_blank">JSON →</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div class="empty">
+            <div class="empty-icon">📭</div>
+            <div>No jobs yet. Create one above to get started.</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div><!-- /container -->
+
+    <div id="toast"></div>
+
+    <script>
+      function showToast(msg, success) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.borderColor = success ? '#34d399' : '#f87171';
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+      }
+
+      async function submitJob(e) {
+        e.preventDefault();
+        const params = new URLSearchParams({
+          num_clips:       document.getElementById('num-clips').value,
+          target_duration: document.getElementById('target-dur').value,
+          engine:          document.getElementById('engine').value,
+        });
+        const url = document.getElementById('video-url').value;
+        if (url) params.set('video_url', url);
+
+        try {
+          const res = await fetch('/jobs/create?' + params, { method: 'POST' });
+          const data = await res.json();
+          if (res.ok) {
+            showToast('Job ' + data.job_id + ' → ' + data.status, data.status === 'completed');
+            setTimeout(() => location.reload(), 1200);
+          } else {
+            showToast('Error: ' + (data.detail || res.statusText), false);
+          }
+        } catch (err) {
+          showToast('Network error: ' + err.message, false);
+        }
+      }
+    </script>
+  </body>
+</html>
