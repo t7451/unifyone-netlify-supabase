@@ -122,9 +122,23 @@ async def get_job_detail(job_id: str) -> Dict[str, Any]:
 
 
 @app.get("/health")
-async def health() -> Dict[str, str]:
-    """Simple liveness check."""
-    return {"status": "ok"}
+async def health() -> Dict[str, Any]:
+    """Rich liveness check with service metadata."""
+    from clippers.config import settings
+
+    registry = get_default_registry()
+    all_jobs = registry.list()
+
+    return {
+        "status": "healthy",
+        "service": "clippers-python-orchestration",
+        "engine": settings.engine,
+        "storage_backend": settings.storage_backend,
+        "version": settings.version,
+        "log_level": settings.log_level,
+        "timestamp": datetime.now(tz=timezone.utc).isoformat(),
+        "jobs_in_memory": len(all_jobs),
+    }
 
 
 # ---------------------------------------------------------------------------
