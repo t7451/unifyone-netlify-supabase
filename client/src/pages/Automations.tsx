@@ -50,6 +50,7 @@ function N8nTab() {
   const [showCreate, setShowCreate] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [testingId, setTestingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -99,8 +100,14 @@ function N8nTab() {
     },
   });
   const test = trpc.automation.n8n.test.useMutation({
-    onSuccess: d => toast.success(`Test sent — HTTP ${d.status}`),
-    onError: e => toast.error(`Test failed: ${e.message}`),
+    onSuccess: d => {
+      setTestingId(null);
+      toast.success(`Test sent — HTTP ${d.status}`);
+    },
+    onError: e => {
+      setTestingId(null);
+      toast.error(`Test failed: ${e.message}`);
+    },
   });
 
   return (
@@ -202,11 +209,14 @@ function N8nTab() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => test.mutate({ id: wf.id })}
-                      disabled={test.isPending && test.variables?.id === wf.id}
+                      onClick={() => {
+                        setTestingId(wf.id);
+                        test.mutate({ id: wf.id });
+                      }}
+                      disabled={testingId === wf.id}
                       className="gap-1 text-xs"
                     >
-                      {test.isPending && test.variables?.id === wf.id ? (
+                      {testingId === wf.id ? (
                         <Loader2 className="w-3 h-3 animate-spin" />
                       ) : (
                         <TestTube2 className="w-3 h-3" />
