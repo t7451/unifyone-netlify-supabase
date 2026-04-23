@@ -22,6 +22,98 @@ pipeline can evolve independently of the orchestration shell that drives it.
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
+## TypeScript + Python Integration
+
+The TypeScript tRPC layer acts as the **API, auth, and billing surface** while
+the Python layer acts as the **execution backend**.  Communication flows like
+this:
+
+```
+Browser / Mobile
+      │  tRPC (type-safe)
+      ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│ TypeScript — Layer 0 (server/routers/clippers.ts)                        │
+│ • Auth + tenant scoping (JWT, Drizzle)                                   │
+│ • Job record created in PostgreSQL (clipping_jobs table)                 │
+│ • Calls clipperWorker.ts to drive the Python layer                       │
+│ • Returns job status / signed clip URLs to the client                    │
+└──────────────────────────────────────────────────────────────────────────┘
+      │  subprocess (python3 clippers/run_job.py) → JSON stdout
+      ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Python — Layer 1 (clippers.jobs) + Layer 2 (clippers.engine)             │
+│ • Downloads source, validates, calls engine, uploads to storage          │
+│ • Returns structured JSON: { clips: [...], status, metrics }             │
+└──────────────────────────────────────────────────────────────────────────┘
+      │  storage keys + signed URLs
+      ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Storage (S3 / Supabase Storage)                                           │
+│ Clips are stored under clips/{tenantId}/{jobId}/clip_NN.mp4              │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### How TypeScript and Python layers communicate
+
+| Concern | Owner |
+|---|---|
+| Auth, billing, multi-tenancy | TypeScript (JWT + Drizzle) |
+| Job record persistence | TypeScript (`clipping_jobs` Drizzle table) |
+| Engine execution | Python (`clippers.jobs.processor.process_job`) |
+| Storage upload | Both layers can upload; TS uploads from engine output paths via `storagePut()` |
+| Signed download URLs | TS generates them via the storage helper; Python provides local signed URLs for standalone use |
+| Error surfacing | Python exits non-zero; TS catches stderr and writes `errorMessage` to DB |
+
+**Key files:**
+
+| File | Purpose |
+|---|---|
+| `server/routers/clippers.ts` | tRPC router: createJob, getJob, listJobs, listClips, testJob |
+| `server/lib/clipperWorker.ts` | Spawns `python3 clippers/run_job.py`, parses JSON, uploads clips, updates DB |
+| `clippers/run_job.py` | CLI entry-point that wraps `process_job` and prints JSON to stdout |
+| `clippers/jobs/processor.py` | Core end-to-end orchestrator |
+| `clippers/jobs/models.py` | `ClippingJob` + `ClipResult` dataclasses — mirror of the Drizzle schema |
+
+### Contract: Python stdout JSON shape
+
+`clippers/run_job.py` writes a single JSON object to stdout on exit:
+
+```jsonc
+{
+  "status": "completed",          // "completed" | "failed"
+  "clips": [
+    {
+      "index": 1,
+      "start": 10.5,              // seconds
+      "end": 55.0,
+      "score": 0.87,
+      "title_suggestion": "...",
+      "caption": "...",
+      "output_path": "/tmp/...",  // local path consumed by TS uploader
+      "storage_key": null,        // set when Python uploads directly
+      "download_url": null        // set when Python uploads directly
+    }
+  ],
+  "error_message": null,          // user-safe string on failure
+  "metrics": { ... }
+}
+```
+
+The TypeScript worker reads `clips[].output_path`, uploads each file via
+`storagePut()`, and then writes the final clip records to the DB.
+
+### Admin Dashboard
+
+A local FastAPI dashboard for inspecting and triggering test jobs is available
+at `clippers/admin/dashboard.py`.  It uses the in-memory job registry and is
+**not** a production deployment target.
+
+```bash
+python -m clippers.admin.dashboard          # http://localhost:8001
+python -m clippers.admin.dashboard --port 9000 --reload
+```
+
 ## Quick start
 
 ### Run a job from the CLI
