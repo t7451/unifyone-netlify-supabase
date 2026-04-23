@@ -85,6 +85,19 @@ export const clippingJobStatusEnum = pgEnum("clipping_job_status", [
   "failed",
   "cancelled",
 ]);
+export const seoContentJobStatusEnum = pgEnum("seo_content_job_status", [
+  "pending",
+  "generating",
+  "generated",
+  "published",
+  "failed",
+  "rejected",
+]);
+export const seoContentTypeEnum = pgEnum("seo_content_type", [
+  "blog_post",
+  "seo_landing",
+  "faq_expansion",
+]);
 export const clippingPlanEnum = pgEnum("clipping_plan", [
   "free",
   "pro",
@@ -1569,3 +1582,55 @@ export const clippingSubscriptions = pgTable(
 export type ClippingSubscription = typeof clippingSubscriptions.$inferSelect;
 export type InsertClippingSubscription =
   typeof clippingSubscriptions.$inferInsert;
+
+// ─── SEO Content Jobs ─────────────────────────────────────────────────────────
+// Tracks AI-generated SEO content (blog posts, landing pages, FAQ expansions)
+// created by the weekly seo-content-generator-scheduled cron job.
+export const seoContentJobs = pgTable(
+  "seo_content_jobs",
+  {
+    id: serial("id").primaryKey(),
+    // URL-safe slug for this piece of content, e.g. "unifyone-vs-woocommerce"
+    slug: varchar("slug", { length: 255 }).notNull().unique(),
+    type: seoContentTypeEnum("type").notNull().default("blog_post"),
+    status: seoContentJobStatusEnum("status").notNull().default("pending"),
+    // Topic string used to prompt the LLM
+    topic: varchar("topic", { length: 500 }).notNull(),
+    // Comma-separated target keywords fed to the LLM
+    targetKeywords: json("targetKeywords").$type<string[]>().notNull().default([]),
+    // Generated page fields (null until generated)
+    title: varchar("title", { length: 500 }),
+    h1: varchar("h1", { length: 500 }),
+    tagline: text("tagline"),
+    description: text("description"),
+    keywords: json("keywords").$type<string[]>(),
+    sections: json("sections").$type<Array<{
+      heading: string;
+      paragraphs: string[];
+      bullets?: string[];
+    }>>(),
+    faq: json("faq").$type<Array<{ q: string; a: string }>>(),
+    related: json("related").$type<string[]>(),
+    // Cron run identifier (ISO timestamp of the run that created this)
+    runId: varchar("runId", { length: 64 }),
+    errorMessage: text("errorMessage"),
+    generatedAt: timestamp("generatedAt"),
+    publishedAt: timestamp("publishedAt"),
+    // Optional: schedule for future generation
+    scheduledFor: timestamp("scheduledFor"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    seoJobStatusIdx: index("seo_content_jobs_status_idx").on(
+      table.status,
+      table.createdAt
+    ),
+    seoJobTypeStatusIdx: index("seo_content_jobs_type_status_idx").on(
+      table.type,
+      table.status
+    ),
+  })
+);
+export type SeoContentJob = typeof seoContentJobs.$inferSelect;
+export type InsertSeoContentJob = typeof seoContentJobs.$inferInsert;
