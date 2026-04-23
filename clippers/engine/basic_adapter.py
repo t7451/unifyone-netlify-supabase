@@ -545,9 +545,9 @@ def score_transcript_text(text: str) -> float:
 
     lowered = text.lower()
     score = 0.25
-    if "?" in text:
+    if "?" in lowered:
         score += 0.12
-    if "!" in text:
+    if "!" in lowered:
         score += 0.08
     word_count = len(text.split())
     score += min(0.18, word_count / 100)
