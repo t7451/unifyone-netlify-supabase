@@ -1,16 +1,12 @@
 # ============================================================================
 # UnifyOne — 1Commerce / PNW Enterprises
-# __APP_URL__
+# https://1commerce.online
 # Last updated: 2026-04-23
 # ============================================================================
 
-# ── Google Search crawlers ────────────────────────────────────────────────
+# ── Google Search crawlers ──────────────────────────────────────────────────
 User-agent: Googlebot
 Allow: /
-Allow: /blog/
-Allow: /seo/
-Allow: /privacy
-Allow: /terms
 Disallow: /api/
 Disallow: /login
 Disallow: /signup
@@ -23,7 +19,6 @@ Disallow: /checkout
 Disallow: /billing
 Disallow: /team
 Disallow: /orders
-Disallow: /products
 Disallow: /customers
 Disallow: /analytics
 Disallow: /settings
@@ -50,32 +45,29 @@ Disallow: /shopify/install
 Disallow: /shopify/success
 Disallow: /sync-monitor
 
-# ── Google Images ─────────────────────────────────────────────────────────
+# ── Google Images ───────────────────────────────────────────────────────────
 User-agent: Googlebot-Image
 Allow: /
 
-# ── Google News ───────────────────────────────────────────────────────────
+# ── Google News ─────────────────────────────────────────────────────────────
 User-agent: Googlebot-News
 Allow: /blog/
 
-# ── Google Shopping ───────────────────────────────────────────────────────
+# ── Google Shopping ─────────────────────────────────────────────────────────
 User-agent: Storebot-Google
 Allow: /
-Allow: /#pricing
 
-# ── Google Search Console inspection ─────────────────────────────────────
+# ── Google Search Console inspection ────────────────────────────────────────
 User-agent: Google-InspectionTool
 Allow: /
 
-# ── Google Extended (Gemini training) — allow for discovery ──────────────
+# ── Google Extended (Gemini training) — allow for discovery ─────────────────
 User-agent: Google-Extended
 Allow: /
 
-# ── Bing ──────────────────────────────────────────────────────────────────
+# ── Bing ────────────────────────────────────────────────────────────────────
 User-agent: Bingbot
 Allow: /
-Allow: /blog/
-Allow: /seo/
 Disallow: /api/
 Disallow: /login
 Disallow: /signup
@@ -88,7 +80,6 @@ Disallow: /checkout
 Disallow: /billing
 Disallow: /team
 Disallow: /orders
-Disallow: /products
 Disallow: /customers
 Disallow: /analytics
 Disallow: /settings
@@ -115,29 +106,29 @@ Disallow: /shopify/install
 Disallow: /shopify/success
 Disallow: /sync-monitor
 
-# ── DuckDuckGo ────────────────────────────────────────────────────────────
+# ── DuckDuckGo ──────────────────────────────────────────────────────────────
 User-agent: DuckDuckBot
 Allow: /
 Disallow: /api/
 
-# ── Yandex ────────────────────────────────────────────────────────────────
+# ── Yandex ──────────────────────────────────────────────────────────────────
 User-agent: YandexBot
 Allow: /
 Disallow: /api/
 
-# ── LinkedIn crawler (for OG preview) ────────────────────────────────────
+# ── LinkedIn crawler (for OG preview) ───────────────────────────────────────
 User-agent: LinkedInBot
 Allow: /
 
-# ── Twitter/X card crawler ────────────────────────────────────────────────
+# ── Twitter/X card crawler ──────────────────────────────────────────────────
 User-agent: Twitterbot
 Allow: /
 
-# ── Facebook crawler (OG preview) ────────────────────────────────────────
+# ── Facebook crawler (OG preview) ───────────────────────────────────────────
 User-agent: facebookexternalhit
 Allow: /
 
-# ── Block AI training crawlers ────────────────────────────────────────────
+# ── Block AI training crawlers ──────────────────────────────────────────────
 User-agent: CCBot
 Disallow: /
 
@@ -153,13 +144,9 @@ Disallow: /
 User-agent: cohere-ai
 Disallow: /
 
-# ── Default rule for all other bots ──────────────────────────────────────
+# ── Default rule for all other bots ─────────────────────────────────────────
 User-agent: *
 Allow: /
-Allow: /blog/
-Allow: /seo/
-Allow: /privacy
-Allow: /terms
 Disallow: /api/
 Disallow: /login
 Disallow: /signup
@@ -172,7 +159,6 @@ Disallow: /checkout
 Disallow: /billing
 Disallow: /team
 Disallow: /orders
-Disallow: /products
 Disallow: /customers
 Disallow: /analytics
 Disallow: /settings
@@ -198,7 +184,6 @@ Disallow: /affiliates
 Disallow: /shopify/install
 Disallow: /shopify/success
 Disallow: /sync-monitor
-Crawl-delay: 1
 
-# ── Sitemaps ──────────────────────────────────────────────────────────────
-Sitemap: __APP_URL__/sitemap.xml
+# ── Sitemap ─────────────────────────────────────────────────────────────────
+Sitemap: https://1commerce.online/sitemap.xml
