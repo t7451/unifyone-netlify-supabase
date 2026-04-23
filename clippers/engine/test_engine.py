@@ -5,6 +5,7 @@ import json
 import shutil
 import subprocess
 import tempfile
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Sequence
@@ -56,6 +57,8 @@ def resolve_video_input(local_video: Path | None, remote_url: str | None) -> Pat
     workspace.mkdir(parents=True, exist_ok=True)
 
     if remote_url:
+        if not is_safe_http_url(remote_url):
+            raise ValueError("Only http:// and https:// URLs are supported for downloads.")
         output_path = workspace / "downloaded-sample.mp4"
         urllib.request.urlretrieve(remote_url, output_path)
         return output_path
@@ -93,6 +96,11 @@ def build_synthetic_sample(output_path: Path) -> None:
         str(output_path),
     )
     subprocess.run(command, check=True, capture_output=True, text=True)
+
+
+def is_safe_http_url(value: str) -> bool:
+    parsed = urllib.parse.urlparse(value)
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 
 if __name__ == "__main__":

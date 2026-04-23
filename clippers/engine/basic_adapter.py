@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import socket
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -217,6 +218,8 @@ class LLMViralityScorer:
         endpoint = os.getenv("OLLAMA_URL")
         model = os.getenv("OLLAMA_MODEL", "llama3.1")
         if not endpoint or not transcript.strip():
+            return 0.0
+        if not is_safe_http_url(endpoint):
             return 0.0
 
         payload = json.dumps(
@@ -464,7 +467,10 @@ class BasicClipperEngine(IClipperEngine):
 
         source = video_path.expanduser().resolve()
         if not source.exists():
-            raise FileNotFoundError(f"Video not found: {source}")
+            raise FileNotFoundError(
+                f"Video file not found at path: {source}. "
+                "Please verify the file exists and the path is correct."
+            )
 
         transcript_segments = self.transcriber.transcribe(source, target_duration)
         energy_peaks = self.energy_analyzer.analyze(source)
@@ -625,3 +631,10 @@ def clamp(value: float, minimum: float = 0.0, maximum: float = 1.0) -> float:
     """Clamp a value to a fixed range."""
 
     return max(minimum, min(maximum, value))
+
+
+def is_safe_http_url(value: str) -> bool:
+    """Allow only HTTP(S) URLs for outbound fetches."""
+
+    parsed = urllib.parse.urlparse(value)
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
