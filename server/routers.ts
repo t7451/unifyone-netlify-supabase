@@ -36,6 +36,7 @@ import { mcpRouter } from "./routers/mcp";
 import { userRouter } from "./routers/user";
 import { gigWorkerRouter } from "./routers/gigWorker";
 import { developerRouter } from "./routers/developer";
+import { clippersRouter } from "./routers/clippers";
 
 export const appRouter = router({
   system: systemRouter,
@@ -88,6 +89,7 @@ export const appRouter = router({
   user: userRouter,
   gigWorker: gigWorkerRouter,
   developer: developerRouter,
+  clippers: clippersRouter,
 });
 
 export type AppRouter = typeof appRouter;
