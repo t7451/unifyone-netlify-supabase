@@ -4,6 +4,8 @@ import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin } from "vite";
+import { SEO_PAGES } from "./client/src/content/seoPages";
+import { prerenderSeoPlugin } from "./vite-plugin-prerender-seo";
 import { sitemapPlugin } from "./vite-plugin-sitemap";
 
 const SITE_HOSTNAME = (
@@ -47,6 +49,11 @@ const plugins = [
   tailwindcss(),
   jsxLocPlugin(),
   vitePluginAppUrl(),
+  prerenderSeoPlugin({
+    hostname: SITE_HOSTNAME,
+    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    pages: SEO_PAGES,
+  }),
   sitemapPlugin({
     hostname: SITE_HOSTNAME,
     outDir: path.resolve(import.meta.dirname, "dist/public"),
