@@ -1,5 +1,6 @@
 import { Suspense, lazy, type ReactNode } from "react";
 import { Route, Switch, useLocation } from "wouter";
+import { ClerkProvider } from "@clerk/clerk-react";
 
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -501,27 +502,41 @@ function Router() {
   );
 }
 
+const CLERK_PUBLISHABLE_KEY = import.meta.env
+  .VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
+
+function AppWithOptionalClerk({ children }: { children: ReactNode }) {
+  if (!CLERK_PUBLISHABLE_KEY) return <>{children}</>;
+  return (
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} afterSignOutUrl="/">
+      {children}
+    </ClerkProvider>
+  );
+}
+
 function App() {
   return (
-    <ErrorBoundary>
-      <ThemeProvider defaultTheme="dark">
-        <TooltipProvider>
-          <Toaster theme="dark" />
-          <Suspense
-            fallback={
-              <LoadingExperience
-                fullScreen
-                title="Loading your next view"
-                description="Streaming route bundles, restoring interface state, and preparing a smoother transition."
-                label="Route bundle loading"
-              />
-            }
-          >
-            <Router />
-          </Suspense>
-        </TooltipProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+    <AppWithOptionalClerk>
+      <ErrorBoundary>
+        <ThemeProvider defaultTheme="dark">
+          <TooltipProvider>
+            <Toaster theme="dark" />
+            <Suspense
+              fallback={
+                <LoadingExperience
+                  fullScreen
+                  title="Loading your next view"
+                  description="Streaming route bundles, restoring interface state, and preparing a smoother transition."
+                  label="Route bundle loading"
+                />
+              }
+            >
+              <Router />
+            </Suspense>
+          </TooltipProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
+    </AppWithOptionalClerk>
   );
 }
 

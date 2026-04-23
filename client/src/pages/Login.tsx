@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import LoadingExperience from "@/components/LoadingExperience";
 import { useLocation } from "wouter";
@@ -20,6 +20,10 @@ import {
   Mail,
   AtSign,
 } from "lucide-react";
+import { useClerk, useSession } from "@clerk/clerk-react";
+
+const CLERK_PUBLISHABLE_KEY = import.meta.env
+  .VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 
 function getReturnTo(): string {
   if (typeof window === "undefined") return "/dashboard";
@@ -89,6 +93,101 @@ type AuthMode = "password" | "sign-in" | "sign-up" | "forgot-password";
 
 type LoginIntent = "signin" | "signup";
 
+/**
+ * Renders a "Continue with Clerk" button and handles the post-sign-in token
+ * exchange.  Only mounted when VITE_CLERK_PUBLISHABLE_KEY is present, which
+ * means ClerkProvider is wrapping the app and the Clerk hooks are available.
+ */
+function ClerkSignInSection({
+  returnTo,
+  onSuccess,
+}: {
+  returnTo: string;
+  onSuccess: () => void;
+}) {
+  const { openSignIn } = useClerk();
+  const { isSignedIn, session } = useSession();
+  const [isClerkSubmitting, setIsClerkSubmitting] = useState(false);
+  const [clerkError, setClerkError] = useState<string | null>(null);
+  // Tracks whether a token exchange is currently in-flight to prevent
+  // concurrent requests when Clerk session state changes mid-request.
+  const isExchangingRef = useRef(false);
+  // Tracks whether exchange has already succeeded, preventing re-exchange.
+  const hasExchangedTokenRef = useRef(false);
+
+  // When Clerk reports a signed-in session, exchange it for an app cookie.
+  useEffect(() => {
+    if (!isSignedIn || !session) return;
+    if (hasExchangedTokenRef.current || isExchangingRef.current) return;
+    isExchangingRef.current = true;
+
+    let cancelled = false;
+
+    session
+      .getToken()
+      .then(async token => {
+        if (cancelled) return;
+        if (!token) throw new Error("No session token");
+        const res = await fetch("/api/auth/clerk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ sessionToken: token }),
+        });
+        if (cancelled) return;
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || "Clerk exchange failed");
+        }
+        hasExchangedTokenRef.current = true;
+        setIsClerkSubmitting(false);
+        onSuccess();
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        isExchangingRef.current = false;
+        setClerkError(
+          err instanceof Error ? err.message : "Clerk sign-in failed"
+        );
+        setIsClerkSubmitting(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSignedIn, session, onSuccess]);
+
+  const handleClerkSignIn = () => {
+    setIsClerkSubmitting(true);
+    setClerkError(null);
+    openSignIn({ afterSignInUrl: returnTo, afterSignUpUrl: returnTo });
+  };
+
+  return (
+    <>
+      {clerkError && (
+        <p className="text-red-400 text-xs text-center">{clerkError}</p>
+      )}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleClerkSignIn}
+        disabled={isClerkSubmitting}
+        className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white"
+      >
+        {isClerkSubmitting ? (
+          <span className="flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Opening Clerk…
+          </span>
+        ) : (
+          "Continue with Clerk"
+        )}
+      </Button>
+    </>
+  );
+}
+
 export default function Login({
   initialIntent = "signin",
 }: { initialIntent?: LoginIntent } = {}) {
@@ -123,7 +222,7 @@ export default function Login({
       setError("That link has expired or is invalid. Please try again.");
     } else if (urlError === "google_oauth_not_ready") {
       setError(
-        "Google OAuth returned to the app, but the callback exchange still needs to be implemented."
+        "Google sign-in is not available yet. Please sign in with your email and password, or contact support."
       );
     }
   }, []);
@@ -180,7 +279,18 @@ export default function Login({
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setError(data.error || "Invalid email or password.");
+        // For rate-limit responses include a human-readable retry hint
+        if (res.status === 429) {
+          const retryAfter = res.headers.get("Retry-After");
+          const seconds = retryAfter ? parseInt(retryAfter, 10) : null;
+          setError(
+            seconds && seconds > 0
+              ? `Too many sign-in attempts. Please wait ${seconds} second${seconds === 1 ? "" : "s"} before trying again.`
+              : "Too many sign-in attempts. Please wait a moment before trying again."
+          );
+        } else {
+          setError(data.error || "Invalid email or password.");
+        }
         if (data.code) setErrorCode(data.code);
         return;
       }
@@ -218,7 +328,27 @@ export default function Login({
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setError(data.error || "Failed to create account.");
+        if (res.status === 429) {
+          const retryAfter = res.headers.get("Retry-After");
+          const seconds = retryAfter ? parseInt(retryAfter, 10) : null;
+          setError(
+            seconds && seconds > 0
+              ? `Too many sign-up attempts. Please wait ${seconds} second${seconds === 1 ? "" : "s"} before trying again.`
+              : "Too many sign-up attempts. Please wait a moment before trying again."
+          );
+        } else {
+          setError(data.error || "Failed to create account.");
+        }
+        return;
+      }
+
+      // If the server requires email verification, surface the check-your-email
+      // screen instead of redirecting silently.
+      if (data.user?.emailVerified === false) {
+        setSuccessMessage(
+          data.message ||
+            "Account created! Please check your email to verify your address before signing in."
+        );
         return;
       }
 
@@ -362,6 +492,8 @@ export default function Login({
   const showPasswordField =
     mode === "password" || mode === "sign-in" || mode === "sign-up";
 
+  const isSignInMode =
+    mode === "sign-in" || (mode === "password" && intent === "signin");
   return (
     <div className="min-h-screen bg-[#060D1F] flex">
       {/* Left panel: branding + features */}
@@ -516,7 +648,7 @@ export default function Login({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label className="text-slate-300 text-sm">Password</Label>
-                  {mode === "sign-in" && (
+                  {isSignInMode && (
                     <button
                       onClick={() => switchMode("forgot-password")}
                       className="text-xs text-[#00D9FF] hover:text-[#00C4E8] transition-colors"
@@ -586,14 +718,19 @@ export default function Login({
                 Redirecting to Google...
               </span>
             ) : (
-              "Continue with Google (scaffold)"
+              "Continue with Google"
             )}
           </Button>
           <p className="text-xs text-slate-500 text-center">
-            Configure Google OAuth after email/password sign-in in Settings →
-            Advanced. Use <span className="font-mono">?tenant=your-store-slug</span>{" "}
-            on this page to test the scaffold.
+            Google sign-in requires configuration in Settings → Advanced.
           </p>
+
+          {CLERK_PUBLISHABLE_KEY && (
+            <ClerkSignInSection
+              returnTo={returnTo}
+              onSuccess={() => navigate(returnTo)}
+            />
+          )}
 
           {mode === "password" && (
             <>

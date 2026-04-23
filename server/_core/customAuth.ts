@@ -14,7 +14,7 @@ import { eq, or } from "drizzle-orm";
 import { users } from "../../drizzle/schema";
 import { sdk } from "./sdk";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import { getAppUrl, ENV } from "./env";
+import { getAppUrl } from "./env";
 import { logger } from "./logger";
 
 const scryptAsync = promisify(scrypt);
@@ -198,15 +198,17 @@ export async function signUp(
     const openId = generateOpenId();
     const displayName = name?.trim() || usernameLower || emailLower.split("@")[0];
 
-    // Auto-verify email if email service is not configured AND we're not in production
-    // This prevents accidental email verification bypass in production due to misconfiguration
+    // Auto-verify email if no email service is configured.
+    // When RESEND_API_KEY is absent there is no way to deliver a verification
+    // link, so requiring verification would permanently lock users out.
+    // Enforcement is only meaningful (and safe) when we can actually send mail.
     const hasEmailService = Boolean(process.env.RESEND_API_KEY);
-    const shouldAutoVerify = !hasEmailService && !ENV.isProduction;
+    const shouldAutoVerify = !hasEmailService; // true in production too when no email service
     const emailVerified = shouldAutoVerify;
 
     if (shouldAutoVerify) {
       logger.warn(
-        "customAuth: Email verification disabled (RESEND_API_KEY not set in non-production environment). Users will be auto-verified."
+        "customAuth: RESEND_API_KEY not set — new users will be auto-verified. Set RESEND_API_KEY to enable email verification."
       );
     }
 
@@ -303,9 +305,12 @@ export async function signIn(
     // Require email verification before granting a session.
     // The client should check for code === "email_not_verified" and offer
     // a "Resend verification email" button.
-    // ONLY enforce when email service is configured OR in production mode
+    // ONLY enforce when email service is configured — if we can't deliver a
+    // verification link there is no point blocking the user (and no way to
+    // unblock them), which would permanently lock out everyone who signed up
+    // without an email service in place.
     const hasEmailService = Boolean(process.env.RESEND_API_KEY);
-    const shouldEnforceVerification = hasEmailService || ENV.isProduction;
+    const shouldEnforceVerification = hasEmailService;
     
     if (user.emailVerified === false && shouldEnforceVerification) {
       return {
@@ -318,7 +323,7 @@ export async function signIn(
 
     if (user.emailVerified === false && !shouldEnforceVerification) {
       logger.warn(
-        "customAuth: Allowing unverified user to sign in (email verification disabled in non-production without RESEND_API_KEY)",
+        "customAuth: Allowing sign-in for unverified user (RESEND_API_KEY not set — email verification disabled)",
         { identifier: identifierLower }
       );
     }
@@ -397,40 +402,22 @@ export async function verifyClerkSession(
   }
 
   try {
-    // Verify Clerk session token
-    const response = await fetch("https://api.clerk.com/v1/sessions/verify", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${clerkSecretKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ token: sessionToken }),
+    const { createClerkClient, verifyToken } = await import("@clerk/backend");
+
+    // Verify the session token (JWT) using @clerk/backend
+    const payload = await verifyToken(sessionToken, {
+      secretKey: clerkSecretKey,
     });
+    const userId = payload.sub;
 
-    if (!response.ok) {
-      return { success: false, error: "Invalid Clerk session" };
-    }
+    // Fetch user details using the typed Clerk client
+    const clerk = createClerkClient({ secretKey: clerkSecretKey });
+    const clerkUser = await clerk.users.getUser(userId);
 
-    const session = await response.json();
-    const userId = session.user_id;
-
-    // Fetch user details
-    const userResponse = await fetch(
-      `https://api.clerk.com/v1/users/${userId}`,
-      {
-        headers: { Authorization: `Bearer ${clerkSecretKey}` },
-      }
-    );
-
-    if (!userResponse.ok) {
-      return { success: false, error: "Failed to fetch Clerk user" };
-    }
-
-    const clerkUser = await userResponse.json();
     const email =
-      clerkUser.email_addresses?.[0]?.email_address || `${userId}@clerk.local`;
+      clerkUser.emailAddresses?.[0]?.emailAddress || `${userId}@clerk.local`;
     const name =
-      `${clerkUser.first_name || ""} ${clerkUser.last_name || ""}`.trim() ||
+      `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() ||
       email.split("@")[0];
 
     // Create or update local user
