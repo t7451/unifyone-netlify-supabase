@@ -14,7 +14,7 @@ import { eq, or } from "drizzle-orm";
 import { users } from "../../drizzle/schema";
 import { sdk } from "./sdk";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import { getAppUrl, ENV } from "./env";
+import { getAppUrl } from "./env";
 import { logger } from "./logger";
 
 const scryptAsync = promisify(scrypt);
@@ -402,40 +402,22 @@ export async function verifyClerkSession(
   }
 
   try {
-    // Verify Clerk session token
-    const response = await fetch("https://api.clerk.com/v1/sessions/verify", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${clerkSecretKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ token: sessionToken }),
+    const { createClerkClient, verifyToken } = await import("@clerk/backend");
+
+    // Verify the session token (JWT) using @clerk/backend
+    const payload = await verifyToken(sessionToken, {
+      secretKey: clerkSecretKey,
     });
+    const userId = payload.sub;
 
-    if (!response.ok) {
-      return { success: false, error: "Invalid Clerk session" };
-    }
+    // Fetch user details using the typed Clerk client
+    const clerk = createClerkClient({ secretKey: clerkSecretKey });
+    const clerkUser = await clerk.users.getUser(userId);
 
-    const session = await response.json();
-    const userId = session.user_id;
-
-    // Fetch user details
-    const userResponse = await fetch(
-      `https://api.clerk.com/v1/users/${userId}`,
-      {
-        headers: { Authorization: `Bearer ${clerkSecretKey}` },
-      }
-    );
-
-    if (!userResponse.ok) {
-      return { success: false, error: "Failed to fetch Clerk user" };
-    }
-
-    const clerkUser = await userResponse.json();
     const email =
-      clerkUser.email_addresses?.[0]?.email_address || `${userId}@clerk.local`;
+      clerkUser.emailAddresses?.[0]?.emailAddress || `${userId}@clerk.local`;
     const name =
-      `${clerkUser.first_name || ""} ${clerkUser.last_name || ""}`.trim() ||
+      `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() ||
       email.split("@")[0];
 
     // Create or update local user

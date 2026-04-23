@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import LoadingExperience from "@/components/LoadingExperience";
 import { useLocation } from "wouter";
@@ -20,6 +20,10 @@ import {
   Mail,
   AtSign,
 } from "lucide-react";
+import { useClerk, useSession } from "@clerk/clerk-react";
+
+const CLERK_PUBLISHABLE_KEY = import.meta.env
+  .VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 
 function getReturnTo(): string {
   if (typeof window === "undefined") return "/dashboard";
@@ -88,6 +92,85 @@ function LogoMark({ size = 40 }: { size?: number }) {
 type AuthMode = "password" | "sign-in" | "sign-up" | "forgot-password";
 
 type LoginIntent = "signin" | "signup";
+
+/**
+ * Renders a "Continue with Clerk" button and handles the post-sign-in token
+ * exchange.  Only mounted when VITE_CLERK_PUBLISHABLE_KEY is present, which
+ * means ClerkProvider is wrapping the app and the Clerk hooks are available.
+ */
+function ClerkSignInSection({
+  returnTo,
+  onSuccess,
+}: {
+  returnTo: string;
+  onSuccess: () => void;
+}) {
+  const { openSignIn } = useClerk();
+  const { isSignedIn, session } = useSession();
+  const [isClerkSubmitting, setIsClerkSubmitting] = useState(false);
+  const [clerkError, setClerkError] = useState<string | null>(null);
+  const exchangedRef = useRef(false);
+
+  // When Clerk reports a signed-in session, exchange it for an app cookie.
+  useEffect(() => {
+    if (!isSignedIn || !session || exchangedRef.current) return;
+    exchangedRef.current = true;
+
+    session
+      .getToken()
+      .then(async token => {
+        if (!token) throw new Error("No session token");
+        const res = await fetch("/api/auth/clerk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ sessionToken: token }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || "Clerk exchange failed");
+        }
+        onSuccess();
+      })
+      .catch((err: unknown) => {
+        exchangedRef.current = false;
+        setClerkError(
+          err instanceof Error ? err.message : "Clerk sign-in failed"
+        );
+        setIsClerkSubmitting(false);
+      });
+  }, [isSignedIn, session, onSuccess]);
+
+  const handleClerkSignIn = () => {
+    setIsClerkSubmitting(true);
+    setClerkError(null);
+    openSignIn({ afterSignInUrl: returnTo, afterSignUpUrl: returnTo });
+  };
+
+  return (
+    <>
+      {clerkError && (
+        <p className="text-red-400 text-xs text-center">{clerkError}</p>
+      )}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleClerkSignIn}
+        disabled={isClerkSubmitting}
+        className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white"
+      >
+        {isClerkSubmitting ? (
+          <span className="flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Opening Clerk…
+          </span>
+        ) : (
+          "Continue with Clerk"
+        )}
+      </Button>
+    </>
+  );
+}
 
 export default function Login({
   initialIntent = "signin",
@@ -625,6 +708,13 @@ export default function Login({
           <p className="text-xs text-slate-500 text-center">
             Google sign-in requires configuration in Settings → Advanced.
           </p>
+
+          {CLERK_PUBLISHABLE_KEY && (
+            <ClerkSignInSection
+              returnTo={returnTo}
+              onSuccess={() => navigate(returnTo)}
+            />
+          )}
 
           {mode === "password" && (
             <>
