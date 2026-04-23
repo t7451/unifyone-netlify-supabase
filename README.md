@@ -1,29 +1,31 @@
 # UnifyOne
 
-UnifyOne is a multi-tenant commerce platform for PNW Enterprises / 1Commerce LLC.
-This repository currently contains:
+**UnifyOne** is an AI-powered, multi-tenant commerce platform built for PNW Enterprises / 1Commerce LLC. It lets you manage stores, orders, customers, and analytics across multiple tenants — all from a single unified dashboard, with built-in AI automation via Claude.
 
-- the legacy React + Express application at the repo root
-- an Astro workspace app in `apps/unifyone/` for the next site iteration
-- shared SEO utilities in `packages/seo/`
-- MCP tooling that exposes UnifyOne data to Claude Desktop, n8n, and other agents
+This repository contains:
+
+- **Root app** — the production React + Express application
+- **`apps/unifyone/`** — an Astro-based marketing and content site (next iteration)
+- **`packages/seo/`** — shared SEO utilities consumed by the Astro app
+- **`src-typescript/`** — a typed MCP (Model Context Protocol) server that surfaces UnifyOne data to Claude Desktop, n8n, and other AI agents
 
 ## Repository layout
 
-| Path              | Purpose                                                                                 |
-| ----------------- | --------------------------------------------------------------------------------------- |
-| `/`               | Legacy production app: React 19 + Vite frontend, Express + tRPC backend, Drizzle schema |
-| `/apps/unifyone`  | Astro app for the newer marketing / content experience                                  |
-| `/packages/seo`   | Shared SEO helpers used by the Astro app                                                |
-| `/infra/neon`     | Neon bootstrap SQL and setup notes                                                      |
-| `/netlify`        | Netlify function entrypoints and deployment wiring                                      |
-| `/src-typescript` | TypeScript MCP server package                                                           |
+| Path              | Purpose                                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| `/`               | **Production app** — React 19 + Vite frontend, Express + tRPC API, Drizzle ORM schema, and Vitest test suite |
+| `/apps/unifyone`  | **Marketing site** — Astro app for the public-facing marketing and content experience                         |
+| `/packages/seo`   | **SEO utilities** — shared meta-tag and sitemap helpers used by the Astro app                                 |
+| `/infra/neon`     | **Database bootstrap** — Neon (serverless Postgres) setup SQL and migration notes                             |
+| `/netlify`        | **Serverless functions** — Netlify function entrypoints and deployment configuration                          |
+| `/src-typescript` | **MCP server** — TypeScript package that runs a Model Context Protocol server over stdio                      |
 
 ## Prerequisites
 
-- Node.js 22+
-- Corepack enabled
-- pnpm 10
+- **Node.js 22+**
+- **pnpm 10** (managed via Corepack)
+
+Enable Corepack and verify pnpm is available:
 
 ```bash
 corepack enable
@@ -40,63 +42,64 @@ corepack pnpm install
 
 ### 2. Configure environment variables
 
-For the legacy app:
+Copy the example file and fill in your values:
 
 ```bash
 cp .env.example .env
 ```
 
-Minimum values to run the root app locally:
+**Required variables** for the root app:
 
-| Variable         | Why it matters                                     |
-| ---------------- | -------------------------------------------------- |
-| `JWT_SECRET`     | Signs session JWTs; must be at least 32 characters |
-| `DATABASE_URL`   | Enables Drizzle / server data access               |
-| `PUBLIC_APP_URL` | Canonical app URL, used in auth, payments, and SEO |
+| Variable         | Purpose                                                 |
+| ---------------- | ------------------------------------------------------- |
+| `JWT_SECRET`     | Signs and verifies session tokens (minimum 32 characters) |
+| `DATABASE_URL`   | PostgreSQL connection string for Drizzle ORM            |
+| `PUBLIC_APP_URL` | Canonical URL used in auth redirects, payments, and SEO |
 
-Optional but common:
+**Optional variables** (add as needed):
 
-- `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` for realtime features
-- payment provider keys for Stripe, PayPal, Square, and Shopify
-- `MCP_API_KEY` for authenticated `/mcp` access
+- `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` — enable realtime features via Supabase
+- Payment provider keys — `STRIPE_SECRET_KEY`, `PAYPAL_CLIENT_ID`, `SQUARE_ACCESS_TOKEN`, `SHOPIFY_*`
+- `MCP_API_KEY` — protects the `/mcp` endpoint with bearer-token authentication
 
-If you are working on the Astro app too:
+If you are also working on the Astro marketing site:
 
 ```bash
 cp apps/unifyone/.env.example apps/unifyone/.env
 ```
 
-That app expects values such as `NEON_DATABASE_URL`, `CLERK_SECRET_KEY`,
-`CLERK_WEBHOOK_SECRET`, and `PUBLIC_CLERK_PUBLISHABLE_KEY`.
+That app additionally requires `NEON_DATABASE_URL`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`, and `PUBLIC_CLERK_PUBLISHABLE_KEY`.
 
 ## Local development
 
-### Legacy root app
+### Root app (React + Express)
+
+Start the development server with hot reload:
 
 ```bash
 corepack pnpm dev
 ```
 
-The Express server defaults to `http://localhost:3000`.
+The Express API server starts at `http://localhost:3000` and the Vite frontend is served on the same port via proxy.
 
-Useful root-level commands:
+Other useful commands:
+
+| Command                   | What it does                          |
+| ------------------------- | ------------------------------------- |
+| `corepack pnpm check`     | Run TypeScript type checking          |
+| `corepack pnpm lint`      | Lint all `.ts` / `.tsx` files         |
+| `corepack pnpm test`      | Run the Vitest test suite             |
+| `corepack pnpm build`     | Build the frontend + server bundle    |
+
+### Astro marketing site
 
 ```bash
-corepack pnpm check
-corepack pnpm lint
-corepack pnpm test
-corepack pnpm build
+corepack pnpm --filter unifyone dev    # start dev server
+corepack pnpm --filter unifyone build  # production build
 ```
 
-### Astro workspace app
-
-```bash
-corepack pnpm --filter unifyone dev
-corepack pnpm --filter unifyone build
-```
-
-See `apps/unifyone/README.md` for Astro-specific details and
-`infra/neon/README.md` for Neon bootstrap steps.
+- Astro-specific details: `apps/unifyone/README.md`
+- Database bootstrap steps: `infra/neon/README.md`
 
 ## Deployment and operations docs
 
@@ -108,33 +111,37 @@ See `apps/unifyone/README.md` for Astro-specific details and
 
 ## MCP integration
 
-The platform exposes an MCP server for Claude Desktop, custom agents, and workflow tools.
+**MCP (Model Context Protocol)** is an open standard that lets AI assistants like Claude interact with external data sources through a structured tool interface. UnifyOne exposes an MCP server so that Claude Desktop, n8n workflows, and custom agents can query your stores, orders, customers, and analytics in real time.
 
 ### Endpoints
 
-| Endpoint    | Method | Purpose                     |
-| ----------- | ------ | --------------------------- |
-| `GET /mcp`  | GET    | Health probe                |
-| `POST /mcp` | POST   | JSON-RPC 2.0 MCP dispatcher |
+| Endpoint    | Method | Purpose                                      |
+| ----------- | ------ | -------------------------------------------- |
+| `GET /mcp`  | GET    | Health probe — confirm the server is running |
+| `POST /mcp` | POST   | JSON-RPC 2.0 dispatcher — invoke MCP tools   |
 
 ### Authentication
 
-When `MCP_API_KEY` is configured, send it as a bearer token:
+When `MCP_API_KEY` is set, include it as a bearer token on every request:
 
 ```http
 Authorization: Bearer <MCP_API_KEY>
 ```
 
-### Core MCP tool groups
+### Available tool groups
 
-- Foundation: `list_stores`, `get_tenant_info`
-- Products: `list_products`, `get_product`, `search_products`, `get_inventory`
-- Orders: `list_orders`, `get_order`, `create_order`
-- Customers: `list_customers`, `get_customer`
-- Analytics: `get_analytics_summary`, `get_revenue_by_day`, `get_webhook_events`
-- Platform / AI: `get_notifications`, `get_platform_stats`, `ask_kai`
+| Group           | Tools                                                                         |
+| --------------- | ----------------------------------------------------------------------------- |
+| **Foundation**  | `list_stores`, `get_tenant_info`                                              |
+| **Products**    | `list_products`, `get_product`, `search_products`, `get_inventory`            |
+| **Orders**      | `list_orders`, `get_order`, `create_order`                                    |
+| **Customers**   | `list_customers`, `get_customer`                                              |
+| **Analytics**   | `get_analytics_summary`, `get_revenue_by_day`, `get_webhook_events`           |
+| **Platform/AI** | `get_notifications`, `get_platform_stats`, `ask_kai`                          |
 
-### Claude Desktop (remote MCP)
+### Connect Claude Desktop (remote server)
+
+Add the following to your Claude Desktop `claude_desktop_config.json`:
 
 ```json
 {
@@ -149,7 +156,7 @@ Authorization: Bearer <MCP_API_KEY>
 }
 ```
 
-### Claude Desktop (local MCP)
+### Connect Claude Desktop (local server)
 
 ```json
 {
@@ -161,9 +168,11 @@ Authorization: Bearer <MCP_API_KEY>
 }
 ```
 
-### TypeScript SDK
+### TypeScript stdio server
 
-The package in `src-typescript/` exposes a typed MCP server over stdio:
+The `src-typescript/` package runs a Model Context Protocol server over stdio — useful for local development and testing without a running HTTP server.
+
+Build the package:
 
 ```bash
 cd src-typescript
@@ -171,7 +180,7 @@ corepack pnpm install
 corepack pnpm build
 ```
 
-Example Claude Desktop config:
+Add it to Claude Desktop:
 
 ```json
 {
@@ -188,7 +197,7 @@ Example Claude Desktop config:
 }
 ```
 
-### Raw JSON-RPC usage
+### Test with cURL
 
 ```bash
 curl -s -X POST https://1commerce.online/mcp \
