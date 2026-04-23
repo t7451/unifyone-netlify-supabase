@@ -571,7 +571,7 @@ function ZapierTab() {
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700 text-white"
-              onClick={() => deletingId !== null && del.mutate({ id: deletingId })}
+              onClick={() => del.mutate({ id: deletingId! })}
             >
               {del.isPending ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting...</>

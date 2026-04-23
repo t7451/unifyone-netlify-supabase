@@ -154,7 +154,7 @@ export default function Orders() {
   const handleCreate = () => {
     if (items.some(i => !i.productName || i.quantity < 1)) {
       // Mark all items as touched so validation errors appear immediately
-      setItemsTouched(items.map(() => true));
+      setItemsTouched(Array<boolean>(items.length).fill(true));
       toast.error("All items need a name and quantity ≥ 1");
       return;
     }

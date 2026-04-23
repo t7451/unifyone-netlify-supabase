@@ -83,6 +83,7 @@ export default function Customers() {
     if (!t) return;
     if (tags.includes(t)) {
       toast.error(`Tag "${t}" already exists`);
+      setTagInput("");
       return;
     }
     setTags([...tags, t]);

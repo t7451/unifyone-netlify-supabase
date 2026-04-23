@@ -445,7 +445,7 @@ export default function Team() {
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700 text-white"
-              onClick={() => removingMemberId !== null && removeMember.mutate({ userId: removingMemberId })}
+              onClick={() => removeMember.mutate({ userId: removingMemberId! })}
             >
               {removeMember.isPending ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Removing...</>

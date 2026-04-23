@@ -271,12 +271,17 @@ export default function Products() {
   const [bulkAction, setBulkAction] = useState<"active" | "draft" | "archive" | null>(null);
   const utils = trpc.useUtils();
 
-  const getErrors = (f: ProductForm, touched: Record<string, boolean>) => ({
-    name: touched.name && !f.name.trim() ? "Product name is required" : undefined,
-    price: touched.price && !f.price ? "Price is required"
-      : touched.price && Number(f.price) <= 0 ? "Price must be greater than 0"
-      : undefined,
-  });
+  const getErrors = (f: ProductForm, touched: Record<string, boolean>) => {
+    const nameTouched = touched.name ?? false;
+    const priceTouched = touched.price ?? false;
+    const priceNum = Number(f.price);
+    return {
+      name: nameTouched && !f.name.trim() ? "Product name is required" : undefined,
+      price: priceTouched && !f.price ? "Price is required"
+        : priceTouched && priceNum <= 0 ? "Price must be greater than 0"
+        : undefined,
+    };
+  };
 
   const products = trpc.products.list.useQuery({
     search: search || undefined,
