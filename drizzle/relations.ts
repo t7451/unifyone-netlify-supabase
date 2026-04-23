@@ -1,5 +1,8 @@
 import { relations } from "drizzle-orm";
 import {
+  clips,
+  clippingJobs,
+  clippingSubscriptions,
   users,
   tenants,
   orders,
@@ -16,6 +19,10 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   tenant: one(tenants, { fields: [users.tenantId], references: [tenants.id] }),
   /** Tenants this user owns. */
   ownedTenants: many(tenants),
+  /** Clippers jobs created by this user. */
+  clippingJobs: many(clippingJobs),
+  /** Clippers subscription owner row. */
+  clippingSubscriptions: many(clippingSubscriptions),
 }));
 
 export const tenantsRelations = relations(tenants, ({ one, many }) => ({
@@ -29,6 +36,12 @@ export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   customers: many(customers),
   /** All categories under this tenant. */
   categories: many(categories),
+  /** All clipping jobs under this tenant. */
+  clippingJobs: many(clippingJobs),
+  /** All generated clips under this tenant. */
+  clips: many(clips),
+  /** Tenant's Clippers subscription state. */
+  clippingSubscriptions: many(clippingSubscriptions),
 }));
 
 // ── orders ↔ orderItems / customers ──────────────────────────────────────────
@@ -92,3 +105,42 @@ export const categoriesRelations = relations(categories, ({ one, many }) => ({
   /** Products assigned to this category. */
   products: many(products),
 }));
+
+// ── clippers ────────────────────────────────────────────────────────────────────
+
+export const clippingJobsRelations = relations(clippingJobs, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [clippingJobs.tenantId],
+    references: [tenants.id],
+  }),
+  user: one(users, {
+    fields: [clippingJobs.userId],
+    references: [users.id],
+  }),
+  clips: many(clips),
+}));
+
+export const clipsRelations = relations(clips, ({ one }) => ({
+  job: one(clippingJobs, {
+    fields: [clips.jobId],
+    references: [clippingJobs.id],
+  }),
+  tenant: one(tenants, {
+    fields: [clips.tenantId],
+    references: [tenants.id],
+  }),
+}));
+
+export const clippingSubscriptionsRelations = relations(
+  clippingSubscriptions,
+  ({ one }) => ({
+    tenant: one(tenants, {
+      fields: [clippingSubscriptions.tenantId],
+      references: [tenants.id],
+    }),
+    user: one(users, {
+      fields: [clippingSubscriptions.userId],
+      references: [users.id],
+    }),
+  })
+);
