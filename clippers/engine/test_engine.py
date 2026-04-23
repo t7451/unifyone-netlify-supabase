@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import shutil
 import subprocess
 import tempfile
@@ -11,12 +12,17 @@ from pathlib import Path
 from typing import Sequence
 
 from clippers.engine.adapter import get_clipper_engine
+from clippers.jobs import ClippingJob, JobStatus, process_job
 
 SYNTHETIC_VIDEO_DURATION_SECONDS = 18
 
 
 def main() -> int:
     args = parse_args()
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
     video_path = resolve_video_input(args.video, args.url)
 
     for engine_name in args.engines:
@@ -28,6 +34,26 @@ def main() -> int:
             style=args.style,
         )
         print(json.dumps({"engine": engine_name, "clips": clips}, indent=2))
+
+    if args.job_flow:
+        for engine_name in args.engines:
+            job = ClippingJob(
+                input_file_path=str(video_path),
+                num_clips=args.num_clips,
+                target_duration=args.target_duration,
+                style=args.style,
+                engine=engine_name,
+            )
+            process_job(job)
+            print(
+                json.dumps(
+                    {"engine": engine_name, "job": job.to_dict()},
+                    indent=2,
+                    default=str,
+                )
+            )
+            if job.status != JobStatus.COMPLETED:
+                return 1
 
     return 0
 
@@ -46,6 +72,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-clips", type=int, default=3)
     parser.add_argument("--target-duration", type=int, default=20)
     parser.add_argument("--style", type=str, default="default")
+    parser.add_argument(
+        "--job-flow",
+        action="store_true",
+        help="Also exercise the Phase 3 end-to-end job processor.",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable debug logging.",
+    )
     return parser.parse_args()
 
 
