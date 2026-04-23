@@ -213,7 +213,7 @@ const CONTENT_SCHEMA = {
       },
       related: {
         type: "array",
-        description: "2-4 related slug strings from the UnifyOne SEO page library for internal linking",
+        description: "2-4 related blog post slug strings (URL-safe, hyphenated) from within the UnifyOne / 1Commerce content library for internal linking",
         items: { type: "string" },
       },
     },

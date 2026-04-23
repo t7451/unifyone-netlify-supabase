@@ -340,13 +340,13 @@ export default function DynamicBlogPost() {
             <span className="inscription block mb-6">Related Guides</span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {related.map(r => (
-                <Link key={r} href={`/seo/${r}`}>
+                <Link key={r} href={`/blog/${r}`}>
                   <div className="stone-card p-6 cursor-pointer group">
                     <span
                       className="inscription block mb-2"
                       style={{ color: "#3A3A3A" }}
                     >
-                      UnifyOne Guide
+                      Related Post
                     </span>
                     <h4
                       className="font-cinzel text-sm font-600 group-hover:text-amber-400 transition-colors"
