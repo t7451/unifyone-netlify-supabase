@@ -1,0 +1,49 @@
+version: "3.9"
+
+# Both containers share the same image build context and pnpm workspace.
+# Resource limits keep them under the Contabo box's budget while n8n uses
+# the rest.
+
+services:
+  spire-worker:
+    build:
+      context: ../../
+      dockerfile: services/spire-worker/Dockerfile.worker
+    image: spire-worker:latest
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      # Encrypted storage-state blobs live in the DB; this mount is only for
+      # transient ./storage-state/ files written during Playwright capture
+      # (e.g. screenshots on failure). Never commit the contents.
+      - ./storage-state:/app/storage-state
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  spire-rank:
+    build:
+      context: ../../
+      dockerfile: services/spire-worker/Dockerfile.rank
+    image: spire-rank:latest
+    restart: unless-stopped
+    env_file: .env
+    # The rank script sleeps internally between weekly runs; no external cron.
+    # `docker exec spire-rank node dist/rank.js --now` forces an immediate run.
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
