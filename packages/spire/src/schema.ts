@@ -158,6 +158,10 @@ export const directories = pgTable("spire_directories", {
     .array()
     .notNull()
     .default(sql`'{}'::text[]`),
+  // Batch 04 addendum: tier 1 = claim yourself this week (GBP, Bing, Apple);
+  // 2 = aggregator-bundled (BrightLocal); 3 = tech/SaaS after content thickens;
+  // 4 = launch-milestones only (HN, Reddit); 5 = local/government pending.
+  tier: integer("tier"),
   active: boolean("active").notNull().default(true),
   cooldownDays: integer("cooldown_days").notNull().default(90),
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -293,6 +297,81 @@ export const rankChecks = pgTable(
   })
 );
 
+// --- Batch 04 addendum: outreach prospects + submission citations ---
+// SQL in infra/neon/0005_outreach_prospects.sql.
+
+export const outreachProspects = pgTable(
+  "spire_outreach_prospects",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    siteId: uuid("site_id")
+      .notNull()
+      .references(() => sites.id, { onDelete: "cascade" }),
+    source: text("source").notNull(),
+    sourceRef: text("source_ref"),
+    domain: text("domain").notNull(),
+    backlinkUrl: text("backlink_url"),
+    anchorText: text("anchor_text"),
+    competitorUrl: text("competitor_url"),
+    prospectContactEmail: text("prospect_contact_email"),
+    prospectContactName: text("prospect_contact_name"),
+    prospectType: text("prospect_type"),
+    estimatedDr: integer("estimated_dr"),
+    reachabilityScore: integer("reachability_score"),
+    notes: text("notes"),
+    status: text("status").notNull().default("new"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  t => ({
+    prospectUnique: uniqueIndex(
+      "spire_outreach_prospects_site_domain_url_key"
+    ).on(t.siteId, t.domain, t.backlinkUrl),
+    queueIdx: index("spire_outreach_prospects_queue_idx").on(
+      t.siteId,
+      t.status,
+      t.reachabilityScore
+    ),
+  })
+);
+
+export const submissionCitations = pgTable(
+  "spire_submission_citations",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    submissionId: uuid("submission_id")
+      .notNull()
+      .references(() => submissions.id, { onDelete: "cascade" }),
+    aggregator: text("aggregator").notNull(),
+    aggregatorRef: text("aggregator_ref"),
+    directoryName: text("directory_name").notNull(),
+    liveUrl: text("live_url"),
+    status: text("status").notNull().default("pending"),
+    propagatedAt: timestamp("propagated_at", { withTimezone: true }),
+    rawPayload: jsonb("raw_payload"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  t => ({
+    parentIdx: index("spire_submission_citations_parent_idx").on(
+      t.submissionId,
+      t.status
+    ),
+  })
+);
+
 export type Site = typeof sites.$inferSelect;
 export type NewSite = typeof sites.$inferInsert;
 export type Keyword = typeof keywords.$inferSelect;
@@ -309,6 +388,10 @@ export type MeshTopic = typeof meshTopics.$inferSelect;
 export type MeshCoverage = typeof meshCoverage.$inferSelect;
 export type TrackedKeyword = typeof trackedKeywords.$inferSelect;
 export type RankCheck = typeof rankChecks.$inferSelect;
+export type OutreachProspect = typeof outreachProspects.$inferSelect;
+export type NewOutreachProspect = typeof outreachProspects.$inferInsert;
+export type SubmissionCitation = typeof submissionCitations.$inferSelect;
+export type NewSubmissionCitation = typeof submissionCitations.$inferInsert;
 
 // Avoid unused-import lint warnings in IDEs when `check` isn't used — Drizzle
 // CHECK constraints live in the SQL file; export it so downstream modules can
