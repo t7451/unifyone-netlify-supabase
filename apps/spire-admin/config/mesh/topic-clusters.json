@@ -1,0 +1,111 @@
+{
+  "clusters": [
+    {
+      "slug": "gig-economy",
+      "display_name": "Gig economy & rideshare",
+      "description": "DoorDash, Uber, Lyft, Instacart — earnings, taxes, optimization"
+    },
+    {
+      "slug": "freelance-income",
+      "display_name": "Freelance & 1099 income",
+      "description": "Independent contractor finances, client billing, quarterly taxes"
+    },
+    {
+      "slug": "ai-infrastructure",
+      "display_name": "AI infrastructure & routing",
+      "description": "LLM APIs, MCP, multi-model routing, developer tooling"
+    },
+    {
+      "slug": "smb-commerce",
+      "display_name": "SMB commerce operations",
+      "description": "Shopify, multi-channel selling, inventory, margin analysis"
+    },
+    {
+      "slug": "environmental-services",
+      "display_name": "Environmental & land services",
+      "description": "Remediation, compliance, assessments — ClearPath territory"
+    },
+    {
+      "slug": "legal-intelligence",
+      "display_name": "Legal & regulatory intelligence",
+      "description": "Case research, compliance automation — Compass AI territory"
+    },
+    {
+      "slug": "domain-assets",
+      "display_name": "Domain arbitrage & RWA",
+      "description": "Aftermarket domains, appraisal, portfolio — PACER territory"
+    },
+    {
+      "slug": "affiliate-ops",
+      "display_name": "Affiliate operations",
+      "description": "Referral tracking, partner enablement — Torqued territory"
+    },
+    {
+      "slug": "editorial-practitioner",
+      "display_name": "Practitioner editorial",
+      "description": "Operator-voice long-form — The Signal territory"
+    }
+  ],
+  "coverage": [
+    {
+      "site": "unifyone",
+      "cluster": "gig-economy",
+      "primary_path": "/gig-workers",
+      "weight": 90
+    },
+    {
+      "site": "unifyone",
+      "cluster": "freelance-income",
+      "primary_path": "/freelancers",
+      "weight": 90
+    },
+    {
+      "site": "unifyone",
+      "cluster": "ai-infrastructure",
+      "primary_path": "/developers",
+      "weight": 90
+    },
+    {
+      "site": "unifyone",
+      "cluster": "smb-commerce",
+      "primary_path": "/smb",
+      "weight": 90
+    },
+    {
+      "site": "the-signal",
+      "cluster": "editorial-practitioner",
+      "primary_path": "/",
+      "weight": 95
+    },
+    {
+      "site": "the-signal",
+      "cluster": "gig-economy",
+      "primary_path": "/archive",
+      "weight": 60
+    },
+    {
+      "site": "clearpath",
+      "cluster": "environmental-services",
+      "primary_path": "/",
+      "weight": 95
+    },
+    {
+      "site": "compass",
+      "cluster": "legal-intelligence",
+      "primary_path": "/",
+      "weight": 95
+    },
+    {
+      "site": "pacer",
+      "cluster": "domain-assets",
+      "primary_path": "/",
+      "weight": 95
+    },
+    {
+      "site": "torqued",
+      "cluster": "affiliate-ops",
+      "primary_path": "/",
+      "weight": 95
+    }
+  ]
+}
