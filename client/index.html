@@ -390,18 +390,125 @@
         text-transform: uppercase;
         opacity: 0.75;
       }
+      /* Pre-hydration SEO content — rendered for crawlers that do not
+         execute JavaScript. Covered by the loader overlay so users never
+         see it flash; React's createRoot().render() replaces it on mount. */
+      #seo-prerender {
+        color: #E6E6E6;
+        background: #020202;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 48px 24px;
+        line-height: 1.65;
+      }
+      #seo-prerender h1 {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: #D4A843;
+        margin: 0 0 16px;
+      }
+      #seo-prerender h2 {
+        font-size: 1.35rem;
+        font-weight: 600;
+        color: #D4A843;
+        margin: 32px 0 12px;
+      }
+      #seo-prerender p { margin: 0 0 16px; }
+      #seo-prerender ul { margin: 0 0 16px; padding-left: 22px; }
+      #seo-prerender li { margin: 0 0 8px; }
+      #seo-prerender a { color: #D4A843; }
     </style>
   </head>
 
   <body>
     <div id="root">
-      <!-- Shown while JavaScript downloads and React initialises.
-           React's createRoot().render() replaces this content automatically. -->
+      <!-- Pre-hydration SEO content. Contains the primary h1 and
+           descriptive copy so crawlers (and noscript users) see real
+           content in the initial HTTP response. React's createRoot().render()
+           replaces this markup once the bundle loads. -->
+      <main id="seo-prerender">
+        <h1>UnifyOne: Your AI Knows What You Actually Earn.</h1>
+        <p>
+          <strong>UnifyOne by 1Commerce (PNW Enterprises)</strong> is the
+          AI-powered multi-tenant commerce platform for gig operators and
+          e-commerce teams. It is the unified commerce infrastructure built
+          for multi-tenant e-commerce operators, agencies, and gig-economy
+          professionals. Connect Shopify, Stripe, PayPal, and Square, sync
+          earnings data from DoorDash, Uber Eats, Instacart, and Amazon Flex,
+          and let Kai — UnifyOne's built-in AI sidekick — turn your real
+          revenue, mileage, and shift history into actionable earnings
+          insights, tax-deduction tracking, and route-optimization
+          recommendations.
+        </p>
+        <p>
+          Engineered on the Cathedral Framework — a sequential, structural
+          approach to commerce infrastructure — UnifyOne unifies products,
+          orders, payments, analytics, and AI automation across every tenant,
+          channel, and integration. Start on the free Acolyte tier, scale to
+          Architect for multi-tenant teams, or deploy Cathedral for white-label
+          enterprise commerce with custom domains, SLA guarantees, and
+          dedicated infrastructure.
+        </p>
+
+        <h2>Why Operators Choose UnifyOne</h2>
+        <ul>
+          <li><strong>GigIQ — Shift Intelligence:</strong> See which hours, zones, and platforms actually pay the most from your real earnings data.</li>
+          <li><strong>Tax Autopilot:</strong> Auto-capture mileage at the current IRS rate with real-time year-to-date deduction tracking and quarterly estimate alerts.</li>
+          <li><strong>UnifyAI Router:</strong> One unified API key routes to Claude, GPT-4, Gemini, and 300+ AI models with predictable single-vendor billing.</li>
+          <li><strong>MoneyPulse Money Manager:</strong> Budgeting, goal tracking, earnings forecasts, and spending analysis connected to your real gig and commerce income.</li>
+          <li><strong>1Commerce Engine:</strong> Multi-tenant storefront management, Shopify sync, affiliate network tools, and order fulfillment in one dashboard.</li>
+          <li><strong>Kai AI Sidekick:</strong> An in-house AI that reads your actual data, routes across models, and keeps costs predictable with zero vendor lock-in.</li>
+        </ul>
+
+        <h2>Built for Multi-Tenant Commerce</h2>
+        <p>
+          Whether you run an agency managing multiple client storefronts, a
+          franchise with dozens of branded locations, or a holding company with
+          parallel e-commerce brands, UnifyOne's multi-tenant architecture
+          isolates data, branding, and settings per tenant while giving you a
+          single unified command center. Every tenant gets its own products,
+          orders, customers, and analytics — with strict data isolation and
+          role-based access control enforced at the database layer.
+        </p>
+
+        <h2>Integrations That Matter</h2>
+        <p>
+          UnifyOne ships with native integrations for Shopify, Stripe, PayPal,
+          Square, Meta (Facebook and Instagram) via CAPI, Google Analytics,
+          Mailchimp, DoorDash, Uber, Instacart, and Amazon Flex. Additional
+          integrations are available through the REST API and webhook system,
+          and the Model Context Protocol (MCP) server exposes your commerce
+          data to any AI agent that supports the MCP standard.
+        </p>
+
+        <h2>Pricing That Scales With You</h2>
+        <ul>
+          <li><strong>Acolyte — Free:</strong> One tenant, core commerce tools, Stripe checkout, and basic analytics. No credit card required.</li>
+          <li><strong>Architect — $49 / month:</strong> Five tenants, AI Intelligence, every payment rail, the full automation layer, and priority support.</li>
+          <li><strong>Cathedral — $149 / month:</strong> Unlimited tenants, full white-label reselling, custom domains, SLA guarantee, and dedicated infrastructure.</li>
+        </ul>
+
+        <p>
+          UnifyOne is built by 1Commerce LLC (also known as PNW Enterprises,
+          1-Commerce, OneCommerce, and UnifyOne Solutions), headquartered in
+          the Pacific Northwest. To get started, visit
+          <a href="/">1commerce.online</a> and begin
+          your free 14-day trial — no credit card required.
+        </p>
+      </main>
+
       <div id="initial-loader" aria-label="Loading UnifyOne..." role="status">
         <div class="spinner"></div>
         <span class="label">Loading</span>
       </div>
     </div>
+    <noscript>
+      <style>#initial-loader { display: none !important; }</style>
+      <div style="position:fixed;top:0;left:0;right:0;background:#D4A843;color:#020202;padding:12px 16px;text-align:center;font-family:system-ui,-apple-system,sans-serif;font-size:0.9rem;z-index:10000;">
+        UnifyOne requires JavaScript for the interactive dashboard. The content below is a static overview — please enable JavaScript to use the full platform.
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
     <!-- Umami analytics loaded conditionally via /src/lib/analyticsInit.ts -->
   </body>

@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://1commerce.online/sitemap-index.xml
+
+Sitemap: https://1commerce.online/sitemap.xml
