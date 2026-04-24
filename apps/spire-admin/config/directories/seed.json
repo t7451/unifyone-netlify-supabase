@@ -1,0 +1,783 @@
+{
+  "directories": [
+    {
+      "slug": "product-hunt",
+      "name": "Product Hunt",
+      "url": "https://www.producthunt.com",
+      "submit_url": "https://www.producthunt.com/posts/new",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          { "type": "wait_for_selector", "selector": "input[name='name']" },
+          {
+            "type": "fill",
+            "selector": "input[name='name']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "textarea[name='tagline']",
+            "value": "{tagline}"
+          },
+          {
+            "type": "fill",
+            "selector": "textarea[name='description']",
+            "value": "{description}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "success_selector": ".success-banner",
+        "requires_auth": true,
+        "auth_hint": "Manual OAuth session persisted to storage state. Run `spire auth product-hunt` first."
+      },
+      "authority": 91,
+      "category": ["saas", "ai", "product-launch"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "indie-hackers",
+      "name": "Indie Hackers",
+      "url": "https://www.indiehackers.com",
+      "submit_url": "https://www.indiehackers.com/products/new",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          { "type": "wait_for_selector", "selector": "input[name='name']" },
+          {
+            "type": "fill",
+            "selector": "input[name='name']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='website']",
+            "value": "{url}"
+          },
+          {
+            "type": "fill",
+            "selector": "textarea[name='tagline']",
+            "value": "{tagline}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": true
+      },
+      "authority": 77,
+      "category": ["saas", "indie", "bootstrap"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "betalist",
+      "name": "BetaList",
+      "url": "https://betalist.com",
+      "submit_url": "https://betalist.com/submit",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='startup[name]']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='startup[tagline]']",
+            "value": "{tagline}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='startup[website]']",
+            "value": "{url}"
+          },
+          {
+            "type": "fill",
+            "selector": "textarea[name='startup[description]']",
+            "value": "{description}"
+          },
+          { "type": "click", "selector": "input[type='submit']" }
+        ],
+        "requires_auth": false
+      },
+      "authority": 65,
+      "category": ["saas", "early-stage", "launch"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "startup-stash",
+      "name": "Startup Stash",
+      "url": "https://startupstash.com",
+      "submit_url": "https://startupstash.com/submit-a-tool/",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='tool_name']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='tool_url']",
+            "value": "{url}"
+          },
+          {
+            "type": "fill",
+            "selector": "textarea[name='tool_description']",
+            "value": "{description}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='contact_email']",
+            "value": "{contact_email}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": false
+      },
+      "authority": 58,
+      "category": ["saas", "general", "directory"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "g2",
+      "name": "G2",
+      "url": "https://www.g2.com",
+      "submit_url": "https://sell.g2.com/add-your-product",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='product_name']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='product_website']",
+            "value": "{url}"
+          },
+          {
+            "type": "fill",
+            "selector": "textarea[name='product_description']",
+            "value": "{description}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": true,
+        "auth_hint": "Vendor account required. Run `spire auth g2` after creating the vendor profile."
+      },
+      "authority": 86,
+      "category": ["saas", "b2b", "reviews"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "capterra",
+      "name": "Capterra",
+      "url": "https://www.capterra.com",
+      "submit_url": "https://www.capterra.com/vendors/sign-up",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='company_name']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='website']",
+            "value": "{url}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='email']",
+            "value": "{contact_email}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": false
+      },
+      "authority": 83,
+      "category": ["saas", "b2b", "reviews"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "getapp",
+      "name": "GetApp",
+      "url": "https://www.getapp.com",
+      "submit_url": "https://www.getapp.com/pages/vendors-signup",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='product_name']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='website']",
+            "value": "{url}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='email']",
+            "value": "{contact_email}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": false
+      },
+      "authority": 78,
+      "category": ["saas", "b2b"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "software-advice",
+      "name": "Software Advice",
+      "url": "https://www.softwareadvice.com",
+      "submit_url": "https://www.softwareadvice.com/vendors/",
+      "method": "email",
+      "method_config": {
+        "to_address": "vendors@softwareadvice.com",
+        "subject_template": "Listing request — {product_name}",
+        "body_template": "Hi,\n\nWe'd like to list {product_name} ({url}) on Software Advice.\n\nTagline: {tagline}\n\n{description}\n\nCategories: {categories}\n\nContact: {contact_email}\n\nThanks,\nThe {product_name} team",
+        "reply_to": "keith@1commerce.online"
+      },
+      "authority": 77,
+      "category": ["saas", "b2b"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "slant",
+      "name": "Slant",
+      "url": "https://www.slant.co",
+      "submit_url": "https://www.slant.co/products/new",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='name']",
+            "value": "{product_name}"
+          },
+          { "type": "fill", "selector": "input[name='url']", "value": "{url}" },
+          {
+            "type": "fill",
+            "selector": "textarea[name='description']",
+            "value": "{description}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": true
+      },
+      "authority": 65,
+      "category": ["comparison", "saas"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "alternativeto",
+      "name": "AlternativeTo",
+      "url": "https://alternativeto.net",
+      "submit_url": "https://alternativeto.net/new-application/",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='name']",
+            "value": "{product_name}"
+          },
+          { "type": "fill", "selector": "input[name='url']", "value": "{url}" },
+          {
+            "type": "fill",
+            "selector": "textarea[name='description']",
+            "value": "{description}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": true
+      },
+      "authority": 81,
+      "category": ["comparison", "alternatives"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "crunchbase",
+      "name": "Crunchbase",
+      "url": "https://www.crunchbase.com",
+      "submit_url": "https://www.crunchbase.com/sign-up",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "https://www.crunchbase.com/add-new" },
+          {
+            "type": "wait_for_selector",
+            "selector": "input[name='company_name']"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='company_name']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='website']",
+            "value": "{url}"
+          },
+          {
+            "type": "fill",
+            "selector": "textarea[name='short_description']",
+            "value": "{tagline}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": true
+      },
+      "authority": 91,
+      "category": ["company-profile", "funding"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "f6s",
+      "name": "F6S",
+      "url": "https://www.f6s.com",
+      "submit_url": "https://www.f6s.com/company/create",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='name']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='website']",
+            "value": "{url}"
+          },
+          {
+            "type": "fill",
+            "selector": "textarea[name='description']",
+            "value": "{description}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": true
+      },
+      "authority": 72,
+      "category": ["startup", "community"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "wellfound",
+      "name": "Wellfound (AngelList)",
+      "url": "https://wellfound.com",
+      "submit_url": "https://wellfound.com/company/new",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='company_name']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='website']",
+            "value": "{url}"
+          },
+          {
+            "type": "fill",
+            "selector": "textarea[name='pitch']",
+            "value": "{tagline}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": true
+      },
+      "authority": 83,
+      "category": ["startup", "jobs"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "saasworthy",
+      "name": "SaaSworthy",
+      "url": "https://www.saasworthy.com",
+      "submit_url": "https://www.saasworthy.com/list-your-software",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='product_name']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='website']",
+            "value": "{url}"
+          },
+          {
+            "type": "fill",
+            "selector": "textarea[name='description']",
+            "value": "{description}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": false
+      },
+      "authority": 63,
+      "category": ["saas", "b2b"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "saashub",
+      "name": "SaaSHub",
+      "url": "https://www.saashub.com",
+      "submit_url": "https://www.saashub.com/submit",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='name']",
+            "value": "{product_name}"
+          },
+          { "type": "fill", "selector": "input[name='url']", "value": "{url}" },
+          {
+            "type": "fill",
+            "selector": "textarea[name='description']",
+            "value": "{description}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": false
+      },
+      "authority": 60,
+      "category": ["saas"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "appsumo-roadmap",
+      "name": "AppSumo Roadmap",
+      "url": "https://roadmap.appsumo.com",
+      "submit_url": "https://roadmap.appsumo.com/submit-a-tool",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='product_name']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='website']",
+            "value": "{url}"
+          },
+          {
+            "type": "fill",
+            "selector": "textarea[name='description']",
+            "value": "{description}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": false
+      },
+      "authority": 70,
+      "category": ["saas", "lifetime-deal"],
+      "cooldown_days": 540
+    },
+    {
+      "slug": "theresanaiforthat",
+      "name": "There's An AI For That",
+      "url": "https://theresanaiforthat.com",
+      "submit_url": "https://theresanaiforthat.com/submit/",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='name']",
+            "value": "{product_name}"
+          },
+          { "type": "fill", "selector": "input[name='url']", "value": "{url}" },
+          {
+            "type": "fill",
+            "selector": "textarea[name='description']",
+            "value": "{description}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": false
+      },
+      "authority": 68,
+      "category": ["ai", "directory"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "futurepedia",
+      "name": "Futurepedia",
+      "url": "https://www.futurepedia.io",
+      "submit_url": "https://www.futurepedia.io/submit-tool",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='tool_name']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='tool_link']",
+            "value": "{url}"
+          },
+          {
+            "type": "fill",
+            "selector": "textarea[name='description']",
+            "value": "{description}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": false
+      },
+      "authority": 71,
+      "category": ["ai", "directory"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "ai-tools-directory",
+      "name": "AI Tools Directory",
+      "url": "https://www.aitoolsdirectory.com",
+      "submit_url": "https://www.aitoolsdirectory.com/submit",
+      "method": "email",
+      "method_config": {
+        "to_address": "submit@aitoolsdirectory.com",
+        "subject_template": "AI tool submission: {product_name}",
+        "body_template": "Tool: {product_name}\nURL: {url}\nTagline: {tagline}\n\n{description}\n\nCategories: {categories}\n\nContact: {contact_email}",
+        "reply_to": "keith@1commerce.online"
+      },
+      "authority": 48,
+      "category": ["ai"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "aixploria",
+      "name": "Aixploria",
+      "url": "https://www.aixploria.com",
+      "submit_url": "https://www.aixploria.com/en/submit-tool/",
+      "method": "form",
+      "method_config": {
+        "steps": [
+          { "type": "navigate", "url": "{submit_url}" },
+          {
+            "type": "fill",
+            "selector": "input[name='tool_name']",
+            "value": "{product_name}"
+          },
+          {
+            "type": "fill",
+            "selector": "input[name='tool_url']",
+            "value": "{url}"
+          },
+          {
+            "type": "fill",
+            "selector": "textarea[name='tool_description']",
+            "value": "{description}"
+          },
+          { "type": "click", "selector": "button[type='submit']" }
+        ],
+        "requires_auth": false
+      },
+      "authority": 59,
+      "category": ["ai", "directory"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "devto",
+      "name": "Dev.to",
+      "url": "https://dev.to",
+      "submit_url": "https://dev.to/new",
+      "method": "api",
+      "method_config": {
+        "endpoint": "devto",
+        "mapping": {
+          "tagline": "title",
+          "description": "body_markdown",
+          "tags": "tags",
+          "url": "canonical_url"
+        },
+        "options": { "published": false }
+      },
+      "authority": 82,
+      "category": ["developer", "content"],
+      "cooldown_days": 180
+    },
+    {
+      "slug": "hashnode",
+      "name": "Hashnode",
+      "url": "https://hashnode.com",
+      "submit_url": "https://hashnode.com/publish",
+      "method": "api",
+      "method_config": {
+        "endpoint": "hashnode",
+        "mapping": {
+          "tagline": "title",
+          "description": "contentMarkdown",
+          "tags": "tags"
+        }
+      },
+      "authority": 74,
+      "category": ["developer", "content"],
+      "cooldown_days": 180
+    },
+    {
+      "slug": "hacker-news-show-hn",
+      "name": "Hacker News — Show HN",
+      "url": "https://news.ycombinator.com",
+      "submit_url": "https://news.ycombinator.com/submit",
+      "method": "manual",
+      "method_config": {
+        "venue": "Hacker News (Show HN)",
+        "title_template": "Show HN: {product_name} – {tagline}",
+        "body_template": "{description}\n\nLinks:\n- {url}\n- Pricing: {pricing_url}\n\nHappy to answer questions here.",
+        "guidance": "Post from your own account; never automate. Show HN posts must come from the builder. Best window: Tue–Thu 7-9am PT."
+      },
+      "authority": 93,
+      "category": ["tech", "community"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "lobsters",
+      "name": "Lobste.rs",
+      "url": "https://lobste.rs",
+      "submit_url": "https://lobste.rs/stories/new",
+      "method": "manual",
+      "method_config": {
+        "venue": "Lobste.rs",
+        "title_template": "{tagline}",
+        "body_template": "Submitted URL: {url}\n\nContext: {description}",
+        "guidance": "Invitation-only community. Must have an active account with karma. Never submit marketing copy — write a story-worthy angle (technical deep-dive, war story, novel approach)."
+      },
+      "authority": 78,
+      "category": ["tech", "community"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "reddit-sideproject",
+      "name": "r/SideProject",
+      "url": "https://www.reddit.com/r/SideProject",
+      "submit_url": "https://www.reddit.com/r/SideProject/submit",
+      "method": "manual",
+      "method_config": {
+        "venue": "r/SideProject",
+        "title_template": "I built {product_name} — {tagline}",
+        "body_template": "**What it is:** {description}\n\n**Why I built it:** [fill in]\n\n**Built with:** [fill in]\n\n**Live at:** {url}\n\nFeedback welcome.",
+        "guidance": "Post from your own account. Include genuine build context; the sub bans self-promotional templates. No UTM tags on the URL."
+      },
+      "authority": 85,
+      "category": ["community", "indie"],
+      "cooldown_days": 180
+    },
+    {
+      "slug": "reddit-entrepreneur",
+      "name": "r/Entrepreneur",
+      "url": "https://www.reddit.com/r/Entrepreneur",
+      "submit_url": "https://www.reddit.com/r/Entrepreneur/submit",
+      "method": "manual",
+      "method_config": {
+        "venue": "r/Entrepreneur",
+        "title_template": "Lessons from launching {product_name}",
+        "body_template": "[Write a first-person lesson post; bury {url} in the body, don't lead with it]",
+        "guidance": "Strict anti-spam moderation. Post a real lesson/retro; linking to your product without real value gets removed on sight."
+      },
+      "authority": 84,
+      "category": ["community", "business"],
+      "cooldown_days": 180
+    },
+    {
+      "slug": "canby-chamber",
+      "name": "Canby Chamber of Commerce",
+      "url": "https://www.canbychamber.org",
+      "submit_url": "https://www.canbychamber.org/join",
+      "method": "email",
+      "method_config": {
+        "to_address": "info@canbychamber.org",
+        "subject_template": "Member directory listing — {product_name}",
+        "body_template": "Hi,\n\nWe'd like to list {product_name} ({url}) in the Canby Chamber directory.\n\n{description}\n\nContact: {contact_email}\n\nThanks,\nKeith",
+        "reply_to": "keith@1commerce.online"
+      },
+      "authority": 42,
+      "category": ["local", "oregon"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "oregon-sba",
+      "name": "Oregon Small Business Advocacy",
+      "url": "https://www.oregon.gov/biz",
+      "submit_url": "https://www.oregon.gov/biz/programs/dof/Pages/business-directory.aspx",
+      "method": "email",
+      "method_config": {
+        "to_address": "business.info@oregon.gov",
+        "subject_template": "Oregon business directory listing — {product_name}",
+        "body_template": "Hi,\n\nOregon-based business {product_name} ({url}) requesting a directory listing.\n\n{description}\n\nCategories: {categories}\nContact: {contact_email}\n\nThanks",
+        "reply_to": "keith@1commerce.online"
+      },
+      "authority": 75,
+      "category": ["local", "government", "oregon"],
+      "cooldown_days": 730
+    },
+    {
+      "slug": "bing-places",
+      "name": "Bing Places for Business",
+      "url": "https://www.bingplaces.com",
+      "submit_url": "https://www.bingplaces.com/NewUser",
+      "method": "api",
+      "method_config": {
+        "endpoint": "bing_places",
+        "options": {
+          "requires_verified_business": true,
+          "note": "Requires Microsoft account with verified business listing"
+        }
+      },
+      "authority": 91,
+      "category": ["maps", "local"],
+      "cooldown_days": 365
+    },
+    {
+      "slug": "google-business-profile",
+      "name": "Google Business Profile",
+      "url": "https://business.google.com",
+      "submit_url": "https://business.google.com/create",
+      "method": "api",
+      "method_config": {
+        "endpoint": "google_business_profile",
+        "options": {
+          "requires_verified_business": true,
+          "note": "Requires Google account with verified business postcard/phone verification"
+        }
+      },
+      "authority": 98,
+      "category": ["maps", "local"],
+      "cooldown_days": 365
+    }
+  ]
+}
