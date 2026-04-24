@@ -99,6 +99,11 @@ const plugins = [
         changefreq: "monthly",
         priority: 0.9,
       },
+      {
+        path: "/blog/digital-retail-guide",
+        changefreq: "monthly",
+        priority: 0.9,
+      },
       { path: "/seo", changefreq: "weekly", priority: 0.9 },
       { path: "/seo/unifyone", changefreq: "weekly", priority: 0.95 },
       { path: "/seo/unifyone-solutions", changefreq: "weekly", priority: 0.92 },
