@@ -39,6 +39,9 @@ export async function seedDirectoriesCommand(): Promise<void> {
     let created = 0;
     let updated = 0;
     for (const entry of parsed.data.directories) {
+      const rawCfg = entry.method_config as Record<string, unknown>;
+      const tierRaw = rawCfg.tier;
+      const tier = typeof tierRaw === "number" ? tierRaw : null;
       const values = {
         slug: entry.slug,
         name: entry.name,
@@ -48,6 +51,7 @@ export async function seedDirectoriesCommand(): Promise<void> {
         methodConfig: entry.method_config,
         authority: entry.authority ?? null,
         category: entry.category,
+        tier,
         active: entry.active,
         cooldownDays: entry.cooldown_days,
       };
@@ -65,6 +69,7 @@ export async function seedDirectoriesCommand(): Promise<void> {
             // ops-level tweaks accumulate there. Seed only sets it on insert.
             authority: values.authority,
             category: values.category,
+            tier: values.tier,
             active: values.active,
             cooldownDays: values.cooldownDays,
           },

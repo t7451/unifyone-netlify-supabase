@@ -134,23 +134,33 @@ export async function queueSubmissionsCommand(
   }
 }
 
-export async function submissionStatusCommand(): Promise<void> {
+export async function submissionStatusCommand(opts?: {
+  tier?: number;
+}): Promise<void> {
   const env = loadEnv(["NEON_DATABASE_URL"] as const);
   const { sql: rawSql, db } = connectNeon(env.NEON_DATABASE_URL);
   try {
-    const counts = await db
+    const countsQuery = db
       .select({
         status: schema.submissions.status,
         count: sql<number>`count(*)::int`,
       })
       .from(schema.submissions)
+      .innerJoin(
+        schema.directories,
+        eq(schema.directories.id, schema.submissions.directoryId)
+      )
       .groupBy(schema.submissions.status);
+    const counts = opts?.tier
+      ? await countsQuery.where(eq(schema.directories.tier, opts.tier))
+      : await countsQuery;
 
-    const recent = await db
+    const recentQuery = db
       .select({
         id: schema.submissions.id,
         siteSlug: schema.sites.slug,
         directorySlug: schema.directories.slug,
+        tier: schema.directories.tier,
         status: schema.submissions.status,
         liveUrl: schema.submissions.liveUrl,
         error: schema.submissions.error,
@@ -164,8 +174,11 @@ export async function submissionStatusCommand(): Promise<void> {
       )
       .orderBy(desc(schema.submissions.updatedAt))
       .limit(15);
+    const recent = opts?.tier
+      ? await recentQuery.where(eq(schema.directories.tier, opts.tier))
+      : await recentQuery;
 
-    logger.info({ counts }, "Pipeline counts");
+    logger.info({ tier: opts?.tier ?? "(all)", counts }, "Pipeline counts");
     logger.info({ recent }, "Recent submissions");
   } finally {
     await rawSql.end({ timeout: 5 });

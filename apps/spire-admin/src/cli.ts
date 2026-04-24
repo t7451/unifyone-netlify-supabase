@@ -424,11 +424,19 @@ submit
 submit
   .command("status")
   .description("Pipeline counts + recent submissions")
-  .action(async () => {
+  .option("--tier <n>", "restrict to directories in the given tier (1-5)")
+  .action(async (opts: { tier?: string }) => {
     const { submissionStatusCommand } = await import(
       "./commands/queue-submissions.js"
     );
-    await submissionStatusCommand();
+    const tier = opts.tier ? Number(opts.tier) : undefined;
+    if (
+      tier !== undefined &&
+      (!Number.isInteger(tier) || tier < 1 || tier > 5)
+    ) {
+      throw new Error(`--tier must be an integer 1-5, got ${opts.tier}`);
+    }
+    await submissionStatusCommand({ tier });
   });
 
 submit
@@ -440,6 +448,24 @@ submit
       "./commands/queue-submissions.js"
     );
     await retrySubmissionCommand(submissionId);
+  });
+
+submit
+  .command("complete")
+  .description("Mark a manual (tier-1) submission as sent; record the live URL")
+  .argument("<submissionId>")
+  .option(
+    "--live-url <url>",
+    "URL the directory published (omit if the directory has no per-entry URL)"
+  )
+  .action(async (submissionId: string, opts: { liveUrl?: string }) => {
+    const { completeSubmissionCommand } = await import(
+      "./commands/complete-submission.js"
+    );
+    await completeSubmissionCommand({
+      submissionId,
+      liveUrl: opts.liveUrl ?? null,
+    });
   });
 
 const mesh = program.command("mesh").description("Cross-site topic mesh");
@@ -512,6 +538,68 @@ rank
   .action(async () => {
     const { rankRunNowStubCommand } = await import("./commands/rank-report.js");
     await rankRunNowStubCommand();
+  });
+
+// --- Batch 04 addendum: outreach + NAP validation ---
+
+const outreach = program
+  .command("outreach")
+  .description("Outreach prospects (competitor gap, HARO, broken-link)");
+
+outreach
+  .command("import-gap")
+  .description(
+    "Import a Semrush backlink-gap CSV into spire_outreach_prospects"
+  )
+  .requiredOption("--site <slug>", "site slug (e.g. unifyone)")
+  .requiredOption(
+    "--competitor <domain>",
+    "competitor domain the gap was pulled against"
+  )
+  .requiredOption("--csv <path>", "path to the Semrush CSV export")
+  .option(
+    "--no-dedupe",
+    "insert every row even if (domain, backlink_url) already exists"
+  )
+  .action(
+    async (opts: {
+      site: string;
+      competitor: string;
+      csv: string;
+      dedupe: boolean;
+    }) => {
+      const { importBacklinkGapCommand } = await import(
+        "./commands/import-backlink-gap.js"
+      );
+      const result = await importBacklinkGapCommand({
+        siteSlug: opts.site,
+        competitor: opts.competitor,
+        csvPath: opts.csv,
+        dedupe: opts.dedupe,
+      });
+      logger.info(result, "Import result");
+    }
+  );
+
+outreach
+  .command("report")
+  .description("Prospect breakdown by type × status")
+  .option("--site <slug>", "restrict to a single site")
+  .action(async (opts: { site?: string }) => {
+    const { outreachReportCommand } = await import(
+      "./commands/import-backlink-gap.js"
+    );
+    await outreachReportCommand({ siteSlug: opts.site });
+  });
+
+program
+  .command("validate-nap")
+  .description(
+    "Load business-profile.json, verify NAP consistency, and check every active directory references known tokens"
+  )
+  .action(async () => {
+    const { validateNapCommand } = await import("./commands/validate-nap.js");
+    await validateNapCommand();
   });
 
 program.parseAsync(process.argv).catch(err => {
