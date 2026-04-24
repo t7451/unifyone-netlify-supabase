@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "updated_at": "2026-04-24",
+  "legal": {
+    "name": "1Commerce LLC",
+    "formation_state": "OR",
+    "ein_masked": null
+  },
+  "display": {
+    "name": "UnifyOne (by 1Commerce)",
+    "short_name": "UnifyOne",
+    "brand_parent": "1Commerce"
+  },
+  "address": {
+    "line_1": "25950 S HWY 170",
+    "line_2": null,
+    "city": "Canby",
+    "region": "OR",
+    "postal_code": "97013",
+    "country": "US",
+    "geo": {
+      "latitude": null,
+      "longitude": null
+    }
+  },
+  "phone": {
+    "display": "(406) 594-4343",
+    "e164": "+14065944343"
+  },
+  "email": {
+    "public": "hello@1commerce.online",
+    "support": "support@1commerce.online",
+    "press": "press@1commerce.online"
+  },
+  "web": {
+    "primary": "https://1commerce.online",
+    "alt_domains": ["https://1commercesolutions.com", "https://1commerce.shop"]
+  },
+  "categories": {
+    "primary": "Software Company",
+    "secondary": [
+      "Business Services",
+      "Artificial Intelligence Service",
+      "E-commerce Service"
+    ]
+  },
+  "description": {
+    "short": "AI-powered commerce and gig income intelligence platform.",
+    "medium": "UnifyOne is the AI platform where your numbers actually matter. Built for gig workers, freelancers, small businesses, and developers who want financial intelligence that knows their real data.",
+    "long": "UnifyOne is 1Commerce's AI-powered platform for people who work for themselves. Gig workers see what they're actually earning per hour after expenses. Freelancers price work based on their real history, not a calculator's guess. Small business operators run their shops with AI that knows their margins. Developers route across every major LLM provider through one API with zero lock-in. Your money. Your AI. One platform."
+  },
+  "founded": "2025",
+  "hours": {
+    "type": "online",
+    "open_24_7": true,
+    "note": "Online-only service; appointments by request"
+  },
+  "social": {
+    "twitter": null,
+    "linkedin": null,
+    "facebook": null,
+    "instagram": null,
+    "github": null
+  },
+  "verification": {
+    "google_business_profile": "claimed",
+    "bing_places": "pending",
+    "apple_business_connect": "pending",
+    "facebook_business": "pending"
+  }
+}

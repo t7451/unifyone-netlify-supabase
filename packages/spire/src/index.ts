@@ -40,6 +40,8 @@ export {
   meshCoverage,
   trackedKeywords,
   rankChecks,
+  outreachProspects,
+  submissionCitations,
 } from "./schema.js";
 export type {
   Site,
@@ -52,7 +54,26 @@ export type {
   MeshCoverage,
   TrackedKeyword,
   RankCheck,
+  OutreachProspect,
+  NewOutreachProspect,
+  SubmissionCitation,
+  NewSubmissionCitation,
 } from "./schema.js";
+
+// Batch 04 addendum — business profile NAP source of truth + NAP renderer.
+export {
+  loadBusinessProfile,
+  assertNapConsistency,
+  BusinessProfileSchema,
+  _resetBusinessProfileCache,
+} from "./lib/business-profile.js";
+export type { BusinessProfile } from "./lib/business-profile.js";
+export {
+  toFormFillerTokens,
+  toGooglePlacesPayload,
+  toBrightLocalPayload,
+  toLocalBusinessJsonLd,
+} from "./directories/renderers/nap.js";
 
 // Batch 04 helpers + schemas.
 export {
