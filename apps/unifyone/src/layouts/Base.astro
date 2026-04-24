@@ -3,6 +3,11 @@ import "../styles/global.css";
 import Nav from "../components/astro/Nav.astro";
 import Footer from "../components/astro/Footer.astro";
 import { buildMeta, organization, website } from "../lib/seo";
+// Build-time import of the canonical business profile — one file, one NAP,
+// inlined into every page's <head> as a LocalBusiness/Organization JSON-LD
+// block. No runtime dep on @1commerce/spire (that workspace carries heavy
+// deps like @anthropic-ai/sdk; apps/unifyone should never import it).
+import businessProfile from "../../../spire-admin/config/business-profile.json";
 
 interface Props {
   title: string;
@@ -18,8 +23,46 @@ const { title, description, canonicalUrl, ogImage, jsonLd = [], type } =
 
 const meta = buildMeta({ title, description, canonicalUrl, ogImage, type });
 
-// Always emit Organization + WebSite; page-specific entries come via jsonLd prop
-const allJsonLd = [organization(), website(), ...jsonLd];
+// LocalBusiness / Organization JSON-LD from the canonical NAP source.
+// Kept as a pure inline object to avoid pulling @1commerce/spire at build
+// time — if the profile shape ever drifts, Astro's content-collection-style
+// JSON import will surface the type mismatch on next `astro build`.
+const primaryUrl = (businessProfile.web.primary as string).replace(/\/$/, "");
+const socialLinks = Object.values(businessProfile.social).filter(
+  (v): v is string => typeof v === "string" && v.length > 0,
+);
+const localBusinessLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: businessProfile.legal.name,
+  alternateName: businessProfile.display.short_name,
+  legalName: businessProfile.legal.name,
+  url: primaryUrl,
+  logo: `${primaryUrl}/favicon.svg`,
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: businessProfile.address.line_1,
+    addressLocality: businessProfile.address.city,
+    addressRegion: businessProfile.address.region,
+    postalCode: businessProfile.address.postal_code,
+    addressCountry: businessProfile.address.country,
+  },
+  contactPoint: {
+    "@type": "ContactPoint",
+    telephone: businessProfile.phone.e164,
+    contactType: "customer service",
+    email: businessProfile.email.public,
+    areaServed: businessProfile.address.country,
+    availableLanguage: ["English"],
+  },
+  foundingDate: businessProfile.founded,
+  description: businessProfile.description.medium,
+  sameAs: socialLinks,
+};
+
+// Always emit Organization + WebSite + the NAP LocalBusiness block;
+// page-specific entries come via the jsonLd prop.
+const allJsonLd = [organization(), website(), localBusinessLd, ...jsonLd];
 
 // Escape characters that could break out of the <script> tag or terminate
 // JSON in line-separator contexts. JSON.stringify alone is NOT safe here.
