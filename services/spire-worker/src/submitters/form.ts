@@ -21,10 +21,20 @@ export type FormSubmitResult = {
 export async function submitViaForm(input: {
   config: FormMethodConfig;
   payload: SubmissionPayload;
+  /** Business-profile-derived tokens merged into substitution. NAP tokens
+   *  win when a key collides with SubmissionPayload — business profile is
+   *  the source of truth for address/phone/legal name. */
+  napTokens?: Record<string, string>;
   storageEncryptionKey: string | undefined;
   directoryUrl: string;
 }): Promise<FormSubmitResult> {
-  const { config, payload, storageEncryptionKey, directoryUrl } = input;
+  const {
+    config,
+    payload,
+    napTokens = {},
+    storageEncryptionKey,
+    directoryUrl,
+  } = input;
 
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
@@ -70,6 +80,7 @@ export async function submitViaForm(input: {
         await runStep(step, {
           page,
           payload,
+          napTokens,
           fallbackUrl: config.steps.some(s => s.type === "navigate")
             ? undefined
             : directoryUrl,
@@ -131,13 +142,14 @@ async function runStep(
   ctx: {
     page: import("playwright").Page;
     payload: SubmissionPayload;
+    napTokens: Record<string, string>;
     fallbackUrl?: string;
   }
 ): Promise<void> {
-  const { page, payload } = ctx;
+  const { page, payload, napTokens } = ctx;
   switch (step.type) {
     case "navigate":
-      await page.goto(substitute(step.url, payload));
+      await page.goto(substitute(step.url, payload, napTokens));
       break;
     case "wait_for_selector":
       await page.waitForSelector(step.selector, {
@@ -145,13 +157,19 @@ async function runStep(
       });
       break;
     case "fill":
-      await page.fill(step.selector, substitute(step.value, payload));
+      await page.fill(
+        step.selector,
+        substitute(step.value, payload, napTokens)
+      );
       break;
     case "click":
       await page.click(step.selector);
       break;
     case "select":
-      await page.selectOption(step.selector, substitute(step.value, payload));
+      await page.selectOption(
+        step.selector,
+        substitute(step.value, payload, napTokens)
+      );
       break;
     case "upload":
       await page.setInputFiles(step.selector, step.filePath);
@@ -171,11 +189,18 @@ async function runStep(
   }
 }
 
-function substitute(template: string, payload: SubmissionPayload): string {
-  // {placeholder} → payload.placeholder. Unknown placeholders pass through
-  // unchanged (leaving the literal `{foo}` in the form field surfaces the
-  // bug to the operator on their first review).
+function substitute(
+  template: string,
+  payload: SubmissionPayload,
+  napTokens: Record<string, string>
+): string {
+  // {placeholder} → napTokens[key] ?? payload[key]. NAP wins on collision —
+  // business profile is the canonical source for address/phone/legal name.
+  // Unknown placeholders pass through unchanged so the bug surfaces on
+  // first operator review rather than silently filling a blank.
   return template.replace(/\{([a-z_][a-z0-9_]*)\}/gi, (match, key: string) => {
+    const nap = napTokens[key];
+    if (nap !== undefined) return nap;
     const value = (payload as unknown as Record<string, unknown>)[key];
     if (value === undefined) return match;
     if (Array.isArray(value)) return value.join(", ");

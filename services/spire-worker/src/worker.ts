@@ -1,6 +1,4 @@
-import { eq, type ExtractTablesWithRelations } from "drizzle-orm";
-import type { PgTransaction } from "drizzle-orm/pg-core";
-import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
+import { eq } from "drizzle-orm";
 import { schema } from "@1commerce/spire";
 import {
   ApiMethodConfigSchema,
@@ -9,20 +7,15 @@ import {
   ManualMethodConfigSchema,
   type SubmissionPayload,
 } from "@1commerce/spire";
+import { loadBusinessProfile, toFormFillerTokens } from "@1commerce/spire";
 import { connect } from "./lib/db.js";
 import { logger } from "./lib/logger.js";
 import { claimAndProcess, markFailedOrRetry, markSent } from "./lib/queue.js";
 import { submitViaForm } from "./submitters/form.js";
 import { submitViaApi } from "./submitters/api.js";
 import { submitViaEmail } from "./submitters/email.js";
-
-// Drizzle transaction type for the schema we work against. Matches the
-// shape queue.ts hands us inside claimAndProcess's callback.
-type Tx = PgTransaction<
-  PostgresJsQueryResultHKT,
-  typeof schema,
-  ExtractTablesWithRelations<typeof schema>
->;
+import { submitViaBrightLocal } from "./submitters/brightlocal.js";
+import type { Tx } from "./types.js";
 
 // Main worker loop. Runs forever; one submission per tick; sleeps
 // WORKER_SLEEP_SECONDS between polls when the queue is empty.
@@ -113,6 +106,15 @@ async function handleSubmission(
   const { submission, directory } = row;
   const payload = submission.payload as SubmissionPayload;
 
+  // Load the business profile once per submission. Fails loudly here if the
+  // file is missing or inconsistent — cheaper than finding out after a
+  // BrightLocal order goes out with a bad ZIP.
+  const businessProfilePath = process.env.BUSINESS_PROFILE_PATH;
+  const profile = businessProfilePath
+    ? loadBusinessProfile(businessProfilePath)
+    : null;
+  const napTokens = profile ? toFormFillerTokens(profile) : {};
+
   logger.info(
     {
       submissionId,
@@ -130,6 +132,7 @@ async function handleSubmission(
         const result = await submitViaForm({
           config: cfg,
           payload,
+          napTokens,
           storageEncryptionKey: STORAGE_STATE_ENCRYPTION_KEY,
           directoryUrl: directory.submitUrl ?? directory.url,
         });
@@ -203,13 +206,21 @@ async function handleSubmission(
         // Manual directories don't auto-submit. Generate the draft and mark
         // the submission as rejected (operator must post it themselves);
         // the payload + rendered draft live in spire_submissions.response
-        // for the digest to surface.
+        // for the digest to surface. If a `runbook` field is present on
+        // method_config (tier-1 NAP entries), pass it through so the digest
+        // can render the operator checklist.
         const cfg = ManualMethodConfigSchema.parse(directory.methodConfig);
+        const methodCfgRaw = directory.methodConfig as Record<string, unknown>;
+        const runbook =
+          typeof methodCfgRaw.runbook === "string"
+            ? methodCfgRaw.runbook
+            : null;
         const draft = {
           venue: cfg.venue,
-          title: substituteTemplate(cfg.title_template, payload),
-          body: substituteTemplate(cfg.body_template, payload),
+          title: substituteTemplate(cfg.title_template, payload, napTokens),
+          body: substituteTemplate(cfg.body_template, payload, napTokens),
           guidance: cfg.guidance,
+          ...(runbook ? { runbook } : {}),
         };
         await tx
           .update(schema.submissions)
@@ -220,6 +231,41 @@ async function handleSubmission(
             updatedAt: new Date(),
           })
           .where(eq(schema.submissions.id, submissionId));
+        break;
+      }
+      case "brightlocal": {
+        if (!profile) {
+          await markFailedOrRetry(tx, submissionId, {
+            error:
+              "BUSINESS_PROFILE_PATH not set — brightlocal requires the NAP source of truth",
+            attempt,
+            retryable: false,
+          });
+          break;
+        }
+        const result = await submitViaBrightLocal({
+          tx,
+          submissionId,
+          directory,
+          profile,
+        });
+        if (result.success) {
+          // Parent row stays in "sent" status once BrightLocal accepts the
+          // order; per-citation completion lands via webhook into
+          // spire_submission_citations. live_url stays null — citations
+          // surface individually, not as a single parent URL.
+          await markSent(tx, submissionId, {
+            liveUrl: null,
+            response: result.response,
+          });
+        } else {
+          await markFailedOrRetry(tx, submissionId, {
+            error: result.error ?? "brightlocal submission failed",
+            attempt,
+            retryable: result.retryable !== false,
+            response: result.response,
+          });
+        }
         break;
       }
       default: {
@@ -242,9 +288,15 @@ async function handleSubmission(
 
 function substituteTemplate(
   template: string,
-  payload: SubmissionPayload
+  payload: SubmissionPayload,
+  napTokens: Record<string, string> = {}
 ): string {
   return template.replace(/\{([a-z_][a-z0-9_]*)\}/gi, (m, key: string) => {
+    // NAP tokens win when the key collides — the business profile is the
+    // source of truth for address/phone/legal name, even if a site renderer
+    // also happens to set the same key.
+    const napValue = napTokens[key];
+    if (napValue !== undefined) return napValue;
     const v = (payload as unknown as Record<string, unknown>)[key];
     if (v === undefined) return m;
     if (Array.isArray(v)) return v.join(", ");
