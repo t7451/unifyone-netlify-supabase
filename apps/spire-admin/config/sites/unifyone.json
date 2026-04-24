@@ -1,0 +1,38 @@
+{
+  "slug": "unifyone",
+  "domain": "1commerce.online",
+  "repo": "unifyone-netlify-supabase",
+  "content_path": "apps/unifyone/src/content/blog",
+  "brand_brief_key": "brand-brief",
+  "niche": "AI-powered commerce and gig income intelligence platform",
+  "target_audiences": [
+    "gig-workers",
+    "freelancers",
+    "smb-operators",
+    "developers"
+  ],
+  "seed_keywords": [
+    "gig worker tax deductions",
+    "doordash mileage tracker",
+    "uber driver quarterly taxes",
+    "1099 tax deductions freelancer",
+    "mileage tracking app",
+    "ai api router",
+    "multi-model llm gateway",
+    "claude api pricing",
+    "openrouter alternative",
+    "mcp server setup",
+    "model context protocol guide",
+    "gig worker earnings calculator",
+    "per hour earnings gig",
+    "best days drive doordash",
+    "instacart shopper tax write offs",
+    "self employed quarterly tax estimator",
+    "llm routing strategies",
+    "ai cost optimization developer",
+    "shopify ai tools small business",
+    "freelance rate calculator"
+  ],
+  "autopublish": false,
+  "autopublish_quality_threshold": 85
+}
