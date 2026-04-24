@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+.env.local
+# Playwright auth sessions — mounted at /app/storage-state in the container.
+# NEVER commit these; they contain session cookies.
+storage-state/
+*.log

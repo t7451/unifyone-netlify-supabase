@@ -1,0 +1,46 @@
+# Spire worker image — Playwright-capable. Multi-stage build so the final
+# image doesn't carry pnpm or the full source tree.
+#
+# Built from the repo root (context: ../../) so the workspace package
+# @1commerce/spire resolves via pnpm.
+
+# ---------- build stage ----------
+FROM mcr.microsoft.com/playwright:v1.47.0-jammy AS build
+
+WORKDIR /repo
+
+# Install pnpm at the build-stage level. Match the repo's pinned version
+# (packages/spire uses pnpm 10.27.0; root packageManager pins same).
+RUN npm install -g pnpm@10.27.0
+
+# Copy workspace metadata first so Docker can cache the install step across
+# code changes.
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY packages/spire/package.json ./packages/spire/
+COPY services/spire-worker/package.json ./services/spire-worker/
+
+# Copy source — include any other workspaces referenced via workspace:*.
+COPY packages/spire ./packages/spire
+COPY services/spire-worker ./services/spire-worker
+
+RUN pnpm install --frozen-lockfile
+
+# Build just the worker service (TypeScript → dist/).
+RUN pnpm --filter @1commerce/spire-worker build
+
+# ---------- runtime stage ----------
+FROM mcr.microsoft.com/playwright:v1.47.0-jammy AS runtime
+
+WORKDIR /app
+
+# Copy only what's needed to run. node_modules comes from the build stage
+# (pnpm's hoisted structure) so we don't re-install in the runtime image.
+COPY --from=build /repo/services/spire-worker/dist ./dist
+COPY --from=build /repo/services/spire-worker/package.json ./
+COPY --from=build /repo/services/spire-worker/node_modules ./node_modules
+
+ENV NODE_ENV=production
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# Runs one submission per tick forever. See src/worker.ts for logic.
+CMD ["node", "dist/worker.js"]
