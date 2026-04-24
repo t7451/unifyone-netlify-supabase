@@ -60,9 +60,111 @@ const localBusinessLd = {
   sameAs: socialLinks,
 };
 
-// Always emit Organization + WebSite + the NAP LocalBusiness block;
-// page-specific entries come via the jsonLd prop.
-const allJsonLd = [organization(), website(), localBusinessLd, ...jsonLd];
+// --- AI-search @graph ---
+// Consolidated entity + site + speakable block targeting AI-powered search
+// surfaces (Perplexity, SearchGPT, Google AI Overviews, Cloudflare AI Search
+// / AutoRAG, Gemini). Cloudflare AI Search has no required schema — this
+// block follows the cross-provider consensus shape: a @graph combining:
+//   1. WebSite + SearchAction — so AI answers can deep-link to site search
+//      (the urlTemplate is a hint to crawlers even when no search page
+//      exists yet; when we ship /search the template points at it).
+//   2. Organization enriched with knowsAbout / slogan / legalName / identifier
+//      — AI crawlers use these to disambiguate the entity and build the
+//      "what does this company do" answer.
+//   3. SpeakableSpecification — tells voice and summarizing AIs which CSS
+//      selectors carry the primary "answer" content on each page.
+// Every node carries @id anchors so Google's parser treats duplicates
+// (organization() from @1commerce/seo and this graph's Organization) as
+// the same entity rather than competing declarations.
+const aiSearchGraphLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${primaryUrl}/#website`,
+      url: primaryUrl,
+      name: businessProfile.display.name,
+      alternateName: businessProfile.display.short_name,
+      description: businessProfile.description.short,
+      inLanguage: "en-US",
+      publisher: { "@id": `${primaryUrl}/#organization` },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${primaryUrl}/?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@type": "Organization",
+      "@id": `${primaryUrl}/#organization`,
+      name: businessProfile.legal.name,
+      alternateName: [
+        businessProfile.display.name,
+        businessProfile.display.short_name,
+      ],
+      legalName: businessProfile.legal.name,
+      url: primaryUrl,
+      logo: {
+        "@type": "ImageObject",
+        "@id": `${primaryUrl}/#logo`,
+        url: `${primaryUrl}/favicon.svg`,
+        caption: businessProfile.display.name,
+      },
+      image: { "@id": `${primaryUrl}/#logo` },
+      slogan: businessProfile.description.short,
+      description: businessProfile.description.long,
+      foundingDate: businessProfile.founded,
+      // knowsAbout surfaces the topic areas the entity is authoritative on.
+      // AI search engines index this heavily for "who is X" and "what
+      // does X do" disambiguation.
+      knowsAbout: [
+        businessProfile.categories.primary,
+        ...businessProfile.categories.secondary,
+      ],
+      // Mirror the identifiers LocalBusiness block carries so an AI crawler
+      // that only reads this graph still gets the full NAP.
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: businessProfile.address.line_1,
+        addressLocality: businessProfile.address.city,
+        addressRegion: businessProfile.address.region,
+        postalCode: businessProfile.address.postal_code,
+        addressCountry: businessProfile.address.country,
+      },
+      contactPoint: {
+        "@type": "ContactPoint",
+        telephone: businessProfile.phone.e164,
+        contactType: "customer service",
+        email: businessProfile.email.public,
+        areaServed: businessProfile.address.country,
+        availableLanguage: ["English"],
+      },
+      sameAs: socialLinks,
+    },
+    {
+      // SpeakableSpecification is attached to the WebSite node by reference.
+      // cssSelector targets the per-page "answer" content — voice assistants
+      // and AI summarizers read from these selectors when surfacing a
+      // spoken or extractive answer.
+      "@type": "SpeakableSpecification",
+      "@id": `${primaryUrl}/#speakable`,
+      cssSelector: ["h1", "main > section:first-of-type p", "[data-speakable]"],
+    },
+  ],
+};
+
+// Always emit Organization + WebSite + the NAP LocalBusiness block + the
+// AI-search @graph; page-specific entries come via the jsonLd prop.
+const allJsonLd = [
+  organization(),
+  website(),
+  localBusinessLd,
+  aiSearchGraphLd,
+  ...jsonLd,
+];
 
 // Escape characters that could break out of the <script> tag or terminate
 // JSON in line-separator contexts. JSON.stringify alone is NOT safe here.
