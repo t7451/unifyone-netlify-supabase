@@ -1,0 +1,30 @@
+{
+  "name": "@1commerce/spire-admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Spire operator CLI + Netlify scheduled functions (tick, weekly digest).",
+  "bin": {
+    "spire": "./src/cli.ts"
+  },
+  "scripts": {
+    "spire": "tsx src/cli.ts",
+    "dev": "netlify dev",
+    "build": "echo 'Netlify builds functions from netlify/functions/ directly; no app build needed'",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@1commerce/spire": "workspace:*",
+    "@netlify/functions": "^2.8.0",
+    "@octokit/rest": "^21.0.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.45.2",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,15 @@
+[build]
+  # This site has no static frontend — Netlify builds only the functions.
+  command = "echo 'spire-admin is functions-only; no frontend build'"
+  publish = "public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+  PNPM_VERSION = "10"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Scheduled functions are declared via the `config.schedule` export inside
+# each .mts file. Netlify's scheduler reads those at deploy time.
