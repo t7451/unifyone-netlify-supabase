@@ -1,0 +1,11 @@
+# Astro
+.astro/
+dist/
+
+# Netlify adapter / CLI cache
+.netlify/
+
+# Env
+.env
+.env.local
+.env.*.local
