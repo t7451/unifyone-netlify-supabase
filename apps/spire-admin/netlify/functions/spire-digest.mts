@@ -34,6 +34,17 @@ export default async (_req: Request) => {
       counts: Record<string, number>;
       topFive: Array<{ title: string | null; slug: string; qualityScore: number | null; url: string }>;
       needsAttention: Array<{ id: string; slug: string; error: string | null }>;
+      // Batch 04 additions:
+      submissions: {
+        counts: Record<string, number>;
+        landedThisWeek: Array<{ directory: string; liveUrl: string | null }>;
+        failedThisWeek: Array<{ directory: string; error: string | null }>;
+      };
+      rankMovement: {
+        topGains: Array<{ term: string; target: string; from: number | null; to: number | null; delta: number }>;
+        topLosses: Array<{ term: string; target: string; from: number | null; to: number | null; delta: number }>;
+        newTop10: Array<{ term: string; target: string; rank: number }>;
+      };
     }>;
 
     for (const site of sites) {
@@ -88,6 +99,8 @@ export default async (_req: Request) => {
           url: `https://${site.domain}/blog/${r.slug}`,
         })),
         needsAttention: failed.map((f) => ({ id: f.id, slug: f.slug, error: f.error })),
+        submissions: await gatherSubmissions(db, site.id, weekAgo),
+        rankMovement: await gatherRankMovement(db, site.id),
       });
     }
 
@@ -117,16 +130,139 @@ export default async (_req: Request) => {
   }
 };
 
-function renderDigestHtml(
-  perSite: Array<{
-    slug: string;
-    published: number;
-    avgQuality: number | null;
+type PerSite = {
+  slug: string;
+  published: number;
+  avgQuality: number | null;
+  counts: Record<string, number>;
+  topFive: Array<{ title: string | null; slug: string; qualityScore: number | null; url: string }>;
+  needsAttention: Array<{ id: string; slug: string; error: string | null }>;
+  submissions: {
     counts: Record<string, number>;
-    topFive: Array<{ title: string | null; slug: string; qualityScore: number | null; url: string }>;
-    needsAttention: Array<{ id: string; slug: string; error: string | null }>;
-  }>
-): string {
+    landedThisWeek: Array<{ directory: string; liveUrl: string | null }>;
+    failedThisWeek: Array<{ directory: string; error: string | null }>;
+  };
+  rankMovement: {
+    topGains: Array<{ term: string; target: string; from: number | null; to: number | null; delta: number }>;
+    topLosses: Array<{ term: string; target: string; from: number | null; to: number | null; delta: number }>;
+    newTop10: Array<{ term: string; target: string; rank: number }>;
+  };
+};
+
+async function gatherSubmissions(
+  db: ReturnType<typeof connectNeon>["db"],
+  siteId: string,
+  since: Date
+): Promise<PerSite["submissions"]> {
+  const counts = await db
+    .select({ status: schema.submissions.status, count: sql<number>`count(*)::int` })
+    .from(schema.submissions)
+    .where(eq(schema.submissions.siteId, siteId))
+    .groupBy(schema.submissions.status);
+
+  const landed = await db
+    .select({
+      directory: schema.directories.slug,
+      liveUrl: schema.submissions.liveUrl,
+    })
+    .from(schema.submissions)
+    .innerJoin(schema.directories, eq(schema.directories.id, schema.submissions.directoryId))
+    .where(
+      and(
+        eq(schema.submissions.siteId, siteId),
+        eq(schema.submissions.status, "sent"),
+        gte(schema.submissions.sentAt, since)
+      )
+    );
+
+  const failed = await db
+    .select({
+      directory: schema.directories.slug,
+      error: schema.submissions.error,
+    })
+    .from(schema.submissions)
+    .innerJoin(schema.directories, eq(schema.directories.id, schema.submissions.directoryId))
+    .where(
+      and(
+        eq(schema.submissions.siteId, siteId),
+        eq(schema.submissions.status, "failed"),
+        gte(schema.submissions.updatedAt, since)
+      )
+    );
+
+  return {
+    counts: Object.fromEntries(counts.map((c) => [c.status, c.count])),
+    landedThisWeek: landed,
+    failedThisWeek: failed,
+  };
+}
+
+async function gatherRankMovement(
+  db: ReturnType<typeof connectNeon>["db"],
+  siteId: string
+): Promise<PerSite["rankMovement"]> {
+  // For each active tracked keyword on this site, grab the latest 2 rank
+  // checks and diff. Deltas of ≥ 5 (either direction) surface; new top-10
+  // entries (latest.rank ≤ 10 && prior.rank > 10) surface.
+  const tracked = await db
+    .select({
+      id: schema.trackedKeywords.id,
+      term: schema.keywords.term,
+      target: schema.trackedKeywords.targetUrl,
+    })
+    .from(schema.trackedKeywords)
+    .innerJoin(schema.keywords, eq(schema.keywords.id, schema.trackedKeywords.keywordId))
+    .where(
+      and(eq(schema.trackedKeywords.active, true), eq(schema.trackedKeywords.siteId, siteId))
+    );
+
+  const gains: PerSite["rankMovement"]["topGains"] = [];
+  const losses: PerSite["rankMovement"]["topLosses"] = [];
+  const newTop10: PerSite["rankMovement"]["newTop10"] = [];
+
+  for (const t of tracked) {
+    const checks = await db
+      .select({ rank: schema.rankChecks.rank, checkedAt: schema.rankChecks.checkedAt })
+      .from(schema.rankChecks)
+      .where(eq(schema.rankChecks.trackedKeywordId, t.id))
+      .orderBy(desc(schema.rankChecks.checkedAt))
+      .limit(2);
+
+    if (checks.length === 0) continue;
+    const latest = checks[0]!;
+    const prior = checks[1];
+
+    // New top-10: latest in top-10 and prior is outside (or absent).
+    if (latest.rank !== null && latest.rank <= 10) {
+      if (!prior || prior.rank === null || prior.rank > 10) {
+        newTop10.push({ term: t.term, target: t.target, rank: latest.rank });
+      }
+    }
+
+    if (!prior) continue;
+    // Negative delta = improvement (going from rank 47 to rank 12 is -35).
+    // Surface as gain. Positive delta = regression, surface as loss.
+    const from = prior.rank ?? 101;
+    const to = latest.rank ?? 101;
+    const delta = to - from;
+    if (Math.abs(delta) >= 5) {
+      const entry = { term: t.term, target: t.target, from: prior.rank, to: latest.rank, delta };
+      if (delta < 0) gains.push(entry);
+      else losses.push(entry);
+    }
+  }
+
+  gains.sort((a, b) => a.delta - b.delta);
+  losses.sort((a, b) => b.delta - a.delta);
+
+  return {
+    topGains: gains.slice(0, 10),
+    topLosses: losses.slice(0, 10),
+    newTop10,
+  };
+}
+
+function renderDigestHtml(perSite: PerSite[]): string {
   const sections = perSite
     .map((s) => {
       const top = s.topFive
@@ -138,10 +274,49 @@ function renderDigestHtml(
       const counts = Object.entries(s.counts)
         .map(([k, v]) => `${k}: ${v}`)
         .join(" · ");
+      const submissionCounts = Object.entries(s.submissions.counts)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(" · ");
+      const landed = s.submissions.landedThisWeek
+        .map(
+          (ls) =>
+            `<li><code>${escape(ls.directory)}</code>${ls.liveUrl ? ` → <a href="${escape(ls.liveUrl)}">${escape(ls.liveUrl)}</a>` : ""}</li>`
+        )
+        .join("");
+      const submissionsFailed = s.submissions.failedThisWeek
+        .map(
+          (f) =>
+            `<li><code>${escape(f.directory)}</code> — ${escape(f.error ?? "(no error recorded)")}</li>`
+        )
+        .join("");
+      const gainsList = s.rankMovement.topGains
+        .map(
+          (g) =>
+            `<li>${escape(g.term)}: ${g.from ?? "—"} → ${g.to ?? "—"} (<strong>${g.delta >= 0 ? "+" : ""}${g.delta}</strong>)</li>`
+        )
+        .join("");
+      const lossesList = s.rankMovement.topLosses
+        .map(
+          (g) =>
+            `<li>${escape(g.term)}: ${g.from ?? "—"} → ${g.to ?? "—"} (<strong>${g.delta}</strong>)</li>`
+        )
+        .join("");
+      const newTop10List = s.rankMovement.newTop10
+        .map((t) => `<li>${escape(t.term)} → rank ${t.rank} on <code>${escape(t.target)}</code></li>`)
+        .join("");
       return `<h2>${escape(s.slug)}</h2>
         <p><strong>${s.published}</strong> published this week · avg quality ${s.avgQuality ?? "n/a"}</p>
-        <p><small>Pipeline: ${escape(counts)}</small></p>
+        <p><small>Content pipeline: ${escape(counts)}</small></p>
         ${top ? `<h3>Top 5 this week</h3><ul>${top}</ul>` : ""}
+        <h3>Submissions this week</h3>
+        <p><small>Queue: ${escape(submissionCounts || "(none)")}</small></p>
+        ${landed ? `<p>Landed:</p><ul>${landed}</ul>` : "<p>None landed this week.</p>"}
+        ${submissionsFailed ? `<p>Failed:</p><ul>${submissionsFailed}</ul>` : ""}
+        <h3>Rank movement</h3>
+        ${newTop10List ? `<p>New top-10 entries:</p><ul>${newTop10List}</ul>` : ""}
+        ${gainsList ? `<p>Biggest gains:</p><ul>${gainsList}</ul>` : ""}
+        ${lossesList ? `<p>Biggest losses:</p><ul>${lossesList}</ul>` : ""}
+        ${!newTop10List && !gainsList && !lossesList ? "<p>No significant rank movement (week over week).</p>" : ""}
         ${attention ? `<h3>Needs attention (${s.needsAttention.length})</h3><ul>${attention}</ul>` : ""}`;
     })
     .join("<hr />");
