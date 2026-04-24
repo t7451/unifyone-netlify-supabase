@@ -14,7 +14,10 @@ Outline:
 Key questions the article must answer:
 {{KEY_QUESTIONS}}
 
-Internal links to use (exact anchor → URL; place where the outline says):
+Internal links to use (exact anchor → URL; place where the outline says).
+Some links may be cross-site full-URL links (starting with https://) to
+other 1Commerce-network sites — treat those like any internal link, not
+like a third-party source. Use the anchor text exactly as given:
 {{INTERNAL_LINKS}}
 
 Outbound sources permitted (cite ONLY these; if the array is empty, use zero outbound links):
@@ -28,8 +31,8 @@ HARD RULES:
 1. **No H1 in the body.** The title renders from frontmatter. Start with a 1–3 paragraph lead, then go straight into `## H2` sections.
 2. **Clean H2/H3 hierarchy.** Follow the outline. `##` for H2, `###` for H3. No `####` or deeper.
 3. **≥ 1200 words of body copy.** (Frontmatter is added separately — count only the markdown you return.)
-4. **Use the supplied internal links verbatim.** Exactly the anchor text and URL given. Minimum 2 internal links.
-5. **Outbound links only from the `outboundSources` array.** Zero allowed means zero. Never fabricate a source.
+4. **Use the supplied internal links verbatim.** Exactly the anchor text and URL given. Minimum 2 internal links. Cross-site links (those with https:// URLs pointing at 1Commerce-network sites) count as internal for this rule.
+5. **Outbound links only from the `outboundSources` array.** Zero allowed means zero. Never fabricate a source. Cross-site mesh links already appear in the INTERNAL LINKS block — do NOT duplicate them here.
 6. **Concrete specifics over abstractions.** Dollar amounts, percentages, real app names, real platform fees. Generalities are failures.
 7. **Apply every rule in the brand brief system prompt.** Forbidden phrases, house style, voice.
 8. **Never mention that you are an AI, a language model, or that this content was AI-generated.** No "As an AI", "I cannot", "I don't have access to", etc.

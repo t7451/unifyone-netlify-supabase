@@ -10,6 +10,9 @@ Priority: {{PRIORITY}}
 INTERNAL LINK TARGETS available on this site (use 2+ when topically relevant):
 {{INTERNAL_LINKS_LIST}}
 
+MESH CROSSLINKS (cross-site links across the 1Commerce network for topic mesh — prefer CROSS-SITE links when they fit the article's actual argument; never force):
+{{MESH_CROSSLINKS}}
+
 Your job: produce a structured brief that a writer (another Claude instance) will execute. The brief determines whether the final article will actually help a reader or be yet another SEO-bait wall of fluff.
 
 REQUIREMENTS:
@@ -21,7 +24,7 @@ REQUIREMENTS:
 5. **H2 outline.** 4–7 H2 sections. Each H2 is a concrete sub-topic, not a generic "Introduction" / "Conclusion". The reader should be able to scan the H2s and know exactly what's covered.
 6. **H3 sub-points per H2.** 2–4 H3s under each H2. Each H3 is a specific question, example, or step — not a vague heading.
 7. **Key questions to answer.** The 3–5 questions a reader is actually asking when they search this keyword. These drive the article's substance.
-8. **Suggested internal links.** Pick 2–4 internal link anchors from the list above and note where in the outline each anchor belongs. Internal links must make editorial sense — don't force `/pricing` into a how-to article about tax deductions.
+8. **Suggested internal links.** Pick 2–4 internal link anchors from the list above and note where in the outline each anchor belongs. Internal links must make editorial sense — don't force `/pricing` into a how-to article about tax deductions. \*\*If the MESH CROSSLINKS block has ≥ 1 CROSS-SITE entry that is topically relevant to this article, include at least one of those as an internalLink (the URL will be a full https://... — that's fine, the writer will treat it as a cross-site reference, not an external source). Vary the anchor text from the `anchor seed` — don't echo it verbatim.
 9. **Suggested outbound sources.** 0–3 authoritative sources (IRS, DOL, manufacturer docs, primary data). **Only include sources that actually exist.** If you can't cite a real source, leave the array empty. The writer is instructed to never fabricate.
 10. **Proof points.** 2–5 specific, concrete data hooks the writer should anchor on — dollar figures, percentages, timeframes, tool names. If they can't be cited, mark them as `"needs_verification": true` and the writer will omit them unless the reader can supply evidence.
 

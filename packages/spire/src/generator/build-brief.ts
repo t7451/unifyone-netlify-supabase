@@ -7,9 +7,19 @@ import { callClaude } from "../lib/anthropic.js";
 import { renderPrompt } from "../lib/prompts.js";
 import { logger } from "../lib/logger.js";
 import { slugify } from "../lib/slug.js";
+import { findCrosslinks, type MeshCrosslink } from "../mesh/find-crosslinks.js";
 
 // Brief schema — validated client-side. If Claude's output drifts, the
 // caller gets a clear error naming the field, not a silent bad row.
+const MeshCrosslinkSchema = z.object({
+  siteSlug: z.string(),
+  siteDomain: z.string(),
+  url: z.string(),
+  anchorHint: z.string(),
+  authorityWeight: z.number().int(),
+  isCrossSite: z.boolean(),
+});
+
 const BriefSchema = z.object({
   slug: z.string().min(1).max(100),
   title: z.string().min(10).max(200),
@@ -26,11 +36,24 @@ const BriefSchema = z.object({
     .min(3)
     .max(10),
   keyQuestions: z.array(z.string().min(5)).min(3).max(10),
+  // URL can be a relative path (same-site internal link) or an absolute
+  // https:// URL (cross-site link pulled from the mesh).
   internalLinks: z
     .array(
       z.object({
         anchor: z.string().min(1),
-        url: z.string().startsWith("/"),
+        url: z
+          .string()
+          .refine(
+            v =>
+              v.startsWith("/") ||
+              v.startsWith("https://") ||
+              v.startsWith("http://"),
+            {
+              message:
+                "internalLinks.url must start with / (same-site) or http(s):// (cross-site)",
+            }
+          ),
         placement: z.string().min(1),
       })
     )
@@ -54,6 +77,9 @@ const BriefSchema = z.object({
     )
     .min(0)
     .max(10),
+  // Added post-parse by build-brief.ts (see below). Optional on the wire
+  // so we don't force Claude to echo the mesh input back.
+  meshCrosslinks: z.array(MeshCrosslinkSchema).optional(),
 });
 
 export type Brief = z.infer<typeof BriefSchema>;
@@ -191,6 +217,27 @@ export async function buildBrief(input: {
     l => `- [${l.anchor}](${l.url})`
   ).join("\n");
 
+  // Batch 04: mesh crosslinks. Pulled from spire_mesh_coverage for this
+  // keyword's cluster. Empty when the mesh has no coverage for this cluster
+  // yet; in that case the prompt renders a fallback string and the quality
+  // gate skips the mesh-links-absent check.
+  const meshCrosslinks = await findCrosslinks({
+    db,
+    currentSiteId: site.id,
+    cluster: keyword.cluster,
+    limit: 4,
+  });
+
+  const meshBlock =
+    meshCrosslinks.length === 0
+      ? "(none — no mesh coverage for this cluster yet; skip cross-site linking)"
+      : meshCrosslinks
+          .map(
+            c =>
+              `- ${c.isCrossSite ? "CROSS-SITE" : "same-site"} → ${c.url} (anchor seed: "${c.anchorHint}", weight ${c.authorityWeight})`
+          )
+          .join("\n");
+
   const prompt = renderPrompt("build-brief", {
     SITE_NAME: site.slug,
     SITE_DOMAIN: site.domain,
@@ -199,6 +246,7 @@ export async function buildBrief(input: {
     CLUSTER: keyword.cluster ?? "general",
     PRIORITY: String(keyword.priority),
     INTERNAL_LINKS_LIST: internalLinksList,
+    MESH_CROSSLINKS: meshBlock,
   });
 
   logger.info({ keywordId, term: keyword.term }, "Building brief");
@@ -223,6 +271,12 @@ export async function buildBrief(input: {
   }
 
   const brief = parsed.data;
+
+  // Graft the mesh crosslinks onto the brief so write-article.ts has them
+  // without re-running findCrosslinks. Stored in spire_content_plan.brief
+  // as part of the jsonb so it round-trips cleanly.
+  (brief as Brief & { meshCrosslinks: MeshCrosslink[] }).meshCrosslinks =
+    meshCrosslinks;
 
   // Normalize slug: Claude's proposed slug may have punctuation, stop words,
   // or casing. slugify() enforces our own rules.

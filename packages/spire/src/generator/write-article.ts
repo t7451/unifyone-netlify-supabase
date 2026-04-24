@@ -112,10 +112,16 @@ export async function writeArticle(input: {
     });
 
     const markdown = text.trim();
+    // Mesh crosslinks are grafted onto the brief by build-brief.ts; they
+    // flow through jsonb round-trip as `meshCrosslinks`. Pass them to the
+    // quality gate so cross-site URLs count as internal, not outbound, and
+    // so the mesh_links_present check fires when coverage exists.
+    const meshCrosslinks = brief.meshCrosslinks ?? [];
     const report = qualityGate(
       markdown,
       brief.internalLinks,
-      brief.outboundSources
+      brief.outboundSources,
+      meshCrosslinks
     );
 
     if (!report.pass) {
