@@ -1,0 +1,349 @@
+#!/usr/bin/env tsx
+// CLI entry point for Spire operators. Commands mirror the Batch 03 spec:
+//   spire register <site>      — upsert a spire_sites row from config/sites/<site>.json
+//   spire seed <site>          — run keyword expansion from that config's seed list
+//   spire plan <site> [--n N]  — build N briefs from top-priority queued keywords
+//   spire write <plan-id>      — generate the article for a specific plan
+//   spire publish <plan-id>    — commit the published content to GitHub
+//   spire status <site>        — pipeline counts + recent plans
+//   spire tick <site>          — run one iteration of the scheduled logic
+
+import { Command } from "commander";
+import { config as loadDotenv } from "dotenv";
+import { eq, and, asc, desc, sql } from "drizzle-orm";
+import { Octokit } from "@octokit/rest";
+import {
+  buildBrief,
+  createAnthropic,
+  connectNeon,
+  expandKeywords,
+  loadEnv,
+  logger,
+  publishArticle,
+  writeArticle,
+  schema,
+} from "@1commerce/spire";
+import { loadSiteConfig } from "./load-site-config.js";
+import { runTick } from "./tick.js";
+
+loadDotenv();
+
+const program = new Command();
+program.name("spire").description("Spire content engine CLI").version("0.1.0");
+
+program
+  .command("register")
+  .description("Upsert a spire_sites row from config/sites/<slug>.json")
+  .argument("<slug>")
+  .action(async (slug: string) => {
+    const cfg = loadSiteConfig(slug);
+    const env = loadEnv(["NEON_DATABASE_URL"] as const);
+    const { sql: raw, db } = connectNeon(env.NEON_DATABASE_URL);
+    try {
+      const existing = await db
+        .select()
+        .from(schema.sites)
+        .where(eq(schema.sites.slug, cfg.slug))
+        .limit(1);
+
+      if (existing[0]) {
+        await db
+          .update(schema.sites)
+          .set({
+            domain: cfg.domain,
+            repo: cfg.repo,
+            contentPath: cfg.content_path,
+            brandBriefKey: cfg.brand_brief_key,
+            niche: cfg.niche,
+            targetAudiences: cfg.target_audiences,
+          })
+          .where(eq(schema.sites.id, existing[0].id));
+        logger.info({ id: existing[0].id, slug: cfg.slug }, "Site updated");
+      } else {
+        const inserted = await db
+          .insert(schema.sites)
+          .values({
+            slug: cfg.slug,
+            domain: cfg.domain,
+            repo: cfg.repo,
+            contentPath: cfg.content_path,
+            brandBriefKey: cfg.brand_brief_key,
+            niche: cfg.niche,
+            targetAudiences: cfg.target_audiences,
+            tier: "foundation",
+            active: true,
+          })
+          .returning({ id: schema.sites.id });
+        logger.info({ id: inserted[0]?.id, slug: cfg.slug }, "Site registered");
+      }
+    } finally {
+      await raw.end({ timeout: 5 });
+    }
+  });
+
+program
+  .command("seed")
+  .description("Expand seed keywords into spire_keywords via Claude")
+  .argument("<slug>")
+  .action(async (slug: string) => {
+    const cfg = loadSiteConfig(slug);
+    const env = loadEnv([
+      "NEON_DATABASE_URL",
+      "ANTHROPIC_API_KEY",
+      "SPIRE_MODEL",
+    ] as const);
+    const { sql: raw, db } = connectNeon(env.NEON_DATABASE_URL);
+    try {
+      const [site] = await db
+        .select()
+        .from(schema.sites)
+        .where(eq(schema.sites.slug, cfg.slug))
+        .limit(1);
+      if (!site)
+        throw new Error(
+          `Site ${slug} not registered. Run: spire register ${slug}`
+        );
+
+      const anthropic = createAnthropic(env.ANTHROPIC_API_KEY);
+      const result = await expandKeywords({
+        db,
+        anthropic,
+        model: env.SPIRE_MODEL,
+        siteId: site.id,
+        seedKeywords: cfg.seed_keywords,
+      });
+      logger.info(result, "Seed complete");
+    } finally {
+      await raw.end({ timeout: 5 });
+    }
+  });
+
+program
+  .command("plan")
+  .description("Build briefs for the N highest-priority queued keywords")
+  .argument("<slug>")
+  .option("-n, --n <count>", "how many briefs to build", "5")
+  .action(async (slug: string, opts: { n: string }) => {
+    const n = Math.max(1, Math.min(20, Number(opts.n)));
+    const env = loadEnv([
+      "NEON_DATABASE_URL",
+      "ANTHROPIC_API_KEY",
+      "SPIRE_MODEL",
+    ] as const);
+    const { sql: raw, db } = connectNeon(env.NEON_DATABASE_URL);
+    try {
+      const [site] = await db
+        .select()
+        .from(schema.sites)
+        .where(eq(schema.sites.slug, slug))
+        .limit(1);
+      if (!site) throw new Error(`Site ${slug} not registered`);
+
+      const rows = await db
+        .select()
+        .from(schema.keywords)
+        .where(
+          and(
+            eq(schema.keywords.siteId, site.id),
+            eq(schema.keywords.status, "new")
+          )
+        )
+        .orderBy(desc(schema.keywords.priority), asc(schema.keywords.createdAt))
+        .limit(n);
+
+      if (rows.length === 0) {
+        logger.warn(
+          "No 'new' keywords available to plan. Run `spire seed` first."
+        );
+        return;
+      }
+
+      const anthropic = createAnthropic(env.ANTHROPIC_API_KEY);
+      let ok = 0;
+      let failed = 0;
+      for (const kw of rows) {
+        try {
+          const result = await buildBrief({
+            db,
+            anthropic,
+            model: env.SPIRE_MODEL,
+            keywordId: kw.id,
+          });
+          logger.info(
+            { contentPlanId: result.contentPlanId, slug: result.slug },
+            "Brief built"
+          );
+          ok += 1;
+        } catch (err) {
+          failed += 1;
+          logger.error(
+            {
+              keywordId: kw.id,
+              term: kw.term,
+              err: err instanceof Error ? err.message : String(err),
+            },
+            "Brief failed"
+          );
+        }
+      }
+      logger.info({ ok, failed, total: rows.length }, "Plan complete");
+    } finally {
+      await raw.end({ timeout: 5 });
+    }
+  });
+
+program
+  .command("write")
+  .description("Generate the article for a specific plan id")
+  .argument("<planId>")
+  .action(async (planId: string) => {
+    const env = loadEnv([
+      "NEON_DATABASE_URL",
+      "ANTHROPIC_API_KEY",
+      "SPIRE_MODEL",
+    ] as const);
+    const { sql: raw, db } = connectNeon(env.NEON_DATABASE_URL);
+    try {
+      const anthropic = createAnthropic(env.ANTHROPIC_API_KEY);
+      const result = await writeArticle({
+        db,
+        anthropic,
+        model: env.SPIRE_MODEL,
+        contentPlanId: planId,
+        // CLI never autopublishes — that's the scheduled tick's job.
+      });
+      logger.info(
+        {
+          status: result.status,
+          qualityScore: result.qualityScore,
+          wordCount: result.wordCount,
+        },
+        "Write complete"
+      );
+    } finally {
+      await raw.end({ timeout: 5 });
+    }
+  });
+
+program
+  .command("publish")
+  .description(
+    "Publish a reviewed plan to GitHub (bypasses autopublish threshold)"
+  )
+  .argument("<planId>")
+  .action(async (planId: string) => {
+    const env = loadEnv([
+      "NEON_DATABASE_URL",
+      "GITHUB_TOKEN",
+      "GITHUB_OWNER",
+      "GITHUB_REPO",
+      "GITHUB_BRANCH",
+    ] as const);
+    const { sql: raw, db } = connectNeon(env.NEON_DATABASE_URL);
+    try {
+      const octokit = new Octokit({ auth: env.GITHUB_TOKEN });
+      const result = await publishArticle({
+        db,
+        octokit,
+        owner: env.GITHUB_OWNER,
+        repo: env.GITHUB_REPO,
+        branch: env.GITHUB_BRANCH,
+        contentPlanId: planId,
+      });
+      logger.info(result, "Publish complete");
+    } finally {
+      await raw.end({ timeout: 5 });
+    }
+  });
+
+program
+  .command("status")
+  .description("Print pipeline counts and recent plans for a site")
+  .argument("<slug>")
+  .action(async (slug: string) => {
+    const env = loadEnv(["NEON_DATABASE_URL"] as const);
+    const { sql: raw, db } = connectNeon(env.NEON_DATABASE_URL);
+    try {
+      const [site] = await db
+        .select()
+        .from(schema.sites)
+        .where(eq(schema.sites.slug, slug))
+        .limit(1);
+      if (!site) {
+        logger.warn(`Site ${slug} not registered`);
+        return;
+      }
+
+      const kwCounts = await db
+        .select({
+          status: schema.keywords.status,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(schema.keywords)
+        .where(eq(schema.keywords.siteId, site.id))
+        .groupBy(schema.keywords.status);
+
+      const planCounts = await db
+        .select({
+          status: schema.contentPlan.status,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(schema.contentPlan)
+        .where(eq(schema.contentPlan.siteId, site.id))
+        .groupBy(schema.contentPlan.status);
+
+      const recent = await db
+        .select({
+          id: schema.contentPlan.id,
+          slug: schema.contentPlan.slug,
+          title: schema.contentPlan.title,
+          status: schema.contentPlan.status,
+          qualityScore: schema.contentPlan.qualityScore,
+          createdAt: schema.contentPlan.createdAt,
+        })
+        .from(schema.contentPlan)
+        .where(eq(schema.contentPlan.siteId, site.id))
+        .orderBy(desc(schema.contentPlan.createdAt))
+        .limit(10);
+
+      logger.info(
+        { site: site.slug, domain: site.domain, id: site.id },
+        "Site"
+      );
+      logger.info({ keywords: kwCounts, plans: planCounts }, "Pipeline counts");
+      logger.info({ recent }, "Recent plans");
+    } finally {
+      await raw.end({ timeout: 5 });
+    }
+  });
+
+program
+  .command("tick")
+  .description("Run one iteration of the scheduled logic manually")
+  .argument("<slug>")
+  .action(async (slug: string) => {
+    const env = loadEnv([
+      "NEON_DATABASE_URL",
+      "ANTHROPIC_API_KEY",
+      "GITHUB_TOKEN",
+      "GITHUB_OWNER",
+      "GITHUB_REPO",
+      "GITHUB_BRANCH",
+      "SPIRE_MODEL",
+      "SPIRE_TICK_BRIEFS_PER_RUN",
+      "SPIRE_TICK_ARTICLES_PER_RUN",
+    ] as const);
+    const summary = await runTick({
+      trigger: "manual",
+      siteSlug: slug,
+      autopublish: loadSiteConfig(slug).autopublish,
+      autopublishThreshold: loadSiteConfig(slug).autopublish_quality_threshold,
+      env,
+    });
+    logger.info(summary, "Tick complete");
+  });
+
+program.parseAsync(process.argv).catch(err => {
+  logger.fatal(err instanceof Error ? err.message : String(err));
+  process.exit(1);
+});
