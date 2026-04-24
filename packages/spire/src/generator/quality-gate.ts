@@ -59,7 +59,13 @@ const AI_LEAK_PATTERNS = [
 export function qualityGate(
   markdown: string,
   briefInternalLinks: Array<{ anchor: string; url: string }>,
-  briefOutboundSources: Array<{ url: string }>
+  briefOutboundSources: Array<{ url: string }>,
+  /**
+   * Batch 04: mesh crosslinks supplied to the brief. When ≥ 2 were given,
+   * the article must include ≥ 1 of them — otherwise Claude is ignoring
+   * the mesh and the piece fails the gate.
+   */
+  briefMeshCrosslinks: Array<{ url: string }> = []
 ): QualityReport {
   const checks: QualityCheck[] = [];
 
@@ -101,25 +107,36 @@ export function qualityGate(
         : `found ${deepHeadingCount} heading(s) at H4 or deeper; max depth is H3`,
   });
 
-  // 5. >= 2 internal links from the brief's allow-list
+  // 5. >= 2 internal links from the brief's allow-list. Internal links can
+  //    be same-site paths (/gig-workers) or cross-site mesh URLs (full
+  //    https://... to another 1Commerce-network site) — both count.
   const internalLinkAllowList = new Set(briefInternalLinks.map(l => l.url));
+  const meshUrlAllowList = new Set(briefMeshCrosslinks.map(l => l.url));
   const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
   const foundLinks: Array<{ anchor: string; url: string }> = [];
   let m: RegExpExecArray | null;
   while ((m = linkRegex.exec(markdown)) !== null) {
     foundLinks.push({ anchor: m[1]!, url: m[2]! });
   }
-  const internalHits = foundLinks.filter(l => internalLinkAllowList.has(l.url));
+  const internalHits = foundLinks.filter(
+    l => internalLinkAllowList.has(l.url) || meshUrlAllowList.has(l.url)
+  );
   checks.push({
     name: "internal_links_>=_2",
     pass: internalHits.length >= 2,
     message: `found ${internalHits.length} internal link(s) matching brief allow-list (out of ${foundLinks.length} total links)`,
   });
 
-  // 6. Outbound links only from brief's allow-list
+  // 6. Outbound links only from the outbound allow-list OR the mesh allow-list.
+  //    Mesh URLs are https:// but are not third-party sources — they're
+  //    cross-site internal links. Must whitelist them or the check falsely
+  //    rejects every well-behaved mesh piece.
   const outboundAllowList = new Set(briefOutboundSources.map(s => s.url));
   const violatingOutbound = foundLinks.filter(
-    l => /^https?:\/\//i.test(l.url) && !outboundAllowList.has(l.url)
+    l =>
+      /^https?:\/\//i.test(l.url) &&
+      !outboundAllowList.has(l.url) &&
+      !meshUrlAllowList.has(l.url)
   );
   checks.push({
     name: "no_unpermitted_outbound_links",
@@ -132,6 +149,21 @@ export function qualityGate(
             .map(l => l.url)
             .join(", ")}`,
   });
+
+  // 5b. Mesh-link check. Only enforced when the brief supplied ≥ 2 mesh
+  //     crosslinks — otherwise the cluster simply has no coverage and the
+  //     article has nothing to mesh to.
+  if (briefMeshCrosslinks.length >= 2) {
+    const meshHits = foundLinks.filter(l => meshUrlAllowList.has(l.url));
+    checks.push({
+      name: "mesh_links_present",
+      pass: meshHits.length >= 1,
+      message:
+        meshHits.length >= 1
+          ? `found ${meshHits.length} mesh link(s)`
+          : `0 mesh links out of ${briefMeshCrosslinks.length} supplied — Claude ignored mesh context`,
+    });
+  }
 
   // 7. Every link resolves to internal path or full URL
   const malformedLinks = foundLinks.filter(
