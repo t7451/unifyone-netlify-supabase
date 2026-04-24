@@ -1,0 +1,27 @@
+{
+  "name": "@1commerce/migration",
+  "private": true,
+  "type": "module",
+  "description": "Supabase → Neon + Clerk migration tooling for UnifyOne Batch 02 cutover.",
+  "scripts": {
+    "01:export": "bash 01_export_supabase.sh",
+    "02:audit": "tsx 02_audit_export.ts",
+    "03:clerk": "tsx 03_clerk_bulk_import.ts",
+    "04:map": "tsx 04_build_user_mapping.ts",
+    "05:import": "tsx 05_transform_and_import.ts",
+    "06:verify": "tsx 06_verify_parity.ts",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clerk/backend": "^3.3.0",
+    "pino": "^9.0.0",
+    "pino-pretty": "^11.0.0",
+    "postgres": "^3.4.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0"
+  }
+}
