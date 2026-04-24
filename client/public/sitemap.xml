@@ -159,6 +159,12 @@
     <changefreq>monthly</changefreq>
     <priority>0.90</priority>
   </url>
+  <url>
+    <loc>__APP_URL__/blog/digital-retail-guide</loc>
+    <lastmod>2026-04-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.90</priority>
+  </url>
 
   <!-- ── SEO Landing Pages (brand variations + product keywords) ──────── -->
   <url>
