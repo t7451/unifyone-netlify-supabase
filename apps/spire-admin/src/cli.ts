@@ -343,6 +343,177 @@ program
     logger.info(summary, "Tick complete");
   });
 
+// --- Batch 04: distribution commands ---
+
+const directories = program
+  .command("directories")
+  .description("Directory registry management");
+
+directories
+  .command("seed")
+  .description("Load config/directories/seed.json into spire_directories")
+  .action(async () => {
+    const { seedDirectoriesCommand } = await import(
+      "./commands/seed-directories.js"
+    );
+    await seedDirectoriesCommand();
+  });
+
+directories
+  .command("list")
+  .description("List registered directories")
+  .option("--active", "only show active directories")
+  .action(async (opts: { active?: boolean }) => {
+    const env = loadEnv(["NEON_DATABASE_URL"] as const);
+    const { sql: raw, db } = connectNeon(env.NEON_DATABASE_URL);
+    try {
+      const rows = opts.active
+        ? await db
+            .select()
+            .from(schema.directories)
+            .where(eq(schema.directories.active, true))
+        : await db.select().from(schema.directories);
+      logger.info(
+        rows.map(r => ({
+          slug: r.slug,
+          method: r.method,
+          authority: r.authority,
+          active: r.active,
+          cooldown_days: r.cooldownDays,
+        })),
+        "Directories"
+      );
+    } finally {
+      await raw.end({ timeout: 5 });
+    }
+  });
+
+program
+  .command("auth")
+  .description(
+    "Open a browser to capture auth state for a form-submission directory"
+  )
+  .argument("<directorySlug>")
+  .action(async (directorySlug: string) => {
+    const { authDirectoryCommand } = await import(
+      "./commands/auth-directory.js"
+    );
+    await authDirectoryCommand(directorySlug);
+  });
+
+const submit = program.command("submit").description("Directory submissions");
+
+submit
+  .command("queue")
+  .description(
+    "Queue submissions for a site (defaults to all active directories)"
+  )
+  .argument("<siteSlug>")
+  .option("--directory <slug>", "restrict to one directory")
+  .action(async (siteSlug: string, opts: { directory?: string }) => {
+    const { queueSubmissionsCommand } = await import(
+      "./commands/queue-submissions.js"
+    );
+    const result = await queueSubmissionsCommand({
+      siteSlug,
+      directorySlug: opts.directory,
+    });
+    logger.info(result, "Queue result");
+  });
+
+submit
+  .command("status")
+  .description("Pipeline counts + recent submissions")
+  .action(async () => {
+    const { submissionStatusCommand } = await import(
+      "./commands/queue-submissions.js"
+    );
+    await submissionStatusCommand();
+  });
+
+submit
+  .command("retry")
+  .description("Re-queue a failed submission by id")
+  .argument("<submissionId>")
+  .action(async (submissionId: string) => {
+    const { retrySubmissionCommand } = await import(
+      "./commands/queue-submissions.js"
+    );
+    await retrySubmissionCommand(submissionId);
+  });
+
+const mesh = program.command("mesh").description("Cross-site topic mesh");
+
+mesh
+  .command("seed")
+  .description("Load config/mesh/topic-clusters.json into spire_mesh_*")
+  .action(async () => {
+    const { seedMeshCommand } = await import("./commands/seed-mesh.js");
+    await seedMeshCommand();
+  });
+
+mesh
+  .command("report")
+  .description("Which topics have coverage, which are orphans")
+  .action(async () => {
+    const { meshReportCommand } = await import("./commands/seed-mesh.js");
+    await meshReportCommand();
+  });
+
+const rank = program.command("rank").description("Rank tracking (DataForSEO)");
+
+rank
+  .command("track")
+  .description("Add a keyword to the rank-tracking queue")
+  .argument("<keywordId>")
+  .requiredOption(
+    "--url <path>",
+    "target URL (path like /gig-workers, or full https://)"
+  )
+  .option(
+    "--location <code>",
+    "DataForSEO location code (default 2840 for US)",
+    "2840"
+  )
+  .option("--language <code>", "language code (default en)", "en")
+  .action(
+    async (
+      keywordId: string,
+      opts: { url: string; location: string; language: string }
+    ) => {
+      const { trackKeywordCommand } = await import("./commands/rank-report.js");
+      await trackKeywordCommand({
+        keywordId,
+        targetUrl: opts.url,
+        locationCode: Number(opts.location),
+        languageCode: opts.language,
+      });
+    }
+  );
+
+rank
+  .command("report")
+  .description("Latest + prior rank per tracked keyword with delta")
+  .option("--site <slug>", "restrict to a single site")
+  .option("--since <days>", "look back N days for history (default 30)", "30")
+  .action(async (opts: { site?: string; since: string }) => {
+    const { rankReportCommand } = await import("./commands/rank-report.js");
+    await rankReportCommand({
+      siteSlug: opts.site,
+      sinceDays: Number(opts.since),
+    });
+  });
+
+rank
+  .command("run-now")
+  .description(
+    "Print instructions for triggering an immediate rank-check cycle on the worker"
+  )
+  .action(async () => {
+    const { rankRunNowStubCommand } = await import("./commands/rank-report.js");
+    await rankRunNowStubCommand();
+  });
+
 program.parseAsync(process.argv).catch(err => {
   logger.fatal(err instanceof Error ? err.message : String(err));
   process.exit(1);
