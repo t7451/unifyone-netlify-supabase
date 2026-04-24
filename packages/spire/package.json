@@ -1,0 +1,32 @@
+{
+  "name": "@1commerce/spire",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Spire content engine — keyword → brief → article → Neon + GitHub publisher.",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts",
+    "./generator": "./src/generator/index.ts",
+    "./publisher": "./src/publisher/index.ts",
+    "./lib": "./src/lib/index.ts",
+    "./prompts/*": "./src/prompts/*"
+  },
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "@octokit/rest": "^21.0.0",
+    "drizzle-orm": "^0.45.2",
+    "pino": "^9.0.0",
+    "pino-pretty": "^11.0.0",
+    "postgres": "^3.4.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.6.3"
+  }
+}
