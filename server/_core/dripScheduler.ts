@@ -84,7 +84,7 @@ async function sendDripEmail(
 
     // Send email via Resend
     const result = await resend.emails.send({
-      from: "UnifyOne <hello@unifyonecommerce.com>",
+      from: "UnifyOne <hello@1commerce.online>",
       to: sub.email,
       subject: template.subject,
       html: template.html,
@@ -137,7 +137,9 @@ export async function processPendingDrips(): Promise<{
   // Early exit if Resend is not configured — avoid querying DB unnecessarily
   const resendCheck = getResendClient();
   if (!resendCheck) {
-    console.warn("[Drip] RESEND_API_KEY is not configured — skipping drip processing. Set the env var to enable email drips.");
+    console.warn(
+      "[Drip] RESEND_API_KEY is not configured — skipping drip processing. Set the env var to enable email drips."
+    );
     return { processed: 0, sent: 0, errors: 0 };
   }
 
@@ -183,13 +185,20 @@ export async function processPendingDrips(): Promise<{
             sent++;
           } else {
             errors++;
-            console.warn(`[Drip] Failed drip ${dripNumber} for ${subscriber.email}: ${result.error}`);
+            console.warn(
+              `[Drip] Failed drip ${dripNumber} for ${subscriber.email}: ${result.error}`
+            );
           }
         } catch (subscriberError) {
           // Isolate per-subscriber errors so one crash doesn't abort the entire batch
           errors++;
-          const msg = subscriberError instanceof Error ? subscriberError.message : String(subscriberError);
-          console.error(`[Drip] Unexpected error processing subscriber ${subscriber.id} (drip ${dripNumber}): ${msg}`);
+          const msg =
+            subscriberError instanceof Error
+              ? subscriberError.message
+              : String(subscriberError);
+          console.error(
+            `[Drip] Unexpected error processing subscriber ${subscriber.id} (drip ${dripNumber}): ${msg}`
+          );
         }
       }
     }
@@ -221,7 +230,7 @@ export async function sendWelcomeEmail(
     const template = emailTemplates.welcome;
 
     const result = await resend.emails.send({
-      from: "UnifyOne <hello@unifyonecommerce.com>",
+      from: "UnifyOne <hello@1commerce.online>",
       to: email,
       subject: template.subject,
       html: template.html,

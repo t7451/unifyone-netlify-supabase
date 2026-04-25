@@ -510,7 +510,7 @@ async function sendEmail(opts: {
     const { Resend } = await import("resend");
     const resend = new Resend(apiKey);
     const result = await resend.emails.send({
-      from: "UnifyOne <hello@unifyonecommerce.com>",
+      from: "UnifyOne <hello@1commerce.online>",
       to: opts.to,
       subject: opts.subject,
       html: opts.html,
