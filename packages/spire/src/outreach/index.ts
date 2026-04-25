@@ -17,3 +17,30 @@ export type {
 export { draftPitch } from "./pitch/draft.js";
 export type { DraftInput, DraftResult } from "./pitch/draft.js";
 export { renderPitchPrompt } from "./pitch/tokens.js";
+export { scheduleSequence } from "./sequences/schedule.js";
+export type {
+  ScheduleSequenceInput,
+  ScheduleSequenceResult,
+} from "./sequences/schedule.js";
+export { advanceSequences } from "./sequences/advance.js";
+export type { AdvanceInput, AdvanceResult } from "./sequences/advance.js";
+export {
+  checkDeliverabilityGate,
+  recordSent,
+} from "./send/deliverability-gate.js";
+export type {
+  GateInput,
+  GateResult,
+  GateReason,
+} from "./send/deliverability-gate.js";
+export {
+  buildCanSpamFooter,
+  suppressionToken,
+  verifySuppressionToken,
+} from "./send/footer.js";
+export type { FooterInput } from "./send/footer.js";
+export { resendSend } from "./send/resend-client.js";
+export type {
+  ResendSendInput,
+  ResendSendResult,
+} from "./send/resend-client.js";
