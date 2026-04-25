@@ -1,6 +1,13 @@
 import type { Config } from "@netlify/functions";
 import { and, desc, eq, gte, sql } from "drizzle-orm";
-import { connectNeon, logger, schema } from "@1commerce/spire";
+import {
+  connectNeon,
+  findRisingQueries,
+  findStrikingDistanceQueries,
+  logger,
+  schema,
+  summarizeGsc,
+} from "@1commerce/spire";
 
 // Weekly digest: Monday 08:00 America/Los_Angeles. Netlify's scheduler runs
 // in UTC, so 08:00 PT in standard time = 16:00 UTC, and in DST (March–Nov)
@@ -27,25 +34,10 @@ export default async (_req: Request) => {
 
     const sites = await db.select().from(schema.sites).where(eq(schema.sites.active, true));
 
-    const perSite = [] as Array<{
-      slug: string;
-      published: number;
-      avgQuality: number | null;
-      counts: Record<string, number>;
-      topFive: Array<{ title: string | null; slug: string; qualityScore: number | null; url: string }>;
-      needsAttention: Array<{ id: string; slug: string; error: string | null }>;
-      // Batch 04 additions:
-      submissions: {
-        counts: Record<string, number>;
-        landedThisWeek: Array<{ directory: string; liveUrl: string | null }>;
-        failedThisWeek: Array<{ directory: string; error: string | null }>;
-      };
-      rankMovement: {
-        topGains: Array<{ term: string; target: string; from: number | null; to: number | null; delta: number }>;
-        topLosses: Array<{ term: string; target: string; from: number | null; to: number | null; delta: number }>;
-        newTop10: Array<{ term: string; target: string; rank: number }>;
-      };
-    }>;
+    // Type defined below (PerSite). Inline type used to be duplicated here
+    // — Batch 05 expands the shape with gsc + syndication, so we just use
+    // the canonical PerSite type and stay DRY.
+    const perSite: PerSite[] = [];
 
     for (const site of sites) {
       const publishedLastWeek = await db
@@ -101,10 +93,16 @@ export default async (_req: Request) => {
         needsAttention: failed.map((f) => ({ id: f.id, slug: f.slug, error: f.error })),
         submissions: await gatherSubmissions(db, site.id, weekAgo),
         rankMovement: await gatherRankMovement(db, site.id),
+        gsc: await gatherGsc(db, site.id),
+        syndication: await gatherSyndications(db, site.id, weekAgo),
       });
     }
 
-    const htmlBody = renderDigestHtml(perSite);
+    // HARO queue is global, not per-site — inbound queries don't carry a
+    // site_id (they're matched at classify time to the configured HARO_SITE_SLUG).
+    const haroSummary = await gatherHaroQueue(db, weekAgo);
+
+    const htmlBody = renderDigestHtml(perSite, haroSummary);
 
     if (env.MAILERLITE_API_KEY && env.DIGEST_TO_EMAIL) {
       await sendViaMailerLite({
@@ -122,7 +120,7 @@ export default async (_req: Request) => {
       );
     }
 
-    return new Response(JSON.stringify({ ok: true, perSite }), {
+    return new Response(JSON.stringify({ ok: true, perSite, haro: haroSummary }), {
       headers: { "content-type": "application/json" },
     });
   } finally {
@@ -147,6 +145,22 @@ type PerSite = {
     topLosses: Array<{ term: string; target: string; from: number | null; to: number | null; delta: number }>;
     newTop10: Array<{ term: string; target: string; rank: number }>;
   };
+  gsc: {
+    summary: Awaited<ReturnType<typeof summarizeGsc>>;
+    strikingDistance: Awaited<ReturnType<typeof findStrikingDistanceQueries>>;
+    rising: Awaited<ReturnType<typeof findRisingQueries>>;
+  } | null;
+  syndication: {
+    counts: Record<string, number>;
+    publishedThisWeek: Array<{ platform: string; planSlug: string; externalUrl: string | null }>;
+    failedThisWeek: Array<{ platform: string; planSlug: string; error: string | null }>;
+  };
+};
+
+type HaroSummary = {
+  newHighScore: Array<{ id: string; outlet: string | null; subject: string; score: number | null; deadline: Date | null }>;
+  deadlinesIn48h: Array<{ id: string; outlet: string | null; subject: string; deadline: Date | null }>;
+  wonThisWeek: Array<{ id: string; outlet: string | null; outcomeUrl: string | null; outcomeDr: number | null }>;
 };
 
 async function gatherSubmissions(
@@ -195,6 +209,151 @@ async function gatherSubmissions(
     landedThisWeek: landed,
     failedThisWeek: failed,
   };
+}
+
+async function gatherGsc(
+  db: ReturnType<typeof connectNeon>["db"],
+  siteId: string
+): Promise<PerSite["gsc"]> {
+  try {
+    const [summary, strikingDistance, rising] = await Promise.all([
+      summarizeGsc(db, { siteId }),
+      findStrikingDistanceQueries(db, { siteId, weeks: 1, limit: 5 }),
+      findRisingQueries(db, { siteId, weeks: 2, limit: 3 }),
+    ]);
+    if (summary.recentImpressions === 0 && summary.priorImpressions === 0) {
+      // No GSC data yet (first week, or service-account hasn't been linked).
+      return null;
+    }
+    return { summary, strikingDistance, rising };
+  } catch (err) {
+    logger.warn(
+      { err: err instanceof Error ? err.message : String(err) },
+      "GSC gather failed; digest will skip the section"
+    );
+    return null;
+  }
+}
+
+async function gatherSyndications(
+  db: ReturnType<typeof connectNeon>["db"],
+  siteId: string,
+  since: Date
+): Promise<PerSite["syndication"]> {
+  const counts = await db
+    .select({
+      status: schema.syndications.status,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(schema.syndications)
+    .innerJoin(schema.contentPlan, eq(schema.contentPlan.id, schema.syndications.contentPlanId))
+    .where(eq(schema.contentPlan.siteId, siteId))
+    .groupBy(schema.syndications.status);
+
+  const published = await db
+    .select({
+      platform: schema.syndicationPlatforms.slug,
+      planSlug: schema.contentPlan.slug,
+      externalUrl: schema.syndications.externalUrl,
+    })
+    .from(schema.syndications)
+    .innerJoin(schema.contentPlan, eq(schema.contentPlan.id, schema.syndications.contentPlanId))
+    .innerJoin(
+      schema.syndicationPlatforms,
+      eq(schema.syndicationPlatforms.id, schema.syndications.platformId)
+    )
+    .where(
+      and(
+        eq(schema.contentPlan.siteId, siteId),
+        eq(schema.syndications.status, "published"),
+        gte(schema.syndications.publishedAt, since)
+      )
+    );
+
+  const failed = await db
+    .select({
+      platform: schema.syndicationPlatforms.slug,
+      planSlug: schema.contentPlan.slug,
+      error: schema.syndications.error,
+    })
+    .from(schema.syndications)
+    .innerJoin(schema.contentPlan, eq(schema.contentPlan.id, schema.syndications.contentPlanId))
+    .innerJoin(
+      schema.syndicationPlatforms,
+      eq(schema.syndicationPlatforms.id, schema.syndications.platformId)
+    )
+    .where(
+      and(
+        eq(schema.contentPlan.siteId, siteId),
+        eq(schema.syndications.status, "failed"),
+        gte(schema.syndications.updatedAt, since)
+      )
+    );
+
+  return {
+    counts: Object.fromEntries(counts.map((c) => [c.status, c.count])),
+    publishedThisWeek: published,
+    failedThisWeek: failed,
+  };
+}
+
+async function gatherHaroQueue(
+  db: ReturnType<typeof connectNeon>["db"],
+  since: Date
+): Promise<HaroSummary> {
+  const newHighScore = await db
+    .select({
+      id: schema.prOpportunities.id,
+      outlet: schema.prOpportunities.outlet,
+      subject: schema.prOpportunities.querySubject,
+      score: schema.prOpportunities.matchScore,
+      deadline: schema.prOpportunities.deadline,
+    })
+    .from(schema.prOpportunities)
+    .where(
+      and(
+        eq(schema.prOpportunities.status, "qualified"),
+        gte(schema.prOpportunities.matchScore, 70)
+      )
+    )
+    .orderBy(desc(schema.prOpportunities.matchScore))
+    .limit(15);
+
+  const in48h = new Date(Date.now() + 48 * 60 * 60 * 1000);
+  const deadlinesIn48h = await db
+    .select({
+      id: schema.prOpportunities.id,
+      outlet: schema.prOpportunities.outlet,
+      subject: schema.prOpportunities.querySubject,
+      deadline: schema.prOpportunities.deadline,
+    })
+    .from(schema.prOpportunities)
+    .where(
+      and(
+        eq(schema.prOpportunities.status, "qualified"),
+        sql`${schema.prOpportunities.deadline} is not null`,
+        sql`${schema.prOpportunities.deadline} <= ${in48h}`,
+        sql`${schema.prOpportunities.deadline} > now()`
+      )
+    )
+    .orderBy(schema.prOpportunities.deadline);
+
+  const wonThisWeek = await db
+    .select({
+      id: schema.prOpportunities.id,
+      outlet: schema.prOpportunities.outlet,
+      outcomeUrl: schema.prOpportunities.outcomeUrl,
+      outcomeDr: schema.prOpportunities.outcomeDr,
+    })
+    .from(schema.prOpportunities)
+    .where(
+      and(
+        eq(schema.prOpportunities.status, "won"),
+        gte(schema.prOpportunities.decidedAt, since)
+      )
+    );
+
+  return { newHighScore, deadlinesIn48h, wonThisWeek };
 }
 
 async function gatherRankMovement(
@@ -262,7 +421,7 @@ async function gatherRankMovement(
   };
 }
 
-function renderDigestHtml(perSite: PerSite[]): string {
+function renderDigestHtml(perSite: PerSite[], haro: HaroSummary): string {
   const sections = perSite
     .map((s) => {
       const top = s.topFive
@@ -304,10 +463,19 @@ function renderDigestHtml(perSite: PerSite[]): string {
       const newTop10List = s.rankMovement.newTop10
         .map((t) => `<li>${escape(t.term)} → rank ${t.rank} on <code>${escape(t.target)}</code></li>`)
         .join("");
+      // Batch 05 sections per site: GSC + syndication
+      const gscBlock = s.gsc
+        ? renderGscBlock(s.gsc)
+        : "<h3>Search Console</h3><p>No GSC data yet (verify the service-account is linked to the property).</p>";
+
+      const syndBlock = renderSyndicationBlock(s.syndication);
+
       return `<h2>${escape(s.slug)}</h2>
         <p><strong>${s.published}</strong> published this week · avg quality ${s.avgQuality ?? "n/a"}</p>
         <p><small>Content pipeline: ${escape(counts)}</small></p>
         ${top ? `<h3>Top 5 this week</h3><ul>${top}</ul>` : ""}
+        ${gscBlock}
+        ${syndBlock}
         <h3>Submissions this week</h3>
         <p><small>Queue: ${escape(submissionCounts || "(none)")}</small></p>
         ${landed ? `<p>Landed:</p><ul>${landed}</ul>` : "<p>None landed this week.</p>"}
@@ -321,11 +489,85 @@ function renderDigestHtml(perSite: PerSite[]): string {
     })
     .join("<hr />");
 
+  // Batch 05: cross-site HARO queue at the bottom (it's not site-scoped).
+  const haroBlock = renderHaroBlock(haro);
+
   return `<div style="font-family: -apple-system, system-ui, sans-serif; max-width: 640px;">
     <h1>Spire weekly digest</h1>
     <p>${new Date().toISOString().slice(0, 10)}</p>
     ${sections}
+    <hr />
+    ${haroBlock}
   </div>`;
+}
+
+function renderGscBlock(gsc: NonNullable<PerSite["gsc"]>): string {
+  const s = gsc.summary;
+  const summary = `<p>${s.recentClicks} clicks / ${s.recentImpressions} impressions / avg position ${s.recentAvgPosition} (last 7d) — week before: ${s.priorClicks}/${s.priorImpressions}/${s.priorAvgPosition}.</p>`;
+  const striking = gsc.strikingDistance.length === 0
+    ? ""
+    : `<p>Striking distance (position 5–20, ≥50 imp/wk):</p><ul>${gsc.strikingDistance
+        .slice(0, 5)
+        .map(
+          (r) =>
+            `<li>"${escape(r.query)}" — pos ${r.position}, ${r.impressions} imp, ${r.clicks} click → <code>${escape(r.page)}</code></li>`
+        )
+        .join("")}</ul>`;
+  const rising = gsc.rising.length === 0
+    ? ""
+    : `<p>Rising queries (≥50% growth):</p><ul>${gsc.rising
+        .slice(0, 3)
+        .map(
+          (r) =>
+            `<li>"${escape(r.query)}" — ${r.priorImpressions}→${r.recentImpressions} imp (${(r.pctChange * 100).toFixed(0)}%)</li>`
+        )
+        .join("")}</ul>`;
+  return `<h3>Search Console</h3>${summary}${striking}${rising}`;
+}
+
+function renderSyndicationBlock(synd: PerSite["syndication"]): string {
+  const counts = Object.entries(synd.counts).map(([k, v]) => `${k}: ${v}`).join(" · ") || "(none)";
+  const published = synd.publishedThisWeek
+    .map(
+      (p) =>
+        `<li><code>${escape(p.platform)}</code> — ${escape(p.planSlug)}${p.externalUrl ? ` → <a href="${escape(p.externalUrl)}">${escape(p.externalUrl)}</a>` : ""}</li>`
+    )
+    .join("");
+  const failed = synd.failedThisWeek
+    .map(
+      (f) =>
+        `<li><code>${escape(f.platform)}</code> — ${escape(f.planSlug)}: ${escape(f.error ?? "(no error)")}</li>`
+    )
+    .join("");
+  return `<h3>Syndication</h3>
+    <p><small>Pipeline: ${escape(counts)}</small></p>
+    ${published ? `<p>Published this week:</p><ul>${published}</ul>` : "<p>No new syndications published this week.</p>"}
+    ${failed ? `<p>Failed:</p><ul>${failed}</ul>` : ""}`;
+}
+
+function renderHaroBlock(haro: HaroSummary): string {
+  const newQueue = haro.newHighScore
+    .map(
+      (h) =>
+        `<li>[${h.score ?? "?"}] <strong>${escape(h.outlet ?? "?")}</strong>: ${escape(h.subject)}${h.deadline ? ` <em>(due ${h.deadline.toISOString().slice(0, 16)})</em>` : ""}</li>`
+    )
+    .join("");
+  const urgent = haro.deadlinesIn48h
+    .map(
+      (h) =>
+        `<li><strong>${escape(h.outlet ?? "?")}</strong>: ${escape(h.subject)}${h.deadline ? ` <em>(due ${h.deadline.toISOString().slice(0, 16)})</em>` : ""}</li>`
+    )
+    .join("");
+  const wins = haro.wonThisWeek
+    .map(
+      (w) =>
+        `<li><strong>${escape(w.outlet ?? "?")}</strong>${w.outcomeUrl ? ` → <a href="${escape(w.outcomeUrl)}">${escape(w.outcomeUrl)}</a>` : ""}${w.outcomeDr ? ` (DR ${w.outcomeDr})` : ""}</li>`
+    )
+    .join("");
+  return `<h2>HARO / PR queue</h2>
+    ${urgent ? `<p><strong>Deadlines within 48h (${haro.deadlinesIn48h.length}):</strong></p><ul>${urgent}</ul>` : ""}
+    ${newQueue ? `<p>High-score opportunities awaiting review:</p><ul>${newQueue}</ul>` : "<p>No high-score opportunities in queue.</p>"}
+    ${wins ? `<p>Won this week:</p><ul>${wins}</ul>` : ""}`;
 }
 
 function escape(s: string): string {
