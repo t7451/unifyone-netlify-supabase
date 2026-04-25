@@ -179,10 +179,12 @@ export default function BuildProcessAnimation() {
             lineHeight: 1.1,
           }}
         >
-          From zero to first sale<br />in under 10 minutes.
+          From zero to first sale
+          <br />
+          in under 10 minutes.
         </h2>
         <p
-          className="font-crimson text-lg mx-auto"
+          className="font-crimson text-lg mx-auto mobile-visibility-copy"
           style={{
             color: "#6A6A6A",
             fontStyle: "italic",
@@ -230,7 +232,8 @@ export default function BuildProcessAnimation() {
                       ? phase.color + "08"
                       : "transparent",
                   border: `1px solid ${isActive ? phase.color + "60" : isDone ? phase.color + "30" : "#242424"}`,
-                  opacity: visibleLines === 0 ? 0.35 : isDone || isActive ? 1 : 0.4,
+                  opacity:
+                    visibleLines === 0 ? 0.35 : isDone || isActive ? 1 : 0.4,
                 }}
               >
                 <div
@@ -265,7 +268,7 @@ export default function BuildProcessAnimation() {
           <button
             onClick={runAnimation}
             disabled={running}
-            className="mt-auto px-3 py-2 rounded-lg text-xs transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="mt-auto px-3 py-2 rounded-lg text-xs transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed mobile-visibility-copy"
             style={{
               backgroundColor: "transparent",
               border: "1px solid #333",
@@ -294,7 +297,8 @@ export default function BuildProcessAnimation() {
           style={{
             backgroundColor: "#080808",
             border: "1px solid #242424",
-            boxShadow: "0 0 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)",
+            boxShadow:
+              "0 0 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)",
           }}
         >
           {/* Terminal title bar */}
@@ -318,7 +322,7 @@ export default function BuildProcessAnimation() {
               style={{ backgroundColor: "#27C93F" }}
             />
             <span
-              className="ml-3 text-xs flex-1 text-center"
+              className="ml-3 text-xs flex-1 text-center mobile-visibility-shell"
               style={{
                 color: "#3a3a3a",
                 fontFamily: "monospace",
@@ -329,7 +333,10 @@ export default function BuildProcessAnimation() {
             </span>
             <span
               className="text-xs"
-              style={{ color: running ? "#27C93F" : "#333", fontFamily: "monospace" }}
+              style={{
+                color: running ? "#27C93F" : "#333",
+                fontFamily: "monospace",
+              }}
             >
               {running ? "● running" : "● idle"}
             </span>
@@ -338,7 +345,11 @@ export default function BuildProcessAnimation() {
           {/* Terminal body */}
           <div
             className="p-5 min-h-72 overflow-y-auto"
-            style={{ fontFamily: "monospace", fontSize: "0.8rem", lineHeight: 1.75 }}
+            style={{
+              fontFamily: "monospace",
+              fontSize: "0.8rem",
+              lineHeight: 1.75,
+            }}
           >
             {/* Static prompt line at top */}
             <div className="mb-1" style={{ color: "#3a3a3a" }}>
@@ -353,14 +364,11 @@ export default function BuildProcessAnimation() {
                   color: lineColor(line.type),
                   animation: "fadeSlideIn 0.25s ease forwards",
                   fontWeight: line.type === "celebrate" ? 700 : 400,
-                  fontSize:
-                    line.type === "celebrate" ? "0.9rem" : "0.8rem",
+                  fontSize: line.type === "celebrate" ? "0.9rem" : "0.8rem",
                 }}
               >
                 {line.type === "cmd" && (
-                  <span style={{ color: "#D4A843", marginRight: 8 }}>
-                    ❯
-                  </span>
+                  <span style={{ color: "#D4A843", marginRight: 8 }}>❯</span>
                 )}
                 <span>{line.text}</span>
               </div>
@@ -411,13 +419,13 @@ export default function BuildProcessAnimation() {
           >
             <div className="flex items-center gap-4">
               <span
-                className="text-xs"
+                className="text-xs mobile-visibility-shell"
                 style={{ color: "#3a3a3a", fontFamily: "monospace" }}
               >
                 node v22 · pnpm 10
               </span>
               <span
-                className="text-xs"
+                className="text-xs mobile-visibility-shell"
                 style={{ color: "#3a3a3a", fontFamily: "monospace" }}
               >
                 Next.js 14 · TypeScript
@@ -428,7 +436,7 @@ export default function BuildProcessAnimation() {
                 href="https://1commerce.online"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs transition-colors"
+                className="text-xs transition-colors mobile-visibility-brand"
                 style={{
                   color: "#D4A843",
                   fontFamily: "Cinzel, serif",
@@ -455,7 +463,7 @@ export default function BuildProcessAnimation() {
       <div className="mt-6">
         <div className="flex items-center justify-between mb-2">
           <span
-            className="text-xs"
+            className="text-xs mobile-visibility-shell"
             style={{
               color: "#3a3a3a",
               fontFamily: "Cinzel, serif",
