@@ -4,6 +4,9 @@ export * as publisher from "./publisher/index.js";
 export * as lib from "./lib/index.js";
 export * as mesh from "./mesh/index.js";
 export * as rank from "./rank/index.js";
+export * as searchConsole from "./search-console/index.js";
+export * as syndication from "./syndication/index.js";
+export * as haro from "./haro/index.js";
 // NOTE: no `export * as directories from "./directories/index.js"` —
 // it would collide with the `directories` table re-export below, and the
 // named exports after this block cover the same surface.
@@ -42,6 +45,10 @@ export {
   rankChecks,
   outreachProspects,
   submissionCitations,
+  gscDaily,
+  syndicationPlatforms,
+  syndications,
+  prOpportunities,
 } from "./schema.js";
 export type {
   Site,
@@ -58,7 +65,60 @@ export type {
   NewOutreachProspect,
   SubmissionCitation,
   NewSubmissionCitation,
+  GscDailyRow,
+  NewGscDailyRow,
+  SyndicationPlatform,
+  NewSyndicationPlatform,
+  Syndication,
+  NewSyndication,
+  PrOpportunity,
+  NewPrOpportunity,
 } from "./schema.js";
+
+// --- Batch 05: search console + syndication + HARO ---
+export {
+  createGscClient,
+  ingestGsc,
+  refreshWeeklyRollup,
+  findStrikingDistanceQueries,
+  findCannibalQueries,
+  findDecliningPages,
+  findRisingQueries,
+  summarize as summarizeGsc,
+} from "./search-console/index.js";
+export type {
+  GscClient,
+  GscRow,
+  GscDimension,
+  IngestResult,
+  StrikingDistanceRow,
+  CannibalRow,
+  TrendRow,
+} from "./search-console/index.js";
+export {
+  selectCandidates,
+  publishOne as publishSyndication,
+  dispatchAdapter,
+  canonicalUrlFor,
+  stripFrontmatter,
+} from "./syndication/index.js";
+export type {
+  SyndicationResult,
+  Adapter,
+  SelectResult,
+  PublishOneInput,
+} from "./syndication/index.js";
+export {
+  parseHaroEmail,
+  detectSource as detectHaroSource,
+  classifyHaroQuery,
+  draftHaroResponse,
+} from "./haro/index.js";
+export type {
+  ParsedHaroQuery,
+  ClassifyResponse,
+  DraftResponse,
+} from "./haro/index.js";
 
 // Batch 04 addendum — business profile NAP source of truth + NAP renderer.
 export {
