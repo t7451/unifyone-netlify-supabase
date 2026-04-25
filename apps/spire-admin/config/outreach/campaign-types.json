@@ -1,0 +1,51 @@
+{
+  "$comment": "Default campaign config. Used by `pnpm spire outreach campaign create` to populate from-name/from-email/reply-to-email and the warmup-week-1 daily cap. Once a campaign is created in Neon, this file is reference-only — the row is the source of truth and can be edited via SQL or CLI.",
+  "version": 1,
+  "updated_at": "2026-04-25",
+  "campaigns": [
+    {
+      "type": "broken_link",
+      "name": "unifyone broken-link replacement v1",
+      "from_name": "Keith Skaggs",
+      "from_email": "keith@outreach.unifyone.com",
+      "reply_to_email": "keith@1commerce.online",
+      "daily_send_cap_week1": 5,
+      "autopilot_default": false,
+      "rationale": "Highest reply-rate campaign type (8-15%). Crawler-driven; runs after spire_broken_links is populated."
+    },
+    {
+      "type": "resource_page",
+      "name": "unifyone resource-page asks v1",
+      "from_name": "Keith Skaggs",
+      "from_email": "keith@outreach.unifyone.com",
+      "reply_to_email": "keith@1commerce.online",
+      "daily_send_cap_week1": 5,
+      "autopilot_default": false,
+      "rationale": "Moderate reply rate (3-6%). Targets curated /resources, /tools, /best-X pages."
+    },
+    {
+      "type": "guest_post",
+      "name": "unifyone guest-post pitches v1",
+      "from_name": "Keith Skaggs",
+      "from_email": "keith@outreach.unifyone.com",
+      "reply_to_email": "keith@1commerce.online",
+      "daily_send_cap_week1": 3,
+      "autopilot_default": false,
+      "rationale": "Lowest reply rate (1-3%) but highest authority payoff. Stays manual indefinitely per Batch 06 spec."
+    }
+  ],
+  "warmup_curve": {
+    "week_1": 5,
+    "week_2": 10,
+    "week_3": 20,
+    "week_4": 30,
+    "week_5_plus": 35,
+    "$comment": "Per-campaign daily caps. Bump weekly via `pnpm spire outreach campaign-cap --campaign <id> --cap <n>` during warmup. Going faster torches the sending domain."
+  },
+  "compliance": {
+    "physical_address_source": "config/business-profile.json (legal.name + address.*)",
+    "unsubscribe_endpoint": "https://1commerce.online/unsubscribe",
+    "unsubscribe_required_within_hours": 24,
+    "$comment": "CAN-SPAM: physical address in every footer; one-click unsubscribe; no false subjects. Append the footer in the worker, not in the prompt."
+  }
+}
