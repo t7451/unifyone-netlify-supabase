@@ -18,6 +18,24 @@
 - **Testing:** Vitest
 - **Package Manager:** pnpm 10
 
+### Persistence stack (read carefully -- NOT a single source of truth)
+
+UnifyOne writes to **two** Postgres clusters depending on the feature:
+
+| Feature                              | Backed by         | Code                         |
+| ------------------------------------ | ----------------- | ---------------------------- |
+| Auth (signup/signin)                 | Neon via Drizzle  | server/\_core/customAuth.ts  |
+| Tenants/products/orders              | Neon via Drizzle  | server/routers/\*, drizzle/  |
+| Credit metering                      | Supabase RPC      | server/creditMeter.ts        |
+| Stripe subscriptions/products/prices | Supabase          | server/stripe.ts             |
+| Real-time push (optional)            | Supabase Realtime | client/src/lib/supabase\*.ts |
+
+The Supabase parts predate the auth migration. Removing them is in-flight (see
+`SUPABASE_REMOVAL.md`). Until that work is done, all of these env vars are
+required: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+`SUPABASE_JWT_SECRET`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. Don't sweep
+them as dead -- they are load-bearing.
+
 ---
 
 ## Build & Test Commands

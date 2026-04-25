@@ -8,7 +8,11 @@
  * POST /api/auth/firebase   - Verify Firebase ID token (fallback)
  */
 
-import type { Express, Request as ExpressRequest, Response as ExpressResponse } from "express";
+import type {
+  Express,
+  Request as ExpressRequest,
+  Response as ExpressResponse,
+} from "express";
 import {
   signUp,
   signIn,
@@ -20,12 +24,21 @@ import {
   resetPassword,
   sendVerificationEmail,
   verifyEmailToken,
+  verifyPassword,
 } from "./customAuth";
+import { sdk } from "./sdk";
 import { authRateLimiter, passwordResetLimiter } from "./rateLimiter";
 import { ENV, getAppUrl } from "./env";
 import { getDb, getTenantBySlug } from "../db";
-import { users as usersTable } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import {
+  users as usersTable,
+  auditLogs as auditLogsTable,
+  notifications as notificationsTable,
+  creditTransactions as creditTransactionsTable,
+  analyticsEvents as analyticsEventsTable,
+  referrals as referralsTable,
+} from "../../drizzle/schema";
+import { eq, or } from "drizzle-orm";
 
 const DEFAULT_GOOGLE_SCOPES =
   "openid email profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
@@ -84,8 +97,7 @@ function readGoogleOAuthSettings(
     clientId: typeof raw.clientId === "string" ? raw.clientId : "",
     clientSecret:
       typeof raw.clientSecret === "string" ? raw.clientSecret : undefined,
-    redirectUri:
-      typeof raw.redirectUri === "string" ? raw.redirectUri : "",
+    redirectUri: typeof raw.redirectUri === "string" ? raw.redirectUri : "",
     scopes:
       typeof raw.scopes === "string" && raw.scopes.trim().length > 0
         ? raw.scopes
@@ -93,9 +105,7 @@ function readGoogleOAuthSettings(
   };
 }
 
-async function buildGoogleOAuthScaffold(
-  tenantSlug?: string
-): Promise<
+async function buildGoogleOAuthScaffold(tenantSlug?: string): Promise<
   | {
       success: true;
       authorizationUrl: string;
@@ -139,13 +149,21 @@ async function buildGoogleOAuthScaffold(
     };
   }
 
-  const callbackUrl = google.redirectUri || `${getAppUrl()}/api/auth/google/callback`;
-  const state = Buffer.from(JSON.stringify({ tenantSlug })).toString("base64url");
-  const authorizationUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+  const callbackUrl =
+    google.redirectUri || `${getAppUrl()}/api/auth/google/callback`;
+  const state = Buffer.from(JSON.stringify({ tenantSlug })).toString(
+    "base64url"
+  );
+  const authorizationUrl = new URL(
+    "https://accounts.google.com/o/oauth2/v2/auth"
+  );
   authorizationUrl.searchParams.set("client_id", google.clientId);
   authorizationUrl.searchParams.set("redirect_uri", callbackUrl);
   authorizationUrl.searchParams.set("response_type", "code");
-  authorizationUrl.searchParams.set("scope", google.scopes || DEFAULT_GOOGLE_SCOPES);
+  authorizationUrl.searchParams.set(
+    "scope",
+    google.scopes || DEFAULT_GOOGLE_SCOPES
+  );
   authorizationUrl.searchParams.set("access_type", "offline");
   authorizationUrl.searchParams.set("prompt", "consent");
   authorizationUrl.searchParams.set("state", state);
@@ -189,7 +207,10 @@ export async function registerCustomAuthFetchRoutes(
 
   try {
     if (path === "/api/auth/google/callback" && method === "GET") {
-      const redirectUrl = new URL("/login?error=google_oauth_not_ready", getAppUrl());
+      const redirectUrl = new URL(
+        "/login?error=google_oauth_not_ready",
+        getAppUrl()
+      );
       return Response.redirect(redirectUrl.toString(), 302);
     }
 
@@ -227,13 +248,10 @@ export async function registerCustomAuthFetchRoutes(
         );
       }
 
-      return Response.json(
-        result,
-        {
-          status: 200,
-          headers: corsHeaders,
-        }
-      );
+      return Response.json(result, {
+        status: 200,
+        headers: corsHeaders,
+      });
     }
 
     // ── Sign Up ────────────────────────────────────────────────────────────
@@ -657,146 +675,172 @@ function isExpressRequestSecure(req: ExpressRequest): boolean {
 }
 
 export function registerCustomAuthExpressRoutes(app: Express) {
-  app.get("/api/auth/google/callback", (_req: ExpressRequest, res: ExpressResponse) => {
-    res.redirect(302, "/login?error=google_oauth_not_ready");
-  });
-
-  app.post("/api/auth/google/start", async (req: ExpressRequest, res: ExpressResponse) => {
-    const clientIp = getExpressClientIp(req);
-    try {
-      const rateCheck = await authRateLimiter.check(clientIp);
-      if (!rateCheck.allowed) {
-        res
-          .status(429)
-          .setHeader(
-            "Retry-After",
-            String(Math.ceil(rateCheck.retryAfterMs / 1000))
-          )
-          .json({
-            success: false,
-            error: "Too many attempts. Please try again later.",
-          });
-        return;
-      }
-
-      const { tenantSlug } = (req.body ?? {}) as { tenantSlug?: string };
-      const result = await buildGoogleOAuthScaffold(tenantSlug);
-      if (!result.success) {
-        res.status(result.status).json({ success: false, error: result.error });
-        return;
-      }
-      res.json(result);
-    } catch (err) {
-      console.error("[customAuthRoutes] Error:", err);
-      res.status(500).json({ success: false, error: "Internal server error" });
+  app.get(
+    "/api/auth/google/callback",
+    (_req: ExpressRequest, res: ExpressResponse) => {
+      res.redirect(302, "/login?error=google_oauth_not_ready");
     }
-  });
+  );
 
-  app.post("/api/auth/signup", async (req: ExpressRequest, res: ExpressResponse) => {
-    const clientIp = getExpressClientIp(req);
-    try {
-      const rateCheck = await authRateLimiter.check(clientIp);
-      if (!rateCheck.allowed) {
+  app.post(
+    "/api/auth/google/start",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const clientIp = getExpressClientIp(req);
+      try {
+        const rateCheck = await authRateLimiter.check(clientIp);
+        if (!rateCheck.allowed) {
+          res
+            .status(429)
+            .setHeader(
+              "Retry-After",
+              String(Math.ceil(rateCheck.retryAfterMs / 1000))
+            )
+            .json({
+              success: false,
+              error: "Too many attempts. Please try again later.",
+            });
+          return;
+        }
+
+        const { tenantSlug } = (req.body ?? {}) as { tenantSlug?: string };
+        const result = await buildGoogleOAuthScaffold(tenantSlug);
+        if (!result.success) {
+          res
+            .status(result.status)
+            .json({ success: false, error: result.error });
+          return;
+        }
+        res.json(result);
+      } catch (err) {
+        console.error("[customAuthRoutes] Error:", err);
         res
-          .status(429)
-          .setHeader(
-            "Retry-After",
-            String(Math.ceil(rateCheck.retryAfterMs / 1000))
-          )
-          .json({
-            success: false,
-            error: "Too many attempts. Please try again later.",
-          });
-        return;
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
       }
+    }
+  );
 
-      const { email, password, name, username } = (req.body ?? {}) as {
-        email?: string;
-        password?: string;
-        name?: string;
-        username?: string;
-      };
+  app.post(
+    "/api/auth/signup",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const clientIp = getExpressClientIp(req);
+      try {
+        const rateCheck = await authRateLimiter.check(clientIp);
+        if (!rateCheck.allowed) {
+          res
+            .status(429)
+            .setHeader(
+              "Retry-After",
+              String(Math.ceil(rateCheck.retryAfterMs / 1000))
+            )
+            .json({
+              success: false,
+              error: "Too many attempts. Please try again later.",
+            });
+          return;
+        }
 
-      const result = await signUp(email || "", password || "", name, username);
-      if (!result.success) {
-        res.status(400).json({ success: false, error: result.error });
-        return;
-      }
+        const { email, password, name, username } = (req.body ?? {}) as {
+          email?: string;
+          password?: string;
+          name?: string;
+          username?: string;
+        };
 
-      if (result.user?.email && result.user.emailVerified === false) {
-        sendVerificationEmail(result.user.openId, result.user.email).catch(err =>
-          console.error("[auth] Failed to send verification email:", err)
+        const result = await signUp(
+          email || "",
+          password || "",
+          name,
+          username
         );
-      }
+        if (!result.success) {
+          res.status(400).json({ success: false, error: result.error });
+          return;
+        }
 
-      res.append(
-        "Set-Cookie",
-        buildSessionCookie(
-          result.sessionToken ?? "",
-          isExpressRequestSecure(req),
-          ENV.cookieDomain || undefined
-        )
-      );
-      res.status(201).json({
-        success: true,
-        user: result.user,
-        message: result.user?.emailVerified
-          ? "Account created successfully. You can now sign in."
-          : "Account created. Please check your email to verify your address.",
-      });
-    } catch (err) {
-      console.error("[customAuthRoutes] Error:", err);
-      res.status(500).json({ success: false, error: "Internal server error" });
-    }
-  });
+        if (result.user?.email && result.user.emailVerified === false) {
+          sendVerificationEmail(result.user.openId, result.user.email).catch(
+            err =>
+              console.error("[auth] Failed to send verification email:", err)
+          );
+        }
 
-  app.post("/api/auth/signin", async (req: ExpressRequest, res: ExpressResponse) => {
-    const clientIp = getExpressClientIp(req);
-    try {
-      const rateCheck = await authRateLimiter.check(clientIp);
-      if (!rateCheck.allowed) {
-        res
-          .status(429)
-          .setHeader(
-            "Retry-After",
-            String(Math.ceil(rateCheck.retryAfterMs / 1000))
+        res.append(
+          "Set-Cookie",
+          buildSessionCookie(
+            result.sessionToken ?? "",
+            isExpressRequestSecure(req),
+            ENV.cookieDomain || undefined
           )
-          .json({
-            success: false,
-            error: "Too many attempts. Please try again later.",
-          });
-        return;
-      }
-
-      const { email, identifier, password } = (req.body ?? {}) as {
-        email?: string;
-        identifier?: string;
-        password?: string;
-      };
-
-      const result = await signIn(identifier || email || "", password || "");
-      if (!result.success) {
+        );
+        res.status(201).json({
+          success: true,
+          user: result.user,
+          message: result.user?.emailVerified
+            ? "Account created successfully. You can now sign in."
+            : "Account created. Please check your email to verify your address.",
+        });
+      } catch (err) {
+        console.error("[customAuthRoutes] Error:", err);
         res
-          .status(401)
-          .json({ success: false, error: result.error, code: result.code });
-        return;
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
       }
-
-      await authRateLimiter.reset(clientIp);
-      res.append(
-        "Set-Cookie",
-        buildSessionCookie(
-          result.sessionToken ?? "",
-          isExpressRequestSecure(req),
-          ENV.cookieDomain || undefined
-        )
-      );
-      res.status(200).json({ success: true, user: result.user });
-    } catch (err) {
-      console.error("[customAuthRoutes] Error:", err);
-      res.status(500).json({ success: false, error: "Internal server error" });
     }
-  });
+  );
+
+  app.post(
+    "/api/auth/signin",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const clientIp = getExpressClientIp(req);
+      try {
+        const rateCheck = await authRateLimiter.check(clientIp);
+        if (!rateCheck.allowed) {
+          res
+            .status(429)
+            .setHeader(
+              "Retry-After",
+              String(Math.ceil(rateCheck.retryAfterMs / 1000))
+            )
+            .json({
+              success: false,
+              error: "Too many attempts. Please try again later.",
+            });
+          return;
+        }
+
+        const { email, identifier, password } = (req.body ?? {}) as {
+          email?: string;
+          identifier?: string;
+          password?: string;
+        };
+
+        const result = await signIn(identifier || email || "", password || "");
+        if (!result.success) {
+          res
+            .status(401)
+            .json({ success: false, error: result.error, code: result.code });
+          return;
+        }
+
+        await authRateLimiter.reset(clientIp);
+        res.append(
+          "Set-Cookie",
+          buildSessionCookie(
+            result.sessionToken ?? "",
+            isExpressRequestSecure(req),
+            ENV.cookieDomain || undefined
+          )
+        );
+        res.status(200).json({ success: true, user: result.user });
+      } catch (err) {
+        console.error("[customAuthRoutes] Error:", err);
+        res
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
+      }
+    }
+  );
 
   app.post("/api/auth/logout", (req: ExpressRequest, res: ExpressResponse) => {
     res.append(
@@ -843,7 +887,9 @@ export function registerCustomAuthExpressRoutes(app: Express) {
         });
       } catch (err) {
         console.error("[customAuthRoutes] Error:", err);
-        res.status(500).json({ success: false, error: "Internal server error" });
+        res
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
       }
     }
   );
@@ -875,7 +921,10 @@ export function registerCustomAuthExpressRoutes(app: Express) {
         if (!token || !password) {
           res
             .status(400)
-            .json({ success: false, error: "Token and new password are required" });
+            .json({
+              success: false,
+              error: "Token and new password are required",
+            });
           return;
         }
 
@@ -891,47 +940,56 @@ export function registerCustomAuthExpressRoutes(app: Express) {
         });
       } catch (err) {
         console.error("[customAuthRoutes] Error:", err);
-        res.status(500).json({ success: false, error: "Internal server error" });
+        res
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
       }
     }
   );
 
-  app.post("/api/auth/verify-email", async (req: ExpressRequest, res: ExpressResponse) => {
-    const clientIp = getExpressClientIp(req);
-    try {
-      const rateCheck = await passwordResetLimiter.check(clientIp);
-      if (!rateCheck.allowed) {
+  app.post(
+    "/api/auth/verify-email",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const clientIp = getExpressClientIp(req);
+      try {
+        const rateCheck = await passwordResetLimiter.check(clientIp);
+        if (!rateCheck.allowed) {
+          res
+            .status(429)
+            .setHeader(
+              "Retry-After",
+              String(Math.ceil(rateCheck.retryAfterMs / 1000))
+            )
+            .json({
+              success: false,
+              error: "Too many attempts. Please try again later.",
+            });
+          return;
+        }
+
+        const { token } = (req.body ?? {}) as { token?: string };
+        if (!token) {
+          res.status(400).json({ success: false, error: "Token is required" });
+          return;
+        }
+
+        const result = await verifyEmailToken(token);
+        if (!result.success) {
+          res.status(400).json({ success: false, error: result.error });
+          return;
+        }
+
         res
-          .status(429)
-          .setHeader(
-            "Retry-After",
-            String(Math.ceil(rateCheck.retryAfterMs / 1000))
-          )
-          .json({
-            success: false,
-            error: "Too many attempts. Please try again later.",
-          });
-        return;
+          .status(200)
+          .json({ success: true, message: "Email verified successfully." });
+      } catch (err) {
+        console.error("[customAuthRoutes] Error:", err);
+        res
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
       }
-
-      const { token } = (req.body ?? {}) as { token?: string };
-      if (!token) {
-        res.status(400).json({ success: false, error: "Token is required" });
-        return;
-      }
-
-      const result = await verifyEmailToken(token);
-      if (!result.success) {
-        res.status(400).json({ success: false, error: result.error });
-        return;
-      }
-
-      res.status(200).json({ success: true, message: "Email verified successfully." });
-    } catch (err) {
-      console.error("[customAuthRoutes] Error:", err);
-      res.status(500).json({ success: false, error: "Internal server error" });
     }
-  });
+  );
 
   app.post(
     "/api/auth/resend-verification",
@@ -971,7 +1029,10 @@ export function registerCustomAuthExpressRoutes(app: Express) {
             .limit(1);
           const user = rows[0];
           if (user && user.emailVerified === false) {
-            await sendVerificationEmail(user.openId, email.toLowerCase().trim());
+            await sendVerificationEmail(
+              user.openId,
+              email.toLowerCase().trim()
+            );
           }
         }
 
@@ -982,7 +1043,208 @@ export function registerCustomAuthExpressRoutes(app: Express) {
         });
       } catch (err) {
         console.error("[customAuthRoutes] Error:", err);
-        res.status(500).json({ success: false, error: "Internal server error" });
+        res
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
+      }
+    }
+  );
+
+  // ── GDPR / CCPA ───────────────────────────────────────────────────────────────
+
+  // POST /api/auth/data-export
+  // Auth required. Returns the user's data as JSON. GDPR Article 15 / CCPA right-to-know.
+  app.post(
+    "/api/auth/data-export",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      try {
+        const user = await sdk.authenticateRequest(req);
+        const db = await getDb();
+        if (!db) {
+          res
+            .status(503)
+            .json({ success: false, error: "Database unavailable" });
+          return;
+        }
+
+        const [
+          accountRows,
+          auditRows,
+          notificationRows,
+          creditTxnRows,
+          analyticsRows,
+          referralRows,
+        ] = await Promise.all([
+          db
+            .select()
+            .from(usersTable)
+            .where(eq(usersTable.id, user.id))
+            .limit(1),
+          db
+            .select()
+            .from(auditLogsTable)
+            .where(eq(auditLogsTable.userId, user.id))
+            .limit(5000),
+          db
+            .select()
+            .from(notificationsTable)
+            .where(eq(notificationsTable.userId, user.id))
+            .limit(5000),
+          db
+            .select()
+            .from(creditTransactionsTable)
+            .where(eq(creditTransactionsTable.userId, user.id))
+            .limit(5000),
+          db
+            .select()
+            .from(analyticsEventsTable)
+            .where(eq(analyticsEventsTable.userId, user.id))
+            .limit(5000),
+          db
+            .select()
+            .from(referralsTable)
+            .where(
+              or(
+                eq(referralsTable.referrerId, user.id),
+                eq(referralsTable.referredUserId, user.id)
+              )
+            )
+            .limit(5000),
+        ]);
+
+        const account = accountRows[0]
+          ? {
+              ...accountRows[0],
+              passwordHash: undefined,
+              passwordResetToken: undefined,
+              passwordResetExpiresAt: undefined,
+              emailVerificationToken: undefined,
+            }
+          : null;
+
+        res.status(200).json({
+          success: true,
+          exportedAt: new Date().toISOString(),
+          account,
+          auditLogs: auditRows,
+          notifications: notificationRows,
+          creditTransactions: creditTxnRows,
+          analyticsEvents: analyticsRows,
+          referrals: referralRows,
+          _note:
+            "Covers primary user-scoped tables. For tenant-scoped data (orders, products, social posts) email support@1commerce.online; we'll extract within 30 days as required by law.",
+        });
+      } catch (err) {
+        if (
+          err instanceof Error &&
+          /forbidden|invalid session/i.test(err.message)
+        ) {
+          res.status(401).json({ success: false, error: "Unauthorized" });
+          return;
+        }
+        console.error("[customAuthRoutes] data-export error:", err);
+        res
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
+      }
+    }
+  );
+
+  // POST /api/auth/delete-account
+  // Auth + password reconfirm + typed confirmation. Soft-deletes (anonymizes PII,
+  // sets deletedAt). GDPR Article 17 / CCPA right-to-delete.
+  app.post(
+    "/api/auth/delete-account",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      try {
+        const user = await sdk.authenticateRequest(req);
+        const { password, confirm } = (req.body ?? {}) as {
+          password?: string;
+          confirm?: string;
+        };
+
+        if (confirm !== "DELETE MY ACCOUNT") {
+          res.status(400).json({
+            success: false,
+            error:
+              'You must include {"confirm":"DELETE MY ACCOUNT"} in the request body.',
+          });
+          return;
+        }
+        if (!password) {
+          res.status(400).json({
+            success: false,
+            error: "Password is required to confirm account deletion",
+          });
+          return;
+        }
+        if (!user.passwordHash) {
+          res.status(400).json({
+            success: false,
+            error:
+              "This account uses social sign-in. Email support@1commerce.online to request deletion.",
+          });
+          return;
+        }
+        const isValid = await verifyPassword(password, user.passwordHash);
+        if (!isValid) {
+          res
+            .status(401)
+            .json({ success: false, error: "Password is incorrect" });
+          return;
+        }
+
+        const db = await getDb();
+        if (!db) {
+          res
+            .status(503)
+            .json({ success: false, error: "Database unavailable" });
+          return;
+        }
+
+        const anonymizedEmail = `deleted-${user.openId}@deleted.1commerce.online`;
+        const anonymizedUsername = `deleted_${user.openId.slice(0, 16)}`;
+        const now = new Date();
+
+        await db
+          .update(usersTable)
+          .set({
+            email: anonymizedEmail,
+            username: anonymizedUsername,
+            name: "Deleted User",
+            passwordHash: null,
+            emailVerificationToken: null,
+            passwordResetToken: null,
+            passwordResetExpiresAt: null,
+            passwordChangedAt: now,
+            referralCode: null,
+            deletedAt: now,
+          })
+          .where(eq(usersTable.openId, user.openId));
+
+        const isProduction = ENV.isProduction;
+        res.setHeader(
+          "Set-Cookie",
+          buildLogoutCookie(isProduction, ENV.cookieDomain || undefined)
+        );
+
+        res.status(200).json({
+          success: true,
+          message:
+            "Your account has been deleted. Personal data is anonymized and will be hard-deleted after 30 days.",
+        });
+      } catch (err) {
+        if (
+          err instanceof Error &&
+          /forbidden|invalid session/i.test(err.message)
+        ) {
+          res.status(401).json({ success: false, error: "Unauthorized" });
+          return;
+        }
+        console.error("[customAuthRoutes] delete-account error:", err);
+        res
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
       }
     }
   );

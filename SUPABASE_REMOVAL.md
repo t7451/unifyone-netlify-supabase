@@ -6,7 +6,7 @@
 
 1. **`client/src/_core/hooks/useAuth.ts`**
    - ❌ Removed `supabase.auth.signOut()` call
-   - ❌ Removed `import { supabase }` 
+   - ❌ Removed `import { supabase }`
    - ✅ Logout now only calls server endpoint (which clears the cookie)
 
 2. **`client/src/pages/AuthCallback.tsx`**
@@ -30,11 +30,54 @@
    - ✅ Explains email verification bypass behavior
    - ✅ Documents all auth endpoints and security features
 
-## What Still Uses Supabase
+## What Still Uses Supabase (as of 2026-04-25)
 
-- **`client/src/lib/supabaseClient.ts`** — Real-time features only (gracefully degrades if env vars absent)
-- **`client/src/lib/supabaseRealtime.ts`** — Real-time subscriptions (optional)
-- **`server/_core/oauth.ts`** — Legacy `/api/auth/supabase-session` endpoint (kept for backward compatibility, can be removed later)
+The "removal" was scoped to **authentication** only. Supabase is still load-bearing
+in the data layer for credits and Stripe object storage. **Future agents: do NOT
+delete Supabase env vars without finishing the migration in
+and .**
+
+### Auth — fully migrated off Supabase
+
+- — server cookie only
+- — no PKCE/magic-link
+- — JWT/scrypt over Drizzle/Neon
+
+### Credits — STILL on Supabase
+
+- — calls supabase.rpc("consume_credits_with_meter", ...)
+- Uses SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
+- Backed by a Postgres function on the Supabase project (denxakpahfmlsekxmubs)
+- To migrate: port the RPC logic to a Drizzle transaction over credit_transactions
+  on Neon. Function-side state currently lives only in Supabase.
+
+### Stripe object storage — STILL on Supabase
+
+- — upserts to Supabase tables stripe_subscriptions,
+  stripe_products, stripe_prices
+- Same Supabase project as credits
+- To migrate: schema for these tables lives in
+  scripts/supabase-stripe-subscriptions.sql. Replicate to Drizzle (drizzle/schema.ts),
+  rewrite the upsert calls, run a one-time data sync.
+
+### Real-time / push — STILL on Supabase (optional)
+
+- ,
+- Gracefully degrades if env vars are absent
+- Live updates / presence only — not load-bearing for any signup/payment flow
+
+### Legacy compat — can remove
+
+- /api/auth/supabase-session — kept for backward compat, no caller
+
+### Required env vars (do not delete)
+
+- SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY — credits + stripe.ts
+- SUPABASE_JWT_SECRET — was the JWT_SECRET fallback in server/\_core/env.ts:10. Once
+  JWT_SECRET is set explicitly (it is, as of 2026-04-25), this is only used for any
+  direct Supabase-issued token verification. Safe to keep until credit/stripe
+  migration completes.
+- VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY — client-side realtime client
 
 ## Testing the Changes
 

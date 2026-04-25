@@ -10,7 +10,7 @@
 
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
-import { eq, or } from "drizzle-orm";
+import { eq, or, and, isNull } from "drizzle-orm";
 import { users } from "../../drizzle/schema";
 import { sdk } from "./sdk";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
@@ -304,9 +304,12 @@ export async function signIn(
       .select()
       .from(users)
       .where(
-        or(
-          eq(users.email, identifierLower),
-          eq(users.username, identifierLower)
+        and(
+          or(
+            eq(users.email, identifierLower),
+            eq(users.username, identifierLower)
+          ),
+          isNull(users.deletedAt)
         )
       )
       .limit(1);
@@ -314,7 +317,8 @@ export async function signIn(
     const user = result[0];
 
     if (!user) {
-      // Timing-safe: still do a hash comparison to prevent timing attacks
+      // Timing-safe: still do a hash comparison to prevent timing attacks.
+      // This branch also covers soft-deleted accounts (deletedAt IS NOT NULL).
       await hashPassword(password);
       return { success: false, error: "Invalid email, username, or password" };
     }

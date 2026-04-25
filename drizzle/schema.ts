@@ -134,6 +134,13 @@ export const users = pgTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   creditBalance: integer("creditBalance").default(0).notNull(),
   referralCode: varchar("referralCode", { length: 32 }).unique(),
+  /**
+   * Set when a user requests account deletion via /api/auth/delete-account.
+   * The row is preserved (soft delete) for any cascading FKs and audit retention.
+   * Auth lookups in customAuth.ts MUST filter `deletedAt IS NULL`.
+   * After 30 days the row may be hard-deleted by a scheduled function.
+   */
+  deletedAt: timestamp("deletedAt"),
 });
 
 export type User = typeof users.$inferSelect;
