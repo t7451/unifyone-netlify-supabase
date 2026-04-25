@@ -1,9 +1,11 @@
 import {
   boolean,
   check,
+  date,
   index,
   integer,
   jsonb,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -531,6 +533,223 @@ export const prOpportunities = pgTable(
   })
 );
 
+// --- Batch 06: outreach engine (campaigns/sequences/messages/replies/suppression/broken_links/volume) ---
+// SQL in infra/neon/0007_spire_outreach.sql.
+
+export const outreachCampaigns = pgTable(
+  "spire_outreach_campaigns",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    siteId: uuid("site_id").references(() => sites.id, { onDelete: "cascade" }),
+    campaignType: text("campaign_type").notNull(),
+    name: text("name").notNull(),
+    active: boolean("active").notNull().default(true),
+    dailySendCap: integer("daily_send_cap").notNull().default(5),
+    autopilot: boolean("autopilot").notNull().default(false),
+    fromName: text("from_name").notNull().default("Keith Skaggs"),
+    fromEmail: text("from_email")
+      .notNull()
+      .default("keith@outreach.unifyone.com"),
+    replyToEmail: text("reply_to_email")
+      .notNull()
+      .default("keith@1commerce.online"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  t => ({
+    siteTypeUnique: uniqueIndex("spire_outreach_campaigns_site_type_key").on(
+      t.siteId,
+      t.campaignType
+    ),
+  })
+);
+
+export const outreachSequences = pgTable(
+  "spire_outreach_sequences",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    campaignId: uuid("campaign_id")
+      .notNull()
+      .references(() => outreachCampaigns.id, { onDelete: "cascade" }),
+    prospectId: uuid("prospect_id")
+      .notNull()
+      .references(() => outreachProspects.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("active"),
+    currentStep: integer("current_step").notNull().default(0),
+    assetUrl: text("asset_url"),
+    assetTitle: text("asset_title"),
+    pitchAngle: text("pitch_angle"),
+    contextSnapshot: jsonb("context_snapshot"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  t => ({
+    pairUnique: uniqueIndex("spire_outreach_sequences_pair_key").on(
+      t.campaignId,
+      t.prospectId
+    ),
+    statusIdx: index("spire_outreach_sequences_status_idx").on(
+      t.status,
+      t.updatedAt
+    ),
+  })
+);
+
+export const outreachMessages = pgTable(
+  "spire_outreach_messages",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    sequenceId: uuid("sequence_id")
+      .notNull()
+      .references(() => outreachSequences.id, { onDelete: "cascade" }),
+    step: integer("step").notNull(),
+    status: text("status").notNull().default("pending_approval"),
+    scheduledFor: timestamp("scheduled_for", { withTimezone: true }).notNull(),
+    subject: text("subject").notNull(),
+    bodyText: text("body_text").notNull(),
+    bodyHtml: text("body_html"),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    resendMessageId: text("resend_message_id"),
+    approvedBy: text("approved_by"),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    error: text("error"),
+    attempts: integer("attempts").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  t => ({
+    seqStepUnique: uniqueIndex("spire_outreach_messages_seq_step_key").on(
+      t.sequenceId,
+      t.step
+    ),
+    queueIdx: index("spire_outreach_messages_queue_idx").on(
+      t.status,
+      t.scheduledFor
+    ),
+  })
+);
+
+export const outreachReplies = pgTable(
+  "spire_outreach_replies",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    messageId: uuid("message_id").references(() => outreachMessages.id, {
+      onDelete: "set null",
+    }),
+    sequenceId: uuid("sequence_id")
+      .notNull()
+      .references(() => outreachSequences.id, { onDelete: "cascade" }),
+    prospectId: uuid("prospect_id")
+      .notNull()
+      .references(() => outreachProspects.id, { onDelete: "cascade" }),
+    fromEmail: text("from_email").notNull(),
+    inReplyTo: text("in_reply_to"),
+    subject: text("subject"),
+    bodyText: text("body_text"),
+    classification: text("classification"),
+    classificationConfidence: numeric("classification_confidence", {
+      precision: 4,
+      scale: 3,
+    }),
+    classificationRationale: text("classification_rationale"),
+    draftedFollowup: jsonb("drafted_followup"),
+    actedOn: boolean("acted_on").notNull().default(false),
+    actedAt: timestamp("acted_at", { withTimezone: true }),
+    receivedAt: timestamp("received_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  t => ({
+    queueIdx: index("spire_outreach_replies_queue_idx").on(
+      t.actedOn,
+      t.receivedAt
+    ),
+  })
+);
+
+export const outreachSuppression = pgTable("spire_outreach_suppression", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  email: text("email"),
+  domain: text("domain"),
+  reason: text("reason").notNull(),
+  sourceMessageId: uuid("source_message_id").references(
+    () => outreachMessages.id,
+    { onDelete: "set null" }
+  ),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const brokenLinks = pgTable(
+  "spire_broken_links",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    prospectId: uuid("prospect_id")
+      .notNull()
+      .references(() => outreachProspects.id, { onDelete: "cascade" }),
+    sourcePageUrl: text("source_page_url").notNull(),
+    brokenUrl: text("broken_url").notNull(),
+    anchorText: text("anchor_text"),
+    contextSnippet: text("context_snippet"),
+    matchedAssetUrl: text("matched_asset_url"),
+    matchedAssetScore: integer("matched_asset_score"),
+    status: text("status").notNull().default("discovered"),
+    discoveredAt: timestamp("discovered_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  t => ({
+    naturalKey: uniqueIndex("spire_broken_links_natural_key").on(
+      t.prospectId,
+      t.sourcePageUrl,
+      t.brokenUrl
+    ),
+    matchIdx: index("spire_broken_links_match_idx").on(
+      t.status,
+      t.matchedAssetScore
+    ),
+  })
+);
+
+export const outreachVolumeDaily = pgTable(
+  "spire_outreach_volume_daily",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    campaignId: uuid("campaign_id")
+      .notNull()
+      .references(() => outreachCampaigns.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    sentCount: integer("sent_count").notNull().default(0),
+  },
+  t => ({
+    perDayUnique: uniqueIndex("spire_outreach_volume_daily_unique").on(
+      t.campaignId,
+      t.date
+    ),
+  })
+);
+
 export type Site = typeof sites.$inferSelect;
 export type NewSite = typeof sites.$inferInsert;
 export type Keyword = typeof keywords.$inferSelect;
@@ -559,6 +778,20 @@ export type Syndication = typeof syndications.$inferSelect;
 export type NewSyndication = typeof syndications.$inferInsert;
 export type PrOpportunity = typeof prOpportunities.$inferSelect;
 export type NewPrOpportunity = typeof prOpportunities.$inferInsert;
+export type OutreachCampaign = typeof outreachCampaigns.$inferSelect;
+export type NewOutreachCampaign = typeof outreachCampaigns.$inferInsert;
+export type OutreachSequence = typeof outreachSequences.$inferSelect;
+export type NewOutreachSequence = typeof outreachSequences.$inferInsert;
+export type OutreachMessage = typeof outreachMessages.$inferSelect;
+export type NewOutreachMessage = typeof outreachMessages.$inferInsert;
+export type OutreachReply = typeof outreachReplies.$inferSelect;
+export type NewOutreachReply = typeof outreachReplies.$inferInsert;
+export type OutreachSuppression = typeof outreachSuppression.$inferSelect;
+export type NewOutreachSuppression = typeof outreachSuppression.$inferInsert;
+export type BrokenLink = typeof brokenLinks.$inferSelect;
+export type NewBrokenLink = typeof brokenLinks.$inferInsert;
+export type OutreachVolumeDaily = typeof outreachVolumeDaily.$inferSelect;
+export type NewOutreachVolumeDaily = typeof outreachVolumeDaily.$inferInsert;
 
 // Avoid unused-import lint warnings in IDEs when `check` isn't used — Drizzle
 // CHECK constraints live in the SQL file; export it so downstream modules can
