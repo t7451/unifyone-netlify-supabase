@@ -602,6 +602,184 @@ program
     await validateNapCommand();
   });
 
+// --- Batch 05: GSC + syndication + HARO ---
+
+const gsc = program
+  .command("gsc")
+  .description("Search Console ingestion + analytics");
+
+gsc
+  .command("ingest")
+  .description("Pull recent GSC data into spire_gsc_daily")
+  .requiredOption("--site <slug>", "site slug (e.g. unifyone)")
+  .option("--days <n>", "how many days to pull (default 3, max 90)", "3")
+  .action(async (opts: { site: string; days: string }) => {
+    const { gscIngestCommand } = await import("./commands/gsc-report.js");
+    await gscIngestCommand({ siteSlug: opts.site, days: Number(opts.days) });
+  });
+
+gsc
+  .command("report")
+  .description("Run a GSC analytics report")
+  .argument(
+    "<kind>",
+    "striking-distance | cannibals | rising | declining | summary"
+  )
+  .requiredOption("--site <slug>")
+  .option("--weeks <n>", "lookback window in weeks", "2")
+  .action(async (kind: string, opts: { site: string; weeks: string }) => {
+    const { gscReportCommand } = await import("./commands/gsc-report.js");
+    const validKinds = [
+      "striking-distance",
+      "cannibals",
+      "rising",
+      "declining",
+      "summary",
+    ] as const;
+    if (!(validKinds as readonly string[]).includes(kind)) {
+      throw new Error(
+        `Unknown report kind: ${kind}. Valid: ${validKinds.join(", ")}`
+      );
+    }
+    await gscReportCommand({
+      kind: kind as (typeof validKinds)[number],
+      siteSlug: opts.site,
+      weeks: Number(opts.weeks),
+    });
+  });
+
+const syndicate = program
+  .command("syndicate")
+  .description("Republish to external platforms with canonical-tag discipline");
+
+syndicate
+  .command("platforms")
+  .description("Manage syndication platforms")
+  .command("seed")
+  .description(
+    "Load config/syndication/platforms.json into spire_syndication_platforms"
+  )
+  .action(async () => {
+    const { syndicatePlatformsSeedCommand } = await import(
+      "./commands/syndicate.js"
+    );
+    await syndicatePlatformsSeedCommand();
+  });
+
+syndicate
+  .command("candidates")
+  .description("Select eligible content_plan rows and queue spire_syndications")
+  .option("--site <slug>", "restrict to one site")
+  .action(async (opts: { site?: string }) => {
+    const { syndicateCandidatesCommand } = await import(
+      "./commands/syndicate.js"
+    );
+    await syndicateCandidatesCommand({ siteSlug: opts.site });
+  });
+
+syndicate
+  .command("queue")
+  .description("Force-queue a single content plan to a single platform")
+  .argument("<contentPlanId>")
+  .requiredOption(
+    "--platform <slug>",
+    "platform slug (devto, hashnode, medium, linkedin, substack)"
+  )
+  .action(async (contentPlanId: string, opts: { platform: string }) => {
+    const { syndicateQueueCommand } = await import("./commands/syndicate.js");
+    await syndicateQueueCommand({ contentPlanId, platformSlug: opts.platform });
+  });
+
+syndicate
+  .command("run")
+  .description("Force-run a single queued syndication (API-method only)")
+  .argument("<syndicationId>")
+  .action(async (syndicationId: string) => {
+    const { syndicateRunCommand } = await import("./commands/syndicate.js");
+    await syndicateRunCommand({ syndicationId });
+  });
+
+syndicate
+  .command("status")
+  .description("Recent syndication activity")
+  .option("--site <slug>", "restrict to one site")
+  .action(async (opts: { site?: string }) => {
+    const { syndicateStatusCommand } = await import("./commands/syndicate.js");
+    await syndicateStatusCommand({ siteSlug: opts.site });
+  });
+
+const haro = program.command("haro").description("HARO / PR opportunity queue");
+
+haro
+  .command("queue")
+  .description("Show new high-score opportunities awaiting review")
+  .option("--site <slug>")
+  .option("--min-score <n>", "minimum match_score (default 70)", "70")
+  .action(async (opts: { site?: string; "min-score": string }) => {
+    const { haroQueueCommand } = await import("./commands/haro-queue.js");
+    await haroQueueCommand({
+      siteSlug: opts.site,
+      minScore: Number(opts["min-score"]),
+    });
+  });
+
+haro
+  .command("view")
+  .description("Print the full query + drafted response variations")
+  .argument("<opportunityId>")
+  .action(async (opportunityId: string) => {
+    const { haroViewCommand } = await import("./commands/haro-queue.js");
+    await haroViewCommand(opportunityId);
+  });
+
+haro
+  .command("mark")
+  .description(
+    "Update an opportunity's status (record send / win / lose / ignore)"
+  )
+  .argument("<opportunityId>")
+  .requiredOption(
+    "--status <status>",
+    "qualified | ignored | drafted | sent | won | lost | expired"
+  )
+  .option("--outcome-url <url>", "live URL of the won placement")
+  .option("--outcome-dr <n>", "outlet DR for the won placement")
+  .option("--used-draft <n>", "0-indexed draft variation that was sent")
+  .action(
+    async (
+      opportunityId: string,
+      opts: {
+        status: string;
+        outcomeUrl?: string;
+        outcomeDr?: string;
+        usedDraft?: string;
+      }
+    ) => {
+      const { haroMarkCommand } = await import("./commands/haro-queue.js");
+      const valid = [
+        "qualified",
+        "ignored",
+        "drafted",
+        "sent",
+        "won",
+        "lost",
+        "expired",
+      ] as const;
+      if (!(valid as readonly string[]).includes(opts.status)) {
+        throw new Error(
+          `Unknown status: ${opts.status}. Valid: ${valid.join(", ")}`
+        );
+      }
+      await haroMarkCommand({
+        opportunityId,
+        status: opts.status as (typeof valid)[number],
+        outcomeUrl: opts.outcomeUrl,
+        outcomeDr: opts.outcomeDr ? Number(opts.outcomeDr) : undefined,
+        usedDraftIndex: opts.usedDraft ? Number(opts.usedDraft) : undefined,
+      });
+    }
+  );
+
 program.parseAsync(process.argv).catch(err => {
   logger.fatal(err instanceof Error ? err.message : String(err));
   process.exit(1);
