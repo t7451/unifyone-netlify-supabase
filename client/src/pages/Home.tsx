@@ -69,9 +69,18 @@ const JSON_LD = [
 
 const MARKET_SIGNALS = [
   { value: "76M+", label: "US gig workers underserved by existing tools" },
-  { value: "$3,200", label: "avg additional deductions tracked per user annually" },
-  { value: "300+", label: "AI models accessible through one Kai unified API key" },
-  { value: "$556B", label: "gig economy market with no unified intelligence layer" },
+  {
+    value: "$3,200",
+    label: "avg additional deductions tracked per user annually",
+  },
+  {
+    value: "300+",
+    label: "AI models accessible through one Kai unified API key",
+  },
+  {
+    value: "$556B",
+    label: "gig economy market with no unified intelligence layer",
+  },
 ];
 
 const LAUNCH_METRICS = [
@@ -188,7 +197,7 @@ function EmailCapture() {
     onSuccess: () => {
       setSubmitted(true);
     },
-    onError: (err) => {
+    onError: err => {
       toast.error(err.message ?? "Something went wrong. Please try again.");
     },
   });
@@ -224,7 +233,7 @@ function EmailCapture() {
           Get the Cathedral Blueprint — free.
         </h2>
         <p
-          className="font-crimson text-lg mb-8"
+          className="font-crimson text-lg mb-8 mobile-visibility-copy"
           style={{ color: "#6A6A6A", fontStyle: "italic" }}
         >
           The architecture guide behind UnifyOne: multi-tenant design, AI
@@ -233,22 +242,37 @@ function EmailCapture() {
         {submitted ? (
           <div
             className="rounded-xl p-6 text-center"
-            style={{ border: "1px solid rgba(212,168,67,0.3)", backgroundColor: "rgba(212,168,67,0.05)" }}
+            style={{
+              border: "1px solid rgba(212,168,67,0.3)",
+              backgroundColor: "rgba(212,168,67,0.05)",
+            }}
           >
-            <p className="font-cinzel text-sm" style={{ color: "#D4A843", letterSpacing: "0.1em" }}>
+            <p
+              className="font-cinzel text-sm"
+              style={{ color: "#D4A843", letterSpacing: "0.1em" }}
+            >
               ✦ BLUEPRINT SENT
             </p>
-            <p className="font-crimson mt-2" style={{ color: "#6A6A6A" }}>
+            <p
+              className="font-crimson mt-2 mobile-visibility-copy"
+              style={{ color: "#6A6A6A" }}
+            >
               Check your inbox — the PDF is on its way.
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+          >
             <div className="flex-1">
               <input
                 type="email"
                 value={email}
-                onChange={e => { setEmail(e.target.value); setError(""); }}
+                onChange={e => {
+                  setEmail(e.target.value);
+                  setError("");
+                }}
                 placeholder="your@email.com"
                 aria-label="Email address"
                 className="w-full px-4 py-3 rounded-lg text-sm"
@@ -261,7 +285,12 @@ function EmailCapture() {
                 required
               />
               {error && (
-                <p className="text-left text-xs mt-1" style={{ color: "#EF4444" }}>{error}</p>
+                <p
+                  className="text-left text-xs mt-1"
+                  style={{ color: "#EF4444" }}
+                >
+                  {error}
+                </p>
               )}
             </div>
             <button
@@ -274,10 +303,18 @@ function EmailCapture() {
             </button>
           </form>
         )}
-        <p className="font-crimson text-xs mt-4" style={{ color: "#3A3A3A" }}>
+        <p
+          className="font-crimson text-xs mt-4 mobile-visibility-subtle"
+          style={{ color: "#3A3A3A" }}
+        >
           No spam. Unsubscribe anytime. We respect your privacy.{" "}
           <Link href="/privacy">
-            <span className="underline cursor-pointer" style={{ color: "#4A4A4A" }}>Privacy Policy</span>
+            <span
+              className="underline cursor-pointer mobile-visibility-subtle"
+              style={{ color: "#4A4A4A" }}
+            >
+              Privacy Policy
+            </span>
           </Link>
         </p>
       </div>
@@ -397,7 +434,10 @@ export default function Home() {
           content="UnifyOne is the multi-tenant commerce platform for gig operators and e-commerce teams. AI-powered earnings insights, order management, and Shopify integration."
         />
         <link rel="canonical" href={CANONICAL} />
-        <meta property="og:title" content="UnifyOne | AI-Powered Multi-Tenant Commerce Platform" />
+        <meta
+          property="og:title"
+          content="UnifyOne | AI-Powered Multi-Tenant Commerce Platform"
+        />
         <meta
           property="og:description"
           content="Commerce infrastructure engineered like a cathedral — sequential, structural, and built to outlast every platform trend. AI-powered insights for gig operators. Start free."
@@ -435,7 +475,7 @@ export default function Home() {
             ].map(item => (
               <span
                 key={item}
-                className="rounded-full px-4 py-2 text-xs sm:text-sm"
+                className="rounded-full px-4 py-2 text-xs sm:text-sm mobile-visibility-chip"
                 style={{
                   color: "#9A9A9A",
                   border: "1px solid rgba(212,168,67,0.18)",
@@ -461,13 +501,15 @@ export default function Home() {
               color: "#F0E8D0",
             }}
           >
-            UnifyOne: Your AI Knows<br />What You Actually Earn.
+            UnifyOne: Your AI Knows
+            <br />
+            What You Actually Earn.
           </h1>
 
           <p
             data-reveal
             data-reveal-delay="200"
-            className="font-crimson text-xl mx-auto mb-10"
+            className="font-crimson text-xl mx-auto mb-10 mobile-visibility-copy"
             style={{
               color: "#6A6A6A",
               fontStyle: "italic",
@@ -502,7 +544,7 @@ export default function Home() {
           <p
             data-reveal
             data-reveal-delay="350"
-            className="font-crimson text-sm mt-5"
+            className="font-crimson text-sm mt-5 mobile-visibility-subtle"
             style={{ color: "#5A5A5A", fontStyle: "italic" }}
           >
             Need proof first? Review{" "}
@@ -535,11 +577,13 @@ export default function Home() {
       </section>
 
       {/* ── STATS ────────────────────────────────────────────────────────── */}
-      <section style={{ borderTop: "1px solid #242424", borderBottom: "1px solid #242424" }}>
-        <div
-          ref={statsRef}
-          className="max-w-7xl mx-auto px-6 sm:px-8 py-16"
-        >
+      <section
+        style={{
+          borderTop: "1px solid #242424",
+          borderBottom: "1px solid #242424",
+        }}
+      >
+        <div ref={statsRef} className="max-w-7xl mx-auto px-6 sm:px-8 py-16">
           <div className="text-center mb-10">
             <span className="inscription" style={{ color: "#D4A843" }}>
               LIVE LAUNCH STATS
@@ -551,7 +595,7 @@ export default function Home() {
               Real traction, not vanity copy.
             </h2>
             <p
-              className="font-crimson text-lg"
+              className="font-crimson text-lg mobile-visibility-copy"
               style={{
                 color: "#6A6A6A",
                 fontStyle: "italic",
@@ -591,7 +635,7 @@ export default function Home() {
               >
                 <div className="stat-value mb-2">{stat.value}</div>
                 <p
-                  className="font-crimson text-sm"
+                  className="font-crimson text-sm mobile-visibility-subtle"
                   style={{ color: "#5A5A5A", lineHeight: 1.5 }}
                 >
                   {stat.label}
@@ -702,8 +746,14 @@ export default function Home() {
       >
         <div className="max-w-5xl mx-auto px-6 sm:px-8">
           <p
-            className="text-center font-crimson text-sm mb-6"
-            style={{ color: "#3A3A3A", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "Cinzel, serif", fontSize: "0.65rem" }}
+            className="text-center font-crimson text-sm mb-6 mobile-visibility-subtle"
+            style={{
+              color: "#3A3A3A",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              fontFamily: "Cinzel, serif",
+              fontSize: "0.65rem",
+            }}
           >
             Payments &amp; Integrations Powered By
           </p>
@@ -718,8 +768,12 @@ export default function Home() {
             ].map(brand => (
               <span
                 key={brand.name}
-                className="font-cinzel text-sm tracking-widest font-bold"
-                style={{ color: brand.color, opacity: 0.55, letterSpacing: "0.15em" }}
+                className="font-cinzel text-sm tracking-widest font-bold mobile-visibility-brand"
+                style={{
+                  color: brand.color,
+                  opacity: 0.55,
+                  letterSpacing: "0.15em",
+                }}
               >
                 {brand.name.toUpperCase()}
               </span>
@@ -746,8 +800,13 @@ export default function Home() {
               Six load-bearing pillars.
             </h2>
             <p
-              className="font-crimson text-lg"
-              style={{ color: "#6A6A6A", fontStyle: "italic", maxWidth: 480, margin: "0 auto" }}
+              className="font-crimson text-lg mobile-visibility-copy"
+              style={{
+                color: "#6A6A6A",
+                fontStyle: "italic",
+                maxWidth: 480,
+                margin: "0 auto",
+              }}
             >
               Every module is structural. Nothing bolted on after the fact.
             </p>
@@ -785,7 +844,7 @@ export default function Home() {
                   {pillar.title}
                 </h3>
                 <p
-                  className="font-crimson text-base"
+                  className="font-crimson text-base mobile-visibility-copy"
                   style={{ color: "#6A6A6A", lineHeight: 1.7 }}
                 >
                   {pillar.body}
@@ -893,9 +952,9 @@ export default function Home() {
                 style={{ color: "#9A9A9A", lineHeight: 1.7 }}
               >
                 <p>
-                  Kai isn't a generic chatbot. It reads your shift earnings, mileage
-                  logs, and platform comparisons — then tells you exactly which
-                  hours and zones pay the most after expenses.
+                  Kai isn't a generic chatbot. It reads your shift earnings,
+                  mileage logs, and platform comparisons — then tells you
+                  exactly which hours and zones pay the most after expenses.
                 </p>
                 <p>
                   Ask it anything:{" "}
@@ -924,7 +983,12 @@ export default function Home() {
             >
               <div
                 className="inscription mb-4"
-                style={{ color: "#D4A843", display: "flex", alignItems: "center", gap: 8 }}
+                style={{
+                  color: "#D4A843",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
               >
                 <span
                   style={{
@@ -945,19 +1009,29 @@ export default function Home() {
                   fontSize: "0.95rem",
                 }}
               >
-                "Which of my shifts this week were most profitable after expenses?"
+                "Which of my shifts this week were most profitable after
+                expenses?"
               </p>
-              <p style={{ color: "#6A6A6A", lineHeight: 1.7, fontSize: "0.9rem" }}>
+              <p
+                className="mobile-visibility-copy"
+                style={{
+                  color: "#6A6A6A",
+                  lineHeight: 1.7,
+                  fontSize: "0.9rem",
+                }}
+              >
                 Your Thursday 5–9pm shifts averaged $31.20/hr after fuel — 42%
-                higher than Monday mornings at $21.90/hr. Shifting those 3 Monday
-                hours to Thursday evenings adds approximately{" "}
-                <span style={{ color: "#F0D080" }}>$120/month</span> to your net.
+                higher than Monday mornings at $21.90/hr. Shifting those 3
+                Monday hours to Thursday evenings adds approximately{" "}
+                <span style={{ color: "#F0D080" }}>$120/month</span> to your
+                net.
               </p>
               <div
                 className="rule-gold mt-4 pt-4"
                 style={{ borderTop: "1px solid #242424" }}
               >
                 <p
+                  className="mobile-visibility-subtle"
                   style={{
                     fontSize: "0.75rem",
                     color: "#3A3A3A",
@@ -995,7 +1069,12 @@ export default function Home() {
           </h2>
           <p
             className="font-crimson text-lg mb-8"
-            style={{ color: "#9A9A9A", fontStyle: "italic", maxWidth: 520, margin: "0 auto 2rem" }}
+            style={{
+              color: "#9A9A9A",
+              fontStyle: "italic",
+              maxWidth: 520,
+              margin: "0 auto 2rem",
+            }}
           >
             Route to Claude for analysis, GPT for code, Gemini for speed. Kai
             keeps billing model-agnostic with one predictable credit system and
@@ -1003,7 +1082,13 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/documents/integrations">
-              <span className="btn-ghost-gold cursor-pointer" style={{ color: "#93C5FD", borderColor: "rgba(147,197,253,0.4)" }}>
+              <span
+                className="btn-ghost-gold cursor-pointer"
+                style={{
+                  color: "#93C5FD",
+                  borderColor: "rgba(147,197,253,0.4)",
+                }}
+              >
                 View Integration Guides
               </span>
             </Link>
@@ -1084,7 +1169,7 @@ export default function Home() {
                     {tier.price}
                   </span>
                   <span
-                    className="font-crimson text-sm ml-2"
+                    className="font-crimson text-sm ml-2 mobile-visibility-subtle"
                     style={{ color: "#5A5A5A" }}
                   >
                     / {tier.period}
@@ -1092,7 +1177,7 @@ export default function Home() {
                 </div>
 
                 <p
-                  className="font-crimson text-base mb-8"
+                  className="font-crimson text-base mb-8 mobile-visibility-subtle"
                   style={{ color: "#5A5A5A", fontStyle: "italic" }}
                 >
                   {tier.description}
@@ -1106,7 +1191,7 @@ export default function Home() {
                         style={{ backgroundColor: "#D4A843" }}
                       />
                       <span
-                        className="font-crimson text-sm"
+                        className="font-crimson text-sm mobile-visibility-copy"
                         style={{ color: "#6A6A6A" }}
                       >
                         {f}
@@ -1117,7 +1202,11 @@ export default function Home() {
 
                 <a
                   href={`${getLoginUrl()}?plan=${tier.id}`}
-                  className={tier.highlight ? "btn-illuminate block text-center" : "btn-ghost-gold block text-center"}
+                  className={
+                    tier.highlight
+                      ? "btn-illuminate block text-center"
+                      : "btn-ghost-gold block text-center"
+                  }
                 >
                   {tier.cta}
                 </a>
@@ -1171,7 +1260,7 @@ export default function Home() {
           </div>
 
           <div className="space-y-0">
-            {HOME_FAQ.map((item) => (
+            {HOME_FAQ.map(item => (
               <div
                 key={item.q}
                 style={{
@@ -1233,15 +1322,18 @@ export default function Home() {
             className="font-cinzel text-3xl sm:text-4xl font-black mt-6 mb-6"
             style={{ color: "#F0E8D0" }}
           >
-            The foundation is ready.<br />Your tenants are not.
+            The foundation is ready.
+            <br />
+            Your tenants are not.
           </h2>
           <p
-            className="font-crimson text-lg mb-10"
+            className="font-crimson text-lg mb-10 mobile-visibility-copy"
             style={{ color: "#6A6A6A", fontStyle: "italic" }}
           >
             Start free. No credit card. The Starter tier runs on the same
-            infrastructure as every paid plan. When you're ready to scale, upgrade
-            in one click — including Kai unified API capacity with one cost model.
+            infrastructure as every paid plan. When you're ready to scale,
+            upgrade in one click — including Kai unified API capacity with one
+            cost model.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href={getLoginUrl()} className="btn-illuminate">
