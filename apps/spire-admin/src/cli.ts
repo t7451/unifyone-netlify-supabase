@@ -780,6 +780,197 @@ haro
     }
   );
 
+// --- Batch 06: outreach engine ---
+// Reuses the `outreach` command group declared above (Batch 04 addendum had
+// `import-gap` + `report`). New verbs: campaign / qualify / find-contacts /
+// crawl-broken-links / queue / review / approve / reject / edit / autopilot /
+// replies / reply-view / suppress / status / tick.
+
+outreach
+  .command("campaign")
+  .description("Manage outreach campaigns")
+  .argument("<verb>", "create | list")
+  .option("--site <slug>", "Site slug")
+  .option("--type <type>", "broken_link | guest_post | resource_page")
+  .option("--name <name>")
+  .option("--from-name <name>")
+  .option("--from-email <email>")
+  .option("--reply-to-email <email>")
+  .action(
+    async (
+      verb: string,
+      opts: {
+        site?: string;
+        type?: string;
+        name?: string;
+        fromName?: string;
+        fromEmail?: string;
+        replyToEmail?: string;
+      }
+    ) => {
+      const out = await import("./commands/outreach.js");
+      if (verb === "create") {
+        if (!opts.site || !opts.type) {
+          throw new Error("--site and --type required");
+        }
+        await out.campaignCreate({
+          siteSlug: opts.site,
+          type: opts.type,
+          name: opts.name,
+          fromName: opts.fromName,
+          fromEmail: opts.fromEmail,
+          replyToEmail: opts.replyToEmail,
+        });
+      } else if (verb === "list") {
+        await out.campaignList({ siteSlug: opts.site });
+      } else {
+        throw new Error(`Unknown verb: ${verb}`);
+      }
+    }
+  );
+
+outreach
+  .command("qualify")
+  .requiredOption("--site <slug>")
+  .requiredOption("--type <type>")
+  .option("--limit <n>", "How many prospects to scan", "50")
+  .action(async (opts: { site: string; type: string; limit?: string }) => {
+    const out = await import("./commands/outreach.js");
+    await out.qualifyCmd({
+      siteSlug: opts.site,
+      type: opts.type,
+      limit: opts.limit ? Number(opts.limit) : undefined,
+    });
+  });
+
+outreach
+  .command("find-contacts")
+  .requiredOption("--site <slug>")
+  .option("--limit <n>", "How many qualified prospects to enrich", "25")
+  .action(async (opts: { site: string; limit?: string }) => {
+    const out = await import("./commands/outreach.js");
+    await out.findContactsCmd({
+      siteSlug: opts.site,
+      limit: opts.limit ? Number(opts.limit) : undefined,
+    });
+  });
+
+outreach
+  .command("crawl-broken-links")
+  .requiredOption("--site <slug>")
+  .option("--limit <n>", "How many prospects to crawl", "20")
+  .action(async (opts: { site: string; limit?: string }) => {
+    const out = await import("./commands/outreach.js");
+    await out.crawlBrokenCmd({
+      siteSlug: opts.site,
+      limit: opts.limit ? Number(opts.limit) : undefined,
+    });
+  });
+
+outreach
+  .command("queue")
+  .requiredOption("--campaign <id>")
+  .option("--limit <n>", "How many prospects to queue", "5")
+  .action(async (opts: { campaign: string; limit?: string }) => {
+    const out = await import("./commands/outreach.js");
+    await out.queueCmd({
+      campaignId: opts.campaign,
+      limit: opts.limit ? Number(opts.limit) : undefined,
+    });
+  });
+
+outreach
+  .command("review")
+  .requiredOption("--campaign <id>")
+  .action(async (opts: { campaign: string }) => {
+    const out = await import("./commands/outreach.js");
+    await out.reviewCmd({ campaignId: opts.campaign });
+  });
+
+outreach
+  .command("approve")
+  .argument("<message-id>")
+  .action(async (messageId: string) => {
+    const out = await import("./commands/outreach.js");
+    await out.approveCmd({ messageId });
+  });
+
+outreach
+  .command("reject")
+  .argument("<message-id>")
+  .requiredOption("--reason <text>")
+  .action(async (messageId: string, opts: { reason: string }) => {
+    const out = await import("./commands/outreach.js");
+    await out.rejectCmd({ messageId, reason: opts.reason });
+  });
+
+outreach
+  .command("edit")
+  .argument("<message-id>")
+  .action(async (messageId: string) => {
+    const out = await import("./commands/outreach.js");
+    await out.editCmd({ messageId });
+  });
+
+outreach
+  .command("autopilot")
+  .requiredOption("--campaign <id>")
+  .option("--enable", "Enable autopilot")
+  .option("--disable", "Disable autopilot")
+  .action(
+    async (opts: { campaign: string; enable?: boolean; disable?: boolean }) => {
+      const out = await import("./commands/outreach.js");
+      const enable = !!opts.enable && !opts.disable;
+      await out.autopilotCmd({ campaignId: opts.campaign, enable });
+    }
+  );
+
+outreach
+  .command("replies")
+  .option("--unactioned", "Only unactioned replies")
+  .action(async (opts: { unactioned?: boolean }) => {
+    const out = await import("./commands/outreach.js");
+    await out.repliesCmd({ unactioned: opts.unactioned });
+  });
+
+outreach
+  .command("reply-view")
+  .argument("<reply-id>")
+  .action(async (replyId: string) => {
+    const out = await import("./commands/outreach.js");
+    await out.replyViewCmd({ replyId });
+  });
+
+outreach
+  .command("suppress")
+  .option("--email <email>")
+  .option("--domain <domain>")
+  .option("--reason <text>", "Reason", "manual")
+  .action(
+    async (opts: { email?: string; domain?: string; reason?: string }) => {
+      const out = await import("./commands/outreach.js");
+      await out.suppressCmd(opts);
+    }
+  );
+
+outreach
+  .command("status")
+  .requiredOption("--site <slug>")
+  .action(async (opts: { site: string }) => {
+    const out = await import("./commands/outreach.js");
+    await out.statusCmd({ siteSlug: opts.site });
+  });
+
+outreach
+  .command("tick")
+  .description(
+    "Run one tick of advanceSequences (drafts step1/2 + promotes ready_to_send)"
+  )
+  .action(async () => {
+    const out = await import("./commands/outreach.js");
+    await out.tickCmd();
+  });
+
 program.parseAsync(process.argv).catch(err => {
   logger.fatal(err instanceof Error ? err.message : String(err));
   process.exit(1);
