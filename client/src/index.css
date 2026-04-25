@@ -71,21 +71,21 @@
   /* Semantic mapping */
   --primary:              oklch(0.73 0.13 72);   /* gold-illuminate */
   --primary-foreground:   oklch(0.04 0 0);
-  --background:           oklch(0.09 0 0);       /* softened void for readability */
+  --background:           oklch(0.09 0 0);       /* raised from 0.03 to improve authenticated-page contrast */
   --foreground:           oklch(0.95 0.01 80);   /* warm white — parchment */
-  --card:                 oklch(0.13 0 0);       /* elevated card contrast */
+  --card:                 oklch(0.13 0 0);       /* raised from 0.07 so card boundaries remain visible */
   --card-foreground:      oklch(0.95 0.01 80);
   --popover:              oklch(0.13 0 0);
   --popover-foreground:   oklch(0.95 0.01 80);
   --secondary:            oklch(0.17 0 0);
   --secondary-foreground: oklch(0.95 0.01 80);
   --muted:                oklch(0.17 0 0);
-  --muted-foreground:     oklch(0.74 0 0);       /* improved low-emphasis readability */
+  --muted-foreground:     oklch(0.74 0 0);       /* raised from 0.50 for clearer secondary text */
   --accent:               oklch(0.73 0.13 72);
   --accent-foreground:    oklch(0.04 0 0);
   --destructive:          oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.97 0 0);
-  --border:               oklch(0.28 0 0);       /* stronger structural boundaries */
+  --border:               oklch(0.28 0 0);       /* raised from 0.14 so outlines remain visible on dark surfaces */
   --input:                oklch(0.19 0 0);
   --ring:                 oklch(0.73 0.13 72);
   --radius:               0px;
