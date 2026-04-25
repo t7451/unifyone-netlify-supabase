@@ -372,6 +372,165 @@ export const submissionCitations = pgTable(
   })
 );
 
+// --- Batch 05: syndication + GSC + HARO ---
+// SQL in infra/neon/0006_spire_syndication.sql.
+
+export const gscDaily = pgTable(
+  "spire_gsc_daily",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    siteId: uuid("site_id")
+      .notNull()
+      .references(() => sites.id, { onDelete: "cascade" }),
+    query: text("query").notNull(),
+    page: text("page").notNull(),
+    country: text("country"),
+    device: text("device"),
+    // Stored as ISO date string (YYYY-MM-DD). drizzle-orm doesn't have a
+    // dedicated `date` helper outside `mode: "string"` text inference, so
+    // we use text + a check at the SQL layer in the migration file.
+    date: text("date").notNull(),
+    clicks: integer("clicks").notNull().default(0),
+    impressions: integer("impressions").notNull().default(0),
+    // Numeric columns surface as string in postgres-js by default; cast
+    // at read time when arithmetic is needed.
+    ctr: text("ctr").notNull().default("0"),
+    position: text("position"),
+    pulledAt: timestamp("pulled_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  t => ({
+    rowUnique: uniqueIndex("spire_gsc_daily_unique_idx").on(
+      t.siteId,
+      t.query,
+      t.page,
+      t.country,
+      t.device,
+      t.date
+    ),
+    siteDateIdx: index("spire_gsc_daily_site_date_idx").on(t.siteId, t.date),
+    queryDateIdx: index("spire_gsc_daily_query_date_idx").on(
+      t.siteId,
+      t.query,
+      t.date
+    ),
+    pageDateIdx: index("spire_gsc_daily_page_date_idx").on(
+      t.siteId,
+      t.page,
+      t.date
+    ),
+  })
+);
+
+export const syndicationPlatforms = pgTable("spire_syndication_platforms", {
+  id: uuid("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  method: text("method").notNull(),
+  config: jsonb("config").notNull(),
+  active: boolean("active").notNull().default(true),
+  audienceMatch: text("audience_match")
+    .array()
+    .notNull()
+    .default(sql`'{}'::text[]`),
+  minQualityScore: integer("min_quality_score").notNull().default(90),
+  delayDays: integer("delay_days").notNull().default(7),
+  rateLimitPerDay: integer("rate_limit_per_day").notNull().default(2),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const syndications = pgTable(
+  "spire_syndications",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    contentPlanId: uuid("content_plan_id")
+      .notNull()
+      .references(() => contentPlan.id, { onDelete: "cascade" }),
+    platformId: uuid("platform_id")
+      .notNull()
+      .references(() => syndicationPlatforms.id, { onDelete: "restrict" }),
+    status: text("status").notNull().default("queued"),
+    externalUrl: text("external_url"),
+    externalId: text("external_id"),
+    renderedPayload: jsonb("rendered_payload"),
+    response: jsonb("response"),
+    error: text("error"),
+    attempts: integer("attempts").notNull().default(0),
+    queuedAt: timestamp("queued_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  t => ({
+    planPlatformUnique: uniqueIndex("spire_syndications_plan_platform_key").on(
+      t.contentPlanId,
+      t.platformId
+    ),
+    queueIdx: index("spire_syndications_queue_idx").on(t.status, t.queuedAt),
+    planIdx: index("spire_syndications_plan_idx").on(t.contentPlanId),
+  })
+);
+
+export const prOpportunities = pgTable(
+  "spire_pr_opportunities",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    source: text("source").notNull(),
+    sourceMessageId: text("source_message_id"),
+    outlet: text("outlet"),
+    reporterName: text("reporter_name"),
+    reporterEmail: text("reporter_email"),
+    querySubject: text("query_subject").notNull(),
+    queryBody: text("query_body").notNull(),
+    deadline: timestamp("deadline", { withTimezone: true }),
+    matchedClusters: text("matched_clusters")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    matchScore: integer("match_score"),
+    matchRationale: text("match_rationale"),
+    draftedResponses: jsonb("drafted_responses"),
+    status: text("status").notNull().default("new"),
+    decidedBy: text("decided_by"),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    sentResponseId: uuid("sent_response_id"),
+    outcomeUrl: text("outcome_url"),
+    outcomeDr: integer("outcome_dr"),
+    receivedAt: timestamp("received_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  t => ({
+    sourceMsgUnique: uniqueIndex("spire_pr_opportunities_source_msg_key").on(
+      t.source,
+      t.sourceMessageId
+    ),
+    statusDeadlineIdx: index("spire_pr_opportunities_status_deadline_idx").on(
+      t.status,
+      t.deadline
+    ),
+    statusScoreIdx: index("spire_pr_opportunities_status_score_idx").on(
+      t.status,
+      t.matchScore
+    ),
+  })
+);
+
 export type Site = typeof sites.$inferSelect;
 export type NewSite = typeof sites.$inferInsert;
 export type Keyword = typeof keywords.$inferSelect;
@@ -392,6 +551,14 @@ export type OutreachProspect = typeof outreachProspects.$inferSelect;
 export type NewOutreachProspect = typeof outreachProspects.$inferInsert;
 export type SubmissionCitation = typeof submissionCitations.$inferSelect;
 export type NewSubmissionCitation = typeof submissionCitations.$inferInsert;
+export type GscDailyRow = typeof gscDaily.$inferSelect;
+export type NewGscDailyRow = typeof gscDaily.$inferInsert;
+export type SyndicationPlatform = typeof syndicationPlatforms.$inferSelect;
+export type NewSyndicationPlatform = typeof syndicationPlatforms.$inferInsert;
+export type Syndication = typeof syndications.$inferSelect;
+export type NewSyndication = typeof syndications.$inferInsert;
+export type PrOpportunity = typeof prOpportunities.$inferSelect;
+export type NewPrOpportunity = typeof prOpportunities.$inferInsert;
 
 // Avoid unused-import lint warnings in IDEs when `check` isn't used — Drizzle
 // CHECK constraints live in the SQL file; export it so downstream modules can
