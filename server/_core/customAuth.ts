@@ -89,12 +89,38 @@ export async function verifyPassword(
 let _db: ReturnType<typeof import("drizzle-orm/neon-http").drizzle> | null =
   null;
 
+/**
+ * Resolve the Postgres connection string from any of the supported env vars,
+ * in priority order:
+ *   1. DATABASE_URL                  — explicit override (preferred)
+ *   2. NETLIFY_DATABASE_URL          — pooled, auto-injected by Netlify Postgres add-on
+ *   3. NETLIFY_DATABASE_URL_UNPOOLED — direct connection (also auto-injected)
+ *
+ * This guards against the "module loads, env is set under a different name,
+ * customAuth silently 500s" failure mode.
+ */
+function resolveDatabaseUrl(): string | undefined {
+  return (
+    process.env.DATABASE_URL ||
+    process.env.NETLIFY_DATABASE_URL ||
+    process.env.NETLIFY_DATABASE_URL_UNPOOLED ||
+    undefined
+  );
+}
+
 async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  if (!_db) {
+    const connectionString = resolveDatabaseUrl();
+    if (!connectionString) {
+      logger.error(
+        "customAuth: no database URL configured (set DATABASE_URL or NETLIFY_DATABASE_URL)"
+      );
+      return null;
+    }
     try {
       const { neon } = await import("@neondatabase/serverless");
       const { drizzle } = await import("drizzle-orm/neon-http");
-      const sql = neon(process.env.DATABASE_URL);
+      const sql = neon(connectionString);
       _db = drizzle(sql);
     } catch (error) {
       logger.error("customAuth: database connection failed", {
@@ -196,7 +222,8 @@ export async function signUp(
     // Hash password and create user
     const passwordHash = await hashPassword(password);
     const openId = generateOpenId();
-    const displayName = name?.trim() || usernameLower || emailLower.split("@")[0];
+    const displayName =
+      name?.trim() || usernameLower || emailLower.split("@")[0];
 
     // Auto-verify email only in non-production environments without an email service.
     // In production, always require explicit email verification so accounts are
@@ -277,7 +304,10 @@ export async function signIn(
       .select()
       .from(users)
       .where(
-        or(eq(users.email, identifierLower), eq(users.username, identifierLower))
+        or(
+          eq(users.email, identifierLower),
+          eq(users.username, identifierLower)
+        )
       )
       .limit(1);
 
@@ -312,7 +342,7 @@ export async function signIn(
     const hasEmailService = Boolean(process.env.RESEND_API_KEY);
     const isProduction = process.env.NODE_ENV === "production";
     const shouldEnforceVerification = hasEmailService || isProduction;
-    
+
     if (user.emailVerified === false && shouldEnforceVerification) {
       return {
         success: false,
