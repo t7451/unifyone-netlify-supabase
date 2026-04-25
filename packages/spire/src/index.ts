@@ -21,6 +21,8 @@ export {
   suppressionToken,
   verifySuppressionToken,
   resendSend,
+  crawlProspectForBrokenLinks,
+  crawlSiteSample,
 } from "./outreach/index.js";
 export type {
   CampaignType,
@@ -33,6 +35,7 @@ export type {
   GateResult,
   GateReason,
   ResendSendResult,
+  CrawlResult,
 } from "./outreach/index.js";
 // NOTE: no `export * as directories from "./directories/index.js"` —
 // it would collide with the `directories` table re-export below, and the
