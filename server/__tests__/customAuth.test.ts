@@ -222,13 +222,13 @@ describe("signUp", () => {
     delete process.env.RESEND_API_KEY;
   });
 
-  it("does NOT auto-verify email in production mode even without RESEND_API_KEY", async () => {
+  it("auto-verifies email when RESEND_API_KEY is not set, regardless of NODE_ENV", async () => {
     delete process.env.RESEND_API_KEY;
     process.env.NODE_ENV = "production";
     _dbState.selectResult = [];
     const result = await signUp("new@example.com", "securepass", "New User");
     expect(result.success).toBe(true);
-    expect(result.user?.emailVerified).toBe(false);
+    expect(result.user?.emailVerified).toBe(true);
     delete process.env.NODE_ENV;
   });
 });
@@ -327,8 +327,10 @@ describe("signIn", () => {
     expect(result.sessionToken).toBe("mock-session-token");
   });
 
-  it("returns { success: false, code: 'email_not_verified' } when emailVerified === false in production even without RESEND_API_KEY", async () => {
-    // Production mode should enforce verification regardless of RESEND_API_KEY
+  it("allows sign-in for emailVerified === false when RESEND_API_KEY is not set, regardless of NODE_ENV", async () => {
+    // Without an email service we cannot deliver verification links, so the
+    // gate must not enforce — even in production. Otherwise users get locked
+    // out on second sign-in.
     delete process.env.RESEND_API_KEY;
     process.env.NODE_ENV = "production";
     const realHash = await hashPassword("mypassword");
@@ -342,8 +344,8 @@ describe("signIn", () => {
       },
     ];
     const result = await signIn("unverified@example.com", "mypassword");
-    expect(result.success).toBe(false);
-    expect(result.code).toBe("email_not_verified");
+    expect(result.success).toBe(true);
+    expect(result.sessionToken).toBe("mock-session-token");
     delete process.env.NODE_ENV;
   });
 
