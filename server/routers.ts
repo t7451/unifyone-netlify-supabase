@@ -43,7 +43,17 @@ export const appRouter = router({
   system: systemRouter,
 
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(opts => {
+      const u = opts.ctx.user;
+      if (!u) return null;
+      const {
+        passwordHash,
+        emailVerificationToken: _emailVerificationToken,
+        passwordResetToken: _passwordResetToken,
+        ...safe
+      } = u;
+      return { ...safe, hasPassword: !!passwordHash };
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       // ctx.res is only available in the Express adapter (local/Docker).
       // In the Netlify fetch adapter ctx.res is undefined; the cookie is
