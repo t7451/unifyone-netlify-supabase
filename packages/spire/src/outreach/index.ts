@@ -40,6 +40,11 @@ export {
 } from "./send/footer.js";
 export type { FooterInput } from "./send/footer.js";
 export { resendSend } from "./send/resend-client.js";
+export {
+  crawlProspectForBrokenLinks,
+  crawlSiteSample,
+} from "./crawler/broken-links.js";
+export type { CrawlInput, CrawlResult } from "./crawler/broken-links.js";
 export type {
   ResendSendInput,
   ResendSendResult,
