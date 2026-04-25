@@ -652,6 +652,184 @@ export async function registerCustomAuthFetchRoutes(
       );
     }
 
+    // ── GDPR / CCPA: data export ────────────────────────────────────────────
+    if (path === "/api/auth/data-export") {
+      let user;
+      try {
+        user = await sdk.authenticateRequest(req as any);
+      } catch {
+        return Response.json(
+          { success: false, error: "Unauthorized" },
+          { status: 401, headers: corsHeaders }
+        );
+      }
+      const db = await getDb();
+      if (!db) {
+        return Response.json(
+          { success: false, error: "Database unavailable" },
+          { status: 503, headers: corsHeaders }
+        );
+      }
+      const [
+        accountRows,
+        auditRows,
+        notificationRows,
+        creditTxnRows,
+        analyticsRows,
+        referralRows,
+      ] = await Promise.all([
+        db.select().from(usersTable).where(eq(usersTable.id, user.id)).limit(1),
+        db
+          .select()
+          .from(auditLogsTable)
+          .where(eq(auditLogsTable.userId, user.id))
+          .limit(5000),
+        db
+          .select()
+          .from(notificationsTable)
+          .where(eq(notificationsTable.userId, user.id))
+          .limit(5000),
+        db
+          .select()
+          .from(creditTransactionsTable)
+          .where(eq(creditTransactionsTable.userId, user.id))
+          .limit(5000),
+        db
+          .select()
+          .from(analyticsEventsTable)
+          .where(eq(analyticsEventsTable.userId, user.id))
+          .limit(5000),
+        db
+          .select()
+          .from(referralsTable)
+          .where(
+            or(
+              eq(referralsTable.referrerId, user.id),
+              eq(referralsTable.referredUserId, user.id)
+            )
+          )
+          .limit(5000),
+      ]);
+      const account = accountRows[0]
+        ? {
+            ...accountRows[0],
+            passwordHash: undefined,
+            passwordResetToken: undefined,
+            passwordResetExpiresAt: undefined,
+            emailVerificationToken: undefined,
+          }
+        : null;
+      return Response.json(
+        {
+          success: true,
+          exportedAt: new Date().toISOString(),
+          account,
+          auditLogs: auditRows,
+          notifications: notificationRows,
+          creditTransactions: creditTxnRows,
+          analyticsEvents: analyticsRows,
+          referrals: referralRows,
+          _note:
+            "Covers primary user-scoped tables. For tenant-scoped data (orders, products, social posts) email support@1commerce.online; we will extract within 30 days as required by law.",
+        },
+        { status: 200, headers: corsHeaders }
+      );
+    }
+
+    // ── GDPR / CCPA: delete account ─────────────────────────────────────────
+    if (path === "/api/auth/delete-account") {
+      let user;
+      try {
+        user = await sdk.authenticateRequest(req as any);
+      } catch {
+        return Response.json(
+          { success: false, error: "Unauthorized" },
+          { status: 401, headers: corsHeaders }
+        );
+      }
+      const body = await req.json().catch(() => ({}));
+      const { password, confirm } = body as {
+        password?: string;
+        confirm?: string;
+      };
+      if (confirm !== "DELETE MY ACCOUNT") {
+        return Response.json(
+          {
+            success: false,
+            error:
+              'You must include {"confirm":"DELETE MY ACCOUNT"} in the request body.',
+          },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+      if (!password) {
+        return Response.json(
+          {
+            success: false,
+            error: "Password is required to confirm account deletion",
+          },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+      if (!user.passwordHash) {
+        return Response.json(
+          {
+            success: false,
+            error:
+              "This account uses social sign-in. Email support@1commerce.online to request deletion.",
+          },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+      const isValid = await verifyPassword(password, user.passwordHash);
+      if (!isValid) {
+        return Response.json(
+          { success: false, error: "Password is incorrect" },
+          { status: 401, headers: corsHeaders }
+        );
+      }
+      const db = await getDb();
+      if (!db) {
+        return Response.json(
+          { success: false, error: "Database unavailable" },
+          { status: 503, headers: corsHeaders }
+        );
+      }
+      const anonymizedEmail = `deleted-${user.openId}@deleted.1commerce.online`;
+      const anonymizedUsername = `deleted_${user.openId.slice(0, 16)}`;
+      const now = new Date();
+      await db
+        .update(usersTable)
+        .set({
+          email: anonymizedEmail,
+          username: anonymizedUsername,
+          name: "Deleted User",
+          passwordHash: null,
+          emailVerificationToken: null,
+          passwordResetToken: null,
+          passwordResetExpiresAt: null,
+          passwordChangedAt: now,
+          referralCode: null,
+          deletedAt: now,
+        })
+        .where(eq(usersTable.openId, user.openId));
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message:
+            "Your account has been deleted. Personal data is anonymized and will be hard-deleted after 30 days.",
+        }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Set-Cookie": buildLogoutCookie(isSecure, cookieDomain),
+          },
+        }
+      );
+    }
+
     return null; // Not a custom auth route
   } catch (err: unknown) {
     console.error("[customAuthRoutes] Error:", err);
@@ -919,12 +1097,10 @@ export function registerCustomAuthExpressRoutes(app: Express) {
           password?: string;
         };
         if (!token || !password) {
-          res
-            .status(400)
-            .json({
-              success: false,
-              error: "Token and new password are required",
-            });
+          res.status(400).json({
+            success: false,
+            error: "Token and new password are required",
+          });
           return;
         }
 
