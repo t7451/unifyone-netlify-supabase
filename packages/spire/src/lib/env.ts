@@ -41,6 +41,11 @@ const schema = {
       }
       return n;
     }),
+  HUNTER_API_KEY: z.string().min(10).optional(),
+  RESEND_OUTREACH_API_KEY: z.string().min(10).optional(),
+  OUTREACH_SUPPRESSION_HMAC_SECRET: z.string().min(16).optional(),
+  RESEND_INBOUND_REPLIES_SECRET: z.string().min(8).optional(),
+  RESEND_EVENTS_SECRET: z.string().min(8).optional(),
 } as const;
 
 type Key = keyof typeof schema;
