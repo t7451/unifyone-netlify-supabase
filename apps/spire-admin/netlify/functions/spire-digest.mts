@@ -95,6 +95,7 @@ export default async (_req: Request) => {
         rankMovement: await gatherRankMovement(db, site.id),
         gsc: await gatherGsc(db, site.id),
         syndication: await gatherSyndications(db, site.id, weekAgo),
+        outreach: await gatherOutreach(db, site.id, weekAgo),
       });
     }
 
@@ -154,6 +155,15 @@ type PerSite = {
     counts: Record<string, number>;
     publishedThisWeek: Array<{ platform: string; planSlug: string; externalUrl: string | null }>;
     failedThisWeek: Array<{ platform: string; planSlug: string; error: string | null }>;
+  };
+  outreach: {
+    sentByCampaign: Array<{ type: string; sent: number; cap: number }>;
+    sentByStep: Record<string, number>;
+    replyRate: { sent: number; replied: number; pct: number };
+    wins: Array<{ domain: string; campaignType: string }>;
+    suppressionAdds: number;
+    bounceRate: { sent: number; bounced: number; pct: number };
+    pendingApproval: number;
   };
 };
 
@@ -294,6 +304,110 @@ async function gatherSyndications(
     counts: Object.fromEntries(counts.map((c) => [c.status, c.count])),
     publishedThisWeek: published,
     failedThisWeek: failed,
+  };
+}
+
+async function gatherOutreach(
+  db: ReturnType<typeof connectNeon>["db"],
+  siteId: string,
+  since: Date
+): Promise<PerSite["outreach"]> {
+  // Sent counts by campaign (today + last 7 days for sent_count is on the
+  // volume table; use messages directly for per-week totals).
+  const byCampaign = await db.execute(sql`
+    select c.campaign_type as type,
+           count(m.id) filter (where m.status='sent' and m.sent_at >= ${since})::int as sent,
+           c.daily_send_cap as cap
+      from spire_outreach_campaigns c
+      left join spire_outreach_sequences s on s.campaign_id = c.id
+      left join spire_outreach_messages m on m.sequence_id = s.id
+     where c.site_id = ${siteId}
+     group by c.id, c.campaign_type, c.daily_send_cap
+     order by c.campaign_type
+  `);
+  const sentByCampaign = (
+    (byCampaign as unknown as { rows?: Array<{ type: string; sent: number; cap: number }> })
+      .rows ?? []
+  ).map(r => ({ type: r.type, sent: r.sent, cap: r.cap }));
+
+  const byStep = await db.execute(sql`
+    select m.step::text as step, count(*)::int as n
+      from spire_outreach_messages m
+      join spire_outreach_sequences s on s.id = m.sequence_id
+      join spire_outreach_campaigns c on c.id = s.campaign_id
+     where c.site_id = ${siteId}
+       and m.status = 'sent'
+       and m.sent_at >= ${since}
+     group by m.step
+  `);
+  const sentByStep: Record<string, number> = Object.fromEntries(
+    ((byStep as unknown as { rows?: Array<{ step: string; n: number }> }).rows ?? []).map(
+      r => [r.step, r.n]
+    )
+  );
+
+  const totals = await db.execute(sql`
+    select
+      count(*) filter (where m.status='sent' and m.sent_at >= ${since})::int as sent,
+      count(distinct r.id)::int as replied,
+      count(*) filter (where m.status='bounced')::int as bounced
+      from spire_outreach_campaigns c
+      left join spire_outreach_sequences s on s.campaign_id = c.id
+      left join spire_outreach_messages m on m.sequence_id = s.id
+      left join spire_outreach_replies r on r.message_id = m.id
+     where c.site_id = ${siteId}
+  `);
+  const t = (totals as unknown as {
+    rows?: Array<{ sent: number; replied: number; bounced: number }>;
+  }).rows?.[0] ?? { sent: 0, replied: 0, bounced: 0 };
+  const replyPct = t.sent > 0 ? (t.replied / t.sent) * 100 : 0;
+  const bouncePct = t.sent > 0 ? (t.bounced / t.sent) * 100 : 0;
+
+  const winsRows = await db.execute(sql`
+    select p.domain as domain, c.campaign_type as type
+      from spire_outreach_replies r
+      join spire_outreach_sequences s on s.id = r.sequence_id
+      join spire_outreach_campaigns c on c.id = s.campaign_id
+      join spire_outreach_prospects p on p.id = s.prospect_id
+     where c.site_id = ${siteId}
+       and r.classification = 'positive'
+       and r.received_at >= ${since}
+     order by r.received_at desc
+     limit 20
+  `);
+  const wins = (
+    (winsRows as unknown as { rows?: Array<{ domain: string; type: string }> }).rows ?? []
+  ).map(r => ({ domain: r.domain, campaignType: r.type }));
+
+  const suppRows = await db.execute(sql`
+    select count(*)::int as n
+      from spire_outreach_suppression
+     where created_at >= ${since}
+  `);
+  const suppressionAdds = (
+    (suppRows as unknown as { rows?: Array<{ n: number }> }).rows ?? []
+  )[0]?.n ?? 0;
+
+  const pendingRows = await db.execute(sql`
+    select count(*)::int as n
+      from spire_outreach_messages m
+      join spire_outreach_sequences s on s.id = m.sequence_id
+      join spire_outreach_campaigns c on c.id = s.campaign_id
+     where c.site_id = ${siteId}
+       and m.status = 'pending_approval'
+  `);
+  const pendingApproval = (
+    (pendingRows as unknown as { rows?: Array<{ n: number }> }).rows ?? []
+  )[0]?.n ?? 0;
+
+  return {
+    sentByCampaign,
+    sentByStep,
+    replyRate: { sent: t.sent, replied: t.replied, pct: Math.round(replyPct * 10) / 10 },
+    wins,
+    suppressionAdds,
+    bounceRate: { sent: t.sent, bounced: t.bounced, pct: Math.round(bouncePct * 10) / 10 },
+    pendingApproval,
   };
 }
 
@@ -469,6 +583,7 @@ function renderDigestHtml(perSite: PerSite[], haro: HaroSummary): string {
         : "<h3>Search Console</h3><p>No GSC data yet (verify the service-account is linked to the property).</p>";
 
       const syndBlock = renderSyndicationBlock(s.syndication);
+      const outreachBlock = renderOutreachBlock(s.outreach);
 
       return `<h2>${escape(s.slug)}</h2>
         <p><strong>${s.published}</strong> published this week · avg quality ${s.avgQuality ?? "n/a"}</p>
@@ -476,6 +591,7 @@ function renderDigestHtml(perSite: PerSite[], haro: HaroSummary): string {
         ${top ? `<h3>Top 5 this week</h3><ul>${top}</ul>` : ""}
         ${gscBlock}
         ${syndBlock}
+        ${outreachBlock}
         <h3>Submissions this week</h3>
         <p><small>Queue: ${escape(submissionCounts || "(none)")}</small></p>
         ${landed ? `<p>Landed:</p><ul>${landed}</ul>` : "<p>None landed this week.</p>"}
@@ -543,6 +659,42 @@ function renderSyndicationBlock(synd: PerSite["syndication"]): string {
     <p><small>Pipeline: ${escape(counts)}</small></p>
     ${published ? `<p>Published this week:</p><ul>${published}</ul>` : "<p>No new syndications published this week.</p>"}
     ${failed ? `<p>Failed:</p><ul>${failed}</ul>` : ""}`;
+}
+
+function renderOutreachBlock(outreach: PerSite["outreach"]): string {
+  const byCampaign = outreach.sentByCampaign
+    .map(
+      c =>
+        `<li><code>${escape(c.type)}</code>: ${c.sent} sent (cap ${c.cap}/day)</li>`
+    )
+    .join("");
+  const byStep = Object.entries(outreach.sentByStep)
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .map(([step, n]) => `step ${step}: ${n}`)
+    .join(" · ");
+  const wins = outreach.wins
+    .map(
+      w =>
+        `<li><strong>${escape(w.domain)}</strong> via ${escape(w.campaignType)}</li>`
+    )
+    .join("");
+  const bounceWarn =
+    outreach.bounceRate.pct > 5
+      ? `<p><strong style="color:#a00">Bounce rate ${outreach.bounceRate.pct}% — investigate, threshold is 5%.</strong></p>`
+      : "";
+  const pendingWarn =
+    outreach.pendingApproval > 0
+      ? `<p><strong>${outreach.pendingApproval} message(s) awaiting your approval.</strong> Run <code>pnpm spire outreach review --campaign &lt;id&gt;</code>.</p>`
+      : "";
+  return `<h3>Outreach (last 7 days)</h3>
+    ${byCampaign ? `<ul>${byCampaign}</ul>` : "<p>No outreach activity yet.</p>"}
+    ${byStep ? `<p><small>By step — ${escape(byStep)}</small></p>` : ""}
+    <p>Reply rate: ${outreach.replyRate.replied}/${outreach.replyRate.sent} (${outreach.replyRate.pct}%)</p>
+    <p>Bounce rate: ${outreach.bounceRate.bounced}/${outreach.bounceRate.sent} (${outreach.bounceRate.pct}%)</p>
+    ${bounceWarn}
+    ${wins ? `<p>Wins this week:</p><ul>${wins}</ul>` : ""}
+    ${outreach.suppressionAdds > 0 ? `<p><small>${outreach.suppressionAdds} new suppression add(s).</small></p>` : ""}
+    ${pendingWarn}`;
 }
 
 function renderHaroBlock(haro: HaroSummary): string {
