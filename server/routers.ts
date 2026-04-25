@@ -46,13 +46,19 @@ export const appRouter = router({
     me: publicProcedure.query(opts => {
       const u = opts.ctx.user;
       if (!u) return null;
-      const {
-        passwordHash,
-        emailVerificationToken: _emailVerificationToken,
-        passwordResetToken: _passwordResetToken,
-        ...safe
-      } = u;
-      return { ...safe, hasPassword: !!passwordHash };
+      return {
+        id: u.id,
+        openId: u.openId,
+        tenantId: u.tenantId,
+        email: u.email,
+        name: u.name,
+        username: u.username,
+        role: u.role,
+        loginMethod: u.loginMethod,
+        emailVerified: u.emailVerified,
+        passwordChangedAt: u.passwordChangedAt,
+        hasPassword: !!u.passwordHash,
+      };
     }),
     logout: publicProcedure.mutation(({ ctx }) => {
       // ctx.res is only available in the Express adapter (local/Docker).
