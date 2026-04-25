@@ -244,7 +244,7 @@ function DashboardLayoutContent({
                 className="h-8 w-8 flex items-center justify-center transition-colors focus:outline-none shrink-0 hover:opacity-70"
                 aria-label="Toggle navigation"
               >
-                <PanelLeft className="h-4 w-4" style={{ color: "#3A3A3A" }} />
+                <PanelLeft className="h-4 w-4" style={{ color: "#B8B8B8" }} />
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -318,18 +318,18 @@ function DashboardLayoutContent({
                 style={{ borderBottom: "1px solid rgba(212,168,67,0.08)" }}
               >
                 <Building2
-                  className="w-3 h-3 shrink-0"
-                  style={{ color: "rgba(212,168,67,0.4)" }}
-                />
+                    className="w-3 h-3 shrink-0"
+                    style={{ color: "rgba(212,168,67,0.72)" }}
+                  />
                 <span
                   className="font-cinzel text-xs truncate flex-1"
-                  style={{ color: "#4A4A4A", letterSpacing: "0.1em" }}
+                  style={{ color: "#D7D7D7", letterSpacing: "0.1em" }}
                 >
                   {tenantName}
                 </span>
                 <ChevronDown
                   className="w-3 h-3 shrink-0"
-                  style={{ color: "#2A2A2A" }}
+                  style={{ color: "#A7A7A7" }}
                 />
               </button>
             </div>
@@ -363,12 +363,12 @@ function DashboardLayoutContent({
                     >
                       <item.icon
                         className="h-3.5 w-3.5"
-                        style={{ color: isActive ? "#D4A843" : "#3A3A3A" }}
+                        style={{ color: isActive ? "#D4A843" : "#BCBCBC" }}
                       />
                       <span
                         className="font-cinzel"
                         style={{
-                          color: isActive ? "#D4A843" : "#4A4A4A",
+                          color: isActive ? "#D4A843" : "#D2D2D2",
                           fontSize: "0.6rem",
                           letterSpacing: "0.12em",
                         }}
@@ -434,21 +434,21 @@ function DashboardLayoutContent({
           <div
             className="flex h-14 items-center justify-between px-2 sticky top-0 z-40"
             style={{
-              borderBottom: "1px solid #1A1A1A",
-              backgroundColor: "rgba(0,0,0,0.97)",
+              borderBottom: "1px solid rgba(255,255,255,0.14)",
+              backgroundColor: "rgba(16,16,18,0.96)",
             }}
           >
             <div className="flex items-center gap-2">
               <SidebarTrigger
                 className="h-9 w-9"
-                style={{ color: "#4A4A4A" }}
+                style={{ color: "#D0D0D0" }}
               />
-              <span
-                className="text-sm font-medium tracking-wide"
-                style={{ color: "#9A9A9A" }}
-              >
-                {activeMenuItem?.label ?? "Menu"}
-              </span>
+                <span
+                  className="text-sm font-medium tracking-wide"
+                  style={{ color: "#D4D4D4" }}
+                >
+                  {activeMenuItem?.label ?? "Menu"}
+                </span>
             </div>
             <div className="flex items-center gap-1 pr-2">
               <NotificationCenter />
@@ -519,18 +519,18 @@ function FloatingAIWidget() {
       {open && (
         <div
           className="w-80 sm:w-96 flex flex-col overflow-hidden shadow-2xl"
-          style={{
-            height: "480px",
-            border: "1px solid rgba(201,168,76,0.25)",
-            backgroundColor: "#000",
-          }}
-        >
+            style={{
+              height: "480px",
+              border: "1px solid rgba(201,168,76,0.25)",
+              backgroundColor: "#0F0F11",
+            }}
+          >
           {/* Widget header */}
           <div
             className="flex items-center gap-2 px-4 py-3 shrink-0"
             style={{
-              borderBottom: "1px solid #1A1A1A",
-              backgroundColor: "#060606",
+              borderBottom: "1px solid rgba(255,255,255,0.14)",
+              backgroundColor: "#131316",
             }}
           >
             <Sparkles className="h-4 w-4" style={{ color: "#C9A84C" }} />
@@ -542,7 +542,7 @@ function FloatingAIWidget() {
             </span>
             <span
               className="text-xs capitalize uppercase tracking-widest"
-              style={{ color: "#4A4A4A" }}
+              style={{ color: "#BEBEBE" }}
             >
               {contextLabel}
             </span>
