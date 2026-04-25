@@ -45,6 +45,17 @@ export {
   crawlSiteSample,
 } from "./crawler/broken-links.js";
 export type { CrawlInput, CrawlResult } from "./crawler/broken-links.js";
+export { classifyReply } from "./replies/classify.js";
+export type {
+  ClassifyInput,
+  ClassifyResult,
+  ReplyClass,
+} from "./replies/classify.js";
+export { dispositionReply } from "./replies/disposition.js";
+export type {
+  DispositionInput,
+  DispositionResult,
+} from "./replies/disposition.js";
 export type {
   ResendSendInput,
   ResendSendResult,
