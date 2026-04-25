@@ -23,6 +23,8 @@ export {
   resendSend,
   crawlProspectForBrokenLinks,
   crawlSiteSample,
+  classifyReply,
+  dispositionReply,
 } from "./outreach/index.js";
 export type {
   CampaignType,
@@ -36,6 +38,9 @@ export type {
   GateReason,
   ResendSendResult,
   CrawlResult,
+  ClassifyResult,
+  ReplyClass,
+  DispositionResult,
 } from "./outreach/index.js";
 // NOTE: no `export * as directories from "./directories/index.js"` —
 // it would collide with the `directories` table re-export below, and the
