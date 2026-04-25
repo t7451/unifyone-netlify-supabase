@@ -1,0 +1,89 @@
+---
+import Base from "@/layouts/Base.astro";
+
+// Public unsubscribe handler. The outreach footer points here:
+//   /unsubscribe?e=<email>&t=<HMAC token>
+// The HMAC is verified by /api/unsubscribe (POST). The page only renders the
+// form — submission writes to spire_outreach_suppression. No login, no
+// friction. CAN-SPAM requires this to work in seconds.
+
+const url = Astro.url;
+const email = url.searchParams.get("e") ?? "";
+const token = url.searchParams.get("t") ?? "";
+const valid = email.length > 0 && token.length === 32;
+---
+
+<Base
+  title="Unsubscribe"
+  description="One-click unsubscribe from outreach communications."
+>
+  <main class="mx-auto max-w-xl px-6 py-16">
+    <h1 class="text-3xl font-semibold mb-4">Unsubscribe</h1>
+    {
+      !valid && (
+        <p class="text-red-700">
+          This unsubscribe link is malformed or expired. Email
+          <a class="underline" href="mailto:keith@1commerce.online">
+            keith@1commerce.online
+          </a>
+          to be removed manually.
+        </p>
+      )
+    }
+    {
+      valid && (
+        <>
+          <p class="mb-6">
+            Confirm you'd like to stop receiving outreach emails sent to
+            <strong>{email}</strong>. You'll be removed within 24 hours.
+          </p>
+          <form id="unsub-form" method="post" action="/api/unsubscribe">
+            <input type="hidden" name="email" value={email} />
+            <input type="hidden" name="token" value={token} />
+            <button
+              type="submit"
+              class="bg-black text-white px-5 py-3 rounded-md font-medium"
+            >
+              Yes, unsubscribe me
+            </button>
+          </form>
+          <p id="unsub-result" class="mt-6 text-green-700 hidden">
+            Done — you've been removed.
+          </p>
+          <p id="unsub-error" class="mt-6 text-red-700 hidden">
+            Something went wrong. Email keith@1commerce.online to unsubscribe
+            manually.
+          </p>
+        </>
+      )
+    }
+  </main>
+</Base>
+
+<script is:inline>
+  const form = document.getElementById("unsub-form");
+  if (form) {
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      try {
+        const res = await fetch("/api/unsubscribe", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            email: fd.get("email"),
+            token: fd.get("token"),
+          }),
+        });
+        if (res.ok) {
+          document.getElementById("unsub-result")?.classList.remove("hidden");
+          form.style.display = "none";
+        } else {
+          document.getElementById("unsub-error")?.classList.remove("hidden");
+        }
+      } catch {
+        document.getElementById("unsub-error")?.classList.remove("hidden");
+      }
+    });
+  }
+</script>
