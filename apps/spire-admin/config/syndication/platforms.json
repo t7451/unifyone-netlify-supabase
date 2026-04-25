@@ -1,0 +1,109 @@
+[
+  {
+    "slug": "devto",
+    "name": "DEV Community",
+    "method": "api",
+    "config": {
+      "api_base": "https://dev.to/api",
+      "auth_header": "api-key",
+      "auth_env": "DEVTO_API_KEY",
+      "endpoint_create": "POST /articles",
+      "supports_canonical": true,
+      "max_tags": 4,
+      "body_format": "markdown"
+    },
+    "audience_match": ["ai-infrastructure"],
+    "min_quality_score": 90,
+    "delay_days": 7,
+    "rate_limit_per_day": 1,
+    "active": true
+  },
+  {
+    "slug": "hashnode",
+    "name": "Hashnode",
+    "method": "api",
+    "config": {
+      "api_base": "https://gql.hashnode.com",
+      "auth_header": "Authorization",
+      "auth_env": "HASHNODE_PAT",
+      "graphql": true,
+      "publication_id_env": "HASHNODE_PUBLICATION_ID",
+      "supports_canonical": true,
+      "body_format": "markdown"
+    },
+    "audience_match": ["ai-infrastructure", "smb-commerce"],
+    "min_quality_score": 90,
+    "delay_days": 7,
+    "rate_limit_per_day": 1,
+    "active": true
+  },
+  {
+    "slug": "medium",
+    "name": "Medium",
+    "method": "api",
+    "config": {
+      "api_base": "https://api.medium.com/v1",
+      "auth_header": "Authorization",
+      "auth_env": "MEDIUM_INTEGRATION_TOKEN",
+      "user_id_env": "MEDIUM_USER_ID",
+      "endpoint_create": "POST /users/{userId}/posts",
+      "supports_canonical": true,
+      "body_format": "markdown",
+      "publishStatus": "public",
+      "note": "Integration tokens are 'deprecated but functional'. If Medium revokes, set active=false in Neon."
+    },
+    "audience_match": [
+      "gig-economy",
+      "freelance-income",
+      "smb-commerce",
+      "editorial-practitioner"
+    ],
+    "min_quality_score": 90,
+    "delay_days": 10,
+    "rate_limit_per_day": 1,
+    "active": true
+  },
+  {
+    "slug": "linkedin",
+    "name": "LinkedIn Articles",
+    "method": "browser",
+    "config": {
+      "publish_url": "https://www.linkedin.com/article/new/",
+      "supports_canonical": false,
+      "requires_auth": true,
+      "auth_storage_state": "linkedin-syndication",
+      "body_format": "html",
+      "max_paragraph_chars": 800,
+      "note": "No public Articles API; runs via Playwright on Contabo. Canonical not honored — we add 'Originally posted at' inline as best-effort attribution."
+    },
+    "audience_match": [
+      "smb-commerce",
+      "freelance-income",
+      "editorial-practitioner"
+    ],
+    "min_quality_score": 92,
+    "delay_days": 14,
+    "rate_limit_per_day": 1,
+    "active": true
+  },
+  {
+    "slug": "substack",
+    "name": "Substack",
+    "method": "browser",
+    "config": {
+      "publish_url": "https://{publication_subdomain}.substack.com/publish",
+      "supports_canonical": true,
+      "canonical_field": "canonical_url_meta_only",
+      "requires_auth": true,
+      "auth_storage_state": "substack",
+      "body_format": "markdown",
+      "publication_subdomain_env": "SUBSTACK_PUBLICATION",
+      "note": "Canonical is meta-tag only on Substack, not a true rel=canonical on <head>. Partial signal."
+    },
+    "audience_match": ["editorial-practitioner", "gig-economy", "smb-commerce"],
+    "min_quality_score": 92,
+    "delay_days": 14,
+    "rate_limit_per_day": 1,
+    "active": true
+  }
+]
