@@ -46,7 +46,7 @@ export default function SecuritySettings() {
   };
 
   const userRecord = user as Record<string, unknown> | undefined;
-  const hasPassword = !!userRecord?.passwordHash;
+  const hasPassword = !!userRecord?.hasPassword;
   const passwordChangedAt = userRecord?.passwordChangedAt as string | undefined;
 
   return (
