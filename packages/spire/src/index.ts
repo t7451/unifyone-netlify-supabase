@@ -7,6 +7,7 @@ export * as rank from "./rank/index.js";
 export * as searchConsole from "./search-console/index.js";
 export * as syndication from "./syndication/index.js";
 export * as haro from "./haro/index.js";
+export * as outreach from "./outreach/index.js";
 // NOTE: no `export * as directories from "./directories/index.js"` —
 // it would collide with the `directories` table re-export below, and the
 // named exports after this block cover the same surface.
