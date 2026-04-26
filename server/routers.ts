@@ -39,6 +39,11 @@ import { developerRouter } from "./routers/developer";
 import { clippersRouter } from "./routers/clippers";
 import { seoRouter } from "./routers/seo";
 import { cliRouter } from "./routers/cli";
+import { dealflowRouter } from "./routers/dealflow";
+import { shopifyThemeRouter } from "./routers/shopifyTheme";
+import { terpforgeRouter } from "./routers/terpforge";
+import { knowledgeGraphRouter } from "./routers/knowledgeGraph";
+import { pixelforgeRouter } from "./routers/pixelforge";
 
 export const appRouter = router({
   system: systemRouter,
@@ -110,6 +115,11 @@ export const appRouter = router({
   clippers: clippersRouter,
   seo: seoRouter,
   cli: cliRouter,
+  dealflow: dealflowRouter,
+  shopifyTheme: shopifyThemeRouter,
+  terpforge: terpforgeRouter,
+  knowledgeGraph: knowledgeGraphRouter,
+  pixelforge: pixelforgeRouter,
 });
 
 export type AppRouter = typeof appRouter;
