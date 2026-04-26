@@ -39,9 +39,12 @@ import {
   orders,
   plans,
   products,
+  stripePaymentAudit,
   tenants,
   users,
   webhookEvents,
+  type InsertStripePaymentAudit,
+  type StripePaymentAudit,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -501,6 +504,112 @@ export async function getOrderCount(tenantId: number) {
     .from(orders)
     .where(eq(orders.tenantId, tenantId));
   return result[0]?.count ?? 0;
+}
+
+// ── Stripe payment audit ─────────────────────────────────────────────────────
+//
+// recordStripePaymentVerification is the idempotency primitive: insert an
+// audit row keyed on (tenantId, idempotencyKey). On unique conflict, the
+// existing row is returned instead — letting callers detect retries.
+//
+// Pair with linkPaymentAuditToOrder once the order row is written, and with
+// markPaymentAuditOrphaned for failures so the reconcile worker can pick up
+// audit rows whose order write never landed.
+
+export async function recordStripePaymentVerification(
+  data: InsertStripePaymentAudit
+): Promise<{ audit: StripePaymentAudit; isReplay: boolean }> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const inserted = await db
+    .insert(stripePaymentAudit)
+    .values(data)
+    .onConflictDoNothing({
+      target: [stripePaymentAudit.tenantId, stripePaymentAudit.idempotencyKey],
+    })
+    .returning();
+  if (inserted[0]) return { audit: inserted[0], isReplay: false };
+  // Conflict — fetch the existing row.
+  const existing = await db
+    .select()
+    .from(stripePaymentAudit)
+    .where(
+      and(
+        eq(stripePaymentAudit.tenantId, data.tenantId),
+        eq(stripePaymentAudit.idempotencyKey, data.idempotencyKey)
+      )
+    )
+    .limit(1);
+  if (!existing[0]) {
+    throw new Error("Stripe payment audit upsert failed: row vanished");
+  }
+  return { audit: existing[0], isReplay: true };
+}
+
+export async function linkPaymentAuditToOrder(
+  auditId: number,
+  orderId: number
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(stripePaymentAudit)
+    .set({ linkedOrderId: orderId, status: "linked", updatedAt: new Date() })
+    .where(eq(stripePaymentAudit.id, auditId));
+}
+
+export async function markPaymentAuditOrphaned(
+  auditId: number,
+  error: string
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(stripePaymentAudit)
+    .set({
+      status: "orphaned",
+      lastError: error.slice(0, 1000),
+      updatedAt: new Date(),
+    })
+    .where(eq(stripePaymentAudit.id, auditId));
+}
+
+export async function getOrderByStripeId(
+  tenantId: number,
+  ids: { stripePaymentIntentId?: string; stripeSessionId?: string }
+) {
+  const db = await getDb();
+  if (!db) return null;
+  const conditions = [eq(orders.tenantId, tenantId)];
+  if (ids.stripePaymentIntentId) {
+    conditions.push(
+      eq(orders.stripePaymentIntentId, ids.stripePaymentIntentId)
+    );
+  } else if (ids.stripeSessionId) {
+    conditions.push(eq(orders.stripeSessionId, ids.stripeSessionId));
+  } else {
+    return null;
+  }
+  const result = await db
+    .select()
+    .from(orders)
+    .where(and(...conditions))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function getPendingStripeAudits(olderThan: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(stripePaymentAudit)
+    .where(
+      and(
+        eq(stripePaymentAudit.status, "pending"),
+        sql`${stripePaymentAudit.createdAt} < ${olderThan}`
+      )
+    );
 }
 
 // ── Customers ─────────────────────────────────────────────────────────────────
@@ -1195,7 +1304,10 @@ export async function upsertClippingSubscription(
     });
 }
 
-export async function incrementClippingUsage(tenantId: number, now = new Date()) {
+export async function incrementClippingUsage(
+  tenantId: number,
+  now = new Date()
+) {
   const db = await getDb();
   if (!db) return;
 

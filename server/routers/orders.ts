@@ -5,14 +5,19 @@ import {
   getCustomerById,
   getCustomers,
   getOrderById,
+  getOrderByStripeId,
   getOrdersByCustomerEmail,
   getOrderWithItems,
   getOrders,
+  linkPaymentAuditToOrder,
+  markPaymentAuditOrphaned,
+  recordStripePaymentVerification,
   updateCustomer,
   updateOrderStatus,
   upsertCustomer,
 } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
+import { logger } from "../_core/logger";
 import {
   StripeVerificationError,
   verifyStripeCheckoutSession,
@@ -103,6 +108,7 @@ export const ordersRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
+      const userId = ctx.user.id;
       const subtotal = input.items.reduce(
         (sum, item) => sum + item.unitPrice * item.quantity,
         0
@@ -173,24 +179,123 @@ export const ordersRouter = router({
         throw err;
       }
 
-      const order = await createOrder(
-        {
+      // For Stripe-backed orders, write a verification audit row BEFORE the
+      // order insert so a DB failure between "Stripe captured the payment" and
+      // "we wrote the order" can be reconciled. Pure-Stripe ids drive
+      // idempotency: the same paymentIntentId/sessionId always returns the
+      // same order, even on retry.
+      const isStripe =
+        providerFields.stripePaymentIntentId !== undefined ||
+        providerFields.stripeSessionId !== undefined;
+
+      let auditId: number | null = null;
+
+      if (isStripe) {
+        // Prefer paymentIntentId for the idempotency key — a session collapses
+        // to a single intent at payment time, but the intent id is the
+        // canonical "this money moved" handle.
+        const stripeKey =
+          providerFields.stripePaymentIntentId ??
+          providerFields.stripeSessionId;
+        if (!stripeKey) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Stripe verification produced no usable id.",
+          });
+        }
+        const idempotencyKey = providerFields.stripePaymentIntentId
+          ? `stripe:pi:${providerFields.stripePaymentIntentId}`
+          : `stripe:cs:${providerFields.stripeSessionId}`;
+
+        const { audit, isReplay } = await recordStripePaymentVerification({
           tenantId,
-          orderNumber,
-          customerEmail: input.customerEmail,
-          customerName: input.customerName,
-          subtotal: String(subtotal),
-          taxAmount: String(input.taxAmount),
-          shippingAmount: String(input.shippingAmount),
-          total: String(total),
+          userId,
+          idempotencyKey,
+          stripePaymentIntentId: providerFields.stripePaymentIntentId,
+          stripeSessionId: providerFields.stripeSessionId,
+          amount: String(total),
           currency: input.currency,
           status: "pending",
-          fulfillmentStatus: "unfulfilled",
-          notes: input.notes,
-          ...providerFields,
-        },
-        input.items
-      );
+        });
+        auditId = audit.id;
+
+        if (isReplay) {
+          // Replay path: a previous attempt for this Stripe payment exists.
+          // Try to return the previously-written order if it landed.
+          if (audit.linkedOrderId) {
+            const existing = await getOrderById(audit.linkedOrderId, tenantId);
+            if (existing) return existing;
+          }
+          // Audit was orphaned (DB write failed mid-flight) but the order may
+          // still have landed before the audit was linked. Look it up by
+          // Stripe id and reattach.
+          const existingOrder = await getOrderByStripeId(tenantId, {
+            stripePaymentIntentId: providerFields.stripePaymentIntentId,
+            stripeSessionId: providerFields.stripeSessionId,
+          });
+          if (existingOrder) {
+            await linkPaymentAuditToOrder(audit.id, existingOrder.id);
+            return existingOrder;
+          }
+          // Fall through and create the order — the partial unique index on
+          // orders.stripePaymentIntentId/stripeSessionId guarantees we can't
+          // double-book.
+        }
+      }
+
+      let order: Awaited<ReturnType<typeof createOrder>>;
+      try {
+        order = await createOrder(
+          {
+            tenantId,
+            orderNumber,
+            customerEmail: input.customerEmail,
+            customerName: input.customerName,
+            subtotal: String(subtotal),
+            taxAmount: String(input.taxAmount),
+            shippingAmount: String(input.shippingAmount),
+            total: String(total),
+            currency: input.currency,
+            status: "pending",
+            fulfillmentStatus: "unfulfilled",
+            notes: input.notes,
+            ...providerFields,
+          },
+          input.items
+        );
+      } catch (err) {
+        // The partial unique index on orders.stripePaymentIntentId / stripeSessionId
+        // can fire under concurrent retries — in that case fetch the winner.
+        if (isStripe) {
+          const existingOrder = await getOrderByStripeId(tenantId, {
+            stripePaymentIntentId: providerFields.stripePaymentIntentId,
+            stripeSessionId: providerFields.stripeSessionId,
+          });
+          if (existingOrder) {
+            if (auditId)
+              await linkPaymentAuditToOrder(auditId, existingOrder.id);
+            return existingOrder;
+          }
+          if (auditId) {
+            await markPaymentAuditOrphaned(
+              auditId,
+              err instanceof Error ? err.message : String(err)
+            );
+            logger.error("Stripe payment audit orphaned", {
+              auditId,
+              tenantId,
+              stripePaymentIntentId: providerFields.stripePaymentIntentId,
+              stripeSessionId: providerFields.stripeSessionId,
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+        }
+        throw err;
+      }
+
+      if (auditId && order) {
+        await linkPaymentAuditToOrder(auditId, order.id);
+      }
 
       // Upsert customer record
       if (input.customerEmail) {
