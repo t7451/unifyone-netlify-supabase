@@ -18,6 +18,7 @@ import { logger, requestLogger } from "./logger";
 import { securityHeaders } from "./securityHeaders";
 import { Sentry } from "./sentry";
 import { registerCustomAuthExpressRoutes } from "./customAuthRoutes";
+import { registerCliWebSocket } from "./cliWebSocket";
 
 /** Validate critical environment variables before the server accepts traffic. */
 function validateEnv() {
@@ -151,6 +152,9 @@ async function startServer() {
       url: `http://localhost:${port}/`,
     });
   });
+
+  // Register WebSocket PTY relay for the in-website CLI (/api/cli/pty)
+  registerCliWebSocket(server);
 
   // Graceful shutdown for Docker stop / SIGTERM
   registerGracefulShutdown(server);

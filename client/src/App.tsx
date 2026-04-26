@@ -87,6 +87,7 @@ const GovernanceDashboard = lazy(() => import("./pages/GovernanceDashboard"));
 const DocsChat = lazy(() => import("./pages/DocsChat"));
 const DeveloperHub = lazy(() => import("./pages/DeveloperHub"));
 const AuthorizationHub = lazy(() => import("./pages/AuthorizationHub"));
+const Terminal = lazy(() => import("./pages/Terminal"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -445,6 +446,14 @@ function Router() {
         component={() => (
           <DashboardRoute>
             <DeveloperHub />
+          </DashboardRoute>
+        )}
+      />
+      <Route
+        path="/terminal"
+        component={() => (
+          <DashboardRoute>
+            <Terminal />
           </DashboardRoute>
         )}
       />
