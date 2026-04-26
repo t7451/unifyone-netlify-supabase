@@ -17,7 +17,7 @@
  *   cli.issueLocalToken — generate a short-lived one-time token for the local agent
  */
 
-import { createCipheriv, createDecipheriv, createHmac, randomBytes } from "crypto";
+import { randomBytes } from "crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { and, desc, eq } from "drizzle-orm";
@@ -32,50 +32,9 @@ import {
   tenants,
   webhookEvents,
 } from "../../drizzle/schema";
-import { ENV } from "../_core/env";
 import { logger } from "../_core/logger";
+import { encryptCliKey, decryptCliKey } from "../lib/cliCrypto";
 
-// ── Encryption helpers for VPS private keys ──────────────────────────────────
-
-const ALGORITHM = "aes-256-gcm";
-
-/** Derive a 32-byte key from the app secret + a per-user salt. */
-function deriveKeyMaterial(userId: number): Buffer {
-  return createHmac("sha256", ENV.cookieSecret)
-    .update(`cli-key-${userId}`)
-    .digest();
-}
-
-/** AES-256-GCM encrypt a private key string. Returns `iv:authTag:ciphertext` (all hex). */
-function encryptPrivateKey(plaintext: string, userId: number): string {
-  const key = deriveKeyMaterial(userId);
-  const iv = randomBytes(16);
-  const cipher = createCipheriv(ALGORITHM, key, iv);
-  const encrypted = Buffer.concat([
-    cipher.update(plaintext, "utf8"),
-    cipher.final(),
-  ]);
-  const authTag = cipher.getAuthTag();
-  return `${iv.toString("hex")}:${authTag.toString("hex")}:${encrypted.toString("hex")}`;
-}
-
-/** Decrypt a previously encrypted private key string. */
-function decryptPrivateKey(encryptedStr: string, userId: number): string {
-  const parts = encryptedStr.split(":");
-  if (parts.length !== 3) throw new Error("Invalid encrypted key format");
-  const [ivHex, authTagHex, ciphertextHex] = parts;
-  const key = deriveKeyMaterial(userId);
-  const decipher = createDecipheriv(
-    ALGORITHM,
-    key,
-    Buffer.from(ivHex, "hex")
-  );
-  decipher.setAuthTag(Buffer.from(authTagHex, "hex"));
-  return (
-    decipher.update(Buffer.from(ciphertextHex, "hex")).toString("utf8") +
-    decipher.final("utf8")
-  );
-}
 
 // ── In-memory one-time token store for local agent ────────────────────────────
 // Maps token → { userId, tenantId, expiresAt }
@@ -458,7 +417,7 @@ export const cliRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
 
       const encryptedPrivateKey = input.privateKey
-        ? encryptPrivateKey(input.privateKey, ctx.user.id)
+        ? encryptCliKey(input.privateKey, ctx.user.id)
         : null;
 
       const result = await db
@@ -582,7 +541,7 @@ export const cliRouter = router({
       if (!rows[0]) throw new TRPCError({ code: "NOT_FOUND", message: "VPS connection not found" });
       const row = rows[0];
       const privateKey = row.encryptedPrivateKey
-        ? decryptPrivateKey(row.encryptedPrivateKey, ctx.user.id)
+        ? decryptCliKey(row.encryptedPrivateKey, ctx.user.id)
         : null;
       return {
         host: row.host,

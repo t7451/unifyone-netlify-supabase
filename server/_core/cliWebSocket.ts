@@ -28,6 +28,20 @@ import { COOKIE_NAME } from "@shared/const";
 import { sdk } from "./sdk";
 import { localAgentTokens } from "../routers/cli";
 import { logger } from "./logger";
+import { decryptCliKey } from "../lib/cliCrypto";
+
+// ── Timeout / rate-limit constants ────────────────────────────────────────────
+
+/** Maximum messages per user per minute before rate-limiting kicks in. */
+const RATE_LIMIT_MAX_TOKENS = 60;
+/** Rate-limit refill window in ms (1 minute). */
+const RATE_LIMIT_REFILL_MS = 60_000;
+/** Idle timeout for VPS/local PTY sessions (15 minutes). */
+const VPS_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+/** Idle timeout for platform-mode sessions (30 minutes). */
+const PLATFORM_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+/** How long to wait for unifyone-agent to connect before giving up. */
+const LOCAL_AGENT_CONNECT_TIMEOUT_MS = 30_000;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -44,21 +58,19 @@ interface RateLimitBucket {
 
 // ── Rate-limiter (in-memory token bucket, per userId) ─────────────────────────
 
-const MAX_TOKENS = 60;
-const REFILL_INTERVAL_MS = 60_000; // 1 minute
 const rateLimitBuckets = new Map<number, RateLimitBucket>();
 
 function isRateLimited(userId: number): boolean {
   const now = Date.now();
   let bucket = rateLimitBuckets.get(userId);
   if (!bucket) {
-    bucket = { tokens: MAX_TOKENS - 1, lastRefill: now };
+    bucket = { tokens: RATE_LIMIT_MAX_TOKENS - 1, lastRefill: now };
     rateLimitBuckets.set(userId, bucket);
     return false;
   }
   // Refill if interval has passed
-  if (now - bucket.lastRefill >= REFILL_INTERVAL_MS) {
-    bucket.tokens = MAX_TOKENS;
+  if (now - bucket.lastRefill >= RATE_LIMIT_REFILL_MS) {
+    bucket.tokens = RATE_LIMIT_MAX_TOKENS;
     bucket.lastRefill = now;
   }
   if (bucket.tokens <= 0) return true;
@@ -130,8 +142,6 @@ async function handleVpsSession(
   const { getDb } = await import("../db");
   const { cliVpsConnections } = await import("../../drizzle/schema");
   const { eq, and } = await import("drizzle-orm");
-  const { createDecipheriv, createHmac } = await import("crypto");
-  const { ENV: env } = await import("./env");
 
   const db = await getDb();
   if (!db) {
@@ -159,26 +169,11 @@ async function handleVpsSession(
 
   const conn = rows[0];
 
-  // Decrypt private key
+  // Decrypt private key using the shared AES-256-GCM helper
   let privateKey: string | undefined;
   if (conn.encryptedPrivateKey) {
     try {
-      const parts = conn.encryptedPrivateKey.split(":");
-      if (parts.length === 3) {
-        const [ivHex, authTagHex, ciphertextHex] = parts;
-        const key = createHmac("sha256", env.cookieSecret)
-          .update(`cli-key-${user.id}`)
-          .digest();
-        const decipher = createDecipheriv(
-          "aes-256-gcm",
-          key,
-          Buffer.from(ivHex, "hex")
-        );
-        decipher.setAuthTag(Buffer.from(authTagHex, "hex"));
-        privateKey =
-          decipher.update(Buffer.from(ciphertextHex, "hex")).toString("utf8") +
-          decipher.final("utf8");
-      }
+      privateKey = decryptCliKey(conn.encryptedPrivateKey, user.id);
     } catch {
       sendError(ws, "Failed to decrypt VPS private key");
       ws.close(1011);
@@ -195,7 +190,6 @@ async function handleVpsSession(
   };
 
   const ssh = new SshClientCtor();
-  const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
   let idleTimer: ReturnType<typeof setTimeout>;
 
   function resetIdle() {
@@ -204,7 +198,7 @@ async function handleVpsSession(
       send(ws, "info", { message: "Session closed due to inactivity." });
       ssh.end();
       ws.close(1000);
-    }, IDLE_TIMEOUT_MS);
+    }, VPS_IDLE_TIMEOUT_MS);
   }
 
   ssh.on("ready", () => {
@@ -308,12 +302,11 @@ async function handleLocalSession(
       "Run: unifyone-agent --token <token>",
   });
 
-  // The actual relay is set up externally when the agent WS connects.
-  // This stub closes with a clear message if the agent never connects in 30 s.
+  // This stub closes with a clear message if the agent never connects.
   const timeout = setTimeout(() => {
     send(ws, "error", { message: "Local agent did not connect within 30 seconds." });
     ws.close(1000);
-  }, 30_000);
+  }, LOCAL_AGENT_CONNECT_TIMEOUT_MS);
 
   ws.on("close", () => clearTimeout(timeout));
 }
@@ -337,14 +330,13 @@ function handlePlatformSession(ws: WebSocket, _user: AuthenticatedUser) {
     resetIdle();
   });
 
-  const IDLE_TIMEOUT_MS = 30 * 60 * 1000; // 30 min for platform mode
   let idleTimer: ReturnType<typeof setTimeout>;
   function resetIdle() {
     clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
       send(ws, "info", { message: "Session closed due to inactivity." });
       ws.close(1000);
-    }, IDLE_TIMEOUT_MS);
+    }, PLATFORM_IDLE_TIMEOUT_MS);
   }
   resetIdle();
 

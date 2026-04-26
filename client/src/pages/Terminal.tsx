@@ -12,7 +12,7 @@
  * the terminal as a slide-in drawer (handled in DashboardLayout.tsx).
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -96,6 +96,8 @@ export default function Terminal() {
   const [localAgentOpen, setLocalAgentOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [terminalKey, setTerminalKey] = useState(0); // remount terminal on reset
+  // Use a ref to track the latest sessionId for cleanup (avoids stale closures)
+  const sessionIdRef = useRef<number | undefined>(undefined);
 
   // VPS list
   const vpsListQuery = trpc.cli.vpsList.useQuery();
@@ -108,7 +110,10 @@ export default function Terminal() {
 
   // Session management
   const openSession = trpc.cli.openSession.useMutation({
-    onSuccess: data => setSessionId(data.sessionId),
+    onSuccess: data => {
+      setSessionId(data.sessionId);
+      sessionIdRef.current = data.sessionId;
+    },
   });
   const closeSession = trpc.cli.closeSession.useMutation();
   const issueLocalToken = trpc.cli.issueLocalToken.useMutation({
@@ -125,8 +130,10 @@ export default function Terminal() {
       vpsId: mode === "vps" ? selectedVpsId : undefined,
     });
     return () => {
-      if (sessionId) {
-        closeSession.mutate({ sessionId });
+      // Use ref to always get the latest sessionId, avoiding stale closure
+      const id = sessionIdRef.current;
+      if (id) {
+        closeSession.mutate({ sessionId: id });
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

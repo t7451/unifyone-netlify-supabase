@@ -46,6 +46,8 @@ interface UseTerminalSessionOptions {
   onMessage?: (msg: CliMessage) => void;
 }
 
+// Exponential back-off: attempt 1 → 1 s, attempt 2 → 2 s, attempt 3 → 4 s,
+// then give up and set status to "error".
 const MAX_RETRIES = 3;
 const BACKOFF_BASE_MS = 1_000;
 
