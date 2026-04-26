@@ -16,12 +16,7 @@ export default defineConfig({
   // on the API routes in src/pages/api/*).
   output: "static",
   adapter: netlify(),
-  integrations: [
-    clerk(),
-    react(),
-    tailwind({ applyBaseStyles: false }),
-    mdx(),
-  ],
+  integrations: [clerk(), react(), tailwind({ applyBaseStyles: false }), mdx()],
   vite: {
     ssr: {
       noExternal: ["@clerk/astro"],
