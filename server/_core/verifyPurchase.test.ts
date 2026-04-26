@@ -143,6 +143,26 @@ describe("verifyStripePaymentIntent", () => {
 });
 
 describe("verifyStripeCheckoutSession", () => {
+  it("rejects when stripe is not configured", async () => {
+    await expect(
+      verifyStripeCheckoutSession(
+        "cs_123",
+        { amount: 25, currency: "USD" },
+        null
+      )
+    ).rejects.toMatchObject({ reason: "stripe_unavailable" });
+  });
+
+  it("rejects when retrieve throws", async () => {
+    await expect(
+      verifyStripeCheckoutSession(
+        "cs_missing",
+        { amount: 25, currency: "USD" },
+        sessionClient("throw")
+      )
+    ).rejects.toMatchObject({ reason: "not_found" });
+  });
+
   it("accepts a paid session that matches amount + currency", async () => {
     const session = await verifyStripeCheckoutSession(
       "cs_123",

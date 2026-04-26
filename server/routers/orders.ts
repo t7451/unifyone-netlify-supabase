@@ -162,13 +162,13 @@ export const ordersRouter = router({
         }
       } catch (err) {
         if (err instanceof StripeVerificationError) {
-          throw new TRPCError({
-            code:
-              err.reason === "stripe_unavailable"
-                ? "PRECONDITION_FAILED"
-                : "BAD_REQUEST",
-            message: err.message,
-          });
+          const code =
+            err.reason === "stripe_unavailable"
+              ? "PRECONDITION_FAILED"
+              : err.reason === "not_found"
+                ? "NOT_FOUND"
+                : "BAD_REQUEST";
+          throw new TRPCError({ code, message: err.message });
         }
         throw err;
       }
