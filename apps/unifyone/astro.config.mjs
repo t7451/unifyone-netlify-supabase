@@ -10,14 +10,13 @@ import clerk from "@clerk/astro";
 // @astrojs/sitemap — two competing sitemap files caused ambiguity.
 export default defineConfig({
   site: "https://1commerce.online",
-  output: "hybrid",
+  // Astro 5 removed `output: "hybrid"`. The new default `static` is the
+  // direct equivalent: pages are pre-rendered unless they opt in to
+  // on-demand rendering via `export const prerender = false` (already set
+  // on the API routes in src/pages/api/*).
+  output: "static",
   adapter: netlify(),
-  integrations: [
-    clerk(),
-    react(),
-    tailwind({ applyBaseStyles: false }),
-    mdx(),
-  ],
+  integrations: [clerk(), react(), tailwind({ applyBaseStyles: false }), mdx()],
   vite: {
     ssr: {
       noExternal: ["@clerk/astro"],
