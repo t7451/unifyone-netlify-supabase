@@ -7,18 +7,18 @@ This repository contains:
 - **Root app** — the production React + Express application
 - **`apps/unifyone/`** — an Astro-based marketing and content site (next iteration)
 - **`packages/seo/`** — shared SEO utilities consumed by the Astro app
-- **`src-typescript/`** — a typed MCP (Model Context Protocol) server that surfaces UnifyOne data to Claude Desktop, n8n, and other AI agents
+- **`src-typescript/`** — source for [`@t7451/mcp-server`](./src-typescript/README.md), our published MCP (Model Context Protocol) server that surfaces UnifyOne data to Claude Desktop, n8n, and other AI agents
 
 ## Repository layout
 
-| Path              | Purpose                                                                                                       |
-| ----------------- | ------------------------------------------------------------------------------------------------------------- |
-| `/`               | **Production app** — React 19 + Vite frontend, Express + tRPC API, Drizzle ORM schema, and Vitest test suite |
-| `/apps/unifyone`  | **Marketing site** — Astro app for the public-facing marketing and content experience                         |
-| `/packages/seo`   | **SEO utilities** — shared meta-tag and sitemap helpers used by the Astro app                                 |
-| `/infra/neon`     | **Database bootstrap** — Neon (serverless Postgres) setup SQL and migration notes                             |
-| `/netlify`        | **Serverless functions** — Netlify function entrypoints and deployment configuration                          |
-| `/src-typescript` | **MCP server** — TypeScript package that runs a Model Context Protocol server over stdio                      |
+| Path              | Purpose                                                                                                                     |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `/`               | **Production app** — React 19 + Vite frontend, Express + tRPC API, Drizzle ORM schema, and Vitest test suite                |
+| `/apps/unifyone`  | **Marketing site** — Astro app for the public-facing marketing and content experience                                       |
+| `/packages/seo`   | **SEO utilities** — shared meta-tag and sitemap helpers used by the Astro app                                               |
+| `/infra/neon`     | **Database bootstrap** — Neon (serverless Postgres) setup SQL and migration notes                                           |
+| `/netlify`        | **Serverless functions** — Netlify function entrypoints and deployment configuration                                        |
+| `/src-typescript` | **MCP server** — source for the [`@t7451/mcp-server`](./src-typescript/README.md) npm package, published to GitHub Packages |
 
 ## Prerequisites
 
@@ -50,11 +50,11 @@ cp .env.example .env
 
 **Required variables** for the root app:
 
-| Variable         | Purpose                                                 |
-| ---------------- | ------------------------------------------------------- |
+| Variable         | Purpose                                                   |
+| ---------------- | --------------------------------------------------------- |
 | `JWT_SECRET`     | Signs and verifies session tokens (minimum 32 characters) |
-| `DATABASE_URL`   | PostgreSQL connection string for Drizzle ORM            |
-| `PUBLIC_APP_URL` | Canonical URL used in auth redirects, payments, and SEO |
+| `DATABASE_URL`   | PostgreSQL connection string for Drizzle ORM              |
+| `PUBLIC_APP_URL` | Canonical URL used in auth redirects, payments, and SEO   |
 
 **Optional variables** (add as needed):
 
@@ -84,12 +84,12 @@ The Express API server starts at `http://localhost:3000` and the Vite frontend i
 
 Other useful commands:
 
-| Command                   | What it does                          |
-| ------------------------- | ------------------------------------- |
-| `corepack pnpm check`     | Run TypeScript type checking          |
-| `corepack pnpm lint`      | Lint all `.ts` / `.tsx` files         |
-| `corepack pnpm test`      | Run the Vitest test suite             |
-| `corepack pnpm build`     | Build the frontend + server bundle    |
+| Command               | What it does                       |
+| --------------------- | ---------------------------------- |
+| `corepack pnpm check` | Run TypeScript type checking       |
+| `corepack pnpm lint`  | Lint all `.ts` / `.tsx` files      |
+| `corepack pnpm test`  | Run the Vitest test suite          |
+| `corepack pnpm build` | Build the frontend + server bundle |
 
 ### Astro marketing site
 
@@ -130,14 +130,14 @@ Authorization: Bearer <MCP_API_KEY>
 
 ### Available tool groups
 
-| Group           | Tools                                                                         |
-| --------------- | ----------------------------------------------------------------------------- |
-| **Foundation**  | `list_stores`, `get_tenant_info`                                              |
-| **Products**    | `list_products`, `get_product`, `search_products`, `get_inventory`            |
-| **Orders**      | `list_orders`, `get_order`, `create_order`                                    |
-| **Customers**   | `list_customers`, `get_customer`                                              |
-| **Analytics**   | `get_analytics_summary`, `get_revenue_by_day`, `get_webhook_events`           |
-| **Platform/AI** | `get_notifications`, `get_platform_stats`, `ask_kai`                          |
+| Group           | Tools                                                               |
+| --------------- | ------------------------------------------------------------------- |
+| **Foundation**  | `list_stores`, `get_tenant_info`                                    |
+| **Products**    | `list_products`, `get_product`, `search_products`, `get_inventory`  |
+| **Orders**      | `list_orders`, `get_order`, `create_order`                          |
+| **Customers**   | `list_customers`, `get_customer`                                    |
+| **Analytics**   | `get_analytics_summary`, `get_revenue_by_day`, `get_webhook_events` |
+| **Platform/AI** | `get_notifications`, `get_platform_stats`, `ask_kai`                |
 
 ### Connect Claude Desktop (remote server)
 
@@ -168,16 +168,24 @@ Add the following to your Claude Desktop `claude_desktop_config.json`:
 }
 ```
 
-### TypeScript stdio server
+### TypeScript stdio server — `@t7451/mcp-server`
 
-The `src-typescript/` package runs a Model Context Protocol server over stdio — useful for local development and testing without a running HTTP server.
+The `src-typescript/` package is published to GitHub Packages as
+[`@t7451/mcp-server`](./src-typescript/README.md). It runs a Model Context
+Protocol server over stdio — useful for local development, testing, and embedding
+in agents that prefer a stdio transport over the hosted `/mcp` endpoint.
 
-Build the package:
+Point your `@t7451` scope at GitHub Packages (one-time, in `~/.npmrc`):
+
+```ini
+@t7451:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+Then install:
 
 ```bash
-cd src-typescript
-corepack pnpm install
-corepack pnpm build
+pnpm add @t7451/mcp-server
 ```
 
 Add it to Claude Desktop:
@@ -187,7 +195,7 @@ Add it to Claude Desktop:
   "mcpServers": {
     "unifyone": {
       "command": "node",
-      "args": ["/absolute/path/to/src-typescript/dist/index.js"],
+      "args": ["./node_modules/@t7451/mcp-server/dist/index.js"],
       "env": {
         "ONECOMMERCE_API_URL": "https://1commerce.online",
         "MCP_API_KEY": "<YOUR_MCP_API_KEY>"
@@ -197,6 +205,10 @@ Add it to Claude Desktop:
 }
 ```
 
+See [`src-typescript/README.md`](./src-typescript/README.md) for the full setup,
+local-development instructions, and a tag/release workflow that publishes new
+versions automatically.
+
 ### Test with cURL
 
 ```bash
@@ -205,3 +217,27 @@ curl -s -X POST https://1commerce.online/mcp \
   -H "Authorization: Bearer $MCP_API_KEY" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 ```
+
+## Publishing `@t7451/mcp-server`
+
+A new version of the MCP server is published to GitHub Packages whenever a tag
+matching `mcp-server-v*` is pushed. The workflow lives at
+[`.github/workflows/publish-mcp-server.yml`](./.github/workflows/publish-mcp-server.yml).
+
+To cut a release:
+
+```bash
+# 1. Bump the version in src-typescript/package.json
+# 2. Commit and push to main
+# 3. Tag and push:
+git tag mcp-server-v1.0.0
+git push origin mcp-server-v1.0.0
+```
+
+The workflow runs `tsc`, builds the package, and runs `npm publish` against
+`https://npm.pkg.github.com` using the repo's built-in `GITHUB_TOKEN` — no
+additional secrets required.
+
+## License
+
+[MIT](./LICENSE) — Copyright (c) 2025 1Commerce LLC / PNW Enterprises.

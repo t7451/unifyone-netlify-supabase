@@ -17,10 +17,22 @@ export function registerPlatformTools(server: McpServer): void {
   server.tool(
     "get_notifications",
     "Platform-wide notifications, most recent first",
-    { limit: z.number().int().positive().optional().default(20).describe("Max results") },
-    async (args) => {
+    {
+      limit: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .default(20)
+        .describe("Max results"),
+    },
+    async args => {
       const data = await apiFetch("get_notifications", args);
-      return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+      return {
+        content: [
+          { type: "text" as const, text: JSON.stringify(data, null, 2) },
+        ],
+      };
     }
   );
 
@@ -30,7 +42,11 @@ export function registerPlatformTools(server: McpServer): void {
     {},
     async () => {
       const data = await apiFetch("get_platform_stats", {});
-      return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+      return {
+        content: [
+          { type: "text" as const, text: JSON.stringify(data, null, 2) },
+        ],
+      };
     }
   );
 
@@ -40,13 +56,17 @@ export function registerPlatformTools(server: McpServer): void {
     {
       question: z.string().min(1).describe("The question to ask Kai"),
       context: z
-        .record(z.unknown())
+        .record(z.string(), z.unknown())
         .optional()
         .describe("Optional context — e.g. { tenant_id, page, recent_orders }"),
     },
-    async (args) => {
+    async args => {
       const data = await apiFetch("ask_kai", args);
-      return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+      return {
+        content: [
+          { type: "text" as const, text: JSON.stringify(data, null, 2) },
+        ],
+      };
     }
   );
 }

@@ -1,14 +1,48 @@
 {
-  "name": "@unifyone/mcp-server",
+  "name": "@t7451/mcp-server",
   "version": "1.0.0",
-  "description": "UnifyOne MCP Server — TypeScript SDK for platform integrations",
+  "description": "UnifyOne MCP Server — TypeScript SDK that exposes UnifyOne stores, products, orders, customers, and analytics to Claude Desktop and other MCP clients.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "tsc"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "anthropic",
+    "unifyone",
+    "1commerce",
+    "ecommerce",
+    "ai-agents"
+  ],
+  "author": "1Commerce LLC",
+  "license": "MIT",
+  "homepage": "https://github.com/t7451/unifyone-netlify-supabase/tree/main/src-typescript",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/t7451/unifyone-netlify-supabase.git",
+    "directory": "src-typescript"
+  },
+  "bugs": {
+    "url": "https://github.com/t7451/unifyone-netlify-supabase/issues"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
