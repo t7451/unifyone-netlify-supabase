@@ -1641,3 +1641,75 @@ export const seoContentJobs = pgTable(
 );
 export type SeoContentJob = typeof seoContentJobs.$inferSelect;
 export type InsertSeoContentJob = typeof seoContentJobs.$inferInsert;
+
+// ── CLI ───────────────────────────────────────────────────────────────────────
+
+export const cliModeEnum = pgEnum("cli_mode", ["platform", "vps", "local"]);
+
+/**
+ * Tracks active and historical CLI sessions (all three modes).
+ * Rows are created when a session begins and updated when it ends.
+ */
+export const cliSessions = pgTable("cli_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  tenantId: integer("tenantId"),
+  mode: cliModeEnum("mode").notNull().default("platform"),
+  /** FK to cli_vps_connections.id — only set when mode = 'vps'. */
+  vpsId: integer("vpsId"),
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  endedAt: timestamp("endedAt"),
+  exitCode: integer("exitCode"),
+});
+export type CliSession = typeof cliSessions.$inferSelect;
+export type InsertCliSession = typeof cliSessions.$inferInsert;
+
+/**
+ * Saved VPS / remote host configurations per user.
+ * Private keys are stored AES-256-GCM encrypted and are never returned to the client.
+ */
+export const cliVpsConnections = pgTable("cli_vps_connections", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenantId"),
+  userId: integer("userId").notNull(),
+  label: varchar("label", { length: 100 }).notNull(),
+  host: varchar("host", { length: 255 }).notNull(),
+  port: integer("port").notNull().default(22),
+  username: varchar("username", { length: 64 }).notNull(),
+  /** AES-256-GCM encrypted private key (hex-encoded). Null if password auth is used. */
+  encryptedPrivateKey: text("encryptedPrivateKey"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type CliVpsConnection = typeof cliVpsConnections.$inferSelect;
+export type InsertCliVpsConnection = typeof cliVpsConnections.$inferInsert;
+
+/**
+ * Per-session command history — one row per command executed.
+ * Used for the history tRPC query and the admin audit log.
+ */
+export const cliCommandHistory = pgTable(
+  "cli_command_history",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("userId").notNull(),
+    tenantId: integer("tenantId"),
+    sessionId: integer("sessionId"),
+    command: text("command").notNull(),
+    output: text("output"),
+    exitCode: integer("exitCode"),
+    executedAt: timestamp("executedAt").defaultNow().notNull(),
+  },
+  table => ({
+    cliHistoryUserIdx: index("cli_command_history_user_idx").on(
+      table.userId,
+      table.executedAt
+    ),
+    cliHistoryTenantIdx: index("cli_command_history_tenant_idx").on(
+      table.tenantId,
+      table.executedAt
+    ),
+  })
+);
+export type CliCommandHistory = typeof cliCommandHistory.$inferSelect;
+export type InsertCliCommandHistory = typeof cliCommandHistory.$inferInsert;

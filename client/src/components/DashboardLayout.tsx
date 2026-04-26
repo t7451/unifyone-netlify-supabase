@@ -57,6 +57,7 @@ import {
   X,
   Code2,
   ShieldCheck,
+  TerminalSquare,
 } from "lucide-react";
 import { AIChatBox } from "@/components/AIChatBox";
 import type { Message } from "@/components/AIChatBox";
@@ -99,6 +100,7 @@ const menuItems = [
   { icon: Sparkles, label: "AI Assistant", path: "/ai-assistant" },
   { icon: ShieldCheck, label: "Authorization Hub", path: "/auth-hub" },
   { icon: Code2, label: "Developer Hub", path: "/developer" },
+  { icon: TerminalSquare, label: "Terminal", path: "/terminal" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
