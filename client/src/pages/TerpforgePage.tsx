@@ -227,7 +227,7 @@ export default function TerpforgePage() {
                   </CardHeader>
                   <CardContent className="text-xs text-muted-foreground">
                     <p>${Number(p.price ?? 0).toFixed(2)}</p>
-                    {p.profile && <p className="mt-1">Profile: {String(p.profile)}</p>}
+                    {p.profile != null && <p className="mt-1">Profile: {String(p.profile)}</p>}
                   </CardContent>
                 </Card>
               ))}
