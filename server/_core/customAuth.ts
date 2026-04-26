@@ -16,6 +16,7 @@ import { sdk } from "./sdk";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getAppUrl } from "./env";
 import { logger } from "./logger";
+import { resolveDatabaseUrl } from "../lib/databaseUrl";
 
 const scryptAsync = promisify(scrypt);
 
@@ -88,25 +89,6 @@ export async function verifyPassword(
 
 let _db: ReturnType<typeof import("drizzle-orm/neon-http").drizzle> | null =
   null;
-
-/**
- * Resolve the Postgres connection string from any of the supported env vars,
- * in priority order:
- *   1. DATABASE_URL                  — explicit override (preferred)
- *   2. NETLIFY_DATABASE_URL          — pooled, auto-injected by Netlify Postgres add-on
- *   3. NETLIFY_DATABASE_URL_UNPOOLED — direct connection (also auto-injected)
- *
- * This guards against the "module loads, env is set under a different name,
- * customAuth silently 500s" failure mode.
- */
-function resolveDatabaseUrl(): string | undefined {
-  return (
-    process.env.DATABASE_URL ||
-    process.env.NETLIFY_DATABASE_URL ||
-    process.env.NETLIFY_DATABASE_URL_UNPOOLED ||
-    undefined
-  );
-}
 
 async function getDb() {
   if (!_db) {

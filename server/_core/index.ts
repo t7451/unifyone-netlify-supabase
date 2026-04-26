@@ -19,6 +19,7 @@ import { securityHeaders } from "./securityHeaders";
 import { Sentry } from "./sentry";
 import { registerCustomAuthExpressRoutes } from "./customAuthRoutes";
 import { registerCliWebSocket } from "./cliWebSocket";
+import { resolveDatabaseUrl } from "../lib/databaseUrl";
 
 /** Validate critical environment variables before the server accepts traffic. */
 function validateEnv() {
@@ -28,9 +29,9 @@ function validateEnv() {
         "Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
     );
   }
-  if (!ENV.databaseUrl) {
+  if (!resolveDatabaseUrl()) {
     console.warn(
-      "[startup] DATABASE_URL is not set — database features will be unavailable."
+      "[startup] DATABASE_URL / NETLIFY_DATABASE_URL is not set — database features will be unavailable."
     );
   }
 
