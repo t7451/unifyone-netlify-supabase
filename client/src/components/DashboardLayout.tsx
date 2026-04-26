@@ -101,6 +101,11 @@ const menuItems = [
   { icon: ShieldCheck, label: "Authorization Hub", path: "/auth-hub" },
   { icon: Code2, label: "Developer Hub", path: "/developer" },
   { icon: TerminalSquare, label: "Terminal", path: "/terminal" },
+  { icon: Target, label: "DealFlow", path: "/dashboard/dealflow" },
+  { icon: Plug, label: "TerpForge", path: "/dashboard/terpforge" },
+  { icon: Share2, label: "Knowledge Graph", path: "/dashboard/knowledge-graph" },
+  { icon: Store, label: "PixelForge", path: "/dashboard/pixelforge" },
+  { icon: ShoppingBag, label: "Shopify Theme", path: "/dashboard/shopify-theme" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
