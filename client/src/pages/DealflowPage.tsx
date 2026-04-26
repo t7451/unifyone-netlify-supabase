@@ -50,7 +50,7 @@ export default function DealflowPage() {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          🎯 DealFlow — Referral &amp; Affiliate Tools
+          🎯 DealFlow — Referral & Affiliate Tools
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
           Manage referral deals, track conversions, and run A/B experiments.

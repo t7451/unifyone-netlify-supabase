@@ -33,7 +33,7 @@ export default function TerpforgePage() {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          🧬 TerpForge — Compound &amp; Product Tools
+          🧬 TerpForge — Compound & Product Tools
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
           Explore terpene compounds, run purity simulations, and browse COA lab data.
