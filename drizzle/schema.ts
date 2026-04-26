@@ -1713,3 +1713,48 @@ export const cliCommandHistory = pgTable(
 );
 export type CliCommandHistory = typeof cliCommandHistory.$inferSelect;
 export type InsertCliCommandHistory = typeof cliCommandHistory.$inferInsert;
+
+// ── Stripe Payment Audit ────────────────────────────────────────────────────
+//
+// Records every successful Stripe verification before the corresponding order
+// row is written. Provides idempotency (a retry with the same Stripe id
+// returns the previously-linked order) and orphan detection (audit rows that
+// stay unlinked beyond a grace window indicate a DB write that failed after
+// Stripe captured the payment).
+export const stripePaymentAuditStatusEnum = pgEnum(
+  "stripe_payment_audit_status",
+  ["pending", "linked", "orphaned"]
+);
+
+export const stripePaymentAudit = pgTable(
+  "stripe_payment_audit",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull(),
+    userId: integer("userId").notNull(),
+    idempotencyKey: varchar("idempotencyKey", { length: 200 }).notNull(),
+    stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 100 }),
+    stripeSessionId: varchar("stripeSessionId", { length: 100 }),
+    amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+    currency: varchar("currency", { length: 3 }).notNull(),
+    status: stripePaymentAuditStatusEnum("status")
+      .notNull()
+      .default("pending"),
+    linkedOrderId: integer("linkedOrderId"),
+    lastError: text("lastError"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    tenantIdempotencyIdx: uniqueIndex("stripe_payment_audit_tenant_key_idx").on(
+      table.tenantId,
+      table.idempotencyKey
+    ),
+    statusCreatedIdx: index("stripe_payment_audit_status_created_idx").on(
+      table.status,
+      table.createdAt
+    ),
+  })
+);
+export type StripePaymentAudit = typeof stripePaymentAudit.$inferSelect;
+export type InsertStripePaymentAudit = typeof stripePaymentAudit.$inferInsert;
