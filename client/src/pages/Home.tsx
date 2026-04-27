@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
-import { getLoginUrl } from "@/const";
+import { getSignupUrl } from "@/const";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { TIERS } from "@/content/pricing";
 import { SITE_URL } from "@/lib/siteConfig";
@@ -627,7 +627,7 @@ export default function Home() {
             data-reveal-delay="300"
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <a href={getLoginUrl()} className="btn-illuminate">
+            <a href={getSignupUrl()} className="btn-illuminate">
               Start Free Trial
             </a>
             <a
@@ -1106,7 +1106,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="mt-8">
-                <a href={getLoginUrl()} className="btn-ghost-gold">
+                <a href={getSignupUrl()} className="btn-ghost-gold">
                   Activate Kai Free
                 </a>
               </div>
@@ -1337,7 +1337,7 @@ export default function Home() {
                 </div>
 
                 <a
-                  href={`/login?plan=${tier.id === "scale" ? "enterprise" : tier.id}`}
+                  href={getSignupUrl(tier.id)}
                   className={
                     tier.highlight
                       ? "btn-illuminate block text-center"
@@ -1472,7 +1472,7 @@ export default function Home() {
             cost model.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href={getLoginUrl()} className="btn-illuminate">
+            <a href={getSignupUrl()} className="btn-illuminate">
               Start Free Trial
             </a>
             <a

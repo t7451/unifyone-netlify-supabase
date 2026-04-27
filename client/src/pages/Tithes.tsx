@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
-import { getLoginUrl } from "@/const";
+import { getSignupUrl } from "@/const";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/tithes`;
@@ -79,6 +79,7 @@ const CATHEDRAL_CTA_BG = "https://d2xsxph8kpxj0f.cloudfront.net/3105196634008145
 
 const TIERS = [
   {
+    id: "starter" as const,
     name: "Acolyte",
     price: { monthly: "$0", yearly: "$0" },
     period: "forever",
@@ -97,6 +98,7 @@ const TIERS = [
     badge: null,
   },
   {
+    id: "pro" as const,
     name: "Architect",
     price: { monthly: "$49", yearly: "$39" },
     period: "per month",
@@ -119,6 +121,7 @@ const TIERS = [
     badge: "Most Chosen",
   },
   {
+    id: "scale" as const,
     name: "Cathedral",
     price: { monthly: "$149", yearly: "$119" },
     period: "per month",
@@ -306,7 +309,7 @@ export default function Tithes() {
                   ))}
                 </div>
                 <a
-                  href={getLoginUrl()}
+                  href={getSignupUrl(tier.id)}
                   className={tier.highlight ? "btn-illuminate block text-center" : "btn-ghost-gold block text-center"}
                   style={{ padding: "0.875rem 1.5rem" }}
                 >
@@ -392,7 +395,7 @@ export default function Tithes() {
             The Acolyte tier is free forever. No credit card. No time limit. Upgrade when your commerce volume demands it.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href={getLoginUrl()} className="btn-illuminate">Begin Construction — Free</a>
+            <a href={getSignupUrl()} className="btn-illuminate">Begin Construction — Free</a>
             <Link href="/architecture">
               <span className="btn-ghost-gold cursor-pointer">View Architecture →</span>
             </Link>

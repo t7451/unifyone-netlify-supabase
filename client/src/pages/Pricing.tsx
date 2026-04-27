@@ -2,7 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { TIERS } from "@/content/pricing";
-import { getLoginUrl } from "@/const";
+import { getSignupUrl } from "@/const";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { SITE_URL } from "@/lib/siteConfig";
 
@@ -241,7 +241,7 @@ export default function Pricing() {
                 </div>
 
                 <a
-                  href={`${getLoginUrl()}?next=${encodeURIComponent(`/checkout?plan=${tier.id}`)}`}
+                  href={getSignupUrl(undefined, `/checkout?plan=${tier.id}`)}
                   className={
                     tier.highlight
                       ? "btn-illuminate block text-center"

@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
-import { getLoginUrl } from "@/const";
+import { getSignupUrl } from "@/const";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/about`;
@@ -140,7 +140,7 @@ export default function About() {
           className="mt-16 pt-10 flex flex-col sm:flex-row gap-4"
           style={{ borderTop: "1px solid #242424" }}
         >
-          <a href={getLoginUrl()} className="btn-illuminate">
+          <a href={getSignupUrl()} className="btn-illuminate">
             Begin Construction — Free
           </a>
           <Link href="/the-system">

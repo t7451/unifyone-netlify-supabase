@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { getLoginUrl } from "@/const";
+import { getSignupUrl } from "@/const";
 import { usePixelPageView } from "@/hooks/usePixelPageView";
 
 const NAV_LINKS = [
@@ -166,7 +166,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               </span>
             </Link>
             <a
-              href={getLoginUrl()}
+              href={getSignupUrl()}
               className="btn-illuminate"
               style={{ padding: "0.5rem 1.25rem", fontSize: "0.65rem" }}
             >
@@ -226,7 +226,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             ))}
             <div className="px-6 py-4">
               <a
-                href={getLoginUrl()}
+                href={getSignupUrl()}
                 className="btn-illuminate block text-center"
                 style={{ padding: "0.75rem 1.5rem", fontSize: "0.7rem" }}
               >
@@ -458,7 +458,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
         }}
       >
         <a
-          href={getLoginUrl()}
+          href={getSignupUrl()}
           className="btn-illuminate block text-center w-full"
           style={{ padding: "0.875rem", fontSize: "0.7rem" }}
         >
