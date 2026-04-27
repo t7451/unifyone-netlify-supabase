@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://1commerce.online/sitemap.xml
+Sitemap: https://marketing.1commerce.online/sitemap.xml

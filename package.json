@@ -158,7 +158,7 @@
       "dompurify": ">=3.4.0",
       "qs": ">=6.14.2",
       "@smithy/config-resolver": ">=4.4.0",
-      "uuid": ">=14.0.0",
+      "svix>uuid": ">=11.1.0 <12",
       "postcss": ">=8.5.10",
       "follow-redirects": ">=1.16.0",
       "hono": ">=4.12.14"
