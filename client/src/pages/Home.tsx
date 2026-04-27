@@ -680,6 +680,20 @@ export default function Home() {
               Get the Cathedral Blueprint →
             </a>
           </div>
+
+          <div
+            data-reveal
+            data-reveal-delay="450"
+            className="flex justify-center mt-3"
+          >
+            <a
+              href="https://marketing.1commerce.online"
+              className="font-crimson text-sm underline"
+              style={{ color: "#9A9A9A", fontStyle: "italic" }}
+            >
+              First time here? Learn how UnifyOne works →
+            </a>
+          </div>
         </div>
       </section>
 

@@ -1,10 +1,32 @@
+# Netlify config for the UnifyOne marketing site (Astro 5).
+#
+# IMPORTANT: This config is read by the marketing Netlify site, NOT the legacy
+# app at 1commerce.online. The legacy app uses /netlify.toml at the repo root.
+#
+# How to provision this site:
+#   1. Create a NEW Netlify site (do not reuse the legacy one).
+#   2. In the Netlify dashboard set: base directory = "apps/unifyone".
+#      (Base is intentionally NOT set here so this file can be reused if the
+#      base ever changes.) With base set, all paths below are relative to
+#      apps/unifyone, and pnpm runs there but still finds the workspace root.
+#   3. Set env vars on the new site (see README in this directory). Do NOT
+#      copy Stripe / Clerk / Supabase / JWT secrets from the legacy site —
+#      this site is unauthenticated marketing content.
+#   4. Custom domain: marketing.1commerce.online.
+
 [build]
-  command = "pnpm --filter unifyone build"
-  publish = "apps/unifyone/dist"
+  command = "pnpm install --no-frozen-lockfile --filter unifyone... && pnpm --filter unifyone build"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "22"
   PNPM_VERSION = "10"
+
+# Skip rebuilds when no marketing-relevant files changed. Pathspecs use
+# git's `:(top)` magic so they resolve from the repo root regardless of the
+# Netlify base directory.
+[build.ignore]
+  command = "git diff --quiet HEAD^ HEAD -- ':(top)apps/unifyone' ':(top)packages/seo' ':(top)pnpm-lock.yaml' ':(top)spire-admin/config/business-profile.json'"
 
 [[headers]]
   for = "/*"
