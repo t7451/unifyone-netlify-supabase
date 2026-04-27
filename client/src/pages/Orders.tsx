@@ -23,6 +23,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Search,
@@ -417,7 +418,7 @@ export default function Orders() {
                   <tr key={i} className="border-b border-border">
                     {[...Array(8)].map((_, j) => (
                       <td key={j} className="px-4 py-3">
-                        <div className="h-4 bg-white/5 rounded animate-pulse" />
+                        <Skeleton className="h-4 w-full" />
                       </td>
                     ))}
                   </tr>
@@ -439,9 +440,15 @@ export default function Orders() {
                 <tr>
                   <td colSpan={8} className="text-center py-16">
                     <ShoppingCart className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-                    <p className="text-gray-400 font-medium">No orders found</p>
+                    <p className="text-gray-400 font-medium">
+                      {search || statusFilter !== "all"
+                        ? "No orders found"
+                        : "No orders yet"}
+                    </p>
                     <p className="text-gray-600 text-sm mt-1">
-                      Create your first order or adjust filters
+                      {search || statusFilter !== "all"
+                        ? "Try adjusting your filters"
+                        : "Create your first order to get started"}
                     </p>
                     <Button
                       size="sm"
@@ -652,6 +659,114 @@ export default function Orders() {
                   </Select>
                 </div>
               </div>
+
+              {/* Order Timeline */}
+              {(() => {
+                const currentStatus = (orderDetail.data as any)
+                  .status as string;
+                const timelineSteps: Array<{
+                  key: string;
+                  label: string;
+                  icon: React.ReactNode;
+                }> = [
+                  {
+                    key: "pending",
+                    label: "Order Placed",
+                    icon: <Clock className="w-4 h-4" />,
+                  },
+                  {
+                    key: "processing",
+                    label: "Processing",
+                    icon: <RefreshCw className="w-4 h-4" />,
+                  },
+                  {
+                    key: "shipped",
+                    label: "Shipped",
+                    icon: <Truck className="w-4 h-4" />,
+                  },
+                  {
+                    key: "delivered",
+                    label: "Delivered",
+                    icon: <CheckCircle className="w-4 h-4" />,
+                  },
+                ];
+                const cancelledOrRefunded =
+                  currentStatus === "cancelled" || currentStatus === "refunded";
+                const statusOrder = [
+                  "pending",
+                  "confirmed",
+                  "processing",
+                  "shipped",
+                  "delivered",
+                ];
+                const currentIdx = statusOrder.indexOf(currentStatus);
+                return (
+                  <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                    <p className="text-gray-400 text-xs mb-4">Order Timeline</p>
+                    {cancelledOrRefunded ? (
+                      <div className="flex items-center gap-2 text-red-400 text-sm">
+                        <XCircle className="w-4 h-4" />
+                        <span className="capitalize font-medium">
+                          {currentStatus}
+                        </span>
+                      </div>
+                    ) : (
+                      <ol className="relative ml-2">
+                        {timelineSteps.map((step, idx) => {
+                          const stepIdx = statusOrder.indexOf(step.key);
+                          const isCompleted = currentIdx >= stepIdx;
+                          const isCurrent =
+                            currentStatus === step.key ||
+                            (step.key === "pending" &&
+                              currentStatus === "confirmed" &&
+                              currentIdx <= 1);
+                          return (
+                            <li
+                              key={step.key}
+                              className="flex items-start gap-3 mb-4 last:mb-0 relative"
+                            >
+                              {idx < timelineSteps.length - 1 && (
+                                <span
+                                  className={`absolute left-3.5 top-7 w-px h-6 -translate-x-1/2 ${isCompleted ? "bg-[#00D9FF]/60" : "bg-white/10"}`}
+                                />
+                              )}
+                              <span
+                                className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center border ${
+                                  isCurrent
+                                    ? "bg-[#00D9FF] border-[#00D9FF] text-[#0A1128]"
+                                    : isCompleted
+                                      ? "bg-[#00D9FF]/20 border-[#00D9FF]/40 text-[#00D9FF]"
+                                      : "bg-white/5 border-white/10 text-gray-500"
+                                }`}
+                              >
+                                {step.icon}
+                              </span>
+                              <div className="pt-0.5">
+                                <span
+                                  className={`text-sm font-medium ${
+                                    isCurrent
+                                      ? "text-[#00D9FF]"
+                                      : isCompleted
+                                        ? "text-white"
+                                        : "text-gray-500"
+                                  }`}
+                                >
+                                  {step.label}
+                                </span>
+                                {isCurrent && (
+                                  <span className="ml-2 text-xs bg-[#00D9FF]/15 text-[#00D9FF] px-1.5 py-0.5 rounded-full">
+                                    Current
+                                  </span>
+                                )}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Customer */}
               {((orderDetail.data as any).customerName ||

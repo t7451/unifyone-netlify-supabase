@@ -35,11 +35,20 @@ interface HealthStatus {
   checks: Record<string, { ok: boolean; latencyMs?: number; error?: string }>;
 }
 
-async function checkDatabase(): Promise<{ ok: boolean; latencyMs: number; error?: string }> {
+async function checkDatabase(): Promise<{
+  ok: boolean;
+  latencyMs: number;
+  error?: string;
+}> {
   const t0 = Date.now();
   try {
     const db = await getDb();
-    if (!db) return { ok: false, latencyMs: Date.now() - t0, error: "no DATABASE_URL configured" };
+    if (!db)
+      return {
+        ok: false,
+        latencyMs: Date.now() - t0,
+        error: "no DATABASE_URL configured",
+      };
     await db.execute("SELECT 1");
     return { ok: true, latencyMs: Date.now() - t0 };
   } catch (err) {
@@ -153,6 +162,7 @@ function isRunningInDocker(): boolean {
  * Call this early in the startup sequence (before tRPC middleware).
  */
 export function registerDockerRoutes(app: Express) {
+  app.get("/health", healthHandler);
   app.get("/api/health", healthHandler);
   app.get("/api/ready", readyHandler);
   app.get("/api/metrics", metricsHandler);

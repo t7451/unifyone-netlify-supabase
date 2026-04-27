@@ -143,16 +143,44 @@ await runAITask({
 };
 
 const CHECKLIST = [
-  { id: "c1", text: "Set MCP_WORKER_URL and ONECOMMERCE_API_KEY in .env", done: false },
-  { id: "c2", text: "Configure Claude Desktop MCP server (mcpConfig block)", done: false },
+  {
+    id: "c1",
+    text: "Set MCP_WORKER_URL and ONECOMMERCE_API_KEY in .env",
+    done: false,
+  },
+  {
+    id: "c2",
+    text: "Configure Claude Desktop MCP server (mcpConfig block)",
+    done: false,
+  },
   { id: "c3", text: "Deploy /api/webhooks/automation endpoint", done: false },
   { id: "c4", text: "Add AUTOMATION_WEBHOOK_SECRET to env", done: false },
-  { id: "c5", text: "Test Kai chat endpoint with a manual prompt", done: false },
-  { id: "c6", text: "Wire n8n HTTP node to tRPC ai.chat endpoint", done: false },
-  { id: "c7", text: "Set up n8n Webhook node for order/lead events", done: false },
+  {
+    id: "c5",
+    text: "Test Kai chat endpoint with a manual prompt",
+    done: false,
+  },
+  {
+    id: "c6",
+    text: "Wire n8n HTTP node to tRPC ai.chat endpoint",
+    done: false,
+  },
+  {
+    id: "c7",
+    text: "Set up n8n Webhook node for order/lead events",
+    done: false,
+  },
   { id: "c8", text: "Verify credit metering in admin dashboard", done: false },
-  { id: "c9", text: "Enable Shopify + payment webhooks for automation triggers", done: false },
-  { id: "c10", text: "Test end-to-end: new order → n8n → Kai insight", done: false },
+  {
+    id: "c9",
+    text: "Enable Shopify + payment webhooks for automation triggers",
+    done: false,
+  },
+  {
+    id: "c10",
+    text: "Test end-to-end: new order → n8n → Kai insight",
+    done: false,
+  },
 ];
 
 function CodeBlock({ code }: { code: string }) {
@@ -163,7 +191,13 @@ function CodeBlock({ code }: { code: string }) {
     setTimeout(() => setCopied(false), 1800);
   };
   return (
-    <div style={{ position: "relative", marginTop: "1rem", marginBottom: "1.5rem" }}>
+    <div
+      style={{
+        position: "relative",
+        marginTop: "1rem",
+        marginBottom: "1.5rem",
+      }}
+    >
       <pre
         style={{
           background: "#0d1117",
@@ -208,9 +242,9 @@ export default function IntegrationGuides() {
   const [checks, setChecks] = useState(CHECKLIST);
 
   const toggle = (id: string) =>
-    setChecks((c) => c.map((x) => (x.id === id ? { ...x, done: !x.done } : x)));
+    setChecks(c => c.map(x => (x.id === id ? { ...x, done: !x.done } : x)));
 
-  const done = checks.filter((c) => c.done).length;
+  const done = checks.filter(c => c.done).length;
 
   return (
     <PublicLayout>
@@ -221,18 +255,25 @@ export default function IntegrationGuides() {
           content="Complete integration guides for Kai, Claude, n8n, and payment processors."
         />
         <link rel="canonical" href={`${SITE_URL}/documents/integrations`} />
-        <meta property="og:title" content="Integration Guides | UnifyOne Documentation" />
+        <meta
+          property="og:title"
+          content="Integration Guides | UnifyOne Documentation"
+        />
         <meta
           property="og:description"
           content="Complete integration guides for Kai, Claude, n8n, and payment processors."
         />
-        <meta property="og:url" content={`${SITE_URL}/documents/integrations`} />
+        <meta
+          property="og:url"
+          content={`${SITE_URL}/documents/integrations`}
+        />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "HowTo",
             name: "AI Integration Guide",
-            description: "Complete guide to integrating Kai AI and Claude with UnifyOne platform",
+            description:
+              "Complete guide to integrating Kai AI and Claude with UnifyOne platform",
             step: [
               {
                 "@type": "HowToStep",
@@ -259,28 +300,135 @@ export default function IntegrationGuides() {
         </script>
       </Helmet>
 
-      <section style={{ backgroundColor: "#020202", minHeight: "100vh", paddingTop: "6rem", paddingBottom: "4rem" }}>
+      <section
+        style={{
+          backgroundColor: "#020202",
+          minHeight: "100vh",
+          paddingTop: "6rem",
+          paddingBottom: "4rem",
+        }}
+      >
         <div className="max-w-5xl mx-auto px-6 sm:px-8">
           {/* Header */}
           <div className="text-center mb-12">
             <span className="inscription block mb-4">INTEGRATION GUIDES</span>
-            <h1 className="font-cinzel text-4xl sm:text-5xl font-bold mb-6" style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}>
-              Kai AI + Claude Integration
+            <h1
+              className="font-cinzel text-4xl sm:text-5xl font-bold mb-6"
+              style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
+            >
+              Connect your entire stack
             </h1>
-            <p className="font-crimson text-lg max-w-2xl mx-auto" style={{ color: "#9A9A9A", lineHeight: 1.8 }}>
-              Complete technical guide to integrating Kai AI for autonomous task execution and Claude for intelligent automation.
+            <p
+              className="font-crimson text-lg max-w-2xl mx-auto"
+              style={{ color: "#9A9A9A", lineHeight: 1.8 }}
+            >
+              Complete technical guide to integrating Kai AI for autonomous task
+              execution and Claude for intelligent automation.
             </p>
+          </div>
+
+          {/* Integration Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+            {[
+              {
+                emoji: "💳",
+                title: "Stripe",
+                description:
+                  "Connect Stripe for subscriptions, one-time payments, and the Meta CAPI purchase event bridge.",
+                tab: "setup",
+              },
+              {
+                emoji: "🛍️",
+                title: "Shopify",
+                description:
+                  "Sync Shopify products, orders, and webhooks with your UnifyOne multi-tenant store.",
+                tab: "setup",
+              },
+              {
+                emoji: "🅿️",
+                title: "PayPal",
+                description:
+                  "Enable PayPal checkout alongside Stripe for broader global payment coverage.",
+                tab: "setup",
+              },
+              {
+                emoji: "⬛",
+                title: "Square",
+                description:
+                  "Integrate Square POS and eCommerce APIs to unify in-person and online sales data.",
+                tab: "setup",
+              },
+              {
+                emoji: "🤖",
+                title: "Anthropic AI",
+                description:
+                  "Wire Claude claude-3-5-sonnet via MCP server for context-aware task execution inside UnifyOne.",
+                tab: "mcp",
+              },
+              {
+                emoji: "🔄",
+                title: "n8n",
+                description:
+                  "Automate workflows end-to-end: orders, leads, and Kai AI prompts via the n8n bridge.",
+                tab: "n8n",
+              },
+            ].map(integration => (
+              <div
+                key={integration.title}
+                style={{
+                  backgroundColor: "rgba(212,168,67,0.04)",
+                  border: "1px solid rgba(212,168,67,0.15)",
+                  padding: "1.5rem",
+                }}
+              >
+                <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>
+                  {integration.emoji}
+                </div>
+                <div
+                  className="font-cinzel text-sm font-bold mb-2"
+                  style={{ color: "#D4A843", letterSpacing: "0.05em" }}
+                >
+                  {integration.title}
+                </div>
+                <p
+                  className="font-crimson text-sm mb-4"
+                  style={{ color: "#A0A0A0", lineHeight: 1.6 }}
+                >
+                  {integration.description}
+                </p>
+                <button
+                  onClick={() => setActiveTab(integration.tab)}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: "rgba(212,168,67,0.1)",
+                    border: "1px solid rgba(212,168,67,0.3)",
+                    color: "#D4A843",
+                    fontFamily: "'Cinzel', serif",
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  View Guide →
+                </button>
+              </div>
+            ))}
           </div>
 
           {/* Tab Navigation */}
           <div className="flex flex-wrap gap-2 mb-8 justify-center">
-            {SECTIONS.map((section) => (
+            {SECTIONS.map(section => (
               <button
                 key={section.id}
                 onClick={() => setActiveTab(section.id)}
                 style={{
                   padding: "10px 16px",
-                  backgroundColor: activeTab === section.id ? "rgba(212,168,67,0.15)" : "rgba(212,168,67,0.05)",
+                  backgroundColor:
+                    activeTab === section.id
+                      ? "rgba(212,168,67,0.15)"
+                      : "rgba(212,168,67,0.05)",
                   border: `1px solid ${activeTab === section.id ? "rgba(212,168,67,0.4)" : "rgba(212,168,67,0.15)"}`,
                   color: activeTab === section.id ? "#D4A843" : "#7A7A7A",
                   fontFamily: "'Cinzel', serif",
@@ -297,18 +445,35 @@ export default function IntegrationGuides() {
           </div>
 
           {/* Content */}
-          <div style={{ backgroundColor: "rgba(212,168,67,0.02)", border: "1px solid rgba(212,168,67,0.1)", padding: "2.5rem" }}>
+          <div
+            style={{
+              backgroundColor: "rgba(212,168,67,0.02)",
+              border: "1px solid rgba(212,168,67,0.1)",
+              padding: "2.5rem",
+            }}
+          >
             {activeTab === "overview" && (
               <div>
-                <h2 className="font-cinzel text-2xl font-bold mb-6" style={{ color: "#D4A843" }}>
+                <h2
+                  className="font-cinzel text-2xl font-bold mb-6"
+                  style={{ color: "#D4A843" }}
+                >
                   Overview
                 </h2>
-                <div className="font-crimson text-base space-y-4" style={{ color: "#C0C0C0", lineHeight: 1.8 }}>
+                <div
+                  className="font-crimson text-base space-y-4"
+                  style={{ color: "#C0C0C0", lineHeight: 1.8 }}
+                >
                   <p>
-                    Kai is a context-aware AI sidekick that <strong style={{ color: "#D4A843" }}>executes tasks</strong> — not just answers questions. Integrate Kai with UnifyOne to automate complex workflows: affiliate research, SEO audits, digital product fulfillment, store provisioning, and more.
+                    Kai is a context-aware AI sidekick that{" "}
+                    <strong style={{ color: "#D4A843" }}>executes tasks</strong>{" "}
+                    — not just answers questions. Integrate Kai with UnifyOne to
+                    automate complex workflows: affiliate research, SEO audits,
+                    digital product fulfillment, store provisioning, and more.
                   </p>
                   <p>
-                    This guide covers: API setup, MCP server configuration, webhook handling, task patterns, and n8n bridge integration.
+                    This guide covers: API setup, MCP server configuration,
+                    webhook handling, task patterns, and n8n bridge integration.
                   </p>
                 </div>
               </div>
@@ -316,10 +481,16 @@ export default function IntegrationGuides() {
 
             {activeTab === "setup" && (
               <div>
-                <h2 className="font-cinzel text-2xl font-bold mb-6" style={{ color: "#D4A843" }}>
+                <h2
+                  className="font-cinzel text-2xl font-bold mb-6"
+                  style={{ color: "#D4A843" }}
+                >
                   1. API Setup
                 </h2>
-                <p className="font-crimson text-base mb-4" style={{ color: "#C0C0C0" }}>
+                <p
+                  className="font-crimson text-base mb-4"
+                  style={{ color: "#C0C0C0" }}
+                >
                   Configure your UnifyAI credentials in your environment:
                 </p>
                 <CodeBlock code={CODE_BLOCKS.envSetup} />
@@ -328,11 +499,18 @@ export default function IntegrationGuides() {
 
             {activeTab === "mcp" && (
               <div>
-                <h2 className="font-cinzel text-2xl font-bold mb-6" style={{ color: "#D4A843" }}>
+                <h2
+                  className="font-cinzel text-2xl font-bold mb-6"
+                  style={{ color: "#D4A843" }}
+                >
                   2. MCP Server
                 </h2>
-                <p className="font-crimson text-base mb-4" style={{ color: "#C0C0C0" }}>
-                  Install and configure the UnifyOne MCP server for Claude integration:
+                <p
+                  className="font-crimson text-base mb-4"
+                  style={{ color: "#C0C0C0" }}
+                >
+                  Install and configure the UnifyOne MCP server for Claude
+                  integration:
                 </p>
                 <CodeBlock code={CODE_BLOCKS.mcpConfig} />
               </div>
@@ -340,10 +518,16 @@ export default function IntegrationGuides() {
 
             {activeTab === "webhook" && (
               <div>
-                <h2 className="font-cinzel text-2xl font-bold mb-6" style={{ color: "#D4A843" }}>
+                <h2
+                  className="font-cinzel text-2xl font-bold mb-6"
+                  style={{ color: "#D4A843" }}
+                >
                   3. Webhooks
                 </h2>
-                <p className="font-crimson text-base mb-4" style={{ color: "#C0C0C0" }}>
+                <p
+                  className="font-crimson text-base mb-4"
+                  style={{ color: "#C0C0C0" }}
+                >
                   Deploy a webhook endpoint to receive automation events:
                 </p>
                 <CodeBlock code={CODE_BLOCKS.webhook} />
@@ -352,10 +536,16 @@ export default function IntegrationGuides() {
 
             {activeTab === "tasks" && (
               <div>
-                <h2 className="font-cinzel text-2xl font-bold mb-6" style={{ color: "#D4A843" }}>
+                <h2
+                  className="font-cinzel text-2xl font-bold mb-6"
+                  style={{ color: "#D4A843" }}
+                >
                   4. Task Patterns
                 </h2>
-                <p className="font-crimson text-base mb-4" style={{ color: "#C0C0C0" }}>
+                <p
+                  className="font-crimson text-base mb-4"
+                  style={{ color: "#C0C0C0" }}
+                >
                   Common task patterns for research, audits, and provisioning:
                 </p>
                 <CodeBlock code={CODE_BLOCKS.taskExample} />
@@ -364,10 +554,16 @@ export default function IntegrationGuides() {
 
             {activeTab === "n8n" && (
               <div>
-                <h2 className="font-cinzel text-2xl font-bold mb-6" style={{ color: "#D4A843" }}>
+                <h2
+                  className="font-cinzel text-2xl font-bold mb-6"
+                  style={{ color: "#D4A843" }}
+                >
                   5. n8n Bridge
                 </h2>
-                <p className="font-crimson text-base mb-4" style={{ color: "#C0C0C0" }}>
+                <p
+                  className="font-crimson text-base mb-4"
+                  style={{ color: "#C0C0C0" }}
+                >
                   Wire Kai task calls through n8n workflows:
                 </p>
                 <CodeBlock code={CODE_BLOCKS.n8nBridge} />
@@ -376,18 +572,23 @@ export default function IntegrationGuides() {
 
             {activeTab === "checklist" && (
               <div>
-                <h2 className="font-cinzel text-2xl font-bold mb-6" style={{ color: "#D4A843" }}>
+                <h2
+                  className="font-cinzel text-2xl font-bold mb-6"
+                  style={{ color: "#D4A843" }}
+                >
                   Implementation Checklist
                 </h2>
                 <div className="space-y-3">
-                  {checks.map((check) => (
+                  {checks.map(check => (
                     <label
                       key={check.id}
                       style={{
                         display: "flex",
                         alignItems: "center",
                         padding: "12px",
-                        backgroundColor: check.done ? "rgba(63, 185, 80, 0.05)" : "rgba(212,168,67,0.05)",
+                        backgroundColor: check.done
+                          ? "rgba(63, 185, 80, 0.05)"
+                          : "rgba(212,168,67,0.05)",
                         border: `1px solid ${check.done ? "rgba(63, 185, 80, 0.2)" : "rgba(212,168,67,0.15)"}`,
                         borderRadius: 6,
                         cursor: "pointer",
@@ -412,15 +613,31 @@ export default function IntegrationGuides() {
                     </label>
                   ))}
                 </div>
-                <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: "1px solid rgba(212,168,67,0.1)" }}>
-                  <div className="font-cinzel text-sm" style={{ color: "#D4A843", marginBottom: "8px" }}>
+                <div
+                  style={{
+                    marginTop: "1.5rem",
+                    paddingTop: "1.5rem",
+                    borderTop: "1px solid rgba(212,168,67,0.1)",
+                  }}
+                >
+                  <div
+                    className="font-cinzel text-sm"
+                    style={{ color: "#D4A843", marginBottom: "8px" }}
+                  >
                     Progress: {done}/{checks.length} complete
                   </div>
-                  <div style={{ background: "rgba(212,168,67,0.1)", borderRadius: 4, height: 8 }}>
+                  <div
+                    style={{
+                      background: "rgba(212,168,67,0.1)",
+                      borderRadius: 4,
+                      height: 8,
+                    }}
+                  >
                     <div
                       style={{
                         width: `${(done / checks.length) * 100}%`,
-                        background: done === checks.length ? "#3fb950" : "#D4A843",
+                        background:
+                          done === checks.length ? "#3fb950" : "#D4A843",
                         height: "100%",
                         borderRadius: 4,
                         transition: "width 0.3s",

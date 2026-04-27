@@ -160,48 +160,168 @@ export default function CaseStudies() {
     <PublicLayout>
       <Helmet>
         <title>Case Studies | UnifyOne Documentation</title>
-        <meta name="description" content="Detailed case studies of UnifyOne platform features: Cathedral Framework, Kai, multi-tenant architecture, Stripe CAPI bridge, and scroll reveals." />
+        <meta
+          name="description"
+          content="Detailed case studies of UnifyOne platform features: Cathedral Framework, Kai, multi-tenant architecture, Stripe CAPI bridge, and scroll reveals."
+        />
         <link rel="canonical" href={`${SITE_URL}/documents/case-studies`} />
-        <meta property="og:title" content="Case Studies | UnifyOne Documentation" />
-        <meta property="og:description" content="Detailed case studies of major platform features and integrations." />
-        <meta property="og:url" content={`${SITE_URL}/documents/case-studies`} />
-        <meta name="twitter:title" content="Case Studies | UnifyOne Documentation" />
-        <meta name="twitter:description" content="Detailed case studies of major platform features and integrations." />
+        <meta
+          property="og:title"
+          content="Case Studies | UnifyOne Documentation"
+        />
+        <meta
+          property="og:description"
+          content="Detailed case studies of major platform features and integrations."
+        />
+        <meta
+          property="og:url"
+          content={`${SITE_URL}/documents/case-studies`}
+        />
+        <meta
+          name="twitter:title"
+          content="Case Studies | UnifyOne Documentation"
+        />
+        <meta
+          name="twitter:description"
+          content="Detailed case studies of major platform features and integrations."
+        />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "CollectionPage",
             name: "UnifyOne Case Studies",
-            description: "Detailed case studies of major platform features and integrations.",
+            description:
+              "Detailed case studies of major platform features and integrations.",
             url: `${SITE_URL}/documents/case-studies`,
             breadcrumb: {
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
-                { "@type": "ListItem", position: 2, name: "Documentation", item: `${SITE_URL}/documents` },
-                { "@type": "ListItem", position: 3, name: "Case Studies", item: `${SITE_URL}/documents/case-studies` },
+                {
+                  "@type": "ListItem",
+                  position: 1,
+                  name: "Home",
+                  item: SITE_URL,
+                },
+                {
+                  "@type": "ListItem",
+                  position: 2,
+                  name: "Documentation",
+                  item: `${SITE_URL}/documents`,
+                },
+                {
+                  "@type": "ListItem",
+                  position: 3,
+                  name: "Case Studies",
+                  item: `${SITE_URL}/documents/case-studies`,
+                },
               ],
             },
           })}
         </script>
       </Helmet>
 
-      <section style={{ backgroundColor: "#020202", minHeight: "100vh", paddingTop: "6rem", paddingBottom: "4rem" }}>
+      <section
+        style={{
+          backgroundColor: "#020202",
+          minHeight: "100vh",
+          paddingTop: "6rem",
+          paddingBottom: "4rem",
+        }}
+      >
         <div className="max-w-4xl mx-auto px-6 sm:px-8">
           {/* Header */}
           <div className="text-center mb-16">
             <span className="inscription block mb-4">CASE STUDIES</span>
-            <h1 className="font-cinzel text-4xl sm:text-5xl font-bold mb-6" style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}>
-              Feature Deep-Dives
+            <h1
+              className="font-cinzel text-4xl sm:text-5xl font-bold mb-6"
+              style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
+            >
+              How businesses scale with UnifyOne
             </h1>
-            <p className="font-crimson text-lg max-w-2xl mx-auto" style={{ color: "#9A9A9A", lineHeight: 1.8 }}>
-              Detailed technical case studies of major platform features, architectural decisions, and integrations.
+            <p
+              className="font-crimson text-lg max-w-2xl mx-auto"
+              style={{ color: "#9A9A9A", lineHeight: 1.8 }}
+            >
+              Detailed technical case studies of major platform features,
+              architectural decisions, and integrations.
             </p>
+          </div>
+
+          {/* Business Case Study Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-16">
+            {[
+              {
+                company: "GrowthStack Co.",
+                metric: "300% revenue growth",
+                description:
+                  "A DTC brand consolidated Stripe, Shopify, and PayPal into UnifyOne, unlocking unified analytics and automated fulfillment — tripling revenue within 6 months.",
+              },
+              {
+                company: "NexaCommerce",
+                metric: "80% reduction in ops overhead",
+                description:
+                  "By wiring n8n automation and Kai AI into their order pipeline, NexaCommerce eliminated manual review tasks and cut operational overhead by 80%.",
+              },
+              {
+                company: "Elevate SaaS",
+                metric: "10x tenant scale in 90 days",
+                description:
+                  "Leveraging UnifyOne's multi-tenant architecture, Elevate SaaS onboarded 10x more tenants without compromising data isolation or platform stability.",
+              },
+            ].map(cs => (
+              <div
+                key={cs.company}
+                style={{
+                  backgroundColor: "rgba(212,168,67,0.04)",
+                  border: "1px solid rgba(212,168,67,0.15)",
+                  padding: "2rem",
+                }}
+              >
+                <div
+                  className="font-cinzel text-xs font-bold mb-3"
+                  style={{
+                    color: "#7A7A7A",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {cs.company}
+                </div>
+                <div
+                  className="font-cinzel text-2xl font-bold mb-4"
+                  style={{ color: "#D4A843" }}
+                >
+                  {cs.metric}
+                </div>
+                <p
+                  className="font-crimson text-sm mb-6"
+                  style={{ color: "#A0A0A0", lineHeight: 1.7 }}
+                >
+                  {cs.description}
+                </p>
+                <button
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: "rgba(212,168,67,0.1)",
+                    border: "1px solid rgba(212,168,67,0.3)",
+                    color: "#D4A843",
+                    fontFamily: "'Cinzel', serif",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  Read Case Study →
+                </button>
+              </div>
+            ))}
           </div>
 
           {/* Case Studies */}
           <div className="space-y-12">
-            {CASE_STUDIES.map((study) => (
+            {CASE_STUDIES.map(study => (
               <div
                 key={study.id}
                 style={{
@@ -211,10 +331,16 @@ export default function CaseStudies() {
                 }}
               >
                 {/* Title */}
-                <h2 className="font-cinzel text-2xl font-bold mb-2" style={{ color: "#D4A843" }}>
+                <h2
+                  className="font-cinzel text-2xl font-bold mb-2"
+                  style={{ color: "#D4A843" }}
+                >
                   {study.title}
                 </h2>
-                <p className="font-crimson text-sm mb-6" style={{ color: "#7A7A7A" }}>
+                <p
+                  className="font-crimson text-sm mb-6"
+                  style={{ color: "#7A7A7A" }}
+                >
                   {study.subtitle}
                 </p>
 
@@ -222,10 +348,16 @@ export default function CaseStudies() {
                 <div className="grid grid-cols-3 gap-4 mb-8">
                   {study.metrics.map((metric, idx) => (
                     <div key={idx} style={{ textAlign: "center" }}>
-                      <div className="font-cinzel text-xl font-bold" style={{ color: "#D4A843" }}>
+                      <div
+                        className="font-cinzel text-xl font-bold"
+                        style={{ color: "#D4A843" }}
+                      >
                         {metric.value}
                       </div>
-                      <div className="font-crimson text-xs mt-1" style={{ color: "#7A7A7A" }}>
+                      <div
+                        className="font-crimson text-xs mt-1"
+                        style={{ color: "#7A7A7A" }}
+                      >
                         {metric.label}
                       </div>
                     </div>
@@ -233,19 +365,39 @@ export default function CaseStudies() {
                 </div>
 
                 {/* Description */}
-                <div className="font-crimson text-base mb-8" style={{ color: "#C0C0C0", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
+                <div
+                  className="font-crimson text-base mb-8"
+                  style={{
+                    color: "#C0C0C0",
+                    lineHeight: 1.8,
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
                   {study.description}
                 </div>
 
                 {/* Achievements */}
                 <div>
-                  <h3 className="font-cinzel text-sm font-bold mb-4" style={{ color: "#D4A843", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                  <h3
+                    className="font-cinzel text-sm font-bold mb-4"
+                    style={{
+                      color: "#D4A843",
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                    }}
+                  >
                     Key Achievements
                   </h3>
                   <ul className="space-y-2">
                     {study.achievements.map((achievement, idx) => (
-                      <li key={idx} className="font-crimson text-sm" style={{ color: "#A0A0A0" }}>
-                        <span style={{ color: "#D4A843", marginRight: "8px" }}>✓</span>
+                      <li
+                        key={idx}
+                        className="font-crimson text-sm"
+                        style={{ color: "#A0A0A0" }}
+                      >
+                        <span style={{ color: "#D4A843", marginRight: "8px" }}>
+                          ✓
+                        </span>
                         {achievement}
                       </li>
                     ))}

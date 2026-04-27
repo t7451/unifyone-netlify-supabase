@@ -3,6 +3,7 @@ import { z } from "zod";
 import { desc, eq, and, gte, lte, like, sql } from "drizzle-orm";
 import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
+import { logAudit } from "../auditLogger";
 import {
   auditLogs,
   escalationQueue,
@@ -387,6 +388,14 @@ export const governanceRouter = router({
           ? `Emergency kill switch activated: ${input.reason ?? "No reason provided"}`
           : undefined,
       });
+      void logAudit({
+        action: "killswitch.toggle",
+        resource: "killswitch",
+        resourceId: input.switchName,
+        severity: "critical",
+        userId: ctx.user.id,
+        metadata: { isActive: input.isActive, reason: input.reason },
+      }).catch(() => {});
       return { success: true };
     }),
 

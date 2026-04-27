@@ -359,6 +359,16 @@ export async function registerCustomAuthFetchRoutes(
       // On successful login reset the rate limit for this IP
       await authRateLimiter.reset(clientIp);
 
+      void import("./../auditLogger").then(({ logAudit }) =>
+        logAudit({
+          action: "auth.login",
+          resource: "user",
+          resourceId: result.user?.openId ?? "",
+          severity: "low",
+          metadata: { method: "password" },
+        }).catch(() => {})
+      );
+
       const response = Response.json(
         {
           success: true,

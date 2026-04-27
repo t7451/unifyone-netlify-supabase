@@ -1,6 +1,16 @@
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
   Area,
   XAxis,
   YAxis,
@@ -11,11 +21,26 @@ import {
   Bar,
   Line,
   ComposedChart,
-  Legend
+  Legend,
 } from "recharts";
-import { TrendingUp, DollarSign, ShoppingCart, Users, Package } from "lucide-react";
+import {
+  TrendingUp,
+  DollarSign,
+  ShoppingCart,
+  Users,
+  Package,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const COLORS = ["#00D9FF", "#0284C7", "#6A1B9A", "#10B981", "#F59E0B"];
+
+function statusVariant(
+  status: string
+): "default" | "secondary" | "destructive" | "outline" {
+  if (status === "processed") return "default";
+  if (status === "failed") return "destructive";
+  return "secondary";
+}
 
 export default function Analytics() {
   const summary = trpc.analytics.summary.useQuery();
@@ -40,6 +65,7 @@ export default function Analytics() {
         (p.productName as string)?.length > 16
           ? (p.productName as string).slice(0, 16) + "..."
           : (p.productName as string),
+      fullName: p.productName as string,
       quantity: Number(p.totalQuantity),
       revenue: Number(p.totalRevenue),
     })
@@ -115,7 +141,7 @@ export default function Analytics() {
         ))}
       </div>
 
-      {/* Revenue chart + Top Products */}
+      {/* Revenue chart + Top Products bar chart */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 bg-card border-border">
           <CardHeader>
@@ -124,7 +150,9 @@ export default function Analytics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {chartData.length > 0 ? (
+            {revenueByDay.isLoading ? (
+              <Skeleton className="h-[240px] w-full" />
+            ) : chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={chartData}>
                   <defs>
@@ -161,9 +189,7 @@ export default function Analytics() {
                       color: "#fff",
                     }}
                   />
-                  <Legend
-                    wrapperStyle={{ color: "#9CA3AF", fontSize: 12 }}
-                  />
+                  <Legend wrapperStyle={{ color: "#9CA3AF", fontSize: 12 }} />
                   <Area
                     yAxisId="revenue"
                     type="monotone"
@@ -192,13 +218,18 @@ export default function Analytics() {
           </CardContent>
         </Card>
 
-        {/* Top Products */}
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-base">Top Products</CardTitle>
           </CardHeader>
           <CardContent>
-            {topProductData.length > 0 ? (
+            {topProducts.isLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-8 w-full" />
+                ))}
+              </div>
+            ) : topProductData.length > 0 ? (
               <>
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={topProductData} layout="vertical">
@@ -231,24 +262,31 @@ export default function Analytics() {
                     />
                   </BarChart>
                 </ResponsiveContainer>
-                <div className="space-y-2 mt-3">
+                <div className="space-y-1 mt-3">
                   {topProductData.map(
                     (
-                      p: { name: string; quantity: number; revenue: number },
+                      p: {
+                        name: string;
+                        fullName: string;
+                        quantity: number;
+                        revenue: number;
+                      },
                       i: number
                     ) => (
                       <div
-                        key={p.name}
+                        key={p.fullName}
                         className="flex items-center justify-between text-sm"
                       >
                         <div className="flex items-center gap-2">
                           <div
-                            className="w-2.5 h-2.5 rounded-full"
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
                             style={{
                               backgroundColor: COLORS[i % COLORS.length],
                             }}
                           />
-                          <span className="text-gray-300">{p.name}</span>
+                          <span className="text-gray-300 truncate max-w-[120px]">
+                            {p.name}
+                          </span>
                         </div>
                         <span className="text-white font-medium">
                           ${p.revenue.toFixed(0)}
@@ -260,76 +298,158 @@ export default function Analytics() {
               </>
             ) : (
               <div className="h-[200px] flex items-center justify-center text-gray-500">
-                No product data yet
+                No products yet
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Webhook Activity */}
+      {/* Top Products ranked table */}
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-white text-base">
-            Recent Webhook Activity
+            Top Products — Ranked
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {recentWebhooks.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left text-gray-400 pb-2 font-medium">
-                      Source
-                    </th>
-                    <th className="text-left text-gray-400 pb-2 font-medium">
-                      Event
-                    </th>
-                    <th className="text-left text-gray-400 pb-2 font-medium">
-                      Status
-                    </th>
-                    <th className="text-right text-gray-400 pb-2 font-medium">
-                      Time
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentWebhooks.map((w: Record<string, unknown>) => (
-                    <tr
-                      key={w.id as number}
-                      className="border-b border-white/5"
-                    >
-                      <td className="py-2 text-white capitalize">
-                        {w.source as string}
-                      </td>
-                      <td className="py-2 text-gray-400 font-mono text-xs">
-                        {w.eventType as string}
-                      </td>
-                      <td className="py-2">
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full ${
-                            (w.status as string) === "processed"
-                              ? "bg-emerald-500/15 text-emerald-400"
-                              : (w.status as string) === "failed"
-                                ? "bg-red-500/15 text-red-400"
-                                : "bg-amber-500/15 text-amber-400"
-                          }`}
-                        >
-                          {(w.status as string) ?? "logged"}
-                        </span>
-                      </td>
-                      <td className="py-2 text-right text-gray-500 text-xs">
-                        {new Date(w.createdAt as string).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {topProducts.isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
             </div>
+          ) : topProductData.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/10">
+                  <TableHead className="text-gray-400 w-10">#</TableHead>
+                  <TableHead className="text-gray-400">Product</TableHead>
+                  <TableHead className="text-gray-400 text-right">
+                    Units Sold
+                  </TableHead>
+                  <TableHead className="text-gray-400 text-right">
+                    Revenue
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {topProductData.map(
+                  (
+                    p: {
+                      name: string;
+                      fullName: string;
+                      quantity: number;
+                      revenue: number;
+                    },
+                    i: number
+                  ) => (
+                    <TableRow
+                      key={p.fullName}
+                      className="border-white/5 hover:bg-white/5"
+                    >
+                      <TableCell>
+                        <span
+                          className={cn(
+                            "inline-flex w-6 h-6 items-center justify-center rounded-full text-xs font-bold",
+                            i === 0 && "bg-yellow-500/20 text-yellow-400",
+                            i === 1 && "bg-gray-400/20 text-gray-300",
+                            i === 2 && "bg-orange-600/20 text-orange-400",
+                            i > 2 && "text-gray-500"
+                          )}
+                        >
+                          {i + 1}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-white font-medium">
+                        {p.fullName}
+                      </TableCell>
+                      <TableCell className="text-gray-300 text-right">
+                        {p.quantity.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-white font-medium text-right">
+                        ${p.revenue.toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  )
+                )}
+              </TableBody>
+            </Table>
           ) : (
             <div className="py-8 text-center text-gray-500">
-              No webhook events yet
+              No products yet
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recent Webhook Events */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-white text-base">
+            Recent Webhook Events
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {webhookLog.isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          ) : recentWebhooks.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/10">
+                  <TableHead className="text-gray-400">Source</TableHead>
+                  <TableHead className="text-gray-400">Event Type</TableHead>
+                  <TableHead className="text-gray-400">Status</TableHead>
+                  <TableHead className="text-gray-400 text-right">
+                    Timestamp
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentWebhooks.map((w: Record<string, unknown>) => {
+                  const status = (w.status as string) ?? "logged";
+                  return (
+                    <TableRow
+                      key={w.id as number}
+                      className="border-white/5 hover:bg-white/5"
+                    >
+                      <TableCell className="text-white capitalize">
+                        {w.source as string}
+                      </TableCell>
+                      <TableCell className="text-gray-400 font-mono text-xs">
+                        {w.eventType as string}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={statusVariant(status)}
+                          className={cn(
+                            status === "processed" &&
+                              "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+                            status === "failed" &&
+                              "bg-red-500/15 text-red-400 border-red-500/30",
+                            status !== "processed" &&
+                              status !== "failed" &&
+                              "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                          )}
+                        >
+                          {status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-gray-500 text-xs">
+                        {new Date(w.createdAt as string).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="py-8 text-center text-gray-500">
+              No webhook events
             </div>
           )}
         </CardContent>

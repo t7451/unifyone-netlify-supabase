@@ -401,6 +401,21 @@ export function registerStripeRoutes(app: Express) {
             console.log(
               `[Stripe] Checkout completed for tenant ${checkoutTenant?.id ?? "unknown"}, customer: ${customerId}`
             );
+
+            void import("./auditLogger").then(({ logAudit }) =>
+              logAudit({
+                action: "stripe.purchase",
+                resource: "subscription",
+                resourceId: customerId,
+                severity: "medium",
+                tenantId: checkoutTenant?.id,
+                metadata: {
+                  amount: sessionAmount,
+                  currency: (session.currency || "USD").toUpperCase(),
+                  sessionId: session.id,
+                },
+              }).catch(() => {})
+            );
             break;
           }
 

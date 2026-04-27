@@ -24,6 +24,30 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+function formatRelative(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const diffMs = Date.now() - d.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return "just now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 30) return `${diffDay}d ago`;
+  return d.toLocaleDateString();
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  delivered: "text-emerald-400 border-emerald-500/30",
+  shipped: "text-cyan-400 border-cyan-500/30",
+  confirmed: "text-blue-400 border-blue-500/30",
+  processing: "text-blue-400 border-blue-500/30",
+  cancelled: "text-red-400 border-red-500/30",
+  refunded: "text-gray-400 border-gray-500/30",
+  pending: "text-amber-400 border-amber-500/30",
+};
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
@@ -31,6 +55,7 @@ export default function Dashboard() {
   const revenueByDay = trpc.analytics.revenueByDay.useQuery();
   const topProducts = trpc.analytics.topProducts.useQuery();
   const lowStock = trpc.products.lowStock.useQuery();
+  const recentOrders = trpc.orders.recentOrders.useQuery();
 
   useEffect(() => {
     if (user && !user.tenantId) navigate("/setup");
@@ -141,8 +166,14 @@ export default function Dashboard() {
             {revenueByDay.isLoading ? (
               <div className="h-[220px] flex flex-col justify-end gap-2 px-2">
                 <div className="flex items-end gap-1.5 h-full">
-                  {[40, 65, 50, 80, 55, 90, 70, 45, 75, 60, 85, 50, 65, 80, 45].map((h, i) => (
-                    <div key={i} className="flex-1 bg-white/5 rounded-t animate-pulse" style={{ height: `${h}%` }} />
+                  {[
+                    40, 65, 50, 80, 55, 90, 70, 45, 75, 60, 85, 50, 65, 80, 45,
+                  ].map((h, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 bg-white/5 rounded-t animate-pulse"
+                      style={{ height: `${h}%` }}
+                    />
                   ))}
                 </div>
                 <div className="flex justify-between px-1">
@@ -230,6 +261,94 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Recent Orders */}
+      <Card className="bg-card border-border">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-white text-base">Recent Orders</CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/orders")}
+            className="text-[#00D9FF] hover:text-[#00D9FF]/80 text-xs h-auto p-0"
+          >
+            View all <ArrowRight className="ml-1 w-3 h-3 inline" />
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {recentOrders.isLoading ? (
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-36 flex-1" />
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-14" />
+                </div>
+              ))}
+            </div>
+          ) : (recentOrders.data ?? []).length === 0 ? (
+            <div className="text-center py-10 text-gray-500">
+              <ShoppingCart className="w-8 h-8 mx-auto mb-2 text-gray-600" />
+              <p className="text-sm">
+                No orders yet. Start selling to see orders here.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[500px]">
+                <thead>
+                  <tr className="border-b border-border">
+                    {["Order ID", "Customer", "Status", "Amount", "Time"].map(
+                      h => (
+                        <th
+                          key={h}
+                          className="text-left text-gray-400 text-xs font-medium pb-2 pr-4 last:pr-0"
+                        >
+                          {h}
+                        </th>
+                      )
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(recentOrders.data ?? []).map((o: any) => (
+                    <tr
+                      key={o.id}
+                      className="border-b border-border/50 hover:bg-white/2 transition-colors"
+                    >
+                      <td className="py-2.5 pr-4 text-[#00D9FF] font-mono text-sm">
+                        #
+                        {String(o.orderNumber ?? o.id)
+                          .slice(-8)
+                          .toUpperCase()}
+                      </td>
+                      <td className="py-2.5 pr-4 text-gray-300 text-sm truncate max-w-[180px]">
+                        {o.customerEmail ?? o.customerName ?? "—"}
+                      </td>
+                      <td className="py-2.5 pr-4">
+                        <Badge
+                          variant="outline"
+                          className={`text-xs capitalize ${STATUS_COLORS[o.status] ?? "text-gray-400 border-gray-500/30"}`}
+                        >
+                          {o.status}
+                        </Badge>
+                      </td>
+                      <td className="py-2.5 pr-4 text-white font-semibold text-sm">
+                        ${Number(o.total).toFixed(2)}
+                      </td>
+                      <td className="py-2.5 text-gray-500 text-xs whitespace-nowrap">
+                        {formatRelative(o.createdAt)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Low Stock Alert */}
       {(lowStock.data ?? []).length > 0 && (

@@ -339,6 +339,20 @@ export const ordersRouter = router({
       return { success: true };
     }),
 
+  recentOrders: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = requireTenant(ctx.user.tenantId);
+    const rows = await getOrders(tenantId, { limit: 10, offset: 0 });
+    return rows.map(o => ({
+      id: o.id,
+      orderNumber: o.orderNumber,
+      total: o.total,
+      status: o.status,
+      customerEmail: o.customerEmail ?? null,
+      customerName: o.customerName ?? null,
+      createdAt: o.createdAt,
+    }));
+  }),
+
   // Customers
   customers: protectedProcedure
     .input(

@@ -1,6 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { X, Info, CheckCircle2, AlertTriangle, AlertCircle, Megaphone } from "lucide-react";
+import {
+  X,
+  Info,
+  CheckCircle2,
+  AlertTriangle,
+  AlertCircle,
+  Megaphone,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Severity config ───────────────────────────────────────────────────────────
@@ -37,25 +44,64 @@ const SEVERITY_CONFIG = {
 
 type Severity = keyof typeof SEVERITY_CONFIG;
 
+const LS_KEY = "unifyone_dismissed_announcements";
+
+function getDismissedIds(): Set<number> {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw) as number[];
+    return new Set(parsed);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDismissedIds(ids: Set<number>): void {
+  localStorage.setItem(LS_KEY, JSON.stringify(Array.from(ids)));
+}
+
 // ── AnnouncementBanner ────────────────────────────────────────────────────────
 export function AnnouncementBanner() {
   const utils = trpc.useUtils();
-  const { data: announcements = [] } = trpc.notifications.listAnnouncements.useQuery(undefined, {
-    refetchInterval: 60_000,
-  });
+  const { data: announcements = [] } =
+    trpc.notifications.listAnnouncements.useQuery(undefined, {
+      refetchInterval: 60_000,
+    });
 
   const dismiss = trpc.notifications.dismissAnnouncement.useMutation({
     onSuccess: () => utils.notifications.listAnnouncements.invalidate(),
   });
 
-  // Only show banner-type announcements here
-  const banners = announcements.filter((a) => a.type === "banner");
+  // Local dismissed state backed by localStorage
+  const [localDismissed, setLocalDismissed] = useState<Set<number>>(() =>
+    getDismissedIds()
+  );
+
+  useEffect(() => {
+    saveDismissedIds(localDismissed);
+  }, [localDismissed]);
+
+  const handleDismiss = (id: number, isServerDismissible: boolean) => {
+    setLocalDismissed(prev => new Set([...Array.from(prev), id]));
+    if (isServerDismissible) {
+      dismiss.mutate({ announcementId: id });
+    }
+  };
+
+  // Only show banner-type announcements with non-empty content, not locally dismissed
+  const banners = announcements.filter(
+    a =>
+      a.type === "banner" &&
+      (a.title?.trim() || a.body?.trim()) &&
+      !localDismissed.has(a.id)
+  );
 
   if (banners.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-1.5 mb-4">
-      {banners.map((announcement) => {
+      {banners.map(announcement => {
         const severity = (announcement.severity as Severity) ?? "info";
         const config = SEVERITY_CONFIG[severity] ?? SEVERITY_CONFIG.info;
         const Icon = config.icon;
@@ -68,22 +114,37 @@ export function AnnouncementBanner() {
               config.bg
             )}
           >
-            <Icon className={cn("h-4 w-4 mt-0.5 flex-shrink-0", config.iconColor)} />
+            <Icon
+              className={cn("h-4 w-4 mt-0.5 flex-shrink-0", config.iconColor)}
+            />
             <div className="flex-1 min-w-0">
-              <span className={cn("font-semibold mr-2", config.text)}>
-                {announcement.title}
-              </span>
-              <span className={cn("opacity-80", config.text)}>{announcement.body}</span>
+              {announcement.title?.trim() && (
+                <span className={cn("font-semibold mr-2", config.text)}>
+                  {announcement.title}
+                </span>
+              )}
+              {announcement.body?.trim() && (
+                <span className={cn("opacity-80", config.text)}>
+                  {announcement.body}
+                </span>
+              )}
             </div>
-            {announcement.dismissible && (
-              <button
-                onClick={() => dismiss.mutate({ announcementId: announcement.id })}
-                className={cn("flex-shrink-0 p-0.5 rounded transition-colors", config.closeColor)}
-                aria-label="Dismiss announcement"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+            {/* Always show dismiss button — server-side if dismissible, local-only otherwise */}
+            <button
+              onClick={() =>
+                handleDismiss(
+                  announcement.id,
+                  announcement.dismissible ?? false
+                )
+              }
+              className={cn(
+                "flex-shrink-0 p-0.5 rounded transition-colors",
+                config.closeColor
+              )}
+              aria-label="Dismiss announcement"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         );
       })}
@@ -97,10 +158,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import { Plus, Trash2, Eye, EyeOff } from "lucide-react";
 
@@ -116,15 +189,23 @@ export function AdminAnnouncementComposer() {
     endsAt: "",
   });
 
-  const { data: allAnnouncements = [], isLoading } = trpc.notifications.listAllAnnouncements.useQuery();
+  const { data: allAnnouncements = [], isLoading } =
+    trpc.notifications.listAllAnnouncements.useQuery();
 
   const create = trpc.notifications.createAnnouncement.useMutation({
     onSuccess: () => {
       toast.success("Announcement created — now visible to all users.");
-      setForm({ title: "", body: "", type: "banner", severity: "info", dismissible: true, endsAt: "" });
+      setForm({
+        title: "",
+        body: "",
+        type: "banner",
+        severity: "info",
+        dismissible: true,
+        endsAt: "",
+      });
       utils.notifications.listAllAnnouncements.invalidate();
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
   const toggle = trpc.notifications.toggleAnnouncement.useMutation({
@@ -165,7 +246,9 @@ export function AdminAnnouncementComposer() {
             <Megaphone className="h-5 w-5 text-cyan-400" />
             <CardTitle className="text-base">Create Announcement</CardTitle>
           </div>
-          <CardDescription>Broadcast a message to all users across the platform.</CardDescription>
+          <CardDescription>
+            Broadcast a message to all users across the platform.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -174,7 +257,7 @@ export function AdminAnnouncementComposer() {
               <Input
                 placeholder="e.g. Scheduled maintenance on March 10"
                 value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               />
             </div>
             <div className="col-span-2 space-y-1.5">
@@ -182,13 +265,18 @@ export function AdminAnnouncementComposer() {
               <Textarea
                 placeholder="Provide details about the announcement..."
                 value={form.body}
-                onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
+                onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
                 rows={2}
               />
             </div>
             <div className="space-y-1.5">
               <Label>Type</Label>
-              <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v as typeof form.type }))}>
+              <Select
+                value={form.type}
+                onValueChange={v =>
+                  setForm(f => ({ ...f, type: v as typeof form.type }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -201,7 +289,12 @@ export function AdminAnnouncementComposer() {
             </div>
             <div className="space-y-1.5">
               <Label>Severity</Label>
-              <Select value={form.severity} onValueChange={(v) => setForm((f) => ({ ...f, severity: v as Severity }))}>
+              <Select
+                value={form.severity}
+                onValueChange={v =>
+                  setForm(f => ({ ...f, severity: v as Severity }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -218,13 +311,13 @@ export function AdminAnnouncementComposer() {
               <Input
                 type="datetime-local"
                 value={form.endsAt}
-                onChange={(e) => setForm((f) => ({ ...f, endsAt: e.target.value }))}
+                onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))}
               />
             </div>
             <div className="flex items-center gap-3 pt-5">
               <Switch
                 checked={form.dismissible}
-                onCheckedChange={(v) => setForm((f) => ({ ...f, dismissible: v }))}
+                onCheckedChange={v => setForm(f => ({ ...f, dismissible: v }))}
               />
               <Label className="cursor-pointer">Users can dismiss</Label>
             </div>
@@ -243,7 +336,9 @@ export function AdminAnnouncementComposer() {
       {/* Existing announcements */}
       <Card className="border-white/10 bg-white/5">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Active & Past Announcements</CardTitle>
+          <CardTitle className="text-base">
+            Active & Past Announcements
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -252,33 +347,48 @@ export function AdminAnnouncementComposer() {
             <p className="text-sm text-slate-500">No announcements yet.</p>
           ) : (
             <div className="space-y-2">
-              {allAnnouncements.map((a) => (
+              {allAnnouncements.map(a => (
                 <div
                   key={a.id}
                   className="flex items-start gap-3 p-3 rounded-lg border border-white/10 bg-white/5"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-white">{a.title}</span>
+                      <span className="text-sm font-medium text-white">
+                        {a.title}
+                      </span>
                       <Badge
                         variant="outline"
-                        className={cn("text-xs border", severityBadgeClass[a.severity as Severity] ?? severityBadgeClass.info)}
+                        className={cn(
+                          "text-xs border",
+                          severityBadgeClass[a.severity as Severity] ??
+                            severityBadgeClass.info
+                        )}
                       >
                         {a.severity}
                       </Badge>
-                      <Badge variant="outline" className="text-xs border-white/20 text-slate-400">
+                      <Badge
+                        variant="outline"
+                        className="text-xs border-white/20 text-slate-400"
+                      >
                         {a.type}
                       </Badge>
                       {!a.active && (
-                        <Badge variant="outline" className="text-xs border-slate-600 text-slate-500">
+                        <Badge
+                          variant="outline"
+                          className="text-xs border-slate-600 text-slate-500"
+                        >
                           inactive
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{a.body}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                      {a.body}
+                    </p>
                     <p className="text-[11px] text-slate-600 mt-1">
                       Created {new Date(a.createdAt).toLocaleDateString()}
-                      {a.endsAt && ` · Expires ${new Date(a.endsAt).toLocaleDateString()}`}
+                      {a.endsAt &&
+                        ` · Expires ${new Date(a.endsAt).toLocaleDateString()}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
@@ -286,10 +396,16 @@ export function AdminAnnouncementComposer() {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-slate-500 hover:text-white"
-                      onClick={() => toggle.mutate({ id: a.id, active: !a.active })}
+                      onClick={() =>
+                        toggle.mutate({ id: a.id, active: !a.active })
+                      }
                       title={a.active ? "Deactivate" : "Activate"}
                     >
-                      {a.active ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      {a.active ? (
+                        <EyeOff className="h-3.5 w-3.5" />
+                      ) : (
+                        <Eye className="h-3.5 w-3.5" />
+                      )}
                     </Button>
                     <Button
                       variant="ghost"

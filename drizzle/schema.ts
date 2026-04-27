@@ -1181,6 +1181,23 @@ export const n8nSchedules = pgTable("n8n_schedules", {
 export type N8nSchedule = typeof n8nSchedules.$inferSelect;
 export type InsertN8nSchedule = typeof n8nSchedules.$inferInsert;
 
+// ─── Meta CAPI Events ─────────────────────────────────────────────────────────
+export const metaCapiEvents = pgTable("meta_capi_events", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenants.id),
+  eventName: text("event_name").notNull(),
+  eventId: text("event_id").notNull(),
+  userId: integer("user_id").references(() => users.id),
+  eventSourceUrl: text("event_source_url"),
+  userData: jsonb("user_data"),
+  customData: jsonb("custom_data"),
+  sentAt: timestamp("sent_at").defaultNow(),
+  responseCode: integer("response_code"),
+  responseBody: text("response_body"),
+});
+export type MetaCapiEvent = typeof metaCapiEvents.$inferSelect;
+export type InsertMetaCapiEvent = typeof metaCapiEvents.$inferInsert;
+
 // ─── Mobile: Push Notification Schedules ─────────────────────────────────────
 export const mobilePushSchedules = pgTable("mobile_push_schedules", {
   id: serial("id").primaryKey(),

@@ -1,7 +1,7 @@
 # ============================================================================
 # UnifyOne — 1Commerce / PNW Enterprises
 # https://1commerce.online
-# Last updated: 2026-04-23
+# Last updated: 2025-07-21
 # ============================================================================
 
 # ── Google Search crawlers ──────────────────────────────────────────────────
@@ -44,6 +44,9 @@ Disallow: /affiliates
 Disallow: /shopify/install
 Disallow: /shopify/success
 Disallow: /sync-monitor
+Disallow: /products
+Disallow: /integrations
+Disallow: /tenant-setup
 
 # ── Google Images ───────────────────────────────────────────────────────────
 User-agent: Googlebot-Image
@@ -105,6 +108,9 @@ Disallow: /affiliates
 Disallow: /shopify/install
 Disallow: /shopify/success
 Disallow: /sync-monitor
+Disallow: /products
+Disallow: /integrations
+Disallow: /tenant-setup
 
 # ── DuckDuckGo ──────────────────────────────────────────────────────────────
 User-agent: DuckDuckBot
@@ -184,6 +190,9 @@ Disallow: /affiliates
 Disallow: /shopify/install
 Disallow: /shopify/success
 Disallow: /sync-monitor
+Disallow: /products
+Disallow: /integrations
+Disallow: /tenant-setup
 
 # ── Sitemap ─────────────────────────────────────────────────────────────────
 Sitemap: https://1commerce.online/sitemap.xml

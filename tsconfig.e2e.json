@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["e2e/**/*", "playwright.config.ts"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "types": ["node"],
+    "moduleResolution": "bundler",
+    "jsx": "preserve"
+  }
+}

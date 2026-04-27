@@ -58,8 +58,7 @@ function readGoogleOAuthSettings(
     clientId: typeof raw.clientId === "string" ? raw.clientId : "",
     clientSecret:
       typeof raw.clientSecret === "string" ? raw.clientSecret : undefined,
-    redirectUri:
-      typeof raw.redirectUri === "string" ? raw.redirectUri : "",
+    redirectUri: typeof raw.redirectUri === "string" ? raw.redirectUri : "",
     scopes:
       typeof raw.scopes === "string" && raw.scopes.trim().length > 0
         ? raw.scopes
@@ -137,6 +136,16 @@ export const tenantRouter = router({
       const tenants = await getTenantsByOwner(ctx.user.id);
       const newTenant = tenants.find(t => t.slug === input.slug);
       if (newTenant) await updateUserTenant(ctx.user.id, newTenant.id);
+      void import("../auditLogger").then(({ logAudit }) =>
+        logAudit({
+          action: "tenant.created",
+          resource: "tenant",
+          resourceId: newTenant ? String(newTenant.id) : undefined,
+          severity: "low",
+          userId: ctx.user.id,
+          metadata: { name: input.name, slug: input.slug },
+        }).catch(() => {})
+      );
       return newTenant;
     }),
 

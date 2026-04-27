@@ -113,6 +113,34 @@ function timeAgo(date: Date | string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+type DateGroup = "Today" | "Yesterday" | "This Week" | "Older";
+
+function getDateGroup(date: Date | string): DateGroup {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const now = new Date();
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+  const startOfYesterday = new Date(startOfToday);
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+  const startOfWeek = new Date(startOfToday);
+  startOfWeek.setDate(startOfWeek.getDate() - 7);
+
+  if (d >= startOfToday) return "Today";
+  if (d >= startOfYesterday) return "Yesterday";
+  if (d >= startOfWeek) return "This Week";
+  return "Older";
+}
+
+const DATE_GROUP_ORDER: DateGroup[] = [
+  "Today",
+  "Yesterday",
+  "This Week",
+  "Older",
+];
+
 // ── NotificationList (Tier 1 full view) ──────────────────────────────────────
 function NotificationList() {
   const utils = trpc.useUtils();
@@ -140,8 +168,19 @@ function NotificationList() {
     },
   });
 
+  // Group notifications by date
+  const grouped = notifs.reduce<Record<DateGroup, typeof notifs>>(
+    (acc, n) => {
+      const group = getDateGroup(n.createdAt);
+      acc[group].push(n);
+      return acc;
+    },
+    { Today: [], Yesterday: [], "This Week": [], Older: [] }
+  );
+
   return (
     <div className="space-y-4">
+      {/* Header with prominent Mark All Read button */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Bell className="h-5 w-5 text-cyan-400" />
@@ -152,95 +191,136 @@ function NotificationList() {
             </Badge>
           )}
         </div>
-        {(unread?.count ?? 0) > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs border-white/20 hover:bg-white/10"
-            onClick={() => markAllRead.mutate()}
-            disabled={markAllRead.isPending}
-          >
-            <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
-            Mark all read
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-xs border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/60 font-medium"
+          onClick={() => markAllRead.mutate()}
+          disabled={markAllRead.isPending || (unread?.count ?? 0) === 0}
+        >
+          <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
+          {markAllRead.isPending ? "Marking…" : "Mark all read"}
+        </Button>
       </div>
 
       {isLoading ? (
-        <div className="space-y-2">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-16 rounded-lg bg-white/5 animate-pulse" />
+        <div className="space-y-4">
+          {/* Skeleton with date header + items */}
+          {[3, 2, 2].map((count, gi) => (
+            <div key={gi} className="space-y-2">
+              <div className="h-4 w-20 rounded bg-white/10 animate-pulse" />
+              {Array.from({ length: count }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex gap-3 p-3 rounded-lg border border-white/5 bg-white/5 animate-pulse"
+                >
+                  <div className="h-4 w-4 mt-0.5 rounded-full bg-white/10 flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 w-2/3 rounded bg-white/10" />
+                    <div className="h-3 w-1/3 rounded bg-white/10" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ))}
         </div>
       ) : notifs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-500">
-          <Bell className="h-10 w-10 mb-3 opacity-20" />
-          <p className="text-sm">No notifications yet</p>
-          <p className="text-xs mt-1 opacity-60">
-            Activity from orders, payments, and team events will appear here.
+        <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+          <div className="relative mb-4">
+            <Bell className="h-14 w-14 opacity-10" />
+            <CheckCircle2 className="h-6 w-6 text-emerald-400 absolute -bottom-1 -right-1" />
+          </div>
+          <p className="text-base font-medium text-slate-300">
+            You&apos;re all caught up!
+          </p>
+          <p className="text-sm mt-1.5 text-slate-500 text-center max-w-xs">
+            No new notifications. Activity from orders, payments, and team
+            events will appear here.
           </p>
         </div>
       ) : (
-        <div className="space-y-1">
-          {notifs.map(n => {
-            const typeInfo = TYPE_ICONS[n.type] ?? TYPE_ICONS.info;
-            const Icon = typeInfo.icon;
+        <div className="space-y-5">
+          {DATE_GROUP_ORDER.map(group => {
+            const items = grouped[group];
+            if (items.length === 0) return null;
             return (
-              <div
-                key={n.id}
-                className={cn(
-                  "group flex gap-3 p-3 rounded-lg border transition-colors",
-                  n.read
-                    ? "border-white/5 bg-white/3 hover:bg-white/5"
-                    : "border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/8"
-                )}
-              >
-                <div className={cn("mt-0.5 flex-shrink-0", typeInfo.color)}>
-                  <Icon className="h-4 w-4" />
+              <div key={group} className="space-y-1">
+                {/* Date separator header */}
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    {group}
+                  </span>
+                  <div className="flex-1 h-px bg-white/5" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-2">
-                    <p
+
+                {items.map(n => {
+                  const typeInfo = TYPE_ICONS[n.type] ?? TYPE_ICONS.info;
+                  const Icon = typeInfo.icon;
+                  return (
+                    <div
+                      key={n.id}
                       className={cn(
-                        "text-sm leading-tight",
-                        n.read ? "text-slate-300" : "text-white font-medium"
+                        "group flex gap-3 p-3 rounded-lg border transition-colors",
+                        n.read
+                          ? "border-white/5 bg-white/3 hover:bg-white/5"
+                          : "border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/8"
                       )}
                     >
-                      {n.title}
-                    </p>
-                    {!n.read && (
-                      <span className="flex-shrink-0 h-2 w-2 rounded-full bg-cyan-400 mt-1.5" />
-                    )}
-                  </div>
-                  {n.body && (
-                    <p className="text-xs text-slate-500 mt-0.5">{n.body}</p>
-                  )}
-                  <p className="text-[11px] text-slate-600 mt-1">
-                    {timeAgo(n.createdAt)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {!n.read && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-slate-500 hover:text-cyan-400"
-                      onClick={() => markRead.mutate({ id: n.id })}
-                      title="Mark as read"
-                    >
-                      <CheckCheck className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-slate-500 hover:text-red-400"
-                    onClick={() => deleteNotif.mutate({ id: n.id })}
-                    title="Delete"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                      <div
+                        className={cn("mt-0.5 flex-shrink-0", typeInfo.color)}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start gap-2">
+                          <p
+                            className={cn(
+                              "text-sm leading-tight",
+                              n.read
+                                ? "text-slate-300"
+                                : "text-white font-medium"
+                            )}
+                          >
+                            {n.title}
+                          </p>
+                          {!n.read && (
+                            <span className="flex-shrink-0 h-2 w-2 rounded-full bg-cyan-400 mt-1.5" />
+                          )}
+                        </div>
+                        {n.body && (
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {n.body}
+                          </p>
+                        )}
+                        <p className="text-[11px] text-slate-600 mt-1">
+                          {timeAgo(n.createdAt)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {!n.read && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-slate-500 hover:text-cyan-400"
+                            onClick={() => markRead.mutate({ id: n.id })}
+                            title="Mark as read"
+                          >
+                            <CheckCheck className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-slate-500 hover:text-red-400"
+                          onClick={() => deleteNotif.mutate({ id: n.id })}
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             );
           })}

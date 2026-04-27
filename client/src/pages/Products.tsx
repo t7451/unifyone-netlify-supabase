@@ -33,6 +33,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { QueryErrorState } from "@/components/QueryErrorState";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
@@ -81,7 +82,9 @@ function ProductFormFields({
           placeholder="e.g. Premium Widget Pro"
           className={`bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50 ${errors?.name ? "border-red-500/70" : ""}`}
         />
-        {errors?.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
+        {errors?.name && (
+          <p className="text-red-400 text-xs mt-1">{errors.name}</p>
+        )}
       </div>
       <div>
         <Label className="text-gray-300 text-sm">Description</Label>
@@ -111,7 +114,9 @@ function ProductFormFields({
               className={`bg-white/5 border-white/10 text-white pl-7 focus:border-[#00D9FF]/50 ${errors?.price ? "border-red-500/70" : ""}`}
             />
           </div>
-          {errors?.price && <p className="text-red-400 text-xs mt-1">{errors.price}</p>}
+          {errors?.price && (
+            <p className="text-red-400 text-xs mt-1">{errors.price}</p>
+          )}
         </div>
         <div>
           <Label className="text-gray-300 text-sm">Compare-at Price</Label>
@@ -266,9 +271,13 @@ export default function Products() {
   const [deleteProduct, setDeleteProduct] = useState<any>(null);
   const [form, setForm] = useState<ProductForm>({ ...EMPTY_FORM });
   const [editForm, setEditForm] = useState<ProductForm>({ ...EMPTY_FORM });
-  const [createTouched, setCreateTouched] = useState<Record<string, boolean>>({});
+  const [createTouched, setCreateTouched] = useState<Record<string, boolean>>(
+    {}
+  );
   const [editTouched, setEditTouched] = useState<Record<string, boolean>>({});
-  const [bulkAction, setBulkAction] = useState<"active" | "draft" | "archive" | null>(null);
+  const [bulkAction, setBulkAction] = useState<
+    "active" | "draft" | "archive" | null
+  >(null);
   const utils = trpc.useUtils();
 
   const getErrors = (f: ProductForm, touched: Record<string, boolean>) => {
@@ -276,10 +285,14 @@ export default function Products() {
     const priceTouched = touched.price ?? false;
     const priceNum = Number(f.price);
     return {
-      name: nameTouched && !f.name.trim() ? "Product name is required" : undefined,
-      price: priceTouched && !f.price ? "Price is required"
-        : priceTouched && priceNum <= 0 ? "Price must be greater than 0"
-        : undefined,
+      name:
+        nameTouched && !f.name.trim() ? "Product name is required" : undefined,
+      price:
+        priceTouched && !f.price
+          ? "Price is required"
+          : priceTouched && priceNum <= 0
+            ? "Price must be greater than 0"
+            : undefined,
     };
   };
 
@@ -481,7 +494,9 @@ export default function Products() {
               form={form}
               setForm={setForm}
               errors={getErrors(form, createTouched)}
-              onTouch={field => setCreateTouched(prev => ({ ...prev, [field]: true }))}
+              onTouch={field =>
+                setCreateTouched(prev => ({ ...prev, [field]: true }))
+              }
             />
             <DialogFooter className="mt-4 gap-2">
               <Button
@@ -493,7 +508,12 @@ export default function Products() {
               </Button>
               <Button
                 onClick={handleCreate}
-                disabled={createMutation.isPending || !form.name || !form.price || Number(form.price) <= 0}
+                disabled={
+                  createMutation.isPending ||
+                  !form.name ||
+                  !form.price ||
+                  Number(form.price) <= 0
+                }
                 className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold"
               >
                 {createMutation.isPending ? (
@@ -554,11 +574,17 @@ export default function Products() {
             className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
             onClick={() => {
               setBulkAction("active");
-              bulkUpdateStatusMutation.mutate({ ids: selectedIds, status: "active" });
+              bulkUpdateStatusMutation.mutate({
+                ids: selectedIds,
+                status: "active",
+              });
             }}
           >
             {bulkAction === "active" && bulkUpdateStatusMutation.isPending ? (
-              <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />Updating...</>
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                Updating...
+              </>
             ) : (
               "Mark Active"
             )}
@@ -570,11 +596,17 @@ export default function Products() {
             className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
             onClick={() => {
               setBulkAction("draft");
-              bulkUpdateStatusMutation.mutate({ ids: selectedIds, status: "draft" });
+              bulkUpdateStatusMutation.mutate({
+                ids: selectedIds,
+                status: "draft",
+              });
             }}
           >
             {bulkAction === "draft" && bulkUpdateStatusMutation.isPending ? (
-              <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />Updating...</>
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                Updating...
+              </>
             ) : (
               "Mark Draft"
             )}
@@ -589,10 +621,24 @@ export default function Products() {
             }}
           >
             {bulkAction === "archive" && bulkArchiveMutation.isPending ? (
-              <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />Archiving...</>
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                Archiving...
+              </>
             ) : (
               "Archive Selected"
             )}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={isBulkPending}
+            className="border-red-500/40 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+            onClick={() => {
+              toast.info("Bulk delete coming soon");
+            }}
+          >
+            Delete Selected
           </Button>
         </div>
       )}
@@ -600,7 +646,15 @@ export default function Products() {
       {products.isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-44 rounded-xl bg-white/5 animate-pulse" />
+            <div
+              key={i}
+              className="rounded-xl border border-border p-5 space-y-3"
+            >
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-8 w-1/3" />
+              <Skeleton className="h-6 w-full" />
+            </div>
           ))}
         </div>
       ) : products.isError ? (
@@ -616,12 +670,16 @@ export default function Products() {
       ) : productList.length === 0 ? (
         <div className="text-center py-20">
           <Package className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg">No products found</p>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-gray-400 text-lg font-medium">
             {search
-              ? "Try a different search term."
-              : "Add your first product to get started."}
+              ? "No products found"
+              : "No products yet. Add your first product."}
           </p>
+          {!search && (
+            <p className="text-gray-500 text-sm mt-1">
+              Click &quot;Add Product&quot; to get started.
+            </p>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -707,7 +765,8 @@ export default function Products() {
                       aria-label={`Edit ${p.name}`}
                       onClick={() => handleEdit(p)}
                     >
-                      <Edit className="w-3 h-3 mr-1.5" aria-hidden="true" /> Edit
+                      <Edit className="w-3 h-3 mr-1.5" aria-hidden="true" />{" "}
+                      Edit
                     </Button>
                     <Button
                       size="sm"
@@ -742,7 +801,9 @@ export default function Products() {
             form={editForm}
             setForm={setEditForm}
             errors={getErrors(editForm, editTouched)}
-            onTouch={field => setEditTouched(prev => ({ ...prev, [field]: true }))}
+            onTouch={field =>
+              setEditTouched(prev => ({ ...prev, [field]: true }))
+            }
           />
           <DialogFooter className="mt-4 gap-2">
             <Button
@@ -755,7 +816,10 @@ export default function Products() {
             <Button
               onClick={handleUpdate}
               disabled={
-                updateMutation.isPending || !editForm.name || !editForm.price || Number(editForm.price) <= 0
+                updateMutation.isPending ||
+                !editForm.name ||
+                !editForm.price ||
+                Number(editForm.price) <= 0
               }
               className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold"
             >
