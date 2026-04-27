@@ -15,7 +15,7 @@
 #   4. Custom domain: marketing.1commerce.online.
 
 [build]
-  command = "pnpm install --no-frozen-lockfile --filter unifyone... && pnpm --filter unifyone build"
+  command = "pnpm install --frozen-lockfile --filter unifyone... && pnpm --filter unifyone build"
   publish = "dist"
 
 [build.environment]
@@ -26,7 +26,7 @@
 # git's `:(top)` magic so they resolve from the repo root regardless of the
 # Netlify base directory.
 [build.ignore]
-  command = "git diff --quiet HEAD^ HEAD -- ':(top)apps/unifyone' ':(top)packages/seo' ':(top)pnpm-lock.yaml' ':(top)spire-admin/config/business-profile.json'"
+  command = "git diff --quiet HEAD^ HEAD -- ':(top)apps/unifyone' ':(top)packages/seo' ':(top)package.json' ':(top)pnpm-workspace.yaml' ':(top)pnpm-lock.yaml' ':(top)spire-admin/config/business-profile.json'"
 
 [[headers]]
   for = "/*"

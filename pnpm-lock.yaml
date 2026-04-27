@@ -15,7 +15,7 @@ overrides:
   dompurify: '>=3.4.0'
   qs: '>=6.14.2'
   '@smithy/config-resolver': '>=4.4.0'
-  uuid: '>=11.1.0 <12'
+  svix>uuid: '>=11.1.0 <12'
   postcss: '>=8.5.10'
   follow-redirects: '>=1.16.0'
   hono: '>=4.12.14'
@@ -9158,6 +9158,10 @@ packages:
     resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
     hasBin: true
 
+  uuid@13.0.0:
+    resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
+    hasBin: true
+
   validate-npm-package-license@3.0.4:
     resolution: {integrity: sha512-DpKm2Ui/xN7/HQKCtpZxoRWBhZ9Z0kqtygG8XCgNQ8ZlDnxuQmWhj566j8fN4Cu3/JmbhsDo7fcAJq4s9h27Ew==}
 
@@ -11213,7 +11217,7 @@ snapshots:
       parse-gitignore: 2.0.0
       semver: 7.7.4
       tmp-promise: 3.0.3
-      uuid: 11.1.0
+      uuid: 13.0.0
       write-file-atomic: 5.0.1
 
   '@netlify/dev@4.17.3(@upstash/redis@1.37.0)(rollup@4.59.0)':
@@ -19808,6 +19812,8 @@ snapshots:
   utils-merge@1.0.1: {}
 
   uuid@11.1.0: {}
+
+  uuid@13.0.0: {}
 
   validate-npm-package-license@3.0.4:
     dependencies:

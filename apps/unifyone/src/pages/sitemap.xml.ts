@@ -1,8 +1,9 @@
 import type { APIRoute } from "astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 import { buildSitemapXml, type SitemapUrl } from "@1commerce/seo";
+import { SITE_URL } from "../lib/seo";
 
-const DEFAULT_SITE = "https://marketing.1commerce.online";
+const DEFAULT_SITE = SITE_URL;
 
 function resolveSiteUrl(raw: string | undefined): string {
   const value = raw?.trim();
