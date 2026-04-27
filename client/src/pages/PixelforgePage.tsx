@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -39,24 +39,27 @@ export default function PixelforgePage() {
       setShowCreate(false);
       void assetsQuery.refetch();
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
   const exportSheet = trpc.pixelforge.exportSpriteSheet.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       const d = data as Record<string, unknown>;
       toast.success(`Exported: ${Number(d.frame_count ?? 0)} frames`);
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
-  const assets = (assetsQuery.data as Record<string, unknown>[] | undefined) ?? [];
+  const assets =
+    (assetsQuery.data as Record<string, unknown>[] | undefined) ?? [];
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">🎨 PixelForge Studio</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            🎨 PixelForge Studio
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Manage pixel art assets, sprites, tilesets, and animations.
           </p>
@@ -88,7 +91,8 @@ export default function PixelforgePage() {
         <Card>
           <CardContent className="py-16 text-center">
             <p className="text-muted-foreground text-sm mb-4">
-              No assets yet. Create your first pixel art asset or open the editor.
+              No assets yet. Create your first pixel art asset or open the
+              editor.
             </p>
             <Button onClick={() => setShowCreate(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -112,7 +116,9 @@ export default function PixelforgePage() {
                 )}
               </div>
               <CardContent className="p-2 space-y-1.5">
-                <p className="text-xs font-medium truncate">{String(asset.name ?? "—")}</p>
+                <p className="text-xs font-medium truncate">
+                  {String(asset.name ?? "—")}
+                </p>
                 <Badge variant="secondary" className="text-[10px]">
                   {String(asset.asset_type ?? asset.type ?? "—")}
                 </Badge>
@@ -124,7 +130,9 @@ export default function PixelforgePage() {
                   variant="outline"
                   className="w-full h-6 text-[10px]"
                   disabled={exportSheet.isPending}
-                  onClick={() => exportSheet.mutate({ assetId: String(asset.id ?? "") })}
+                  onClick={() =>
+                    exportSheet.mutate({ assetId: String(asset.id ?? "") })
+                  }
                 >
                   <Download className="h-3 w-3 mr-1" />
                   Export
@@ -147,7 +155,7 @@ export default function PixelforgePage() {
               <Input
                 placeholder="My Sprite"
                 value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -158,8 +166,11 @@ export default function PixelforgePage() {
                   min={1}
                   max={512}
                   value={form.width}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, width: parseInt(e.target.value) || 16 }))
+                  onChange={e =>
+                    setForm(f => ({
+                      ...f,
+                      width: parseInt(e.target.value) || 16,
+                    }))
                   }
                 />
               </div>
@@ -170,8 +181,11 @@ export default function PixelforgePage() {
                   min={1}
                   max={512}
                   value={form.height}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, height: parseInt(e.target.value) || 16 }))
+                  onChange={e =>
+                    setForm(f => ({
+                      ...f,
+                      height: parseInt(e.target.value) || 16,
+                    }))
                   }
                 />
               </div>
@@ -180,8 +194,8 @@ export default function PixelforgePage() {
               <Label>Asset Type</Label>
               <Select
                 value={form.assetType}
-                onValueChange={(v) =>
-                  setForm((f) => ({
+                onValueChange={v =>
+                  setForm(f => ({
                     ...f,
                     assetType: v as "sprite" | "tileset" | "animation",
                   }))
