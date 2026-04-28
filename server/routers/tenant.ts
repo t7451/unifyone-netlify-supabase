@@ -128,13 +128,51 @@ export const tenantRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await createTenant({
-        name: input.name,
-        slug: input.slug,
-        ownerId: ctx.user.id,
-      });
-      const tenants = await getTenantsByOwner(ctx.user.id);
-      const newTenant = tenants.find(t => t.slug === input.slug);
+      // Check whether a tenant with this slug already exists so we can give
+      // a precise error or resume an interrupted setup flow idempotently.
+      const existing = await getTenantBySlug(input.slug);
+      if (existing) {
+        if (existing.ownerId !== ctx.user.id) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `The slug "${input.slug}" is already taken. Please choose a different one.`,
+          });
+        }
+        // The same owner already created this tenant (e.g. a retry after a
+        // network failure). Resume the setup flow with the existing record.
+        await updateUserTenant(ctx.user.id, existing.id);
+        return existing;
+      }
+
+      try {
+        await createTenant({
+          name: input.name,
+          slug: input.slug,
+          ownerId: ctx.user.id,
+        });
+      } catch (err) {
+        // Catch a race-condition duplicate on the slug unique constraint and
+        // surface a clear message rather than an opaque "Internal server error".
+        const msg = err instanceof Error ? err.message : String(err);
+        if (
+          msg.includes("unique") ||
+          msg.includes("duplicate") ||
+          msg.includes("tenants_slug_unique")
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `The slug "${input.slug}" is already taken. Please choose a different one.`,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create store. Please try again.",
+          cause: err,
+        });
+      }
+
+      const ownerTenants = await getTenantsByOwner(ctx.user.id);
+      const newTenant = ownerTenants.find(t => t.slug === input.slug);
       if (newTenant) await updateUserTenant(ctx.user.id, newTenant.id);
       void import("../auditLogger").then(({ logAudit }) =>
         logAudit({
