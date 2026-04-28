@@ -465,6 +465,14 @@ export function buildRefreshLogoutCookie(
 /** Raw token length in bytes → 32 bytes = 64 hex chars */
 const REFRESH_TOKEN_BYTES = 32;
 
+/**
+ * Hash a raw refresh token for storage.
+ *
+ * We store only the SHA-256 digest — the raw token is never persisted.
+ * This means a database compromise reveals hashes that cannot be reversed
+ * into usable tokens (assuming the attacker doesn't have pre-images).
+ * Lookup is O(1) via the unique index on tokenHash.
+ */
 function hashRefreshToken(rawToken: string): string {
   return createHash("sha256").update(rawToken).digest("hex");
 }
@@ -481,8 +489,10 @@ export async function issueRefreshToken(
   const db = await getDb();
   if (!db) return null;
 
-  // Prune expired/revoked tokens for this user to keep the table lean.
-  // Fire-and-forget — don't block the login on cleanup.
+  // Prune expired tokens for this user to keep the table lean.
+  // Fire-and-forget — cleanup failure is non-critical (tokens expire naturally
+  // via expiresAt) and we don't want to block the login path. Errors here
+  // are expected to be rare (transient DB hiccup), so log at warn level only.
   db.delete(refreshTokens)
     .where(
       and(
@@ -490,7 +500,7 @@ export async function issueRefreshToken(
         lt(refreshTokens.expiresAt, new Date())
       )
     )
-    .catch(() => {});
+    .catch(err => logger.warn("refreshTokens: cleanup failed", { error: String(err) }));
 
   const rawToken = randomBytes(REFRESH_TOKEN_BYTES).toString("hex");
   const tokenHash = hashRefreshToken(rawToken);

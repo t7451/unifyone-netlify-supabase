@@ -111,6 +111,11 @@ async function startServer() {
   // Auth endpoints get a tighter limit (64 KB) — they only accept JSON
   // credentials and tokens, never file bytes. This reduces the surface area
   // for DoS via oversized request bodies on login/signup/reset paths.
+  //
+  // ORDERING: these middleware registrations must come AFTER webhook routes
+  // (which use raw body parsing and are registered above) and BEFORE the
+  // default 4 MB json() registration below — Express matches middleware in
+  // registration order so the first matching body parser wins.
   app.use("/api/auth", express.json({ limit: "64kb" }));
   app.use("/api/auth", express.urlencoded({ limit: "64kb", extended: false }));
 

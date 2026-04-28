@@ -156,11 +156,23 @@ export const tenantRouter = router({
         // expose the SQLSTATE via a `code` property, so we check that first
         // before falling back to message inspection for safety.
         const pgCode = (err as { code?: string }).code;
-        const isUniqueViolation =
-          pgCode === "23505" ||
-          (err instanceof Error &&
-            (err.message.includes("unique") ||
-              err.message.includes("tenants_slug_unique")));
+        const codeIsUniqueViolation = pgCode === "23505";
+        const messageIsUniqueViolation =
+          !codeIsUniqueViolation &&
+          err instanceof Error &&
+          (err.message.includes("unique") ||
+            err.message.includes("tenants_slug_unique"));
+
+        if (messageIsUniqueViolation) {
+          // Log when we fall through to message-inspection so we can monitor
+          // if this path fires on unrelated errors (would indicate a driver change).
+          console.warn(
+            "[tenant.create] unique-violation detected via message inspection (no PG code)",
+            { message: (err as Error).message }
+          );
+        }
+
+        const isUniqueViolation = codeIsUniqueViolation || messageIsUniqueViolation;
         if (isUniqueViolation) {
           throw new TRPCError({
             code: "BAD_REQUEST",

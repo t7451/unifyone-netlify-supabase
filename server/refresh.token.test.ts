@@ -69,10 +69,8 @@ const mockDb = {
   })),
   select: vi.fn(() => ({
     from: vi.fn(() => ({
-      where: vi.fn((condition: unknown) => ({
-        limit: vi.fn((n: number) => {
-          void condition;
-          void n;
+      where: vi.fn((_condition: unknown) => ({
+        limit: vi.fn((_n: number) => {
           // This simplified mock just returns the first item when called.
           // Tests configure _state.tokens / _state.users directly.
           return Promise.resolve(_state.tokens.slice(0, 1));

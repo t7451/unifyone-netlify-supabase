@@ -434,9 +434,11 @@ export async function registerCustomAuthFetchRoutes(
       });
 
       if (!rotateResult.success) {
-        // Rotation failed — clear both cookies so the client re-authenticates
+        // Rotation failed — clear both cookies so the client re-authenticates.
+        // Return a generic message to avoid leaking token state (revoked vs expired
+        // vs not found) which could assist token-enumeration attacks.
         const response = Response.json(
-          { success: false, error: rotateResult.error },
+          { success: false, error: "Authentication expired. Please sign in again." },
           { status: 401, headers: corsHeaders }
         );
         response.headers.append(
@@ -1164,7 +1166,10 @@ export function registerCustomAuthExpressRoutes(app: Express) {
         if (!rotateResult.success) {
           res.append("Set-Cookie", buildLogoutCookie(isSecureExpress, cookieDomainExpress));
           res.append("Set-Cookie", buildRefreshLogoutCookie(isSecureExpress, cookieDomainExpress));
-          res.status(401).json({ success: false, error: rotateResult.error });
+          res.status(401).json({
+            success: false,
+            error: "Authentication expired. Please sign in again.",
+          });
           return;
         }
 

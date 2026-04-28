@@ -55,8 +55,8 @@ async function checkDatabase(): Promise<{
     // Sanitize: never return raw connection strings or internal DB error details.
     const rawMsg = String(err);
     const safeMsg = rawMsg
-      .replace(/postgresql:\/\/[^)\s]*/gi, "postgresql://[redacted]")
-      .replace(/password=[^\s&)]*/gi, "password=[redacted]")
+      .replace(/postgresql:\/\/[^\s]+/gi, "postgresql://[redacted]")
+      .replace(/password=[^\s&]*/gi, "password=[redacted]")
       .substring(0, 200);
     return { ok: false, latencyMs: Date.now() - t0, error: safeMsg };
   }
@@ -147,10 +147,9 @@ function metricsHandler(req: Request, res: Response) {
       return;
     }
   } else if (process.env.NODE_ENV === "production") {
-    // Production with no key configured — block to prevent accidental exposure
-    res
-      .status(403)
-      .json({ error: "Metrics unavailable. Set ADMIN_API_KEY to enable." });
+    // Production with no key configured — return 404 to avoid hinting at the
+    // endpoint's existence or the ADMIN_API_KEY variable name.
+    res.status(404).json({ error: "Not found" });
     return;
   }
 
