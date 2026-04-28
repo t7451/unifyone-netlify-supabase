@@ -1775,3 +1775,28 @@ export const stripePaymentAudit = pgTable(
 );
 export type StripePaymentAudit = typeof stripePaymentAudit.$inferSelect;
 export type InsertStripePaymentAudit = typeof stripePaymentAudit.$inferInsert;
+
+// ── Refresh Tokens ────────────────────────────────────────────────────────────
+//
+// Stores opaque refresh tokens that back short-lived access JWTs.
+// When the access JWT expires the client presents its HttpOnly refresh cookie
+// to POST /api/auth/refresh; the server verifies the token hash, rotates
+// (deletes old, issues new), and returns a fresh access JWT + new refresh token.
+//
+// Revocation: setting revokedAt prevents the token from being used again.
+// The access JWT's short lifetime (7 days) limits blast radius if stolen.
+export const refreshTokens = pgTable("refresh_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  /** SHA-256 hex digest of the raw token (raw token is never stored). */
+  tokenHash: varchar("tokenHash", { length: 64 }).notNull().unique(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  revokedAt: timestamp("revokedAt"),
+  /** Device/browser identity for the session management UI. */
+  userAgent: text("userAgent"),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  lastUsedAt: timestamp("lastUsedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type RefreshToken = typeof refreshTokens.$inferSelect;
+export type InsertRefreshToken = typeof refreshTokens.$inferInsert;

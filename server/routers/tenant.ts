@@ -128,19 +128,76 @@ export const tenantRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await createTenant({
-        name: input.name,
-        slug: input.slug,
-        ownerId: ctx.user.id,
-      });
-      const tenants = await getTenantsByOwner(ctx.user.id);
-      const newTenant = tenants.find(t => t.slug === input.slug);
-      if (newTenant) await updateUserTenant(ctx.user.id, newTenant.id);
+      // Check whether a tenant with this slug already exists so we can give
+      // a precise error or resume an interrupted setup flow idempotently.
+      const existing = await getTenantBySlug(input.slug);
+      if (existing) {
+        if (existing.ownerId !== ctx.user.id) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `The slug "${input.slug}" is already taken. Please choose a different one.`,
+          });
+        }
+        // The same owner already created this tenant (e.g. a retry after a
+        // network failure). Resume the setup flow with the existing record.
+        await updateUserTenant(ctx.user.id, existing.id);
+        return existing;
+      }
+
+      let newTenant;
+      try {
+        newTenant = await createTenant({
+          name: input.name,
+          slug: input.slug,
+          ownerId: ctx.user.id,
+        });
+      } catch (err) {
+        // PostgreSQL SQLSTATE 23505 = unique_violation.  Neon's error objects
+        // expose the SQLSTATE via a `code` property, so we check that first
+        // before falling back to message inspection for safety.
+        const pgCode = (err as { code?: string }).code;
+        const codeIsUniqueViolation = pgCode === "23505";
+        const messageIsUniqueViolation =
+          !codeIsUniqueViolation &&
+          err instanceof Error &&
+          (err.message.includes("unique") ||
+            err.message.includes("tenants_slug_unique"));
+
+        if (messageIsUniqueViolation) {
+          // Log when we fall through to message-inspection so we can monitor
+          // if this path fires on unrelated errors (would indicate a driver change).
+          console.warn(
+            "[tenant.create] unique-violation detected via message inspection (no PG code)",
+            { message: (err as Error).message }
+          );
+        }
+
+        const isUniqueViolation = codeIsUniqueViolation || messageIsUniqueViolation;
+        if (isUniqueViolation) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `The slug "${input.slug}" is already taken. Please choose a different one.`,
+          });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create store. Please try again.",
+          cause: err,
+        });
+      }
+
+      if (!newTenant) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Store was created but could not be retrieved. Please refresh and try again.",
+        });
+      }
+      await updateUserTenant(ctx.user.id, newTenant.id);
       void import("../auditLogger").then(({ logAudit }) =>
         logAudit({
           action: "tenant.created",
           resource: "tenant",
-          resourceId: newTenant ? String(newTenant.id) : undefined,
+          resourceId: String(newTenant.id),
           severity: "low",
           userId: ctx.user.id,
           metadata: { name: input.name, slug: input.slug },

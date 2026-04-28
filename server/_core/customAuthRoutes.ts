@@ -19,7 +19,10 @@ import {
   verifyClerkSession,
   verifyFirebaseIdToken,
   buildSessionCookie,
+  buildRefreshCookie,
   buildLogoutCookie,
+  buildRefreshLogoutCookie,
+  rotateRefreshToken,
   requestPasswordReset,
   resetPassword,
   sendVerificationEmail,
@@ -30,6 +33,7 @@ import { sdk } from "./sdk";
 import { authRateLimiter, passwordResetLimiter } from "./rateLimiter";
 import { ENV, getAppUrl } from "./env";
 import { getDb, getTenantBySlug } from "../db";
+import { REFRESH_COOKIE_NAME } from "@shared/const";
 import {
   users as usersTable,
   auditLogs as auditLogsTable,
@@ -281,7 +285,10 @@ export async function registerCustomAuthFetchRoutes(
         username?: string;
       };
 
-      const result = await signUp(email || "", password || "", name, username);
+      const result = await signUp(email || "", password || "", name, username, {
+        ipAddress: clientIp,
+        userAgent: req.headers.get("user-agent") ?? undefined,
+      });
 
       if (!result.success) {
         return Response.json(
@@ -315,6 +322,12 @@ export async function registerCustomAuthFetchRoutes(
         "Set-Cookie",
         buildSessionCookie(result.sessionToken ?? "", isSecure, cookieDomain)
       );
+      if (result.refreshToken) {
+        response.headers.append(
+          "Set-Cookie",
+          buildRefreshCookie(result.refreshToken, isSecure, cookieDomain)
+        );
+      }
 
       return response;
     }
@@ -345,7 +358,10 @@ export async function registerCustomAuthFetchRoutes(
         password?: string;
       };
 
-      const result = await signIn(identifier || email || "", password || "");
+      const result = await signIn(identifier || email || "", password || "", {
+        ipAddress: clientIp,
+        userAgent: req.headers.get("user-agent") ?? undefined,
+      });
 
       if (!result.success) {
         // Pass through the machine-readable code so the client can branch
@@ -366,6 +382,8 @@ export async function registerCustomAuthFetchRoutes(
           resourceId: result.user?.openId ?? "",
           severity: "low",
           metadata: { method: "password" },
+          ip: clientIp,
+          userAgent: req.headers.get("user-agent") ?? undefined,
         }).catch(() => {})
       );
 
@@ -381,7 +399,73 @@ export async function registerCustomAuthFetchRoutes(
         "Set-Cookie",
         buildSessionCookie(result.sessionToken ?? "", isSecure, cookieDomain)
       );
+      if (result.refreshToken) {
+        response.headers.append(
+          "Set-Cookie",
+          buildRefreshCookie(result.refreshToken, isSecure, cookieDomain)
+        );
+      }
 
+      return response;
+    }
+
+    // ── Token Refresh ──────────────────────────────────────────────────────
+    if (path === "/api/auth/refresh") {
+      // Read raw refresh token from the HttpOnly cookie
+      const cookieHeader = req.headers.get("cookie") ?? "";
+      const refreshTokenCookieMatch = cookieHeader
+        .split(";")
+        .map(c => c.trim())
+        .find(c => c.startsWith(`${REFRESH_COOKIE_NAME}=`));
+      const rawRefreshToken = refreshTokenCookieMatch
+        ? refreshTokenCookieMatch.slice(`${REFRESH_COOKIE_NAME}=`.length)
+        : null;
+
+      if (!rawRefreshToken) {
+        return Response.json(
+          { success: false, error: "No refresh token" },
+          { status: 401, headers: corsHeaders }
+        );
+      }
+
+      const rotateResult = await rotateRefreshToken(rawRefreshToken, {
+        ipAddress: clientIp,
+        userAgent: req.headers.get("user-agent") ?? undefined,
+      });
+
+      if (!rotateResult.success) {
+        // Rotation failed — clear both cookies so the client re-authenticates.
+        // Return a generic message to avoid leaking token state (revoked vs expired
+        // vs not found) which could assist token-enumeration attacks.
+        const response = Response.json(
+          { success: false, error: "Authentication expired. Please sign in again." },
+          { status: 401, headers: corsHeaders }
+        );
+        response.headers.append(
+          "Set-Cookie",
+          buildLogoutCookie(isSecure, cookieDomain)
+        );
+        response.headers.append(
+          "Set-Cookie",
+          buildRefreshLogoutCookie(isSecure, cookieDomain)
+        );
+        return response;
+      }
+
+      const response = Response.json(
+        { success: true, user: rotateResult.user },
+        { status: 200, headers: corsHeaders }
+      );
+      response.headers.append(
+        "Set-Cookie",
+        buildSessionCookie(rotateResult.sessionToken ?? "", isSecure, cookieDomain)
+      );
+      if (rotateResult.newRefreshToken) {
+        response.headers.append(
+          "Set-Cookie",
+          buildRefreshCookie(rotateResult.newRefreshToken, isSecure, cookieDomain)
+        );
+      }
       return response;
     }
 
@@ -395,6 +479,10 @@ export async function registerCustomAuthFetchRoutes(
       response.headers.append(
         "Set-Cookie",
         buildLogoutCookie(isSecure, cookieDomain)
+      );
+      response.headers.append(
+        "Set-Cookie",
+        buildRefreshLogoutCookie(isSecure, cookieDomain)
       );
 
       return response;
@@ -935,12 +1023,10 @@ export function registerCustomAuthExpressRoutes(app: Express) {
           username?: string;
         };
 
-        const result = await signUp(
-          email || "",
-          password || "",
-          name,
-          username
-        );
+        const result = await signUp(email || "", password || "", name, username, {
+          ipAddress: clientIp,
+          userAgent: req.headers["user-agent"] ?? undefined,
+        });
         if (!result.success) {
           res.status(400).json({ success: false, error: result.error });
           return;
@@ -953,14 +1039,18 @@ export function registerCustomAuthExpressRoutes(app: Express) {
           );
         }
 
+        const isSecureExpress = isExpressRequestSecure(req);
+        const cookieDomainExpress = ENV.cookieDomain || undefined;
         res.append(
           "Set-Cookie",
-          buildSessionCookie(
-            result.sessionToken ?? "",
-            isExpressRequestSecure(req),
-            ENV.cookieDomain || undefined
-          )
+          buildSessionCookie(result.sessionToken ?? "", isSecureExpress, cookieDomainExpress)
         );
+        if (result.refreshToken) {
+          res.append(
+            "Set-Cookie",
+            buildRefreshCookie(result.refreshToken, isSecureExpress, cookieDomainExpress)
+          );
+        }
         res.status(201).json({
           success: true,
           user: result.user,
@@ -1003,7 +1093,10 @@ export function registerCustomAuthExpressRoutes(app: Express) {
           password?: string;
         };
 
-        const result = await signIn(identifier || email || "", password || "");
+        const result = await signIn(identifier || email || "", password || "", {
+          ipAddress: clientIp,
+          userAgent: req.headers["user-agent"] ?? undefined,
+        });
         if (!result.success) {
           res
             .status(401)
@@ -1012,14 +1105,18 @@ export function registerCustomAuthExpressRoutes(app: Express) {
         }
 
         await authRateLimiter.reset(clientIp);
+        const isSecureExpress = isExpressRequestSecure(req);
+        const cookieDomainExpress = ENV.cookieDomain || undefined;
         res.append(
           "Set-Cookie",
-          buildSessionCookie(
-            result.sessionToken ?? "",
-            isExpressRequestSecure(req),
-            ENV.cookieDomain || undefined
-          )
+          buildSessionCookie(result.sessionToken ?? "", isSecureExpress, cookieDomainExpress)
         );
+        if (result.refreshToken) {
+          res.append(
+            "Set-Cookie",
+            buildRefreshCookie(result.refreshToken, isSecureExpress, cookieDomainExpress)
+          );
+        }
         res.status(200).json({ success: true, user: result.user });
       } catch (err) {
         console.error("[customAuthRoutes] Error:", err);
@@ -1031,15 +1128,68 @@ export function registerCustomAuthExpressRoutes(app: Express) {
   );
 
   app.post("/api/auth/logout", (req: ExpressRequest, res: ExpressResponse) => {
-    res.append(
-      "Set-Cookie",
-      buildLogoutCookie(
-        isExpressRequestSecure(req),
-        ENV.cookieDomain || undefined
-      )
-    );
+    const isSecureExpress = isExpressRequestSecure(req);
+    const cookieDomainExpress = ENV.cookieDomain || undefined;
+    res.append("Set-Cookie", buildLogoutCookie(isSecureExpress, cookieDomainExpress));
+    res.append("Set-Cookie", buildRefreshLogoutCookie(isSecureExpress, cookieDomainExpress));
     res.status(200).json({ success: true });
   });
+
+  // ── Token Refresh (Express) ───────────────────────────────────────────────
+  app.post(
+    "/api/auth/refresh",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const clientIp = getExpressClientIp(req);
+      const cookieHeader = req.headers.cookie ?? "";
+      const refreshTokenCookieMatch = cookieHeader
+        .split(";")
+        .map(c => c.trim())
+        .find(c => c.startsWith(`${REFRESH_COOKIE_NAME}=`));
+      const rawRefreshToken = refreshTokenCookieMatch
+        ? refreshTokenCookieMatch.slice(`${REFRESH_COOKIE_NAME}=`.length)
+        : null;
+
+      if (!rawRefreshToken) {
+        res.status(401).json({ success: false, error: "No refresh token" });
+        return;
+      }
+
+      try {
+        const rotateResult = await rotateRefreshToken(rawRefreshToken, {
+          ipAddress: clientIp,
+          userAgent: req.headers["user-agent"] ?? undefined,
+        });
+
+        const isSecureExpress = isExpressRequestSecure(req);
+        const cookieDomainExpress = ENV.cookieDomain || undefined;
+
+        if (!rotateResult.success) {
+          res.append("Set-Cookie", buildLogoutCookie(isSecureExpress, cookieDomainExpress));
+          res.append("Set-Cookie", buildRefreshLogoutCookie(isSecureExpress, cookieDomainExpress));
+          res.status(401).json({
+            success: false,
+            error: "Authentication expired. Please sign in again.",
+          });
+          return;
+        }
+
+        res.append(
+          "Set-Cookie",
+          buildSessionCookie(rotateResult.sessionToken ?? "", isSecureExpress, cookieDomainExpress)
+        );
+        if (rotateResult.newRefreshToken) {
+          res.append(
+            "Set-Cookie",
+            buildRefreshCookie(rotateResult.newRefreshToken, isSecureExpress, cookieDomainExpress)
+          );
+        }
+        res.status(200).json({ success: true, user: rotateResult.user });
+      } catch (err) {
+        console.error("[customAuthRoutes] Refresh error:", err);
+        res.status(500).json({ success: false, error: "Internal server error" });
+      }
+    }
+  );
 
   app.post(
     "/api/auth/forgot-password",

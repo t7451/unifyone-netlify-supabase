@@ -52,7 +52,13 @@ async function checkDatabase(): Promise<{
     await db.execute("SELECT 1");
     return { ok: true, latencyMs: Date.now() - t0 };
   } catch (err) {
-    return { ok: false, latencyMs: Date.now() - t0, error: String(err) };
+    // Sanitize: never return raw connection strings or internal DB error details.
+    const rawMsg = String(err);
+    const safeMsg = rawMsg
+      .replace(/postgresql:\/\/[^\s]+/gi, "postgresql://[redacted]")
+      .replace(/password=[^\s&]*/gi, "password=[redacted]")
+      .substring(0, 200);
+    return { ok: false, latencyMs: Date.now() - t0, error: safeMsg };
   }
 }
 
@@ -126,8 +132,27 @@ async function readyHandler(_req: Request, res: Response) {
  * GET /api/metrics
  * Exposes runtime metrics: memory, CPU, uptime, active connections.
  * Useful for monitoring dashboards (Prometheus scraper, Datadog, etc.).
+ *
+ * Protected by ADMIN_API_KEY when set (required in production).
+ * Pass the key via the `X-Admin-Key` request header.
  */
-function metricsHandler(_req: Request, res: Response) {
+function metricsHandler(req: Request, res: Response) {
+  const adminKey = process.env.ADMIN_API_KEY;
+
+  if (adminKey) {
+    // Key is configured — require it on every request
+    const provided = req.headers["x-admin-key"];
+    if (provided !== adminKey) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+  } else if (process.env.NODE_ENV === "production") {
+    // Production with no key configured — return 404 to avoid hinting at the
+    // endpoint's existence or the ADMIN_API_KEY variable name.
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
   res.json({
     uptime: Math.floor((Date.now() - startedAt) / 1000),
     timestamp: new Date().toISOString(),

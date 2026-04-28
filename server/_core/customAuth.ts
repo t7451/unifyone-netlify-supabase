@@ -8,12 +8,17 @@
  * All methods produce the same session token format for downstream compatibility.
  */
 
-import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
+import { randomBytes, scrypt, timingSafeEqual, createHash } from "node:crypto";
 import { promisify } from "node:util";
-import { eq, or, and, isNull } from "drizzle-orm";
-import { users } from "../../drizzle/schema";
+import { eq, or, and, isNull, lt } from "drizzle-orm";
+import { users, refreshTokens } from "../../drizzle/schema";
 import { sdk } from "./sdk";
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import {
+  COOKIE_NAME,
+  REFRESH_COOKIE_NAME,
+  ACCESS_TOKEN_LIFETIME_MS,
+  REFRESH_TOKEN_LIFETIME_MS,
+} from "@shared/const";
 import { getAppUrl } from "./env";
 import { logger } from "./logger";
 import { resolveDatabaseUrl } from "../lib/databaseUrl";
@@ -128,6 +133,8 @@ export type AuthResult = {
   /** Machine-readable code — lets clients branch without parsing error strings. */
   code?: "email_not_verified";
   sessionToken?: string;
+  /** Raw refresh token — caller embeds this in the HttpOnly refresh cookie. */
+  refreshToken?: string;
   user?: {
     openId: string;
     email: string;
@@ -143,7 +150,8 @@ export async function signUp(
   email: string,
   password: string,
   name?: string,
-  username?: string
+  username?: string,
+  opts: { ipAddress?: string; userAgent?: string } = {}
 ): Promise<AuthResult> {
   if (!email || !password) {
     return { success: false, error: "Email and password are required" };
@@ -216,27 +224,38 @@ export async function signUp(
       );
     }
 
-    await db.insert(users).values({
-      openId,
-      email: emailLower,
-      username: usernameLower,
-      passwordHash,
-      name: displayName,
-      loginMethod: "password",
-      emailVerified,
-      role: "user",
-    });
+    const [insertedUser] = await db
+      .insert(users)
+      .values({
+        openId,
+        email: emailLower,
+        username: usernameLower,
+        passwordHash,
+        name: displayName,
+        loginMethod: "password",
+        emailVerified,
+        role: "user",
+      })
+      .returning({ id: users.id });
 
     // Create session token
     const sessionToken = await sdk.createSessionToken(openId, {
       name: displayName,
       email: emailLower,
       loginMethod: "password",
+      expiresInMs: ACCESS_TOKEN_LIFETIME_MS,
     });
+
+    // Issue refresh token — non-blocking; don't fail signup if this errors
+    const refreshToken = insertedUser
+      ? (await issueRefreshToken(insertedUser.id, opts).catch(() => null))
+          ?.rawToken
+      : undefined;
 
     return {
       success: true,
       sessionToken,
+      refreshToken,
       user: {
         openId,
         email: emailLower,
@@ -260,7 +279,8 @@ export async function signUp(
 
 export async function signIn(
   identifier: string,
-  password: string
+  password: string,
+  opts: { ipAddress?: string; userAgent?: string } = {}
 ): Promise<AuthResult> {
   if (!identifier || !password) {
     return {
@@ -348,11 +368,18 @@ export async function signIn(
       name: user.name || user.username || user.email?.split("@")[0] || "User",
       email: user.email,
       loginMethod: "password",
+      expiresInMs: ACCESS_TOKEN_LIFETIME_MS,
     });
+
+    // Issue refresh token — non-blocking; don't fail signin if this errors
+    const refreshToken = (
+      await issueRefreshToken(user.id, opts).catch(() => null)
+    )?.rawToken;
 
     return {
       success: true,
       sessionToken,
+      refreshToken,
       user: {
         openId: user.openId,
         email: user.email || identifierLower,
@@ -380,7 +407,24 @@ export function buildSessionCookie(
     "Path=/",
     "HttpOnly",
     "SameSite=Lax",
-    `Max-Age=${Math.floor(ONE_YEAR_MS / 1000)}`,
+    `Max-Age=${Math.floor(ACCESS_TOKEN_LIFETIME_MS / 1000)}`,
+  ];
+  if (secure) flags.push("Secure");
+  if (domain) flags.push(`Domain=${domain}`);
+  return flags.join("; ");
+}
+
+export function buildRefreshCookie(
+  rawToken: string,
+  secure: boolean,
+  domain?: string
+): string {
+  const flags = [
+    `${REFRESH_COOKIE_NAME}=${rawToken}`,
+    "Path=/api/auth/refresh",
+    "HttpOnly",
+    "SameSite=Strict",
+    `Max-Age=${Math.floor(REFRESH_TOKEN_LIFETIME_MS / 1000)}`,
   ];
   if (secure) flags.push("Secure");
   if (domain) flags.push(`Domain=${domain}`);
@@ -398,6 +442,153 @@ export function buildLogoutCookie(secure: boolean, domain?: string): string {
   if (secure) flags.push("Secure");
   if (domain) flags.push(`Domain=${domain}`);
   return flags.join("; ");
+}
+
+export function buildRefreshLogoutCookie(
+  secure: boolean,
+  domain?: string
+): string {
+  const flags = [
+    `${REFRESH_COOKIE_NAME}=`,
+    "Path=/api/auth/refresh",
+    "HttpOnly",
+    "SameSite=Strict",
+    "Max-Age=0",
+  ];
+  if (secure) flags.push("Secure");
+  if (domain) flags.push(`Domain=${domain}`);
+  return flags.join("; ");
+}
+
+// ── Refresh Token Helpers ────────────────────────────────────────────────────
+
+/** Raw token length in bytes → 32 bytes = 64 hex chars */
+const REFRESH_TOKEN_BYTES = 32;
+
+/**
+ * Hash a raw refresh token for storage.
+ *
+ * We store only the SHA-256 digest — the raw token is never persisted.
+ * This means a database compromise reveals hashes that cannot be reversed
+ * into usable tokens (assuming the attacker doesn't have pre-images).
+ * Lookup is O(1) via the unique index on tokenHash.
+ */
+function hashRefreshToken(rawToken: string): string {
+  return createHash("sha256").update(rawToken).digest("hex");
+}
+
+/**
+ * Issue a new refresh token for a user.
+ * Stores the hash in the `refresh_tokens` table and returns the raw token
+ * (which the caller embeds in the HttpOnly cookie — never stored server-side).
+ */
+export async function issueRefreshToken(
+  userId: number,
+  opts: { ipAddress?: string; userAgent?: string } = {}
+): Promise<{ rawToken: string } | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  // Prune expired tokens for this user to keep the table lean.
+  // Fire-and-forget — cleanup failure is non-critical (tokens expire naturally
+  // via expiresAt) and we don't want to block the login path. Errors here
+  // are expected to be rare (transient DB hiccup), so log at warn level only.
+  db.delete(refreshTokens)
+    .where(
+      and(
+        eq(refreshTokens.userId, userId),
+        lt(refreshTokens.expiresAt, new Date())
+      )
+    )
+    .catch(err => logger.warn("refreshTokens: cleanup failed", { error: String(err) }));
+
+  const rawToken = randomBytes(REFRESH_TOKEN_BYTES).toString("hex");
+  const tokenHash = hashRefreshToken(rawToken);
+  const expiresAt = new Date(Date.now() + REFRESH_TOKEN_LIFETIME_MS);
+
+  await db.insert(refreshTokens).values({
+    userId,
+    tokenHash,
+    expiresAt,
+    ipAddress: opts.ipAddress ?? null,
+    userAgent: opts.userAgent ?? null,
+  });
+
+  return { rawToken };
+}
+
+/**
+ * Validate a raw refresh token, rotate it (revoke old, issue new), and
+ * return a fresh access JWT + new raw refresh token.
+ *
+ * Returns null when the token is invalid, expired, or already revoked.
+ */
+export async function rotateRefreshToken(
+  rawToken: string,
+  opts: { ipAddress?: string; userAgent?: string } = {}
+): Promise<AuthResult & { newRefreshToken?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, error: "Database unavailable" };
+
+  const tokenHash = hashRefreshToken(rawToken);
+
+  const [stored] = await db
+    .select()
+    .from(refreshTokens)
+    .where(eq(refreshTokens.tokenHash, tokenHash))
+    .limit(1);
+
+  if (!stored) {
+    return { success: false, error: "Invalid refresh token" };
+  }
+
+  if (stored.revokedAt) {
+    return { success: false, error: "Refresh token has been revoked" };
+  }
+
+  if (new Date() > stored.expiresAt) {
+    return { success: false, error: "Refresh token has expired" };
+  }
+
+  // Revoke the used token immediately (rotation — prevent replay)
+  await db
+    .update(refreshTokens)
+    .set({ revokedAt: new Date() })
+    .where(eq(refreshTokens.tokenHash, tokenHash));
+
+  // Load the user
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(and(eq(users.id, stored.userId), isNull(users.deletedAt)))
+    .limit(1);
+
+  if (!user) {
+    return { success: false, error: "User not found or deleted" };
+  }
+
+  // Issue new access JWT
+  const sessionToken = await sdk.createSessionToken(user.openId, {
+    name: user.name || user.email?.split("@")[0] || "User",
+    email: user.email,
+    loginMethod: user.loginMethod ?? "password",
+    expiresInMs: ACCESS_TOKEN_LIFETIME_MS,
+  });
+
+  // Issue new refresh token (rotation)
+  const newRefreshResult = await issueRefreshToken(user.id, opts);
+
+  return {
+    success: true,
+    sessionToken,
+    newRefreshToken: newRefreshResult?.rawToken,
+    user: {
+      openId: user.openId,
+      email: user.email || "",
+      name: user.name || user.email?.split("@")[0] || "User",
+      username: user.username,
+    },
+  };
 }
 
 // ── Clerk Fallback (when CLERK_SECRET_KEY is set) ────────────────────────────
