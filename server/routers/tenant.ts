@@ -151,14 +151,16 @@ export const tenantRouter = router({
           ownerId: ctx.user.id,
         });
       } catch (err) {
-        // Catch a race-condition duplicate on the slug unique constraint and
-        // surface a clear message rather than an opaque "Internal server error".
-        const msg = err instanceof Error ? err.message : String(err);
-        if (
-          msg.includes("unique") ||
-          msg.includes("duplicate") ||
-          msg.includes("tenants_slug_unique")
-        ) {
+        // PostgreSQL SQLSTATE 23505 = unique_violation.  Neon's error objects
+        // expose the SQLSTATE via a `code` property, so we check that first
+        // before falling back to message inspection for safety.
+        const pgCode = (err as { code?: string }).code;
+        const isUniqueViolation =
+          pgCode === "23505" ||
+          (err instanceof Error &&
+            (err.message.includes("unique") ||
+              err.message.includes("tenants_slug_unique")));
+        if (isUniqueViolation) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: `The slug "${input.slug}" is already taken. Please choose a different one.`,
@@ -173,12 +175,18 @@ export const tenantRouter = router({
 
       const ownerTenants = await getTenantsByOwner(ctx.user.id);
       const newTenant = ownerTenants.find(t => t.slug === input.slug);
-      if (newTenant) await updateUserTenant(ctx.user.id, newTenant.id);
+      if (!newTenant) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Store was created but could not be retrieved. Please refresh and try again.",
+        });
+      }
+      await updateUserTenant(ctx.user.id, newTenant.id);
       void import("../auditLogger").then(({ logAudit }) =>
         logAudit({
           action: "tenant.created",
           resource: "tenant",
-          resourceId: newTenant ? String(newTenant.id) : undefined,
+          resourceId: String(newTenant.id),
           severity: "low",
           userId: ctx.user.id,
           metadata: { name: input.name, slug: input.slug },
