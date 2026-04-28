@@ -144,8 +144,9 @@ export const tenantRouter = router({
         return existing;
       }
 
+      let newTenant;
       try {
-        await createTenant({
+        newTenant = await createTenant({
           name: input.name,
           slug: input.slug,
           ownerId: ctx.user.id,
@@ -173,8 +174,6 @@ export const tenantRouter = router({
         });
       }
 
-      const ownerTenants = await getTenantsByOwner(ctx.user.id);
-      const newTenant = ownerTenants.find(t => t.slug === input.slug);
       if (!newTenant) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

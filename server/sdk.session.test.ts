@@ -165,7 +165,7 @@ describe("SDKServer.authenticateRequest — passwordChangedAt enforcement", () =
     );
   });
 
-  it("rejects a JWT issued at exactly passwordChangedAt (boundary — revoked)", async () => {
+  it("accepts a JWT issued at exactly passwordChangedAt (boundary — not revoked)", async () => {
     vi.resetModules();
     const { sdk } = await import("./_core/sdk");
 
@@ -186,12 +186,12 @@ describe("SDKServer.authenticateRequest — passwordChangedAt enforcement", () =
       updatedAt: new Date(),
     };
 
-    // iat === passwordChangedAt (in seconds) — should be rejected (< check fails)
+    // iat === passwordChangedAt (in seconds) — should be ACCEPTED because
+    // iat < passwordChangedAtSec is false when they are equal (strict less-than).
     const token = await signJwt("user-4", nowSec);
     const req = await makeRequest(token);
 
-    // iat === passwordChangedAtSec is NOT < passwordChangedAtSec, so it should be ACCEPTED
-    // (we only reject iat strictly LESS THAN passwordChangedAt)
+    // Only iat strictly LESS THAN passwordChangedAt is rejected.
     await expect(sdk.authenticateRequest(req)).resolves.toMatchObject({
       openId: "user-4",
     });

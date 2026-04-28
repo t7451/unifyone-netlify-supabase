@@ -55,8 +55,8 @@ async function checkDatabase(): Promise<{
     // Sanitize: never return raw connection strings or internal DB error details.
     const rawMsg = String(err);
     const safeMsg = rawMsg
-      .replace(/postgresql:\/\/[^\s]*/gi, "postgresql://[redacted]")
-      .replace(/password=[^\s&]*/gi, "password=[redacted]")
+      .replace(/postgresql:\/\/[^)\s]*/gi, "postgresql://[redacted]")
+      .replace(/password=[^\s&)]*/gi, "password=[redacted]")
       .substring(0, 200);
     return { ok: false, latencyMs: Date.now() - t0, error: safeMsg };
   }
