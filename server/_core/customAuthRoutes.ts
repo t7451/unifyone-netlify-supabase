@@ -382,6 +382,8 @@ export async function registerCustomAuthFetchRoutes(
           resourceId: result.user?.openId ?? "",
           severity: "low",
           metadata: { method: "password" },
+          ip: clientIp,
+          userAgent: req.headers.get("user-agent") ?? undefined,
         }).catch(() => {})
       );
 

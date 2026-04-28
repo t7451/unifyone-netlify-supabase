@@ -106,8 +106,17 @@ async function startServer() {
   registerShopifyRoutes(app);
   // Register Square payment + webhook routes (webhook needs raw body for signature verification)
   registerSquareRoutes(app);
-  // 4 MB body limit — sufficient for JSON API payloads. File uploads should
-  // use presigned S3 URLs (storagePut) and never pass file bytes through this server.
+
+  // ── Per-route body size limits ─────────────────────────────────────────────
+  // Auth endpoints get a tighter limit (64 KB) — they only accept JSON
+  // credentials and tokens, never file bytes. This reduces the surface area
+  // for DoS via oversized request bodies on login/signup/reset paths.
+  app.use("/api/auth", express.json({ limit: "64kb" }));
+  app.use("/api/auth", express.urlencoded({ limit: "64kb", extended: false }));
+
+  // Default limit for all other routes: 4 MB — sufficient for JSON API payloads.
+  // File uploads must use presigned S3 URLs (storagePut) and never pass file
+  // bytes through this server.
   app.use(express.json({ limit: "4mb" }));
   app.use(express.urlencoded({ limit: "4mb", extended: true }));
   // Structured request/response logging (attaches X-Request-Id header)
@@ -121,10 +130,23 @@ async function startServer() {
     createExpressMiddleware({
       router: appRouter,
       createContext,
-      onError: ({ error, path }) => {
+      onError: ({ error, path, ctx }) => {
         logger.error(`[tRPC] ${path ?? "unknown"}: ${error.message}`);
         if (error.code === "INTERNAL_SERVER_ERROR") {
-          Sentry.captureException(error);
+          Sentry.withScope(scope => {
+            // Enrich with request-level context so errors are grouped
+            // by tenant and user in the Sentry dashboard.
+            if (ctx?.user) {
+              scope.setUser({
+                id: String(ctx.user.id),
+                email: ctx.user.email ?? undefined,
+              });
+              scope.setTag("tenantId", String(ctx.user.tenantId ?? "none"));
+              scope.setTag("userRole", ctx.user.role);
+            }
+            scope.setTag("trpc.path", path ?? "unknown");
+            Sentry.captureException(error);
+          });
         }
       },
     })
