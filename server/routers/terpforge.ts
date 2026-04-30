@@ -6,9 +6,14 @@
  */
 
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { rateLimitedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { mcpCallTool } from "../lib/mcpClient";
+import { mcpRateLimiter } from "../_core/rateLimiter";
+
+// All procedures proxy to an external Cloudflare MCP worker — rate-limit
+// per user to cap abuse and runaway egress costs.
+const protectedProcedure = rateLimitedProcedure(mcpRateLimiter, "mcp:terp");
 
 export const terpforgeRouter = router({
   listCompounds: protectedProcedure

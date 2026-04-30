@@ -6,16 +6,29 @@
  */
 
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { rateLimitedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { mcpCallTool } from "../lib/mcpClient";
+import { mcpRateLimiter } from "../_core/rateLimiter";
+
+// All procedures proxy to an external Cloudflare MCP worker — rate-limit
+// per user to cap abuse and runaway egress costs.
+const protectedProcedure = rateLimitedProcedure(mcpRateLimiter, "mcp:kg");
 
 export const knowledgeGraphRouter = router({
   queryGraph: protectedProcedure
     .input(
       z.object({
         nodeType: z
-          .enum(["project", "session", "file", "tool", "model", "commit", "author"])
+          .enum([
+            "project",
+            "session",
+            "file",
+            "tool",
+            "model",
+            "commit",
+            "author",
+          ])
           .optional(),
         label: z.string().optional(),
         limit: z.number().int().positive().optional(),
@@ -87,7 +100,9 @@ export const knowledgeGraphRouter = router({
     .input(z.object({ seconds: z.number().int().positive().optional() }))
     .query(async ({ input }) => {
       try {
-        return await mcpCallTool("get_brain_activity", { seconds: input.seconds });
+        return await mcpCallTool("get_brain_activity", {
+          seconds: input.seconds,
+        });
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });

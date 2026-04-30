@@ -137,3 +137,28 @@ export const passwordResetLimiter = createRateLimiter({
   maxAttempts: 3,
   windowMs: 15 * 60 * 1000,
 });
+
+/** LLM-backed endpoints: 20 calls per 5 minutes per user/IP — cost guard. */
+export const llmRateLimiter = createRateLimiter({
+  maxAttempts: 20,
+  windowMs: 5 * 60 * 1000,
+});
+
+/**
+ * Public form/event endpoints (waitlists, leads, analytics relays):
+ * 30 submissions per 5 minutes per IP. Tighter than auth because the
+ * intent is anti-spam, not anti-bruteforce.
+ */
+export const publicFormLimiter = createRateLimiter({
+  maxAttempts: 30,
+  windowMs: 5 * 60 * 1000,
+});
+
+/**
+ * MCP / external worker proxies (knowledge graph, terpforge catalog):
+ * 60 calls per minute per user — generous for UI polling but caps abuse.
+ */
+export const mcpRateLimiter = createRateLimiter({
+  maxAttempts: 60,
+  windowMs: 60 * 1000,
+});

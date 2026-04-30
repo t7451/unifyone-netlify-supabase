@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { adminProcedure, publicProcedure, router } from "../_core/trpc";
+import {
+  adminProcedure,
+  publicRateLimitedProcedure,
+  router,
+} from "../_core/trpc";
+import { publicFormLimiter } from "../_core/rateLimiter";
 import { getDb } from "../db";
 import { leads, n8nWorkflows, zapierHooks } from "../../drizzle/schema";
 import { eq, desc, and } from "drizzle-orm";
@@ -111,8 +116,8 @@ async function fireAutomations(
 }
 
 export const leadsRouter = router({
-  // Public: submit a lead from the landing page wizard
-  submit: publicProcedure
+  // Public: submit a lead from the landing page wizard — IP rate-limited.
+  submit: publicRateLimitedProcedure(publicFormLimiter, "leads:submit")
     .input(
       z.object({
         companyName: z.string().optional(),

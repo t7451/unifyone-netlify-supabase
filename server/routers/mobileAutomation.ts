@@ -1,9 +1,17 @@
 import { z } from "zod";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import {
+  protectedProcedure,
+  publicRateLimitedProcedure,
+  router,
+} from "../_core/trpc";
+import { publicFormLimiter } from "../_core/rateLimiter";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import {
-  n8nSchedules, deepLinkAttributions, metaPixelEvents, mobilePushSchedules,
+  n8nSchedules,
+  deepLinkAttributions,
+  metaPixelEvents,
+  mobilePushSchedules,
 } from "../../drizzle/schema";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
 
@@ -40,26 +48,38 @@ export const mobileAutomationRouter = router({
   }),
 
   createSchedule: protectedProcedure
-    .input(z.object({
-      name: z.string().min(1).max(255),
-      description: z.string().optional(),
-      workflowId: z.string().optional(),
-      webhookUrl: z.string().url().optional(),
-      cronExpression: z.string().min(1).max(100),
-      payload: z.record(z.string(), z.unknown()).optional(),
-    }))
+    .input(
+      z.object({
+        name: z.string().min(1).max(255),
+        description: z.string().optional(),
+        workflowId: z.string().optional(),
+        webhookUrl: z.string().url().optional(),
+        cronExpression: z.string().min(1).max(100),
+        payload: z.record(z.string(), z.unknown()).optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
       const nextRunAt = nextCronDate(input.cronExpression);
       await db.insert(n8nSchedules).values({
         tenantId: ctx.user.id,
         name: input.name,
         cronExpression: input.cronExpression,
         enabled: true,
-        ...(input.description !== undefined ? { description: input.description } : {}),
-        ...(input.workflowId !== undefined ? { workflowId: input.workflowId } : {}),
-        ...(input.webhookUrl !== undefined ? { webhookUrl: input.webhookUrl } : {}),
+        ...(input.description !== undefined
+          ? { description: input.description }
+          : {}),
+        ...(input.workflowId !== undefined
+          ? { workflowId: input.workflowId }
+          : {}),
+        ...(input.webhookUrl !== undefined
+          ? { webhookUrl: input.webhookUrl }
+          : {}),
         ...(input.payload !== undefined ? { payload: input.payload } : {}),
         ...(nextRunAt ? { nextRunAt } : {}),
       });
@@ -67,20 +87,28 @@ export const mobileAutomationRouter = router({
     }),
 
   updateSchedule: protectedProcedure
-    .input(z.object({
-      id: z.number(),
-      name: z.string().min(1).max(255).optional(),
-      description: z.string().optional(),
-      webhookUrl: z.string().url().optional(),
-      cronExpression: z.string().optional(),
-      payload: z.record(z.string(), z.unknown()).optional(),
-      enabled: z.boolean().optional(),
-    }))
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().min(1).max(255).optional(),
+        description: z.string().optional(),
+        webhookUrl: z.string().url().optional(),
+        cronExpression: z.string().optional(),
+        payload: z.record(z.string(), z.unknown()).optional(),
+        enabled: z.boolean().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
       const { id, ...updates } = input;
-      const nextRunAt = updates.cronExpression ? nextCronDate(updates.cronExpression) : undefined;
+      const nextRunAt = updates.cronExpression
+        ? nextCronDate(updates.cronExpression)
+        : undefined;
       await db
         .update(n8nSchedules)
         .set({
@@ -88,7 +116,9 @@ export const mobileAutomationRouter = router({
           ...(nextRunAt ? { nextRunAt } : {}),
           updatedAt: new Date(),
         })
-        .where(and(eq(n8nSchedules.id, id), eq(n8nSchedules.tenantId, ctx.user.id)));
+        .where(
+          and(eq(n8nSchedules.id, id), eq(n8nSchedules.tenantId, ctx.user.id))
+        );
       return { success: true };
     }),
 
@@ -96,10 +126,19 @@ export const mobileAutomationRouter = router({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
       await db
         .delete(n8nSchedules)
-        .where(and(eq(n8nSchedules.id, input.id), eq(n8nSchedules.tenantId, ctx.user.id)));
+        .where(
+          and(
+            eq(n8nSchedules.id, input.id),
+            eq(n8nSchedules.tenantId, ctx.user.id)
+          )
+        );
       return { success: true };
     }),
 
@@ -107,14 +146,31 @@ export const mobileAutomationRouter = router({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
       const [schedule] = await db
         .select()
         .from(n8nSchedules)
-        .where(and(eq(n8nSchedules.id, input.id), eq(n8nSchedules.tenantId, ctx.user.id)))
+        .where(
+          and(
+            eq(n8nSchedules.id, input.id),
+            eq(n8nSchedules.tenantId, ctx.user.id)
+          )
+        )
         .limit(1);
-      if (!schedule) throw new TRPCError({ code: "NOT_FOUND", message: "Schedule not found" });
-      if (!schedule.webhookUrl) throw new TRPCError({ code: "BAD_REQUEST", message: "No webhook URL configured" });
+      if (!schedule)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Schedule not found",
+        });
+      if (!schedule.webhookUrl)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No webhook URL configured",
+        });
 
       let status: "success" | "failed" = "failed";
       let lastError: string | null = null;
@@ -152,24 +208,33 @@ export const mobileAutomationRouter = router({
     }),
 
   // ── Deep Link Attributions ────────────────────────────────────────────────────
-  trackDeepLink: publicProcedure
-    .input(z.object({
-      userId: z.number().optional(),
-      email: z.string().email().optional(),
-      source: z.string().default("unknown"),
-      medium: z.string().optional(),
-      campaign: z.string().optional(),
-      deepLinkPath: z.string().optional(),
-      referralCode: z.string().optional(),
-      utmSource: z.string().optional(),
-      utmMedium: z.string().optional(),
-      utmCampaign: z.string().optional(),
-    }))
+  trackDeepLink: publicRateLimitedProcedure(publicFormLimiter, "mob:deeplink")
+    .input(
+      z.object({
+        userId: z.number().optional(),
+        email: z.string().email().optional(),
+        source: z.string().default("unknown"),
+        medium: z.string().optional(),
+        campaign: z.string().optional(),
+        deepLinkPath: z.string().optional(),
+        referralCode: z.string().optional(),
+        utmSource: z.string().optional(),
+        utmMedium: z.string().optional(),
+        utmCampaign: z.string().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return { success: false };
-      const req = (ctx as { req?: { headers?: { "x-forwarded-for"?: string; "user-agent"?: string } } }).req;
-      const ipAddress = req?.headers?.["x-forwarded-for"]?.split(",")[0]?.trim() ?? undefined;
+      const req = (
+        ctx as {
+          req?: {
+            headers?: { "x-forwarded-for"?: string; "user-agent"?: string };
+          };
+        }
+      ).req;
+      const ipAddress =
+        req?.headers?.["x-forwarded-for"]?.split(",")[0]?.trim() ?? undefined;
       const userAgent = req?.headers?.["user-agent"] ?? undefined;
       await db.insert(deepLinkAttributions).values({
         ...input,
@@ -192,12 +257,15 @@ export const mobileAutomationRouter = router({
     }),
 
   getAttributionStats: protectedProcedure
-    .input(z.object({
-      days: z.number().min(1).max(365).default(30),
-    }))
+    .input(
+      z.object({
+        days: z.number().min(1).max(365).default(30),
+      })
+    )
     .query(async ({ input }) => {
       const db = await getDb();
-      if (!db) return { total: 0, converted: 0, conversionRate: 0, bySource: [] };
+      if (!db)
+        return { total: 0, converted: 0, conversionRate: 0, bySource: [] };
       const since = new Date(Date.now() - input.days * 86400000);
       const rows = await db
         .select()
@@ -206,30 +274,39 @@ export const mobileAutomationRouter = router({
 
       const total = rows.length;
       const converted = rows.filter(r => r.converted).length;
-      const conversionRate = total > 0 ? Math.round((converted / total) * 1000) / 10 : 0;
+      const conversionRate =
+        total > 0 ? Math.round((converted / total) * 1000) / 10 : 0;
 
       // Group by source
-      const sourceMap: Record<string, { total: number; converted: number }> = {};
+      const sourceMap: Record<string, { total: number; converted: number }> =
+        {};
       for (const r of rows) {
         const src = r.source ?? "unknown";
         if (!sourceMap[src]) sourceMap[src] = { total: 0, converted: 0 };
         sourceMap[src].total++;
         if (r.converted) sourceMap[src].converted++;
       }
-      const bySource = Object.entries(sourceMap).map(([source, stats]) => ({
-        source,
-        ...stats,
-        rate: stats.total > 0 ? Math.round((stats.converted / stats.total) * 1000) / 10 : 0,
-      })).sort((a, b) => b.total - a.total);
+      const bySource = Object.entries(sourceMap)
+        .map(([source, stats]) => ({
+          source,
+          ...stats,
+          rate:
+            stats.total > 0
+              ? Math.round((stats.converted / stats.total) * 1000) / 10
+              : 0,
+        }))
+        .sort((a, b) => b.total - a.total);
 
       return { total, converted, conversionRate, bySource };
     }),
 
   listAttributions: protectedProcedure
-    .input(z.object({
-      limit: z.number().min(1).max(100).default(20),
-      offset: z.number().min(0).default(0),
-    }))
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).default(20),
+        offset: z.number().min(0).default(0),
+      })
+    )
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return { rows: [], total: 0 };
@@ -247,10 +324,12 @@ export const mobileAutomationRouter = router({
 
   // ── CAPI Event Log ────────────────────────────────────────────────────────────
   listCapiEvents: protectedProcedure
-    .input(z.object({
-      limit: z.number().min(1).max(100).default(20),
-      offset: z.number().min(0).default(0),
-    }))
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).default(20),
+        offset: z.number().min(0).default(0),
+      })
+    )
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return { events: [], total: 0 };
@@ -297,27 +376,49 @@ export const mobileAutomationRouter = router({
   }),
 
   createPushSchedule: protectedProcedure
-    .input(z.object({
-      title: z.string().min(1).max(255),
-      body: z.string().min(1),
-      targetAudience: z.enum(["all", "active_users", "inactive_users", "new_users", "custom"]).default("all"),
-      scheduledAt: z.string().datetime().optional(),
-      cronExpression: z.string().max(100).optional(),
-      recurring: z.boolean().default(false),
-      deepLinkPath: z.string().max(500).optional(),
-      imageUrl: z.string().url().optional(),
-    }))
+    .input(
+      z.object({
+        title: z.string().min(1).max(255),
+        body: z.string().min(1),
+        targetAudience: z
+          .enum([
+            "all",
+            "active_users",
+            "inactive_users",
+            "new_users",
+            "custom",
+          ])
+          .default("all"),
+        scheduledAt: z.string().datetime().optional(),
+        cronExpression: z.string().max(100).optional(),
+        recurring: z.boolean().default(false),
+        deepLinkPath: z.string().max(500).optional(),
+        imageUrl: z.string().url().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-      const status = input.recurring ? "recurring" as const : input.scheduledAt ? "scheduled" as const : "draft" as const;
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
+      const status = input.recurring
+        ? ("recurring" as const)
+        : input.scheduledAt
+          ? ("scheduled" as const)
+          : ("draft" as const);
       await db.insert(mobilePushSchedules).values({
         tenantId: ctx.user.id,
         title: input.title,
         body: input.body,
         targetAudience: input.targetAudience,
-        ...(input.scheduledAt ? { scheduledAt: new Date(input.scheduledAt) } : {}),
-        ...(input.cronExpression ? { cronExpression: input.cronExpression } : {}),
+        ...(input.scheduledAt
+          ? { scheduledAt: new Date(input.scheduledAt) }
+          : {}),
+        ...(input.cronExpression
+          ? { cronExpression: input.cronExpression }
+          : {}),
         recurring: input.recurring,
         ...(input.deepLinkPath ? { deepLinkPath: input.deepLinkPath } : {}),
         ...(input.imageUrl ? { imageUrl: input.imageUrl } : {}),
@@ -328,20 +429,34 @@ export const mobileAutomationRouter = router({
     }),
 
   updatePushSchedule: protectedProcedure
-    .input(z.object({
-      id: z.number(),
-      title: z.string().min(1).max(255).optional(),
-      body: z.string().min(1).optional(),
-      targetAudience: z.enum(["all", "active_users", "inactive_users", "new_users", "custom"]).optional(),
-      scheduledAt: z.string().datetime().optional(),
-      cronExpression: z.string().max(100).optional(),
-      recurring: z.boolean().optional(),
-      deepLinkPath: z.string().max(500).optional(),
-      enabled: z.boolean().optional(),
-    }))
+    .input(
+      z.object({
+        id: z.number(),
+        title: z.string().min(1).max(255).optional(),
+        body: z.string().min(1).optional(),
+        targetAudience: z
+          .enum([
+            "all",
+            "active_users",
+            "inactive_users",
+            "new_users",
+            "custom",
+          ])
+          .optional(),
+        scheduledAt: z.string().datetime().optional(),
+        cronExpression: z.string().max(100).optional(),
+        recurring: z.boolean().optional(),
+        deepLinkPath: z.string().max(500).optional(),
+        enabled: z.boolean().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
       const { id, scheduledAt, ...updates } = input;
       await db
         .update(mobilePushSchedules)
@@ -350,7 +465,12 @@ export const mobileAutomationRouter = router({
           ...(scheduledAt ? { scheduledAt: new Date(scheduledAt) } : {}),
           updatedAt: new Date(),
         })
-        .where(and(eq(mobilePushSchedules.id, id), eq(mobilePushSchedules.tenantId, ctx.user.id)));
+        .where(
+          and(
+            eq(mobilePushSchedules.id, id),
+            eq(mobilePushSchedules.tenantId, ctx.user.id)
+          )
+        );
       return { success: true };
     }),
 
@@ -358,10 +478,19 @@ export const mobileAutomationRouter = router({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
       await db
         .delete(mobilePushSchedules)
-        .where(and(eq(mobilePushSchedules.id, input.id), eq(mobilePushSchedules.tenantId, ctx.user.id)));
+        .where(
+          and(
+            eq(mobilePushSchedules.id, input.id),
+            eq(mobilePushSchedules.tenantId, ctx.user.id)
+          )
+        );
       return { success: true };
     }),
 
@@ -369,13 +498,26 @@ export const mobileAutomationRouter = router({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
       const [schedule] = await db
         .select()
         .from(mobilePushSchedules)
-        .where(and(eq(mobilePushSchedules.id, input.id), eq(mobilePushSchedules.tenantId, ctx.user.id)))
+        .where(
+          and(
+            eq(mobilePushSchedules.id, input.id),
+            eq(mobilePushSchedules.tenantId, ctx.user.id)
+          )
+        )
         .limit(1);
-      if (!schedule) throw new TRPCError({ code: "NOT_FOUND", message: "Push schedule not found" });
+      if (!schedule)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Push schedule not found",
+        });
 
       // In production this would call FCM/APNs. For now, mark as sent.
       await db

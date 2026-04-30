@@ -4,9 +4,10 @@ import { desc, eq } from "drizzle-orm";
 import {
   adminProcedure,
   protectedProcedure,
-  publicProcedure,
+  publicRateLimitedProcedure,
   router,
 } from "../_core/trpc";
+import { publicFormLimiter } from "../_core/rateLimiter";
 import { getDb } from "../db";
 import { metaPixelEvents } from "../../drizzle/schema";
 import { sendCAPIEvent, capi, type CAPIUserData } from "../meta/capi";
@@ -82,7 +83,7 @@ export const metaRouter = router({
    * Generic CAPI relay — receives event data from client Pixel hook
    * and forwards server-side for deduplication.
    */
-  relayEvent: publicProcedure
+  relayEvent: publicRateLimitedProcedure(publicFormLimiter, "meta:relay")
     .input(
       z.object({
         eventName: z.string().min(1).max(100),
@@ -175,7 +176,7 @@ export const metaRouter = router({
   /**
    * Fire a Lead CAPI event — typically called after a lead form submission.
    */
-  fireLead: publicProcedure
+  fireLead: publicRateLimitedProcedure(publicFormLimiter, "meta:lead")
     .input(
       z.object({
         eventId: z.string().min(1),

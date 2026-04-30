@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { publicProcedure, router } from "../_core/trpc";
+import {
+  publicProcedure,
+  publicRateLimitedProcedure,
+  router,
+} from "../_core/trpc";
+import { publicFormLimiter } from "../_core/rateLimiter";
 import { getDb } from "../db";
 import { emailSubscribers } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -24,7 +29,7 @@ export const emailRouter = router({
    * - Schedules welcome email via Resend
    * - Returns success/error response
    */
-  capture: publicProcedure
+  capture: publicRateLimitedProcedure(publicFormLimiter, "email:capture")
     .input(
       z.object({
         email: z.string().email("Invalid email address"),
@@ -103,7 +108,7 @@ export const emailRouter = router({
   /**
    * Unsubscribe an email
    */
-  unsubscribe: publicProcedure
+  unsubscribe: publicRateLimitedProcedure(publicFormLimiter, "email:unsub")
     .input(z.object({ email: z.string().email() }))
     .mutation(async ({ input }) => {
       try {
