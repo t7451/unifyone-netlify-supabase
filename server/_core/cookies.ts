@@ -30,16 +30,25 @@ export function getSessionCookieOptions(
   const isLocal =
     !hostname || LOCAL_HOSTS.has(hostname) || isIpAddress(hostname);
 
-  // Prefer explicit COOKIE_DOMAIN env var; fall back to auto-detecting from
-  // the request hostname for production requests.
+  // Cookie domain resolution:
+  //   * Explicit COOKIE_DOMAIN env var wins (required in production — the
+  //     startup validator refuses to boot without it).
+  //   * In local dev only, auto-derive from the request hostname so devs
+  //     don't need to set the env var. This intentionally does NOT happen
+  //     in production: the previous auto-derivation prepended a dot to the
+  //     request hostname, which on Netlify deploy previews scoped the
+  //     cookie to `.<branch>--app.netlify.app` and leaked sessions to
+  //     sibling preview branches.
   let domain: string | undefined;
   if (ENV.cookieDomain) {
     domain = ENV.cookieDomain;
-  } else if (!isLocal) {
-    // Prepend a dot so the cookie is valid for the apex domain and all
-    // first-party subdomains (e.g. .1commerce.online).
+  } else if (!isLocal && !ENV.isProduction) {
     domain = hostname.startsWith(".") ? hostname : `.${hostname}`;
   }
+  // In production with no COOKIE_DOMAIN (shouldn't happen — validateEnv
+  // throws — but defense in depth), leave domain undefined so the cookie
+  // is host-locked to the exact request host instead of leaking to
+  // siblings.
 
   return {
     domain,
