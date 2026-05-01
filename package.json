@@ -25,6 +25,7 @@
     "@clerk/clerk-react": "5.61.3",
     "@hookform/resolvers": "^5.2.2",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@netlify/blobs": "^9.1.0",
     "@neondatabase/serverless": "^1.0.2",
     "@paypal/paypal-server-sdk": "^2.2.0",
     "@plausible-analytics/tracker": "^0.4.4",
