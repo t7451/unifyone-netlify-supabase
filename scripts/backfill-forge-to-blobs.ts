@@ -50,7 +50,11 @@ function parseArgs(): Args {
     else if (raw.startsWith("--manifest=")) a.manifest = raw.slice(11);
     else if (raw.startsWith("--store=")) a.store = raw.slice(8);
     else if (raw.startsWith("--concurrency=")) {
-      a.concurrency = Math.max(1, parseInt(raw.slice(14), 10));
+      const parsed = Number(raw.slice(14));
+      if (!Number.isInteger(parsed) || parsed < 1) {
+        throw new Error("--concurrency must be a positive integer");
+      }
+      a.concurrency = parsed;
     }
   }
   return a;
@@ -70,9 +74,31 @@ async function readManifest(path?: string): Promise<Entry[]> {
   if (!Array.isArray(parsed)) {
     throw new Error("Manifest must be a JSON array");
   }
-  return parsed.map((item: string | Entry) =>
-    typeof item === "string" ? { key: item } : item
-  );
+  return parsed.map((item: unknown, index: number): Entry => {
+    if (typeof item === "string") {
+      if (item.length === 0) {
+        throw new Error(`Manifest entry at index ${index} has empty key`);
+      }
+      return { key: item };
+    }
+    if (
+      item &&
+      typeof item === "object" &&
+      "key" in item &&
+      typeof (item as { key: unknown }).key === "string" &&
+      (item as { key: string }).key.length > 0
+    ) {
+      const key = (item as { key: string }).key;
+      const ct = (item as { contentType?: unknown }).contentType;
+      return {
+        key,
+        contentType: typeof ct === "string" ? ct : undefined,
+      };
+    }
+    throw new Error(
+      `Manifest entry at index ${index} must be a non-empty string or { key: string, contentType?: string }`
+    );
+  });
 }
 
 async function forgeDownload(key: string): Promise<{
@@ -84,16 +110,20 @@ async function forgeDownload(key: string): Promise<{
   if (!baseUrl || !apiKey) {
     throw new Error("Missing BUILT_IN_FORGE_API_URL / BUILT_IN_FORGE_API_KEY");
   }
+  const timeoutMs = 30_000;
   const urlReq = new URL(`${baseUrl}/v1/storage/downloadUrl`);
   urlReq.searchParams.set("path", key);
   const urlRes = await fetch(urlReq, {
     headers: { Authorization: `Bearer ${apiKey}` },
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!urlRes.ok) {
     throw new Error(`forge downloadUrl ${urlRes.status} for ${key}`);
   }
   const { url } = (await urlRes.json()) as { url: string };
-  const objRes = await fetch(url);
+  const objRes = await fetch(url, {
+    signal: AbortSignal.timeout(timeoutMs),
+  });
   if (!objRes.ok) {
     throw new Error(`forge GET ${objRes.status} for ${key}`);
   }
@@ -120,11 +150,11 @@ async function migrateOne(
       if (existing)
         return { key: entry.key, status: "skipped", reason: "exists" };
     }
-    const { body, contentType } = await forgeDownload(entry.key);
-    const ct = entry.contentType ?? contentType;
     if (args.dryRun) {
       return { key: entry.key, status: "skipped", reason: "dry-run" };
     }
+    const { body, contentType } = await forgeDownload(entry.key);
+    const ct = entry.contentType ?? contentType;
     await store.set(entry.key, new Blob([body], { type: ct }), {
       metadata: { contentType: ct },
     });
