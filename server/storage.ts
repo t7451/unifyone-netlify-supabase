@@ -1,9 +1,77 @@
-// Preconfigured storage helpers for UnifyOne
-// Uses the Biz-provided storage proxy (Authorization: Bearer <token>)
+// Storage helpers for UnifyOne.
+//
+// Supports three backends, selected via STORAGE_BACKEND env var:
+//   - "blobs"  → Netlify Blobs (default when running on Netlify)
+//   - "forge"  → Biz-provided storage proxy (legacy default)
+//   - "auto"   → Blobs when NETLIFY=true, else forge (default)
+//
+// All backends expose the same {key, url} contract so callers
+// (imageGeneration.ts, clipperWorker.ts, etc.) don't need to change.
 
-import { ENV } from './_core/env';
+import { getStore, type Store } from "@netlify/blobs";
+import { ENV } from "./_core/env";
 
 type StorageConfig = { baseUrl: string; apiKey: string };
+
+type Backend = "blobs" | "forge";
+
+function selectBackend(): Backend {
+  const explicit = (process.env.STORAGE_BACKEND ?? "auto").toLowerCase();
+  if (explicit === "blobs" || explicit === "forge") return explicit;
+  // auto: prefer Blobs when running under Netlify
+  if (process.env.NETLIFY === "true" || process.env.NETLIFY_BLOBS_CONTEXT) {
+    return "blobs";
+  }
+  // fall back to forge if its credentials are present, else still try blobs
+  if (ENV.forgeApiUrl && ENV.forgeApiKey) return "forge";
+  return "blobs";
+}
+
+// ---------- Netlify Blobs backend ----------
+
+const DEFAULT_STORE = process.env.NETLIFY_BLOBS_STORE ?? "uploads";
+
+function blobStore(): Store {
+  // siteID/token are auto-injected when running in a Netlify function;
+  // for local dev the @netlify/blobs SDK uses a sandboxed local store.
+  const siteID = process.env.NETLIFY_SITE_ID ?? process.env.SITE_ID;
+  const token =
+    process.env.NETLIFY_BLOBS_TOKEN ?? process.env.NETLIFY_AUTH_TOKEN;
+  if (siteID && token) {
+    return getStore({ name: DEFAULT_STORE, siteID, token });
+  }
+  return getStore(DEFAULT_STORE);
+}
+
+function publicBlobUrl(key: string): string {
+  // Served via a Netlify function (see netlify/functions/blobs-serve.mts).
+  // Image CDN can transform via /.netlify/images?url=/blobs/<key>&w=...
+  return `/blobs/${encodeURI(key)}`;
+}
+
+async function blobsPut(
+  relKey: string,
+  data: Buffer | Uint8Array | string,
+  contentType: string
+): Promise<{ key: string; url: string }> {
+  const key = normalizeKey(relKey);
+  const store = blobStore();
+  const value =
+    typeof data === "string"
+      ? data
+      : new Blob([data as unknown as ArrayBuffer], { type: contentType });
+  await store.set(key, value as Blob | string, {
+    metadata: { contentType },
+  });
+  return { key, url: publicBlobUrl(key) };
+}
+
+async function blobsGet(relKey: string): Promise<{ key: string; url: string }> {
+  const key = normalizeKey(relKey);
+  return { key, url: publicBlobUrl(key) };
+}
+
+// ---------- Forge proxy backend (legacy) ----------
 
 function getStorageConfig(): StorageConfig {
   const baseUrl = ENV.forgeApiUrl;
@@ -57,7 +125,7 @@ function toFormData(
   const blob =
     typeof data === "string"
       ? new Blob([data], { type: contentType })
-      : new Blob([data as any], { type: contentType });
+      : new Blob([data as unknown as ArrayBuffer], { type: contentType });
   const form = new FormData();
   form.append("file", blob, fileName || "file");
   return form;
@@ -67,10 +135,10 @@ function buildAuthHeaders(apiKey: string): HeadersInit {
   return { Authorization: `Bearer ${apiKey}` };
 }
 
-export async function storagePut(
+async function forgePut(
   relKey: string,
   data: Buffer | Uint8Array | string,
-  contentType = "application/octet-stream"
+  contentType: string
 ): Promise<{ key: string; url: string }> {
   const { baseUrl, apiKey } = getStorageConfig();
   const key = normalizeKey(relKey);
@@ -92,11 +160,48 @@ export async function storagePut(
   return { key, url };
 }
 
-export async function storageGet(relKey: string): Promise<{ key: string; url: string; }> {
+async function forgeGet(relKey: string): Promise<{ key: string; url: string }> {
   const { baseUrl, apiKey } = getStorageConfig();
   const key = normalizeKey(relKey);
   return {
     key,
     url: await buildDownloadUrl(baseUrl, key, apiKey),
   };
+}
+
+// ---------- Public API ----------
+
+export async function storagePut(
+  relKey: string,
+  data: Buffer | Uint8Array | string,
+  contentType = "application/octet-stream"
+): Promise<{ key: string; url: string }> {
+  const backend = selectBackend();
+  return backend === "blobs"
+    ? blobsPut(relKey, data, contentType)
+    : forgePut(relKey, data, contentType);
+}
+
+export async function storageGet(
+  relKey: string
+): Promise<{ key: string; url: string }> {
+  const backend = selectBackend();
+  return backend === "blobs" ? blobsGet(relKey) : forgeGet(relKey);
+}
+
+/**
+ * Returns the raw bytes of a stored object. Currently only implemented for
+ * the Blobs backend — used by the /blobs/* serving function.
+ */
+export async function storageGetStream(
+  relKey: string
+): Promise<{ body: ReadableStream | null; contentType: string } | null> {
+  const key = normalizeKey(relKey);
+  const store = blobStore();
+  const result = await store.getWithMetadata(key, { type: "stream" });
+  if (!result) return null;
+  const contentType =
+    (result.metadata?.contentType as string | undefined) ??
+    "application/octet-stream";
+  return { body: result.data as ReadableStream | null, contentType };
 }
