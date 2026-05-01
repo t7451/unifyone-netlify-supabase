@@ -94,8 +94,12 @@ const mockDb = {
   })),
 };
 
-vi.mock("../db", () => ({
-  getDb: vi.fn().mockResolvedValue(mockDb),
+// customAuth.ts has its own internal getDb() that dynamically imports neon
+// + drizzle, so mock those modules directly (the previous "../db" mock was
+// a no-op because customAuth doesn't import from "./db").
+vi.mock("@neondatabase/serverless", () => ({ neon: vi.fn(() => ({})) }));
+vi.mock("drizzle-orm/neon-http", () => ({
+  drizzle: vi.fn(() => mockDb),
 }));
 
 vi.mock("./_core/sdk", () => ({
@@ -165,18 +169,20 @@ describe("issueRefreshToken", () => {
     vi.clearAllMocks();
     mockDb.delete.mockReturnValue({ where: vi.fn(() => Promise.resolve()) });
     mockDb.insert.mockReturnValue({
-      values: vi.fn((vals: Omit<StoredToken, "id" | "lastUsedAt" | "createdAt">) => {
-        _state.tokens.push({
-          id: _state.nextId++,
-          lastUsedAt: new Date(),
-          createdAt: new Date(),
-          revokedAt: vals.revokedAt ?? null,
-          ipAddress: vals.ipAddress ?? null,
-          userAgent: vals.userAgent ?? null,
-          ...vals,
-        });
-        return Promise.resolve();
-      }),
+      values: vi.fn(
+        (vals: Omit<StoredToken, "id" | "lastUsedAt" | "createdAt">) => {
+          _state.tokens.push({
+            id: _state.nextId++,
+            lastUsedAt: new Date(),
+            createdAt: new Date(),
+            revokedAt: vals.revokedAt ?? null,
+            ipAddress: vals.ipAddress ?? null,
+            userAgent: vals.userAgent ?? null,
+            ...vals,
+          });
+          return Promise.resolve();
+        }
+      ),
     });
   });
 
@@ -292,18 +298,20 @@ describe("rotateRefreshToken", () => {
 
     // insert for new refresh token
     mockDb.insert.mockReturnValue({
-      values: vi.fn((vals: Omit<StoredToken, "id" | "lastUsedAt" | "createdAt">) => {
-        _state.tokens.push({
-          id: _state.nextId++,
-          lastUsedAt: new Date(),
-          createdAt: new Date(),
-          revokedAt: null,
-          ipAddress: vals.ipAddress ?? null,
-          userAgent: vals.userAgent ?? null,
-          ...vals,
-        });
-        return Promise.resolve();
-      }),
+      values: vi.fn(
+        (vals: Omit<StoredToken, "id" | "lastUsedAt" | "createdAt">) => {
+          _state.tokens.push({
+            id: _state.nextId++,
+            lastUsedAt: new Date(),
+            createdAt: new Date(),
+            revokedAt: null,
+            ipAddress: vals.ipAddress ?? null,
+            userAgent: vals.userAgent ?? null,
+            ...vals,
+          });
+          return Promise.resolve();
+        }
+      ),
     });
 
     const result = await rotateRefreshToken("valid-raw-token");

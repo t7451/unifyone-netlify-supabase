@@ -6,31 +6,106 @@ import type { TrpcContext } from "./_core/context";
 vi.mock("./db", () => ({
   getTenantByOwnerId: vi.fn().mockResolvedValue(null),
   getTenantById: vi.fn().mockResolvedValue(null),
-  createTenant: vi.fn().mockResolvedValue({ id: 1, name: "Test Store", slug: "test-store", status: "active", planId: 1, ownerId: 1, createdAt: new Date(), updatedAt: new Date() }),
+  getTenantBySlug: vi.fn().mockResolvedValue(null),
+  createTenant: vi
+    .fn()
+    .mockResolvedValue({
+      id: 1,
+      name: "Test Store",
+      slug: "test-store",
+      status: "active",
+      planId: 1,
+      ownerId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }),
   updateTenant: vi.fn().mockResolvedValue(undefined),
   getProducts: vi.fn().mockResolvedValue([]),
   getProductById: vi.fn().mockResolvedValue(null),
-  createProduct: vi.fn().mockResolvedValue({ id: 1, name: "Test Product", price: "29.99", tenantId: 1, status: "active", createdAt: new Date(), updatedAt: new Date() }),
+  createProduct: vi
+    .fn()
+    .mockResolvedValue({
+      id: 1,
+      name: "Test Product",
+      price: "29.99",
+      tenantId: 1,
+      status: "active",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }),
   updateProduct: vi.fn().mockResolvedValue(undefined),
   deleteProduct: vi.fn().mockResolvedValue(undefined),
   getOrders: vi.fn().mockResolvedValue([]),
   getOrderById: vi.fn().mockResolvedValue(null),
-  createOrder: vi.fn().mockResolvedValue({ id: 1, orderNumber: "ORD-001", status: "pending", total: "29.99", tenantId: 1, createdAt: new Date(), updatedAt: new Date() }),
+  createOrder: vi
+    .fn()
+    .mockResolvedValue({
+      id: 1,
+      orderNumber: "ORD-001",
+      status: "pending",
+      total: "29.99",
+      tenantId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }),
   updateOrderStatus: vi.fn().mockResolvedValue(undefined),
   getCustomers: vi.fn().mockResolvedValue([]),
-  getAnalyticsSummary: vi.fn().mockResolvedValue({ totalRevenue: "0", orderCount: 0, customerCount: 0, productCount: 0 }),
+  getAnalyticsSummary: vi
+    .fn()
+    .mockResolvedValue({
+      totalRevenue: "0",
+      orderCount: 0,
+      customerCount: 0,
+      productCount: 0,
+    }),
   getRevenueByDay: vi.fn().mockResolvedValue([]),
   getTopProducts: vi.fn().mockResolvedValue([]),
   getWebhookEvents: vi.fn().mockResolvedValue([]),
   getPlans: vi.fn().mockResolvedValue([
-    { id: 1, name: "Starter", slug: "starter", price: "0", maxProducts: 50, maxOrders: 100, maxUsers: 1, features: null, createdAt: new Date() },
-    { id: 2, name: "Pro", slug: "pro", price: "49", maxProducts: 500, maxOrders: 1000, maxUsers: 5, features: null, createdAt: new Date() },
-    { id: 3, name: "Enterprise", slug: "enterprise", price: "199", maxProducts: 9999, maxOrders: 99999, maxUsers: 25, features: null, createdAt: new Date() },
+    {
+      id: 1,
+      name: "Starter",
+      slug: "starter",
+      price: "0",
+      maxProducts: 50,
+      maxOrders: 100,
+      maxUsers: 1,
+      features: null,
+      createdAt: new Date(),
+    },
+    {
+      id: 2,
+      name: "Pro",
+      slug: "pro",
+      price: "49",
+      maxProducts: 500,
+      maxOrders: 1000,
+      maxUsers: 5,
+      features: null,
+      createdAt: new Date(),
+    },
+    {
+      id: 3,
+      name: "Enterprise",
+      slug: "enterprise",
+      price: "199",
+      maxProducts: 9999,
+      maxOrders: 99999,
+      maxUsers: 25,
+      features: null,
+      createdAt: new Date(),
+    },
   ]),
   upsertUser: vi.fn().mockResolvedValue(undefined),
   getUserByOpenId: vi.fn().mockResolvedValue(undefined),
   logWebhookEvent: vi.fn().mockResolvedValue(undefined),
-  getIntegrationStatus: vi.fn().mockResolvedValue({ stripe: { connected: false }, shopify: { connected: false, shopDomain: null }, n8n: { configured: false, webhookUrl: null } }),
+  getIntegrationStatus: vi
+    .fn()
+    .mockResolvedValue({
+      stripe: { connected: false },
+      shopify: { connected: false, shopDomain: null },
+      n8n: { configured: false, webhookUrl: null },
+    }),
   getTenantsByOwner: vi.fn().mockResolvedValue([]),
   getAllTenants: vi.fn().mockResolvedValue([]),
   updateUserTenant: vi.fn().mockResolvedValue(undefined),
@@ -41,7 +116,16 @@ vi.mock("./db", () => ({
   getInventory: vi.fn().mockResolvedValue([]),
   getLowStockProducts: vi.fn().mockResolvedValue([]),
   upsertInventory: vi.fn().mockResolvedValue(undefined),
-  createCategory: vi.fn().mockResolvedValue({ id: 1, name: "Test", slug: "test", tenantId: 1, parentId: null, createdAt: new Date() }),
+  createCategory: vi
+    .fn()
+    .mockResolvedValue({
+      id: 1,
+      name: "Test",
+      slug: "test",
+      tenantId: 1,
+      parentId: null,
+      createdAt: new Date(),
+    }),
 }));
 
 function makeCtx(overrides: Partial<TrpcContext> = {}): TrpcContext {
@@ -101,24 +185,55 @@ describe("tenant router", () => {
   it("creates a new tenant", async () => {
     const ctx = makeCtx();
     const { getTenantsByOwner } = await import("./db");
-    vi.mocked(getTenantsByOwner).mockResolvedValueOnce([{
-      id: 1, name: "Test Store", slug: "test-store", status: "active" as const, planId: 1, ownerId: 1,
-      domain: null, logoUrl: null, stripeCustomerId: null, stripeSubscriptionId: null,
-      stripePriceId: null, shopifyShopDomain: null, shopifyAccessToken: null,
-      shopifySyncEnabled: false, n8nWebhookUrl: null, createdAt: new Date(), updatedAt: new Date()
-    }]);
+    vi.mocked(getTenantsByOwner).mockResolvedValueOnce([
+      {
+        id: 1,
+        name: "Test Store",
+        slug: "test-store",
+        status: "active" as const,
+        planId: 1,
+        ownerId: 1,
+        domain: null,
+        logoUrl: null,
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        stripePriceId: null,
+        shopifyShopDomain: null,
+        shopifyAccessToken: null,
+        shopifySyncEnabled: false,
+        n8nWebhookUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
     const caller = appRouter.createCaller(ctx);
-    const tenant = await caller.tenant.create({ name: "Test Store", slug: "test-store" });
+    const tenant = await caller.tenant.create({
+      name: "Test Store",
+      slug: "test-store",
+    });
     expect(tenant).toBeDefined();
     expect(tenant?.name).toBe("Test Store");
   });
 });
 
 const mockTenant = {
-  id: 1, name: "Test", slug: "test", status: "active" as const, planId: 1, ownerId: 1,
-  domain: null, logoUrl: null, stripeCustomerId: null, stripeSubscriptionId: null,
-  stripePriceId: null, shopifyShopDomain: null, shopifyAccessToken: null,
-  shopifySyncEnabled: false, n8nWebhookUrl: null, createdAt: new Date(), updatedAt: new Date()
+  id: 1,
+  name: "Test",
+  slug: "test",
+  status: "active" as const,
+  planId: 1,
+  ownerId: 1,
+  domain: null,
+  logoUrl: null,
+  stripeCustomerId: null,
+  stripeSubscriptionId: null,
+  stripePriceId: null,
+  shopifyShopDomain: null,
+  shopifyAccessToken: null,
+  shopifySyncEnabled: false,
+  n8nWebhookUrl: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 describe("analytics router", () => {
