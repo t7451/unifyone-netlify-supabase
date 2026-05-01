@@ -16,6 +16,7 @@ import {
   createCategory,
 } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
+import { setEdgeCache, EDGE_CACHE } from "../_core/cacheControl";
 
 const googleOAuthInputSchema = z.object({
   enabled: z.boolean(),
@@ -172,7 +173,8 @@ export const tenantRouter = router({
           );
         }
 
-        const isUniqueViolation = codeIsUniqueViolation || messageIsUniqueViolation;
+        const isUniqueViolation =
+          codeIsUniqueViolation || messageIsUniqueViolation;
         if (isUniqueViolation) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -189,7 +191,8 @@ export const tenantRouter = router({
       if (!newTenant) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Store was created but could not be retrieved. Please refresh and try again.",
+          message:
+            "Store was created but could not be retrieved. Please refresh and try again.",
         });
       }
       await updateUserTenant(ctx.user.id, newTenant.id);
@@ -234,8 +237,9 @@ export const tenantRouter = router({
       return getTenantById(id);
     }),
 
-  // Get subscription plans
-  getPlans: protectedProcedure.query(async () => {
+  // Get subscription plans — cached at the Netlify edge for 1h (SWR 24h).
+  getPlans: protectedProcedure.query(async ({ ctx }) => {
+    setEdgeCache(ctx.res, EDGE_CACHE.public_long);
     return getPlans();
   }),
 
