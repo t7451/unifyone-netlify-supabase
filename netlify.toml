@@ -125,6 +125,7 @@
 [images]
   remote_images = [
     "^/blobs/.*",
+    "^https://github\\.com/user-attachments/.*",
   ]
 
 # Recommended Netlify extensions (install via Netlify UI → Extensions):

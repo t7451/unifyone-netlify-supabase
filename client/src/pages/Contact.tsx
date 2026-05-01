@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { trpc } from "@/lib/trpc";
 import PublicLayout from "@/components/PublicLayout";
+import { CdnImage } from "@/components/CdnImage";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/contact`;
@@ -50,17 +51,23 @@ export default function Contact() {
       });
       if (res.success) {
         setStatus("sent");
-        setFeedback("Your message was received. We'll respond within one business day.");
+        setFeedback(
+          "Your message was received. We'll respond within one business day."
+        );
         setName("");
         setEmail("");
         setMessage("");
       } else {
         setStatus("error");
-        setFeedback("Something went wrong. Please email us directly at hello@1commerce.online");
+        setFeedback(
+          "Something went wrong. Please email us directly at hello@1commerce.online"
+        );
       }
     } catch {
       setStatus("error");
-      setFeedback("Something went wrong. Please email us directly at hello@1commerce.online");
+      setFeedback(
+        "Something went wrong. Please email us directly at hello@1commerce.online"
+      );
     }
   };
 
@@ -124,17 +131,21 @@ export default function Contact() {
             rel="noopener noreferrer"
             className="group flex-shrink-0"
           >
-            <img
+            <CdnImage
               src="https://github.com/user-attachments/assets/6dbb3057-6f53-4fcd-9d50-edff38133fed"
               alt="Follow @1COMMERCE_LLC on Instagram — scan QR code"
               width={100}
               height={100}
+              fit="cover"
               className="rounded-lg opacity-80 group-hover:opacity-100 transition-opacity duration-300"
               style={{ imageRendering: "pixelated" }}
             />
           </a>
           <div>
-            <span className="inscription block mb-2" style={{ color: "#D4A843" }}>
+            <span
+              className="inscription block mb-2"
+              style={{ color: "#D4A843" }}
+            >
               INSTAGRAM
             </span>
             <a
@@ -143,13 +154,21 @@ export default function Contact() {
               rel="noopener noreferrer"
               className="font-cinzel text-sm tracking-widest transition-colors duration-200"
               style={{ color: "#8A8A8A", letterSpacing: "0.15em" }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#D4A843"}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#8A8A8A"}
+              onMouseEnter={e =>
+                ((e.currentTarget as HTMLElement).style.color = "#D4A843")
+              }
+              onMouseLeave={e =>
+                ((e.currentTarget as HTMLElement).style.color = "#8A8A8A")
+              }
             >
               @1COMMERCE_LLC
             </a>
-            <p className="font-crimson text-sm mt-1" style={{ color: "#5A5A5A", fontStyle: "italic" }}>
-              Scan to follow — behind-the-scenes builds, product updates, and operator content.
+            <p
+              className="font-crimson text-sm mt-1"
+              style={{ color: "#5A5A5A", fontStyle: "italic" }}
+            >
+              Scan to follow — behind-the-scenes builds, product updates, and
+              operator content.
             </p>
           </div>
         </div>
