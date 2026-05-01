@@ -1,9 +1,8 @@
 # Netlify Blobs Integration
 
-This project uses **Netlify Blobs** as its primary object store for
-user-generated and AI-generated content (product images, generated images,
-clipper outputs, etc.). It replaces the legacy "forge" storage proxy as the
-default backend on Netlify deployments.
+This project uses **Netlify Blobs** as its object store for user-generated
+and AI-generated content (product images, generated images, clipper
+outputs, etc.).
 
 ## Architecture
 
@@ -11,32 +10,25 @@ default backend on Netlify deployments.
 caller (imageGeneration.ts, clipperWorker.ts, ...)
    │
    ▼
-server/storage.ts            ← shared {key, url} interface
-   │
-   ├── Netlify Blobs   (default on Netlify)
-   └── Forge proxy     (legacy fallback)
+server/storage.ts   →   Netlify Blobs (store: "uploads")
+                              │
+                              ▼
+                    /blobs/*  (public read function)
+                              │
+                              ▼
+                    /.netlify/images?url=/blobs/...  (Image CDN)
 ```
 
 Public reads are served by `netlify/functions/blobs-serve.mts` mounted at
 `/blobs/*`. Image transforms go through the Netlify Image CDN at
 `/.netlify/images?url=/blobs/<key>&w=...`.
 
-## Selecting the backend
-
-`STORAGE_BACKEND` env var controls behavior:
-
-| Value   | Behavior                                                 |
-| ------- | -------------------------------------------------------- |
-| `auto`  | Default. Blobs when `NETLIFY=true`, else forge if creds. |
-| `blobs` | Force Netlify Blobs.                                     |
-| `forge` | Force the legacy forge proxy.                            |
-
-Optional knobs:
+## Configuration
 
 - `NETLIFY_BLOBS_STORE` — namespace name (default `uploads`).
 - `NETLIFY_SITE_ID` + `NETLIFY_BLOBS_TOKEN` — only needed when calling
-  Blobs from outside a Netlify function (e.g. local CLI scripts). Inside
-  functions, credentials are auto-injected.
+  Blobs from outside a Netlify function (e.g. local CLI scripts or the
+  backfill script). Inside functions, credentials are auto-injected.
 
 ## Server usage
 
@@ -81,11 +73,13 @@ Install from the Netlify UI → **Extensions**:
 ## Migration notes
 
 - Existing forge URLs are persisted as-is in the database; nothing rewrites
-  them. New uploads use Blobs.
-- To backfill (re-upload existing forge content to Blobs), write a one-off
-  script using `storageGet` (forge backend) → `storagePut` (blobs backend).
-- The forge proxy code path is kept for local development and as a
-  rollback target. Remove it once we're confident in Blobs in production.
+  them. New uploads always use Blobs.
+- To backfill (re-upload existing forge content to Blobs), use
+  `scripts/backfill-forge-to-blobs.ts` with a JSON manifest of keys.
+- The forge storage backend has been removed from `server/storage.ts`.
+  `BUILT_IN_FORGE_API_URL` / `BUILT_IN_FORGE_API_KEY` are still used by
+  LLM, voice transcription, image generation, maps, and dataApi — do not
+  unset them.
 
 ## Limits
 
