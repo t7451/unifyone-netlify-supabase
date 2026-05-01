@@ -27,7 +27,18 @@ const mockWhere = vi.fn(() => ({ limit: mockLimit }));
 const mockFrom = vi.fn(() => ({ where: mockWhere }));
 const mockSelect = vi.fn(() => ({ from: mockFrom }));
 
-const mockInsertValues = vi.fn(() => Promise.resolve());
+// Default insert chain returns a synthetic row from .returning() so callers
+// using `await db.insert(...).values(...).returning(...)` get [{ id: 1 }].
+// Tests that don't use returning still resolve since `values()` itself is
+// awaitable (returns Promise<void>).
+const mockInsertReturning = vi.fn(() => Promise.resolve([{ id: 1 }]));
+const mockInsertValues = vi.fn(() => {
+  const chain = Promise.resolve() as Promise<unknown> & {
+    returning: typeof mockInsertReturning;
+  };
+  chain.returning = mockInsertReturning;
+  return chain;
+});
 const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
 
 // update chain: .update().set().where()
@@ -73,7 +84,14 @@ function resetDbState() {
 
   // Re-wire mock implementations to pick up fresh _dbState values
   mockLimit.mockImplementation(() => Promise.resolve(_dbState.selectResult));
-  mockInsertValues.mockImplementation(() => Promise.resolve());
+  mockInsertReturning.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+  mockInsertValues.mockImplementation(() => {
+    const chain = Promise.resolve() as Promise<unknown> & {
+      returning: typeof mockInsertReturning;
+    };
+    chain.returning = mockInsertReturning;
+    return chain;
+  });
   mockUpdateWhere.mockImplementation(() => Promise.resolve());
 }
 
@@ -87,7 +105,14 @@ beforeEach(() => {
   mockWhere.mockImplementation(() => ({ limit: mockLimit }));
   mockFrom.mockImplementation(() => ({ where: mockWhere }));
   mockSelect.mockImplementation(() => ({ from: mockFrom }));
-  mockInsertValues.mockImplementation(() => Promise.resolve());
+  mockInsertReturning.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+  mockInsertValues.mockImplementation(() => {
+    const chain = Promise.resolve() as Promise<unknown> & {
+      returning: typeof mockInsertReturning;
+    };
+    chain.returning = mockInsertReturning;
+    return chain;
+  });
   mockInsert.mockImplementation(() => ({ values: mockInsertValues }));
   mockUpdateWhere.mockImplementation(() => Promise.resolve());
   mockUpdateSet.mockImplementation(() => ({ where: mockUpdateWhere }));

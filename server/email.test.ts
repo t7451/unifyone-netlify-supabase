@@ -29,6 +29,20 @@ vi.mock("./_core/dripScheduler", () => ({
 
 import { emailRouter } from "./routers/email";
 
+// emailRouter.capture uses publicRateLimitedProcedure → clientKey(ctx.req),
+// which dereferences req.headers and req.socket. Provide a minimal stub.
+function makeCtx(): Parameters<typeof emailRouter.createCaller>[0] {
+  return {
+    req: {
+      headers: {},
+      ip: "127.0.0.1",
+      socket: { remoteAddress: "127.0.0.1" },
+    },
+    res: {},
+    user: null,
+  } as unknown as Parameters<typeof emailRouter.createCaller>[0];
+}
+
 describe("emailRouter.capture", () => {
   beforeEach(() => {
     mockState.insertResult = [{ id: 1 }];
@@ -40,9 +54,7 @@ describe("emailRouter.capture", () => {
   });
 
   it("returns success and sends the welcome email for a new subscriber", async () => {
-    const caller = emailRouter.createCaller(
-      {} as Parameters<typeof emailRouter.createCaller>[0]
-    );
+    const caller = emailRouter.createCaller(makeCtx());
 
     const result = await caller.capture({
       email: "new@example.com",
@@ -59,9 +71,7 @@ describe("emailRouter.capture", () => {
 
   it("returns the existing duplicate response shape when the email already exists", async () => {
     mockState.insertResult = [];
-    const caller = emailRouter.createCaller(
-      {} as Parameters<typeof emailRouter.createCaller>[0]
-    );
+    const caller = emailRouter.createCaller(makeCtx());
 
     const result = await caller.capture({
       email: "existing@example.com",
