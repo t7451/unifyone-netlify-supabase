@@ -1,6 +1,9 @@
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
+import { resolveDatabaseUrl } from "../env";
+import { DatabaseConnectionError } from "@shared/errors";
+import { NO_DATABASE_URL } from "@shared/const";
 
 export { schema };
 
@@ -11,8 +14,10 @@ let cachedDb: Db | null = null;
 
 export function getDb(): Db {
   if (cachedDb) return cachedDb;
-  const url = import.meta.env.NEON_DATABASE_URL;
-  if (!url) throw new Error("NEON_DATABASE_URL not set");
+  const url = resolveDatabaseUrl(import.meta.env);
+  if (!url) {
+    throw new DatabaseConnectionError(NO_DATABASE_URL);
+  }
   cachedSql = neon(url);
   cachedDb = drizzle(cachedSql, { schema });
   return cachedDb;

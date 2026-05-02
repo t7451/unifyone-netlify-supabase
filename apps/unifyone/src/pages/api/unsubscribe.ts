@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { neon } from "@neondatabase/serverless";
 import { createHmac } from "node:crypto";
+import { resolveDatabaseUrl } from "../../lib/env";
 
 // Public unsubscribe POST handler. Verifies the HMAC suppression token, then
 // writes a row to spire_outreach_suppression. We write raw SQL via Neon's
@@ -37,7 +38,7 @@ export const POST: APIRoute = async ({ request }) => {
   const secret = import.meta.env.OUTREACH_SUPPRESSION_HMAC_SECRET as
     | string
     | undefined;
-  const neonUrl = import.meta.env.NEON_DATABASE_URL as string | undefined;
+  const neonUrl = resolveDatabaseUrl(import.meta.env);
   if (!secret || !neonUrl) {
     return json({ ok: false, error: "config_missing" }, 500);
   }
