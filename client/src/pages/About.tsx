@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
+import { CdnImage } from "@/components/CdnImage";
 import { getSignupUrl } from "@/const";
 import { SITE_URL } from "@/lib/siteConfig";
 
@@ -74,9 +75,9 @@ export default function About() {
 
           <p>
             We started with one frustration: every existing commerce stack is
-            assembled from plugins, integrations, and middleware that nobody owns
-            end-to-end. When something breaks, you debug across four vendors.
-            When you scale, the seams pull apart.
+            assembled from plugins, integrations, and middleware that nobody
+            owns end-to-end. When something breaks, you debug across four
+            vendors. When you scale, the seams pull apart.
           </p>
 
           <p>
@@ -115,19 +116,28 @@ export default function About() {
           <p>
             See{" "}
             <Link href="/architecture">
-              <span className="cursor-pointer underline" style={{ color: "#D4A843" }}>
+              <span
+                className="cursor-pointer underline"
+                style={{ color: "#D4A843" }}
+              >
                 the architecture
               </span>
             </Link>
             ,{" "}
             <Link href="/pricing">
-              <span className="cursor-pointer underline" style={{ color: "#D4A843" }}>
+              <span
+                className="cursor-pointer underline"
+                style={{ color: "#D4A843" }}
+              >
                 the pricing
               </span>
             </Link>
             , or{" "}
             <Link href="/contact">
-              <span className="cursor-pointer underline" style={{ color: "#D4A843" }}>
+              <span
+                className="cursor-pointer underline"
+                style={{ color: "#D4A843" }}
+              >
                 send us a note
               </span>
             </Link>
@@ -161,17 +171,21 @@ export default function About() {
             rel="noopener noreferrer"
             className="group flex-shrink-0"
           >
-            <img
+            <CdnImage
               src="https://github.com/user-attachments/assets/6dbb3057-6f53-4fcd-9d50-edff38133fed"
               alt="Follow @1COMMERCE_LLC on Instagram — scan QR code"
               width={88}
               height={88}
+              fit="cover"
               className="rounded-lg opacity-80 group-hover:opacity-100 transition-opacity duration-300"
               style={{ imageRendering: "pixelated" }}
             />
           </a>
           <div>
-            <span className="inscription block mb-1" style={{ color: "#D4A843" }}>
+            <span
+              className="inscription block mb-1"
+              style={{ color: "#D4A843" }}
+            >
               FOLLOW THE BUILD
             </span>
             <a
@@ -180,13 +194,21 @@ export default function About() {
               rel="noopener noreferrer"
               className="font-cinzel text-sm tracking-widest transition-colors duration-200"
               style={{ color: "#8A8A8A", letterSpacing: "0.15em" }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#D4A843"}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#8A8A8A"}
+              onMouseEnter={e =>
+                ((e.currentTarget as HTMLElement).style.color = "#D4A843")
+              }
+              onMouseLeave={e =>
+                ((e.currentTarget as HTMLElement).style.color = "#8A8A8A")
+              }
             >
               @1COMMERCE_LLC
             </a>
-            <p className="font-crimson text-sm mt-1" style={{ color: "#5A5A5A", fontStyle: "italic" }}>
-              Product updates, operator stories, and behind-the-scenes construction.
+            <p
+              className="font-crimson text-sm mt-1"
+              style={{ color: "#5A5A5A", fontStyle: "italic" }}
+            >
+              Product updates, operator stories, and behind-the-scenes
+              construction.
             </p>
           </div>
         </div>

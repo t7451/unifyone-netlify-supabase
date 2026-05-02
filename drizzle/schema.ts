@@ -1800,3 +1800,17 @@ export const refreshTokens = pgTable("refresh_tokens", {
 });
 export type RefreshToken = typeof refreshTokens.$inferSelect;
 export type InsertRefreshToken = typeof refreshTokens.$inferInsert;
+
+// ── Stripe Webhook Events (forensic log + idempotency) ────────────────────────
+export const stripeWebhookEvents = pgTable("stripe_webhook_events", {
+  id: serial("id").primaryKey(),
+  eventId: varchar("event_id", { length: 100 }).notNull().unique(),
+  eventType: varchar("event_type", { length: 100 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull(), // received | processed | failed
+  errorMessage: text("error_message"),
+  livemode: boolean("livemode").default(false).notNull(),
+  payload: json("payload").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+

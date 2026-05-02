@@ -32,6 +32,11 @@ export async function buildNonTrpcHandler(): Promise<
       registerCustomAuthFetchRoutes: null,
     })),
   ]);
+  const { registerAdminOpsFetchRoutes } = await import("../adminOps").catch(
+    () => ({
+      registerAdminOpsFetchRoutes: null as unknown as FetchHandler | null,
+    })
+  );
 
   return async (req: Request): Promise<Response | null> => {
     const url = new URL(req.url);
@@ -41,6 +46,16 @@ export async function buildNonTrpcHandler(): Promise<
     if (path.startsWith("/api/stripe/") && registerStripeFetchRoutes) {
       try {
         return await (registerStripeFetchRoutes as FetchHandler)(req);
+      } catch (e: unknown) {
+        return Response.json({ error: (e as Error).message }, { status: 500 });
+      }
+    }
+
+    // Admin ops (Resend / Cloudflare DNS) — admin-key gated inside adminOps.
+    if (path.startsWith("/api/admin/") && registerAdminOpsFetchRoutes) {
+      try {
+        const result = await (registerAdminOpsFetchRoutes as FetchHandler)(req);
+        if (result) return result;
       } catch (e: unknown) {
         return Response.json({ error: (e as Error).message }, { status: 500 });
       }

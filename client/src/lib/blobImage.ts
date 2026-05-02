@@ -25,7 +25,16 @@ export function blobUrl(key: string): string {
 
 /** Returns an Image-CDN-transformed URL for a stored image blob. */
 export function blobImage(key: string, t: ImageTransform = {}): string {
-  const params = new URLSearchParams({ url: blobUrl(key) });
+  return cdnImage(blobUrl(key), t);
+}
+
+/**
+ * Returns an Image-CDN-transformed URL for any source URL (relative path
+ * inside the site, or an external https URL allow-listed in
+ * netlify.toml's [images] remote_images).
+ */
+export function cdnImage(src: string, t: ImageTransform = {}): string {
+  const params = new URLSearchParams({ url: src });
   if (t.w) params.set("w", String(t.w));
   if (t.h) params.set("h", String(t.h));
   if (t.fit) params.set("fit", t.fit);
