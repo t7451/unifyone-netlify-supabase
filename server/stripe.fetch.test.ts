@@ -108,7 +108,10 @@ describe("registerStripeFetchRoutes — webhook", () => {
 });
 
 describe("registerStripeFetchRoutes — non-webhook routes", () => {
-  it("returns 400 for /api/stripe/create-checkout with no body fields", async () => {
+  it("returns 401 for /api/stripe/create-checkout when unauthenticated", async () => {
+    // PATCHED: this endpoint now requires a valid app_session_id JWT cookie so
+    // tenant_id and user_id can be derived from the JWT, not the request body.
+    // An unauthenticated caller previously got 400; now they get 401.
     const { registerStripeFetchRoutes } = await import("./stripe");
     const req = new Request("https://example.test/api/stripe/create-checkout", {
       method: "POST",
@@ -117,10 +120,13 @@ describe("registerStripeFetchRoutes — non-webhook routes", () => {
     });
     const res = await registerStripeFetchRoutes(req);
     expect(res).not.toBeNull();
-    expect(res!.status).toBe(400);
+    expect(res!.status).toBe(401);
+    const body = (await res!.json()) as { error?: string };
+    expect(body.error).toMatch(/auth/i);
   });
 
-  it("returns 400 for /api/stripe/create-embedded-checkout with no priceId", async () => {
+  it("returns 401 for /api/stripe/create-embedded-checkout when unauthenticated", async () => {
+    // PATCHED: same auth requirement as create-checkout.
     const { registerStripeFetchRoutes } = await import("./stripe");
     const req = new Request(
       "https://example.test/api/stripe/create-embedded-checkout",
@@ -132,7 +138,42 @@ describe("registerStripeFetchRoutes — non-webhook routes", () => {
     );
     const res = await registerStripeFetchRoutes(req);
     expect(res).not.toBeNull();
+    expect(res!.status).toBe(401);
+  });
+
+  it("/api/stripe/portal alias accepts the same payload as customer-portal", async () => {
+    // PATCHED: tRPC subscription.createPortalSession still calls
+    // /api/stripe/portal — keep it wired to the same handler as customer-portal.
+    const { registerStripeFetchRoutes } = await import("./stripe");
+    const req = new Request("https://example.test/api/stripe/portal", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    });
+    const res = await registerStripeFetchRoutes(req);
+    expect(res).not.toBeNull();
+    // No customerId supplied → 400, same as customer-portal. The point of
+    // this test is that the route is *not* a 404/null fall-through.
     expect(res!.status).toBe(400);
+  });
+
+  it("returns 401 for /api/stripe/admin/reconcile without admin key", async () => {
+    // PATCHED: admin recovery endpoint must be gated behind ADMIN_API_KEY.
+    const { registerStripeFetchRoutes } = await import("./stripe");
+    const prevKey = process.env.ADMIN_API_KEY;
+    process.env.ADMIN_API_KEY = "test-admin-key";
+    try {
+      const req = new Request(
+        "https://example.test/api/stripe/admin/reconcile",
+        { method: "POST", headers: { "content-type": "application/json" } }
+      );
+      const res = await registerStripeFetchRoutes(req);
+      expect(res).not.toBeNull();
+      expect(res!.status).toBe(401);
+    } finally {
+      if (prevKey === undefined) delete process.env.ADMIN_API_KEY;
+      else process.env.ADMIN_API_KEY = prevKey;
+    }
   });
 
   it("returns 400 for /api/stripe/customer-portal with no customerId", async () => {

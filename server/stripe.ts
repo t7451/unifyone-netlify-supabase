@@ -6,8 +6,22 @@ import type {
 } from "express";
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
-import { getDb, getTenantByStripeCustomerId } from "./db";
-import { tenants, plans, themeInstalls, themes } from "../drizzle/schema";
+import {
+  getDb,
+  getTenantByStripeCustomerId,
+  getTenantById,
+  getTenantsByOwner,
+} from "./db";
+import { sdk } from "./_core/sdk";
+import { COOKIE_NAME } from "../shared/const";
+import {
+  tenants,
+  plans,
+  themeInstalls,
+  themes,
+  stripeWebhookEvents,
+  users,
+} from "../drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { capi } from "./meta/capi";
 import { ENV, getAppUrl } from "./_core/env";
@@ -24,6 +38,171 @@ function getSupabaseAdmin() {
 }
 
 const stripe = getStripe();
+
+// PATCHED:LINK_TENANT_FROM_METADATA
+// ─────────────────────────────────────────────────────────────────────────────
+// Webhook tenant-linking helper.
+//
+// Background: when a brand-new subscriber completes Stripe Checkout, the
+// returned customer_id has never been seen before — no tenant row has it on
+// `stripeCustomerId`. The pre-existing path called `syncSubscription()`
+// directly, which UPDATEs WHERE stripeCustomerId = ... and silently affects
+// zero rows. Result: paid users got no entitlements.
+//
+// Fix: when no tenant matches by customer_id, fall back to the tenant_id we
+// stamped into the Checkout Session's metadata at create time, write the
+// stripeCustomerId onto that tenant, then return it so syncSubscription has
+// something to update.
+//
+// Security: we accept session.metadata.tenant_id only because the
+// /api/stripe/create-checkout endpoint is now authenticated and overrides
+// any client-supplied tenant_id with the JWT's tenant_id. Don't relax this
+// without keeping the server-side override.
+async function resolveTenantForCheckout(
+  session: Stripe.Checkout.Session
+): Promise<{ id: number } | undefined> {
+  const customerId = (session.customer as string) || "";
+  if (customerId) {
+    const byCustomer = await getTenantByStripeCustomerId(customerId);
+    if (byCustomer) return byCustomer;
+  }
+  const tenantIdRaw = session.metadata?.tenant_id;
+  const tenantId = tenantIdRaw ? parseInt(tenantIdRaw, 10) : NaN;
+  if (!Number.isFinite(tenantId)) return undefined;
+  const t = await getTenantById(tenantId);
+  if (!t) return undefined;
+  if (customerId && t.stripeCustomerId !== customerId) {
+    const db = await getDb();
+    if (db) {
+      await db
+        .update(tenants)
+        .set({ stripeCustomerId: customerId })
+        .where(eq(tenants.id, t.id));
+      console.log(
+        `[Stripe] Linked tenant ${t.id} → customer ${customerId} via metadata.tenant_id`
+      );
+    }
+  }
+  return { id: t.id };
+}
+
+// Same idea for subscription events — `customer.subscription.created` may
+// arrive before checkout.session.completed in rare orderings, or be replayed.
+async function resolveTenantForSubscription(
+  sub: Stripe.Subscription
+): Promise<{ id: number } | undefined> {
+  const customerId = (sub.customer as string) || "";
+  if (customerId) {
+    const byCustomer = await getTenantByStripeCustomerId(customerId);
+    if (byCustomer) return byCustomer;
+  }
+  const tenantIdRaw = sub.metadata?.tenant_id;
+  const tenantId = tenantIdRaw ? parseInt(tenantIdRaw, 10) : NaN;
+  if (Number.isFinite(tenantId)) {
+    const t = await getTenantById(tenantId);
+    if (t) {
+      if (customerId && t.stripeCustomerId !== customerId) {
+        const db = await getDb();
+        if (db) {
+          await db
+            .update(tenants)
+            .set({ stripeCustomerId: customerId })
+            .where(eq(tenants.id, t.id));
+        }
+      }
+      return { id: t.id };
+    }
+  }
+  // Last resort: user_id metadata → tenant via owner
+  const userIdRaw = sub.metadata?.user_id;
+  const userId = userIdRaw ? parseInt(userIdRaw, 10) : NaN;
+  if (Number.isFinite(userId)) {
+    const owned = await getTenantsByOwner(userId);
+    const t = owned[0];
+    if (t) {
+      if (customerId && t.stripeCustomerId !== customerId) {
+        const db = await getDb();
+        if (db) {
+          await db
+            .update(tenants)
+            .set({ stripeCustomerId: customerId })
+            .where(eq(tenants.id, t.id));
+        }
+      }
+      return { id: t.id };
+    }
+  }
+  return undefined;
+}
+
+// JWT cookie extractor for the Fetch handler — mirrors the tRPC ctx logic.
+// Reads the `app_session_id` cookie, verifies via sdk.verifySession (jose
+// HS256), and looks up the user by openId. Returns numeric userId/tenantId
+// for stamping into Stripe Checkout Session metadata so the webhook can
+// resolve the right tenant later.
+async function authedUserFromRequest(
+  req: Request
+): Promise<{ userId: number; tenantId: number | null; email: string } | null> {
+  try {
+    const cookieHeader = req.headers.get("cookie") || "";
+    const m = cookieHeader.match(
+      new RegExp("(?:^|;\\s*)" + COOKIE_NAME + "=([^;]+)")
+    );
+    if (!m) return null;
+    const token = decodeURIComponent(m[1]);
+    const session = await sdk.verifySession(token);
+    if (!session) return null;
+    const db = await getDb();
+    if (!db) return null;
+    const rows = await db
+      .select()
+      .from(users)
+      .where(eq(users.openId, session.openId))
+      .limit(1);
+    const u = rows[0];
+    if (!u) return null;
+    return {
+      userId: u.id,
+      tenantId: u.tenantId ?? null,
+      email: u.email ?? session.email ?? "",
+    };
+  } catch (err: unknown) {
+    console.error("[Stripe] authedUserFromRequest:", errMsg(err));
+    return null;
+  }
+}
+
+// Persist a webhook event for forensic + idempotency.
+async function recordWebhookEvent(
+  event: Stripe.Event,
+  status: "received" | "processed" | "failed",
+  errorMessage?: string
+): Promise<void> {
+  try {
+    const db = await getDb();
+    if (!db) return;
+    await db
+      .insert(stripeWebhookEvents)
+      .values({
+        eventId: event.id,
+        eventType: event.type,
+        status,
+        errorMessage: errorMessage ?? null,
+        livemode: event.livemode,
+        payload: event as unknown as Record<string, unknown>,
+      })
+      .onConflictDoUpdate({
+        target: stripeWebhookEvents.eventId,
+        set: {
+          status,
+          errorMessage: errorMessage ?? null,
+          updatedAt: new Date(),
+        },
+      });
+  } catch (err: unknown) {
+    console.error("[Stripe Webhook] Failed to record event:", errMsg(err));
+  }
+}
 
 // Map Stripe subscription status → our enum
 function mapSubStatus(
@@ -281,11 +460,10 @@ export function registerStripeRoutes(app: Express) {
           case "checkout.session.completed": {
             const session = event.data.object as Stripe.Checkout.Session;
             const customerId = session.customer as string;
-            // Resolve tenant from the verified Stripe customer ID, NOT user-supplied metadata.
-            // This prevents a user from crafting metadata.tenant_id to hijack another tenant's subscription.
-            const checkoutTenant = customerId
-              ? await getTenantByStripeCustomerId(customerId)
-              : undefined;
+            // PATCHED: resolve via metadata.tenant_id when no prior link.
+            // Safe because /api/stripe/create-checkout overrides client-supplied
+            // metadata with JWT-derived tenant_id (see authedUserFromRequest).
+            const checkoutTenant = await resolveTenantForCheckout(session);
 
             // ── Theme purchase fulfillment ─────────────────────────────────
             if (
@@ -885,6 +1063,8 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
   }
 
   console.log(`[Stripe Webhook] Received event: ${event.type} (${event.id})`);
+  // PATCHED: persist for forensic + idempotency.
+  await recordWebhookEvent(event, "received");
 
   try {
     switch (event.type) {
@@ -902,9 +1082,8 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const customerId = session.customer as string;
-        const checkoutTenant = customerId
-          ? await getTenantByStripeCustomerId(customerId)
-          : undefined;
+        // PATCHED: resolve via metadata.tenant_id if customer not yet linked.
+        const checkoutTenant = await resolveTenantForCheckout(session);
 
         // Theme purchase fulfillment
         if (
@@ -1126,9 +1305,13 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
     }
   } catch (err) {
     console.error("[Stripe Webhook] Error processing event:", err);
+    // PATCHED: forensic — record the failure for later debugging.
+    await recordWebhookEvent(event, "failed", errMsg(err));
     return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 
+  // PATCHED: mark processed so we have an audit trail.
+  await recordWebhookEvent(event, "processed");
   return Response.json({ received: true });
 }
 
@@ -1160,25 +1343,30 @@ export async function registerStripeFetchRoutes(
   // ── /api/stripe/create-checkout ─────────────────────────────────────
   if (path === "/api/stripe/create-checkout" && method === "POST") {
     try {
-      const {
-        priceId,
-        tenantId,
-        userId,
-        userEmail,
-        userName,
-        origin,
-        amount,
-        description,
-      } = await safeJson<{
+      // PATCHED: require auth and trust JWT, not request body, for tenant/user.
+      const authed = await authedUserFromRequest(req);
+      if (!authed) {
+        return Response.json(
+          { error: "Authentication required" },
+          { status: 401 }
+        );
+      }
+      const body = await safeJson<{
         priceId?: string;
-        tenantId?: string | number;
-        userId?: string | number;
-        userEmail?: string;
         userName?: string;
         origin?: string;
         amount?: string | number;
         description?: string;
       }>(req);
+      const priceId = body.priceId;
+      const userName = body.userName;
+      const origin = body.origin;
+      const amount = body.amount;
+      const description = body.description;
+      // Override any body-supplied tenant/user IDs with authenticated values.
+      const tenantId = authed.tenantId;
+      const userId = authed.userId;
+      const userEmail = authed.email;
 
       const baseUrl = origin || "http://localhost:3000";
 
@@ -1256,12 +1444,19 @@ export async function registerStripeFetchRoutes(
   // ── /api/stripe/create-embedded-checkout ────────────────────────────
   if (path === "/api/stripe/create-embedded-checkout" && method === "POST") {
     try {
-      const { priceId, userEmail, userId, tenantId } = await safeJson<{
-        priceId?: string;
-        userEmail?: string;
-        userId?: string | number;
-        tenantId?: string | number;
-      }>(req);
+      // PATCHED: require auth, override tenant/user from JWT.
+      const authed = await authedUserFromRequest(req);
+      if (!authed) {
+        return Response.json(
+          { error: "Authentication required" },
+          { status: 401 }
+        );
+      }
+      const body = await safeJson<{ priceId?: string }>(req);
+      const priceId = body.priceId;
+      const userEmail = authed.email;
+      const userId = authed.userId;
+      const tenantId = authed.tenantId;
       if (!priceId) {
         return Response.json({ error: "priceId is required" }, { status: 400 });
       }
@@ -1289,8 +1484,12 @@ export async function registerStripeFetchRoutes(
     }
   }
 
-  // ── /api/stripe/customer-portal ─────────────────────────────────────
-  if (path === "/api/stripe/customer-portal" && method === "POST") {
+  // ── /api/stripe/portal (legacy alias) + /api/stripe/customer-portal ─
+  // PATCHED: tRPC subscription.createPortalSession still calls /api/stripe/portal.
+  if (
+    (path === "/api/stripe/customer-portal" || path === "/api/stripe/portal") &&
+    method === "POST"
+  ) {
     try {
       const { customerId, origin } = await safeJson<{
         customerId?: string;
@@ -1422,6 +1621,73 @@ export async function registerStripeFetchRoutes(
       });
       return Response.json(invoices.data);
     } catch (err: unknown) {
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
+  // ── /api/stripe/admin/reconcile (admin-only recovery) ───────────────
+  // PATCHED: pulls recent Stripe customers + subscriptions and links any
+  // orphan paid customers back to their tenant rows. Use after a webhook
+  // outage to recover lost subscribers. Idempotent.
+  if (path === "/api/stripe/admin/reconcile" && method === "POST") {
+    const adminKey = req.headers.get("x-admin-key") || "";
+    if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!stripe) {
+      return Response.json({ error: "Stripe not configured" }, { status: 503 });
+    }
+    try {
+      const linked: Array<{
+        customerId: string;
+        subscriptionId: string;
+        tenantId: number;
+        email: string;
+        action: string;
+      }> = [];
+      const orphans: Array<{
+        customerId: string;
+        subscriptionId: string;
+        email: string;
+        reason: string;
+      }> = [];
+      const subs = await stripe!.subscriptions.list({
+        limit: 100,
+        status: "all",
+        expand: ["data.customer"],
+      });
+      for (const sub of subs.data) {
+        const customerId =
+          typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+        const customerEmail =
+          typeof sub.customer === "object" &&
+          sub.customer &&
+          !sub.customer.deleted
+            ? (sub.customer as Stripe.Customer).email || ""
+            : "";
+        const tenant = await resolveTenantForSubscription(sub);
+        if (!tenant) {
+          orphans.push({
+            customerId,
+            subscriptionId: sub.id,
+            email: customerEmail,
+            reason:
+              "no metadata.tenant_id/user_id and customer not previously linked",
+          });
+          continue;
+        }
+        await syncSubscription(sub);
+        linked.push({
+          customerId,
+          subscriptionId: sub.id,
+          tenantId: tenant.id,
+          email: customerEmail,
+          action: "linked-and-synced",
+        });
+      }
+      return Response.json({ linked, orphans, scanned: subs.data.length });
+    } catch (err: unknown) {
+      console.error("[Stripe] Reconcile error:", errMsg(err));
       return Response.json({ error: errMsg(err) }, { status: 500 });
     }
   }
