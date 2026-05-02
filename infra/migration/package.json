@@ -13,7 +13,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/backend": "^3.3.0",
+    "@clerk/backend": "^3.4.4",
     "pino": "^9.0.0",
     "pino-pretty": "^11.0.0",
     "postgres": "^3.4.0",
