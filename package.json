@@ -20,7 +20,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
     "@clerk/backend": "3.4.4",
-    "@clerk/clerk-react": "5.61.3",
+    "@clerk/clerk-react": "^5.61.6",
     "@hookform/resolvers": "^5.2.2",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@neondatabase/serverless": "^1.0.2",
@@ -160,7 +160,10 @@
       "svix>uuid": ">=11.1.0 <12",
       "postcss": ">=8.5.10",
       "follow-redirects": ">=1.16.0",
-      "hono": ">=4.12.14"
+      "hono": ">=4.12.14",
+      "uuid@13": ">=14.0.0",
+      "uuid@12": ">=14.0.0",
+      "esbuild@<0.25.0": ">=0.25.0"
     },
     "onlyBuiltDependencies": [
       "@tailwindcss/oxide",
