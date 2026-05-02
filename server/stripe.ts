@@ -1692,6 +1692,320 @@ export async function registerStripeFetchRoutes(
     }
   }
 
+  // PATCHED:ADMIN_DISCOVER_AND_SETUP
+  // ── /api/stripe/admin/discover (admin-only, read-only) ──────────────
+  // Returns a JSON snapshot of Stripe state so we can answer "do products
+  // exist? are there orphan customers? was anyone actually charged?"
+  // without needing a connected Stripe Dashboard browser session.
+  if (path === "/api/stripe/admin/discover" && method === "POST") {
+    const adminKey = req.headers.get("x-admin-key") || "";
+    if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!stripe) {
+      return Response.json({ error: "Stripe not configured" }, { status: 503 });
+    }
+    try {
+      const [products, prices, customers, subs, payments, charges] =
+        await Promise.all([
+          stripe!.products.list({ limit: 100, active: true }),
+          stripe!.prices.list({ limit: 100, active: true }),
+          stripe!.customers.list({ limit: 100 }),
+          stripe!.subscriptions.list({ limit: 100, status: "all" }),
+          stripe!.paymentIntents.list({ limit: 100 }),
+          stripe!.charges.list({ limit: 100 }),
+        ]);
+      const acct = await stripe!.accounts.retrieve();
+      // Slim each list down to what's useful for triage (avoid 1MB responses).
+      return Response.json({
+        account: {
+          id: acct.id,
+          email: acct.email,
+          country: acct.country,
+          default_currency: acct.default_currency,
+          charges_enabled: acct.charges_enabled,
+          details_submitted: acct.details_submitted,
+        },
+        livemode: products.data[0]?.livemode ?? null,
+        products: products.data.map(p => ({
+          id: p.id,
+          name: p.name,
+          active: p.active,
+          metadata: p.metadata,
+          default_price:
+            typeof p.default_price === "string" ? p.default_price : null,
+        })),
+        prices: prices.data.map(p => ({
+          id: p.id,
+          product: typeof p.product === "string" ? p.product : "",
+          nickname: p.nickname,
+          unit_amount: p.unit_amount,
+          currency: p.currency,
+          recurring: p.recurring
+            ? {
+                interval: p.recurring.interval,
+                interval_count: p.recurring.interval_count,
+              }
+            : null,
+          active: p.active,
+          lookup_key: p.lookup_key,
+        })),
+        customers: customers.data.map(c => ({
+          id: c.id,
+          email: c.email,
+          name: c.name,
+          created: c.created,
+          metadata: c.metadata,
+          default_source: c.default_source,
+        })),
+        subscriptions: subs.data.map(s => ({
+          id: s.id,
+          customer: typeof s.customer === "string" ? s.customer : "",
+          status: s.status,
+          created: s.created,
+          metadata: s.metadata,
+          items: s.items.data.map(i => ({
+            price_id: i.price.id,
+            quantity: i.quantity,
+          })),
+        })),
+        payments: payments.data.map(pi => ({
+          id: pi.id,
+          customer: typeof pi.customer === "string" ? pi.customer : null,
+          amount: pi.amount,
+          currency: pi.currency,
+          status: pi.status,
+          description: pi.description,
+          created: pi.created,
+          metadata: pi.metadata,
+          receipt_email: pi.receipt_email,
+        })),
+        charges: charges.data.map(c => ({
+          id: c.id,
+          customer: typeof c.customer === "string" ? c.customer : null,
+          amount: c.amount,
+          currency: c.currency,
+          status: c.status,
+          paid: c.paid,
+          refunded: c.refunded,
+          billing_email: c.billing_details?.email ?? null,
+          billing_name: c.billing_details?.name ?? null,
+          created: c.created,
+          description: c.description,
+        })),
+      });
+    } catch (err: unknown) {
+      console.error("[Stripe] Discover error:", errMsg(err));
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
+  // ── /api/stripe/admin/setup-products (admin-only, idempotent) ───────
+  // Creates "UnifyOne Pro" and "UnifyOne Scale" products with monthly +
+  // yearly recurring prices ($19/$190, $99/$990) if they don't already
+  // exist (matched by metadata.unifyone_plan_slug = pro|scale). Then
+  // upserts the corresponding rows into the `plans` table with the real
+  // Stripe price IDs. Safe to re-run.
+  if (path === "/api/stripe/admin/setup-products" && method === "POST") {
+    const adminKey = req.headers.get("x-admin-key") || "";
+    if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!stripe) {
+      return Response.json({ error: "Stripe not configured" }, { status: 503 });
+    }
+    try {
+      const tiers: Array<{
+        slug: "pro" | "scale";
+        name: string;
+        description: string;
+        monthlyCents: number;
+        yearlyCents: number;
+        maxProducts: number;
+        maxOrders: number;
+        maxUsers: number;
+        features: string[];
+      }> = [
+        {
+          slug: "pro",
+          name: "UnifyOne Pro",
+          description:
+            "Unlimited platforms, 500 Kai credits/mo, quarterly estimates + 1099 prep, full MCP config dashboard.",
+          monthlyCents: 1900,
+          yearlyCents: 19000,
+          maxProducts: 1000,
+          maxOrders: 10000,
+          maxUsers: 5,
+          features: [
+            "Unlimited platforms",
+            "Quarterly estimates + 1099 prep",
+            "500 Kai credits/mo",
+            "1 storefront",
+            "API key mgmt",
+          ],
+        },
+        {
+          slug: "scale",
+          name: "UnifyOne Scale",
+          description:
+            "Multi-tenant, white-label, 10000 Kai credits/mo, custom MCP routing, Slack support 4hr SLA.",
+          monthlyCents: 9900,
+          yearlyCents: 99000,
+          maxProducts: 1000000,
+          maxOrders: 1000000,
+          maxUsers: 1000000,
+          features: [
+            "Unlimited tenants",
+            "White-label",
+            "10000 Kai credits/mo",
+            "Slack support 4hr SLA",
+          ],
+        },
+      ];
+
+      const results: Array<Record<string, unknown>> = [];
+
+      for (const t of tiers) {
+        // Find existing product by metadata marker — survives renames.
+        const search = await stripe!.products.search({
+          query: `metadata['unifyone_plan_slug']:'${t.slug}'`,
+          limit: 1,
+        });
+        let product = search.data[0];
+        if (!product) {
+          product = await stripe!.products.create({
+            name: t.name,
+            description: t.description,
+            metadata: { unifyone_plan_slug: t.slug },
+            tax_code: "txcd_10000000", // SaaS / general business services
+          });
+        } else {
+          // Keep name/desc in sync.
+          await stripe!.products.update(product.id, {
+            name: t.name,
+            description: t.description,
+            active: true,
+          });
+        }
+
+        // Find or create monthly price
+        let monthlyPrice: Stripe.Price | undefined;
+        let yearlyPrice: Stripe.Price | undefined;
+        const existingPrices = await stripe!.prices.list({
+          product: product.id,
+          limit: 100,
+          active: true,
+        });
+        for (const p of existingPrices.data) {
+          if (
+            p.recurring?.interval === "month" &&
+            p.unit_amount === t.monthlyCents
+          ) {
+            monthlyPrice = p;
+          } else if (
+            p.recurring?.interval === "year" &&
+            p.unit_amount === t.yearlyCents
+          ) {
+            yearlyPrice = p;
+          }
+        }
+        if (!monthlyPrice) {
+          monthlyPrice = await stripe!.prices.create({
+            product: product.id,
+            unit_amount: t.monthlyCents,
+            currency: "usd",
+            recurring: { interval: "month" },
+            nickname: `${t.slug}_monthly`,
+            lookup_key: `unifyone_${t.slug}_monthly`,
+            metadata: { unifyone_plan_slug: t.slug, billing_period: "monthly" },
+          });
+        }
+        if (!yearlyPrice) {
+          yearlyPrice = await stripe!.prices.create({
+            product: product.id,
+            unit_amount: t.yearlyCents,
+            currency: "usd",
+            recurring: { interval: "year" },
+            nickname: `${t.slug}_yearly`,
+            lookup_key: `unifyone_${t.slug}_yearly`,
+            metadata: { unifyone_plan_slug: t.slug, billing_period: "yearly" },
+          });
+        }
+
+        // Upsert plan row in DB
+        const db = await getDb();
+        if (db) {
+          const allPlans = await db.select().from(plans);
+          const existing = allPlans.find(p => p.slug === t.slug);
+          if (existing) {
+            await db
+              .update(plans)
+              .set({
+                name: t.name,
+                description: t.description,
+                priceMonthly: (t.monthlyCents / 100).toFixed(2),
+                priceYearly: (t.yearlyCents / 100).toFixed(2),
+                stripePriceIdMonthly: monthlyPrice.id,
+                stripePriceIdYearly: yearlyPrice.id,
+                features: t.features,
+                isActive: true,
+              })
+              .where(eq(plans.slug, t.slug));
+          } else {
+            await db.insert(plans).values({
+              slug: t.slug,
+              name: t.name,
+              description: t.description,
+              priceMonthly: (t.monthlyCents / 100).toFixed(2),
+              priceYearly: (t.yearlyCents / 100).toFixed(2),
+              stripePriceIdMonthly: monthlyPrice.id,
+              stripePriceIdYearly: yearlyPrice.id,
+              maxProducts: t.maxProducts,
+              maxOrders: t.maxOrders,
+              maxUsers: t.maxUsers,
+              features: t.features,
+              isActive: true,
+            });
+          }
+        }
+
+        results.push({
+          slug: t.slug,
+          product_id: product.id,
+          monthly_price_id: monthlyPrice.id,
+          yearly_price_id: yearlyPrice.id,
+        });
+      }
+
+      // Also seed the free Starter row if missing (no Stripe IDs needed).
+      const db = await getDb();
+      if (db) {
+        const allPlans = await db.select().from(plans);
+        if (!allPlans.find(p => p.slug === "starter")) {
+          await db.insert(plans).values({
+            slug: "starter",
+            name: "Starter",
+            description: "Free forever. 50 Kai credits/mo, 2 platforms.",
+            priceMonthly: "0.00",
+            priceYearly: "0.00",
+            stripePriceIdMonthly: null,
+            stripePriceIdYearly: null,
+            maxProducts: 100,
+            maxOrders: 1000,
+            maxUsers: 2,
+            features: ["50 Kai credits/mo", "2 platforms", "Money Manager"],
+            isActive: true,
+          });
+        }
+      }
+
+      return Response.json({ created: results });
+    } catch (err: unknown) {
+      console.error("[Stripe] Setup products error:", errMsg(err));
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
   // Not handled here — return null so caller falls through to tRPC
   return null;
 }
