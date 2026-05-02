@@ -1,5 +1,9 @@
 import Stripe from "stripe";
-import { Express, Request, Response } from "express";
+import type {
+  Express,
+  Request as ExpressRequest,
+  Response as ExpressResponse,
+} from "express";
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
 import { getDb, getTenantByStripeCustomerId } from "./db";
@@ -225,7 +229,7 @@ export function registerStripeRoutes(app: Express) {
   app.post(
     "/api/stripe/webhook",
     express.raw({ type: "application/json" }),
-    async (req: Request, res: Response) => {
+    async (req: ExpressRequest, res: ExpressResponse) => {
       if (!stripe) {
         console.error("[Stripe Webhook] STRIPE_SECRET_KEY not configured");
         return res.status(503).json({ error: "Stripe not configured" });
@@ -537,7 +541,7 @@ export function registerStripeRoutes(app: Express) {
   app.post(
     "/api/stripe/create-checkout",
     express.json(),
-    async (req: Request, res: Response) => {
+    async (req: ExpressRequest, res: ExpressResponse) => {
       if (!stripe)
         return res.status(503).json({ error: "Stripe not configured" });
       try {
@@ -631,7 +635,7 @@ export function registerStripeRoutes(app: Express) {
   app.post(
     "/api/stripe/create-embedded-checkout",
     express.json(),
-    async (req: Request, res: Response) => {
+    async (req: ExpressRequest, res: ExpressResponse) => {
       if (!stripe)
         return res.status(503).json({ error: "Stripe not configured" });
       try {
@@ -668,7 +672,7 @@ export function registerStripeRoutes(app: Express) {
   app.post(
     "/api/stripe/customer-portal",
     express.json(),
-    async (req: Request, res: Response) => {
+    async (req: ExpressRequest, res: ExpressResponse) => {
       if (!stripe)
         return res.status(503).json({ error: "Stripe not configured" });
       try {
@@ -694,7 +698,7 @@ export function registerStripeRoutes(app: Express) {
   // Get subscription details for a tenant
   app.get(
     "/api/stripe/subscription/:subscriptionId",
-    async (req: Request, res: Response) => {
+    async (req: ExpressRequest, res: ExpressResponse) => {
       if (!stripe)
         return res.status(503).json({ error: "Stripe not configured" });
       try {
@@ -715,7 +719,7 @@ export function registerStripeRoutes(app: Express) {
   app.post(
     "/api/stripe/change-plan",
     express.json(),
-    async (req: Request, res: Response) => {
+    async (req: ExpressRequest, res: ExpressResponse) => {
       if (!stripe)
         return res.status(503).json({ error: "Stripe not configured" });
       try {
@@ -742,7 +746,7 @@ export function registerStripeRoutes(app: Express) {
   app.post(
     "/api/stripe/cancel-subscription",
     express.json(),
-    async (req: Request, res: Response) => {
+    async (req: ExpressRequest, res: ExpressResponse) => {
       if (!stripe)
         return res.status(503).json({ error: "Stripe not configured" });
       try {
@@ -766,7 +770,7 @@ export function registerStripeRoutes(app: Express) {
   app.post(
     "/api/stripe/flush-overages",
     express.json(),
-    async (req: Request, res: Response) => {
+    async (req: ExpressRequest, res: ExpressResponse) => {
       const adminKey = req.headers["x-admin-key"] as string | undefined;
       if (process.env.ADMIN_API_KEY && adminKey !== process.env.ADMIN_API_KEY) {
         return res.status(401).json({ error: "Unauthorized" });
@@ -785,7 +789,7 @@ export function registerStripeRoutes(app: Express) {
   app.post(
     "/api/stripe/flush-overages/:userId",
     express.json(),
-    async (req: Request, res: Response) => {
+    async (req: ExpressRequest, res: ExpressResponse) => {
       try {
         const result = await flushUserOverages(req.params.userId);
         res.json(result);
@@ -799,7 +803,7 @@ export function registerStripeRoutes(app: Express) {
   // List invoices for a Stripe customer
   app.get(
     "/api/stripe/invoices/:customerId",
-    async (req: Request, res: Response) => {
+    async (req: ExpressRequest, res: ExpressResponse) => {
       if (!stripe)
         return res.status(503).json({ error: "Stripe not configured" });
       try {
@@ -817,5 +821,611 @@ export function registerStripeRoutes(app: Express) {
 
 export { stripe };
 
-// Fetch-based route handler stub (for Netlify serverless; not yet implemented)
-export const registerStripeFetchRoutes: null = null;
+/* ─────────────────────────────────────────────────────────────────────────
+ * registerStripeFetchRoutes — Netlify Functions Fetch API handler.
+ *
+ * The Express routes above (registerStripeRoutes) only run under the
+ * Express adapter (local/Docker). On Netlify the server function is a
+ * Fetch handler (tRPC fetchRequestHandler) with NO Express, so those
+ * routes never mounted and every /api/stripe/* request fell through to
+ * tRPC and 404'd. This implementation mirrors the Express routes 1:1.
+ *
+ * IMPORTANT: webhook signature verification REQUIRES the raw body via
+ * req.text() — never req.json(), which mutates whitespace and breaks the
+ * HMAC. The /api/webhooks exclusion in middleware is preserved upstream
+ * (this file is mounted before tRPC in nonTrpcRoutes.ts).
+ * ───────────────────────────────────────────────────────────────────── */
+async function handleStripeWebhook(req: Request): Promise<Response> {
+  if (!stripe) {
+    console.error("[Stripe Webhook] STRIPE_SECRET_KEY not configured");
+    return Response.json({ error: "Stripe not configured" }, { status: 503 });
+  }
+
+  const sig = req.headers.get("stripe-signature");
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
+  if (!sig) {
+    return Response.json(
+      { error: "Missing stripe-signature header" },
+      { status: 400 }
+    );
+  }
+  if (!webhookSecret) {
+    console.error("[Stripe Webhook] STRIPE_WEBHOOK_SECRET not configured");
+    return Response.json(
+      { error: "Webhook secret not configured" },
+      { status: 503 }
+    );
+  }
+
+  const rawBody = await req.text();
+
+  let event: Stripe.Event;
+  try {
+    // constructEventAsync uses Web Crypto API — required in serverless edge/fetch contexts
+    event = await stripe.webhooks.constructEventAsync(
+      rawBody,
+      sig,
+      webhookSecret
+    );
+  } catch (err: unknown) {
+    console.error(
+      "[Stripe Webhook] Signature verification failed:",
+      errMsg(err)
+    );
+    return Response.json(
+      { error: `Webhook Error: ${errMsg(err)}` },
+      { status: 400 }
+    );
+  }
+
+  // Test events (sent by the Stripe Dashboard "Send test webhook" button)
+  if (event.id.startsWith("evt_test_")) {
+    console.log("[Stripe Webhook] Test event verified:", event.type);
+    return Response.json({ verified: true });
+  }
+
+  console.log(`[Stripe Webhook] Received event: ${event.type} (${event.id})`);
+
+  try {
+    switch (event.type) {
+      case "product.created":
+      case "product.updated": {
+        await syncProduct(event.data.object as Stripe.Product);
+        break;
+      }
+      case "price.created":
+      case "price.updated": {
+        await syncPrice(event.data.object as Stripe.Price);
+        break;
+      }
+
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const customerId = session.customer as string;
+        const checkoutTenant = customerId
+          ? await getTenantByStripeCustomerId(customerId)
+          : undefined;
+
+        // Theme purchase fulfillment
+        if (
+          session.metadata?.purchase_type === "theme" &&
+          session.metadata?.theme_id &&
+          session.metadata?.user_id
+        ) {
+          const themeId = parseInt(session.metadata.theme_id);
+          const userId = parseInt(session.metadata.user_id);
+          const amountPaid = session.amount_total
+            ? (session.amount_total / 100).toFixed(2)
+            : "0.00";
+          const db = await getDb();
+          if (db) {
+            const existing = await db
+              .select()
+              .from(themeInstalls)
+              .where(
+                and(
+                  eq(themeInstalls.themeId, themeId),
+                  eq(themeInstalls.userId, userId)
+                )
+              )
+              .limit(1);
+            if (!existing.length) {
+              await db.insert(themeInstalls).values({
+                themeId,
+                userId,
+                amountPaid,
+                stripePaymentIntentId:
+                  (session.payment_intent as string) ?? null,
+              });
+              await db
+                .update(themes)
+                .set({ installCount: sql`${themes.installCount} + 1` })
+                .where(eq(themes.id, themeId));
+              console.log(
+                `[Stripe] Theme ${themeId} purchased by user ${userId}, amount: $${amountPaid}`
+              );
+
+              const themeEmail =
+                session.customer_details?.email ||
+                session.metadata?.customer_email ||
+                "";
+              capi
+                .purchase(
+                  `stripe_theme_${session.id}`,
+                  { email: themeEmail },
+                  `${getAppUrl()}/checkout`,
+                  parseFloat(amountPaid),
+                  (session.currency || "USD").toUpperCase()
+                )
+                .catch((err: Error) =>
+                  console.error("[CAPI] Purchase event failed:", errMsg(err))
+                );
+            }
+          }
+          break;
+        }
+
+        if (checkoutTenant && customerId) {
+          const db = await getDb();
+          if (db) {
+            await db
+              .update(tenants)
+              .set({
+                stripeCustomerId: customerId,
+                subscriptionStatus: "active",
+              })
+              .where(eq(tenants.id, checkoutTenant.id));
+          }
+        } else if (!checkoutTenant && customerId) {
+          console.log(
+            `[Stripe] checkout.session.completed: no tenant found for customer ${customerId}; subscription sync will handle the link.`
+          );
+        }
+
+        if (session.subscription) {
+          const sub = await stripe.subscriptions.retrieve(
+            session.subscription as string
+          );
+          await syncSubscription(sub);
+        }
+
+        const sessionAmount = session.amount_total
+          ? session.amount_total / 100
+          : 0;
+        const sessionEmail =
+          session.customer_details?.email ||
+          session.metadata?.customer_email ||
+          "";
+        if (sessionAmount > 0 && sessionEmail) {
+          capi
+            .purchase(
+              `stripe_sub_${session.id}`,
+              { email: sessionEmail },
+              `${getAppUrl()}/checkout`,
+              sessionAmount,
+              (session.currency || "USD").toUpperCase()
+            )
+            .catch((err: Error) =>
+              console.error("[CAPI] Purchase event failed:", errMsg(err))
+            );
+        }
+
+        console.log(
+          `[Stripe] Checkout completed for tenant ${checkoutTenant?.id ?? "unknown"}, customer: ${customerId}`
+        );
+
+        void import("./auditLogger").then(({ logAudit }) =>
+          logAudit({
+            action: "stripe.purchase",
+            resource: "subscription",
+            resourceId: customerId,
+            severity: "medium",
+            tenantId: checkoutTenant?.id,
+            metadata: {
+              amount: sessionAmount,
+              currency: (session.currency || "USD").toUpperCase(),
+              sessionId: session.id,
+            },
+          }).catch(() => {})
+        );
+        break;
+      }
+
+      case "customer.subscription.created":
+      case "customer.subscription.updated": {
+        await syncSubscription(event.data.object as Stripe.Subscription);
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const sub = event.data.object as Stripe.Subscription;
+        const db = await getDb();
+        if (db) {
+          await db
+            .update(tenants)
+            .set({
+              stripeSubscriptionId: null,
+              subscriptionStatus: "cancelled",
+              subscriptionCurrentPeriodEnd: null,
+            })
+            .where(eq(tenants.stripeCustomerId, sub.customer as string));
+        }
+        const supabase = getSupabaseAdmin();
+        if (supabase) {
+          await supabase
+            .from("stripe_subscriptions")
+            .update({
+              status: "canceled",
+              ended_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", sub.id);
+        }
+        console.log(`[Stripe] Subscription cancelled: ${sub.id}`);
+        break;
+      }
+
+      case "invoice.created":
+      case "invoice.upcoming": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const supabase = getSupabaseAdmin();
+        if (supabase && invoice.customer) {
+          const { data: sub } = await supabase
+            .from("stripe_subscriptions")
+            .select("user_id")
+            .eq("stripe_customer_id", invoice.customer as string)
+            .in("status", ["trialing", "active"])
+            .maybeSingle();
+          if (sub?.user_id) {
+            await flushUserOverages(sub.user_id);
+          }
+        }
+        console.log(
+          `[Stripe] Invoice ${event.type}: ${invoice.id}, flushed overages`
+        );
+        break;
+      }
+
+      case "invoice.payment_succeeded":
+      case "invoice.paid": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subId = (invoice as Stripe.Invoice & { subscription?: string })
+          .subscription;
+        if (subId) {
+          const sub = await stripe.subscriptions.retrieve(subId);
+          await syncSubscription(sub);
+          await grantSubscriptionCredits(invoice, sub);
+        }
+        console.log(
+          `[Stripe] Invoice paid: ${invoice.id}, amount: ${invoice.amount_paid}`
+        );
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const db = await getDb();
+        if (db && invoice.customer) {
+          await db
+            .update(tenants)
+            .set({ subscriptionStatus: "past_due" })
+            .where(eq(tenants.stripeCustomerId, invoice.customer as string));
+        }
+        console.error(`[Stripe] Invoice payment failed: ${invoice.id}`);
+        break;
+      }
+
+      case "customer.subscription.trial_will_end": {
+        const sub = event.data.object as Stripe.Subscription;
+        console.log(`[Stripe] Trial ending soon for subscription: ${sub.id}`);
+        break;
+      }
+
+      default:
+        console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
+    }
+  } catch (err) {
+    console.error("[Stripe Webhook] Error processing event:", err);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
+  }
+
+  return Response.json({ received: true });
+}
+
+async function safeJson<T = unknown>(req: Request): Promise<T> {
+  try {
+    return (await req.json()) as T;
+  } catch {
+    return {} as T;
+  }
+}
+
+export async function registerStripeFetchRoutes(
+  req: Request
+): Promise<Response | null> {
+  const url = new URL(req.url);
+  const path = url.pathname;
+  const method = req.method.toUpperCase();
+
+  // ── /api/stripe/webhook ─────────────────────────────────────────────
+  if (path === "/api/stripe/webhook" && method === "POST") {
+    return handleStripeWebhook(req);
+  }
+
+  // All remaining routes need a Stripe instance
+  if (path.startsWith("/api/stripe/") && !stripe) {
+    return Response.json({ error: "Stripe not configured" }, { status: 503 });
+  }
+
+  // ── /api/stripe/create-checkout ─────────────────────────────────────
+  if (path === "/api/stripe/create-checkout" && method === "POST") {
+    try {
+      const {
+        priceId,
+        tenantId,
+        userId,
+        userEmail,
+        userName,
+        origin,
+        amount,
+        description,
+      } = await safeJson<{
+        priceId?: string;
+        tenantId?: string | number;
+        userId?: string | number;
+        userEmail?: string;
+        userName?: string;
+        origin?: string;
+        amount?: string | number;
+        description?: string;
+      }>(req);
+
+      const baseUrl = origin || "http://localhost:3000";
+
+      if (priceId) {
+        const session = await stripe!.checkout.sessions.create({
+          mode: "subscription",
+          payment_method_types: ["card"],
+          customer_email: userEmail,
+          allow_promotion_codes: true,
+          line_items: [{ price: priceId, quantity: 1 }],
+          subscription_data: {
+            metadata: {
+              tenant_id: tenantId?.toString() || "",
+              user_id: userId?.toString() || "",
+            },
+          },
+          client_reference_id: userId?.toString(),
+          metadata: {
+            tenant_id: tenantId?.toString() || "",
+            user_id: userId?.toString() || "",
+            customer_email: userEmail || "",
+            customer_name: userName || "",
+          },
+          automatic_tax: { enabled: true },
+          success_url: `${baseUrl}/dashboard?stripe=success`,
+          cancel_url: `${baseUrl}/checkout?stripe=cancelled`,
+        });
+        return Response.json({ url: session.url });
+      }
+
+      if (!amount || isNaN(parseFloat(String(amount)))) {
+        return Response.json(
+          { error: "Either priceId or amount is required" },
+          { status: 400 }
+        );
+      }
+
+      const amountCents = Math.round(parseFloat(String(amount)) * 100);
+      const session = await stripe!.checkout.sessions.create({
+        mode: "payment",
+        payment_method_types: ["card"],
+        customer_email: userEmail,
+        allow_promotion_codes: true,
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              unit_amount: amountCents,
+              product_data: {
+                name: description || "UnifyOne Order",
+                description: "UnifyOne Commerce Platform",
+              },
+            },
+            quantity: 1,
+          },
+        ],
+        client_reference_id: userId?.toString(),
+        metadata: {
+          tenant_id: tenantId?.toString() || "",
+          user_id: userId?.toString() || "",
+          customer_email: userEmail || "",
+          customer_name: userName || "",
+        },
+        success_url: `${baseUrl}/dashboard?stripe=success`,
+        cancel_url: `${baseUrl}/checkout?stripe=cancelled`,
+      });
+
+      return Response.json({ url: session.url });
+    } catch (err: unknown) {
+      console.error("[Stripe] Create checkout error:", errMsg(err));
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
+  // ── /api/stripe/create-embedded-checkout ────────────────────────────
+  if (path === "/api/stripe/create-embedded-checkout" && method === "POST") {
+    try {
+      const { priceId, userEmail, userId, tenantId } = await safeJson<{
+        priceId?: string;
+        userEmail?: string;
+        userId?: string | number;
+        tenantId?: string | number;
+      }>(req);
+      if (!priceId) {
+        return Response.json({ error: "priceId is required" }, { status: 400 });
+      }
+      const origin =
+        req.headers.get("origin") || getAppUrl() || "http://localhost:3000";
+      const session = await stripe!.checkout.sessions.create({
+        ui_mode: "embedded",
+        mode: "subscription",
+        line_items: [{ price: priceId, quantity: 1 }],
+        subscription_data: {
+          metadata: {
+            tenant_id: tenantId?.toString() || "",
+            user_id: userId?.toString() || "",
+          },
+        },
+        customer_email: userEmail,
+        automatic_tax: { enabled: true },
+        allow_promotion_codes: true,
+        return_url: `${origin}/dashboard?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
+      });
+      return Response.json({ clientSecret: session.client_secret });
+    } catch (err: unknown) {
+      console.error("[Stripe] Create embedded checkout error:", errMsg(err));
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
+  // ── /api/stripe/customer-portal ─────────────────────────────────────
+  if (path === "/api/stripe/customer-portal" && method === "POST") {
+    try {
+      const { customerId, origin } = await safeJson<{
+        customerId?: string;
+        origin?: string;
+      }>(req);
+      if (!customerId) {
+        return Response.json(
+          { error: "customerId is required" },
+          { status: 400 }
+        );
+      }
+      const session = await stripe!.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: `${origin || "http://localhost:3000"}/settings`,
+      });
+      return Response.json({ url: session.url });
+    } catch (err: unknown) {
+      console.error("[Stripe] Customer portal error:", errMsg(err));
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
+  // ── /api/stripe/subscription/:subscriptionId ────────────────────────
+  if (path.startsWith("/api/stripe/subscription/") && method === "GET") {
+    try {
+      const subId = decodeURIComponent(
+        path.slice("/api/stripe/subscription/".length)
+      );
+      if (!subId) {
+        return Response.json(
+          { error: "subscriptionId required" },
+          { status: 400 }
+        );
+      }
+      const sub = await stripe!.subscriptions.retrieve(subId, {
+        expand: ["latest_invoice", "items.data.price.product"],
+      });
+      return Response.json(sub);
+    } catch (err: unknown) {
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
+  // ── /api/stripe/change-plan ─────────────────────────────────────────
+  if (path === "/api/stripe/change-plan" && method === "POST") {
+    try {
+      const { subscriptionId, newPriceId } = await safeJson<{
+        subscriptionId?: string;
+        newPriceId?: string;
+      }>(req);
+      if (!subscriptionId || !newPriceId) {
+        return Response.json(
+          { error: "subscriptionId and newPriceId are required" },
+          { status: 400 }
+        );
+      }
+      const sub = await stripe!.subscriptions.retrieve(subscriptionId);
+      const updated = await stripe!.subscriptions.update(subscriptionId, {
+        items: [{ id: sub.items.data[0].id, price: newPriceId }],
+        proration_behavior: "create_prorations",
+      });
+      return Response.json(updated);
+    } catch (err: unknown) {
+      console.error("[Stripe] Change plan error:", errMsg(err));
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
+  // ── /api/stripe/cancel-subscription ─────────────────────────────────
+  if (path === "/api/stripe/cancel-subscription" && method === "POST") {
+    try {
+      const { subscriptionId } = await safeJson<{ subscriptionId?: string }>(
+        req
+      );
+      if (!subscriptionId) {
+        return Response.json(
+          { error: "subscriptionId is required" },
+          { status: 400 }
+        );
+      }
+      const updated = await stripe!.subscriptions.update(subscriptionId, {
+        cancel_at_period_end: true,
+      });
+      return Response.json(updated);
+    } catch (err: unknown) {
+      console.error("[Stripe] Cancel subscription error:", errMsg(err));
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
+  // ── /api/stripe/flush-overages (admin-only) ─────────────────────────
+  if (path === "/api/stripe/flush-overages" && method === "POST") {
+    const adminKey = req.headers.get("x-admin-key") || "";
+    if (process.env.ADMIN_API_KEY && adminKey !== process.env.ADMIN_API_KEY) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    try {
+      const result = await flushAllOverages();
+      return Response.json(result);
+    } catch (err: unknown) {
+      console.error("[Stripe] Flush overages error:", errMsg(err));
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
+  // ── /api/stripe/flush-overages/:userId ──────────────────────────────
+  if (path.startsWith("/api/stripe/flush-overages/") && method === "POST") {
+    try {
+      const userId = decodeURIComponent(
+        path.slice("/api/stripe/flush-overages/".length)
+      );
+      const result = await flushUserOverages(userId);
+      return Response.json(result);
+    } catch (err: unknown) {
+      console.error("[Stripe] Flush user overages error:", errMsg(err));
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
+  // ── /api/stripe/invoices/:customerId ────────────────────────────────
+  if (path.startsWith("/api/stripe/invoices/") && method === "GET") {
+    try {
+      const customerId = decodeURIComponent(
+        path.slice("/api/stripe/invoices/".length)
+      );
+      const invoices = await stripe!.invoices.list({
+        customer: customerId,
+        limit: 20,
+      });
+      return Response.json(invoices.data);
+    } catch (err: unknown) {
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
+  // Not handled here — return null so caller falls through to tRPC
+  return null;
+}
