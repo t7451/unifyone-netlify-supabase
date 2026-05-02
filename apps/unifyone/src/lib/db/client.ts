@@ -2,6 +2,8 @@ import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
 import { resolveDatabaseUrl } from "../env";
+import { DatabaseConnectionError } from "@shared/errors";
+import { NO_DATABASE_URL } from "@shared/const";
 
 export { schema };
 
@@ -14,9 +16,7 @@ export function getDb(): Db {
   if (cachedDb) return cachedDb;
   const url = resolveDatabaseUrl(import.meta.env);
   if (!url) {
-    throw new Error(
-      "No database URL set. Provide NEON_DATABASE_URL, or install the Netlify Neon extension."
-    );
+    throw new DatabaseConnectionError(NO_DATABASE_URL);
   }
   cachedSql = neon(url);
   cachedDb = drizzle(cachedSql, { schema });

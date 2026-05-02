@@ -3,6 +3,8 @@ import react from "@astrojs/react";
 import tailwind from "@astrojs/tailwind";
 import mdx from "@astrojs/mdx";
 import netlify from "@astrojs/netlify";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Sitemap is served by the manual endpoint at src/pages/sitemap.xml.ts
 // (uses @1commerce/seo, includes blog collection). Do not re-add
@@ -16,6 +18,16 @@ export default defineConfig({
   output: "static",
   adapter: netlify(),
   integrations: [react(), tailwind({ applyBaseStyles: false }), mdx()],
+  vite: {
+    resolve: {
+      alias: {
+        "@shared": path.resolve(
+          path.dirname(fileURLToPath(import.meta.url)),
+          "../../shared"
+        ),
+      },
+    },
+  },
   // Auth lives on the legacy app at 1commerce.online (custom JWT, not Clerk).
   // These two routes preserve any inbound /sign-in or /sign-up links from
   // old marketing copy and forward them to the real login/signup pages.
