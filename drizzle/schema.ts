@@ -1814,3 +1814,71 @@ export const stripeWebhookEvents = pgTable("stripe_webhook_events", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Impact.com S2S Affiliate Tracking
+//
+// Click capture → conversion firing for the Impact.com affiliate network.
+// Two tables:
+//   * impact_clicks      — every inbound ?im_ref=… landing
+//   * impact_conversions — every conversion postback fired to Impact's S2S API
+//
+// Privacy: ipHash is SHA-256 of the IP, never the raw address.
+// Idempotency: stripe_session_id is UNIQUE on conversions so a replayed
+// Stripe webhook can never double-fire.
+// ─────────────────────────────────────────────────────────────────────────────
+export const impactClicks = pgTable(
+  "impact_clicks",
+  {
+    id: serial("id").primaryKey(),
+    /** Server-issued opaque ID (32 hex chars) — what we send to Impact as SubId. */
+    clickId: varchar("click_id", { length: 64 }).notNull().unique(),
+    /** Raw value of the ?im_ref= query param (partner-supplied). */
+    imRef: varchar("im_ref", { length: 200 }).notNull(),
+    /** Landing page URL with the affiliate parameter intact. */
+    landingUrl: text("landing_url"),
+    /** SHA-256 hex of the client IP. Never the raw IP. */
+    ipHash: varchar("ip_hash", { length: 64 }),
+    userAgent: text("user_agent"),
+    referer: text("referer"),
+    /** When known (post-signup), link the click back to the user. */
+    userId: integer("user_id"),
+    /** Set when the conversion is fired, so we can compute funnel rate. */
+    convertedAt: timestamp("converted_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  table => ({
+    imRefIdx: index("impact_clicks_im_ref_idx").on(table.imRef),
+    userIdx: index("impact_clicks_user_id_idx").on(table.userId),
+    createdAtIdx: index("impact_clicks_created_at_idx").on(table.createdAt),
+  })
+);
+export type ImpactClick = typeof impactClicks.$inferSelect;
+export type InsertImpactClick = typeof impactClicks.$inferInsert;
+
+export const impactConversions = pgTable(
+  "impact_conversions",
+  {
+    id: serial("id").primaryKey(),
+    clickId: varchar("click_id", { length: 64 }).notNull(),
+    /** The Stripe checkout session that triggered this conversion. UNIQUE => idempotent. */
+    stripeSessionId: varchar("stripe_session_id", { length: 100 })
+      .notNull()
+      .unique(),
+    amountCents: integer("amount_cents").notNull(),
+    currency: varchar("currency", { length: 3 }).notNull(),
+    /** Raw response from Impact's S2S endpoint for forensic replay. */
+    impactResponse: json("impact_response").$type<Record<string, unknown>>(),
+    /** HTTP status from the Impact API (null if local-only / dry-run). */
+    httpStatus: integer("http_status"),
+    /** True if posted successfully to Impact (2xx); false on error. */
+    success: boolean("success").default(false).notNull(),
+    firedAt: timestamp("fired_at").defaultNow().notNull(),
+  },
+  table => ({
+    clickIdx: index("impact_conversions_click_id_idx").on(table.clickId),
+    firedAtIdx: index("impact_conversions_fired_at_idx").on(table.firedAt),
+  })
+);
+export type ImpactConversion = typeof impactConversions.$inferSelect;
+export type InsertImpactConversion = typeof impactConversions.$inferInsert;

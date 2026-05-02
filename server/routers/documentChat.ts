@@ -5,6 +5,7 @@ import { getDb } from "../db";
 import { documentEmbeddings } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { llmRateLimiter } from "../_core/rateLimiter";
+import { voyageEmbedOne } from "../_core/voyage";
 
 // Helper: Compute cosine similarity between two vectors
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -21,31 +22,25 @@ function cosineSimilarity(a: number[], b: number[]): number {
   return denominator === 0 ? 0 : dotProduct / denominator;
 }
 
-// Helper: Get embedding for a query.
-//
-// NOTE: this is a deterministic hash-based pseudo-embedding — it does not
-// produce semantically meaningful vectors. For production-grade semantic
-// search, replace with Voyage AI (`voyage-3-large` via the Voyage REST API),
-// Anthropic's recommended embeddings provider. Tracked under
-// PRODUCTION_HARDENING.md.
+/**
+ * Get a query embedding via Voyage AI.
+ *
+ * Production-grade semantic embedding using the Voyage AI REST API
+ * (model: voyage-3-large by default; override via VOYAGE_MODEL). Falls back
+ * automatically to a deterministic hash embedding when VOYAGE_API_KEY is
+ * unset or the API errors. See server/_core/voyage.ts for details.
+ *
+ * Indexing-side calls (when adding documents) should pass mode="document";
+ * search-side calls (this one) pass mode="query" so Voyage applies the
+ * correct task-specific prompting internally.
+ */
 async function getQueryEmbedding(query: string): Promise<number[]> {
-  const hash = Array.from(query).reduce((acc, char) => {
-    return (acc << 5) - acc + char.charCodeAt(0);
-  }, 0);
-
-  // Generate a 1536-dimensional vector from the hash
-  const embedding: number[] = [];
-  let seed = hash;
-  for (let i = 0; i < 1536; i++) {
-    seed = (seed * 9301 + 49297) % 233280;
-    embedding.push((seed / 233280) * 2 - 1);
-  }
-  return embedding;
+  return voyageEmbedOne(query, { mode: "query" });
 }
 
 export const documentChatRouter = router({
   // `documentEmbeddings` is a SHARED, platform-wide documentation knowledge
-  // base (no `tenantId` column on the table) — so tenant scoping is not
+  // base (no `tenantId` column on the table) -- so tenant scoping is not
   // applicable here. We still require an authenticated user and apply a
   // strict per-user rate limit because this endpoint invokes Claude on
   // every call and is otherwise a free LLM-cost burner.
@@ -79,7 +74,7 @@ export const documentChatRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database unavailable");
 
-      // Get embedding for the question
+      // Get embedding for the question (Voyage, mode=query)
       const queryEmbedding = await getQueryEmbedding(input.question);
 
       // Retrieve all document chunks (platform-wide shared docs)

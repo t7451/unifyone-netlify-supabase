@@ -403,6 +403,22 @@ async function grantSubscriptionCredits(
   }
 }
 
+/** Parse an im_ref cookie value out of a raw HTTP Cookie header. */
+function parseImRefFromCookieHeader(header: string): string | null {
+  if (!header) return null;
+  for (const part of header.split(";")) {
+    const [k, ...rest] = part.trim().split("=");
+    if (k === "im_ref") {
+      try {
+        return decodeURIComponent(rest.join("=")) || null;
+      } catch {
+        return rest.join("=") || null;
+      }
+    }
+  }
+  return null;
+}
+
 export function registerStripeRoutes(app: Express) {
   // Stripe webhook — must use raw body BEFORE json middleware
   app.post(
@@ -598,6 +614,36 @@ export function registerStripeRoutes(app: Express) {
                 },
               }).catch(() => {})
             );
+
+            // ── Impact.com S2S affiliate conversion (Express path) ───
+            try {
+              const sessionAmountCents = session.amount_total ?? 0;
+              if (sessionAmountCents > 0) {
+                const { fireImpactConversion } = await import("./_core/impact");
+                const stripeMetaClickId =
+                  session.metadata?.im_click_id ||
+                  session.metadata?.imClickId ||
+                  null;
+                const userIdFromMeta = session.metadata?.user_id
+                  ? Number(session.metadata.user_id)
+                  : null;
+                const db = await getDb();
+                if (db) {
+                  await fireImpactConversion(db, {
+                    stripeSessionId: session.id,
+                    amountCents: sessionAmountCents,
+                    currency: (session.currency || "USD").toUpperCase(),
+                    clickId: stripeMetaClickId,
+                    userId: userIdFromMeta,
+                  });
+                }
+              }
+            } catch (impactErr: unknown) {
+              console.error(
+                "[Impact] Conversion firing failed (non-fatal):",
+                errMsg(impactErr)
+              );
+            }
             break;
           }
 
@@ -736,6 +782,13 @@ export function registerStripeRoutes(app: Express) {
 
         const baseUrl = origin || "http://localhost:3000";
 
+        // Capture im_ref click ID from buyer's cookie so we can attribute
+        // the eventual checkout.session.completed back to the affiliate
+        // who sourced this user. We persist into both metadata bags.
+        const imClickId = parseImRefFromCookieHeader(
+          (req.headers["cookie"] as string | undefined) || ""
+        );
+
         // If a specific priceId is provided, use subscription mode
         if (priceId) {
           const session = await stripe.checkout.sessions.create({
@@ -748,6 +801,7 @@ export function registerStripeRoutes(app: Express) {
               metadata: {
                 tenant_id: tenantId?.toString() || "",
                 user_id: userId?.toString() || "",
+                im_click_id: imClickId || "",
               },
             },
             client_reference_id: userId?.toString(),
@@ -756,6 +810,7 @@ export function registerStripeRoutes(app: Express) {
               user_id: userId?.toString() || "",
               customer_email: userEmail || "",
               customer_name: userName || "",
+              im_click_id: imClickId || "",
             },
             automatic_tax: { enabled: true },
             success_url: `${baseUrl}/dashboard?stripe=success`,
@@ -1207,6 +1262,44 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
             },
           }).catch(() => {})
         );
+
+        // ── Impact.com S2S affiliate conversion ─────────────────────
+        // Idempotent on session.id (UNIQUE constraint on
+        // impact_conversions.stripe_session_id). Stripe's webhook request
+        // does NOT carry the buyer's im_ref cookie, so we resolve the
+        // click via:
+        //   1. session.metadata.im_click_id (set at create-checkout time)
+        //   2. fallback: most-recent unconverted click for this user_id
+        // No-op when IMPACT_* env vars are unset, never blocks the
+        // Stripe webhook handler on affiliate-network failure.
+        try {
+          const sessionAmountCents = session.amount_total ?? 0;
+          if (sessionAmountCents > 0) {
+            const { fireImpactConversion } = await import("./_core/impact");
+            const stripeMetaClickId =
+              session.metadata?.im_click_id ||
+              session.metadata?.imClickId ||
+              null;
+            const userIdFromMeta = session.metadata?.user_id
+              ? Number(session.metadata.user_id)
+              : null;
+            const db = await getDb();
+            if (db) {
+              await fireImpactConversion(db, {
+                stripeSessionId: session.id,
+                amountCents: sessionAmountCents,
+                currency: (session.currency || "USD").toUpperCase(),
+                clickId: stripeMetaClickId,
+                userId: userIdFromMeta,
+              });
+            }
+          }
+        } catch (impactErr: unknown) {
+          console.error(
+            "[Impact] Conversion firing failed (non-fatal):",
+            errMsg(impactErr)
+          );
+        }
         break;
       }
 
@@ -1370,6 +1463,23 @@ export async function registerStripeFetchRoutes(
 
       const baseUrl = origin || "http://localhost:3000";
 
+      // Read im_ref click cookie so we can attribute the eventual conversion
+      // back to the affiliate that sourced this user.
+      const imClickId = (() => {
+        const header = req.headers.get("cookie") || "";
+        for (const part of header.split(";")) {
+          const [k, ...rest] = part.trim().split("=");
+          if (k === "im_ref") {
+            try {
+              return decodeURIComponent(rest.join("=")) || null;
+            } catch {
+              return rest.join("=") || null;
+            }
+          }
+        }
+        return null;
+      })();
+
       if (priceId) {
         const session = await stripe!.checkout.sessions.create({
           mode: "subscription",
@@ -1381,6 +1491,7 @@ export async function registerStripeFetchRoutes(
             metadata: {
               tenant_id: tenantId?.toString() || "",
               user_id: userId?.toString() || "",
+              im_click_id: imClickId || "",
             },
           },
           client_reference_id: userId?.toString(),
@@ -1389,6 +1500,7 @@ export async function registerStripeFetchRoutes(
             user_id: userId?.toString() || "",
             customer_email: userEmail || "",
             customer_name: userName || "",
+            im_click_id: imClickId || "",
           },
           automatic_tax: { enabled: true },
           success_url: `${baseUrl}/dashboard?stripe=success`,

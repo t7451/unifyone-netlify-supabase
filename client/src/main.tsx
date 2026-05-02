@@ -1,6 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { HelmetProvider } from "react-helmet-async";
-import { UNAUTHED_ERR_MSG } from '@shared/const';
+import { UNAUTHED_ERR_MSG } from "@shared/const";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
@@ -10,6 +10,7 @@ import { getLoginUrl } from "./const";
 import "./index.css";
 import "./lib/metaPixelInit";
 import "./lib/analyticsInit";
+import "./lib/impactCapture";
 
 const FETCH_TIMEOUT_MS = 15_000;
 
@@ -70,7 +71,9 @@ function initializeApp() {
   try {
     const rootElement = document.getElementById("root");
     if (!rootElement) {
-      throw new Error("[UnifyOne] Root DOM element #root not found. Check index.html.");
+      throw new Error(
+        "[UnifyOne] Root DOM element #root not found. Check index.html."
+      );
     }
 
     console.log("[UnifyOne] Initializing React application...");
@@ -92,38 +95,44 @@ function initializeApp() {
     const rootElement = document.getElementById("root");
     if (rootElement) {
       // Sanitize error message to prevent XSS
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       const sanitizedMessage = document.createTextNode(errorMessage);
-      
+
       const errorContainer = document.createElement("div");
-      errorContainer.style.cssText = "min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #020202; color: #F0D080; font-family: system-ui, sans-serif;";
-      
+      errorContainer.style.cssText =
+        "min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #020202; color: #F0D080; font-family: system-ui, sans-serif;";
+
       const errorContent = document.createElement("div");
-      errorContent.style.cssText = "max-width: 600px; padding: 2rem; text-align: center;";
-      
+      errorContent.style.cssText =
+        "max-width: 600px; padding: 2rem; text-align: center;";
+
       const heading = document.createElement("h1");
       heading.style.cssText = "font-size: 2rem; margin-bottom: 1rem;";
       heading.textContent = "Application Error";
-      
+
       const description = document.createElement("p");
       description.style.cssText = "margin-bottom: 1rem; color: #9A9A9A;";
-      description.textContent = "We encountered an error while loading the application. Please try refreshing the page.";
-      
+      description.textContent =
+        "We encountered an error while loading the application. Please try refreshing the page.";
+
       const errorDetails = document.createElement("p");
-      errorDetails.style.cssText = "font-size: 0.875rem; color: #5A5A5A; font-family: monospace;";
+      errorDetails.style.cssText =
+        "font-size: 0.875rem; color: #5A5A5A; font-family: monospace;";
       errorDetails.appendChild(sanitizedMessage);
-      
+
       const refreshButton = document.createElement("button");
       refreshButton.textContent = "Refresh Page";
-      refreshButton.style.cssText = "margin-top: 1.5rem; padding: 0.75rem 2rem; background: #D4A843; color: #020202; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; letter-spacing: 0.05em;";
+      refreshButton.style.cssText =
+        "margin-top: 1.5rem; padding: 0.75rem 2rem; background: #D4A843; color: #020202; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; letter-spacing: 0.05em;";
       refreshButton.onclick = () => window.location.reload();
-      
+
       errorContent.appendChild(heading);
       errorContent.appendChild(description);
       errorContent.appendChild(errorDetails);
       errorContent.appendChild(refreshButton);
       errorContainer.appendChild(errorContent);
-      
+
       rootElement.replaceChildren(errorContainer);
     }
   }

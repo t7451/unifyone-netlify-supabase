@@ -435,5 +435,137 @@ export async function registerAdminOpsFetchRoutes(
     }
   }
 
+  // ── Impact.com Affiliate Tracking ───────────────────────────────────
+  if (path === "/api/admin/impact/report" && method === "POST") {
+    const unauthorized = checkAdmin(req);
+    if (unauthorized) return unauthorized;
+    try {
+      const body = (await req.json().catch(() => ({}))) as {
+        days?: number;
+      };
+      const days = Math.min(Math.max(Number(body.days) || 30, 1), 365);
+      const { getDb } = await import("./db");
+      const { impactClicks, impactConversions } = await import(
+        "../drizzle/schema"
+      );
+      const { gte, sql, desc } = await import("drizzle-orm");
+      const db = await getDb();
+      if (!db) {
+        return Response.json({ error: "DB unavailable" }, { status: 503 });
+      }
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+      // Aggregate counts
+      const [clickCountRow] = (await db
+        .select({ c: sql<number>`count(*)::int` })
+        .from(impactClicks)
+        .where(gte(impactClicks.createdAt, since))) as Array<{ c: number }>;
+      const [convCountRow] = (await db
+        .select({
+          c: sql<number>`count(*)::int`,
+          ok: sql<number>`sum(case when success then 1 else 0 end)::int`,
+          gross: sql<number>`coalesce(sum(amount_cents), 0)::int`,
+        })
+        .from(impactConversions)
+        .where(gte(impactConversions.firedAt, since))) as Array<{
+        c: number;
+        ok: number;
+        gross: number;
+      }>;
+
+      // Per-affiliate breakdown
+      const perAffiliate = await db
+        .select({
+          imRef: impactClicks.imRef,
+          clicks: sql<number>`count(*)::int`,
+          converted: sql<number>`sum(case when ${impactClicks.convertedAt} is not null then 1 else 0 end)::int`,
+        })
+        .from(impactClicks)
+        .where(gte(impactClicks.createdAt, since))
+        .groupBy(impactClicks.imRef)
+        .orderBy(desc(sql`count(*)`))
+        .limit(100);
+
+      // Recent rows
+      const recentClicks = await db
+        .select()
+        .from(impactClicks)
+        .where(gte(impactClicks.createdAt, since))
+        .orderBy(desc(impactClicks.createdAt))
+        .limit(50);
+      const recentConversions = await db
+        .select()
+        .from(impactConversions)
+        .where(gte(impactConversions.firedAt, since))
+        .orderBy(desc(impactConversions.firedAt))
+        .limit(50);
+
+      const clickCount = clickCountRow?.c ?? 0;
+      const convCount = convCountRow?.c ?? 0;
+      const convOk = convCountRow?.ok ?? 0;
+      const grossCents = convCountRow?.gross ?? 0;
+      const funnelRate =
+        clickCount > 0 ? Number((convCount / clickCount).toFixed(4)) : 0;
+
+      return Response.json({
+        windowDays: days,
+        totals: {
+          clicks: clickCount,
+          conversions: convCount,
+          conversionsSuccessful: convOk,
+          grossCents,
+          funnelRate,
+        },
+        perAffiliate,
+        recentClicks,
+        recentConversions,
+        configPresent: {
+          accountSid: !!process.env.IMPACT_ACCOUNT_SID,
+          authToken: !!process.env.IMPACT_AUTH_TOKEN,
+          campaignId: !!process.env.IMPACT_CAMPAIGN_ID,
+        },
+      });
+    } catch (err: unknown) {
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
+  if (path === "/api/admin/impact/test-conversion" && method === "POST") {
+    const unauthorized = checkAdmin(req);
+    if (unauthorized) return unauthorized;
+    try {
+      const body = (await req.json().catch(() => ({}))) as {
+        clickId?: string;
+        amountCents?: number;
+        currency?: string;
+        dryRun?: boolean;
+      };
+      const { getDb } = await import("./db");
+      const { fireImpactConversion } = await import("./_core/impact");
+      const db = await getDb();
+      if (!db) {
+        return Response.json({ error: "DB unavailable" }, { status: 503 });
+      }
+      const stripeSessionId = `cs_test_admin_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const result = await fireImpactConversion(db, {
+        stripeSessionId,
+        amountCents: Number(body.amountCents) || 100,
+        currency: body.currency || "USD",
+        clickId: body.clickId || null,
+        dryRun: body.dryRun !== false, // default to dry-run for safety
+      });
+      return Response.json({
+        stripeSessionId,
+        result,
+        note:
+          body.dryRun === false
+            ? "Live call attempted against Impact API"
+            : "Dry-run: no Impact API call made (pass dryRun: false to fire)",
+      });
+    } catch (err: unknown) {
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
   return null;
 }
