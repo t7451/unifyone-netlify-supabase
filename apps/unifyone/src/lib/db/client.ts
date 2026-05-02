@@ -11,8 +11,16 @@ let cachedDb: Db | null = null;
 
 export function getDb(): Db {
   if (cachedDb) return cachedDb;
-  const url = import.meta.env.NEON_DATABASE_URL;
-  if (!url) throw new Error("NEON_DATABASE_URL not set");
+  // Accept any of: NEON_DATABASE_URL (preferred), NETLIFY_DATABASE_URL
+  // (auto-set by the Netlify Neon extension), or DATABASE_URL.
+  const env = import.meta.env;
+  const url =
+    env.NEON_DATABASE_URL || env.NETLIFY_DATABASE_URL || env.DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      "No database URL set. Provide NEON_DATABASE_URL, or install the Netlify Neon extension."
+    );
+  }
   cachedSql = neon(url);
   cachedDb = drizzle(cachedSql, { schema });
   return cachedDb;

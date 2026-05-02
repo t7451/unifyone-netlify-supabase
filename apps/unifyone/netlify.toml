@@ -6,25 +6,37 @@
 # How to provision this site:
 #   1. Create a NEW Netlify site (do not reuse the legacy one).
 #   2. In the Netlify dashboard set: base directory = "apps/unifyone".
-#      (Base is intentionally NOT set here so this file can be reused if the
-#      base ever changes.) With base set, all paths below are relative to
-#      apps/unifyone, and pnpm runs there but still finds the workspace root.
-#   3. Set env vars on the new site (see README in this directory). Do NOT
-#      copy Stripe / Clerk / Supabase / JWT secrets from the legacy site —
-#      this site is unauthenticated marketing content.
+#      With base set, all paths below resolve relative to apps/unifyone, but
+#      pnpm still discovers the workspace root (../../pnpm-workspace.yaml).
+#   3. Set env vars on the new site:
+#        - NEON_DATABASE_URL (or install the Netlify Neon extension; the
+#          extension sets NETLIFY_DATABASE_URL which we fall back to)
+#        - PUBLIC_SITE_URL=https://marketing.1commerce.online
+#        - WAITLIST_N8N_WEBHOOK_URL (optional; only for waitlist API route)
 #   4. Custom domain: marketing.1commerce.online.
+#
+# `pnpm` is provisioned via Corepack (driven by the root package.json
+# `packageManager` field), so we don't pin PNPM_VERSION here.
+#
+# We deliberately do NOT use `--frozen-lockfile` for the marketing-site
+# install: the root lockfile changes whenever the legacy app's deps change,
+# and a frozen install fails the marketing build for an unrelated reason.
+# The `--filter unifyone...` scope keeps the install minimal.
 
 [build]
-  command = "pnpm install --frozen-lockfile --filter unifyone... && pnpm --filter unifyone build"
+  command = "corepack enable && pnpm install --filter unifyone... && pnpm --filter unifyone build"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "22"
-  PNPM_VERSION = "10"
+  # Astro reads import.meta.env at build time; nothing in this site
+  # requires DB at build, but enabling Astro's Netlify adapter checks.
+  ASTRO_TELEMETRY_DISABLED = "1"
 
 # Skip rebuilds when no marketing-relevant files changed. Pathspecs use
 # git's `:(top)` magic so they resolve from the repo root regardless of the
-# Netlify base directory.
+# Netlify base directory. Keep this list in sync with the workspace deps
+# of apps/unifyone.
 [build.ignore]
   command = "git diff --quiet HEAD^ HEAD -- ':(top)apps/unifyone' ':(top)packages/seo' ':(top)package.json' ':(top)pnpm-workspace.yaml' ':(top)pnpm-lock.yaml' ':(top)spire-admin/config/business-profile.json'"
 
@@ -35,3 +47,9 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(), camera=(), microphone=()"
+
+# Cache static assets aggressively (Astro hashes them).
+[[headers]]
+  for = "/_astro/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

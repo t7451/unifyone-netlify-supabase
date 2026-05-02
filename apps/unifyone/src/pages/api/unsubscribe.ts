@@ -37,7 +37,10 @@ export const POST: APIRoute = async ({ request }) => {
   const secret = import.meta.env.OUTREACH_SUPPRESSION_HMAC_SECRET as
     | string
     | undefined;
-  const neonUrl = import.meta.env.NEON_DATABASE_URL as string | undefined;
+  const env = import.meta.env;
+  const neonUrl = (env.NEON_DATABASE_URL ||
+    env.NETLIFY_DATABASE_URL ||
+    env.DATABASE_URL) as string | undefined;
   if (!secret || !neonUrl) {
     return json({ ok: false, error: "config_missing" }, 500);
   }
