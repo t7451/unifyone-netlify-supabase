@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { resolveDatabaseUrl } from "../../lib/env";
 
 // On-demand rendering — this endpoint reports live env state, so it must
 // not be pre-rendered to disk at build time.
@@ -10,16 +11,14 @@ export const prerender = false;
  * Used as a Netlify smoke check after deploy. Reports presence (boolean)
  * not values, so it's safe to expose. The `db` flag accepts the Netlify
  * Neon extension (NETLIFY_DATABASE_URL) as well as the legacy variable
- * names.
+ * names — see resolveDatabaseUrl().
  */
 export const GET: APIRoute = () => {
   const env = import.meta.env;
   const body = {
     status: "ok",
     site: env.PUBLIC_SITE_URL ?? null,
-    db: Boolean(
-      env.NEON_DATABASE_URL || env.NETLIFY_DATABASE_URL || env.DATABASE_URL
-    ),
+    db: Boolean(resolveDatabaseUrl(env)),
     waitlist: Boolean(env.WAITLIST_N8N_WEBHOOK_URL),
     builtAt: new Date().toISOString(),
   };

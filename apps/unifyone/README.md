@@ -44,12 +44,13 @@ pnpm --filter unifyone dev               # http://localhost:4321
    - Build command: leave empty (read from `apps/unifyone/netlify.toml`)
 
 2. **Site settings → Environment variables** — set on _all_ deploy contexts:
-   | Var | Required | Purpose |
-   | --- | --- | --- |
-   | `PUBLIC_SITE_URL` | yes | `https://marketing.1commerce.online` |
-   | `NEON_DATABASE_URL` | recommended | OR install the Netlify **Neon** extension; the integration sets `NETLIFY_DATABASE_URL` and our code falls back to it |
-   | `WAITLIST_N8N_WEBHOOK_URL` | optional | only for `/api/waitlist` |
-   | `OUTREACH_SUPPRESSION_HMAC_SECRET` | optional | only for `/api/unsubscribe` |
+
+   | Var                                | Required    | Purpose                                                                                                              |
+   | ---------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
+   | `PUBLIC_SITE_URL`                  | yes         | `https://marketing.1commerce.online`                                                                                 |
+   | `NEON_DATABASE_URL`                | recommended | OR install the Netlify **Neon** extension; the integration sets `NETLIFY_DATABASE_URL` and our code falls back to it |
+   | `WAITLIST_N8N_WEBHOOK_URL`         | optional    | only for `/api/waitlist`                                                                                             |
+   | `OUTREACH_SUPPRESSION_HMAC_SECRET` | optional    | only for `/api/unsubscribe`                                                                                          |
 
 3. **Domain settings**
    - Add `marketing.1commerce.online` as a custom domain.
