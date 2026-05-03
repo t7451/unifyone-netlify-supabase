@@ -7,6 +7,7 @@ import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
 import { getCookieHeader } from "../lib/cookieHeader";
+import { getAuthorizationHeader } from "../lib/authHeader";
 
 type SessionPayload = {
   openId: string;
@@ -123,7 +124,7 @@ class SDKServer {
     // PATCHED:CR1 — Bearer API token path. Generated keys (uo_live_*, uo_test_*)
     // were inert until this. Hash the token, look up via getApiKeyByHash, then
     // resolve the owning user by userId.
-    const auth = req.headers.get("authorization") || "";
+    const auth = getAuthorizationHeader(req) ?? "";
     if (
       auth.startsWith("Bearer uo_live_") ||
       auth.startsWith("Bearer uo_test_")
