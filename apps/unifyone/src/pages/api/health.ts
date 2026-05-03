@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { resolveDatabaseUrl } from "../../lib/env";
+import { resolveDatabaseUrl } from "@/lib/env";
 
 // On-demand rendering — this endpoint reports live env state, so it must
 // not be pre-rendered to disk at build time.
