@@ -121,6 +121,12 @@ export async function getUserByOpenId(openId: string) {
   return result[0];
 }
 
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result[0];
+}
 export async function updateUserTenant(
   userId: number,
   tenantId: number,
@@ -985,6 +991,15 @@ export async function getApiKeyByHash(keyHash: string) {
   return result[0];
 }
 
+export async function touchApiKey(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  // PATCHED:CR1 — record last-used timestamp on successful API-key auth.
+  await db
+    .update(apiKeys)
+    .set({ lastUsedAt: new Date() })
+    .where(eq(apiKeys.id, id));
+}
 export async function revokeApiKey(id: number, tenantId: number) {
   const db = await getDb();
   if (!db) return;

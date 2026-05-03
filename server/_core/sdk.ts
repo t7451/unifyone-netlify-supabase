@@ -120,6 +120,32 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
+    // PATCHED:CR1 — Bearer API token path. Generated keys (uo_live_*, uo_test_*)
+    // were inert until this. Hash the token, look up via getApiKeyByHash, then
+    // resolve the owning user by userId.
+    const auth = req.headers.get("authorization") || "";
+    if (
+      auth.startsWith("Bearer uo_live_") ||
+      auth.startsWith("Bearer uo_test_")
+    ) {
+      const rawKey = auth.slice("Bearer ".length).trim();
+      const { createHash } = await import("crypto");
+      const keyHash = createHash("sha256").update(rawKey).digest("hex");
+      const apiKey = await db.getApiKeyByHash(keyHash);
+      if (apiKey) {
+        // Best-effort timestamp update; never block auth on it.
+        db.touchApiKey(apiKey.id).catch(() => {});
+        const user = await db.getUserById(apiKey.userId).catch(() => undefined);
+        if (user) {
+          if (user.deletedAt) {
+            throw ForbiddenError("Account has been deleted");
+          }
+          return user;
+        }
+      }
+      throw ForbiddenError("Invalid API key");
+    }
+
     const cookies = this.parseCookies(getCookieHeader(req));
     const sessionCookie = cookies.get(COOKIE_NAME);
     const session = await this.verifySession(sessionCookie);
