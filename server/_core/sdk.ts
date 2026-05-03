@@ -160,6 +160,11 @@ class SDKServer {
         lastSignedIn: signedInAt,
       } as User;
     } else {
+      // PATCHED:GDPR_DELETED_AT_GUARD — defense in depth. If a soft-deleted
+      // user somehow slips past getUserByOpenId's deletedAt filter, reject here.
+      if (user.deletedAt) {
+        throw ForbiddenError("Account has been deleted");
+      }
       // Enforce session revocation: reject any JWT issued before the user last
       // changed their password (or explicitly revoked all sessions).
       // passwordChangedAt is set by resetPassword() and revokeAllSessions().

@@ -28,7 +28,9 @@ export default async (req: Request) => {
   const { next_run } = await req.json().catch(() => ({ next_run: "unknown" }));
   console.log(`[aggregate-credit-stats] Hourly aggregation start. Next: ${next_run}`);
 
-  const supabaseUrl = Netlify.env.get("SUPABASE_URL") || Netlify.env.get("NEXT_PUBLIC_SUPABASE_URL");
+  // PATCHED: removed NEXT_PUBLIC_SUPABASE_URL fallback — Vite app uses VITE_SUPABASE_URL,
+  // server uses SUPABASE_URL. NEXT_PUBLIC_ var was a relic from a Next.js prototype.
+  const supabaseUrl = Netlify.env.get("SUPABASE_URL");
   const supabaseKey = Netlify.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !supabaseKey) {

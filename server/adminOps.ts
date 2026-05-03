@@ -567,5 +567,66 @@ export async function registerAdminOpsFetchRoutes(
     }
   }
 
+  // ── Deploy notifier smoke test ──────────────────────────────────────────
+  // POST /api/admin/deploy-notify/test
+  //   { state?: "error", commit_ref?: "test", error_message?: "smoke" }
+  //
+  // Synthesizes a Netlify deploy event payload and runs the receiver
+  // in-process (skipping the shared-secret check, since we're already
+  // gated by x-admin-key). Use to confirm Resend alerting works without
+  // having to break a real deploy.
+  if (path === "/api/admin/deploy-notify/test" && method === "POST") {
+    const unauthorized = checkAdmin(req);
+    if (unauthorized) return unauthorized;
+    try {
+      const body = (await req.json().catch(() => ({}))) as {
+        state?: string;
+        commit_ref?: string;
+        error_message?: string;
+        deploy_id?: string;
+        site_name?: string;
+        branch?: string;
+        alertEmail?: string;
+      };
+      const { handleDeployEvent, buildProdDeps } = await import(
+        "./_core/deployNotifier"
+      );
+      const synthDeployId =
+        body.deploy_id ||
+        `dpl_smoke_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const payload = {
+        id: synthDeployId,
+        site_id: process.env.NETLIFY_SITE_ID || "smoke-site",
+        name: body.site_name || "unify0ne",
+        state: body.state || "error",
+        branch: body.branch || "main",
+        commit_ref: body.commit_ref || "smoketest",
+        commit_url: null as unknown as string,
+        error_message: body.error_message || "Synthesized smoke test event",
+        deploy_url: "https://1commerce.online",
+        log_url: "https://app.netlify.com/sites/unify0ne/deploys/smoke",
+        admin_url: "https://app.netlify.com/sites/unify0ne",
+        deploy_time: 12,
+      };
+      const cfg = {
+        expectedToken: process.env.NETLIFY_DEPLOY_NOTIFY_TOKEN || "noop",
+        alertEmail:
+          body.alertEmail ||
+          process.env.DEPLOY_ALERT_EMAIL ||
+          "keith@1commerce.online",
+        defaultSiteName: "unify0ne",
+      };
+      const result = await handleDeployEvent(payload, cfg, buildProdDeps());
+      return Response.json({
+        ok: result.ok,
+        action: result.action,
+        deploy_id: synthDeployId,
+        body: result.body,
+      });
+    } catch (err: unknown) {
+      return Response.json({ error: errMsg(err) }, { status: 500 });
+    }
+  }
+
   return null;
 }

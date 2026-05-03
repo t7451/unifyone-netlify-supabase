@@ -1882,3 +1882,38 @@ export const impactConversions = pgTable(
 );
 export type ImpactConversion = typeof impactConversions.$inferSelect;
 export type InsertImpactConversion = typeof impactConversions.$inferInsert;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Deploy Events (Netlify outgoing-webhook receiver)
+//
+// Persistent, idempotent log of every Netlify deploy event we receive at
+// /api/deploys/notify. UNIQUE on deployId so Netlify retries are no-ops and
+// we have forensic history when investigating outages (e.g. "what was the
+// last successful deploy before this fire?").
+// ─────────────────────────────────────────────────────────────────────────────
+export const deployEvents = pgTable(
+  "deploy_events",
+  {
+    id: serial("id").primaryKey(),
+    /** Netlify deploy ID; UNIQUE so the same event can't be persisted twice. */
+    deployId: varchar("deploy_id", { length: 64 }).notNull().unique(),
+    /** Netlify site ID — useful when we add more sites later. */
+    siteId: varchar("site_id", { length: 64 }),
+    /** Deploy state: ready / error / failed / timeout / broken / building / … */
+    state: varchar("state", { length: 32 }).notNull(),
+    branch: varchar("branch", { length: 120 }),
+    commitRef: varchar("commit_ref", { length: 64 }),
+    errorMessage: text("error_message"),
+    /** Full Netlify payload as jsonb so we can mine it later. */
+    payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+    receivedAt: timestamp("received_at").defaultNow().notNull(),
+  },
+  table => ({
+    stateIdx: index("deploy_events_state_idx").on(table.state),
+    receivedAtIdx: index("deploy_events_received_at_idx").on(table.receivedAt),
+    siteIdIdx: index("deploy_events_site_id_idx").on(table.siteId),
+  })
+);
+export type DeployEvent = typeof deployEvents.$inferSelect;
+export type InsertDeployEvent = typeof deployEvents.$inferInsert;

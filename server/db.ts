@@ -1,6 +1,7 @@
 import {
   and,
   count,
+  isNull,
   desc,
   eq,
   gte,
@@ -108,10 +109,13 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
   if (!db) return undefined;
+  // PATCHED:GDPR_DELETED_AT_FILTER — soft-deleted users must not be auth-resolvable.
+  // Stale JWTs were continuing to authenticate after delete-account because this
+  // lookup didn't exclude deletedAt. See GDPR audit 2026-05-03.
   const result = await db
     .select()
     .from(users)
-    .where(eq(users.openId, openId))
+    .where(and(eq(users.openId, openId), isNull(users.deletedAt)))
     .limit(1);
   return result[0];
 }
