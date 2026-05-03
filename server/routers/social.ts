@@ -304,14 +304,14 @@ Return JSON with keys: ${input.platforms.join(", ")}`;
       if (existing.length > 0) {
         await db
           .update(socialAccounts)
-          .set({ handle: input.handle, isConnected: true })
+          .set({ handle: input.handle, isConnected: false })
           .where(eq(socialAccounts.id, existing[0].id));
       } else {
         await db.insert(socialAccounts).values({
           tenantId,
           platform: input.platform,
           handle: input.handle,
-          isConnected: true,
+          isConnected: false,
         });
       }
       return { success: true };
