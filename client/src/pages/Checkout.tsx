@@ -74,6 +74,7 @@ export default function Checkout() {
   const intStatus = trpc.integrations.status.useQuery();
   const shopifyCheckoutUrl = intStatus.data?.shopifyCheckoutUrl;
   const paypalConfigured = intStatus.data?.paypal?.configured;
+  const squareConfigured = intStatus.data?.square?.configured;
 
   // Fetch plans when plan slug is present
   const plansQuery = trpc.subscription.getPlans.useQuery(undefined, {
@@ -342,8 +343,8 @@ export default function Checkout() {
       description: "Pay with card via Square hosted checkout",
       icon: CreditCard,
       color: "#3E4348",
-      badge: "Available",
-      available: true,
+      badge: squareConfigured ? "Live" : "Configure",
+      available: !!squareConfigured,
     },
   ];
 

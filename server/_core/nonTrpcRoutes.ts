@@ -89,19 +89,25 @@ export async function buildNonTrpcHandler(): Promise<
       }
     }
 
-    // PayPal
+    // PayPal — handler may return null to fall through to tRPC
     if (path.startsWith("/api/paypal/") && registerPayPalFetchRoutes) {
       try {
-        return await (registerPayPalFetchRoutes as FetchHandler)(req);
+        const result = await (
+          registerPayPalFetchRoutes as unknown as FetchHandler
+        )(req);
+        if (result) return result;
       } catch (e: unknown) {
         return Response.json({ error: (e as Error).message }, { status: 500 });
       }
     }
 
-    // Square
+    // Square — handler may return null to fall through to tRPC
     if (path.startsWith("/api/square/") && registerSquareFetchRoutes) {
       try {
-        return await (registerSquareFetchRoutes as FetchHandler)(req);
+        const result = await (
+          registerSquareFetchRoutes as unknown as FetchHandler
+        )(req);
+        if (result) return result;
       } catch (e: unknown) {
         return Response.json({ error: (e as Error).message }, { status: 500 });
       }

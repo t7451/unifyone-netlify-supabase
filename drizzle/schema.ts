@@ -1814,6 +1814,37 @@ export const stripeWebhookEvents = pgTable("stripe_webhook_events", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// ── PayPal Webhook Events (forensic log + idempotency) ───────────────────────
+// Mirror of stripeWebhookEvents for PayPal. eventId is the `id` field on the
+// PayPal webhook envelope (e.g. "WH-xxxx-xxxx") which is unique per delivery,
+// guaranteeing idempotency.
+export const paypalWebhookEvents = pgTable("paypal_webhook_events", {
+  id: serial("id").primaryKey(),
+  eventId: varchar("event_id", { length: 100 }).notNull().unique(),
+  eventType: varchar("event_type", { length: 100 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull(), // received | processed | failed
+  errorMessage: text("error_message"),
+  livemode: boolean("livemode").default(false).notNull(),
+  payload: json("payload").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ── Square Webhook Events (forensic log + idempotency) ───────────────────────
+// Mirror of stripeWebhookEvents for Square. eventId is the `event_id` field on
+// the Square webhook envelope (UUID) which is unique per delivery.
+export const squareWebhookEvents = pgTable("square_webhook_events", {
+  id: serial("id").primaryKey(),
+  eventId: varchar("event_id", { length: 100 }).notNull().unique(),
+  eventType: varchar("event_type", { length: 100 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull(), // received | processed | failed
+  errorMessage: text("error_message"),
+  livemode: boolean("livemode").default(false).notNull(),
+  payload: json("payload").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Impact.com S2S Affiliate Tracking
