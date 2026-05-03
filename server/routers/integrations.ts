@@ -57,20 +57,56 @@ export const integrationsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
+
+      // PATCHED:H9 — validate the token live against Shopify Admin API
+      // BEFORE persisting, so we catch typo'd / revoked / wrong-shop tokens
+      // at connect time instead of silently failing every later sync.
+      const cleanDomain = input.shopDomain.trim().replace(/^https?:\/\//, "");
+      const verifyRes = await fetch(
+        `https://${cleanDomain}/admin/api/2024-01/shop.json`,
+        {
+          headers: {
+            "X-Shopify-Access-Token": input.accessToken,
+            "Content-Type": "application/json",
+          },
+        }
+      ).catch(err => {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Could not reach https://${cleanDomain}: ${
+            err instanceof Error ? err.message : "network error"
+          }`,
+        });
+      });
+      if (!verifyRes.ok) {
+        const body = await verifyRes.text().catch(() => "");
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            verifyRes.status === 401
+              ? "Shopify rejected the access token (401 Unauthorized). Confirm the token belongs to the correct store and hasn't been revoked."
+              : verifyRes.status === 404
+                ? `Shopify shop not found at https://${cleanDomain}. Check the domain.`
+                : `Shopify rejected the credentials (HTTP ${verifyRes.status})${
+                    body ? ": " + body.slice(0, 200) : ""
+                  }.`,
+        });
+      }
+
       await updateTenant(tenantId, {
-        shopifyShopDomain: input.shopDomain,
+        shopifyShopDomain: cleanDomain,
         shopifyAccessToken: input.accessToken,
         shopifySyncEnabled: true,
       });
       await logWebhookEvent(
         "shopify",
         "store.connected",
-        { shopDomain: input.shopDomain },
+        { shopDomain: cleanDomain },
         tenantId
       );
       return {
         success: true,
-        message: "Shopify store connected successfully.",
+        message: `Connected to ${cleanDomain}.`,
       };
     }),
 
