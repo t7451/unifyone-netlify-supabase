@@ -18,8 +18,10 @@ function isValidUsername(username: string): boolean {
 
   const firstCharacter = username[0];
   const lastCharacter = username[username.length - 1];
-  return ![".", "-", "_"].includes(firstCharacter ?? "") &&
-    ![".", "-", "_"].includes(lastCharacter ?? "");
+  return (
+    ![".", "-", "_"].includes(firstCharacter ?? "") &&
+    ![".", "-", "_"].includes(lastCharacter ?? "")
+  );
 }
 
 const usernameSchema = z
@@ -72,8 +74,26 @@ export const userRouter = router({
 
       await db.update(users).set(updateData).where(eq(users.id, ctx.user.id));
 
+      // PATCHED:H1 — narrow returning columns so we never leak passwordHash,
+      // emailVerificationToken, passwordResetToken, passwordResetExpiresAt,
+      // passwordChangedAt, deletedAt to the client.
       const result = await db
-        .select()
+        .select({
+          id: users.id,
+          openId: users.openId,
+          name: users.name,
+          email: users.email,
+          username: users.username,
+          role: users.role,
+          tenantId: users.tenantId,
+          emailVerified: users.emailVerified,
+          loginMethod: users.loginMethod,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+          lastSignedIn: users.lastSignedIn,
+          creditBalance: users.creditBalance,
+          referralCode: users.referralCode,
+        })
         .from(users)
         .where(eq(users.id, ctx.user.id))
         .limit(1);
