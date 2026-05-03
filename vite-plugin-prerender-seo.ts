@@ -1,20 +1,22 @@
 /**
  * vite-plugin-prerender-seo.ts
  *
- * Generates a static index.html for every SEO landing page at build time.
- * Netlify (and any static host) will serve these files directly for their
- * corresponding URL paths, so crawlers receive fully-formed meta tags —
- * title, description, canonical, Open Graph, Twitter Card, and JSON-LD —
- * in the initial HTTP response rather than waiting for JavaScript hydration.
+ * Generates a static html file for every SEO landing page at build time so
+ * crawlers receive fully-formed meta tags — title, description, canonical,
+ * Open Graph, Twitter Card, and JSON-LD — in the initial HTTP response
+ * rather than waiting for JavaScript hydration.
  *
  * Output layout (all inside Vite's build.outDir):
- *   seo/index.html            → /seo
- *   seo/<slug>/index.html     → /seo/<slug>    (one file per SeoPage)
+ *   seo.html                  → /seo
+ *   seo/<slug>.html           → /seo/<slug>    (one file per SeoPage)
+ *   <route>.html              → /<route>       (one file per extraRoute)
  *
- * Netlify file-based routing rule: if a physical file exists at the requested
- * path, it is served directly; the SPA catch-all redirect (`/* → /index.html`)
- * only fires for paths without a matching file.  No netlify.toml changes are
- * needed.
+ * Flat .html files (NOT directory/index.html) are used so that Netlify's
+ * pretty_urls behavior keeps the trailing-slash-free URL canonical, matching
+ * the canonical link tag and sitemap entries. Directory/index.html files
+ * cause Netlify to canonicalize with a trailing slash, which forces a 301
+ * redirect from the slug-without-slash URL — Ahrefs flags that as
+ * "Canonical points to redirect" and "3XX redirect in sitemap".
  */
 
 import fs from "node:fs";
@@ -41,6 +43,15 @@ export interface SeoPage {
   related?: string[];
 }
 
+export interface PrerenderExtraRoute {
+  /** URL path, e.g. "/pricing" or "/blog/digital-retail-guide". Use "/" for home. */
+  path: string;
+  /** Optional: override <title> for this route */
+  title?: string;
+  /** Optional: override <meta name="description"> for this route */
+  description?: string;
+}
+
 export interface PrerenderSeoOptions {
   /** Full origin, e.g. "https://1commerce.online" */
   hostname: string;
@@ -48,6 +59,12 @@ export interface PrerenderSeoOptions {
   outDir: string;
   /** Array of SEO page definitions imported from seoPages.ts */
   pages: SeoPage[];
+  /**
+   * Additional routes (non-SEO landing pages) that need a static HTML file
+   * so crawlers see a per-route canonical/og:url instead of the homepage's.
+   * Used to fix Ahrefs "Non-canonical page in sitemap" issues for SPA routes.
+   */
+  extraRoutes?: PrerenderExtraRoute[];
 }
 
 // ── HTML helpers ─────────────────────────────────────────────────────────
@@ -77,7 +94,11 @@ function replaceAttr(html: string, re: RegExp, replacement: string): string {
 
 // ── JSON-LD builders ──────────────────────────────────────────────────────
 
-function pageJsonLdScripts(page: SeoPage, canonical: string, origin: string): string {
+function pageJsonLdScripts(
+  page: SeoPage,
+  canonical: string,
+  origin: string
+): string {
   const schemas: object[] = [
     {
       "@context": "https://schema.org",
@@ -134,7 +155,7 @@ function pageJsonLdScripts(page: SeoPage, canonical: string, origin: string): st
     schemas.push({
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      mainEntity: page.faq.map((item) => ({
+      mainEntity: page.faq.map(item => ({
         "@type": "Question",
         name: item.q,
         acceptedAnswer: { "@type": "Answer", text: item.a },
@@ -144,7 +165,7 @@ function pageJsonLdScripts(page: SeoPage, canonical: string, origin: string): st
 
   return schemas
     .map(
-      (s) =>
+      s =>
         `  <script type="application/ld+json">\n  ${safeJsonStringify(s)}\n  </script>`
     )
     .join("\n");
@@ -187,7 +208,7 @@ function seoIndexJsonLdScripts(
 
   return schemas
     .map(
-      (s) =>
+      s =>
         `  <script type="application/ld+json">\n  ${safeJsonStringify(s)}\n  </script>`
     )
     .join("\n");
@@ -195,7 +216,11 @@ function seoIndexJsonLdScripts(
 
 // ── Per-page HTML injection ───────────────────────────────────────────────
 
-function injectPageMeta(baseHtml: string, page: SeoPage, origin: string): string {
+function injectPageMeta(
+  baseHtml: string,
+  page: SeoPage,
+  origin: string
+): string {
   const canonical = `${origin}/seo/${page.slug}`;
   let html = baseHtml;
 
@@ -270,8 +295,7 @@ function injectPageMeta(baseHtml: string, page: SeoPage, origin: string): string
 
 function buildSeoIndexHtml(baseHtml: string, origin: string): string {
   const canonical = `${origin}/seo`;
-  const title =
-    "UnifyOne Guides — 1Commerce, UnifOne, OneCommerce, 1-Commerce";
+  const title = "UnifyOne Guides — 1Commerce, UnifOne, OneCommerce, 1-Commerce";
   const description =
     "Complete index of UnifyOne guides — covering every brand variation operators search for: UnifyOne, UnifOne, 1Commerce, 1-commerce, 1Commerce LLC, OneCommerc, OneCommerce, UnifyOne Solutions, PNW Enterprises.";
   const keywords =
@@ -339,6 +363,64 @@ function buildSeoIndexHtml(baseHtml: string, origin: string): string {
 
 // ── Plugin export ─────────────────────────────────────────────────────────
 
+function injectExtraRouteMeta(
+  baseHtml: string,
+  route: PrerenderExtraRoute,
+  origin: string
+): string {
+  const canonical = `${origin}${route.path === "/" ? "/" : route.path}`;
+  let html = baseHtml;
+
+  html = replaceAttr(
+    html,
+    /<link rel="canonical" href="[^"]*"/,
+    `<link rel="canonical" href="${canonical}"`
+  );
+  html = replaceAttr(
+    html,
+    /<meta property="og:url" content="[^"]*"/,
+    `<meta property="og:url" content="${canonical}"`
+  );
+
+  if (route.title) {
+    html = replaceAttr(
+      html,
+      /<title>[^<]*<\/title>/,
+      `<title>${esc(route.title)}</title>`
+    );
+    html = replaceAttr(
+      html,
+      /<meta property="og:title" content="[^"]*"/,
+      `<meta property="og:title" content="${esc(route.title)}"`
+    );
+    html = replaceAttr(
+      html,
+      /<meta name="twitter:title" content="[^"]*"/,
+      `<meta name="twitter:title" content="${esc(route.title)}"`
+    );
+  }
+
+  if (route.description) {
+    html = replaceAttr(
+      html,
+      /<meta name="description" content="[^"]*"/,
+      `<meta name="description" content="${esc(route.description)}"`
+    );
+    html = replaceAttr(
+      html,
+      /<meta property="og:description" content="[^"]*"/,
+      `<meta property="og:description" content="${esc(route.description)}"`
+    );
+    html = replaceAttr(
+      html,
+      /<meta name="twitter:description" content="[^"]*"/,
+      `<meta name="twitter:description" content="${esc(route.description)}"`
+    );
+  }
+
+  return html;
+}
+
 export function prerenderSeoPlugin(options: PrerenderSeoOptions): Plugin {
   return {
     name: "vite-prerender-seo",
@@ -355,24 +437,39 @@ export function prerenderSeoPlugin(options: PrerenderSeoOptions): Plugin {
       }
 
       const baseHtml = fs.readFileSync(indexPath, "utf-8");
+
+      // /seo  → seo.html (flat file; pretty_urls makes it canonical without trailing slash)
+      const seoIndexHtml = buildSeoIndexHtml(baseHtml, origin);
+      fs.writeFileSync(
+        path.join(options.outDir, "seo.html"),
+        seoIndexHtml,
+        "utf-8"
+      );
+
+      // /seo/:slug → seo/<slug>.html (flat files inside seo/ directory)
       const seoDir = path.join(options.outDir, "seo");
       fs.mkdirSync(seoDir, { recursive: true });
-
-      // /seo  (index page)
-      const seoIndexHtml = buildSeoIndexHtml(baseHtml, origin);
-      fs.writeFileSync(path.join(seoDir, "index.html"), seoIndexHtml, "utf-8");
-
-      // /seo/:slug  (one file per page)
       for (const page of options.pages) {
-        const dir = path.join(seoDir, page.slug);
-        fs.mkdirSync(dir, { recursive: true });
         const html = injectPageMeta(baseHtml, page, origin);
-        fs.writeFileSync(path.join(dir, "index.html"), html, "utf-8");
+        fs.writeFileSync(path.join(seoDir, `${page.slug}.html`), html, "utf-8");
       }
 
-      const total = options.pages.length + 1; // +1 for the index
+      // Extra routes (non-SEO sitemap pages): write flat <route>.html with
+      // proper canonical so crawlers stop seeing the homepage canonical.
+      const extras = options.extraRoutes ?? [];
+      for (const route of extras) {
+        if (route.path === "/" || route.path === "") continue; // homepage already canonical
+        const cleanPath = route.path.replace(/^\/+|\/+$/g, "");
+        if (!cleanPath) continue;
+        const filePath = path.join(options.outDir, `${cleanPath}.html`);
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        const html = injectExtraRouteMeta(baseHtml, route, origin);
+        fs.writeFileSync(filePath, html, "utf-8");
+      }
+
+      const total = options.pages.length + 1 + extras.length;
       console.log(
-        `[prerender-seo] Pre-rendered ${total} SEO pages in ${seoDir}`
+        `[prerender-seo] Pre-rendered ${total} pages (1 SEO index + ${options.pages.length} SEO pages + ${extras.length} extra routes)`
       );
     },
   };
