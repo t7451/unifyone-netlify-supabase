@@ -87,3 +87,42 @@ export function registerN8nWebhookRoutes(app: Express) {
     }
   );
 }
+
+// ─── Fetch-style handler for Netlify Functions ───────────────────────────────
+// Mirrors registerN8nWebhookRoutes but as Web Fetch so it runs in serverless.
+export async function registerN8nWebhookFetchRoutes(
+  req: Request
+): Promise<Response | null> {
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
+      status: 405,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  try {
+    const rawBody = await req.text();
+    const sig = req.headers.get("x-n8n-signature") || undefined;
+    if (!verifyN8nSignature(rawBody, sig)) {
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    let event: unknown;
+    try {
+      event = JSON.parse(rawBody);
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    const evt = event as { type?: string; workflowId?: string };
+    console.log(
+      `[n8n] Webhook verified: type=${evt.type ?? "unknown"} workflow=${evt.workflowId ?? "unknown"}`
+    );
+    return Response.json({ received: true });
+  } catch (err: unknown) {
+    return Response.json({ error: errMsg(err) }, { status: 500 });
+  }
+}

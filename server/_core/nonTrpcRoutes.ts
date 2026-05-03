@@ -25,6 +25,8 @@ export async function buildNonTrpcHandler(): Promise<
     { registerOAuthFetchRoutes },
     { registerCustomAuthFetchRoutes },
     { registerImpactFetchRoutes },
+    { registerShopifyFetchRoutes },
+    { registerN8nWebhookFetchRoutes },
   ] = await Promise.all([
     import("../stripe").catch(() => ({ registerStripeFetchRoutes: null })),
     import("../billing").catch(() => ({ registerBillingFetchRoutes: null })),
@@ -36,6 +38,10 @@ export async function buildNonTrpcHandler(): Promise<
     })),
     import("./impactRoutes").catch(() => ({
       registerImpactFetchRoutes: null,
+    })),
+    import("../shopify").catch(() => ({ registerShopifyFetchRoutes: null })),
+    import("../n8nWebhook").catch(() => ({
+      registerN8nWebhookFetchRoutes: null,
     })),
   ]);
   const { registerAdminOpsFetchRoutes } = await import("../adminOps").catch(
@@ -146,6 +152,30 @@ export async function buildNonTrpcHandler(): Promise<
         `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${cookieDomain}`
       );
       return res;
+    }
+
+    // Shopify OAuth + webhook (Admin install, callback, webhook receiver)
+    if (path.startsWith("/api/shopify/") && registerShopifyFetchRoutes) {
+      try {
+        const result = await (
+          registerShopifyFetchRoutes as unknown as FetchHandler
+        )(req);
+        if (result) return result;
+      } catch (e: unknown) {
+        return Response.json({ error: (e as Error).message }, { status: 500 });
+      }
+    }
+
+    // n8n inbound webhook (HMAC-SHA256 verified)
+    if (path === "/api/n8n/webhook" && registerN8nWebhookFetchRoutes) {
+      try {
+        const result = await (
+          registerN8nWebhookFetchRoutes as unknown as FetchHandler
+        )(req);
+        if (result) return result;
+      } catch (e: unknown) {
+        return Response.json({ error: (e as Error).message }, { status: 500 });
+      }
     }
 
     return null; // Not handled — pass to tRPC
