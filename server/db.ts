@@ -121,10 +121,19 @@ export async function getUserByOpenId(openId: string) {
   return result[0];
 }
 
-export async function updateUserTenant(userId: number, tenantId: number) {
+export async function updateUserTenant(
+  userId: number,
+  tenantId: number,
+  opts: { promoteToAdmin?: boolean } = {}
+) {
   const db = await getDb();
   if (!db) return;
-  await db.update(users).set({ tenantId }).where(eq(users.id, userId));
+  // PATCHED:CR2 — when set, promote the user to role=admin so a tenant owner
+  // can manage Team page (invite, role-change, member removal). Without this,
+  // tenant.create silently leaves owners as role=user and the Team UI hides.
+  const set: { tenantId: number; role?: "admin" } = { tenantId };
+  if (opts.promoteToAdmin) set.role = "admin";
+  await db.update(users).set(set).where(eq(users.id, userId));
 }
 
 // ── Plans ─────────────────────────────────────────────────────────────────────

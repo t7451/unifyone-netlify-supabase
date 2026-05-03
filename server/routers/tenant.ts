@@ -141,7 +141,9 @@ export const tenantRouter = router({
         }
         // The same owner already created this tenant (e.g. a retry after a
         // network failure). Resume the setup flow with the existing record.
-        await updateUserTenant(ctx.user.id, existing.id);
+        await updateUserTenant(ctx.user.id, existing.id, {
+          promoteToAdmin: true,
+        });
         return existing;
       }
 
@@ -195,7 +197,9 @@ export const tenantRouter = router({
             "Store was created but could not be retrieved. Please refresh and try again.",
         });
       }
-      await updateUserTenant(ctx.user.id, newTenant.id);
+      await updateUserTenant(ctx.user.id, newTenant.id, {
+        promoteToAdmin: true,
+      });
       void import("../auditLogger").then(({ logAudit }) =>
         logAudit({
           action: "tenant.created",
