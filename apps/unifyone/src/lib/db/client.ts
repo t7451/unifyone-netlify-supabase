@@ -1,7 +1,7 @@
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
-import { resolveDatabaseUrl } from "../env";
+import { resolveDatabaseUrl } from "@/lib/env";
 import { DatabaseConnectionError } from "@shared/errors";
 import { NO_DATABASE_URL } from "@shared/const";
 

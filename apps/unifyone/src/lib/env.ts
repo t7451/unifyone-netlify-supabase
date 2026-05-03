@@ -12,10 +12,21 @@ type DbEnv = {
   DATABASE_URL?: string;
 };
 
+function pick(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 /**
- * Resolve the database URL with the documented fallback chain. Returns
- * undefined if none of the variables are set.
+ * Resolve the database URL with the documented fallback chain. Whitespace-
+ * only values are treated as missing (so a blank Netlify env var doesn't
+ * silently defer the failure to the DB driver).
  */
 export function resolveDatabaseUrl(env: DbEnv): string | undefined {
-  return env.NEON_DATABASE_URL || env.NETLIFY_DATABASE_URL || env.DATABASE_URL;
+  return (
+    pick(env.NEON_DATABASE_URL) ||
+    pick(env.NETLIFY_DATABASE_URL) ||
+    pick(env.DATABASE_URL)
+  );
 }

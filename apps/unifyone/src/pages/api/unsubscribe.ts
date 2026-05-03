@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { neon } from "@neondatabase/serverless";
 import { createHmac } from "node:crypto";
-import { resolveDatabaseUrl } from "../../lib/env";
+import { resolveDatabaseUrl } from "@/lib/env";
 
 // Public unsubscribe POST handler. Verifies the HMAC suppression token, then
 // writes a row to spire_outreach_suppression. We write raw SQL via Neon's
