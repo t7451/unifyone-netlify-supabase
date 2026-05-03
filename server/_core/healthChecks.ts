@@ -162,6 +162,49 @@ export async function checkDb(
     return down(Date.now() - start, err);
   }
 }
+export async function checkDb(
+  opts: {
+    databaseUrl?: string | null;
+    timeoutMs?: number;
+    neonFactory?: (url: string) => NeonQueryClient | Promise<NeonQueryClient>;
+  } = {}
+): Promise<CheckResult> {
+  const url =
+    opts.databaseUrl ??
+    process.env.DATABASE_URL ??
+    process.env.NETLIFY_DATABASE_URL ??
+    process.env.NETLIFY_DATABASE_URL_UNPOOLED ??
+    null;
+  if (!url) return unconfigured();
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const start = Date.now();
+  try {
+    const factory =
+      opts.neonFactory ??
+      (async (u: string): Promise<NeonQueryClient> => {
+        const { neon } = await import("@neondatabase/serverless");
+        return neon(u) as unknown as NeonQueryClient;
+      });
+    const maybe = factory(url);
+    const sqlClient: NeonQueryClient =
+      maybe instanceof Promise ? await maybe : maybe;
+    if (typeof sqlClient.query !== "function") {
+      return down(
+        Date.now() - start,
+        "neon client missing .query() — incompatible serverless version"
+      );
+    }
+    const r = await withTimeout(
+      () => sqlClient.query("SELECT 1 as one"),
+      timeoutMs,
+      "db"
+    );
+    if (r.error) return down(Date.now() - start, r.error);
+    return ok(Date.now() - start);
+  } catch (err) {
+    return down(Date.now() - start, err);
+  }
+}
 
 /**
  * Pings Stripe via `stripe.balance.retrieve()`. Returns "unconfigured" when

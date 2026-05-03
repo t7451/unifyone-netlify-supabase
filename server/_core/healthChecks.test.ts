@@ -86,6 +86,16 @@ describe("checkDb", () => {
     expect(r.status).toBe("down");
     expect(r.error).toMatch(/missing \.query/);
   });
+
+  it("returns 'down' with a clear message when the neon client lacks .query()", async () => {
+    const r = await checkDb({
+      databaseUrl: "postgres://x",
+      // @ts-expect-error — intentional bad shape
+      neonFactory: () => ({}),
+    });
+    expect(r.status).toBe("down");
+    expect(r.error).toMatch(/missing \.query/);
+  });
 });
 
 describe("checkStripe", () => {
