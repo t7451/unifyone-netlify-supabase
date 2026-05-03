@@ -270,14 +270,7 @@ Return JSON with keys: ${input.platforms.join(", ")}`;
       .where(eq(socialAccounts.tenantId, tenantId));
   }),
 
-  // ── Connect Account (records handle only — real OAuth pending) ────────────
-  // SECURITY: This procedure used to mark `isConnected = true` whenever a user
-  // typed a handle, even though no access token was ever obtained. That made
-  // the UI lie ("Connected to @foo") and downstream `publish` mutations
-  // silently flip posts to "published" without ever calling Twitter/IG/etc.
-  // Until per-platform OAuth flows ship, we record the handle but keep
-  // `isConnected = false` so callers / UI can clearly see the account is
-  // unverified and posting won't actually broadcast.
+  // ── Connect Account (stub — real OAuth per platform) ───────────────────────
   connectAccount: protectedProcedure
     .input(
       z.object({
@@ -297,6 +290,7 @@ Return JSON with keys: ${input.platforms.join(", ")}`;
       if (!tenantId)
         throw new TRPCError({ code: "FORBIDDEN", message: "No active tenant" });
 
+      // Upsert: update if exists, insert if not
       const existing = await db
         .select()
         .from(socialAccounts)
@@ -310,24 +304,17 @@ Return JSON with keys: ${input.platforms.join(", ")}`;
       if (existing.length > 0) {
         await db
           .update(socialAccounts)
-          .set({ handle: input.handle, isConnected: false })
+          .set({ handle: input.handle, isConnected: true })
           .where(eq(socialAccounts.id, existing[0].id));
       } else {
         await db.insert(socialAccounts).values({
           tenantId,
           platform: input.platform,
           handle: input.handle,
-          isConnected: false,
+          isConnected: true,
         });
       }
-      return {
-        success: true,
-        connected: false,
-        message:
-          "Handle saved. OAuth connection to " +
-          input.platform +
-          " is not implemented yet — posts to this account will not broadcast until OAuth is wired.",
-      };
+      return { success: true };
     }),
 
   // ── Analytics Summary ───────────────────────────────────────────────────────

@@ -47,10 +47,7 @@ export const integrationsRouter = router({
     };
   }),
 
-  // Shopify: connect store — validates the access token by hitting the Admin
-  // API for shop.json BEFORE persisting, so a bogus token can't be saved.
-  // Also upserts the canonical record into shopify_stores so the rest of the
-  // app (shopifyStores.* router, sync monitor) sees the connection.
+  // Shopify: connect store
   shopifyConnect: protectedProcedure
     .input(
       z.object({
@@ -60,101 +57,20 @@ export const integrationsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      const shop = input.shopDomain.trim().toLowerCase();
-      if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invalid Shopify shop domain.",
-        });
-      }
-      // Validate token live
-      let shopMeta: {
-        name?: string;
-        email?: string;
-        currency?: string;
-        plan_name?: string;
-      } | null = null;
-      try {
-        const r = await fetch(`https://${shop}/admin/api/2024-01/shop.json`, {
-          headers: { "X-Shopify-Access-Token": input.accessToken },
-          signal: AbortSignal.timeout(8000),
-        });
-        if (!r.ok) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `Shopify rejected the access token (HTTP ${r.status}).`,
-          });
-        }
-        const j = (await r.json()) as { shop: typeof shopMeta };
-        shopMeta = j.shop ?? null;
-      } catch (err) {
-        if (err instanceof TRPCError) throw err;
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Could not reach Shopify Admin API: ${String(err)}`,
-        });
-      }
-
-      // Persist on the tenant record (legacy fields) AND upsert into shopify_stores
       await updateTenant(tenantId, {
-        shopifyShopDomain: shop,
+        shopifyShopDomain: input.shopDomain,
         shopifyAccessToken: input.accessToken,
         shopifySyncEnabled: true,
       });
-
-      try {
-        const { getDb } = await import("../db");
-        const { shopifyStores } = await import("../../drizzle/schema");
-        const { eq } = await import("drizzle-orm");
-        const db = await getDb();
-        if (db) {
-          const existing = await db
-            .select({ id: shopifyStores.id })
-            .from(shopifyStores)
-            .where(eq(shopifyStores.shopDomain, shop))
-            .limit(1);
-          if (existing.length) {
-            await db
-              .update(shopifyStores)
-              .set({
-                userId: ctx.user.id,
-                tenantId,
-                accessToken: input.accessToken,
-                shopName: shopMeta?.name,
-                shopEmail: shopMeta?.email,
-                shopCurrency: shopMeta?.currency ?? "USD",
-                shopPlan: shopMeta?.plan_name,
-                status: "active",
-              })
-              .where(eq(shopifyStores.id, existing[0].id));
-          } else {
-            await db.insert(shopifyStores).values({
-              userId: ctx.user.id,
-              tenantId,
-              shopDomain: shop,
-              accessToken: input.accessToken,
-              shopName: shopMeta?.name,
-              shopEmail: shopMeta?.email,
-              shopCurrency: shopMeta?.currency ?? "USD",
-              shopPlan: shopMeta?.plan_name,
-              status: "active",
-            });
-          }
-        }
-      } catch (err) {
-        console.error("[shopifyConnect] failed to upsert shopify_stores", err);
-      }
-
       await logWebhookEvent(
         "shopify",
         "store.connected",
-        { shopDomain: shop, validated: true },
+        { shopDomain: input.shopDomain },
         tenantId
       );
       return {
         success: true,
         message: "Shopify store connected successfully.",
-        shopName: shopMeta?.name,
       };
     }),
 

@@ -43,7 +43,7 @@ export const mobileAutomationRouter = router({
     return db
       .select()
       .from(n8nSchedules)
-      .where(eq(n8nSchedules.tenantId, ctx.user.tenantId!))
+      .where(eq(n8nSchedules.tenantId, ctx.user.id))
       .orderBy(desc(n8nSchedules.createdAt));
   }),
 
@@ -67,7 +67,7 @@ export const mobileAutomationRouter = router({
         });
       const nextRunAt = nextCronDate(input.cronExpression);
       await db.insert(n8nSchedules).values({
-        tenantId: ctx.user.tenantId!,
+        tenantId: ctx.user.id,
         name: input.name,
         cronExpression: input.cronExpression,
         enabled: true,
@@ -117,10 +117,7 @@ export const mobileAutomationRouter = router({
           updatedAt: new Date(),
         })
         .where(
-          and(
-            eq(n8nSchedules.id, id),
-            eq(n8nSchedules.tenantId, ctx.user.tenantId!)
-          )
+          and(eq(n8nSchedules.id, id), eq(n8nSchedules.tenantId, ctx.user.id))
         );
       return { success: true };
     }),
@@ -139,7 +136,7 @@ export const mobileAutomationRouter = router({
         .where(
           and(
             eq(n8nSchedules.id, input.id),
-            eq(n8nSchedules.tenantId, ctx.user.tenantId!)
+            eq(n8nSchedules.tenantId, ctx.user.id)
           )
         );
       return { success: true };
@@ -160,7 +157,7 @@ export const mobileAutomationRouter = router({
         .where(
           and(
             eq(n8nSchedules.id, input.id),
-            eq(n8nSchedules.tenantId, ctx.user.tenantId!)
+            eq(n8nSchedules.tenantId, ctx.user.id)
           )
         )
         .limit(1);
@@ -374,7 +371,7 @@ export const mobileAutomationRouter = router({
     return db
       .select()
       .from(mobilePushSchedules)
-      .where(eq(mobilePushSchedules.tenantId, ctx.user.tenantId!))
+      .where(eq(mobilePushSchedules.tenantId, ctx.user.id))
       .orderBy(desc(mobilePushSchedules.createdAt));
   }),
 
@@ -412,7 +409,7 @@ export const mobileAutomationRouter = router({
           ? ("scheduled" as const)
           : ("draft" as const);
       await db.insert(mobilePushSchedules).values({
-        tenantId: ctx.user.tenantId!,
+        tenantId: ctx.user.id,
         title: input.title,
         body: input.body,
         targetAudience: input.targetAudience,
@@ -471,7 +468,7 @@ export const mobileAutomationRouter = router({
         .where(
           and(
             eq(mobilePushSchedules.id, id),
-            eq(mobilePushSchedules.tenantId, ctx.user.tenantId!)
+            eq(mobilePushSchedules.tenantId, ctx.user.id)
           )
         );
       return { success: true };
@@ -491,7 +488,7 @@ export const mobileAutomationRouter = router({
         .where(
           and(
             eq(mobilePushSchedules.id, input.id),
-            eq(mobilePushSchedules.tenantId, ctx.user.tenantId!)
+            eq(mobilePushSchedules.tenantId, ctx.user.id)
           )
         );
       return { success: true };
@@ -512,7 +509,7 @@ export const mobileAutomationRouter = router({
         .where(
           and(
             eq(mobilePushSchedules.id, input.id),
-            eq(mobilePushSchedules.tenantId, ctx.user.tenantId!)
+            eq(mobilePushSchedules.tenantId, ctx.user.id)
           )
         )
         .limit(1);
