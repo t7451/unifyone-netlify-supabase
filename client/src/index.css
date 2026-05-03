@@ -612,6 +612,7 @@ img {
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  scroll-behavior: smooth;
 }
 
 /* Mobile-first stat values — scale down on small screens */

@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
-import { getLoginUrl } from "@/const";
+import { getSignupUrl } from "@/const";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { SITE_URL } from "@/lib/siteConfig";
 
@@ -256,7 +256,7 @@ export default function TheSystem() {
             Create your tenant, connect your payment rails, and have your first order processed in under 30 minutes.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href={getLoginUrl()} className="btn-illuminate">Begin Construction — Free</a>
+            <a href={getSignupUrl()} className="btn-illuminate">Begin Construction — Free</a>
             <Link href="/ai-assistant">
               <span className="btn-ghost-gold cursor-pointer">Explore Kai →</span>
             </Link>

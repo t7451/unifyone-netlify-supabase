@@ -23,6 +23,14 @@
   to = "/.netlify/functions/server"
   status = 200
 
+# Netlify Blobs serving function — public reads of stored objects.
+# blobs-serve.mts uses in-code config { path: "/blobs/*" }; this redirect
+# is a belt-and-suspenders fallback.
+[[redirects]]
+  from = "/blobs/*"
+  to = "/.netlify/functions/blobs-serve"
+  status = 200
+
 # MCP (Model Context Protocol) server endpoint
 # mcp.mjs uses in-code config { path: "/mcp" } — Netlify auto-routes it.
 # This redirect is kept as a belt-and-suspenders fallback.
@@ -104,3 +112,24 @@
   for = "/*.css"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# ----------------------------------------------------------------------------
+# Netlify-native integrations
+# ----------------------------------------------------------------------------
+# Netlify Blobs is enabled automatically — no toml config required. Server
+# code uses it via server/storage.ts (STORAGE_BACKEND=auto by default).
+#
+# Image CDN: route blob image transforms through /.netlify/images. Example:
+#   <img src="/.netlify/images?url=/blobs/products/foo.jpg&w=800&fit=cover">
+# Allow remote sources for the Image CDN here:
+[images]
+  remote_images = [
+    "^/blobs/.*",
+    "^https://github\\.com/user-attachments/.*",
+  ]
+
+# Recommended Netlify extensions (install via Netlify UI → Extensions):
+#   - Stripe       (auto-injects STRIPE_* env vars, dashboard widgets)
+#   - Supabase     (auto-injects SUPABASE_* env vars; until removal completes)
+#   - Neon         (auto-injects DATABASE_URL/NETLIFY_DATABASE_URL)
+#   - Sentry       (release tracking + source maps)

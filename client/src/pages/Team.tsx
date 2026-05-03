@@ -5,8 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,8 +30,19 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
-  Users, UserPlus, Mail, Shield, ShieldCheck, Clock, CheckCircle,
-  XCircle, Trash2, Copy, RefreshCw, Crown, Loader2
+  Users,
+  UserPlus,
+  Mail,
+  Shield,
+  ShieldCheck,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Trash2,
+  Copy,
+  RefreshCw,
+  Crown,
+  Loader2,
 } from "lucide-react";
 
 const ROLE_COLORS: Record<string, string> = {
@@ -44,20 +66,20 @@ export default function Team() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"user" | "admin">("user");
   const [inviteLink, setInviteLink] = useState<string | null>(null);
-  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+  const [removingMemberId, setRemovingMemberId] = useState<number | null>(null);
   const [removingMemberName, setRemovingMemberName] = useState<string>("");
 
   const members = trpc.team.listMembers.useQuery();
   const invites = trpc.team.listInvites.useQuery();
 
   const sendInvite = trpc.team.invite.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       const link = `${window.location.origin}/join?token=${data.token}`;
       setInviteLink(link);
       utils.team.listInvites.invalidate();
       toast.success("Invite created! Share the link below.");
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
   const revokeInvite = trpc.team.revokeInvite.useMutation({
@@ -65,7 +87,7 @@ export default function Team() {
       utils.team.listInvites.invalidate();
       toast.success("Invite revoked");
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
   const updateRole = trpc.team.updateMemberRole.useMutation({
@@ -73,7 +95,7 @@ export default function Team() {
       utils.team.listMembers.invalidate();
       toast.success("Role updated");
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
   const removeMember = trpc.team.removeMember.useMutation({
@@ -82,7 +104,7 @@ export default function Team() {
       setRemovingMemberId(null);
       toast.success("Member removed from team");
     },
-    onError: (e) => {
+    onError: e => {
       setRemovingMemberId(null);
       toast.error(e.message);
     },
@@ -99,7 +121,9 @@ export default function Team() {
     toast.success("Invite link copied to clipboard!");
   };
 
-  const pendingInvites = (invites.data ?? []).filter(i => i.status === "pending");
+  const pendingInvites = (invites.data ?? []).filter(
+    i => i.status === "pending"
+  );
   const pastInvites = (invites.data ?? []).filter(i => i.status !== "pending");
 
   return (
@@ -109,12 +133,18 @@ export default function Team() {
         <div>
           <h1 className="text-2xl font-bold text-white">Team</h1>
           <p className="text-gray-400 text-sm mt-1">
-            {members.data?.length ?? 0} member{(members.data?.length ?? 0) !== 1 ? "s" : ""} · Manage access and roles
+            {members.data?.length ?? 0} member
+            {(members.data?.length ?? 0) !== 1 ? "s" : ""} · Manage access and
+            roles
           </p>
         </div>
         {isAdmin && (
           <Button
-            onClick={() => { setShowInviteModal(true); setInviteLink(null); setInviteEmail(""); }}
+            onClick={() => {
+              setShowInviteModal(true);
+              setInviteLink(null);
+              setInviteEmail("");
+            }}
             className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
           >
             <UserPlus className="w-4 h-4 mr-2" /> Invite Member
@@ -126,7 +156,9 @@ export default function Team() {
       <div className="rounded-xl border border-border overflow-hidden">
         <div className="px-4 py-3 bg-white/3 border-b border-border flex items-center gap-2">
           <Users className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-300 text-sm font-medium">Team Members</span>
+          <span className="text-gray-300 text-sm font-medium">
+            Team Members
+          </span>
         </div>
         {members.isLoading ? (
           <div className="divide-y divide-border">
@@ -146,57 +178,95 @@ export default function Team() {
           <div className="p-12 text-center">
             <Users className="w-10 h-10 text-gray-600 mx-auto mb-3" />
             <p className="text-gray-400 font-medium">No team members yet</p>
-            <p className="text-gray-600 text-sm mt-1">Invite your first team member to get started</p>
+            <p className="text-gray-600 text-sm mt-1">
+              Invite your first team member to get started
+            </p>
           </div>
         ) : (
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                {["Member", "Email", "Role", "Last Active", ...(isAdmin ? ["Actions"] : [])].map(h => (
-                  <th key={h} className="text-left text-gray-400 text-xs font-medium px-4 py-3">{h}</th>
+                {[
+                  "Member",
+                  "Email",
+                  "Role",
+                  "Last Active",
+                  ...(isAdmin ? ["Actions"] : []),
+                ].map(h => (
+                  <th
+                    key={h}
+                    className="text-left text-gray-400 text-xs font-medium px-4 py-3"
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {(members.data ?? []).map((m: any) => (
-                <tr key={m.id} className="border-b border-border hover:bg-white/2 transition-colors">
+                <tr
+                  key={m.id}
+                  className="border-b border-border hover:bg-white/2 transition-colors"
+                >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00D9FF]/30 to-purple-500/30 flex items-center justify-center text-white text-xs font-bold">
                         {(m.name ?? m.email ?? "?")[0].toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-white text-sm font-medium">{m.name ?? "—"}</p>
+                        <p className="text-white text-sm font-medium">
+                          {m.name ?? "—"}
+                        </p>
                         {m.id === user?.id && (
                           <span className="text-[#00D9FF] text-xs">You</span>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-400 text-sm">{m.email ?? "—"}</td>
+                  <td className="px-4 py-3 text-gray-400 text-sm">
+                    {m.email ?? "—"}
+                  </td>
                   <td className="px-4 py-3">
                     {isAdmin && m.id !== user?.id ? (
                       <Select
                         value={m.role}
-                        onValueChange={v => updateRole.mutate({ userId: m.id, role: v as "user" | "admin" })}
+                        onValueChange={v =>
+                          updateRole.mutate({
+                            userId: m.id,
+                            role: v as "user" | "admin",
+                          })
+                        }
                       >
                         <SelectTrigger className="w-28 h-7 bg-white/5 border-white/10 text-gray-300 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#0F172A] border-white/10">
-                          <SelectItem value="user" className="text-xs">User</SelectItem>
-                          <SelectItem value="admin" className="text-xs">Admin</SelectItem>
+                          <SelectItem value="user" className="text-xs">
+                            User
+                          </SelectItem>
+                          <SelectItem value="admin" className="text-xs">
+                            Admin
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
-                      <Badge variant="outline" className={`text-xs capitalize ${ROLE_COLORS[m.role] ?? ""}`}>
-                        {m.role === "admin" ? <Crown className="w-3 h-3 mr-1" /> : <Shield className="w-3 h-3 mr-1" />}
+                      <Badge
+                        variant="outline"
+                        className={`text-xs capitalize ${ROLE_COLORS[m.role] ?? ""}`}
+                      >
+                        {m.role === "admin" ? (
+                          <Crown className="w-3 h-3 mr-1" />
+                        ) : (
+                          <Shield className="w-3 h-3 mr-1" />
+                        )}
                         {m.role}
                       </Badge>
                     )}
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs">
-                    {m.lastSignedIn ? new Date(m.lastSignedIn).toLocaleDateString() : "Never"}
+                    {m.lastSignedIn
+                      ? new Date(m.lastSignedIn).toLocaleDateString()
+                      : "Never"}
                   </td>
                   {isAdmin && (
                     <td className="px-4 py-3">
@@ -207,7 +277,9 @@ export default function Team() {
                           className="h-7 w-7 p-0 text-gray-500 hover:text-red-400 hover:bg-red-500/10"
                           onClick={() => {
                             setRemovingMemberId(m.id);
-                            setRemovingMemberName(m.name ?? m.email ?? "this member");
+                            setRemovingMemberName(
+                              m.name ?? m.email ?? "this member"
+                            );
                           }}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -227,7 +299,9 @@ export default function Team() {
         <div className="rounded-xl border border-border overflow-hidden">
           <div className="px-4 py-3 bg-white/3 border-b border-border flex items-center gap-2">
             <Clock className="w-4 h-4 text-amber-400" />
-            <span className="text-gray-300 text-sm font-medium">Pending Invites</span>
+            <span className="text-gray-300 text-sm font-medium">
+              Pending Invites
+            </span>
             <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs ml-auto">
               {pendingInvites.length}
             </Badge>
@@ -236,13 +310,21 @@ export default function Team() {
             <thead>
               <tr className="border-b border-border">
                 {["Email", "Role", "Sent", "Expires", "Actions"].map(h => (
-                  <th key={h} className="text-left text-gray-400 text-xs font-medium px-4 py-3">{h}</th>
+                  <th
+                    key={h}
+                    className="text-left text-gray-400 text-xs font-medium px-4 py-3"
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {pendingInvites.map((inv: any) => (
-                <tr key={inv.id} className="border-b border-border hover:bg-white/2 transition-colors">
+                <tr
+                  key={inv.id}
+                  className="border-b border-border hover:bg-white/2 transition-colors"
+                >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <Mail className="w-3.5 h-3.5 text-gray-500" />
@@ -250,7 +332,10 @@ export default function Team() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant="outline" className={`text-xs capitalize ${ROLE_COLORS[inv.role] ?? ""}`}>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs capitalize ${ROLE_COLORS[inv.role] ?? ""}`}
+                    >
                       {inv.role}
                     </Badge>
                   </td>
@@ -296,21 +381,31 @@ export default function Team() {
         <div className="rounded-xl border border-border overflow-hidden">
           <div className="px-4 py-3 bg-white/3 border-b border-border flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-gray-500" />
-            <span className="text-gray-400 text-sm font-medium">Invite History</span>
-            <span className="text-gray-600 text-xs ml-auto">{pastInvites.length} entries</span>
+            <span className="text-gray-400 text-sm font-medium">
+              Invite History
+            </span>
+            <span className="text-gray-600 text-xs ml-auto">
+              {pastInvites.length} entries
+            </span>
           </div>
           <table className="w-full">
             <tbody>
               {pastInvites.slice(0, 5).map((inv: any) => (
                 <tr key={inv.id} className="border-b border-border">
-                  <td className="px-4 py-3 text-gray-500 text-sm">{inv.email}</td>
+                  <td className="px-4 py-3 text-gray-500 text-sm">
+                    {inv.email}
+                  </td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${INVITE_STATUS_COLORS[inv.status] ?? ""}`}>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full capitalize ${INVITE_STATUS_COLORS[inv.status] ?? ""}`}
+                    >
                       {inv.status}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-600 text-xs">
-                    {inv.acceptedAt ? `Accepted ${new Date(inv.acceptedAt).toLocaleDateString()}` : new Date(inv.createdAt).toLocaleDateString()}
+                    {inv.acceptedAt
+                      ? `Accepted ${new Date(inv.acceptedAt).toLocaleDateString()}`
+                      : new Date(inv.createdAt).toLocaleDateString()}
                   </td>
                 </tr>
               ))}
@@ -332,7 +427,9 @@ export default function Team() {
           {!inviteLink ? (
             <div className="space-y-4 pt-2">
               <div>
-                <label className="text-gray-400 text-sm mb-1.5 block">Email Address</label>
+                <label className="text-gray-400 text-sm mb-1.5 block">
+                  Email Address
+                </label>
                 <Input
                   type="email"
                   value={inviteEmail}
@@ -343,8 +440,13 @@ export default function Team() {
                 />
               </div>
               <div>
-                <label className="text-gray-400 text-sm mb-1.5 block">Role</label>
-                <Select value={inviteRole} onValueChange={v => setInviteRole(v as "user" | "admin")}>
+                <label className="text-gray-400 text-sm mb-1.5 block">
+                  Role
+                </label>
+                <Select
+                  value={inviteRole}
+                  onValueChange={v => setInviteRole(v as "user" | "admin")}
+                >
                   <SelectTrigger className="bg-white/5 border-white/10 text-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -354,7 +456,9 @@ export default function Team() {
                         <Shield className="w-3.5 h-3.5 text-blue-400" />
                         <div>
                           <p className="text-sm">Member</p>
-                          <p className="text-xs text-gray-500">Can view and manage orders, products, customers</p>
+                          <p className="text-xs text-gray-500">
+                            Can view and manage orders, products, customers
+                          </p>
                         </div>
                       </div>
                     </SelectItem>
@@ -363,7 +467,9 @@ export default function Team() {
                         <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
                         <div>
                           <p className="text-sm">Admin</p>
-                          <p className="text-xs text-gray-500">Full access including settings and billing</p>
+                          <p className="text-xs text-gray-500">
+                            Full access including settings and billing
+                          </p>
                         </div>
                       </div>
                     </SelectItem>
@@ -371,7 +477,10 @@ export default function Team() {
                 </Select>
               </div>
               <div className="bg-white/5 rounded-lg p-3 text-xs text-gray-400">
-                <p>An invite link will be generated. Share it with your team member — they'll need to sign in with their account to join.</p>
+                <p>
+                  An invite link will be generated. Share it with your team
+                  member — they'll need to sign in with their account to join.
+                </p>
                 <p className="mt-1 text-gray-500">Link expires in 7 days.</p>
               </div>
               <div className="flex gap-3 pt-1">
@@ -390,7 +499,9 @@ export default function Team() {
                   {sendInvite.isPending ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
                   ) : (
-                    <><UserPlus className="w-4 h-4 mr-2" /> Generate Invite</>
+                    <>
+                      <UserPlus className="w-4 h-4 mr-2" /> Generate Invite
+                    </>
                   )}
                 </Button>
               </div>
@@ -400,10 +511,14 @@ export default function Team() {
               <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 text-center">
                 <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
                 <p className="text-white font-semibold">Invite Created!</p>
-                <p className="text-gray-400 text-sm mt-1">Share this link with your team member</p>
+                <p className="text-gray-400 text-sm mt-1">
+                  Share this link with your team member
+                </p>
               </div>
               <div className="bg-white/5 rounded-lg p-3 flex items-center gap-2">
-                <code className="text-[#00D9FF] text-xs flex-1 truncate">{inviteLink}</code>
+                <code className="text-[#00D9FF] text-xs flex-1 truncate">
+                  {inviteLink}
+                </code>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -422,7 +537,10 @@ export default function Team() {
               <Button
                 variant="ghost"
                 className="w-full border border-white/10 text-gray-300 hover:bg-white/5"
-                onClick={() => { setShowInviteModal(false); setInviteLink(null); }}
+                onClick={() => {
+                  setShowInviteModal(false);
+                  setInviteLink(null);
+                }}
               >
                 Done
               </Button>
@@ -431,12 +549,19 @@ export default function Team() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={removingMemberId !== null} onOpenChange={open => !open && setRemovingMemberId(null)}>
+      <AlertDialog
+        open={removingMemberId !== null}
+        onOpenChange={open => !open && setRemovingMemberId(null)}
+      >
         <AlertDialogContent className="bg-[#0F172A] border-white/10 text-white">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Team Member?</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-400">
-              This will remove <span className="text-white font-medium">{removingMemberName}</span> from the team. They will lose access immediately.
+              This will remove{" "}
+              <span className="text-white font-medium">
+                {removingMemberName}
+              </span>{" "}
+              from the team. They will lose access immediately.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -448,7 +573,10 @@ export default function Team() {
               onClick={() => removeMember.mutate({ userId: removingMemberId! })}
             >
               {removeMember.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Removing...</>
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Removing...
+                </>
               ) : (
                 "Remove Member"
               )}

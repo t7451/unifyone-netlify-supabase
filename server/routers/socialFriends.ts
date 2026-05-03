@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { protectedProcedure, adminProcedure, router } from "../_core/trpc";
+import { resolveAllPendingFriendChallenges } from "../challengeCompletion";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import {
@@ -896,5 +897,25 @@ export const socialFriendsRouter = router({
     );
 
     return enriched;
+  }),
+
+  // ── Admin: check and resolve all pending friend challenges ───────────────────
+  /**
+   * Scans all accepted (unresolved) friend challenges and resolves any that
+   * have detectable completions. Safe to call repeatedly (idempotent).
+   */
+  checkAllChallenges: adminProcedure.mutation(async () => {
+    const db = await getDb();
+    if (!db) return { checked: 0, resolved: 0 };
+
+    const accepted = await db
+      .select({ id: friendChallenges.id })
+      .from(friendChallenges)
+      .where(eq(friendChallenges.status, "accepted"));
+
+    const checked = accepted.length;
+    const resolved = await resolveAllPendingFriendChallenges();
+
+    return { checked, resolved };
   }),
 });

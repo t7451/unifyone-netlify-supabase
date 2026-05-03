@@ -11,22 +11,59 @@ const VP_CANONICAL = `${SITE_URL}/video-production`;
 
 export default function VideoProduction() {
   const [videoPlaying, setVideoPlaying] = useState(false);
-  const [activeShowcaseId, setActiveShowcaseId] = useState("onestack-cinematic");
+  const [activeShowcaseId, setActiveShowcaseId] =
+    useState("onestack-cinematic");
 
   const showcases = [
     {
       id: "onestack-cinematic",
       title: "OneStack Cinematic Reel",
-      description: "Professional cinematic footage showcasing OneStack enterprise AI capabilities. Ultra-realistic production quality demonstrating autonomous operations at scale.",
+      description:
+        "Professional cinematic footage showcasing OneStack enterprise AI capabilities. Ultra-realistic production quality demonstrating autonomous operations at scale.",
       duration: "30 seconds",
       format: "4K Cinematic",
       tags: ["Enterprise AI", "Cinematic", "Autonomous Operations"],
       thumbnail: "🎬",
-      videoUrl: "https://cdn.1commerce.online/videos/Ultra-realistic_cinematic_foot_Kling_30__37390(1).mp4",
+      videoUrl:
+        "https://cdn.1commerce.online/videos/Ultra-realistic_cinematic_foot_Kling_30__37390(1).mp4",
     },
   ];
 
-  const activeShowcase = showcases.find(s => s.id === activeShowcaseId) ?? showcases[0];
+  const additionalShowcases = [
+    {
+      id: "multi-tenant-showcase",
+      title: "Multi-Tenant Commerce Demo",
+      description:
+        "Visual walkthrough of multi-tenant isolation, tenant switching, and SaaS scalability features built into the UnifyOne platform.",
+      duration: "45 seconds",
+      format: "Product Demo",
+      tags: ["Multi-Tenant", "SaaS", "Commerce"],
+      thumbnail: "🏢",
+    },
+    {
+      id: "ai-automation-reel",
+      title: "AI Automation Reel",
+      description:
+        "Showcase of Kai AI executing autonomous tasks: affiliate research, order fulfillment, and n8n workflow automation at enterprise scale.",
+      duration: "60 seconds",
+      format: "Feature Highlight",
+      tags: ["Kai AI", "Automation", "n8n"],
+      thumbnail: "🤖",
+    },
+    {
+      id: "payment-integration",
+      title: "Payment Infrastructure Demo",
+      description:
+        "End-to-end payment flow demonstration across Stripe, PayPal, Shopify, and Square — unified under a single dashboard with real-time analytics.",
+      duration: "30 seconds",
+      format: "Integration Demo",
+      tags: ["Stripe", "Payments", "Analytics"],
+      thumbnail: "💳",
+    },
+  ];
+
+  const activeShowcase =
+    showcases.find(s => s.id === activeShowcaseId) ?? showcases[0];
   const videoUrl = activeShowcase.videoUrl;
 
   const handleSelectShowcase = (id: string) => {
@@ -47,7 +84,7 @@ export default function VideoProduction() {
     const embedCode = `<video src="${videoUrl}" autoplay loop muted playsinline style="width:100%;height:auto"></video>`;
     navigator.clipboard.writeText(embedCode).then(
       () => toast.success("Embed code copied to clipboard!"),
-      () => toast.error("Failed to copy embed code"),
+      () => toast.error("Failed to copy embed code")
     );
   };
 
@@ -61,22 +98,26 @@ export default function VideoProduction() {
   const useCases = [
     {
       title: "Landing Page Hero",
-      description: "Embed the cinematic reel as an autoplay hero video on product landing pages to demonstrate OneStack capabilities in real-time.",
+      description:
+        "Embed the cinematic reel as an autoplay hero video on product landing pages to demonstrate OneStack capabilities in real-time.",
       icon: "🎯",
     },
     {
       title: "Social Media",
-      description: "Repurpose for Instagram Reels, TikTok, and LinkedIn video posts. Ultra-realistic footage captures attention and drives engagement.",
+      description:
+        "Repurpose for Instagram Reels, TikTok, and LinkedIn video posts. Ultra-realistic footage captures attention and drives engagement.",
       icon: "📱",
     },
     {
       title: "Pitch Decks",
-      description: "Include in investor presentations and sales decks to showcase enterprise-grade production quality and autonomous operations.",
+      description:
+        "Include in investor presentations and sales decks to showcase enterprise-grade production quality and autonomous operations.",
       icon: "💼",
     },
     {
       title: "Email Campaigns",
-      description: "Embed in email campaigns with animated GIF fallback for maximum reach across email clients.",
+      description:
+        "Embed in email campaigns with animated GIF fallback for maximum reach across email clients.",
       icon: "📧",
     },
   ];
@@ -138,19 +179,33 @@ export default function VideoProduction() {
             {/* Content */}
             <div className="space-y-6">
               <div>
-                <h1 className="text-4xl font-bold text-foreground mb-4">OneStack Cinematic Reel</h1>
+                <h1 className="text-4xl font-bold text-foreground mb-4">
+                  OneStack Cinematic Reel
+                </h1>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Professional ultra-realistic cinematic footage showcasing OneStack enterprise AI capabilities. This production-grade asset demonstrates autonomous operations at scale with stunning visual quality.
+                  Professional ultra-realistic cinematic footage showcasing
+                  OneStack enterprise AI capabilities. This production-grade
+                  asset demonstrates autonomous operations at scale with
+                  stunning visual quality.
                 </p>
               </div>
 
               <div className="space-y-3">
-                <h3 className="font-semibold text-foreground">Production Specifications</h3>
+                <h3 className="font-semibold text-foreground">
+                  Production Specifications
+                </h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {productionStats.map((stat) => (
-                    <div key={stat.label} className="bg-card border border-border rounded-lg p-3">
-                      <p className="text-xs text-muted-foreground">{stat.label}</p>
-                      <p className="font-semibold text-foreground">{stat.value}</p>
+                  {productionStats.map(stat => (
+                    <div
+                      key={stat.label}
+                      className="bg-card border border-border rounded-lg p-3"
+                    >
+                      <p className="text-xs text-muted-foreground">
+                        {stat.label}
+                      </p>
+                      <p className="font-semibold text-foreground">
+                        {stat.value}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -174,13 +229,16 @@ export default function VideoProduction() {
       <section className="py-16 border-t border-border">
         <div className="container max-w-6xl mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Showcase Library</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-4">
+              Showcase Library
+            </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Production-grade video assets ready to deploy across your marketing channels.
+              Production-grade video assets ready to deploy across your
+              marketing channels.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {showcases.map((showcase) => (
+            {showcases.map(showcase => (
               <Card
                 key={showcase.id}
                 className={`p-6 hover:shadow-lg transition-shadow cursor-pointer ${
@@ -189,15 +247,54 @@ export default function VideoProduction() {
                 onClick={() => handleSelectShowcase(showcase.id)}
               >
                 <div className="text-4xl mb-4">{showcase.thumbnail}</div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">{showcase.title}</h3>
-                <p className="text-sm text-muted-foreground mb-4">{showcase.description}</p>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  {showcase.title}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {showcase.description}
+                </p>
                 <div className="flex gap-2 flex-wrap mb-4">
                   <Badge variant="outline">{showcase.format}</Badge>
                   <Badge variant="outline">{showcase.duration}</Badge>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {showcase.tags.map((tag) => (
-                    <span key={tag} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">
+                  {showcase.tags.map(tag => (
+                    <span
+                      key={tag}
+                      className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </Card>
+            ))}
+
+            {/* Additional showcase cards — thumbnail placeholder grid */}
+            {additionalShowcases.map(showcase => (
+              <Card
+                key={showcase.id}
+                className="p-6 hover:shadow-lg transition-shadow"
+              >
+                <div className="text-4xl mb-4 w-full aspect-video bg-muted rounded-md flex items-center justify-center">
+                  <span className="text-5xl">{showcase.thumbnail}</span>
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  {showcase.title}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {showcase.description}
+                </p>
+                <div className="flex gap-2 flex-wrap mb-4">
+                  <Badge variant="outline">{showcase.format}</Badge>
+                  <Badge variant="outline">{showcase.duration}</Badge>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {showcase.tags.map(tag => (
+                    <span
+                      key={tag}
+                      className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20"
+                    >
                       {tag}
                     </span>
                   ))}
@@ -212,17 +309,26 @@ export default function VideoProduction() {
       <section className="py-16 border-t border-border">
         <div className="container max-w-6xl mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Use Cases</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-4">
+              Use Cases
+            </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Deploy the OneStack cinematic reel across your marketing channels to showcase enterprise-grade production quality and autonomous capabilities.
+              Deploy the OneStack cinematic reel across your marketing channels
+              to showcase enterprise-grade production quality and autonomous
+              capabilities.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {useCases.map((useCase) => (
-              <Card key={useCase.title} className="p-6 hover:shadow-lg transition-shadow">
+            {useCases.map(useCase => (
+              <Card
+                key={useCase.title}
+                className="p-6 hover:shadow-lg transition-shadow"
+              >
                 <div className="text-3xl mb-4">{useCase.icon}</div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">{useCase.title}</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  {useCase.title}
+                </h3>
                 <p className="text-muted-foreground">{useCase.description}</p>
               </Card>
             ))}
@@ -236,23 +342,32 @@ export default function VideoProduction() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <Award className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold text-foreground mb-2">Premium Quality</h3>
+              <h3 className="font-semibold text-foreground mb-2">
+                Premium Quality
+              </h3>
               <p className="text-sm text-muted-foreground">
-                Ultra-realistic 4K cinematic production showcasing enterprise-grade visual standards.
+                Ultra-realistic 4K cinematic production showcasing
+                enterprise-grade visual standards.
               </p>
             </div>
             <div className="text-center">
               <Zap className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold text-foreground mb-2">Optimized Format</h3>
+              <h3 className="font-semibold text-foreground mb-2">
+                Optimized Format
+              </h3>
               <p className="text-sm text-muted-foreground">
-                Compressed for web delivery while maintaining visual fidelity across all platforms.
+                Compressed for web delivery while maintaining visual fidelity
+                across all platforms.
               </p>
             </div>
             <div className="text-center">
               <Film className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold text-foreground mb-2">Versatile Asset</h3>
+              <h3 className="font-semibold text-foreground mb-2">
+                Versatile Asset
+              </h3>
               <p className="text-sm text-muted-foreground">
-                Deploy on landing pages, social media, email campaigns, and pitch decks.
+                Deploy on landing pages, social media, email campaigns, and
+                pitch decks.
               </p>
             </div>
           </div>
@@ -262,9 +377,13 @@ export default function VideoProduction() {
       {/* CTA Section */}
       <section className="py-16 border-t border-border">
         <div className="container max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-4">Ready to Showcase OneStack?</h2>
+          <h2 className="text-3xl font-bold text-foreground mb-4">
+            Ready to Showcase OneStack?
+          </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-            Download the cinematic reel and integrate it into your marketing channels. This production-grade asset is ready to deploy immediately.
+            Download the cinematic reel and integrate it into your marketing
+            channels. This production-grade asset is ready to deploy
+            immediately.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="gap-2" onClick={handleDownload}>

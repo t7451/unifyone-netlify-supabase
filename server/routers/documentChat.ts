@@ -1,8 +1,11 @@
-import { router, publicProcedure } from "../_core/trpc";
+import { router, protectedProcedure } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
 import { documentEmbeddings } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { llmRateLimiter } from "../_core/rateLimiter";
+import { voyageEmbedOne } from "../_core/voyage";
 
 // Helper: Compute cosine similarity between two vectors
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -19,27 +22,29 @@ function cosineSimilarity(a: number[], b: number[]): number {
   return denominator === 0 ? 0 : dotProduct / denominator;
 }
 
-// Helper: Get embedding for a query using a deterministic hash-based approach.
-// Claude does not expose a native embeddings API; for production-grade semantic
-// search use Voyage AI (voyageai.com) — Anthropic's recommended embeddings
-// provider — by calling their `voyage-3-large` model with the query text.
+/**
+ * Get a query embedding via Voyage AI.
+ *
+ * Production-grade semantic embedding using the Voyage AI REST API
+ * (model: voyage-3-large by default; override via VOYAGE_MODEL). Falls back
+ * automatically to a deterministic hash embedding when VOYAGE_API_KEY is
+ * unset or the API errors. See server/_core/voyage.ts for details.
+ *
+ * Indexing-side calls (when adding documents) should pass mode="document";
+ * search-side calls (this one) pass mode="query" so Voyage applies the
+ * correct task-specific prompting internally.
+ */
 async function getQueryEmbedding(query: string): Promise<number[]> {
-  const hash = Array.from(query).reduce((acc, char) => {
-    return (acc << 5) - acc + char.charCodeAt(0);
-  }, 0);
-
-  // Generate a 1536-dimensional vector from the hash
-  const embedding: number[] = [];
-  let seed = hash;
-  for (let i = 0; i < 1536; i++) {
-    seed = (seed * 9301 + 49297) % 233280;
-    embedding.push((seed / 233280) * 2 - 1);
-  }
-  return embedding;
+  return voyageEmbedOne(query, { mode: "query" });
 }
 
 export const documentChatRouter = router({
-  ask: publicProcedure
+  // `documentEmbeddings` is a SHARED, platform-wide documentation knowledge
+  // base (no `tenantId` column on the table) -- so tenant scoping is not
+  // applicable here. We still require an authenticated user and apply a
+  // strict per-user rate limit because this endpoint invokes Claude on
+  // every call and is otherwise a free LLM-cost burner.
+  ask: protectedProcedure
     .input(
       z.object({
         question: z.string().min(1).max(1000),
@@ -50,17 +55,29 @@ export const documentChatRouter = router({
               content: z.string(),
             })
           )
+          .max(20)
           .default([]),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Per-user rate limit on LLM-backed endpoint
+      const limit = await llmRateLimiter.check(`documentChat:${ctx.user.id}`);
+      if (!limit.allowed) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `Too many requests. Try again in ${Math.ceil(
+            limit.retryAfterMs / 1000
+          )}s.`,
+        });
+      }
+
       const db = await getDb();
       if (!db) throw new Error("Database unavailable");
 
-      // Get embedding for the question
+      // Get embedding for the question (Voyage, mode=query)
       const queryEmbedding = await getQueryEmbedding(input.question);
 
-      // Retrieve all document chunks
+      // Retrieve all document chunks (platform-wide shared docs)
       const allChunks = await db.select().from(documentEmbeddings);
 
       // Compute similarity scores and sort
@@ -86,8 +103,8 @@ export const documentChatRouter = router({
         .join("\n\n---\n\n");
 
       // Build system prompt
-      const systemPrompt = `You are a helpful assistant for UnifyOne, a Cathedral Framework-based commerce platform powered by Kai. 
-      
+      const systemPrompt = `You are a helpful assistant for UnifyOne, a Cathedral Framework-based commerce platform powered by Kai.
+
 Answer user questions based on the following documentation context. Be concise, accurate, and helpful. If the answer is not in the documentation, say so honestly.
 
 DOCUMENTATION CONTEXT:

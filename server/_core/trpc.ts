@@ -1,4 +1,4 @@
-import { NOT_ADMIN_ERR_MSG, UNAUTHED_ERR_MSG } from '@shared/const';
+import { NOT_ADMIN_ERR_MSG, UNAUTHED_ERR_MSG } from "@shared/const";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
@@ -27,11 +27,111 @@ const requireUser = t.middleware(async opts => {
 
 export const protectedProcedure = t.procedure.use(requireUser);
 
+/**
+ * tenantProcedure — like protectedProcedure but additionally guarantees the
+ * caller has a non-null `tenantId`. Use this for any procedure that reads or
+ * writes tenant-scoped data; it surfaces the tenantId on `ctx` so callers
+ * cannot forget to filter by it.
+ *
+ * IMPORTANT: this enforces the *presence* of a tenant context, not the
+ * correctness of every query. Routers must still scope every DB read/write
+ * by `ctx.tenantId`.
+ */
+/**
+ * rateLimitedProcedure(limiter, keyFn?) — wraps protectedProcedure with a
+ * rate-limit check keyed (by default) on the authenticated user id. Throws
+ * TRPCError TOO_MANY_REQUESTS when the limit is exceeded.
+ *
+ * Usage:
+ *   import { mcpRateLimiter } from "./rateLimiter";
+ *   const limited = rateLimitedProcedure(mcpRateLimiter, "mcp");
+ *   limited.query(async () => { ... })
+ */
+type Limiter = {
+  check(
+    key: string
+  ): Promise<{ allowed: true } | { allowed: false; retryAfterMs: number }>;
+};
+export function rateLimitedProcedure(limiter: Limiter, scope: string) {
+  return protectedProcedure.use(
+    t.middleware(async opts => {
+      const { ctx, next } = opts;
+      const key = `${scope}:${ctx.user!.id}`;
+      const result = await limiter.check(key);
+      if (!result.allowed) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `Rate limit exceeded. Retry in ${Math.ceil(result.retryAfterMs / 1000)}s.`,
+        });
+      }
+      return next();
+    })
+  );
+}
+
+/**
+ * Resolve the client IP for rate-limit keying. Trusts X-Forwarded-For only
+ * when present (Express's req.ip already honors `trust proxy`). Falls back
+ * to the socket address. Never returns an empty string — defaults to "anon"
+ * so a misconfigured proxy still gets a single shared bucket instead of
+ * silently disabling the limiter.
+ */
+function clientKey(req: TrpcContext["req"]): string {
+  const fwd = req.headers["x-forwarded-for"];
+  const fwdStr = Array.isArray(fwd) ? fwd[0] : fwd;
+  const first = fwdStr?.split(",")[0]?.trim();
+  return first || req.ip || req.socket?.remoteAddress || "anon";
+}
+
+/**
+ * publicRateLimitedProcedure — like publicProcedure but checks `limiter`
+ * keyed on the caller's IP. Use on public form endpoints (waitlists,
+ * leads, analytics relays) where unauthenticated abuse is the threat.
+ */
+export function publicRateLimitedProcedure(limiter: Limiter, scope: string) {
+  return t.procedure.use(
+    t.middleware(async opts => {
+      const { ctx, next } = opts;
+      const key = `${scope}:${clientKey(ctx.req)}`;
+      const result = await limiter.check(key);
+      if (!result.allowed) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `Too many requests. Retry in ${Math.ceil(result.retryAfterMs / 1000)}s.`,
+        });
+      }
+      return next();
+    })
+  );
+}
+
+export const tenantProcedure = protectedProcedure.use(
+  t.middleware(async opts => {
+    const { ctx, next } = opts;
+
+    const tenantId = ctx.user?.tenantId;
+    if (tenantId == null) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "No tenant context for this user",
+      });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        user: ctx.user,
+        tenantId,
+      },
+    });
+  })
+);
+
 export const adminProcedure = t.procedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
 
-    if (!ctx.user || ctx.user.role !== 'admin') {
+    if (!ctx.user || ctx.user.role !== "admin") {
       throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
     }
 
@@ -41,5 +141,5 @@ export const adminProcedure = t.procedure.use(
         user: ctx.user,
       },
     });
-  }),
+  })
 );

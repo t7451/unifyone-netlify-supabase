@@ -7,7 +7,15 @@ export const ENV = {
     process.env.DEPLOY_PRIME_URL ??
     process.env.DEPLOY_URL ??
     "",
-  cookieSecret: process.env.JWT_SECRET ?? process.env.SUPABASE_JWT_SECRET ?? "",
+  // Cookie/JWT signing secret — JWT_SECRET only.
+  //
+  // We previously fell back to SUPABASE_JWT_SECRET so the platform could
+  // bootstrap during the Supabase migration. That fallback has been removed
+  // because (a) Supabase is being decommissioned (see SUPABASE_REMOVAL.md)
+  // and (b) silently signing app sessions with the upstream Supabase JWT
+  // secret couples session validity to a third-party rotation we don't
+  // control. Operators MUST set a dedicated JWT_SECRET (>= 32 chars).
+  cookieSecret: process.env.JWT_SECRET ?? "",
   /**
    * Explicit cookie domain — restricts the session cookie to your root domain
    * and prevents it leaking to unrelated subdomains.

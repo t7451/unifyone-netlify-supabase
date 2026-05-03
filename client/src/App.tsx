@@ -87,6 +87,12 @@ const GovernanceDashboard = lazy(() => import("./pages/GovernanceDashboard"));
 const DocsChat = lazy(() => import("./pages/DocsChat"));
 const DeveloperHub = lazy(() => import("./pages/DeveloperHub"));
 const AuthorizationHub = lazy(() => import("./pages/AuthorizationHub"));
+const Terminal = lazy(() => import("./pages/Terminal"));
+const DealflowPage = lazy(() => import("./pages/DealflowPage"));
+const TerpforgePage = lazy(() => import("./pages/TerpforgePage"));
+const KnowledgeGraphPage = lazy(() => import("./pages/KnowledgeGraphPage"));
+const PixelforgePage = lazy(() => import("./pages/PixelforgePage"));
+const ShopifyThemePage = lazy(() => import("./pages/ShopifyThemePage"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -448,6 +454,14 @@ function Router() {
           </DashboardRoute>
         )}
       />
+      <Route
+        path="/terminal"
+        component={() => (
+          <DashboardRoute>
+            <Terminal />
+          </DashboardRoute>
+        )}
+      />
       <Route path="/sovereign" component={() => <Sovereign />} />
       <Route path="/privacy" component={() => <PrivacyPolicy />} />
       <Route path="/terms" component={() => <TermsOfService />} />
@@ -508,6 +522,46 @@ function Router() {
           <ProtectedRoute>
             <Checkout />
           </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/dashboard/dealflow"
+        component={() => (
+          <DashboardRoute>
+            <DealflowPage />
+          </DashboardRoute>
+        )}
+      />
+      <Route
+        path="/dashboard/terpforge"
+        component={() => (
+          <DashboardRoute>
+            <TerpforgePage />
+          </DashboardRoute>
+        )}
+      />
+      <Route
+        path="/dashboard/knowledge-graph"
+        component={() => (
+          <DashboardRoute>
+            <KnowledgeGraphPage />
+          </DashboardRoute>
+        )}
+      />
+      <Route
+        path="/dashboard/pixelforge"
+        component={() => (
+          <DashboardRoute>
+            <PixelforgePage />
+          </DashboardRoute>
+        )}
+      />
+      <Route
+        path="/dashboard/shopify-theme"
+        component={() => (
+          <DashboardRoute>
+            <ShopifyThemePage />
+          </DashboardRoute>
         )}
       />
       <Route path="/404" component={() => <NotFound />} />

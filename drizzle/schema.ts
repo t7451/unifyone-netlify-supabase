@@ -1181,6 +1181,23 @@ export const n8nSchedules = pgTable("n8n_schedules", {
 export type N8nSchedule = typeof n8nSchedules.$inferSelect;
 export type InsertN8nSchedule = typeof n8nSchedules.$inferInsert;
 
+// ─── Meta CAPI Events ─────────────────────────────────────────────────────────
+export const metaCapiEvents = pgTable("meta_capi_events", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenants.id),
+  eventName: text("event_name").notNull(),
+  eventId: text("event_id").notNull(),
+  userId: integer("user_id").references(() => users.id),
+  eventSourceUrl: text("event_source_url"),
+  userData: jsonb("user_data"),
+  customData: jsonb("custom_data"),
+  sentAt: timestamp("sent_at").defaultNow(),
+  responseCode: integer("response_code"),
+  responseBody: text("response_body"),
+});
+export type MetaCapiEvent = typeof metaCapiEvents.$inferSelect;
+export type InsertMetaCapiEvent = typeof metaCapiEvents.$inferInsert;
+
 // ─── Mobile: Push Notification Schedules ─────────────────────────────────────
 export const mobilePushSchedules = pgTable("mobile_push_schedules", {
   id: serial("id").primaryKey(),
@@ -1641,3 +1658,227 @@ export const seoContentJobs = pgTable(
 );
 export type SeoContentJob = typeof seoContentJobs.$inferSelect;
 export type InsertSeoContentJob = typeof seoContentJobs.$inferInsert;
+
+// ── CLI ───────────────────────────────────────────────────────────────────────
+
+export const cliModeEnum = pgEnum("cli_mode", ["platform", "vps", "local"]);
+
+/**
+ * Tracks active and historical CLI sessions (all three modes).
+ * Rows are created when a session begins and updated when it ends.
+ */
+export const cliSessions = pgTable("cli_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  tenantId: integer("tenantId"),
+  mode: cliModeEnum("mode").notNull().default("platform"),
+  /** FK to cli_vps_connections.id — only set when mode = 'vps'. */
+  vpsId: integer("vpsId"),
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  endedAt: timestamp("endedAt"),
+  exitCode: integer("exitCode"),
+});
+export type CliSession = typeof cliSessions.$inferSelect;
+export type InsertCliSession = typeof cliSessions.$inferInsert;
+
+/**
+ * Saved VPS / remote host configurations per user.
+ * Private keys are stored AES-256-GCM encrypted and are never returned to the client.
+ */
+export const cliVpsConnections = pgTable("cli_vps_connections", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenantId"),
+  userId: integer("userId").notNull(),
+  label: varchar("label", { length: 100 }).notNull(),
+  host: varchar("host", { length: 255 }).notNull(),
+  port: integer("port").notNull().default(22),
+  username: varchar("username", { length: 64 }).notNull(),
+  /** AES-256-GCM encrypted private key (hex-encoded). Null if password auth is used. */
+  encryptedPrivateKey: text("encryptedPrivateKey"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type CliVpsConnection = typeof cliVpsConnections.$inferSelect;
+export type InsertCliVpsConnection = typeof cliVpsConnections.$inferInsert;
+
+/**
+ * Per-session command history — one row per command executed.
+ * Used for the history tRPC query and the admin audit log.
+ */
+export const cliCommandHistory = pgTable(
+  "cli_command_history",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("userId").notNull(),
+    tenantId: integer("tenantId"),
+    sessionId: integer("sessionId"),
+    command: text("command").notNull(),
+    output: text("output"),
+    exitCode: integer("exitCode"),
+    executedAt: timestamp("executedAt").defaultNow().notNull(),
+  },
+  table => ({
+    cliHistoryUserIdx: index("cli_command_history_user_idx").on(
+      table.userId,
+      table.executedAt
+    ),
+    cliHistoryTenantIdx: index("cli_command_history_tenant_idx").on(
+      table.tenantId,
+      table.executedAt
+    ),
+  })
+);
+export type CliCommandHistory = typeof cliCommandHistory.$inferSelect;
+export type InsertCliCommandHistory = typeof cliCommandHistory.$inferInsert;
+
+// ── Stripe Payment Audit ────────────────────────────────────────────────────
+//
+// Records every successful Stripe verification before the corresponding order
+// row is written. Provides idempotency (a retry with the same Stripe id
+// returns the previously-linked order) and orphan detection (audit rows that
+// stay unlinked beyond a grace window indicate a DB write that failed after
+// Stripe captured the payment).
+export const stripePaymentAuditStatusEnum = pgEnum(
+  "stripe_payment_audit_status",
+  ["pending", "linked", "orphaned"]
+);
+
+export const stripePaymentAudit = pgTable(
+  "stripe_payment_audit",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull(),
+    userId: integer("userId").notNull(),
+    idempotencyKey: varchar("idempotencyKey", { length: 200 }).notNull(),
+    stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 100 }),
+    stripeSessionId: varchar("stripeSessionId", { length: 100 }),
+    amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+    currency: varchar("currency", { length: 3 }).notNull(),
+    status: stripePaymentAuditStatusEnum("status")
+      .notNull()
+      .default("pending"),
+    linkedOrderId: integer("linkedOrderId"),
+    lastError: text("lastError"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    tenantIdempotencyIdx: uniqueIndex("stripe_payment_audit_tenant_key_idx").on(
+      table.tenantId,
+      table.idempotencyKey
+    ),
+    statusCreatedIdx: index("stripe_payment_audit_status_created_idx").on(
+      table.status,
+      table.createdAt
+    ),
+  })
+);
+export type StripePaymentAudit = typeof stripePaymentAudit.$inferSelect;
+export type InsertStripePaymentAudit = typeof stripePaymentAudit.$inferInsert;
+
+// ── Refresh Tokens ────────────────────────────────────────────────────────────
+//
+// Stores opaque refresh tokens that back short-lived access JWTs.
+// When the access JWT expires the client presents its HttpOnly refresh cookie
+// to POST /api/auth/refresh; the server verifies the token hash, rotates
+// (deletes old, issues new), and returns a fresh access JWT + new refresh token.
+//
+// Revocation: setting revokedAt prevents the token from being used again.
+// The access JWT's short lifetime (7 days) limits blast radius if stolen.
+export const refreshTokens = pgTable("refresh_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  /** SHA-256 hex digest of the raw token (raw token is never stored). */
+  tokenHash: varchar("tokenHash", { length: 64 }).notNull().unique(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  revokedAt: timestamp("revokedAt"),
+  /** Device/browser identity for the session management UI. */
+  userAgent: text("userAgent"),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  lastUsedAt: timestamp("lastUsedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type RefreshToken = typeof refreshTokens.$inferSelect;
+export type InsertRefreshToken = typeof refreshTokens.$inferInsert;
+
+// ── Stripe Webhook Events (forensic log + idempotency) ────────────────────────
+export const stripeWebhookEvents = pgTable("stripe_webhook_events", {
+  id: serial("id").primaryKey(),
+  eventId: varchar("event_id", { length: 100 }).notNull().unique(),
+  eventType: varchar("event_type", { length: 100 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull(), // received | processed | failed
+  errorMessage: text("error_message"),
+  livemode: boolean("livemode").default(false).notNull(),
+  payload: json("payload").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Impact.com S2S Affiliate Tracking
+//
+// Click capture → conversion firing for the Impact.com affiliate network.
+// Two tables:
+//   * impact_clicks      — every inbound ?im_ref=… landing
+//   * impact_conversions — every conversion postback fired to Impact's S2S API
+//
+// Privacy: ipHash is SHA-256 of the IP, never the raw address.
+// Idempotency: stripe_session_id is UNIQUE on conversions so a replayed
+// Stripe webhook can never double-fire.
+// ─────────────────────────────────────────────────────────────────────────────
+export const impactClicks = pgTable(
+  "impact_clicks",
+  {
+    id: serial("id").primaryKey(),
+    /** Server-issued opaque ID (32 hex chars) — what we send to Impact as SubId. */
+    clickId: varchar("click_id", { length: 64 }).notNull().unique(),
+    /** Raw value of the ?im_ref= query param (partner-supplied). */
+    imRef: varchar("im_ref", { length: 200 }).notNull(),
+    /** Landing page URL with the affiliate parameter intact. */
+    landingUrl: text("landing_url"),
+    /** SHA-256 hex of the client IP. Never the raw IP. */
+    ipHash: varchar("ip_hash", { length: 64 }),
+    userAgent: text("user_agent"),
+    referer: text("referer"),
+    /** When known (post-signup), link the click back to the user. */
+    userId: integer("user_id"),
+    /** Set when the conversion is fired, so we can compute funnel rate. */
+    convertedAt: timestamp("converted_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  table => ({
+    imRefIdx: index("impact_clicks_im_ref_idx").on(table.imRef),
+    userIdx: index("impact_clicks_user_id_idx").on(table.userId),
+    createdAtIdx: index("impact_clicks_created_at_idx").on(table.createdAt),
+  })
+);
+export type ImpactClick = typeof impactClicks.$inferSelect;
+export type InsertImpactClick = typeof impactClicks.$inferInsert;
+
+export const impactConversions = pgTable(
+  "impact_conversions",
+  {
+    id: serial("id").primaryKey(),
+    clickId: varchar("click_id", { length: 64 }).notNull(),
+    /** The Stripe checkout session that triggered this conversion. UNIQUE => idempotent. */
+    stripeSessionId: varchar("stripe_session_id", { length: 100 })
+      .notNull()
+      .unique(),
+    amountCents: integer("amount_cents").notNull(),
+    currency: varchar("currency", { length: 3 }).notNull(),
+    /** Raw response from Impact's S2S endpoint for forensic replay. */
+    impactResponse: json("impact_response").$type<Record<string, unknown>>(),
+    /** HTTP status from the Impact API (null if local-only / dry-run). */
+    httpStatus: integer("http_status"),
+    /** True if posted successfully to Impact (2xx); false on error. */
+    success: boolean("success").default(false).notNull(),
+    firedAt: timestamp("fired_at").defaultNow().notNull(),
+  },
+  table => ({
+    clickIdx: index("impact_conversions_click_id_idx").on(table.clickId),
+    firedAtIdx: index("impact_conversions_fired_at_idx").on(table.firedAt),
+  })
+);
+export type ImpactConversion = typeof impactConversions.$inferSelect;
+export type InsertImpactConversion = typeof impactConversions.$inferInsert;

@@ -147,7 +147,7 @@ export default function DigitalRetailGuidePost() {
       {/* Article */}
       <article className="max-w-4xl mx-auto px-6 sm:px-8 pt-28 pb-24">
         {/* Breadcrumb */}
-        <nav aria-label="breadcrumb" className="mb-8">
+        <nav aria-label="breadcrumb" className="mb-4">
           <ol
             className="flex items-center gap-2 text-xs"
             style={{
@@ -165,12 +165,33 @@ export default function DigitalRetailGuidePost() {
             </li>
             <li style={{ color: "#242424" }}>›</li>
             <li>
-              <span style={{ color: "#5A5A5A" }}>Blog</span>
+              <Link href="/blog">
+                <span
+                  className="cursor-pointer hover:text-amber-500 transition-colors"
+                  style={{ color: "#5A5A5A" }}
+                >
+                  Blog
+                </span>
+              </Link>
             </li>
             <li style={{ color: "#242424" }}>›</li>
             <li style={{ color: "#D4A843" }}>Digital Retail Guide</li>
           </ol>
         </nav>
+        <div className="mb-8">
+          <Link href="/blog">
+            <span
+              className="text-xs cursor-pointer hover:text-amber-400 transition-colors"
+              style={{
+                fontFamily: "Cinzel, serif",
+                letterSpacing: "0.15em",
+                color: "#5A5A5A",
+              }}
+            >
+              ← Back to Blog
+            </span>
+          </Link>
+        </div>
 
         {/* Header */}
         <header className="mb-12">
@@ -188,6 +209,22 @@ export default function DigitalRetailGuidePost() {
             The Digital Retail Guide: How Modern Operators Build Stores That
             Scale
           </h1>
+          <div
+            className="flex flex-wrap items-center gap-4 mb-6 text-xs"
+            style={{
+              fontFamily: "Cinzel, serif",
+              letterSpacing: "0.12em",
+              color: "#5A5A5A",
+            }}
+          >
+            <span>
+              By <span style={{ color: "#D4A843" }}>UnifyOne Team</span>
+            </span>
+            <span style={{ color: "#242424" }}>·</span>
+            <time dateTime="2026-04-24">April 24, 2026</time>
+            <span style={{ color: "#242424" }}>·</span>
+            <span>5 min read</span>
+          </div>
           <p
             className="font-crimson text-xl sm:text-2xl"
             style={{ color: "#9A9A9A", fontStyle: "italic", lineHeight: 1.6 }}
@@ -229,9 +266,9 @@ export default function DigitalRetailGuidePost() {
             <p className="mt-4">
               Operators who treat these channels as separate concerns end up
               with five dashboards, three spreadsheets, and a support inbox that
-              can never fully reflect reality. The structural answer is a unified
-              commerce backbone that connects all channels to a single source of
-              truth for product, order, customer, and payment data.
+              can never fully reflect reality. The structural answer is a
+              unified commerce backbone that connects all channels to a single
+              source of truth for product, order, customer, and payment data.
             </p>
           </section>
 
@@ -294,13 +331,13 @@ export default function DigitalRetailGuidePost() {
               and high-growth operations.
             </p>
             <p className="mt-4">
-              The structural answer is payment orchestration: connecting multiple
-              processors in a single checkout layer, with logic that routes each
-              transaction based on processor health, transaction cost, customer
-              geography, and card type. UnifyOne's checkout connects Stripe,
-              PayPal, Square, and Shopify Payments in a single integration, with
-              automatic fallback routing if any processor returns an error or
-              becomes unavailable.
+              The structural answer is payment orchestration: connecting
+              multiple processors in a single checkout layer, with logic that
+              routes each transaction based on processor health, transaction
+              cost, customer geography, and card type. UnifyOne's checkout
+              connects Stripe, PayPal, Square, and Shopify Payments in a single
+              integration, with automatic fallback routing if any processor
+              returns an error or becomes unavailable.
             </p>
             <p className="mt-4">
               This is not a feature for enterprise operators only. Any merchant
@@ -334,12 +371,12 @@ export default function DigitalRetailGuidePost() {
               single dashboard.
             </p>
             <p className="mt-4">
-              For digital retail operators expanding from one brand to many, this
-              is the architectural decision that determines whether the second
-              and third brand are incremental effort or exponential overhead.
-              UnifyOne was built multi-tenant from the database layer up — every
-              product, order, customer record, and payment event is scoped to a
-              tenant by design, with zero bleed between accounts.
+              For digital retail operators expanding from one brand to many,
+              this is the architectural decision that determines whether the
+              second and third brand are incremental effort or exponential
+              overhead. UnifyOne was built multi-tenant from the database layer
+              up — every product, order, customer record, and payment event is
+              scoped to a tenant by design, with zero bleed between accounts.
             </p>
           </section>
 
@@ -384,10 +421,11 @@ export default function DigitalRetailGuidePost() {
             </ul>
             <p className="mt-6">
               Kai, UnifyOne's embedded AI layer, applies all five of these
-              directly to your store's actual data — no data export, no third-party
-              integration, no generic benchmarks. It reads your orders, your
-              customers, your product margins, and your payment events, and
-              generates recommendations that are specific to your operation.
+              directly to your store's actual data — no data export, no
+              third-party integration, no generic benchmarks. It reads your
+              orders, your customers, your product margins, and your payment
+              events, and generates recommendations that are specific to your
+              operation.
             </p>
           </section>
 
@@ -409,8 +447,8 @@ export default function DigitalRetailGuidePost() {
               For digital retail, this means: before you spend on paid
               acquisition, before you negotiate influencer deals, before you
               launch on a second marketplace — make sure the order management,
-              payment orchestration, inventory tracking, and customer data layers
-              are structurally sound. Traffic into broken infrastructure
+              payment orchestration, inventory tracking, and customer data
+              layers are structurally sound. Traffic into broken infrastructure
               generates revenue you cannot fulfill, customers you cannot retain,
               and disputes you cannot resolve.
             </p>
@@ -461,10 +499,11 @@ export default function DigitalRetailGuidePost() {
             </ul>
             <p className="mt-6">
               UnifyOne answers all five: full data portability via export at any
-              time, four-processor payment orchestration (Stripe, PayPal, Square,
-              Shopify), multi-tenant architecture that absorbs additional brands
-              without per-brand pricing, Kai AI embedded directly in the
-              dashboard, and PostgreSQL tenant isolation at the database layer.
+              time, four-processor payment orchestration (Stripe, PayPal,
+              Square, Shopify), multi-tenant architecture that absorbs
+              additional brands without per-brand pricing, Kai AI embedded
+              directly in the dashboard, and PostgreSQL tenant isolation at the
+              database layer.
             </p>
           </section>
 
@@ -478,15 +517,15 @@ export default function DigitalRetailGuidePost() {
             <p>
               UnifyOne's Acolyte tier is free: one tenant, core product and
               order management, and Shopify integration for operators already on
-              that platform. The Architect tier ($49/month) adds Kai AI insights,
-              all four payment rails, advanced analytics, and up to five tenants.
-              The Cathedral tier ($149/month) is for operators running a full
-              multi-brand or white-label operation.
+              that platform. The Architect tier ($49/month) adds Kai AI
+              insights, all four payment rails, advanced analytics, and up to
+              five tenants. The Cathedral tier ($149/month) is for operators
+              running a full multi-brand or white-label operation.
             </p>
             <p className="mt-4">
-              Digital retail infrastructure is not an expense. It is the load-bearing
-              wall your revenue sits on. Build it right before you scale the
-              traffic.
+              Digital retail infrastructure is not an expense. It is the
+              load-bearing wall your revenue sits on. Build it right before you
+              scale the traffic.
             </p>
           </section>
 
@@ -604,6 +643,24 @@ export default function DigitalRetailGuidePost() {
               </div>
             </Link>
           </div>
+        </div>
+        {/* Back to Blog */}
+        <div
+          className="mt-12 pt-8"
+          style={{ borderTop: "1px solid rgba(212,168,67,0.08)" }}
+        >
+          <Link href="/blog">
+            <span
+              className="text-xs cursor-pointer hover:text-amber-400 transition-colors"
+              style={{
+                fontFamily: "Cinzel, serif",
+                letterSpacing: "0.15em",
+                color: "#5A5A5A",
+              }}
+            >
+              ← Back to Blog
+            </span>
+          </Link>
         </div>
       </article>
     </div>

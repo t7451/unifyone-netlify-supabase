@@ -26,6 +26,7 @@ import { moneyManagerRouter } from "./routers/moneyManager";
 import { gamificationRouter } from "./routers/gamification";
 import { socialFriendsRouter } from "./routers/socialFriends";
 import { mobileAutomationRouter } from "./routers/mobileAutomation";
+import { capiRouter } from "./routers/capi";
 import { aiRouter } from "./routers/ai";
 import { emailRouter } from "./routers/email";
 import { documentChatRouter } from "./routers/documentChat";
@@ -38,12 +39,34 @@ import { gigWorkerRouter } from "./routers/gigWorker";
 import { developerRouter } from "./routers/developer";
 import { clippersRouter } from "./routers/clippers";
 import { seoRouter } from "./routers/seo";
+import { cliRouter } from "./routers/cli";
+import { dealflowRouter } from "./routers/dealflow";
+import { shopifyThemeRouter } from "./routers/shopifyTheme";
+import { terpforgeRouter } from "./routers/terpforge";
+import { knowledgeGraphRouter } from "./routers/knowledgeGraph";
+import { pixelforgeRouter } from "./routers/pixelforge";
 
 export const appRouter = router({
   system: systemRouter,
 
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(opts => {
+      const u = opts.ctx.user;
+      if (!u) return null;
+      return {
+        id: u.id,
+        openId: u.openId,
+        tenantId: u.tenantId,
+        email: u.email,
+        name: u.name,
+        username: u.username,
+        role: u.role,
+        loginMethod: u.loginMethod,
+        emailVerified: u.emailVerified,
+        passwordChangedAt: u.passwordChangedAt,
+        hasPassword: !!u.passwordHash,
+      };
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       // ctx.res is only available in the Express adapter (local/Docker).
       // In the Netlify fetch adapter ctx.res is undefined; the cookie is
@@ -80,6 +103,7 @@ export const appRouter = router({
   gamification: gamificationRouter,
   socialFriends: socialFriendsRouter,
   mobileAutomation: mobileAutomationRouter,
+  capi: capiRouter,
   ai: aiRouter,
   mcp: mcpRouter,
   email: emailRouter,
@@ -92,6 +116,12 @@ export const appRouter = router({
   developer: developerRouter,
   clippers: clippersRouter,
   seo: seoRouter,
+  cli: cliRouter,
+  dealflow: dealflowRouter,
+  shopifyTheme: shopifyThemeRouter,
+  terpforge: terpforgeRouter,
+  knowledgeGraph: knowledgeGraphRouter,
+  pixelforge: pixelforgeRouter,
 });
 
 export type AppRouter = typeof appRouter;

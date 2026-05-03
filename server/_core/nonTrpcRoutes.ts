@@ -1,7 +1,9 @@
 /**
  * server/_core/nonTrpcRoutes.ts
  *
- * Handles non-tRPC routes: Stripe/PayPal/Square/billing webhooks + OAuth.
+ * Handles non-tRPC routes: Stripe/PayPal/Square/billing webhooks + OAuth
+ * + Impact affiliate click capture.
+ *
  * These need raw body access before any JSON parsing middleware.
  *
  * Returns null if the route is not handled here (falls through to tRPC).
@@ -22,6 +24,7 @@ export async function buildNonTrpcHandler(): Promise<
     { registerSquareFetchRoutes },
     { registerOAuthFetchRoutes },
     { registerCustomAuthFetchRoutes },
+    { registerImpactFetchRoutes },
   ] = await Promise.all([
     import("../stripe").catch(() => ({ registerStripeFetchRoutes: null })),
     import("../billing").catch(() => ({ registerBillingFetchRoutes: null })),
@@ -31,7 +34,15 @@ export async function buildNonTrpcHandler(): Promise<
     import("./customAuthRoutes").catch(() => ({
       registerCustomAuthFetchRoutes: null,
     })),
+    import("./impactRoutes").catch(() => ({
+      registerImpactFetchRoutes: null,
+    })),
   ]);
+  const { registerAdminOpsFetchRoutes } = await import("../adminOps").catch(
+    () => ({
+      registerAdminOpsFetchRoutes: null as unknown as FetchHandler | null,
+    })
+  );
 
   return async (req: Request): Promise<Response | null> => {
     const url = new URL(req.url);
@@ -41,6 +52,29 @@ export async function buildNonTrpcHandler(): Promise<
     if (path.startsWith("/api/stripe/") && registerStripeFetchRoutes) {
       try {
         return await (registerStripeFetchRoutes as FetchHandler)(req);
+      } catch (e: unknown) {
+        return Response.json({ error: (e as Error).message }, { status: 500 });
+      }
+    }
+
+    // Impact.com affiliate click capture (public, no admin gate).
+    // Mounted BEFORE the admin block so /api/impact/* never falls through to
+    // the admin handler (which would return 401).
+    if (path.startsWith("/api/impact/") && registerImpactFetchRoutes) {
+      try {
+        const result = await (registerImpactFetchRoutes as FetchHandler)(req);
+        if (result) return result;
+      } catch (e: unknown) {
+        return Response.json({ error: (e as Error).message }, { status: 500 });
+      }
+    }
+
+    // Admin ops (Resend / Cloudflare DNS / Impact reports) — admin-key
+    // gated inside adminOps.
+    if (path.startsWith("/api/admin/") && registerAdminOpsFetchRoutes) {
+      try {
+        const result = await (registerAdminOpsFetchRoutes as FetchHandler)(req);
+        if (result) return result;
       } catch (e: unknown) {
         return Response.json({ error: (e as Error).message }, { status: 500 });
       }

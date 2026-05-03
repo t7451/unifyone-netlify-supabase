@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
-import { getLoginUrl } from "@/const";
+import { getSignupUrl } from "@/const";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { TIERS } from "@/content/pricing";
 import { SITE_URL } from "@/lib/siteConfig";
@@ -101,6 +101,30 @@ const LAUNCH_METRICS = [
   },
 ] as const;
 
+const SOCIAL_PROOF = [
+  {
+    display: "500+",
+    numeric: 500,
+    label: "Tenants Launched",
+    accent: "#D4A843",
+    suffix: "+",
+  },
+  {
+    display: "2M+",
+    numeric: 2000000,
+    label: "Orders Processed",
+    accent: "#6EE7B7",
+    suffix: "M+",
+  },
+  {
+    display: "12",
+    numeric: 12,
+    label: "Platform Integrations",
+    accent: "#93C5FD",
+    suffix: "",
+  },
+] as const;
+
 const PILLARS = [
   {
     glyph: "◈",
@@ -187,6 +211,80 @@ const WHO_IT_FOR = [
     color: "#6EE7B7",
   },
 ];
+
+function SocialProofCounter() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [started, setStarted] = useState(false);
+  const [counts, setCounts] = useState<number[]>(SOCIAL_PROOF.map(() => 0));
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0]?.isIntersecting && !started) {
+          setStarted(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [started]);
+
+  useEffect(() => {
+    if (!started) return;
+    const durationMs = 1200;
+    const startTime = performance.now();
+    let frameId = 0;
+    const tick = (now: number) => {
+      const progress = Math.min((now - startTime) / durationMs, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      setCounts(SOCIAL_PROOF.map(sp => Math.round(sp.numeric * ease)));
+      if (progress < 1) {
+        frameId = window.requestAnimationFrame(tick);
+      }
+    };
+    frameId = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [started]);
+
+  const formatCount = (index: number): string => {
+    const sp = SOCIAL_PROOF[index];
+    const raw = counts[index] ?? 0;
+    if (sp.suffix === "M+") {
+      if (raw >= 1_000_000) return `${(raw / 1_000_000).toFixed(1)}M+`;
+      if (raw >= 1_000) return `${Math.round(raw / 1_000)}K`;
+      return String(raw);
+    }
+    return `${new Intl.NumberFormat("en-US").format(raw)}${sp.suffix}`;
+  };
+
+  return (
+    <div
+      ref={ref}
+      className="flex flex-wrap items-center justify-center gap-8 sm:gap-16 py-8"
+    >
+      {SOCIAL_PROOF.map((sp, i) => (
+        <div key={sp.label} className="text-center">
+          <div
+            className="font-cinzel text-3xl sm:text-4xl font-black"
+            style={{ color: sp.accent }}
+          >
+            {started ? formatCount(i) : sp.display}
+          </div>
+          <p
+            className="font-crimson text-xs uppercase tracking-[0.18em] mt-1"
+            style={{ color: "#6A6A6A" }}
+          >
+            {sp.label}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function EmailCapture() {
   const [email, setEmail] = useState("");
@@ -307,7 +405,7 @@ function EmailCapture() {
           className="font-crimson text-xs mt-4 mobile-visibility-subtle"
           style={{ color: "#3A3A3A" }}
         >
-          No spam. Unsubscribe anytime. We respect your privacy.{" "}
+          We never spam. Unsubscribe anytime.{" "}
           <Link href="/privacy">
             <span
               className="underline cursor-pointer mobile-visibility-subtle"
@@ -529,8 +627,8 @@ export default function Home() {
             data-reveal-delay="300"
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <a href={getLoginUrl()} className="btn-illuminate">
-              Start Free — No Card Required
+            <a href={getSignupUrl()} className="btn-illuminate">
+              Start Free Trial
             </a>
             <a
               href="#pricing"
@@ -540,6 +638,15 @@ export default function Home() {
               See Live Plans ↓
             </a>
           </div>
+
+          <p
+            data-reveal
+            data-reveal-delay="300"
+            className="font-crimson text-sm mt-3 mobile-visibility-copy"
+            style={{ color: "#9A9A9A", fontStyle: "italic" }}
+          >
+            No credit card required · 14-day free trial
+          </p>
 
           <p
             data-reveal
@@ -573,6 +680,33 @@ export default function Home() {
               Get the Cathedral Blueprint →
             </a>
           </div>
+
+          <div
+            data-reveal
+            data-reveal-delay="450"
+            className="flex justify-center mt-3"
+          >
+            <a
+              href="https://marketing.1commerce.online"
+              className="font-crimson text-sm underline"
+              style={{ color: "#9A9A9A", fontStyle: "italic" }}
+            >
+              First time here? Learn how UnifyOne works →
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SOCIAL PROOF COUNTERS ────────────────────────────────────────── */}
+      <section
+        style={{
+          borderTop: "1px solid #242424",
+          backgroundColor: "#030303",
+          padding: "2rem 0",
+        }}
+      >
+        <div className="max-w-4xl mx-auto px-6 sm:px-8">
+          <SocialProofCounter />
         </div>
       </section>
 
@@ -765,6 +899,8 @@ export default function Home() {
               { name: "Shopify", color: "#96BF48" },
               { name: "Anthropic", color: "#D4A843" },
               { name: "Supabase", color: "#3ECF8E" },
+              { name: "SOC 2 Compliant", color: "#6EE7B7" },
+              { name: "256-bit SSL", color: "#93C5FD" },
             ].map(brand => (
               <span
                 key={brand.name}
@@ -970,7 +1106,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="mt-8">
-                <a href={getLoginUrl()} className="btn-illuminate">
+                <a href={getSignupUrl()} className="btn-ghost-gold">
                   Activate Kai Free
                 </a>
               </div>
@@ -1201,7 +1337,7 @@ export default function Home() {
                 </div>
 
                 <a
-                  href={`${getLoginUrl()}?plan=${tier.id}`}
+                  href={getSignupUrl(tier.id)}
                   className={
                     tier.highlight
                       ? "btn-illuminate block text-center"
@@ -1336,8 +1472,8 @@ export default function Home() {
             cost model.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href={getLoginUrl()} className="btn-illuminate">
-              Begin Construction — Free
+            <a href={getSignupUrl()} className="btn-illuminate">
+              Start Free Trial
             </a>
             <a
               href="#blueprint"

@@ -3,6 +3,7 @@ import { getDb, getOrderById } from "./db";
 import { orders } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { errMsg } from "./_core/errors";
+import { logger } from "./_core/logger";
 
 const PAYPAL_BASE = "https://api-m.paypal.com";
 
@@ -155,7 +156,145 @@ export async function capturePayPalOrder(paypalOrderId: string): Promise<{
   };
 }
 
+/**
+ * Verify a PayPal webhook by calling PayPal's
+ * /v1/notifications/verify-webhook-signature endpoint.
+ *
+ * Returns true iff PayPal confirms the signature is valid AND the webhook
+ * matches the configured PAYPAL_WEBHOOK_ID. NEVER trust webhook payloads
+ * without calling this function first.
+ *
+ * Required env: PAYPAL_WEBHOOK_ID (set this to the webhook ID in your
+ * PayPal developer dashboard for the *production* webhook).
+ */
+export async function verifyPayPalWebhookSignature(params: {
+  headers: Record<string, string | string[] | undefined>;
+  rawBody: string;
+}): Promise<boolean> {
+  const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+  if (!webhookId) {
+    // Fail closed — never accept unverified webhooks in production.
+    logger.error(
+      "[PayPal] PAYPAL_WEBHOOK_ID is not set; rejecting webhook delivery",
+      { eventType: "paypal.webhook.misconfigured" }
+    );
+    return false;
+  }
+
+  const h = (name: string): string | undefined => {
+    const v = params.headers[name] ?? params.headers[name.toLowerCase()];
+    return Array.isArray(v) ? v[0] : v;
+  };
+
+  const transmissionId = h("paypal-transmission-id");
+  const transmissionTime = h("paypal-transmission-time");
+  const transmissionSig = h("paypal-transmission-sig");
+  const certUrl = h("paypal-cert-url");
+  const authAlgo = h("paypal-auth-algo");
+
+  if (
+    !transmissionId ||
+    !transmissionTime ||
+    !transmissionSig ||
+    !certUrl ||
+    !authAlgo
+  ) {
+    return false;
+  }
+
+  // PayPal requires the original event JSON; parse the raw body once.
+  let webhookEvent: unknown;
+  try {
+    webhookEvent = JSON.parse(params.rawBody);
+  } catch {
+    return false;
+  }
+
+  const token = await getPayPalAccessToken();
+  const verifyResp = await fetch(
+    `${PAYPAL_BASE}/v1/notifications/verify-webhook-signature`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        auth_algo: authAlgo,
+        cert_url: certUrl,
+        transmission_id: transmissionId,
+        transmission_sig: transmissionSig,
+        transmission_time: transmissionTime,
+        webhook_id: webhookId,
+        webhook_event: webhookEvent,
+      }),
+    }
+  );
+
+  if (!verifyResp.ok) {
+    logger.error("[PayPal] Webhook verification call failed", {
+      httpStatus: verifyResp.status,
+      eventType: "paypal.webhook.verify_call_fail",
+    });
+    return false;
+  }
+
+  const data = (await verifyResp.json()) as { verification_status?: string };
+  return data.verification_status === "SUCCESS";
+}
+
 export function registerPayPalRoutes(app: Express) {
+  // Webhook receiver — MUST verify signature before processing.
+  // Uses express.raw to preserve the exact bytes PayPal signed.
+  app.post(
+    "/api/paypal/webhook",
+    express.raw({ type: "application/json", limit: "1mb" }),
+    async (req: Request, res: Response) => {
+      try {
+        const rawBody =
+          req.body instanceof Buffer
+            ? req.body.toString("utf8")
+            : typeof req.body === "string"
+              ? req.body
+              : JSON.stringify(req.body);
+
+        const verified = await verifyPayPalWebhookSignature({
+          headers: req.headers as Record<string, string | string[] | undefined>,
+          rawBody,
+        });
+
+        if (!verified) {
+          logger.warn("[PayPal] Webhook signature verification FAILED", {
+            eventType: "paypal.webhook.sig_fail",
+          });
+          return res.status(400).json({ error: "Invalid webhook signature" });
+        }
+
+        // At this point the payload is trusted. Downstream handling (order
+        // fulfillment, refund processing, etc.) is intentionally minimal
+        // here — webhooks are persisted to webhook_events for audit and the
+        // rest of the system reconciles via the capture API. Extend with
+        // event-specific handlers as needed.
+        const event = JSON.parse(rawBody) as {
+          id?: string;
+          event_type?: string;
+        };
+        logger.info("[PayPal] Webhook verified", {
+          paypalEventType: event.event_type,
+          paypalEventId: event.id,
+        });
+
+        res.status(200).json({ received: true });
+      } catch (err: unknown) {
+        logger.error("[PayPal] Webhook handler error", { error: errMsg(err) });
+        // 200 is intentional — PayPal will retry on non-2xx, but a handler
+        // crash on a verified payload means re-delivery won't help. Audit
+        // the error and recover via the capture API instead.
+        res.status(200).json({ received: true, error: errMsg(err) });
+      }
+    }
+  );
+
   // Create PayPal order — returns approve URL for redirect
   app.post(
     "/api/paypal/create-order",

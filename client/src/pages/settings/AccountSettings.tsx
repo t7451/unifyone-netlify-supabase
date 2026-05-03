@@ -262,7 +262,8 @@ export default function AccountSettings() {
                   Login Method
                 </p>
                 <p className="text-white text-sm mt-0.5 capitalize">
-                  {(user as { loginMethod?: string | null })?.loginMethod ?? "OAuth"}
+                  {(user as { loginMethod?: string | null })?.loginMethod ??
+                    "OAuth"}
                 </p>
               </div>
             </div>
@@ -273,7 +274,8 @@ export default function AccountSettings() {
                   Username
                 </p>
                 <p className="text-white text-sm mt-0.5">
-                  {(user as { username?: string | null })?.username ?? "Not set"}
+                  {(user as { username?: string | null })?.username ??
+                    "Not set"}
                 </p>
               </div>
             </div>
@@ -288,7 +290,11 @@ export default function AccountSettings() {
                   </p>
                 </div>
                 <p className="text-white text-sm">
-                  {formatDate(user?.createdAt)}
+                  {formatDate(
+                    (user as Record<string, unknown>)?.createdAt as
+                      | string
+                      | undefined
+                  )}
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-white/5">

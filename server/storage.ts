@@ -1,70 +1,32 @@
-// Preconfigured storage helpers for UnifyOne
-// Uses the Biz-provided storage proxy (Authorization: Bearer <token>)
+// Storage helpers for UnifyOne — backed by Netlify Blobs.
+//
+// All callers (imageGeneration.ts, clipperWorker.ts, etc.) use the same
+// {key, url} contract. Public reads are served by
+// netlify/functions/blobs-serve.mts at /blobs/<key>; image transforms
+// go through the Netlify Image CDN.
 
-import { ENV } from './_core/env';
+import { getStore, type Store } from "@netlify/blobs";
 
-type StorageConfig = { baseUrl: string; apiKey: string };
+const DEFAULT_STORE = process.env.NETLIFY_BLOBS_STORE ?? "uploads";
 
-function getStorageConfig(): StorageConfig {
-  const baseUrl = ENV.forgeApiUrl;
-  const apiKey = ENV.forgeApiKey;
-
-  if (!baseUrl || !apiKey) {
-    throw new Error(
-      "Storage proxy credentials missing: set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY"
-    );
+function blobStore(): Store {
+  // siteID/token are auto-injected when running in a Netlify function;
+  // for local dev the @netlify/blobs SDK uses a sandboxed local store.
+  const siteID = process.env.NETLIFY_SITE_ID ?? process.env.SITE_ID;
+  const token =
+    process.env.NETLIFY_BLOBS_TOKEN ?? process.env.NETLIFY_AUTH_TOKEN;
+  if (siteID && token) {
+    return getStore({ name: DEFAULT_STORE, siteID, token });
   }
-
-  return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
+  return getStore(DEFAULT_STORE);
 }
 
-function buildUploadUrl(baseUrl: string, relKey: string): URL {
-  const url = new URL("v1/storage/upload", ensureTrailingSlash(baseUrl));
-  url.searchParams.set("path", normalizeKey(relKey));
-  return url;
-}
-
-async function buildDownloadUrl(
-  baseUrl: string,
-  relKey: string,
-  apiKey: string
-): Promise<string> {
-  const downloadApiUrl = new URL(
-    "v1/storage/downloadUrl",
-    ensureTrailingSlash(baseUrl)
-  );
-  downloadApiUrl.searchParams.set("path", normalizeKey(relKey));
-  const response = await fetch(downloadApiUrl, {
-    method: "GET",
-    headers: buildAuthHeaders(apiKey),
-  });
-  return (await response.json()).url;
-}
-
-function ensureTrailingSlash(value: string): string {
-  return value.endsWith("/") ? value : `${value}/`;
+function publicBlobUrl(key: string): string {
+  return `/blobs/${encodeURI(key)}`;
 }
 
 function normalizeKey(relKey: string): string {
   return relKey.replace(/^\/+/, "");
-}
-
-function toFormData(
-  data: Buffer | Uint8Array | string,
-  contentType: string,
-  fileName: string
-): FormData {
-  const blob =
-    typeof data === "string"
-      ? new Blob([data], { type: contentType })
-      : new Blob([data as any], { type: contentType });
-  const form = new FormData();
-  form.append("file", blob, fileName || "file");
-  return form;
-}
-
-function buildAuthHeaders(apiKey: string): HeadersInit {
-  return { Authorization: `Bearer ${apiKey}` };
 }
 
 export async function storagePut(
@@ -72,31 +34,36 @@ export async function storagePut(
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
   const key = normalizeKey(relKey);
-  const uploadUrl = buildUploadUrl(baseUrl, key);
-  const formData = toFormData(data, contentType, key.split("/").pop() ?? key);
-  const response = await fetch(uploadUrl, {
-    method: "POST",
-    headers: buildAuthHeaders(apiKey),
-    body: formData,
+  const value =
+    typeof data === "string"
+      ? data
+      : new Blob([data as unknown as ArrayBuffer], { type: contentType });
+  await blobStore().set(key, value as Blob | string, {
+    metadata: { contentType },
   });
-
-  if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText);
-    throw new Error(
-      `Storage upload failed (${response.status} ${response.statusText}): ${message}`
-    );
-  }
-  const url = (await response.json()).url;
-  return { key, url };
+  return { key, url: publicBlobUrl(key) };
 }
 
-export async function storageGet(relKey: string): Promise<{ key: string; url: string; }> {
-  const { baseUrl, apiKey } = getStorageConfig();
+export async function storageGet(
+  relKey: string
+): Promise<{ key: string; url: string }> {
   const key = normalizeKey(relKey);
-  return {
-    key,
-    url: await buildDownloadUrl(baseUrl, key, apiKey),
-  };
+  return { key, url: publicBlobUrl(key) };
+}
+
+/**
+ * Returns the raw bytes of a stored object — used by the /blobs/* serving
+ * function.
+ */
+export async function storageGetStream(
+  relKey: string
+): Promise<{ body: ReadableStream | null; contentType: string } | null> {
+  const key = normalizeKey(relKey);
+  const result = await blobStore().getWithMetadata(key, { type: "stream" });
+  if (!result) return null;
+  const contentType =
+    (result.metadata?.contentType as string | undefined) ??
+    "application/octet-stream";
+  return { body: result.data as ReadableStream | null, contentType };
 }

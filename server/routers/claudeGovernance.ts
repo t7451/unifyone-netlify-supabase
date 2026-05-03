@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
+import { adminProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { invokeLLM } from "../_core/llm";
 import {
@@ -20,7 +20,10 @@ export const claudeGovernanceRouter = router({
    * Evaluate a proposed autonomous action against governance rules using Claude reasoning.
    * Returns decision recommendation and creates escalation if needed.
    */
-  evaluateAutonomousAction: protectedProcedure
+  // Admin-only: invokes Claude on every call and writes to the platform-wide
+  // escalationQueue/auditLogs tables. Allowing arbitrary authenticated users
+  // would let them burn LLM budget and seed the governance queue with noise.
+  evaluateAutonomousAction: adminProcedure
     .input(
       z.object({
         actionType: z.enum([
@@ -262,7 +265,9 @@ Consider factors like:
   /**
    * Request Claude to provide additional reasoning or alternative approaches.
    */
-  requestAlternativeAnalysis: protectedProcedure
+  // Admin-only — re-invokes Claude with full context for alternate
+  // governance analysis. Same reasoning as evaluateAutonomousAction.
+  requestAlternativeAnalysis: adminProcedure
     .input(
       z.object({
         escalationId: z.number(),

@@ -18,6 +18,7 @@ import { COOKIE_NAME } from "../shared/const";
 import { parse as parseCookieHeader } from "cookie";
 import { getStripe } from "./_core/stripeClient";
 import { getAppUrl } from "./_core/env";
+import { logger } from "./_core/logger";
 
 // Mirror the stripe.ts pattern: fail gracefully when the key is absent.
 const stripe = getStripe();
@@ -164,7 +165,7 @@ export function registerBillingRoutes(app: Express) {
         });
         return res.json({ url: session.url, sessionId: session.id });
       } catch (err: unknown) {
-        console.error("[Billing] checkout error:", errMsg(err));
+        logger.error("[Billing] checkout error", { error: errMsg(err) });
         return res.status(500).json({ error: errMsg(err) });
       }
     }
@@ -187,7 +188,10 @@ export function registerBillingRoutes(app: Express) {
           process.env.STRIPE_WEBHOOK_SECRET || ""
         );
       } catch (err: unknown) {
-        console.error("[Billing Webhook] Sig failed:", errMsg(err));
+        logger.error("[Billing Webhook] Stripe signature verification failed", {
+          error: errMsg(err),
+          eventType: "stripe.webhook.sig_fail",
+        });
         return res.status(400).json({ error: errMsg(err) });
       }
 
@@ -200,7 +204,9 @@ export function registerBillingRoutes(app: Express) {
       try {
         const db = getBillingDb();
         if (!db) {
-          console.error("[Billing Webhook] Billing service not configured");
+          logger.error("[Billing Webhook] Billing service not configured", {
+            stripeEventId: event.id,
+          });
           return res
             .status(503)
             .json({ error: "Billing service not configured" });
@@ -252,12 +258,23 @@ export function registerBillingRoutes(app: Express) {
             paid_at: new Date().toISOString(),
           });
         }
-        console.log(
-          `[Billing] Credited ${totalCredits} credits → user ${userId}`
-        );
+        logger.info("[Billing] Credits applied", {
+          userId,
+          totalCredits,
+          stripeEventId: event.id,
+          packageId: session.metadata?.package_id,
+        });
         return res.json({ received: true, credited: totalCredits });
       } catch (err: unknown) {
-        console.error("[Billing Webhook] Fulfillment error:", errMsg(err));
+        // CRITICAL: fulfillment failure on a verified Stripe webhook means
+        // we charged the customer but didn't credit them. Sentry's tRPC
+        // integration doesn't see this path — log + capture explicitly.
+        logger.error("[Billing Webhook] Fulfillment error", {
+          error: errMsg(err),
+          stripeEventId: event.id,
+          stripeSessionId: session.id,
+          userId: session.metadata?.user_id,
+        });
         return res.status(500).json({ error: "Fulfillment failed" });
       }
     }

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { getLoginUrl } from "@/const";
+import { getSignupUrl } from "@/const";
 import { usePixelPageView } from "@/hooks/usePixelPageView";
+import { CdnImage } from "@/components/CdnImage";
 
 const NAV_LINKS = [
   { label: "Architecture", href: "/architecture" },
@@ -166,7 +167,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               </span>
             </Link>
             <a
-              href={getLoginUrl()}
+              href={getSignupUrl()}
               className="btn-illuminate"
               style={{ padding: "0.5rem 1.25rem", fontSize: "0.65rem" }}
             >
@@ -226,7 +227,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             ))}
             <div className="px-6 py-4">
               <a
-                href={getLoginUrl()}
+                href={getSignupUrl()}
                 className="btn-illuminate block text-center"
                 style={{ padding: "0.75rem 1.5rem", fontSize: "0.7rem" }}
               >
@@ -400,11 +401,12 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               rel="noopener noreferrer"
               className="group flex flex-col items-center gap-3"
             >
-              <img
+              <CdnImage
                 src="https://github.com/user-attachments/assets/6dbb3057-6f53-4fcd-9d50-edff38133fed"
                 alt="Follow @1COMMERCE_LLC on Instagram — scan QR code"
                 width={96}
                 height={96}
+                fit="cover"
                 className="rounded-lg opacity-80 group-hover:opacity-100 transition-opacity duration-300"
                 style={{ imageRendering: "pixelated" }}
               />
@@ -458,7 +460,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
         }}
       >
         <a
-          href={getLoginUrl()}
+          href={getSignupUrl()}
           className="btn-illuminate block text-center w-full"
           style={{ padding: "0.875rem", fontSize: "0.7rem" }}
         >

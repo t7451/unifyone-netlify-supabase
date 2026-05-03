@@ -12,7 +12,7 @@ import {
 import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
-  id: text("id").primaryKey(), // clerk user id
+  id: text("id").primaryKey(), // legacy app user id (custom JWT auth on 1commerce.online)
   email: text("email").notNull().unique(),
   orgId: text("org_id"),
   tier: text("tier").default("free").notNull(),

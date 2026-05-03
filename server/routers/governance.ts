@@ -1,8 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { desc, eq, and, gte, lte, like, sql } from "drizzle-orm";
-import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
+import { adminProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
+import { logAudit } from "../auditLogger";
 import {
   auditLogs,
   escalationQueue,
@@ -81,7 +82,12 @@ export const governanceRouter = router({
       return { logs, total: countResult?.count ?? logs.length };
     }),
 
-  createAuditLog: protectedProcedure
+  // Audit log writes are admin-only. Previously this was `protectedProcedure`,
+  // which let any authenticated user insert arbitrary rows into the
+  // platform-wide audit log — a defeats-the-point situation for an audit
+  // trail. System-side audit writes go through `auditLogger.logAudit()`
+  // directly, not via tRPC.
+  createAuditLog: adminProcedure
     .input(
       z.object({
         action: z.string().min(1).max(255),
@@ -115,8 +121,9 @@ export const governanceRouter = router({
       return { success: true };
     }),
 
-  // logAuditEvent — Create audit log entries with actor, target, metadata
-  logAuditEvent: protectedProcedure
+  // logAuditEvent — Create audit log entries with actor, target, metadata.
+  // Admin-only: see createAuditLog comment above.
+  logAuditEvent: adminProcedure
     .input(
       z.object({
         action: z.string().min(1).max(255),
@@ -149,8 +156,11 @@ export const governanceRouter = router({
     }),
 
   // ── Escalation Queue ─────────────────────────────────────────────────────────
-  // createEscalation — Add items to escalation queue with priority, description, assignee
-  createEscalation: protectedProcedure
+  // createEscalation — Add items to escalation queue with priority, description, assignee.
+  // Admin-only: the escalation queue gates platform-wide governance decisions
+  // (refunds, pricing changes, etc.) and must not be writable by ordinary
+  // users — that would let them flood the queue and DoS reviewers.
+  createEscalation: adminProcedure
     .input(
       z.object({
         priority: z.enum(["low", "medium", "high", "critical"]),
@@ -387,6 +397,14 @@ export const governanceRouter = router({
           ? `Emergency kill switch activated: ${input.reason ?? "No reason provided"}`
           : undefined,
       });
+      void logAudit({
+        action: "killswitch.toggle",
+        resource: "killswitch",
+        resourceId: input.switchName,
+        severity: "critical",
+        userId: ctx.user.id,
+        metadata: { isActive: input.isActive, reason: input.reason },
+      }).catch(() => {});
       return { success: true };
     }),
 
@@ -559,7 +577,11 @@ export const governanceRouter = router({
   }),
 
   // ── Claude Decision Evaluation ────────────────────────────────────────────────
-  evaluateDecision: protectedProcedure
+  // Admin-only — writes to the platform audit log and escalation queue based
+  // on rule evaluation. Allowing any authenticated user to call this would
+  // (a) flood the queue, (b) forge audit log entries with arbitrary action
+  // strings, and (c) leak the active governance rules via the response.
+  evaluateDecision: adminProcedure
     .input(
       z.object({
         action: z.string().min(1),

@@ -16,6 +16,12 @@ type SessionPayload = {
   loginMethod?: string | null;
 };
 
+/** Extended payload returned by verifySession — includes the JWT issued-at timestamp. */
+type VerifiedSession = SessionPayload & {
+  /** JWT issued-at in seconds (set automatically by SignJWT). Used to enforce passwordChangedAt revocation. */
+  iat: number;
+};
+
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
@@ -77,7 +83,7 @@ class SDKServer {
 
   async verifySession(
     cookieValue: string | undefined | null
-  ): Promise<SessionPayload | null> {
+  ): Promise<VerifiedSession | null> {
     if (!cookieValue) return null;
 
     try {
@@ -106,6 +112,7 @@ class SDKServer {
         name,
         email: typeof email === "string" ? email : null,
         loginMethod: typeof loginMethod === "string" ? loginMethod : "supabase",
+        iat: typeof payload.iat === "number" ? payload.iat : 0,
       };
     } catch {
       return null;
@@ -153,6 +160,18 @@ class SDKServer {
         lastSignedIn: signedInAt,
       } as User;
     } else {
+      // Enforce session revocation: reject any JWT issued before the user last
+      // changed their password (or explicitly revoked all sessions).
+      // passwordChangedAt is set by resetPassword() and revokeAllSessions().
+      if (user.passwordChangedAt && session.iat) {
+        const passwordChangedAtSec = Math.floor(
+          new Date(user.passwordChangedAt).getTime() / 1000
+        );
+        if (session.iat < passwordChangedAtSec) {
+          throw ForbiddenError("Session has been revoked");
+        }
+      }
+
       // Only write lastSignedIn if it's been more than 5 minutes since the last
       // update — avoids a DB write on every single authenticated request.
       const FIVE_MINUTES_MS = 5 * 60 * 1000;

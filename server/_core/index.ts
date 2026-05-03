@@ -9,6 +9,7 @@ import { registerStripeRoutes } from "../stripe";
 import { registerPayPalRoutes } from "../paypal";
 import { registerShopifyRoutes } from "../shopify";
 import { registerSquareRoutes } from "../square";
+import { registerN8nWebhookRoutes } from "../n8nWebhook";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -16,37 +17,69 @@ import { registerDockerRoutes, registerGracefulShutdown } from "./docker";
 import { ENV } from "./env";
 import { logger, requestLogger } from "./logger";
 import { securityHeaders } from "./securityHeaders";
+import { csrfProtection } from "./csrf";
 import { Sentry } from "./sentry";
 import { registerCustomAuthExpressRoutes } from "./customAuthRoutes";
+import { registerCliWebSocket } from "./cliWebSocket";
+import { resolveDatabaseUrl } from "../lib/databaseUrl";
 
 /** Validate critical environment variables before the server accepts traffic. */
 function validateEnv() {
   if (!ENV.cookieSecret || ENV.cookieSecret.length < 32) {
     throw new Error(
-      "[startup] JWT_SECRET (or SUPABASE_JWT_SECRET) must be set and at least 32 characters long. " +
+      "[startup] JWT_SECRET must be set and at least 32 characters long. " +
         "Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
     );
   }
-  if (!ENV.databaseUrl) {
+  if (!resolveDatabaseUrl()) {
     console.warn(
-      "[startup] DATABASE_URL is not set — database features will be unavailable."
+      "[startup] DATABASE_URL / NETLIFY_DATABASE_URL is not set — database features will be unavailable."
     );
   }
 
   if (ENV.isProduction) {
-    const missing: string[] = [];
+    // Fail-fast on missing critical secrets in production. A web process
+    // running with no Stripe/PayPal/JWT credentials is a misconfigured
+    // deployment, not a degraded one — refuse to start so the orchestrator
+    // surfaces the rollout failure.
+    const required: string[] = [];
 
-    if (!process.env.STRIPE_SECRET_KEY) missing.push("STRIPE_SECRET_KEY");
+    // Payments — webhook secrets are non-optional; without them, signature
+    // verification can't happen and the handlers are unsafe.
+    if (!process.env.STRIPE_SECRET_KEY) required.push("STRIPE_SECRET_KEY");
     if (!process.env.STRIPE_WEBHOOK_SECRET)
-      missing.push("STRIPE_WEBHOOK_SECRET");
-    if (!process.env.PAYPAL_CLIENT_ID) missing.push("PAYPAL_CLIENT_ID");
-    if (!process.env.PAYPAL_CLIENT_SECRET) missing.push("PAYPAL_CLIENT_SECRET");
-    if (!process.env.SHOPIFY_API_KEY) missing.push("SHOPIFY_API_KEY");
-    if (!process.env.SHOPIFY_API_SECRET) missing.push("SHOPIFY_API_SECRET");
-    if (!process.env.SUPABASE_URL) missing.push("SUPABASE_URL");
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY)
-      missing.push("SUPABASE_SERVICE_ROLE_KEY");
+      required.push("STRIPE_WEBHOOK_SECRET");
+    if (!process.env.PAYPAL_CLIENT_ID) required.push("PAYPAL_CLIENT_ID");
+    if (!process.env.PAYPAL_CLIENT_SECRET)
+      required.push("PAYPAL_CLIENT_SECRET");
+    // PAYPAL_WEBHOOK_ID is required for webhook signature verification —
+    // without it, verifyPayPalWebhookSignature fails closed and rejects all
+    // webhook deliveries (correct behavior, but a misconfiguration in prod).
+    if (!process.env.PAYPAL_WEBHOOK_ID) required.push("PAYPAL_WEBHOOK_ID");
 
+    // Public URL is used for OAuth redirects, email links, and webhook
+    // callback URLs — silently defaulting it leaks redirects to staging.
+    if (!process.env.PUBLIC_APP_URL) required.push("PUBLIC_APP_URL");
+
+    // Cookie domain must be explicit in production, otherwise the cookie
+    // auto-scopes to the request host and leaks across deploy previews.
+    if (!process.env.COOKIE_DOMAIN) required.push("COOKIE_DOMAIN");
+
+    if (required.length > 0) {
+      throw new Error(
+        `[startup] Production environment is missing required vars: ${required.join(", ")}.`
+      );
+    }
+
+    // Recommended-but-not-blocking. Log loudly so ops sees them but don't
+    // refuse to boot — these gate optional features (Shopify integration,
+    // OAuth login provider, the in-flight Supabase removal).
+    const recommended: string[] = [];
+    if (!process.env.SHOPIFY_API_KEY) recommended.push("SHOPIFY_API_KEY");
+    if (!process.env.SHOPIFY_API_SECRET) recommended.push("SHOPIFY_API_SECRET");
+    if (!process.env.SUPABASE_URL) recommended.push("SUPABASE_URL");
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY)
+      recommended.push("SUPABASE_SERVICE_ROLE_KEY");
     const oauthVars = [
       "OAUTH_CLIENT_ID",
       "OAUTH_CLIENT_SECRET",
@@ -54,19 +87,87 @@ function validateEnv() {
       "OAUTH_TOKEN_URL",
       "OAUTH_USERINFO_URL",
     ];
-    const missingOAuth = oauthVars.filter(v => !process.env[v]);
-    if (missingOAuth.length > 0) {
-      missing.push(...missingOAuth);
-    }
-    if (!process.env.PUBLIC_APP_URL) missing.push("PUBLIC_APP_URL");
+    recommended.push(...oauthVars.filter(v => !process.env[v]));
 
-    if (missing.length > 0) {
+    if (recommended.length > 0) {
       logger.warn(
-        `[startup] Production environment is missing recommended vars: ${missing.join(", ")}. ` +
-          "Some features may be unavailable."
+        `[startup] Production environment is missing optional vars: ${recommended.join(", ")}. ` +
+          "Dependent features will be unavailable."
+      );
+    }
+
+    // Serverless deployments need a distributed rate-limit store. The
+    // in-memory fallback resets every cold start, so brute-force protection
+    // on auth routes is effectively absent on Netlify Functions.
+    if (
+      process.env.NETLIFY === "true" &&
+      (!process.env.UPSTASH_REDIS_REST_URL ||
+        !process.env.UPSTASH_REDIS_REST_TOKEN)
+    ) {
+      throw new Error(
+        "[startup] On Netlify, UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required " +
+          "for cross-invocation rate limiting (auth brute-force protection)."
       );
     }
   }
+}
+
+/**
+ * Build a strict CORS handler keyed on an explicit origin allow-list.
+ *
+ * Allow-list is sourced from CORS_ALLOWED_ORIGINS (comma-separated) and
+ * augmented with PUBLIC_APP_URL. In development, localhost origins on common
+ * ports are also accepted. Requests with no Origin header (server-to-server,
+ * curl, same-origin browser navigations) pass through untouched.
+ *
+ * Credentials are allowed because the app uses cookie-based auth — which
+ * means a wildcard origin is forbidden by the spec, hence the explicit list.
+ */
+function corsMiddleware(): express.RequestHandler {
+  const fromEnv = (process.env.CORS_ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
+  const appUrl = (process.env.PUBLIC_APP_URL ?? "").replace(/\/+$/, "");
+  const allowList = new Set<string>(fromEnv);
+  if (appUrl) allowList.add(appUrl);
+  if (!ENV.isProduction) {
+    allowList.add("http://localhost:3000");
+    allowList.add("http://localhost:5173");
+    allowList.add("http://127.0.0.1:3000");
+    allowList.add("http://127.0.0.1:5173");
+  }
+
+  return (req, res, next) => {
+    const origin = req.headers.origin;
+    if (typeof origin === "string" && allowList.has(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Vary", "Origin");
+      res.setHeader(
+        "Access-Control-Allow-Methods",
+        "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS"
+      );
+      res.setHeader(
+        "Access-Control-Allow-Headers",
+        req.headers["access-control-request-headers"]?.toString() ??
+          "content-type, authorization, x-csrf-token, x-request-id"
+      );
+      res.setHeader("Access-Control-Max-Age", "600");
+    } else if (typeof origin === "string") {
+      // Origin present but not allow-listed → reject preflights, drop
+      // credentials on actual requests. Don't echo arbitrary origins.
+      if (req.method === "OPTIONS") {
+        res.status(403).end();
+        return;
+      }
+    }
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
+    next();
+  };
 }
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -94,6 +195,9 @@ async function startServer() {
   const server = createServer(app);
   // Security headers on every response (before all route handlers)
   app.use(securityHeaders);
+  // Strict CORS allow-list — must run before any route handler so preflights
+  // short-circuit before tRPC / webhook handlers see them.
+  app.use(corsMiddleware());
   // Docker health/readiness/metrics routes (no auth, no body parsing needed)
   registerDockerRoutes(app);
   // Register Stripe webhook BEFORE json middleware (requires raw body for signature verification)
@@ -104,12 +208,33 @@ async function startServer() {
   registerShopifyRoutes(app);
   // Register Square payment + webhook routes (webhook needs raw body for signature verification)
   registerSquareRoutes(app);
-  // 4 MB body limit — sufficient for JSON API payloads. File uploads should
-  // use presigned S3 URLs (storagePut) and never pass file bytes through this server.
+  // Register n8n inbound webhook (HMAC-verified) BEFORE json middleware
+  registerN8nWebhookRoutes(app);
+
+  // ── Per-route body size limits ─────────────────────────────────────────────
+  // Auth endpoints get a tighter limit (64 KB) — they only accept JSON
+  // credentials and tokens, never file bytes. This reduces the surface area
+  // for DoS via oversized request bodies on login/signup/reset paths.
+  //
+  // ORDERING: these middleware registrations must come AFTER webhook routes
+  // (which use raw body parsing and are registered above) and BEFORE the
+  // default 4 MB json() registration below — Express matches middleware in
+  // registration order so the first matching body parser wins.
+  app.use("/api/auth", express.json({ limit: "64kb" }));
+  app.use("/api/auth", express.urlencoded({ limit: "64kb", extended: false }));
+
+  // Default limit for all other routes: 4 MB — sufficient for JSON API payloads.
+  // File uploads must use presigned S3 URLs (storagePut) and never pass file
+  // bytes through this server.
   app.use(express.json({ limit: "4mb" }));
   app.use(express.urlencoded({ limit: "4mb", extended: true }));
   // Structured request/response logging (attaches X-Request-Id header)
   app.use(requestLogger);
+  // CSRF protection on cookie-authenticated mutations. Mounted AFTER webhook
+  // routes (which respond without calling next) so signed third-party
+  // webhooks bypass it; webhook paths are also explicitly exempted as a
+  // belt-and-suspenders measure.
+  app.use(csrfProtection());
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   registerCustomAuthExpressRoutes(app);
@@ -119,10 +244,23 @@ async function startServer() {
     createExpressMiddleware({
       router: appRouter,
       createContext,
-      onError: ({ error, path }) => {
+      onError: ({ error, path, ctx }) => {
         logger.error(`[tRPC] ${path ?? "unknown"}: ${error.message}`);
         if (error.code === "INTERNAL_SERVER_ERROR") {
-          Sentry.captureException(error);
+          Sentry.withScope(scope => {
+            // Enrich with request-level context so errors are grouped
+            // by tenant and user in the Sentry dashboard.
+            if (ctx?.user) {
+              scope.setUser({
+                id: String(ctx.user.id),
+                email: ctx.user.email ?? undefined,
+              });
+              scope.setTag("tenantId", String(ctx.user.tenantId ?? "none"));
+              scope.setTag("userRole", ctx.user.role);
+            }
+            scope.setTag("trpc.path", path ?? "unknown");
+            Sentry.captureException(error);
+          });
         }
       },
     })
@@ -151,6 +289,9 @@ async function startServer() {
       url: `http://localhost:${port}/`,
     });
   });
+
+  // Register WebSocket PTY relay for the in-website CLI (/api/cli/pty)
+  registerCliWebSocket(server);
 
   // Graceful shutdown for Docker stop / SIGTERM
   registerGracefulShutdown(server);

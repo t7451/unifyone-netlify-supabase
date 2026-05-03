@@ -27,7 +27,18 @@ const mockWhere = vi.fn(() => ({ limit: mockLimit }));
 const mockFrom = vi.fn(() => ({ where: mockWhere }));
 const mockSelect = vi.fn(() => ({ from: mockFrom }));
 
-const mockInsertValues = vi.fn(() => Promise.resolve());
+// Default insert chain returns a synthetic row from .returning() so callers
+// using `await db.insert(...).values(...).returning(...)` get [{ id: 1 }].
+// Tests that don't use returning still resolve since `values()` itself is
+// awaitable (returns Promise<void>).
+const mockInsertReturning = vi.fn(() => Promise.resolve([{ id: 1 }]));
+const mockInsertValues = vi.fn(() => {
+  const chain = Promise.resolve() as Promise<unknown> & {
+    returning: typeof mockInsertReturning;
+  };
+  chain.returning = mockInsertReturning;
+  return chain;
+});
 const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
 
 // update chain: .update().set().where()
@@ -73,7 +84,14 @@ function resetDbState() {
 
   // Re-wire mock implementations to pick up fresh _dbState values
   mockLimit.mockImplementation(() => Promise.resolve(_dbState.selectResult));
-  mockInsertValues.mockImplementation(() => Promise.resolve());
+  mockInsertReturning.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+  mockInsertValues.mockImplementation(() => {
+    const chain = Promise.resolve() as Promise<unknown> & {
+      returning: typeof mockInsertReturning;
+    };
+    chain.returning = mockInsertReturning;
+    return chain;
+  });
   mockUpdateWhere.mockImplementation(() => Promise.resolve());
 }
 
@@ -87,7 +105,14 @@ beforeEach(() => {
   mockWhere.mockImplementation(() => ({ limit: mockLimit }));
   mockFrom.mockImplementation(() => ({ where: mockWhere }));
   mockSelect.mockImplementation(() => ({ from: mockFrom }));
-  mockInsertValues.mockImplementation(() => Promise.resolve());
+  mockInsertReturning.mockImplementation(() => Promise.resolve([{ id: 1 }]));
+  mockInsertValues.mockImplementation(() => {
+    const chain = Promise.resolve() as Promise<unknown> & {
+      returning: typeof mockInsertReturning;
+    };
+    chain.returning = mockInsertReturning;
+    return chain;
+  });
   mockInsert.mockImplementation(() => ({ values: mockInsertValues }));
   mockUpdateWhere.mockImplementation(() => Promise.resolve());
   mockUpdateSet.mockImplementation(() => ({ where: mockUpdateWhere }));
@@ -222,13 +247,13 @@ describe("signUp", () => {
     delete process.env.RESEND_API_KEY;
   });
 
-  it("does NOT auto-verify email in production mode even without RESEND_API_KEY", async () => {
+  it("auto-verifies email when RESEND_API_KEY is not set, regardless of NODE_ENV", async () => {
     delete process.env.RESEND_API_KEY;
     process.env.NODE_ENV = "production";
     _dbState.selectResult = [];
     const result = await signUp("new@example.com", "securepass", "New User");
     expect(result.success).toBe(true);
-    expect(result.user?.emailVerified).toBe(false);
+    expect(result.user?.emailVerified).toBe(true);
     delete process.env.NODE_ENV;
   });
 });
@@ -327,8 +352,10 @@ describe("signIn", () => {
     expect(result.sessionToken).toBe("mock-session-token");
   });
 
-  it("returns { success: false, code: 'email_not_verified' } when emailVerified === false in production even without RESEND_API_KEY", async () => {
-    // Production mode should enforce verification regardless of RESEND_API_KEY
+  it("allows sign-in for emailVerified === false when RESEND_API_KEY is not set, regardless of NODE_ENV", async () => {
+    // Without an email service we cannot deliver verification links, so the
+    // gate must not enforce — even in production. Otherwise users get locked
+    // out on second sign-in.
     delete process.env.RESEND_API_KEY;
     process.env.NODE_ENV = "production";
     const realHash = await hashPassword("mypassword");
@@ -342,8 +369,8 @@ describe("signIn", () => {
       },
     ];
     const result = await signIn("unverified@example.com", "mypassword");
-    expect(result.success).toBe(false);
-    expect(result.code).toBe("email_not_verified");
+    expect(result.success).toBe(true);
+    expect(result.sessionToken).toBe("mock-session-token");
     delete process.env.NODE_ENV;
   });
 
