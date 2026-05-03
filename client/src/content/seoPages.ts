@@ -59,7 +59,7 @@ export const SEO_PAGES: SeoPage[] = [
     tagline:
       "UnifyOne (also written as UnifOne or OneCommerc) is the flagship product of 1Commerce LLC — a multi-tenant commerce platform engineered on the Cathedral Framework by PNW Enterprises.",
     description:
-      "UnifyOne is the AI-powered multi-tenant commerce platform from 1Commerce LLC (PNW Enterprises). Unify products, orders, payments, and analytics across tenants with Shopify, Stripe, PayPal, and Square integrations. Also known as UnifOne, OneCommerc, OneCommerce, 1-commerce.",
+      "UnifyOne by 1Commerce LLC (PNW Enterprises) — the AI-powered multi-tenant commerce platform. Unify products, orders, payments, and analytics in one tenant.",
     keywords: brand(["UnifyOne login", "UnifyOne platform", "UnifyOne app"]),
     sections: [
       {
@@ -118,7 +118,7 @@ export const SEO_PAGES: SeoPage[] = [
     tagline:
       "UnifyOne Solutions is the 1Commerce LLC product suite that unifies payments, analytics, AI, and multi-tenant operations under a single cathedral-grade platform.",
     description:
-      "UnifyOne Solutions — the commerce infrastructure suite from 1Commerce LLC (PNW Enterprises). Multi-tenant architecture, AI Intelligence, Shopify, Stripe, PayPal, Square, and subscription billing in one unified platform.",
+      "UnifyOne Solutions — commerce infrastructure suite from 1Commerce LLC (PNW Enterprises). Multi-tenant, AI insights, Stripe, PayPal, Shopify, Square in one.",
     keywords: brand([
       "UnifyOne Solutions",
       "commerce infrastructure",
@@ -203,8 +203,12 @@ export const SEO_PAGES: SeoPage[] = [
     tagline:
       "UnifyOne Commerce is the e-commerce side of the UnifyOne platform: products, orders, checkout, and channel unification.",
     description:
-      "UnifyOne Commerce — unify products, orders, and checkout across Shopify, Stripe, PayPal, and Square. Built by 1Commerce LLC. Also searched as OneCommerce, 1-commerce, UnifOne.",
-    keywords: brand(["UnifyOne commerce", "unified commerce", "headless commerce"]),
+      "UnifyOne Commerce — unify products, orders, and checkout across Shopify, Stripe, PayPal, and Square. Built by 1Commerce LLC (UnifOne, OneCommerce).",
+    keywords: brand([
+      "UnifyOne commerce",
+      "unified commerce",
+      "headless commerce",
+    ]),
     sections: [
       {
         heading: "What is UnifyOne Commerce?",
@@ -260,8 +264,12 @@ export const SEO_PAGES: SeoPage[] = [
     tagline:
       "Three tiers: Acolyte (free), Architect ($49/mo), Cathedral ($149/mo). Transparent, flat-rate pricing from 1Commerce LLC.",
     description:
-      "UnifyOne pricing — Acolyte free tier, Architect at $49/month, Cathedral at $149/month. 14-day free trial, no credit card. By 1Commerce LLC / UnifOne / OneCommerce.",
-    keywords: brand(["UnifyOne pricing", "1commerce pricing", "OneCommerce pricing"]),
+      "UnifyOne pricing — Acolyte free, Architect $49/mo, Cathedral $149/mo. 14-day free trial, no credit card. By 1Commerce LLC / OneCommerce.",
+    keywords: brand([
+      "UnifyOne pricing",
+      "1commerce pricing",
+      "OneCommerce pricing",
+    ]),
     sections: [
       {
         heading: "UnifyOne pricing tiers",
@@ -296,7 +304,11 @@ export const SEO_PAGES: SeoPage[] = [
       "UnifyOne by 1Commerce LLC holds a 4.9 / 5 aggregate rating across verified operator reviews.",
     description:
       "UnifyOne reviews — verified operator ratings for 1Commerce (UnifOne, OneCommerc, 1-commerce). 4.9/5 aggregate across 47 reviews.",
-    keywords: brand(["UnifyOne reviews", "1commerce reviews", "UnifOne reviews"]),
+    keywords: brand([
+      "UnifyOne reviews",
+      "1commerce reviews",
+      "UnifOne reviews",
+    ]),
     sections: [
       {
         heading: "How operators rate UnifyOne",
@@ -414,7 +426,7 @@ export const SEO_PAGES: SeoPage[] = [
     tagline:
       "1Commerce LLC (trading as PNW Enterprises) is the legal entity behind UnifyOne, UnifyOne Solutions, and the OneCommerce brand.",
     description:
-      "1Commerce LLC is the Washington-state company behind UnifyOne, the multi-tenant AI commerce platform. Trading as PNW Enterprises. Also called OneCommerce, OneCommerc, 1-commerce.",
+      "1Commerce LLC is the Washington-state company behind UnifyOne, the multi-tenant AI commerce platform. Trading as PNW Enterprises (OneCommerce, 1-commerce).",
     keywords: brand(["1Commerce LLC", "1commerce LLC", "1 Commerce LLC"]),
     sections: [
       {
@@ -441,7 +453,7 @@ export const SEO_PAGES: SeoPage[] = [
     tagline:
       "1Commerce Solutions is the umbrella brand for UnifyOne + Kai AI + Gig Command + Money Manager + Cathedral white-label.",
     description:
-      "1Commerce Solutions — the full UnifyOne product suite. Platform, AI, gig tracker, money manager, and white-label tier. Part of 1Commerce LLC / PNW Enterprises.",
+      "1Commerce Solutions — the full UnifyOne product suite: platform, AI, gig tracker, money manager, white-label tier. Part of 1Commerce LLC.",
     keywords: brand(["1Commerce Solutions", "1-commerce solutions"]),
     sections: [
       {
@@ -575,7 +587,7 @@ export const SEO_PAGES: SeoPage[] = [
     tagline:
       "The OneCommerce platform is UnifyOne: multi-tenant, AI-powered, and built to replace five SaaS tools with one.",
     description:
-      "OneCommerce platform — the UnifyOne multi-tenant commerce platform from 1Commerce LLC. Stripe, PayPal, Shopify, and Square integrations, AI insights, and subscription billing.",
+      "OneCommerce platform — UnifyOne multi-tenant commerce by 1Commerce LLC. Stripe, PayPal, Shopify, Square, AI insights, and subscription billing.",
     keywords: brand(["OneCommerce platform", "1Commerce platform"]),
     sections: [
       {
@@ -654,7 +666,11 @@ export const SEO_PAGES: SeoPage[] = [
       "PNW 1Commerce is the operator-grade commerce platform (UnifyOne) built in the Pacific Northwest.",
     description:
       "PNW 1Commerce — the Pacific Northwest home of UnifyOne, the multi-tenant AI commerce platform from 1Commerce LLC / PNW Enterprises.",
-    keywords: brand(["PNW 1commerce", "PNW 1-commerce", "Pacific Northwest commerce"]),
+    keywords: brand([
+      "PNW 1commerce",
+      "PNW 1-commerce",
+      "Pacific Northwest commerce",
+    ]),
     sections: [
       {
         heading: "Commerce infrastructure, PNW-style",
@@ -702,7 +718,8 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unifyone-vs-squarespace",
-    title: "UnifyOne vs Squarespace — Commerce Infrastructure vs Website Builder",
+    title:
+      "UnifyOne vs Squarespace — Commerce Infrastructure vs Website Builder",
     h1: "UnifyOne vs Squarespace",
     tagline:
       "Squarespace builds websites. UnifyOne builds commerce infrastructure. Know which one you need.",
@@ -1080,5 +1097,5 @@ export const SEO_PAGES: SeoPage[] = [
 ];
 
 export function getSeoPage(slug: string): SeoPage | undefined {
-  return SEO_PAGES.find((p) => p.slug === slug);
+  return SEO_PAGES.find(p => p.slug === slug);
 }
