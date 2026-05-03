@@ -249,11 +249,11 @@ export default function Dashboard() {
                       {p.productName}
                     </div>
                     <div className="text-gray-400 text-xs">
-                      {p.totalSold} sold
+                      {p.totalQuantity} sold
                     </div>
                   </div>
                   <div className="text-[#00D9FF] text-sm font-semibold">
-                    ${Number(p.revenue).toFixed(0)}
+                    ${Number(p.totalRevenue).toFixed(0)}
                   </div>
                 </div>
               ))
