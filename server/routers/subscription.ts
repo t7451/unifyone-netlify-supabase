@@ -136,6 +136,11 @@ export const subscriptionRouter = router({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          // PATCHED: signal that this is a server-side proxied call so any
+          // CDN bot-mitigation has a chance to allow it. Cloudflare Bot Fight
+          // Mode still might intercept — see fallback handling below.
+          "User-Agent": "UnifyOne-tRPC/1.0 (+server-side)",
+          "X-Internal-Request": "trpc-subscription-createCheckout",
           Cookie: getCookieHeader(ctx.req) ?? "",
         },
         body: JSON.stringify({
@@ -150,6 +155,32 @@ export const subscriptionRouter = router({
         }),
       });
 
+      // PATCHED: Detect Cloudflare bot-challenge intercept. CF returns the
+      // challenge HTML page (not JSON) which would normally fail JSON.parse
+      // with an opaque error. Surface a specific message so the client can
+      // show actionable copy.
+      const contentType = res.headers.get("content-type") || "";
+      const isHtml =
+        contentType.includes("text/html") ||
+        res.headers.get("cf-mitigated") === "challenge";
+
+      if (isHtml) {
+        const body = await res.text();
+        const looksLikeCfChallenge =
+          /Just a moment|cf-mitigated|cf_chl_opt|challenge-platform|cloudflare/i.test(
+            body
+          );
+        if (looksLikeCfChallenge) {
+          throw new TRPCError({
+            code: "TOO_MANY_REQUESTS",
+            message:
+              "CLOUDFLARE_BOT_CHALLENGE: Cloudflare is verifying this request. " +
+              "If you see this often, ask an admin to disable Bot Fight Mode for /api/* " +
+              "(see CLOUDFLARE_BOT_CHALLENGE_FIX.md).",
+          });
+        }
+      }
+
       if (!res.ok) {
         const err = await res.text();
         throw new TRPCError({
@@ -158,7 +189,7 @@ export const subscriptionRouter = router({
         });
       }
 
-      const data = (await res.json()) as { url?: string };
+      const data = (await res.json().catch(() => ({}))) as { url?: string };
       return { url: data.url ?? null };
     }),
 
