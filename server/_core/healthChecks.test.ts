@@ -47,37 +47,44 @@ describe("checkDb", () => {
   });
 
   it("returns 'ok' when neon SELECT 1 succeeds", async () => {
-    const sqlClient = vi.fn().mockResolvedValue([{ one: 1 }]);
+    const queryFn = vi.fn().mockResolvedValue([{ one: 1 }]);
     const r = await checkDb({
       databaseUrl: "postgres://x",
-      neonFactory: () => sqlClient,
+      neonFactory: () => ({ query: queryFn }),
     });
     expect(r.status).toBe("ok");
-    expect(sqlClient).toHaveBeenCalledWith("SELECT 1 as one");
+    expect(queryFn).toHaveBeenCalledWith("SELECT 1 as one");
   });
 
   it("returns 'down' when neon throws", async () => {
-    const sqlClient = vi
-      .fn()
-      .mockRejectedValue(new Error("connection refused"));
+    const queryFn = vi.fn().mockRejectedValue(new Error("connection refused"));
     const r = await checkDb({
       databaseUrl: "postgres://x",
-      neonFactory: () => sqlClient,
+      neonFactory: () => ({ query: queryFn }),
     });
     expect(r.status).toBe("down");
     expect(r.error).toMatch(/connection refused/);
   });
 
   it("returns 'down' when the query never resolves before the timeout", async () => {
-    const sqlClient = vi.fn(() => new Promise(() => {})); // hangs
+    const queryFn = vi.fn(() => new Promise<unknown>(() => {})); // hangs
     const r = await checkDb({
       databaseUrl: "postgres://x",
-      neonFactory: () =>
-        sqlClient as unknown as (q: string) => Promise<unknown>,
+      neonFactory: () => ({ query: queryFn }),
       timeoutMs: 25,
     });
     expect(r.status).toBe("down");
     expect(r.error).toMatch(/timed out/);
+  });
+
+  it("returns 'down' with a clear message when the neon client lacks .query()", async () => {
+    const r = await checkDb({
+      databaseUrl: "postgres://x",
+      // @ts-expect-error — intentional bad shape
+      neonFactory: () => ({}),
+    });
+    expect(r.status).toBe("down");
+    expect(r.error).toMatch(/missing \.query/);
   });
 });
 

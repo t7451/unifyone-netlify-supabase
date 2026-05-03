@@ -109,13 +109,21 @@ async function withTimeout<T>(
  * Pings Neon over HTTP (`SELECT 1`). Uses the same `neon()` HTTP client as
  * server/db.ts. Reads DATABASE_URL or NETLIFY_DATABASE_URL.
  *
+ * The neon serverless v1 client is a callable+object — calling it as a plain
+ * function with a string raises "sqlClient is not a function" in production
+ * (it expects a tagged template). Use `.query(sql, params?)` instead.
+ *
  * Accepts an injected `neonFactory` for testability.
  */
+export interface NeonQueryClient {
+  query: (sql: string, params?: unknown[]) => Promise<unknown>;
+}
+
 export async function checkDb(
   opts: {
     databaseUrl?: string | null;
     timeoutMs?: number;
-    neonFactory?: (url: string) => (q: string) => Promise<unknown>;
+    neonFactory?: (url: string) => NeonQueryClient | Promise<NeonQueryClient>;
   } = {}
 ): Promise<CheckResult> {
   const url =
@@ -130,21 +138,21 @@ export async function checkDb(
   try {
     const factory =
       opts.neonFactory ??
-      (async (u: string) => {
+      (async (u: string): Promise<NeonQueryClient> => {
         const { neon } = await import("@neondatabase/serverless");
-        return neon(u) as unknown as (q: string) => Promise<unknown>;
+        return neon(u) as unknown as NeonQueryClient;
       });
-    const sqlClient =
-      typeof factory === "function" && factory.length === 1
-        ? // synchronous-ish factory (used in tests)
-          (factory as (u: string) => (q: string) => Promise<unknown>)(url)
-        : await (
-            factory as unknown as (
-              u: string
-            ) => Promise<(q: string) => Promise<unknown>>
-          )(url);
+    const maybe = factory(url);
+    const sqlClient: NeonQueryClient =
+      maybe instanceof Promise ? await maybe : maybe;
+    if (typeof sqlClient.query !== "function") {
+      return down(
+        Date.now() - start,
+        "neon client missing .query() — incompatible serverless version"
+      );
+    }
     const r = await withTimeout(
-      () => Promise.resolve(sqlClient("SELECT 1 as one")),
+      () => sqlClient.query("SELECT 1 as one"),
       timeoutMs,
       "db"
     );
