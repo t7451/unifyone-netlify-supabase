@@ -4,6 +4,7 @@ import {
   createOrder,
   getCustomerById,
   getCustomers,
+  getDb,
   getOrderById,
   getOrderByStripeId,
   getOrdersByCustomerEmail,
@@ -16,6 +17,8 @@ import {
   updateOrderStatus,
   upsertCustomer,
 } from "../db";
+import { notifications } from "../../drizzle/schema";
+import { logAudit } from "../auditLogger";
 import { protectedProcedure, router } from "../_core/trpc";
 import { logger } from "../_core/logger";
 import {
@@ -302,6 +305,49 @@ export const ordersRouter = router({
         await upsertCustomer(tenantId, input.customerEmail, {
           firstName: input.customerName?.split(" ")[0],
           lastName: input.customerName?.split(" ").slice(1).join(" "),
+        });
+      }
+
+      // PATCHED:H7 — observability. Fire-and-forget; a failed audit or
+      // notification must NEVER break order creation (the money already moved).
+      logAudit({
+        userId,
+        tenantId,
+        action: "order.create",
+        resource: "order",
+        resourceId: String(order.id),
+        severity: "low",
+        metadata: {
+          orderNumber: order.orderNumber,
+          total: String(total),
+          currency: input.currency,
+          paymentMethod: providerFields.paymentMethod,
+          paymentStatus: providerFields.paymentStatus,
+          itemCount: input.items.length,
+          customerEmail: input.customerEmail ?? null,
+        },
+      }).catch(() => {});
+
+      try {
+        const notifDb = await getDb();
+        if (notifDb) {
+          await notifDb.insert(notifications).values({
+            userId,
+            tenantId,
+            type: "order",
+            title: `New order ${order.orderNumber}`,
+            body: `${input.items.length} item${
+              input.items.length === 1 ? "" : "s"
+            } — ${input.currency} ${total.toFixed(2)}${
+              input.customerEmail ? " — " + input.customerEmail : ""
+            }`,
+            link: `/orders/${order.id}`,
+          });
+        }
+      } catch (err) {
+        logger.warn("order notification insert failed", {
+          orderId: order.id,
+          error: err instanceof Error ? err.message : String(err),
         });
       }
 
