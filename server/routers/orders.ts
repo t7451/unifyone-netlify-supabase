@@ -21,6 +21,7 @@ import { notifications } from "../../drizzle/schema";
 import { logAudit } from "../auditLogger";
 import { protectedProcedure, router } from "../_core/trpc";
 import { logger } from "../_core/logger";
+import { getStripe } from "../_core/stripeClient";
 import {
   StripeVerificationError,
   verifyStripeCheckoutSession,
@@ -383,6 +384,142 @@ export const ordersRouter = router({
         input.paymentStatus
       );
       return { success: true };
+    }),
+
+  /**
+   * H6 — Issue a Stripe refund for an order. Idempotent at the order level via
+   * paymentStatus="refunded" guard. Partial refunds supported via amountMinor.
+   * Tenant-scoped: caller must belong to the order's tenant.
+   */
+  refund: protectedProcedure
+    .input(
+      z.object({
+        orderId: z.number(),
+        /** Refund amount in MINOR units (cents). Omit for full refund. */
+        amountMinor: z.number().int().positive().optional(),
+        /** Stripe-accepted reason, optional. */
+        reason: z
+          .enum(["duplicate", "fraudulent", "requested_by_customer"])
+          .optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = requireTenant(ctx.user.tenantId);
+      const userId = ctx.user.id;
+
+      const order = await getOrderById(input.orderId, tenantId);
+      if (!order) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Order not found.",
+        });
+      }
+      if (!order.stripePaymentIntentId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Refund only supported for Stripe-backed orders right now. " +
+            "PayPal/Square refunds must be issued from their dashboards.",
+        });
+      }
+      if (order.paymentStatus === "refunded") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Order has already been fully refunded.",
+        });
+      }
+
+      const stripe = getStripe();
+      if (!stripe) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Stripe is not configured on this server.",
+        });
+      }
+
+      let refund;
+      try {
+        refund = await stripe.refunds.create({
+          payment_intent: order.stripePaymentIntentId,
+          amount: input.amountMinor,
+          reason: input.reason,
+          metadata: {
+            unifyone_order_id: String(order.id),
+            unifyone_order_number: order.orderNumber,
+            unifyone_tenant_id: String(tenantId),
+            unifyone_initiated_by: String(userId),
+          },
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.error("stripe refund failed", {
+          orderId: order.id,
+          stripePaymentIntentId: order.stripePaymentIntentId,
+          error: msg,
+        });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Stripe rejected the refund: ${msg}`,
+        });
+      }
+
+      // Determine if this is a full or partial refund.
+      const orderTotalMinor = Math.round(Number(order.total) * 100);
+      const refundedMinor = refund.amount;
+      const isFull =
+        input.amountMinor === undefined || refundedMinor >= orderTotalMinor;
+
+      const newPaymentStatus = isFull ? "refunded" : "partial";
+      const newStatus = isFull ? "refunded" : order.status;
+      await updateOrderStatus(order.id, tenantId, newStatus, newPaymentStatus);
+
+      // Audit + notify (fire-and-forget; the refund already happened).
+      logAudit({
+        userId,
+        tenantId,
+        action: "order.refund",
+        resource: "order",
+        resourceId: String(order.id),
+        severity: isFull ? "medium" : "low",
+        metadata: {
+          orderNumber: order.orderNumber,
+          stripeRefundId: refund.id,
+          stripePaymentIntentId: order.stripePaymentIntentId,
+          refundedMinor,
+          orderTotalMinor,
+          currency: order.currency,
+          isFull,
+          reason: input.reason ?? null,
+        },
+      }).catch(() => {});
+
+      try {
+        const notifDb = await getDb();
+        if (notifDb) {
+          await notifDb.insert(notifications).values({
+            userId,
+            tenantId,
+            type: "payment",
+            title: `${isFull ? "Refunded" : "Partially refunded"} order ${order.orderNumber}`,
+            body: `${order.currency} ${(refundedMinor / 100).toFixed(2)} refunded via Stripe (${refund.id}).`,
+            link: `/orders/${order.id}`,
+          });
+        }
+      } catch (err) {
+        logger.warn("refund notification insert failed", {
+          orderId: order.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+
+      return {
+        success: true,
+        refundId: refund.id,
+        refundedMinor,
+        isFull,
+        newPaymentStatus,
+        newStatus,
+      };
     }),
 
   recentOrders: protectedProcedure.query(async ({ ctx }) => {
