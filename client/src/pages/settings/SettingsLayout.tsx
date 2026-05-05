@@ -8,6 +8,8 @@ import {
   Wrench,
   ChevronRight,
   Settings2,
+  CreditCard,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/useMobile";
@@ -43,6 +45,18 @@ const settingsNav = [
     path: "/settings/security",
     icon: Shield,
     description: "Password and session management",
+  },
+  {
+    label: "Billing",
+    path: "/billing",
+    icon: CreditCard,
+    description: "Subscription, invoices, and payment methods",
+  },
+  {
+    label: "Team",
+    path: "/team",
+    icon: Users,
+    description: "Invite teammates and manage roles",
   },
   {
     label: "Appearance",
