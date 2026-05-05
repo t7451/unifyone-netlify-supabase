@@ -40,6 +40,12 @@ export async function buildNonTrpcHandler(): Promise<
       registerImpactFetchRoutes: null,
     })),
   ]);
+
+  const { registerUploadFetchRoutes } = await import("../uploads").catch(
+    () => ({
+      registerUploadFetchRoutes: null as unknown as FetchHandler | null,
+    })
+  );
   const { registerAdminOpsFetchRoutes } = await import("../adminOps").catch(
     () => ({
       registerAdminOpsFetchRoutes: null as unknown as FetchHandler | null,
@@ -123,6 +129,16 @@ export async function buildNonTrpcHandler(): Promise<
         const result = await (
           registerShopifyFetchRoutes as unknown as FetchHandler
         )(req);
+        if (result) return result;
+      } catch (e: unknown) {
+        return Response.json({ error: (e as Error).message }, { status: 500 });
+      }
+    }
+
+    // Image uploads (Netlify Blobs) — POST /api/uploads/image, GET re-serve
+    if (path.startsWith("/api/uploads/") && registerUploadFetchRoutes) {
+      try {
+        const result = await (registerUploadFetchRoutes as FetchHandler)(req);
         if (result) return result;
       } catch (e: unknown) {
         return Response.json({ error: (e as Error).message }, { status: 500 });
