@@ -4,6 +4,8 @@ import { eq } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { users, userPreferences } from "../../drizzle/schema";
+import { hashPassword, verifyPassword } from "../_core/customAuth";
+import { logAudit } from "../auditLogger";
 
 function isValidUsername(username: string): boolean {
   if (username.length < 3 || username.length > 32) return false;
@@ -199,4 +201,242 @@ export const userRouter = router({
 
     return { success: true };
   }),
+  /** H3 — Change password. Requires current password. Bumping
+   *  passwordChangedAt invalidates every session including this one. */
+  changePassword: protectedProcedure
+    .input(
+      z.object({
+        currentPassword: z.string().min(1),
+        newPassword: z.string().min(8).max(128),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
+
+      const row = await db
+        .select({ passwordHash: users.passwordHash })
+        .from(users)
+        .where(eq(users.id, ctx.user.id))
+        .limit(1);
+
+      const existingHash = row[0]?.passwordHash;
+      if (!existingHash) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "No password set for this account. Use the password reset flow first.",
+        });
+      }
+
+      const ok = await verifyPassword(input.currentPassword, existingHash);
+      if (!ok) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Current password is incorrect.",
+        });
+      }
+      if (input.currentPassword === input.newPassword) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "New password must differ from current password.",
+        });
+      }
+
+      const newHash = await hashPassword(input.newPassword);
+      const now = new Date();
+      await db
+        .update(users)
+        .set({
+          passwordHash: newHash,
+          passwordChangedAt: now,
+          updatedAt: now,
+        })
+        .where(eq(users.id, ctx.user.id));
+
+      logAudit({
+        userId: ctx.user.id,
+        tenantId: ctx.user.tenantId ?? undefined,
+        action: "user.changePassword",
+        resource: "user",
+        resourceId: String(ctx.user.id),
+        severity: "high",
+      }).catch(() => {});
+
+      return { success: true };
+    }),
+
+  /** H4 — Change email. Requires password. Sets emailVerified=false; user
+   *  re-verifies via the existing verification flow. Bumps passwordChangedAt
+   *  so the new email takes effect on next sign-in. */
+  changeEmail: protectedProcedure
+    .input(
+      z.object({
+        newEmail: z.string().email().toLowerCase(),
+        currentPassword: z.string().min(1),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
+
+      const row = await db
+        .select({
+          email: users.email,
+          passwordHash: users.passwordHash,
+        })
+        .from(users)
+        .where(eq(users.id, ctx.user.id))
+        .limit(1);
+
+      if (!row[0]) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      }
+      if (row[0].email === input.newEmail) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "That is already your current email.",
+        });
+      }
+      if (!row[0].passwordHash) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Set a password on this account before changing email.",
+        });
+      }
+
+      const ok = await verifyPassword(
+        input.currentPassword,
+        row[0].passwordHash
+      );
+      if (!ok) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Password is incorrect.",
+        });
+      }
+
+      const conflict = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, input.newEmail))
+        .limit(1);
+      if (conflict[0] && conflict[0].id !== ctx.user.id) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "That email is already in use.",
+        });
+      }
+
+      const now = new Date();
+      const oldEmail = row[0].email;
+      await db
+        .update(users)
+        .set({
+          email: input.newEmail,
+          emailVerified: false,
+          emailVerificationToken: null,
+          passwordChangedAt: now,
+          updatedAt: now,
+        })
+        .where(eq(users.id, ctx.user.id));
+
+      logAudit({
+        userId: ctx.user.id,
+        tenantId: ctx.user.tenantId ?? undefined,
+        action: "user.changeEmail",
+        resource: "user",
+        resourceId: String(ctx.user.id),
+        severity: "high",
+        metadata: { oldEmail, newEmail: input.newEmail },
+      }).catch(() => {});
+
+      return { success: true, newEmail: input.newEmail };
+    }),
+
+  /** H2 — Soft-delete the user's account (GDPR Art. 17 / CCPA right-to-delete).
+   *  Sets users.deletedAt and bumps passwordChangedAt to invalidate sessions.
+   *  authenticateRequest enforces deletedAt on every subsequent request. */
+  deleteAccount: protectedProcedure
+    .input(
+      z.object({
+        confirmEmail: z.string().email().toLowerCase(),
+        currentPassword: z.string().min(1),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
+
+      const row = await db
+        .select({
+          email: users.email,
+          passwordHash: users.passwordHash,
+        })
+        .from(users)
+        .where(eq(users.id, ctx.user.id))
+        .limit(1);
+
+      if (!row[0]) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      }
+      if ((row[0].email ?? "").toLowerCase() !== input.confirmEmail) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Confirmation email does not match the account on file.",
+        });
+      }
+      if (!row[0].passwordHash) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Password required to delete account. Set one via password reset first.",
+        });
+      }
+
+      const ok = await verifyPassword(
+        input.currentPassword,
+        row[0].passwordHash
+      );
+      if (!ok) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Password is incorrect.",
+        });
+      }
+
+      const now = new Date();
+      await db
+        .update(users)
+        .set({
+          deletedAt: now,
+          passwordChangedAt: now,
+          updatedAt: now,
+        })
+        .where(eq(users.id, ctx.user.id));
+
+      logAudit({
+        userId: ctx.user.id,
+        tenantId: ctx.user.tenantId ?? undefined,
+        action: "user.deleteAccount",
+        resource: "user",
+        resourceId: String(ctx.user.id),
+        severity: "critical",
+        metadata: { email: row[0].email },
+      }).catch(() => {});
+
+      return { success: true };
+    }),
 });

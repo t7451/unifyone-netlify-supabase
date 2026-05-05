@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import {
@@ -9,16 +10,20 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
   Shield,
   Key,
   Lock,
+  Mail,
   Monitor,
   LogOut,
   CheckCircle,
   AlertTriangle,
+  Trash2,
   Loader2,
 } from "lucide-react";
 import SettingsLayout from "./SettingsLayout";
@@ -26,16 +31,90 @@ import SettingsLayout from "./SettingsLayout";
 export default function SecuritySettings() {
   const { user, logout } = useAuth();
 
+  // ── Change password state ────────────────────────────────────────────────
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+
+  const changePassword = trpc.user.changePassword.useMutation({
+    onSuccess: () => {
+      toast.success(
+        "Password updated. You will be signed out so the change takes effect."
+      );
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+      setTimeout(() => logout(), 1500);
+    },
+    onError: (e: { message: string }) => toast.error(e.message),
+  });
+
+  // ── Change email state ───────────────────────────────────────────────────
+  const [newEmail, setNewEmail] = useState("");
+  const [emailPw, setEmailPw] = useState("");
+
+  const changeEmail = trpc.user.changeEmail.useMutation({
+    onSuccess: () => {
+      toast.success(
+        "Email updated. Check your inbox to verify, then sign back in."
+      );
+      setNewEmail("");
+      setEmailPw("");
+      setTimeout(() => logout(), 1500);
+    },
+    onError: (e: { message: string }) => toast.error(e.message),
+  });
+
+  // ── Delete account state ─────────────────────────────────────────────────
+  const [confirmEmail, setConfirmEmail] = useState("");
+  const [deletePw, setDeletePw] = useState("");
+  const [showDelete, setShowDelete] = useState(false);
+
+  const deleteAccount = trpc.user.deleteAccount.useMutation({
+    onSuccess: () => {
+      toast.success("Account deleted. You will be signed out.");
+      setTimeout(() => logout(), 1500);
+    },
+    onError: (e: { message: string }) => toast.error(e.message),
+  });
+
   const revokeAll = trpc.user.revokeAllSessions.useMutation({
     onSuccess: () => {
       toast.success(
         "All other sessions have been revoked. You will need to sign in again."
       );
-      // Current session is also invalidated, sign out after brief delay
       setTimeout(() => logout(), 1500);
     },
     onError: (e: { message: string }) => toast.error(e.message),
   });
+
+  const handleChangePassword = () => {
+    if (newPw.length < 8) {
+      toast.error("New password must be at least 8 characters.");
+      return;
+    }
+    if (newPw !== confirmPw) {
+      toast.error("New password and confirmation do not match.");
+      return;
+    }
+    changePassword.mutate({ currentPassword: currentPw, newPassword: newPw });
+  };
+
+  const handleChangeEmail = () => {
+    if (!newEmail || !emailPw) {
+      toast.error("Email and password are both required.");
+      return;
+    }
+    changeEmail.mutate({ newEmail, currentPassword: emailPw });
+  };
+
+  const handleDeleteAccount = () => {
+    if (!confirmEmail || !deletePw) {
+      toast.error("Email confirmation and password are both required.");
+      return;
+    }
+    deleteAccount.mutate({ confirmEmail, currentPassword: deletePw });
+  };
 
   const handlePasswordReset = () => {
     window.location.href = "/reset-password";
@@ -92,18 +171,159 @@ export default function SecuritySettings() {
               </Badge>
             </div>
 
-            <Button
-              onClick={handlePasswordReset}
-              variant="outline"
-              className="border-white/10 text-gray-300 hover:text-white hover:border-white/20"
-            >
-              <Key className="w-4 h-4 mr-2" />
-              {hasPassword ? "Reset Password" : "Set Password"}
-            </Button>
-            {hasPassword && (
-              <p className="text-xs text-gray-600">
-                Opens the password reset flow. A reset link will be sent to your
-                email.
+            {hasPassword ? (
+              <div className="space-y-3 p-4 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lock className="w-4 h-4 text-[#00D9FF]" />
+                  <p className="text-white text-sm font-medium">
+                    Change Password
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="current-pw" className="text-xs text-gray-400">
+                    Current password
+                  </Label>
+                  <Input
+                    id="current-pw"
+                    type="password"
+                    autoComplete="current-password"
+                    value={currentPw}
+                    onChange={e => setCurrentPw(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-pw" className="text-xs text-gray-400">
+                    New password (min 8 characters)
+                  </Label>
+                  <Input
+                    id="new-pw"
+                    type="password"
+                    autoComplete="new-password"
+                    value={newPw}
+                    onChange={e => setNewPw(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-pw" className="text-xs text-gray-400">
+                    Confirm new password
+                  </Label>
+                  <Input
+                    id="confirm-pw"
+                    type="password"
+                    autoComplete="new-password"
+                    value={confirmPw}
+                    onChange={e => setConfirmPw(e.target.value)}
+                  />
+                </div>
+                <Button
+                  onClick={handleChangePassword}
+                  disabled={
+                    changePassword.isPending ||
+                    !currentPw ||
+                    !newPw ||
+                    !confirmPw
+                  }
+                  className="bg-[#00D9FF]/10 border border-[#00D9FF]/30 text-[#00D9FF] hover:bg-[#00D9FF]/20"
+                >
+                  {changePassword.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <Key className="w-4 h-4 mr-2" />
+                      Update Password
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-gray-600">
+                  All active sessions including this one will be revoked.
+                </p>
+              </div>
+            ) : (
+              <Button
+                onClick={handlePasswordReset}
+                variant="outline"
+                className="border-white/10 text-gray-300 hover:text-white hover:border-white/20"
+              >
+                <Key className="w-4 h-4 mr-2" />
+                Set Password
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Email */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-white text-base flex items-center gap-2">
+              <Mail className="w-4 h-4 text-[#00D9FF]" />
+              Email Address
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Change the email address you use to sign in
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="p-3 rounded-lg bg-white/5">
+              <p className="text-xs text-gray-500">Current</p>
+              <p className="text-white text-sm font-medium">
+                {user?.email ?? "—"}
+              </p>
+            </div>
+
+            {hasPassword ? (
+              <div className="space-y-3 p-4 rounded-lg bg-white/5 border border-white/10">
+                <div className="space-y-2">
+                  <Label htmlFor="new-email" className="text-xs text-gray-400">
+                    New email
+                  </Label>
+                  <Input
+                    id="new-email"
+                    type="email"
+                    autoComplete="email"
+                    value={newEmail}
+                    onChange={e => setNewEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email-pw" className="text-xs text-gray-400">
+                    Current password
+                  </Label>
+                  <Input
+                    id="email-pw"
+                    type="password"
+                    autoComplete="current-password"
+                    value={emailPw}
+                    onChange={e => setEmailPw(e.target.value)}
+                  />
+                </div>
+                <Button
+                  onClick={handleChangeEmail}
+                  disabled={changeEmail.isPending || !newEmail || !emailPw}
+                  className="bg-[#00D9FF]/10 border border-[#00D9FF]/30 text-[#00D9FF] hover:bg-[#00D9FF]/20"
+                >
+                  {changeEmail.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 mr-2" />
+                      Update Email
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-gray-600">
+                  Your new email will need to be re-verified. Sessions will be
+                  revoked for security.
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500">
+                Set a password before changing your email address.
               </p>
             )}
           </CardContent>
@@ -121,7 +341,6 @@ export default function SecuritySettings() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {/* Login method */}
             <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-[#00D9FF]/10 flex items-center justify-center">
@@ -139,7 +358,6 @@ export default function SecuritySettings() {
               <CheckCircle className="w-4 h-4 text-emerald-400" />
             </div>
 
-            {/* Email verification */}
             <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
               <div className="flex items-center gap-3">
                 <div
@@ -265,6 +483,117 @@ export default function SecuritySettings() {
               Revoking all sessions invalidates every active login token,
               including this one. You will be signed out.
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Danger zone */}
+        <Card className="bg-card border-red-500/30">
+          <CardHeader>
+            <CardTitle className="text-red-400 text-base flex items-center gap-2">
+              <Trash2 className="w-4 h-4" />
+              Delete Account
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Permanently remove your account from UnifyOne. This is
+              irreversible.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/20 text-xs text-gray-400 space-y-1">
+              <p className="text-red-300">
+                What happens when you delete your account:
+              </p>
+              <ul className="list-disc pl-4 space-y-0.5">
+                <li>
+                  Your access is revoked immediately and you are signed out.
+                </li>
+                <li>
+                  Tenant, products, orders, and other data are preserved for 30
+                  days for legal/audit purposes, then permanently removed.
+                </li>
+                <li>
+                  Your email and username become available for reuse after 30
+                  days.
+                </li>
+                <li>
+                  Active subscriptions are NOT auto-cancelled. Cancel in Stripe
+                  first if applicable.
+                </li>
+              </ul>
+            </div>
+
+            {!showDelete ? (
+              <Button
+                onClick={() => setShowDelete(true)}
+                variant="outline"
+                className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />I understand — show delete
+                options
+              </Button>
+            ) : (
+              <div className="space-y-3 p-4 rounded-lg bg-red-500/5 border border-red-500/30">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="confirm-email"
+                    className="text-xs text-gray-400"
+                  >
+                    Type your email ({user?.email ?? "—"}) to confirm
+                  </Label>
+                  <Input
+                    id="confirm-email"
+                    type="email"
+                    autoComplete="off"
+                    value={confirmEmail}
+                    onChange={e => setConfirmEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="delete-pw" className="text-xs text-gray-400">
+                    Current password
+                  </Label>
+                  <Input
+                    id="delete-pw"
+                    type="password"
+                    autoComplete="current-password"
+                    value={deletePw}
+                    onChange={e => setDeletePw(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    onClick={handleDeleteAccount}
+                    disabled={
+                      deleteAccount.isPending || !confirmEmail || !deletePw
+                    }
+                    className="bg-red-500/20 border border-red-500/40 text-red-400 hover:bg-red-500/30"
+                  >
+                    {deleteAccount.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Permanently Delete Account
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowDelete(false);
+                      setConfirmEmail("");
+                      setDeletePw("");
+                    }}
+                    variant="outline"
+                    className="border-white/10 text-gray-300"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
