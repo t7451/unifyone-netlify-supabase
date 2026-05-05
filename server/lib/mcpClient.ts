@@ -14,14 +14,13 @@
  *   const result = await mcpClient.callTool("listStores", { tenantId });
  */
 
-// KAI_MCP_NGROK_URL lets a developer point Kai's MCP calls at a locally
-// tunneled MCP worker (e.g. an ngrok URL fronting a dev Cloudflare Worker
-// running via `wrangler dev`). Honored only outside production so a stray
-// env var can't redirect production traffic.
+import { resolveKaiMcpUrl } from "../_core/ngrok";
+
+// resolveKaiMcpUrl is the single source of truth for env-based precedence:
+// it honors KAI_MCP_NGROK_URL outside production, then falls back to
+// MCP_WORKER_URL. The default below covers the case where neither is set.
 export const MCP_WORKER_URL =
-  (process.env.NODE_ENV !== "production" && process.env.KAI_MCP_NGROK_URL) ||
-  process.env.MCP_WORKER_URL ||
-  "https://unify0ne-mcp.skdev-371.workers.dev";
+  resolveKaiMcpUrl() || "https://unify0ne-mcp.skdev-371.workers.dev";
 
 const MCP_ENDPOINT = `${MCP_WORKER_URL}/mcp`;
 

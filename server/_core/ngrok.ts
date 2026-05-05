@@ -68,11 +68,11 @@ export async function startNgrokTunnel(port: number): Promise<string | null> {
     logger.info(
       "[ngrok] Webhook URLs (point provider dashboards here in dev):"
     );
-    logger.info(`[ngrok]   Stripe   → ${url}/webhooks/stripe`);
-    logger.info(`[ngrok]   PayPal   → ${url}/webhooks/paypal`);
-    logger.info(`[ngrok]   Shopify  → ${url}/webhooks/shopify`);
-    logger.info(`[ngrok]   Square   → ${url}/webhooks/square`);
-    logger.info(`[ngrok]   n8n      → ${url}/webhooks/n8n`);
+    logger.info(`[ngrok]   Stripe   → ${url}/api/stripe/webhook`);
+    logger.info(`[ngrok]   PayPal   → ${url}/api/paypal/webhook`);
+    logger.info(`[ngrok]   Shopify  → ${url}/api/shopify/webhook`);
+    logger.info(`[ngrok]   Square   → ${url}/api/square/webhook`);
+    logger.info(`[ngrok]   n8n      → ${url}/api/n8n/webhook`);
     return url;
   } catch (err) {
     logger.error("[ngrok] Failed to start tunnel", {
