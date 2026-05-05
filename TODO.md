@@ -65,11 +65,12 @@ The UX surface area users actually touch every day.
 ### Active — operating against UnifyOne today
 
 - **1Commerce Solutions** (1commercesolutions.com) — service brand / consultancy front for the platform.
-- **The Signal** (signal01.netlify.app, repo `The-signal`) — blog brand.
+- **The Signal** (https://1commercesolutions.com, repo `The-signal`) — blog brand. Now mounted on the consultancy front.
 - **ClearPath Environmental** (repo `Clearpath`) — environmental services vertical.
 - **Compass AI** (repo `compass`) — AI consulting / legal intelligence vertical.
 - **Torqued Affiliates** (`torqued-affiliates`, `news-aggregator`) — affiliate platform; conversions feed Impact.com S2S.
 - **PACER** (repo `PACER`) — domain arbitrage + RWA pipeline.
+- **DealFlow** (https://1commerce.world) — deal pipeline / business broker surface.
 - **PNW Solutions** (repo `pnwenterprises`) — shell, holding-company surface.
 
 ### Planned — not built yet
@@ -106,7 +107,8 @@ Things noticed during the audit-fix rollout that aren't blocking revenue but are
 
 ### Production URLs
 
-- **App:** <https://1commerce.online>
+- **App (UnifyOne):** <https://1commerce.online>
+- **Brand fronts:** <https://1commercesolutions.com> (Signal/blog) · <https://1commerce.world> (DealFlow) · <https://1commerce.shop> (Shopify demo)
 - **API health:** <https://1commerce.online/api/health>
 - **Stripe webhook:** `https://1commerce.online/api/stripe/webhook`
 - **PayPal webhook:** `https://1commerce.online/api/paypal/webhook`
