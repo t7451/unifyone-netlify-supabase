@@ -77,14 +77,24 @@ The UX surface area users actually touch every day.
 
 ### Active — operating against UnifyOne today
 
-- **1Commerce Solutions** (1commercesolutions.com) — service brand / consultancy front for the platform.
-- **The Signal** (https://1commercesolutions.com, repo `The-signal`) — blog brand. Now mounted on the consultancy front.
+- **1Commerce Solutions** (1commercesolutions.com) — service brand / consultancy front for the platform. Now also hosts The Signal blog content.
+- **The Signal** (https://1commercesolutions.com, repo `The-signal`) — blog brand mounted on the consultancy front.
 - **ClearPath Environmental** (repo `Clearpath`) — environmental services vertical.
 - **Compass AI** (repo `compass`) — AI consulting / legal intelligence vertical.
 - **Torqued Affiliates** (`torqued-affiliates`, `news-aggregator`) — affiliate platform; conversions feed Impact.com S2S.
 - **PACER** (repo `PACER`) — domain arbitrage + RWA pipeline.
 - **DealFlow** (https://1commerce.world) — deal pipeline / business broker surface.
 - **PNW Solutions** (repo `pnwenterprises`) — shell, holding-company surface.
+- **UnifyOne Shopify storefront** (`unifyone-2.myshopify.com`, demo at https://1commerce.shop) — actual digital product catalog. Active SKUs include **n8n Commerce Workflow Pack**, **AI Prompt Library v2.0**, **Solo Agency Blueprint**, **Shopify Launch Kit**, plus ~16 more digital products. This is a real revenue surface, not just a demo. Currently under catalog-pollution audit (dropshipped items being culled).
+
+### In flight — separate platforms / initiatives
+
+- **Gov Contract Watch** — government contract intelligence platform with a Flask-based control surface. Distinct from UnifyOne but follows the same Cathedral Principle phasing.
+- **Neural Knowledge Graph** — internal product with a cyan-themed neural UI override. Knowledge graph ingesters being refactored to support multi-source ingest.
+- **Trading bot dashboard** — Flask-based control surface for managing trading bot strategies. Internal tooling, not yet customer-facing.
+- **PartnerStack enrollment** — partner program application in flight via dash.partnerstack.com.
+- **Meta developer platform** — Flutter app + payment integration; building toward a Meta (FB/IG) developer surface for the social commerce flow.
+- **Signal Archives** — new project, architectural shift to Cloudflare Pages + Functions + D1. Build spec drafted; implementation pending.
 
 ### Planned — not built yet
 
@@ -112,6 +122,10 @@ Things noticed during the audit-fix rollout that aren't blocking revenue but are
 - **Subscription plan switching** — works via `/pricing` redirect; no in-place plan-change flow yet.
 - **Discount usage counting** — `usageCount` increments via the `resolveCode` query but the actual increment happens at checkout; verify the orders flow consumes a discount when present.
 - **Voice transcription scaffolding** in `server/_core/voiceTranscription.ts` is documented but commented out — wire it into a router when needed.
+- **UnifyOne Shopify storefront — catalog pollution audit** — Keith was actively culling dropshipped items from the active SKU list. ~20 digital products remain valid; the ones flagged "sold out" are being normalized. Coordinate with the Shopify admin at `unifyone-2.myshopify.com`.
+- **Shopify Collective supplier sync** — physical-product sync issue under investigation. Distinct from the webhook receiver (CR4) — this is the inbound product-import path from suppliers.
+- **AES-256-GCM Shopify token encryption + DB-backed CSRF** shipped in PR #116 (`0d8b929`) — verify SHOPIFY_ENCRYPTION_KEY env var is set on Netlify and the migration that adds the encryption columns has been applied.
+- **IncomeCalculator** also landed in PR #116 — surface a route or page for it if customers should access.
 - **Branch protection** has `enforce_admins=false` for solo-dev workflow; flip to true once a second engineer joins.
 
 ---
