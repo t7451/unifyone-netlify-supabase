@@ -18,7 +18,7 @@ import {
   upsertCustomer,
 } from "../db";
 import { discounts, notifications } from "../../drizzle/schema";
-import { and, sql } from "drizzle-orm";
+import { and, sql, eq } from "drizzle-orm";
 import { logAudit } from "../auditLogger";
 import { protectedProcedure, router } from "../_core/trpc";
 import { logger } from "../_core/logger";

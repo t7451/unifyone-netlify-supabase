@@ -15,6 +15,8 @@ import { plans } from "../../drizzle/schema";
 import { getStripe } from "../_core/stripeClient";
 import { logAudit } from "../auditLogger";
 import { logger } from "../_core/logger";
+import { eq } from "drizzle-orm";
+import { getDb } from "../db";
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || "";
@@ -350,7 +352,8 @@ export const subscriptionRouter = router({
         success: true,
         unchanged: false as const,
         subscriptionId: updated.id,
-        currentPeriodEnd: updated.current_period_end,
+        currentPeriodEnd: (updated as unknown as { current_period_end: number })
+          .current_period_end,
         planSlug: plan.slug,
         billingCycle: input.billingCycle,
       };
