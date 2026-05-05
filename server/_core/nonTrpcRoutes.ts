@@ -22,6 +22,7 @@ export async function buildNonTrpcHandler(): Promise<
     { registerBillingFetchRoutes },
     { registerPayPalFetchRoutes },
     { registerSquareFetchRoutes },
+    { registerShopifyFetchRoutes },
     { registerOAuthFetchRoutes },
     { registerCustomAuthFetchRoutes },
     { registerImpactFetchRoutes },
@@ -30,6 +31,7 @@ export async function buildNonTrpcHandler(): Promise<
     import("../billing").catch(() => ({ registerBillingFetchRoutes: null })),
     import("../paypal").catch(() => ({ registerPayPalFetchRoutes: null })),
     import("../square").catch(() => ({ registerSquareFetchRoutes: null })),
+    import("../shopify").catch(() => ({ registerShopifyFetchRoutes: null })),
     import("./oauth").catch(() => ({ registerOAuthFetchRoutes: null })),
     import("./customAuthRoutes").catch(() => ({
       registerCustomAuthFetchRoutes: null,
@@ -106,6 +108,20 @@ export async function buildNonTrpcHandler(): Promise<
       try {
         const result = await (
           registerSquareFetchRoutes as unknown as FetchHandler
+        )(req);
+        if (result) return result;
+      } catch (e: unknown) {
+        return Response.json({ error: (e as Error).message }, { status: 500 });
+      }
+    }
+
+    // Shopify — webhook receiver + OAuth install/callback. CR4: Express
+    // handler in server/shopify.ts only runs in local dev; this Fetch path
+    // is what Netlify Functions actually serve.
+    if (path.startsWith("/api/shopify/") && registerShopifyFetchRoutes) {
+      try {
+        const result = await (
+          registerShopifyFetchRoutes as unknown as FetchHandler
         )(req);
         if (result) return result;
       } catch (e: unknown) {

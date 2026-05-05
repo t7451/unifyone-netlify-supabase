@@ -1,7 +1,11 @@
 import express, { type Express, type Request, type Response } from "express";
 import crypto from "crypto";
 import { getDb } from "./db";
-import { shopifyStores, shopifySyncLog, webhookEvents } from "../drizzle/schema";
+import {
+  shopifyStores,
+  shopifySyncLog,
+  webhookEvents,
+} from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
 // ─── Shopify OAuth Config ─────────────────────────────────────────────────────
@@ -432,4 +436,284 @@ function normalizePayloadForWebhookEvent(
   }
 
   return { value: payload };
+}
+
+// ─── Register Shopify Fetch Routes (Netlify production) ──────────────────────
+// Parallels registerPayPalFetchRoutes / registerSquareFetchRoutes. The Express
+// version (registerShopifyRoutes) only runs in local dev; Netlify Functions
+// dispatch through server/_core/nonTrpcRoutes.ts, which calls this Fetch
+// handler. Returning null falls through to tRPC.
+export async function registerShopifyFetchRoutes(
+  req: Request
+): Promise<Response | null> {
+  const url = new URL(req.url);
+  const path = url.pathname;
+
+  // ── POST /api/shopify/webhook ─────────────────────────────────────────────
+  if (path === "/api/shopify/webhook" && req.method === "POST") {
+    const startTime = Date.now();
+    const rawBytes = new Uint8Array(await req.arrayBuffer());
+    const rawBuffer = Buffer.from(rawBytes);
+    const rawBody = rawBuffer.toString("utf-8");
+    const hmacHeader = req.headers.get("x-shopify-hmac-sha256") || "";
+    const topic = req.headers.get("x-shopify-topic") || "";
+    const shopDomain = req.headers.get("x-shopify-shop-domain") || "";
+
+    let payload: Record<string, unknown> = {};
+    try {
+      payload = JSON.parse(rawBody) as Record<string, unknown>;
+    } catch {
+      // non-JSON payload — leave as {}
+    }
+
+    // Resolve store + tenant from shopDomain
+    const db = await getDb();
+    let storeId = 0;
+    let tenantId: number | undefined;
+    if (db && shopDomain) {
+      const stores = await db
+        .select({ id: shopifyStores.id, tenantId: shopifyStores.tenantId })
+        .from(shopifyStores)
+        .where(eq(shopifyStores.shopDomain, shopDomain))
+        .limit(1);
+      if (stores.length > 0) {
+        storeId = stores[0].id;
+        tenantId = stores[0].tenantId ?? undefined;
+      }
+    }
+
+    const headersRecord: Record<string, string> = {};
+    req.headers.forEach((value, key) => {
+      headersRecord[key] = value;
+    });
+
+    const webhookPayload = {
+      topic,
+      shopDomain,
+      id: payload.id,
+      payload,
+    };
+
+    if (!validateShopifyWebhook(rawBuffer, hmacHeader)) {
+      await logSyncEvent({
+        storeId,
+        tenantId,
+        event: topic || "webhook/unknown",
+        entity: "webhook",
+        entityId: (payload.id as string | number | undefined)?.toString(),
+        direction: "inbound",
+        status: "failed",
+        latencyMs: Date.now() - startTime,
+        errorMsg: "Invalid Shopify webhook signature",
+        payload: webhookPayload,
+        headers: headersRecord,
+        rawBody,
+        shopDomain,
+      });
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    const entityMap: Record<
+      string,
+      "product" | "order" | "customer" | "inventory" | "fulfillment" | "webhook"
+    > = {
+      "products/create": "product",
+      "products/update": "product",
+      "products/delete": "product",
+      "orders/create": "order",
+      "orders/updated": "order",
+      "orders/cancelled": "order",
+      "orders/paid": "order",
+      "orders/fulfilled": "order",
+      "customers/create": "customer",
+      "customers/update": "customer",
+      "customers/delete": "customer",
+      "inventory_levels/update": "inventory",
+      "fulfillments/create": "fulfillment",
+      "fulfillments/update": "fulfillment",
+    };
+    const entity = entityMap[topic] ?? "webhook";
+    const entityId = (payload.id as string | number | undefined)?.toString();
+
+    await logSyncEvent({
+      storeId,
+      tenantId,
+      event: topic,
+      entity,
+      entityId,
+      direction: "inbound",
+      status: "success",
+      latencyMs: Date.now() - startTime,
+      payload: webhookPayload,
+      headers: headersRecord,
+      rawBody,
+      shopDomain,
+    });
+
+    console.log(`[Shopify Webhook] ${topic} from ${shopDomain}`);
+    return new Response("OK", { status: 200 });
+  }
+
+  // ── GET /api/shopify/install ──────────────────────────────────────────────
+  if (path === "/api/shopify/install" && req.method === "GET") {
+    const shop = (url.searchParams.get("shop") || "").trim().toLowerCase();
+    if (!shop || !/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
+      return Response.json(
+        { error: "Invalid shop domain. Must end in .myshopify.com" },
+        { status: 400 }
+      );
+    }
+    if (!SHOPIFY_API_KEY) {
+      return Response.json(
+        { error: "SHOPIFY_API_KEY not configured" },
+        { status: 500 }
+      );
+    }
+    const state = crypto.randomBytes(16).toString("hex");
+    const redirectUri = `${url.origin}/api/shopify/callback`;
+    const installUrl =
+      `https://${shop}/admin/oauth/authorize` +
+      `?client_id=${SHOPIFY_API_KEY}` +
+      `&scope=${encodeURIComponent(REQUIRED_SCOPES)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&state=${state}`;
+
+    const res = new Response(null, {
+      status: 302,
+      headers: { Location: installUrl },
+    });
+    res.headers.append(
+      "Set-Cookie",
+      `shopify_oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${
+        process.env.NODE_ENV === "production" ? "; Secure" : ""
+      }`
+    );
+    return res;
+  }
+
+  // ── GET /api/shopify/callback ─────────────────────────────────────────────
+  if (path === "/api/shopify/callback" && req.method === "GET") {
+    const shop = url.searchParams.get("shop") || "";
+    const code = url.searchParams.get("code") || "";
+    const state = url.searchParams.get("state") || "";
+
+    // CSRF check (state cookie)
+    const cookieHeader = req.headers.get("cookie") || "";
+    const m = cookieHeader.match(/(?:^|;\s*)shopify_oauth_state=([^;]+)/);
+    const storedState = m ? decodeURIComponent(m[1]) : null;
+    if (!state || state !== storedState) {
+      return new Response("State mismatch — possible CSRF attack", {
+        status: 403,
+      });
+    }
+
+    // HMAC validation across query
+    const queryEntries: Record<string, string> = {};
+    url.searchParams.forEach((v, k) => {
+      queryEntries[k] = v;
+    });
+    if (!validateHmac(queryEntries)) {
+      return new Response("Invalid HMAC signature", { status: 403 });
+    }
+
+    if (!shop || !code) {
+      return new Response("Missing shop or code", { status: 400 });
+    }
+
+    try {
+      const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_id: SHOPIFY_API_KEY,
+          client_secret: SHOPIFY_API_SECRET,
+          code,
+        }),
+      });
+      if (!tokenRes.ok) {
+        const err = await tokenRes.text();
+        console.error("[Shopify OAuth] Token exchange failed:", err);
+        return new Response("Token exchange failed", { status: 500 });
+      }
+      const tokenData = (await tokenRes.json()) as {
+        access_token: string;
+        scope: string;
+      };
+
+      const shopRes = await fetch(
+        `https://${shop}/admin/api/2024-01/shop.json`,
+        {
+          headers: { "X-Shopify-Access-Token": tokenData.access_token },
+        }
+      );
+      const shopData = shopRes.ok
+        ? (
+            (await shopRes.json()) as {
+              shop: {
+                name: string;
+                email: string;
+                currency: string;
+                plan_name: string;
+              };
+            }
+          ).shop
+        : null;
+
+      const db = await getDb();
+      if (!db) {
+        return new Response("Database unavailable", { status: 500 });
+      }
+
+      const existing = await db
+        .select()
+        .from(shopifyStores)
+        .where(eq(shopifyStores.shopDomain, shop))
+        .limit(1);
+
+      if (existing.length > 0) {
+        await db
+          .update(shopifyStores)
+          .set({
+            accessToken: tokenData.access_token,
+            scopes: tokenData.scope,
+            shopName: shopData?.name,
+            shopEmail: shopData?.email,
+            shopCurrency: shopData?.currency ?? "USD",
+            shopPlan: shopData?.plan_name,
+            status: "active",
+          })
+          .where(eq(shopifyStores.shopDomain, shop));
+      } else {
+        await db.insert(shopifyStores).values({
+          userId: 0,
+          shopDomain: shop,
+          accessToken: tokenData.access_token,
+          scopes: tokenData.scope,
+          shopName: shopData?.name,
+          shopEmail: shopData?.email,
+          shopCurrency: shopData?.currency ?? "USD",
+          shopPlan: shopData?.plan_name,
+          status: "active",
+        });
+      }
+
+      const res = new Response(null, {
+        status: 302,
+        headers: {
+          Location: `/shopify/success?shop=${encodeURIComponent(shop)}`,
+        },
+      });
+      res.headers.append(
+        "Set-Cookie",
+        "shopify_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+      );
+      return res;
+    } catch (err) {
+      console.error("[Shopify OAuth] Callback error:", err);
+      return new Response("OAuth callback failed", { status: 500 });
+    }
+  }
+
+  // Unhandled — fall through to tRPC
+  return null;
 }
