@@ -17,7 +17,8 @@ import {
   updateOrderStatus,
   upsertCustomer,
 } from "../db";
-import { notifications } from "../../drizzle/schema";
+import { discounts, notifications } from "../../drizzle/schema";
+import { and, sql, eq } from "drizzle-orm";
 import { logAudit } from "../auditLogger";
 import { protectedProcedure, router } from "../_core/trpc";
 import { logger } from "../_core/logger";
@@ -107,6 +108,9 @@ export const ordersRouter = router({
         taxAmount: z.number().default(0),
         currency: z.string().length(3).default("USD"),
         notes: z.string().optional(),
+        /** Optional discount code to apply. Validated server-side; if invalid
+         *  or expired, the order is created without the discount. */
+        discountCode: z.string().min(1).max(64).optional(),
         payment: paymentInputSchema,
       })
     )
@@ -117,7 +121,58 @@ export const ordersRouter = router({
         (sum, item) => sum + item.unitPrice * item.quantity,
         0
       );
-      const total = subtotal + input.shippingAmount + input.taxAmount;
+      const grossTotal = subtotal + input.shippingAmount + input.taxAmount;
+
+      // PATCHED:DISCOUNT — resolve discount code before computing final total.
+      // Failed lookups silently produce a 0 discount so a typoed code never
+      // blocks a checkout that would otherwise succeed. The audit log row
+      // captures whether the code was applied for forensic review.
+      let discountAmount = 0;
+      let discountCodeApplied: string | null = null;
+      let discountIdApplied: number | null = null;
+      if (input.discountCode) {
+        try {
+          const code = input.discountCode.toUpperCase().trim();
+          const db2 = await getDb();
+          if (db2) {
+            const rows = await db2
+              .select()
+              .from(discounts)
+              .where(
+                and(
+                  eq(discounts.tenantId, tenantId),
+                  eq(discounts.code, code),
+                  eq(discounts.isActive, true)
+                )
+              )
+              .limit(1);
+            const d = rows[0];
+            const now = new Date();
+            const inWindow =
+              d &&
+              (!d.validFrom || d.validFrom <= now) &&
+              (!d.validUntil || d.validUntil >= now);
+            const underLimit =
+              d && (d.usageLimit === 0 || d.usageCount < d.usageLimit);
+            if (d && inWindow && underLimit) {
+              const v = Number(d.value);
+              if (Number.isFinite(v) && v > 0) {
+                discountAmount =
+                  d.type === "percentage"
+                    ? Math.round(grossTotal * (v / 100) * 100) / 100
+                    : Math.min(v, grossTotal);
+                discountCodeApplied = d.code;
+                discountIdApplied = d.id;
+              }
+            }
+          }
+        } catch (err) {
+          logger.warn("discount lookup failed; proceeding without discount", {
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+      const total = Math.max(0, grossTotal - discountAmount);
       const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
       const providerFields: {
@@ -258,6 +313,7 @@ export const ordersRouter = router({
             subtotal: String(subtotal),
             taxAmount: String(input.taxAmount),
             shippingAmount: String(input.shippingAmount),
+            discountAmount: String(discountAmount),
             total: String(total),
             currency: input.currency,
             status: "pending",
@@ -350,6 +406,44 @@ export const ordersRouter = router({
           orderId: order.id,
           error: err instanceof Error ? err.message : String(err),
         });
+      }
+
+      // PATCHED:DISCOUNT — bump usageCount fire-and-forget after the order
+      // committed. If this fails, the order is still valid; the count is
+      // best-effort.
+      if (discountIdApplied !== null) {
+        try {
+          const db3 = await getDb();
+          if (db3) {
+            await db3
+              .update(discounts)
+              .set({
+                usageCount: sql`${discounts.usageCount} + 1`,
+                updatedAt: new Date(),
+              })
+              .where(eq(discounts.id, discountIdApplied));
+          }
+        } catch (err) {
+          logger.warn("discount usageCount increment failed", {
+            discountId: discountIdApplied,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+
+        logAudit({
+          userId,
+          tenantId,
+          action: "discount.applied",
+          resource: "discount",
+          resourceId: String(discountIdApplied),
+          severity: "low",
+          metadata: {
+            code: discountCodeApplied,
+            orderId: order.id,
+            discountAmount: String(discountAmount),
+            grossTotal: String(grossTotal),
+          },
+        }).catch(() => {});
       }
 
       return order;

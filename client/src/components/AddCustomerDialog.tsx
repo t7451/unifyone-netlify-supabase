@@ -33,6 +33,7 @@ export function AddCustomerDialog({ onCreated }: Props) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+  const [notes, setNotes] = useState("");
 
   const utils = trpc.useUtils();
   const create = trpc.customers.create.useMutation({
@@ -51,6 +52,7 @@ export function AddCustomerDialog({ onCreated }: Props) {
       setFirstName("");
       setLastName("");
       setPhone("");
+      setNotes("");
     },
     onError: (e: { message: string }) => toast.error(e.message),
   });
@@ -65,6 +67,7 @@ export function AddCustomerDialog({ onCreated }: Props) {
       firstName: firstName || undefined,
       lastName: lastName || undefined,
       phone: phone || undefined,
+      notes: notes || undefined,
     });
   };
 
@@ -126,6 +129,16 @@ export function AddCustomerDialog({ onCreated }: Props) {
               id="ac-phone"
               value={phone}
               onChange={e => setPhone(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="ac-notes" className="text-xs">
+              Notes
+            </Label>
+            <Input
+              id="ac-notes"
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
             />
           </div>
         </div>

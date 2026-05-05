@@ -11,6 +11,12 @@ import {
   getPlanBySlug,
 } from "../db";
 import { getCookieHeader } from "../lib/cookieHeader";
+import { plans } from "../../drizzle/schema";
+import { getStripe } from "../_core/stripeClient";
+import { logAudit } from "../auditLogger";
+import { logger } from "../_core/logger";
+import { eq } from "drizzle-orm";
+import { getDb } from "../db";
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || "";
@@ -196,6 +202,163 @@ export const subscriptionRouter = router({
   /**
    * Create a Stripe Customer Portal session for managing subscriptions.
    */
+  /**
+   * Switch the current user's tenant to a different plan in-place via Stripe
+   * subscriptions.update with proration. The user provides a target plan
+   * slug + billing cycle; we look up the matching Stripe price id and patch
+   * the active Stripe Subscription's price.
+   *
+   * Safe-by-default:
+   *  - No active subscription -> BAD_REQUEST (use createCheckout instead)
+   *  - Plan not found -> NOT_FOUND
+   *  - Plan has no Stripe price for the chosen cycle -> BAD_REQUEST
+   *  - Same plan/cycle as current -> NO_OP success
+   */
+  changePlan: protectedProcedure
+    .input(
+      z.object({
+        planSlug: z.string().min(1).max(50),
+        billingCycle: z.enum(["monthly", "yearly"]).default("monthly"),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
+
+      // Resolve target plan
+      const planRows = await db
+        .select()
+        .from(plans)
+        .where(eq(plans.slug, input.planSlug))
+        .limit(1);
+      const plan = planRows[0];
+      if (!plan) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `No plan with slug '${input.planSlug}'.`,
+        });
+      }
+      const targetPriceId =
+        input.billingCycle === "yearly"
+          ? plan.stripePriceIdYearly
+          : plan.stripePriceIdMonthly;
+      if (!targetPriceId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Plan '${plan.name}' has no Stripe ${input.billingCycle} price configured.`,
+        });
+      }
+
+      // Resolve current Stripe subscription via tenant.stripeCustomerId
+      const tenantId = ctx.user.tenantId;
+      if (!tenantId) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "User has no tenant.",
+        });
+      }
+      const tenant = await getTenantById(tenantId);
+      if (!tenant?.stripeCustomerId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "No Stripe customer linked to this tenant. Use createCheckout to start a subscription.",
+        });
+      }
+
+      const stripe = getStripe();
+      if (!stripe) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Stripe is not configured on this server.",
+        });
+      }
+
+      // Find the active subscription for this customer.
+      const subs = await stripe.subscriptions.list({
+        customer: tenant.stripeCustomerId,
+        status: "active",
+        limit: 1,
+      });
+      const sub = subs.data[0];
+      if (!sub) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "No active Stripe subscription. Start one via the pricing page.",
+        });
+      }
+
+      const currentItem = sub.items.data[0];
+      if (!currentItem) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Active subscription has no items.",
+        });
+      }
+      if (currentItem.price.id === targetPriceId) {
+        return {
+          success: true,
+          unchanged: true as const,
+          message: "Already on that plan.",
+        };
+      }
+
+      let updated;
+      try {
+        updated = await stripe.subscriptions.update(sub.id, {
+          items: [{ id: currentItem.id, price: targetPriceId }],
+          proration_behavior: "create_prorations",
+          metadata: {
+            unifyone_tenant_id: String(tenantId),
+            unifyone_user_id: String(ctx.user.id),
+            unifyone_plan_slug: plan.slug,
+            unifyone_billing_cycle: input.billingCycle,
+          },
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.error("stripe subscriptions.update failed", {
+          subId: sub.id,
+          targetPriceId,
+          error: msg,
+        });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Stripe rejected the plan change: ${msg}`,
+        });
+      }
+
+      logAudit({
+        userId: ctx.user.id,
+        tenantId,
+        action: "subscription.changePlan",
+        resource: "subscription",
+        resourceId: sub.id,
+        severity: "high",
+        metadata: {
+          fromPriceId: currentItem.price.id,
+          toPriceId: targetPriceId,
+          planSlug: plan.slug,
+          billingCycle: input.billingCycle,
+        },
+      }).catch(() => {});
+
+      return {
+        success: true,
+        unchanged: false as const,
+        subscriptionId: updated.id,
+        currentPeriodEnd: (updated as unknown as { current_period_end: number })
+          .current_period_end,
+        planSlug: plan.slug,
+        billingCycle: input.billingCycle,
+      };
+    }),
+
   createPortalSession: protectedProcedure
     .input(z.object({ origin: z.string() }))
     .mutation(async ({ ctx, input }) => {

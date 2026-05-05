@@ -1,9 +1,9 @@
 # UnifyOne / 1commerce.online — Platform Scope Finalization
 
 **Status as of:** 2026-05-05  
-**Repo:** [`t7451/unifyone-netlify-supabase`](https://github.com/t7451/unifyone-netlify-supabase) — HEAD `df2d4cb`  
+**Repo:** [`t7451/unifyone-netlify-supabase`](https://github.com/t7451/unifyone-netlify-supabase) — HEAD `8eb6004`  
 **Production:** <https://1commerce.online>  
-**Cathedral phase:** Foundation ✅ → Revenue ✅ → Systems ✅ → Scale ✅ (this round closed Scale)
+**Cathedral phase:** Foundation ✅ → Revenue ✅ → Systems ✅ → Scale ✅ (this round closed Scale + scope-A polish)
 
 ---
 
@@ -58,6 +58,12 @@ The UX surface area users actually touch every day.
 - **Discounts / Coupons (`7f30151`, Item 4):** new `discounts` table with (tenantId, code) unique index, type enum (percentage|fixed). Apply via `pnpm drizzle-kit push` (NOT migrate). Router has list/create/update/toggleActive/delete + `resolveCode` for checkout validation. Page at `/discounts` with toggle/delete/create dialog. Code uppercased + regex-validated; CONFLICT on duplicate.
 - **Settings sidebar Billing + Team (`c297ee3`, Item 5):** SettingsLayout.tsx surfaces the existing top-level `/billing` and `/team` routes from inside the settings group so users find them without bouncing to the dashboard nav.
 
+### Scope-A polish — shipped 2026-05-05 (post-finalization)
+
+- **Discount code at checkout (`f9c484f`):** `orders.create` accepts an optional `discountCode`. Server resolves against `discounts` table (uppercase, validity window, usage cap), computes `discountAmount`, stamps it in `orders.discountAmount`, and increments `discounts.usageCount` atomically post-insert. Failed lookups silently produce a 0 discount so a typo never blocks checkout. Audit log row on apply.
+- **Subscription plan switching (`8c466e6`):** `subscription.changePlan({ planSlug, billingCycle })` patches the active Stripe subscription via `stripe.subscriptions.update` with `proration_behavior="create_prorations"`. Resolves target Stripe price id from `plans.stripePriceIdMonthly|Yearly`. Refuses if no active subscription; no-op success if already on that plan/cycle. Audit log severity=high (recurring revenue change).
+- **`customers.notes` restored (`d01099e`):** schema, server input, and `AddCustomerDialog` UI all carry the field again. Apply via `pnpm drizzle-kit push` before deploying.
+
 ---
 
 ## Subsidiary brands & next-up surface area
@@ -65,11 +71,12 @@ The UX surface area users actually touch every day.
 ### Active — operating against UnifyOne today
 
 - **1Commerce Solutions** (1commercesolutions.com) — service brand / consultancy front for the platform.
-- **The Signal** (signal01.netlify.app, repo `The-signal`) — blog brand.
+- **The Signal** (https://1commercesolutions.com, repo `The-signal`) — blog brand. Now mounted on the consultancy front.
 - **ClearPath Environmental** (repo `Clearpath`) — environmental services vertical.
 - **Compass AI** (repo `compass`) — AI consulting / legal intelligence vertical.
 - **Torqued Affiliates** (`torqued-affiliates`, `news-aggregator`) — affiliate platform; conversions feed Impact.com S2S.
 - **PACER** (repo `PACER`) — domain arbitrage + RWA pipeline.
+- **DealFlow** (https://1commerce.world) — deal pipeline / business broker surface.
 - **PNW Solutions** (repo `pnwenterprises`) — shell, holding-company surface.
 
 ### Planned — not built yet
@@ -106,7 +113,8 @@ Things noticed during the audit-fix rollout that aren't blocking revenue but are
 
 ### Production URLs
 
-- **App:** <https://1commerce.online>
+- **App (UnifyOne):** <https://1commerce.online>
+- **Brand fronts:** <https://1commercesolutions.com> (Signal/blog) · <https://1commerce.world> (DealFlow) · <https://1commerce.shop> (Shopify demo)
 - **API health:** <https://1commerce.online/api/health>
 - **Stripe webhook:** `https://1commerce.online/api/stripe/webhook`
 - **PayPal webhook:** `https://1commerce.online/api/paypal/webhook`

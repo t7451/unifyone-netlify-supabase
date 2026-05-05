@@ -289,6 +289,7 @@ export const customers = pgTable(
       line1?: string; line2?: string; city?: string;
       state?: string; zip?: string; country?: string;
     }>(),
+    notes: text("notes"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   },
