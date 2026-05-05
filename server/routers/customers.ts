@@ -62,7 +62,6 @@ export const customersRouter = router({
         firstName: z.string().max(255).optional(),
         lastName: z.string().max(255).optional(),
         phone: z.string().max(50).optional(),
-        notes: z.string().max(2000).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -94,7 +93,6 @@ export const customersRouter = router({
         if (input.firstName !== undefined) update.firstName = input.firstName;
         if (input.lastName !== undefined) update.lastName = input.lastName;
         if (input.phone !== undefined) update.phone = input.phone;
-        if (input.notes !== undefined) update.notes = input.notes;
         await db
           .update(customers)
           .set(update)
@@ -110,7 +108,6 @@ export const customersRouter = router({
           firstName: input.firstName,
           lastName: input.lastName,
           phone: input.phone,
-          notes: input.notes,
         })
         .returning();
 
@@ -135,7 +132,6 @@ export const customersRouter = router({
         firstName: z.string().max(255).optional(),
         lastName: z.string().max(255).optional(),
         phone: z.string().max(50).optional(),
-        notes: z.string().max(2000).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -151,7 +147,6 @@ export const customersRouter = router({
       if (input.firstName !== undefined) update.firstName = input.firstName;
       if (input.lastName !== undefined) update.lastName = input.lastName;
       if (input.phone !== undefined) update.phone = input.phone;
-      if (input.notes !== undefined) update.notes = input.notes;
 
       await db
         .update(customers)

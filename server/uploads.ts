@@ -56,7 +56,9 @@ export async function registerUploadFetchRoutes(
   if (path === "/api/uploads/image" && req.method === "POST") {
     let user;
     try {
-      user = await sdk.authenticateRequest(req);
+      user = await sdk.authenticateRequest(
+        req as unknown as Parameters<typeof sdk.authenticateRequest>[0]
+      );
     } catch {
       return jsonError("Authentication required.", 401);
     }
@@ -81,11 +83,16 @@ export async function registerUploadFetchRoutes(
       );
     }
 
-    const file = formData.get("file");
-    if (!(file instanceof File) && !(file instanceof Blob)) {
+    const fileEntry = formData.get("file");
+    if (!fileEntry || typeof fileEntry === "string") {
       return jsonError("Missing 'file' field in form data.", 400);
     }
-    const fileBlob = file as File;
+    const fileBlob = fileEntry as unknown as {
+      type: string;
+      size: number;
+      name?: string;
+      arrayBuffer: () => Promise<ArrayBuffer>;
+    };
 
     if (!fileBlob.type.startsWith("image/")) {
       return jsonError(
