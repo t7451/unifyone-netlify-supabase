@@ -852,7 +852,11 @@ export const shopifyStores = pgTable("shopify_stores", {
   tenantId: integer("tenantId"),
   userId: integer("userId").notNull(),
   shopDomain: varchar("shopDomain", { length: 255 }).notNull().unique(),
-  accessToken: varchar("accessToken", { length: 500 }).notNull(),
+  // DEPRECATED. Drop in follow-up migration once all rows encrypted.
+  accessToken: varchar("accessToken", { length: 500 }),
+  // base64(iv || authTag || ciphertext) AES-256-GCM
+  accessTokenEnc: text("accessTokenEnc"),
+  tokenCipherVersion: integer("tokenCipherVersion").default(1),
   scopes: text("scopes").notNull(),
   shopName: varchar("shopName", { length: 255 }),
   shopEmail: varchar("shopEmail", { length: 255 }),
@@ -898,6 +902,18 @@ export const shopifyApiQuota = pgTable("shopify_api_quota", {
 });
 export type ShopifyApiQuota = typeof shopifyApiQuota.$inferSelect;
 export type InsertShopifyApiQuota = typeof shopifyApiQuota.$inferInsert;
+
+// ─── Shopify OAuth CSRF State ─────────────────────────────────────────────────
+export const shopifyOauthStates = pgTable("shopify_oauth_states", {
+  state: varchar("state", { length: 64 }).primaryKey(),
+  shop: varchar("shop", { length: 255 }).notNull(),
+  userId: integer("userId"),
+  tenantId: integer("tenantId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt").defaultNow().notNull(),
+});
+export type ShopifyOauthState = typeof shopifyOauthStates.$inferSelect;
+export type InsertShopifyOauthState = typeof shopifyOauthStates.$inferInsert;
 
 // ─── Sovereign Stack Waitlist ─────────────────────────────────────────────────
 export const sovereignWaitlist = pgTable("sovereign_waitlist", {

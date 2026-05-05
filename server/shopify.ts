@@ -3,16 +3,25 @@ import express, {
   type Request as ExpressRequest,
   type Response as ExpressResponse,
 } from "express";
-import crypto from "crypto";
+import crypto from "node:crypto";
+import { and, eq, gt } from "drizzle-orm";
+import { COOKIE_NAME } from "@shared/const";
 import { getDb } from "./db";
 import {
   shopifyStores,
   shopifySyncLog,
+  shopifyOauthStates,
   webhookEvents,
+  users,
 } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import {
+  verifyOAuthCallbackHmac,
+  verifyWebhookHmac,
+  isValidShopDomain,
+} from "./_core/shopifyHmac";
+import { encryptToken } from "./_core/shopifyTokenCrypto";
+import { sdk } from "./_core/sdk";
 
-// ─── Shopify OAuth Config ─────────────────────────────────────────────────────
 const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY || "";
 const SHOPIFY_API_SECRET = process.env.SHOPIFY_API_SECRET || "";
 const REQUIRED_SCOPES = [
@@ -27,70 +36,174 @@ const REQUIRED_SCOPES = [
   "read_fulfillments",
   "write_fulfillments",
 ].join(",");
+const STATE_TTL_MS = 10 * 60 * 1000;
 
-// ─── HMAC Validation ──────────────────────────────────────────────────────────
-function validateHmac(query: Record<string, string>): boolean {
-  const { hmac, ...rest } = query;
-  if (!hmac || !SHOPIFY_API_SECRET) return false;
-  const message = Object.keys(rest)
-    .sort()
-    .map(k => `${k}=${rest[k]}`)
-    .join("&");
-  const digest = crypto
-    .createHmac("sha256", SHOPIFY_API_SECRET)
-    .update(message)
-    .digest("hex");
-  const digestBuffer = Buffer.from(digest, "hex");
-  const hmacBuffer = Buffer.from(hmac, "hex");
-  if (digestBuffer.length !== hmacBuffer.length) return false;
-  return crypto.timingSafeEqual(digestBuffer, hmacBuffer);
+const MANDATORY_TOPICS = new Set([
+  "app/uninstalled",
+  "customers/data_request",
+  "customers/redact",
+  "shop/redact",
+]);
+
+async function resolveUserFromCookieHeader(
+  cookieHeader: string | null
+): Promise<{ id: number; tenantId: number | null } | null> {
+  if (!cookieHeader) return null;
+  const m = cookieHeader.match(new RegExp(`(?:^|;\\s*)${COOKIE_NAME}=([^;]+)`));
+  if (!m) return null;
+  const session = await sdk.verifySession(decodeURIComponent(m[1]));
+  if (!session?.openId) return null;
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select({ id: users.id, tenantId: users.tenantId })
+    .from(users)
+    .where(eq(users.openId, session.openId))
+    .limit(1);
+  return rows[0] ?? null;
 }
 
-// ─── Validate Webhook Signature ───────────────────────────────────────────────
-/**
- * Validates Shopify webhook signature using HMAC-SHA256.
- * IMPORTANT: Returns false if SHOPIFY_API_SECRET is not configured, which will
- * reject all webhooks. This is intentional - webhooks should not be accepted
- * if signature verification is not possible.
- */
-export function validateShopifyWebhook(
-  rawBody: Buffer,
-  hmacHeader: string
-): boolean {
-  if (!SHOPIFY_API_SECRET) {
-    console.error(
-      "[Shopify] SHOPIFY_API_SECRET not configured - webhook rejected"
-    );
-    return false;
-  }
-  if (!hmacHeader) {
-    console.warn("[Shopify] Webhook missing x-shopify-hmac-sha256 header");
-    return false;
-  }
+async function storeOauthState(params: {
+  state: string;
+  shop: string;
+  userId: number | null;
+  tenantId: number | null;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await db.insert(shopifyOauthStates).values({
+    state: params.state,
+    shop: params.shop,
+    userId: params.userId,
+    tenantId: params.tenantId,
+    expiresAt: new Date(Date.now() + STATE_TTL_MS),
+  });
+}
 
+async function consumeOauthState(
+  state: string,
+  shop: string
+): Promise<{ userId: number | null; tenantId: number | null } | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(shopifyOauthStates)
+    .where(
+      and(
+        eq(shopifyOauthStates.state, state),
+        eq(shopifyOauthStates.shop, shop),
+        gt(shopifyOauthStates.expiresAt, new Date())
+      )
+    )
+    .limit(1);
+  if (!rows.length) return null;
+  await db
+    .delete(shopifyOauthStates)
+    .where(eq(shopifyOauthStates.state, state));
+  return { userId: rows[0].userId, tenantId: rows[0].tenantId };
+}
+
+async function exchangeCodeForToken(
+  shop: string,
+  code: string
+): Promise<{ access_token: string; scope: string }> {
+  const r = await fetch(`https://${shop}/admin/oauth/access_token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      client_id: SHOPIFY_API_KEY,
+      client_secret: SHOPIFY_API_SECRET,
+      code,
+    }),
+  });
+  if (!r.ok) throw new Error(`Token exchange failed: ${await r.text()}`);
+  return (await r.json()) as { access_token: string; scope: string };
+}
+
+async function fetchShopProfile(shop: string, accessToken: string) {
   try {
-    const digest = crypto
-      .createHmac("sha256", SHOPIFY_API_SECRET)
-      .update(rawBody)
-      .digest("base64");
-
-    // Both values must be base64-decoded for safe comparison
-    const digestBuffer = Buffer.from(digest, "base64");
-    const hmacBuffer = Buffer.from(hmacHeader, "base64");
-
-    // timingSafeEqual requires buffers of equal length
-    if (digestBuffer.length !== hmacBuffer.length) {
-      return false;
-    }
-
-    return crypto.timingSafeEqual(digestBuffer, hmacBuffer);
-  } catch (err) {
-    console.error("[Shopify] Webhook validation error:", err);
-    return false;
+    const r = await fetch(`https://${shop}/admin/api/2024-01/shop.json`, {
+      headers: { "X-Shopify-Access-Token": accessToken },
+    });
+    if (!r.ok) return null;
+    const json = (await r.json()) as {
+      shop: {
+        name: string;
+        email: string;
+        currency: string;
+        plan_name: string;
+      };
+    };
+    return json.shop;
+  } catch {
+    return null;
   }
 }
 
-// ─── Log Sync Event Helper ────────────────────────────────────────────────────
+async function upsertStore(params: {
+  shopDomain: string;
+  accessToken: string;
+  scopes: string;
+  shopProfile: {
+    name: string;
+    email: string;
+    currency: string;
+    plan_name: string;
+  } | null;
+  userId: number;
+  tenantId: number | null;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const enc = encryptToken(params.accessToken);
+  const existing = await db
+    .select()
+    .from(shopifyStores)
+    .where(eq(shopifyStores.shopDomain, params.shopDomain))
+    .limit(1);
+
+  const baseFields = {
+    accessToken: null,
+    accessTokenEnc: enc.ciphertext,
+    tokenCipherVersion: enc.version,
+    scopes: params.scopes,
+    shopName: params.shopProfile?.name,
+    shopEmail: params.shopProfile?.email,
+    shopCurrency: params.shopProfile?.currency ?? "USD",
+    shopPlan: params.shopProfile?.plan_name,
+    status: "active" as const,
+  };
+
+  if (existing.length > 0) {
+    await db
+      .update(shopifyStores)
+      .set({
+        ...baseFields,
+        // Re-bind ownership only if row was an unbound (userId=0) placeholder.
+        userId: existing[0].userId === 0 ? params.userId : existing[0].userId,
+        tenantId: existing[0].tenantId ?? params.tenantId,
+      })
+      .where(eq(shopifyStores.shopDomain, params.shopDomain));
+  } else {
+    await db.insert(shopifyStores).values({
+      userId: params.userId,
+      tenantId: params.tenantId,
+      shopDomain: params.shopDomain,
+      ...baseFields,
+    });
+  }
+}
+
+function normalizePayloadForWebhookEvent(
+  payload: unknown
+): Record<string, unknown> | undefined {
+  if (payload === undefined) return undefined;
+  if (payload && typeof payload === "object" && !Array.isArray(payload))
+    return payload as Record<string, unknown>;
+  return { value: payload };
+}
+
 export async function logSyncEvent(params: {
   storeId: number;
   tenantId?: number;
@@ -117,9 +230,7 @@ export async function logSyncEvent(params: {
   try {
     const db = await getDb();
     if (!db) return;
-
     const payload = normalizePayloadForWebhookEvent(params.payload);
-
     const webhookStatus =
       params.status === "success"
         ? "processed"
@@ -168,24 +279,80 @@ export async function logSyncEvent(params: {
   }
 }
 
-// ─── Register Shopify OAuth Routes ───────────────────────────────────────────
+async function applyMandatorySideEffects(
+  topic: string,
+  shopDomain: string,
+  payload: Record<string, unknown>
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  if (topic === "app/uninstalled") {
+    await db
+      .update(shopifyStores)
+      .set({ status: "uninstalled" })
+      .where(eq(shopifyStores.shopDomain, shopDomain));
+    return;
+  }
+  // GDPR redacts: we don't persist customer PII directly; ACK + audit log is correct.
+  void payload;
+}
+
+const ENTITY_MAP: Record<
+  string,
+  "product" | "order" | "customer" | "inventory" | "fulfillment" | "webhook"
+> = {
+  "products/create": "product",
+  "products/update": "product",
+  "products/delete": "product",
+  "orders/create": "order",
+  "orders/updated": "order",
+  "orders/cancelled": "order",
+  "orders/paid": "order",
+  "orders/fulfilled": "order",
+  "customers/create": "customer",
+  "customers/update": "customer",
+  "customers/delete": "customer",
+  "customers/data_request": "customer",
+  "customers/redact": "customer",
+  "shop/redact": "webhook",
+  "app/uninstalled": "webhook",
+  "inventory_levels/update": "inventory",
+  "fulfillments/create": "fulfillment",
+  "fulfillments/update": "fulfillment",
+};
+
 export function registerShopifyRoutes(app: Express) {
-  // ── Step 1: Initiate OAuth (/api/shopify/install) ──────────────────────────
   app.get(
     "/api/shopify/install",
-    (req: ExpressRequest, res: ExpressResponse) => {
+    async (req: ExpressRequest, res: ExpressResponse) => {
       const shop = ((req.query.shop as string) || "").trim().toLowerCase();
-      if (!shop || !/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
-        return res
-          .status(400)
-          .json({ error: "Invalid shop domain. Must end in .myshopify.com" });
-      }
-      if (!SHOPIFY_API_KEY) {
+      if (!isValidShopDomain(shop))
+        return res.status(400).json({
+          error: "Invalid shop domain. Must end in .myshopify.com",
+        });
+      if (!SHOPIFY_API_KEY)
         return res
           .status(500)
           .json({ error: "SHOPIFY_API_KEY not configured" });
-      }
+      const me = await resolveUserFromCookieHeader(req.headers.cookie ?? null);
+      if (!me)
+        return res
+          .status(401)
+          .json({ error: "Sign in before connecting a Shopify store" });
+
       const state = crypto.randomBytes(16).toString("hex");
+      try {
+        await storeOauthState({
+          state,
+          shop,
+          userId: me.id,
+          tenantId: me.tenantId,
+        });
+      } catch (e) {
+        console.error("[Shopify OAuth] storeOauthState failed:", e);
+        return res.status(500).json({ error: "Failed to initiate install" });
+      }
+
       const redirectUri = `${req.protocol}://${req.get("host")}/api/shopify/callback`;
       const installUrl =
         `https://${shop}/admin/oauth/authorize` +
@@ -193,132 +360,63 @@ export function registerShopifyRoutes(app: Express) {
         `&scope=${encodeURIComponent(REQUIRED_SCOPES)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&state=${state}`;
-      // Store state in a short-lived cookie for CSRF protection
+
       res.cookie("shopify_oauth_state", state, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        maxAge: 10 * 60 * 1000, // 10 minutes
+        sameSite: "lax",
+        maxAge: STATE_TTL_MS,
       });
       return res.redirect(installUrl);
     }
   );
 
-  // ── Step 2: OAuth Callback (/api/shopify/callback) ─────────────────────────
   app.get(
     "/api/shopify/callback",
     async (req: ExpressRequest, res: ExpressResponse) => {
-      const {
-        shop,
-        code,
-        state,
-        hmac: _hmac,
-      } = req.query as Record<string, string>;
+      const query = req.query as Record<string, string>;
+      const shop = (query.shop || "").toLowerCase();
+      const code = query.code || "";
+      const state = query.state || "";
 
-      // CSRF check
-      const storedState = req.cookies?.shopify_oauth_state;
-      if (!state || state !== storedState) {
-        return res.status(403).send("State mismatch — possible CSRF attack");
-      }
-
-      // HMAC validation
-      if (!validateHmac(req.query as Record<string, string>)) {
+      if (!isValidShopDomain(shop))
+        return res.status(400).send("Invalid shop domain");
+      if (!verifyOAuthCallbackHmac(query))
         return res.status(403).send("Invalid HMAC signature");
-      }
 
-      if (!shop || !code) {
-        return res.status(400).send("Missing shop or code");
+      const consumed = await consumeOauthState(state, shop);
+      if (!consumed)
+        return res
+          .status(403)
+          .send("State mismatch or expired — possible CSRF");
+      let userId = consumed.userId ?? 0;
+      let tenantId = consumed.tenantId;
+      if (!userId) {
+        const fallback = await resolveUserFromCookieHeader(
+          req.headers.cookie ?? null
+        );
+        if (!fallback)
+          return res.status(401).send("Sign in to complete Shopify install");
+        userId = fallback.id;
+        tenantId = fallback.tenantId;
       }
+      if (!shop || !code) return res.status(400).send("Missing shop or code");
 
       try {
-        // ── Exchange code for access token ──────────────────────────────────────
-        const tokenRes = await fetch(
-          `https://${shop}/admin/oauth/access_token`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              client_id: SHOPIFY_API_KEY,
-              client_secret: SHOPIFY_API_SECRET,
-              code,
-            }),
-          }
+        const tokenData = await exchangeCodeForToken(shop, code);
+        const shopProfile = await fetchShopProfile(
+          shop,
+          tokenData.access_token
         );
-
-        if (!tokenRes.ok) {
-          const err = await tokenRes.text();
-          console.error("[Shopify OAuth] Token exchange failed:", err);
-          return res.status(500).send("Token exchange failed");
-        }
-
-        const tokenData = (await tokenRes.json()) as {
-          access_token: string;
-          scope: string;
-        };
-
-        // ── Fetch shop details ──────────────────────────────────────────────────
-        const shopRes = await fetch(
-          `https://${shop}/admin/api/2024-01/shop.json`,
-          {
-            headers: { "X-Shopify-Access-Token": tokenData.access_token },
-          }
-        );
-        const shopData = shopRes.ok
-          ? (
-              (await shopRes.json()) as {
-                shop: {
-                  name: string;
-                  email: string;
-                  currency: string;
-                  plan_name: string;
-                };
-              }
-            ).shop
-          : null;
-
-        // ── Upsert store record ─────────────────────────────────────────────────
-        const db = await getDb();
-        if (!db) {
-          return res.status(500).send("Database unavailable");
-        }
-
-        const existing = await db
-          .select()
-          .from(shopifyStores)
-          .where(eq(shopifyStores.shopDomain, shop))
-          .limit(1);
-
-        if (existing.length > 0) {
-          await db
-            .update(shopifyStores)
-            .set({
-              accessToken: tokenData.access_token,
-              scopes: tokenData.scope,
-              shopName: shopData?.name,
-              shopEmail: shopData?.email,
-              shopCurrency: shopData?.currency ?? "USD",
-              shopPlan: shopData?.plan_name,
-              status: "active",
-            })
-            .where(eq(shopifyStores.shopDomain, shop));
-        } else {
-          // userId will be set to 0 for now — the user can link it from the dashboard
-          await db.insert(shopifyStores).values({
-            userId: 0,
-            shopDomain: shop,
-            accessToken: tokenData.access_token,
-            scopes: tokenData.scope,
-            shopName: shopData?.name,
-            shopEmail: shopData?.email,
-            shopCurrency: shopData?.currency ?? "USD",
-            shopPlan: shopData?.plan_name,
-            status: "active",
-          });
-        }
-
-        // Clear CSRF cookie
+        await upsertStore({
+          shopDomain: shop,
+          accessToken: tokenData.access_token,
+          scopes: tokenData.scope,
+          shopProfile,
+          userId,
+          tenantId,
+        });
         res.clearCookie("shopify_oauth_state");
-
-        // Redirect to success page
         return res.redirect(
           `/shopify/success?shop=${encodeURIComponent(shop)}`
         );
@@ -329,24 +427,29 @@ export function registerShopifyRoutes(app: Express) {
     }
   );
 
-  // ── Shopify Webhook Receiver (/api/shopify/webhook) ────────────────────────
   app.post(
     "/api/shopify/webhook",
     express.raw({ type: "application/json" }),
     async (req: ExpressRequest, res: ExpressResponse) => {
       const startTime = Date.now();
-      const rawBody = (req.body as Buffer).toString();
-      const hmacHeader = req.headers["x-shopify-hmac-sha256"] as string;
-      const topic = req.headers["x-shopify-topic"] as string;
-      const shopDomain = req.headers["x-shopify-shop-domain"] as string;
+      const rawBuffer = req.body as Buffer;
+      const rawBody = rawBuffer.toString();
+      const hmacHeader = (req.headers["x-shopify-hmac-sha256"] as string) || "";
+      const topic = (req.headers["x-shopify-topic"] as string) || "";
+      const shopDomain = (req.headers["x-shopify-shop-domain"] as string) || "";
+
       let payload: Record<string, unknown> = {};
       try {
         payload = JSON.parse(rawBody) as Record<string, unknown>;
       } catch {
-        // non-JSON payload
+        /* keep {} */
       }
 
-      // Find the store
+      const headers: Record<string, string | string[]> = {};
+      for (const [k, v] of Object.entries(req.headers)) {
+        if (v !== undefined) headers[k] = v as string | string[];
+      }
+
       const db = await getDb();
       let storeId = 0;
       let tenantId: number | undefined;
@@ -356,25 +459,13 @@ export function registerShopifyRoutes(app: Express) {
           .from(shopifyStores)
           .where(eq(shopifyStores.shopDomain, shopDomain))
           .limit(1);
-        if (stores.length > 0) {
+        if (stores.length) {
           storeId = stores[0].id;
           tenantId = stores[0].tenantId ?? undefined;
         }
       }
 
-      const webhookPayload = {
-        topic,
-        shopDomain,
-        id: payload.id,
-        payload,
-      };
-      const headers = Object.fromEntries(
-        Object.entries(req.headers).flatMap(([key, value]) =>
-          value === undefined ? [] : [[key, value]]
-        )
-      );
-
-      if (!validateShopifyWebhook(req.body as Buffer, hmacHeader)) {
+      if (!verifyWebhookHmac(rawBuffer, hmacHeader)) {
         await logSyncEvent({
           storeId,
           tenantId,
@@ -385,7 +476,7 @@ export function registerShopifyRoutes(app: Express) {
           status: "failed",
           latencyMs: Date.now() - startTime,
           errorMsg: "Invalid Shopify webhook signature",
-          payload: webhookPayload,
+          payload: { topic, shopDomain, id: payload.id, payload },
           headers,
           rawBody,
           shopDomain,
@@ -393,32 +484,19 @@ export function registerShopifyRoutes(app: Express) {
         return res.status(401).send("Unauthorized");
       }
 
-      // Determine entity type from topic
-      const entityMap: Record<
-        string,
-        | "product"
-        | "order"
-        | "customer"
-        | "inventory"
-        | "fulfillment"
-        | "webhook"
-      > = {
-        "products/create": "product",
-        "products/update": "product",
-        "products/delete": "product",
-        "orders/create": "order",
-        "orders/updated": "order",
-        "orders/cancelled": "order",
-        "orders/fulfilled": "order",
-        "customers/create": "customer",
-        "customers/update": "customer",
-        "customers/delete": "customer",
-        "inventory_levels/update": "inventory",
-        "fulfillments/create": "fulfillment",
-        "fulfillments/update": "fulfillment",
-      };
-      const entity = entityMap[topic] ?? "webhook";
+      const entity = ENTITY_MAP[topic] ?? "webhook";
       const entityId = (payload.id as string | number | undefined)?.toString();
+
+      if (MANDATORY_TOPICS.has(topic)) {
+        try {
+          await applyMandatorySideEffects(topic, shopDomain, payload);
+        } catch (e) {
+          console.error(
+            `[Shopify Webhook] mandatory side-effect failed (${topic}):`,
+            e
+          );
+        }
+      }
 
       await logSyncEvent({
         storeId,
@@ -429,7 +507,7 @@ export function registerShopifyRoutes(app: Express) {
         direction: "inbound",
         status: "success",
         latencyMs: Date.now() - startTime,
-        payload: webhookPayload,
+        payload: { topic, shopDomain, id: payload.id, payload },
         headers,
         rawBody,
         shopDomain,
@@ -441,38 +519,18 @@ export function registerShopifyRoutes(app: Express) {
   );
 }
 
-function normalizePayloadForWebhookEvent(
-  payload: unknown
-): Record<string, unknown> | undefined {
-  if (payload === undefined) {
-    return undefined;
-  }
-
-  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
-    return payload as Record<string, unknown>;
-  }
-
-  return { value: payload };
-}
-
-// ─── Register Shopify Fetch Routes (Netlify production) ──────────────────────
-// Parallels registerPayPalFetchRoutes / registerSquareFetchRoutes. The Express
-// version (registerShopifyRoutes) only runs in local dev; Netlify Functions
-// dispatch through server/_core/nonTrpcRoutes.ts, which calls this Fetch
-// handler. Returning null falls through to tRPC.
 export async function registerShopifyFetchRoutes(
   req: Request
 ): Promise<Response | null> {
   const url = new URL(req.url);
   const path = url.pathname;
 
-  // ── POST /api/shopify/webhook ─────────────────────────────────────────────
   if (path === "/api/shopify/webhook" && req.method === "POST") {
     const startTime = Date.now();
     const rawBytes = new Uint8Array(await req.arrayBuffer());
     const rawBuffer = Buffer.from(rawBytes);
     const rawBody = rawBuffer.toString("utf-8");
-    const hmacHeader = req.headers.get("x-shopify-hmac-sha256") || "";
+    const hmacHeader = req.headers.get("x-shopify-hmac-sha256");
     const topic = req.headers.get("x-shopify-topic") || "";
     const shopDomain = req.headers.get("x-shopify-shop-domain") || "";
 
@@ -480,10 +538,14 @@ export async function registerShopifyFetchRoutes(
     try {
       payload = JSON.parse(rawBody) as Record<string, unknown>;
     } catch {
-      // non-JSON payload — leave as {}
+      /* keep {} */
     }
 
-    // Resolve store + tenant from shopDomain
+    const headersRecord: Record<string, string> = {};
+    req.headers.forEach((v, k) => {
+      headersRecord[k] = v;
+    });
+
     const db = await getDb();
     let storeId = 0;
     let tenantId: number | undefined;
@@ -493,25 +555,13 @@ export async function registerShopifyFetchRoutes(
         .from(shopifyStores)
         .where(eq(shopifyStores.shopDomain, shopDomain))
         .limit(1);
-      if (stores.length > 0) {
+      if (stores.length) {
         storeId = stores[0].id;
         tenantId = stores[0].tenantId ?? undefined;
       }
     }
 
-    const headersRecord: Record<string, string> = {};
-    req.headers.forEach((value, key) => {
-      headersRecord[key] = value;
-    });
-
-    const webhookPayload = {
-      topic,
-      shopDomain,
-      id: payload.id,
-      payload,
-    };
-
-    if (!validateShopifyWebhook(rawBuffer, hmacHeader)) {
+    if (!verifyWebhookHmac(rawBuffer, hmacHeader)) {
       await logSyncEvent({
         storeId,
         tenantId,
@@ -522,7 +572,7 @@ export async function registerShopifyFetchRoutes(
         status: "failed",
         latencyMs: Date.now() - startTime,
         errorMsg: "Invalid Shopify webhook signature",
-        payload: webhookPayload,
+        payload: { topic, shopDomain, id: payload.id, payload },
         headers: headersRecord,
         rawBody,
         shopDomain,
@@ -530,27 +580,19 @@ export async function registerShopifyFetchRoutes(
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const entityMap: Record<
-      string,
-      "product" | "order" | "customer" | "inventory" | "fulfillment" | "webhook"
-    > = {
-      "products/create": "product",
-      "products/update": "product",
-      "products/delete": "product",
-      "orders/create": "order",
-      "orders/updated": "order",
-      "orders/cancelled": "order",
-      "orders/paid": "order",
-      "orders/fulfilled": "order",
-      "customers/create": "customer",
-      "customers/update": "customer",
-      "customers/delete": "customer",
-      "inventory_levels/update": "inventory",
-      "fulfillments/create": "fulfillment",
-      "fulfillments/update": "fulfillment",
-    };
-    const entity = entityMap[topic] ?? "webhook";
+    const entity = ENTITY_MAP[topic] ?? "webhook";
     const entityId = (payload.id as string | number | undefined)?.toString();
+
+    if (MANDATORY_TOPICS.has(topic)) {
+      try {
+        await applyMandatorySideEffects(topic, shopDomain, payload);
+      } catch (e) {
+        console.error(
+          `[Shopify Webhook] mandatory side-effect failed (${topic}):`,
+          e
+        );
+      }
+    }
 
     await logSyncEvent({
       storeId,
@@ -561,32 +603,49 @@ export async function registerShopifyFetchRoutes(
       direction: "inbound",
       status: "success",
       latencyMs: Date.now() - startTime,
-      payload: webhookPayload,
+      payload: { topic, shopDomain, id: payload.id, payload },
       headers: headersRecord,
       rawBody,
       shopDomain,
     });
-
-    console.log(`[Shopify Webhook] ${topic} from ${shopDomain}`);
     return new Response("OK", { status: 200 });
   }
 
-  // ── GET /api/shopify/install ──────────────────────────────────────────────
   if (path === "/api/shopify/install" && req.method === "GET") {
     const shop = (url.searchParams.get("shop") || "").trim().toLowerCase();
-    if (!shop || !/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
+    if (!isValidShopDomain(shop))
       return Response.json(
         { error: "Invalid shop domain. Must end in .myshopify.com" },
         { status: 400 }
       );
-    }
-    if (!SHOPIFY_API_KEY) {
+    if (!SHOPIFY_API_KEY)
       return Response.json(
         { error: "SHOPIFY_API_KEY not configured" },
         { status: 500 }
       );
-    }
+    const me = await resolveUserFromCookieHeader(req.headers.get("cookie"));
+    if (!me)
+      return Response.json(
+        { error: "Sign in before connecting a Shopify store" },
+        { status: 401 }
+      );
+
     const state = crypto.randomBytes(16).toString("hex");
+    try {
+      await storeOauthState({
+        state,
+        shop,
+        userId: me.id,
+        tenantId: me.tenantId,
+      });
+    } catch (e) {
+      console.error("[Shopify OAuth] storeOauthState failed:", e);
+      return Response.json(
+        { error: "Failed to initiate install" },
+        { status: 500 }
+      );
+    }
+
     const redirectUri = `${url.origin}/api/shopify/callback`;
     const installUrl =
       `https://${shop}/admin/oauth/authorize` +
@@ -601,119 +660,61 @@ export async function registerShopifyFetchRoutes(
     });
     res.headers.append(
       "Set-Cookie",
-      `shopify_oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${
-        process.env.NODE_ENV === "production" ? "; Secure" : ""
-      }`
+      `shopify_oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(
+        STATE_TTL_MS / 1000
+      )}${process.env.NODE_ENV === "production" ? "; Secure" : ""}`
     );
     return res;
   }
 
-  // ── GET /api/shopify/callback ─────────────────────────────────────────────
   if (path === "/api/shopify/callback" && req.method === "GET") {
-    const shop = url.searchParams.get("shop") || "";
+    const shop = (url.searchParams.get("shop") || "").toLowerCase();
     const code = url.searchParams.get("code") || "";
     const state = url.searchParams.get("state") || "";
 
-    // CSRF check (state cookie)
-    const cookieHeader = req.headers.get("cookie") || "";
-    const m = cookieHeader.match(/(?:^|;\s*)shopify_oauth_state=([^;]+)/);
-    const storedState = m ? decodeURIComponent(m[1]) : null;
-    if (!state || state !== storedState) {
-      return new Response("State mismatch — possible CSRF attack", {
-        status: 403,
-      });
-    }
+    if (!isValidShopDomain(shop))
+      return new Response("Invalid shop domain", { status: 400 });
 
-    // HMAC validation across query
     const queryEntries: Record<string, string> = {};
     url.searchParams.forEach((v, k) => {
       queryEntries[k] = v;
     });
-    if (!validateHmac(queryEntries)) {
+    if (!verifyOAuthCallbackHmac(queryEntries))
       return new Response("Invalid HMAC signature", { status: 403 });
-    }
 
-    if (!shop || !code) {
-      return new Response("Missing shop or code", { status: 400 });
+    const consumed = await consumeOauthState(state, shop);
+    if (!consumed)
+      return new Response("State mismatch or expired — possible CSRF", {
+        status: 403,
+      });
+
+    let userId = consumed.userId ?? 0;
+    let tenantId = consumed.tenantId;
+    if (!userId) {
+      const fallback = await resolveUserFromCookieHeader(
+        req.headers.get("cookie")
+      );
+      if (!fallback)
+        return new Response("Sign in to complete Shopify install", {
+          status: 401,
+        });
+      userId = fallback.id;
+      tenantId = fallback.tenantId;
     }
+    if (!shop || !code)
+      return new Response("Missing shop or code", { status: 400 });
 
     try {
-      const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          client_id: SHOPIFY_API_KEY,
-          client_secret: SHOPIFY_API_SECRET,
-          code,
-        }),
+      const tokenData = await exchangeCodeForToken(shop, code);
+      const shopProfile = await fetchShopProfile(shop, tokenData.access_token);
+      await upsertStore({
+        shopDomain: shop,
+        accessToken: tokenData.access_token,
+        scopes: tokenData.scope,
+        shopProfile,
+        userId,
+        tenantId,
       });
-      if (!tokenRes.ok) {
-        const err = await tokenRes.text();
-        console.error("[Shopify OAuth] Token exchange failed:", err);
-        return new Response("Token exchange failed", { status: 500 });
-      }
-      const tokenData = (await tokenRes.json()) as {
-        access_token: string;
-        scope: string;
-      };
-
-      const shopRes = await fetch(
-        `https://${shop}/admin/api/2024-01/shop.json`,
-        {
-          headers: { "X-Shopify-Access-Token": tokenData.access_token },
-        }
-      );
-      const shopData = shopRes.ok
-        ? (
-            (await shopRes.json()) as {
-              shop: {
-                name: string;
-                email: string;
-                currency: string;
-                plan_name: string;
-              };
-            }
-          ).shop
-        : null;
-
-      const db = await getDb();
-      if (!db) {
-        return new Response("Database unavailable", { status: 500 });
-      }
-
-      const existing = await db
-        .select()
-        .from(shopifyStores)
-        .where(eq(shopifyStores.shopDomain, shop))
-        .limit(1);
-
-      if (existing.length > 0) {
-        await db
-          .update(shopifyStores)
-          .set({
-            accessToken: tokenData.access_token,
-            scopes: tokenData.scope,
-            shopName: shopData?.name,
-            shopEmail: shopData?.email,
-            shopCurrency: shopData?.currency ?? "USD",
-            shopPlan: shopData?.plan_name,
-            status: "active",
-          })
-          .where(eq(shopifyStores.shopDomain, shop));
-      } else {
-        await db.insert(shopifyStores).values({
-          userId: 0,
-          shopDomain: shop,
-          accessToken: tokenData.access_token,
-          scopes: tokenData.scope,
-          shopName: shopData?.name,
-          shopEmail: shopData?.email,
-          shopCurrency: shopData?.currency ?? "USD",
-          shopPlan: shopData?.plan_name,
-          status: "active",
-        });
-      }
-
       const res = new Response(null, {
         status: 302,
         headers: {
@@ -731,6 +732,8 @@ export async function registerShopifyFetchRoutes(
     }
   }
 
-  // Unhandled — fall through to tRPC
   return null;
 }
+
+// Legacy compat — remove after callsites grepped clean
+export { verifyWebhookHmac as validateShopifyWebhook } from "./_core/shopifyHmac";

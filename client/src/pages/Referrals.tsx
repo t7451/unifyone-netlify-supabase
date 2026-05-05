@@ -35,6 +35,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import IncomeCalculator from "@/components/referral/IncomeCalculator";
 
 const CREDIT_RATES = [
   { action: "Someone clicks your link", credits: 0, note: "Tracking only" },
@@ -405,6 +406,12 @@ export default function Referrals() {
                 100 credits = $1 off your next subscription invoice. Min
                 redemption: 100 credits.
               </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <IncomeCalculator />
             </CardContent>
           </Card>
 
