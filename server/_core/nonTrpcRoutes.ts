@@ -41,6 +41,12 @@ export async function buildNonTrpcHandler(): Promise<
     })),
   ]);
 
+  const { registerPostmanFetchRoutes } = await import("../postman").catch(
+    () => ({
+      registerPostmanFetchRoutes: null as unknown as FetchHandler | null,
+    })
+  );
+
   const { registerUploadFetchRoutes } = await import("../uploads").catch(
     () => ({
       registerUploadFetchRoutes: null as unknown as FetchHandler | null,
@@ -139,6 +145,16 @@ export async function buildNonTrpcHandler(): Promise<
     if (path.startsWith("/api/uploads/") && registerUploadFetchRoutes) {
       try {
         const result = await (registerUploadFetchRoutes as FetchHandler)(req);
+        if (result) return result;
+      } catch (e: unknown) {
+        return Response.json({ error: (e as Error).message }, { status: 500 });
+      }
+    }
+
+    // Postman collection + environment JSON. Public.
+    if (path.startsWith("/api/postman/") && registerPostmanFetchRoutes) {
+      try {
+        const result = await (registerPostmanFetchRoutes as FetchHandler)(req);
         if (result) return result;
       } catch (e: unknown) {
         return Response.json({ error: (e as Error).message }, { status: 500 });
