@@ -1,9 +1,9 @@
 # UnifyOne / 1commerce.online — Platform Scope Finalization
 
 **Status as of:** 2026-05-05  
-**Repo:** [`t7451/unifyone-netlify-supabase`](https://github.com/t7451/unifyone-netlify-supabase) — HEAD `df2d4cb`  
+**Repo:** [`t7451/unifyone-netlify-supabase`](https://github.com/t7451/unifyone-netlify-supabase) — HEAD `8eb6004`  
 **Production:** <https://1commerce.online>  
-**Cathedral phase:** Foundation ✅ → Revenue ✅ → Systems ✅ → Scale ✅ (this round closed Scale)
+**Cathedral phase:** Foundation ✅ → Revenue ✅ → Systems ✅ → Scale ✅ (this round closed Scale + scope-A polish)
 
 ---
 
@@ -57,6 +57,12 @@ The UX surface area users actually touch every day.
 - **Image upload via Netlify Blobs (`ab8556b`, Item 3):** `POST /api/uploads/image` Fetch route, multipart form data, image/\* only, max 5MB, auth-gated. Stores in `uploads` blob store keyed `t<tenantId>/u<userId>/<ts>-<rand>.<ext>`. Re-served via `GET /api/uploads/image/:key` with immutable cache headers. Lazy-imports `@netlify/blobs` so local dev returns 501 with a clear message instead of crashing.
 - **Discounts / Coupons (`7f30151`, Item 4):** new `discounts` table with (tenantId, code) unique index, type enum (percentage|fixed). Apply via `pnpm drizzle-kit push` (NOT migrate). Router has list/create/update/toggleActive/delete + `resolveCode` for checkout validation. Page at `/discounts` with toggle/delete/create dialog. Code uppercased + regex-validated; CONFLICT on duplicate.
 - **Settings sidebar Billing + Team (`c297ee3`, Item 5):** SettingsLayout.tsx surfaces the existing top-level `/billing` and `/team` routes from inside the settings group so users find them without bouncing to the dashboard nav.
+
+### Scope-A polish — shipped 2026-05-05 (post-finalization)
+
+- **Discount code at checkout (`f9c484f`):** `orders.create` accepts an optional `discountCode`. Server resolves against `discounts` table (uppercase, validity window, usage cap), computes `discountAmount`, stamps it in `orders.discountAmount`, and increments `discounts.usageCount` atomically post-insert. Failed lookups silently produce a 0 discount so a typo never blocks checkout. Audit log row on apply.
+- **Subscription plan switching (`8c466e6`):** `subscription.changePlan({ planSlug, billingCycle })` patches the active Stripe subscription via `stripe.subscriptions.update` with `proration_behavior="create_prorations"`. Resolves target Stripe price id from `plans.stripePriceIdMonthly|Yearly`. Refuses if no active subscription; no-op success if already on that plan/cycle. Audit log severity=high (recurring revenue change).
+- **`customers.notes` restored (`d01099e`):** schema, server input, and `AddCustomerDialog` UI all carry the field again. Apply via `pnpm drizzle-kit push` before deploying.
 
 ---
 
