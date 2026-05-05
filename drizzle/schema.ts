@@ -1948,3 +1948,38 @@ export const deployEvents = pgTable(
 );
 export type DeployEvent = typeof deployEvents.$inferSelect;
 export type InsertDeployEvent = typeof deployEvents.$inferInsert;
+
+// ── Discounts / Coupons ──────────────────────────────────────────────────────
+// Per-tenant promo codes. `code` is unique per tenant (composite). usageLimit
+// of 0 means unlimited. validFrom / validUntil are nullable for "always valid".
+export const discountTypeEnum = pgEnum("discount_type", ["percentage", "fixed"]);
+
+export const discounts = pgTable(
+  "discounts",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull(),
+    code: varchar("code", { length: 64 }).notNull(),
+    description: text("description"),
+    type: discountTypeEnum("type").notNull(),
+    value: varchar("value", { length: 32 }).notNull(),
+    currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+    validFrom: timestamp("validFrom"),
+    validUntil: timestamp("validUntil"),
+    usageLimit: integer("usageLimit").default(0).notNull(),
+    usageCount: integer("usageCount").default(0).notNull(),
+    isActive: boolean("isActive").default(true).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  (table) => ({
+    tenantCodeUniq: uniqueIndex("discounts_tenant_code_uniq").on(
+      table.tenantId,
+      table.code
+    ),
+  })
+);
+
+export type Discount = typeof discounts.$inferSelect;
+export type InsertDiscount = typeof discounts.$inferInsert;
+

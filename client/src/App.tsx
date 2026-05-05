@@ -14,6 +14,7 @@ import { getLoginUrl } from "./const";
 import { trpc } from "./lib/trpc";
 
 const Home = lazy(() => import("./pages/Home"));
+const Discounts = lazy(() => import("./pages/Discounts"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Products = lazy(() => import("./pages/Products"));
 const Orders = lazy(() => import("./pages/Orders"));
@@ -564,14 +565,23 @@ function Router() {
           </DashboardRoute>
         )}
       />
+      <Route
+        path="/discounts"
+        component={() => (
+          <DashboardRoute>
+            <Discounts />
+          </DashboardRoute>
+        )}
+      />
       <Route path="/404" component={() => <NotFound />} />
       <Route>{() => <NotFound />}</Route>
     </Switch>
   );
 }
 
-const CLERK_PUBLISHABLE_KEY = import.meta.env
-  .VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
+  | string
+  | undefined;
 
 function AppWithOptionalClerk({ children }: { children: ReactNode }) {
   if (!CLERK_PUBLISHABLE_KEY) return <>{children}</>;
