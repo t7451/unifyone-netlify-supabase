@@ -23,6 +23,7 @@ import {
   Star,
 } from "lucide-react";
 import { useState } from "react";
+import { ChangePlanCard } from "@/components/ChangePlanCard";
 
 function formatCurrency(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", {
@@ -510,6 +511,7 @@ export default function Billing() {
           )}
         </div>
       </div>
+      <ChangePlanCard />
     </DashboardLayout>
   );
 }
