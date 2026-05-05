@@ -22,6 +22,7 @@ import { Sentry } from "./sentry";
 import { registerCustomAuthExpressRoutes } from "./customAuthRoutes";
 import { registerCliWebSocket } from "./cliWebSocket";
 import { resolveDatabaseUrl } from "../lib/databaseUrl";
+import { getNgrokUrl, startNgrokTunnel } from "./ngrok";
 
 /** Validate critical environment variables before the server accepts traffic. */
 function validateEnv() {
@@ -140,6 +141,10 @@ function corsMiddleware(): express.RequestHandler {
 
   return (req, res, next) => {
     const origin = req.headers.origin;
+    // Allow the active ngrok tunnel as a CORS origin in dev. Resolved lazily
+    // because the tunnel URL isn't known at middleware-construction time.
+    const ngrokUrl = !ENV.isProduction ? getNgrokUrl() : null;
+    if (ngrokUrl) allowList.add(ngrokUrl);
     if (typeof origin === "string" && allowList.has(origin)) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -200,6 +205,13 @@ async function startServer() {
   app.use(corsMiddleware());
   // Docker health/readiness/metrics routes (no auth, no body parsing needed)
   registerDockerRoutes(app);
+  // Dev-only: surface the active ngrok tunnel URL so the client (and Kai)
+  // can display/copy it. Disabled in production to avoid leaking infra info.
+  if (!ENV.isProduction) {
+    app.get("/api/dev/ngrok", (_req, res) => {
+      res.json({ url: getNgrokUrl(), enabled: process.env.NGROK_ENABLED === "true" });
+    });
+  }
   // Register Stripe webhook BEFORE json middleware (requires raw body for signature verification)
   registerStripeRoutes(app);
   // Register PayPal REST API routes
@@ -288,6 +300,10 @@ async function startServer() {
       env: process.env.NODE_ENV ?? "development",
       url: `http://localhost:${port}/`,
     });
+    // Start the ngrok tunnel after the HTTP server is listening so the
+    // forwarded address is immediately reachable. Failure is non-fatal —
+    // the local server keeps running without a public URL.
+    void startNgrokTunnel(port);
   });
 
   // Register WebSocket PTY relay for the in-website CLI (/api/cli/pty)

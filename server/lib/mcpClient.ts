@@ -14,9 +14,13 @@
  *   const result = await mcpClient.callTool("listStores", { tenantId });
  */
 
+import { resolveKaiMcpUrl } from "../_core/ngrok";
+
+// resolveKaiMcpUrl is the single source of truth for env-based precedence:
+// it honors KAI_MCP_NGROK_URL outside production, then falls back to
+// MCP_WORKER_URL. The default below covers the case where neither is set.
 export const MCP_WORKER_URL =
-  process.env.MCP_WORKER_URL ??
-  "https://unify0ne-mcp.skdev-371.workers.dev";
+  resolveKaiMcpUrl() || "https://unify0ne-mcp.skdev-371.workers.dev";
 
 const MCP_ENDPOINT = `${MCP_WORKER_URL}/mcp`;
 
