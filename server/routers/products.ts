@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
   bulkArchiveProducts,
+  bulkDeleteProducts,
   bulkUpdateProductStatus,
   createProduct,
   deleteProduct,
@@ -186,6 +187,18 @@ export const productsRouter = router({
       const tenantId = requireTenant(ctx.user.tenantId);
       const updatedCount = await bulkArchiveProducts(tenantId, input.ids);
       return { success: true, updatedCount };
+    }),
+
+  bulkDelete: protectedProcedure
+    .input(
+      z.object({
+        ids: z.array(z.number()).min(1).max(500),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = requireTenant(ctx.user.tenantId);
+      const deletedCount = await bulkDeleteProducts(tenantId, input.ids);
+      return { success: true, deletedCount };
     }),
 
   // Inventory

@@ -276,8 +276,9 @@ export default function Products() {
   );
   const [editTouched, setEditTouched] = useState<Record<string, boolean>>({});
   const [bulkAction, setBulkAction] = useState<
-    "active" | "draft" | "archive" | null
+    "active" | "draft" | "archive" | "delete" | null
   >(null);
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
   const utils = trpc.useUtils();
 
   const getErrors = (f: ProductForm, touched: Record<string, boolean>) => {
@@ -349,6 +350,20 @@ export default function Products() {
       toast.success(`Archived ${data.updatedCount} product(s)`);
       setSelectedIds([]);
       setBulkAction(null);
+      utils.products.list.invalidate();
+    },
+    onError: e => {
+      setBulkAction(null);
+      toast.error(e.message);
+    },
+  });
+
+  const bulkDeleteMutation = trpc.products.bulkDelete.useMutation({
+    onSuccess: data => {
+      toast.success(`Deleted ${data.deletedCount} product(s)`);
+      setSelectedIds([]);
+      setBulkAction(null);
+      setBulkDeleteConfirmOpen(false);
       utils.products.list.invalidate();
     },
     onError: e => {
@@ -442,7 +457,9 @@ export default function Products() {
     productList.length > 0 &&
     productList.every(p => selectedIds.includes(p.id));
   const isBulkPending =
-    bulkUpdateStatusMutation.isPending || bulkArchiveMutation.isPending;
+    bulkUpdateStatusMutation.isPending ||
+    bulkArchiveMutation.isPending ||
+    bulkDeleteMutation.isPending;
 
   const toggleSelection = (id: number) => {
     setSelectedIds(prev =>
@@ -634,14 +651,66 @@ export default function Products() {
             variant="outline"
             disabled={isBulkPending}
             className="border-red-500/40 text-red-400 hover:text-red-300 hover:bg-red-500/10"
-            onClick={() => {
-              toast.info("Bulk delete coming soon");
-            }}
+            onClick={() => setBulkDeleteConfirmOpen(true)}
           >
-            Delete Selected
+            {bulkAction === "delete" && bulkDeleteMutation.isPending ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              "Delete Selected"
+            )}
           </Button>
         </div>
       )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog
+        open={bulkDeleteConfirmOpen}
+        onOpenChange={setBulkDeleteConfirmOpen}
+      >
+        <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white text-lg flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+              Delete {selectedIds.length} product
+              {selectedIds.length === 1 ? "" : "s"}?
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-gray-400 text-sm">
+            This will permanently delete the selected products and their
+            inventory records. This cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setBulkDeleteConfirmOpen(false)}
+              disabled={bulkDeleteMutation.isPending}
+              className="border-white/10 text-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-red-500/90 hover:bg-red-500 text-white"
+              disabled={bulkDeleteMutation.isPending}
+              onClick={() => {
+                setBulkAction("delete");
+                bulkDeleteMutation.mutate({ ids: selectedIds });
+              }}
+            >
+              {bulkDeleteMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Permanently"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Product Grid */}
       {products.isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

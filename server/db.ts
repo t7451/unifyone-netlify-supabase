@@ -322,6 +322,15 @@ export async function bulkArchiveProducts(tenantId: number, ids: number[]) {
   return bulkUpdateProductStatus(tenantId, ids, "archived");
 }
 
+export async function bulkDeleteProducts(tenantId: number, ids: number[]) {
+  const db = await getDb();
+  if (!db || ids.length === 0) return 0;
+  const result = await db
+    .delete(products)
+    .where(and(eq(products.tenantId, tenantId), inArray(products.id, ids)));
+  return result.rowCount ?? 0;
+}
+
 export async function getProductCount(tenantId: number) {
   const db = await getDb();
   if (!db) return 0;
