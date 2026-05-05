@@ -2,16 +2,21 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resolveKaiMcpUrl } from "./ngrok";
 
 describe("resolveKaiMcpUrl", () => {
-  const originalEnv = { ...process.env };
+  const saved: Record<string, string | undefined> = {};
+  const keys = ["KAI_MCP_NGROK_URL", "MCP_WORKER_URL", "NODE_ENV"] as const;
 
   beforeEach(() => {
-    delete process.env.KAI_MCP_NGROK_URL;
-    delete process.env.MCP_WORKER_URL;
-    delete process.env.NODE_ENV;
+    for (const k of keys) {
+      saved[k] = process.env[k];
+      delete process.env[k];
+    }
   });
 
   afterEach(() => {
-    process.env = { ...originalEnv };
+    for (const k of keys) {
+      if (saved[k] === undefined) delete process.env[k];
+      else process.env[k] = saved[k];
+    }
   });
 
   it("returns KAI_MCP_NGROK_URL when set outside production", () => {

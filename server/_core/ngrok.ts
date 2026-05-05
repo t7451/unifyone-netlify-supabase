@@ -35,12 +35,16 @@ export async function startNgrokTunnel(port: number): Promise<string | null> {
 
   // Dynamic import keeps @ngrok/ngrok an optional dep — production builds
   // and CI environments without it installed must not crash on startup.
-  // Typed as unknown because the package may be absent at type-check time.
-  let ngrok: { forward: (opts: Record<string, unknown>) => Promise<{ url: () => string | null }> };
+  // The module name is held in a variable so `tsc --noEmit` doesn't try to
+  // resolve types for a package that may not be installed.
+  let ngrok: {
+    forward: (
+      opts: Record<string, unknown>
+    ) => Promise<{ url: () => string | null }>;
+  };
+  const ngrokModuleName = "@ngrok/ngrok";
   try {
-    ngrok = (await import(
-      /* @vite-ignore */ "@ngrok/ngrok"
-    )) as unknown as typeof ngrok;
+    ngrok = (await import(ngrokModuleName)) as unknown as typeof ngrok;
   } catch {
     logger.warn(
       "[ngrok] @ngrok/ngrok is not installed — run `pnpm add -D @ngrok/ngrok` to enable tunnels."

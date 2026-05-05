@@ -105,9 +105,6 @@
     "ws": "^8.20.0",
     "zod": "^4.1.12"
   },
-  "optionalDependencies": {
-    "@ngrok/ngrok": "^1.4.1"
-  },
   "devDependencies": {
     "@builder.io/vite-plugin-jsx-loc": "^0.1.1",
     "@eslint/js": "^9.0.0",
