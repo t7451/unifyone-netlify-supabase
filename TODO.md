@@ -1,9 +1,9 @@
 # UnifyOne / 1commerce.online — Platform Scope Finalization
 
 **Status as of:** 2026-05-05  
-**Repo:** [`t7451/unifyone-netlify-supabase`](https://github.com/t7451/unifyone-netlify-supabase) — HEAD `8eb6004`  
+**Repo:** [`t7451/unifyone-netlify-supabase`](https://github.com/t7451/unifyone-netlify-supabase) — HEAD `c34e979`  
 **Production:** <https://1commerce.online>  
-**Cathedral phase:** Foundation ✅ → Revenue ✅ → Systems ✅ → Scale ✅ (this round closed Scale + scope-A polish)
+**Cathedral phase:** Foundation ✅ → Revenue ✅ → Systems ✅ → Scale ✅ (Scale + scope-A polish + scope-B polish all closed)
 
 ---
 
@@ -63,6 +63,13 @@ The UX surface area users actually touch every day.
 - **Discount code at checkout (`f9c484f`):** `orders.create` accepts an optional `discountCode`. Server resolves against `discounts` table (uppercase, validity window, usage cap), computes `discountAmount`, stamps it in `orders.discountAmount`, and increments `discounts.usageCount` atomically post-insert. Failed lookups silently produce a 0 discount so a typo never blocks checkout. Audit log row on apply.
 - **Subscription plan switching (`8c466e6`):** `subscription.changePlan({ planSlug, billingCycle })` patches the active Stripe subscription via `stripe.subscriptions.update` with `proration_behavior="create_prorations"`. Resolves target Stripe price id from `plans.stripePriceIdMonthly|Yearly`. Refuses if no active subscription; no-op success if already on that plan/cycle. Audit log severity=high (recurring revenue change).
 - **`customers.notes` restored (`d01099e`):** schema, server input, and `AddCustomerDialog` UI all carry the field again. Apply via `pnpm drizzle-kit push` before deploying.
+
+### Scope-B polish — shipped 2026-05-05 evening
+
+- **Postman v2.1 collection (`87d9fc0`):** `GET /api/postman/collection.json` returns a Postman collection covering Health, Auth, Payments (Stripe/PayPal/Square), Shopify, Uploads, Affiliate Tracking, Admin, and a tRPC envelope example. `GET /api/postman/environment.json?env=production|local` returns matching environment file. Three vars: `base_url`, `api_key` (uo*live*_/uo*test*_), `admin_api_key`. Drop into Postman and you're hitting UnifyOne in 30 seconds.
+- **`<ChangePlanCard />` on /billing (`c34e979`):** wires `subscription.changePlan` into the existing Billing page with monthly/yearly toggle, current-plan badge, per-plan loading state, and a proration warning. `subscription.getStatus` invalidates on success.
+- **Shopify hardening (`0d8b929`, external PR):** encrypted tokens at rest, DB-backed CSRF, mandatory webhooks, income calculator.
+- **Axios bump (`bda25c4`, dependabot):** moderate vuln resolved.
 
 ---
 
