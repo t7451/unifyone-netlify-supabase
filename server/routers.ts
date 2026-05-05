@@ -45,6 +45,7 @@ import { shopifyThemeRouter } from "./routers/shopifyTheme";
 import { terpforgeRouter } from "./routers/terpforge";
 import { knowledgeGraphRouter } from "./routers/knowledgeGraph";
 import { pixelforgeRouter } from "./routers/pixelforge";
+import { customersRouter } from "./routers/customers";
 
 export const appRouter = router({
   system: systemRouter,
@@ -122,6 +123,8 @@ export const appRouter = router({
   terpforge: terpforgeRouter,
   knowledgeGraph: knowledgeGraphRouter,
   pixelforge: pixelforgeRouter,
+
+  customers: customersRouter,
 });
 
 export type AppRouter = typeof appRouter;
