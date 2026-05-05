@@ -1,4 +1,8 @@
-import express, { type Express, type Request, type Response } from "express";
+import express, {
+  type Express,
+  type Request as ExpressRequest,
+  type Response as ExpressResponse,
+} from "express";
 import crypto from "crypto";
 import { getDb } from "./db";
 import {
@@ -167,116 +171,140 @@ export async function logSyncEvent(params: {
 // ─── Register Shopify OAuth Routes ───────────────────────────────────────────
 export function registerShopifyRoutes(app: Express) {
   // ── Step 1: Initiate OAuth (/api/shopify/install) ──────────────────────────
-  app.get("/api/shopify/install", (req: Request, res: Response) => {
-    const shop = ((req.query.shop as string) || "").trim().toLowerCase();
-    if (!shop || !/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
-      return res
-        .status(400)
-        .json({ error: "Invalid shop domain. Must end in .myshopify.com" });
+  app.get(
+    "/api/shopify/install",
+    (req: ExpressRequest, res: ExpressResponse) => {
+      const shop = ((req.query.shop as string) || "").trim().toLowerCase();
+      if (!shop || !/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(shop)) {
+        return res
+          .status(400)
+          .json({ error: "Invalid shop domain. Must end in .myshopify.com" });
+      }
+      if (!SHOPIFY_API_KEY) {
+        return res
+          .status(500)
+          .json({ error: "SHOPIFY_API_KEY not configured" });
+      }
+      const state = crypto.randomBytes(16).toString("hex");
+      const redirectUri = `${req.protocol}://${req.get("host")}/api/shopify/callback`;
+      const installUrl =
+        `https://${shop}/admin/oauth/authorize` +
+        `?client_id=${SHOPIFY_API_KEY}` +
+        `&scope=${encodeURIComponent(REQUIRED_SCOPES)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&state=${state}`;
+      // Store state in a short-lived cookie for CSRF protection
+      res.cookie("shopify_oauth_state", state, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 10 * 60 * 1000, // 10 minutes
+      });
+      return res.redirect(installUrl);
     }
-    if (!SHOPIFY_API_KEY) {
-      return res.status(500).json({ error: "SHOPIFY_API_KEY not configured" });
-    }
-    const state = crypto.randomBytes(16).toString("hex");
-    const redirectUri = `${req.protocol}://${req.get("host")}/api/shopify/callback`;
-    const installUrl =
-      `https://${shop}/admin/oauth/authorize` +
-      `?client_id=${SHOPIFY_API_KEY}` +
-      `&scope=${encodeURIComponent(REQUIRED_SCOPES)}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&state=${state}`;
-    // Store state in a short-lived cookie for CSRF protection
-    res.cookie("shopify_oauth_state", state, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 10 * 60 * 1000, // 10 minutes
-    });
-    return res.redirect(installUrl);
-  });
+  );
 
   // ── Step 2: OAuth Callback (/api/shopify/callback) ─────────────────────────
-  app.get("/api/shopify/callback", async (req: Request, res: Response) => {
-    const {
-      shop,
-      code,
-      state,
-      hmac: _hmac,
-    } = req.query as Record<string, string>;
+  app.get(
+    "/api/shopify/callback",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const {
+        shop,
+        code,
+        state,
+        hmac: _hmac,
+      } = req.query as Record<string, string>;
 
-    // CSRF check
-    const storedState = req.cookies?.shopify_oauth_state;
-    if (!state || state !== storedState) {
-      return res.status(403).send("State mismatch — possible CSRF attack");
-    }
-
-    // HMAC validation
-    if (!validateHmac(req.query as Record<string, string>)) {
-      return res.status(403).send("Invalid HMAC signature");
-    }
-
-    if (!shop || !code) {
-      return res.status(400).send("Missing shop or code");
-    }
-
-    try {
-      // ── Exchange code for access token ──────────────────────────────────────
-      const tokenRes = await fetch(`https://${shop}/admin/oauth/access_token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          client_id: SHOPIFY_API_KEY,
-          client_secret: SHOPIFY_API_SECRET,
-          code,
-        }),
-      });
-
-      if (!tokenRes.ok) {
-        const err = await tokenRes.text();
-        console.error("[Shopify OAuth] Token exchange failed:", err);
-        return res.status(500).send("Token exchange failed");
+      // CSRF check
+      const storedState = req.cookies?.shopify_oauth_state;
+      if (!state || state !== storedState) {
+        return res.status(403).send("State mismatch — possible CSRF attack");
       }
 
-      const tokenData = (await tokenRes.json()) as {
-        access_token: string;
-        scope: string;
-      };
+      // HMAC validation
+      if (!validateHmac(req.query as Record<string, string>)) {
+        return res.status(403).send("Invalid HMAC signature");
+      }
 
-      // ── Fetch shop details ──────────────────────────────────────────────────
-      const shopRes = await fetch(
-        `https://${shop}/admin/api/2024-01/shop.json`,
-        {
-          headers: { "X-Shopify-Access-Token": tokenData.access_token },
+      if (!shop || !code) {
+        return res.status(400).send("Missing shop or code");
+      }
+
+      try {
+        // ── Exchange code for access token ──────────────────────────────────────
+        const tokenRes = await fetch(
+          `https://${shop}/admin/oauth/access_token`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              client_id: SHOPIFY_API_KEY,
+              client_secret: SHOPIFY_API_SECRET,
+              code,
+            }),
+          }
+        );
+
+        if (!tokenRes.ok) {
+          const err = await tokenRes.text();
+          console.error("[Shopify OAuth] Token exchange failed:", err);
+          return res.status(500).send("Token exchange failed");
         }
-      );
-      const shopData = shopRes.ok
-        ? (
-            (await shopRes.json()) as {
-              shop: {
-                name: string;
-                email: string;
-                currency: string;
-                plan_name: string;
-              };
-            }
-          ).shop
-        : null;
 
-      // ── Upsert store record ─────────────────────────────────────────────────
-      const db = await getDb();
-      if (!db) {
-        return res.status(500).send("Database unavailable");
-      }
+        const tokenData = (await tokenRes.json()) as {
+          access_token: string;
+          scope: string;
+        };
 
-      const existing = await db
-        .select()
-        .from(shopifyStores)
-        .where(eq(shopifyStores.shopDomain, shop))
-        .limit(1);
+        // ── Fetch shop details ──────────────────────────────────────────────────
+        const shopRes = await fetch(
+          `https://${shop}/admin/api/2024-01/shop.json`,
+          {
+            headers: { "X-Shopify-Access-Token": tokenData.access_token },
+          }
+        );
+        const shopData = shopRes.ok
+          ? (
+              (await shopRes.json()) as {
+                shop: {
+                  name: string;
+                  email: string;
+                  currency: string;
+                  plan_name: string;
+                };
+              }
+            ).shop
+          : null;
 
-      if (existing.length > 0) {
-        await db
-          .update(shopifyStores)
-          .set({
+        // ── Upsert store record ─────────────────────────────────────────────────
+        const db = await getDb();
+        if (!db) {
+          return res.status(500).send("Database unavailable");
+        }
+
+        const existing = await db
+          .select()
+          .from(shopifyStores)
+          .where(eq(shopifyStores.shopDomain, shop))
+          .limit(1);
+
+        if (existing.length > 0) {
+          await db
+            .update(shopifyStores)
+            .set({
+              accessToken: tokenData.access_token,
+              scopes: tokenData.scope,
+              shopName: shopData?.name,
+              shopEmail: shopData?.email,
+              shopCurrency: shopData?.currency ?? "USD",
+              shopPlan: shopData?.plan_name,
+              status: "active",
+            })
+            .where(eq(shopifyStores.shopDomain, shop));
+        } else {
+          // userId will be set to 0 for now — the user can link it from the dashboard
+          await db.insert(shopifyStores).values({
+            userId: 0,
+            shopDomain: shop,
             accessToken: tokenData.access_token,
             scopes: tokenData.scope,
             shopName: shopData?.name,
@@ -284,39 +312,28 @@ export function registerShopifyRoutes(app: Express) {
             shopCurrency: shopData?.currency ?? "USD",
             shopPlan: shopData?.plan_name,
             status: "active",
-          })
-          .where(eq(shopifyStores.shopDomain, shop));
-      } else {
-        // userId will be set to 0 for now — the user can link it from the dashboard
-        await db.insert(shopifyStores).values({
-          userId: 0,
-          shopDomain: shop,
-          accessToken: tokenData.access_token,
-          scopes: tokenData.scope,
-          shopName: shopData?.name,
-          shopEmail: shopData?.email,
-          shopCurrency: shopData?.currency ?? "USD",
-          shopPlan: shopData?.plan_name,
-          status: "active",
-        });
+          });
+        }
+
+        // Clear CSRF cookie
+        res.clearCookie("shopify_oauth_state");
+
+        // Redirect to success page
+        return res.redirect(
+          `/shopify/success?shop=${encodeURIComponent(shop)}`
+        );
+      } catch (err) {
+        console.error("[Shopify OAuth] Callback error:", err);
+        return res.status(500).send("OAuth callback failed");
       }
-
-      // Clear CSRF cookie
-      res.clearCookie("shopify_oauth_state");
-
-      // Redirect to success page
-      return res.redirect(`/shopify/success?shop=${encodeURIComponent(shop)}`);
-    } catch (err) {
-      console.error("[Shopify OAuth] Callback error:", err);
-      return res.status(500).send("OAuth callback failed");
     }
-  });
+  );
 
   // ── Shopify Webhook Receiver (/api/shopify/webhook) ────────────────────────
   app.post(
     "/api/shopify/webhook",
     express.raw({ type: "application/json" }),
-    async (req: Request, res: Response) => {
+    async (req: ExpressRequest, res: ExpressResponse) => {
       const startTime = Date.now();
       const rawBody = (req.body as Buffer).toString();
       const hmacHeader = req.headers["x-shopify-hmac-sha256"] as string;
