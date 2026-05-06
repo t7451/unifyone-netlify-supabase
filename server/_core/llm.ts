@@ -273,6 +273,15 @@ const isGroqModel = (model: string) =>
 const toProviderModel = (model: string) =>
   model.startsWith("groq/") ? model.slice("groq/".length) : model;
 
+const FORGE_THINKING_MODELS = new Set(["gemini-2.5-flash", "gemini-2.5-pro"]);
+
+const RETRYABLE_400_PATTERNS = [
+  "model",
+  "unsupported",
+  "unrecognized",
+  "unknown parameter",
+];
+
 const assertApiKey = (provider: "forge" | "groq") => {
   if (provider === "groq") {
     if (!ENV.groqApiKey) {
@@ -353,12 +362,7 @@ function isRetryableError(err: unknown): boolean {
     )
       return false;
     if (msg.includes("400") && !msg.includes("rate")) {
-      return (
-        msg.includes("model") ||
-        msg.includes("unsupported") ||
-        msg.includes("unrecognized") ||
-        msg.includes("unknown parameter")
-      );
+      return RETRYABLE_400_PATTERNS.some(pattern => msg.includes(pattern));
     }
     if (
       msg.includes("5") ||
@@ -411,7 +415,7 @@ async function invokeOnce(
   }
 
   payload.max_tokens = params.maxTokens ?? params.max_tokens ?? 32768;
-  if (provider === "forge" && providerModel.includes("gemini")) {
+  if (provider === "forge" && FORGE_THINKING_MODELS.has(providerModel)) {
     payload.thinking = { budget_tokens: 128 };
   }
 
