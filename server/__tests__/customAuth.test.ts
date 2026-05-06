@@ -71,6 +71,7 @@ import {
   verifyPassword,
   signUp,
   signIn,
+  signInWithGoogleProfile,
   buildSessionCookie,
   buildLogoutCookie,
 } from "../_core/customAuth";
@@ -419,7 +420,110 @@ describe("signIn", () => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 4. buildSessionCookie / buildLogoutCookie
+// 4. Google OAuth sign-in
+// ═════════════════════════════════════════════════════════════════════════════
+
+describe("signInWithGoogleProfile", () => {
+  it("rejects Google profiles with unverified email addresses", async () => {
+    const result = await signInWithGoogleProfile({
+      sub: "google-sub-1",
+      email: "user@example.com",
+      emailVerified: false,
+      name: "Google User",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/verified/i);
+  });
+
+  it("creates a passwordless local user for a new verified Google account", async () => {
+    _dbState.selectResult = [];
+
+    const result = await signInWithGoogleProfile({
+      sub: "google-sub-2",
+      email: "new-google@example.com",
+      emailVerified: true,
+      name: "New Google",
+      tenantId: 42,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.sessionToken).toBe("mock-session-token");
+    expect(result.user).toMatchObject({
+      email: "new-google@example.com",
+      name: "New Google",
+      emailVerified: true,
+    });
+    expect(mockInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "new-google@example.com",
+        passwordHash: null,
+        loginMethod: "google",
+        emailVerified: true,
+        tenantId: 42,
+      })
+    );
+  });
+
+  it("links a verified Google login to an existing user by email", async () => {
+    _dbState.selectResult = [
+      {
+        id: 7,
+        openId: "existing-open-id",
+        email: "existing@example.com",
+        username: "existing",
+        name: "Existing User",
+        tenantId: 42,
+      },
+    ];
+
+    const result = await signInWithGoogleProfile({
+      sub: "google-sub-3",
+      email: "existing@example.com",
+      emailVerified: true,
+      name: "Google Name",
+      tenantId: 42,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.user).toMatchObject({
+      openId: "existing-open-id",
+      email: "existing@example.com",
+      name: "Existing User",
+      username: "existing",
+    });
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ loginMethod: "google", emailVerified: true })
+    );
+  });
+
+  it("rejects tenant-scoped Google login for a user attached to another tenant", async () => {
+    _dbState.selectResult = [
+      {
+        id: 7,
+        openId: "existing-open-id",
+        email: "existing@example.com",
+        username: "existing",
+        name: "Existing User",
+        tenantId: 41,
+      },
+    ];
+
+    const result = await signInWithGoogleProfile({
+      sub: "google-sub-4",
+      email: "existing@example.com",
+      emailVerified: true,
+      name: "Google Name",
+      tenantId: 42,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/different workspace/i);
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 5. buildSessionCookie / buildLogoutCookie
 // ═════════════════════════════════════════════════════════════════════════════
 
 describe("buildSessionCookie", () => {

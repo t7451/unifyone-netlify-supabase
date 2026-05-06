@@ -13,9 +13,11 @@ import type {
   Request as ExpressRequest,
   Response as ExpressResponse,
 } from "express";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import {
   signUp,
   signIn,
+  signInWithGoogleProfile,
   verifyClerkSession,
   verifyFirebaseIdToken,
   buildSessionCookie,
@@ -53,6 +55,23 @@ type GoogleOAuthSettings = {
   clientSecret?: string;
   redirectUri: string;
   scopes: string;
+  tenantId?: number | null;
+  tenantSlug?: string;
+  source: "tenant" | "env";
+};
+
+type GoogleOAuthState = {
+  exp: number;
+  nonce: string;
+  returnTo: string;
+  tenantSlug?: string;
+};
+
+type GoogleUserInfo = {
+  sub: string;
+  email: string;
+  email_verified?: boolean | string;
+  name?: string;
 };
 
 function getClientIp(req: Request): string {
@@ -74,14 +93,21 @@ function getClientIp(req: Request): string {
  */
 function getAllowedOrigin(req: Request): string {
   const appUrl = getAppUrl();
+  const appOrigin = new URL(appUrl).origin;
   const requestOrigin = req.headers.get("origin") ?? "";
   // Allow the exact origin only if it matches our app domain
-  if (requestOrigin && requestOrigin.startsWith(appUrl)) {
-    return requestOrigin;
+  if (requestOrigin) {
+    try {
+      if (new URL(requestOrigin).origin === appOrigin) {
+        return requestOrigin;
+      }
+    } catch {
+      // Fall through to canonical app origin for malformed Origin headers.
+    }
   }
   // For same-origin requests (no Origin header) or non-matching origins,
   // return our canonical URL — keeps the header valid.
-  return appUrl;
+  return appOrigin;
 }
 
 function readGoogleOAuthSettings(
@@ -106,10 +132,197 @@ function readGoogleOAuthSettings(
       typeof raw.scopes === "string" && raw.scopes.trim().length > 0
         ? raw.scopes
         : DEFAULT_GOOGLE_SCOPES,
+    source: "tenant",
   };
 }
 
-async function buildGoogleOAuthScaffold(tenantSlug?: string): Promise<
+function readGlobalGoogleOAuthSettings(): GoogleOAuthSettings {
+  return {
+    enabled:
+      process.env.GOOGLE_OAUTH_ENABLED !== "false" &&
+      Boolean(
+        process.env.GOOGLE_OAUTH_CLIENT_ID &&
+          process.env.GOOGLE_OAUTH_CLIENT_SECRET
+      ),
+    clientId: process.env.GOOGLE_OAUTH_CLIENT_ID ?? "",
+    clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || undefined,
+    redirectUri: process.env.GOOGLE_OAUTH_REDIRECT_URI ?? "",
+    scopes: process.env.GOOGLE_OAUTH_SCOPES || DEFAULT_GOOGLE_SCOPES,
+    source: "env",
+  };
+}
+
+function sanitizeReturnTo(returnTo: unknown): string {
+  if (typeof returnTo !== "string") return "/dashboard";
+  const trimmed = returnTo.trim();
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {
+    return "/dashboard";
+  }
+  return trimmed;
+}
+
+function buildLoginRedirect(error: string, returnTo = "/dashboard"): string {
+  const redirectUrl = new URL("/login", getAppUrl());
+  redirectUrl.searchParams.set("error", error);
+  if (returnTo && returnTo !== "/dashboard") {
+    redirectUrl.searchParams.set("returnTo", returnTo);
+  }
+  return redirectUrl.toString();
+}
+
+function getStateSecret(): Buffer {
+  return Buffer.from(ENV.cookieSecret || process.env.JWT_SECRET || "", "utf8");
+}
+
+function signStatePayload(payload: string): string {
+  return createHmac("sha256", getStateSecret())
+    .update(payload)
+    .digest("base64url");
+}
+
+function createGoogleOAuthState(input: {
+  tenantSlug?: string;
+  returnTo?: string;
+}): string {
+  const state: GoogleOAuthState = {
+    exp: Date.now() + 10 * 60 * 1000,
+    nonce: randomBytes(16).toString("base64url"),
+    returnTo: sanitizeReturnTo(input.returnTo),
+    ...(input.tenantSlug ? { tenantSlug: input.tenantSlug } : {}),
+  };
+  const payload = Buffer.from(JSON.stringify(state), "utf8").toString(
+    "base64url"
+  );
+  return `${payload}.${signStatePayload(payload)}`;
+}
+
+function verifyGoogleOAuthState(
+  rawState: string | null
+): GoogleOAuthState | null {
+  if (!rawState) return null;
+  const [payload, signature] = rawState.split(".");
+  if (!payload || !signature) return null;
+
+  const expected = signStatePayload(payload);
+  const expectedBuffer = Buffer.from(expected);
+  const actualBuffer = Buffer.from(signature);
+  if (
+    expectedBuffer.length !== actualBuffer.length ||
+    !timingSafeEqual(expectedBuffer, actualBuffer)
+  ) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(payload, "base64url").toString("utf8")
+    ) as Partial<GoogleOAuthState>;
+    if (typeof parsed.exp !== "number" || parsed.exp < Date.now()) return null;
+    if (typeof parsed.nonce !== "string" || parsed.nonce.length === 0) {
+      return null;
+    }
+    return {
+      exp: parsed.exp,
+      nonce: parsed.nonce,
+      returnTo: sanitizeReturnTo(parsed.returnTo),
+      tenantSlug:
+        typeof parsed.tenantSlug === "string" && parsed.tenantSlug.length > 0
+          ? parsed.tenantSlug
+          : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function withDefaultRedirectUri(
+  settings: GoogleOAuthSettings
+): GoogleOAuthSettings {
+  return {
+    ...settings,
+    redirectUri:
+      settings.redirectUri || `${getAppUrl()}/api/auth/google/callback`,
+  };
+}
+
+async function resolveGoogleOAuthSettings(
+  tenantSlug?: string
+): Promise<
+  | { success: true; settings: GoogleOAuthSettings }
+  | { success: false; status: number; error: string }
+> {
+  const globalSettings = readGlobalGoogleOAuthSettings();
+
+  if (tenantSlug) {
+    const tenant = await getTenantBySlug(tenantSlug);
+    if (!tenant) {
+      return {
+        success: false,
+        status: 404,
+        error: "Workspace not found for that tenant slug.",
+      };
+    }
+
+    const tenantGoogle = readGoogleOAuthSettings(
+      (tenant.settings as Record<string, unknown> | null | undefined) ?? null
+    );
+    if (tenantGoogle.enabled && tenantGoogle.clientId) {
+      if (!tenantGoogle.clientSecret) {
+        return {
+          success: false,
+          status: 400,
+          error: "Google OAuth is missing a client secret for this workspace.",
+        };
+      }
+      return {
+        success: true,
+        settings: withDefaultRedirectUri({
+          ...tenantGoogle,
+          tenantId: tenant.id,
+          tenantSlug,
+          source: "tenant",
+        }),
+      };
+    }
+
+    if (globalSettings.enabled) {
+      return {
+        success: true,
+        settings: withDefaultRedirectUri({
+          ...globalSettings,
+          tenantId: tenant.id,
+          tenantSlug,
+        }),
+      };
+    }
+
+    return {
+      success: false,
+      status: 400,
+      error:
+        "Google OAuth is not configured for this workspace yet. Add workspace settings or configure GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET.",
+    };
+  }
+
+  if (!globalSettings.enabled) {
+    return {
+      success: false,
+      status: 400,
+      error:
+        "Google OAuth is not configured globally. Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET, or use a login URL with ?tenant=your-store-slug for workspace-specific settings.",
+    };
+  }
+
+  return {
+    success: true,
+    settings: withDefaultRedirectUri(globalSettings),
+  };
+}
+
+async function buildGoogleOAuthScaffold(
+  tenantSlug?: string,
+  returnTo?: string
+): Promise<
   | {
       success: true;
       authorizationUrl: string;
@@ -122,42 +335,15 @@ async function buildGoogleOAuthScaffold(tenantSlug?: string): Promise<
       error: string;
     }
 > {
-  if (!tenantSlug) {
-    return {
-      success: false,
-      status: 400,
-      error:
-        "A tenant slug is required. Add ?tenant=your-store-slug to the login URL after configuring Google OAuth.",
-    };
-  }
+  const resolved = await resolveGoogleOAuthSettings(tenantSlug);
+  if (!resolved.success) return resolved;
 
-  const tenant = await getTenantBySlug(tenantSlug);
-  if (!tenant) {
-    return {
-      success: false,
-      status: 404,
-      error: "Workspace not found for that tenant slug.",
-    };
-  }
-
-  const google = readGoogleOAuthSettings(
-    (tenant.settings as Record<string, unknown> | null | undefined) ?? null
-  );
-
-  if (!google.enabled || !google.clientId) {
-    return {
-      success: false,
-      status: 400,
-      error:
-        "Google OAuth is not configured for this workspace yet. Sign in with email/password and add the provider settings first.",
-    };
-  }
-
-  const callbackUrl =
-    google.redirectUri || `${getAppUrl()}/api/auth/google/callback`;
-  const state = Buffer.from(JSON.stringify({ tenantSlug })).toString(
-    "base64url"
-  );
+  const google = resolved.settings;
+  const callbackUrl = google.redirectUri;
+  const state = createGoogleOAuthState({
+    tenantSlug: google.tenantSlug,
+    returnTo,
+  });
   const authorizationUrl = new URL(
     "https://accounts.google.com/o/oauth2/v2/auth"
   );
@@ -168,17 +354,153 @@ async function buildGoogleOAuthScaffold(tenantSlug?: string): Promise<
     "scope",
     google.scopes || DEFAULT_GOOGLE_SCOPES
   );
-  authorizationUrl.searchParams.set("access_type", "offline");
-  authorizationUrl.searchParams.set("prompt", "consent");
+  authorizationUrl.searchParams.set("include_granted_scopes", "true");
+  authorizationUrl.searchParams.set("prompt", "select_account");
   authorizationUrl.searchParams.set("state", state);
 
   return {
     success: true,
     authorizationUrl: authorizationUrl.toString(),
     callbackUrl,
-    message:
-      "Google OAuth authorize URL created. The callback exchange still needs to be finished later.",
+    message: "Redirecting to Google for sign-in.",
   };
+}
+
+async function exchangeGoogleCode(
+  google: GoogleOAuthSettings,
+  code: string
+): Promise<{ accessToken: string }> {
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      code,
+      client_id: google.clientId,
+      client_secret: google.clientSecret ?? "",
+      redirect_uri: google.redirectUri,
+      grant_type: "authorization_code",
+    }),
+  });
+  const data = (await response.json().catch(() => ({}))) as {
+    access_token?: string;
+    error?: string;
+    error_description?: string;
+  };
+
+  if (!response.ok || !data.access_token) {
+    throw new Error(
+      data.error_description || data.error || "Google token exchange failed"
+    );
+  }
+
+  return { accessToken: data.access_token };
+}
+
+async function fetchGoogleUserInfo(
+  accessToken: string
+): Promise<GoogleUserInfo> {
+  const response = await fetch(
+    "https://openidconnect.googleapis.com/v1/userinfo",
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }
+  );
+  const data = (await response
+    .json()
+    .catch(() => ({}))) as Partial<GoogleUserInfo>;
+
+  if (!response.ok || !data.sub || !data.email) {
+    throw new Error("Google userinfo request failed");
+  }
+
+  return {
+    sub: data.sub,
+    email: data.email,
+    email_verified: data.email_verified,
+    name: data.name,
+  };
+}
+
+async function completeGoogleOAuthCallback(params: {
+  code: string | null;
+  state: string | null;
+  providerError?: string | null;
+  clientIp: string;
+  userAgent?: string;
+}): Promise<{
+  redirectTo: string;
+  sessionToken?: string;
+  refreshToken?: string;
+}> {
+  const verifiedState = verifyGoogleOAuthState(params.state);
+  const returnTo = verifiedState?.returnTo ?? "/dashboard";
+
+  if (params.providerError) {
+    return { redirectTo: buildLoginRedirect("google_oauth_denied", returnTo) };
+  }
+  if (!params.code || !verifiedState) {
+    return { redirectTo: buildLoginRedirect("google_oauth_invalid", returnTo) };
+  }
+
+  const resolved = await resolveGoogleOAuthSettings(verifiedState.tenantSlug);
+  if (!resolved.success) {
+    return { redirectTo: buildLoginRedirect("google_oauth_config", returnTo) };
+  }
+
+  try {
+    const { accessToken } = await exchangeGoogleCode(
+      resolved.settings,
+      params.code
+    );
+    const profile = await fetchGoogleUserInfo(accessToken);
+    const emailVerified =
+      profile.email_verified === true || profile.email_verified === "true";
+    const result = await signInWithGoogleProfile(
+      {
+        sub: profile.sub,
+        email: profile.email,
+        emailVerified,
+        name: profile.name,
+        tenantId: resolved.settings.tenantId ?? null,
+      },
+      { ipAddress: params.clientIp, userAgent: params.userAgent }
+    );
+
+    if (!result.success) {
+      return {
+        redirectTo: buildLoginRedirect(
+          emailVerified ? "google_oauth_failed" : "google_oauth_unverified",
+          returnTo
+        ),
+      };
+    }
+
+    await authRateLimiter.reset(params.clientIp);
+    void import("./../auditLogger").then(({ logAudit }) =>
+      logAudit({
+        action: "auth.login",
+        resource: "user",
+        resourceId: result.user?.openId ?? "",
+        severity: "low",
+        metadata: {
+          method: "google",
+          providerSource: resolved.settings.source,
+          tenantSlug: resolved.settings.tenantSlug,
+        },
+        ip: params.clientIp,
+        userAgent: params.userAgent,
+      }).catch(() => {})
+    );
+
+    return {
+      redirectTo: returnTo,
+      sessionToken: result.sessionToken,
+      refreshToken: result.refreshToken,
+    };
+  } catch (err) {
+    console.error("[Google OAuth] callback failed:", err);
+    return { redirectTo: buildLoginRedirect("google_oauth_failed", returnTo) };
+  }
 }
 
 export async function registerCustomAuthFetchRoutes(
@@ -187,7 +509,8 @@ export async function registerCustomAuthFetchRoutes(
   const url = new URL(req.url);
   const path = url.pathname;
   const method = req.method.toUpperCase();
-  const isSecure = url.protocol === "https:";
+  const forwardedProto = req.headers.get("x-forwarded-proto");
+  const isSecure = forwardedProto === "https" || url.protocol === "https:";
   const clientIp = getClientIp(req);
   const cookieDomain = ENV.cookieDomain || undefined;
 
@@ -211,11 +534,30 @@ export async function registerCustomAuthFetchRoutes(
 
   try {
     if (path === "/api/auth/google/callback" && method === "GET") {
-      const redirectUrl = new URL(
-        "/login?error=google_oauth_not_ready",
-        getAppUrl()
-      );
-      return Response.redirect(redirectUrl.toString(), 302);
+      const callback = await completeGoogleOAuthCallback({
+        code: url.searchParams.get("code"),
+        state: url.searchParams.get("state"),
+        providerError: url.searchParams.get("error"),
+        clientIp,
+        userAgent: req.headers.get("user-agent") ?? undefined,
+      });
+      const response = new Response(null, {
+        status: 302,
+        headers: { Location: callback.redirectTo },
+      });
+      if (callback.sessionToken) {
+        response.headers.append(
+          "Set-Cookie",
+          buildSessionCookie(callback.sessionToken, isSecure, cookieDomain)
+        );
+      }
+      if (callback.refreshToken) {
+        response.headers.append(
+          "Set-Cookie",
+          buildRefreshCookie(callback.refreshToken, isSecure, cookieDomain)
+        );
+      }
+      return response;
     }
 
     // Only handle POST requests for all other custom auth endpoints
@@ -242,8 +584,11 @@ export async function registerCustomAuthFetchRoutes(
       }
 
       const body = await req.json().catch(() => ({}));
-      const { tenantSlug } = body as { tenantSlug?: string };
-      const result = await buildGoogleOAuthScaffold(tenantSlug);
+      const { tenantSlug, returnTo } = body as {
+        tenantSlug?: string;
+        returnTo?: string;
+      };
+      const result = await buildGoogleOAuthScaffold(tenantSlug, returnTo);
 
       if (!result.success) {
         return Response.json(
@@ -438,7 +783,10 @@ export async function registerCustomAuthFetchRoutes(
         // Return a generic message to avoid leaking token state (revoked vs expired
         // vs not found) which could assist token-enumeration attacks.
         const response = Response.json(
-          { success: false, error: "Authentication expired. Please sign in again." },
+          {
+            success: false,
+            error: "Authentication expired. Please sign in again.",
+          },
           { status: 401, headers: corsHeaders }
         );
         response.headers.append(
@@ -458,12 +806,20 @@ export async function registerCustomAuthFetchRoutes(
       );
       response.headers.append(
         "Set-Cookie",
-        buildSessionCookie(rotateResult.sessionToken ?? "", isSecure, cookieDomain)
+        buildSessionCookie(
+          rotateResult.sessionToken ?? "",
+          isSecure,
+          cookieDomain
+        )
       );
       if (rotateResult.newRefreshToken) {
         response.headers.append(
           "Set-Cookie",
-          buildRefreshCookie(rotateResult.newRefreshToken, isSecure, cookieDomain)
+          buildRefreshCookie(
+            rotateResult.newRefreshToken,
+            isSecure,
+            cookieDomain
+          )
         );
       }
       return response;
@@ -953,8 +1309,44 @@ function isExpressRequestSecure(req: ExpressRequest): boolean {
 export function registerCustomAuthExpressRoutes(app: Express) {
   app.get(
     "/api/auth/google/callback",
-    (_req: ExpressRequest, res: ExpressResponse) => {
-      res.redirect(302, "/login?error=google_oauth_not_ready");
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const clientIp = getExpressClientIp(req);
+      try {
+        const callback = await completeGoogleOAuthCallback({
+          code: typeof req.query.code === "string" ? req.query.code : null,
+          state: typeof req.query.state === "string" ? req.query.state : null,
+          providerError:
+            typeof req.query.error === "string" ? req.query.error : null,
+          clientIp,
+          userAgent: req.headers["user-agent"] ?? undefined,
+        });
+        const isSecureExpress = isExpressRequestSecure(req);
+        const cookieDomainExpress = ENV.cookieDomain || undefined;
+        if (callback.sessionToken) {
+          res.append(
+            "Set-Cookie",
+            buildSessionCookie(
+              callback.sessionToken,
+              isSecureExpress,
+              cookieDomainExpress
+            )
+          );
+        }
+        if (callback.refreshToken) {
+          res.append(
+            "Set-Cookie",
+            buildRefreshCookie(
+              callback.refreshToken,
+              isSecureExpress,
+              cookieDomainExpress
+            )
+          );
+        }
+        res.redirect(302, callback.redirectTo);
+      } catch (err) {
+        console.error("[customAuthRoutes] Google callback error:", err);
+        res.redirect(302, "/login?error=google_oauth_failed");
+      }
     }
   );
 
@@ -978,8 +1370,11 @@ export function registerCustomAuthExpressRoutes(app: Express) {
           return;
         }
 
-        const { tenantSlug } = (req.body ?? {}) as { tenantSlug?: string };
-        const result = await buildGoogleOAuthScaffold(tenantSlug);
+        const { tenantSlug, returnTo } = (req.body ?? {}) as {
+          tenantSlug?: string;
+          returnTo?: string;
+        };
+        const result = await buildGoogleOAuthScaffold(tenantSlug, returnTo);
         if (!result.success) {
           res
             .status(result.status)
@@ -1023,10 +1418,16 @@ export function registerCustomAuthExpressRoutes(app: Express) {
           username?: string;
         };
 
-        const result = await signUp(email || "", password || "", name, username, {
-          ipAddress: clientIp,
-          userAgent: req.headers["user-agent"] ?? undefined,
-        });
+        const result = await signUp(
+          email || "",
+          password || "",
+          name,
+          username,
+          {
+            ipAddress: clientIp,
+            userAgent: req.headers["user-agent"] ?? undefined,
+          }
+        );
         if (!result.success) {
           res.status(400).json({ success: false, error: result.error });
           return;
@@ -1043,12 +1444,20 @@ export function registerCustomAuthExpressRoutes(app: Express) {
         const cookieDomainExpress = ENV.cookieDomain || undefined;
         res.append(
           "Set-Cookie",
-          buildSessionCookie(result.sessionToken ?? "", isSecureExpress, cookieDomainExpress)
+          buildSessionCookie(
+            result.sessionToken ?? "",
+            isSecureExpress,
+            cookieDomainExpress
+          )
         );
         if (result.refreshToken) {
           res.append(
             "Set-Cookie",
-            buildRefreshCookie(result.refreshToken, isSecureExpress, cookieDomainExpress)
+            buildRefreshCookie(
+              result.refreshToken,
+              isSecureExpress,
+              cookieDomainExpress
+            )
           );
         }
         res.status(201).json({
@@ -1109,12 +1518,20 @@ export function registerCustomAuthExpressRoutes(app: Express) {
         const cookieDomainExpress = ENV.cookieDomain || undefined;
         res.append(
           "Set-Cookie",
-          buildSessionCookie(result.sessionToken ?? "", isSecureExpress, cookieDomainExpress)
+          buildSessionCookie(
+            result.sessionToken ?? "",
+            isSecureExpress,
+            cookieDomainExpress
+          )
         );
         if (result.refreshToken) {
           res.append(
             "Set-Cookie",
-            buildRefreshCookie(result.refreshToken, isSecureExpress, cookieDomainExpress)
+            buildRefreshCookie(
+              result.refreshToken,
+              isSecureExpress,
+              cookieDomainExpress
+            )
           );
         }
         res.status(200).json({ success: true, user: result.user });
@@ -1130,8 +1547,14 @@ export function registerCustomAuthExpressRoutes(app: Express) {
   app.post("/api/auth/logout", (req: ExpressRequest, res: ExpressResponse) => {
     const isSecureExpress = isExpressRequestSecure(req);
     const cookieDomainExpress = ENV.cookieDomain || undefined;
-    res.append("Set-Cookie", buildLogoutCookie(isSecureExpress, cookieDomainExpress));
-    res.append("Set-Cookie", buildRefreshLogoutCookie(isSecureExpress, cookieDomainExpress));
+    res.append(
+      "Set-Cookie",
+      buildLogoutCookie(isSecureExpress, cookieDomainExpress)
+    );
+    res.append(
+      "Set-Cookie",
+      buildRefreshLogoutCookie(isSecureExpress, cookieDomainExpress)
+    );
     res.status(200).json({ success: true });
   });
 
@@ -1164,8 +1587,14 @@ export function registerCustomAuthExpressRoutes(app: Express) {
         const cookieDomainExpress = ENV.cookieDomain || undefined;
 
         if (!rotateResult.success) {
-          res.append("Set-Cookie", buildLogoutCookie(isSecureExpress, cookieDomainExpress));
-          res.append("Set-Cookie", buildRefreshLogoutCookie(isSecureExpress, cookieDomainExpress));
+          res.append(
+            "Set-Cookie",
+            buildLogoutCookie(isSecureExpress, cookieDomainExpress)
+          );
+          res.append(
+            "Set-Cookie",
+            buildRefreshLogoutCookie(isSecureExpress, cookieDomainExpress)
+          );
           res.status(401).json({
             success: false,
             error: "Authentication expired. Please sign in again.",
@@ -1175,18 +1604,28 @@ export function registerCustomAuthExpressRoutes(app: Express) {
 
         res.append(
           "Set-Cookie",
-          buildSessionCookie(rotateResult.sessionToken ?? "", isSecureExpress, cookieDomainExpress)
+          buildSessionCookie(
+            rotateResult.sessionToken ?? "",
+            isSecureExpress,
+            cookieDomainExpress
+          )
         );
         if (rotateResult.newRefreshToken) {
           res.append(
             "Set-Cookie",
-            buildRefreshCookie(rotateResult.newRefreshToken, isSecureExpress, cookieDomainExpress)
+            buildRefreshCookie(
+              rotateResult.newRefreshToken,
+              isSecureExpress,
+              cookieDomainExpress
+            )
           );
         }
         res.status(200).json({ success: true, user: rotateResult.user });
       } catch (err) {
         console.error("[customAuthRoutes] Refresh error:", err);
-        res.status(500).json({ success: false, error: "Internal server error" });
+        res
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
       }
     }
   );

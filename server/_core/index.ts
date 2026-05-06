@@ -82,13 +82,7 @@ function validateEnv() {
     if (!process.env.SUPABASE_URL) recommended.push("SUPABASE_URL");
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY)
       recommended.push("SUPABASE_SERVICE_ROLE_KEY");
-    const oauthVars = [
-      "OAUTH_CLIENT_ID",
-      "OAUTH_CLIENT_SECRET",
-      "OAUTH_AUTHORIZE_URL",
-      "OAUTH_TOKEN_URL",
-      "OAUTH_USERINFO_URL",
-    ];
+    const oauthVars = ["GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET"];
     recommended.push(...oauthVars.filter(v => !process.env[v]));
 
     if (recommended.length > 0) {

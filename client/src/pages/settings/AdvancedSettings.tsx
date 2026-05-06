@@ -155,11 +155,11 @@ function GoogleOAuthCard() {
       <CardHeader>
         <CardTitle className="text-white text-base flex items-center gap-2">
           <KeyRound className="w-4 h-4 text-[#00D9FF]" />
-          Google OAuth Scaffold
+          Google OAuth
         </CardTitle>
         <CardDescription className="text-gray-400">
-          Save tenant-specific Google OAuth values after signing in with
-          email/password. The provider callback is scaffolded for later wiring.
+          Save tenant-specific Google OAuth values for workspace sign-in. The
+          callback exchanges Google authorization codes for UnifyOne sessions.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -204,7 +204,8 @@ function GoogleOAuthCard() {
           />
           {resolvedGoogle?.hasClientSecret && (
             <p className="text-xs text-gray-500">
-              A client secret is already stored and is never sent back to the UI.
+              A client secret is already stored and is never sent back to the
+              UI.
             </p>
           )}
         </div>
@@ -235,16 +236,19 @@ function GoogleOAuthCard() {
 
         <div className="rounded-lg bg-white/5 border border-white/10 p-3 space-y-1">
           <p className="text-xs uppercase tracking-wider text-gray-500">
-            Scaffold usage
+            Usage
           </p>
           <p className="text-sm text-gray-300">
             After saving, open the login page with
-            <span className="font-mono text-white"> ?tenant=your-store-slug</span>
-            and use the Google button to test the authorize redirect.
+            <span className="font-mono text-white">
+              {" "}
+              ?tenant=your-store-slug
+            </span>
+            and use the Google button to test sign-in.
           </p>
           <p className="text-xs text-gray-500">
-            Callback status: the app redirects back to login with a scaffold
-            notice until the token exchange is implemented.
+            Callback URL: use /api/auth/google/callback on the same public app
+            domain you entered in Google Cloud.
           </p>
         </div>
 

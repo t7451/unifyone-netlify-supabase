@@ -395,6 +395,137 @@ export async function signIn(
   }
 }
 
+// ── Google OAuth Sign In ────────────────────────────────────────────────────
+
+export async function signInWithGoogleProfile(
+  profile: {
+    sub: string;
+    email: string;
+    emailVerified: boolean;
+    name?: string | null;
+    tenantId?: number | null;
+  },
+  opts: { ipAddress?: string; userAgent?: string } = {}
+): Promise<AuthResult> {
+  const emailLower = profile.email.toLowerCase().trim();
+  if (!profile.sub || !emailLower) {
+    return {
+      success: false,
+      error: "Google profile is missing required fields",
+    };
+  }
+  if (!profile.emailVerified) {
+    return { success: false, error: "Google account email is not verified" };
+  }
+
+  try {
+    const db = await getDb();
+    if (!db) {
+      return { success: false, error: "Database unavailable" };
+    }
+
+    const googleOpenId = `google_${createHash("sha256")
+      .update(profile.sub)
+      .digest("hex")
+      .slice(0, 32)}`;
+    const displayName =
+      profile.name?.trim() || emailLower.split("@")[0] || "UnifyOne User";
+
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(
+        and(
+          or(eq(users.openId, googleOpenId), eq(users.email, emailLower)),
+          isNull(users.deletedAt)
+        )
+      )
+      .limit(1);
+
+    let userId = existingUser?.id;
+    let openId = existingUser?.openId ?? googleOpenId;
+    let username = existingUser?.username ?? null;
+    let sessionName = displayName;
+
+    if (existingUser) {
+      if (
+        profile.tenantId &&
+        existingUser.tenantId &&
+        existingUser.tenantId !== profile.tenantId
+      ) {
+        return {
+          success: false,
+          error: "This Google account belongs to a different workspace.",
+        };
+      }
+
+      sessionName = existingUser.name || displayName;
+
+      await db
+        .update(users)
+        .set({
+          name: sessionName,
+          email: existingUser.email || emailLower,
+          emailVerified: true,
+          loginMethod: "google",
+          lastSignedIn: new Date(),
+          tenantId: existingUser.tenantId ?? profile.tenantId ?? null,
+        })
+        .where(eq(users.id, existingUser.id));
+    } else {
+      const [insertedUser] = await db
+        .insert(users)
+        .values({
+          openId: googleOpenId,
+          email: emailLower,
+          name: displayName,
+          passwordHash: null,
+          loginMethod: "google",
+          emailVerified: true,
+          role: "user",
+          tenantId: profile.tenantId ?? null,
+        })
+        .returning({ id: users.id });
+
+      userId = insertedUser?.id;
+      openId = googleOpenId;
+      username = null;
+    }
+
+    const sessionToken = await sdk.createSessionToken(openId, {
+      name: sessionName,
+      email: emailLower,
+      loginMethod: "google",
+      expiresInMs: ACCESS_TOKEN_LIFETIME_MS,
+    });
+
+    const refreshToken = userId
+      ? (await issueRefreshToken(userId, opts).catch(() => null))?.rawToken
+      : undefined;
+
+    return {
+      success: true,
+      sessionToken,
+      refreshToken,
+      user: {
+        openId,
+        email: emailLower,
+        name: sessionName,
+        username,
+        emailVerified: true,
+      },
+    };
+  } catch (err: unknown) {
+    logger.error("customAuth: Google sign-in failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return {
+      success: false,
+      error: "Google sign-in failed. Please try again.",
+    };
+  }
+}
+
 // ── Build Cookie Header ──────────────────────────────────────────────────────
 
 export function buildSessionCookie(
@@ -500,7 +631,9 @@ export async function issueRefreshToken(
         lt(refreshTokens.expiresAt, new Date())
       )
     )
-    .catch(err => logger.warn("refreshTokens: cleanup failed", { error: String(err) }));
+    .catch(err =>
+      logger.warn("refreshTokens: cleanup failed", { error: String(err) })
+    );
 
   const rawToken = randomBytes(REFRESH_TOKEN_BYTES).toString("hex");
   const tokenHash = hashRefreshToken(rawToken);

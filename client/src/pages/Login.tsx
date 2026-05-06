@@ -22,8 +22,9 @@ import {
 } from "lucide-react";
 import { useClerk, useSession } from "@clerk/clerk-react";
 
-const CLERK_PUBLISHABLE_KEY = import.meta.env
-  .VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
+  | string
+  | undefined;
 
 function getReturnTo(): string {
   if (typeof window === "undefined") return "/dashboard";
@@ -220,9 +221,23 @@ export default function Login({
     const urlError = params.get("error");
     if (urlError === "invalid_link") {
       setError("That link has expired or is invalid. Please try again.");
-    } else if (urlError === "google_oauth_not_ready") {
+    } else if (urlError?.startsWith("google_oauth")) {
+      const googleErrors: Record<string, string> = {
+        google_oauth_denied: "Google sign-in was cancelled.",
+        google_oauth_invalid:
+          "Google sign-in could not be verified. Please try again.",
+        google_oauth_config:
+          "Google sign-in is not configured correctly yet. Please contact the workspace owner.",
+        google_oauth_unverified:
+          "Google did not verify this account's email address. Please use a verified Google account.",
+        google_oauth_failed:
+          "Google sign-in failed. Please try again or use email and password.",
+        google_oauth_not_ready:
+          "Google sign-in is not available yet. Please sign in with your email and password, or contact support.",
+      };
       setError(
-        "Google sign-in is not available yet. Please sign in with your email and password, or contact support."
+        googleErrors[urlError] ||
+          "Google sign-in failed. Please try again or use email and password."
       );
     }
   }, []);
@@ -362,13 +377,6 @@ export default function Login({
   };
 
   const handleGoogleOAuth = async () => {
-    if (!tenantSlug) {
-      setError(
-        "Add ?tenant=your-store-slug to the login URL after configuring Google OAuth in Settings → Advanced."
-      );
-      return;
-    }
-
     setIsGoogleSubmitting(true);
     setError(null);
     setErrorCode(null);
@@ -378,14 +386,12 @@ export default function Login({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ tenantSlug }),
+        body: JSON.stringify({ tenantSlug: tenantSlug || undefined, returnTo }),
       });
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data.success || !data.authorizationUrl) {
-        setError(
-          data.error || "Google OAuth is not configured for this workspace yet."
-        );
+        setError(data.error || "Google OAuth is not configured yet.");
         return;
       }
 
@@ -728,7 +734,8 @@ export default function Login({
             )}
           </Button>
           <p className="text-xs text-slate-500 text-center">
-            Google sign-in requires configuration in Settings → Advanced.
+            Google sign-in uses the configured global provider, or workspace
+            settings when a tenant is selected.
           </p>
 
           {CLERK_PUBLISHABLE_KEY && (
