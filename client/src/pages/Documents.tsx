@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Helmet } from "react-helmet-async";
 import {
   ArrowRight,
   BarChart2,
@@ -9,11 +8,16 @@ import {
   Layers,
   Plug,
 } from "lucide-react";
+import PageHead from "@/components/PageHead";
 import PublicLayout from "@/components/PublicLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SITE_URL } from "@/lib/siteConfig";
+
+const DOCUMENTS_CANONICAL = `${SITE_URL}/documents`;
+const DOCUMENTS_DESCRIPTION =
+  "Complete documentation, case studies, integration guides, and proof of work for UnifyOne platform.";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: "📋" },
@@ -71,32 +75,17 @@ export default function Documents() {
 
   return (
     <PublicLayout>
-      <Helmet>
-        <title>Documentation | UnifyOne</title>
-        <meta
-          name="description"
-          content="Complete documentation, case studies, integration guides, and proof of work for UnifyOne platform."
-        />
-        <link rel="canonical" href={`${SITE_URL}/documents`} />
-        <meta property="og:title" content="Documentation | UnifyOne" />
-        <meta
-          property="og:description"
-          content="Complete documentation, case studies, integration guides, and proof of work."
-        />
-        <meta property="og:url" content={`${SITE_URL}/documents`} />
-        <meta name="twitter:title" content="Documentation | UnifyOne" />
-        <meta
-          name="twitter:description"
-          content="Complete documentation, case studies, integration guides, and proof of work."
-        />
-        <script type="application/ld+json">
-          {JSON.stringify({
+      <PageHead
+        title="Documentation | UnifyOne"
+        description={DOCUMENTS_DESCRIPTION}
+        canonical={DOCUMENTS_CANONICAL}
+        jsonLd={[
+          {
             "@context": "https://schema.org",
             "@type": "WebPage",
             name: "UnifyOne Documentation",
-            description:
-              "Complete documentation, case studies, integration guides, and proof of work.",
-            url: `${SITE_URL}/documents`,
+            description: DOCUMENTS_DESCRIPTION,
+            url: DOCUMENTS_CANONICAL,
             breadcrumb: {
               "@type": "BreadcrumbList",
               itemListElement: [
@@ -110,13 +99,13 @@ export default function Documents() {
                   "@type": "ListItem",
                   position: 2,
                   name: "Documentation",
-                  item: `${SITE_URL}/documents`,
+                  item: DOCUMENTS_CANONICAL,
                 },
               ],
             },
-          })}
-        </script>
-      </Helmet>
+          },
+        ]}
+      />
 
       <section
         style={{

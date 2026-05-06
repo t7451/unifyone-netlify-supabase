@@ -1,0 +1,130 @@
+name: Apply production migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      MIGRATION_FILE:
+        description: "SQL migration file to apply"
+        required: false
+        default: "drizzle/0041_kai_credits.sql"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    name: Apply and verify SQL migration
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      MIGRATION_FILE: ${{ inputs.MIGRATION_FILE }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate inputs and secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL repository secret is required."
+            exit 1
+          fi
+
+          echo "::add-mask::${DATABASE_URL}"
+
+          case "${MIGRATION_FILE}" in
+            drizzle/*.sql) ;;
+            *)
+              echo "::error::MIGRATION_FILE must point to a committed drizzle/*.sql file."
+              exit 1
+              ;;
+          esac
+
+          if [ ! -f "${MIGRATION_FILE}" ]; then
+            echo "::error::Migration file does not exist: ${MIGRATION_FILE}"
+            exit 1
+          fi
+
+      - name: Install PostgreSQL client
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install --no-install-recommends -y postgresql-client
+
+      - name: Apply migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "${DATABASE_URL}" \
+            --no-psqlrc \
+            --set ON_ERROR_STOP=1 \
+            --file "${MIGRATION_FILE}"
+
+      - name: Verify Kai credit schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "${DATABASE_URL}" \
+            --no-psqlrc \
+            --set ON_ERROR_STOP=1 \
+            --quiet \
+            <<'SQL'
+          DO $$
+          DECLARE
+            purchase_status_labels text[];
+            ledger_type_labels text[];
+          BEGIN
+            IF to_regclass('public.kai_credit_packages') IS NULL THEN
+              RAISE EXCEPTION 'Missing table: kai_credit_packages';
+            END IF;
+
+            IF to_regclass('public.kai_credit_purchases') IS NULL THEN
+              RAISE EXCEPTION 'Missing table: kai_credit_purchases';
+            END IF;
+
+            IF to_regclass('public.kai_credit_ledger') IS NULL THEN
+              RAISE EXCEPTION 'Missing table: kai_credit_ledger';
+            END IF;
+
+            SELECT array_agg(e.enumlabel ORDER BY e.enumsortorder)
+              INTO purchase_status_labels
+            FROM pg_type t
+            JOIN pg_enum e ON e.enumtypid = t.oid
+            WHERE t.typname = 'kai_credit_purchase_status';
+
+            IF purchase_status_labels IS DISTINCT FROM ARRAY[
+              'pending',
+              'paid',
+              'failed',
+              'cancelled',
+              'refunded'
+            ] THEN
+              RAISE EXCEPTION 'kai_credit_purchase_status enum mismatch: %',
+                purchase_status_labels;
+            END IF;
+
+            SELECT array_agg(e.enumlabel ORDER BY e.enumsortorder)
+              INTO ledger_type_labels
+            FROM pg_type t
+            JOIN pg_enum e ON e.enumtypid = t.oid
+            WHERE t.typname = 'kai_credit_ledger_type';
+
+            IF ledger_type_labels IS DISTINCT FROM ARRAY[
+              'purchase',
+              'usage',
+              'adjustment',
+              'refund'
+            ] THEN
+              RAISE EXCEPTION 'kai_credit_ledger_type enum mismatch: %',
+                ledger_type_labels;
+            END IF;
+          END $$;
+
+          SELECT 'Kai credit migration verified.' AS status;
+          SQL

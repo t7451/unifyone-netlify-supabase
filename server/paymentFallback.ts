@@ -69,6 +69,19 @@ export function getAvailablePaymentProviders(
   );
 }
 
+export function normalizeCheckoutOrigin(origin: string): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(origin);
+  } catch {
+    throw new Error("Checkout origin must be a valid URL");
+  }
+  if (!["http:", "https:"].includes(parsed.protocol)) {
+    throw new Error("Checkout origin must use http or https");
+  }
+  return parsed.origin;
+}
+
 export function buildManualPaymentUrl(input: {
   origin: string;
   planSlug?: string | null;
@@ -78,8 +91,9 @@ export function buildManualPaymentUrl(input: {
   env?: NodeJS.ProcessEnv;
 }): string {
   const env = input.env ?? process.env;
-  const target = env.MANUAL_PAYMENT_URL || `${input.origin}/contact`;
-  const url = new URL(target, input.origin);
+  const origin = normalizeCheckoutOrigin(input.origin);
+  const target = env.MANUAL_PAYMENT_URL || `${origin}/contact`;
+  const url = new URL(target, origin);
   url.searchParams.set("intent", "manual-payment");
   if (input.planSlug) url.searchParams.set("plan", input.planSlug);
   if (input.billingPeriod) url.searchParams.set("period", input.billingPeriod);

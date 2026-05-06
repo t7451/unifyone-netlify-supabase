@@ -13,9 +13,11 @@ Use this checklist before shipping auth, billing, routing, or infrastructure cha
 
 ## 2. Local Quality Gate
 
+- [ ] In Codespaces/devcontainers, rebuild with `.devcontainer/devcontainer.json` and confirm post-create setup finishes (`pnpm install --no-frozen-lockfile` + `pnpm check`)
 - [ ] Run pnpm lint
 - [ ] Run pnpm check
 - [ ] Run pnpm test
+- [ ] Run pnpm smoke:public to confirm public production health, routes, and resource downloads
 - [ ] Start the app locally with pnpm dev and confirm the server boots without auth or router errors
 
 ## 3. Auth Smoke Test
@@ -51,6 +53,7 @@ Use this checklist before shipping auth, billing, routing, or infrastructure cha
 - [ ] Confirm at least one protected route loads successfully in production after deploy
 - [ ] Confirm login, logout, and one payment path in production after deploy
 - [ ] Review Netlify function logs for new auth, DB, webhook, or routing errors introduced by the change
+- [ ] For manual production SQL fixes, run the **Apply production migration** GitHub Action with repo secret `DATABASE_URL` configured. Use the default `MIGRATION_FILE` (`drizzle/0041_kai_credits.sql`) for Kai credits unless intentionally applying a different committed `drizzle/*.sql` file, then confirm the action's verification step passes.
 
 ## 7. Regression Notes
 

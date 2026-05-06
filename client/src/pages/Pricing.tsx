@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
+import PageHead from "@/components/PageHead";
 import PublicLayout from "@/components/PublicLayout";
 import { TIERS } from "@/content/pricing";
 import { getSignupUrl } from "@/const";
@@ -9,6 +9,8 @@ import { SITE_URL } from "@/lib/siteConfig";
 import { PLAN_CATALOG } from "@shared/pricing";
 
 const CANONICAL = `${SITE_URL}/pricing`;
+const DESCRIPTION =
+  "Three plans for every stage — Starter (free forever), Pro ($19/mo), Scale ($99/mo). All share the same tenant-safe billing and checkout infrastructure.";
 
 const JSON_LD = [
   {
@@ -93,21 +95,12 @@ export default function Pricing() {
 
   return (
     <PublicLayout>
-      <Helmet>
-        <title>Pricing | UnifyOne</title>
-        <meta
-          name="description"
-          content="Three plans for every stage — Starter (free forever), Pro ($19/mo), Scale ($99/mo). All share the same tenant-safe billing and checkout infrastructure."
-        />
-        <link rel="canonical" href={CANONICAL} />
-        <meta property="og:title" content="Pricing | UnifyOne" />
-        <meta
-          property="og:description"
-          content="Three plans for every stage — Starter (free forever), Pro ($19/mo), Scale ($99/mo). Start free, then upgrade without migrating tenants or billing data."
-        />
-        <meta property="og:url" content={CANONICAL} />
-        <script type="application/ld+json">{JSON.stringify(JSON_LD)}</script>
-      </Helmet>
+      <PageHead
+        title="Pricing | UnifyOne"
+        description={DESCRIPTION}
+        canonical={CANONICAL}
+        jsonLd={JSON_LD}
+      />
 
       {/* Hero */}
       <section

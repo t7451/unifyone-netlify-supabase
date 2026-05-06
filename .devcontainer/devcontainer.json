@@ -1,0 +1,57 @@
+{
+  "name": "UnifyOne Platform",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": false,
+      "username": "node"
+    },
+    "ghcr.io/devcontainers-extra/features/apt-packages:1": {
+      "packages": "postgresql-client,curl,jq"
+    }
+  },
+  "containerEnv": {
+    "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
+    "NODE_ENV": "development",
+    "PORT": "3000",
+    "SMOKE_BASE_URL": "https://1commerce.online"
+  },
+  "forwardPorts": [3000, 5173, 8888],
+  "portsAttributes": {
+    "3000": {
+      "label": "UnifyOne dev server",
+      "onAutoForward": "notify"
+    },
+    "5173": {
+      "label": "Vite frontend",
+      "onAutoForward": "silent"
+    },
+    "8888": {
+      "label": "Netlify dev",
+      "onAutoForward": "silent"
+    }
+  },
+  "postCreateCommand": "corepack enable && corepack prepare pnpm@10.27.0 --activate && pnpm install --no-frozen-lockfile && pnpm check",
+  "postAttachCommand": "printf '\\nUnifyOne ready. Useful commands:\\n  pnpm dev\\n  pnpm check && pnpm test && pnpm build\\n  pnpm smoke:public\\n  gh workflow run apply-production-migration.yml --ref main -f MIGRATION_FILE=drizzle/0041_kai_credits.sql\\n\\nProduction-only checks need DATABASE_URL/Netlify/Stripe/AI credentials supplied as environment secrets.\\n\\n'",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-azuretools.vscode-docker",
+        "GitHub.vscode-github-actions"
+      ],
+      "settings": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "eslint.workingDirectories": ["."]
+      }
+    }
+  },
+  "remoteUser": "node"
+}

@@ -1,25 +1,28 @@
-import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
+import PageHead from "@/components/PageHead";
 import PublicLayout from "@/components/PublicLayout";
+import { BLOG_POSTS } from "@/pages/blog/blogPostShared";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/blog`;
+const DESCRIPTION =
+  "Read UnifyOne essays on gig ecommerce, multi-tenant SaaS architecture, and Manus AI in commerce operations.";
 
 const POSTS = [
   {
-    href: "/blog/gig-ecommerce",
+    href: BLOG_POSTS.gigEcommerce.href,
     title: "Gig Ecommerce",
     description:
       "How UnifyOne helps operators unify storefront, payments, automation, and fulfillment in one stack.",
   },
   {
-    href: "/blog/multi-tenant",
+    href: BLOG_POSTS.multiTenant.href,
     title: "Multi-Tenant Commerce",
     description:
       "Why tenant-safe architecture matters when products, orders, and analytics share one platform.",
   },
   {
-    href: "/blog/manus-ai",
+    href: BLOG_POSTS.aiGigWorkers.href,
     title: "Manus AI",
     description:
       "Where AI agents fit inside a governed commerce platform built for real operations.",
@@ -48,21 +51,12 @@ const JSON_LD = {
 export default function BlogIndex() {
   return (
     <PublicLayout>
-      <Helmet>
-        <title>Blog | UnifyOne by 1Commerce</title>
-        <meta
-          name="description"
-          content="Read UnifyOne essays on gig ecommerce, multi-tenant SaaS architecture, and Manus AI in commerce operations."
-        />
-        <link rel="canonical" href={CANONICAL} />
-        <meta property="og:title" content="Blog | UnifyOne by 1Commerce" />
-        <meta
-          property="og:description"
-          content="Read UnifyOne essays on gig ecommerce, multi-tenant SaaS architecture, and Manus AI in commerce operations."
-        />
-        <meta property="og:url" content={CANONICAL} />
-        <script type="application/ld+json">{JSON.stringify(JSON_LD)}</script>
-      </Helmet>
+      <PageHead
+        title="Blog | UnifyOne by 1Commerce"
+        description={DESCRIPTION}
+        canonical={CANONICAL}
+        jsonLd={[JSON_LD]}
+      />
 
       <section className="max-w-4xl mx-auto px-6 sm:px-8 pt-32 pb-24">
         <div className="inscription mb-6" style={{ color: "#D4A843" }}>

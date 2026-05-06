@@ -11,6 +11,7 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
+    "smoke:public": "tsx scripts/smoke-public.ts",
     "db:generate": "drizzle-kit generate:pg",
     "db:push": "drizzle-kit generate:pg && drizzle-kit up:pg",
     "seed:plans": "tsx scripts/seed-stripe-products.ts",

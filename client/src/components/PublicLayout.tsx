@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { getSignupUrl } from "@/const";
 import { usePixelPageView } from "@/hooks/usePixelPageView";
 import { CdnImage } from "@/components/CdnImage";
+import { BLOG_POSTS } from "@/pages/blog/blogPostShared";
 
 const NAV_LINKS = [
   { label: "Architecture", href: "/architecture" },
@@ -328,15 +329,15 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 {[
                   {
                     label: "Gig Commerce Guide",
-                    href: "/blog/gig-ecommerce",
+                    href: BLOG_POSTS.gigEcommerce.href,
                   },
                   {
                     label: "Multi-Tenant SaaS",
-                    href: "/blog/multi-tenant",
+                    href: BLOG_POSTS.multiTenant.href,
                   },
                   {
                     label: "AI for Gig Workers",
-                    href: "/blog/manus-ai",
+                    href: BLOG_POSTS.aiGigWorkers.href,
                   },
                   { label: "Resources", href: "/resources" },
                   { label: "Docs Chat", href: "/docs-chat" },

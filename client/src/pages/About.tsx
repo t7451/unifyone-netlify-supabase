@@ -1,11 +1,13 @@
-import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
+import PageHead from "@/components/PageHead";
 import PublicLayout from "@/components/PublicLayout";
 import { CdnImage } from "@/components/CdnImage";
 import { getSignupUrl } from "@/const";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/about`;
+const DESCRIPTION =
+  "1Commerce / PNW Enterprises builds UnifyOne — a multi-tenant commerce platform on the Cathedral Framework for gig operators and e-commerce teams. Built to endure.";
 
 const JSON_LD = {
   "@context": "https://schema.org",
@@ -29,21 +31,12 @@ const JSON_LD = {
 export default function About() {
   return (
     <PublicLayout>
-      <Helmet>
-        <title>About | UnifyOne by 1Commerce</title>
-        <meta
-          name="description"
-          content="1Commerce / PNW Enterprises builds UnifyOne — a multi-tenant commerce platform on the Cathedral Framework for gig operators and e-commerce teams. Built to endure."
-        />
-        <link rel="canonical" href={CANONICAL} />
-        <meta property="og:title" content="About | UnifyOne by 1Commerce" />
-        <meta
-          property="og:description"
-          content="1Commerce / PNW Enterprises builds UnifyOne — a multi-tenant commerce platform on the Cathedral Framework for gig operators and e-commerce teams. Built to endure."
-        />
-        <meta property="og:url" content={CANONICAL} />
-        <script type="application/ld+json">{JSON.stringify(JSON_LD)}</script>
-      </Helmet>
+      <PageHead
+        title="About | UnifyOne by 1Commerce"
+        description={DESCRIPTION}
+        canonical={CANONICAL}
+        jsonLd={[JSON_LD]}
+      />
 
       <article
         className="max-w-3xl mx-auto px-6 sm:px-8"

@@ -238,7 +238,7 @@ describe("aiRouter Kai Neon credit enforcement", () => {
     expect(usageRows[0]).toMatchObject({
       tenantId: 44,
       userId: 7,
-      creditDelta: -1,
+      creditDelta: -2,
       idempotencyKey: "kai_chat_usage:44:7:resp-debit",
       description: "Kai chat general (kai-balanced)",
       metadata: {
@@ -247,11 +247,14 @@ describe("aiRouter Kai Neon credit enforcement", () => {
         selectedModel: "kai-balanced",
         gatewayModel: "claude-3-5-haiku",
         actualModel: "gemini-2.5-flash",
-        chargedCredits: 1,
+        chargedCredits: 2,
         responseId: "resp-debit",
       },
     });
-    expect(result.metadata.credits.balanceAfter).toBe(4);
+    expect(result.metadata.credits).toMatchObject({
+      charged: 2,
+      balanceAfter: 3,
+    });
   });
 
   it("does not double-debit a replayed response idempotency key", async () => {

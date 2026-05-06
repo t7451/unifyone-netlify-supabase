@@ -35,6 +35,7 @@ import {
   buildKaiCreditFulfillmentPlan,
   parseKaiCreditCheckoutMetadata,
 } from "./lib/kaiCredits";
+import { normalizeCheckoutOrigin } from "./paymentFallback";
 
 // Supabase admin client for subscription/credit sync (service role — no RLS)
 function getSupabaseAdmin() {
@@ -538,6 +539,10 @@ export function registerStripeRoutes(app: Express) {
 
       const sig = req.headers["stripe-signature"] as string;
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
+      if (!webhookSecret) {
+        console.error("[Stripe Webhook] STRIPE_WEBHOOK_SECRET not configured");
+        return res.status(503).json({ error: "Webhook secret not configured" });
+      }
 
       let event: Stripe.Event;
 
@@ -888,7 +893,17 @@ export function registerStripeRoutes(app: Express) {
           return res.status(401).json({ error: "Authentication required" });
         }
 
-        const baseUrl = origin || "http://localhost:3000";
+        let baseUrl: string;
+        try {
+          baseUrl = normalizeCheckoutOrigin(origin || "http://localhost:3000");
+        } catch (error) {
+          return res.status(400).json({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Invalid checkout origin",
+          });
+        }
         const tenantId = authed.tenantId;
         const userId = authed.userId;
         const effectiveUserEmail = authed.email || userEmail;
@@ -996,8 +1011,19 @@ export function registerStripeRoutes(app: Express) {
         const userId = authed.userId;
         const tenantId = authed.tenantId;
         const effectiveUserEmail = authed.email || userEmail;
-        const origin =
-          req.headers.origin || getAppUrl() || "http://localhost:3000";
+        let origin: string;
+        try {
+          origin = normalizeCheckoutOrigin(
+            req.headers.origin || getAppUrl() || "http://localhost:3000"
+          );
+        } catch (error) {
+          return res.status(400).json({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Invalid checkout origin",
+          });
+        }
         const session = await stripe.checkout.sessions.create({
           ui_mode: "embedded",
           mode: "subscription",
@@ -1048,9 +1074,21 @@ export function registerStripeRoutes(app: Express) {
           return res.status(ownership.status).json({ error: ownership.error });
         }
 
+        let baseUrl: string;
+        try {
+          baseUrl = normalizeCheckoutOrigin(origin || "http://localhost:3000");
+        } catch (error) {
+          return res.status(400).json({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Invalid checkout origin",
+          });
+        }
+
         const session = await stripe.billingPortal.sessions.create({
           customer: customerId,
-          return_url: `${origin || "http://localhost:3000"}/settings`,
+          return_url: `${baseUrl}/settings`,
         });
 
         res.json({ url: session.url });
@@ -1282,6 +1320,10 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
 
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+        if (await fulfillKaiCreditCheckout(session)) {
+          break;
+        }
+
         const customerId = session.customer as string;
         // PATCHED: resolve via metadata.tenant_id if customer not yet linked.
         const checkoutTenant = await resolveTenantForCheckout(session);
@@ -1607,7 +1649,20 @@ export async function registerStripeFetchRoutes(
       const userId = authed.userId;
       const userEmail = authed.email;
 
-      const baseUrl = origin || "http://localhost:3000";
+      let baseUrl: string;
+      try {
+        baseUrl = normalizeCheckoutOrigin(origin || "http://localhost:3000");
+      } catch (error) {
+        return Response.json(
+          {
+            error:
+              error instanceof Error
+                ? error.message
+                : "Invalid checkout origin",
+          },
+          { status: 400 }
+        );
+      }
 
       // Read im_ref click cookie so we can attribute the eventual conversion
       // back to the affiliate that sourced this user.
@@ -1718,8 +1773,22 @@ export async function registerStripeFetchRoutes(
       if (!priceId) {
         return Response.json({ error: "priceId is required" }, { status: 400 });
       }
-      const origin =
-        req.headers.get("origin") || getAppUrl() || "http://localhost:3000";
+      let origin: string;
+      try {
+        origin = normalizeCheckoutOrigin(
+          req.headers.get("origin") || getAppUrl() || "http://localhost:3000"
+        );
+      } catch (error) {
+        return Response.json(
+          {
+            error:
+              error instanceof Error
+                ? error.message
+                : "Invalid checkout origin",
+          },
+          { status: 400 }
+        );
+      }
       const session = await stripe!.checkout.sessions.create({
         ui_mode: "embedded",
         mode: "subscription",
@@ -1776,9 +1845,23 @@ export async function registerStripeFetchRoutes(
           { status: ownership.status }
         );
       }
+      let baseUrl: string;
+      try {
+        baseUrl = normalizeCheckoutOrigin(origin || "http://localhost:3000");
+      } catch (error) {
+        return Response.json(
+          {
+            error:
+              error instanceof Error
+                ? error.message
+                : "Invalid checkout origin",
+          },
+          { status: 400 }
+        );
+      }
       const session = await stripe!.billingPortal.sessions.create({
         customer: customerId,
-        return_url: `${origin || "http://localhost:3000"}/settings`,
+        return_url: `${baseUrl}/settings`,
       });
       return Response.json({ url: session.url });
     } catch (err: unknown) {

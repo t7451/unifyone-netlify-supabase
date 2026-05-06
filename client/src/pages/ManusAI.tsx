@@ -1,9 +1,12 @@
-import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
+import PageHead from "@/components/PageHead";
 import PublicLayout from "@/components/PublicLayout";
+import { BLOG_POSTS } from "@/pages/blog/blogPostShared";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/manus-ai`;
+const DESCRIPTION =
+  "Discover how Manus AI extends UnifyOne with guided operators, documentation workflows, and governed automation.";
 
 const JSON_LD = {
   "@context": "https://schema.org",
@@ -27,21 +30,12 @@ const JSON_LD = {
 export default function ManusAI() {
   return (
     <PublicLayout>
-      <Helmet>
-        <title>Manus AI | UnifyOne by 1Commerce</title>
-        <meta
-          name="description"
-          content="Discover how Manus AI extends UnifyOne with guided operators, documentation workflows, and governed automation."
-        />
-        <link rel="canonical" href={CANONICAL} />
-        <meta property="og:title" content="Manus AI | UnifyOne by 1Commerce" />
-        <meta
-          property="og:description"
-          content="Discover how Manus AI extends UnifyOne with guided operators, documentation workflows, and governed automation."
-        />
-        <meta property="og:url" content={CANONICAL} />
-        <script type="application/ld+json">{JSON.stringify(JSON_LD)}</script>
-      </Helmet>
+      <PageHead
+        title="Manus AI | UnifyOne by 1Commerce"
+        description={DESCRIPTION}
+        canonical={CANONICAL}
+        jsonLd={[JSON_LD]}
+      />
 
       <section className="max-w-4xl mx-auto px-6 sm:px-8 pt-32 pb-24">
         <div className="inscription mb-6" style={{ color: "#D4A843" }}>
@@ -108,7 +102,7 @@ export default function ManusAI() {
               Explore Docs Chat
             </span>
           </Link>
-          <Link href="/blog/manus-ai">
+          <Link href={BLOG_POSTS.aiGigWorkers.href}>
             <span
               className="cursor-pointer rounded-full border px-6 py-3 text-sm font-cinzel tracking-[0.2em] uppercase"
               style={{

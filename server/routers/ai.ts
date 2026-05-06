@@ -16,6 +16,7 @@ import {
   buildKaiUsageLedgerIdempotencyKey,
   checkKaiCreditAllowance,
   debitKaiCreditUsage,
+  toKaiLedgerCreditAmount,
 } from "../lib/kaiCreditGuard";
 import { randomUUID } from "node:crypto";
 
@@ -392,8 +393,12 @@ export const aiRouter = router({
         }
 
         if (llmSucceeded) {
-          const creditsToDebit =
-            chargedCredits || estimatedCredits || selectedModel.minimumCredits;
+          const creditsToDebit = Math.max(
+            chargedCredits || 0,
+            estimatedCredits || 0,
+            selectedModel.minimumCredits
+          );
+          const ledgerCreditsToDebit = toKaiLedgerCreditAmount(creditsToDebit);
           const debitIdempotencyKey = buildKaiUsageLedgerIdempotencyKey({
             tenantId: ctx.tenantId,
             userId: user.id,
@@ -404,7 +409,7 @@ export const aiRouter = router({
             const debit = await debitKaiCreditUsage({
               tenantId: ctx.tenantId,
               userId: user.id,
-              credits: creditsToDebit,
+              credits: ledgerCreditsToDebit,
               idempotencyKey: debitIdempotencyKey,
               description: `Kai chat ${input.context} (${selectedModel.id})`,
               metadata: {
@@ -418,7 +423,7 @@ export const aiRouter = router({
                   .filter(Boolean),
                 estimatedCredits:
                   estimatedCredits || selectedModel.minimumCredits,
-                chargedCredits: creditsToDebit,
+                chargedCredits: ledgerCreditsToDebit,
                 creditMultiplier: selectedModel.creditMultiplier,
                 minimumCredits: selectedModel.minimumCredits,
                 supabaseMeteringSuccess: meteringSuccess,

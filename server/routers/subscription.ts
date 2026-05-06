@@ -27,6 +27,7 @@ import { createSquareCheckout } from "../square";
 import {
   buildManualPaymentUrl,
   getAvailablePaymentProviders,
+  normalizeCheckoutOrigin,
   isPaymentProviderConfigured,
   type PaymentProvider,
 } from "../paymentFallback";
@@ -181,7 +182,16 @@ export const subscriptionRouter = router({
       }
 
       const tenantId = ctx.user.tenantId;
-      const baseUrl = input.origin;
+      let baseUrl: string;
+      try {
+        baseUrl = normalizeCheckoutOrigin(input.origin);
+      } catch (error) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            error instanceof Error ? error.message : "Invalid checkout origin",
+        });
+      }
       const cookieHeader = getCookieHeader(ctx.req) ?? "";
       const providerOrder = input.allowFallback
         ? getAvailablePaymentProviders(

@@ -4,6 +4,7 @@ import {
   getAvailablePaymentProviders,
   getProviderOrder,
   isPaymentProviderConfigured,
+  normalizeCheckoutOrigin,
 } from "./paymentFallback";
 
 describe("payment fallback provider selection", () => {
@@ -93,5 +94,23 @@ describe("manual payment fallback URL", () => {
     expect(url.origin).toBe("https://billing.test");
     expect(url.pathname).toBe("/pay");
     expect(url.searchParams.get("plan")).toBe("agency");
+  });
+});
+
+describe("checkout origin normalization", () => {
+  it("keeps only the origin for valid web URLs", () => {
+    expect(normalizeCheckoutOrigin("https://app.test/path?x=1")).toBe(
+      "https://app.test"
+    );
+    expect(normalizeCheckoutOrigin("http://localhost:5173/checkout")).toBe(
+      "http://localhost:5173"
+    );
+  });
+
+  it("rejects invalid or non-web origins", () => {
+    expect(() => normalizeCheckoutOrigin("not a url")).toThrow(/valid URL/);
+    expect(() => normalizeCheckoutOrigin("javascript:alert(1)")).toThrow(
+      /http or https/
+    );
   });
 });

@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { trpc } from "@/lib/trpc";
+import PageHead from "@/components/PageHead";
 import PublicLayout from "@/components/PublicLayout";
 import { CdnImage } from "@/components/CdnImage";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/contact`;
+const DESCRIPTION =
+  "Get in touch with the UnifyOne team. Questions about pricing, enterprise plans, or integrations? We respond within one business day.";
 
 const JSON_LD = {
   "@context": "https://schema.org",
@@ -81,21 +83,12 @@ export default function Contact() {
 
   return (
     <PublicLayout>
-      <Helmet>
-        <title>Contact | UnifyOne</title>
-        <meta
-          name="description"
-          content="Get in touch with the UnifyOne team. Questions about pricing, enterprise plans, or integrations? We respond within one business day."
-        />
-        <link rel="canonical" href={CANONICAL} />
-        <meta property="og:title" content="Contact | UnifyOne" />
-        <meta
-          property="og:description"
-          content="Get in touch with the UnifyOne team. We respond within one business day."
-        />
-        <meta property="og:url" content={CANONICAL} />
-        <script type="application/ld+json">{JSON.stringify(JSON_LD)}</script>
-      </Helmet>
+      <PageHead
+        title="Contact | UnifyOne"
+        description={DESCRIPTION}
+        canonical={CANONICAL}
+        jsonLd={[JSON_LD]}
+      />
 
       <section
         className="max-w-2xl mx-auto px-6 sm:px-8"
