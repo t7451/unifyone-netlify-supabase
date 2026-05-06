@@ -1,9 +1,9 @@
 # UnifyOne / 1commerce.online — Platform Scope Finalization
 
-**Status as of:** 2026-05-05  
-**Repo:** [`t7451/unifyone-netlify-supabase`](https://github.com/t7451/unifyone-netlify-supabase) — HEAD `c34e979`  
+**Status as of:** 2026-05-06  
+**Repo:** [`t7451/unifyone-netlify-supabase`](https://github.com/t7451/unifyone-netlify-supabase) — HEAD `54d3011`  
 **Production:** <https://1commerce.online>  
-**Cathedral phase:** Foundation ✅ → Revenue ✅ → Systems ✅ → Scale ✅ (Scale + scope-A polish + scope-B polish all closed)
+**Cathedral phase:** Foundation ✅ → Revenue ✅ → Systems ✅ → Scale ✅ → Optimize ⏳ (Scale + scope-A/B polish closed; Optimize kicked off with agent automation + Kai credits + MCP normalization)
 
 ---
 
@@ -70,6 +70,23 @@ The UX surface area users actually touch every day.
 - **`<ChangePlanCard />` on /billing (`c34e979`):** wires `subscription.changePlan` into the existing Billing page with monthly/yearly toggle, current-plan badge, per-plan loading state, and a proration warning. `subscription.getStatus` invalidates on success.
 - **Shopify hardening (`0d8b929`, external PR):** encrypted tokens at rest, DB-backed CSRF, mandatory webhooks, income calculator.
 - **Axios bump (`bda25c4`, dependabot):** moderate vuln resolved.
+
+### Optimize phase — kicked off 2026-05-06
+
+Day-of work post-`c34e979`. Focus shifted from feature surface to automation, AI credits, observability, and dependency hygiene.
+
+- **Agent automation infrastructure (`2229370` → `3a1a7b5`, ~15 commits):** Three GitHub Action agents under `.github/workflows/`:
+  - `unifyone-dev-agent.yml` + `.github/scripts/unifyone-dev-agent.js` — code-change agent with MCP 2025-03-26 client support (`ed3007b`), Groq as the primary free model (`bb139f2`), free-fallback mode (`a629f24`).
+  - `unifyone-ux-ui-agent.yml` + `.github/scripts/unifyone-ux-ui-agent.js` — UX/UI agent with free-fallback (`311673f`); guarantees the dev server is shut down on exit (`2470c8c`).
+  - `unifyone-main-agent.yml` — orchestrator that spawns dev + ux-ui + quality in parallel (`8c65462`); pnpm v10 + Node 24 alignment (`d094458`); hidden agent-report artifact upload across all three workflows (`3a1a7b5`).
+  - Shared utilities in `.github/scripts/agent-utils.js`, `unifyone-orchestrator.js`, `unifyone-issue-reporter.js`, `unifyone-mcp-agent.js`, `unifyone-quality-agent.js` (`643a788`).
+- **Kai credits end-to-end (`1343839`):** purchase + balance + ledger model. New router, checkout flow, balance UI. Migration `0041_kai_credits.sql` adds `kai_credit_packages`, `kai_credit_purchases`, `kai_credit_ledger` tables plus enums `kai_credit_purchase_status` (pending|paid|failed|cancelled|refunded) and `kai_credit_ledger_type` (purchase|usage|adjustment|refund). **Apply via `Apply production migration` Action with default `MIGRATION_FILE`.**
+- **Kai chat concurrency stress test + credit enforcement (#119, `54d3011`):** new `server/__tests__/ai.kaiCreditEnforcement.test.ts`, hardened fallback chain in `server/_core/llm.ts`, expanded `server/lib/kaiAgent.test.ts` and `kaiModels.test.ts`. Adds 4 env vars to `.env.example`.
+- **MCP tool normalization (`eabebda`):** snake_case for tool names + args across `netlify/functions/mcp-server.ts`, `mcp.mjs`, `server/lib/mcpClient.ts`, `server/routers/mcp.ts`, plus new dispatcher tests. 1,737 +/333 −.
+- **Production health probe (`f408bbd`):** `scripts/probe-health.ts` + `server/healthProbeScript.test.ts`; surfaced via `pnpm` script.
+- **Protected-route auth e2e (`5628fb9`):** expanded coverage in `e2e/auth.spec.ts`.
+- **Dependency hardening (`5129bfa`, `682de9e`):** pnpm overrides hardened, `path-to-regexp` pinned.
+- **New migrations awaiting prod:** `0039_deploy_events.sql`, `0040_paypal_square_webhook_events.sql`, `0041_kai_credits.sql`.
 
 ---
 

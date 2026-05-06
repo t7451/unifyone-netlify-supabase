@@ -159,3 +159,44 @@ and .**
 2. **Add OAuth**: Wire up Clerk or Firebase for social login (Google, GitHub, etc.)
 3. **Add magic links**: Implement passwordless login via email (can reuse existing email infrastructure)
 4. **Add 2FA**: Add TOTP support for enhanced security
+
+---
+
+## Supabase Migration Sprint — concrete plan (drafted 2026-05-06)
+
+The remaining Supabase footprint is two load-bearing call sites and one optional realtime client. Migrating to Drizzle/Neon eliminates 6 required env vars and one external dependency. Estimated 2–3 days of focused work. Ship in three sequential PRs so each can revert cleanly.
+
+### Sprint 1 — Credits RPC port (1 day)
+
+**Target call site:** `server/creditMeter.ts:34,103-110`
+
+- [ ] Capture the current Supabase Postgres function definition. Source it from the Supabase dashboard SQL editor (project `denxakpahfmlsekxmubs`) and commit as `drizzle/0042_credits_rpc.sql` for reference.
+- [ ] Port `consume_credits_with_meter` to a Drizzle transaction: read balance → guard against overdraw → insert `credit_transactions` row → return new balance. Atomic in a single `db.transaction()`.
+- [ ] Replace `supabase.rpc("consume_credits_with_meter", ...)` with the new helper. Delete `_supabase` client init from `creditMeter.ts`.
+- [ ] Add a Vitest covering: sufficient balance path, insufficient balance path, concurrent call serialization, idempotency on `(tenantId, idempotencyKey)`.
+- [ ] One-time data sync: snapshot Supabase `credit_transactions` → import into Neon. Run dry-run first, then cutover during a maintenance window.
+
+### Sprint 2 — Stripe object storage port (1 day)
+
+**Target call site:** `server/stripe.ts:8,42-43,302-303`
+
+- [ ] Replicate the Supabase tables `stripe_subscriptions`, `stripe_products`, `stripe_prices` into `drizzle/schema.ts`. Reference SQL is in `scripts/supabase-stripe-subscriptions.sql`.
+- [ ] Generate migration via `pnpm drizzle-kit generate` and commit as `drizzle/0043_stripe_objects.sql`.
+- [ ] Rewrite the Supabase upserts in `server/stripe.ts` as Drizzle `onConflictDoUpdate` calls. Drop `getSupabaseAdmin()` from this file once both call sites are gone.
+- [ ] One-time data sync from Supabase → Neon for existing rows.
+- [ ] Apply the migration in prod via the `Apply production migration` Action.
+
+### Sprint 3 — Realtime + env cleanup (½ day)
+
+- [ ] Decide on realtime: keep Supabase Realtime as an optional dependency, or replace with native server-sent events / Pusher / Cloudflare Durable Objects. Default recommendation: keep as optional-only, gated on `VITE_SUPABASE_URL` presence (already the current behavior).
+- [ ] Delete `/api/auth/supabase-session` legacy endpoint from `server/_core/oauth.ts`.
+- [ ] Drop `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET` from `.env.example` server section. Keep `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` only if realtime is staying.
+- [ ] Remove `@supabase/supabase-js` from `package.json` if realtime is removed; otherwise keep but downgrade comment to "client-only realtime".
+- [ ] Update `CLAUDE.md` "Persistence stack" table — drop the credit-meter and Stripe-storage rows from the Supabase column.
+- [ ] Update `SUPABASE_REMOVAL.md` to mark sprints 1 + 2 complete.
+
+### Cutover safety
+
+1. Each sprint ships behind a feature flag (env var `USE_NEON_CREDITS=1` etc.) for ~24h before the Supabase code path is deleted.
+2. Keep Supabase env vars set during the rollover window — code will read from Neon but the old client init must not crash if Supabase env vars are absent.
+3. Verify both `/api/health` and the in-app credit balance UI before deleting the Supabase code.

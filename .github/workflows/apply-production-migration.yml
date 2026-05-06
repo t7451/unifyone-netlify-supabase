@@ -67,6 +67,7 @@ jobs:
             --file "${MIGRATION_FILE}"
 
       - name: Verify Kai credit schema
+        if: contains(inputs.MIGRATION_FILE, '0041_kai_credits')
         shell: bash
         run: |
           set -euo pipefail
@@ -127,4 +128,47 @@ jobs:
           END $$;
 
           SELECT 'Kai credit migration verified.' AS status;
+          SQL
+
+      - name: Verify deploy_events schema
+        if: contains(inputs.MIGRATION_FILE, '0039_deploy_events')
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "${DATABASE_URL}" \
+            --no-psqlrc \
+            --set ON_ERROR_STOP=1 \
+            --quiet \
+            <<'SQL'
+          DO $$
+          BEGIN
+            IF to_regclass('public.deploy_events') IS NULL THEN
+              RAISE EXCEPTION 'Missing table: deploy_events';
+            END IF;
+          END $$;
+
+          SELECT 'deploy_events migration verified.' AS status;
+          SQL
+
+      - name: Verify PayPal/Square webhook event schema
+        if: contains(inputs.MIGRATION_FILE, '0040_paypal_square_webhook_events')
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "${DATABASE_URL}" \
+            --no-psqlrc \
+            --set ON_ERROR_STOP=1 \
+            --quiet \
+            <<'SQL'
+          DO $$
+          BEGIN
+            IF to_regclass('public.paypal_webhook_events') IS NULL THEN
+              RAISE EXCEPTION 'Missing table: paypal_webhook_events';
+            END IF;
+            IF to_regclass('public.square_webhook_events') IS NULL THEN
+              RAISE EXCEPTION 'Missing table: square_webhook_events';
+            END IF;
+          END $$;
+
+          SELECT 'paypal/square webhook event migration verified.' AS status;
           SQL
