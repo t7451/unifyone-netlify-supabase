@@ -1,29 +1,45 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import { trpc } from "@/lib/trpc";
+import { ChangePlanCard } from "@/components/ChangePlanCard";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { trpc } from "@/lib/trpc";
+import { cn } from "@/lib/utils";
+import {
+  PLAN_CATALOG_BY_SLUG,
+  formatUsdCents,
+  getPlanNumericLimitLabel,
+  isPlanSlug,
+} from "@shared/pricing";
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  CheckCircle2,
+  Clock,
   CreditCard,
   Download,
   ExternalLink,
-  Receipt,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  AlertTriangle,
-  ArrowUpRight,
-  Zap,
-  Package,
-  ShoppingCart,
-  Users,
   Loader2,
+  Package,
+  Receipt,
+  ShoppingCart,
   Star,
+  Users,
+  XCircle,
+  Zap,
 } from "lucide-react";
 import { useState } from "react";
-import { ChangePlanCard } from "@/components/ChangePlanCard";
+import { toast } from "sonner";
 
 function formatCurrency(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", {
@@ -40,6 +56,23 @@ function formatDate(ts: number) {
   });
 }
 
+function formatLongDate(value: Date | string | null | undefined) {
+  if (!value) return null;
+
+  return new Date(value).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function toTitleCase(value: string) {
+  return value
+    .split("_")
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 function InvoiceStatusBadge({ status }: { status: string }) {
   const map: Record<
     string,
@@ -47,34 +80,147 @@ function InvoiceStatusBadge({ status }: { status: string }) {
   > = {
     paid: {
       label: "Paid",
-      icon: <CheckCircle2 className="w-3 h-3" />,
-      className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+      icon: <CheckCircle2 className="h-3 w-3" />,
+      className: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
     },
     open: {
       label: "Open",
-      icon: <Clock className="w-3 h-3" />,
-      className: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+      icon: <Clock className="h-3 w-3" />,
+      className: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
     },
     void: {
       label: "Void",
-      icon: <XCircle className="w-3 h-3" />,
-      className: "bg-slate-500/15 text-slate-400 border-slate-500/30",
+      icon: <XCircle className="h-3 w-3" />,
+      className: "bg-slate-500/15 text-slate-300 border-slate-500/30",
     },
     uncollectible: {
       label: "Uncollectible",
-      icon: <AlertTriangle className="w-3 h-3" />,
-      className: "bg-red-500/15 text-red-400 border-red-500/30",
+      icon: <AlertTriangle className="h-3 w-3" />,
+      className: "bg-red-500/15 text-red-300 border-red-500/30",
     },
   };
   const cfg = map[status] ?? map.open;
   return (
     <Badge
       variant="outline"
-      className={`flex items-center gap-1 text-xs ${cfg.className}`}
+      className={cn("flex items-center gap-1 text-xs", cfg.className)}
     >
       {cfg.icon}
       {cfg.label}
     </Badge>
+  );
+}
+
+function PlanTierBadge({ slug }: { slug: string | null | undefined }) {
+  const tier =
+    slug === "scale"
+      ? {
+          label: "Scale",
+          className: "border-violet-500/30 bg-violet-500/15 text-violet-200",
+        }
+      : slug === "pro"
+        ? {
+            label: "Pro",
+            className: "border-cyan-500/30 bg-cyan-500/15 text-cyan-200",
+          }
+        : {
+            label: "Free",
+            className: "border-slate-600 bg-slate-700/50 text-slate-200",
+          };
+
+  return (
+    <Badge variant="outline" className={tier.className}>
+      {tier.label}
+    </Badge>
+  );
+}
+
+function SubscriptionStatusBadge({
+  status,
+}: {
+  status: string | null | undefined;
+}) {
+  const badge =
+    status === "active"
+      ? {
+          label: "Active",
+          className: "border-emerald-500/30 bg-emerald-500/15 text-emerald-200",
+        }
+      : status === "trialing"
+        ? {
+            label: "Trialing",
+            className: "border-cyan-500/30 bg-cyan-500/15 text-cyan-200",
+          }
+        : status === "past_due"
+          ? {
+              label: "Past Due",
+              className: "border-red-500/30 bg-red-500/15 text-red-200",
+            }
+          : status === "cancelled"
+            ? {
+                label: "Cancelled",
+                className:
+                  "border-slate-500/30 bg-slate-500/15 text-slate-200",
+              }
+            : {
+                label: "None",
+                className:
+                  "border-slate-500/30 bg-slate-500/15 text-slate-200",
+              };
+
+  return (
+    <Badge variant="outline" className={badge.className}>
+      {badge.label}
+    </Badge>
+  );
+}
+
+function UsageBar({
+  icon: Icon,
+  label,
+  used,
+  max,
+  loading,
+  indicatorClassName,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  used: number | null;
+  max: number | null;
+  loading: boolean;
+  indicatorClassName: string;
+}) {
+  const hasValues = typeof used === "number" && typeof max === "number";
+  const progress =
+    hasValues && max > 0 ? Math.min(100, Math.round((used / max) * 100)) : 0;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="flex items-center gap-2 text-slate-300">
+          <Icon className="h-4 w-4 text-slate-400" />
+          {label}
+        </span>
+        <span className="text-xs text-slate-400">
+          {loading
+            ? "—"
+            : `${used?.toLocaleString() ?? "—"} / ${
+                typeof max === "number" ? getPlanNumericLimitLabel(max) : "—"
+              }`}
+        </span>
+      </div>
+      {loading ? (
+        <Skeleton className="h-2 w-full bg-slate-700/70" />
+      ) : (
+        <Progress
+          value={progress}
+          className={cn(
+            "h-2 bg-slate-700/60 [&_[data-slot=progress-indicator]]:bg-cyan-400",
+            indicatorClassName
+          )}
+        />
+      )}
+    </div>
   );
 }
 
@@ -83,6 +229,8 @@ export default function Billing() {
 
   const { data: subStatus, isLoading: subLoading } =
     trpc.subscription.getStatus.useQuery();
+  const { data: usage, isLoading: usageLoading } =
+    trpc.tenant.getUsage.useQuery();
   const { data: invoices, isLoading: invoicesLoading } =
     trpc.subscription.getInvoices.useQuery();
 
@@ -94,8 +242,8 @@ export default function Billing() {
         toast.error("Could not create checkout session.");
       }
     },
-    onError: (e: { message: string }) => {
-      toast.error(e.message ?? "Checkout failed. Please try again.");
+    onError: (error: { message: string }) => {
+      toast.error(error.message ?? "Checkout failed. Please try again.");
     },
   });
 
@@ -112,6 +260,7 @@ export default function Billing() {
       toast.info("No active subscription. Upgrade a plan first.");
       return;
     }
+
     setPortalLoading(true);
     try {
       const res = await fetch("/api/stripe/customer-portal", {
@@ -136,382 +285,403 @@ export default function Billing() {
     }
   };
 
-  const periodEndStr = subStatus?.subscriptionCurrentPeriodEnd
-    ? new Date(subStatus.subscriptionCurrentPeriodEnd).toLocaleDateString(
-        undefined,
-        {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }
-      )
+  const planSlug = subStatus?.plan?.slug;
+  const catalogPlan =
+    planSlug && isPlanSlug(planSlug)
+      ? PLAN_CATALOG_BY_SLUG[planSlug]
+      : PLAN_CATALOG_BY_SLUG.starter;
+  const planName = subStatus?.plan?.name ?? catalogPlan.name;
+  const status = subStatus?.status ?? "none";
+  const billingCycle = subStatus?.billingCycle
+    ? toTitleCase(subStatus.billingCycle)
     : null;
-
-  const isFreeTier =
+  const periodEnd = formatLongDate(subStatus?.subscriptionCurrentPeriodEnd);
+  const trialDaysLeft = subStatus?.trialDaysLeft ?? null;
+  const isTrialing =
     !subLoading &&
-    (subStatus?.status === "none" ||
-      subStatus?.status === "cancelled" ||
-      subStatus?.tenantStatus === "trial");
-
-  const isOnTrial =
-    !subLoading &&
-    subStatus?.tenantStatus === "trial" &&
-    subStatus?.trialDaysLeft !== null;
-
-  const trialDaysTotal = 14;
-  const trialDaysLeft = subStatus?.trialDaysLeft ?? 0;
-  const trialPct =
-    trialDaysLeft > 0
-      ? Math.round(((trialDaysTotal - trialDaysLeft) / trialDaysTotal) * 100)
-      : 100;
+    (subStatus?.status === "trialing" || subStatus?.tenantStatus === "trial") &&
+    trialDaysLeft !== null;
+  const isFreeTier = !subLoading && subStatus?.status === "none" && !isTrialing;
+  const canManageBilling = Boolean(subStatus?.stripeCustomerId);
+  const hasPaidPlan = catalogPlan.monthlyPriceCents > 0;
+  const usageLimits = {
+    maxProducts: subStatus?.plan?.maxProducts ?? catalogPlan.maxProducts,
+    maxOrders: subStatus?.plan?.maxOrders ?? catalogPlan.maxOrders,
+    maxUsers: subStatus?.plan?.maxUsers ?? catalogPlan.maxUsers,
+  };
+  const proPlan = PLAN_CATALOG_BY_SLUG.pro;
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
+      <div className="mx-auto max-w-4xl space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-white">
             Billing & Subscription
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="mt-1 text-sm text-slate-400">
             Manage your plan, payment method, and invoice history.
           </p>
         </div>
 
-        {/* ── Current Plan Summary Card ── */}
-        <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/15 flex items-center justify-center shrink-0">
-                <Zap className="w-5 h-5 text-cyan-400" />
+        {status === "past_due" && (
+          <Alert className="border-red-500/40 bg-red-500/10 text-red-100">
+            <AlertTriangle className="text-red-300" />
+            <AlertTitle>Payment past due</AlertTitle>
+            <AlertDescription className="text-red-100/90">
+              <p>
+                Your subscription is past due. Update your payment method to keep
+                paid features active.
+              </p>
+              {canManageBilling && (
+                <Button
+                  variant="link"
+                  className="h-auto p-0 text-red-100 hover:text-white"
+                  onClick={handleOpenPortal}
+                  disabled={portalLoading}
+                >
+                  {portalLoading ? "Opening portal..." : "Update payment method"}
+                </Button>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <Card className="border-slate-700/50 bg-slate-800/40 text-white shadow-none">
+          <CardHeader className="gap-4 border-b border-slate-700/50 pb-6 sm:flex sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-500/15">
+                <Zap className="h-5 w-5 text-cyan-300" />
               </div>
-              <div>
-                <p className="text-sm text-slate-400">Current Plan</p>
+              <div className="space-y-2">
+                <CardDescription className="text-slate-400">
+                  Current Plan
+                </CardDescription>
                 {subLoading ? (
-                  <Skeleton className="h-6 w-32 mt-1 bg-slate-700" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-7 w-40 bg-slate-700/70" />
+                    <Skeleton className="h-4 w-56 bg-slate-700/50" />
+                  </div>
                 ) : (
-                  <p className="text-lg font-semibold text-white">
-                    {subStatus?.plan?.name ?? "Free Tier"}
-                  </p>
+                  <>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <CardTitle className="text-2xl text-white">
+                        {planName}
+                      </CardTitle>
+                      <PlanTierBadge slug={planSlug} />
+                      <SubscriptionStatusBadge status={status} />
+                    </div>
+                    <p className="text-sm text-slate-400">{catalogPlan.tagline}</p>
+                  </>
                 )}
               </div>
             </div>
 
-            <div className="flex flex-col items-end gap-2">
-              {subLoading ? (
-                <Skeleton className="h-6 w-20 bg-slate-700" />
-              ) : (
-                <>
-                  <Badge
-                    variant="outline"
-                    className={
-                      subStatus?.status === "active"
-                        ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                        : subStatus?.status === "trialing"
-                          ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"
-                          : subStatus?.status === "past_due"
-                            ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-                            : "bg-slate-500/15 text-slate-400 border-slate-500/30"
-                    }
-                  >
-                    {subStatus?.status === "active"
-                      ? "Active"
-                      : subStatus?.status === "trialing"
-                        ? "Trialing"
-                        : subStatus?.status === "past_due"
-                          ? "Past Due"
-                          : subStatus?.status === "cancelled"
-                            ? "Cancelled"
-                            : "Free"}
-                  </Badge>
-
-                  {/* Billing cycle */}
-                  {subStatus?.status === "active" && (
-                    <p className="text-xs text-slate-500">
-                      Billing cycle: Monthly
-                    </p>
-                  )}
-
-                  {/* Next billing date */}
-                  {periodEndStr && (
-                    <p className="text-xs text-slate-500">
-                      Next billing date:{" "}
-                      <span className="text-slate-300">{periodEndStr}</span>
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Trial progress bar */}
-          {isOnTrial && (
-            <div className="mt-4 pt-4 border-t border-slate-700/50">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-medium text-amber-400">
-                  Trial period
-                </p>
-                <p className="text-xs text-slate-400">
-                  <span className="text-amber-400 font-semibold">
-                    {trialDaysLeft}
-                  </span>{" "}
-                  / {trialDaysTotal} days remaining
-                </p>
+            {subLoading ? (
+              <div className="grid gap-2 sm:min-w-52">
+                <Skeleton className="h-4 w-36 bg-slate-700/60" />
+                <Skeleton className="h-4 w-40 bg-slate-700/60" />
               </div>
-              <div className="h-2 w-full rounded-full bg-slate-700/60 overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all",
-                    trialPct >= 80 ? "bg-amber-500" : "bg-cyan-500"
-                  )}
-                  style={{ width: `${trialPct}%` }}
+            ) : (
+              <dl className="grid gap-3 rounded-lg border border-slate-700/60 bg-slate-900/40 p-4 text-sm sm:min-w-56">
+                <div className="space-y-1">
+                  <dt className="text-xs uppercase tracking-wide text-slate-500">
+                    Subscription status
+                  </dt>
+                  <dd className="text-slate-200">{toTitleCase(status)}</dd>
+                </div>
+                {hasPaidPlan && billingCycle && (
+                  <div className="space-y-1">
+                    <dt className="text-xs uppercase tracking-wide text-slate-500">
+                      Billing cycle
+                    </dt>
+                    <dd className="text-slate-200">{billingCycle}</dd>
+                  </div>
+                )}
+                {periodEnd && (
+                  <div className="space-y-1">
+                    <dt className="text-xs uppercase tracking-wide text-slate-500">
+                      Period end
+                    </dt>
+                    <dd className="text-slate-200">{periodEnd}</dd>
+                  </div>
+                )}
+              </dl>
+            )}
+          </CardHeader>
+
+          <CardContent className="space-y-5 pt-6">
+            <div>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-white">
+                    Usage vs limits
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Orders reset each calendar month for plan limits.
+                  </p>
+                </div>
+                {usageLoading ? (
+                  <Skeleton className="h-4 w-24 bg-slate-700/60" />
+                ) : (
+                  <span className="text-xs text-slate-500">
+                    Plan cap: {getPlanNumericLimitLabel(usageLimits.maxUsers)} team
+                    members
+                  </span>
+                )}
+              </div>
+              <div className="space-y-4 rounded-xl border border-slate-700/50 bg-slate-900/30 p-4">
+                <UsageBar
+                  icon={Package}
+                  label="Products"
+                  used={usage?.productCount ?? null}
+                  max={usageLimits.maxProducts}
+                  loading={usageLoading}
+                  indicatorClassName="[&_[data-slot=progress-indicator]]:bg-cyan-400"
+                />
+                <UsageBar
+                  icon={ShoppingCart}
+                  label="Orders this month"
+                  used={usage?.orderCount ?? null}
+                  max={usageLimits.maxOrders}
+                  loading={usageLoading}
+                  indicatorClassName="[&_[data-slot=progress-indicator]]:bg-violet-400"
+                />
+                <UsageBar
+                  icon={Users}
+                  label="Team members"
+                  used={usage?.userCount ?? null}
+                  max={usageLimits.maxUsers}
+                  loading={usageLoading}
+                  indicatorClassName="[&_[data-slot=progress-indicator]]:bg-emerald-400"
                 />
               </div>
-              <p className="text-xs text-slate-500 mt-1.5">
-                Trial ends in {trialDaysLeft} day
-                {trialDaysLeft !== 1 ? "s" : ""}. Upgrade to keep access.
-              </p>
             </div>
-          )}
+          </CardContent>
 
-          {/* Usage vs limits */}
-          {!subLoading && subStatus?.usage && (
-            <div className="mt-4 pt-4 border-t border-slate-700/50 space-y-4">
-              {[
-                {
-                  label: "Products",
-                  icon: Package,
-                  used: subStatus.usage.products,
-                  max: subStatus.usage.maxProducts,
-                  barColor: "bg-cyan-500",
-                },
-                {
-                  label: "Orders this month",
-                  icon: ShoppingCart,
-                  used: subStatus.usage.orders,
-                  max: subStatus.usage.maxOrders,
-                  barColor: "bg-violet-500",
-                },
-                {
-                  label: "Team members",
-                  icon: Users,
-                  used: 1,
-                  max: subStatus.usage.maxUsers,
-                  barColor: "bg-emerald-500",
-                },
-              ].map(item => {
-                const pct =
-                  item.max > 0
-                    ? Math.min(100, Math.round((item.used / item.max) * 100))
-                    : 0;
-                const nearLimit = pct >= 80;
-                const Icon = item.icon;
-                return (
-                  <div key={item.label}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                        <Icon className="w-3 h-3" />
-                        {item.label}
-                      </div>
-                      <span
-                        className={`text-xs font-medium ${nearLimit ? "text-amber-400" : "text-slate-400"}`}
-                      >
-                        {item.used.toLocaleString()}&nbsp;/&nbsp;
-                        {item.max.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="h-1.5 w-full rounded-full bg-slate-700/60 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${nearLimit ? "bg-amber-500" : item.barColor}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Action buttons */}
-          <div className="mt-4 flex flex-wrap gap-3">
-            {subStatus?.stripeCustomerId && (
+          <CardFooter className="flex flex-wrap gap-3 border-t border-slate-700/50 pt-6">
+            {canManageBilling && (
               <Button
-                size="sm"
                 variant="outline"
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                className="border-slate-600 bg-transparent text-slate-200 hover:bg-slate-700/60"
                 onClick={handleOpenPortal}
                 disabled={portalLoading}
               >
-                <CreditCard className="w-4 h-4 mr-1.5" />
-                {portalLoading ? "Opening..." : "Manage Billing"}
-                <ExternalLink className="w-3.5 h-3.5 ml-1.5 opacity-60" />
+                <CreditCard className="h-4 w-4" />
+                {portalLoading ? "Opening..." : "Manage billing"}
+                <ExternalLink className="h-3.5 w-3.5 opacity-70" />
               </Button>
             )}
-          </div>
-        </div>
-
-        {/* ── Upgrade CTA Card (free / trial / cancelled users) ── */}
-        {isFreeTier && (
-          <div className="rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-violet-500/10 p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-11 h-11 rounded-xl bg-cyan-500/20 flex items-center justify-center shrink-0">
-                <Star className="w-5 h-5 text-cyan-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base font-semibold text-white">
-                  Upgrade to Pro
-                </h3>
-                <p className="text-sm text-slate-400 mt-1">
-                  Unlock unlimited products, priority support, and advanced
-                  analytics. Grow without limits.
-                </p>
-                <ul className="mt-3 space-y-1.5">
-                  {[
-                    "Unlimited products & orders",
-                    "Priority customer support",
-                    "Advanced analytics & reporting",
-                    "Custom domain & branding",
-                  ].map(feature => (
-                    <li
-                      key={feature}
-                      className="flex items-center gap-2 text-xs text-slate-300"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            <div className="mt-5">
+            {(isFreeTier || isTrialing || status === "cancelled") && (
               <Button
-                className="bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-semibold w-full sm:w-auto"
+                className="bg-cyan-400 text-slate-950 hover:bg-cyan-300"
                 onClick={handleUpgrade}
                 disabled={createCheckout.isPending}
               >
                 {createCheckout.isPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                    Redirecting to checkout...
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Redirecting...
                   </>
                 ) : (
                   <>
-                    <ArrowUpRight className="w-4 h-4 mr-1.5" />
-                    Upgrade to Pro — starts at $29/mo
+                    <ArrowUpRight className="h-4 w-4" />
+                    {status === "cancelled" ? "Reactivate plan" : "Upgrade to Pro"}
                   </>
                 )}
               </Button>
-            </div>
-          </div>
+            )}
+          </CardFooter>
+        </Card>
+
+        {isTrialing && (
+          <Card className="border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 via-slate-900 to-violet-500/10 text-white shadow-none">
+            <CardContent className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-cyan-200">
+                  <Clock className="h-4 w-4" />
+                  <span className="text-sm font-medium">Trial countdown</span>
+                </div>
+                <div>
+                  <p className="text-2xl font-semibold text-white">
+                    {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} remaining
+                  </p>
+                  <p className="text-sm text-slate-300">
+                    Upgrade now to keep your storefront live and retain access to
+                    paid billing features.
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="lg"
+                className="bg-cyan-400 text-slate-950 hover:bg-cyan-300"
+                onClick={handleUpgrade}
+                disabled={createCheckout.isPending}
+              >
+                {createCheckout.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Redirecting...
+                  </>
+                ) : (
+                  <>
+                    <ArrowUpRight className="h-4 w-4" />
+                    Upgrade Now
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
         )}
 
-        {/* ── Invoice History ── */}
-        <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 overflow-hidden">
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-700/50">
-            <Receipt className="w-4 h-4 text-slate-400" />
-            <h2 className="text-sm font-semibold text-white">
-              Invoice History
-            </h2>
-          </div>
-
-          {invoicesLoading ? (
-            <div className="p-5 space-y-3">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="space-y-1.5">
-                    <Skeleton className="h-4 w-32 bg-slate-700" />
-                    <Skeleton className="h-3 w-24 bg-slate-700/60" />
-                  </div>
-                  <Skeleton className="h-7 w-20 bg-slate-700" />
+        {isFreeTier && (
+          <Card className="border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-slate-900 to-cyan-500/10 text-white shadow-none">
+            <CardContent className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/15">
+                  <Star className="h-5 w-5 text-emerald-300" />
                 </div>
-              ))}
-            </div>
-          ) : !invoices || invoices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Receipt className="w-10 h-10 text-slate-600 mb-3" />
-              <p className="text-sm font-medium text-slate-400">
-                No invoices yet
-              </p>
-              <p className="text-xs text-slate-600 mt-1">
-                Invoices will appear here after your first payment.
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-700/50">
-              {invoices.map(invoice => (
-                <div
-                  key={invoice.id}
-                  className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-700/20 transition-colors"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-slate-700/60 flex items-center justify-center shrink-0">
-                      <Receipt className="w-4 h-4 text-slate-400" />
+                <div className="space-y-2">
+                  <p className="text-lg font-semibold text-white">
+                    Upgrade from Free to Pro
+                  </p>
+                  <p className="text-sm text-slate-300">
+                    Unlock {getPlanNumericLimitLabel(proPlan.maxProducts)} products,
+                    {" "}{getPlanNumericLimitLabel(proPlan.maxOrders)} monthly orders,
+                    and {getPlanNumericLimitLabel(proPlan.maxUsers)} team members on
+                    one paid plan.
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="lg"
+                className="bg-emerald-400 text-slate-950 hover:bg-emerald-300"
+                onClick={handleUpgrade}
+                disabled={createCheckout.isPending}
+              >
+                {createCheckout.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Redirecting...
+                  </>
+                ) : (
+                  <>
+                    <ArrowUpRight className="h-4 w-4" />
+                    Upgrade to Pro — {formatUsdCents(proPlan.monthlyPriceCents)}/mo
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        <ChangePlanCard />
+
+        <Card className="overflow-hidden border-slate-700/50 bg-slate-800/40 text-white shadow-none">
+          <CardHeader className="flex flex-row items-center gap-3 border-b border-slate-700/50 pb-4">
+            <Receipt className="h-4 w-4 text-slate-400" />
+            <CardTitle className="text-sm font-semibold text-white">
+              Invoice History
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="px-0 pt-0">
+            {invoicesLoading ? (
+              <div className="space-y-3 p-5">
+                {[1, 2, 3].map(item => (
+                  <div key={item} className="flex items-center justify-between">
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-32 bg-slate-700" />
+                      <Skeleton className="h-3 w-24 bg-slate-700/60" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-white truncate">
-                        {invoice.number ?? invoice.id.slice(0, 12)}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {formatDate(invoice.created)}
-                      </p>
-                    </div>
+                    <Skeleton className="h-7 w-20 bg-slate-700" />
                   </div>
-                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                    <InvoiceStatusBadge status={invoice.status} />
-                    <span className="text-sm font-semibold text-white min-w-[3.5rem] text-right">
-                      {formatCurrency(
-                        invoice.amount_paid || invoice.amount_due,
-                        invoice.currency
-                      )}
-                    </span>
-                    {/* Download PDF button */}
-                    {invoice.invoice_pdf ? (
-                      <a
-                        href={invoice.invoice_pdf}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Download PDF"
-                      >
+                ))}
+              </div>
+            ) : !invoices || invoices.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Receipt className="mb-3 h-10 w-10 text-slate-600" />
+                <p className="text-sm font-medium text-slate-400">
+                  No invoices yet
+                </p>
+                <p className="mt-1 text-xs text-slate-600">
+                  Invoices will appear here after your first payment.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-700/50">
+                {invoices.map(invoice => (
+                  <div
+                    key={invoice.id}
+                    className="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-slate-700/20"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-700/60">
+                        <Receipt className="h-4 w-4 text-slate-400" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-white">
+                          {invoice.number ?? invoice.id.slice(0, 12)}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatDate(invoice.created)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+                      <InvoiceStatusBadge status={invoice.status} />
+                      <span className="min-w-[3.5rem] text-right text-sm font-semibold text-white">
+                        {formatCurrency(
+                          invoice.amount_paid || invoice.amount_due,
+                          invoice.currency
+                        )}
+                      </span>
+                      {invoice.invoice_pdf ? (
+                        <a
+                          href={invoice.invoice_pdf}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Download PDF"
+                        >
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 border-slate-600 px-2 text-slate-300 hover:bg-slate-700 hover:text-white"
+                          >
+                            <Download className="mr-1 h-3.5 w-3.5" />
+                            PDF
+                          </Button>
+                        </a>
+                      ) : (
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-7 px-2 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+                          className="h-7 cursor-not-allowed border-slate-700 px-2 text-slate-600"
+                          disabled
+                          title="PDF not available"
                         >
-                          <Download className="w-3.5 h-3.5 mr-1" />
+                          <Download className="mr-1 h-3.5 w-3.5" />
                           PDF
                         </Button>
-                      </a>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 px-2 border-slate-700 text-slate-600 cursor-not-allowed"
-                        disabled
-                        title="PDF not available"
-                      >
-                        <Download className="w-3.5 h-3.5 mr-1" />
-                        PDF
-                      </Button>
-                    )}
-                    {invoice.hosted_invoice_url && (
-                      <a
-                        href={invoice.hosted_invoice_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-slate-500 hover:text-slate-300 transition-colors"
-                        title="View invoice"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
+                      )}
+                      {invoice.hosted_invoice_url && (
+                        <a
+                          href={invoice.hosted_invoice_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-slate-500 transition-colors hover:text-slate-300"
+                          title="View invoice"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
-      <ChangePlanCard />
     </DashboardLayout>
   );
 }
