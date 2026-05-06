@@ -171,9 +171,9 @@ The remaining Supabase footprint is two load-bearing call sites and one optional
 **Target call site:** `server/creditMeter.ts:34,103-110`
 
 - [ ] Capture the current Supabase Postgres function definition. Source it from the Supabase dashboard SQL editor (project `denxakpahfmlsekxmubs`) and commit as `drizzle/0042_credits_rpc.sql` for reference.
-- [ ] Port `consume_credits_with_meter` to a Drizzle transaction: read balance → guard against overdraw → insert `credit_transactions` row → return new balance. Atomic in a single `db.transaction()`.
+- [ ] Port `consume_credits_with_meter` to a Drizzle transaction: read balance → guard against overdraw → insert `credit_transactions` row → return new balance. Atomic in a single `db.transaction()`. **Concurrency requirement:** the balance read must be row-locked to prevent two concurrent requests from each seeing sufficient balance and both succeeding (classic overdraw race). Use `SELECT … FOR UPDATE` against the tenant's balance row inside the transaction, or set the transaction isolation level to `SERIALIZABLE` and retry on serialization failure. The current Supabase function relies on Postgres' MVCC inside its own transaction; the Drizzle port must replicate that guarantee explicitly.
 - [ ] Replace `supabase.rpc("consume_credits_with_meter", ...)` with the new helper. Delete `_supabase` client init from `creditMeter.ts`.
-- [ ] Add a Vitest covering: sufficient balance path, insufficient balance path, concurrent call serialization, idempotency on `(tenantId, idempotencyKey)`.
+- [ ] Add a Vitest covering: sufficient balance path, insufficient balance path, **concurrent call serialization (two parallel debits against the same tenant exhausting balance)**, and idempotency on `(tenantId, idempotencyKey)`.
 - [ ] One-time data sync: snapshot Supabase `credit_transactions` → import into Neon. Run dry-run first, then cutover during a maintenance window.
 
 ### Sprint 2 — Stripe object storage port (1 day)

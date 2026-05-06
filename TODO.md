@@ -131,7 +131,7 @@ Things noticed during the audit-fix rollout that aren't blocking revenue but are
 
 - **Husky pre-commit eslint hook** is strict (max-warnings=20, fails on unused-imports). Worked-around twice this session by re-running with the route wired correctly. Consider relaxing during scaffolding-heavy work.
 - **drizzle migrations partially broken** — must use `drizzle-kit push`, not `migrate`. The new `discounts` table needs to be pushed against prod once.
-- **14 Dependabot alerts** on the default branch (4 high, 9 moderate, 1 low) per the latest push. Triage during a maintenance window — most are likely transitive.
+- **6 Dependabot alerts** on the default branch (2 high, 4 moderate) per the latest push. Triage during a maintenance window — most are likely transitive.
 - **`SHOPIFY_API_SECRET`** must be set on Netlify for the Shopify webhook receiver to accept anything. Without it, `validateShopifyWebhook` fails closed (intentional security default).
 - **Image upload requires Netlify Blobs** to be available — works automatically on Netlify Functions runtime, but local dev returns 501 unless you set up a local blob store.
 - **Customers schema has no `notes` column** — added it to the input schema and dropped it; if you want notes on customers, add the column via drizzle-kit push and re-add `notes` to the create/update mutations.

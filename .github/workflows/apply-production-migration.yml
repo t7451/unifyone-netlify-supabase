@@ -172,3 +172,12 @@ jobs:
 
           SELECT 'paypal/square webhook event migration verified.' AS status;
           SQL
+
+      - name: Warn — no schema verifier registered for this migration
+        if: |
+          !contains(inputs.MIGRATION_FILE, '0039_deploy_events') &&
+          !contains(inputs.MIGRATION_FILE, '0040_paypal_square_webhook_events') &&
+          !contains(inputs.MIGRATION_FILE, '0041_kai_credits')
+        shell: bash
+        run: |
+          echo "::warning::No schema verifier is registered for ${MIGRATION_FILE}. The SQL was applied successfully, but post-apply schema verification was skipped — confirm the resulting schema manually before treating this migration as complete."
