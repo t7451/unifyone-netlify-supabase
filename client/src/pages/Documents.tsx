@@ -1,8 +1,18 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { Helmet } from "react-helmet-async";
-import { BookOpen, Zap, Code, Rocket } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart2,
+  BookOpen,
+  Code2,
+  Layers,
+  Plug,
+} from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const TABS = [
@@ -11,6 +21,50 @@ const TABS = [
   { id: "integrations", label: "Integrations", icon: "⚙️" },
   { id: "work-proof", label: "Work Proof", icon: "✓" },
 ];
+
+const DOC_AREAS = [
+  {
+    title: "Getting Started",
+    description:
+      "Start with the architecture, platform orientation, and the fastest path to exploring UnifyOne's docs surface.",
+    href: "/docs/getting-started",
+    Icon: BookOpen,
+    badge: "Quickstart",
+  },
+  {
+    title: "Integration Guides",
+    description:
+      "Review setup patterns for commerce, automation, and AI integrations spanning payments, workflows, and messaging.",
+    href: "/docs/integration-guides",
+    Icon: Plug,
+    badge: "Platform",
+  },
+  {
+    title: "API Reference",
+    description:
+      "Download the Postman collection covering auth, payments, admin flows, and the core REST endpoints exposed by UnifyOne.",
+    href: "/api/postman/collection.json",
+    Icon: Code2,
+    badge: "Download",
+    download: true,
+  },
+  {
+    title: "Case Studies",
+    description:
+      "See how operators scale revenue, automate fulfillment, and launch tenant portfolios using the UnifyOne control plane.",
+    href: "/docs/case-studies",
+    Icon: BarChart2,
+    badge: "Stories",
+  },
+  {
+    title: "Architecture",
+    description:
+      "Dive into the Cathedral Principle, multi-tenant patterns, and the systems thinking behind UnifyOne's product design.",
+    href: "/architecture",
+    Icon: Layers,
+    badge: "Systems",
+  },
+] as const;
 
 export default function Documents() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -280,7 +334,6 @@ export default function Documents() {
                     ))}
                   </div>
 
-                  {/* Doc Section Cards */}
                   <div className="mt-12">
                     <h3
                       className="font-cinzel text-lg font-bold mb-6"
@@ -288,85 +341,74 @@ export default function Documents() {
                     >
                       EXPLORE DOCUMENTATION
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {[
-                        {
-                          Icon: BookOpen,
-                          title: "Case Studies",
-                          description:
-                            "Technical deep-dives into Cathedral Framework, Kai AI, multi-tenant architecture, and Stripe CAPI.",
-                          href: "/documents/case-studies",
-                        },
-                        {
-                          Icon: Zap,
-                          title: "Integration Guides",
-                          description:
-                            "Step-by-step guides for Stripe, Shopify, PayPal, Square, Anthropic AI, and n8n automation.",
-                          href: "/documents/integrations",
-                        },
-                        {
-                          Icon: Code,
-                          title: "API Reference",
-                          description:
-                            "Complete tRPC endpoint reference, authentication patterns, and schema definitions.",
-                          href: "/documents/work-proof",
-                        },
-                        {
-                          Icon: Rocket,
-                          title: "Getting Started",
-                          description:
-                            "Quickstart guide — from zero to a running UnifyOne instance in under 30 minutes.",
-                          href: "/docs-chat",
-                        },
-                      ].map(({ Icon, title, description, href }) => (
-                        <Link key={title} href={href}>
-                          <a
-                            style={{
-                              display: "flex",
-                              alignItems: "flex-start",
-                              gap: "1rem",
-                              padding: "1.5rem",
-                              backgroundColor: "rgba(212,168,67,0.05)",
-                              border: "1px solid rgba(212,168,67,0.15)",
-                              textDecoration: "none",
-                              transition: "all 0.3s ease",
-                            }}
-                            className="hover:bg-opacity-20 group"
-                          >
-                            <div
-                              style={{
-                                flexShrink: 0,
-                                width: "2.5rem",
-                                height: "2.5rem",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                backgroundColor: "rgba(212,168,67,0.1)",
-                                border: "1px solid rgba(212,168,67,0.25)",
-                              }}
-                            >
-                              <Icon size={18} color="#D4A843" />
-                            </div>
-                            <div>
-                              <div
-                                className="font-cinzel text-sm font-bold mb-1"
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                      {DOC_AREAS.map(area => {
+                        const { Icon, badge, description, href, title } = area;
+                        const download =
+                          "download" in area ? area.download : false;
+                        const cardContent = (
+                          <Card className="h-full border-[#d4a84333] bg-[#0d0d0d] text-left transition-colors hover:border-[#d4a84366] hover:bg-[#131313]">
+                            <CardHeader className="space-y-4">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#d4a84355] bg-[#d4a84314] text-[#D4A843]">
+                                  <Icon className="h-5 w-5" />
+                                </div>
+                                <Badge
+                                  variant="outline"
+                                  className="border-[#d4a84344] text-[#D4A843]"
+                                >
+                                  {badge}
+                                </Badge>
+                              </div>
+                              <CardTitle
+                                className="font-cinzel text-lg"
                                 style={{
-                                  color: "#D4A843",
-                                  letterSpacing: "0.05em",
+                                  color: "#F0E8D0",
+                                  letterSpacing: "0.03em",
                                 }}
                               >
                                 {title}
-                              </div>
-                              <div
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="flex h-full flex-col justify-between gap-6">
+                              <p
                                 className="font-crimson text-sm"
-                                style={{ color: "#7A7A7A", lineHeight: 1.6 }}
+                                style={{ color: "#A0A0A0", lineHeight: 1.7 }}
                               >
                                 {description}
-                              </div>
-                            </div>
-                          </a>
-                        </Link>
-                      ))}
+                              </p>
+                              <Button
+                                asChild
+                                variant="link"
+                                className="h-auto justify-start px-0 font-cinzel text-xs font-semibold tracking-[0.12em] text-[#D4A843]"
+                              >
+                                <span>
+                                  Read <ArrowRight className="h-4 w-4" />
+                                </span>
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        );
+
+                        if (download) {
+                          return (
+                            <a
+                              key={title}
+                              href={href}
+                              download
+                              className="block h-full"
+                            >
+                              {cardContent}
+                            </a>
+                          );
+                        }
+
+                        return (
+                          <Link key={title} href={href}>
+                            <a className="block h-full">{cardContent}</a>
+                          </Link>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

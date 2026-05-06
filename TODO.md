@@ -13,7 +13,7 @@ Auth, multi-tenancy, payment plumbing, observability.
 
 - **Custom auth** (scrypt + jose HS256 JWT in `app_session_id` cookie). `passwordChangedAt` is the JWT kill-switch — bumped on any auth-state change to revoke sessions immediately. Email verification via emailVerificationToken; password reset via passwordResetToken with TTL.
 - **Multi-tenant data isolation** via `tenants.id` FK on every business object (orders, products, customers, discounts, etc.). Tenant-creator promoted to `role=admin` on `tenant.create` (CR2).
-- **Stripe subscriptions live** with `plans` table seeded with real Stripe price IDs, `stripe_webhook_events` table for idempotency on `event_id`, tenant link via Stripe Checkout `metadata.tenant_id`, recovery endpoint at `/api/admin/recover-subscription` for reattaching stranded payments.
+- **Stripe subscriptions live** — plumbing complete end-to-end (`subscription.createCheckout` tRPC → `/api/stripe/create-checkout` → Stripe Checkout → `checkout.session.completed` webhook → `tenants.subscriptionStatus`). `stripe_webhook_events` table for idempotency on `event_id`, tenant link via Stripe Checkout `metadata.tenant_id` (server-stamped from JWT), recovery endpoint at `/api/admin/recover-subscription` for reattaching stranded payments. **The `plans` table must be seeded with real Stripe price IDs before customers can subscribe** — run `pnpm seed:plans` (see "Subscription activation runbook" below).
 - **`/api/health` v2** pings db + stripe + resend + redis with per-dep latency. Returns `{status:"ok|degraded"}`.
 - **Deploy-failure notifier** at `/api/admin/deploy-events`: Netlify webhook receiver, registers itself on first call, writes `deploy_events` rows, alerts via Resend on failure.
 
@@ -131,6 +131,23 @@ Things noticed during the audit-fix rollout that aren't blocking revenue but are
 ---
 
 ## Quick reference
+
+### Subscription activation runbook
+
+The app's subscription flow is wired end-to-end in code, but a customer can only subscribe once Stripe products/prices exist **and** the `plans` table (Neon) holds the resulting price IDs. To turn that on (or to refresh prices after editing `shared/pricing.ts`):
+
+```bash
+# 1. (optional) preview what would change
+pnpm seed:plans -- --dry-run
+
+# 2. apply for real (creates/reuses Stripe products + prices, upserts plans rows)
+pnpm seed:plans
+
+# 3. if Stripe was already seeded by another mechanism, just sync the DB rows
+pnpm seed:plans -- --skip-stripe
+```
+
+The script (`scripts/seed-plans.ts`) is idempotent. It reuses Stripe products by `metadata.uo_plan_slug` and prices by `lookup_key` (`unifyone_<slug>_<monthly|yearly>`), and upserts `plans` rows by `slug`. Required env: `STRIPE_SECRET_KEY` + `DATABASE_URL` (or `NETLIFY_DATABASE_URL`).
 
 ### Production URLs
 

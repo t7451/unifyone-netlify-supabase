@@ -9,62 +9,85 @@ import { toast } from "sonner";
 
 const VP_CANONICAL = `${SITE_URL}/video-production`;
 
+type Showcase = {
+  id: string;
+  title: string;
+  description: string;
+  duration: string;
+  format: string;
+  tags: string[];
+  category: string;
+  thumbnail: string;
+  videoUrl?: string;
+};
+
+const PRIMARY_SHOWCASES: Showcase[] = [
+  {
+    id: "onestack-cinematic",
+    title: "OneStack Cinematic Reel",
+    description:
+      "Professional cinematic footage showcasing OneStack enterprise AI capabilities. Ultra-realistic production quality demonstrating autonomous operations at scale.",
+    duration: "30 seconds",
+    format: "4K Cinematic",
+    tags: ["Enterprise AI", "Cinematic", "Autonomous Operations"],
+    category: "Featured Reel",
+    thumbnail: "🎬",
+    videoUrl:
+      "https://cdn.1commerce.online/videos/Ultra-realistic_cinematic_foot_Kling_30__37390(1).mp4",
+  },
+];
+
+const ADDITIONAL_SHOWCASES: Showcase[] = [
+  {
+    id: "multi-tenant-showcase",
+    title: "Multi-Tenant Commerce Demo",
+    description:
+      "Visual walkthrough of multi-tenant isolation, tenant switching, and SaaS scalability features built into the UnifyOne platform.",
+    duration: "45 seconds",
+    format: "Product Demo",
+    tags: ["Multi-Tenant", "SaaS", "Commerce"],
+    category: "Platform Story",
+    thumbnail: "🏢",
+  },
+  {
+    id: "ai-automation-reel",
+    title: "AI Automation Reel",
+    description:
+      "Showcase of Kai AI executing autonomous tasks: affiliate research, order fulfillment, and n8n workflow automation at enterprise scale.",
+    duration: "60 seconds",
+    format: "Feature Highlight",
+    tags: ["Kai AI", "Automation", "n8n"],
+    category: "Automation",
+    thumbnail: "🤖",
+  },
+  {
+    id: "payment-integration",
+    title: "Payment Infrastructure Demo",
+    description:
+      "End-to-end payment flow demonstration across Stripe, PayPal, Shopify, and Square — unified under a single dashboard with real-time analytics.",
+    duration: "30 seconds",
+    format: "Integration Demo",
+    tags: ["Stripe", "Payments", "Analytics"],
+    category: "Payments",
+    thumbnail: "💳",
+  },
+];
+
+const SHOWCASE_LIBRARY: Showcase[] = [
+  ...PRIMARY_SHOWCASES,
+  ...ADDITIONAL_SHOWCASES,
+];
+
 export default function VideoProduction() {
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [activeShowcaseId, setActiveShowcaseId] =
     useState("onestack-cinematic");
 
-  const showcases = [
-    {
-      id: "onestack-cinematic",
-      title: "OneStack Cinematic Reel",
-      description:
-        "Professional cinematic footage showcasing OneStack enterprise AI capabilities. Ultra-realistic production quality demonstrating autonomous operations at scale.",
-      duration: "30 seconds",
-      format: "4K Cinematic",
-      tags: ["Enterprise AI", "Cinematic", "Autonomous Operations"],
-      thumbnail: "🎬",
-      videoUrl:
-        "https://cdn.1commerce.online/videos/Ultra-realistic_cinematic_foot_Kling_30__37390(1).mp4",
-    },
-  ];
-
-  const additionalShowcases = [
-    {
-      id: "multi-tenant-showcase",
-      title: "Multi-Tenant Commerce Demo",
-      description:
-        "Visual walkthrough of multi-tenant isolation, tenant switching, and SaaS scalability features built into the UnifyOne platform.",
-      duration: "45 seconds",
-      format: "Product Demo",
-      tags: ["Multi-Tenant", "SaaS", "Commerce"],
-      thumbnail: "🏢",
-    },
-    {
-      id: "ai-automation-reel",
-      title: "AI Automation Reel",
-      description:
-        "Showcase of Kai AI executing autonomous tasks: affiliate research, order fulfillment, and n8n workflow automation at enterprise scale.",
-      duration: "60 seconds",
-      format: "Feature Highlight",
-      tags: ["Kai AI", "Automation", "n8n"],
-      thumbnail: "🤖",
-    },
-    {
-      id: "payment-integration",
-      title: "Payment Infrastructure Demo",
-      description:
-        "End-to-end payment flow demonstration across Stripe, PayPal, Shopify, and Square — unified under a single dashboard with real-time analytics.",
-      duration: "30 seconds",
-      format: "Integration Demo",
-      tags: ["Stripe", "Payments", "Analytics"],
-      thumbnail: "💳",
-    },
-  ];
-
-  const activeShowcase =
-    showcases.find(s => s.id === activeShowcaseId) ?? showcases[0];
-  const videoUrl = activeShowcase.videoUrl;
+  const activeShowcase: Showcase =
+    SHOWCASE_LIBRARY.find(showcase => showcase.id === activeShowcaseId) ??
+    SHOWCASE_LIBRARY[0];
+  const videoUrl = activeShowcase.videoUrl ?? undefined;
+  const isPlayable = Boolean(videoUrl);
 
   const handleSelectShowcase = (id: string) => {
     setActiveShowcaseId(id);
@@ -72,6 +95,11 @@ export default function VideoProduction() {
   };
 
   const handleDownload = () => {
+    if (!videoUrl) {
+      toast.info("Storyboard asset coming soon for this showcase.");
+      return;
+    }
+
     const a = document.createElement("a");
     a.href = videoUrl;
     a.download = `${activeShowcase.title.replace(/\s+/g, "-").toLowerCase()}.mp4`;
@@ -81,6 +109,11 @@ export default function VideoProduction() {
   };
 
   const handleCopyEmbed = () => {
+    if (!videoUrl) {
+      toast.info("Embed code will unlock when the video asset is published.");
+      return;
+    }
+
     const embedCode = `<video src="${videoUrl}" autoplay loop muted playsinline style="width:100%;height:auto"></video>`;
     navigator.clipboard.writeText(embedCode).then(
       () => toast.success("Embed code copied to clipboard!"),
@@ -89,10 +122,13 @@ export default function VideoProduction() {
   };
 
   const productionStats = [
-    { label: "Production Quality", value: "4K Ultra-Realistic" },
-    { label: "Format", value: "Cinematic Reel" },
-    { label: "Duration", value: "30 Seconds" },
-    { label: "Use Cases", value: "Landing Pages, Social, Pitch Decks" },
+    {
+      label: "Production Quality",
+      value: isPlayable ? "4K Ultra-Realistic" : "Storyboard Preview",
+    },
+    { label: "Format", value: activeShowcase.format },
+    { label: "Duration", value: activeShowcase.duration },
+    { label: "Category", value: activeShowcase.category },
   ];
 
   const useCases = [
@@ -139,54 +175,68 @@ export default function VideoProduction() {
       <section className="relative bg-gradient-to-b from-card to-background py-16">
         <div className="container max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Video Player */}
             <div className="relative">
-              <div className="relative bg-black rounded-lg overflow-hidden aspect-video border border-border shadow-2xl">
-                {!videoPlaying ? (
-                  <>
+              <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-black shadow-2xl">
+                {isPlayable ? (
+                  !videoPlaying ? (
+                    <>
+                      <video
+                        src={videoUrl}
+                        className="h-full w-full object-cover"
+                        poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1920 1080'%3E%3Crect fill='%23000' width='1920' height='1080'/%3E%3C/svg%3E"
+                      />
+                      <button
+                        onClick={() => setVideoPlaying(true)}
+                        className="group absolute inset-0 flex items-center justify-center bg-black/40 transition-colors hover:bg-black/50"
+                      >
+                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary transition-transform group-hover:scale-110">
+                          <Play className="ml-1 h-8 w-8 fill-black text-black" />
+                        </div>
+                      </button>
+                    </>
+                  ) : (
                     <video
                       src={videoUrl}
-                      className="w-full h-full object-cover"
-                      poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1920 1080'%3E%3Crect fill='%23000' width='1920' height='1080'/%3E%3C/svg%3E"
+                      autoPlay
+                      controls
+                      className="h-full w-full object-cover"
                     />
-                    <button
-                      onClick={() => setVideoPlaying(true)}
-                      className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/50 transition-colors group"
-                    >
-                      <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Play className="w-8 h-8 text-black fill-black ml-1" />
-                      </div>
-                    </button>
-                  </>
+                  )
                 ) : (
-                  <video
-                    src={videoUrl}
-                    autoPlay
-                    controls
-                    className="w-full h-full object-cover"
-                  />
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-gradient-to-br from-muted via-card to-background px-6 text-center">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary">
+                      <Play className="h-8 w-8 fill-current" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold text-foreground">
+                        Storyboard preview coming soon
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        This showcase is ready for review while the final video
+                        asset is being published.
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
-              <div className="mt-4 flex gap-2">
-                <Badge className="bg-primary/20 text-primary border-primary/40">
-                  <Film className="w-3 h-3 mr-1" />
-                  4K Cinematic
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Badge className="border-primary/40 bg-primary/20 text-primary">
+                  <Film className="mr-1 h-3 w-3" />
+                  {activeShowcase.format}
                 </Badge>
-                <Badge variant="outline">30 seconds</Badge>
+                <Badge variant="outline">{activeShowcase.duration}</Badge>
+                <Badge variant="outline">{activeShowcase.category}</Badge>
               </div>
             </div>
 
             {/* Content */}
             <div className="space-y-6">
               <div>
-                <h1 className="text-4xl font-bold text-foreground mb-4">
-                  OneStack Cinematic Reel
+                <h1 className="mb-4 text-4xl font-bold text-foreground">
+                  {activeShowcase.title}
                 </h1>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Professional ultra-realistic cinematic footage showcasing
-                  OneStack enterprise AI capabilities. This production-grade
-                  asset demonstrates autonomous operations at scale with
-                  stunning visual quality.
+                <p className="text-lg leading-relaxed text-muted-foreground">
+                  {activeShowcase.description}
                 </p>
               </div>
 
@@ -237,70 +287,59 @@ export default function VideoProduction() {
               marketing channels.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {showcases.map(showcase => (
-              <Card
-                key={showcase.id}
-                className={`p-6 hover:shadow-lg transition-shadow cursor-pointer ${
-                  showcase.id === activeShowcaseId ? "ring-2 ring-primary" : ""
-                }`}
-                onClick={() => handleSelectShowcase(showcase.id)}
-              >
-                <div className="text-4xl mb-4">{showcase.thumbnail}</div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  {showcase.title}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {showcase.description}
-                </p>
-                <div className="flex gap-2 flex-wrap mb-4">
-                  <Badge variant="outline">{showcase.format}</Badge>
-                  <Badge variant="outline">{showcase.duration}</Badge>
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  {showcase.tags.map(tag => (
-                    <span
-                      key={tag}
-                      className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </Card>
-            ))}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {SHOWCASE_LIBRARY.map(showcase => {
+              const isActive = showcase.id === activeShowcaseId;
+              const isShowcasePlayable = Boolean(showcase.videoUrl);
 
-            {/* Additional showcase cards — thumbnail placeholder grid */}
-            {additionalShowcases.map(showcase => (
-              <Card
-                key={showcase.id}
-                className="p-6 hover:shadow-lg transition-shadow"
-              >
-                <div className="text-4xl mb-4 w-full aspect-video bg-muted rounded-md flex items-center justify-center">
-                  <span className="text-5xl">{showcase.thumbnail}</span>
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  {showcase.title}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {showcase.description}
-                </p>
-                <div className="flex gap-2 flex-wrap mb-4">
-                  <Badge variant="outline">{showcase.format}</Badge>
-                  <Badge variant="outline">{showcase.duration}</Badge>
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  {showcase.tags.map(tag => (
-                    <span
-                      key={tag}
-                      className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </Card>
-            ))}
+              return (
+                <Card
+                  key={showcase.id}
+                  className={`cursor-pointer p-6 transition-all hover:-translate-y-1 hover:shadow-lg ${
+                    isActive ? "ring-2 ring-primary" : ""
+                  }`}
+                  onClick={() => handleSelectShowcase(showcase.id)}
+                >
+                  <div className="relative mb-4 flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-border bg-gradient-to-br from-muted via-card to-background">
+                    <div className="absolute left-3 top-3 rounded-full border border-primary/20 bg-background/80 px-2 py-1 text-sm">
+                      {showcase.thumbnail}
+                    </div>
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-black shadow-lg">
+                      <Play className="ml-0.5 h-5 w-5 fill-current" />
+                    </div>
+                    <div className="absolute bottom-3 right-3">
+                      <Badge variant="outline" className="bg-background/80">
+                        {isShowcasePlayable ? "Playable" : "Storyboard"}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    <Badge className="border-primary/40 bg-primary/15 text-primary">
+                      {showcase.category}
+                    </Badge>
+                    <Badge variant="outline">{showcase.format}</Badge>
+                    <Badge variant="outline">{showcase.duration}</Badge>
+                  </div>
+                  <h3 className="mb-2 text-lg font-semibold text-foreground">
+                    {showcase.title}
+                  </h3>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    {showcase.description}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {showcase.tags.map(tag => (
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="bg-primary/10 text-primary"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>

@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import PublicLayout from "@/components/PublicLayout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const SECTIONS = [
@@ -141,6 +151,73 @@ await runAITask({
   tenantId,
 });`,
 };
+
+const INTEGRATION_CARDS = [
+  {
+    avatar: "S",
+    title: "Stripe",
+    description:
+      "Subscriptions, checkout sessions, and webhook-based billing sync for tenant plans.",
+    difficulty: "Easy",
+    tab: "setup",
+  },
+  {
+    avatar: "P",
+    title: "PayPal",
+    description:
+      "Layer PayPal order capture into checkout for broader buyer coverage and payment redundancy.",
+    difficulty: "Easy",
+    tab: "setup",
+  },
+  {
+    avatar: "SQ",
+    title: "Square",
+    description:
+      "Connect POS and online payment data so in-person and digital sales stay in one operating view.",
+    difficulty: "Medium",
+    tab: "setup",
+  },
+  {
+    avatar: "🛍️",
+    title: "Shopify",
+    description:
+      "Bridge storefront products, checkout flows, and commerce events into the UnifyOne tenant model.",
+    difficulty: "Medium",
+    tab: "setup",
+  },
+  {
+    avatar: "I",
+    title: "Impact.com",
+    description:
+      "Track affiliate relationships, payouts, and campaign performance alongside your native referral suite.",
+    difficulty: "Medium",
+    tab: "tasks",
+  },
+  {
+    avatar: "n8n",
+    title: "n8n",
+    description:
+      "Automate lead routing, fulfillment, and AI-triggered workflows with low-code orchestration.",
+    difficulty: "Medium",
+    tab: "n8n",
+  },
+  {
+    avatar: "✦",
+    title: "Anthropic Claude",
+    description:
+      "Run context-aware Claude workflows through MCP for research, drafting, and operator copilots.",
+    difficulty: "Advanced",
+    tab: "mcp",
+  },
+  {
+    avatar: "R",
+    title: "Resend",
+    description:
+      "Deliver transactional and lifecycle email from automations, onboarding, and revenue workflows.",
+    difficulty: "Easy",
+    tab: "webhook",
+  },
+] as const;
 
 const CHECKLIST = [
   {
@@ -327,93 +404,50 @@ export default function IntegrationGuides() {
             </p>
           </div>
 
-          {/* Integration Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
-            {[
-              {
-                emoji: "💳",
-                title: "Stripe",
-                description:
-                  "Connect Stripe for subscriptions, one-time payments, and the Meta CAPI purchase event bridge.",
-                tab: "setup",
-              },
-              {
-                emoji: "🛍️",
-                title: "Shopify",
-                description:
-                  "Sync Shopify products, orders, and webhooks with your UnifyOne multi-tenant store.",
-                tab: "setup",
-              },
-              {
-                emoji: "🅿️",
-                title: "PayPal",
-                description:
-                  "Enable PayPal checkout alongside Stripe for broader global payment coverage.",
-                tab: "setup",
-              },
-              {
-                emoji: "⬛",
-                title: "Square",
-                description:
-                  "Integrate Square POS and eCommerce APIs to unify in-person and online sales data.",
-                tab: "setup",
-              },
-              {
-                emoji: "🤖",
-                title: "Anthropic AI",
-                description:
-                  "Wire Claude claude-3-5-sonnet via MCP server for context-aware task execution inside UnifyOne.",
-                tab: "mcp",
-              },
-              {
-                emoji: "🔄",
-                title: "n8n",
-                description:
-                  "Automate workflows end-to-end: orders, leads, and Kai AI prompts via the n8n bridge.",
-                tab: "n8n",
-              },
-            ].map(integration => (
-              <div
+          <div className="grid grid-cols-1 gap-4 mb-12 sm:grid-cols-2 lg:grid-cols-4">
+            {INTEGRATION_CARDS.map(integration => (
+              <Card
                 key={integration.title}
-                style={{
-                  backgroundColor: "rgba(212,168,67,0.04)",
-                  border: "1px solid rgba(212,168,67,0.15)",
-                  padding: "1.5rem",
-                }}
+                className="border-[#d4a84333] bg-[#0d0d0d] text-left"
               >
-                <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>
-                  {integration.emoji}
-                </div>
-                <div
-                  className="font-cinzel text-sm font-bold mb-2"
-                  style={{ color: "#D4A843", letterSpacing: "0.05em" }}
-                >
-                  {integration.title}
-                </div>
-                <p
-                  className="font-crimson text-sm mb-4"
-                  style={{ color: "#A0A0A0", lineHeight: 1.6 }}
-                >
-                  {integration.description}
-                </p>
-                <button
-                  onClick={() => setActiveTab(integration.tab)}
-                  style={{
-                    padding: "8px 16px",
-                    backgroundColor: "rgba(212,168,67,0.1)",
-                    border: "1px solid rgba(212,168,67,0.3)",
-                    color: "#D4A843",
-                    fontFamily: "'Cinzel', serif",
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    letterSpacing: "0.05em",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  View Guide →
-                </button>
-              </div>
+                <CardHeader className="space-y-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d4a84355] bg-[#d4a84314] font-cinzel text-sm font-bold text-[#D4A843]">
+                      {integration.avatar}
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className="border-[#d4a84344] text-[#D4A843]"
+                    >
+                      {integration.difficulty}
+                    </Badge>
+                  </div>
+                  <div>
+                    <CardTitle
+                      className="font-cinzel text-base"
+                      style={{ color: "#F0E8D0", letterSpacing: "0.04em" }}
+                    >
+                      {integration.title}
+                    </CardTitle>
+                    <CardDescription
+                      className="mt-2 font-crimson text-sm"
+                      style={{ color: "#9A9A9A", lineHeight: 1.6 }}
+                    >
+                      {integration.description}
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent />
+                <CardFooter>
+                  <Button
+                    variant="link"
+                    className="h-auto px-0 font-cinzel text-xs font-semibold tracking-[0.1em] text-[#D4A843]"
+                    onClick={() => setActiveTab(integration.tab)}
+                  >
+                    View Guide →
+                  </Button>
+                </CardFooter>
+              </Card>
             ))}
           </div>
 

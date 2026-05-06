@@ -13,8 +13,10 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate:pg",
     "db:push": "drizzle-kit generate:pg && drizzle-kit up:pg",
+    "seed:plans": "tsx scripts/seed-plans.ts",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "seed:plans": "tsx scripts/seed-stripe-products.ts",
     "prepare": "is-ci || husky",
     "test:e2e": "playwright test"
   },

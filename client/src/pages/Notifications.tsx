@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -46,6 +47,7 @@ import {
   Zap,
   Mail,
   Slack,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -89,17 +91,98 @@ const TRIGGER_EVENTS = [
   },
 ];
 
+type NotificationType =
+  | "info"
+  | "success"
+  | "warning"
+  | "error"
+  | "order"
+  | "payment"
+  | "team"
+  | "social"
+  | "lead";
+
+type NotificationDisplayType = NotificationType | "system";
+
+type TriggerConfigState = {
+  inAppEnabled: boolean;
+  n8nEnabled: boolean;
+  n8nWebhookUrl: string;
+  zapierEnabled: boolean;
+  mailchimpEnabled: boolean;
+  slackEnabled: boolean;
+  slackWebhookUrl: string;
+  emailEnabled: boolean;
+  emailRecipients: string;
+};
+
+const NOTIFICATION_TYPE_OPTIONS: NotificationType[] = [
+  "info",
+  "success",
+  "warning",
+  "error",
+  "order",
+  "payment",
+  "team",
+  "social",
+  "lead",
+];
+
 // ── Notification type icon map ─────────────────────────────────────────────────
-const TYPE_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
-  info: { icon: Info, color: "text-blue-400" },
-  success: { icon: CheckCircle2, color: "text-emerald-400" },
-  warning: { icon: AlertTriangle, color: "text-amber-400" },
-  error: { icon: AlertCircle, color: "text-red-400" },
-  order: { icon: ShoppingCart, color: "text-cyan-400" },
-  payment: { icon: CreditCard, color: "text-purple-400" },
-  team: { icon: Users, color: "text-indigo-400" },
-  social: { icon: Share2, color: "text-pink-400" },
-  lead: { icon: Target, color: "text-orange-400" },
+const TYPE_ICONS: Record<
+  NotificationDisplayType,
+  { icon: LucideIcon; color: string; background: string }
+> = {
+  info: {
+    icon: Info,
+    color: "text-blue-300",
+    background: "bg-blue-500/10 ring-1 ring-blue-500/20",
+  },
+  success: {
+    icon: CheckCircle2,
+    color: "text-emerald-300",
+    background: "bg-emerald-500/10 ring-1 ring-emerald-500/20",
+  },
+  warning: {
+    icon: AlertTriangle,
+    color: "text-amber-300",
+    background: "bg-amber-500/10 ring-1 ring-amber-500/20",
+  },
+  error: {
+    icon: AlertCircle,
+    color: "text-red-300",
+    background: "bg-red-500/10 ring-1 ring-red-500/20",
+  },
+  order: {
+    icon: ShoppingCart,
+    color: "text-cyan-300",
+    background: "bg-cyan-500/10 ring-1 ring-cyan-500/20",
+  },
+  payment: {
+    icon: CreditCard,
+    color: "text-violet-300",
+    background: "bg-violet-500/10 ring-1 ring-violet-500/20",
+  },
+  team: {
+    icon: Users,
+    color: "text-indigo-300",
+    background: "bg-indigo-500/10 ring-1 ring-indigo-500/20",
+  },
+  social: {
+    icon: Share2,
+    color: "text-pink-300",
+    background: "bg-pink-500/10 ring-1 ring-pink-500/20",
+  },
+  lead: {
+    icon: Target,
+    color: "text-orange-300",
+    background: "bg-orange-500/10 ring-1 ring-orange-500/20",
+  },
+  system: {
+    icon: Bell,
+    color: "text-slate-300",
+    background: "bg-slate-500/10 ring-1 ring-slate-500/20",
+  },
 };
 
 function timeAgo(date: Date | string): string {
@@ -126,7 +209,9 @@ function getDateGroup(date: Date | string): DateGroup {
   const startOfYesterday = new Date(startOfToday);
   startOfYesterday.setDate(startOfYesterday.getDate() - 1);
   const startOfWeek = new Date(startOfToday);
-  startOfWeek.setDate(startOfWeek.getDate() - 7);
+  const dayOfWeek = startOfWeek.getDay();
+  const daysSinceMonday = (dayOfWeek + 6) % 7;
+  startOfWeek.setDate(startOfWeek.getDate() - daysSinceMonday);
 
   if (d >= startOfToday) return "Today";
   if (d >= startOfYesterday) return "Yesterday";
@@ -181,43 +266,45 @@ function NotificationList() {
   return (
     <div className="space-y-4">
       {/* Header with prominent Mark All Read button */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <Bell className="h-5 w-5 text-cyan-400" />
           <h3 className="font-semibold text-white">Your Notifications</h3>
           {(unread?.count ?? 0) > 0 && (
-            <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-xs">
+            <Badge className="border-cyan-500/30 bg-cyan-500/20 text-xs text-cyan-400">
               {unread?.count} unread
             </Badge>
           )}
         </div>
         <Button
-          variant="outline"
           size="sm"
-          className="h-8 text-xs border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/60 font-medium"
+          className="h-9 bg-cyan-500 px-4 text-xs font-semibold text-black hover:bg-cyan-400 disabled:bg-cyan-500/40 disabled:text-black/70"
           onClick={() => markAllRead.mutate()}
           disabled={markAllRead.isPending || (unread?.count ?? 0) === 0}
         >
-          <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
-          {markAllRead.isPending ? "Marking…" : "Mark all read"}
+          <CheckCheck className="mr-1.5 h-3.5 w-3.5" />
+          {markAllRead.isPending ? "Marking…" : "Mark all as read"}
         </Button>
       </div>
 
       {isLoading ? (
-        <div className="space-y-4">
-          {/* Skeleton with date header + items */}
-          {[3, 2, 2].map((count, gi) => (
-            <div key={gi} className="space-y-2">
-              <div className="h-4 w-20 rounded bg-white/10 animate-pulse" />
-              {Array.from({ length: count }).map((_, i) => (
+        <div className="space-y-5">
+          {["Today", "Yesterday", "This Week"].map(group => (
+            <div key={group} className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-px flex-1" />
+              </div>
+              {Array.from({ length: 2 }).map((_, index) => (
                 <div
-                  key={i}
-                  className="flex gap-3 p-3 rounded-lg border border-white/5 bg-white/5 animate-pulse"
+                  key={`${group}-${index}`}
+                  className="flex gap-3 rounded-xl border border-white/10 bg-white/5 p-4"
                 >
-                  <div className="h-4 w-4 mt-0.5 rounded-full bg-white/10 flex-shrink-0" />
+                  <Skeleton className="h-10 w-10 rounded-full" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-3.5 w-2/3 rounded bg-white/10" />
-                    <div className="h-3 w-1/3 rounded bg-white/10" />
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-4/5" />
+                    <Skeleton className="h-3 w-20" />
                   </div>
                 </div>
               ))}
@@ -225,17 +312,14 @@ function NotificationList() {
           ))}
         </div>
       ) : notifs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-          <div className="relative mb-4">
-            <Bell className="h-14 w-14 opacity-10" />
-            <CheckCircle2 className="h-6 w-6 text-emerald-400 absolute -bottom-1 -right-1" />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/5 px-6 py-16 text-center">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-cyan-500/10 ring-1 ring-cyan-500/20">
+            <Bell className="h-7 w-7 text-cyan-300" />
           </div>
-          <p className="text-base font-medium text-slate-300">
-            You&apos;re all caught up!
-          </p>
-          <p className="text-sm mt-1.5 text-slate-500 text-center max-w-xs">
-            No new notifications. Activity from orders, payments, and team
-            events will appear here.
+          <p className="text-lg font-semibold text-white">All caught up!</p>
+          <p className="mt-2 max-w-sm text-sm text-slate-400">
+            You&apos;ll see order updates, payment alerts, and team activity
+            here.
           </p>
         </div>
       ) : (
@@ -254,24 +338,33 @@ function NotificationList() {
                 </div>
 
                 {items.map(n => {
-                  const typeInfo = TYPE_ICONS[n.type] ?? TYPE_ICONS.info;
+                  const notificationType: NotificationDisplayType =
+                    NOTIFICATION_TYPE_OPTIONS.includes(
+                      n.type as NotificationType
+                    )
+                      ? (n.type as NotificationDisplayType)
+                      : "system";
+                  const typeInfo = TYPE_ICONS[notificationType];
                   const Icon = typeInfo.icon;
                   return (
                     <div
                       key={n.id}
                       className={cn(
-                        "group flex gap-3 p-3 rounded-lg border transition-colors",
+                        "group flex gap-3 rounded-xl border p-4 transition-colors",
                         n.read
-                          ? "border-white/5 bg-white/3 hover:bg-white/5"
-                          : "border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/8"
+                          ? "border-white/5 bg-white/[0.03] hover:bg-white/[0.05]"
+                          : "border-cyan-500/20 bg-cyan-500/[0.06] hover:bg-cyan-500/[0.1]"
                       )}
                     >
                       <div
-                        className={cn("mt-0.5 flex-shrink-0", typeInfo.color)}
+                        className={cn(
+                          "mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full",
+                          typeInfo.background
+                        )}
                       >
-                        <Icon className="h-4 w-4" />
+                        <Icon className={cn("h-4 w-4", typeInfo.color)} />
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-start gap-2">
                           <p
                             className={cn(
@@ -333,15 +426,25 @@ function NotificationList() {
 // ── AdminBroadcast (Tier 2) ───────────────────────────────────────────────────
 function AdminBroadcast() {
   const { user } = useAuth();
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    userId: string;
+    type: NotificationType;
+    title: string;
+    body: string;
+    link: string;
+  }>({
     userId: "",
-    type: "info" as string,
+    type: "info",
     title: "",
     body: "",
     link: "",
   });
-  const [broadcastForm, setBroadcastForm] = useState({
-    type: "info" as string,
+  const [broadcastForm, setBroadcastForm] = useState<{
+    type: NotificationType;
+    title: string;
+    body: string;
+  }>({
+    type: "info",
     title: "",
     body: "",
   });
@@ -392,15 +495,20 @@ function AdminBroadcast() {
               <Label>Type</Label>
               <Select
                 value={form.type}
-                onValueChange={v => setForm(f => ({ ...f, type: v }))}
+                onValueChange={value =>
+                  setForm(current => ({
+                    ...current,
+                    type: value as NotificationType,
+                  }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.keys(TYPE_ICONS).map(t => (
-                    <SelectItem key={t} value={t}>
-                      {t}
+                  {NOTIFICATION_TYPE_OPTIONS.map(type => (
+                    <SelectItem key={type} value={type}>
+                      {type}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -438,8 +546,8 @@ function AdminBroadcast() {
                 return;
               }
               sendToUser.mutate({
-                userId: parseInt(form.userId),
-                type: form.type as any,
+                userId: parseInt(form.userId, 10),
+                type: form.type,
                 title: form.title,
                 body: form.body || undefined,
                 link: form.link || undefined,
@@ -473,15 +581,20 @@ function AdminBroadcast() {
               <Label>Type</Label>
               <Select
                 value={broadcastForm.type}
-                onValueChange={v => setBroadcastForm(f => ({ ...f, type: v }))}
+                onValueChange={value =>
+                  setBroadcastForm(current => ({
+                    ...current,
+                    type: value as NotificationType,
+                  }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.keys(TYPE_ICONS).map(t => (
-                    <SelectItem key={t} value={t}>
-                      {t}
+                  {NOTIFICATION_TYPE_OPTIONS.map(type => (
+                    <SelectItem key={type} value={type}>
+                      {type}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -520,7 +633,7 @@ function AdminBroadcast() {
               }
               broadcast.mutate({
                 tenantId,
-                type: broadcastForm.type as any,
+                type: broadcastForm.type,
                 title: broadcastForm.title,
                 body: broadcastForm.body || undefined,
               });
@@ -562,38 +675,25 @@ function TriggerConfig() {
   });
 
   // Local state for each event's config
-  const [configs, setConfigs] = useState<
-    Record<
-      string,
-      {
-        inAppEnabled: boolean;
-        n8nEnabled: boolean;
-        n8nWebhookUrl: string;
-        zapierEnabled: boolean;
-        mailchimpEnabled: boolean;
-        slackEnabled: boolean;
-        slackWebhookUrl: string;
-        emailEnabled: boolean;
-        emailRecipients: string;
-      }
-    >
-  >(() => {
-    const defaults: Record<string, any> = {};
-    TRIGGER_EVENTS.forEach(e => {
-      defaults[e.event] = {
-        inAppEnabled: true,
-        n8nEnabled: false,
-        n8nWebhookUrl: "",
-        zapierEnabled: false,
-        mailchimpEnabled: false,
-        slackEnabled: false,
-        slackWebhookUrl: "",
-        emailEnabled: false,
-        emailRecipients: "",
-      };
-    });
-    return defaults;
-  });
+  const [configs, setConfigs] = useState<Record<string, TriggerConfigState>>(
+    () => {
+      const defaults: Record<string, TriggerConfigState> = {};
+      TRIGGER_EVENTS.forEach(e => {
+        defaults[e.event] = {
+          inAppEnabled: true,
+          n8nEnabled: false,
+          n8nWebhookUrl: "",
+          zapierEnabled: false,
+          mailchimpEnabled: false,
+          slackEnabled: false,
+          slackWebhookUrl: "",
+          emailEnabled: false,
+          emailRecipients: "",
+        };
+      });
+      return defaults;
+    }
+  );
 
   // Sync from DB when triggers load
   const [synced, setSynced] = useState(false);

@@ -328,15 +328,15 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 {[
                   {
                     label: "Gig Commerce Guide",
-                    href: "/blog/gig-economy-commerce-platform",
+                    href: "/blog/gig-ecommerce",
                   },
                   {
                     label: "Multi-Tenant SaaS",
-                    href: "/blog/multi-tenant-ecommerce-saas",
+                    href: "/blog/multi-tenant",
                   },
                   {
                     label: "AI for Gig Workers",
-                    href: "/blog/manus-ai-gig-workers",
+                    href: "/blog/manus-ai",
                   },
                   { label: "Resources", href: "/resources" },
                   { label: "Docs Chat", href: "/docs-chat" },

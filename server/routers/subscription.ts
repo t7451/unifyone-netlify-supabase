@@ -51,6 +51,7 @@ export const subscriptionRouter = router({
       return {
         status: "none" as const,
         plan: null,
+        billingCycle: null,
         subscriptionCurrentPeriodEnd: null,
         stripeCustomerId: null,
         stripeSubscriptionId: null,
@@ -78,6 +79,30 @@ export const subscriptionRouter = router({
       trialDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
     }
 
+    let billingCycle: "monthly" | "yearly" | null = null;
+    if (tenant.stripeSubscriptionId) {
+      const stripe = getStripe();
+      if (stripe) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(
+            tenant.stripeSubscriptionId,
+            {
+              expand: ["items.data.price"],
+            }
+          );
+          const interval = subscription.items.data[0]?.price?.recurring?.interval;
+          if (interval === "month") billingCycle = "monthly";
+          if (interval === "year") billingCycle = "yearly";
+        } catch (error) {
+          logger.warn("subscription.getStatus billing cycle lookup failed", {
+            tenantId,
+            stripeSubscriptionId: tenant.stripeSubscriptionId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    }
+
     const [productCount, orderCount, customerCount] = await Promise.all([
       getProductCount(tenantId),
       getOrderCount(tenantId),
@@ -88,6 +113,7 @@ export const subscriptionRouter = router({
       status: tenant.subscriptionStatus,
       tenantStatus: tenant.status,
       plan,
+      billingCycle,
       subscriptionCurrentPeriodEnd: tenant.subscriptionCurrentPeriodEnd,
       stripeCustomerId: tenant.stripeCustomerId,
       stripeSubscriptionId: tenant.stripeSubscriptionId,

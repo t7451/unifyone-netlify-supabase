@@ -5,6 +5,7 @@ import {
   eq,
   gte,
   ilike,
+  isNull,
   inArray,
   like,
   sql,
@@ -335,6 +336,23 @@ export async function bulkDeleteProducts(tenantId: number, ids: number[]) {
   return result.rowCount ?? 0;
 }
 
+export async function bulkDeleteOrders(tenantId: number, ids: number[]) {
+  const db = await getDb();
+  if (!db || ids.length === 0) return 0;
+
+  await db
+    .delete(orderItems)
+    .where(
+      and(eq(orderItems.tenantId, tenantId), inArray(orderItems.orderId, ids))
+    );
+
+  const result = await db
+    .delete(orders)
+    .where(and(eq(orders.tenantId, tenantId), inArray(orders.id, ids)));
+
+  return result.rowCount ?? 0;
+}
+
 export async function getProductCount(tenantId: number) {
   const db = await getDb();
   if (!db) return 0;
@@ -538,6 +556,37 @@ export async function getOrderCount(tenantId: number) {
     .select({ count: sql<number>`count(*)` })
     .from(orders)
     .where(eq(orders.tenantId, tenantId));
+  return result[0]?.count ?? 0;
+}
+
+export async function getOrderCountThisMonth(tenantId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const now = new Date();
+  const startOfMonth = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+  );
+
+  const result = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(orders)
+    .where(
+      and(eq(orders.tenantId, tenantId), gte(orders.createdAt, startOfMonth))
+    );
+
+  return result[0]?.count ?? 0;
+}
+
+export async function getUserCount(tenantId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const result = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(users)
+    .where(and(eq(users.tenantId, tenantId), isNull(users.deletedAt)));
+
   return result[0]?.count ?? 0;
 }
 
@@ -830,6 +879,7 @@ export async function getTopProducts(tenantId: number, limit = 5) {
       productName: orderItems.productName,
       productId: orderItems.productId,
       totalQuantity: sql<number>`sum(${orderItems.quantity})`,
+      orderCount: sql<number>`count(distinct ${orderItems.orderId})`,
       totalRevenue: sum(orderItems.totalPrice),
     })
     .from(orderItems)
