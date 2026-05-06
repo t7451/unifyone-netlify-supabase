@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -34,8 +35,34 @@ import {
 } from "lucide-react";
 import { QueryErrorState } from "@/components/QueryErrorState";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
-const STATUS_COLORS: Record<string, string> = {
+type ProductStatus = "active" | "draft" | "archived";
+
+interface ProductInventory {
+  quantity: number;
+  lowStockThreshold: number;
+}
+
+interface ProductListItem {
+  id: number;
+  name: string;
+  description: string | null;
+  sku: string | null;
+  price: number | string;
+  compareAtPrice: number | string | null;
+  status: ProductStatus;
+  categoryId?: number | null;
+  imageUrl?: string | null;
+  inventory?: ProductInventory | null;
+}
+
+interface CategoryOption {
+  id: number;
+  name: string;
+}
+
+const STATUS_COLORS: Record<ProductStatus, string> = {
   active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
   draft: "bg-slate-500/20 text-slate-400 border-slate-500/30",
   archived: "bg-red-500/20 text-red-400 border-red-500/30",
@@ -48,7 +75,7 @@ const EMPTY_FORM = {
   compareAtPrice: "",
   sku: "",
   barcode: "",
-  status: "draft" as "active" | "draft" | "archived",
+  status: "draft" as ProductStatus,
   initialStock: "0",
   lowStockThreshold: "5",
   weight: "",
@@ -57,6 +84,17 @@ const EMPTY_FORM = {
 };
 
 type ProductForm = typeof EMPTY_FORM;
+
+const isValidImageUrl = (value: string) => {
+  if (!value.trim()) return false;
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 
 function ProductFormFields({
   form,
@@ -70,7 +108,10 @@ function ProductFormFields({
   onTouch?: (field: string) => void;
 }) {
   const categories = trpc.products.categories.useQuery();
+  const categoryList = (categories.data ?? []) as CategoryOption[];
   const [imgBroken, setImgBroken] = useState(false);
+  const showImagePreview = isValidImageUrl(form.imageUrl) && !imgBroken;
+
   return (
     <div className="space-y-4">
       <div>
@@ -163,7 +204,9 @@ function ProductFormFields({
           <Label className="text-gray-300 text-sm">Status</Label>
           <Select
             value={form.status}
-            onValueChange={v => setForm({ ...form, status: v as any })}
+            onValueChange={value =>
+              setForm({ ...form, status: value as ProductStatus })
+            }
           >
             <SelectTrigger className="bg-white/5 border-white/10 text-white mt-1">
               <SelectValue />
@@ -186,9 +229,9 @@ function ProductFormFields({
             </SelectTrigger>
             <SelectContent className="bg-[#0F172A] border-white/10">
               <SelectItem value="none">None</SelectItem>
-              {(categories.data ?? []).map((c: any) => (
-                <SelectItem key={c.id} value={String(c.id)}>
-                  {c.name}
+              {categoryList.map(category => (
+                <SelectItem key={category.id} value={String(category.id)}>
+                  {category.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -238,24 +281,31 @@ function ProductFormFields({
       </div>
       <div>
         <Label className="text-gray-300 text-sm">Image URL</Label>
-        <Input
-          value={form.imageUrl}
-          onChange={e => {
-            setForm({ ...form, imageUrl: e.target.value });
-            setImgBroken(false);
-          }}
-          placeholder="https://example.com/image.jpg"
-          className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
-        />
-        {form.imageUrl && !imgBroken && (
-          <div className="mt-2">
-            <img
-              src={form.imageUrl}
-              alt="Product preview"
-              className="w-24 h-24 object-cover rounded-lg border border-white/10"
-              onError={() => setImgBroken(true)}
-            />
-          </div>
+        <div className="mt-1 flex items-start gap-3">
+          <Input
+            value={form.imageUrl}
+            onChange={e => {
+              setForm({ ...form, imageUrl: e.target.value });
+              setImgBroken(false);
+            }}
+            placeholder="https://example.com/image.jpg"
+            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+          />
+          {showImagePreview && (
+            <div className="h-12 w-12 overflow-hidden rounded-lg border border-white/10 bg-white/5 shrink-0">
+              <img
+                src={form.imageUrl}
+                alt="Product preview"
+                className="h-full w-full object-cover"
+                onError={() => setImgBroken(true)}
+              />
+            </div>
+          )}
+        </div>
+        {form.imageUrl && !showImagePreview && (
+          <p className="mt-2 text-xs text-gray-500">
+            Enter a valid image URL to preview the thumbnail.
+          </p>
         )}
       </div>
     </div>
@@ -264,11 +314,15 @@ function ProductFormFields({
 
 export default function Products() {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<ProductStatus | "all">(
+    "all"
+  );
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
-  const [editProduct, setEditProduct] = useState<any>(null);
-  const [deleteProduct, setDeleteProduct] = useState<any>(null);
+  const [editProduct, setEditProduct] = useState<ProductListItem | null>(null);
+  const [deleteProduct, setDeleteProduct] = useState<ProductListItem | null>(
+    null
+  );
   const [form, setForm] = useState<ProductForm>({ ...EMPTY_FORM });
   const [editForm, setEditForm] = useState<ProductForm>({ ...EMPTY_FORM });
   const [createTouched, setCreateTouched] = useState<Record<string, boolean>>(
@@ -299,7 +353,7 @@ export default function Products() {
 
   const products = trpc.products.list.useQuery({
     search: search || undefined,
-    status: statusFilter !== "all" ? (statusFilter as any) : undefined,
+    status: statusFilter === "all" ? undefined : statusFilter,
   });
 
   const createMutation = trpc.products.create.useMutation({
@@ -401,28 +455,29 @@ export default function Products() {
     });
   };
 
-  const handleEdit = (p: any) => {
-    setEditProduct(p);
+  const handleEdit = (product: ProductListItem) => {
+    setEditProduct(product);
     setEditTouched({});
     setEditForm({
-      name: p.name ?? "",
-      description: p.description ?? "",
-      price: String(p.price ?? ""),
-      compareAtPrice: String(p.compareAtPrice ?? ""),
-      sku: p.sku ?? "",
-      barcode: p.barcode ?? "",
-      status: p.status ?? "draft",
-      initialStock: String(p.inventory?.quantity ?? 0),
-      lowStockThreshold: String(p.inventory?.lowStockThreshold ?? 5),
-      weight: String(p.weight ?? ""),
-      categoryId: String(p.categoryId ?? ""),
-      imageUrl: p.imageUrl ?? "",
+      name: product.name ?? "",
+      description: product.description ?? "",
+      price: String(product.price ?? ""),
+      compareAtPrice: String(product.compareAtPrice ?? ""),
+      sku: product.sku ?? "",
+      barcode: "",
+      status: product.status ?? "draft",
+      initialStock: String(product.inventory?.quantity ?? 0),
+      lowStockThreshold: String(product.inventory?.lowStockThreshold ?? 5),
+      weight: "",
+      categoryId: String(product.categoryId ?? "none"),
+      imageUrl: product.imageUrl ?? "",
     });
   };
 
   const handleUpdate = () => {
     const allTouched = { name: true, price: true };
     setEditTouched(allTouched);
+    if (!editProduct) return;
     if (!editForm.name || !editForm.price || Number(editForm.price) <= 0)
       return toast.error("Name and a valid price are required");
 
@@ -448,10 +503,11 @@ export default function Products() {
     });
   };
 
-  const productList = (products.data ?? []) as any[];
+  const productList = (products.data ?? []) as ProductListItem[];
   const lowStockCount = productList.filter(
-    (p: any) =>
-      p.inventory && p.inventory.quantity <= p.inventory.lowStockThreshold
+    product =>
+      product.inventory &&
+      product.inventory.quantity <= product.inventory.lowStockThreshold
   ).length;
   const allVisibleSelected =
     productList.length > 0 &&
@@ -558,7 +614,12 @@ export default function Products() {
             className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select
+          value={statusFilter}
+          onValueChange={value =>
+            setStatusFilter((value as ProductStatus | "all") ?? "all")
+          }
+        >
           <SelectTrigger className="bg-white/5 border-white/10 text-white w-40">
             <SelectValue />
           </SelectTrigger>
@@ -713,21 +774,29 @@ export default function Products() {
       </Dialog>
       {/* Product Grid */}
       {products.isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="rounded-xl border border-border p-5 space-y-3"
-            >
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-8 w-1/3" />
-              <Skeleton className="h-6 w-full" />
-            </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Card key={index} className="border-border bg-card/70">
+              <CardContent className="space-y-4 p-5">
+                <div className="flex items-start gap-3">
+                  <Skeleton className="mt-1 h-4 w-4 rounded-sm" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-3.5 w-1/3" />
+                  </div>
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </div>
+                <Skeleton className="h-24 w-full rounded-xl" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-8 w-28" />
+                <Skeleton className="h-9 w-full rounded-md" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       ) : products.isError ? (
-        <div className="text-center py-20">
+        <div className="py-20 text-center">
           <QueryErrorState
             icon={Package}
             title="Failed to load products"
@@ -737,116 +806,159 @@ export default function Products() {
           />
         </div>
       ) : productList.length === 0 ? (
-        <div className="text-center py-20">
-          <Package className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg font-medium">
-            {search
-              ? "No products found"
-              : "No products yet. Add your first product."}
-          </p>
-          {!search && (
-            <p className="text-gray-500 text-sm mt-1">
-              Click &quot;Add Product&quot; to get started.
+        <Card className="border-dashed border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02]">
+          <CardContent className="flex flex-col items-center px-6 py-16 text-center">
+            <div className="mb-5 rounded-full border border-white/10 bg-white/5 p-4">
+              <Package className="h-10 w-10 text-[#00D9FF]" />
+            </div>
+            <h2 className="text-xl font-semibold text-white">
+              {search || statusFilter !== "all"
+                ? "No matching products"
+                : "No products yet"}
+            </h2>
+            <p className="mt-2 max-w-md text-sm text-gray-400">
+              {search || statusFilter !== "all"
+                ? "Try clearing your filters or searching for a different product name or SKU."
+                : "Build your catalog with pricing, inventory, and imagery so your team can start selling faster."}
             </p>
-          )}
-        </div>
+            {!search && statusFilter === "all" && (
+              <Button
+                className="mt-6 bg-[#00D9FF] font-semibold text-[#0A1128] hover:bg-[#00D9FF]/90"
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Add your first product
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {productList.map((p: any) => {
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {productList.map(product => {
             const isLowStock =
-              p.inventory &&
-              p.inventory.quantity <= p.inventory.lowStockThreshold;
+              product.inventory &&
+              product.inventory.quantity <= product.inventory.lowStockThreshold;
             const hasDiscount =
-              p.compareAtPrice && Number(p.compareAtPrice) > Number(p.price);
+              product.compareAtPrice &&
+              Number(product.compareAtPrice) > Number(product.price);
+
             return (
               <Card
-                key={p.id}
-                className="bg-card border-border hover:border-[#00D9FF]/30 transition-all group"
+                key={product.id}
+                className="group border-border bg-card transition-all hover:border-[#00D9FF]/30 hover:shadow-lg hover:shadow-[#00D9FF]/5"
               >
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-start gap-2 flex-1 min-w-0">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(p.id)}
-                        onChange={() => toggleSelection(p.id)}
-                        className="mt-1 h-4 w-4 rounded border-white/30 bg-transparent accent-[#00D9FF]"
-                        aria-label={`Select ${p.name}`}
-                      />
-                      <div className="min-w-0">
-                        <h3 className="text-white font-semibold truncate">
-                          {p.name}
-                        </h3>
-                        {p.sku && (
-                          <p className="text-gray-500 text-xs mt-0.5 font-mono">
-                            {p.sku}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={`ml-2 text-xs shrink-0 ${STATUS_COLORS[p.status] ?? ""}`}
+                <CardContent className="relative p-5">
+                  <div className="absolute right-5 top-5 flex gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 border border-white/10 text-gray-400 hover:bg-[#00D9FF]/5 hover:text-white"
+                      aria-label={`Edit ${product.name}`}
+                      onClick={() => handleEdit(product)}
                     >
-                      {p.status}
-                    </Badge>
+                      <Edit className="h-3.5 w-3.5" aria-hidden="true" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                      aria-label={`Delete ${product.name}`}
+                      onClick={() => setDeleteProduct(product)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    </Button>
                   </div>
 
-                  {p.description && (
-                    <p className="text-gray-400 text-xs mb-3 line-clamp-2">
-                      {p.description}
-                    </p>
+                  <div className="mb-4 flex items-start gap-3 pr-20">
+                    <Checkbox
+                      checked={selectedIds.includes(product.id)}
+                      onCheckedChange={() => toggleSelection(product.id)}
+                      className="mt-1 border-white/30 data-[state=checked]:border-[#00D9FF] data-[state=checked]:bg-[#00D9FF] data-[state=checked]:text-[#0A1128]"
+                      aria-label={`Select ${product.name}`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h3 className="truncate font-semibold text-white">
+                            {product.name}
+                          </h3>
+                          {product.sku && (
+                            <p className="mt-0.5 font-mono text-xs text-gray-500">
+                              {product.sku}
+                            </p>
+                          )}
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "shrink-0 text-xs capitalize",
+                            STATUS_COLORS[product.status]
+                          )}
+                        >
+                          {product.status}
+                        </Badge>
+                      </div>
+
+                      {product.description && (
+                        <p className="mt-3 line-clamp-2 text-xs text-gray-400">
+                          {product.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {product.imageUrl && isValidImageUrl(product.imageUrl) && (
+                    <div className="mb-4 overflow-hidden rounded-xl border border-white/10 bg-white/5">
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="h-32 w-full object-cover"
+                      />
+                    </div>
                   )}
 
-                  <div className="flex items-baseline gap-2 mb-3">
+                  <div className="mb-3 flex items-baseline gap-2">
                     <span className="text-2xl font-bold text-[#00D9FF]">
-                      ${Number(p.price).toFixed(2)}
+                      ${Number(product.price).toFixed(2)}
                     </span>
                     {hasDiscount && (
-                      <span className="text-gray-500 text-sm line-through">
-                        ${Number(p.compareAtPrice).toFixed(2)}
+                      <span className="text-sm text-gray-500 line-through">
+                        ${Number(product.compareAtPrice).toFixed(2)}
                       </span>
                     )}
                   </div>
 
-                  {p.inventory && (
+                  {product.inventory && (
                     <div
-                      className={`flex items-center gap-1.5 text-xs mb-4 px-2 py-1 rounded-md ${isLowStock ? "bg-amber-500/10 text-amber-400" : "bg-white/5 text-gray-400"}`}
-                    >
-                      {isLowStock && (
-                        <AlertTriangle className="w-3 h-3 shrink-0" />
+                      className={cn(
+                        "mb-4 flex items-center gap-1.5 rounded-md px-2 py-1 text-xs",
+                        isLowStock
+                          ? "bg-amber-500/10 text-amber-400"
+                          : "bg-white/5 text-gray-400"
                       )}
-                      <BarChart3 className="w-3 h-3 shrink-0" />
-                      <span>{p.inventory.quantity} in stock</span>
+                    >
+                      {isLowStock ? (
+                        <AlertTriangle className="h-3 w-3 shrink-0" />
+                      ) : (
+                        <BarChart3 className="h-3 w-3 shrink-0" />
+                      )}
+                      <span>{product.inventory.quantity} in stock</span>
                       {isLowStock && (
-                        <span className="text-amber-500 font-medium">
+                        <span className="font-medium text-amber-500">
                           — Low Stock
                         </span>
                       )}
                     </div>
                   )}
 
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="flex-1 text-gray-400 hover:text-white border border-white/10 hover:border-[#00D9FF]/40 hover:bg-[#00D9FF]/5 transition-colors"
-                      aria-label={`Edit ${p.name}`}
-                      onClick={() => handleEdit(p)}
-                    >
-                      <Edit className="w-3 h-3 mr-1.5" aria-hidden="true" />{" "}
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 hover:bg-red-500/5 transition-colors"
-                      aria-label={`Delete ${p.name}`}
-                      onClick={() => setDeleteProduct(p)}
-                    >
-                      <Trash2 className="w-3 h-3" aria-hidden="true" />
-                    </Button>
-                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="w-full border border-white/10 text-gray-300 transition-colors hover:border-[#00D9FF]/40 hover:bg-[#00D9FF]/5 hover:text-white"
+                    onClick={() => handleEdit(product)}
+                  >
+                    <Edit className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                    Edit product
+                  </Button>
                 </CardContent>
               </Card>
             );
@@ -939,7 +1051,9 @@ export default function Products() {
               Cancel
             </Button>
             <Button
-              onClick={() => deleteMutation.mutate({ id: deleteProduct.id })}
+              onClick={() =>
+                deleteProduct && deleteMutation.mutate({ id: deleteProduct.id })
+              }
               disabled={deleteMutation.isPending}
               className="bg-red-500 hover:bg-red-600 text-white font-bold"
             >

@@ -6,6 +6,8 @@ import { RealtimeStatus } from "@/components/RealtimeStatus";
 import { QueryErrorState } from "@/components/QueryErrorState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,6 +27,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { downloadCsv } from "@/lib/downloadCsv";
 import {
   Search,
   ShoppingCart,
@@ -42,6 +46,8 @@ import {
   User,
   CreditCard,
   Download,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -88,8 +94,43 @@ const PAYMENT_STATUSES = [
   "refunded",
   "partial",
 ] as const;
+const ORDER_TIMELINE = [
+  "pending",
+  "confirmed",
+  "processing",
+  "shipped",
+  "delivered",
+] as const;
 
 type OrderStatus = (typeof ORDER_STATUSES)[number];
+type OrderPaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+interface OrderSummary {
+  id: number;
+  orderNumber: string;
+  customerName: string | null;
+  customerEmail: string | null;
+  total: number | string;
+  status: OrderStatus;
+  paymentStatus: OrderPaymentStatus;
+  createdAt: Date | string;
+  itemCount?: number | null;
+}
+
+interface OrderDetailItem {
+  productName: string;
+  productSku?: string | null;
+  quantity: number;
+  unitPrice: number | string;
+}
+
+interface OrderDetailData extends OrderSummary {
+  subtotal?: number | string | null;
+  taxAmount?: number | string | null;
+  shippingAmount?: number | string | null;
+  notes?: string | null;
+  items?: OrderDetailItem[];
+}
 
 interface OrderItem {
   productName: string;
@@ -108,13 +149,15 @@ const emptyItem = (): OrderItem => ({
 export default function Orders() {
   const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
+  const [selectedOrder, setSelectedOrder] = useState<OrderSummary | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [showDetail, setShowDetail] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
   const utils = trpc.useUtils();
   const tenantList = trpc.tenant.list.useQuery();
-  const tenantId = (tenantList.data?.[0] as any)?.id;
+  const tenantId = tenantList.data?.[0]?.id;
 
   // Supabase Realtime: auto-refresh orders list on any change
   useRealtimeOrders(tenantId, () => {
@@ -145,11 +188,20 @@ export default function Orders() {
     search: search || undefined,
     status: statusFilter === "all" ? undefined : statusFilter,
   });
+  const orderList = (orders.data ?? []) as OrderSummary[];
+  const allVisibleSelected =
+    orderList.length > 0 &&
+    orderList.every(order => selectedIds.includes(order.id));
+  const someVisibleSelected =
+    orderList.some(order => selectedIds.includes(order.id)) &&
+    !allVisibleSelected;
 
+  const selectedOrderId: number = selectedOrder?.id ?? 0;
   const orderDetail = trpc.orders.get.useQuery(
-    { id: selectedOrder?.id },
-    { enabled: !!selectedOrder?.id && showDetail }
+    { id: selectedOrderId },
+    { enabled: selectedOrderId > 0 && showDetail }
   );
+  const orderData = orderDetail.data as OrderDetailData | undefined;
 
   const updateStatus = trpc.orders.updateStatus.useMutation({
     onMutate: async ({ id, status }) => {
@@ -191,6 +243,20 @@ export default function Orders() {
       resetCreateForm();
     },
     onError: e => toast.error(e.message),
+  });
+
+  const bulkDeleteOrders = trpc.orders.bulkDelete.useMutation({
+    onSuccess: data => {
+      toast.success(`Deleted ${data.deletedCount} order(s)`);
+      setSelectedIds([]);
+      setBulkDeleteConfirmOpen(false);
+      utils.orders.list.invalidate();
+      if (selectedOrder && selectedIds.includes(selectedOrder.id)) {
+        setSelectedOrder(null);
+        setShowDetail(false);
+      }
+    },
+    onError: error => toast.error(error.message),
   });
 
   const resetCreateForm = () => {
@@ -279,54 +345,57 @@ export default function Orders() {
     });
   };
 
-  const openDetail = (order: any) => {
+  const toggleSelection = (id: number) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(value => value !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAllVisible = () => {
+    if (allVisibleSelected) {
+      setSelectedIds(prev =>
+        prev.filter(id => !orderList.some(order => order.id === id))
+      );
+      return;
+    }
+
+    setSelectedIds(prev =>
+      Array.from(new Set([...prev, ...orderList.map(order => order.id)]))
+    );
+  };
+
+  const openDetail = (order: OrderSummary) => {
     setSelectedOrder(order);
     setShowDetail(true);
   };
 
   const exportToCSV = () => {
-    const rows = orders.data ?? [];
-    if (!rows.length) return toast.error("No orders to export");
-    const headers = [
-      "Order #",
-      "Customer",
-      "Email",
-      "Status",
-      "Payment",
-      "Total",
-      "Created",
-    ];
-    type OrderRow = {
-      orderNumber?: string | number;
-      id: number;
-      customerName?: string;
-      customerEmail?: string;
-      status: string;
-      paymentStatus?: string;
-      totalAmount?: number | string;
-      createdAt: Date | string;
-    };
-    const csvRows = [
-      headers.join(","),
-      ...(rows as OrderRow[]).map(o =>
-        [
-          o.orderNumber ?? o.id,
-          JSON.stringify(o.customerName ?? ""),
-          JSON.stringify(o.customerEmail ?? ""),
-          o.status,
-          o.paymentStatus ?? "",
-          `$${Number(o.totalAmount ?? 0).toFixed(2)}`,
-          new Date(o.createdAt).toLocaleDateString(),
-        ].join(",")
-      ),
-    ];
-    const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    if (!orderList.length) {
+      toast.error("No orders to export");
+      return;
+    }
+
+    downloadCsv(
+      `orders-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        "Order ID",
+        "Customer Name",
+        "Customer Email",
+        "Total",
+        "Status",
+        "Payment Status",
+        "Created Date",
+      ],
+      orderList.map(order => [
+        order.orderNumber || order.id,
+        order.customerName ?? "Guest",
+        order.customerEmail ?? "",
+        Number(order.total).toFixed(2),
+        order.status,
+        order.paymentStatus,
+        new Date(order.createdAt).toLocaleString(),
+      ])
+    );
   };
 
   return (
@@ -337,8 +406,7 @@ export default function Orders() {
           <h1 className="text-2xl font-bold text-white">Orders</h1>
           <div className="flex items-center gap-3 mt-1">
             <p className="text-gray-400 text-sm">
-              {orders.data?.length ?? 0} order
-              {(orders.data?.length ?? 0) !== 1 ? "s" : ""}
+              {orderList.length} order{orderList.length !== 1 ? "s" : ""}
             </p>
             <RealtimeStatus />
           </div>
@@ -348,6 +416,7 @@ export default function Orders() {
             variant="outline"
             size="sm"
             onClick={exportToCSV}
+            disabled={orderList.length === 0}
             className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
           >
             <Download className="w-4 h-4 mr-2" /> Export CSV
@@ -362,213 +431,352 @@ export default function Orders() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <div className="flex flex-wrap gap-3">
+        <div className="relative min-w-[200px] flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by order number or customer..."
-            className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500"
+            className="border-white/10 bg-white/5 pl-10 text-white placeholder:text-gray-500"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44 bg-white/5 border-white/10 text-white">
+        <Select
+          value={statusFilter}
+          onValueChange={value => setStatusFilter(value as OrderStatus | "all")}
+        >
+          <SelectTrigger className="w-44 border-white/10 bg-white/5 text-white">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent className="bg-[#0F172A] border-white/10">
             <SelectItem value="all">All Status</SelectItem>
-            {ORDER_STATUSES.map(s => (
-              <SelectItem key={s} value={s} className="capitalize">
-                {s}
+            {ORDER_STATUSES.map(status => (
+              <SelectItem key={status} value={status} className="capitalize">
+                {status}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          onClick={toggleSelectAllVisible}
+          disabled={orderList.length === 0}
+          className="border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
+        >
+          {allVisibleSelected ? "Clear Visible" : "Select Visible"}
+        </Button>
       </div>
 
-      {/* Orders Table */}
-      <div className="rounded-xl border border-border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px]">
-            <thead>
-              <tr className="border-b border-border bg-white/3">
-                {[
-                  "Order",
-                  "Customer",
-                  "Items",
-                  "Total",
-                  "Status",
-                  "Payment",
-                  "Date",
-                  "Actions",
-                ].map(h => (
-                  <th
-                    key={h}
-                    className="text-left text-gray-400 text-xs font-medium px-4 py-3"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {orders.isLoading ? (
-                [...Array(5)].map((_, i) => (
-                  <tr key={i} className="border-b border-border">
-                    {[...Array(8)].map((_, j) => (
-                      <td key={j} className="px-4 py-3">
-                        <Skeleton className="h-4 w-full" />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : orders.isError ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-16">
-                    <QueryErrorState
-                      icon={ShoppingCart}
-                      title="Failed to load orders"
-                      message={orders.error?.message}
-                      onRetry={() => orders.refetch()}
-                      isRetrying={orders.isRefetching}
-                      size="sm"
-                    />
-                  </td>
-                </tr>
-              ) : (orders.data ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-16">
-                    <ShoppingCart className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-                    <p className="text-gray-400 font-medium">
-                      {search || statusFilter !== "all"
-                        ? "No orders found"
-                        : "No orders yet"}
-                    </p>
-                    <p className="text-gray-600 text-sm mt-1">
-                      {search || statusFilter !== "all"
-                        ? "Try adjusting your filters"
-                        : "Create your first order to get started"}
-                    </p>
-                    <Button
-                      size="sm"
-                      className="mt-4 bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90"
-                      onClick={() => setShowCreate(true)}
-                    >
-                      <Plus className="w-3 h-3 mr-1" /> Create Order
-                    </Button>
-                  </td>
-                </tr>
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-3">
+          <p className="mr-2 text-sm text-gray-300">
+            {selectedIds.length} selected
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={bulkDeleteOrders.isPending}
+            className="border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+            onClick={() => setBulkDeleteConfirmOpen(true)}
+          >
+            {bulkDeleteOrders.isPending ? (
+              <>
+                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                Delete selected
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      <Dialog
+        open={bulkDeleteConfirmOpen}
+        onOpenChange={setBulkDeleteConfirmOpen}
+      >
+        <DialogContent className="max-w-md border-white/10 bg-[#0F172A] text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+              Delete {selectedIds.length} order
+              {selectedIds.length === 1 ? "" : "s"}?
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-400">
+            This permanently removes the selected orders and their line items.
+            This action cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="border-white/10 text-gray-300"
+              disabled={bulkDeleteOrders.isPending}
+              onClick={() => setBulkDeleteConfirmOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-red-500/90 text-white hover:bg-red-500"
+              disabled={bulkDeleteOrders.isPending}
+              onClick={() => bulkDeleteOrders.mutate({ ids: selectedIds })}
+            >
+              {bulkDeleteOrders.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
               ) : (
-                (orders.data ?? []).map((o: any) => (
-                  <tr
-                    key={o.id}
-                    className="border-b border-border hover:bg-white/2 transition-colors"
-                  >
-                    <td className="px-4 py-3">
-                      <span className="text-[#00D9FF] font-mono text-xs">
-                        {o.orderNumber}
-                      </span>
+                "Delete permanently"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Orders Table */}
+      <div className="overflow-hidden rounded-xl border border-border">
+        {(orders.isLoading || orders.isError || orderList.length > 0) && (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px]">
+              <thead>
+                <tr className="border-b border-border bg-white/3">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">
+                    <Checkbox
+                      checked={
+                        allVisibleSelected ||
+                        (someVisibleSelected ? "indeterminate" : false)
+                      }
+                      onCheckedChange={() => toggleSelectAllVisible()}
+                      aria-label="Select all visible orders"
+                      className="border-white/30 data-[state=checked]:border-[#00D9FF] data-[state=checked]:bg-[#00D9FF] data-[state=checked]:text-[#0A1128]"
+                    />
+                  </th>
+                  {[
+                    "Order",
+                    "Customer",
+                    "Items",
+                    "Total",
+                    "Status",
+                    "Payment",
+                    "Date",
+                    "Actions",
+                  ].map(header => (
+                    <th
+                      key={header}
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-400"
+                    >
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {orders.isLoading ? (
+                  Array.from({ length: 6 }).map((_, index) => (
+                    <tr
+                      key={index}
+                      className="border-b border-border/60 last:border-0"
+                    >
+                      <td className="px-4 py-4">
+                        <Skeleton className="h-4 w-4 rounded-sm" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <Skeleton className="h-4 w-24" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <Skeleton className="h-4 w-40" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <Skeleton className="h-4 w-10" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <Skeleton className="h-4 w-16" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <Skeleton className="h-6 w-24 rounded-full" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <Skeleton className="h-6 w-20 rounded-full" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <Skeleton className="h-4 w-24" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <Skeleton className="h-8 w-40" />
+                      </td>
+                    </tr>
+                  ))
+                ) : orders.isError ? (
+                  <tr>
+                    <td colSpan={9} className="py-16 text-center">
+                      <QueryErrorState
+                        icon={ShoppingCart}
+                        title="Failed to load orders"
+                        message={orders.error?.message}
+                        onRetry={() => orders.refetch()}
+                        isRetrying={orders.isRefetching}
+                        size="sm"
+                      />
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="text-white text-sm">
-                        {o.customerName ?? "Guest"}
-                      </div>
-                      <div className="text-gray-500 text-xs">
-                        {o.customerEmail ?? ""}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-300 text-sm">
-                      {o.itemCount ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 text-white font-semibold">
-                      ${Number(o.total).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        variant="outline"
-                        className={`text-xs capitalize flex items-center gap-1 w-fit ${STATUS_COLORS[o.status] ?? ""}`}
-                      >
-                        {STATUS_ICONS[o.status]}
-                        {o.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full capitalize ${PAYMENT_COLORS[o.paymentStatus] ?? ""}`}
-                      >
-                        {o.paymentStatus}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">
-                      {new Date(o.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 w-7 p-0 text-gray-400 hover:text-[#00D9FF]"
-                          aria-label={`View details for order ${o.orderNumber}`}
-                          onClick={() => openDetail(o)}
+                  </tr>
+                ) : (
+                  orderList.map(order => (
+                    <tr
+                      key={order.id}
+                      className="border-b border-border/60 transition-colors hover:bg-white/[0.03] last:border-0"
+                    >
+                      <td className="px-4 py-3 align-top">
+                        <Checkbox
+                          checked={selectedIds.includes(order.id)}
+                          onCheckedChange={() => toggleSelection(order.id)}
+                          aria-label={`Select order ${order.orderNumber}`}
+                          className="border-white/30 data-[state=checked]:border-[#00D9FF] data-[state=checked]:bg-[#00D9FF] data-[state=checked]:text-[#0A1128]"
+                        />
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <span className="font-mono text-xs text-[#00D9FF]">
+                          {order.orderNumber}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <div className="text-sm text-white">
+                          {order.customerName ?? "Guest"}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {order.customerEmail ?? ""}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-300 align-top">
+                        {order.itemCount ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 align-top font-semibold text-white">
+                        ${Number(order.total).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "flex w-fit items-center gap-1 text-xs capitalize",
+                            STATUS_COLORS[order.status]
+                          )}
                         >
-                          <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                        </Button>
-                        {(o.paymentStatus === "pending" ||
-                          o.paymentStatus === "failed") && (
+                          {STATUS_ICONS[order.status]}
+                          {order.status}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-xs capitalize",
+                            PAYMENT_COLORS[order.paymentStatus]
+                          )}
+                        >
+                          {order.paymentStatus}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 align-top text-xs text-gray-400">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <div className="flex items-center gap-2">
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 px-2 text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 gap-1"
-                            aria-label={`Pay now for order ${o.orderNumber}`}
-                            onClick={() =>
-                              navigate(
-                                `/checkout?orderId=${o.id}&amount=${Number(o.total).toFixed(2)}&desc=Order+${encodeURIComponent(o.orderNumber)}`
-                              )
+                            className="h-7 w-7 p-0 text-gray-400 hover:text-[#00D9FF]"
+                            aria-label={`View details for order ${order.orderNumber}`}
+                            onClick={() => openDetail(order)}
+                          >
+                            <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                          </Button>
+                          {(order.paymentStatus === "pending" ||
+                            order.paymentStatus === "failed") && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 gap-1 px-2 text-xs text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
+                              aria-label={`Pay now for order ${order.orderNumber}`}
+                              onClick={() =>
+                                navigate(
+                                  `/checkout?orderId=${order.id}&amount=${Number(order.total).toFixed(2)}&desc=Order+${encodeURIComponent(order.orderNumber)}`
+                                )
+                              }
+                            >
+                              <CreditCard
+                                className="h-3.5 w-3.5"
+                                aria-hidden="true"
+                              />
+                              Pay
+                            </Button>
+                          )}
+                          <Select
+                            value={order.status}
+                            onValueChange={value =>
+                              updateStatus.mutate({
+                                id: order.id,
+                                status: value as OrderStatus,
+                              })
                             }
                           >
-                            <CreditCard
-                              className="w-3.5 h-3.5"
-                              aria-hidden="true"
-                            />
-                            Pay
-                          </Button>
-                        )}
-                        <Select
-                          value={o.status}
-                          onValueChange={v =>
-                            updateStatus.mutate({
-                              id: o.id,
-                              status: v as OrderStatus,
-                            })
-                          }
-                        >
-                          <SelectTrigger
-                            className="w-28 h-7 bg-white/5 border-white/10 text-gray-300 text-xs"
-                            aria-label={`Change status for order ${o.orderNumber}`}
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[#0F172A] border-white/10">
-                            {ORDER_STATUSES.map(s => (
-                              <SelectItem
-                                key={s}
-                                value={s}
-                                className="text-xs capitalize"
-                              >
-                                {s}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                            <SelectTrigger
+                              className="h-7 w-28 border-white/10 bg-white/5 text-xs text-gray-300"
+                              aria-label={`Change status for order ${order.orderNumber}`}
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="border-white/10 bg-[#0F172A]">
+                              {ORDER_STATUSES.map(status => (
+                                <SelectItem
+                                  key={status}
+                                  value={status}
+                                  className="text-xs capitalize"
+                                >
+                                  {status}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {!orders.isLoading && !orders.isError && orderList.length === 0 && (
+          <Card className="rounded-none border-0 bg-transparent shadow-none">
+            <CardContent className="flex flex-col items-center px-6 py-16 text-center">
+              <div className="mb-5 rounded-full border border-white/10 bg-white/5 p-4">
+                <ShoppingCart className="h-10 w-10 text-[#00D9FF]" />
+              </div>
+              <h2 className="text-xl font-semibold text-white">
+                {search || statusFilter !== "all"
+                  ? "No orders found"
+                  : "No orders yet"}
+              </h2>
+              <p className="mt-2 max-w-md text-sm text-gray-400">
+                {search || statusFilter !== "all"
+                  ? "Try adjusting your filters to find the order you're looking for."
+                  : "Orders will appear here as customers check out or when your team creates manual orders."}
+              </p>
+              {!search && statusFilter === "all" && (
+                <Button
+                  size="sm"
+                  className="mt-6 bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90"
+                  onClick={() => setShowCreate(true)}
+                >
+                  <Plus className="mr-1 h-3.5 w-3.5" /> Create your first order
+                </Button>
               )}
-            </tbody>
-          </table>
-        </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
       {/* Order Detail Modal */}
       <Dialog open={showDetail} onOpenChange={setShowDetail}>
@@ -582,77 +790,83 @@ export default function Orders() {
 
           {orderDetail.isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-[#00D9FF]" />
+              <Loader2 className="h-6 w-6 animate-spin text-[#00D9FF]" />
             </div>
-          ) : orderDetail.data ? (
+          ) : orderData ? (
             <div className="space-y-5">
               {/* Status + Payment */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-gray-400 text-xs mb-2">Order Status</p>
-                  <div className="flex items-center gap-2 mb-3">
+                <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                  <p className="mb-2 text-xs text-gray-400">Order Status</p>
+                  <div className="mb-3 flex items-center gap-2">
                     <Badge
                       variant="outline"
-                      className={`capitalize ${STATUS_COLORS[(orderDetail.data as any).status] ?? ""}`}
+                      className={cn(
+                        "capitalize",
+                        STATUS_COLORS[orderData.status]
+                      )}
                     >
-                      {(orderDetail.data as any).status}
+                      {orderData.status}
                     </Badge>
                   </div>
                   <Select
-                    value={(orderDetail.data as any).status}
-                    onValueChange={v =>
+                    value={orderData.status}
+                    onValueChange={value =>
                       updateStatus.mutate({
-                        id: (orderDetail.data as any).id,
-                        status: v as OrderStatus,
+                        id: orderData.id,
+                        status: value as OrderStatus,
                       })
                     }
                   >
-                    <SelectTrigger className="w-full h-8 bg-white/5 border-white/10 text-gray-300 text-xs">
+                    <SelectTrigger className="h-8 w-full border-white/10 bg-white/5 text-xs text-gray-300">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0F172A] border-white/10">
-                      {ORDER_STATUSES.map(s => (
+                    <SelectContent className="border-white/10 bg-[#0F172A]">
+                      {ORDER_STATUSES.map(status => (
                         <SelectItem
-                          key={s}
-                          value={s}
+                          key={status}
+                          value={status}
                           className="text-xs capitalize"
                         >
-                          {s}
+                          {status}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-gray-400 text-xs mb-2">Payment Status</p>
-                  <div className="flex items-center gap-2 mb-3">
+                <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                  <p className="mb-2 text-xs text-gray-400">Payment Status</p>
+                  <div className="mb-3 flex items-center gap-2">
                     <span
-                      className={`text-xs px-2 py-1 rounded-full capitalize ${PAYMENT_COLORS[(orderDetail.data as any).paymentStatus] ?? ""}`}
+                      className={cn(
+                        "rounded-full px-2 py-1 text-xs capitalize",
+                        PAYMENT_COLORS[orderData.paymentStatus]
+                      )}
                     >
-                      {(orderDetail.data as any).paymentStatus}
+                      {orderData.paymentStatus}
                     </span>
                   </div>
                   <Select
-                    value={(orderDetail.data as any).paymentStatus}
-                    onValueChange={v =>
+                    value={orderData.paymentStatus}
+                    onValueChange={value =>
                       updateStatus.mutate({
-                        id: (orderDetail.data as any).id,
-                        status: (orderDetail.data as any).status,
-                        paymentStatus: v as any,
+                        id: orderData.id,
+                        status: orderData.status,
+                        paymentStatus: value as OrderPaymentStatus,
                       })
                     }
                   >
-                    <SelectTrigger className="w-full h-8 bg-white/5 border-white/10 text-gray-300 text-xs">
+                    <SelectTrigger className="h-8 w-full border-white/10 bg-white/5 text-xs text-gray-300">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0F172A] border-white/10">
-                      {PAYMENT_STATUSES.map(s => (
+                    <SelectContent className="border-white/10 bg-[#0F172A]">
+                      {PAYMENT_STATUSES.map(status => (
                         <SelectItem
-                          key={s}
-                          value={s}
+                          key={status}
+                          value={status}
                           className="text-xs capitalize"
                         >
-                          {s}
+                          {status}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -662,182 +876,175 @@ export default function Orders() {
 
               {/* Order Timeline */}
               {(() => {
-                const currentStatus = (orderDetail.data as any)
-                  .status as string;
-                const timelineSteps: Array<{
-                  key: string;
-                  label: string;
-                  icon: React.ReactNode;
-                }> = [
-                  {
-                    key: "pending",
-                    label: "Order Placed",
-                    icon: <Clock className="w-4 h-4" />,
+                const currentIndex = ORDER_TIMELINE.indexOf(
+                  orderData.status as (typeof ORDER_TIMELINE)[number]
+                );
+                const terminalStatus =
+                  orderData.status === "cancelled" ||
+                  orderData.status === "refunded"
+                    ? orderData.status
+                    : null;
+                const timelineMeta: Record<
+                  (typeof ORDER_TIMELINE)[number],
+                  { label: string; icon: React.ReactNode }
+                > = {
+                  pending: {
+                    label: "Pending",
+                    icon: <Clock className="h-4 w-4" />,
                   },
-                  {
-                    key: "processing",
+                  confirmed: {
+                    label: "Confirmed",
+                    icon: <CheckCircle className="h-4 w-4" />,
+                  },
+                  processing: {
                     label: "Processing",
-                    icon: <RefreshCw className="w-4 h-4" />,
+                    icon: <RefreshCw className="h-4 w-4" />,
                   },
-                  {
-                    key: "shipped",
+                  shipped: {
                     label: "Shipped",
-                    icon: <Truck className="w-4 h-4" />,
+                    icon: <Truck className="h-4 w-4" />,
                   },
-                  {
-                    key: "delivered",
+                  delivered: {
                     label: "Delivered",
-                    icon: <CheckCircle className="w-4 h-4" />,
+                    icon: <Package className="h-4 w-4" />,
                   },
-                ];
-                const cancelledOrRefunded =
-                  currentStatus === "cancelled" || currentStatus === "refunded";
-                const statusOrder = [
-                  "pending",
-                  "confirmed",
-                  "processing",
-                  "shipped",
-                  "delivered",
-                ];
-                const currentIdx = statusOrder.indexOf(currentStatus);
+                };
+
                 return (
-                  <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-                    <p className="text-gray-400 text-xs mb-4">Order Timeline</p>
-                    {cancelledOrRefunded ? (
-                      <div className="flex items-center gap-2 text-red-400 text-sm">
-                        <XCircle className="w-4 h-4" />
-                        <span className="capitalize font-medium">
-                          {currentStatus}
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <p className="text-xs text-gray-400">Order Timeline</p>
+                      {terminalStatus && (
+                        <span className="rounded-full bg-red-500/10 px-2 py-1 text-xs font-medium capitalize text-red-300">
+                          {terminalStatus}
                         </span>
-                      </div>
-                    ) : (
-                      <ol className="relative ml-2">
-                        {timelineSteps.map((step, idx) => {
-                          const stepIdx = statusOrder.indexOf(step.key);
-                          const isCompleted = currentIdx >= stepIdx;
-                          const isCurrent =
-                            currentStatus === step.key ||
-                            (step.key === "pending" &&
-                              currentStatus === "confirmed" &&
-                              currentIdx <= 1);
-                          return (
-                            <li
-                              key={step.key}
-                              className="flex items-start gap-3 mb-4 last:mb-0 relative"
-                            >
-                              {idx < timelineSteps.length - 1 && (
-                                <span
-                                  className={`absolute left-3.5 top-7 w-px h-6 -translate-x-1/2 ${isCompleted ? "bg-[#00D9FF]/60" : "bg-white/10"}`}
-                                />
+                      )}
+                    </div>
+                    <ol className="grid gap-3 md:grid-cols-5">
+                      {ORDER_TIMELINE.map((status, index) => {
+                        const isComplete = currentIndex >= index;
+                        const isCurrent = orderData.status === status;
+                        const meta = timelineMeta[status];
+
+                        return (
+                          <li key={status} className="relative">
+                            <div
+                              className={cn(
+                                "flex h-full flex-col gap-3 rounded-xl border p-3 transition-colors",
+                                isCurrent
+                                  ? "border-[#00D9FF]/60 bg-[#00D9FF]/10"
+                                  : isComplete
+                                    ? "border-[#00D9FF]/30 bg-white/[0.04]"
+                                    : "border-white/10 bg-white/[0.02]"
                               )}
+                            >
                               <span
-                                className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center border ${
+                                className={cn(
+                                  "flex h-8 w-8 items-center justify-center rounded-full border",
                                   isCurrent
-                                    ? "bg-[#00D9FF] border-[#00D9FF] text-[#0A1128]"
-                                    : isCompleted
-                                      ? "bg-[#00D9FF]/20 border-[#00D9FF]/40 text-[#00D9FF]"
-                                      : "bg-white/5 border-white/10 text-gray-500"
-                                }`}
+                                    ? "border-[#00D9FF] bg-[#00D9FF] text-[#0A1128]"
+                                    : isComplete
+                                      ? "border-[#00D9FF]/40 bg-[#00D9FF]/15 text-[#00D9FF]"
+                                      : "border-white/10 bg-white/5 text-gray-500"
+                                )}
                               >
-                                {step.icon}
+                                {meta.icon}
                               </span>
-                              <div className="pt-0.5">
-                                <span
-                                  className={`text-sm font-medium ${
+                              <div>
+                                <p
+                                  className={cn(
+                                    "text-sm font-medium",
                                     isCurrent
                                       ? "text-[#00D9FF]"
-                                      : isCompleted
+                                      : isComplete
                                         ? "text-white"
                                         : "text-gray-500"
-                                  }`}
+                                  )}
                                 >
-                                  {step.label}
-                                </span>
+                                  {meta.label}
+                                </p>
                                 {isCurrent && (
-                                  <span className="ml-2 text-xs bg-[#00D9FF]/15 text-[#00D9FF] px-1.5 py-0.5 rounded-full">
+                                  <span className="mt-1 inline-flex rounded-full bg-[#00D9FF]/15 px-1.5 py-0.5 text-xs text-[#00D9FF]">
                                     Current
                                   </span>
                                 )}
                               </div>
-                            </li>
-                          );
-                        })}
-                      </ol>
-                    )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ol>
                   </div>
                 );
               })()}
 
               {/* Customer */}
-              {((orderDetail.data as any).customerName ||
-                (orderDetail.data as any).customerEmail) && (
-                <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-gray-400 text-xs mb-2 flex items-center gap-1">
-                    <User className="w-3 h-3" /> Customer
+              {(orderData.customerName || orderData.customerEmail) && (
+                <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                  <p className="mb-2 flex items-center gap-1 text-xs text-gray-400">
+                    <User className="h-3 w-3" /> Customer
                   </p>
-                  <p className="text-white font-medium">
-                    {(orderDetail.data as any).customerName ?? "—"}
+                  <p className="font-medium text-white">
+                    {orderData.customerName ?? "—"}
                   </p>
-                  <p className="text-gray-400 text-sm">
-                    {(orderDetail.data as any).customerEmail ?? "—"}
+                  <p className="text-sm text-gray-400">
+                    {orderData.customerEmail ?? "—"}
                   </p>
                 </div>
               )}
 
               {/* Line Items */}
-              {(orderDetail.data as any).items?.length > 0 && (
+              {(orderData.items?.length ?? 0) > 0 && (
                 <div>
-                  <p className="text-gray-400 text-xs mb-2">Line Items</p>
-                  <div className="rounded-lg border border-white/10 overflow-hidden">
+                  <p className="mb-2 text-xs text-gray-400">Line Items</p>
+                  <div className="overflow-hidden rounded-lg border border-white/10">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="bg-white/5 border-b border-white/10">
-                          <th className="text-left text-gray-400 text-xs px-3 py-2">
+                        <tr className="border-b border-white/10 bg-white/5">
+                          <th className="px-3 py-2 text-left text-xs text-gray-400">
                             Product
                           </th>
-                          <th className="text-right text-gray-400 text-xs px-3 py-2">
+                          <th className="px-3 py-2 text-right text-xs text-gray-400">
                             Qty
                           </th>
-                          <th className="text-right text-gray-400 text-xs px-3 py-2">
+                          <th className="px-3 py-2 text-right text-xs text-gray-400">
                             Unit Price
                           </th>
-                          <th className="text-right text-gray-400 text-xs px-3 py-2">
+                          <th className="px-3 py-2 text-right text-xs text-gray-400">
                             Total
                           </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {(orderDetail.data as any).items.map(
-                          (item: any, i: number) => (
-                            <tr
-                              key={i}
-                              className="border-b border-white/5 last:border-0"
-                            >
-                              <td className="px-3 py-2">
-                                <div className="text-white">
-                                  {item.productName}
+                        {orderData.items?.map((item, index) => (
+                          <tr
+                            key={`${item.productName}-${index}`}
+                            className="border-b border-white/5 last:border-0"
+                          >
+                            <td className="px-3 py-2">
+                              <div className="text-white">
+                                {item.productName}
+                              </div>
+                              {item.productSku && (
+                                <div className="text-xs text-gray-500">
+                                  {item.productSku}
                                 </div>
-                                {item.productSku && (
-                                  <div className="text-gray-500 text-xs">
-                                    {item.productSku}
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-right text-gray-300">
-                                {item.quantity}
-                              </td>
-                              <td className="px-3 py-2 text-right text-gray-300">
-                                ${Number(item.unitPrice).toFixed(2)}
-                              </td>
-                              <td className="px-3 py-2 text-right text-white font-medium">
-                                $
-                                {(
-                                  item.quantity * Number(item.unitPrice)
-                                ).toFixed(2)}
-                              </td>
-                            </tr>
-                          )
-                        )}
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-right text-gray-300">
+                              {item.quantity}
+                            </td>
+                            <td className="px-3 py-2 text-right text-gray-300">
+                              ${Number(item.unitPrice).toFixed(2)}
+                            </td>
+                            <td className="px-3 py-2 text-right font-medium text-white">
+                              $
+                              {(item.quantity * Number(item.unitPrice)).toFixed(
+                                2
+                              )}
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
@@ -845,65 +1052,50 @@ export default function Orders() {
               )}
 
               {/* Totals */}
-              <div className="p-4 rounded-lg bg-white/5 border border-white/10 space-y-2">
+              <div className="space-y-2 rounded-lg border border-white/10 bg-white/5 p-4">
                 <div className="flex justify-between text-sm text-gray-400">
                   <span>Subtotal</span>
-                  <span>
-                    $
-                    {Number((orderDetail.data as any).subtotal ?? 0).toFixed(2)}
-                  </span>
+                  <span>${Number(orderData.subtotal ?? 0).toFixed(2)}</span>
                 </div>
-                {Number((orderDetail.data as any).taxAmount) > 0 && (
+                {Number(orderData.taxAmount ?? 0) > 0 && (
                   <div className="flex justify-between text-sm text-gray-400">
                     <span>Tax</span>
-                    <span>
-                      ${Number((orderDetail.data as any).taxAmount).toFixed(2)}
-                    </span>
+                    <span>${Number(orderData.taxAmount).toFixed(2)}</span>
                   </div>
                 )}
-                {Number((orderDetail.data as any).shippingAmount) > 0 && (
+                {Number(orderData.shippingAmount ?? 0) > 0 && (
                   <div className="flex justify-between text-sm text-gray-400">
                     <span>Shipping</span>
-                    <span>
-                      $
-                      {Number((orderDetail.data as any).shippingAmount).toFixed(
-                        2
-                      )}
-                    </span>
+                    <span>${Number(orderData.shippingAmount).toFixed(2)}</span>
                   </div>
                 )}
                 <Separator className="bg-white/10" />
-                <div className="flex justify-between text-white font-bold">
+                <div className="flex justify-between font-bold text-white">
                   <span>Total</span>
                   <span className="text-[#00D9FF]">
-                    ${Number((orderDetail.data as any).total).toFixed(2)}
+                    ${Number(orderData.total).toFixed(2)}
                   </span>
                 </div>
               </div>
 
               {/* Notes */}
-              {(orderDetail.data as any).notes && (
-                <div className="p-3 rounded-lg bg-white/3 border border-white/10">
-                  <p className="text-gray-400 text-xs mb-1">Notes</p>
-                  <p className="text-gray-300 text-sm">
-                    {(orderDetail.data as any).notes}
-                  </p>
+              {orderData.notes && (
+                <div className="rounded-lg border border-white/10 bg-white/3 p-3">
+                  <p className="mb-1 text-xs text-gray-400">Notes</p>
+                  <p className="text-sm text-gray-300">{orderData.notes}</p>
                 </div>
               )}
 
               {/* Metadata */}
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <span>
-                  Created{" "}
-                  {new Date(
-                    (orderDetail.data as any).createdAt
-                  ).toLocaleString()}
+                  Created {new Date(orderData.createdAt).toLocaleString()}
                 </span>
-                <span>ID #{(orderDetail.data as any).id}</span>
+                <span>ID #{orderData.id}</span>
               </div>
             </div>
           ) : (
-            <p className="text-gray-400 text-center py-8">Order not found</p>
+            <p className="py-8 text-center text-gray-400">Order not found</p>
           )}
         </DialogContent>
       </Dialog>

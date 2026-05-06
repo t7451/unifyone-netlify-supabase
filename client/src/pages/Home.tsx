@@ -6,6 +6,7 @@ import { getSignupUrl } from "@/const";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { TIERS } from "@/content/pricing";
 import { SITE_URL } from "@/lib/siteConfig";
+import { cn as classNames } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import BuildProcessAnimation from "@/components/BuildProcessAnimation";
@@ -103,27 +104,40 @@ const LAUNCH_METRICS = [
 
 const SOCIAL_PROOF = [
   {
-    display: "500+",
-    numeric: 500,
-    label: "Tenants Launched",
+    label: "Operators",
+    numeric: 2400,
     accent: "#D4A843",
-    suffix: "+",
+    format: "countPlus",
   },
   {
-    display: "2M+",
-    numeric: 2000000,
-    label: "Orders Processed",
+    label: "Processed",
+    numeric: 1200000,
     accent: "#6EE7B7",
-    suffix: "M+",
+    format: "currencyCompact",
   },
   {
-    display: "12",
-    numeric: 12,
-    label: "Platform Integrations",
+    label: "Integrations",
+    numeric: 8,
     accent: "#93C5FD",
-    suffix: "",
+    format: "plain",
+  },
+  {
+    label: "Uptime",
+    numeric: 999,
+    accent: "#C4B5FD",
+    format: "uptime",
   },
 ] as const;
+
+const TRUST_BADGES = [
+  "Stripe",
+  "PayPal",
+  "Square",
+  "Shopify",
+  "Anthropic Claude",
+] as const;
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const PILLARS = [
   {
@@ -263,6 +277,25 @@ const TESTIMONIALS = [
   },
 ] as const;
 
+function formatSocialProofValue(
+  value: number,
+  format: (typeof SOCIAL_PROOF)[number]["format"]
+): string {
+  if (format === "currencyCompact") {
+    if (value >= 1_000_000) {
+      return `$${(value / 1_000_000).toFixed(1)}M+`;
+    }
+    return `$${new Intl.NumberFormat("en-US").format(value)}`;
+  }
+
+  if (format === "uptime") {
+    return `${(value / 10).toFixed(1)}%`;
+  }
+
+  const formatted = new Intl.NumberFormat("en-US").format(value);
+  return format === "countPlus" ? `${formatted}+` : formatted;
+}
+
 function SocialProofCounter() {
   const ref = useRef<HTMLDivElement>(null);
   const [started, setStarted] = useState(false);
@@ -271,6 +304,7 @@ function SocialProofCounter() {
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
+
     const observer = new IntersectionObserver(
       entries => {
         if (entries[0]?.isIntersecting && !started) {
@@ -280,15 +314,18 @@ function SocialProofCounter() {
       },
       { threshold: 0.3 }
     );
+
     observer.observe(node);
     return () => observer.disconnect();
   }, [started]);
 
   useEffect(() => {
     if (!started) return;
+
     const durationMs = 1200;
     const startTime = performance.now();
     let frameId = 0;
+
     const tick = (now: number) => {
       const progress = Math.min((now - startTime) / durationMs, 1);
       const ease = 1 - Math.pow(1 - progress, 3);
@@ -297,42 +334,55 @@ function SocialProofCounter() {
         frameId = window.requestAnimationFrame(tick);
       }
     };
+
     frameId = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(frameId);
   }, [started]);
 
-  const formatCount = (index: number): string => {
-    const sp = SOCIAL_PROOF[index];
-    const raw = counts[index] ?? 0;
-    if (sp.suffix === "M+") {
-      if (raw >= 1_000_000) return `${(raw / 1_000_000).toFixed(1)}M+`;
-      if (raw >= 1_000) return `${Math.round(raw / 1_000)}K`;
-      return String(raw);
-    }
-    return `${new Intl.NumberFormat("en-US").format(raw)}${sp.suffix}`;
-  };
-
   return (
-    <div
-      ref={ref}
-      className="flex flex-wrap items-center justify-center gap-8 sm:gap-16 py-8"
-    >
-      {SOCIAL_PROOF.map((sp, i) => (
-        <div key={sp.label} className="text-center">
+    <div ref={ref} className="space-y-8 py-4">
+      <div className="text-center">
+        <p
+          className="font-cinzel text-xs tracking-[0.24em] uppercase"
+          style={{ color: "#D4A843" }}
+        >
+          Trusted by operators
+        </p>
+        <p
+          className="font-crimson text-base sm:text-lg mt-3"
+          style={{ color: "#9A9A9A", fontStyle: "italic" }}
+        >
+          Join 2,400+ operators already running their commerce stack on
+          UnifyOne.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+        {SOCIAL_PROOF.map((sp, index) => (
           <div
-            className="font-cinzel text-3xl sm:text-4xl font-black"
-            style={{ color: sp.accent }}
+            key={sp.label}
+            className="rounded-2xl border px-4 py-5 text-center sm:px-6"
+            style={{
+              borderColor: "rgba(36,36,36,0.9)",
+              background:
+                "linear-gradient(180deg, rgba(10,10,10,0.95), rgba(3,3,3,0.92))",
+            }}
           >
-            {started ? formatCount(i) : sp.display}
+            <div
+              className="font-cinzel text-3xl sm:text-4xl font-black"
+              style={{ color: sp.accent }}
+            >
+              {formatSocialProofValue(counts[index] ?? 0, sp.format)}
+            </div>
+            <p
+              className="mt-2 font-crimson text-xs uppercase tracking-[0.18em] sm:text-sm"
+              style={{ color: "#6A6A6A" }}
+            >
+              {sp.label}
+            </p>
           </div>
-          <p
-            className="font-crimson text-xs uppercase tracking-[0.18em] mt-1"
-            style={{ color: "#6A6A6A" }}
-          >
-            {sp.label}
-          </p>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -341,6 +391,7 @@ function EmailCapture() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [touched, setTouched] = useState(false);
 
   const submitLead = trpc.leads.submit.useMutation({
     onSuccess: () => {
@@ -351,14 +402,23 @@ function EmailCapture() {
     },
   });
 
+  const validateEmail = (value: string) => EMAIL_PATTERN.test(value.trim());
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address.");
+    const trimmedEmail = email.trim();
+    setTouched(true);
+
+    if (!validateEmail(trimmedEmail)) {
+      setError("Please enter a valid email address");
       return;
     }
-    submitLead.mutate({ email, source: "landing_page_blueprint" });
+
+    setError("");
+    submitLead.mutate({
+      email: trimmedEmail,
+      source: "landing_page_blueprint",
+    });
   };
 
   return (
@@ -379,7 +439,8 @@ function EmailCapture() {
           className="font-cinzel text-2xl sm:text-3xl font-black mt-4 mb-3"
           style={{ color: "#F0E8D0" }}
         >
-          Get the Cathedral Blueprint — free.
+          Get the Cathedral Blueprint — the exact system architecture we use to
+          run 8 revenue streams from one platform.
         </h2>
         <p
           className="font-crimson text-lg mb-8 mobile-visibility-copy"
@@ -397,75 +458,93 @@ function EmailCapture() {
             }}
           >
             <p
-              className="font-cinzel text-sm"
-              style={{ color: "#D4A843", letterSpacing: "0.1em" }}
+              className="font-crimson text-base mobile-visibility-copy"
+              style={{ color: "#D4A843" }}
             >
-              ✦ BLUEPRINT SENT
-            </p>
-            <p
-              className="font-crimson mt-2 mobile-visibility-copy"
-              style={{ color: "#6A6A6A" }}
-            >
-              Check your inbox — the PDF is on its way.
+              ✓ You&apos;re on the list! Check your inbox for the Cathedral
+              Blueprint.
             </p>
           </div>
         ) : (
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-          >
-            <div className="flex-1">
-              <input
-                type="email"
-                value={email}
-                onChange={e => {
-                  setEmail(e.target.value);
-                  setError("");
-                }}
-                placeholder="your@email.com"
-                aria-label="Email address"
-                className="w-full px-4 py-3 rounded-lg text-sm"
-                style={{
-                  backgroundColor: "#0A0A0A",
-                  border: error ? "1px solid #EF4444" : "1px solid #242424",
-                  color: "#F0E8D0",
-                  outline: "none",
-                }}
-                required
-              />
-              {error && (
-                <p
-                  className="text-left text-xs mt-1"
-                  style={{ color: "#EF4444" }}
+          <>
+            <form
+              onSubmit={handleSubmit}
+              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+              noValidate
+            >
+              <div className="flex-1">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => {
+                    const nextEmail = e.target.value;
+                    setEmail(nextEmail);
+                    if (touched) {
+                      setError(
+                        nextEmail.trim() && !validateEmail(nextEmail)
+                          ? "Please enter a valid email address"
+                          : ""
+                      );
+                    }
+                  }}
+                  onBlur={() => {
+                    setTouched(true);
+                    setError(
+                      email.trim() && !validateEmail(email)
+                        ? "Please enter a valid email address"
+                        : ""
+                    );
+                  }}
+                  placeholder="your@email.com"
+                  aria-label="Email address"
+                  aria-invalid={Boolean(error)}
+                  className={classNames(
+                    "w-full rounded-lg border px-4 py-3 text-sm transition-colors",
+                    error ? "border-red-500" : "border-[#242424]"
+                  )}
+                  style={{
+                    backgroundColor: "#0A0A0A",
+                    color: "#F0E8D0",
+                    outline: "none",
+                  }}
+                  required
+                />
+                {error && (
+                  <p
+                    className="mt-1 text-left text-xs"
+                    style={{ color: "#EF4444" }}
+                  >
+                    {error}
+                  </p>
+                )}
+              </div>
+              <button
+                type="submit"
+                disabled={submitLead.isPending}
+                className={classNames(
+                  "btn-illuminate shrink-0 whitespace-nowrap",
+                  submitLead.isPending && "opacity-70"
+                )}
+              >
+                {submitLead.isPending ? "Sending…" : "Send My Blueprint"}
+              </button>
+            </form>
+            <p
+              className="font-crimson text-xs mt-4 mobile-visibility-subtle"
+              style={{ color: "#3A3A3A" }}
+            >
+              No spam. Unsubscribe anytime. We respect your privacy.{" "}
+              <Link href="/privacy">
+                <span
+                  className="underline cursor-pointer mobile-visibility-subtle"
+                  style={{ color: "#4A4A4A" }}
                 >
-                  {error}
-                </p>
-              )}
-            </div>
-            <button
-              type="submit"
-              disabled={submitLead.isPending}
-              className="btn-illuminate shrink-0 disabled:opacity-70"
-              style={{ whiteSpace: "nowrap" }}
-            >
-              {submitLead.isPending ? "Sending…" : "Send My Blueprint"}
-            </button>
-          </form>
+                  Privacy Policy
+                </span>
+              </Link>
+            </p>
+          </>
         )}
-        <p
-          className="font-crimson text-xs mt-4 mobile-visibility-subtle"
-          style={{ color: "#3A3A3A" }}
-        >
-          We never spam. Unsubscribe anytime.{" "}
-          <Link href="/privacy">
-            <span
-              className="underline cursor-pointer mobile-visibility-subtle"
-              style={{ color: "#4A4A4A" }}
-            >
-              Privacy Policy
-            </span>
-          </Link>
-        </p>
       </div>
     </section>
   );
@@ -542,6 +621,21 @@ export default function Home() {
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+    const previousRootScrollBehavior = root.style.scrollBehavior;
+    const previousBodyScrollBehavior = body.style.scrollBehavior;
+
+    root.style.scrollBehavior = "smooth";
+    body.style.scrollBehavior = "smooth";
+
+    return () => {
+      root.style.scrollBehavior = previousRootScrollBehavior;
+      body.style.scrollBehavior = previousBodyScrollBehavior;
+    };
+  }, []);
 
   useEffect(() => {
     if (!window.location.hash) {
@@ -698,6 +792,45 @@ export default function Home() {
           >
             No credit card required · 14-day free trial
           </p>
+
+          <p
+            data-reveal
+            data-reveal-delay="325"
+            className="font-crimson text-sm mt-4 mobile-visibility-copy"
+            style={{ color: "#D7CBA5", fontStyle: "italic" }}
+          >
+            Join 2,400+ operators already running their commerce stack on
+            UnifyOne.
+          </p>
+
+          <div
+            data-reveal
+            data-reveal-delay="340"
+            className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:gap-4"
+          >
+            <span
+              className="font-cinzel text-[0.65rem] uppercase tracking-[0.24em]"
+              style={{ color: "#5A5A5A" }}
+            >
+              Powered by
+            </span>
+            {TRUST_BADGES.map(badge => (
+              <span
+                key={badge}
+                className={classNames(
+                  "rounded-full border px-3 py-1 text-[0.7rem] font-cinzel tracking-[0.18em] uppercase sm:text-xs",
+                  "mobile-visibility-brand"
+                )}
+                style={{
+                  color: "#8A8A8A",
+                  borderColor: "rgba(138,138,138,0.18)",
+                  backgroundColor: "rgba(255,255,255,0.02)",
+                }}
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
 
           <p
             data-reveal
@@ -916,54 +1049,6 @@ export default function Home() {
                   }}
                 />
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── TRUST BADGES ─────────────────────────────────────────────────── */}
-      <section
-        style={{
-          borderBottom: "1px solid #242424",
-          padding: "2.5rem 0",
-          backgroundColor: "#030303",
-        }}
-      >
-        <div className="max-w-5xl mx-auto px-6 sm:px-8">
-          <p
-            className="text-center font-crimson text-sm mb-6 mobile-visibility-subtle"
-            style={{
-              color: "#3A3A3A",
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              fontFamily: "Cinzel, serif",
-              fontSize: "0.65rem",
-            }}
-          >
-            Payments &amp; Integrations Powered By
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-            {[
-              { name: "Stripe", color: "#6772E5" },
-              { name: "PayPal", color: "#003087" },
-              { name: "Square", color: "#3E4348" },
-              { name: "Shopify", color: "#96BF48" },
-              { name: "Anthropic", color: "#D4A843" },
-              { name: "Supabase", color: "#3ECF8E" },
-              { name: "SOC 2 Compliant", color: "#6EE7B7" },
-              { name: "256-bit SSL", color: "#93C5FD" },
-            ].map(brand => (
-              <span
-                key={brand.name}
-                className="font-cinzel text-sm tracking-widest font-bold mobile-visibility-brand"
-                style={{
-                  color: brand.color,
-                  opacity: 0.55,
-                  letterSpacing: "0.15em",
-                }}
-              >
-                {brand.name.toUpperCase()}
-              </span>
             ))}
           </div>
         </div>
@@ -1488,16 +1573,15 @@ export default function Home() {
                   ))}
                 </div>
 
-                <a
-                  href={getSignupUrl(tier.id)}
-                  className={
-                    tier.highlight
-                      ? "btn-illuminate block text-center"
-                      : "btn-ghost-gold block text-center"
-                  }
+                <Link
+                  href={`/login?plan=${tier.id}`}
+                  className={classNames(
+                    "block text-center",
+                    tier.highlight ? "btn-illuminate" : "btn-ghost-gold"
+                  )}
                 >
                   {tier.cta}
-                </a>
+                </Link>
               </div>
             ))}
           </div>

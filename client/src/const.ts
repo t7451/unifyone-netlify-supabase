@@ -13,7 +13,7 @@ export const getLoginUrl = (_returnPath?: string): string => {
  * - `next` overrides the post-registration redirect with an arbitrary path.
  */
 export const getSignupUrl = (planSlug?: string, next?: string): string => {
-  if (next) return `/signup?next=${encodeURIComponent(next)}`;
-  if (planSlug) return `/signup?plan=${encodeURIComponent(planSlug)}`;
-  return "/signup";
+  if (next) return `/register?next=${encodeURIComponent(next)}`;
+  if (planSlug) return `/register?plan=${encodeURIComponent(planSlug)}`;
+  return "/register";
 };

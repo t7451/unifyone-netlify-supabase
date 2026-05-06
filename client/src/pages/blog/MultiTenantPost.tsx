@@ -1,69 +1,20 @@
 import { Link } from "wouter";
-import { SITE_URL } from "@/lib/siteConfig";
-import BlogPostHead from "@/components/BlogPostHead";
-
-const CANONICAL = `${SITE_URL}/blog/multi-tenant-ecommerce-saas`;
-const TITLE =
-  "Why Multi-Tenant SaaS Is the Right Architecture for Commerce Teams | 1Commerce";
-const DESCRIPTION =
-  "A technical and strategic breakdown of multi-tenant commerce architecture — why it outperforms single-tenant deployments for agencies, franchises, and holding companies managing multiple brands or client accounts.";
-const OG_IMAGE =
-  "https://files.manuscdn.com/user_upload_by_module/session_file/310519663412766662/uBzlkALhOZxeuTyR.jpg";
-
-const JSON_LD = [
-  {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline:
-      "Why Multi-Tenant SaaS Is the Right Architecture for Commerce Teams",
-    description: DESCRIPTION,
-    image: OG_IMAGE,
-    author: {
-      "@type": "Organization",
-      name: "1Commerce",
-      url: SITE_URL,
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "1Commerce",
-      logo: { "@type": "ImageObject", url: `${SITE_URL}/favicon.ico` },
-    },
-    datePublished: "2026-03-06",
-    dateModified: "2026-04-04",
-    mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL },
-    keywords: [
-      "multi-tenant ecommerce",
-      "SaaS architecture",
-      "white-label commerce platform",
-      "ecommerce agency tools",
-      "multi-brand commerce",
-      "tenant isolation",
-    ],
-    articleSection: "Commerce Architecture",
-    wordCount: 1100,
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "Blog",
-        item: `${SITE_URL}/blog`,
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: "Multi-Tenant Architecture",
-        item: CANONICAL,
-      },
-    ],
-  },
-];
+import PageHead from "@/components/PageHead";
+import {
+  BLOG_POSTS,
+  BlogBackLink,
+  RelatedPostsSection,
+  buildArticleJsonLd,
+  buildArticleMeta,
+  formatBlogDate,
+  getReadingTimeText,
+} from "./blogPostShared";
 
 export default function MultiTenantPost() {
+  const post = BLOG_POSTS.multiTenant;
+  const publishedDate = formatBlogDate(post.publishedAt);
+  const readingTime = getReadingTimeText(post.wordCount);
+
   return (
     <div
       style={{
@@ -72,13 +23,14 @@ export default function MultiTenantPost() {
         minHeight: "100vh",
       }}
     >
-      <BlogPostHead
-        canonical={CANONICAL}
-        title={TITLE}
-        description={DESCRIPTION}
-        ogImage={OG_IMAGE}
-        breadcrumbName="Multi-Tenant Architecture"
-        jsonLd={JSON_LD}
+      <PageHead
+        title={post.title}
+        description={post.description}
+        canonical={post.canonical}
+        ogImage={post.ogImage}
+        ogType="article"
+        meta={buildArticleMeta(post)}
+        jsonLd={buildArticleJsonLd(post)}
       />
 
       <nav
@@ -133,27 +85,15 @@ export default function MultiTenantPost() {
               </Link>
             </li>
             <li style={{ color: "#242424" }}>›</li>
-            <li style={{ color: "#D4A843" }}>Multi-Tenant Architecture</li>
+            <li style={{ color: "#D4A843" }}>{post.breadcrumbName}</li>
           </ol>
         </nav>
-        <div className="mb-8">
-          <Link href="/blog">
-            <span
-              className="text-xs cursor-pointer hover:text-amber-400 transition-colors"
-              style={{
-                fontFamily: "Cinzel, serif",
-                letterSpacing: "0.15em",
-                color: "#5A5A5A",
-              }}
-            >
-              ← Back to Blog
-            </span>
-          </Link>
-        </div>
+
+        <BlogBackLink className="mb-8" />
 
         <header className="mb-12">
           <span className="inscription block mb-4">
-            Commerce Architecture · March 2026
+            {post.category} · {publishedDate}
           </span>
           <h1
             className="font-cinzel text-3xl sm:text-5xl font-black mb-6"
@@ -163,7 +103,7 @@ export default function MultiTenantPost() {
               letterSpacing: "0.01em",
             }}
           >
-            Why Multi-Tenant SaaS Is the Right Architecture for Commerce Teams
+            {post.headline}
           </h1>
           <div
             className="flex flex-wrap items-center gap-4 mb-6 text-xs"
@@ -174,12 +114,12 @@ export default function MultiTenantPost() {
             }}
           >
             <span>
-              By <span style={{ color: "#D4A843" }}>UnifyOne Team</span>
+              By <span style={{ color: "#D4A843" }}>{post.author}</span>
             </span>
             <span style={{ color: "#242424" }}>·</span>
-            <time dateTime="2026-03-06">March 6, 2026</time>
+            <time dateTime={post.publishedAt}>{publishedDate}</time>
             <span style={{ color: "#242424" }}>·</span>
-            <span>5 min read</span>
+            <span>{readingTime}</span>
           </div>
           <p
             className="font-crimson text-xl sm:text-2xl"
@@ -236,11 +176,12 @@ export default function MultiTenantPost() {
             </h2>
             <p>
               The objection to multi-tenant architecture is always data
-              isolation: "What if one client's data bleeds into another?" This
-              is a legitimate concern in poorly designed systems. In a properly
-              architected multi-tenant platform, tenant isolation is enforced at
-              the database row level — every query is scoped to a tenant ID, and
-              no query can return data outside its tenant boundary.
+              isolation: &quot;What if one client&apos;s data bleeds into
+              another?&quot; This is a legitimate concern in poorly designed
+              systems. In a properly architected multi-tenant platform, tenant
+              isolation is enforced at the database row level — every query is
+              scoped to a tenant ID, and no query can return data outside its
+              tenant boundary.
             </p>
             <p className="mt-4">
               UnifyOne enforces tenant isolation at three layers: the database
@@ -269,9 +210,9 @@ export default function MultiTenantPost() {
             <p className="mt-4">
               For agencies, this is the difference between a services business
               (linear revenue, linear cost) and a product business (exponential
-              revenue, flat cost). UnifyOne's Scale tier at $99/month supports
-              unlimited tenants. A ten-client agency paying $99/month in
-              infrastructure costs while billing each client $500/month is
+              revenue, flat cost). UnifyOne&apos;s Scale tier at $99/month
+              supports unlimited tenants. A ten-client agency paying $99/month
+              in infrastructure costs while billing each client $500/month is
               running an exceptional gross margin infrastructure layer.
             </p>
           </section>
@@ -285,19 +226,19 @@ export default function MultiTenantPost() {
             </h2>
             <p>
               Multi-tenant architecture enables white-labeling at zero marginal
-              cost. UnifyOne's Scale tier includes custom domain support and
-              full brand customization per tenant. An agency can deploy UnifyOne
-              under their own brand — "PoweredBy YourAgency Commerce" — and
-              resell it to clients as a proprietary product. The underlying
-              infrastructure is UnifyOne; the brand experience is entirely
-              theirs.
+              cost. UnifyOne&apos;s Scale tier includes custom domain support
+              and full brand customization per tenant. An agency can deploy
+              UnifyOne under their own brand — &quot;PoweredBy YourAgency
+              Commerce&quot; — and resell it to clients as a proprietary
+              product. The underlying infrastructure is UnifyOne; the brand
+              experience is entirely theirs.
             </p>
             <p className="mt-4">
               This is the reseller multiplier: you buy infrastructure at
               $99/month and sell it as a branded product at $500/month per
               client. The margin is the brand. The brand is built on someone
-              else's infrastructure. This is how software companies are built
-              without engineering teams.
+              else&apos;s infrastructure. This is how software companies are
+              built without engineering teams.
             </p>
           </section>
 
@@ -317,7 +258,7 @@ export default function MultiTenantPost() {
               horizontally — but only if the foundation is solid.
             </p>
             <p className="mt-4">
-              UnifyOne's onboarding flow enforces this sequence. Your first
+              UnifyOne&apos;s onboarding flow enforces this sequence. Your first
               tenant is your proof of concept. The platform guides you through
               integration, data validation, and baseline analytics before
               unlocking multi-tenant features. This is not a limitation — it is
@@ -351,66 +292,7 @@ export default function MultiTenantPost() {
           </div>
         </div>
 
-        {/* Related */}
-        <div
-          className="mt-16 pt-12"
-          style={{ borderTop: "1px solid rgba(212,168,67,0.08)" }}
-        >
-          <span className="inscription block mb-6">Further Reading</span>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <Link href="/blog/gig-economy-commerce-platform">
-              <div className="stone-card p-6 cursor-pointer group">
-                <span
-                  className="inscription block mb-2"
-                  style={{ color: "#3A3A3A" }}
-                >
-                  Gig Economy
-                </span>
-                <h4
-                  className="font-cinzel text-sm font-600 group-hover:text-amber-400 transition-colors"
-                  style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
-                >
-                  How Gig Economy Workers Can Build a Commerce Platform That
-                  Scales
-                </h4>
-              </div>
-            </Link>
-            <Link href="/blog/manus-ai-gig-workers">
-              <div className="stone-card p-6 cursor-pointer group">
-                <span
-                  className="inscription block mb-2"
-                  style={{ color: "#3A3A3A" }}
-                >
-                  AI Integration
-                </span>
-                <h4
-                  className="font-cinzel text-sm font-600 group-hover:text-amber-400 transition-colors"
-                  style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
-                >
-                  Kai AI for Gig Workers: From Data to Decisions in Seconds
-                </h4>
-              </div>
-            </Link>
-          </div>
-        </div>
-        {/* Back to Blog */}
-        <div
-          className="mt-12 pt-8"
-          style={{ borderTop: "1px solid rgba(212,168,67,0.08)" }}
-        >
-          <Link href="/blog">
-            <span
-              className="text-xs cursor-pointer hover:text-amber-400 transition-colors"
-              style={{
-                fontFamily: "Cinzel, serif",
-                letterSpacing: "0.15em",
-                color: "#5A5A5A",
-              }}
-            >
-              ← Back to Blog
-            </span>
-          </Link>
-        </div>
+        <RelatedPostsSection currentPost="multiTenant" />
       </article>
     </div>
   );

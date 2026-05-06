@@ -1,6 +1,48 @@
 import { Helmet } from "react-helmet-async";
 import PublicLayout from "@/components/PublicLayout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SITE_URL } from "@/lib/siteConfig";
+
+const BUSINESS_CASE_STUDIES = [
+  {
+    id: "ecommerce-studio",
+    badge: "Scale Plan",
+    headline: "E-commerce Studio Processes $240K in 6 Months",
+    subtitle:
+      "A multi-brand operator consolidated Stripe, PayPal, and affiliate operations into one revenue engine.",
+    metrics: [
+      { value: "$240K", label: "processed in 6 months" },
+      { value: "2", label: "payment rails unified" },
+      { value: "+34%", label: "affiliate-driven growth" },
+    ],
+  },
+  {
+    id: "gig-economy-platform",
+    badge: "Automation",
+    headline: "Gig Economy Platform Automates 80% of Order Fulfillment",
+    subtitle:
+      "n8n orchestration, Kai workflows, and AI credit metering replaced manual operations across the order queue.",
+    metrics: [
+      { value: "80%", label: "fulfillment automated" },
+      { value: "14", label: "workflow steps orchestrated" },
+      { value: "24/7", label: "AI-assisted triage" },
+    ],
+  },
+  {
+    id: "white-label-agency",
+    badge: "White Label",
+    headline: "White-label Agency Deploys 12 Client Stores in One Sprint",
+    subtitle:
+      "Unlimited tenants, custom domains, and a white-label control plane let the agency ship storefronts without operational drag.",
+    metrics: [
+      { value: "12", label: "client stores launched" },
+      { value: "1", label: "sprint to deploy" },
+      { value: "100%", label: "brand-controlled experiences" },
+    ],
+  },
+] as const;
 
 const CASE_STUDIES = [
   {
@@ -247,76 +289,81 @@ export default function CaseStudies() {
             </p>
           </div>
 
-          {/* Business Case Study Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-16">
-            {[
-              {
-                company: "GrowthStack Co.",
-                metric: "300% revenue growth",
-                description:
-                  "A DTC brand consolidated Stripe, Shopify, and PayPal into UnifyOne, unlocking unified analytics and automated fulfillment — tripling revenue within 6 months.",
-              },
-              {
-                company: "NexaCommerce",
-                metric: "80% reduction in ops overhead",
-                description:
-                  "By wiring n8n automation and Kai AI into their order pipeline, NexaCommerce eliminated manual review tasks and cut operational overhead by 80%.",
-              },
-              {
-                company: "Elevate SaaS",
-                metric: "10x tenant scale in 90 days",
-                description:
-                  "Leveraging UnifyOne's multi-tenant architecture, Elevate SaaS onboarded 10x more tenants without compromising data isolation or platform stability.",
-              },
-            ].map(cs => (
-              <div
-                key={cs.company}
-                style={{
-                  backgroundColor: "rgba(212,168,67,0.04)",
-                  border: "1px solid rgba(212,168,67,0.15)",
-                  padding: "2rem",
-                }}
-              >
-                <div
-                  className="font-cinzel text-xs font-bold mb-3"
-                  style={{
-                    color: "#7A7A7A",
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                  }}
+          <div id="featured-case-studies" className="mb-16">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p
+                  className="font-cinzel text-xs font-bold"
+                  style={{ color: "#7A7A7A", letterSpacing: "0.16em" }}
                 >
-                  {cs.company}
-                </div>
-                <div
-                  className="font-cinzel text-2xl font-bold mb-4"
+                  OPERATOR OUTCOMES
+                </p>
+                <h2
+                  className="font-cinzel text-2xl font-bold mt-2"
                   style={{ color: "#D4A843" }}
                 >
-                  {cs.metric}
-                </div>
-                <p
-                  className="font-crimson text-sm mb-6"
-                  style={{ color: "#A0A0A0", lineHeight: 1.7 }}
-                >
-                  {cs.description}
-                </p>
-                <button
-                  style={{
-                    padding: "10px 20px",
-                    backgroundColor: "rgba(212,168,67,0.1)",
-                    border: "1px solid rgba(212,168,67,0.3)",
-                    color: "#D4A843",
-                    fontFamily: "'Cinzel', serif",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    letterSpacing: "0.05em",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  Read Case Study →
-                </button>
+                  Featured business case studies
+                </h2>
               </div>
-            ))}
+              <p
+                className="font-crimson max-w-2xl text-sm"
+                style={{ color: "#A0A0A0", lineHeight: 1.7 }}
+              >
+                High-signal teasers for the operators, agencies, and
+                automation-heavy teams using UnifyOne to scale faster.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              {BUSINESS_CASE_STUDIES.map(study => (
+                <Card
+                  key={study.id}
+                  id={study.id}
+                  className="border-[#d4a84333] bg-[#0d0d0d] text-left"
+                >
+                  <CardHeader className="space-y-4">
+                    <Badge className="w-fit bg-[#d4a8431a] text-[#D4A843] hover:bg-[#d4a8431a]">
+                      {study.badge}
+                    </Badge>
+                    <div className="space-y-2">
+                      <CardTitle
+                        className="font-cinzel text-xl leading-snug"
+                        style={{ color: "#F0E8D0" }}
+                      >
+                        {study.headline}
+                      </CardTitle>
+                      <p
+                        className="font-crimson text-sm"
+                        style={{ color: "#A0A0A0", lineHeight: 1.7 }}
+                      >
+                        {study.subtitle}
+                      </p>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid gap-3">
+                      {study.metrics.map(metric => (
+                        <div
+                          key={metric.label}
+                          className="rounded-lg border border-[#d4a84322] bg-[#121212] px-4 py-3 font-crimson text-sm"
+                          style={{ color: "#C0C0C0" }}
+                        >
+                          <span
+                            className="font-semibold"
+                            style={{ color: "#F0E8D0" }}
+                          >
+                            {metric.value}
+                          </span>{" "}
+                          {metric.label}
+                        </div>
+                      ))}
+                    </div>
+                    <Button asChild className="font-cinzel tracking-[0.08em]">
+                      <a href={`#${study.id}`}>Read Full Story →</a>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
 
           {/* Case Studies */}
