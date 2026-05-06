@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
+  bulkDeleteOrders,
   createOrder,
   getCustomerById,
   getCustomers,
@@ -478,6 +479,18 @@ export const ordersRouter = router({
         input.paymentStatus
       );
       return { success: true };
+    }),
+
+  bulkDelete: protectedProcedure
+    .input(
+      z.object({
+        ids: z.array(z.number()).min(1).max(500),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = requireTenant(ctx.user.tenantId);
+      const deletedCount = await bulkDeleteOrders(tenantId, input.ids);
+      return { success: true, deletedCount };
     }),
 
   /**
