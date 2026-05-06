@@ -52,6 +52,11 @@ export async function buildNonTrpcHandler(): Promise<
       registerUploadFetchRoutes: null as unknown as FetchHandler | null,
     })
   );
+  const { registerResourceDownloadFetchRoutes } = await import(
+    "../resourceDownloads"
+  ).catch(() => ({
+    registerResourceDownloadFetchRoutes: null as unknown as FetchHandler | null,
+  }));
   const { registerAdminOpsFetchRoutes } = await import("../adminOps").catch(
     () => ({
       registerAdminOpsFetchRoutes: null as unknown as FetchHandler | null,
@@ -155,6 +160,21 @@ export async function buildNonTrpcHandler(): Promise<
     if (path.startsWith("/api/postman/") && registerPostmanFetchRoutes) {
       try {
         const result = await (registerPostmanFetchRoutes as FetchHandler)(req);
+        if (result) return result;
+      } catch (e: unknown) {
+        return Response.json({ error: (e as Error).message }, { status: 500 });
+      }
+    }
+
+    // Public generated resource downloads for the Resources page.
+    if (
+      path.startsWith("/api/resources/") &&
+      registerResourceDownloadFetchRoutes
+    ) {
+      try {
+        const result = await (
+          registerResourceDownloadFetchRoutes as FetchHandler
+        )(req);
         if (result) return result;
       } catch (e: unknown) {
         return Response.json({ error: (e as Error).message }, { status: 500 });

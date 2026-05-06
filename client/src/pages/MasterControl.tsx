@@ -1350,14 +1350,20 @@ export default function MasterControl() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="grid gap-2">
-                    <Button variant="outline">
-                      <Gift className="h-4 w-4" /> Issue Credit
+                    <Button asChild variant="outline">
+                      <Link href="/billing">
+                        <Gift className="h-4 w-4" /> Issue Credit
+                      </Link>
                     </Button>
-                    <Button variant="outline">
-                      <Copy className="h-4 w-4" /> Apply Discount
+                    <Button asChild variant="outline">
+                      <Link href="/discounts">
+                        <Copy className="h-4 w-4" /> Apply Discount
+                      </Link>
                     </Button>
-                    <Button variant="outline">
-                      <ArrowRight className="h-4 w-4" /> Prorated Upgrade
+                    <Button asChild variant="outline">
+                      <Link href="/billing">
+                        <ArrowRight className="h-4 w-4" /> Prorated Upgrade
+                      </Link>
                     </Button>
                   </CardContent>
                 </Card>

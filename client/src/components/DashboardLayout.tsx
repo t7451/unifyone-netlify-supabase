@@ -64,7 +64,7 @@ import { AIChatBox } from "@/components/AIChatBox";
 import type { Message } from "@/components/AIChatBox";
 import { trpc } from "@/lib/trpc";
 import { CSSProperties, useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { SubscriptionWidget } from "./SubscriptionWidget";
 import { NotificationCenter } from "./NotificationCenter";
@@ -331,8 +331,10 @@ function DashboardLayoutContent({
 
           {!isCollapsed && (
             <div className="px-3 pb-2 pt-2">
-              <button
-                className="w-full flex items-center gap-2 px-2 py-1.5 transition-colors text-left hover:opacity-80"
+              <Link
+                href="/settings"
+                aria-label={`Open settings for ${tenantName}`}
+                className="w-full flex items-center gap-2 px-2 py-1.5 transition-colors text-left hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 style={{ borderBottom: "1px solid rgba(212,168,67,0.08)" }}
               >
                 <Building2
@@ -349,7 +351,7 @@ function DashboardLayoutContent({
                   className="w-3 h-3 shrink-0"
                   style={{ color: "#A7A7A7" }}
                 />
-              </button>
+              </Link>
             </div>
           )}
           <SidebarContent className="gap-0">

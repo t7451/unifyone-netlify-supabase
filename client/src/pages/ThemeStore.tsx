@@ -8,16 +8,32 @@ import PageHead from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  ShoppingBag, Search, Star, Download, Sparkles, ArrowRight,
-  Filter, Grid3X3, List, Package, Globe, Zap, Tag,
-  Lock, CheckCircle2, ExternalLink
+  ShoppingBag,
+  Search,
+  Star,
+  Download,
+  Sparkles,
+  ArrowRight,
+  Filter,
+  Grid3X3,
+  List,
+  Package,
+  Globe,
+  Zap,
+  Tag,
+  Lock,
+  CheckCircle2,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
 
 // ── Complexity badge colors ───────────────────────────────────────────────────
 const COMPLEXITY_STYLES: Record<string, string> = {
@@ -27,7 +43,13 @@ const COMPLEXITY_STYLES: Record<string, string> = {
 };
 
 // ── Price badge ───────────────────────────────────────────────────────────────
-function PriceBadge({ priceType, price }: { priceType: string; price: string }) {
+function PriceBadge({
+  priceType,
+  price,
+}: {
+  priceType: string;
+  price: string;
+}) {
   if (priceType === "free") {
     return (
       <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/15 border border-emerald-500/20 px-2 py-0.5 rounded-full">
@@ -43,8 +65,16 @@ function PriceBadge({ priceType, price }: { priceType: string; price: string }) 
 }
 
 // ── Theme Card ────────────────────────────────────────────────────────────────
-function ThemeCard({ theme, onSelect }: { theme: any; onSelect: (t: any) => void }) {
-  const thumbnail = theme.thumbnailUrl || `https://placehold.co/400x280/0D1A3A/00D9FF?text=${encodeURIComponent(theme.name)}`;
+function ThemeCard({
+  theme,
+  onSelect,
+}: {
+  theme: any;
+  onSelect: (t: any) => void;
+}) {
+  const thumbnail =
+    theme.thumbnailUrl ||
+    `https://placehold.co/400x280/0D1A3A/00D9FF?text=${encodeURIComponent(theme.name)}`;
 
   return (
     <div
@@ -57,8 +87,9 @@ function ThemeCard({ theme, onSelect }: { theme: any; onSelect: (t: any) => void
           src={thumbnail}
           alt={theme.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = `https://placehold.co/400x280/0D1A3A/00D9FF?text=${encodeURIComponent(theme.name)}`;
+          onError={e => {
+            (e.target as HTMLImageElement).src =
+              `https://placehold.co/400x280/0D1A3A/00D9FF?text=${encodeURIComponent(theme.name)}`;
           }}
         />
         {theme.featured && (
@@ -74,7 +105,14 @@ function ThemeCard({ theme, onSelect }: { theme: any; onSelect: (t: any) => void
         </div>
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-[#060D1F]/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <Button size="sm" className="bg-[#00D9FF] text-[#060D1F] hover:bg-[#00C4E8] font-semibold gap-1.5">
+          <Button
+            size="sm"
+            onClick={e => {
+              e.stopPropagation();
+              onSelect(theme);
+            }}
+            className="bg-[#00D9FF] text-[#060D1F] hover:bg-[#00C4E8] font-semibold gap-1.5"
+          >
             View Details <ArrowRight className="w-3.5 h-3.5" />
           </Button>
         </div>
@@ -86,13 +124,20 @@ function ThemeCard({ theme, onSelect }: { theme: any; onSelect: (t: any) => void
           <h3 className="font-semibold text-white text-sm leading-tight line-clamp-1 group-hover:text-[#00D9FF] transition-colors">
             {theme.name}
           </h3>
-          <span className={cn("text-xs px-1.5 py-0.5 rounded border flex-shrink-0", COMPLEXITY_STYLES[theme.complexity] ?? COMPLEXITY_STYLES.standard)}>
+          <span
+            className={cn(
+              "text-xs px-1.5 py-0.5 rounded border flex-shrink-0",
+              COMPLEXITY_STYLES[theme.complexity] ?? COMPLEXITY_STYLES.standard
+            )}
+          >
             {theme.complexity}
           </span>
         </div>
 
         {theme.description && (
-          <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{theme.description}</p>
+          <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+            {theme.description}
+          </p>
         )}
 
         <div className="flex items-center justify-between pt-1">
@@ -118,7 +163,13 @@ function ThemeCard({ theme, onSelect }: { theme: any; onSelect: (t: any) => void
 }
 
 // ── Theme Detail Modal ────────────────────────────────────────────────────────
-function ThemeDetailModal({ theme, onClose }: { theme: any; onClose: () => void }) {
+function ThemeDetailModal({
+  theme,
+  onClose,
+}: {
+  theme: any;
+  onClose: () => void;
+}) {
   const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
@@ -129,26 +180,31 @@ function ThemeDetailModal({ theme, onClose }: { theme: any; onClose: () => void 
   );
 
   const installFree = trpc.themes.installFree.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       if (data.alreadyInstalled) {
-        toast.info("Already installed", { description: "This theme is already in your library." });
+        toast.info("Already installed", {
+          description: "This theme is already in your library.",
+        });
       } else {
-        toast.success("Theme installed!", { description: `${theme.name} has been added to your library.` });
+        toast.success("Theme installed!", {
+          description: `${theme.name} has been added to your library.`,
+        });
       }
       utils.themes.myThemes.invalidate();
       utils.themes.checkInstalled.invalidate({ themeId: theme.id });
     },
-    onError: (err) => toast.error("Install failed", { description: err.message }),
+    onError: err => toast.error("Install failed", { description: err.message }),
   });
 
   const createCheckout = trpc.themes.createCheckout.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       if (data.url) {
         toast.info("Redirecting to checkout…");
         window.open(data.url, "_blank");
       }
     },
-    onError: (err) => toast.error("Checkout failed", { description: err.message }),
+    onError: err =>
+      toast.error("Checkout failed", { description: err.message }),
   });
 
   const handleInstall = () => {
@@ -159,16 +215,25 @@ function ThemeDetailModal({ theme, onClose }: { theme: any; onClose: () => void 
     if (theme.priceType === "free") {
       installFree.mutate({ themeId: theme.id });
     } else {
-      createCheckout.mutate({ themeId: theme.id, origin: window.location.origin });
+      createCheckout.mutate({
+        themeId: theme.id,
+        origin: window.location.origin,
+      });
     }
   };
 
   const screenshots = theme.screenshotUrls?.length
     ? theme.screenshotUrls
-    : [theme.thumbnailUrl || `https://placehold.co/800x500/0D1A3A/00D9FF?text=${encodeURIComponent(theme.name)}`];
+    : [
+        theme.thumbnailUrl ||
+          `https://placehold.co/800x500/0D1A3A/00D9FF?text=${encodeURIComponent(theme.name)}`,
+      ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}
+    >
       <div
         className="bg-[#0A1128] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
@@ -183,16 +248,29 @@ function ThemeDetailModal({ theme, onClose }: { theme: any; onClose: () => void 
               <h2 className="text-xl font-bold text-white">{theme.name}</h2>
               <div className="flex items-center gap-2 mt-1">
                 <PriceBadge priceType={theme.priceType} price={theme.price} />
-                <span className={cn("text-xs px-1.5 py-0.5 rounded border", COMPLEXITY_STYLES[theme.complexity] ?? COMPLEXITY_STYLES.standard)}>
+                <span
+                  className={cn(
+                    "text-xs px-1.5 py-0.5 rounded border",
+                    COMPLEXITY_STYLES[theme.complexity] ??
+                      COMPLEXITY_STYLES.standard
+                  )}
+                >
                   {theme.complexity}
                 </span>
                 {theme.industry && (
-                  <span className="text-xs text-slate-500">{theme.industry}</span>
+                  <span className="text-xs text-slate-500">
+                    {theme.industry}
+                  </span>
                 )}
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors text-xl leading-none p-1">×</button>
+          <button
+            onClick={onClose}
+            className="text-slate-500 hover:text-white transition-colors text-xl leading-none p-1"
+          >
+            ×
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
@@ -204,8 +282,9 @@ function ThemeDetailModal({ theme, onClose }: { theme: any; onClose: () => void 
                 src={screenshots[0]}
                 alt={theme.name}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = `https://placehold.co/800x500/0D1A3A/00D9FF?text=${encodeURIComponent(theme.name)}`;
+                onError={e => {
+                  (e.target as HTMLImageElement).src =
+                    `https://placehold.co/800x500/0D1A3A/00D9FF?text=${encodeURIComponent(theme.name)}`;
                 }}
               />
             </div>
@@ -213,7 +292,9 @@ function ThemeDetailModal({ theme, onClose }: { theme: any; onClose: () => void 
             {/* Description */}
             {(theme.longDescription || theme.description) && (
               <div>
-                <h3 className="text-sm font-semibold text-white mb-2">About this theme</h3>
+                <h3 className="text-sm font-semibold text-white mb-2">
+                  About this theme
+                </h3>
                 <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-line">
                   {theme.longDescription || theme.description}
                 </p>
@@ -223,10 +304,15 @@ function ThemeDetailModal({ theme, onClose }: { theme: any; onClose: () => void 
             {/* Features */}
             {theme.features?.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-white mb-3">What's included</h3>
+                <h3 className="text-sm font-semibold text-white mb-3">
+                  What's included
+                </h3>
                 <div className="grid grid-cols-2 gap-2">
                   {theme.features.map((f: string) => (
-                    <div key={f} className="flex items-center gap-2 text-sm text-slate-300">
+                    <div
+                      key={f}
+                      className="flex items-center gap-2 text-sm text-slate-300"
+                    >
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                       {f}
                     </div>
@@ -238,10 +324,17 @@ function ThemeDetailModal({ theme, onClose }: { theme: any; onClose: () => void 
             {/* Tech stack */}
             {theme.techStack?.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-white mb-2">Tech stack</h3>
+                <h3 className="text-sm font-semibold text-white mb-2">
+                  Tech stack
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {theme.techStack.map((t: string) => (
-                    <span key={t} className="text-xs px-2 py-1 bg-white/5 border border-white/10 rounded text-slate-300">{t}</span>
+                    <span
+                      key={t}
+                      className="text-xs px-2 py-1 bg-white/5 border border-white/10 rounded text-slate-300"
+                    >
+                      {t}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -253,7 +346,10 @@ function ThemeDetailModal({ theme, onClose }: { theme: any; onClose: () => void 
             {/* CTA */}
             <div className="space-y-3">
               {installed?.installed ? (
-                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2" disabled>
+                <Button
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                  disabled
+                >
                   <CheckCircle2 className="w-4 h-4" />
                   Installed
                 </Button>
@@ -269,9 +365,13 @@ function ThemeDetailModal({ theme, onClose }: { theme: any; onClose: () => void 
                   )}
                 >
                   {theme.priceType === "free" ? (
-                    <><Download className="w-4 h-4" /> Install Free</>
+                    <>
+                      <Download className="w-4 h-4" /> Install Free
+                    </>
                   ) : (
-                    <><Lock className="w-4 h-4" /> Purchase — ${theme.price}</>
+                    <>
+                      <Lock className="w-4 h-4" /> Purchase — ${theme.price}
+                    </>
                   )}
                 </Button>
               )}
@@ -291,28 +391,45 @@ function ThemeDetailModal({ theme, onClose }: { theme: any; onClose: () => void 
             {/* Stats */}
             <div className="space-y-3 pt-2 border-t border-white/8">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500 flex items-center gap-1.5"><Download className="w-3.5 h-3.5" /> Installs</span>
-                <span className="text-white font-medium">{theme.installCount.toLocaleString()}</span>
+                <span className="text-slate-500 flex items-center gap-1.5">
+                  <Download className="w-3.5 h-3.5" /> Installs
+                </span>
+                <span className="text-white font-medium">
+                  {theme.installCount.toLocaleString()}
+                </span>
               </div>
               {theme.reviewCount > 0 && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500 flex items-center gap-1.5"><Star className="w-3.5 h-3.5" /> Rating</span>
-                  <span className="text-white font-medium">{Number(theme.averageRating).toFixed(1)} / 5</span>
+                  <span className="text-slate-500 flex items-center gap-1.5">
+                    <Star className="w-3.5 h-3.5" /> Rating
+                  </span>
+                  <span className="text-white font-medium">
+                    {Number(theme.averageRating).toFixed(1)} / 5
+                  </span>
                 </div>
               )}
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-500 flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> Complexity</span>
-                <span className="text-white font-medium capitalize">{theme.complexity}</span>
+                <span className="text-slate-500 flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5" /> Complexity
+                </span>
+                <span className="text-white font-medium capitalize">
+                  {theme.complexity}
+                </span>
               </div>
             </div>
 
             {/* Tags */}
             {theme.tags?.length > 0 && (
               <div>
-                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tags</h4>
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  Tags
+                </h4>
                 <div className="flex flex-wrap gap-1.5">
                   {theme.tags.map((tag: string) => (
-                    <span key={tag} className="text-xs px-2 py-0.5 bg-white/5 border border-white/8 rounded text-slate-400">
+                    <span
+                      key={tag}
+                      className="text-xs px-2 py-0.5 bg-white/5 border border-white/8 rounded text-slate-400"
+                    >
                       {tag}
                     </span>
                   ))}
@@ -331,21 +448,30 @@ export default function ThemeStore() {
   const [search, setSearch] = useState("");
   const [priceFilter, setPriceFilter] = useState<string>("all");
   const [complexityFilter, setComplexityFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"newest" | "popular" | "rating" | "price_asc" | "price_desc">("newest");
+  const [sortBy, setSortBy] = useState<
+    "newest" | "popular" | "rating" | "price_asc" | "price_desc"
+  >("newest");
   const [selectedTheme, setSelectedTheme] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const { data: themes = [], isLoading } = trpc.themes.list.useQuery({
     search: search || undefined,
     priceType: priceFilter !== "all" ? (priceFilter as any) : undefined,
-    complexity: complexityFilter !== "all" ? (complexityFilter as any) : undefined,
+    complexity:
+      complexityFilter !== "all" ? (complexityFilter as any) : undefined,
     sortBy,
     limit: 48,
     offset: 0,
   });
 
-  const featuredThemes = useMemo(() => themes.filter((t: any) => t.featured), [themes]);
-  const regularThemes = useMemo(() => themes.filter((t: any) => !t.featured), [themes]);
+  const featuredThemes = useMemo(
+    () => themes.filter((t: any) => t.featured),
+    [themes]
+  );
+  const regularThemes = useMemo(
+    () => themes.filter((t: any) => !t.featured),
+    [themes]
+  );
 
   return (
     <div className="min-h-screen bg-[#060D1F] text-white">
@@ -361,7 +487,8 @@ export default function ThemeStore() {
             "@id": `${SITE_URL}/themes`,
             url: `${SITE_URL}/themes`,
             name: "Theme Store | UnifyOne",
-            description: "Browse professionally designed website templates for your UnifyOne storefront.",
+            description:
+              "Browse professionally designed website templates for your UnifyOne storefront.",
             isPartOf: { "@id": `${SITE_URL}/#website` },
             inLanguage: "en-US",
           },
@@ -369,8 +496,18 @@ export default function ThemeStore() {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
-              { "@type": "ListItem", position: 2, name: "Theme Store", item: `${SITE_URL}/themes` },
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: `${SITE_URL}/`,
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Theme Store",
+                item: `${SITE_URL}/themes`,
+              },
             ],
           },
         ]}
@@ -384,16 +521,20 @@ export default function ThemeStore() {
         <div className="relative max-w-7xl mx-auto px-6 py-16 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <ShoppingBag className="w-6 h-6 text-[#00D9FF]" />
-            <span className="text-sm font-semibold text-[#00D9FF] uppercase tracking-widest">Theme Store</span>
+            <span className="text-sm font-semibold text-[#00D9FF] uppercase tracking-widest">
+              Theme Store
+            </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Launch faster with<br />
+            Launch faster with
+            <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00D9FF] to-blue-400">
               premium templates
             </span>
           </h1>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto mb-8">
-            Browse professionally designed website templates. Free and paid options for every industry and use case.
+            Browse professionally designed website templates. Free and paid
+            options for every industry and use case.
           </p>
 
           {/* Search bar */}
@@ -409,9 +550,15 @@ export default function ThemeStore() {
 
           {/* Stats */}
           <div className="flex items-center justify-center gap-8 mt-8 text-sm text-slate-500">
-            <span className="flex items-center gap-1.5"><Package className="w-4 h-4" /> {themes.length} templates</span>
-            <span className="flex items-center gap-1.5"><Globe className="w-4 h-4" /> Multiple industries</span>
-            <span className="flex items-center gap-1.5"><Zap className="w-4 h-4" /> Free & paid options</span>
+            <span className="flex items-center gap-1.5">
+              <Package className="w-4 h-4" /> {themes.length} templates
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Globe className="w-4 h-4" /> Multiple industries
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Zap className="w-4 h-4" /> Free & paid options
+            </span>
           </div>
         </div>
       </div>
@@ -465,13 +612,23 @@ export default function ThemeStore() {
             <div className="flex items-center border border-white/10 rounded-lg overflow-hidden">
               <button
                 onClick={() => setViewMode("grid")}
-                className={cn("p-2 transition-colors", viewMode === "grid" ? "bg-white/10 text-white" : "text-slate-500 hover:text-white")}
+                className={cn(
+                  "p-2 transition-colors",
+                  viewMode === "grid"
+                    ? "bg-white/10 text-white"
+                    : "text-slate-500 hover:text-white"
+                )}
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={cn("p-2 transition-colors", viewMode === "list" ? "bg-white/10 text-white" : "text-slate-500 hover:text-white")}
+                className={cn(
+                  "p-2 transition-colors",
+                  viewMode === "list"
+                    ? "bg-white/10 text-white"
+                    : "text-slate-500 hover:text-white"
+                )}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -481,9 +638,19 @@ export default function ThemeStore() {
 
         {/* Loading state */}
         {isLoading && (
-          <div className={cn("grid gap-5", viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1")}>
+          <div
+            className={cn(
+              "grid gap-5",
+              viewMode === "grid"
+                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                : "grid-cols-1"
+            )}
+          >
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-[#0D1A3A] border border-white/8 rounded-xl overflow-hidden animate-pulse">
+              <div
+                key={i}
+                className="bg-[#0D1A3A] border border-white/8 rounded-xl overflow-hidden animate-pulse"
+              >
                 <div className="aspect-[16/10] bg-white/5" />
                 <div className="p-4 space-y-2">
                   <div className="h-4 bg-white/5 rounded w-3/4" />
@@ -499,12 +666,20 @@ export default function ThemeStore() {
         {!isLoading && themes.length === 0 && (
           <div className="text-center py-20">
             <ShoppingBag className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No themes found</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              No themes found
+            </h3>
             <p className="text-slate-500 text-sm mb-6">
-              {search ? `No themes match "${search}". Try a different search term.` : "No themes have been published yet. Check back soon!"}
+              {search
+                ? `No themes match "${search}". Try a different search term.`
+                : "No themes have been published yet. Check back soon!"}
             </p>
             {search && (
-              <Button variant="outline" onClick={() => setSearch("")} className="border-white/10 text-slate-300">
+              <Button
+                variant="outline"
+                onClick={() => setSearch("")}
+                className="border-white/10 text-slate-300"
+              >
                 Clear search
               </Button>
             )}
@@ -516,11 +691,17 @@ export default function ThemeStore() {
           <section className="mb-10">
             <div className="flex items-center gap-2 mb-5">
               <Sparkles className="w-4 h-4 text-amber-400" />
-              <h2 className="text-base font-semibold text-white">Featured themes</h2>
+              <h2 className="text-base font-semibold text-white">
+                Featured themes
+              </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {featuredThemes.map((theme: any) => (
-                <ThemeCard key={theme.id} theme={theme} onSelect={setSelectedTheme} />
+                <ThemeCard
+                  key={theme.id}
+                  theme={theme}
+                  onSelect={setSelectedTheme}
+                />
               ))}
             </div>
           </section>
@@ -532,18 +713,28 @@ export default function ThemeStore() {
             {featuredThemes.length > 0 && (
               <div className="flex items-center gap-2 mb-5">
                 <Tag className="w-4 h-4 text-slate-400" />
-                <h2 className="text-base font-semibold text-white">All themes</h2>
-                <span className="text-xs text-slate-500">({regularThemes.length})</span>
+                <h2 className="text-base font-semibold text-white">
+                  All themes
+                </h2>
+                <span className="text-xs text-slate-500">
+                  ({regularThemes.length})
+                </span>
               </div>
             )}
-            <div className={cn(
-              "grid gap-5",
-              viewMode === "grid"
-                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                : "grid-cols-1"
-            )}>
+            <div
+              className={cn(
+                "grid gap-5",
+                viewMode === "grid"
+                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                  : "grid-cols-1"
+              )}
+            >
               {regularThemes.map((theme: any) => (
-                <ThemeCard key={theme.id} theme={theme} onSelect={setSelectedTheme} />
+                <ThemeCard
+                  key={theme.id}
+                  theme={theme}
+                  onSelect={setSelectedTheme}
+                />
               ))}
             </div>
           </section>
@@ -552,7 +743,10 @@ export default function ThemeStore() {
 
       {/* Theme detail modal */}
       {selectedTheme && (
-        <ThemeDetailModal theme={selectedTheme} onClose={() => setSelectedTheme(null)} />
+        <ThemeDetailModal
+          theme={selectedTheme}
+          onClose={() => setSelectedTheme(null)}
+        />
       )}
     </div>
   );

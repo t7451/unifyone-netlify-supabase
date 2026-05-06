@@ -23,6 +23,7 @@ import { registerCustomAuthExpressRoutes } from "./customAuthRoutes";
 import { registerCliWebSocket } from "./cliWebSocket";
 import { resolveDatabaseUrl } from "../lib/databaseUrl";
 import { getNgrokUrl, startNgrokTunnel } from "./ngrok";
+import { registerResourceDownloadRoutes } from "../resourceDownloads";
 
 /** Validate critical environment variables before the server accepts traffic. */
 function validateEnv() {
@@ -209,7 +210,10 @@ async function startServer() {
   // can display/copy it. Disabled in production to avoid leaking infra info.
   if (!ENV.isProduction) {
     app.get("/api/dev/ngrok", (_req, res) => {
-      res.json({ url: getNgrokUrl(), enabled: process.env.NGROK_ENABLED === "true" });
+      res.json({
+        url: getNgrokUrl(),
+        enabled: process.env.NGROK_ENABLED === "true",
+      });
     });
   }
   // Register Stripe webhook BEFORE json middleware (requires raw body for signature verification)
@@ -250,6 +254,7 @@ async function startServer() {
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   registerCustomAuthExpressRoutes(app);
+  registerResourceDownloadRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

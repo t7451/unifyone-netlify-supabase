@@ -181,6 +181,66 @@ export default function AdCopyHub() {
     return platformMatch && campaignMatch && searchMatch;
   });
 
+  const downloadTextFile = (
+    filename: string,
+    contents: string,
+    type: string
+  ) => {
+    const blob = new Blob([contents], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const escapeCsvValue = (value: string | number) =>
+    `"${String(value).replace(/"/g, '""')}"`;
+
+  const adCopiesToCsv = (ads: AdCopy[]) => {
+    const headers = [
+      "id",
+      "campaign",
+      "platform",
+      "format",
+      "headline",
+      "subheadline",
+      "body",
+      "cta",
+      "charCount",
+      "voiceRatio",
+      "element",
+      "hook",
+    ] as const;
+    const rows = ads.map(ad =>
+      headers.map(header => escapeCsvValue(ad[header])).join(",")
+    );
+    return [headers.join(","), ...rows].join("\n");
+  };
+
+  const exportAds = (format: "csv" | "json", ads = filteredAds) => {
+    if (format === "csv") {
+      downloadTextFile(
+        "unifyone-ad-copy.csv",
+        adCopiesToCsv(ads),
+        "text/csv;charset=utf-8"
+      );
+    } else {
+      downloadTextFile(
+        "unifyone-ad-copy.json",
+        JSON.stringify(ads, null, 2),
+        "application/json;charset=utf-8"
+      );
+    }
+
+    toast.success(
+      `Exported ${ads.length} ad ${ads.length === 1 ? "copy" : "copies"}.`
+    );
+  };
+
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard!");
@@ -365,7 +425,12 @@ export default function AdCopyHub() {
                         <Copy className="h-4 w-4" />
                         Copy
                       </Button>
-                      <Button variant="ghost" size="sm" className="gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => exportAds("json", [ad])}
+                        className="gap-2"
+                      >
                         <Download className="h-4 w-4" />
                         Export
                       </Button>
@@ -419,11 +484,20 @@ export default function AdCopyHub() {
             import into your ad management platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="gap-2">
+            <Button
+              size="lg"
+              onClick={() => exportAds("csv")}
+              className="gap-2"
+            >
               <Download className="h-4 w-4" />
               Export as CSV
             </Button>
-            <Button variant="outline" size="lg" className="gap-2">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => exportAds("json")}
+              className="gap-2"
+            >
               <Download className="h-4 w-4" />
               Export as JSON
             </Button>

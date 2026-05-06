@@ -26,10 +26,18 @@ const JSON_LD = {
   },
 };
 
+function initialMessageFromQuery(): string {
+  if (typeof window === "undefined") return "";
+  const topic = new URLSearchParams(window.location.search).get("topic");
+  if (topic !== "custom-resources") return "";
+
+  return "I'd like to request custom UnifyOne resources for my business.";
+}
+
 export default function Contact() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(initialMessageFromQuery);
   const [company, setCompany] = useState(""); // honeypot
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"

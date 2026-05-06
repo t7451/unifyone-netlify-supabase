@@ -699,7 +699,7 @@ export default function Checkout() {
                       </div>
                       <Button
                         variant="ghost"
-                        onClick={() => navigate("/dashboard/integrations")}
+                        onClick={() => navigate("/integrations")}
                         className="w-full border border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
                       >
                         Go to Integrations

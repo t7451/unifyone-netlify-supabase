@@ -59,6 +59,7 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Sovereign = lazy(() => import("./pages/Sovereign"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const MoneyManager = lazy(() => import("./pages/MoneyManager"));
+const ComponentShowcase = lazy(() => import("./pages/ComponentShowcase"));
 const Achievements = lazy(() => import("./pages/Achievements"));
 const Friends = lazy(() => import("./pages/Friends"));
 const GigCommand = lazy(() => import("./pages/GigCommand"));
@@ -339,6 +340,7 @@ function Router() {
         )}
       />
       <Route path="/themes" component={() => <ThemeStore />} />
+      <Route path="/components" component={() => <ComponentShowcase />} />
       <Route
         path="/my-themes"
         component={() => (
