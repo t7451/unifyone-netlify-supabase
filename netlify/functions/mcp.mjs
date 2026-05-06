@@ -40,18 +40,18 @@ const TOOLS = [
   // Walls — Products (5)
   {
     name: "list_products",
-    description: "List products with optional tenant and limit filters",
-    inputSchema: { type: "object", properties: { tenant_id: { type: "number" }, limit: { type: "number" } } },
+    description: "List products for a tenant with optional limit filters",
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" }, limit: { type: "number" } } },
   },
   {
     name: "get_product",
     description: "Get a single product by its numeric ID",
-    inputSchema: { type: "object", required: ["product_id"], properties: { product_id: { type: "number" }, tenant_id: { type: "number" } } },
+    inputSchema: { type: "object", required: ["product_id", "tenant_id"], properties: { product_id: { type: "number" }, tenant_id: { type: "number" } } },
   },
   {
     name: "search_products",
     description: "Full-text search across product names and descriptions",
-    inputSchema: { type: "object", required: ["query"], properties: { query: { type: "string" }, tenant_id: { type: "number" } } },
+    inputSchema: { type: "object", required: ["query", "tenant_id"], properties: { query: { type: "string" }, tenant_id: { type: "number" } } },
   },
   {
     name: "get_inventory",
@@ -66,24 +66,24 @@ const TOOLS = [
   // Walls — Orders (2)
   {
     name: "list_orders",
-    description: "List orders with optional tenant and limit filters",
-    inputSchema: { type: "object", properties: { tenant_id: { type: "number" }, limit: { type: "number" } } },
+    description: "List orders for a tenant with optional limit filters",
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" }, limit: { type: "number" } } },
   },
   {
     name: "get_order",
     description: "Get a single order with its line items",
-    inputSchema: { type: "object", required: ["order_id"], properties: { order_id: { type: "number" }, tenant_id: { type: "number" } } },
+    inputSchema: { type: "object", required: ["order_id", "tenant_id"], properties: { order_id: { type: "number" }, tenant_id: { type: "number" } } },
   },
   // Walls — Customers (2)
   {
     name: "list_customers",
     description: "List customers for a tenant",
-    inputSchema: { type: "object", properties: { tenant_id: { type: "number" }, limit: { type: "number" } } },
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" }, limit: { type: "number" } } },
   },
   {
     name: "get_customer",
     description: "Get a customer by their numeric ID",
-    inputSchema: { type: "object", required: ["customer_id"], properties: { customer_id: { type: "number" }, tenant_id: { type: "number" } } },
+    inputSchema: { type: "object", required: ["customer_id", "tenant_id"], properties: { customer_id: { type: "number" }, tenant_id: { type: "number" } } },
   },
   // Walls — Catalog (1)
   {
@@ -502,67 +502,103 @@ const TOOLS = [
 ];
 
 // ── Tool dispatcher ───────────────────────────────────────────────────────────
+function parsePositiveInteger(value, name, { required = true, defaultValue } = {}) {
+  if (value == null || value === "") {
+    if (required) throw new Error(`Missing required numeric ${name}`);
+    return defaultValue;
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw new Error(`Invalid numeric ${name}`);
+  }
+  return parsed;
+}
+
+function parseLimit(value, defaultValue) {
+  return parsePositiveInteger(value, "limit", { required: false, defaultValue });
+}
+
+function parseDays(value, defaultValue = 30) {
+  return parsePositiveInteger(value, "days", { required: false, defaultValue });
+}
+
+function parseNonNegativeNumber(value, name, defaultValue = 0) {
+  if (value == null || value === "") return defaultValue;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`Invalid numeric ${name}`);
+  }
+  return parsed;
+}
+
+function applyLimit(rows, limit) {
+  return typeof limit === "number" ? rows.slice(0, limit) : rows;
+}
+
 async function callTool(name, args) {
   const db = await import("../../server/db.js");
 
   switch (name) {
-    case "list_stores":
-      return db.getAllTenants();
-
-    case "get_tenant_info":
-      return db.getTenantById(Number(args.tenant_id));
-
-    case "list_products": {
-      const tenantId = args.tenant_id != null ? Number(args.tenant_id) : undefined;
-      return db.getProducts(tenantId, args.limit != null ? Number(args.limit) : undefined);
+    case "list_stores": {
+      const tenants = await db.getAllTenants();
+      return applyLimit(tenants, parseLimit(args.limit));
     }
 
+    case "get_tenant_info":
+      return db.getTenantById(parsePositiveInteger(args.tenant_id, "tenant_id"));
+
+    case "list_products":
+      return db.getProducts(parsePositiveInteger(args.tenant_id, "tenant_id"), { limit: parseLimit(args.limit, 50) });
+
     case "get_product":
-      return db.getProductById(Number(args.product_id), Number(args.tenant_id ?? 0));
+      return db.getProductById(parsePositiveInteger(args.product_id, "product_id"), parsePositiveInteger(args.tenant_id, "tenant_id"));
 
     case "search_products": {
-      const tenantId = args.tenant_id != null ? Number(args.tenant_id) : undefined;
-      const all = await db.getProducts(tenantId);
-      const q = String(args.query).toLowerCase();
+      const tenantId = parsePositiveInteger(args.tenant_id, "tenant_id");
+      const all = await db.getProducts(tenantId, { search: String(args.query ?? "") });
+      const q = String(args.query ?? "").toLowerCase();
       return all.filter((p) => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
     }
 
     case "get_inventory":
-      return db.getInventory(Number(args.tenant_id), args.product_id != null ? Number(args.product_id) : undefined);
+      return db.getInventory(
+        parsePositiveInteger(args.tenant_id, "tenant_id"),
+        parsePositiveInteger(args.product_id, "product_id", { required: false })
+      );
 
-    case "get_low_stock_products":
-      return db.getLowStockProducts(Number(args.tenant_id));
-
-    case "list_orders": {
-      const tenantId = args.tenant_id != null ? Number(args.tenant_id) : undefined;
-      return db.getOrders(tenantId, args.limit != null ? Number(args.limit) : undefined);
+    case "get_low_stock_products": {
+      const rows = await db.getLowStockProducts(parsePositiveInteger(args.tenant_id, "tenant_id"));
+      const threshold = parsePositiveInteger(args.threshold, "threshold", { required: false });
+      if (threshold == null) return rows;
+      return rows.filter((row) => Number(row?.inv?.quantity) <= threshold);
     }
+
+    case "list_orders":
+      return db.getOrders(parsePositiveInteger(args.tenant_id, "tenant_id"), { limit: parseLimit(args.limit, 50) });
 
     case "get_order":
-      return db.getOrderWithItems(Number(args.order_id), Number(args.tenant_id ?? 0));
+      return db.getOrderWithItems(parsePositiveInteger(args.order_id, "order_id"), parsePositiveInteger(args.tenant_id, "tenant_id"));
 
-    case "list_customers": {
-      const tenantId = args.tenant_id != null ? Number(args.tenant_id) : undefined;
-      return db.getCustomers(tenantId, args.limit != null ? Number(args.limit) : undefined);
-    }
+    case "list_customers":
+      return db.getCustomers(parsePositiveInteger(args.tenant_id, "tenant_id"), { limit: parseLimit(args.limit, 50) });
 
     case "get_customer":
-      return db.getCustomerById(Number(args.customer_id), Number(args.tenant_id ?? 0));
+      return db.getCustomerById(parsePositiveInteger(args.customer_id, "customer_id"), parsePositiveInteger(args.tenant_id, "tenant_id"));
 
     case "get_categories":
-      return db.getCategories(Number(args.tenant_id));
+      return db.getCategories(parsePositiveInteger(args.tenant_id, "tenant_id"));
 
     case "get_analytics_summary":
-      return db.getAnalyticsSummary(Number(args.tenant_id), args.days != null ? Number(args.days) : 30);
+      return db.getAnalyticsSummary(parsePositiveInteger(args.tenant_id, "tenant_id"), parseDays(args.days));
 
     case "get_revenue_by_day":
-      return db.getRevenueByDay(Number(args.tenant_id), args.days != null ? Number(args.days) : 30);
+      return db.getRevenueByDay(parsePositiveInteger(args.tenant_id, "tenant_id"), parseDays(args.days));
 
     case "get_top_products":
-      return db.getTopProducts(Number(args.tenant_id), args.limit != null ? Number(args.limit) : 5);
+      return db.getTopProducts(parsePositiveInteger(args.tenant_id, "tenant_id"), parseLimit(args.limit, 5));
 
     case "get_webhook_events":
-      return db.getWebhookEvents(Number(args.tenant_id), args.limit != null ? Number(args.limit) : 50);
+      return db.getWebhookEvents(parsePositiveInteger(args.tenant_id, "tenant_id"), parseLimit(args.limit, 50));
 
     case "get_notifications": {
       const drizzle = await db.getDb();
@@ -577,13 +613,25 @@ async function callTool(name, args) {
     }
 
     case "get_platform_stats": {
-      const [tenants, summary] = await Promise.all([
-        db.getAllTenants(),
-        db.getAnalyticsSummary(0, 30).catch(() => null),
-      ]);
+      const tenants = await db.getAllTenants();
+      const tenantIds = tenants
+        .map((tenant) => Number(tenant?.id))
+        .filter((tenantId) => Number.isSafeInteger(tenantId) && tenantId > 0);
+      const summaries = await Promise.all(
+        tenantIds.map((tenantId) => db.getAnalyticsSummary(tenantId, 30).catch(() => null))
+      );
+      const totals = summaries.reduce(
+        (acc, summary) => ({
+          totalRevenue: acc.totalRevenue + Number(summary?.totalRevenue ?? 0),
+          orderCount: acc.orderCount + Number(summary?.orderCount ?? 0),
+          customerCount: acc.customerCount + Number(summary?.customerCount ?? 0),
+          productCount: acc.productCount + Number(summary?.productCount ?? 0),
+        }),
+        { totalRevenue: 0, orderCount: 0, customerCount: 0, productCount: 0 }
+      );
       return {
         tenant_count: tenants.length,
-        ...(summary ?? {}),
+        ...totals,
         ts: new Date().toISOString(),
       };
     }
@@ -599,14 +647,36 @@ async function callTool(name, args) {
     }
 
     case "create_order": {
-      return db.createOrder({
-        tenantId: Number(args.tenant_id),
-        customerEmail: args.customer_email != null ? String(args.customer_email) : null,
-        status: "pending",
-        paymentMethod: args.payment_method ?? "stripe",
-        notes: args.notes ?? null,
-        items: Array.isArray(args.items) ? args.items : [],
+      const tenantId = parsePositiveInteger(args.tenant_id, "tenant_id");
+      if (!Array.isArray(args.items) || args.items.length === 0) {
+        throw new Error("Missing required order items");
+      }
+      const items = args.items.map((item, index) => {
+        const productId = parsePositiveInteger(item?.product_id, `items[${index}].product_id`);
+        const quantity = parsePositiveInteger(item?.quantity, `items[${index}].quantity`);
+        const unitPrice = parseNonNegativeNumber(item?.unit_price, `items[${index}].unit_price`);
+        return {
+          productId,
+          productName: item?.product_name != null ? String(item.product_name) : `Product #${productId}`,
+          quantity,
+          unitPrice,
+        };
       });
+      const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+      const orderNumber = `MCP-${Date.now()}`;
+      return db.createOrder(
+        {
+          tenantId,
+          orderNumber,
+          customerEmail: args.customer_email != null ? String(args.customer_email) : null,
+          subtotal: subtotal.toFixed(2),
+          total: subtotal.toFixed(2),
+          status: "pending",
+          paymentMethod: args.payment_method != null ? String(args.payment_method) : "stripe",
+          notes: args.notes != null ? String(args.notes) : null,
+        },
+        items
+      );
     }
 
     // ── DealFlow ──────────────────────────────────────────────────────────────

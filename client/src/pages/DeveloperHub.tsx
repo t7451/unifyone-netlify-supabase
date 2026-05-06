@@ -12,7 +12,13 @@
 
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,11 +123,20 @@ function timeAgo(dateStr: string | Date | null | undefined) {
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
 function OverviewTab() {
-  const health = trpc.developer.health.useQuery(undefined, { refetchInterval: 30_000 });
+  const health = trpc.developer.health.useQuery(undefined, {
+    refetchInterval: 30_000,
+  });
   const keys = trpc.developer.listApiKeys.useQuery();
-  const mcpHealth = trpc.mcp.health.useQuery(undefined, { refetchInterval: 60_000, retry: 1 });
-  const mcpHealthData = mcpHealth.data as (Record<string, unknown> & { tools?: number }) | undefined;
-  const stats = trpc.developer.webhookStats.useQuery(undefined, { refetchInterval: 60_000 });
+  const mcpHealth = trpc.mcp.health.useQuery(undefined, {
+    refetchInterval: 60_000,
+    retry: 1,
+  });
+  const mcpHealthData = mcpHealth.data as
+    | (Record<string, unknown> & { tools?: number })
+    | undefined;
+  const stats = trpc.developer.webhookStats.useQuery(undefined, {
+    refetchInterval: 60_000,
+  });
 
   const checks = health.data?.checks ?? {};
   const allOk = Object.values(checks).every(Boolean);
@@ -145,7 +160,11 @@ function OverviewTab() {
               )}
               variant="outline"
             >
-              {health.isLoading ? "Checking…" : allOk ? "All Systems Operational" : "Partial Degradation"}
+              {health.isLoading
+                ? "Checking…"
+                : allOk
+                  ? "All Systems Operational"
+                  : "Partial Degradation"}
             </Badge>
           </div>
         </CardHeader>
@@ -163,7 +182,9 @@ function OverviewTab() {
                   className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/5"
                 >
                   <StatusDot ok={ok as boolean} />
-                  <span className="text-sm text-gray-300 capitalize">{service}</span>
+                  <span className="text-sm text-gray-300 capitalize">
+                    {service}
+                  </span>
                 </div>
               ))}
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/5">
@@ -198,7 +219,8 @@ function OverviewTab() {
           },
           {
             label: "MCP Tools",
-            value: mcpHealthData?.tools != null ? String(mcpHealthData.tools) : "—",
+            value:
+              mcpHealthData?.tools != null ? String(mcpHealthData.tools) : "—",
             icon: Cpu,
             color: "text-violet-400",
           },
@@ -209,9 +231,13 @@ function OverviewTab() {
               <CardContent className="pt-5">
                 <div className="flex items-center gap-2 mb-1">
                   <Icon className={cn("w-4 h-4", stat.color)} />
-                  <span className="text-xs text-gray-500 uppercase tracking-wide">{stat.label}</span>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide">
+                    {stat.label}
+                  </span>
                 </div>
-                <p className="text-2xl font-bold text-white capitalize">{stat.value}</p>
+                <p className="text-2xl font-bold text-white capitalize">
+                  {stat.value}
+                </p>
               </CardContent>
             </Card>
           );
@@ -261,17 +287,37 @@ function OverviewTab() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { label: "Total", value: stats.data?.total ?? 0, color: "text-gray-300" },
-                { label: "Processed", value: stats.data?.processed ?? 0, color: "text-emerald-400" },
-                { label: "Pending", value: stats.data?.pending ?? 0, color: "text-amber-400" },
-                { label: "Failed", value: stats.data?.failed ?? 0, color: "text-red-400" },
+                {
+                  label: "Total",
+                  value: stats.data?.total ?? 0,
+                  color: "text-gray-300",
+                },
+                {
+                  label: "Processed",
+                  value: stats.data?.processed ?? 0,
+                  color: "text-emerald-400",
+                },
+                {
+                  label: "Pending",
+                  value: stats.data?.pending ?? 0,
+                  color: "text-amber-400",
+                },
+                {
+                  label: "Failed",
+                  value: stats.data?.failed ?? 0,
+                  color: "text-red-400",
+                },
               ].map(s => (
                 <div
                   key={s.label}
                   className="flex flex-col items-center justify-center px-3 py-3 rounded-lg bg-white/5 border border-white/5"
                 >
-                  <span className={cn("text-2xl font-bold", s.color)}>{s.value}</span>
-                  <span className="text-xs text-gray-500 mt-0.5">{s.label}</span>
+                  <span className={cn("text-2xl font-bold", s.color)}>
+                    {s.value}
+                  </span>
+                  <span className="text-xs text-gray-500 mt-0.5">
+                    {s.label}
+                  </span>
                 </div>
               ))}
             </div>
@@ -290,8 +336,16 @@ function OverviewTab() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { label: "Integration Guides", href: "/documents/integrations", icon: Link2 },
-              { label: "Architecture Overview", href: "/architecture", icon: Database },
+              {
+                label: "Integration Guides",
+                href: "/documents/integrations",
+                icon: Link2,
+              },
+              {
+                label: "Architecture Overview",
+                href: "/architecture",
+                icon: Database,
+              },
               { label: "Docs Chat (AI)", href: "/docs-chat", icon: Terminal },
               { label: "Sync Monitor", href: "/sync-monitor", icon: Activity },
               { label: "Automations (n8n)", href: "/automations", icon: Zap },
@@ -305,7 +359,9 @@ function OverviewTab() {
                   className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-colors group"
                 >
                   <Icon className="w-4 h-4 text-gray-500 group-hover:text-[#00D9FF] transition-colors" />
-                  <span className="text-sm text-gray-300 group-hover:text-white transition-colors">{link.label}</span>
+                  <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                    {link.label}
+                  </span>
                   <ExternalLink className="w-3 h-3 text-gray-600 ml-auto group-hover:text-gray-400 transition-colors" />
                 </a>
               );
@@ -328,7 +384,10 @@ function ApiKeysTab() {
   const [newKeyScopes, setNewKeyScopes] = useState<string[]>(["read"]);
   const [newKeyExpiry, setNewKeyExpiry] = useState<string>("never");
   const [createdKey, setCreatedKey] = useState<string | null>(null);
-  const [revokeTarget, setRevokeTarget] = useState<{ id: number; name: string } | null>(null);
+  const [revokeTarget, setRevokeTarget] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
   const { copied, copy } = useCopy();
 
   const generate = trpc.developer.generateApiKey.useMutation({
@@ -350,7 +409,14 @@ function ApiKeysTab() {
     onError: e => toast.error(e.message),
   });
 
-  const SCOPE_OPTIONS = ["read", "write", "orders", "products", "analytics", "admin"];
+  const SCOPE_OPTIONS = [
+    "read",
+    "write",
+    "orders",
+    "products",
+    "analytics",
+    "admin",
+  ];
   const EXPIRY_OPTIONS = [
     { value: "never", label: "Never" },
     { value: "30", label: "30 days" },
@@ -374,7 +440,8 @@ function ApiKeysTab() {
               Your New API Key
             </DialogTitle>
             <DialogDescription className="text-amber-400">
-              ⚠ This key will never be shown again. Copy it now and store it securely.
+              ⚠ This key will never be shown again. Copy it now and store it
+              securely.
             </DialogDescription>
           </DialogHeader>
           <div className="relative">
@@ -417,8 +484,11 @@ function ApiKeysTab() {
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               Are you sure you want to revoke{" "}
-              <span className="text-white font-medium">"{revokeTarget?.name}"</span>? Any
-              applications using this key will lose access immediately. This cannot be undone.
+              <span className="text-white font-medium">
+                "{revokeTarget?.name}"
+              </span>
+              ? Any applications using this key will lose access immediately.
+              This cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
@@ -440,7 +510,10 @@ function ApiKeysTab() {
               className="bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20"
             >
               {revoke.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Revoking…</>
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Revoking…
+                </>
               ) : (
                 <>Revoke Key</>
               )}
@@ -459,7 +532,8 @@ function ApiKeysTab() {
                 API Keys
               </CardTitle>
               <CardDescription className="text-gray-500 text-sm mt-1">
-                Use API keys to authenticate programmatic access to your storefront data.
+                Use API keys to authenticate programmatic access to your
+                storefront data.
               </CardDescription>
             </div>
             <Button
@@ -494,7 +568,9 @@ function ApiKeysTab() {
                     </SelectTrigger>
                     <SelectContent>
                       {EXPIRY_OPTIONS.map(o => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -537,13 +613,19 @@ function ApiKeysTab() {
                     generate.mutate({
                       name: newKeyName.trim(),
                       scopes: newKeyScopes.length ? newKeyScopes : ["read"],
-                      expiresInDays: newKeyExpiry !== "never" ? parseInt(newKeyExpiry) : undefined,
+                      expiresInDays:
+                        newKeyExpiry !== "never"
+                          ? parseInt(newKeyExpiry)
+                          : undefined,
                     })
                   }
                   className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
                 >
                   {generate.isPending ? (
-                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating…</>
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />{" "}
+                      Generating…
+                    </>
                   ) : (
                     <>Generate Key</>
                   )}
@@ -565,7 +647,9 @@ function ApiKeysTab() {
           ) : !keys.data?.length ? (
             <div className="text-center py-10">
               <Key className="w-8 h-8 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">No API keys yet. Create one above.</p>
+              <p className="text-gray-500 text-sm">
+                No API keys yet. Create one above.
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -577,12 +661,17 @@ function ApiKeysTab() {
                   <div className="flex items-center gap-3 min-w-0">
                     <Key className="w-4 h-4 text-[#00D9FF] shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-sm text-white font-medium truncate">{k.name}</p>
+                      <p className="text-sm text-white font-medium truncate">
+                        {k.name}
+                      </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <code className="text-xs font-mono text-gray-400">
                           {k.keyPrefix}…
                         </code>
-                        <CopyButton text={`${k.keyPrefix}…`} id={`key-${k.id}`} />
+                        <CopyButton
+                          text={`${k.keyPrefix}…`}
+                          id={`key-${k.id}`}
+                        />
                         <span className="text-gray-600 text-xs">·</span>
                         <span className="text-xs text-gray-500">
                           Last used: {timeAgo(k.lastUsedAt)}
@@ -592,17 +681,26 @@ function ApiKeysTab() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-3">
                     {(k.scopes as string[]).slice(0, 3).map(s => (
-                      <Badge key={s} variant="outline" className="text-xs border-white/10 text-gray-400">
+                      <Badge
+                        key={s}
+                        variant="outline"
+                        className="text-xs border-white/10 text-gray-400"
+                      >
                         {s}
                       </Badge>
                     ))}
                     {(k.scopes as string[]).length > 3 && (
-                      <Badge variant="outline" className="text-xs border-white/10 text-gray-400">
+                      <Badge
+                        variant="outline"
+                        className="text-xs border-white/10 text-gray-400"
+                      >
                         +{(k.scopes as string[]).length - 3}
                       </Badge>
                     )}
                     <button
-                      onClick={() => setRevokeTarget({ id: k.id, name: k.name })}
+                      onClick={() =>
+                        setRevokeTarget({ id: k.id, name: k.name })
+                      }
                       className="text-gray-600 hover:text-red-400 transition-colors ml-1"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -621,11 +719,20 @@ function ApiKeysTab() {
           <div className="flex gap-3">
             <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <div className="text-sm text-amber-300/80">
-              <p className="font-medium text-amber-300 mb-1">Security Best Practices</p>
+              <p className="font-medium text-amber-300 mb-1">
+                Security Best Practices
+              </p>
               <ul className="space-y-0.5 text-xs text-amber-300/70 list-disc list-inside">
-                <li>Never embed API keys in client-side code or public repositories</li>
-                <li>Rotate keys regularly and use the minimum scopes required</li>
-                <li>Set expiration dates on all keys used in automated systems</li>
+                <li>
+                  Never embed API keys in client-side code or public
+                  repositories
+                </li>
+                <li>
+                  Rotate keys regularly and use the minimum scopes required
+                </li>
+                <li>
+                  Set expiration dates on all keys used in automated systems
+                </li>
                 <li>Revoke keys immediately if they may be compromised</li>
               </ul>
             </div>
@@ -655,8 +762,12 @@ const STATUS_COLORS: Record<string, string> = {
 function WebhooksTab() {
   const utils = trpc.useUtils();
   const [limit, setLimit] = useState(50);
-  const [filterSource, setFilterSource] = useState<"all" | "stripe" | "shopify" | "n8n" | "internal">("all");
-  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "processed" | "failed" | "skipped">("all");
+  const [filterSource, setFilterSource] = useState<
+    "all" | "stripe" | "shopify" | "n8n" | "internal"
+  >("all");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "pending" | "processed" | "failed" | "skipped"
+  >("all");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
 
@@ -690,7 +801,8 @@ function WebhooksTab() {
                 Webhook Event Log
               </CardTitle>
               <CardDescription className="text-gray-500 text-sm mt-1">
-                Live feed of incoming webhook events from Stripe, Shopify, and n8n.
+                Live feed of incoming webhook events from Stripe, Shopify, and
+                n8n.
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -703,7 +815,9 @@ function WebhooksTab() {
                 </SelectTrigger>
                 <SelectContent>
                   {[25, 50, 100, 200].map(n => (
-                    <SelectItem key={n} value={String(n)}>{n} events</SelectItem>
+                    <SelectItem key={n} value={String(n)}>
+                      {n} events
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -711,7 +825,9 @@ function WebhooksTab() {
                 onClick={() => logs.refetch()}
                 className="text-gray-500 hover:text-white transition-colors"
               >
-                <RefreshCw className={cn("w-4 h-4", logs.isFetching && "animate-spin")} />
+                <RefreshCw
+                  className={cn("w-4 h-4", logs.isFetching && "animate-spin")}
+                />
               </button>
             </div>
           </div>
@@ -719,7 +835,10 @@ function WebhooksTab() {
           {/* Filter row */}
           <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-white/5">
             <Filter className="w-3.5 h-3.5 text-gray-500 shrink-0" />
-            <Select value={filterSource} onValueChange={v => setFilterSource(v as typeof filterSource)}>
+            <Select
+              value={filterSource}
+              onValueChange={v => setFilterSource(v as typeof filterSource)}
+            >
               <SelectTrigger className="bg-white/5 border-white/10 text-white w-32 h-7 text-xs focus:border-[#00D9FF]/50">
                 <SelectValue placeholder="Source" />
               </SelectTrigger>
@@ -731,7 +850,10 @@ function WebhooksTab() {
                 <SelectItem value="internal">Internal</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filterStatus} onValueChange={v => setFilterStatus(v as typeof filterStatus)}>
+            <Select
+              value={filterStatus}
+              onValueChange={v => setFilterStatus(v as typeof filterStatus)}
+            >
               <SelectTrigger className="bg-white/5 border-white/10 text-white w-32 h-7 text-xs focus:border-[#00D9FF]/50">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -754,7 +876,11 @@ function WebhooksTab() {
             </div>
             {(filterSource !== "all" || filterStatus !== "all" || search) && (
               <button
-                onClick={() => { setFilterSource("all"); setFilterStatus("all"); setSearch(""); }}
+                onClick={() => {
+                  setFilterSource("all");
+                  setFilterStatus("all");
+                  setSearch("");
+                }}
                 className="text-xs text-gray-500 hover:text-white transition-colors"
               >
                 Clear
@@ -771,7 +897,9 @@ function WebhooksTab() {
           ) : !logs.data?.length ? (
             <div className="text-center py-10">
               <Webhook className="w-8 h-8 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">No webhook events match your filters.</p>
+              <p className="text-gray-500 text-sm">
+                No webhook events match your filters.
+              </p>
               <p className="text-gray-600 text-xs mt-1">
                 Configure Shopify, Stripe, or n8n to see events here.
               </p>
@@ -782,7 +910,9 @@ function WebhooksTab() {
                 {logs.data.map(evt => (
                   <div key={evt.id} className="group">
                     <button
-                      onClick={() => setExpanded(expanded === evt.id ? null : evt.id)}
+                      onClick={() =>
+                        setExpanded(expanded === evt.id ? null : evt.id)
+                      }
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-left"
                     >
                       <span
@@ -819,7 +949,9 @@ function WebhooksTab() {
                           {JSON.stringify(evt.payload, null, 2)}
                         </pre>
                         {evt.error && (
-                          <p className="text-xs text-red-400 font-mono">{evt.error}</p>
+                          <p className="text-xs text-red-400 font-mono">
+                            {evt.error}
+                          </p>
                         )}
                         {evt.status === "failed" && (
                           <button
@@ -827,7 +959,12 @@ function WebhooksTab() {
                             onClick={() => retry.mutate({ id: evt.id })}
                             className="flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 transition-colors disabled:opacity-50"
                           >
-                            <RotateCcw className={cn("w-3 h-3", retry.isPending && "animate-spin")} />
+                            <RotateCcw
+                              className={cn(
+                                "w-3 h-3",
+                                retry.isPending && "animate-spin"
+                              )}
+                            />
                             Retry this event
                           </button>
                         )}
@@ -851,7 +988,8 @@ function MCPToolsTab() {
     <div className="space-y-6">
       <p className="text-gray-400 text-sm">
         The UnifyOne MCP (Model Context Protocol) server exposes your storefront
-        data to AI assistants like Claude. Connect it to any MCP-compatible tool.
+        data to AI assistants like Claude. Connect it to any MCP-compatible
+        tool.
       </p>
       <MCPStatusWidget variant="settings" />
       <Card className="bg-card border-border">
@@ -863,25 +1001,32 @@ function MCPToolsTab() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-gray-400">
-            Invoke any MCP tool through the tRPC endpoint — useful for automation
-            scripts, n8n nodes, and AI-driven workflows.
+            Invoke any MCP tool through the tRPC endpoint — useful for
+            automation scripts, n8n nodes, and AI-driven workflows. The live
+            Netlify MCP catalog uses snake_case names; older camelCase aliases
+            only work when your bridge agent maps them.
           </p>
           <div className="rounded-lg bg-black/50 border border-white/5 p-3">
             <pre className="text-xs font-mono text-emerald-400 whitespace-pre-wrap">
-{`// Via tRPC (authenticated)
+              {`// Via tRPC (authenticated)
 const result = await trpc.mcp.callTool.mutate({
-  tool: "getAnalyticsSummary",
-  args: {},
+  tool: "get_analytics_summary",
+  args: { days: 30 },
 });
 
-// Available tools:
-//   getAnalyticsSummary  — revenue + order stats
-//   getLowStockProducts  — inventory alerts
-//   listProducts         — full product catalog
-//   listOrders           — recent orders
-//   listCustomers        — customer list
-//   getWebhookEvents     — integration event log
-//   getPlatformStats     — system-wide metrics`}
+// Preferred tool names are snake_case:
+//   get_analytics_summary  — revenue + order stats
+//   get_low_stock_products — inventory alerts
+//   list_products          — full product catalog
+//   list_orders            — recent orders
+//   list_customers         — customer list
+//   get_webhook_events     — integration event log
+//   ask_kai                — AI commerce assistant
+//   list_deals             — DealFlow affiliate catalog
+//   query_graph            — knowledge graph search
+//
+// Legacy aliases such as getAnalyticsSummary may still work when
+// your MCP bridge agent explicitly implements camelCase mapping.`}
             </pre>
           </div>
           <a
@@ -913,8 +1058,8 @@ function CodeTab() {
   return (
     <div className="space-y-4">
       <p className="text-gray-400 text-sm">
-        Ready-to-use snippets for common storefront integrations and automations.
-        Click a snippet to expand, then copy with the button.
+        Ready-to-use snippets for common storefront integrations and
+        automations. Click a snippet to expand, then copy with the button.
       </p>
 
       {snippets.isLoading ? (
@@ -925,15 +1070,24 @@ function CodeTab() {
       ) : (
         <div className="space-y-3">
           {snippets.data?.map(snippet => (
-            <Card key={snippet.id} className="bg-card border-border overflow-hidden">
+            <Card
+              key={snippet.id}
+              className="bg-card border-border overflow-hidden"
+            >
               <button
                 className="w-full flex items-center gap-3 p-4 text-left hover:bg-white/5 transition-colors"
-                onClick={() => setActive(active === snippet.id ? null : snippet.id)}
+                onClick={() =>
+                  setActive(active === snippet.id ? null : snippet.id)
+                }
               >
                 <Code2 className="w-4 h-4 text-[#00D9FF] shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white font-medium">{snippet.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 truncate">{snippet.description}</p>
+                  <p className="text-sm text-white font-medium">
+                    {snippet.title}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5 truncate">
+                    {snippet.description}
+                  </p>
                 </div>
                 <span
                   className={cn(
@@ -966,9 +1120,13 @@ function CodeTab() {
                       className="absolute top-2 right-3 flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors bg-black/40 px-2 py-1 rounded"
                     >
                       {copied === snippet.id ? (
-                        <><Check className="w-3 h-3 text-emerald-400" /> Copied</>
+                        <>
+                          <Check className="w-3 h-3 text-emerald-400" /> Copied
+                        </>
                       ) : (
-                        <><Copy className="w-3 h-3" /> Copy</>
+                        <>
+                          <Copy className="w-3 h-3" /> Copy
+                        </>
                       )}
                     </button>
                   </div>
@@ -1001,24 +1159,38 @@ function ReferenceTab() {
             <Terminal className="w-4 h-4 text-[#00D9FF] shrink-0" />
             <div>
               <p className="text-xs text-gray-400">Base URL</p>
-              <code className="text-sm text-[#00D9FF] font-mono">{ref.data?.baseUrl}</code>
+              <code className="text-sm text-[#00D9FF] font-mono">
+                {ref.data?.baseUrl}
+              </code>
             </div>
           </div>
           <p className="text-xs text-gray-500">{ref.data?.auth}</p>
 
           <div className="space-y-3">
             {ref.data?.namespaces.map(ns => (
-              <Card key={ns.name} className="bg-card border-border overflow-hidden">
+              <Card
+                key={ns.name}
+                className="bg-card border-border overflow-hidden"
+              >
                 <button
                   className="w-full flex items-center gap-3 p-4 text-left hover:bg-white/5 transition-colors"
-                  onClick={() => setExpanded(expanded === ns.name ? null : ns.name)}
+                  onClick={() =>
+                    setExpanded(expanded === ns.name ? null : ns.name)
+                  }
                 >
                   <Code2 className="w-4 h-4 text-[#00D9FF] shrink-0" />
                   <div className="flex-1">
-                    <p className="text-sm text-white font-mono font-medium">{ns.name}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{ns.description}</p>
+                    <p className="text-sm text-white font-mono font-medium">
+                      {ns.name}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {ns.description}
+                    </p>
                   </div>
-                  <Badge variant="outline" className="border-white/10 text-gray-500 text-xs shrink-0">
+                  <Badge
+                    variant="outline"
+                    className="border-white/10 text-gray-500 text-xs shrink-0"
+                  >
                     {ns.procedures.length} procedures
                   </Badge>
                   {expanded === ns.name ? (
@@ -1046,8 +1218,12 @@ function ReferenceTab() {
                         >
                           {proc.type}
                         </Badge>
-                        <code className="text-xs font-mono text-gray-300">{proc.name}</code>
-                        <span className="text-xs text-gray-500 ml-auto text-right">{proc.description}</span>
+                        <code className="text-xs font-mono text-gray-300">
+                          {proc.name}
+                        </code>
+                        <span className="text-xs text-gray-500 ml-auto text-right">
+                          {proc.description}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -1080,7 +1256,8 @@ export default function DeveloperHub() {
             </Badge>
           </div>
           <p className="text-gray-400 text-sm">
-            Tools, APIs, and resources for building and automating storefronts on UnifyOne.
+            Tools, APIs, and resources for building and automating storefronts
+            on UnifyOne.
           </p>
         </div>
         <a

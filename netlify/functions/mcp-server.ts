@@ -11,7 +11,10 @@ import type { Handler, HandlerEvent, HandlerContext } from "@netlify/functions";
 function jsonRpcOk(id: string | number | null, result: unknown) {
   return {
     statusCode: 200,
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
     body: JSON.stringify({ jsonrpc: "2.0", id, result }),
   };
 }
@@ -19,7 +22,10 @@ function jsonRpcOk(id: string | number | null, result: unknown) {
 function jsonRpcErr(id: string | number | null, code: number, message: string) {
   return {
     statusCode: 200,
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
     body: JSON.stringify({ jsonrpc: "2.0", id, error: { code, message } }),
   };
 }
@@ -27,80 +33,392 @@ function jsonRpcErr(id: string | number | null, code: number, message: string) {
 // ── Tool definitions (18 tools, 4 Cathedral phases) ──────────────────────────
 const TOOLS = [
   // Foundation (2)
-  { name: "listStores", description: "List all stores/tenants", inputSchema: { type: "object", properties: { limit: { type: "number" } } } },
-  { name: "getTenantInfo", description: "Get tenant details by ID", inputSchema: { type: "object", required: ["tenantId"], properties: { tenantId: { type: "string" } } } },
+  {
+    name: "listStores",
+    description: "List all stores/tenants",
+    inputSchema: { type: "object", properties: { limit: { type: "number" } } },
+  },
+  {
+    name: "getTenantInfo",
+    description: "Get tenant details by ID",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" } },
+    },
+  },
   // Walls (11)
-  { name: "listProducts", description: "List products with filters", inputSchema: { type: "object", properties: { tenantId: { type: "string" }, limit: { type: "number" } } } },
-  { name: "getProduct", description: "Get product by ID", inputSchema: { type: "object", required: ["productId"], properties: { productId: { type: "string" } } } },
-  { name: "searchProducts", description: "Search products by keyword", inputSchema: { type: "object", required: ["query"], properties: { query: { type: "string" }, tenantId: { type: "string" } } } },
-  { name: "listOrders", description: "List orders", inputSchema: { type: "object", properties: { tenantId: { type: "string" }, limit: { type: "number" } } } },
-  { name: "getOrder", description: "Get order with line items", inputSchema: { type: "object", required: ["orderId"], properties: { orderId: { type: "string" } } } },
-  { name: "listCustomers", description: "List customers", inputSchema: { type: "object", properties: { tenantId: { type: "string" }, limit: { type: "number" } } } },
-  { name: "getCustomer", description: "Get customer by ID", inputSchema: { type: "object", required: ["customerId"], properties: { customerId: { type: "string" } } } },
-  { name: "getInventory", description: "Get inventory levels", inputSchema: { type: "object", properties: { tenantId: { type: "string" } } } },
-  { name: "getLowStockProducts", description: "Products below stock threshold", inputSchema: { type: "object", properties: { threshold: { type: "number" } } } },
-  { name: "getAnalyticsSummary", description: "Revenue, order, customer summary", inputSchema: { type: "object", properties: { tenantId: { type: "string" } } } },
-  { name: "getRevenueByDay", description: "Daily revenue breakdown", inputSchema: { type: "object", properties: { tenantId: { type: "string" } } } },
+  {
+    name: "listProducts",
+    description: "List products with filters",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, limit: { type: "number" } },
+    },
+  },
+  {
+    name: "getProduct",
+    description: "Get product by ID",
+    inputSchema: {
+      type: "object",
+      required: ["productId", "tenantId"],
+      properties: {
+        productId: { type: "number" },
+        tenantId: { type: "number" },
+      },
+    },
+  },
+  {
+    name: "searchProducts",
+    description: "Search products by keyword",
+    inputSchema: {
+      type: "object",
+      required: ["query", "tenantId"],
+      properties: { query: { type: "string" }, tenantId: { type: "number" } },
+    },
+  },
+  {
+    name: "listOrders",
+    description: "List orders",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, limit: { type: "number" } },
+    },
+  },
+  {
+    name: "getOrder",
+    description: "Get order with line items",
+    inputSchema: {
+      type: "object",
+      required: ["orderId", "tenantId"],
+      properties: { orderId: { type: "number" }, tenantId: { type: "number" } },
+    },
+  },
+  {
+    name: "listCustomers",
+    description: "List customers",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, limit: { type: "number" } },
+    },
+  },
+  {
+    name: "getCustomer",
+    description: "Get customer by ID",
+    inputSchema: {
+      type: "object",
+      required: ["customerId", "tenantId"],
+      properties: {
+        customerId: { type: "number" },
+        tenantId: { type: "number" },
+      },
+    },
+  },
+  {
+    name: "getInventory",
+    description: "Get inventory levels",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" } },
+    },
+  },
+  {
+    name: "getLowStockProducts",
+    description: "Products below stock threshold",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: {
+        tenantId: { type: "number" },
+        threshold: { type: "number" },
+      },
+    },
+  },
+  {
+    name: "getAnalyticsSummary",
+    description: "Revenue, order, customer summary",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, days: { type: "number" } },
+    },
+  },
+  {
+    name: "getRevenueByDay",
+    description: "Daily revenue breakdown",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, days: { type: "number" } },
+    },
+  },
   // Vaults (3)
-  { name: "getTopProducts", description: "Top products by revenue", inputSchema: { type: "object", properties: { limit: { type: "number" } } } },
-  { name: "getWebhookEvents", description: "Recent webhook events", inputSchema: { type: "object", properties: { limit: { type: "number" } } } },
-  { name: "getCategories", description: "Product categories", inputSchema: { type: "object", properties: { tenantId: { type: "string" } } } },
+  {
+    name: "getTopProducts",
+    description: "Top products by revenue",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, limit: { type: "number" } },
+    },
+  },
+  {
+    name: "getWebhookEvents",
+    description: "Recent webhook events",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, limit: { type: "number" } },
+    },
+  },
+  {
+    name: "getCategories",
+    description: "Product categories",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" } },
+    },
+  },
   // Spire (2)
-  { name: "getNotifications", description: "Platform notifications", inputSchema: { type: "object", properties: { limit: { type: "number" } } } },
-  { name: "getPlatformStats", description: "Aggregated platform statistics", inputSchema: { type: "object", properties: {} } },
+  {
+    name: "getNotifications",
+    description: "Platform notifications",
+    inputSchema: { type: "object", properties: { limit: { type: "number" } } },
+  },
+  {
+    name: "getPlatformStats",
+    description: "Aggregated platform statistics",
+    inputSchema: { type: "object", properties: {} },
+  },
 ];
 
 // ── Tool dispatcher ───────────────────────────────────────────────────────────
-async function callTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+function parsePositiveInteger(value: unknown, name: string): number;
+function parsePositiveInteger(
+  value: unknown,
+  name: string,
+  options: { required?: true; defaultValue?: number }
+): number;
+function parsePositiveInteger(
+  value: unknown,
+  name: string,
+  options: { required: false; defaultValue: number }
+): number;
+function parsePositiveInteger(
+  value: unknown,
+  name: string,
+  options: { required: false; defaultValue?: undefined }
+): number | undefined;
+function parsePositiveInteger(
+  value: unknown,
+  name: string,
+  {
+    required = true,
+    defaultValue,
+  }: { required?: boolean; defaultValue?: number } = {}
+): number | undefined {
+  if (value == null || value === "") {
+    if (required) throw new Error(`Missing required numeric ${name}`);
+    return defaultValue;
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw new Error(`Invalid numeric ${name}`);
+  }
+  return parsed;
+}
+
+function parseLimit(value: unknown, defaultValue: number): number;
+function parseLimit(
+  value: unknown,
+  defaultValue?: undefined
+): number | undefined;
+function parseLimit(value: unknown, defaultValue?: number) {
+  if (defaultValue === undefined) {
+    return parsePositiveInteger(value, "limit", { required: false });
+  }
+  return parsePositiveInteger(value, "limit", {
+    required: false,
+    defaultValue,
+  });
+}
+
+function parseDays(value: unknown, defaultValue = 30): number {
+  return parsePositiveInteger(value, "days", { required: false, defaultValue });
+}
+
+function applyLimit<T>(rows: T[], limit: number | undefined) {
+  return typeof limit === "number" ? rows.slice(0, limit) : rows;
+}
+
+async function callTool(
+  name: string,
+  args: Record<string, unknown>
+): Promise<unknown> {
   const db = await import("../../server/db");
   switch (name) {
-    case "listStores": return db.getAllTenants();
-    case "getTenantInfo": return db.getTenantById(args.tenantId as string);
-    case "listProducts": return db.getProducts(args.tenantId as string | undefined, args.limit as number | undefined);
-    case "getProduct": return db.getProductById(args.productId as string);
-    case "searchProducts": {
-      const all = await db.getProducts(args.tenantId as string | undefined) as any[];
-      const q = (args.query as string).toLowerCase();
-      return all.filter((p: any) => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
+    case "listStores": {
+      const tenants = await db.getAllTenants();
+      return applyLimit(tenants, parseLimit(args.limit));
     }
-    case "listOrders": return db.getOrders(args.tenantId as string | undefined, args.limit as number | undefined);
-    case "getOrder": return db.getOrderWithItems(args.orderId as string);
-    case "listCustomers": return db.getCustomers(args.tenantId as string | undefined, args.limit as number | undefined);
-    case "getCustomer": return db.getCustomerById(args.customerId as string);
-    case "getInventory": return db.getInventory(args.tenantId as string | undefined);
-    case "getLowStockProducts": return db.getLowStockProducts(args.threshold as number | undefined);
-    case "getAnalyticsSummary": return db.getAnalyticsSummary(args.tenantId as string | undefined);
-    case "getRevenueByDay": return db.getRevenueByDay(args.tenantId as string | undefined);
-    case "getTopProducts": return db.getTopProducts(args.limit as number | undefined);
-    case "getWebhookEvents": return db.getWebhookEvents(args.limit as number | undefined);
-    case "getCategories": return db.getCategories(args.tenantId as string | undefined);
+    case "getTenantInfo":
+      return db.getTenantById(parsePositiveInteger(args.tenantId, "tenantId"));
+    case "listProducts":
+      return db.getProducts(parsePositiveInteger(args.tenantId, "tenantId"), {
+        limit: parseLimit(args.limit, 50),
+      });
+    case "getProduct":
+      return db.getProductById(
+        parsePositiveInteger(args.productId, "productId"),
+        parsePositiveInteger(args.tenantId, "tenantId")
+      );
+    case "searchProducts": {
+      const all = await db.getProducts(
+        parsePositiveInteger(args.tenantId, "tenantId"),
+        { search: String(args.query ?? "") }
+      );
+      const q = String(args.query ?? "").toLowerCase();
+      return all.filter(
+        (p: any) =>
+          p.name?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q)
+      );
+    }
+    case "listOrders":
+      return db.getOrders(parsePositiveInteger(args.tenantId, "tenantId"), {
+        limit: parseLimit(args.limit, 50),
+      });
+    case "getOrder":
+      return db.getOrderWithItems(
+        parsePositiveInteger(args.orderId, "orderId"),
+        parsePositiveInteger(args.tenantId, "tenantId")
+      );
+    case "listCustomers":
+      return db.getCustomers(parsePositiveInteger(args.tenantId, "tenantId"), {
+        limit: parseLimit(args.limit, 50),
+      });
+    case "getCustomer":
+      return db.getCustomerById(
+        parsePositiveInteger(args.customerId, "customerId"),
+        parsePositiveInteger(args.tenantId, "tenantId")
+      );
+    case "getInventory":
+      return db.getInventory(parsePositiveInteger(args.tenantId, "tenantId"));
+    case "getLowStockProducts": {
+      const rows = await db.getLowStockProducts(
+        parsePositiveInteger(args.tenantId, "tenantId")
+      );
+      const threshold = parsePositiveInteger(args.threshold, "threshold", {
+        required: false,
+      });
+      if (threshold == null) return rows;
+      return rows.filter((row: any) => Number(row?.inv?.quantity) <= threshold);
+    }
+    case "getAnalyticsSummary":
+      return db.getAnalyticsSummary(
+        parsePositiveInteger(args.tenantId, "tenantId"),
+        parseDays(args.days)
+      );
+    case "getRevenueByDay":
+      return db.getRevenueByDay(
+        parsePositiveInteger(args.tenantId, "tenantId"),
+        parseDays(args.days)
+      );
+    case "getTopProducts":
+      return db.getTopProducts(
+        parsePositiveInteger(args.tenantId, "tenantId"),
+        parseLimit(args.limit, 5)
+      );
+    case "getWebhookEvents":
+      return db.getWebhookEvents(
+        parsePositiveInteger(args.tenantId, "tenantId"),
+        parseLimit(args.limit, 50)
+      );
+    case "getCategories":
+      return db.getCategories(parsePositiveInteger(args.tenantId, "tenantId"));
     case "getNotifications": {
       const drizzle = await db.getDb();
       if (!drizzle) return [];
       const { notifications } = await import("../../drizzle/schema");
       const { desc } = await import("drizzle-orm");
-      return drizzle.select().from(notifications).orderBy(desc(notifications.createdAt)).limit((args.limit as number) ?? 20);
+      return drizzle
+        .select()
+        .from(notifications)
+        .orderBy(desc(notifications.createdAt))
+        .limit((args.limit as number) ?? 20);
     }
     case "getPlatformStats": {
-      const [tenants, summary] = await Promise.all([db.getAllTenants(), db.getAnalyticsSummary(undefined)]);
-      return { tenantCount: (tenants as any[]).length, ...(summary as any ?? {}), ts: new Date().toISOString() };
+      const tenants = await db.getAllTenants();
+      const tenantIds = tenants
+        .map(tenant => Number(tenant?.id))
+        .filter(tenantId => Number.isSafeInteger(tenantId) && tenantId > 0);
+      const summaries = await Promise.all(
+        tenantIds.map(tenantId =>
+          db.getAnalyticsSummary(tenantId, 30).catch(() => null)
+        )
+      );
+      const totals = summaries.reduce<{
+        totalRevenue: number;
+        orderCount: number;
+        customerCount: number;
+        productCount: number;
+      }>(
+        (acc, summary) => ({
+          totalRevenue: acc.totalRevenue + Number(summary?.totalRevenue ?? 0),
+          orderCount: acc.orderCount + Number(summary?.orderCount ?? 0),
+          customerCount:
+            acc.customerCount + Number(summary?.customerCount ?? 0),
+          productCount: acc.productCount + Number(summary?.productCount ?? 0),
+        }),
+        { totalRevenue: 0, orderCount: 0, customerCount: 0, productCount: 0 }
+      );
+      return {
+        tenantCount: tenants.length,
+        ...totals,
+        ts: new Date().toISOString(),
+      };
     }
-    default: throw new Error(`Unknown tool: ${name}`);
+    default:
+      throw new Error(`Unknown tool: ${name}`);
   }
 }
 
 // ── Netlify Function handler ──────────────────────────────────────────────────
-export const handler: Handler = async (event: HandlerEvent, _ctx: HandlerContext) => {
+export const handler: Handler = async (
+  event: HandlerEvent,
+  _ctx: HandlerContext
+) => {
   // CORS preflight
   if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 204, headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization" }, body: "" };
+    return {
+      statusCode: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      },
+      body: "",
+    };
   }
 
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: "Method not allowed" }),
+    };
   }
 
-  let body: { jsonrpc: string; id: string | number | null; method: string; params?: Record<string, unknown> };
+  let body: {
+    jsonrpc: string;
+    id: string | number | null;
+    method: string;
+    params?: Record<string, unknown>;
+  };
   try {
     body = JSON.parse(event.body ?? "{}");
   } catch {
@@ -111,7 +429,11 @@ export const handler: Handler = async (event: HandlerEvent, _ctx: HandlerContext
 
   switch (method) {
     case "initialize":
-      return jsonRpcOk(id, { protocolVersion: "2024-11-05", serverInfo: { name: "unifyone-mcp", version: "2.0.0" }, capabilities: { tools: { listChanged: false } } });
+      return jsonRpcOk(id, {
+        protocolVersion: "2024-11-05",
+        serverInfo: { name: "unifyone-mcp", version: "2.0.0" },
+        capabilities: { tools: { listChanged: false } },
+      });
 
     case "tools/list":
       return jsonRpcOk(id, { tools: TOOLS });
@@ -120,10 +442,18 @@ export const handler: Handler = async (event: HandlerEvent, _ctx: HandlerContext
       const toolName = params.name as string;
       if (!toolName) return jsonRpcErr(id, -32602, "Missing tool name");
       try {
-        const result = await callTool(toolName, (params.arguments ?? {}) as Record<string, unknown>);
-        return jsonRpcOk(id, { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] });
+        const result = await callTool(
+          toolName,
+          (params.arguments ?? {}) as Record<string, unknown>
+        );
+        return jsonRpcOk(id, {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        });
       } catch (e: any) {
-        return jsonRpcOk(id, { content: [{ type: "text", text: e.message }], isError: true });
+        return jsonRpcOk(id, {
+          content: [{ type: "text", text: e.message }],
+          isError: true,
+        });
       }
     }
 

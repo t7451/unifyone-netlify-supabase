@@ -21,11 +21,23 @@ import {
   mcpCallTool,
   mcpInitialize,
   MCP_WORKER_URL,
+  normalizeMcpToolArguments,
+  normalizeMcpToolName,
 } from "../lib/mcpClient";
 import { meterCredits } from "../creditMeter";
 
 // Credit cost per MCP tool call (matches CREDIT_COST_MODEL in creditMeter)
 const MCP_TOOL_CREDIT_COST = 1;
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function getAuthoritativeTenantId(
+  tenantId: string | number | null | undefined
+): string | number | null {
+  return tenantId === null || tenantId === undefined ? null : tenantId;
+}
 
 export const mcpRouter = router({
   /**
@@ -35,26 +47,26 @@ export const mcpRouter = router({
     try {
       const result = await mcpHealth();
       return { ...result, workerUrl: MCP_WORKER_URL };
-    } catch (e: any) {
+    } catch (e: unknown) {
       return {
         status: "error" as const,
-        message: e.message,
+        message: getErrorMessage(e),
         workerUrl: MCP_WORKER_URL,
       };
     }
   }),
 
   /**
-   * List all 18 registered tools with schemas.
+   * List all registered tools with schemas.
    */
   listTools: protectedProcedure.query(async () => {
     try {
       const tools = await mcpListTools();
       return { tools, count: tools.length, workerUrl: MCP_WORKER_URL };
-    } catch (e: any) {
+    } catch (e: unknown) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: `MCP tools/list failed: ${e.message}`,
+        message: `MCP tools/list failed: ${getErrorMessage(e)}`,
       });
     }
   }),
@@ -65,10 +77,10 @@ export const mcpRouter = router({
   initialize: protectedProcedure.query(async () => {
     try {
       return await mcpInitialize();
-    } catch (e: any) {
+    } catch (e: unknown) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: `MCP initialize failed: ${e.message}`,
+        message: `MCP initialize failed: ${getErrorMessage(e)}`,
       });
     }
   }),
@@ -86,6 +98,16 @@ export const mcpRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       const userId = ctx.user.id;
+      const requestedTool = input.tool;
+      let toolName: string;
+      try {
+        toolName = normalizeMcpToolName(requestedTool);
+      } catch (e: unknown) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: getErrorMessage(e),
+        });
+      }
 
       // Meter the call
       try {
@@ -94,7 +116,7 @@ export const mcpRouter = router({
           tenantId: ctx.user.tenantId ?? undefined,
           amount: MCP_TOOL_CREDIT_COST,
           source: "mcp_tool",
-          action: `mcp:${input.tool}`,
+          action: `mcp:${toolName}`,
         });
         if (!metered.success) {
           throw new TRPCError({
@@ -102,35 +124,31 @@ export const mcpRouter = router({
             message: "Insufficient credits. Please top up to continue.",
           });
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof TRPCError) throw e;
         // If metering itself fails, still allow the call (don't block on billing infra)
         console.warn(
           "[mcp.callTool] Metering failed (non-blocking):",
-          e.message
+          getErrorMessage(e)
         );
       }
 
-      const userTenantId =
-        ctx.user.tenantId !== null && ctx.user.tenantId !== undefined
-          ? String(ctx.user.tenantId)
-          : null;
-      // Force-overwrite any tenantId in args with the authenticated user's tenantId.
-      // Never trust client-provided tenantId.
-      const safeArgs = { ...(input.args as Record<string, unknown>) };
-      if (userTenantId) {
-        safeArgs.tenantId = userTenantId;
-      } else {
-        delete safeArgs.tenantId;
-      }
+      const safeArgs = normalizeMcpToolArguments(input.args, {
+        authoritativeTenantId: getAuthoritativeTenantId(ctx.user.tenantId),
+      });
 
       try {
-        const result = await mcpCallTool(input.tool, safeArgs);
-        return { success: true, tool: input.tool, result };
-      } catch (e: any) {
+        const result = await mcpCallTool(toolName, safeArgs);
+        return {
+          success: true,
+          tool: requestedTool,
+          resolvedTool: toolName,
+          result,
+        };
+      } catch (e: unknown) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `MCP tool "${input.tool}" failed: ${e.message}`,
+          message: `MCP tool "${toolName}" failed: ${getErrorMessage(e)}`,
         });
       }
     }),
@@ -139,16 +157,16 @@ export const mcpRouter = router({
    * Convenience: get platform analytics summary via MCP.
    */
   analytics: protectedProcedure.query(async ({ ctx }) => {
-    const tenantId = ctx.user.tenantId ? String(ctx.user.tenantId) : undefined;
+    const tenantId = getAuthoritativeTenantId(ctx.user.tenantId);
     try {
       return await mcpCallTool(
-        "getAnalyticsSummary",
-        tenantId ? { tenantId } : {}
+        "get_analytics_summary",
+        normalizeMcpToolArguments({}, { authoritativeTenantId: tenantId })
       );
-    } catch (e: any) {
+    } catch (e: unknown) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: e.message,
+        message: getErrorMessage(e),
       });
     }
   }),
@@ -159,18 +177,19 @@ export const mcpRouter = router({
   lowStock: protectedProcedure
     .input(z.object({ threshold: z.number().optional().default(10) }))
     .query(async ({ ctx, input }) => {
-      const tenantId = ctx.user.tenantId
-        ? String(ctx.user.tenantId)
-        : undefined;
+      const tenantId = getAuthoritativeTenantId(ctx.user.tenantId);
       try {
-        return await mcpCallTool("getLowStockProducts", {
-          threshold: input.threshold,
-          ...(tenantId ? { tenantId } : {}),
-        });
-      } catch (e: any) {
+        return await mcpCallTool(
+          "get_low_stock_products",
+          normalizeMcpToolArguments(
+            { threshold: input.threshold },
+            { authoritativeTenantId: tenantId }
+          )
+        );
+      } catch (e: unknown) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: e.message,
+          message: getErrorMessage(e),
         });
       }
     }),
@@ -179,13 +198,21 @@ export const mcpRouter = router({
    * Get Worker config info (URL, version, registered tools) for Settings UI.
    */
   config: protectedProcedure.query(async () => {
-    const tools = await mcpListTools().catch(() => []);
+    let toolListError: string | undefined;
+    let tools: Awaited<ReturnType<typeof mcpListTools>> = [];
+    try {
+      tools = await mcpListTools();
+    } catch (e: unknown) {
+      toolListError = getErrorMessage(e);
+    }
+
     return {
       workerUrl: MCP_WORKER_URL,
       endpoint: `${MCP_WORKER_URL}/mcp`,
       healthUrl: `${MCP_WORKER_URL}/health`,
       customDomain: "mcp.1commerce.online (pending DNS)",
       toolCount: tools.length,
+      toolListError,
       tools: tools.map(t => ({ name: t.name, description: t.description })),
       claudeDesktopConfig: JSON.stringify(
         {

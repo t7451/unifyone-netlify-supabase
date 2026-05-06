@@ -237,6 +237,85 @@ const plugins = [
   }),
 ];
 
+const normalizeChunkId = (id: string) => id.replaceAll("\\", "/");
+
+function manualChunks(id: string): string | undefined {
+  const normalizedId = normalizeChunkId(id);
+
+  if (!normalizedId.includes("/node_modules/")) return undefined;
+
+  // Shiki language grammars are lazy-loaded by streamdown. Let Rollup keep
+  // those grammar files split by language instead of merging them together.
+  if (normalizedId.includes("/node_modules/@shikijs/langs/")) {
+    return undefined;
+  }
+
+  if (
+    normalizedId.includes("/node_modules/react/") ||
+    normalizedId.includes("/node_modules/react-dom/") ||
+    normalizedId.includes("/node_modules/scheduler/")
+  ) {
+    return "react-vendor";
+  }
+
+  if (
+    normalizedId.includes("/node_modules/@tanstack/react-query/") ||
+    normalizedId.includes("/node_modules/@trpc/") ||
+    normalizedId.includes("/node_modules/superjson/")
+  ) {
+    return "api-vendor";
+  }
+
+  if (normalizedId.includes("/node_modules/@clerk/")) {
+    return "auth-vendor";
+  }
+
+  if (
+    normalizedId.includes("/node_modules/@radix-ui/") ||
+    normalizedId.includes("/node_modules/cmdk/") ||
+    normalizedId.includes("/node_modules/date-fns/") ||
+    normalizedId.includes("/node_modules/input-otp/") ||
+    normalizedId.includes("/node_modules/lucide-react/") ||
+    normalizedId.includes("/node_modules/next-themes/") ||
+    normalizedId.includes("/node_modules/sonner/") ||
+    normalizedId.includes("/node_modules/vaul/")
+  ) {
+    return "ui-vendor";
+  }
+
+  if (
+    normalizedId.includes("/node_modules/framer-motion/") ||
+    normalizedId.includes("/node_modules/motion-dom/") ||
+    normalizedId.includes("/node_modules/motion-utils/")
+  ) {
+    return "animation-vendor";
+  }
+
+  if (
+    normalizedId.includes("/node_modules/recharts/") ||
+    normalizedId.includes("/node_modules/d3-")
+  ) {
+    return "charts-vendor";
+  }
+
+  if (
+    normalizedId.includes("/node_modules/@xterm/") ||
+    normalizedId.includes("/node_modules/ssh2/")
+  ) {
+    return "terminal-vendor";
+  }
+
+  if (
+    normalizedId.includes("/node_modules/@stripe/") ||
+    normalizedId.includes("/node_modules/stripe/") ||
+    normalizedId.includes("/node_modules/@paypal/")
+  ) {
+    return "payments-vendor";
+  }
+
+  return undefined;
+}
+
 export default defineConfig({
   plugins,
   resolve: {
@@ -252,6 +331,14 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // The largest remaining client chunks are isolated lazy-loaded syntax /
+    // diagram renderers. Keep the warning focused on app-shell regressions.
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks,
+      },
+    },
   },
   server: {
     host: true,

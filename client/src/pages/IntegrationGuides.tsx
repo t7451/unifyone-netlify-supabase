@@ -44,7 +44,12 @@ UNIFYAI_API_KEY=your_unifyone_api_key`,
 
 // Alternative: use npx mcp-remote for SSE transport
 // npx @modelcontextprotocol/inspector \\
-//   https://unify0ne-mcp.skdev-371.workers.dev/mcp`,
+//   https://unify0ne-mcp.skdev-371.workers.dev/mcp
+//
+// Preferred live tool names are snake_case:
+//   get_analytics_summary, list_products, get_low_stock_products
+// Legacy camelCase aliases such as getAnalyticsSummary only work when
+// your MCP bridge agent explicitly maps them.`,
 
   createTask: `// server/ai.ts — invoke the Kai chat endpoint from server-side
 import { invokeLLM } from "./_core/llm";
@@ -227,7 +232,7 @@ const CHECKLIST = [
   },
   {
     id: "c2",
-    text: "Configure Claude Desktop MCP server (mcpConfig block)",
+    text: "Configure Claude Desktop MCP server and verify snake_case tools/list output",
     done: false,
   },
   { id: "c3", text: "Deploy /api/webhooks/automation endpoint", done: false },
@@ -544,7 +549,8 @@ export default function IntegrationGuides() {
                   style={{ color: "#C0C0C0" }}
                 >
                   Install and configure the UnifyOne MCP server for Claude
-                  integration:
+                  integration. The live tool catalog now uses snake_case names;
+                  camelCase aliases are legacy bridge compatibility only:
                 </p>
                 <CodeBlock code={CODE_BLOCKS.mcpConfig} />
               </div>
