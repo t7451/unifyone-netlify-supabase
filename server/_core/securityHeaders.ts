@@ -6,8 +6,9 @@
  *
  * Content-Security-Policy is applied in production only. Vite dev mode
  * injects inline HMR scripts that would be blocked by a strict CSP.
- * All inline executable scripts have been moved to JS modules so that
- * script-src does not require 'unsafe-inline'.
+ * Netlify's CSP nonce plugin injects per-request nonces into HTML <script>
+ * and <style> tags in production, so script-src does not require
+ * 'unsafe-inline'.
  */
 
 import type { Request, Response, NextFunction } from "express";
@@ -24,36 +25,43 @@ import type { Request, Response, NextFunction } from "express";
  *  - Supabase HTTPS + WebSocket endpoints
  *  - PayPal API
  *  - Facebook Graph API (Meta Pixel event calls)
+ *  - Anthropic API requests
+ *  - Impact.com affiliate tracking pixel
  *
  * 'unsafe-inline' is allowed for style-src only because React components
- * and Tailwind CSS use inline styles at runtime. It is intentionally
- * excluded from script-src.
+ * and Tailwind CSS use inline style attributes at runtime. Script nonces are
+ * injected by the Netlify CSP nonce plugin.
  */
 const PRODUCTION_CSP = [
   "default-src 'self'",
-  "script-src 'self' https://plausible.io https://connect.facebook.net https://js.stripe.com",
+  "script-src 'self' https://plausible.io https://connect.facebook.net https://js.stripe.com https://www.paypal.com https://www.paypalobjects.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://checkout.stripe.com https://api.paypal.com https://www.facebook.com https://plausible.io",
+  "img-src 'self' data: blob: https: https://d.impactradius-event.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://checkout.stripe.com https://api.paypal.com https://www.facebook.com https://plausible.io https://api.anthropic.com",
   "frame-src https://js.stripe.com https://hooks.stripe.com https://www.paypal.com",
+  "frame-ancestors 'none'",
+  "worker-src 'self'",
+  "manifest-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
+  "upgrade-insecure-requests",
 ].join("; ");
 
 /**
  * Middleware that attaches security response headers to every reply.
  *
  * Headers set:
- *  - Content-Security-Policy (prod only)      — XSS mitigation
- *  - X-Content-Type-Options: nosniff          — prevents MIME-type sniffing
- *  - X-Frame-Options: DENY                    — blocks clickjacking in iframes
- *  - X-XSS-Protection: 0                      — disables legacy XSS filter (modern browsers don't need it; it can be exploited)
+ *  - Content-Security-Policy (prod only)       — XSS mitigation
+ *  - X-Content-Type-Options: nosniff           — prevents MIME-type sniffing
+ *  - X-Frame-Options: DENY                     — blocks clickjacking in iframes
+ *  - X-XSS-Protection: 0                       — disables legacy XSS filter (modern browsers don't need it; it can be exploited)
  *  - Referrer-Policy: strict-origin-when-cross-origin
  *  - Permissions-Policy                        — disables browser features not used by this app
- *  - Strict-Transport-Security (prod only)    — enforces HTTPS for 1 year
- *  - Cross-Origin-Opener-Policy: same-origin  — isolates the browsing context
+ *  - Strict-Transport-Security (prod only)     — enforces HTTPS for 1 year
+ *  - Cross-Origin-Opener-Policy: same-origin   — isolates the browsing context
+ *  - Cross-Origin-Embedder-Policy: unsafe-none — avoids breaking Stripe/PayPal embeds
  *  - Cross-Origin-Resource-Policy: same-origin — blocks cross-origin reads of resources
  */
 export function securityHeaders(
@@ -62,10 +70,17 @@ export function securityHeaders(
   next: NextFunction
 ) {
   const isProd = process.env.NODE_ENV === "production";
+  const isApiRoute = req.path.startsWith("/api/");
 
-  // Strict CSP — only in production; Vite dev HMR uses inline scripts
+  // Strict CSP — only in production; Vite dev HMR uses inline scripts.
+  // Script/style nonces are injected at the Netlify edge in production.
   if (isProd) {
     res.setHeader("Content-Security-Policy", PRODUCTION_CSP);
+  }
+
+  if (isApiRoute) {
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("X-DNS-Prefetch-Control", "off");
   }
 
   // Prevent MIME-type sniffing (e.g. serving a PNG as JS)
@@ -97,6 +112,7 @@ export function securityHeaders(
 
   // Cross-Origin isolation headers
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
   res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
 
   // HSTS: tell browsers to only use HTTPS for 1 year, including subdomains.
