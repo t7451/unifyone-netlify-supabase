@@ -28,7 +28,8 @@ const DEFAULT_WORKER_URL = "https://1commerce-nlweb.skdev-371.workers.dev";
  */
 export function getNlwebWorkerUrl(): string {
   const fromEnv = import.meta.env?.VITE_NLWEB_WORKER_URL as string | undefined;
-  return (fromEnv && fromEnv.trim()) || DEFAULT_WORKER_URL;
+  const url = (fromEnv && fromEnv.trim()) || DEFAULT_WORKER_URL;
+  return url.replace(/\/+$/, "");
 }
 
 /**
