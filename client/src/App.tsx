@@ -47,6 +47,7 @@ const Notifications = lazy(() => import("./pages/Notifications"));
 const ThemeStore = lazy(() => import("./pages/ThemeStore"));
 const MyThemes = lazy(() => import("./pages/MyThemes"));
 const AdminThemes = lazy(() => import("./pages/AdminThemes"));
+const BlogIndex = lazy(() => import("./pages/BlogIndex"));
 const Login = lazy(() => import("./pages/Login"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -82,6 +83,7 @@ const CaseStudies = lazy(() => import("./pages/CaseStudies"));
 const IntegrationGuides = lazy(() => import("./pages/IntegrationGuides"));
 const WorkProof = lazy(() => import("./pages/WorkProof"));
 const Resources = lazy(() => import("./pages/Resources"));
+const ManusAI = lazy(() => import("./pages/ManusAI"));
 const VideoProduction = lazy(() => import("./pages/VideoProduction"));
 const AdCopyHub = lazy(() => import("./pages/AdCopyHub"));
 const GovernanceDashboard = lazy(() => import("./pages/GovernanceDashboard"));
@@ -168,6 +170,7 @@ function Router() {
     <Switch>
       <Route path="/" component={() => <Home />} />
       <Route path="/login" component={() => <Login />} />
+      <Route path="/register">{() => <Login initialIntent="signup" />}</Route>
       <Route path="/signup">{() => <Login initialIntent="signup" />}</Route>
       <Route path="/auth/callback" component={() => <AuthCallback />} />
       <Route path="/reset-password" component={() => <ResetPassword />} />
@@ -467,32 +470,47 @@ function Router() {
         )}
       />
       <Route path="/sovereign" component={() => <Sovereign />} />
+      <Route path="/manus-ai" component={() => <ManusAI />} />
       <Route path="/privacy" component={() => <PrivacyPolicy />} />
       <Route path="/terms" component={() => <TermsOfService />} />
       <Route path="/architecture" component={() => <Architecture />} />
       <Route path="/the-system" component={() => <TheSystem />} />
       <Route path="/tithes" component={() => <Tithes />} />
       <Route path="/documents" component={() => <Documents />} />
+      <Route path="/docs" component={() => <Documents />} />
+      <Route path="/docs/getting-started" component={() => <Documents />} />
       <Route path="/documents/case-studies" component={() => <CaseStudies />} />
+      <Route path="/docs/case-studies" component={() => <CaseStudies />} />
       <Route
         path="/documents/integrations"
         component={() => <IntegrationGuides />}
       />
+      <Route
+        path="/docs/integration-guides"
+        component={() => <IntegrationGuides />}
+      />
       <Route path="/documents/work-proof" component={() => <WorkProof />} />
       <Route path="/docs-chat" component={() => <DocsChat />} />
+      <Route path="/blog" component={() => <BlogIndex />} />
       <Route path="/chat" component={() => <NlwebChat />} />
       <Route path="/resources" component={() => <Resources />} />
       <Route path="/video-production" component={() => <VideoProduction />} />
       <Route path="/marketing/ad-copy" component={() => <AdCopyHub />} />
       <Route path="/governance" component={() => <GovernanceDashboard />} />
       <Route
+        path="/blog/gig-ecommerce"
+        component={() => <GigEcommercePost />}
+      />
+      <Route
         path="/blog/gig-economy-commerce-platform"
         component={() => <GigEcommercePost />}
       />
+      <Route path="/blog/multi-tenant" component={() => <MultiTenantPost />} />
       <Route
         path="/blog/multi-tenant-ecommerce-saas"
         component={() => <MultiTenantPost />}
       />
+      <Route path="/blog/manus-ai" component={() => <AIGigWorkersPost />} />
       <Route
         path="/blog/manus-ai-gig-workers"
         component={() => <AIGigWorkersPost />}
