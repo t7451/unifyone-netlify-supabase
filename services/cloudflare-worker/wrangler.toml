@@ -1,0 +1,21 @@
+name = "1commerce-nlweb"
+main = "src/index.ts"
+compatibility_date = "2025-01-15"
+compatibility_flags = ["nodejs_compat"]
+
+# Deploys to https://1commerce-nlweb.skdev-371.workers.dev
+workers_dev = true
+
+# Workers AI binding (Cloudflare-hosted models)
+[ai]
+binding = "AI"
+
+# Environment variables (non-secret defaults).
+# Secrets (e.g. ANTHROPIC_API_KEY) must be set via:
+#   wrangler secret put ANTHROPIC_API_KEY
+[vars]
+DEFAULT_MODEL = "@cf/meta/llama-3.1-8b-instruct"
+ALLOWED_ORIGINS = "https://1commerce.app,https://www.1commerce.app,http://localhost:5173"
+
+[observability]
+enabled = true
