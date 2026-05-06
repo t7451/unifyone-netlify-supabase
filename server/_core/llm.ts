@@ -267,6 +267,8 @@ const resolveGroqApiUrl = () =>
 
 export const GROQ_FALLBACK_MODEL = "llama-3.3-70b-versatile";
 
+// The allowlist uses the concrete fallback model; "groq/<model>" is reserved
+// for future explicit Groq model routing without exposing arbitrary providers.
 const isGroqModel = (model: string) =>
   model === GROQ_FALLBACK_MODEL || model.startsWith("groq/");
 
@@ -276,8 +278,12 @@ const toProviderModel = (model: string) =>
 const FORGE_THINKING_MODELS = new Set(["gemini-2.5-flash", "gemini-2.5-pro"]);
 
 const RETRYABLE_400_PATTERNS = [
-  "model",
-  "unsupported",
+  "invalid model",
+  "model not found",
+  "model_not_found",
+  "does not exist",
+  "unsupported model",
+  "unsupported parameter",
   "unrecognized",
   "unknown parameter",
 ];
@@ -352,7 +358,32 @@ export const DEFAULT_FALLBACK_CHAIN = [
   GROQ_FALLBACK_MODEL,
 ];
 
+class LLMInvokeError extends Error {
+  constructor(
+    readonly status: number,
+    readonly statusText: string,
+    readonly responseText: string
+  ) {
+    super(`LLM invoke failed: ${status} ${statusText} – ${responseText}`);
+  }
+}
+
+const hasRetryableCompatibilityPattern = (message: string) =>
+  RETRYABLE_400_PATTERNS.some(pattern => message.includes(pattern));
+
 function isRetryableError(err: unknown): boolean {
+  if (err instanceof LLMInvokeError) {
+    if (err.status === 401 || err.status === 403) return false;
+    if (err.status === 429 || err.status >= 500) return true;
+    if (err.status === 400) {
+      const details = `${err.statusText} ${err.responseText}`.toLowerCase();
+      return (
+        details.includes("rate") || hasRetryableCompatibilityPattern(details)
+      );
+    }
+    return false;
+  }
+
   if (err instanceof Error) {
     const msg = err.message.toLowerCase();
     if (
@@ -362,7 +393,7 @@ function isRetryableError(err: unknown): boolean {
     )
       return false;
     if (msg.includes("400") && !msg.includes("rate")) {
-      return RETRYABLE_400_PATTERNS.some(pattern => msg.includes(pattern));
+      return hasRetryableCompatibilityPattern(msg);
     }
     if (
       msg.includes("5") ||
@@ -416,6 +447,8 @@ async function invokeOnce(
 
   payload.max_tokens = params.maxTokens ?? params.max_tokens ?? 32768;
   if (provider === "forge" && FORGE_THINKING_MODELS.has(providerModel)) {
+    // Keep the budget small so Gemini can plan without materially increasing
+    // latency or metered token usage for short Kai chat requests.
     payload.thinking = { budget_tokens: 128 };
   }
 
@@ -446,9 +479,7 @@ async function invokeOnce(
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(
-      `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
-    );
+    throw new LLMInvokeError(response.status, response.statusText, errorText);
   }
 
   const result = (await response.json()) as InvokeResult;
