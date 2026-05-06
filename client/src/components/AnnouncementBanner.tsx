@@ -47,8 +47,10 @@ type Severity = keyof typeof SEVERITY_CONFIG;
 const LS_KEY = "unifyone_dismissed_announcements";
 
 function getDismissedIds(): Set<number> {
+  if (typeof window === "undefined") return new Set();
+
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = window.localStorage.getItem(LS_KEY);
     if (!raw) return new Set();
     const parsed = JSON.parse(raw) as number[];
     return new Set(parsed);
@@ -58,7 +60,8 @@ function getDismissedIds(): Set<number> {
 }
 
 function saveDismissedIds(ids: Set<number>): void {
-  localStorage.setItem(LS_KEY, JSON.stringify(Array.from(ids)));
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(LS_KEY, JSON.stringify(Array.from(ids)));
 }
 
 // ── AnnouncementBanner ────────────────────────────────────────────────────────
@@ -100,7 +103,7 @@ export function AnnouncementBanner() {
   if (banners.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-1.5 mb-4">
+    <div className="mb-4 flex w-full flex-col gap-1.5">
       {banners.map(announcement => {
         const severity = (announcement.severity as Severity) ?? "info";
         const config = SEVERITY_CONFIG[severity] ?? SEVERITY_CONFIG.info;
@@ -131,6 +134,7 @@ export function AnnouncementBanner() {
             </div>
             {/* Always show dismiss button — server-side if dismissible, local-only otherwise */}
             <button
+              type="button"
               onClick={() =>
                 handleDismiss(
                   announcement.id,
