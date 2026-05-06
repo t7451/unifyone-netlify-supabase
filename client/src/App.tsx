@@ -5,7 +5,7 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-import ErrorBoundary from "./components/ErrorBoundary";
+import ErrorBoundary, { RouteErrorBoundary } from "./components/ErrorBoundary";
 import LoadingExperience from "./components/LoadingExperience";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { useAuth } from "./_core/hooks/useAuth";
@@ -647,7 +647,9 @@ function App() {
                 />
               }
             >
-              <Router />
+              <RouteErrorBoundary>
+                <Router />
+              </RouteErrorBoundary>
             </Suspense>
           </TooltipProvider>
         </ThemeProvider>

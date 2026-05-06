@@ -1,9 +1,15 @@
 import { trpc } from "@/lib/trpc";
 import { HelmetProvider } from "react-helmet-async";
 import { UNAUTHED_ERR_MSG } from "@shared/const";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
+import { toast } from "sonner";
 import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
@@ -14,7 +20,73 @@ import "./lib/impactCapture";
 
 const FETCH_TIMEOUT_MS = 15_000;
 
+const getTrpcErrorCode = (error: unknown) => {
+  if (!(error instanceof TRPCClientError)) return null;
+
+  return error.data?.code ?? null;
+};
+
+const redirectToLoginIfUnauthorized = (error: unknown) => {
+  if (typeof window === "undefined") return;
+
+  const code = getTrpcErrorCode(error);
+  const isUnauthorized =
+    code === "UNAUTHORIZED" ||
+    (error instanceof TRPCClientError && error.message === UNAUTHED_ERR_MSG);
+
+  if (!isUnauthorized) return;
+
+  window.location.href = getLoginUrl();
+};
+
+const showGlobalTrpcErrorToast = (error: unknown) => {
+  const code = getTrpcErrorCode(error);
+
+  if (
+    code === "UNAUTHORIZED" ||
+    code === "NOT_FOUND" ||
+    (error instanceof TRPCClientError && error.message === UNAUTHED_ERR_MSG)
+  ) {
+    return;
+  }
+
+  if (code === "FORBIDDEN") {
+    toast.error("You don't have permission to do that");
+    return;
+  }
+
+  if (code === "INTERNAL_SERVER_ERROR") {
+    toast.error("Server error — please try again");
+    return;
+  }
+
+  if (error instanceof Error && error.message) {
+    toast.error(error.message);
+    return;
+  }
+
+  toast.error("Something went wrong");
+};
+
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: error => {
+      redirectToLoginIfUnauthorized(error);
+      showGlobalTrpcErrorToast(error);
+      console.error("[API Query Error]", error);
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _context, mutation) => {
+      redirectToLoginIfUnauthorized(error);
+
+      if (!mutation.options.onError) {
+        showGlobalTrpcErrorToast(error);
+      }
+
+      console.error("[API Mutation Error]", error);
+    },
+  }),
   defaultOptions: {
     queries: {
       retry: false,
@@ -22,33 +94,6 @@ const queryClient = new QueryClient({
       staleTime: 30_000,
     },
   },
-});
-
-const redirectToLoginIfUnauthorized = (error: unknown) => {
-  if (!(error instanceof TRPCClientError)) return;
-  if (typeof window === "undefined") return;
-
-  const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
-
-  if (!isUnauthorized) return;
-
-  window.location.href = getLoginUrl();
-};
-
-queryClient.getQueryCache().subscribe(event => {
-  if (event.type === "updated" && event.action.type === "error") {
-    const error = event.query.state.error;
-    redirectToLoginIfUnauthorized(error);
-    console.error("[API Query Error]", error);
-  }
-});
-
-queryClient.getMutationCache().subscribe(event => {
-  if (event.type === "updated" && event.action.type === "error") {
-    const error = event.mutation.state.error;
-    redirectToLoginIfUnauthorized(error);
-    console.error("[API Mutation Error]", error);
-  }
 });
 
 const trpcClient = trpc.createClient({
