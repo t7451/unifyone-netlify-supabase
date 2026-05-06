@@ -200,6 +200,7 @@ export async function startIntegratedServer() {
   };
   const child = spawn("pnpm", ["dev"], {
     env,
+    detached: true,
     stdio: ["ignore", "pipe", "pipe"],
   });
 
@@ -224,5 +225,12 @@ export async function startIntegratedServer() {
 }
 
 export function stopServer(child) {
-  if (child && !child.killed) child.kill("SIGTERM");
+  if (!child || child.killed) return;
+  try {
+    process.kill(-child.pid, "SIGTERM");
+  } catch {
+    child.kill("SIGTERM");
+  }
+  child.stdout?.destroy();
+  child.stderr?.destroy();
 }
