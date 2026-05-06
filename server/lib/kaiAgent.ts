@@ -68,6 +68,20 @@ export interface RunKaiAgentInput {
   meterSource?: CreditSource;
   /** Action label used in metering and logs. */
   meterAction?: string;
+  /** Gateway model selected by the Kai model allowlist. */
+  model?: string;
+  /** Ordered fallback models selected by the Kai model allowlist. */
+  modelChain?: string[];
+  /** Credit multiplier for this Kai model. */
+  creditMultiplier?: number;
+  /** Minimum credits charged per LLM iteration. */
+  minimumCredits?: number;
+  /** Additional metering metadata. */
+  meterMetadata?: Record<string, unknown>;
+  /** Await LLM metering and return usage details. */
+  awaitMetering?: boolean;
+  /** Optional base request id for per-iteration metering idempotency. */
+  meterRequestId?: string;
   /** If true, expose MCP tools. Default true. */
   enableTools?: boolean;
 }
@@ -82,6 +96,16 @@ export interface RunKaiAgentResult {
     error?: string;
   }>;
   fullMessages: Message[];
+  modelUsage: Array<{
+    requestedModel?: string;
+    actualModel?: string;
+    responseId?: string;
+    estimatedCredits?: number;
+    chargedCredits?: number;
+    balanceAfter?: number;
+    success?: boolean;
+    error?: string;
+  }>;
 }
 
 /**
@@ -138,6 +162,7 @@ export async function runKaiAgent(
   const enableTools = input.enableTools !== false;
   const tools = enableTools ? await loadKaiToolDefinitions() : [];
   const toolCallLog: RunKaiAgentResult["toolCalls"] = [];
+  const modelUsage: RunKaiAgentResult["modelUsage"] = [];
 
   const messages: Message[] = [...input.messages];
 
@@ -148,12 +173,31 @@ export async function runKaiAgent(
     const response: InvokeResult = await invokeLLM({
       messages,
       ...(tools.length > 0 ? { tools, toolChoice: "auto" } : {}),
+      model: input.model,
+      modelChain: input.modelChain,
       meter: {
         userId: input.user.id,
         source: input.meterSource ?? "ai_chat",
         action: input.meterAction ?? `kai.agent.iter${iteration}`,
         tenantId: input.user.tenantId ?? undefined,
+        requestId: input.meterRequestId
+          ? `${input.meterRequestId}:iter:${iteration}`
+          : undefined,
+        creditMultiplier: input.creditMultiplier,
+        minimumCredits: input.minimumCredits,
+        metadata: input.meterMetadata,
+        awaitResult: input.awaitMetering,
       },
+    });
+    modelUsage.push({
+      requestedModel: input.model,
+      actualModel: response.model,
+      responseId: response.id,
+      estimatedCredits: response.metering?.estimatedCredits,
+      chargedCredits: response.metering?.chargedCredits,
+      balanceAfter: response.metering?.balanceAfter,
+      success: response.metering?.success,
+      error: response.metering?.error,
     });
 
     const choice = response.choices[0];
@@ -211,5 +255,6 @@ export async function runKaiAgent(
     iterations: iteration,
     toolCalls: toolCallLog,
     fullMessages: messages,
+    modelUsage,
   };
 }

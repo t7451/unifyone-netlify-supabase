@@ -1,10 +1,23 @@
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
+import { protectedProcedure, router, tenantProcedure } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { getDb } from "../db";
 import { aiConversations } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { mcpClient } from "../lib/mcpClient";
+import {
+  buildKaiChatMeterMetadata,
+  getKaiModelCatalogForClient,
+  KAI_MODEL_IDS,
+  resolveKaiModel,
+} from "../lib/kaiModels";
+import {
+  buildKaiUsageLedgerIdempotencyKey,
+  checkKaiCreditAllowance,
+  debitKaiCreditUsage,
+} from "../lib/kaiCreditGuard";
+import { randomUUID } from "node:crypto";
 
 // ─── Context-aware system prompts per page ──────────────────────────────────
 // Kai is the UnifyOne AI sidekick — powered by UnifyAI (Cloudflare Workers MCP).
@@ -75,6 +88,11 @@ const CONTEXT_SUGGESTIONS: Record<string, string[]> = {
 };
 
 export const aiRouter = router({
+  /** List Kai model choices clients are allowed to request. */
+  listModels: protectedProcedure.query(() => ({
+    models: getKaiModelCatalogForClient(),
+  })),
+
   /** Get context-aware suggested prompts for the current page — Kai */
   getSuggestions: protectedProcedure
     .input(z.object({ context: z.string().default("general") }))
@@ -126,19 +144,44 @@ export const aiRouter = router({
     }),
 
   /** Send a message and get an AI response — persists to conversation history */
-  chat: protectedProcedure
+  chat: tenantProcedure
     .input(
       z.object({
         message: z.string().min(1).max(4000),
         context: z.string().default("general"),
         conversationId: z.number().optional(),
+        model: z.enum(KAI_MODEL_IDS).optional(),
         /** Optional data context injected into the system prompt (e.g. current shift stats) */
         dataContext: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       try {
+        const user = ctx.user;
+        if (!user) throw new TRPCError({ code: "UNAUTHORIZED" });
         const db = await getDb();
+        const selectedModel = resolveKaiModel(input.model);
+        const kaiUsageRequestId = randomUUID();
+        const meterMetadata = buildKaiChatMeterMetadata(
+          selectedModel,
+          input.model
+        );
+        const creditAllowance = await checkKaiCreditAllowance({
+          tenantId: ctx.tenantId,
+          userId: user.id,
+          minimumCredits: selectedModel.minimumCredits,
+        });
+        if (!creditAllowance.allowed) {
+          throw new TRPCError({
+            code:
+              creditAllowance.enforcement === "neon"
+                ? "FORBIDDEN"
+                : "SERVICE_UNAVAILABLE",
+            message:
+              creditAllowance.reason ??
+              "Insufficient Kai credits for the selected model.",
+          });
+        }
 
         // Build system prompt with optional data context + live MCP data
         const baseSystemPrompt =
@@ -171,7 +214,7 @@ export const aiRouter = router({
             // Non-blocking — Kai still works without live shift data
             try {
               const analytics = await mcpClient.getAnalytics(
-                ctx.user.tenantId ? String(ctx.user.tenantId) : undefined
+                ctx.tenantId ? String(ctx.tenantId) : undefined
               );
               if (analytics) {
                 mcpContext = `\n\nPlatform analytics:\n${JSON.stringify(analytics, null, 2)}`;
@@ -208,7 +251,7 @@ export const aiRouter = router({
             .where(
               and(
                 eq(aiConversations.id, conversationId),
-                eq(aiConversations.userId, ctx.user.id)
+                eq(aiConversations.userId, user.id)
               )
             )
             .limit(1);
@@ -232,6 +275,25 @@ export const aiRouter = router({
         // Call LLM with error handling + credit metering.
         // For data-rich contexts, run the agentic loop so Kai can call MCP tools.
         let assistantContent: string;
+        let actualModel: string | null = null;
+        let estimatedCredits = 0;
+        let chargedCredits = 0;
+        let balanceAfter: number | null = null;
+        let meteringSuccess: boolean | undefined;
+        let meteringError: string | undefined;
+        let toolCallCount = 0;
+        let llmSucceeded = false;
+        let kaiResponseId: string | null = null;
+        let kaiDebitChargedCredits: number | null = null;
+        let kaiDebitIdempotencyKey: string | null = null;
+        let kaiDebitApplied: boolean | null = null;
+        let agentToolCalls: Array<{ name: string; error?: string }> = [];
+        let agentModelUsage: Array<{
+          actualModel?: string;
+          chargedCredits?: number;
+          estimatedCredits?: number;
+          responseId?: string;
+        }> = [];
         const useAgent = ["dashboard", "money-manager", "gig-command"].includes(
           input.context
         );
@@ -241,14 +303,48 @@ export const aiRouter = router({
             const agentResult = await runKaiAgent({
               messages: llmMessages,
               user: {
-                id: ctx.user.id,
-                tenantId: ctx.user.tenantId ?? null,
+                id: user.id,
+                tenantId: ctx.tenantId,
               },
               maxIterations: 4,
+              model: selectedModel.gatewayModel,
+              modelChain: selectedModel.fallbackModels,
               meterSource: "ai_chat",
               meterAction: `kai.chat:${input.context}`,
+              creditMultiplier: selectedModel.creditMultiplier,
+              minimumCredits: selectedModel.minimumCredits,
+              meterMetadata,
+              awaitMetering: true,
+              meterRequestId: kaiUsageRequestId,
             });
             assistantContent = agentResult.finalContent;
+            llmSucceeded = true;
+            toolCallCount = agentResult.toolCalls.length;
+            agentToolCalls = agentResult.toolCalls.map(t => ({
+              name: t.name,
+              ...(t.error ? { error: t.error } : {}),
+            }));
+            agentModelUsage = agentResult.modelUsage.map(usage => ({
+              actualModel: usage.actualModel,
+              chargedCredits: usage.chargedCredits,
+              estimatedCredits: usage.estimatedCredits,
+              responseId: usage.responseId,
+            }));
+            const lastUsage =
+              agentResult.modelUsage[agentResult.modelUsage.length - 1];
+            actualModel = lastUsage?.actualModel ?? null;
+            kaiResponseId = lastUsage?.responseId ?? null;
+            estimatedCredits = agentResult.modelUsage.reduce(
+              (sum, usage) => sum + (usage.estimatedCredits ?? 0),
+              0
+            );
+            chargedCredits = agentResult.modelUsage.reduce(
+              (sum, usage) => sum + (usage.chargedCredits ?? 0),
+              0
+            );
+            balanceAfter = lastUsage?.balanceAfter ?? null;
+            meteringSuccess = lastUsage?.success;
+            meteringError = lastUsage?.error;
             if (agentResult.toolCalls.length > 0) {
               console.log(
                 `[Kai] Agent used ${agentResult.toolCalls.length} tool calls in ${agentResult.iterations} iterations:`,
@@ -258,13 +354,28 @@ export const aiRouter = router({
           } else {
             const response = await invokeLLM({
               messages: llmMessages,
+              model: selectedModel.gatewayModel,
+              modelChain: selectedModel.fallbackModels,
               meter: {
-                userId: ctx.user.id,
+                userId: user.id,
                 source: "ai_chat",
                 action: `kai.chat:${input.context}`,
-                tenantId: ctx.user.tenantId ?? undefined,
+                tenantId: ctx.tenantId,
+                creditMultiplier: selectedModel.creditMultiplier,
+                minimumCredits: selectedModel.minimumCredits,
+                metadata: meterMetadata,
+                awaitResult: true,
+                requestId: kaiUsageRequestId,
               },
             });
+            llmSucceeded = true;
+            kaiResponseId = response.id;
+            actualModel = response.model;
+            estimatedCredits = response.metering?.estimatedCredits ?? 0;
+            chargedCredits = response.metering?.chargedCredits ?? 0;
+            balanceAfter = response.metering?.balanceAfter ?? null;
+            meteringSuccess = response.metering?.success;
+            meteringError = response.metering?.error;
             const rawContent = response.choices[0]?.message?.content;
             assistantContent =
               typeof rawContent === "string"
@@ -278,6 +389,67 @@ export const aiRouter = router({
           );
           assistantContent =
             "I encountered a temporary issue processing your request. Please try again in a moment.";
+        }
+
+        if (llmSucceeded) {
+          const creditsToDebit =
+            chargedCredits || estimatedCredits || selectedModel.minimumCredits;
+          const debitIdempotencyKey = buildKaiUsageLedgerIdempotencyKey({
+            tenantId: ctx.tenantId,
+            userId: user.id,
+            responseId: kaiResponseId,
+            requestId: kaiUsageRequestId,
+          });
+          try {
+            const debit = await debitKaiCreditUsage({
+              tenantId: ctx.tenantId,
+              userId: user.id,
+              credits: creditsToDebit,
+              idempotencyKey: debitIdempotencyKey,
+              description: `Kai chat ${input.context} (${selectedModel.id})`,
+              metadata: {
+                context: input.context,
+                requestedModel: input.model ?? null,
+                selectedModel: selectedModel.id,
+                gatewayModel: selectedModel.gatewayModel,
+                actualModel,
+                actualModels: agentModelUsage
+                  .map(usage => usage.actualModel)
+                  .filter(Boolean),
+                estimatedCredits:
+                  estimatedCredits || selectedModel.minimumCredits,
+                chargedCredits: creditsToDebit,
+                creditMultiplier: selectedModel.creditMultiplier,
+                minimumCredits: selectedModel.minimumCredits,
+                supabaseMeteringSuccess: meteringSuccess,
+                supabaseMeteringError: meteringError,
+                toolCallCount,
+                toolCalls: agentToolCalls,
+                responseId: kaiResponseId,
+                requestId: kaiUsageRequestId,
+              },
+            });
+            kaiDebitChargedCredits = debit.chargedCredits;
+            kaiDebitIdempotencyKey = debit.idempotencyKey;
+            kaiDebitApplied = debit.debited;
+            balanceAfter = debit.balanceAfter;
+          } catch (debitError) {
+            console.error(
+              "[Kai] Neon credit debit failed:",
+              debitError instanceof Error
+                ? debitError.message
+                : String(debitError)
+            );
+            throw new TRPCError({
+              code: "SERVICE_UNAVAILABLE",
+              message:
+                debitError instanceof Error
+                  ? `Kai credit debit failed: ${debitError.message}`
+                  : "Kai credit debit failed",
+            });
+          }
+        } else {
+          balanceAfter = creditAllowance.balance;
         }
 
         // Persist conversation
@@ -309,14 +481,14 @@ export const aiRouter = router({
               .where(
                 and(
                   eq(aiConversations.id, conversationId),
-                  eq(aiConversations.userId, ctx.user.id)
+                  eq(aiConversations.userId, user.id)
                 )
               );
           } else {
             const [inserted] = await db
               .insert(aiConversations)
               .values({
-                userId: ctx.user.id,
+                userId: user.id,
                 context: input.context,
                 messages: updatedMessages,
                 title: title ?? "New Conversation",
@@ -330,8 +502,36 @@ export const aiRouter = router({
           reply: assistantContent,
           conversationId,
           messageCount: updatedMessages.length,
+          metadata: {
+            model: {
+              requested: input.model ?? null,
+              selected: selectedModel.id,
+              label: selectedModel.label,
+              provider: selectedModel.provider,
+              gatewayModel: selectedModel.gatewayModel,
+              actual: actualModel,
+              fallbackModels: selectedModel.fallbackModels,
+            },
+            credits: {
+              minimum: selectedModel.minimumCredits,
+              multiplier: selectedModel.creditMultiplier,
+              estimated: estimatedCredits || selectedModel.minimumCredits,
+              charged: (kaiDebitChargedCredits ?? chargedCredits) || null,
+              balanceBefore: creditAllowance.balance,
+              balanceAfter,
+              enforcement: creditAllowance.enforcement,
+              ledgerDebited: kaiDebitApplied,
+              ledgerIdempotencyKey: kaiDebitIdempotencyKey,
+              meteringSuccess,
+              meteringError,
+            },
+            toolCallCount,
+          },
         };
       } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         console.error(
           "[Kai] Chat mutation failed:",
           error instanceof Error ? error.message : String(error)

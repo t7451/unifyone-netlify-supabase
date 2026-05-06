@@ -48,6 +48,7 @@ import { pixelforgeRouter } from "./routers/pixelforge";
 import { customersRouter } from "./routers/customers";
 import { discountsRouter } from "./routers/discounts";
 import { masterControlRouter } from "./routers/masterControl";
+import { kaiCreditsRouter } from "./routers/kaiCredits";
 
 export const appRouter = router({
   system: systemRouter,
@@ -130,6 +131,7 @@ export const appRouter = router({
 
   discounts: discountsRouter,
   masterControl: masterControlRouter,
+  kaiCredits: kaiCreditsRouter,
 });
 
 export type AppRouter = typeof appRouter;

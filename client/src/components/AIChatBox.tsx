@@ -12,6 +12,20 @@ import { StreamdownLazy } from "./StreamdownLazy";
 export type Message = {
   role: "system" | "user" | "assistant";
   content: string;
+  metadata?: {
+    model?: {
+      label?: string | null;
+      actual?: string | null;
+      selected?: string | null;
+    };
+    credits?: {
+      estimated?: number | null;
+      charged?: number | null;
+      balanceAfter?: number | null;
+      meteringError?: string | null;
+    };
+    toolCallCount?: number | null;
+  };
 };
 
 export type AIChatBoxProps = {
@@ -262,8 +276,43 @@ export function AIChatBox({
                       )}
                     >
                       {message.role === "assistant" ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <StreamdownLazy>{message.content}</StreamdownLazy>
+                        <div>
+                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <StreamdownLazy>{message.content}</StreamdownLazy>
+                          </div>
+                          {message.metadata ? (
+                            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-border/60 pt-2 text-[11px] text-muted-foreground">
+                              {message.metadata.model ? (
+                                <span>
+                                  {message.metadata.model.label ??
+                                    message.metadata.model.actual ??
+                                    message.metadata.model.selected}
+                                </span>
+                              ) : null}
+                              {message.metadata.credits ? (
+                                <span>
+                                  {message.metadata.credits.charged
+                                    ? `${message.metadata.credits.charged} credits`
+                                    : `~${message.metadata.credits.estimated ?? 0} credits`}
+                                </span>
+                              ) : null}
+                              {typeof message.metadata.toolCallCount ===
+                                "number" &&
+                              message.metadata.toolCallCount > 0 ? (
+                                <span>
+                                  {message.metadata.toolCallCount} tool calls
+                                </span>
+                              ) : null}
+                              {message.metadata.credits?.balanceAfter !==
+                                null &&
+                              message.metadata.credits?.balanceAfter !==
+                                undefined ? (
+                                <span>
+                                  {message.metadata.credits.balanceAfter} left
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
                         </div>
                       ) : (
                         <p className="whitespace-pre-wrap text-sm">

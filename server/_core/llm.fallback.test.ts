@@ -15,6 +15,7 @@ vi.mock("../creditMeter", () => ({
 }));
 
 import { invokeLLMWithFallback, DEFAULT_FALLBACK_CHAIN } from "./llm";
+import { meterCredits } from "../creditMeter";
 
 const mockOk = (model: string) =>
   Promise.resolve({
@@ -90,6 +91,57 @@ describe("invokeLLMWithFallback", () => {
       modelChain: ["custom-fallback"],
     });
     expect(out.choices[0].message.content).toBe("from custom-fallback");
+  });
+
+  it("applies minimum credits and returns awaited metering metadata", async () => {
+    fetchSpy.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: "test",
+            model: "gpt-4o-mini",
+            choices: [
+              {
+                index: 0,
+                message: { role: "assistant", content: "ok" },
+                finish_reason: "stop",
+              },
+            ],
+            usage: {
+              prompt_tokens: 100,
+              completion_tokens: 50,
+              total_tokens: 150,
+            },
+          }),
+        text: () => Promise.resolve(""),
+      })
+    );
+
+    const out = await invokeLLMWithFallback({
+      messages: [{ role: "user", content: "hi" }],
+      model: "gpt-4o-mini",
+      meter: {
+        userId: 1,
+        action: "kai.chat:test",
+        minimumCredits: 2,
+        creditMultiplier: 3,
+        awaitResult: true,
+      },
+    });
+
+    expect(out.metering?.estimatedCredits).toBe(2);
+    expect(out.metering?.chargedCredits).toBe(2);
+    expect(meterCredits).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amount: 2,
+        model: "gpt-4o-mini",
+        metadata: expect.objectContaining({
+          credit_multiplier: 3,
+          minimum_credits: 2,
+        }),
+      })
+    );
   });
 
   it("exports DEFAULT_FALLBACK_CHAIN", () => {

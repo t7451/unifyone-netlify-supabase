@@ -51,6 +51,52 @@ describe("runKaiAgent", () => {
     expect(out.iterations).toBe(1);
   });
 
+  it("passes selected model and credit settings to each LLM invocation", async () => {
+    (invokeLLM as any).mockResolvedValueOnce({
+      model: "gpt-4o-mini",
+      choices: [
+        {
+          index: 0,
+          message: { role: "assistant", content: "Hello!" },
+          finish_reason: "stop",
+        },
+      ],
+      metering: {
+        estimatedCredits: 1.5,
+        chargedCredits: 1.5,
+        balanceAfter: 10,
+        success: true,
+      },
+    });
+
+    const out = await runKaiAgent({
+      messages: [{ role: "user", content: "hi" }],
+      user: { id: 1, tenantId: "tenant-A" },
+      model: "gpt-4o-mini",
+      modelChain: ["gpt-4o-mini", "gemini-2.5-flash"],
+      creditMultiplier: 1.5,
+      minimumCredits: 1.5,
+      awaitMetering: true,
+    });
+
+    expect(invokeLLM).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "gpt-4o-mini",
+        modelChain: ["gpt-4o-mini", "gemini-2.5-flash"],
+        meter: expect.objectContaining({
+          creditMultiplier: 1.5,
+          minimumCredits: 1.5,
+          awaitResult: true,
+        }),
+      })
+    );
+    expect(out.modelUsage[0]).toMatchObject({
+      actualModel: "gpt-4o-mini",
+      chargedCredits: 1.5,
+      balanceAfter: 10,
+    });
+  });
+
   it("executes tool calls and feeds results back to LLM", async () => {
     (invokeLLM as any)
       .mockResolvedValueOnce({

@@ -1,0 +1,348 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const invokeLLMMock = vi.hoisted(() => vi.fn());
+
+vi.mock("../../_core/llm", () => ({
+  invokeLLM: invokeLLMMock,
+}));
+
+vi.mock("../../db", () => ({
+  getDb: vi.fn(),
+}));
+
+import { getDb } from "../../db";
+import { aiRouter } from "../ai";
+
+type LedgerRow = {
+  id: number;
+  tenantId: number;
+  userId: number;
+  type: string;
+  creditDelta: number;
+  idempotencyKey: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+};
+
+const ctx = {
+  user: {
+    id: 7,
+    email: "buyer@example.com",
+    tenantId: 44,
+    role: "user",
+    openId: "openid",
+  },
+  req: {} as any,
+  res: {} as any,
+};
+
+function collectWhereScope(whereClause: unknown) {
+  const scope: { tenantId?: number; userId?: number } = {};
+  let pendingColumn: "tenantId" | "userId" | null = null;
+
+  function walk(value: unknown) {
+    if (!value || typeof value !== "object") return;
+    const record = value as Record<PropertyKey, unknown>;
+    if (record.name === "tenantId" || record.name === "userId") {
+      pendingColumn = record.name;
+      return;
+    }
+    if (
+      pendingColumn &&
+      "value" in record &&
+      typeof record.value === "number"
+    ) {
+      scope[pendingColumn] = record.value;
+      pendingColumn = null;
+      return;
+    }
+    if (Array.isArray(record.queryChunks)) {
+      record.queryChunks.forEach(walk);
+    }
+    if (Array.isArray(record.value)) {
+      record.value.forEach(walk);
+    }
+  }
+
+  walk(whereClause);
+  return scope;
+}
+
+function createAiDb(rows: LedgerRow[]) {
+  let nextLedgerId = rows.length + 1;
+  let nextConversationId = 100;
+  const selectWhere = vi.fn((whereClause: unknown) => {
+    const scope = collectWhereScope(whereClause);
+    const remaining = rows
+      .filter(
+        row => row.tenantId === scope.tenantId && row.userId === scope.userId
+      )
+      .reduce((sum, row) => sum + row.creditDelta, 0);
+    return Promise.resolve([{ remaining }]);
+  });
+  const insertValues = vi.fn((value: Record<string, unknown>) => {
+    const insertBuilder = {
+      onConflictDoNothing: vi.fn(() => ({
+        returning: vi.fn(() => {
+          const idempotencyKey = String(value.idempotencyKey);
+          if (rows.some(row => row.idempotencyKey === idempotencyKey)) {
+            return Promise.resolve([]);
+          }
+          const inserted = {
+            id: nextLedgerId++,
+            tenantId: Number(value.tenantId),
+            userId: Number(value.userId),
+            type: String(value.type),
+            creditDelta: Number(value.creditDelta),
+            idempotencyKey,
+            description:
+              typeof value.description === "string"
+                ? value.description
+                : undefined,
+            metadata: value.metadata as Record<string, unknown> | undefined,
+          };
+          rows.push(inserted);
+          return Promise.resolve([{ id: inserted.id }]);
+        }),
+      })),
+      returning: vi.fn(() => Promise.resolve([{ id: nextConversationId++ }])),
+    };
+    return insertBuilder;
+  });
+
+  return {
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: selectWhere,
+      })),
+    })),
+    insert: vi.fn(() => ({
+      values: insertValues,
+    })),
+    __selectWhere: selectWhere,
+    __insertValues: insertValues,
+  };
+}
+
+function mockSuccessfulLlm(responseId = "resp-kai") {
+  invokeLLMMock.mockResolvedValue({
+    id: responseId,
+    created: 1,
+    model: "gemini-2.5-flash",
+    choices: [
+      {
+        index: 0,
+        message: { role: "assistant", content: "Kai response" },
+        finish_reason: "stop",
+      },
+    ],
+    usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+    metering: {
+      estimatedCredits: 1,
+      chargedCredits: 1,
+      balanceAfter: 999,
+      success: true,
+    },
+  });
+}
+
+describe("aiRouter Kai Neon credit enforcement", () => {
+  beforeEach(() => {
+    vi.mocked(getDb).mockReset();
+    invokeLLMMock.mockReset();
+  });
+
+  it("allows chat when purchased Neon balance meets the selected model minimum", async () => {
+    const rows: LedgerRow[] = [
+      {
+        id: 1,
+        tenantId: 44,
+        userId: 7,
+        type: "purchase",
+        creditDelta: 4,
+        idempotencyKey: "purchase",
+      },
+    ];
+    vi.mocked(getDb).mockResolvedValue(createAiDb(rows) as any);
+    mockSuccessfulLlm("resp-allow");
+
+    const caller = aiRouter.createCaller(ctx as any);
+    const result = await caller.chat({
+      message: "Help me plan",
+      context: "general",
+      model: "kai-fast",
+    });
+
+    expect(invokeLLMMock).toHaveBeenCalledOnce();
+    expect(result.reply).toBe("Kai response");
+    expect(result.metadata.credits).toMatchObject({
+      balanceBefore: 4,
+      charged: 1,
+      balanceAfter: 3,
+      enforcement: "neon",
+      ledgerDebited: true,
+    });
+  });
+
+  it("blocks insufficient Neon balance before calling the LLM", async () => {
+    vi.mocked(getDb).mockResolvedValue(
+      createAiDb([
+        {
+          id: 1,
+          tenantId: 44,
+          userId: 7,
+          type: "purchase",
+          creditDelta: 1,
+          idempotencyKey: "purchase",
+        },
+      ]) as any
+    );
+
+    const caller = aiRouter.createCaller(ctx as any);
+    await expect(
+      caller.chat({
+        message: "Use premium reasoning",
+        context: "general",
+        model: "kai-premium",
+      })
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "Insufficient Kai credits for the selected model.",
+    });
+    expect(invokeLLMMock).not.toHaveBeenCalled();
+  });
+
+  it("records successful usage as a negative tenant/user-scoped ledger debit", async () => {
+    const rows: LedgerRow[] = [
+      {
+        id: 1,
+        tenantId: 44,
+        userId: 7,
+        type: "purchase",
+        creditDelta: 5,
+        idempotencyKey: "purchase",
+      },
+    ];
+    vi.mocked(getDb).mockResolvedValue(createAiDb(rows) as any);
+    mockSuccessfulLlm("resp-debit");
+
+    const caller = aiRouter.createCaller(ctx as any);
+    const result = await caller.chat({
+      message: "Summarize my orders",
+      context: "general",
+      model: "kai-balanced",
+    });
+
+    const usageRows = rows.filter(row => row.type === "usage");
+    expect(usageRows).toHaveLength(1);
+    expect(usageRows[0]).toMatchObject({
+      tenantId: 44,
+      userId: 7,
+      creditDelta: -1,
+      idempotencyKey: "kai_chat_usage:44:7:resp-debit",
+      description: "Kai chat general (kai-balanced)",
+      metadata: {
+        context: "general",
+        requestedModel: "kai-balanced",
+        selectedModel: "kai-balanced",
+        gatewayModel: "claude-3-5-haiku",
+        actualModel: "gemini-2.5-flash",
+        chargedCredits: 1,
+        responseId: "resp-debit",
+      },
+    });
+    expect(result.metadata.credits.balanceAfter).toBe(4);
+  });
+
+  it("does not double-debit a replayed response idempotency key", async () => {
+    const rows: LedgerRow[] = [
+      {
+        id: 1,
+        tenantId: 44,
+        userId: 7,
+        type: "purchase",
+        creditDelta: 10,
+        idempotencyKey: "purchase",
+      },
+    ];
+    vi.mocked(getDb).mockResolvedValue(createAiDb(rows) as any);
+    mockSuccessfulLlm("resp-replay");
+
+    const caller = aiRouter.createCaller(ctx as any);
+    await caller.chat({
+      message: "First",
+      context: "general",
+      model: "kai-fast",
+    });
+    const replay = await caller.chat({
+      message: "Replay",
+      context: "general",
+      model: "kai-fast",
+    });
+
+    expect(rows.filter(row => row.type === "usage")).toHaveLength(1);
+    expect(replay.metadata.credits).toMatchObject({
+      balanceBefore: 9,
+      balanceAfter: 9,
+      ledgerDebited: false,
+      ledgerIdempotencyKey: "kai_chat_usage:44:7:resp-replay",
+    });
+  });
+
+  it("ignores cross-tenant ledger rows for allowance and debit balance", async () => {
+    const rows: LedgerRow[] = [
+      {
+        id: 1,
+        tenantId: 44,
+        userId: 7,
+        type: "purchase",
+        creditDelta: 2,
+        idempotencyKey: "tenant-purchase",
+      },
+      {
+        id: 2,
+        tenantId: 45,
+        userId: 7,
+        type: "purchase",
+        creditDelta: 100,
+        idempotencyKey: "other-tenant-purchase",
+      },
+    ];
+    vi.mocked(getDb).mockResolvedValue(createAiDb(rows) as any);
+    mockSuccessfulLlm("resp-isolated");
+
+    const caller = aiRouter.createCaller(ctx as any);
+    const result = await caller.chat({
+      message: "Stay isolated",
+      context: "general",
+      model: "kai-fast",
+    });
+
+    expect(result.metadata.credits).toMatchObject({
+      balanceBefore: 2,
+      balanceAfter: 1,
+    });
+    expect(rows.find(row => row.type === "usage")).toMatchObject({
+      tenantId: 44,
+      userId: 7,
+      creditDelta: -1,
+    });
+  });
+
+  it("fails closed when Neon is unavailable before production chat LLM work", async () => {
+    vi.mocked(getDb).mockResolvedValue(null);
+
+    const caller = aiRouter.createCaller(ctx as any);
+    await expect(
+      caller.chat({
+        message: "Are credits available?",
+        context: "general",
+        model: "kai-fast",
+      })
+    ).rejects.toMatchObject({
+      code: "SERVICE_UNAVAILABLE",
+      message: "Kai credit ledger database is unavailable.",
+    });
+    expect(invokeLLMMock).not.toHaveBeenCalled();
+  });
+});

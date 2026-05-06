@@ -21,6 +21,8 @@ import {
   themes,
   stripeWebhookEvents,
   users,
+  kaiCreditPurchases,
+  kaiCreditLedger,
 } from "../drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { capi } from "./meta/capi";
@@ -29,6 +31,10 @@ import { flushAllOverages, flushUserOverages } from "./creditMeter";
 import { errMsg } from "./_core/errors";
 import { getStripe } from "./_core/stripeClient";
 import { PLAN_CATALOG, PLAN_CATALOG_BY_SLUG } from "../shared/pricing";
+import {
+  buildKaiCreditFulfillmentPlan,
+  parseKaiCreditCheckoutMetadata,
+} from "./lib/kaiCredits";
 
 // Supabase admin client for subscription/credit sync (service role — no RLS)
 function getSupabaseAdmin() {
@@ -433,6 +439,76 @@ async function grantSubscriptionCredits(
   }
 }
 
+async function fulfillKaiCreditCheckout(session: Stripe.Checkout.Session) {
+  if (session.metadata?.type !== "kai_credits") return false;
+
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable for Kai credit fulfillment");
+
+  const metadata = parseKaiCreditCheckoutMetadata(session.metadata);
+  if (!metadata) return false;
+
+  const [purchase] = await db
+    .select()
+    .from(kaiCreditPurchases)
+    .where(
+      and(
+        eq(kaiCreditPurchases.id, metadata.purchaseId),
+        eq(kaiCreditPurchases.tenantId, metadata.tenantId),
+        eq(kaiCreditPurchases.userId, metadata.userId)
+      )
+    )
+    .limit(1);
+
+  if (!purchase) {
+    throw new Error(`Kai credit purchase not found: ${metadata.purchaseId}`);
+  }
+
+  let plan: ReturnType<typeof buildKaiCreditFulfillmentPlan>;
+  try {
+    plan = buildKaiCreditFulfillmentPlan(session, purchase);
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.startsWith("Kai credit amount mismatch")
+    ) {
+      await db
+        .update(kaiCreditPurchases)
+        .set({ status: "failed", updatedAt: new Date() })
+        .where(
+          and(
+            eq(kaiCreditPurchases.id, purchase.id),
+            eq(kaiCreditPurchases.tenantId, purchase.tenantId),
+            eq(kaiCreditPurchases.userId, purchase.userId)
+          )
+        );
+    }
+    throw error;
+  }
+  if (!plan) return false;
+
+  await db
+    .insert(kaiCreditLedger)
+    .values(plan.ledgerInsert)
+    .onConflictDoNothing({ target: kaiCreditLedger.idempotencyKey });
+
+  await db
+    .update(kaiCreditPurchases)
+    .set(plan.purchaseUpdate)
+    .where(
+      and(
+        eq(kaiCreditPurchases.id, purchase.id),
+        eq(kaiCreditPurchases.tenantId, purchase.tenantId),
+        eq(kaiCreditPurchases.userId, purchase.userId)
+      )
+    );
+
+  console.log(
+    `[Stripe] Fulfilled Kai credit purchase ${purchase.id}: +${purchase.credits} credits for tenant ${purchase.tenantId}, user ${purchase.userId}`
+  );
+  return true;
+}
+
 /** Parse an im_ref cookie value out of a raw HTTP Cookie header. */
 function parseImRefFromCookieHeader(header: string): string | null {
   if (!header) return null;
@@ -505,6 +581,10 @@ export function registerStripeRoutes(app: Express) {
 
           case "checkout.session.completed": {
             const session = event.data.object as Stripe.Checkout.Session;
+            if (await fulfillKaiCreditCheckout(session)) {
+              break;
+            }
+
             const customerId = session.customer as string;
             // PATCHED: resolve via metadata.tenant_id when no prior link.
             // Safe because /api/stripe/create-checkout overrides client-supplied

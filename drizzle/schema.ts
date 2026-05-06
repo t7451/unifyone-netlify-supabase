@@ -107,6 +107,19 @@ export const clippingSourceTypeEnum = pgEnum("clipping_source_type", [
   "upload",
   "url",
 ]);
+export const kaiCreditPurchaseStatusEnum = pgEnum("kai_credit_purchase_status", [
+  "pending",
+  "paid",
+  "failed",
+  "cancelled",
+  "refunded",
+]);
+export const kaiCreditLedgerTypeEnum = pgEnum("kai_credit_ledger_type", [
+  "purchase",
+  "usage",
+  "adjustment",
+  "refund",
+]);
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 export const users = pgTable("users", {
@@ -1793,6 +1806,122 @@ export const stripePaymentAudit = pgTable(
 export type StripePaymentAudit = typeof stripePaymentAudit.$inferSelect;
 export type InsertStripePaymentAudit = typeof stripePaymentAudit.$inferInsert;
 
+// ── Kai Credits ──────────────────────────────────────────────────────────────
+// Purchasable Kai AI credits live in Neon/Drizzle and are intentionally
+// separate from users.creditBalance and the Supabase usage meter.
+export const kaiCreditPackages = pgTable(
+  "kai_credit_packages",
+  {
+    id: serial("id").primaryKey(),
+    slug: varchar("slug", { length: 64 }).notNull().unique(),
+    name: varchar("name", { length: 120 }).notNull(),
+    description: text("description"),
+    credits: integer("credits").notNull(),
+    amountCents: integer("amountCents").notNull(),
+    currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+    stripePriceId: varchar("stripePriceId", { length: 100 }),
+    isActive: boolean("isActive").default(true).notNull(),
+    sortOrder: integer("sortOrder").default(0).notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    activeSortIdx: index("kai_credit_packages_active_sort_idx").on(
+      table.isActive,
+      table.sortOrder
+    ),
+    creditsPositive: check(
+      "kai_credit_packages_credits_positive",
+      sql`${table.credits} > 0`
+    ),
+    amountNonNegative: check(
+      "kai_credit_packages_amount_non_negative",
+      sql`${table.amountCents} >= 0`
+    ),
+  })
+);
+export type KaiCreditPackage = typeof kaiCreditPackages.$inferSelect;
+export type InsertKaiCreditPackage = typeof kaiCreditPackages.$inferInsert;
+
+export const kaiCreditPurchases = pgTable(
+  "kai_credit_purchases",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull(),
+    userId: integer("userId").notNull(),
+    packageId: integer("packageId"),
+    packageSlug: varchar("packageSlug", { length: 64 }).notNull(),
+    credits: integer("credits").notNull(),
+    amountCents: integer("amountCents").notNull(),
+    currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+    status: kaiCreditPurchaseStatusEnum("status")
+      .default("pending")
+      .notNull(),
+    stripeCheckoutSessionId: varchar("stripeCheckoutSessionId", {
+      length: 100,
+    }).unique(),
+    stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 100 }),
+    stripeCustomerId: varchar("stripeCustomerId", { length: 100 }),
+    idempotencyKey: varchar("idempotencyKey", { length: 160 }).notNull(),
+    packageSnapshot: jsonb("packageSnapshot").$type<Record<string, unknown>>(),
+    paidAt: timestamp("paidAt"),
+    fulfilledAt: timestamp("fulfilledAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    tenantUserCreatedIdx: index("kai_credit_purchases_tenant_user_created_idx").on(
+      table.tenantId,
+      table.userId,
+      table.createdAt
+    ),
+    tenantIdempotencyIdx: uniqueIndex(
+      "kai_credit_purchases_tenant_idempotency_idx"
+    ).on(table.tenantId, table.idempotencyKey),
+    creditsPositive: check(
+      "kai_credit_purchases_credits_positive",
+      sql`${table.credits} > 0`
+    ),
+    amountNonNegative: check(
+      "kai_credit_purchases_amount_non_negative",
+      sql`${table.amountCents} >= 0`
+    ),
+  })
+);
+export type KaiCreditPurchase = typeof kaiCreditPurchases.$inferSelect;
+export type InsertKaiCreditPurchase = typeof kaiCreditPurchases.$inferInsert;
+
+export const kaiCreditLedger = pgTable(
+  "kai_credit_ledger",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull(),
+    userId: integer("userId").notNull(),
+    purchaseId: integer("purchaseId"),
+    type: kaiCreditLedgerTypeEnum("type").notNull(),
+    creditDelta: integer("creditDelta").notNull(),
+    idempotencyKey: varchar("idempotencyKey", { length: 160 }).notNull().unique(),
+    description: text("description"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({
+    tenantUserCreatedIdx: index("kai_credit_ledger_tenant_user_created_idx").on(
+      table.tenantId,
+      table.userId,
+      table.createdAt
+    ),
+    purchaseIdx: index("kai_credit_ledger_purchase_idx").on(table.purchaseId),
+    nonZeroDelta: check(
+      "kai_credit_ledger_non_zero_delta",
+      sql`${table.creditDelta} <> 0`
+    ),
+  })
+);
+export type KaiCreditLedger = typeof kaiCreditLedger.$inferSelect;
+export type InsertKaiCreditLedger = typeof kaiCreditLedger.$inferInsert;
+
 // ── Refresh Tokens ────────────────────────────────────────────────────────────
 //
 // Stores opaque refresh tokens that back short-lived access JWTs.
@@ -1999,4 +2128,3 @@ export const discounts = pgTable(
 
 export type Discount = typeof discounts.$inferSelect;
 export type InsertDiscount = typeof discounts.$inferInsert;
-

@@ -90,6 +90,14 @@ export type InvokeParams = {
     requestId?: string;
     /** Override automatic token→credit conversion */
     fixedCredits?: number;
+    /** Multiplier applied to automatic token→credit conversion. */
+    creditMultiplier?: number;
+    /** Minimum credits charged for this request. */
+    minimumCredits?: number;
+    /** Additional audit metadata forwarded to creditMeter. */
+    metadata?: Record<string, unknown>;
+    /** Await metering and attach the result to the InvokeResult. */
+    awaitResult?: boolean;
   };
   /** Override the default model. */
   model?: string;
@@ -123,6 +131,15 @@ export type InvokeResult = {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
+  };
+  metering?: {
+    estimatedCredits: number;
+    chargedCredits?: number;
+    balanceAfter?: number;
+    overageCredits?: number;
+    eventId?: string | null;
+    success?: boolean;
+    error?: string;
   };
 };
 
@@ -396,22 +413,50 @@ async function invokeOnce(
   if (params.meter) {
     const tokensIn = result.usage?.prompt_tokens ?? 0;
     const tokensOut = result.usage?.completion_tokens ?? 0;
+    const tokenCredits = tokensToCredits(tokensIn, tokensOut);
     const amount =
-      params.meter.fixedCredits ?? tokensToCredits(tokensIn, tokensOut);
-    meterCredits({
+      params.meter.fixedCredits ??
+      Math.max(
+        params.meter.minimumCredits ?? 0,
+        Math.round(tokenCredits * (params.meter.creditMultiplier ?? 1) * 100) /
+          100
+      );
+    const meterPayload = {
       userId: params.meter.userId,
       amount,
       source: params.meter.source ?? "ai_chat",
       action: params.meter.action,
       tokensIn,
       tokensOut,
-      model,
+      model: result.model || model,
       tenantId: params.meter.tenantId,
       requestId: params.meter.requestId,
-      metadata: { finish_reason: result.choices[0]?.finish_reason ?? null },
-    }).catch(err =>
-      console.error("[LLM] Credit metering failed:", err.message)
-    );
+      metadata: {
+        finish_reason: result.choices[0]?.finish_reason ?? null,
+        requested_model: model,
+        credit_multiplier: params.meter.creditMultiplier ?? 1,
+        minimum_credits: params.meter.minimumCredits ?? 0,
+        ...(params.meter.metadata ?? {}),
+      },
+    };
+    result.metering = { estimatedCredits: amount };
+    const meteringPromise = meterCredits(meterPayload);
+    if (params.meter.awaitResult) {
+      const metering = await meteringPromise;
+      result.metering = {
+        estimatedCredits: amount,
+        chargedCredits: amount,
+        balanceAfter: metering.balanceAfter,
+        overageCredits: metering.overageCredits,
+        eventId: metering.eventId,
+        success: metering.success,
+        error: metering.error,
+      };
+    } else {
+      meteringPromise.catch(err =>
+        console.error("[LLM] Credit metering failed:", err.message)
+      );
+    }
   }
 
   return result;
