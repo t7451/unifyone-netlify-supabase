@@ -107,6 +107,7 @@ export const masterControlRouter = router({
         name: tenant.name,
         slug: tenant.slug,
         domain: tenant.domain,
+        logoUrl: tenant.logoUrl,
         status: tenant.status,
         subscriptionStatus: tenant.subscriptionStatus,
         ownerId: tenant.ownerId,

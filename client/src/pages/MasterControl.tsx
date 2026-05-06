@@ -91,9 +91,18 @@ export default function MasterControl() {
       onError: error => toast.error(error.message),
     });
 
-  const tenants = snapshot.data?.tenants ?? [];
-  const plans = snapshot.data?.plans ?? [];
-  const modules = snapshot.data?.modules ?? [];
+  const tenants = useMemo(
+    () => snapshot.data?.tenants ?? [],
+    [snapshot.data?.tenants]
+  );
+  const plans = useMemo(
+    () => snapshot.data?.plans ?? [],
+    [snapshot.data?.plans]
+  );
+  const modules = useMemo(
+    () => snapshot.data?.modules ?? [],
+    [snapshot.data?.modules]
+  );
   const [selectedTenantId, setSelectedTenantId] = useState<string>("");
   const selectedTenant = useMemo(
     () => tenants.find(tenant => String(tenant.id) === selectedTenantId),
@@ -112,7 +121,7 @@ export default function MasterControl() {
     setForm({
       name: selectedTenant.name,
       domain: selectedTenant.domain ?? "",
-      logoUrl: "",
+      logoUrl: selectedTenant.logoUrl ?? "",
       status: selectedTenant.status,
       subscriptionStatus: selectedTenant.subscriptionStatus,
       planId: selectedTenant.planId ? String(selectedTenant.planId) : "none",
