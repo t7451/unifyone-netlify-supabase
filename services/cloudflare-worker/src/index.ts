@@ -33,7 +33,10 @@ const DEFAULT_SYSTEM_PROMPT =
   "You are the 1Commerce assistant, a concise and helpful AI for an e-commerce SaaS platform. " +
   "Answer questions about products, orders, and the platform. If unsure, say so.";
 
-function corsHeaders(request: Request, env: Env): Record<string, string> {
+export function corsHeaders(
+  request: Request,
+  env: Pick<Env, "ALLOWED_ORIGINS">,
+): Record<string, string> {
   const origin = request.headers.get("Origin");
   const allowed = env.ALLOWED_ORIGINS.split(",")
     .map((s) => s.trim())
@@ -72,7 +75,7 @@ function jsonResponse(
   });
 }
 
-function normalizeMessages(body: ChatRequestBody): ChatMessage[] {
+export function normalizeMessages(body: ChatRequestBody): ChatMessage[] {
   const msgs: ChatMessage[] = [];
   if (Array.isArray(body.messages) && body.messages.length > 0) {
     msgs.push(...body.messages);
