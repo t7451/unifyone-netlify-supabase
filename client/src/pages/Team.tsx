@@ -77,36 +77,39 @@ export default function Team() {
       const link = `${window.location.origin}/join?token=${data.token}`;
       setInviteLink(link);
       utils.team.listInvites.invalidate();
-      toast.success("Invite created! Share the link below.");
+      toast.success("Invite link created. Share it with your teammate.");
     },
-    onError: e => toast.error(e.message),
+    onError: error =>
+      toast.error(error.message || "Something went wrong. Please try again."),
   });
 
   const revokeInvite = trpc.team.revokeInvite.useMutation({
     onSuccess: () => {
       utils.team.listInvites.invalidate();
-      toast.success("Invite revoked");
+      toast.success("Team invite revoked");
     },
-    onError: e => toast.error(e.message),
+    onError: error =>
+      toast.error(error.message || "Something went wrong. Please try again."),
   });
 
   const updateRole = trpc.team.updateMemberRole.useMutation({
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       utils.team.listMembers.invalidate();
-      toast.success("Role updated");
+      toast.success(`Team member role updated to ${variables.role}`);
     },
-    onError: e => toast.error(e.message),
+    onError: error =>
+      toast.error(error.message || "Something went wrong. Please try again."),
   });
 
   const removeMember = trpc.team.removeMember.useMutation({
     onSuccess: () => {
       utils.team.listMembers.invalidate();
       setRemovingMemberId(null);
-      toast.success("Member removed from team");
+      toast.success("Team member removed");
     },
-    onError: e => {
+    onError: error => {
       setRemovingMemberId(null);
-      toast.error(e.message);
+      toast.error(error.message || "Something went wrong. Please try again.");
     },
   });
 
@@ -230,6 +233,10 @@ export default function Team() {
                     {isAdmin && m.id !== user?.id ? (
                       <Select
                         value={m.role}
+                        disabled={
+                          updateRole.isPending &&
+                          updateRole.variables?.userId === m.id
+                        }
                         onValueChange={v =>
                           updateRole.mutate({
                             userId: m.id,
@@ -364,8 +371,17 @@ export default function Team() {
                         variant="ghost"
                         className="h-7 w-7 p-0 text-gray-500 hover:text-red-400 hover:bg-red-500/10"
                         onClick={() => revokeInvite.mutate({ id: inv.id })}
+                        disabled={
+                          revokeInvite.isPending &&
+                          revokeInvite.variables?.id === inv.id
+                        }
                       >
-                        <XCircle className="w-3.5 h-3.5" />
+                        {revokeInvite.isPending &&
+                        revokeInvite.variables?.id === inv.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <XCircle className="w-3.5 h-3.5" />
+                        )}
                       </Button>
                     </div>
                   </td>
@@ -497,7 +513,10 @@ export default function Team() {
                   disabled={!inviteEmail.trim() || sendInvite.isPending}
                 >
                   {sendInvite.isPending ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
                   ) : (
                     <>
                       <UserPlus className="w-4 h-4 mr-2" /> Generate Invite
@@ -565,12 +584,16 @@ export default function Team() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/10 text-gray-300 hover:bg-white/5">
+            <AlertDialogCancel
+              className="border-white/10 text-gray-300 hover:bg-white/5"
+              disabled={removeMember.isPending}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700 text-white"
               onClick={() => removeMember.mutate({ userId: removingMemberId! })}
+              disabled={removeMember.isPending || !removingMemberId}
             >
               {removeMember.isPending ? (
                 <>

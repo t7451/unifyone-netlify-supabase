@@ -36,7 +36,7 @@ export default function DiscountsPage() {
 
   const create = trpc.discounts.create.useMutation({
     onSuccess: () => {
-      toast.success("Discount created.");
+      toast.success("Discount created");
       utils.discounts.list.invalidate();
       setOpen(false);
       setCode("");
@@ -45,20 +45,25 @@ export default function DiscountsPage() {
       setValue("10");
       setUsageLimit("0");
     },
-    onError: (e: { message: string }) => toast.error(e.message),
+    onError: error => toast.error(error.message || "Something went wrong"),
   });
 
   const toggle = trpc.discounts.toggleActive.useMutation({
-    onSuccess: () => utils.discounts.list.invalidate(),
-    onError: (e: { message: string }) => toast.error(e.message),
+    onSuccess: (_data, variables) => {
+      toast.success(
+        variables.isActive ? "Discount activated" : "Discount deactivated"
+      );
+      utils.discounts.list.invalidate();
+    },
+    onError: error => toast.error(error.message || "Something went wrong"),
   });
 
   const del = trpc.discounts.delete.useMutation({
     onSuccess: () => {
-      toast.success("Discount deleted.");
+      toast.success("Discount deleted");
       utils.discounts.list.invalidate();
     },
-    onError: (e: { message: string }) => toast.error(e.message),
+    onError: error => toast.error(error.message || "Something went wrong"),
   });
 
   return (
@@ -196,72 +201,88 @@ export default function DiscountsPage() {
             </p>
           ) : (
             <div className="space-y-2">
-              {list.data.map(d => (
-                <div
-                  key={d.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <code className="text-white font-mono text-sm">
-                        {d.code}
-                      </code>
-                      <Badge
-                        variant="outline"
-                        className={
-                          d.isActive
-                            ? "border-emerald-500/30 text-emerald-400 text-xs"
-                            : "border-gray-500/30 text-gray-400 text-xs"
-                        }
-                      >
-                        {d.isActive ? "Active" : "Disabled"}
-                      </Badge>
-                      <span className="text-xs text-gray-400">
-                        {d.type === "percentage"
-                          ? `${d.value}% off`
-                          : `${d.value} ${d.currency} off`}
-                      </span>
-                    </div>
-                    {d.description && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        {d.description}
+              {list.data.map(d => {
+                const isToggling =
+                  toggle.isPending && toggle.variables?.id === d.id;
+                const isDeleting = del.isPending && del.variables?.id === d.id;
+
+                return (
+                  <div
+                    key={d.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <code className="text-white font-mono text-sm">
+                          {d.code}
+                        </code>
+                        <Badge
+                          variant="outline"
+                          className={
+                            d.isActive
+                              ? "border-emerald-500/30 text-emerald-400 text-xs"
+                              : "border-gray-500/30 text-gray-400 text-xs"
+                          }
+                        >
+                          {d.isActive ? "Active" : "Disabled"}
+                        </Badge>
+                        <span className="text-xs text-gray-400">
+                          {d.type === "percentage"
+                            ? `${d.value}% off`
+                            : `${d.value} ${d.currency} off`}
+                        </span>
+                      </div>
+                      {d.description && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {d.description}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-600 mt-0.5">
+                        Used {d.usageCount}
+                        {d.usageLimit > 0 ? ` / ${d.usageLimit}` : ""} times
                       </p>
-                    )}
-                    <p className="text-xs text-gray-600 mt-0.5">
-                      Used {d.usageCount}
-                      {d.usageLimit > 0 ? ` / ${d.usageLimit}` : ""} times
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        toggle.mutate({ id: d.id, isActive: !d.isActive })
-                      }
-                      className="border-white/10 text-gray-300 hover:text-white"
-                    >
-                      <Power className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        if (
-                          confirm(
-                            `Delete discount '${d.code}'? Cannot be undone.`
-                          )
-                        ) {
-                          del.mutate({ id: d.id });
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          toggle.mutate({ id: d.id, isActive: !d.isActive })
                         }
-                      }}
-                      className="border-red-500/20 text-red-400 hover:bg-red-500/10"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                        disabled={isToggling || isDeleting}
+                        className="border-white/10 text-gray-300 hover:text-white"
+                      >
+                        {isToggling ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Power className="w-3.5 h-3.5" />
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          if (
+                            confirm(
+                              `Delete discount '${d.code}'? Cannot be undone.`
+                            )
+                          ) {
+                            del.mutate({ id: d.id });
+                          }
+                        }}
+                        disabled={isToggling || isDeleting}
+                        className="border-red-500/20 text-red-400 hover:bg-red-500/10"
+                      >
+                        {isDeleting ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

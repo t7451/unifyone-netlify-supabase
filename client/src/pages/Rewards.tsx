@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,12 +34,42 @@ const CATEGORY_CONFIG: Record<
   string,
   { label: string; icon: React.ElementType; color: string; bg: string }
 > = {
-  signup:      { label: "Sign Up",    icon: Star,         color: "text-yellow-400",  bg: "bg-yellow-400/10" },
-  referral:    { label: "Referral",   icon: Users,        color: "text-teal-400",    bg: "bg-teal-400/10" },
-  purchase:    { label: "Purchase",   icon: ShoppingCart, color: "text-blue-400",    bg: "bg-blue-400/10" },
-  engagement:  { label: "Engagement", icon: Zap,          color: "text-purple-400",  bg: "bg-purple-400/10" },
-  milestone:   { label: "Milestone",  icon: Trophy,       color: "text-orange-400",  bg: "bg-orange-400/10" },
-  promotion:   { label: "Promo",      icon: Tag,          color: "text-pink-400",    bg: "bg-pink-400/10" },
+  signup: {
+    label: "Sign Up",
+    icon: Star,
+    color: "text-yellow-400",
+    bg: "bg-yellow-400/10",
+  },
+  referral: {
+    label: "Referral",
+    icon: Users,
+    color: "text-teal-400",
+    bg: "bg-teal-400/10",
+  },
+  purchase: {
+    label: "Purchase",
+    icon: ShoppingCart,
+    color: "text-blue-400",
+    bg: "bg-blue-400/10",
+  },
+  engagement: {
+    label: "Engagement",
+    icon: Zap,
+    color: "text-purple-400",
+    bg: "bg-purple-400/10",
+  },
+  milestone: {
+    label: "Milestone",
+    icon: Trophy,
+    color: "text-orange-400",
+    bg: "bg-orange-400/10",
+  },
+  promotion: {
+    label: "Promo",
+    icon: Tag,
+    color: "text-pink-400",
+    bg: "bg-pink-400/10",
+  },
 };
 
 // ─── Opportunity Card ─────────────────────────────────────────────────────────
@@ -62,7 +98,9 @@ function OpportunityCard({
   const claimed = !opp.canClaim && opp.userClaimCount > 0;
 
   return (
-    <Card className={`border transition-all ${claimed ? "opacity-60" : "hover:border-teal-500/40"}`}>
+    <Card
+      className={`border transition-all ${claimed ? "opacity-60" : "hover:border-teal-500/40"}`}
+    >
       <CardContent className="p-4 flex items-start gap-4">
         <div className={`rounded-xl p-3 ${cfg.bg} flex-shrink-0`}>
           <Icon className={`w-5 h-5 ${cfg.color}`} />
@@ -72,14 +110,22 @@ function OpportunityCard({
             <div>
               <p className="font-semibold text-sm leading-tight">{opp.title}</p>
               {opp.description && (
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{opp.description}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                  {opp.description}
+                </p>
               )}
             </div>
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
-              <Badge variant="secondary" className="text-teal-400 bg-teal-400/10 border-teal-400/20 font-bold text-sm px-2">
+              <Badge
+                variant="secondary"
+                className="text-teal-400 bg-teal-400/10 border-teal-400/20 font-bold text-sm px-2"
+              >
                 +{opp.credits} <Key className="w-3 h-3 ml-1 inline" />
               </Badge>
-              <Badge variant="outline" className={`text-xs ${cfg.color} border-current/30`}>
+              <Badge
+                variant="outline"
+                className={`text-xs ${cfg.color} border-current/30`}
+              >
                 {cfg.label}
               </Badge>
             </div>
@@ -93,7 +139,9 @@ function OpportunityCard({
                 </span>
               )}
               {opp.maxClaimsPerUser > 1 && (
-                <span>{opp.userClaimCount}/{opp.maxClaimsPerUser} claimed</span>
+                <span>
+                  {opp.userClaimCount}/{opp.maxClaimsPerUser} claimed
+                </span>
               )}
             </div>
             {claimed ? (
@@ -109,7 +157,14 @@ function OpportunityCard({
                 onClick={() => onClaim(opp.id)}
                 disabled={claiming || !opp.canClaim}
               >
-                {claiming ? <Loader2 className="w-3 h-3 animate-spin" /> : "Claim"}
+                {claiming ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Claiming...
+                  </>
+                ) : (
+                  "Claim"
+                )}
               </Button>
             )}
           </div>
@@ -124,24 +179,25 @@ function OpportunityCard({
 export default function Rewards() {
   const [claimingId, setClaimingId] = useState<number | null>(null);
 
-  const { data: balanceData, refetch: refetchBalance } = trpc.rewards.getBalance.useQuery();
-  const { data: opportunities, isLoading: oppsLoading, refetch: refetchOpps } =
-    trpc.rewards.listOpportunities.useQuery();
-  const { data: history, isLoading: histLoading } = trpc.rewards.getHistory.useQuery({ limit: 20 });
-  const { data: creditHistory } = trpc.rewards.getCreditHistory.useQuery({ limit: 30 });
+  const { data: balanceData, refetch: refetchBalance } =
+    trpc.rewards.getBalance.useQuery();
+  const {
+    data: opportunities,
+    isLoading: oppsLoading,
+    refetch: refetchOpps,
+  } = trpc.rewards.listOpportunities.useQuery();
+  const { data: history, isLoading: histLoading } =
+    trpc.rewards.getHistory.useQuery({ limit: 20 });
+  const { data: creditHistory } = trpc.rewards.getCreditHistory.useQuery({
+    limit: 30,
+  });
 
-  const claimMutation = trpc.rewards.claimOpportunity.useMutation();
-  const fireCapiMutation = trpc.meta.fireRewardsKeyEarned.useMutation();
-
-  const handleClaim = async (opportunityId: number) => {
-    setClaimingId(opportunityId);
-    try {
-      const result = await claimMutation.mutateAsync({ opportunityId });
+  const claimMutation = trpc.rewards.claimOpportunity.useMutation({
+    onSuccess: result => {
       toast.success(`+${result.credits} Rewards Keys earned!`, {
         description: result.opportunityTitle,
       });
 
-      // Fire Meta CAPI event for deduplication
       if (result.metaEventId) {
         fireCapiMutation.mutate({
           eventId: result.metaEventId,
@@ -153,21 +209,30 @@ export default function Rewards() {
 
       refetchBalance();
       refetchOpps();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to claim reward";
-      toast.error(msg);
-    } finally {
+    },
+    onError: error => {
+      toast.error(error.message || "Failed to claim reward. Please try again.");
+    },
+    onSettled: () => {
       setClaimingId(null);
-    }
+    },
+  });
+  const fireCapiMutation = trpc.meta.fireRewardsKeyEarned.useMutation();
+
+  const handleClaim = (opportunityId: number) => {
+    setClaimingId(opportunityId);
+    claimMutation.mutate({ opportunityId });
   };
 
   const balance = balanceData?.balance ?? 0;
-  const totalEarned = creditHistory
-    ?.filter((t) => t.type === "earned" || t.type === "bonus")
-    .reduce((sum, t) => sum + t.amount, 0) ?? 0;
-  const totalRedeemed = creditHistory
-    ?.filter((t) => t.type === "redeemed")
-    .reduce((sum, t) => sum + Math.abs(t.amount), 0) ?? 0;
+  const totalEarned =
+    creditHistory
+      ?.filter(t => t.type === "earned" || t.type === "bonus")
+      .reduce((sum, t) => sum + t.amount, 0) ?? 0;
+  const totalRedeemed =
+    creditHistory
+      ?.filter(t => t.type === "redeemed")
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0) ?? 0;
 
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
@@ -190,7 +255,9 @@ export default function Rewards() {
               <Key className="w-5 h-5 text-teal-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-teal-400">{balance.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-teal-400">
+                {balance.toLocaleString()}
+              </p>
               <p className="text-xs text-muted-foreground">Current Balance</p>
             </div>
           </CardContent>
@@ -201,7 +268,9 @@ export default function Rewards() {
               <TrendingUp className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{totalEarned.toLocaleString()}</p>
+              <p className="text-2xl font-bold">
+                {totalEarned.toLocaleString()}
+              </p>
               <p className="text-xs text-muted-foreground">Total Earned</p>
             </div>
           </CardContent>
@@ -212,7 +281,9 @@ export default function Rewards() {
               <Gift className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{totalRedeemed.toLocaleString()}</p>
+              <p className="text-2xl font-bold">
+                {totalRedeemed.toLocaleString()}
+              </p>
               <p className="text-xs text-muted-foreground">Total Redeemed</p>
             </div>
           </CardContent>
@@ -247,12 +318,16 @@ export default function Rewards() {
             <Card>
               <CardContent className="py-12 text-center text-muted-foreground">
                 <Gift className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">No opportunities available right now</p>
-                <p className="text-sm mt-1">Check back soon for new ways to earn Rewards Keys.</p>
+                <p className="font-medium">
+                  No opportunities available right now
+                </p>
+                <p className="text-sm mt-1">
+                  Check back soon for new ways to earn Rewards Keys.
+                </p>
               </CardContent>
             </Card>
           ) : (
-            opportunities.map((opp) => (
+            opportunities.map(opp => (
               <OpportunityCard
                 key={opp.id}
                 opp={opp}
@@ -275,31 +350,45 @@ export default function Rewards() {
               <CardContent className="py-12 text-center text-muted-foreground">
                 <History className="w-10 h-10 mx-auto mb-3 opacity-30" />
                 <p className="font-medium">No claims yet</p>
-                <p className="text-sm mt-1">Start earning by claiming opportunities above.</p>
+                <p className="text-sm mt-1">
+                  Start earning by claiming opportunities above.
+                </p>
               </CardContent>
             </Card>
           ) : (
             <Card>
               <CardContent className="p-0">
                 <div className="divide-y">
-                  {history.map((claim) => {
-                    const cfg = CATEGORY_CONFIG[claim.opportunityCategory ?? "engagement"] ?? CATEGORY_CONFIG.engagement;
+                  {history.map(claim => {
+                    const cfg =
+                      CATEGORY_CONFIG[
+                        claim.opportunityCategory ?? "engagement"
+                      ] ?? CATEGORY_CONFIG.engagement;
                     const Icon = cfg.icon;
                     return (
-                      <div key={claim.id} className="flex items-center justify-between px-4 py-3">
+                      <div
+                        key={claim.id}
+                        className="flex items-center justify-between px-4 py-3"
+                      >
                         <div className="flex items-center gap-3">
                           <div className={`rounded-lg p-2 ${cfg.bg}`}>
                             <Icon className={`w-4 h-4 ${cfg.color}`} />
                           </div>
                           <div>
-                            <p className="text-sm font-medium">{claim.opportunityTitle ?? "Reward"}</p>
+                            <p className="text-sm font-medium">
+                              {claim.opportunityTitle ?? "Reward"}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {new Date(claim.claimedAt).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
-                        <Badge variant="secondary" className="text-teal-400 bg-teal-400/10 font-bold">
-                          +{claim.credits} <Key className="w-3 h-3 ml-1 inline" />
+                        <Badge
+                          variant="secondary"
+                          className="text-teal-400 bg-teal-400/10 font-bold"
+                        >
+                          +{claim.credits}{" "}
+                          <Key className="w-3 h-3 ml-1 inline" />
                         </Badge>
                       </div>
                     );
@@ -323,23 +412,33 @@ export default function Rewards() {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Credit Ledger</CardTitle>
-                <CardDescription className="text-xs">All credit movements on your account</CardDescription>
+                <CardDescription className="text-xs">
+                  All credit movements on your account
+                </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y">
-                  {creditHistory.map((txn) => {
+                  {creditHistory.map(txn => {
                     const isPositive = txn.amount > 0;
                     return (
-                      <div key={txn.id} className="flex items-center justify-between px-4 py-3">
+                      <div
+                        key={txn.id}
+                        className="flex items-center justify-between px-4 py-3"
+                      >
                         <div>
-                          <p className="text-sm font-medium">{txn.description ?? txn.type}</p>
+                          <p className="text-sm font-medium">
+                            {txn.description ?? txn.type}
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             Balance after: {txn.balanceAfter} &middot;{" "}
                             {new Date(txn.createdAt).toLocaleDateString()}
                           </p>
                         </div>
-                        <span className={`font-bold text-sm ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
-                          {isPositive ? "+" : ""}{txn.amount}
+                        <span
+                          className={`font-bold text-sm ${isPositive ? "text-emerald-400" : "text-red-400"}`}
+                        >
+                          {isPositive ? "+" : ""}
+                          {txn.amount}
                         </span>
                       </div>
                     );

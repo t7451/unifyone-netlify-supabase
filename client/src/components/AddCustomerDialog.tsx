@@ -46,6 +46,7 @@ export function AddCustomerDialog({ onCreated }: Props) {
         toast.success("Customer created.");
       }
       utils.customers.list.invalidate?.();
+      utils.orders.customers.invalidate();
       onCreated?.(data.id ?? 0);
       setOpen(false);
       setEmail("");

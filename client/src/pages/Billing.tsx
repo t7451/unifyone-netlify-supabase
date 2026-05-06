@@ -159,13 +159,11 @@ function SubscriptionStatusBadge({
           : status === "cancelled"
             ? {
                 label: "Cancelled",
-                className:
-                  "border-slate-500/30 bg-slate-500/15 text-slate-200",
+                className: "border-slate-500/30 bg-slate-500/15 text-slate-200",
               }
             : {
                 label: "None",
-                className:
-                  "border-slate-500/30 bg-slate-500/15 text-slate-200",
+                className: "border-slate-500/30 bg-slate-500/15 text-slate-200",
               };
 
   return (
@@ -237,13 +235,16 @@ export default function Billing() {
   const createCheckout = trpc.subscription.createCheckout.useMutation({
     onSuccess: data => {
       if (data.url) {
+        toast.success("Redirecting to secure checkout...");
         window.location.href = data.url;
       } else {
         toast.error("Could not create checkout session.");
       }
     },
     onError: (error: { message: string }) => {
-      toast.error(error.message ?? "Checkout failed. Please try again.");
+      toast.error(
+        error.message || "Failed to start checkout. Please try again."
+      );
     },
   });
 
@@ -329,8 +330,8 @@ export default function Billing() {
             <AlertTitle>Payment past due</AlertTitle>
             <AlertDescription className="text-red-100/90">
               <p>
-                Your subscription is past due. Update your payment method to keep
-                paid features active.
+                Your subscription is past due. Update your payment method to
+                keep paid features active.
               </p>
               {canManageBilling && (
                 <Button
@@ -339,7 +340,9 @@ export default function Billing() {
                   onClick={handleOpenPortal}
                   disabled={portalLoading}
                 >
-                  {portalLoading ? "Opening portal..." : "Update payment method"}
+                  {portalLoading
+                    ? "Opening portal..."
+                    : "Update payment method"}
                 </Button>
               )}
             </AlertDescription>
@@ -370,7 +373,9 @@ export default function Billing() {
                       <PlanTierBadge slug={planSlug} />
                       <SubscriptionStatusBadge status={status} />
                     </div>
-                    <p className="text-sm text-slate-400">{catalogPlan.tagline}</p>
+                    <p className="text-sm text-slate-400">
+                      {catalogPlan.tagline}
+                    </p>
                   </>
                 )}
               </div>
@@ -424,8 +429,8 @@ export default function Billing() {
                   <Skeleton className="h-4 w-24 bg-slate-700/60" />
                 ) : (
                   <span className="text-xs text-slate-500">
-                    Plan cap: {getPlanNumericLimitLabel(usageLimits.maxUsers)} team
-                    members
+                    Plan cap: {getPlanNumericLimitLabel(usageLimits.maxUsers)}{" "}
+                    team members
                   </span>
                 )}
               </div>
@@ -485,7 +490,9 @@ export default function Billing() {
                 ) : (
                   <>
                     <ArrowUpRight className="h-4 w-4" />
-                    {status === "cancelled" ? "Reactivate plan" : "Upgrade to Pro"}
+                    {status === "cancelled"
+                      ? "Reactivate plan"
+                      : "Upgrade to Pro"}
                   </>
                 )}
               </Button>
@@ -503,11 +510,12 @@ export default function Billing() {
                 </div>
                 <div>
                   <p className="text-2xl font-semibold text-white">
-                    {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} remaining
+                    {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"}{" "}
+                    remaining
                   </p>
                   <p className="text-sm text-slate-300">
-                    Upgrade now to keep your storefront live and retain access to
-                    paid billing features.
+                    Upgrade now to keep your storefront live and retain access
+                    to paid billing features.
                   </p>
                 </div>
               </div>
@@ -545,9 +553,10 @@ export default function Billing() {
                     Upgrade from Free to Pro
                   </p>
                   <p className="text-sm text-slate-300">
-                    Unlock {getPlanNumericLimitLabel(proPlan.maxProducts)} products,
-                    {" "}{getPlanNumericLimitLabel(proPlan.maxOrders)} monthly orders,
-                    and {getPlanNumericLimitLabel(proPlan.maxUsers)} team members on
+                    Unlock {getPlanNumericLimitLabel(proPlan.maxProducts)}{" "}
+                    products, {getPlanNumericLimitLabel(proPlan.maxOrders)}{" "}
+                    monthly orders, and{" "}
+                    {getPlanNumericLimitLabel(proPlan.maxUsers)} team members on
                     one paid plan.
                   </p>
                 </div>
@@ -566,7 +575,8 @@ export default function Billing() {
                 ) : (
                   <>
                     <ArrowUpRight className="h-4 w-4" />
-                    Upgrade to Pro — {formatUsdCents(proPlan.monthlyPriceCents)}/mo
+                    Upgrade to Pro — {formatUsdCents(proPlan.monthlyPriceCents)}
+                    /mo
                   </>
                 )}
               </Button>

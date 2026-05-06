@@ -34,7 +34,7 @@ export default function AccountSettings() {
 
   const updateProfile = trpc.user.updateProfile.useMutation({
     onSuccess: () => {
-      toast.success("Profile updated");
+      toast.success("Profile changes saved");
       setName("");
       setUsername("");
       refresh();
