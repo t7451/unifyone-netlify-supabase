@@ -1,8 +1,11 @@
 import { TRPCError } from "@trpc/server";
+import { count, eq } from "drizzle-orm";
 import { z } from "zod";
+import { products, type InsertProduct } from "../../drizzle/schema";
 import {
   createTenant,
   getAllTenants,
+  getDb,
   getPlans,
   getTenantById,
   getTenantsByOwner,
@@ -14,6 +17,9 @@ import {
   createOrder,
   upsertCustomer,
   createCategory,
+  getProductCount,
+  getOrderCountThisMonth,
+  getUserCount,
 } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 import { setEdgeCache, EDGE_CACHE } from "../_core/cacheControl";
@@ -213,6 +219,133 @@ export const tenantRouter = router({
       return newTenant;
     }),
 
+  seedDemoData: protectedProcedure
+    .input(
+      z.object({
+        tenantId: z.number().int().positive(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenant = await getTenantById(input.tenantId);
+      if (!tenant) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      if (
+        tenant.ownerId !== ctx.user.id &&
+        ctx.user.role !== "admin" &&
+        ctx.user.tenantId !== tenant.id
+      ) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      const db = await getDb();
+      if (!db) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Database unavailable.",
+        });
+      }
+
+      const [{ productCount }] = await db
+        .select({ productCount: count() })
+        .from(products)
+        .where(eq(products.tenantId, input.tenantId));
+
+      if (productCount > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Demo products can only be added to an empty store.",
+        });
+      }
+
+      const demoProducts: InsertProduct[] = [
+        {
+          tenantId: input.tenantId,
+          name: "Classic Logo T-Shirt",
+          slug: "classic-logo-t-shirt",
+          description:
+            "A soft cotton tee with a clean UnifyOne-inspired storefront logo.",
+          sku: "DEMO-TSHIRT-001",
+          price: "24.00",
+          imageUrl:
+            "https://placehold.co/600x600/png?text=Classic+Logo+T-Shirt",
+          images: [
+            "https://placehold.co/600x600/png?text=Classic+Logo+T-Shirt",
+          ],
+          tags: ["demo", "apparel", "t-shirt"],
+          status: "active",
+          trackInventory: true,
+        },
+        {
+          tenantId: input.tenantId,
+          name: "Minimalist Coffee Mug",
+          slug: "minimalist-coffee-mug",
+          description:
+            "A glossy ceramic mug for your morning brew and merch table.",
+          sku: "DEMO-MUG-001",
+          price: "18.00",
+          imageUrl:
+            "https://placehold.co/600x600/png?text=Minimalist+Coffee+Mug",
+          images: [
+            "https://placehold.co/600x600/png?text=Minimalist+Coffee+Mug",
+          ],
+          tags: ["demo", "drinkware", "mug"],
+          status: "active",
+          trackInventory: true,
+        },
+        {
+          tenantId: input.tenantId,
+          name: "Vinyl Sticker Pack",
+          slug: "vinyl-sticker-pack",
+          description: "A weatherproof 5-pack of laptop-ready brand stickers.",
+          sku: "DEMO-STICKER-001",
+          price: "9.50",
+          imageUrl: "https://placehold.co/600x600/png?text=Vinyl+Sticker+Pack",
+          images: ["https://placehold.co/600x600/png?text=Vinyl+Sticker+Pack"],
+          tags: ["demo", "accessories", "stickers"],
+          status: "active",
+          trackInventory: true,
+        },
+        {
+          tenantId: input.tenantId,
+          name: "Heavyweight Zip Hoodie",
+          slug: "heavyweight-zip-hoodie",
+          description: "A cozy midweight hoodie for cool warehouse mornings.",
+          sku: "DEMO-HOODIE-001",
+          price: "54.00",
+          imageUrl:
+            "https://placehold.co/600x600/png?text=Heavyweight+Zip+Hoodie",
+          images: [
+            "https://placehold.co/600x600/png?text=Heavyweight+Zip+Hoodie",
+          ],
+          tags: ["demo", "apparel", "hoodie"],
+          status: "active",
+          trackInventory: true,
+        },
+        {
+          tenantId: input.tenantId,
+          name: "Canvas Market Tote",
+          slug: "canvas-market-tote",
+          description:
+            "A durable reusable tote for pop-up shops and everyday errands.",
+          sku: "DEMO-TOTE-001",
+          price: "28.00",
+          imageUrl: "https://placehold.co/600x600/png?text=Canvas+Market+Tote",
+          images: ["https://placehold.co/600x600/png?text=Canvas+Market+Tote"],
+          tags: ["demo", "accessories", "tote"],
+          status: "active",
+          trackInventory: true,
+        },
+      ];
+
+      await db.insert(products).values(demoProducts);
+
+      return {
+        success: true,
+        productsCreated: demoProducts.length,
+      };
+    }),
+
   // Update tenant settings
   update: protectedProcedure
     .input(
@@ -245,6 +378,29 @@ export const tenantRouter = router({
   getPlans: protectedProcedure.query(async ({ ctx }) => {
     setEdgeCache(ctx.res, EDGE_CACHE.public_long);
     return getPlans();
+  }),
+
+  getUsage: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = ctx.user.tenantId;
+    if (!tenantId) {
+      return {
+        productCount: 0,
+        orderCount: 0,
+        userCount: 0,
+      };
+    }
+
+    const [productCount, orderCount, userCount] = await Promise.all([
+      getProductCount(tenantId),
+      getOrderCountThisMonth(tenantId),
+      getUserCount(tenantId),
+    ]);
+
+    return {
+      productCount: Number(productCount),
+      orderCount: Number(orderCount),
+      userCount: Number(userCount),
+    };
   }),
 
   getOAuthSettings: protectedProcedure.query(async ({ ctx }) => {
