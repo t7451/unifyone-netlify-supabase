@@ -114,6 +114,19 @@ type Auth0UserInfo = {
   nickname?: string;
 };
 
+type AuthProviderAvailability = {
+  google: {
+    enabled: boolean;
+    source?: GoogleOAuthSettings["source"];
+    tenantSlug?: string;
+    reason?: string;
+  };
+  auth0: {
+    enabled: boolean;
+    reason?: string;
+  };
+};
+
 function getClientIp(req: Request): string {
   // Standard forwarded-for header (Netlify / proxies set this)
   const forwarded = req.headers.get("x-forwarded-for");
@@ -734,6 +747,26 @@ async function resolveAuth0OAuthSettings(): Promise<
   return { success: true, settings };
 }
 
+async function getAuthProviderAvailability(
+  tenantSlug?: string
+): Promise<AuthProviderAvailability> {
+  const google = await resolveGoogleOAuthSettings(tenantSlug);
+  const auth0 = await resolveAuth0OAuthSettings();
+
+  return {
+    google: google.success
+      ? {
+          enabled: true,
+          source: google.settings.source,
+          tenantSlug: google.settings.tenantSlug,
+        }
+      : { enabled: false, reason: google.error },
+    auth0: auth0.success
+      ? { enabled: true }
+      : { enabled: false, reason: auth0.error },
+  };
+}
+
 async function buildAuth0OAuthStart(
   returnTo: string | undefined,
   secure: boolean,
@@ -965,6 +998,14 @@ export async function registerCustomAuthFetchRoutes(
   };
 
   try {
+    if (path === "/api/auth/providers" && method === "GET") {
+      const tenantSlug = url.searchParams.get("tenant")?.trim() || undefined;
+      return Response.json(await getAuthProviderAvailability(tenantSlug), {
+        status: 200,
+        headers: corsHeaders,
+      });
+    }
+
     if (path === "/api/auth/auth0/callback" && method === "GET") {
       const callback = await completeAuth0OAuthCallback({
         code: url.searchParams.get("code"),
@@ -1820,6 +1861,24 @@ function isExpressRequestSecure(req: ExpressRequest): boolean {
 }
 
 export function registerCustomAuthExpressRoutes(app: Express) {
+  app.get(
+    "/api/auth/providers",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      try {
+        const tenantSlug =
+          typeof req.query.tenant === "string"
+            ? req.query.tenant.trim() || undefined
+            : undefined;
+        res.json(await getAuthProviderAvailability(tenantSlug));
+      } catch (err) {
+        console.error("[customAuthRoutes] Provider status error:", err);
+        res
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
+      }
+    }
+  );
+
   app.get(
     "/api/auth/auth0/callback",
     async (req: ExpressRequest, res: ExpressResponse) => {

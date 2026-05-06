@@ -94,6 +94,11 @@ type AuthMode = "password" | "sign-in" | "sign-up" | "forgot-password";
 
 type LoginIntent = "signin" | "signup";
 
+type AuthProviderStatus = {
+  google: { enabled: boolean; reason?: string };
+  auth0: { enabled: boolean; reason?: string };
+};
+
 /**
  * Renders a "Continue with Clerk" button and handles the post-sign-in token
  * exchange.  Only mounted when VITE_CLERK_PUBLISHABLE_KEY is present, which
@@ -206,6 +211,8 @@ export default function Login({
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [providerStatus, setProviderStatus] =
+    useState<AuthProviderStatus | null>(null);
 
   const returnTo = getReturnTo();
   const tenantSlug = getTenantSlug();
@@ -215,6 +222,31 @@ export default function Login({
       navigate(returnTo);
     }
   }, [isAuthenticated, loading, navigate, returnTo]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const params = new URLSearchParams();
+    if (tenantSlug) params.set("tenant", tenantSlug);
+
+    fetch(`/api/auth/providers${params.size ? `?${params}` : ""}`, {
+      credentials: "include",
+      signal: controller.signal,
+    })
+      .then(async res => {
+        if (!res.ok) throw new Error("Provider status unavailable");
+        return (await res.json()) as AuthProviderStatus;
+      })
+      .then(setProviderStatus)
+      .catch(err => {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setProviderStatus({
+          google: { enabled: false },
+          auth0: { enabled: false },
+        });
+      });
+
+    return () => controller.abort();
+  }, [tenantSlug]);
 
   // Check URL for error params (e.g., from failed magic link)
   useEffect(() => {
@@ -544,6 +576,10 @@ export default function Login({
 
   const isSignInMode =
     mode === "sign-in" || (mode === "password" && intent === "signin");
+  const providersLoaded = providerStatus !== null;
+  const isGoogleAvailable = providerStatus?.google.enabled === true;
+  const isAuth0Available = providerStatus?.auth0.enabled === true;
+  const hasOAuthProvider = isGoogleAvailable || isAuth0Available;
   return (
     <div className="min-h-screen bg-[#060D1F] flex">
       {/* Left panel: branding + features */}
@@ -760,43 +796,51 @@ export default function Login({
             </Button>
           </div>
 
-          <Separator className="bg-white/10" />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleGoogleOAuth}
-            disabled={isGoogleSubmitting || isAuth0Submitting}
-            className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white"
-          >
-            {isGoogleSubmitting ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Redirecting to Google...
-              </span>
-            ) : (
-              "Continue with Google"
-            )}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleAuth0OAuth}
-            disabled={isAuth0Submitting || isGoogleSubmitting}
-            className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white"
-          >
-            {isAuth0Submitting ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Redirecting to Auth0...
-              </span>
-            ) : (
-              "Continue with Auth0"
-            )}
-          </Button>
-          <p className="text-xs text-slate-500 text-center">
-            Google and Auth0 sign-in use the configured provider settings and
-            create the same secure UnifyOne session.
-          </p>
+          {providersLoaded && hasOAuthProvider && (
+            <>
+              <Separator className="bg-white/10" />
+              {isGoogleAvailable && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGoogleOAuth}
+                  disabled={isGoogleSubmitting || isAuth0Submitting}
+                  className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white"
+                >
+                  {isGoogleSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Redirecting to Google...
+                    </span>
+                  ) : (
+                    "Continue with Google"
+                  )}
+                </Button>
+              )}
+              {isAuth0Available && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAuth0OAuth}
+                  disabled={isAuth0Submitting || isGoogleSubmitting}
+                  className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white"
+                >
+                  {isAuth0Submitting ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Redirecting to Auth0...
+                    </span>
+                  ) : (
+                    "Continue with Auth0"
+                  )}
+                </Button>
+              )}
+              <p className="text-xs text-slate-500 text-center">
+                Social sign-in uses the configured provider settings and creates
+                the same secure UnifyOne session.
+              </p>
+            </>
+          )}
 
           {CLERK_PUBLISHABLE_KEY && (
             <ClerkSignInSection
