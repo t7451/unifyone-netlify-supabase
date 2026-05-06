@@ -30,8 +30,14 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DashboardPageShell } from "@/components/DashboardPageShell";
+import { FeatureOnboardingWizard } from "@/components/FeatureOnboardingWizard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  FEATURE_CATEGORIES,
+  FEATURE_COUNT,
+  type FeatureCategory,
+} from "@/lib/featureCatalog";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import type { AppRouter } from "../../../server/routers";
@@ -68,6 +74,19 @@ type StarterAction = {
   icon: typeof PackagePlus;
 };
 
+type OnboardingStatus = "new" | "dismissed" | "completed";
+
+const ONBOARDING_STORAGE_PREFIX = "unifyone:onboarding:v2";
+
+const categoryToneClasses: Record<FeatureCategory["tone"], string> = {
+  cyan: "border-cyan-400/25 bg-cyan-400/10 text-cyan-200",
+  emerald: "border-emerald-400/25 bg-emerald-400/10 text-emerald-200",
+  amber: "border-amber-400/25 bg-amber-400/10 text-amber-200",
+  violet: "border-violet-400/25 bg-violet-400/10 text-violet-200",
+  rose: "border-rose-400/25 bg-rose-400/10 text-rose-200",
+  slate: "border-slate-400/25 bg-slate-400/10 text-slate-200",
+};
+
 const STATUS_COLORS: Record<string, string> = {
   delivered: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
   shipped: "border-cyan-500/30 bg-cyan-500/10 text-cyan-300",
@@ -99,6 +118,40 @@ const STARTER_ACTIONS: StarterAction[] = [
     icon: UserPlus,
   },
 ];
+
+function getOnboardingStorageKey(openId: string | null | undefined) {
+  return `${ONBOARDING_STORAGE_PREFIX}:${openId ?? "anonymous"}`;
+}
+
+function readOnboardingStatus(storageKey: string): OnboardingStatus {
+  if (typeof window === "undefined") return "dismissed";
+
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) return "new";
+
+    const parsed = JSON.parse(raw) as { status?: OnboardingStatus };
+    if (parsed.status === "completed" || parsed.status === "dismissed") {
+      return parsed.status;
+    }
+  } catch {
+    return "new";
+  }
+
+  return "new";
+}
+
+function writeOnboardingStatus(
+  storageKey: string,
+  status: Exclude<OnboardingStatus, "new">
+) {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(
+    storageKey,
+    JSON.stringify({ status, updatedAt: new Date().toISOString() })
+  );
+}
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
@@ -291,6 +344,13 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const [chartRange, setChartRange] = useState<ChartRange>("month");
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [onboardingInitialCategoryId, setOnboardingInitialCategoryId] =
+    useState<string>();
+  const [onboardingStatus, setOnboardingStatus] =
+    useState<OnboardingStatus>("dismissed");
+
+  const onboardingStorageKey = getOnboardingStorageKey(user?.openId);
 
   const dashboardOverview = trpc.analytics.dashboardOverview.useQuery();
   const revenueByDay = trpc.analytics.revenueByDay.useQuery({
@@ -308,6 +368,47 @@ export default function Dashboard() {
     // `navigate` from wouter is stable; omitted to avoid unnecessary re-runs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const status = readOnboardingStatus(onboardingStorageKey);
+    setOnboardingStatus(status);
+    setOnboardingOpen(status === "new");
+  }, [onboardingStorageKey, user]);
+
+  const persistOnboardingStatus = (
+    status: Exclude<OnboardingStatus, "new">
+  ) => {
+    writeOnboardingStatus(onboardingStorageKey, status);
+    setOnboardingStatus(status);
+  };
+
+  const openOnboarding = (categoryId?: string) => {
+    setOnboardingInitialCategoryId(categoryId);
+    setOnboardingOpen(true);
+  };
+
+  const handleOnboardingOpenChange = (open: boolean) => {
+    setOnboardingOpen(open);
+
+    if (!open && onboardingStatus === "new") {
+      persistOnboardingStatus("dismissed");
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    persistOnboardingStatus("completed");
+    setOnboardingOpen(false);
+  };
+
+  const handleOnboardingNavigate = (path: string) => {
+    if (onboardingStatus === "new") {
+      persistOnboardingStatus("dismissed");
+    }
+    setOnboardingOpen(false);
+    navigate(path);
+  };
 
   const kpiCards = useMemo(
     () => (dashboardOverview.data ? buildKpiCards(dashboardOverview.data) : []),
@@ -338,6 +439,13 @@ export default function Dashboard() {
       description="Monitor revenue, fulfillment, customer growth, and product momentum from a single operating view built for daily action."
       actions={
         <>
+          <Button
+            variant="outline"
+            onClick={() => openOnboarding()}
+            className="border-white/10 bg-white/5 text-white hover:bg-white/10"
+          >
+            Open feature guide
+          </Button>
           <Button
             variant="outline"
             onClick={() => {
@@ -422,6 +530,108 @@ export default function Dashboard() {
         },
       ]}
     >
+      <FeatureOnboardingWizard
+        open={onboardingOpen}
+        initialCategoryId={onboardingInitialCategoryId}
+        onOpenChange={handleOnboardingOpenChange}
+        onComplete={handleOnboardingComplete}
+        onNavigate={handleOnboardingNavigate}
+      />
+
+      <Card className="border-border bg-card">
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle className="text-white">
+              What you can run in UnifyOne
+            </CardTitle>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+              The platform is organized into {FEATURE_CATEGORIES.length}
+              operating areas and {FEATURE_COUNT} guided modules. Use this map
+              to pick a lane, then open the wizard for module-by-module next
+              actions.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <Badge
+              variant="outline"
+              className={cn(
+                "w-fit border-white/10 bg-white/5",
+                onboardingStatus === "completed"
+                  ? "text-emerald-300"
+                  : "text-cyan-200"
+              )}
+            >
+              {onboardingStatus === "completed"
+                ? "Onboarding complete"
+                : `${FEATURE_COUNT} modules mapped`}
+            </Badge>
+            <Button
+              type="button"
+              size="sm"
+              className="bg-[#00D9FF] font-semibold text-[#0A1128] hover:bg-[#00D9FF]/90"
+              onClick={() => openOnboarding()}
+            >
+              Start full walkthrough <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
+            {FEATURE_CATEGORIES.map(category => {
+              const Icon = category.icon;
+
+              return (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => openOnboarding(category.id)}
+                  className="rounded-xl border border-border/70 bg-background/35 p-4 text-left transition-colors hover:border-[#00D9FF]/40 hover:bg-[#00D9FF]/5"
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={cn(
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border",
+                        categoryToneClasses[category.tone]
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="font-semibold text-white">
+                          {category.title}
+                        </h3>
+                        <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-slate-300">
+                          {category.features.length}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-slate-400">
+                        {category.summary}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {category.features.slice(0, 4).map(feature => (
+                      <span
+                        key={feature.path}
+                        className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs text-slate-300"
+                      >
+                        {feature.label}
+                      </span>
+                    ))}
+                    {category.features.length > 4 ? (
+                      <span className="rounded-full border border-[#00D9FF]/20 bg-[#00D9FF]/10 px-2.5 py-1 text-xs text-[#00D9FF]">
+                        +{category.features.length - 4} more
+                      </span>
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {dashboardOverview.isLoading ? (
           Array.from({ length: 4 }, (_, index) => <KpiSkeleton key={index} />)
