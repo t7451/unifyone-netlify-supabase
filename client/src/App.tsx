@@ -86,6 +86,7 @@ const VideoProduction = lazy(() => import("./pages/VideoProduction"));
 const AdCopyHub = lazy(() => import("./pages/AdCopyHub"));
 const GovernanceDashboard = lazy(() => import("./pages/GovernanceDashboard"));
 const DocsChat = lazy(() => import("./pages/DocsChat"));
+const NlwebChat = lazy(() => import("./pages/NlwebChat"));
 const DeveloperHub = lazy(() => import("./pages/DeveloperHub"));
 const AuthorizationHub = lazy(() => import("./pages/AuthorizationHub"));
 const Terminal = lazy(() => import("./pages/Terminal"));
@@ -477,6 +478,7 @@ function Router() {
       />
       <Route path="/documents/work-proof" component={() => <WorkProof />} />
       <Route path="/docs-chat" component={() => <DocsChat />} />
+      <Route path="/chat" component={() => <NlwebChat />} />
       <Route path="/resources" component={() => <Resources />} />
       <Route path="/video-production" component={() => <VideoProduction />} />
       <Route path="/marketing/ad-copy" component={() => <AdCopyHub />} />
