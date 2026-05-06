@@ -3,13 +3,37 @@ import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
 // Mock the db module to avoid real DB connections in tests
-vi.mock("./db", () => ({
-  getTenantByOwnerId: vi.fn().mockResolvedValue(null),
-  getTenantById: vi.fn().mockResolvedValue(null),
-  getTenantBySlug: vi.fn().mockResolvedValue(null),
-  createTenant: vi
-    .fn()
-    .mockResolvedValue({
+vi.mock("./db", () => {
+  const emptyDb = {
+    select: vi.fn((fields?: unknown) => {
+      if (fields) {
+        return {
+          from: () => ({
+            where: vi.fn().mockResolvedValue([{ count: 0 }]),
+          }),
+        };
+      }
+
+      return {
+        from: () => ({
+          where: () => ({
+            orderBy: () => ({
+              limit: () => ({
+                offset: vi.fn().mockResolvedValue([]),
+              }),
+            }),
+          }),
+        }),
+      };
+    }),
+  };
+
+  return {
+    getDb: vi.fn().mockResolvedValue(emptyDb),
+    getTenantByOwnerId: vi.fn().mockResolvedValue(null),
+    getTenantById: vi.fn().mockResolvedValue(null),
+    getTenantBySlug: vi.fn().mockResolvedValue(null),
+    createTenant: vi.fn().mockResolvedValue({
       id: 1,
       name: "Test Store",
       slug: "test-store",
@@ -19,12 +43,10 @@ vi.mock("./db", () => ({
       createdAt: new Date(),
       updatedAt: new Date(),
     }),
-  updateTenant: vi.fn().mockResolvedValue(undefined),
-  getProducts: vi.fn().mockResolvedValue([]),
-  getProductById: vi.fn().mockResolvedValue(null),
-  createProduct: vi
-    .fn()
-    .mockResolvedValue({
+    updateTenant: vi.fn().mockResolvedValue(undefined),
+    getProducts: vi.fn().mockResolvedValue([]),
+    getProductById: vi.fn().mockResolvedValue(null),
+    createProduct: vi.fn().mockResolvedValue({
       id: 1,
       name: "Test Product",
       price: "29.99",
@@ -33,13 +55,11 @@ vi.mock("./db", () => ({
       createdAt: new Date(),
       updatedAt: new Date(),
     }),
-  updateProduct: vi.fn().mockResolvedValue(undefined),
-  deleteProduct: vi.fn().mockResolvedValue(undefined),
-  getOrders: vi.fn().mockResolvedValue([]),
-  getOrderById: vi.fn().mockResolvedValue(null),
-  createOrder: vi
-    .fn()
-    .mockResolvedValue({
+    updateProduct: vi.fn().mockResolvedValue(undefined),
+    deleteProduct: vi.fn().mockResolvedValue(undefined),
+    getOrders: vi.fn().mockResolvedValue([]),
+    getOrderById: vi.fn().mockResolvedValue(null),
+    createOrder: vi.fn().mockResolvedValue({
       id: 1,
       orderNumber: "ORD-001",
       status: "pending",
@@ -48,77 +68,71 @@ vi.mock("./db", () => ({
       createdAt: new Date(),
       updatedAt: new Date(),
     }),
-  updateOrderStatus: vi.fn().mockResolvedValue(undefined),
-  getCustomers: vi.fn().mockResolvedValue([]),
-  getAnalyticsSummary: vi
-    .fn()
-    .mockResolvedValue({
+    updateOrderStatus: vi.fn().mockResolvedValue(undefined),
+    getCustomers: vi.fn().mockResolvedValue([]),
+    getAnalyticsSummary: vi.fn().mockResolvedValue({
       totalRevenue: "0",
       orderCount: 0,
       customerCount: 0,
       productCount: 0,
     }),
-  getRevenueByDay: vi.fn().mockResolvedValue([]),
-  getTopProducts: vi.fn().mockResolvedValue([]),
-  getWebhookEvents: vi.fn().mockResolvedValue([]),
-  getPlans: vi.fn().mockResolvedValue([
-    {
-      id: 1,
-      name: "Starter",
-      slug: "starter",
-      price: "0",
-      maxProducts: 50,
-      maxOrders: 100,
-      maxUsers: 1,
-      features: null,
-      createdAt: new Date(),
-    },
-    {
-      id: 2,
-      name: "Pro",
-      slug: "pro",
-      price: "49",
-      maxProducts: 500,
-      maxOrders: 1000,
-      maxUsers: 5,
-      features: null,
-      createdAt: new Date(),
-    },
-    {
-      id: 3,
-      name: "Enterprise",
-      slug: "enterprise",
-      price: "199",
-      maxProducts: 9999,
-      maxOrders: 99999,
-      maxUsers: 25,
-      features: null,
-      createdAt: new Date(),
-    },
-  ]),
-  upsertUser: vi.fn().mockResolvedValue(undefined),
-  getUserByOpenId: vi.fn().mockResolvedValue(undefined),
-  logWebhookEvent: vi.fn().mockResolvedValue(undefined),
-  getIntegrationStatus: vi
-    .fn()
-    .mockResolvedValue({
+    getRevenueByDay: vi.fn().mockResolvedValue([]),
+    getTopProducts: vi.fn().mockResolvedValue([]),
+    getWebhookEvents: vi.fn().mockResolvedValue([]),
+    getPlans: vi.fn().mockResolvedValue([
+      {
+        id: 1,
+        name: "Starter",
+        slug: "starter",
+        price: "0",
+        maxProducts: 50,
+        maxOrders: 100,
+        maxUsers: 1,
+        features: null,
+        createdAt: new Date(),
+      },
+      {
+        id: 2,
+        name: "Pro",
+        slug: "pro",
+        price: "49",
+        maxProducts: 500,
+        maxOrders: 1000,
+        maxUsers: 5,
+        features: null,
+        createdAt: new Date(),
+      },
+      {
+        id: 3,
+        name: "Enterprise",
+        slug: "enterprise",
+        price: "199",
+        maxProducts: 9999,
+        maxOrders: 99999,
+        maxUsers: 25,
+        features: null,
+        createdAt: new Date(),
+      },
+    ]),
+    upsertUser: vi.fn().mockResolvedValue(undefined),
+    getUserByOpenId: vi.fn().mockResolvedValue(undefined),
+    logWebhookEvent: vi.fn().mockResolvedValue(undefined),
+    getIntegrationStatus: vi.fn().mockResolvedValue({
       stripe: { connected: false },
       shopify: { connected: false, shopDomain: null },
       n8n: { configured: false, webhookUrl: null },
     }),
-  getTenantsByOwner: vi.fn().mockResolvedValue([]),
-  getAllTenants: vi.fn().mockResolvedValue([]),
-  updateUserTenant: vi.fn().mockResolvedValue(undefined),
-  getCustomerCount: vi.fn().mockResolvedValue(0),
-  getOrderCount: vi.fn().mockResolvedValue(0),
-  getProductCount: vi.fn().mockResolvedValue(0),
-  getCategories: vi.fn().mockResolvedValue([]),
-  getInventory: vi.fn().mockResolvedValue([]),
-  getLowStockProducts: vi.fn().mockResolvedValue([]),
-  upsertInventory: vi.fn().mockResolvedValue(undefined),
-  createCategory: vi
-    .fn()
-    .mockResolvedValue({
+    getTenantsByOwner: vi.fn().mockResolvedValue([]),
+    getAllTenants: vi.fn().mockResolvedValue([]),
+    updateUserTenant: vi.fn().mockResolvedValue(undefined),
+    getCustomerCount: vi.fn().mockResolvedValue(0),
+    getOrderCount: vi.fn().mockResolvedValue(0),
+    getProductCount: vi.fn().mockResolvedValue(0),
+    getCategories: vi.fn().mockResolvedValue([]),
+    getInventory: vi.fn().mockResolvedValue([]),
+    getLowStockProducts: vi.fn().mockResolvedValue([]),
+    upsertInventory: vi.fn().mockResolvedValue(undefined),
+    createCategory: vi.fn().mockResolvedValue({
       id: 1,
       name: "Test",
       slug: "test",
@@ -126,7 +140,8 @@ vi.mock("./db", () => ({
       parentId: null,
       createdAt: new Date(),
     }),
-}));
+  };
+});
 
 function makeCtx(overrides: Partial<TrpcContext> = {}): TrpcContext {
   return {
@@ -251,10 +266,42 @@ describe("analytics router", () => {
 describe("products router", () => {
   it("returns empty product list for new tenant", async () => {
     const ctx = makeCtx();
-    const { getTenantByOwnerId } = await import("./db");
+    const { getDb, getTenantByOwnerId } = await import("./db");
     vi.mocked(getTenantByOwnerId).mockResolvedValue(mockTenant);
+
+    const mockDb = {
+      select: vi.fn(selection => {
+        if (
+          selection &&
+          typeof selection === "object" &&
+          "count" in selection
+        ) {
+          return {
+            from: vi.fn(() => ({
+              where: vi.fn().mockResolvedValue([{ count: 0 }]),
+            })),
+          };
+        }
+
+        return {
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => ({
+                limit: vi.fn(() => ({ offset: vi.fn().mockResolvedValue([]) })),
+              })),
+            })),
+          })),
+        };
+      }),
+    };
+
+    vi.mocked(getDb).mockResolvedValue(mockDb as never);
+
     const caller = appRouter.createCaller(ctx);
     const products = await caller.products.list();
-    expect(Array.isArray(products)).toBe(true);
+
+    expect(products.items).toEqual([]);
+    expect(products.total).toBe(0);
+    expect(products.totalPages).toBe(1);
   });
 });

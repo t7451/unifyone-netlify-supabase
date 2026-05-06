@@ -18,8 +18,14 @@ import {
   updateOrderStatus,
   upsertCustomer,
 } from "../db";
-import { discounts, notifications } from "../../drizzle/schema";
-import { and, sql, eq } from "drizzle-orm";
+import {
+  discounts,
+  notifications,
+  orderStatusEnum,
+  orders as ordersTable,
+  paymentStatusEnum,
+} from "../../drizzle/schema";
+import { and, count, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
 import { logAudit } from "../auditLogger";
 import {
   protectedIpRateLimitedProcedure,
@@ -72,16 +78,97 @@ export const ordersRouter = router({
     .input(
       z
         .object({
-          status: z.string().optional(),
-          search: z.string().optional(),
-          limit: z.number().default(50),
-          offset: z.number().default(0),
+          tenantId: z.number().optional(),
+          status: z.enum(orderStatusEnum.enumValues).optional(),
+          paymentStatus: z.enum(paymentStatusEnum.enumValues).optional(),
+          search: z.string().trim().optional(),
+          dateFrom: z.string().optional(),
+          dateTo: z.string().optional(),
+          page: z.number().min(1).default(1),
+          limit: z.number().min(1).max(100).default(25),
         })
         .optional()
     )
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getOrders(tenantId, input);
+      if (input?.tenantId !== undefined && input.tenantId !== tenantId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Tenant mismatch.",
+        });
+      }
+
+      const db = await getDb();
+      if (!db) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
+      }
+
+      const page = input?.page ?? 1;
+      const limit = input?.limit ?? 25;
+      const conditions = [eq(ordersTable.tenantId, tenantId)];
+      const search = input?.search?.trim();
+
+      if (input?.status) {
+        conditions.push(eq(ordersTable.status, input.status));
+      }
+      if (input?.paymentStatus) {
+        conditions.push(eq(ordersTable.paymentStatus, input.paymentStatus));
+      }
+      if (search) {
+        const searchPattern = `%${search}%`;
+        const searchCondition = or(
+          ilike(ordersTable.orderNumber, searchPattern),
+          ilike(ordersTable.customerName, searchPattern),
+          ilike(ordersTable.customerEmail, searchPattern),
+          sql`cast(${ordersTable.id} as text) ilike ${searchPattern}`
+        );
+        if (searchCondition) {
+          conditions.push(searchCondition);
+        }
+      }
+      if (input?.dateFrom) {
+        const dateFrom = new Date(input.dateFrom);
+        if (!Number.isNaN(dateFrom.getTime())) {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(input.dateFrom)) {
+            dateFrom.setUTCHours(0, 0, 0, 0);
+          }
+          conditions.push(gte(ordersTable.createdAt, dateFrom));
+        }
+      }
+      if (input?.dateTo) {
+        const dateTo = new Date(input.dateTo);
+        if (!Number.isNaN(dateTo.getTime())) {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(input.dateTo)) {
+            dateTo.setUTCHours(23, 59, 59, 999);
+          }
+          conditions.push(lte(ordersTable.createdAt, dateTo));
+        }
+      }
+
+      const where = and(...conditions);
+      const [items, totalResult] = await Promise.all([
+        db
+          .select()
+          .from(ordersTable)
+          .where(where)
+          .orderBy(desc(ordersTable.createdAt))
+          .limit(limit)
+          .offset((page - 1) * limit),
+        db.select({ count: count() }).from(ordersTable).where(where),
+      ]);
+
+      const total = Number(totalResult[0]?.count ?? 0);
+
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      };
     }),
 
   get: protectedProcedure

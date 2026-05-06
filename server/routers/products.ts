@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { and, count, desc, eq, ilike, or } from "drizzle-orm";
 import { z } from "zod";
 import {
   bulkArchiveProducts,
@@ -7,15 +8,16 @@ import {
   createProduct,
   deleteProduct,
   getCategories,
+  getDb,
   getInventory,
   getLowStockProducts,
   getProductById,
-  getProducts,
   updateProduct,
   upsertInventory,
   createCategory,
 } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
+import { products as productsTable } from "../../drizzle/schema";
 
 const requireTenant = (tenantId: number | null | undefined) => {
   if (!tenantId)
@@ -31,17 +33,76 @@ export const productsRouter = router({
     .input(
       z
         .object({
+          tenantId: z.number().optional(),
           status: z.enum(["active", "draft", "archived"]).optional(),
-          search: z.string().optional(),
+          search: z.string().trim().optional(),
           categoryId: z.number().optional(),
-          limit: z.number().default(50),
-          offset: z.number().default(0),
+          page: z.number().min(1).default(1),
+          limit: z.number().min(1).max(100).default(25),
         })
         .optional()
     )
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getProducts(tenantId, input);
+      if (input?.tenantId !== undefined && input.tenantId !== tenantId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Tenant mismatch.",
+        });
+      }
+
+      const db = await getDb();
+      if (!db) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "DB unavailable",
+        });
+      }
+
+      const page = input?.page ?? 1;
+      const limit = input?.limit ?? 25;
+      const conditions = [eq(productsTable.tenantId, tenantId)];
+      const search = input?.search?.trim();
+
+      if (input?.status) {
+        conditions.push(eq(productsTable.status, input.status));
+      }
+      if (search) {
+        const searchPattern = `%${search}%`;
+        const searchCondition = or(
+          ilike(productsTable.name, searchPattern),
+          ilike(productsTable.sku, searchPattern),
+          ilike(productsTable.description, searchPattern)
+        );
+        if (searchCondition) {
+          conditions.push(searchCondition);
+        }
+      }
+      if (input?.categoryId) {
+        conditions.push(eq(productsTable.categoryId, input.categoryId));
+      }
+
+      const where = and(...conditions);
+      const [items, totalResult] = await Promise.all([
+        db
+          .select()
+          .from(productsTable)
+          .where(where)
+          .orderBy(desc(productsTable.createdAt))
+          .limit(limit)
+          .offset((page - 1) * limit),
+        db.select({ count: count() }).from(productsTable).where(where),
+      ]);
+
+      const total = Number(totalResult[0]?.count ?? 0);
+
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      };
     }),
 
   get: protectedProcedure

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,12 +32,54 @@ import {
 import { toast } from "sonner";
 import { useRealtimeTable } from "@/lib/supabaseRealtime";
 import { RealtimeStatus } from "@/components/RealtimeStatus";
+import { PaginationControls } from "@/components/PaginationControls";
 import { QueryErrorState } from "@/components/QueryErrorState";
 import { AddCustomerDialog } from "@/components/AddCustomerDialog";
 
+interface CustomerAddress {
+  line1?: string;
+  line2?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+}
+
+interface CustomerListItem {
+  id: number;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  tags: string[] | null;
+  address: CustomerAddress | null;
+  totalOrders: number | null;
+  totalSpent: number | string | null;
+  createdAt: Date | string;
+}
+
+interface CustomerOrderSummary {
+  id: number;
+  orderNumber: string;
+  status: string;
+  total: number | string;
+  createdAt: Date | string;
+}
+
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export default function Customers() {
   const [search, setSearch] = useState("");
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<CustomerListItem | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [tagInput, setTagInput] = useState("");
@@ -53,8 +95,8 @@ export default function Customers() {
 
   const utils = trpc.useUtils();
 
-  const customers = trpc.orders.customers.useQuery(
-    { search: search || undefined },
+  const customers = trpc.customers.list.useQuery(
+    { search: search || undefined, page, limit },
     { staleTime: 30_000 }
   );
 
@@ -66,22 +108,37 @@ export default function Customers() {
   const updateCustomer = trpc.orders.updateCustomer.useMutation({
     onSuccess: () => {
       toast.success("Customer updated");
-      utils.orders.customers.invalidate();
+      utils.customers.list.invalidate();
       setShowEdit(false);
     },
     onError: e => toast.error(e.message),
   });
 
   useRealtimeTable("customers", undefined, () => {
-    utils.orders.customers.invalidate();
+    utils.customers.list.invalidate();
   });
 
-  function openProfile(c: any) {
+  const customerResponse = customers.data as
+    | PaginatedResponse<CustomerListItem>
+    | undefined;
+  const customerList = customerResponse?.items ?? [];
+  const totalCustomers = customerResponse?.total ?? 0;
+  const totalPages = customerResponse?.totalPages ?? 1;
+  const customerOrderList =
+    (customerOrders.data as CustomerOrderSummary[] | undefined) ?? [];
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(1);
+    }
+  }, [page, totalPages]);
+
+  function openProfile(c: CustomerListItem) {
     setSelectedCustomer(c);
     setShowProfile(true);
   }
 
-  function openEdit(c: any) {
+  function openEdit(c: CustomerListItem) {
     setSelectedCustomer(c);
     setFirstName(c.firstName ?? "");
     setLastName(c.lastName ?? "");
@@ -129,7 +186,7 @@ export default function Customers() {
     });
   }
 
-  const fullName = (c: any) =>
+  const fullName = (c: Partial<CustomerListItem>) =>
     [c.firstName, c.lastName].filter(Boolean).join(" ") || "—";
 
   return (
@@ -142,8 +199,7 @@ export default function Customers() {
           <h1 className="text-2xl font-bold text-white">Customers</h1>
           <div className="flex items-center gap-3 mt-1">
             <p className="text-gray-400 text-sm">
-              {customers.data?.length ?? 0} customer
-              {(customers.data?.length ?? 0) !== 1 ? "s" : ""}
+              {totalCustomers} customer{totalCustomers !== 1 ? "s" : ""}
             </p>
             <RealtimeStatus />
           </div>
@@ -154,7 +210,10 @@ export default function Customers() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           placeholder="Search by email..."
           className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500"
         />
@@ -208,7 +267,7 @@ export default function Customers() {
                     />
                   </td>
                 </tr>
-              ) : (customers.data ?? []).length === 0 ? (
+              ) : customerList.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-16">
                     <Users className="w-10 h-10 text-gray-600 mx-auto mb-3" />
@@ -221,7 +280,7 @@ export default function Customers() {
                   </td>
                 </tr>
               ) : (
-                (customers.data ?? []).map((c: any) => (
+                customerList.map(c => (
                   <tr
                     key={c.id}
                     className="border-b border-border hover:bg-white/2 transition-colors cursor-pointer"
@@ -275,7 +334,7 @@ export default function Customers() {
                         ))}
                         {(c.tags ?? []).length > 2 && (
                           <span className="text-gray-500 text-xs">
-                            +{c.tags.length - 2}
+                            +{(c.tags ?? []).length - 2}
                           </span>
                         )}
                       </div>
@@ -304,6 +363,22 @@ export default function Customers() {
           </table>
         </div>
       </div>
+
+      {!customers.isLoading && !customers.isError && totalCustomers > 0 && (
+        <PaginationControls
+          page={page}
+          limit={limit}
+          total={totalCustomers}
+          totalPages={totalPages}
+          itemLabel="customers"
+          onPageChange={setPage}
+          onLimitChange={value => {
+            setLimit(value);
+            setPage(1);
+          }}
+          disabled={customers.isRefetching}
+        />
+      )}
 
       {/* Profile Modal */}
       <Dialog open={showProfile} onOpenChange={setShowProfile}>
@@ -410,7 +485,7 @@ export default function Customers() {
                     Tags
                   </h4>
                   <div className="flex flex-wrap gap-2">
-                    {selectedCustomer.tags.map((t: string) => (
+                    {(selectedCustomer.tags ?? []).map((t: string) => (
                       <Badge
                         key={t}
                         variant="outline"
@@ -433,14 +508,14 @@ export default function Customers() {
                     <Loader2 className="w-4 h-4 animate-spin" /> Loading
                     orders...
                   </div>
-                ) : (customerOrders.data ?? []).length === 0 ? (
+                ) : customerOrderList.length === 0 ? (
                   <div className="text-center py-6 text-gray-500">
                     <Package className="w-8 h-8 mx-auto mb-2 text-gray-600" />
                     <p className="text-sm">No orders found</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {(customerOrders.data ?? []).map((o: any) => (
+                    {customerOrderList.map(o => (
                       <div
                         key={o.id}
                         className="flex items-center justify-between bg-white/5 rounded-lg p-3 border border-white/5"
@@ -492,6 +567,7 @@ export default function Customers() {
             </Button>
             <Button
               onClick={() => {
+                if (!selectedCustomer) return;
                 setShowProfile(false);
                 openEdit(selectedCustomer);
               }}

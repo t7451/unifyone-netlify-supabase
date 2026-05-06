@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, sql } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { customers } from "../../drizzle/schema";
@@ -22,13 +22,22 @@ export const customersRouter = router({
     .input(
       z
         .object({
+          tenantId: z.number().optional(),
           search: z.string().optional(),
-          limit: z.number().int().positive().max(500).default(100),
+          page: z.number().min(1).default(1),
+          limit: z.number().min(1).max(100).default(25),
         })
         .optional()
     )
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
+      if (input?.tenantId !== undefined && input.tenantId !== tenantId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Tenant mismatch.",
+        });
+      }
+
       const db = await getDb();
       if (!db)
         throw new TRPCError({
@@ -36,6 +45,8 @@ export const customersRouter = router({
           message: "DB unavailable",
         });
 
+      const page = input?.page ?? 1;
+      const limit = input?.limit ?? 25;
       const where = input?.search
         ? and(
             eq(customers.tenantId, tenantId),
@@ -43,13 +54,26 @@ export const customersRouter = router({
           )
         : eq(customers.tenantId, tenantId);
 
-      const rows = await db
-        .select()
-        .from(customers)
-        .where(where)
-        .orderBy(desc(customers.createdAt))
-        .limit(input?.limit ?? 100);
-      return rows;
+      const [items, totalResult] = await Promise.all([
+        db
+          .select()
+          .from(customers)
+          .where(where)
+          .orderBy(desc(customers.createdAt))
+          .limit(limit)
+          .offset((page - 1) * limit),
+        db.select({ count: count() }).from(customers).where(where),
+      ]);
+
+      const total = Number(totalResult[0]?.count ?? 0);
+
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      };
     }),
 
   /** Manually create a new customer. Audit-finding deliverable.

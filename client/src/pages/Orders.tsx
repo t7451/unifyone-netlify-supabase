@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useRealtimeOrders } from "@/lib/supabaseRealtime";
 import { RealtimeStatus } from "@/components/RealtimeStatus";
+import { PaginationControls } from "@/components/PaginationControls";
 import { QueryErrorState } from "@/components/QueryErrorState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { downloadCsv } from "@/lib/downloadCsv";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useIsMobile } from "@/hooks/useMobile";
 import {
   Search,
   ShoppingCart,
@@ -87,12 +90,26 @@ const ORDER_STATUSES = [
   "cancelled",
   "refunded",
 ] as const;
+const ORDER_FILTER_STATUSES = [
+  "pending",
+  "confirmed",
+  "processing",
+  "shipped",
+  "delivered",
+  "cancelled",
+] as const;
 const PAYMENT_STATUSES = [
   "pending",
   "paid",
   "failed",
   "refunded",
   "partial",
+] as const;
+const PAYMENT_FILTER_STATUSES = [
+  "paid",
+  "pending",
+  "failed",
+  "refunded",
 ] as const;
 const ORDER_TIMELINE = [
   "pending",
@@ -104,6 +121,14 @@ const ORDER_TIMELINE = [
 
 type OrderStatus = (typeof ORDER_STATUSES)[number];
 type OrderPaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 interface OrderSummary {
   id: number;
@@ -148,16 +173,70 @@ const emptyItem = (): OrderItem => ({
 
 export default function Orders() {
   const [, navigate] = useLocation();
+  const isMobile = useIsMobile();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<
+    OrderPaymentStatus | "all"
+  >("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderSummary | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [showDetail, setShowDetail] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
   const utils = trpc.useUtils();
+  const debouncedSearch = useDebounce(search, 300);
+  const normalizedSearch = debouncedSearch.trim();
   const tenantList = trpc.tenant.list.useQuery();
   const tenantId = tenantList.data?.[0]?.id;
+
+  const hasActiveFilters =
+    normalizedSearch.length > 0 ||
+    statusFilter !== "all" ||
+    paymentStatusFilter !== "all" ||
+    Boolean(dateFrom) ||
+    Boolean(dateTo);
+  const activeFilterCount = [
+    normalizedSearch,
+    statusFilter !== "all" ? statusFilter : "",
+    paymentStatusFilter !== "all" ? paymentStatusFilter : "",
+    dateFrom,
+    dateTo,
+  ].filter(Boolean).length;
+  const queryInput = useMemo(
+    () => ({
+      search: normalizedSearch || undefined,
+      status: statusFilter === "all" ? undefined : statusFilter,
+      paymentStatus:
+        paymentStatusFilter === "all" ? undefined : paymentStatusFilter,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+      page,
+      limit,
+    }),
+    [
+      normalizedSearch,
+      statusFilter,
+      paymentStatusFilter,
+      dateFrom,
+      dateTo,
+      page,
+      limit,
+    ]
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [normalizedSearch, statusFilter, paymentStatusFilter, dateFrom, dateTo]);
+
+  useEffect(() => {
+    setMobileFiltersOpen(false);
+  }, [isMobile]);
 
   // Supabase Realtime: auto-refresh orders list on any change
   useRealtimeOrders(tenantId, () => {
@@ -184,11 +263,13 @@ export default function Orders() {
   const [paymentRefId, setPaymentRefId] = useState("");
   const [squareOrderRefId, setSquareOrderRefId] = useState("");
 
-  const orders = trpc.orders.list.useQuery({
-    search: search || undefined,
-    status: statusFilter === "all" ? undefined : statusFilter,
-  });
-  const orderList = (orders.data ?? []) as OrderSummary[];
+  const orders = trpc.orders.list.useQuery(queryInput);
+  const orderResponse = orders.data as
+    | PaginatedResponse<OrderSummary>
+    | undefined;
+  const orderList = orderResponse?.items ?? [];
+  const totalOrders = orderResponse?.total ?? 0;
+  const totalPages = orderResponse?.totalPages ?? 1;
   const allVisibleSelected =
     orderList.length > 0 &&
     orderList.every(order => selectedIds.includes(order.id));
@@ -203,18 +284,33 @@ export default function Orders() {
   );
   const orderData = orderDetail.data as OrderDetailData | undefined;
 
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(1);
+    }
+  }, [page, totalPages]);
+
   const updateStatus = trpc.orders.updateStatus.useMutation({
-    onMutate: async ({ id, status }) => {
-      const queryInput = {
-        search: search || undefined,
-        status: statusFilter === "all" ? undefined : statusFilter,
-      };
+    onMutate: async ({ id, status, paymentStatus }) => {
       // Cancel any in-flight refetch so it doesn't overwrite our optimistic update
       await utils.orders.list.cancel(queryInput);
       const previous = utils.orders.list.getData(queryInput);
       // Optimistically apply the new status immediately
       utils.orders.list.setData(queryInput, prev =>
-        prev?.map(o => (o.id === id ? { ...o, status } : o))
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map(order =>
+                order.id === id
+                  ? {
+                      ...order,
+                      status,
+                      paymentStatus: paymentStatus ?? order.paymentStatus,
+                    }
+                  : order
+              ),
+            }
+          : prev
       );
       return { previous, queryInput };
     },
@@ -242,7 +338,7 @@ export default function Orders() {
       setShowCreate(false);
       resetCreateForm();
     },
-    onError: e => toast.error(e.message),
+    onError: error => toast.error(error.message || "Something went wrong"),
   });
 
   const bulkDeleteOrders = trpc.orders.bulkDelete.useMutation({
@@ -256,7 +352,7 @@ export default function Orders() {
         setShowDetail(false);
       }
     },
-    onError: error => toast.error(error.message),
+    onError: error => toast.error(error.message || "Something went wrong"),
   });
 
   const resetCreateForm = () => {
@@ -406,7 +502,7 @@ export default function Orders() {
           <h1 className="text-2xl font-bold text-white">Orders</h1>
           <div className="flex items-center gap-3 mt-1">
             <p className="text-gray-400 text-sm">
-              {orderList.length} order{orderList.length !== 1 ? "s" : ""}
+              {totalOrders} order{totalOrders !== 1 ? "s" : ""}
             </p>
             <RealtimeStatus />
           </div>
@@ -431,40 +527,126 @@ export default function Orders() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative min-w-[200px] flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <Input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by order number or customer..."
-            className="border-white/10 bg-white/5 pl-10 text-white placeholder:text-gray-500"
-          />
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-3">
+          {isMobile && (
+            <Button
+              variant="outline"
+              onClick={() => setMobileFiltersOpen(open => !open)}
+              className="border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
+            >
+              Filters
+              {activeFilterCount > 0 && (
+                <Badge className="bg-[#00D9FF]/15 text-[#00D9FF] hover:bg-[#00D9FF]/15">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            onClick={toggleSelectAllVisible}
+            disabled={orderList.length === 0}
+            className="border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
+          >
+            {allVisibleSelected ? "Clear Visible" : "Select Visible"}
+          </Button>
         </div>
-        <Select
-          value={statusFilter}
-          onValueChange={value => setStatusFilter(value as OrderStatus | "all")}
-        >
-          <SelectTrigger className="w-44 border-white/10 bg-white/5 text-white">
-            <SelectValue placeholder="All Status" />
-          </SelectTrigger>
-          <SelectContent className="bg-[#0F172A] border-white/10">
-            <SelectItem value="all">All Status</SelectItem>
-            {ORDER_STATUSES.map(status => (
-              <SelectItem key={status} value={status} className="capitalize">
-                {status}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          variant="outline"
-          onClick={toggleSelectAllVisible}
-          disabled={orderList.length === 0}
-          className="border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
-        >
-          {allVisibleSelected ? "Clear Visible" : "Select Visible"}
-        </Button>
+
+        {(!isMobile || mobileFiltersOpen) && (
+          <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-white/5 p-3 lg:flex-row lg:flex-wrap lg:items-center">
+            <div className="relative min-w-[220px] flex-1 lg:max-w-sm">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                value={search}
+                onChange={e => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search by customer, order ID…"
+                className="border-white/10 bg-white/5 pl-10 text-white placeholder:text-gray-500"
+              />
+            </div>
+            <Select
+              value={statusFilter}
+              onValueChange={value =>
+                setStatusFilter(value as OrderStatus | "all")
+              }
+            >
+              <SelectTrigger className="w-full border-white/10 bg-white/5 text-white sm:w-48">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#0F172A] border-white/10">
+                <SelectItem value="all">All</SelectItem>
+                {ORDER_FILTER_STATUSES.map(status => (
+                  <SelectItem
+                    key={status}
+                    value={status}
+                    className="capitalize"
+                  >
+                    {status}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={paymentStatusFilter}
+              onValueChange={value =>
+                setPaymentStatusFilter(value as OrderPaymentStatus | "all")
+              }
+            >
+              <SelectTrigger className="w-full border-white/10 bg-white/5 text-white sm:w-44">
+                <SelectValue placeholder="All payments" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#0F172A] border-white/10">
+                <SelectItem value="all">All</SelectItem>
+                {PAYMENT_FILTER_STATUSES.map(status => (
+                  <SelectItem
+                    key={status}
+                    value={status}
+                    className="capitalize"
+                  >
+                    {status}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex flex-col gap-1 sm:w-[150px]">
+              <Label className="text-xs text-gray-400">From</Label>
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={e => setDateFrom(e.target.value)}
+                className="border-white/10 bg-white/5 text-white"
+              />
+            </div>
+            <div className="flex flex-col gap-1 sm:w-[150px]">
+              <Label className="text-xs text-gray-400">To</Label>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={e => setDateTo(e.target.value)}
+                className="border-white/10 bg-white/5 text-white"
+              />
+            </div>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("all");
+                  setPaymentStatusFilter("all");
+                  setDateFrom("");
+                  setDateTo("");
+                  setPage(1);
+                }}
+                className="border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
+              >
+                Clear filters
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {selectedIds.length > 0 && (
@@ -749,6 +931,24 @@ export default function Orders() {
           </div>
         )}
 
+        {!orders.isLoading && !orders.isError && totalOrders > 0 && (
+          <div className="border-t border-white/10 px-4 py-4 sm:px-6">
+            <PaginationControls
+              page={page}
+              limit={limit}
+              total={totalOrders}
+              totalPages={totalPages}
+              itemLabel="orders"
+              onPageChange={setPage}
+              onLimitChange={value => {
+                setLimit(value);
+                setPage(1);
+              }}
+              disabled={orders.isRefetching}
+            />
+          </div>
+        )}
+
         {!orders.isLoading && !orders.isError && orderList.length === 0 && (
           <Card className="rounded-none border-0 bg-transparent shadow-none">
             <CardContent className="flex flex-col items-center px-6 py-16 text-center">
@@ -756,16 +956,14 @@ export default function Orders() {
                 <ShoppingCart className="h-10 w-10 text-[#00D9FF]" />
               </div>
               <h2 className="text-xl font-semibold text-white">
-                {search || statusFilter !== "all"
-                  ? "No orders found"
-                  : "No orders yet"}
+                {hasActiveFilters ? "No orders found" : "No orders yet"}
               </h2>
               <p className="mt-2 max-w-md text-sm text-gray-400">
-                {search || statusFilter !== "all"
+                {hasActiveFilters
                   ? "Try adjusting your filters to find the order you're looking for."
                   : "Orders will appear here as customers check out or when your team creates manual orders."}
               </p>
-              {!search && statusFilter === "all" && (
+              {!hasActiveFilters && (
                 <Button
                   size="sm"
                   className="mt-6 bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90"

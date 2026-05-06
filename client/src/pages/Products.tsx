@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,9 +33,11 @@ import {
   Loader2,
   BarChart3,
 } from "lucide-react";
+import { PaginationControls } from "@/components/PaginationControls";
 import { QueryErrorState } from "@/components/QueryErrorState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/useDebounce";
 
 type ProductStatus = "active" | "draft" | "archived";
 
@@ -60,6 +62,14 @@ interface ProductListItem {
 interface CategoryOption {
   id: number;
   name: string;
+}
+
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 const STATUS_COLORS: Record<ProductStatus, string> = {
@@ -317,6 +327,8 @@ export default function Products() {
   const [statusFilter, setStatusFilter] = useState<ProductStatus | "all">(
     "all"
   );
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<ProductListItem | null>(null);
@@ -334,6 +346,14 @@ export default function Products() {
   >(null);
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
   const utils = trpc.useUtils();
+  const debouncedSearch = useDebounce(search, 300);
+  const normalizedSearch = debouncedSearch.trim();
+  const hasActiveFilters =
+    normalizedSearch.length > 0 || statusFilter !== "all";
+
+  useEffect(() => {
+    setPage(1);
+  }, [normalizedSearch, statusFilter]);
 
   const getErrors = (f: ProductForm, touched: Record<string, boolean>) => {
     const nameTouched = touched.name ?? false;
@@ -352,8 +372,10 @@ export default function Products() {
   };
 
   const products = trpc.products.list.useQuery({
-    search: search || undefined,
+    search: normalizedSearch || undefined,
     status: statusFilter === "all" ? undefined : statusFilter,
+    page,
+    limit,
   });
 
   const createMutation = trpc.products.create.useMutation({
@@ -364,7 +386,7 @@ export default function Products() {
       setCreateTouched({});
       utils.products.list.invalidate();
     },
-    onError: e => toast.error(e.message),
+    onError: error => toast.error(error.message || "Something went wrong"),
   });
 
   const updateMutation = trpc.products.update.useMutation({
@@ -374,7 +396,7 @@ export default function Products() {
       setEditTouched({});
       utils.products.list.invalidate();
     },
-    onError: e => toast.error(e.message),
+    onError: error => toast.error(error.message || "Something went wrong"),
   });
 
   const deleteMutation = trpc.products.delete.useMutation({
@@ -383,7 +405,7 @@ export default function Products() {
       setDeleteProduct(null);
       utils.products.list.invalidate();
     },
-    onError: e => toast.error(e.message),
+    onError: error => toast.error(error.message || "Something went wrong"),
   });
 
   const bulkUpdateStatusMutation = trpc.products.bulkUpdateStatus.useMutation({
@@ -393,9 +415,9 @@ export default function Products() {
       setBulkAction(null);
       utils.products.list.invalidate();
     },
-    onError: e => {
+    onError: error => {
       setBulkAction(null);
-      toast.error(e.message);
+      toast.error(error.message || "Something went wrong");
     },
   });
 
@@ -406,9 +428,9 @@ export default function Products() {
       setBulkAction(null);
       utils.products.list.invalidate();
     },
-    onError: e => {
+    onError: error => {
       setBulkAction(null);
-      toast.error(e.message);
+      toast.error(error.message || "Something went wrong");
     },
   });
 
@@ -420,9 +442,9 @@ export default function Products() {
       setBulkDeleteConfirmOpen(false);
       utils.products.list.invalidate();
     },
-    onError: e => {
+    onError: error => {
       setBulkAction(null);
-      toast.error(e.message);
+      toast.error(error.message || "Something went wrong");
     },
   });
 
@@ -503,7 +525,19 @@ export default function Products() {
     });
   };
 
-  const productList = (products.data ?? []) as ProductListItem[];
+  const productResponse = products.data as
+    | PaginatedResponse<ProductListItem>
+    | undefined;
+  const productList = productResponse?.items ?? [];
+  const totalProducts = productResponse?.total ?? 0;
+  const totalPages = productResponse?.totalPages ?? 1;
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(1);
+    }
+  }, [page, totalPages]);
+
   const lowStockCount = productList.filter(
     product =>
       product.inventory &&
@@ -542,7 +576,7 @@ export default function Products() {
         <div>
           <h1 className="text-2xl font-bold text-white">Products</h1>
           <p className="text-gray-400 text-sm mt-1">
-            {productList.length} products
+            {totalProducts} product{totalProducts === 1 ? "" : "s"}
             {lowStockCount > 0 && (
               <span className="ml-2 text-amber-400">
                 <AlertTriangle className="w-3 h-3 inline mr-1" />
@@ -604,32 +638,51 @@ export default function Products() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search products..."
-            className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500"
-          />
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="flex flex-1 flex-col gap-3 sm:flex-row">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              value={search}
+              onChange={e => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Search products…"
+              className="border-white/10 bg-white/5 pl-10 text-white placeholder:text-gray-500"
+            />
+          </div>
+          <Select
+            value={statusFilter}
+            onValueChange={(value: ProductStatus | "all") => {
+              setStatusFilter(value);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-full border-white/10 bg-white/5 text-white sm:w-40">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#0F172A] border-white/10">
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearch("");
+                setStatusFilter("all");
+                setPage(1);
+              }}
+              className="border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
+            >
+              Clear filters
+            </Button>
+          )}
         </div>
-        <Select
-          value={statusFilter}
-          onValueChange={value =>
-            setStatusFilter((value as ProductStatus | "all") ?? "all")
-          }
-        >
-          <SelectTrigger className="bg-white/5 border-white/10 text-white w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-[#0F172A] border-white/10">
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="archived">Archived</SelectItem>
-          </SelectContent>
-        </Select>
         <Button
           variant="outline"
           onClick={toggleSelectAllVisible}
@@ -726,6 +779,22 @@ export default function Products() {
         </div>
       )}
 
+      {!products.isLoading && !products.isError && totalProducts > 0 && (
+        <PaginationControls
+          page={page}
+          limit={limit}
+          total={totalProducts}
+          totalPages={totalPages}
+          itemLabel="products"
+          onPageChange={setPage}
+          onLimitChange={value => {
+            setLimit(value);
+            setPage(1);
+          }}
+          disabled={products.isRefetching}
+        />
+      )}
+
       {/* Bulk Delete Confirmation Dialog */}
       <Dialog
         open={bulkDeleteConfirmOpen}
@@ -812,16 +881,14 @@ export default function Products() {
               <Package className="h-10 w-10 text-[#00D9FF]" />
             </div>
             <h2 className="text-xl font-semibold text-white">
-              {search || statusFilter !== "all"
-                ? "No matching products"
-                : "No products yet"}
+              {hasActiveFilters ? "No matching products" : "No products yet"}
             </h2>
             <p className="mt-2 max-w-md text-sm text-gray-400">
-              {search || statusFilter !== "all"
+              {hasActiveFilters
                 ? "Try clearing your filters or searching for a different product name or SKU."
                 : "Build your catalog with pricing, inventory, and imagery so your team can start selling faster."}
             </p>
-            {!search && statusFilter === "all" && (
+            {!hasActiveFilters && (
               <Button
                 className="mt-6 bg-[#00D9FF] font-semibold text-[#0A1128] hover:bg-[#00D9FF]/90"
                 onClick={() => setCreateOpen(true)}
