@@ -47,6 +47,7 @@ import { knowledgeGraphRouter } from "./routers/knowledgeGraph";
 import { pixelforgeRouter } from "./routers/pixelforge";
 import { customersRouter } from "./routers/customers";
 import { discountsRouter } from "./routers/discounts";
+import { masterControlRouter } from "./routers/masterControl";
 
 export const appRouter = router({
   system: systemRouter,
@@ -128,6 +129,7 @@ export const appRouter = router({
   customers: customersRouter,
 
   discounts: discountsRouter,
+  masterControl: masterControlRouter,
 });
 
 export type AppRouter = typeof appRouter;

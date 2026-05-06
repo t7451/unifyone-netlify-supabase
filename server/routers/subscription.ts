@@ -17,6 +17,14 @@ import { logAudit } from "../auditLogger";
 import { logger } from "../_core/logger";
 import { eq } from "drizzle-orm";
 import { getDb } from "../db";
+import { createPayPalOrder } from "../paypal";
+import { createSquareCheckout } from "../square";
+import {
+  buildManualPaymentUrl,
+  getAvailablePaymentProviders,
+  isPaymentProviderConfigured,
+  type PaymentProvider,
+} from "../paymentFallback";
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || "";
@@ -96,9 +104,10 @@ export const subscriptionRouter = router({
   }),
 
   /**
-   * Create a Stripe Checkout Session for a subscription plan.
-   * Accepts either a planSlug (looks up Stripe price ID from DB) or a direct priceId.
-   * Falls back to one-time payment if no Stripe price ID is configured yet.
+   * Create a checkout session for a subscription plan.
+   * Stripe remains primary for recurring subscriptions. If Stripe is unavailable
+   * or blocked, fall back to Square/PayPal one-time first-period collection and
+   * finally manual invoice intake so checkout never dead-ends.
    */
   createCheckout: protectedProcedure
     .input(
@@ -107,6 +116,10 @@ export const subscriptionRouter = router({
         priceId: z.string().optional(),
         billingPeriod: z.enum(["monthly", "yearly"]).default("monthly"),
         origin: z.string(),
+        preferredProvider: z
+          .enum(["stripe", "square", "paypal", "shopify", "manual"])
+          .optional(),
+        allowFallback: z.boolean().default(true),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -114,89 +127,209 @@ export const subscriptionRouter = router({
       let fallbackAmount: number | undefined;
       let fallbackDescription: string | undefined;
 
-      // Resolve price ID from plan slug if not provided directly
-      if (!resolvedPriceId && input.planSlug) {
+      // Resolve plan pricing from slug for Stripe and non-Stripe fallbacks.
+      if (input.planSlug) {
         const plan = await getPlanBySlug(input.planSlug);
         if (!plan)
           throw new TRPCError({ code: "NOT_FOUND", message: "Plan not found" });
-        resolvedPriceId =
-          input.billingPeriod === "yearly"
-            ? (plan.stripePriceIdYearly ?? undefined)
-            : (plan.stripePriceIdMonthly ?? undefined);
-
-        // Fallback: use plan price as one-time amount if no Stripe price ID configured
         if (!resolvedPriceId) {
-          const priceVal =
+          resolvedPriceId =
             input.billingPeriod === "yearly"
-              ? Number(plan.priceYearly)
-              : Number(plan.priceMonthly);
-          fallbackAmount = Math.round(priceVal * 100); // cents
-          fallbackDescription = `UnifyOne ${plan.name} Plan (${input.billingPeriod})`;
+              ? (plan.stripePriceIdYearly ?? undefined)
+              : (plan.stripePriceIdMonthly ?? undefined);
         }
+
+        const priceVal =
+          input.billingPeriod === "yearly"
+            ? Number(plan.priceYearly)
+            : Number(plan.priceMonthly);
+        fallbackAmount = Math.round(priceVal * 100);
+        fallbackDescription = `UnifyOne ${plan.name} Plan (${input.billingPeriod})`;
       }
 
       const tenantId = ctx.user.tenantId;
       const baseUrl = input.origin;
+      const cookieHeader = getCookieHeader(ctx.req) ?? "";
+      const providerOrder = input.allowFallback
+        ? getAvailablePaymentProviders(
+            input.preferredProvider as PaymentProvider | undefined
+          )
+        : input.preferredProvider
+          ? isPaymentProviderConfigured(input.preferredProvider)
+            ? [input.preferredProvider]
+            : []
+          : isPaymentProviderConfigured("stripe")
+            ? ["stripe" as const]
+            : [];
+      const attempts: Array<{ provider: PaymentProvider; error: string }> = [];
+      const amountCents = fallbackAmount;
+      const description =
+        fallbackDescription ||
+        (input.planSlug
+          ? `UnifyOne ${input.planSlug} Plan (${input.billingPeriod})`
+          : "UnifyOne Subscription");
 
-      const res = await fetch(`${baseUrl}/api/stripe/create-checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // PATCHED: signal that this is a server-side proxied call so any
-          // CDN bot-mitigation has a chance to allow it. Cloudflare Bot Fight
-          // Mode still might intercept — see fallback handling below.
-          "User-Agent": "UnifyOne-tRPC/1.0 (+server-side)",
-          "X-Internal-Request": "trpc-subscription-createCheckout",
-          Cookie: getCookieHeader(ctx.req) ?? "",
-        },
-        body: JSON.stringify({
-          priceId: resolvedPriceId,
-          tenantId,
-          userId: ctx.user.id,
-          userEmail: ctx.user.email,
-          userName: ctx.user.name,
-          origin: baseUrl,
-          amount: fallbackAmount,
-          description: fallbackDescription,
-        }),
-      });
+      if (!providerOrder.length) {
+        return {
+          url: buildManualPaymentUrl({
+            origin: baseUrl,
+            planSlug: input.planSlug,
+            amountCents,
+            description,
+            billingPeriod: input.billingPeriod,
+          }),
+          provider: "manual" as const,
+          fallbackUsed: true,
+          attempts,
+        };
+      }
 
-      // PATCHED: Detect Cloudflare bot-challenge intercept. CF returns the
-      // challenge HTML page (not JSON) which would normally fail JSON.parse
-      // with an opaque error. Surface a specific message so the client can
-      // show actionable copy.
-      const contentType = res.headers.get("content-type") || "";
-      const isHtml =
-        contentType.includes("text/html") ||
-        res.headers.get("cf-mitigated") === "challenge";
+      for (const provider of providerOrder) {
+        try {
+          if (provider === "stripe") {
+            const res = await fetch(`${baseUrl}/api/stripe/create-checkout`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "User-Agent": "UnifyOne-tRPC/1.0 (+server-side)",
+                "X-Internal-Request": "trpc-subscription-createCheckout",
+                Cookie: cookieHeader,
+              },
+              body: JSON.stringify({
+                priceId: resolvedPriceId,
+                tenantId,
+                userId: ctx.user.id,
+                userEmail: ctx.user.email,
+                userName: ctx.user.name,
+                origin: baseUrl,
+                amount: fallbackAmount,
+                description: fallbackDescription,
+              }),
+            });
 
-      if (isHtml) {
-        const body = await res.text();
-        const looksLikeCfChallenge =
-          /Just a moment|cf-mitigated|cf_chl_opt|challenge-platform|cloudflare/i.test(
-            body
-          );
-        if (looksLikeCfChallenge) {
-          throw new TRPCError({
-            code: "TOO_MANY_REQUESTS",
-            message:
-              "CLOUDFLARE_BOT_CHALLENGE: Cloudflare is verifying this request. " +
-              "If you see this often, ask an admin to disable Bot Fight Mode for /api/* " +
-              "(see CLOUDFLARE_BOT_CHALLENGE_FIX.md).",
+            const contentType = res.headers.get("content-type") || "";
+            const isHtml =
+              contentType.includes("text/html") ||
+              res.headers.get("cf-mitigated") === "challenge";
+
+            if (isHtml) {
+              const body = await res.text();
+              const looksLikeCfChallenge =
+                /Just a moment|cf-mitigated|cf_chl_opt|challenge-platform|cloudflare/i.test(
+                  body
+                );
+              if (looksLikeCfChallenge) {
+                throw new Error(
+                  "Stripe checkout blocked by Cloudflare challenge"
+                );
+              }
+            }
+
+            if (!res.ok) {
+              throw new Error(await res.text());
+            }
+
+            const data = (await res.json().catch(() => ({}))) as {
+              url?: string;
+            };
+            if (!data.url)
+              throw new Error("Stripe did not return a checkout URL");
+            return {
+              url: data.url,
+              provider,
+              fallbackUsed: provider !== "stripe",
+              attempts,
+            };
+          }
+
+          if (provider === "square") {
+            if (!amountCents || amountCents <= 0) {
+              throw new Error("Square fallback requires a plan amount");
+            }
+            const result = await createSquareCheckout({
+              amount: amountCents / 100,
+              currency: "USD",
+              description,
+              tenantId,
+              userId: ctx.user.id,
+              redirectUrl: `${baseUrl}/dashboard?square=success&fallback=subscription`,
+            });
+            return {
+              url: result.checkoutUrl,
+              provider,
+              fallbackUsed: true,
+              attempts,
+            };
+          }
+
+          if (provider === "paypal") {
+            if (!amountCents || amountCents <= 0) {
+              throw new Error("PayPal fallback requires a plan amount");
+            }
+            const result = await createPayPalOrder({
+              amount: amountCents / 100,
+              currency: "USD",
+              description,
+              tenantId,
+              userId: ctx.user.id,
+              userEmail: ctx.user.email,
+              returnUrl: `${baseUrl}/dashboard?paypal_return=1&fallback=subscription`,
+              cancelUrl: `${baseUrl}/checkout?paypal_cancel=1`,
+            });
+            return {
+              url: result.approveUrl,
+              provider,
+              fallbackUsed: true,
+              attempts,
+            };
+          }
+
+          if (provider === "shopify") {
+            return {
+              url: process.env.SHOPIFY_CHECKOUT_URL || "",
+              provider,
+              fallbackUsed: true,
+              attempts,
+            };
+          }
+
+          return {
+            url: buildManualPaymentUrl({
+              origin: baseUrl,
+              planSlug: input.planSlug,
+              amountCents,
+              description,
+              billingPeriod: input.billingPeriod,
+            }),
+            provider,
+            fallbackUsed: true,
+            attempts,
+          };
+        } catch (err) {
+          attempts.push({
+            provider,
+            error: err instanceof Error ? err.message : String(err),
+          });
+          logger.warn("payment provider checkout failed; trying fallback", {
+            provider,
+            tenantId,
+            error: err instanceof Error ? err.message : String(err),
           });
         }
       }
 
-      if (!res.ok) {
-        const err = await res.text();
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: `Stripe checkout failed: ${err}`,
-        });
-      }
-
-      const data = (await res.json().catch(() => ({}))) as { url?: string };
-      return { url: data.url ?? null };
+      return {
+        url: buildManualPaymentUrl({
+          origin: baseUrl,
+          planSlug: input.planSlug,
+          amountCents,
+          description,
+          billingPeriod: input.billingPeriod,
+        }),
+        provider: "manual" as const,
+        fallbackUsed: true,
+        attempts,
+      };
     }),
 
   /**
@@ -375,7 +508,7 @@ export const subscriptionRouter = router({
           message: "No Stripe customer found. Please subscribe first.",
         });
       }
-      const res = await fetch(`${input.origin}/api/stripe/portal`, {
+      const res = await fetch(`${input.origin}/api/stripe/customer-portal`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -580,12 +713,13 @@ export const subscriptionRouter = router({
     if (!tenant?.stripeCustomerId) return [];
 
     try {
-      const res = await fetch(
-        `/api/stripe/invoices/${tenant.stripeCustomerId}`
-      );
-      if (!res.ok) return [];
-      const invoices = await res.json();
-      return invoices as Array<{
+      const stripe = getStripe();
+      if (!stripe) return [];
+      const invoices = await stripe.invoices.list({
+        customer: tenant.stripeCustomerId,
+        limit: 20,
+      });
+      return invoices.data as Array<{
         id: string;
         amount_paid: number;
         amount_due: number;
