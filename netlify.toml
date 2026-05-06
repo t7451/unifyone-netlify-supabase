@@ -11,13 +11,6 @@
   NODE_VERSION = "22"
   PNPM_VERSION = "10"
 
-[[plugins]]
-  package = "@netlify/plugin-csp-nonce"
-  [plugins.inputs]
-    reportOnly = false
-    unsafeEval = false
-    excludedPath = ["/api/*", "/mcp"]
-
 # Netlify Functions — use esbuild to bundle the TypeScript server function
 [functions]
   node_bundler = "esbuild"
@@ -93,9 +86,8 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(self)"
     Cross-Origin-Opener-Policy = "same-origin"
-    Cross-Origin-Embedder-Policy = "unsafe-none"
     Cross-Origin-Resource-Policy = "same-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' https://plausible.io https://connect.facebook.net https://js.stripe.com https://www.paypal.com https://www.paypalobjects.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https: https://d.impactradius-event.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://checkout.stripe.com https://api.paypal.com https://www.facebook.com https://plausible.io https://api.anthropic.com; frame-src https://js.stripe.com https://hooks.stripe.com https://www.paypal.com; frame-ancestors 'none'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://plausible.io https://connect.facebook.net https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://checkout.stripe.com https://api.paypal.com https://www.facebook.com https://plausible.io; frame-src https://js.stripe.com https://hooks.stripe.com https://www.paypal.com; object-src 'none'; base-uri 'self'; form-action 'self';"
 
 # Ensure webhook routes accept Stripe POST requests
 # CORS is locked down to production domain - webhooks are verified by signature
@@ -112,12 +104,6 @@
     Access-Control-Allow-Origin = "https://1commerce.online"
     Access-Control-Allow-Methods = "POST, GET, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, stripe-signature"
-
-[[headers]]
-  for = "/api/*"
-  [headers.values]
-    Cache-Control = "no-store"
-    X-DNS-Prefetch-Control = "off"
 
 # Cache static assets aggressively
 [[headers]]

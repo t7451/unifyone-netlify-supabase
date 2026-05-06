@@ -13,9 +13,10 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate:pg",
     "db:push": "drizzle-kit generate:pg && drizzle-kit up:pg",
-    "seed:plans": "tsx scripts/seed-stripe-products.ts",
+    "seed:plans": "tsx scripts/seed-plans.ts",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "seed:plans": "tsx scripts/seed-stripe-products.ts",
     "prepare": "is-ci || husky",
     "test:e2e": "playwright test"
   },
@@ -109,7 +110,6 @@
   "devDependencies": {
     "@builder.io/vite-plugin-jsx-loc": "^0.1.1",
     "@eslint/js": "^9.0.0",
-    "@netlify/plugin-csp-nonce": "^1.6.2",
     "@playwright/test": "^1.59.1",
     "@tailwindcss/typography": "^0.5.15",
     "@tailwindcss/vite": "^4.1.3",
