@@ -15,6 +15,8 @@
  *      warning with a fix command if it is missing.
  *
  * Usage:
+ *   pnpm seed:plans
+ *   # or directly:
  *   pnpm tsx scripts/seed-stripe-products.ts
  *
  * Environment variables required (loaded from .env automatically):
