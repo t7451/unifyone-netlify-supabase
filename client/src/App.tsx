@@ -90,6 +90,7 @@ const NlwebChat = lazy(() => import("./pages/NlwebChat"));
 const DeveloperHub = lazy(() => import("./pages/DeveloperHub"));
 const AuthorizationHub = lazy(() => import("./pages/AuthorizationHub"));
 const Terminal = lazy(() => import("./pages/Terminal"));
+const RevenueCommand = lazy(() => import("./pages/RevenueCommand"));
 const DealflowPage = lazy(() => import("./pages/DealflowPage"));
 const TerpforgePage = lazy(() => import("./pages/TerpforgePage"));
 const KnowledgeGraphPage = lazy(() => import("./pages/KnowledgeGraphPage"));
@@ -525,6 +526,14 @@ function Router() {
           <ProtectedRoute>
             <Checkout />
           </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/revenue-command"
+        component={() => (
+          <DashboardRoute>
+            <RevenueCommand />
+          </DashboardRoute>
         )}
       />
       <Route

@@ -87,6 +87,7 @@ const menuItems = [
   { icon: Store, label: "Theme Store", path: "/themes" },
   { icon: Package, label: "My Themes", path: "/my-themes" },
   { icon: Key, label: "Rewards Keys", path: "/rewards" },
+  { icon: TrendingUp, label: "Revenue Command", path: "/revenue-command" },
   { icon: TrendingUp, label: "Revenue Streams", path: "/revenue-streams" },
   { icon: Link2, label: "Affiliate Hub", path: "/affiliates" },
   { icon: Activity, label: "Sync Monitor", path: "/sync-monitor" },
@@ -103,9 +104,17 @@ const menuItems = [
   { icon: TerminalSquare, label: "Terminal", path: "/terminal" },
   { icon: Target, label: "DealFlow", path: "/dashboard/dealflow" },
   { icon: Plug, label: "TerpForge", path: "/dashboard/terpforge" },
-  { icon: Share2, label: "Knowledge Graph", path: "/dashboard/knowledge-graph" },
+  {
+    icon: Share2,
+    label: "Knowledge Graph",
+    path: "/dashboard/knowledge-graph",
+  },
   { icon: Store, label: "PixelForge", path: "/dashboard/pixelforge" },
-  { icon: ShoppingBag, label: "Shopify Theme", path: "/dashboard/shopify-theme" },
+  {
+    icon: ShoppingBag,
+    label: "Shopify Theme",
+    path: "/dashboard/shopify-theme",
+  },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -325,9 +334,9 @@ function DashboardLayoutContent({
                 style={{ borderBottom: "1px solid rgba(212,168,67,0.08)" }}
               >
                 <Building2
-                    className="w-3 h-3 shrink-0"
-                    style={{ color: "rgba(212,168,67,0.72)" }}
-                  />
+                  className="w-3 h-3 shrink-0"
+                  style={{ color: "rgba(212,168,67,0.72)" }}
+                />
                 <span
                   className="font-cinzel text-xs truncate flex-1"
                   style={{ color: "#D7D7D7", letterSpacing: "0.1em" }}
@@ -450,12 +459,12 @@ function DashboardLayoutContent({
                 className="h-9 w-9"
                 style={{ color: "#D0D0D0" }}
               />
-                <span
-                  className="text-sm font-medium tracking-wide"
-                  style={{ color: "#D4D4D4" }}
-                >
-                  {activeMenuItem?.label ?? "Menu"}
-                </span>
+              <span
+                className="text-sm font-medium tracking-wide"
+                style={{ color: "#D4D4D4" }}
+              >
+                {activeMenuItem?.label ?? "Menu"}
+              </span>
             </div>
             <div className="flex items-center gap-1 pr-2">
               <NotificationCenter />
@@ -526,12 +535,12 @@ function FloatingAIWidget() {
       {open && (
         <div
           className="w-80 sm:w-96 flex flex-col overflow-hidden shadow-2xl"
-            style={{
-              height: "480px",
-              border: "1px solid rgba(201,168,76,0.25)",
-              backgroundColor: "#0F0F11",
-            }}
-          >
+          style={{
+            height: "480px",
+            border: "1px solid rgba(201,168,76,0.25)",
+            backgroundColor: "#0F0F11",
+          }}
+        >
           {/* Widget header */}
           <div
             className="flex items-center gap-2 px-4 py-3 shrink-0"
