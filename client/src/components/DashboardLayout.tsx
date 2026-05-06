@@ -58,6 +58,7 @@ import {
   Code2,
   ShieldCheck,
   TerminalSquare,
+  SlidersHorizontal,
 } from "lucide-react";
 import { AIChatBox } from "@/components/AIChatBox";
 import type { Message } from "@/components/AIChatBox";
@@ -71,6 +72,7 @@ import { Button } from "./ui/button";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: SlidersHorizontal, label: "Master Control", path: "/master-control" },
   { icon: ShoppingBag, label: "Products", path: "/products" },
   { icon: ShoppingCart, label: "Orders", path: "/orders" },
   { icon: Users, label: "Customers", path: "/customers" },
