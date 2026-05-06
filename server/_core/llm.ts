@@ -392,6 +392,15 @@ class LLMInvokeError extends Error {
 const hasRetryableCompatibilityPattern = (message: string) =>
   RETRYABLE_400_PATTERNS.some(pattern => message.includes(pattern));
 
+/**
+ * Normalize provider error payloads for retry decisions.
+ *
+ * OpenAI-compatible providers usually return
+ * `{ error: { code, type, message } }`; Forge-compatible errors can also be
+ * plain text. The returned `code` supports exact allowlist checks, while
+ * `text` combines normalized code/type/message content for last-resort
+ * compatibility pattern matching.
+ */
 const parseProviderErrorDetails = (responseText: string) => {
   try {
     const parsed = JSON.parse(responseText) as {
@@ -492,6 +501,9 @@ async function invokeOnce(
 
   payload.max_tokens = params.maxTokens ?? params.max_tokens ?? 32768;
   if (provider === "forge" && FORGE_THINKING_MODELS.has(providerModel)) {
+    // The provider guard is intentional: a Groq-routed model such as
+    // "groq/gemini-2.5-flash" is normalized to "gemini-2.5-flash", but Groq's
+    // OpenAI-compatible API still must not receive Forge/Gemini-only params.
     // Forge supports Gemini's provider-specific thinking parameter; Groq's
     // OpenAI-compatible API and non-Gemini Forge models do not. Keep the budget
     // small so Gemini can plan without materially increasing latency or metered

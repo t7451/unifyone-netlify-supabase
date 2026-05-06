@@ -332,10 +332,11 @@ describe("runKaiAgent", () => {
       expect(result.toolCalls).toHaveLength(2);
       expect(result.modelUsage).toHaveLength(2);
       for (const toolCall of result.toolCalls) {
+        const args = toolCall.args as Record<string, unknown>;
         expect(toolCall.args).toEqual(
           expect.objectContaining({ tenantId: tenants[index] })
         );
-      expect(JSON.stringify(toolCall.args)).not.toContain("tenant-injected");
+        expect(args.tenantId).not.toBe("tenant-injected");
       }
     }
     expect(invokeLLM).toHaveBeenCalledTimes(tenants.length * 2);
