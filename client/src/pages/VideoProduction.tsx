@@ -1,8 +1,23 @@
 import { useState } from "react";
-import { Play, Zap, Film, Award, Download } from "lucide-react";
+import {
+  Play,
+  Zap,
+  Film,
+  Award,
+  Download,
+  Clipboard,
+  FileText,
+  ListChecks,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 import { toast } from "sonner";
@@ -19,6 +34,14 @@ type Showcase = {
   category: string;
   thumbnail: string;
   videoUrl?: string;
+  storyboard: StoryboardFrame[];
+};
+
+type StoryboardFrame = {
+  timecode: string;
+  title: string;
+  visual: string;
+  narration: string;
 };
 
 const PRIMARY_SHOWCASES: Showcase[] = [
@@ -34,6 +57,39 @@ const PRIMARY_SHOWCASES: Showcase[] = [
     thumbnail: "🎬",
     videoUrl:
       "https://cdn.1commerce.online/videos/Ultra-realistic_cinematic_foot_Kling_30__37390(1).mp4",
+    storyboard: [
+      {
+        timecode: "0:00-0:05",
+        title: "Command room opens",
+        visual:
+          "A dark commerce command floor wakes up with order, payment, and automation panels lighting in sequence.",
+        narration:
+          "OneStack brings fragmented commerce operations into one live operating layer.",
+      },
+      {
+        timecode: "0:06-0:14",
+        title: "Autonomous execution",
+        visual:
+          "AI agents move cards from research to fulfillment while payment rails verify in the background.",
+        narration:
+          "Kai handles the repetitive operational work while operators keep final control.",
+      },
+      {
+        timecode: "0:15-0:24",
+        title: "Multi-tenant scale",
+        visual:
+          "Multiple branded storefronts branch from the same platform core, each with isolated data and revenue flows.",
+        narration:
+          "Each tenant gets its own commerce system without duplicating infrastructure.",
+      },
+      {
+        timecode: "0:25-0:30",
+        title: "Final lockup",
+        visual:
+          "The OneStack mark resolves over a clean dashboard with revenue, fulfillment, and automation signals stable.",
+        narration: "One stack. Every channel. Built to operate at scale.",
+      },
+    ],
   },
 ];
 
@@ -48,6 +104,40 @@ const ADDITIONAL_SHOWCASES: Showcase[] = [
     tags: ["Multi-Tenant", "SaaS", "Commerce"],
     category: "Platform Story",
     thumbnail: "🏢",
+    storyboard: [
+      {
+        timecode: "0:00-0:07",
+        title: "Tenant map",
+        visual:
+          "A clean operations map shows three storefronts entering UnifyOne through separate tenant lanes.",
+        narration:
+          "Each brand can run independently while sharing the same commerce backbone.",
+      },
+      {
+        timecode: "0:08-0:18",
+        title: "Data isolation",
+        visual:
+          "Orders, customers, products, and analytics lock into tenant-specific vaults with distinct accent colors.",
+        narration:
+          "Tenant scoping keeps every customer, order, and report tied to the correct business.",
+      },
+      {
+        timecode: "0:19-0:32",
+        title: "Operator dashboard",
+        visual:
+          "An operator switches from fulfillment to analytics to billing without leaving the dashboard shell.",
+        narration:
+          "Operators get one command surface for products, payments, team access, and reporting.",
+      },
+      {
+        timecode: "0:33-0:45",
+        title: "Scale moment",
+        visual:
+          "New tenant tiles activate as revenue counters rise and integration badges settle into place.",
+        narration:
+          "The platform scales by adding tenants, not by rebuilding the business each time.",
+      },
+    ],
   },
   {
     id: "ai-automation-reel",
@@ -59,6 +149,39 @@ const ADDITIONAL_SHOWCASES: Showcase[] = [
     tags: ["Kai AI", "Automation", "n8n"],
     category: "Automation",
     thumbnail: "🤖",
+    storyboard: [
+      {
+        timecode: "0:00-0:10",
+        title: "Morning queue",
+        visual:
+          "A packed operations inbox is sorted into orders, leads, refunds, content, and follow-up tasks.",
+        narration:
+          "Kai starts with the queue, separates urgent work, and prepares the next best actions.",
+      },
+      {
+        timecode: "0:11-0:25",
+        title: "Workflow handoff",
+        visual:
+          "n8n workflow cards trigger in sequence: lead capture, fulfillment ping, Meta CAPI event, notification.",
+        narration:
+          "Automation handles the handoffs that usually disappear between tools.",
+      },
+      {
+        timecode: "0:26-0:45",
+        title: "Human approval",
+        visual:
+          "Kai presents a concise action summary with approve, edit, and hold controls beside the workflow timeline.",
+        narration:
+          "The system moves fast, but operators keep approval over revenue-sensitive actions.",
+      },
+      {
+        timecode: "0:46-1:00",
+        title: "Closed loop",
+        visual:
+          "Task cards collapse into completed states while analytics update with saved hours and revenue impact.",
+        narration: "Every completed automation feeds the next decision loop.",
+      },
+    ],
   },
   {
     id: "payment-integration",
@@ -70,6 +193,40 @@ const ADDITIONAL_SHOWCASES: Showcase[] = [
     tags: ["Stripe", "Payments", "Analytics"],
     category: "Payments",
     thumbnail: "💳",
+    storyboard: [
+      {
+        timecode: "0:00-0:05",
+        title: "Checkout start",
+        visual:
+          "A customer begins checkout while Stripe, PayPal, Square, and Shopify rails appear as selectable routes.",
+        narration:
+          "UnifyOne lets operators support the payment rails customers already trust.",
+      },
+      {
+        timecode: "0:06-0:14",
+        title: "Provider verification",
+        visual:
+          "Payment IDs validate against provider APIs, then flow into an order record with audit metadata attached.",
+        narration:
+          "Captured payments are connected back to provider records for reconciliation and support.",
+      },
+      {
+        timecode: "0:15-0:23",
+        title: "Webhook confirmation",
+        visual:
+          "Webhook events arrive, signature checks pass, and payment status changes from pending to paid.",
+        narration:
+          "Verified webhooks keep the order book aligned with real payment events.",
+      },
+      {
+        timecode: "0:24-0:30",
+        title: "Revenue dashboard",
+        visual:
+          "The dashboard updates revenue, payment status, fulfillment queue, and attribution metrics in one view.",
+        narration:
+          "Finance, fulfillment, and marketing see the same source of truth.",
+      },
+    ],
   },
 ];
 
@@ -80,6 +237,7 @@ const SHOWCASE_LIBRARY: Showcase[] = [
 
 export default function VideoProduction() {
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [storyboardOpen, setStoryboardOpen] = useState(false);
   const [activeShowcaseId, setActiveShowcaseId] =
     useState("onestack-cinematic");
 
@@ -89,6 +247,8 @@ export default function VideoProduction() {
   const videoUrl = activeShowcase.videoUrl ?? undefined;
   const isPlayable = Boolean(videoUrl);
 
+  const storyboardText = buildStoryboardText(activeShowcase);
+
   const handleSelectShowcase = (id: string) => {
     setActiveShowcaseId(id);
     setVideoPlaying(false);
@@ -96,7 +256,17 @@ export default function VideoProduction() {
 
   const handleDownload = () => {
     if (!videoUrl) {
-      toast.info("Storyboard asset coming soon for this showcase.");
+      const blob = new Blob([storyboardText], {
+        type: "text/markdown;charset=utf-8;",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${activeShowcase.title.replace(/\s+/g, "-").toLowerCase()}-storyboard.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       return;
     }
 
@@ -110,7 +280,10 @@ export default function VideoProduction() {
 
   const handleCopyEmbed = () => {
     if (!videoUrl) {
-      toast.info("Embed code will unlock when the video asset is published.");
+      navigator.clipboard.writeText(storyboardText).then(
+        () => toast.success("Storyboard copied to clipboard!"),
+        () => toast.error("Failed to copy storyboard")
+      );
       return;
     }
 
@@ -120,6 +293,28 @@ export default function VideoProduction() {
       () => toast.error("Failed to copy embed code")
     );
   };
+
+  function buildStoryboardText(showcase: Showcase) {
+    return [
+      `# ${showcase.title}`,
+      "",
+      showcase.description,
+      "",
+      `- Duration: ${showcase.duration}`,
+      `- Format: ${showcase.format}`,
+      `- Category: ${showcase.category}`,
+      `- Tags: ${showcase.tags.join(", ")}`,
+      "",
+      "## Shot List",
+      "",
+      ...showcase.storyboard.flatMap(frame => [
+        `### ${frame.timecode} - ${frame.title}`,
+        `Visual: ${frame.visual}`,
+        `Narration: ${frame.narration}`,
+        "",
+      ]),
+    ].join("\n");
+  }
 
   const productionStats = [
     {
@@ -203,18 +398,41 @@ export default function VideoProduction() {
                     />
                   )
                 ) : (
-                  <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-gradient-to-br from-muted via-card to-background px-6 text-center">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary">
-                      <Play className="h-8 w-8 fill-current" />
+                  <div className="flex h-full w-full flex-col justify-center gap-4 bg-gradient-to-br from-muted via-card to-background px-6 py-5">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary">
+                        <ListChecks className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-lg font-semibold text-foreground">
+                          Storyboard ready
+                        </p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Review the shot list, narration, and production beats
+                          while the final video asset is being published.
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-lg font-semibold text-foreground">
-                        Storyboard preview coming soon
-                      </p>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        This showcase is ready for review while the final video
-                        asset is being published.
-                      </p>
+                    <div className="space-y-2">
+                      {activeShowcase.storyboard.slice(0, 3).map(frame => (
+                        <button
+                          key={frame.timecode}
+                          onClick={() => setStoryboardOpen(true)}
+                          className="w-full rounded-md border border-border bg-background/60 p-3 text-left transition-colors hover:border-primary/40 hover:bg-background"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="font-mono">
+                              {frame.timecode}
+                            </Badge>
+                            <span className="truncate text-sm font-semibold text-foreground">
+                              {frame.title}
+                            </span>
+                          </div>
+                          <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+                            {frame.visual}
+                          </p>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -264,10 +482,19 @@ export default function VideoProduction() {
               <div className="flex gap-3">
                 <Button size="lg" className="gap-2" onClick={handleDownload}>
                   <Download className="w-4 h-4" />
-                  Download Video
+                  {isPlayable ? "Download Video" : "Download Storyboard"}
                 </Button>
                 <Button variant="outline" size="lg" onClick={handleCopyEmbed}>
-                  Copy Embed Code
+                  <Clipboard className="mr-2 h-4 w-4" />
+                  {isPlayable ? "Copy Embed Code" : "Copy Shot List"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setStoryboardOpen(true)}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Storyboard
                 </Button>
               </div>
             </div>
@@ -337,12 +564,96 @@ export default function VideoProduction() {
                       </Badge>
                     ))}
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-5 w-full gap-2"
+                    onClick={event => {
+                      event.stopPropagation();
+                      handleSelectShowcase(showcase.id);
+                      setStoryboardOpen(true);
+                    }}
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    View Storyboard
+                  </Button>
                 </Card>
               );
             })}
           </div>
         </div>
       </section>
+
+      <Dialog open={storyboardOpen} onOpenChange={setStoryboardOpen}>
+        <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              {activeShowcase.title} Storyboard
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-5">
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="text-sm text-muted-foreground">
+                {activeShowcase.description}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Badge variant="outline">{activeShowcase.duration}</Badge>
+                <Badge variant="outline">{activeShowcase.format}</Badge>
+                <Badge variant="outline">{activeShowcase.category}</Badge>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {activeShowcase.storyboard.map(frame => (
+                <div
+                  key={frame.timecode}
+                  className="rounded-lg border border-border bg-background p-4"
+                >
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <Badge className="bg-primary/15 font-mono text-primary">
+                      {frame.timecode}
+                    </Badge>
+                    <h3 className="text-base font-semibold text-foreground">
+                      {frame.title}
+                    </h3>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-muted-foreground">
+                        Visual
+                      </p>
+                      <p className="mt-1 text-sm text-foreground">
+                        {frame.visual}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-muted-foreground">
+                        Narration
+                      </p>
+                      <p className="mt-1 text-sm text-foreground">
+                        {frame.narration}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button variant="outline" onClick={handleCopyEmbed}>
+                <Clipboard className="mr-2 h-4 w-4" />
+                {isPlayable ? "Copy Embed Code" : "Copy Shot List"}
+              </Button>
+              <Button onClick={handleDownload}>
+                <Download className="mr-2 h-4 w-4" />
+                {isPlayable ? "Download Video" : "Download Storyboard"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Use Cases */}
       <section className="py-16 border-t border-border">

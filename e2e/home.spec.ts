@@ -8,11 +8,7 @@ test.describe("Home page", () => {
 
   test("hero headline is visible", async ({ page }) => {
     await page.goto("/");
-    // The hero section is rendered with a scroll-reveal ref; wait for it
-    const hero = page.locator("section").first();
-    await expect(hero).toBeVisible();
-    // Check for a prominent heading in the hero area
-    const heading = page.locator("h1, h2").first();
+    const heading = page.getByRole("heading", { level: 1 }).first();
     await expect(heading).toBeVisible();
   });
 

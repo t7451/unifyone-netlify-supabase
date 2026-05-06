@@ -11,18 +11,11 @@ test.describe("Auth flows", () => {
 
   test("login form elements are present", async ({ page }) => {
     await page.goto("/login");
-    // Email input
-    const emailInput = page.locator('input[type="email"], input[name="email"]');
+    const emailInput = page.getByPlaceholder(/you@yourcompany\.com/i).first();
     await expect(emailInput).toBeVisible();
-    // Password input
-    const passwordInput = page.locator(
-      'input[type="password"], input[name="password"]'
-    );
+    const passwordInput = page.getByPlaceholder(/enter your password/i);
     await expect(passwordInput).toBeVisible();
-    // Submit button
-    const submitBtn = page.getByRole("button", {
-      name: /sign in|log in|continue/i,
-    });
+    const submitBtn = page.getByRole("button", { name: /sign in/i }).first();
     await expect(submitBtn).toBeVisible();
   });
 
