@@ -2,60 +2,97 @@ name: UnifyOne Main Orchestrator (Spawns Multiple Agents)
 
 on:
   schedule:
-    - cron: '0 13 * * *'  # 6 AM PT
+    - cron: "0 13 * * *" # 6 AM PT
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/unifyone-main-agent.yml"
+      - ".github/scripts/**"
+      - "TODO.md"
+      - "TODO_COMPREHENSIVE.md"
+      - "client/**"
+      - "server/**"
+      - "shared/**"
+      - "src-typescript/**"
+      - "drizzle/**"
+      - "netlify/**"
+      - "e2e/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
 
 permissions:
-  contents: write
+  contents: read
   issues: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+  GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+  REPO: ${{ github.repository }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  dev-agent:
+  mission:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with: { version: 10 }
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: 'pnpm' }
+        with:
+          node-version: 22
+          cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - run: node .github/scripts/unifyone-dev-agent.js
-        env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          REPO: ${{ github.repository }}
+      - run: node .github/scripts/unifyone-orchestrator.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mission-briefing
+          path: .agent-output/*
 
-  ux-ui-agent:
+  agents:
+    needs: mission
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    strategy:
+      fail-fast: false
+      matrix:
+        agent: [dev, ux-ui, quality, mcp]
+    name: ${{ matrix.agent }}-agent
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: mission-briefing
+          path: .agent-output
       - uses: pnpm/action-setup@v4
-        with: { version: 10 }
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: 'pnpm' }
+        with:
+          node-version: 22
+          cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps
-      - run: node .github/scripts/unifyone-ux-ui-agent.js
-        env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          REPO: ${{ github.repository }}
+      - if: matrix.agent == 'ux-ui'
+        run: pnpm exec playwright install chromium --with-deps
+      - run: node .github/scripts/unifyone-${{ matrix.agent }}-agent.js
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-${{ matrix.agent }}-report
+          path: .agent-output/*
 
-  quality-agent:
+  issue-reporter:
+    if: always()
+    needs: agents
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with: { version: 10 }
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: 'pnpm' }
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint && pnpm test && pnpm build
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: agent-*-report
+          merge-multiple: true
+          path: .agent-output
+      - run: node .github/scripts/unifyone-issue-reporter.js
         env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-
-  # Optional: Add more agents here (MCP, Security, Performance, etc.)
+          GH_TOKEN: ${{ github.token }}
+          CREATE_GITHUB_ISSUES: "true"

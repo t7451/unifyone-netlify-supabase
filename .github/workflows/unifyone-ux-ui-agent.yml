@@ -2,62 +2,77 @@ name: UnifyOne UX/UI Agent (Frontend Quality Guardian)
 
 on:
   schedule:
-    - cron: '0 14 * * *'  # 7 AM PT daily
+    - cron: "0 14 * * *" # 7 AM PT daily
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'client/**'
-      - 'e2e/**'
-      - 'playwright.config.ts'
-      - '**.tsx'
-      - '**.jsx'
+      - "client/**"
+      - "e2e/**"
+      - "playwright.config.ts"
+      - "**.tsx"
+      - "**.jsx"
 
 permissions:
   contents: write
   issues: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+  GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+  REPO: ${{ github.repository }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ux-ui-agent:
+    if: github.event_name != 'push' || github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Generate mission briefing
+        run: node .github/scripts/unifyone-orchestrator.js
 
       - name: Run UX/UI Agent
-        env:
-          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
-          REPO: ${{ github.repository }}
         run: node .github/scripts/unifyone-ux-ui-agent.js
+
+      - name: Upload UX/UI report and Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-ui-agent-report
+          path: |
+            .agent-output/*
+            test-results/**
 
       - name: Commit fixes if any
         run: |
-          if git diff --quiet HEAD --; then
+          if [ -z "$(git status --porcelain -- . ':!.agent-output' ':!test-results')" ]; then
             echo "No UI/UX fixes needed."
           else
             git config user.name "UnifyOne UX/UI Agent"
             git config user.email "ux-agent@t7451.dev"
-            git add -A
-            git commit -m "🎨 ux-ui-agent: fixed UI/UX issues
-
-            Automated fixes for broken features, accessibility, responsive issues, etc."
+            git add -A -- . ':!.agent-output' ':!test-results'
+            git commit -m "ux-ui-agent: fixed UI/UX issues"
             git push
           fi
