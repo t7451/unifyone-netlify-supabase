@@ -154,6 +154,24 @@ export const publicFormLimiter = createRateLimiter({
   windowMs: 5 * 60 * 1000,
 });
 
+/** Checkout/order creation: 50 writes per minute per caller IP. */
+export const orderCreateLimiter = createRateLimiter({
+  maxAttempts: 50,
+  windowMs: 60 * 1000,
+});
+
+/** Subscription plan changes: 10 per hour per caller IP. */
+export const subscriptionChangePlanLimiter = createRateLimiter({
+  maxAttempts: 10,
+  windowMs: 60 * 60 * 1000,
+});
+
+/** Authenticated image uploads: 20 per minute per caller IP. */
+export const imageUploadLimiter = createRateLimiter({
+  maxAttempts: 20,
+  windowMs: 60 * 1000,
+});
+
 /**
  * MCP / external worker proxies (knowledge graph, terpforge catalog):
  * 60 calls per minute per user — generous for UI polling but caps abuse.

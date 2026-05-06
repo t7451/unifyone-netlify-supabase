@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createClient } from "@supabase/supabase-js";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import {
+  protectedIpRateLimitedProcedure,
+  protectedProcedure,
+  publicProcedure,
+  router,
+} from "../_core/trpc";
 import {
   getProductCount,
   getOrderCount,
@@ -25,6 +30,7 @@ import {
   isPaymentProviderConfigured,
   type PaymentProvider,
 } from "../paymentFallback";
+import { subscriptionChangePlanLimiter } from "../_core/rateLimiter";
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL || "";
@@ -90,7 +96,8 @@ export const subscriptionRouter = router({
               expand: ["items.data.price"],
             }
           );
-          const interval = subscription.items.data[0]?.price?.recurring?.interval;
+          const interval =
+            subscription.items.data[0]?.price?.recurring?.interval;
           if (interval === "month") billingCycle = "monthly";
           if (interval === "year") billingCycle = "yearly";
         } catch (error) {
@@ -373,7 +380,10 @@ export const subscriptionRouter = router({
    *  - Plan has no Stripe price for the chosen cycle -> BAD_REQUEST
    *  - Same plan/cycle as current -> NO_OP success
    */
-  changePlan: protectedProcedure
+  changePlan: protectedIpRateLimitedProcedure(
+    subscriptionChangePlanLimiter,
+    "subscription:change-plan"
+  )
     .input(
       z.object({
         planSlug: z.string().min(1).max(50),

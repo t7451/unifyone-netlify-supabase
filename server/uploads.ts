@@ -11,6 +11,7 @@
  * Returns: { url: string, key: string } where url points back to
  *   GET /api/uploads/image/:key for re-serving.
  */
+import { imageUploadLimiter } from "./_core/rateLimiter";
 import { sdk } from "./_core/sdk";
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -40,11 +41,24 @@ async function loadBlobsStore() {
   }
 }
 
-function jsonError(message: string, status: number): Response {
+function jsonError(
+  message: string,
+  status: number,
+  headers: Record<string, string> = {}
+): Response {
   return new Response(JSON.stringify({ error: message }), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
   });
+}
+
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return "unknown";
 }
 
 export async function registerUploadFetchRoutes(
@@ -54,6 +68,18 @@ export async function registerUploadFetchRoutes(
   const path = url.pathname;
 
   if (path === "/api/uploads/image" && req.method === "POST") {
+    const clientIp = getClientIp(req);
+    const rateCheck = await imageUploadLimiter.check(clientIp);
+    if (!rateCheck.allowed) {
+      return jsonError(
+        "Too many upload attempts. Please try again later.",
+        429,
+        {
+          "Retry-After": String(Math.ceil(rateCheck.retryAfterMs / 1000)),
+        }
+      );
+    }
+
     let user;
     try {
       user = await sdk.authenticateRequest(

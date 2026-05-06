@@ -21,8 +21,13 @@ import {
 import { discounts, notifications } from "../../drizzle/schema";
 import { and, sql, eq } from "drizzle-orm";
 import { logAudit } from "../auditLogger";
-import { protectedProcedure, router } from "../_core/trpc";
+import {
+  protectedIpRateLimitedProcedure,
+  protectedProcedure,
+  router,
+} from "../_core/trpc";
 import { logger } from "../_core/logger";
+import { orderCreateLimiter } from "../_core/rateLimiter";
 import { getStripe } from "../_core/stripeClient";
 import {
   StripeVerificationError,
@@ -88,7 +93,7 @@ export const ordersRouter = router({
       return order;
     }),
 
-  create: protectedProcedure
+  create: protectedIpRateLimitedProcedure(orderCreateLimiter, "orders:create")
     .input(
       z.object({
         customerEmail: z.string().email().optional(),

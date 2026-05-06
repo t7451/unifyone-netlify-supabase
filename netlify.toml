@@ -16,6 +16,14 @@
   node_bundler = "esbuild"
   included_files = ["drizzle/**", "server/**"]
 
+[[edge_functions]]
+  path = "/api/auth/*"
+  function = "rate-limit"
+
+[[edge_functions]]
+  path = "/api/oauth/*"
+  function = "rate-limit"
+
 # Redirect API calls to the server function
 # server.ts uses in-code config { path: "/api/*" } — Netlify auto-routes it
 [[redirects]]

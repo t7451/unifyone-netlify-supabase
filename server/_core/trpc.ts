@@ -38,9 +38,9 @@ export const protectedProcedure = t.procedure.use(requireUser);
  * by `ctx.tenantId`.
  */
 /**
- * rateLimitedProcedure(limiter, keyFn?) — wraps protectedProcedure with a
- * rate-limit check keyed (by default) on the authenticated user id. Throws
- * TRPCError TOO_MANY_REQUESTS when the limit is exceeded.
+ * rateLimitedProcedure(limiter, scope) — wraps protectedProcedure with a
+ * rate-limit check keyed on the authenticated user id. Throws TRPCError
+ * TOO_MANY_REQUESTS when the limit is exceeded.
  *
  * Usage:
  *   import { mcpRateLimiter } from "./rateLimiter";
@@ -52,6 +52,14 @@ type Limiter = {
     key: string
   ): Promise<{ allowed: true } | { allowed: false; retryAfterMs: number }>;
 };
+
+function throwRateLimitError(retryAfterMs: number, prefix: string) {
+  throw new TRPCError({
+    code: "TOO_MANY_REQUESTS",
+    message: `${prefix} Retry in ${Math.ceil(retryAfterMs / 1000)}s.`,
+  });
+}
+
 export function rateLimitedProcedure(limiter: Limiter, scope: string) {
   return protectedProcedure.use(
     t.middleware(async opts => {
@@ -59,10 +67,7 @@ export function rateLimitedProcedure(limiter: Limiter, scope: string) {
       const key = `${scope}:${ctx.user!.id}`;
       const result = await limiter.check(key);
       if (!result.allowed) {
-        throw new TRPCError({
-          code: "TOO_MANY_REQUESTS",
-          message: `Rate limit exceeded. Retry in ${Math.ceil(result.retryAfterMs / 1000)}s.`,
-        });
+        throwRateLimitError(result.retryAfterMs, "Rate limit exceeded.");
       }
       return next();
     })
@@ -84,6 +89,27 @@ function clientKey(req: TrpcContext["req"]): string {
 }
 
 /**
+ * protectedIpRateLimitedProcedure — for authenticated mutations where abuse is
+ * best keyed on the caller's IP rather than the user id.
+ */
+export function protectedIpRateLimitedProcedure(
+  limiter: Limiter,
+  scope: string
+) {
+  return protectedProcedure.use(
+    t.middleware(async opts => {
+      const { ctx, next } = opts;
+      const key = `${scope}:${clientKey(ctx.req)}`;
+      const result = await limiter.check(key);
+      if (!result.allowed) {
+        throwRateLimitError(result.retryAfterMs, "Too many requests.");
+      }
+      return next();
+    })
+  );
+}
+
+/**
  * publicRateLimitedProcedure — like publicProcedure but checks `limiter`
  * keyed on the caller's IP. Use on public form endpoints (waitlists,
  * leads, analytics relays) where unauthenticated abuse is the threat.
@@ -95,10 +121,7 @@ export function publicRateLimitedProcedure(limiter: Limiter, scope: string) {
       const key = `${scope}:${clientKey(ctx.req)}`;
       const result = await limiter.check(key);
       if (!result.allowed) {
-        throw new TRPCError({
-          code: "TOO_MANY_REQUESTS",
-          message: `Too many requests. Retry in ${Math.ceil(result.retryAfterMs / 1000)}s.`,
-        });
+        throwRateLimitError(result.retryAfterMs, "Too many requests.");
       }
       return next();
     })
