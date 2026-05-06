@@ -39,12 +39,12 @@ const mockOk = (model: string) =>
     text: () => Promise.resolve(""),
   });
 
-const mockErr = (status: number, statusText = "fail") =>
+const mockErr = (status: number, statusText = "fail", body?: string) =>
   Promise.resolve({
     ok: false,
     status,
     statusText,
-    text: () => Promise.resolve(`error ${status}`),
+    text: () => Promise.resolve(body ?? `error ${status}`),
     json: () => Promise.resolve({}),
   });
 
@@ -73,6 +73,23 @@ describe("invokeLLMWithFallback", () => {
     const out = await invokeLLMWithFallback({
       messages: [{ role: "user", content: "hi" }],
     });
+    expect(out.choices[0].message.content).toBe("from claude-3-5-haiku");
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("falls back on provider model/payload compatibility 400s", async () => {
+    fetchSpy
+      .mockImplementationOnce(() =>
+        mockErr(400, "bad request", "unsupported model parameter")
+      )
+      .mockImplementationOnce(() => mockOk("claude-3-5-haiku"));
+
+    const out = await invokeLLMWithFallback({
+      messages: [{ role: "user", content: "hi" }],
+      model: "gemini-2.5-flash",
+      modelChain: ["claude-3-5-haiku"],
+    });
+
     expect(out.choices[0].message.content).toBe("from claude-3-5-haiku");
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
