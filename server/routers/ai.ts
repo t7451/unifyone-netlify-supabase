@@ -153,7 +153,9 @@ export const aiRouter = router({
           try {
             const { moneyManagerRouter } = await import("./moneyManager");
             // Call getKaiContext server-side via the router caller (no HTTP roundtrip)
-            const caller = moneyManagerRouter.createCaller(ctx as Parameters<typeof moneyManagerRouter.createCaller>[0]);
+            const caller = moneyManagerRouter.createCaller(
+              ctx as Parameters<typeof moneyManagerRouter.createCaller>[0]
+            );
             const kaiCtx = await caller
               .getKaiContext({
                 context: input.context as
@@ -227,23 +229,48 @@ export const aiRouter = router({
           { role: "user" as const, content: input.message },
         ];
 
-        // Call LLM with error handling + credit metering
+        // Call LLM with error handling + credit metering.
+        // For data-rich contexts, run the agentic loop so Kai can call MCP tools.
         let assistantContent: string;
+        const useAgent = ["dashboard", "money-manager", "gig-command"].includes(
+          input.context
+        );
         try {
-          const response = await invokeLLM({
-            messages: llmMessages,
-            meter: {
-              userId: ctx.user.id,
-              source: "ai_chat",
-              action: `kai.chat:${input.context}`,
-              tenantId: ctx.user.tenantId ?? undefined,
-            },
-          });
-          const rawContent = response.choices[0]?.message?.content;
-          assistantContent =
-            typeof rawContent === "string"
-              ? rawContent
-              : "I'm sorry, I couldn't generate a response. Please try again.";
+          if (useAgent) {
+            const { runKaiAgent } = await import("../lib/kaiAgent");
+            const agentResult = await runKaiAgent({
+              messages: llmMessages,
+              user: {
+                id: ctx.user.id,
+                tenantId: ctx.user.tenantId ?? null,
+              },
+              maxIterations: 4,
+              meterSource: "ai_chat",
+              meterAction: `kai.chat:${input.context}`,
+            });
+            assistantContent = agentResult.finalContent;
+            if (agentResult.toolCalls.length > 0) {
+              console.log(
+                `[Kai] Agent used ${agentResult.toolCalls.length} tool calls in ${agentResult.iterations} iterations:`,
+                agentResult.toolCalls.map(t => t.name).join(", ")
+              );
+            }
+          } else {
+            const response = await invokeLLM({
+              messages: llmMessages,
+              meter: {
+                userId: ctx.user.id,
+                source: "ai_chat",
+                action: `kai.chat:${input.context}`,
+                tenantId: ctx.user.tenantId ?? undefined,
+              },
+            });
+            const rawContent = response.choices[0]?.message?.content;
+            assistantContent =
+              typeof rawContent === "string"
+                ? rawContent
+                : "I'm sorry, I couldn't generate a response. Please try again.";
+          }
         } catch (llmError) {
           console.error(
             "[Kai] LLM invocation failed:",

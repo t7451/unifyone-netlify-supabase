@@ -105,11 +105,27 @@ export const mcpRouter = router({
       } catch (e: any) {
         if (e instanceof TRPCError) throw e;
         // If metering itself fails, still allow the call (don't block on billing infra)
-        console.warn("[mcp.callTool] Metering failed (non-blocking):", e.message);
+        console.warn(
+          "[mcp.callTool] Metering failed (non-blocking):",
+          e.message
+        );
+      }
+
+      const userTenantId =
+        ctx.user.tenantId !== null && ctx.user.tenantId !== undefined
+          ? String(ctx.user.tenantId)
+          : null;
+      // Force-overwrite any tenantId in args with the authenticated user's tenantId.
+      // Never trust client-provided tenantId.
+      const safeArgs = { ...(input.args as Record<string, unknown>) };
+      if (userTenantId) {
+        safeArgs.tenantId = userTenantId;
+      } else {
+        delete safeArgs.tenantId;
       }
 
       try {
-        const result = await mcpCallTool(input.tool, input.args as Record<string, unknown>);
+        const result = await mcpCallTool(input.tool, safeArgs);
         return { success: true, tool: input.tool, result };
       } catch (e: any) {
         throw new TRPCError({
@@ -122,26 +138,40 @@ export const mcpRouter = router({
   /**
    * Convenience: get platform analytics summary via MCP.
    */
-  analytics: protectedProcedure
-    .input(z.object({ tenantId: z.string().optional() }))
-    .query(async ({ input }) => {
-      try {
-        return await mcpCallTool("getAnalyticsSummary", input.tenantId ? { tenantId: input.tenantId } : {});
-      } catch (e: any) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: e.message });
-      }
-    }),
+  analytics: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = ctx.user.tenantId ? String(ctx.user.tenantId) : undefined;
+    try {
+      return await mcpCallTool(
+        "getAnalyticsSummary",
+        tenantId ? { tenantId } : {}
+      );
+    } catch (e: any) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: e.message,
+      });
+    }
+  }),
 
   /**
    * Convenience: get low stock products via MCP.
    */
   lowStock: protectedProcedure
     .input(z.object({ threshold: z.number().optional().default(10) }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const tenantId = ctx.user.tenantId
+        ? String(ctx.user.tenantId)
+        : undefined;
       try {
-        return await mcpCallTool("getLowStockProducts", { threshold: input.threshold });
+        return await mcpCallTool("getLowStockProducts", {
+          threshold: input.threshold,
+          ...(tenantId ? { tenantId } : {}),
+        });
       } catch (e: any) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: e.message });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: e.message,
+        });
       }
     }),
 
@@ -156,7 +186,7 @@ export const mcpRouter = router({
       healthUrl: `${MCP_WORKER_URL}/health`,
       customDomain: "mcp.1commerce.online (pending DNS)",
       toolCount: tools.length,
-      tools: tools.map((t) => ({ name: t.name, description: t.description })),
+      tools: tools.map(t => ({ name: t.name, description: t.description })),
       claudeDesktopConfig: JSON.stringify(
         {
           mcpServers: {
