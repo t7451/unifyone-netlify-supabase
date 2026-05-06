@@ -269,9 +269,9 @@ export default function MultiTenantPost() {
             <p className="mt-4">
               For agencies, this is the difference between a services business
               (linear revenue, linear cost) and a product business (exponential
-              revenue, flat cost). UnifyOne's Cathedral tier at $149/month
-              supports unlimited tenants. A ten-client agency paying $149/month
-              in infrastructure costs while billing each client $500/month is
+              revenue, flat cost). UnifyOne's Scale tier at $99/month supports
+              unlimited tenants. A ten-client agency paying $99/month in
+              infrastructure costs while billing each client $500/month is
               running an exceptional gross margin infrastructure layer.
             </p>
           </section>
@@ -285,7 +285,7 @@ export default function MultiTenantPost() {
             </h2>
             <p>
               Multi-tenant architecture enables white-labeling at zero marginal
-              cost. UnifyOne's Cathedral tier includes custom domain support and
+              cost. UnifyOne's Scale tier includes custom domain support and
               full brand customization per tenant. An agency can deploy UnifyOne
               under their own brand — "PoweredBy YourAgency Commerce" — and
               resell it to clients as a proprietary product. The underlying
@@ -294,7 +294,7 @@ export default function MultiTenantPost() {
             </p>
             <p className="mt-4">
               This is the reseller multiplier: you buy infrastructure at
-              $149/month and sell it as a branded product at $500/month per
+              $99/month and sell it as a branded product at $500/month per
               client. The margin is the brand. The brand is built on someone
               else's infrastructure. This is how software companies are built
               without engineering teams.

@@ -167,9 +167,14 @@
       "esbuild@<0.25.0": ">=0.25.0"
     },
     "onlyBuiltDependencies": [
+      "@clerk/shared",
+      "@parcel/watcher",
       "@tailwindcss/oxide",
+      "cpu-features",
+      "es5-ext",
       "esbuild",
-      "es5-ext"
+      "sharp",
+      "ssh2"
     ]
   },
   "lint-staged": {

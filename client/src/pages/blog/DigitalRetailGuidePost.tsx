@@ -515,12 +515,12 @@ export default function DigitalRetailGuidePost() {
               Getting Started
             </h2>
             <p>
-              UnifyOne's Acolyte tier is free: one tenant, core product and
+              UnifyOne's Starter tier is free: one tenant, core product and
               order management, and Shopify integration for operators already on
-              that platform. The Architect tier ($49/month) adds Kai AI
-              insights, all four payment rails, advanced analytics, and up to
-              five tenants. The Cathedral tier ($149/month) is for operators
-              running a full multi-brand or white-label operation.
+              that platform. The Pro tier ($19/month) adds Kai AI insights, the
+              automation layer, advanced analytics, and up to five tenants. The
+              Scale tier ($99/month) is for operators running a full multi-brand
+              or white-label operation.
             </p>
             <p className="mt-4">
               Digital retail infrastructure is not an expense. It is the

@@ -212,6 +212,57 @@ const WHO_IT_FOR = [
   },
 ];
 
+const TESTIMONIALS = [
+  {
+    quote:
+      "GigIQ showed me I was burning $340/month in dead zones. Shifted my schedule in two weeks and my net is up 22% without working more hours.",
+    name: "Marcus D.",
+    role: "DoorDash & Instacart Driver",
+    initials: "MD",
+    accent: "#F0D080",
+  },
+  {
+    quote:
+      "Managing 7 Shopify stores from one dashboard was the dream. UnifyOne's tenant isolation means my clients' data is always separate, always clean.",
+    name: "Priya S.",
+    role: "E-Commerce Agency Owner",
+    initials: "PS",
+    accent: "#6EE7B7",
+  },
+  {
+    quote:
+      "The Kai unified API pricing alone is worth it. I used to juggle three AI vendor bills. Now I have one credit system and one invoice.",
+    name: "Jordan T.",
+    role: "Independent Developer",
+    initials: "JT",
+    accent: "#93C5FD",
+  },
+  {
+    quote:
+      "Tax Autopilot caught 11 months of mileage deductions I had completely missed. That was a $2,800 write-off I almost lost.",
+    name: "Carmen R.",
+    role: "Freelance Contractor",
+    initials: "CR",
+    accent: "#C4B5FD",
+  },
+  {
+    quote:
+      "We white-labeled the whole platform in a week. Our clients think it's our proprietary tool. The Scale tier pays for itself with the first resale.",
+    name: "Derek L.",
+    role: "SaaS Reseller, Scale Tier",
+    initials: "DL",
+    accent: "#FCA5A5",
+  },
+  {
+    quote:
+      "Onboarding was under 10 minutes. Stripe connected, first order in by end of day. No developer, no headaches — just a working commerce stack.",
+    name: "Aisha M.",
+    role: "New Tenant, Starter Plan",
+    initials: "AM",
+    accent: "#FCD34D",
+  },
+] as const;
+
 function SocialProofCounter() {
   const ref = useRef<HTMLDivElement>(null);
   const [started, setStarted] = useState(false);
@@ -1057,6 +1108,107 @@ export default function Home() {
                 >
                   {item.body}
                 </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ─────────────────────────────────────────────────── */}
+      <section
+        id="testimonials"
+        style={{
+          padding: "6rem 0",
+          borderTop: "1px solid #242424",
+          borderBottom: "1px solid #242424",
+          backgroundColor: "#030303",
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-16">
+            <span className="inscription" style={{ color: "#D4A843" }}>
+              OPERATOR VOICES
+            </span>
+            <h2
+              className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
+              style={{ color: "#F0E8D0" }}
+            >
+              From the operators using it.
+            </h2>
+            <p
+              className="font-crimson text-lg"
+              style={{
+                color: "#9A9A9A",
+                fontStyle: "italic",
+                maxWidth: 480,
+                margin: "0 auto",
+              }}
+            >
+              Real results from gig workers, agency owners, and developers who
+              replaced multiple tools with one platform.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
+            {TESTIMONIALS.map((t, i) => (
+              <div
+                key={t.name}
+                data-reveal
+                data-reveal-delay={String(i * 80)}
+                className="p-8 relative"
+                style={{
+                  border: "1px solid #242424",
+                  backgroundColor: "#020202",
+                }}
+              >
+                <div className="flex gap-1 mb-4">
+                  {Array.from({ length: 5 }).map((_, s) => (
+                    <span
+                      key={s}
+                      style={{ color: t.accent, fontSize: "0.75rem" }}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+
+                <p
+                  className="font-crimson text-base mb-6"
+                  style={{
+                    color: "#9A9A9A",
+                    fontStyle: "italic",
+                    lineHeight: 1.75,
+                  }}
+                >
+                  "{t.quote}"
+                </p>
+
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-9 h-9 flex items-center justify-center shrink-0 font-cinzel text-xs font-bold"
+                    style={{
+                      backgroundColor: `${t.accent}18`,
+                      border: `1px solid ${t.accent}40`,
+                      color: t.accent,
+                    }}
+                  >
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p
+                      className="font-cinzel text-xs font-bold"
+                      style={{ color: "#F0E8D0", letterSpacing: "0.06em" }}
+                    >
+                      {t.name}
+                    </p>
+                    <p
+                      className="font-crimson text-xs"
+                      style={{ color: "#5A5A5A" }}
+                    >
+                      {t.role}
+                    </p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
