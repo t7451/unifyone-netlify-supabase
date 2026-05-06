@@ -120,6 +120,23 @@ describe("invokeLLMWithFallback", () => {
     );
   });
 
+  it("routes explicit groq-prefixed models to Groq without the prefix", async () => {
+    fetchSpy.mockImplementationOnce(() => mockOk("llama-3.1-8b-instant"));
+
+    await invokeLLMWithFallback({
+      messages: [{ role: "user", content: "hi" }],
+      model: "groq/llama-3.1-8b-instant",
+    });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0][0]).toBe(
+      "https://api.groq.com/openai/v1/chat/completions"
+    );
+    expect(JSON.parse(fetchSpy.mock.calls[0][1].body)).toEqual(
+      expect.objectContaining({ model: "llama-3.1-8b-instant" })
+    );
+  });
+
   it("does NOT fall back on 401/403 auth errors", async () => {
     fetchSpy.mockImplementationOnce(() => mockErr(401, "unauthorized"));
     await expect(

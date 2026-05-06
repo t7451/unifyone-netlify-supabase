@@ -255,15 +255,29 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
+const resolveProviderUrl = (
+  baseUrl: string | undefined,
+  defaultBaseUrl: string,
+  path: string
+) => {
+  const root =
+    baseUrl && baseUrl.trim().length > 0 ? baseUrl : defaultBaseUrl;
+  return `${root.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+};
+
 const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://forge.butterfly-effect.dev/v1/chat/completions";
+  resolveProviderUrl(
+    ENV.forgeApiUrl,
+    "https://forge.butterfly-effect.dev",
+    "v1/chat/completions"
+  );
 
 const resolveGroqApiUrl = () =>
-  ENV.groqApiUrl && ENV.groqApiUrl.trim().length > 0
-    ? `${ENV.groqApiUrl.replace(/\/$/, "")}/openai/v1/chat/completions`
-    : "https://api.groq.com/openai/v1/chat/completions";
+  resolveProviderUrl(
+    ENV.groqApiUrl,
+    "https://api.groq.com",
+    "openai/v1/chat/completions"
+  );
 
 export const GROQ_FALLBACK_MODEL = "llama-3.3-70b-versatile";
 
@@ -447,8 +461,10 @@ async function invokeOnce(
 
   payload.max_tokens = params.maxTokens ?? params.max_tokens ?? 32768;
   if (provider === "forge" && FORGE_THINKING_MODELS.has(providerModel)) {
-    // Keep the budget small so Gemini can plan without materially increasing
-    // latency or metered token usage for short Kai chat requests.
+    // Forge supports Gemini's provider-specific thinking parameter; Groq's
+    // OpenAI-compatible API and non-Gemini Forge models do not. Keep the budget
+    // small so Gemini can plan without materially increasing latency or metered
+    // token usage for short Kai chat requests.
     payload.thinking = { budget_tokens: 128 };
   }
 
