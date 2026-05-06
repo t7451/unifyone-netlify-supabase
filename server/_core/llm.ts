@@ -289,19 +289,6 @@ const isGroqModel = (model: string) =>
 const toProviderModel = (model: string) =>
   model.startsWith("groq/") ? model.slice("groq/".length) : model;
 
-const FORGE_THINKING_MODELS = new Set(["gemini-2.5-flash", "gemini-2.5-pro"]);
-
-const RETRYABLE_400_PATTERNS = [
-  "invalid model",
-  "model not found",
-  "model_not_found",
-  "does not exist",
-  "unsupported model",
-  "unsupported parameter",
-  "unrecognized",
-  "unknown parameter",
-];
-
 const assertApiKey = (provider: "forge" | "groq") => {
   if (provider === "groq") {
     if (!ENV.groqApiKey) {
@@ -372,6 +359,26 @@ export const DEFAULT_FALLBACK_CHAIN = [
   GROQ_FALLBACK_MODEL,
 ];
 
+const FORGE_THINKING_MODELS = new Set(["gemini-2.5-flash", "gemini-2.5-pro"]);
+
+const RETRYABLE_400_ERROR_CODES = new Set([
+  "invalid_model",
+  "model_not_found",
+  "unsupported_model",
+  "unsupported_parameter",
+  "unknown_parameter",
+]);
+
+const RETRYABLE_400_PATTERNS = [
+  "invalid model",
+  "model not found",
+  "does not exist",
+  "unsupported model",
+  "unsupported parameter",
+  "unrecognized",
+  "unknown parameter",
+];
+
 class LLMInvokeError extends Error {
   constructor(
     readonly status: number,
@@ -385,12 +392,36 @@ class LLMInvokeError extends Error {
 const hasRetryableCompatibilityPattern = (message: string) =>
   RETRYABLE_400_PATTERNS.some(pattern => message.includes(pattern));
 
+const parseProviderErrorDetails = (responseText: string) => {
+  try {
+    const parsed = JSON.parse(responseText) as {
+      error?: { code?: unknown; type?: unknown; message?: unknown };
+    };
+    const error = parsed.error;
+    if (!error) return { text: responseText.toLowerCase() };
+    const code = typeof error.code === "string" ? error.code.toLowerCase() : "";
+    const type = typeof error.type === "string" ? error.type.toLowerCase() : "";
+    const message =
+      typeof error.message === "string" ? error.message.toLowerCase() : "";
+    return { code, text: `${code} ${type} ${message}` };
+  } catch {
+    return { text: responseText.toLowerCase() };
+  }
+};
+
 function isRetryableError(err: unknown): boolean {
   if (err instanceof LLMInvokeError) {
     if (err.status === 401 || err.status === 403) return false;
     if (err.status === 429 || err.status >= 500) return true;
     if (err.status === 400) {
-      const details = `${err.statusText} ${err.responseText}`.toLowerCase();
+      const providerError = parseProviderErrorDetails(err.responseText);
+      if (
+        providerError.code &&
+        RETRYABLE_400_ERROR_CODES.has(providerError.code)
+      ) {
+        return true;
+      }
+      const details = `${err.statusText} ${providerError.text}`.toLowerCase();
       return (
         details.includes("rate") || hasRetryableCompatibilityPattern(details)
       );

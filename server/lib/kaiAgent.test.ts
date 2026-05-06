@@ -159,7 +159,7 @@ describe("runKaiAgent", () => {
                   function: {
                     name: "getRevenueByDay",
                     arguments: JSON.stringify({
-                      tenantId: "tenant-EVIL",
+                      tenantId: "tenant-injected",
                       days: 7,
                     }),
                   },
@@ -192,7 +192,7 @@ describe("runKaiAgent", () => {
     );
     const calledArgs = (mcpCallTool as any).mock.calls[0][1];
     expect(calledArgs.tenantId).toBe("tenant-A");
-    expect(calledArgs.tenantId).not.toBe("tenant-EVIL");
+    expect(calledArgs.tenantId).not.toBe("tenant-injected");
   });
 
   it("strips tenantId entirely if user has no tenant", async () => {
@@ -210,7 +210,7 @@ describe("runKaiAgent", () => {
                   type: "function",
                   function: {
                     name: "getLowStockProducts",
-                    arguments: JSON.stringify({ tenantId: "tenant-EVIL" }),
+                    arguments: JSON.stringify({ tenantId: "tenant-injected" }),
                   },
                 },
               ],
@@ -281,7 +281,7 @@ describe("runKaiAgent", () => {
                     function: {
                       name: "getRevenueByDay",
                       arguments: JSON.stringify({
-                        tenantId: "tenant-EVIL",
+                        tenantId: "tenant-injected",
                         days: 30,
                       }),
                     },
@@ -335,7 +335,7 @@ describe("runKaiAgent", () => {
         expect(toolCall.args).toEqual(
           expect.objectContaining({ tenantId: tenants[index] })
         );
-        expect(JSON.stringify(toolCall.args)).not.toContain("tenant-EVIL");
+      expect(JSON.stringify(toolCall.args)).not.toContain("tenant-injected");
       }
     }
     expect(invokeLLM).toHaveBeenCalledTimes(tenants.length * 2);
