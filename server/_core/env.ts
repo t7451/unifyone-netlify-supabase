@@ -32,6 +32,8 @@ export const ENV = {
   },
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  groqApiUrl: process.env.GROQ_API_URL ?? "",
+  groqApiKey: process.env.GROQ_API_KEY ?? "",
   squareAccessToken: process.env.SQUARE_ACCESS_TOKEN ?? "",
   squareLocationId: process.env.SQUARE_LOCATION_ID ?? "",
   squareWebhookSignatureKey: process.env.SQUARE_WEBHOOK_SIGNATURE_KEY ?? "",

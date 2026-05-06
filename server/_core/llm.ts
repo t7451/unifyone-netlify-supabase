@@ -255,12 +255,50 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://forge.butterfly-effect.dev/v1/chat/completions";
+const resolveProviderUrl = (
+  baseUrl: string | undefined,
+  defaultBaseUrl: string,
+  path: string
+) => {
+  const root =
+    baseUrl && baseUrl.trim().length > 0 ? baseUrl : defaultBaseUrl;
+  return `${root.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+};
 
-const assertApiKey = () => {
+const resolveApiUrl = () =>
+  resolveProviderUrl(
+    ENV.forgeApiUrl,
+    "https://forge.butterfly-effect.dev",
+    "v1/chat/completions"
+  );
+
+const resolveGroqApiUrl = () =>
+  resolveProviderUrl(
+    ENV.groqApiUrl,
+    "https://api.groq.com",
+    "openai/v1/chat/completions"
+  );
+
+export const GROQ_FALLBACK_MODEL = "llama-3.3-70b-versatile";
+
+// The allowlist uses the concrete fallback model; "groq/<model>" is reserved
+// for future explicit Groq model routing without exposing arbitrary providers.
+const isGroqModel = (model: string) =>
+  model === GROQ_FALLBACK_MODEL || model.startsWith("groq/");
+
+const toProviderModel = (model: string) =>
+  model.startsWith("groq/") ? model.slice("groq/".length) : model;
+
+const assertApiKey = (provider: "forge" | "groq") => {
+  if (provider === "groq") {
+    if (!ENV.groqApiKey) {
+      throw new Error(
+        "GROQ_API_KEY is not configured. Set this environment variable to enable Groq AI fallback."
+      );
+    }
+    return;
+  }
+
   if (!ENV.forgeApiKey) {
     throw new Error(
       "BUILT_IN_FORGE_API_KEY is not configured. Set this environment variable to enable AI features."
@@ -318,9 +356,88 @@ export const DEFAULT_FALLBACK_CHAIN = [
   DEFAULT_MODEL,
   "claude-3-5-haiku",
   "gpt-4o-mini",
+  GROQ_FALLBACK_MODEL,
 ];
 
+const FORGE_THINKING_MODELS = new Set(["gemini-2.5-flash", "gemini-2.5-pro"]);
+
+const RETRYABLE_400_ERROR_CODES = new Set([
+  "invalid_model",
+  "model_not_found",
+  "unsupported_model",
+  "unsupported_parameter",
+  "unknown_parameter",
+]);
+
+const RETRYABLE_400_PATTERNS = [
+  "invalid model",
+  "model not found",
+  "does not exist",
+  "unsupported model",
+  "unsupported parameter",
+  "unrecognized",
+  "unknown parameter",
+];
+
+class LLMInvokeError extends Error {
+  constructor(
+    readonly status: number,
+    readonly statusText: string,
+    readonly responseText: string
+  ) {
+    super(`LLM invoke failed: ${status} ${statusText} – ${responseText}`);
+  }
+}
+
+const hasRetryableCompatibilityPattern = (message: string) =>
+  RETRYABLE_400_PATTERNS.some(pattern => message.includes(pattern));
+
+/**
+ * Normalize provider error payloads for retry decisions.
+ *
+ * OpenAI-compatible providers usually return
+ * `{ error: { code, type, message } }`; Forge-compatible errors can also be
+ * plain text. The returned `code` supports exact allowlist checks, while
+ * `text` combines normalized code/type/message content for last-resort
+ * compatibility pattern matching.
+ */
+const parseProviderErrorDetails = (responseText: string) => {
+  try {
+    const parsed = JSON.parse(responseText) as {
+      error?: { code?: unknown; type?: unknown; message?: unknown };
+    };
+    const error = parsed.error;
+    if (!error) return { text: responseText.toLowerCase() };
+    const code = typeof error.code === "string" ? error.code.toLowerCase() : "";
+    const type = typeof error.type === "string" ? error.type.toLowerCase() : "";
+    const message =
+      typeof error.message === "string" ? error.message.toLowerCase() : "";
+    return { code, text: `${code} ${type} ${message}` };
+  } catch {
+    return { text: responseText.toLowerCase() };
+  }
+};
+
 function isRetryableError(err: unknown): boolean {
+  if (err instanceof LLMInvokeError) {
+    if (err.status === 401 || err.status === 403) return false;
+    if (err.status === 429 || err.status >= 500) return true;
+    if (err.status === 400) {
+      const providerError = parseProviderErrorDetails(err.responseText);
+      if (
+        providerError.code &&
+        RETRYABLE_400_ERROR_CODES.has(providerError.code)
+      ) {
+        return true;
+      }
+      const details = `${err.statusText} ${providerError.text}`.toLowerCase();
+      return (
+        details.includes("rate") || hasRetryableCompatibilityPattern(details)
+      );
+    }
+    return false;
+  }
+
   if (err instanceof Error) {
     const msg = err.message.toLowerCase();
     if (
@@ -329,7 +446,9 @@ function isRetryableError(err: unknown): boolean {
       msg.includes("invalid_api_key")
     )
       return false;
-    if (msg.includes("400") && !msg.includes("rate")) return false;
+    if (msg.includes("400") && !msg.includes("rate")) {
+      return hasRetryableCompatibilityPattern(msg);
+    }
     if (
       msg.includes("5") ||
       msg.includes("timeout") ||
@@ -348,7 +467,9 @@ async function invokeOnce(
   model: string,
   params: InvokeParams
 ): Promise<InvokeResult> {
-  assertApiKey();
+  const provider = isGroqModel(model) ? "groq" : "forge";
+  assertApiKey(provider);
+  const providerModel = toProviderModel(model);
 
   const {
     messages,
@@ -362,7 +483,7 @@ async function invokeOnce(
   } = params;
 
   const payload: Record<string, unknown> = {
-    model,
+    model: providerModel,
     messages: messages.map(normalizeMessage),
   };
 
@@ -379,7 +500,16 @@ async function invokeOnce(
   }
 
   payload.max_tokens = params.maxTokens ?? params.max_tokens ?? 32768;
-  payload.thinking = { budget_tokens: 128 };
+  if (provider === "forge" && FORGE_THINKING_MODELS.has(providerModel)) {
+    // The provider guard is intentional: a Groq-routed model such as
+    // "groq/gemini-2.5-flash" is normalized to "gemini-2.5-flash", but Groq's
+    // OpenAI-compatible API still must not receive Forge/Gemini-only params.
+    // Forge supports Gemini's provider-specific thinking parameter; Groq's
+    // OpenAI-compatible API and non-Gemini Forge models do not. Keep the budget
+    // small so Gemini can plan without materially increasing latency or metered
+    // token usage for short Kai chat requests.
+    payload.thinking = { budget_tokens: 128 };
+  }
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
@@ -392,20 +522,23 @@ async function invokeOnce(
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetch(resolveApiUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  const response = await fetch(
+    provider === "groq" ? resolveGroqApiUrl() : resolveApiUrl(),
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${
+          provider === "groq" ? ENV.groqApiKey : ENV.forgeApiKey
+        }`,
+      },
+      body: JSON.stringify(payload),
+    }
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(
-      `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
-    );
+    throw new LLMInvokeError(response.status, response.statusText, errorText);
   }
 
   const result = (await response.json()) as InvokeResult;

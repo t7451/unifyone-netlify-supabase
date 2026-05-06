@@ -1,3 +1,5 @@
+import { GROQ_FALLBACK_MODEL } from "../_core/llm";
+
 export const KAI_MODEL_IDS = [
   "gemini-2.5-flash",
   "claude-3-5-haiku",
@@ -29,6 +31,7 @@ const DEFAULT_FALLBACK_MODELS = [
   "gemini-2.5-flash",
   "claude-3-5-haiku",
   "gpt-4o-mini",
+  GROQ_FALLBACK_MODEL,
 ];
 
 export const KAI_MODEL_CATALOG: Record<KaiModelId, KaiModelCatalogEntry> = {

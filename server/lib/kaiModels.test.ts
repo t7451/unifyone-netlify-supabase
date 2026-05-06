@@ -45,4 +45,13 @@ describe("Kai model allowlist", () => {
       requested_model: null,
     });
   });
+
+  it("includes Groq in backend fallback chains without exposing fallback internals", () => {
+    expect(KAI_MODEL_CATALOG["kai-fast"].fallbackModels).toContain(
+      "llama-3.3-70b-versatile"
+    );
+    expect(getKaiModelCatalogForClient()[0]).not.toHaveProperty(
+      "fallbackModels"
+    );
+  });
 });
