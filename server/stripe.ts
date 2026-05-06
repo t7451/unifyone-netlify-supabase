@@ -141,11 +141,26 @@ async function resolveTenantForSubscription(
 // HS256), and looks up the user by openId. Returns numeric userId/tenantId
 // for stamping into Stripe Checkout Session metadata so the webhook can
 // resolve the right tenant later.
+function cookieHeaderFromRequestLike(
+  req:
+    | Request
+    | { headers: Headers | Record<string, string | string[] | undefined> }
+): string {
+  const rawHeaders = req.headers;
+  if (rawHeaders instanceof Headers) return rawHeaders.get("cookie") || "";
+  const cookieHeader = rawHeaders.cookie;
+  return Array.isArray(cookieHeader)
+    ? cookieHeader.join("; ")
+    : cookieHeader || "";
+}
+
 async function authedUserFromRequest(
-  req: Request
+  req:
+    | Request
+    | { headers: Headers | Record<string, string | string[] | undefined> }
 ): Promise<{ userId: number; tenantId: number | null; email: string } | null> {
   try {
-    const cookieHeader = req.headers.get("cookie") || "";
+    const cookieHeader = cookieHeaderFromRequestLike(req);
     const m = cookieHeader.match(
       new RegExp("(?:^|;\\s*)" + COOKIE_NAME + "=([^;]+)")
     );
@@ -171,6 +186,20 @@ async function authedUserFromRequest(
     console.error("[Stripe] authedUserFromRequest:", errMsg(err));
     return null;
   }
+}
+
+async function ensureCustomerBelongsToAuthenticatedTenant(
+  customerId: string,
+  authed: { userId: number; tenantId: number | null; email: string }
+): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  if (!authed.tenantId) {
+    return { ok: false, status: 403, error: "No active tenant" };
+  }
+  const tenant = await getTenantById(authed.tenantId);
+  if (!tenant?.stripeCustomerId || tenant.stripeCustomerId !== customerId) {
+    return { ok: false, status: 403, error: "Stripe customer mismatch" };
+  }
+  return { ok: true };
 }
 
 // Persist a webhook event for forensic + idempotency.
@@ -770,18 +799,19 @@ export function registerStripeRoutes(app: Express) {
       if (!stripe)
         return res.status(503).json({ error: "Stripe not configured" });
       try {
-        const {
-          priceId,
-          tenantId,
-          userId,
-          userEmail,
-          userName,
-          origin,
-          amount,
-          description,
-        } = req.body;
+        const { priceId, userEmail, userName, origin, amount, description } =
+          req.body;
+        const authed = await authedUserFromRequest({
+          headers: req.headers as Record<string, string | string[] | undefined>,
+        });
+        if (!authed) {
+          return res.status(401).json({ error: "Authentication required" });
+        }
 
         const baseUrl = origin || "http://localhost:3000";
+        const tenantId = authed.tenantId;
+        const userId = authed.userId;
+        const effectiveUserEmail = authed.email || userEmail;
 
         // Capture im_ref click ID from buyer's cookie so we can attribute
         // the eventual checkout.session.completed back to the affiliate
@@ -795,7 +825,7 @@ export function registerStripeRoutes(app: Express) {
           const session = await stripe.checkout.sessions.create({
             mode: "subscription",
             payment_method_types: ["card"],
-            customer_email: userEmail,
+            customer_email: effectiveUserEmail,
             allow_promotion_codes: true,
             line_items: [{ price: priceId, quantity: 1 }],
             subscription_data: {
@@ -809,7 +839,7 @@ export function registerStripeRoutes(app: Express) {
             metadata: {
               tenant_id: tenantId?.toString() || "",
               user_id: userId?.toString() || "",
-              customer_email: userEmail || "",
+              customer_email: effectiveUserEmail || "",
               customer_name: userName || "",
               im_click_id: imClickId || "",
             },
@@ -831,7 +861,7 @@ export function registerStripeRoutes(app: Express) {
         const session = await stripe.checkout.sessions.create({
           mode: "payment",
           payment_method_types: ["card"],
-          customer_email: userEmail,
+          customer_email: effectiveUserEmail,
           allow_promotion_codes: true,
           line_items: [
             {
@@ -850,7 +880,7 @@ export function registerStripeRoutes(app: Express) {
           metadata: {
             tenant_id: tenantId?.toString() || "",
             user_id: userId?.toString() || "",
-            customer_email: userEmail || "",
+            customer_email: effectiveUserEmail || "",
             customer_name: userName || "",
           },
           success_url: `${baseUrl}/dashboard?stripe=success`,
@@ -873,10 +903,19 @@ export function registerStripeRoutes(app: Express) {
       if (!stripe)
         return res.status(503).json({ error: "Stripe not configured" });
       try {
-        const { priceId, userEmail, userId, tenantId } = req.body;
+        const { priceId, userEmail } = req.body;
+        const authed = await authedUserFromRequest({
+          headers: req.headers as Record<string, string | string[] | undefined>,
+        });
+        if (!authed) {
+          return res.status(401).json({ error: "Authentication required" });
+        }
         if (!priceId) {
           return res.status(400).json({ error: "priceId is required" });
         }
+        const userId = authed.userId;
+        const tenantId = authed.tenantId;
+        const effectiveUserEmail = authed.email || userEmail;
         const origin =
           req.headers.origin || getAppUrl() || "http://localhost:3000";
         const session = await stripe.checkout.sessions.create({
@@ -889,7 +928,7 @@ export function registerStripeRoutes(app: Express) {
               user_id: userId?.toString() || "",
             },
           },
-          customer_email: userEmail,
+          customer_email: effectiveUserEmail,
           automatic_tax: { enabled: true },
           allow_promotion_codes: true,
           return_url: `${origin}/dashboard?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
@@ -914,6 +953,19 @@ export function registerStripeRoutes(app: Express) {
 
         if (!customerId) {
           return res.status(400).json({ error: "customerId is required" });
+        }
+        const authed = await authedUserFromRequest({
+          headers: req.headers as Record<string, string | string[] | undefined>,
+        });
+        if (!authed) {
+          return res.status(401).json({ error: "Authentication required" });
+        }
+        const ownership = await ensureCustomerBelongsToAuthenticatedTenant(
+          customerId,
+          authed
+        );
+        if (!ownership.ok) {
+          return res.status(ownership.status).json({ error: ownership.error });
         }
 
         const session = await stripe.billingPortal.sessions.create({
@@ -1041,6 +1093,19 @@ export function registerStripeRoutes(app: Express) {
       if (!stripe)
         return res.status(503).json({ error: "Stripe not configured" });
       try {
+        const authed = await authedUserFromRequest({
+          headers: req.headers as Record<string, string | string[] | undefined>,
+        });
+        if (!authed) {
+          return res.status(401).json({ error: "Authentication required" });
+        }
+        const ownership = await ensureCustomerBelongsToAuthenticatedTenant(
+          req.params.customerId,
+          authed
+        );
+        if (!ownership.ok) {
+          return res.status(ownership.status).json({ error: ownership.error });
+        }
         const invoices = await stripe.invoices.list({
           customer: req.params.customerId,
           limit: 20,
@@ -1614,6 +1679,23 @@ export async function registerStripeFetchRoutes(
           { status: 400 }
         );
       }
+      const authed = await authedUserFromRequest(req);
+      if (!authed) {
+        return Response.json(
+          { error: "Authentication required" },
+          { status: 401 }
+        );
+      }
+      const ownership = await ensureCustomerBelongsToAuthenticatedTenant(
+        customerId,
+        authed
+      );
+      if (!ownership.ok) {
+        return Response.json(
+          { error: ownership.error },
+          { status: ownership.status }
+        );
+      }
       const session = await stripe!.billingPortal.sessions.create({
         customer: customerId,
         return_url: `${origin || "http://localhost:3000"}/settings`,
@@ -1728,6 +1810,23 @@ export async function registerStripeFetchRoutes(
       const customerId = decodeURIComponent(
         path.slice("/api/stripe/invoices/".length)
       );
+      const authed = await authedUserFromRequest(req);
+      if (!authed) {
+        return Response.json(
+          { error: "Authentication required" },
+          { status: 401 }
+        );
+      }
+      const ownership = await ensureCustomerBelongsToAuthenticatedTenant(
+        customerId,
+        authed
+      );
+      if (!ownership.ok) {
+        return Response.json(
+          { error: ownership.error },
+          { status: ownership.status }
+        );
+      }
       const invoices = await stripe!.invoices.list({
         customer: customerId,
         limit: 20,

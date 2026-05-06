@@ -63,7 +63,8 @@ export default function Checkout() {
     trpc.subscription.createCheckout.useMutation({
       onSuccess: data => {
         if (data.url) {
-          toast.info("Redirecting to Stripe Checkout…");
+          const provider = data.provider ?? "payment";
+          toast.info(`Redirecting to ${provider} checkout…`);
           window.location.href = data.url;
         } else {
           toast.error("Checkout session created but no URL returned.");
@@ -404,7 +405,10 @@ export default function Checkout() {
               <div className="glass rounded-2xl p-5 border border-white/10 space-y-4">
                 <div className="flex items-center gap-2 text-gray-400 text-xs">
                   <Shield className="w-3.5 h-3.5 text-[#635BFF]" />
-                  <span>Secured by Stripe — Cancel anytime, no lock-in</span>
+                  <span>
+                    Automatic payment fallback enabled — Cancel anytime, no
+                    lock-in
+                  </span>
                 </div>
                 <Button
                   className="w-full h-12 font-bold text-white"
@@ -426,7 +430,7 @@ export default function Checkout() {
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4 mr-2" />
-                      Subscribe — $
+                      Subscribe securely — $
                       {canonicalPlan
                         ? canonicalPlan.monthlyPriceCents / 100
                         : Number(activePlan.priceMonthly ?? 0).toFixed(0)}
@@ -435,8 +439,9 @@ export default function Checkout() {
                   )}
                 </Button>
                 <p className="text-gray-600 text-xs text-center">
-                  You'll be redirected to Stripe's secure checkout. Test card:
-                  4242 4242 4242 4242
+                  Stripe is primary. If unavailable, checkout automatically
+                  falls back to configured Square, PayPal, Shopify, or manual
+                  invoice rails.
                 </p>
               </div>
             )}
