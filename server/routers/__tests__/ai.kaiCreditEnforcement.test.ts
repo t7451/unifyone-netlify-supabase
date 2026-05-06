@@ -4,6 +4,7 @@ const invokeLLMMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../../_core/llm", () => ({
   invokeLLM: invokeLLMMock,
+  GROQ_FALLBACK_MODEL: "llama-3.3-70b-versatile",
 }));
 
 vi.mock("../../db", () => ({

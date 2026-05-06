@@ -260,7 +260,29 @@ const resolveApiUrl = () =>
     ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
     : "https://forge.butterfly-effect.dev/v1/chat/completions";
 
-const assertApiKey = () => {
+const resolveGroqApiUrl = () =>
+  ENV.groqApiUrl && ENV.groqApiUrl.trim().length > 0
+    ? `${ENV.groqApiUrl.replace(/\/$/, "")}/openai/v1/chat/completions`
+    : "https://api.groq.com/openai/v1/chat/completions";
+
+export const GROQ_FALLBACK_MODEL = "llama-3.3-70b-versatile";
+
+const isGroqModel = (model: string) =>
+  model === GROQ_FALLBACK_MODEL || model.startsWith("groq/");
+
+const toProviderModel = (model: string) =>
+  model.startsWith("groq/") ? model.slice("groq/".length) : model;
+
+const assertApiKey = (provider: "forge" | "groq") => {
+  if (provider === "groq") {
+    if (!ENV.groqApiKey) {
+      throw new Error(
+        "GROQ_API_KEY is not configured. Set this environment variable to enable Groq AI fallback."
+      );
+    }
+    return;
+  }
+
   if (!ENV.forgeApiKey) {
     throw new Error(
       "BUILT_IN_FORGE_API_KEY is not configured. Set this environment variable to enable AI features."
@@ -318,6 +340,7 @@ export const DEFAULT_FALLBACK_CHAIN = [
   DEFAULT_MODEL,
   "claude-3-5-haiku",
   "gpt-4o-mini",
+  GROQ_FALLBACK_MODEL,
 ];
 
 function isRetryableError(err: unknown): boolean {
@@ -329,7 +352,14 @@ function isRetryableError(err: unknown): boolean {
       msg.includes("invalid_api_key")
     )
       return false;
-    if (msg.includes("400") && !msg.includes("rate")) return false;
+    if (msg.includes("400") && !msg.includes("rate")) {
+      return (
+        msg.includes("model") ||
+        msg.includes("unsupported") ||
+        msg.includes("unrecognized") ||
+        msg.includes("unknown parameter")
+      );
+    }
     if (
       msg.includes("5") ||
       msg.includes("timeout") ||
@@ -348,7 +378,9 @@ async function invokeOnce(
   model: string,
   params: InvokeParams
 ): Promise<InvokeResult> {
-  assertApiKey();
+  const provider = isGroqModel(model) ? "groq" : "forge";
+  assertApiKey(provider);
+  const providerModel = toProviderModel(model);
 
   const {
     messages,
@@ -362,7 +394,7 @@ async function invokeOnce(
   } = params;
 
   const payload: Record<string, unknown> = {
-    model,
+    model: providerModel,
     messages: messages.map(normalizeMessage),
   };
 
@@ -379,7 +411,9 @@ async function invokeOnce(
   }
 
   payload.max_tokens = params.maxTokens ?? params.max_tokens ?? 32768;
-  payload.thinking = { budget_tokens: 128 };
+  if (provider === "forge" && providerModel.includes("gemini")) {
+    payload.thinking = { budget_tokens: 128 };
+  }
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
@@ -392,14 +426,19 @@ async function invokeOnce(
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetch(resolveApiUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  const response = await fetch(
+    provider === "groq" ? resolveGroqApiUrl() : resolveApiUrl(),
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${
+          provider === "groq" ? ENV.groqApiKey : ENV.forgeApiKey
+        }`,
+      },
+      body: JSON.stringify(payload),
+    }
+  );
 
   if (!response.ok) {
     const errorText = await response.text();

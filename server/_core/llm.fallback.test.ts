@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("./env", () => ({
-  ENV: { forgeApiKey: "test-key" },
+  ENV: { forgeApiKey: "test-key", groqApiKey: "groq-test-key" },
 }));
 
 vi.mock("../creditMeter", () => ({
@@ -14,7 +14,11 @@ vi.mock("../creditMeter", () => ({
   tokensToCredits: vi.fn(() => 0.1),
 }));
 
-import { invokeLLMWithFallback, DEFAULT_FALLBACK_CHAIN } from "./llm";
+import {
+  invokeLLMWithFallback,
+  DEFAULT_FALLBACK_CHAIN,
+  GROQ_FALLBACK_MODEL,
+} from "./llm";
 import { meterCredits } from "../creditMeter";
 
 const mockOk = (model: string) =>
@@ -73,6 +77,32 @@ describe("invokeLLMWithFallback", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
+  it("falls back to Groq using the Groq API key and endpoint", async () => {
+    fetchSpy
+      .mockImplementationOnce(() => mockErr(503, "service unavailable"))
+      .mockImplementationOnce(() => mockOk(GROQ_FALLBACK_MODEL));
+
+    const out = await invokeLLMWithFallback({
+      messages: [{ role: "user", content: "hi" }],
+      model: "gemini-2.5-flash",
+      modelChain: [GROQ_FALLBACK_MODEL],
+    });
+
+    expect(out.choices[0].message.content).toBe(
+      `from ${GROQ_FALLBACK_MODEL}`
+    );
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy.mock.calls[1][0]).toBe(
+      "https://api.groq.com/openai/v1/chat/completions"
+    );
+    expect(fetchSpy.mock.calls[1][1].headers.authorization).toBe(
+      "Bearer groq-test-key"
+    );
+    expect(JSON.parse(fetchSpy.mock.calls[1][1].body)).toEqual(
+      expect.objectContaining({ model: GROQ_FALLBACK_MODEL })
+    );
+  });
+
   it("does NOT fall back on 401/403 auth errors", async () => {
     fetchSpy.mockImplementationOnce(() => mockErr(401, "unauthorized"));
     await expect(
@@ -91,6 +121,19 @@ describe("invokeLLMWithFallback", () => {
       modelChain: ["custom-fallback"],
     });
     expect(out.choices[0].message.content).toBe("from custom-fallback");
+  });
+
+  it("does not send provider-incompatible thinking params to non-Gemini models", async () => {
+    fetchSpy.mockImplementationOnce(() => mockOk("gpt-4o-mini"));
+
+    await invokeLLMWithFallback({
+      messages: [{ role: "user", content: "hi" }],
+      model: "gpt-4o-mini",
+    });
+
+    expect(JSON.parse(fetchSpy.mock.calls[0][1].body)).not.toHaveProperty(
+      "thinking"
+    );
   });
 
   it("applies minimum credits and returns awaited metering metadata", async () => {
@@ -146,5 +189,6 @@ describe("invokeLLMWithFallback", () => {
 
   it("exports DEFAULT_FALLBACK_CHAIN", () => {
     expect(DEFAULT_FALLBACK_CHAIN).toContain("gemini-2.5-flash");
+    expect(DEFAULT_FALLBACK_CHAIN).toContain(GROQ_FALLBACK_MODEL);
   });
 });
