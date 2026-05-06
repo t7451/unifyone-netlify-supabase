@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { PaginationControls } from "@/components/PaginationControls";
 import { QueryErrorState } from "@/components/QueryErrorState";
+import { DashboardPageShell } from "@/components/DashboardPageShell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -543,6 +544,12 @@ export default function Products() {
       product.inventory &&
       product.inventory.quantity <= product.inventory.lowStockThreshold
   ).length;
+  const activeProductCount = productList.filter(
+    product => product.status === "active"
+  ).length;
+  const draftProductCount = productList.filter(
+    product => product.status === "draft"
+  ).length;
   const allVisibleSelected =
     productList.length > 0 &&
     productList.every(p => selectedIds.includes(p.id));
@@ -570,21 +577,11 @@ export default function Products() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Products</h1>
-          <p className="text-gray-400 text-sm mt-1">
-            {totalProducts} product{totalProducts === 1 ? "" : "s"}
-            {lowStockCount > 0 && (
-              <span className="ml-2 text-amber-400">
-                <AlertTriangle className="w-3 h-3 inline mr-1" />
-                {lowStockCount} low stock
-              </span>
-            )}
-          </p>
-        </div>
+    <DashboardPageShell
+      eyebrow="Catalog operations"
+      title="Products"
+      description="Control merchandising, inventory health, draft cleanup, and bulk catalog operations from one working surface."
+      actions={
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold">
@@ -635,8 +632,65 @@ export default function Products() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-
+      }
+      meta={
+        <>
+          <Badge variant="outline" className="border-white/10 bg-white/5">
+            {totalProducts} product{totalProducts === 1 ? "" : "s"}
+          </Badge>
+          {hasActiveFilters ? (
+            <Badge
+              variant="outline"
+              className="border-cyan-400/30 bg-cyan-400/10 text-cyan-200"
+            >
+              Filtered view
+            </Badge>
+          ) : null}
+          {lowStockCount > 0 ? (
+            <Badge
+              variant="outline"
+              className="border-amber-500/30 bg-amber-500/10 text-amber-300"
+            >
+              <AlertTriangle className="mr-1.5 h-3.5 w-3.5" />
+              {lowStockCount} low stock
+            </Badge>
+          ) : null}
+        </>
+      }
+      stats={[
+        {
+          label: "Visible active",
+          value: activeProductCount.toLocaleString(),
+          helper: "Published products on this page",
+          icon: Package,
+          tone: "emerald",
+        },
+        {
+          label: "Draft cleanup",
+          value: draftProductCount.toLocaleString(),
+          helper: "Draft products in the current view",
+          icon: Edit,
+          tone: "slate",
+        },
+        {
+          label: "Inventory alerts",
+          value: lowStockCount.toLocaleString(),
+          helper:
+            lowStockCount > 0
+              ? "Restock or archive low-stock SKUs"
+              : "No low-stock alerts visible",
+          icon: AlertTriangle,
+          tone: lowStockCount > 0 ? "amber" : "emerald",
+        },
+        {
+          label: "Bulk selection",
+          value: selectedIds.length.toLocaleString(),
+          helper: "Selected for operational action",
+          icon: BarChart3,
+          tone: selectedIds.length > 0 ? "cyan" : "slate",
+        },
+      ]}
+    >
       {/* Filters */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="flex flex-1 flex-col gap-3 sm:flex-row">
@@ -1136,6 +1190,6 @@ export default function Products() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </DashboardPageShell>
   );
 }

@@ -35,6 +35,7 @@ import { RealtimeStatus } from "@/components/RealtimeStatus";
 import { PaginationControls } from "@/components/PaginationControls";
 import { QueryErrorState } from "@/components/QueryErrorState";
 import { AddCustomerDialog } from "@/components/AddCustomerDialog";
+import { DashboardPageShell } from "@/components/DashboardPageShell";
 
 interface CustomerAddress {
   line1?: string;
@@ -124,6 +125,17 @@ export default function Customers() {
   const customerList = customerResponse?.items ?? [];
   const totalCustomers = customerResponse?.total ?? 0;
   const totalPages = customerResponse?.totalPages ?? 1;
+  const visibleSpend = customerList.reduce(
+    (total, customer) => total + Number(customer.totalSpent ?? 0),
+    0
+  );
+  const visibleOrders = customerList.reduce(
+    (total, customer) => total + Number(customer.totalOrders ?? 0),
+    0
+  );
+  const taggedCustomerCount = customerList.filter(
+    customer => (customer.tags ?? []).length > 0
+  ).length;
   const customerOrderList =
     (customerOrders.data as CustomerOrderSummary[] | undefined) ?? [];
 
@@ -190,22 +202,61 @@ export default function Customers() {
     [c.firstName, c.lastName].filter(Boolean).join(" ") || "—";
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-end mb-4">
-        <AddCustomerDialog />
-      </div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Customers</h1>
-          <div className="flex items-center gap-3 mt-1">
-            <p className="text-gray-400 text-sm">
-              {totalCustomers} customer{totalCustomers !== 1 ? "s" : ""}
-            </p>
-            <RealtimeStatus />
-          </div>
-        </div>
-      </div>
-
+    <DashboardPageShell
+      eyebrow="Customer operations"
+      title="Customers"
+      description="Keep a clean customer graph with profile enrichment, tags, order history, and lifetime value signals."
+      actions={<AddCustomerDialog />}
+      meta={
+        <>
+          <Badge variant="outline" className="border-white/10 bg-white/5">
+            {totalCustomers} customer{totalCustomers !== 1 ? "s" : ""}
+          </Badge>
+          <RealtimeStatus />
+          {search ? (
+            <Badge
+              variant="outline"
+              className="border-cyan-400/30 bg-cyan-400/10 text-cyan-200"
+            >
+              Search active
+            </Badge>
+          ) : null}
+        </>
+      }
+      stats={[
+        {
+          label: "Visible LTV",
+          value: `$${visibleSpend.toFixed(2)}`,
+          helper: "Spend represented on this page",
+          icon: DollarSign,
+          tone: "emerald",
+        },
+        {
+          label: "Visible orders",
+          value: visibleOrders.toLocaleString(),
+          helper: "Orders tied to visible customers",
+          icon: ShoppingBag,
+          tone: "cyan",
+        },
+        {
+          label: "Tagged profiles",
+          value: taggedCustomerCount.toLocaleString(),
+          helper: "Profiles with segmentation tags",
+          icon: Tag,
+          tone: taggedCustomerCount > 0 ? "violet" : "slate",
+        },
+        {
+          label: "Avg visible LTV",
+          value:
+            customerList.length > 0
+              ? `$${(visibleSpend / customerList.length).toFixed(2)}`
+              : "$0.00",
+          helper: "Per visible customer",
+          icon: Users,
+          tone: "amber",
+        },
+      ]}
+    >
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input
@@ -716,6 +767,6 @@ export default function Customers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </DashboardPageShell>
   );
 }

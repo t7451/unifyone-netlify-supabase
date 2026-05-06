@@ -9,6 +9,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DashboardPageShell } from "@/components/DashboardPageShell";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Area,
@@ -22,11 +24,13 @@ import {
   Legend,
 } from "recharts";
 import {
+  Activity,
   TrendingUp,
   DollarSign,
   ShoppingCart,
   Users,
   Package,
+  RefreshCw,
 } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/routers";
@@ -124,16 +128,59 @@ export default function Analytics() {
       color: "#F59E0B",
     },
   ];
+  const operationalStatus =
+    !summary.isError &&
+    !revenueByDay.isError &&
+    !topProducts.isError &&
+    !webhookLog.isError;
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Analytics</h1>
-        <p className="mt-1 text-sm text-gray-400">
-          Revenue and performance insights
-        </p>
-      </div>
-
+    <DashboardPageShell
+      eyebrow="Intelligence center"
+      title="Analytics"
+      description="Track revenue quality, product winners, customer growth, and webhook reliability from one decision dashboard."
+      actions={
+        <Button
+          variant="outline"
+          onClick={() => {
+            void summary.refetch();
+            void revenueByDay.refetch();
+            void topProducts.refetch();
+            void webhookLog.refetch();
+          }}
+          className="border-white/10 bg-white/5 text-white hover:bg-white/10"
+        >
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Refresh analytics
+        </Button>
+      }
+      meta={
+        <Badge
+          variant="outline"
+          className={cn(
+            "border-white/10 bg-white/5",
+            operationalStatus ? "text-emerald-300" : "text-amber-300"
+          )}
+        >
+          <Activity className="mr-1.5 h-3.5 w-3.5" />
+          {operationalStatus ? "Analytics online" : "Analytics degraded"}
+        </Badge>
+      }
+      stats={metrics.slice(0, 4).map(metric => ({
+        label: metric.label,
+        value: metric.value,
+        helper: "Current tenant scope",
+        icon: metric.icon,
+        tone:
+          metric.label === "Total Revenue"
+            ? "emerald"
+            : metric.label === "Total Orders"
+              ? "cyan"
+              : metric.label === "Customers"
+                ? "violet"
+                : "amber",
+      }))}
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {metrics.map(metric => (
           <Card key={metric.label} className="border-border bg-card">
@@ -407,6 +454,6 @@ export default function Analytics() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </DashboardPageShell>
   );
 }

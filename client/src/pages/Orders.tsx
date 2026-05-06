@@ -5,6 +5,7 @@ import { useRealtimeOrders } from "@/lib/supabaseRealtime";
 import { RealtimeStatus } from "@/components/RealtimeStatus";
 import { PaginationControls } from "@/components/PaginationControls";
 import { QueryErrorState } from "@/components/QueryErrorState";
+import { DashboardPageShell } from "@/components/DashboardPageShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -276,6 +277,17 @@ export default function Orders() {
   const someVisibleSelected =
     orderList.some(order => selectedIds.includes(order.id)) &&
     !allVisibleSelected;
+  const visibleRevenue = orderList.reduce(
+    (total, order) => total + Number(order.total ?? 0),
+    0
+  );
+  const paidVisibleCount = orderList.filter(
+    order => order.paymentStatus === "paid"
+  ).length;
+  const openFulfillmentCount = orderList.filter(
+    order =>
+      !["delivered", "cancelled", "refunded"].includes(String(order.status))
+  ).length;
 
   const selectedOrderId: number = selectedOrder?.id ?? 0;
   const orderDetail = trpc.orders.get.useQuery(
@@ -495,19 +507,12 @@ export default function Orders() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Orders</h1>
-          <div className="flex items-center gap-3 mt-1">
-            <p className="text-gray-400 text-sm">
-              {totalOrders} order{totalOrders !== 1 ? "s" : ""}
-            </p>
-            <RealtimeStatus />
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
+    <DashboardPageShell
+      eyebrow="Order operations"
+      title="Orders"
+      description="Prioritize fulfillment, payment exceptions, bulk cleanup, exports, and real-time order flow from the command queue."
+      actions={
+        <>
           <Button
             variant="outline"
             size="sm"
@@ -523,9 +528,56 @@ export default function Orders() {
           >
             <Plus className="w-4 h-4 mr-2" /> New Order
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+      meta={
+        <>
+          <Badge variant="outline" className="border-white/10 bg-white/5">
+            {totalOrders} order{totalOrders !== 1 ? "s" : ""}
+          </Badge>
+          <RealtimeStatus />
+          {hasActiveFilters ? (
+            <Badge
+              variant="outline"
+              className="border-cyan-400/30 bg-cyan-400/10 text-cyan-200"
+            >
+              {activeFilterCount} active filter
+              {activeFilterCount === 1 ? "" : "s"}
+            </Badge>
+          ) : null}
+        </>
+      }
+      stats={[
+        {
+          label: "Visible revenue",
+          value: `$${visibleRevenue.toFixed(2)}`,
+          helper: "Current page order value",
+          icon: DollarSign,
+          tone: "emerald",
+        },
+        {
+          label: "Paid orders",
+          value: paidVisibleCount.toLocaleString(),
+          helper: "Paid orders in this view",
+          icon: CreditCard,
+          tone: "cyan",
+        },
+        {
+          label: "Fulfillment queue",
+          value: openFulfillmentCount.toLocaleString(),
+          helper: "Not delivered, cancelled, or refunded",
+          icon: Truck,
+          tone: openFulfillmentCount > 0 ? "amber" : "emerald",
+        },
+        {
+          label: "Selected",
+          value: selectedIds.length.toLocaleString(),
+          helper: "Ready for bulk operations",
+          icon: Trash2,
+          tone: selectedIds.length > 0 ? "rose" : "slate",
+        },
+      ]}
+    >
       {/* Filters */}
       <div className="space-y-3">
         <div className="flex flex-wrap gap-3">
@@ -1600,6 +1652,6 @@ export default function Orders() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </DashboardPageShell>
   );
 }
