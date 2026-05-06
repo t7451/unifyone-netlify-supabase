@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "smoke:public": "tsx scripts/smoke-public.ts",
+    "health:probe": "tsx scripts/probe-health.ts",
     "db:generate": "drizzle-kit generate:pg",
     "db:push": "drizzle-kit generate:pg && drizzle-kit up:pg",
     "seed:plans": "tsx scripts/seed-stripe-products.ts",
