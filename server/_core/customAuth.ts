@@ -4,6 +4,7 @@
  * Primary: Email + Password with scrypt hashing (Node.js crypto, no external deps)
  * Fallback 1: Clerk (when CLERK_SECRET_KEY is set)
  * Fallback 2: Firebase Auth (when FIREBASE_SERVICE_ACCOUNT is set)
+ * OAuth: Google and Auth0 issue the same local JWT session cookies
  *
  * All methods produce the same session token format for downstream compatibility.
  */
@@ -395,9 +396,12 @@ export async function signIn(
   }
 }
 
-// ── Google OAuth Sign In ────────────────────────────────────────────────────
+// ── Social OAuth Sign In ────────────────────────────────────────────────────
 
-export async function signInWithGoogleProfile(
+type ExternalOAuthProvider = "google" | "auth0";
+
+async function signInWithExternalOAuthProfile(
+  provider: ExternalOAuthProvider,
   profile: {
     sub: string;
     email: string;
@@ -411,11 +415,14 @@ export async function signInWithGoogleProfile(
   if (!profile.sub || !emailLower) {
     return {
       success: false,
-      error: "Google profile is missing required fields",
+      error: `${provider === "google" ? "Google" : "Auth0"} profile is missing required fields`,
     };
   }
   if (!profile.emailVerified) {
-    return { success: false, error: "Google account email is not verified" };
+    return {
+      success: false,
+      error: `${provider === "google" ? "Google" : "Auth0"} account email is not verified`,
+    };
   }
 
   try {
@@ -424,7 +431,7 @@ export async function signInWithGoogleProfile(
       return { success: false, error: "Database unavailable" };
     }
 
-    const googleOpenId = `google_${createHash("sha256")
+    const providerOpenId = `${provider}_${createHash("sha256")
       .update(profile.sub)
       .digest("hex")
       .slice(0, 32)}`;
@@ -436,14 +443,14 @@ export async function signInWithGoogleProfile(
       .from(users)
       .where(
         and(
-          or(eq(users.openId, googleOpenId), eq(users.email, emailLower)),
+          or(eq(users.openId, providerOpenId), eq(users.email, emailLower)),
           isNull(users.deletedAt)
         )
       )
       .limit(1);
 
     let userId = existingUser?.id;
-    let openId = existingUser?.openId ?? googleOpenId;
+    let openId = existingUser?.openId ?? providerOpenId;
     let username = existingUser?.username ?? null;
     let sessionName = displayName;
 
@@ -455,7 +462,7 @@ export async function signInWithGoogleProfile(
       ) {
         return {
           success: false,
-          error: "This Google account belongs to a different workspace.",
+          error: `This ${provider === "google" ? "Google" : "Auth0"} account belongs to a different workspace.`,
         };
       }
 
@@ -467,7 +474,7 @@ export async function signInWithGoogleProfile(
           name: sessionName,
           email: existingUser.email || emailLower,
           emailVerified: true,
-          loginMethod: "google",
+          loginMethod: provider,
           lastSignedIn: new Date(),
           tenantId: existingUser.tenantId ?? profile.tenantId ?? null,
         })
@@ -476,11 +483,11 @@ export async function signInWithGoogleProfile(
       const [insertedUser] = await db
         .insert(users)
         .values({
-          openId: googleOpenId,
+          openId: providerOpenId,
           email: emailLower,
           name: displayName,
           passwordHash: null,
-          loginMethod: "google",
+          loginMethod: provider,
           emailVerified: true,
           role: "user",
           tenantId: profile.tenantId ?? null,
@@ -488,14 +495,14 @@ export async function signInWithGoogleProfile(
         .returning({ id: users.id });
 
       userId = insertedUser?.id;
-      openId = googleOpenId;
+      openId = providerOpenId;
       username = null;
     }
 
     const sessionToken = await sdk.createSessionToken(openId, {
       name: sessionName,
       email: emailLower,
-      loginMethod: "google",
+      loginMethod: provider,
       expiresInMs: ACCESS_TOKEN_LIFETIME_MS,
     });
 
@@ -516,14 +523,40 @@ export async function signInWithGoogleProfile(
       },
     };
   } catch (err: unknown) {
-    logger.error("customAuth: Google sign-in failed", {
+    logger.error(`customAuth: ${provider} sign-in failed`, {
       error: err instanceof Error ? err.message : String(err),
     });
     return {
       success: false,
-      error: "Google sign-in failed. Please try again.",
+      error: `${provider === "google" ? "Google" : "Auth0"} sign-in failed. Please try again.`,
     };
   }
+}
+
+export async function signInWithGoogleProfile(
+  profile: {
+    sub: string;
+    email: string;
+    emailVerified: boolean;
+    name?: string | null;
+    tenantId?: number | null;
+  },
+  opts: { ipAddress?: string; userAgent?: string } = {}
+): Promise<AuthResult> {
+  return signInWithExternalOAuthProfile("google", profile, opts);
+}
+
+export async function signInWithAuth0Profile(
+  profile: {
+    sub: string;
+    email: string;
+    emailVerified: boolean;
+    name?: string | null;
+    tenantId?: number | null;
+  },
+  opts: { ipAddress?: string; userAgent?: string } = {}
+): Promise<AuthResult> {
+  return signInWithExternalOAuthProfile("auth0", profile, opts);
 }
 
 // ── Build Cookie Header ──────────────────────────────────────────────────────

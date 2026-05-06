@@ -201,6 +201,7 @@ export default function Login({
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+  const [isAuth0Submitting, setIsAuth0Submitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
@@ -238,6 +239,22 @@ export default function Login({
       setError(
         googleErrors[urlError] ||
           "Google sign-in failed. Please try again or use email and password."
+      );
+    } else if (urlError?.startsWith("auth0_oauth")) {
+      const auth0Errors: Record<string, string> = {
+        auth0_oauth_denied: "Auth0 sign-in was cancelled.",
+        auth0_oauth_invalid:
+          "Auth0 sign-in could not be verified. Please try again.",
+        auth0_oauth_config:
+          "Auth0 sign-in is not configured correctly yet. Please check the Netlify Auth0 extension settings.",
+        auth0_oauth_unverified:
+          "Auth0 did not verify this account's email address. Please use a verified account.",
+        auth0_oauth_failed:
+          "Auth0 sign-in failed. Please try again or use another sign-in method.",
+      };
+      setError(
+        auth0Errors[urlError] ||
+          "Auth0 sign-in failed. Please try again or use another sign-in method."
       );
     }
   }, []);
@@ -400,6 +417,33 @@ export default function Login({
       setError("Failed to start Google OAuth. Please try again.");
     } finally {
       setIsGoogleSubmitting(false);
+    }
+  };
+
+  const handleAuth0OAuth = async () => {
+    setIsAuth0Submitting(true);
+    setError(null);
+    setErrorCode(null);
+
+    try {
+      const res = await fetch("/api/auth/auth0/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ returnTo }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success || !data.authorizationUrl) {
+        setError(data.error || "Auth0 is not configured yet.");
+        return;
+      }
+
+      window.location.href = data.authorizationUrl as string;
+    } catch {
+      setError("Failed to start Auth0 sign-in. Please try again.");
+    } finally {
+      setIsAuth0Submitting(false);
     }
   };
 
@@ -721,7 +765,7 @@ export default function Login({
             type="button"
             variant="outline"
             onClick={handleGoogleOAuth}
-            disabled={isGoogleSubmitting}
+            disabled={isGoogleSubmitting || isAuth0Submitting}
             className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white"
           >
             {isGoogleSubmitting ? (
@@ -733,9 +777,25 @@ export default function Login({
               "Continue with Google"
             )}
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAuth0OAuth}
+            disabled={isAuth0Submitting || isGoogleSubmitting}
+            className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white"
+          >
+            {isAuth0Submitting ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Redirecting to Auth0...
+              </span>
+            ) : (
+              "Continue with Auth0"
+            )}
+          </Button>
           <p className="text-xs text-slate-500 text-center">
-            Google sign-in uses the configured global provider, or workspace
-            settings when a tenant is selected.
+            Google and Auth0 sign-in use the configured provider settings and
+            create the same secure UnifyOne session.
           </p>
 
           {CLERK_PUBLISHABLE_KEY && (

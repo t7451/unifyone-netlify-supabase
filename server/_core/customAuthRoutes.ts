@@ -4,6 +4,7 @@
  * POST /api/auth/signup     - Create account with email/password
  * POST /api/auth/signin     - Sign in with email/password
  * POST /api/auth/logout     - Clear session cookie
+ * POST /api/auth/auth0/start - Start Auth0 OAuth sign-in
  * POST /api/auth/clerk      - Verify Clerk session token (fallback)
  * POST /api/auth/firebase   - Verify Firebase ID token (fallback)
  */
@@ -13,11 +14,17 @@ import type {
   Request as ExpressRequest,
   Response as ExpressResponse,
 } from "express";
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import {
+  createHash,
+  createHmac,
+  randomBytes,
+  timingSafeEqual,
+} from "node:crypto";
 import {
   signUp,
   signIn,
   signInWithGoogleProfile,
+  signInWithAuth0Profile,
   verifyClerkSession,
   verifyFirebaseIdToken,
   buildSessionCookie,
@@ -48,6 +55,8 @@ import { eq, or } from "drizzle-orm";
 
 const DEFAULT_GOOGLE_SCOPES =
   "openid email profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
+const DEFAULT_AUTH0_SCOPES = "openid profile email";
+const AUTH0_PKCE_COOKIE_NAME = "auth0_pkce";
 
 type GoogleOAuthSettings = {
   enabled: boolean;
@@ -74,11 +83,58 @@ type GoogleUserInfo = {
   name?: string;
 };
 
+type Auth0OAuthSettings = {
+  enabled: boolean;
+  domain: string;
+  issuer: string;
+  clientId: string;
+  clientSecret?: string;
+  audience?: string;
+  redirectUri: string;
+  scopes: string;
+};
+
+type Auth0OAuthState = {
+  exp: number;
+  nonce: string;
+  returnTo: string;
+};
+
+type Auth0PkceCookie = {
+  exp: number;
+  nonce: string;
+  verifier: string;
+};
+
+type Auth0UserInfo = {
+  sub: string;
+  email: string;
+  email_verified?: boolean | string;
+  name?: string;
+  nickname?: string;
+};
+
 function getClientIp(req: Request): string {
   // Standard forwarded-for header (Netlify / proxies set this)
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
   return "unknown";
+}
+
+function readCookieValue(
+  cookieHeader: string | null | undefined,
+  name: string
+): string | null {
+  const match = (cookieHeader ?? "")
+    .split(";")
+    .map(cookie => cookie.trim())
+    .find(cookie => cookie.startsWith(`${name}=`));
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match.slice(`${name}=`.length));
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -149,6 +205,42 @@ function readGlobalGoogleOAuthSettings(): GoogleOAuthSettings {
     redirectUri: process.env.GOOGLE_OAUTH_REDIRECT_URI ?? "",
     scopes: process.env.GOOGLE_OAUTH_SCOPES || DEFAULT_GOOGLE_SCOPES,
     source: "env",
+  };
+}
+
+function firstEnv(...names: string[]): string | undefined {
+  for (const name of names) {
+    const value = process.env[name]?.trim();
+    if (value) return value;
+  }
+  return undefined;
+}
+
+function normalizeAuth0Issuer(input: string): string {
+  if (!input) return "";
+  const withProtocol = input.startsWith("http") ? input : `https://${input}`;
+  return withProtocol.endsWith("/") ? withProtocol : `${withProtocol}/`;
+}
+
+function readGlobalAuth0OAuthSettings(): Auth0OAuthSettings {
+  const domain = firstEnv("AUTH0_DOMAIN", "VITE_AUTH0_DOMAIN") ?? "";
+  const issuer = normalizeAuth0Issuer(
+    firstEnv("AUTH0_ISSUER", "AUTH0_ISSUER_BASE_URL") ?? domain
+  );
+  const clientId = firstEnv("AUTH0_CLIENT_ID", "VITE_AUTH0_CLIENT_ID") ?? "";
+
+  return {
+    enabled:
+      process.env.AUTH0_ENABLED !== "false" && Boolean(issuer && clientId),
+    domain,
+    issuer,
+    clientId,
+    clientSecret: firstEnv("AUTH0_CLIENT_SECRET"),
+    audience: firstEnv("AUTH0_AUDIENCE", "VITE_AUTH0_AUDIENCE"),
+    redirectUri:
+      firstEnv("AUTH0_REDIRECT_URI", "AUTH0_CALLBACK_URL") ??
+      `${getAppUrl()}/api/auth/auth0/callback`,
+    scopes: firstEnv("AUTH0_SCOPES") ?? DEFAULT_AUTH0_SCOPES,
   };
 }
 
@@ -233,6 +325,128 @@ function verifyGoogleOAuthState(
   } catch {
     return null;
   }
+}
+
+function createAuth0OAuthState(returnTo?: string): Auth0OAuthState {
+  return {
+    exp: Date.now() + 10 * 60 * 1000,
+    nonce: randomBytes(16).toString("base64url"),
+    returnTo: sanitizeReturnTo(returnTo),
+  };
+}
+
+function serializeSignedPayload(payloadObject: object): string {
+  const payload = Buffer.from(JSON.stringify(payloadObject), "utf8").toString(
+    "base64url"
+  );
+  return `${payload}.${signStatePayload(payload)}`;
+}
+
+function verifySignedPayload<T extends object>(
+  rawValue: string | null
+): T | null {
+  if (!rawValue) return null;
+  const [payload, signature] = rawValue.split(".");
+  if (!payload || !signature) return null;
+
+  const expected = signStatePayload(payload);
+  const expectedBuffer = Buffer.from(expected);
+  const actualBuffer = Buffer.from(signature);
+  if (
+    expectedBuffer.length !== actualBuffer.length ||
+    !timingSafeEqual(expectedBuffer, actualBuffer)
+  ) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as T;
+  } catch {
+    return null;
+  }
+}
+
+function serializeAuth0OAuthState(state: Auth0OAuthState): string {
+  return serializeSignedPayload(state);
+}
+
+function verifyAuth0OAuthState(
+  rawState: string | null
+): Auth0OAuthState | null {
+  const parsed = verifySignedPayload<Partial<Auth0OAuthState>>(rawState);
+  if (!parsed) return null;
+  if (typeof parsed.exp !== "number" || parsed.exp < Date.now()) return null;
+  if (typeof parsed.nonce !== "string" || parsed.nonce.length === 0) {
+    return null;
+  }
+  return {
+    exp: parsed.exp,
+    nonce: parsed.nonce,
+    returnTo: sanitizeReturnTo(parsed.returnTo),
+  };
+}
+
+function createAuth0CodeVerifier(): string {
+  return randomBytes(32).toString("base64url");
+}
+
+function createAuth0CodeChallenge(verifier: string): string {
+  return createHash("sha256").update(verifier).digest("base64url");
+}
+
+function createAuth0PkceCookieValue(input: {
+  nonce: string;
+  verifier: string;
+}): string {
+  return serializeSignedPayload({
+    exp: Date.now() + 10 * 60 * 1000,
+    nonce: input.nonce,
+    verifier: input.verifier,
+  } satisfies Auth0PkceCookie);
+}
+
+function verifyAuth0PkceCookie(
+  rawCookie: string | null,
+  expectedNonce: string
+): string | null {
+  const parsed = verifySignedPayload<Partial<Auth0PkceCookie>>(rawCookie);
+  if (!parsed) return null;
+  if (typeof parsed.exp !== "number" || parsed.exp < Date.now()) return null;
+  if (parsed.nonce !== expectedNonce) return null;
+  if (typeof parsed.verifier !== "string" || parsed.verifier.length === 0) {
+    return null;
+  }
+  return parsed.verifier;
+}
+
+function buildAuth0PkceCookie(
+  cookieValue: string,
+  secure: boolean,
+  domain?: string
+): string {
+  const flags = [
+    `${AUTH0_PKCE_COOKIE_NAME}=${cookieValue}`,
+    "Path=/api/auth/auth0/callback",
+    "HttpOnly",
+    "SameSite=Lax",
+    "Max-Age=600",
+  ];
+  if (secure) flags.push("Secure");
+  if (domain) flags.push(`Domain=${domain}`);
+  return flags.join("; ");
+}
+
+function buildAuth0PkceLogoutCookie(secure: boolean, domain?: string): string {
+  const flags = [
+    `${AUTH0_PKCE_COOKIE_NAME}=`,
+    "Path=/api/auth/auth0/callback",
+    "HttpOnly",
+    "SameSite=Lax",
+    "Max-Age=0",
+  ];
+  if (secure) flags.push("Secure");
+  if (domain) flags.push(`Domain=${domain}`);
+  return flags.join("; ");
 }
 
 function withDefaultRedirectUri(
@@ -503,6 +717,224 @@ async function completeGoogleOAuthCallback(params: {
   }
 }
 
+async function resolveAuth0OAuthSettings(): Promise<
+  | { success: true; settings: Auth0OAuthSettings }
+  | { success: false; status: number; error: string }
+> {
+  const settings = readGlobalAuth0OAuthSettings();
+  if (!settings.enabled) {
+    return {
+      success: false,
+      status: 400,
+      error:
+        "Auth0 is not configured yet. Connect the Netlify Auth0 extension or set AUTH0_DOMAIN and AUTH0_CLIENT_ID.",
+    };
+  }
+
+  return { success: true, settings };
+}
+
+async function buildAuth0OAuthStart(
+  returnTo: string | undefined,
+  secure: boolean,
+  cookieDomain?: string
+): Promise<
+  | {
+      success: true;
+      authorizationUrl: string;
+      callbackUrl: string;
+      message: string;
+      pkceCookie: string;
+    }
+  | { success: false; status: number; error: string }
+> {
+  const resolved = await resolveAuth0OAuthSettings();
+  if (!resolved.success) return resolved;
+
+  const auth0 = resolved.settings;
+  const stateObject = createAuth0OAuthState(returnTo);
+  const state = serializeAuth0OAuthState(stateObject);
+  const codeVerifier = createAuth0CodeVerifier();
+  const authorizationUrl = new URL("authorize", auth0.issuer);
+  authorizationUrl.searchParams.set("client_id", auth0.clientId);
+  authorizationUrl.searchParams.set("redirect_uri", auth0.redirectUri);
+  authorizationUrl.searchParams.set("response_type", "code");
+  authorizationUrl.searchParams.set("scope", auth0.scopes);
+  authorizationUrl.searchParams.set("state", state);
+  authorizationUrl.searchParams.set("code_challenge_method", "S256");
+  authorizationUrl.searchParams.set(
+    "code_challenge",
+    createAuth0CodeChallenge(codeVerifier)
+  );
+  if (auth0.audience) {
+    authorizationUrl.searchParams.set("audience", auth0.audience);
+  }
+
+  const pkceCookie = buildAuth0PkceCookie(
+    createAuth0PkceCookieValue({
+      nonce: stateObject.nonce,
+      verifier: codeVerifier,
+    }),
+    secure,
+    cookieDomain
+  );
+
+  return {
+    success: true,
+    authorizationUrl: authorizationUrl.toString(),
+    callbackUrl: auth0.redirectUri,
+    message: "Redirecting to Auth0 for sign-in.",
+    pkceCookie,
+  };
+}
+
+async function exchangeAuth0Code(
+  auth0: Auth0OAuthSettings,
+  code: string,
+  codeVerifier: string
+): Promise<{ accessToken: string }> {
+  const body = new URLSearchParams({
+    grant_type: "authorization_code",
+    client_id: auth0.clientId,
+    code,
+    redirect_uri: auth0.redirectUri,
+    code_verifier: codeVerifier,
+  });
+  if (auth0.clientSecret) {
+    body.set("client_secret", auth0.clientSecret);
+  }
+
+  const response = await fetch(new URL("oauth/token", auth0.issuer), {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  const data = (await response.json().catch(() => ({}))) as {
+    access_token?: string;
+    error?: string;
+    error_description?: string;
+  };
+
+  if (!response.ok || !data.access_token) {
+    throw new Error(
+      data.error_description || data.error || "Auth0 token exchange failed"
+    );
+  }
+
+  return { accessToken: data.access_token };
+}
+
+async function fetchAuth0UserInfo(
+  auth0: Auth0OAuthSettings,
+  accessToken: string
+): Promise<Auth0UserInfo> {
+  const response = await fetch(new URL("userinfo", auth0.issuer), {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const data = (await response
+    .json()
+    .catch(() => ({}))) as Partial<Auth0UserInfo>;
+
+  if (!response.ok || !data.sub || !data.email) {
+    throw new Error("Auth0 userinfo request failed");
+  }
+
+  return {
+    sub: data.sub,
+    email: data.email,
+    email_verified: data.email_verified,
+    name: data.name,
+    nickname: data.nickname,
+  };
+}
+
+async function completeAuth0OAuthCallback(params: {
+  code: string | null;
+  state: string | null;
+  pkceCookie: string | null;
+  providerError?: string | null;
+  clientIp: string;
+  userAgent?: string;
+}): Promise<{
+  redirectTo: string;
+  sessionToken?: string;
+  refreshToken?: string;
+}> {
+  const verifiedState = verifyAuth0OAuthState(params.state);
+  const returnTo = verifiedState?.returnTo ?? "/dashboard";
+
+  if (params.providerError) {
+    return { redirectTo: buildLoginRedirect("auth0_oauth_denied", returnTo) };
+  }
+  if (!params.code || !verifiedState) {
+    return { redirectTo: buildLoginRedirect("auth0_oauth_invalid", returnTo) };
+  }
+
+  const codeVerifier = verifyAuth0PkceCookie(
+    params.pkceCookie,
+    verifiedState.nonce
+  );
+  if (!codeVerifier) {
+    return { redirectTo: buildLoginRedirect("auth0_oauth_invalid", returnTo) };
+  }
+
+  const resolved = await resolveAuth0OAuthSettings();
+  if (!resolved.success) {
+    return { redirectTo: buildLoginRedirect("auth0_oauth_config", returnTo) };
+  }
+
+  try {
+    const { accessToken } = await exchangeAuth0Code(
+      resolved.settings,
+      params.code,
+      codeVerifier
+    );
+    const profile = await fetchAuth0UserInfo(resolved.settings, accessToken);
+    const emailVerified =
+      profile.email_verified === true || profile.email_verified === "true";
+    const result = await signInWithAuth0Profile(
+      {
+        sub: profile.sub,
+        email: profile.email,
+        emailVerified,
+        name: profile.name ?? profile.nickname,
+      },
+      { ipAddress: params.clientIp, userAgent: params.userAgent }
+    );
+
+    if (!result.success) {
+      return {
+        redirectTo: buildLoginRedirect(
+          emailVerified ? "auth0_oauth_failed" : "auth0_oauth_unverified",
+          returnTo
+        ),
+      };
+    }
+
+    await authRateLimiter.reset(params.clientIp);
+    void import("./../auditLogger").then(({ logAudit }) =>
+      logAudit({
+        action: "auth.login",
+        resource: "user",
+        resourceId: result.user?.openId ?? "",
+        severity: "low",
+        metadata: { method: "auth0", issuer: resolved.settings.issuer },
+        ip: params.clientIp,
+        userAgent: params.userAgent,
+      }).catch(() => {})
+    );
+
+    return {
+      redirectTo: returnTo,
+      sessionToken: result.sessionToken,
+      refreshToken: result.refreshToken,
+    };
+  } catch (err) {
+    console.error("[Auth0 OAuth] callback failed:", err);
+    return { redirectTo: buildLoginRedirect("auth0_oauth_failed", returnTo) };
+  }
+}
+
 export async function registerCustomAuthFetchRoutes(
   req: Request
 ): Promise<Response | null> {
@@ -533,6 +965,41 @@ export async function registerCustomAuthFetchRoutes(
   };
 
   try {
+    if (path === "/api/auth/auth0/callback" && method === "GET") {
+      const callback = await completeAuth0OAuthCallback({
+        code: url.searchParams.get("code"),
+        state: url.searchParams.get("state"),
+        pkceCookie: readCookieValue(
+          req.headers.get("cookie"),
+          AUTH0_PKCE_COOKIE_NAME
+        ),
+        providerError: url.searchParams.get("error"),
+        clientIp,
+        userAgent: req.headers.get("user-agent") ?? undefined,
+      });
+      const response = new Response(null, {
+        status: 302,
+        headers: { Location: callback.redirectTo },
+      });
+      response.headers.append(
+        "Set-Cookie",
+        buildAuth0PkceLogoutCookie(isSecure, cookieDomain)
+      );
+      if (callback.sessionToken) {
+        response.headers.append(
+          "Set-Cookie",
+          buildSessionCookie(callback.sessionToken, isSecure, cookieDomain)
+        );
+      }
+      if (callback.refreshToken) {
+        response.headers.append(
+          "Set-Cookie",
+          buildRefreshCookie(callback.refreshToken, isSecure, cookieDomain)
+        );
+      }
+      return response;
+    }
+
     if (path === "/api/auth/google/callback" && method === "GET") {
       const callback = await completeGoogleOAuthCallback({
         code: url.searchParams.get("code"),
@@ -601,6 +1068,52 @@ export async function registerCustomAuthFetchRoutes(
         status: 200,
         headers: corsHeaders,
       });
+    }
+
+    if (path === "/api/auth/auth0/start") {
+      const rateCheck = await authRateLimiter.check(clientIp);
+      if (!rateCheck.allowed) {
+        return Response.json(
+          {
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          },
+          {
+            status: 429,
+            headers: {
+              ...corsHeaders,
+              "Retry-After": String(Math.ceil(rateCheck.retryAfterMs / 1000)),
+            },
+          }
+        );
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const { returnTo } = body as { returnTo?: string };
+      const result = await buildAuth0OAuthStart(
+        returnTo,
+        isSecure,
+        cookieDomain
+      );
+
+      if (!result.success) {
+        return Response.json(
+          { success: false, error: result.error },
+          { status: result.status, headers: corsHeaders }
+        );
+      }
+
+      const response = Response.json(
+        {
+          success: true,
+          authorizationUrl: result.authorizationUrl,
+          callbackUrl: result.callbackUrl,
+          message: result.message,
+        },
+        { status: 200, headers: corsHeaders }
+      );
+      response.headers.append("Set-Cookie", result.pkceCookie);
+      return response;
     }
 
     // ── Sign Up ────────────────────────────────────────────────────────────
@@ -1308,6 +1821,61 @@ function isExpressRequestSecure(req: ExpressRequest): boolean {
 
 export function registerCustomAuthExpressRoutes(app: Express) {
   app.get(
+    "/api/auth/auth0/callback",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const clientIp = getExpressClientIp(req);
+      const isSecureExpress = isExpressRequestSecure(req);
+      const cookieDomainExpress = ENV.cookieDomain || undefined;
+      try {
+        const callback = await completeAuth0OAuthCallback({
+          code: typeof req.query.code === "string" ? req.query.code : null,
+          state: typeof req.query.state === "string" ? req.query.state : null,
+          pkceCookie: readCookieValue(
+            req.headers.cookie,
+            AUTH0_PKCE_COOKIE_NAME
+          ),
+          providerError:
+            typeof req.query.error === "string" ? req.query.error : null,
+          clientIp,
+          userAgent: req.headers["user-agent"] ?? undefined,
+        });
+        res.append(
+          "Set-Cookie",
+          buildAuth0PkceLogoutCookie(isSecureExpress, cookieDomainExpress)
+        );
+        if (callback.sessionToken) {
+          res.append(
+            "Set-Cookie",
+            buildSessionCookie(
+              callback.sessionToken,
+              isSecureExpress,
+              cookieDomainExpress
+            )
+          );
+        }
+        if (callback.refreshToken) {
+          res.append(
+            "Set-Cookie",
+            buildRefreshCookie(
+              callback.refreshToken,
+              isSecureExpress,
+              cookieDomainExpress
+            )
+          );
+        }
+        res.redirect(302, callback.redirectTo);
+      } catch (err) {
+        console.error("[customAuthRoutes] Auth0 callback error:", err);
+        res.append(
+          "Set-Cookie",
+          buildAuth0PkceLogoutCookie(isSecureExpress, cookieDomainExpress)
+        );
+        res.redirect(302, "/login?error=auth0_oauth_failed");
+      }
+    }
+  );
+
+  app.get(
     "/api/auth/google/callback",
     async (req: ExpressRequest, res: ExpressResponse) => {
       const clientIp = getExpressClientIp(req);
@@ -1346,6 +1914,56 @@ export function registerCustomAuthExpressRoutes(app: Express) {
       } catch (err) {
         console.error("[customAuthRoutes] Google callback error:", err);
         res.redirect(302, "/login?error=google_oauth_failed");
+      }
+    }
+  );
+
+  app.post(
+    "/api/auth/auth0/start",
+    async (req: ExpressRequest, res: ExpressResponse) => {
+      const clientIp = getExpressClientIp(req);
+      try {
+        const rateCheck = await authRateLimiter.check(clientIp);
+        if (!rateCheck.allowed) {
+          res
+            .status(429)
+            .setHeader(
+              "Retry-After",
+              String(Math.ceil(rateCheck.retryAfterMs / 1000))
+            )
+            .json({
+              success: false,
+              error: "Too many attempts. Please try again later.",
+            });
+          return;
+        }
+
+        const { returnTo } = (req.body ?? {}) as { returnTo?: string };
+        const isSecureExpress = isExpressRequestSecure(req);
+        const cookieDomainExpress = ENV.cookieDomain || undefined;
+        const result = await buildAuth0OAuthStart(
+          returnTo,
+          isSecureExpress,
+          cookieDomainExpress
+        );
+        if (!result.success) {
+          res
+            .status(result.status)
+            .json({ success: false, error: result.error });
+          return;
+        }
+        res.append("Set-Cookie", result.pkceCookie);
+        res.json({
+          success: true,
+          authorizationUrl: result.authorizationUrl,
+          callbackUrl: result.callbackUrl,
+          message: result.message,
+        });
+      } catch (err) {
+        console.error("[customAuthRoutes] Error:", err);
+        res
+          .status(500)
+          .json({ success: false, error: "Internal server error" });
       }
     }
   );

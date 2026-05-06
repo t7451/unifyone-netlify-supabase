@@ -82,8 +82,16 @@ function validateEnv() {
     if (!process.env.SUPABASE_URL) recommended.push("SUPABASE_URL");
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY)
       recommended.push("SUPABASE_SERVICE_ROLE_KEY");
-    const oauthVars = ["GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET"];
-    recommended.push(...oauthVars.filter(v => !process.env[v]));
+    if (!process.env.GOOGLE_OAUTH_CLIENT_ID)
+      recommended.push("GOOGLE_OAUTH_CLIENT_ID");
+    if (!process.env.GOOGLE_OAUTH_CLIENT_SECRET)
+      recommended.push("GOOGLE_OAUTH_CLIENT_SECRET");
+    if (!process.env.AUTH0_DOMAIN && !process.env.VITE_AUTH0_DOMAIN) {
+      recommended.push("AUTH0_DOMAIN or VITE_AUTH0_DOMAIN");
+    }
+    if (!process.env.AUTH0_CLIENT_ID && !process.env.VITE_AUTH0_CLIENT_ID) {
+      recommended.push("AUTH0_CLIENT_ID or VITE_AUTH0_CLIENT_ID");
+    }
 
     if (recommended.length > 0) {
       logger.warn(

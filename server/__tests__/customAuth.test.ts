@@ -72,6 +72,7 @@ import {
   signUp,
   signIn,
   signInWithGoogleProfile,
+  signInWithAuth0Profile,
   buildSessionCookie,
   buildLogoutCookie,
 } from "../_core/customAuth";
@@ -514,6 +515,102 @@ describe("signInWithGoogleProfile", () => {
       email: "existing@example.com",
       emailVerified: true,
       name: "Google Name",
+      tenantId: 42,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/different workspace/i);
+  });
+});
+
+describe("signInWithAuth0Profile", () => {
+  it("rejects Auth0 profiles with unverified email addresses", async () => {
+    const result = await signInWithAuth0Profile({
+      sub: "auth0|user-1",
+      email: "user@example.com",
+      emailVerified: false,
+      name: "Auth0 User",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/verified/i);
+  });
+
+  it("creates a passwordless local user for a new verified Auth0 account", async () => {
+    _dbState.selectResult = [];
+
+    const result = await signInWithAuth0Profile({
+      sub: "auth0|user-2",
+      email: "new-auth0@example.com",
+      emailVerified: true,
+      name: "New Auth0",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.sessionToken).toBe("mock-session-token");
+    expect(result.user).toMatchObject({
+      email: "new-auth0@example.com",
+      name: "New Auth0",
+      emailVerified: true,
+    });
+    expect(mockInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "new-auth0@example.com",
+        passwordHash: null,
+        loginMethod: "auth0",
+        emailVerified: true,
+      })
+    );
+  });
+
+  it("links a verified Auth0 login to an existing user by email", async () => {
+    _dbState.selectResult = [
+      {
+        id: 7,
+        openId: "existing-open-id",
+        email: "existing@example.com",
+        username: "existing",
+        name: "Existing User",
+        tenantId: null,
+      },
+    ];
+
+    const result = await signInWithAuth0Profile({
+      sub: "auth0|user-3",
+      email: "existing@example.com",
+      emailVerified: true,
+      name: "Auth0 Name",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.user).toMatchObject({
+      openId: "existing-open-id",
+      email: "existing@example.com",
+      name: "Existing User",
+      username: "existing",
+    });
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ loginMethod: "auth0", emailVerified: true })
+    );
+  });
+
+  it("rejects tenant-scoped Auth0 login for a user attached to another tenant", async () => {
+    _dbState.selectResult = [
+      {
+        id: 7,
+        openId: "existing-open-id",
+        email: "existing@example.com",
+        username: "existing",
+        name: "Existing User",
+        tenantId: 41,
+      },
+    ];
+
+    const result = await signInWithAuth0Profile({
+      sub: "auth0|user-4",
+      email: "existing@example.com",
+      emailVerified: true,
+      name: "Auth0 Name",
       tenantId: 42,
     });
 
