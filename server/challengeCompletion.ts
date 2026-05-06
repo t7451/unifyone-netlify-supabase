@@ -1,37 +1,102 @@
-/**
- * Challenge Completion Engine
- *
- * Detects when a friend challenge is resolved (one or both participants
- * complete the underlying challenge goal), determines the winner using
- * first-to-complete tie-breaking, awards bonus points, and fires in-app
- * notifications to both participants.
- *
- * Call `checkAndResolveFriendChallenge(db, challengeId, userId)` after any
- * action that could advance a user's challenge progress (shift end, mileage
- * log, rule create, etc.).
- */
-
-import { eq, and, inArray } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
 import { getDb } from "./db";
 import {
-  friendChallenges,
   challengeProgress,
   challenges,
-  userPoints,
-  pointsTransactions,
+  financialRules,
+  friendChallenges,
+  gigShifts,
+  mileageLogs,
   notifications,
+  pointsTransactions,
+  userPoints,
   users,
 } from "../drizzle/schema";
 
-// Bonus points awarded to the winner of a friend challenge
 const WINNER_BONUS_POINTS = 50;
 
-// ── Internal helpers ──────────────────────────────────────────────────────────
+type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
+type ChallengeDefinition = typeof challenges.$inferSelect;
+type FriendChallengeRecord = typeof friendChallenges.$inferSelect;
+type ChallengeMetric = "earnings" | "miles" | "rules" | "shifts" | "progress";
 
-type Db = Awaited<ReturnType<typeof getDb>>;
+type ProgressEvent = {
+  occurredAt: Date;
+  value: number;
+};
+
+export type ChallengeProgressSnapshot = {
+  userId: number;
+  progress: number;
+  goalReachedAt: Date | null;
+  updatedAt: Date | null;
+};
+
+export type ChallengeResolutionOutcome = {
+  winnerUserId: number | null;
+  winnerUserIds: number[];
+  loserUserIds: number[];
+  isTie: boolean;
+  resolvedAt: Date;
+};
+
+function normalizeProgress(value: number, metric: ChallengeMetric): number {
+  if (metric === "earnings" || metric === "miles") {
+    return Math.round(value * 100) / 100;
+  }
+
+  return Math.round(value);
+}
+
+function inferChallengeMetric(challenge: ChallengeDefinition): ChallengeMetric {
+  const haystack = [challenge.unit, challenge.name, challenge.description ?? ""]
+    .join(" ")
+    .toLowerCase();
+
+  if (haystack.includes("mile")) return "miles";
+  if (
+    haystack.includes("earn") ||
+    haystack.includes("dollar") ||
+    haystack.includes("revenue") ||
+    haystack.includes("$")
+  ) {
+    return "earnings";
+  }
+  if (haystack.includes("rule")) return "rules";
+  if (haystack.includes("shift") || haystack.includes("trip")) return "shifts";
+  return "progress";
+}
+
+function buildSnapshotFromEvents(
+  userId: number,
+  goal: number,
+  metric: ChallengeMetric,
+  events: ProgressEvent[]
+): ChallengeProgressSnapshot {
+  const sortedEvents = [...events].sort(
+    (left, right) => left.occurredAt.getTime() - right.occurredAt.getTime()
+  );
+
+  let runningTotal = 0;
+  let goalReachedAt: Date | null = null;
+
+  for (const event of sortedEvents) {
+    runningTotal += event.value;
+    if (goalReachedAt === null && runningTotal >= goal) {
+      goalReachedAt = event.occurredAt;
+    }
+  }
+
+  return {
+    userId,
+    progress: normalizeProgress(runningTotal, metric),
+    goalReachedAt,
+    updatedAt: sortedEvents.at(-1)?.occurredAt ?? null,
+  };
+}
 
 async function createNotification(
-  db: NonNullable<Db>,
+  db: Db,
   opts: {
     userId: number;
     type: string;
@@ -50,308 +115,589 @@ async function createNotification(
   });
 }
 
-async function awardBonusPoints(
-  db: NonNullable<Db>,
+async function awardWinnerBonus(
+  db: Db,
   userId: number,
-  points: number,
-  description: string,
-  referenceId: string
+  friendChallengeId: number,
+  challengeName: string
 ) {
-  const [existing] = await db
+  const referenceId = `friend-challenge:${friendChallengeId}:winner:${userId}`;
+  const [existingAward] = await db
+    .select({ id: pointsTransactions.id })
+    .from(pointsTransactions)
+    .where(
+      and(
+        eq(pointsTransactions.userId, userId),
+        eq(pointsTransactions.action, "friend_challenge_win"),
+        eq(pointsTransactions.referenceId, referenceId)
+      )
+    )
+    .limit(1);
+
+  if (existingAward) {
+    return;
+  }
+
+  const [currentPoints] = await db
     .select()
     .from(userPoints)
     .where(eq(userPoints.userId, userId))
     .limit(1);
 
-  const currentBalance = existing?.totalPoints ?? 0;
-  const newBalance = currentBalance + points;
-  const newLifetime = (existing?.lifetimePoints ?? 0) + points;
-  const newLevel = Math.floor(1 + Math.sqrt(newLifetime / 50));
+  const totalPoints = (currentPoints?.totalPoints ?? 0) + WINNER_BONUS_POINTS;
+  const lifetimePoints =
+    (currentPoints?.lifetimePoints ?? 0) + WINNER_BONUS_POINTS;
+  const level = Math.max(1, Math.floor(1 + Math.sqrt(lifetimePoints / 50)));
+  const now = new Date();
 
-  if (existing) {
+  if (currentPoints) {
     await db
       .update(userPoints)
       .set({
-        totalPoints: newBalance,
-        lifetimePoints: newLifetime,
-        level: newLevel,
-        lastActivityAt: new Date(),
+        totalPoints,
+        lifetimePoints,
+        level,
+        lastActivityAt: now,
+        updatedAt: now,
       })
       .where(eq(userPoints.userId, userId));
   } else {
     await db.insert(userPoints).values({
       userId,
-      totalPoints: newBalance,
-      lifetimePoints: newLifetime,
-      level: newLevel,
-      lastActivityAt: new Date(),
+      totalPoints,
+      lifetimePoints,
+      level,
+      lastActivityAt: now,
+      updatedAt: now,
     });
   }
 
   await db.insert(pointsTransactions).values({
     userId,
-    points,
-    action: "challenge_winner_bonus",
-    description,
+    points: WINNER_BONUS_POINTS,
+    action: "friend_challenge_win",
+    description: `Won friend challenge: ${challengeName}`,
     referenceId,
-    balanceAfter: newBalance,
+    balanceAfter: totalPoints,
   });
 }
 
-// ── Core resolution logic ─────────────────────────────────────────────────────
+async function loadProgressEvents(
+  db: Db,
+  challenge: ChallengeDefinition,
+  userId: number,
+  metric: ChallengeMetric
+): Promise<ProgressEvent[]> {
+  const startsAt = challenge.startsAt;
+  const endsAt = challenge.endsAt;
 
-export interface ResolutionResult {
-  resolved: boolean;
-  winnerId: number | null;
-  isTie: boolean;
-  friendChallengeId: number;
-}
+  if (metric === "earnings") {
+    const shifts = await db
+      .select({
+        grossEarnings: gigShifts.grossEarnings,
+        tips: gigShifts.tips,
+        bonuses: gigShifts.bonuses,
+        endTime: gigShifts.endTime,
+      })
+      .from(gigShifts)
+      .where(
+        and(
+          eq(gigShifts.userId, userId),
+          eq(gigShifts.status, "completed"),
+          gte(gigShifts.endTime, startsAt),
+          lte(gigShifts.endTime, endsAt)
+        )
+      );
 
-/**
- * Check if a specific friend challenge can be resolved after a participant
- * has made progress. This is the primary entry point called from mutations.
- *
- * @param challengeId  - The gamification challenge ID (from challenges table)
- * @param actingUserId - The user who just completed an action
- */
-export async function checkAndResolveFriendChallenge(
-  challengeId: number,
-  actingUserId: number
-): Promise<ResolutionResult[]> {
-  const db = await getDb();
-  if (!db) return [];
+    return shifts
+      .filter(shift => shift.endTime !== null)
+      .map(shift => ({
+        occurredAt: shift.endTime as Date,
+        value:
+          Number(shift.grossEarnings) +
+          Number(shift.tips) +
+          Number(shift.bonuses),
+      }));
+  }
 
-  // Find all active (accepted) friend challenges for this challenge that
-  // involve the acting user and haven't been resolved yet
-  const activeFriendChallenges = await db
-    .select()
-    .from(friendChallenges)
+  if (metric === "miles") {
+    const logs = await db
+      .select({ date: mileageLogs.date, miles: mileageLogs.miles })
+      .from(mileageLogs)
+      .where(
+        and(
+          eq(mileageLogs.userId, userId),
+          gte(mileageLogs.date, startsAt),
+          lte(mileageLogs.date, endsAt)
+        )
+      );
+
+    return logs.map(log => ({
+      occurredAt: log.date,
+      value: Number(log.miles),
+    }));
+  }
+
+  if (metric === "rules") {
+    const rules = await db
+      .select({ createdAt: financialRules.createdAt })
+      .from(financialRules)
+      .where(
+        and(
+          eq(financialRules.userId, userId),
+          gte(financialRules.createdAt, startsAt),
+          lte(financialRules.createdAt, endsAt)
+        )
+      );
+
+    return rules.map(rule => ({
+      occurredAt: rule.createdAt,
+      value: 1,
+    }));
+  }
+
+  if (metric === "shifts") {
+    const shifts = await db
+      .select({ endTime: gigShifts.endTime })
+      .from(gigShifts)
+      .where(
+        and(
+          eq(gigShifts.userId, userId),
+          eq(gigShifts.status, "completed"),
+          gte(gigShifts.endTime, startsAt),
+          lte(gigShifts.endTime, endsAt)
+        )
+      );
+
+    return shifts
+      .filter(shift => shift.endTime !== null)
+      .map(shift => ({
+        occurredAt: shift.endTime as Date,
+        value: 1,
+      }));
+  }
+
+  const [progressRecord] = await db
+    .select({
+      progress: challengeProgress.progress,
+      completed: challengeProgress.completed,
+      completedAt: challengeProgress.completedAt,
+      updatedAt: challengeProgress.updatedAt,
+      joinedAt: challengeProgress.joinedAt,
+    })
+    .from(challengeProgress)
     .where(
       and(
-        eq(friendChallenges.challengeId, challengeId),
-        eq(friendChallenges.status, "accepted")
+        eq(challengeProgress.userId, userId),
+        eq(challengeProgress.challengeId, challenge.id)
       )
-    );
+    )
+    .limit(1);
 
-  // Filter to only those involving the acting user
-  const relevantChallenges = activeFriendChallenges.filter(
-    (fc) => fc.challengerId === actingUserId || fc.challengeeId === actingUserId
+  if (!progressRecord) {
+    return [];
+  }
+
+  return [
+    {
+      occurredAt:
+        progressRecord.completedAt ??
+        progressRecord.updatedAt ??
+        progressRecord.joinedAt,
+      value: progressRecord.progress,
+    },
+  ];
+}
+
+async function loadProgressSnapshot(
+  db: Db,
+  challenge: ChallengeDefinition,
+  userId: number
+): Promise<ChallengeProgressSnapshot> {
+  const metric = inferChallengeMetric(challenge);
+  const events = await loadProgressEvents(db, challenge, userId, metric);
+
+  return buildSnapshotFromEvents(userId, challenge.goal, metric, events);
+}
+
+export function determineChallengeOutcome(
+  challenger: ChallengeProgressSnapshot,
+  challengee: ChallengeProgressSnapshot,
+  goal: number,
+  resolvedAt = new Date()
+): ChallengeResolutionOutcome | null {
+  const challengerReached = challenger.progress >= goal;
+  const challengeeReached = challengee.progress >= goal;
+
+  if (!challengerReached && !challengeeReached) {
+    return null;
+  }
+
+  if (challengerReached && challengeeReached) {
+    const challengerReachedAt =
+      challenger.goalReachedAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const challengeeReachedAt =
+      challengee.goalReachedAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
+
+    if (challengerReachedAt === challengeeReachedAt) {
+      return {
+        winnerUserId: null,
+        winnerUserIds: [challenger.userId, challengee.userId],
+        loserUserIds: [],
+        isTie: true,
+        resolvedAt,
+      };
+    }
+
+    const winnerUserId =
+      challengerReachedAt < challengeeReachedAt
+        ? challenger.userId
+        : challengee.userId;
+    const loserUserId =
+      winnerUserId === challenger.userId
+        ? challengee.userId
+        : challenger.userId;
+
+    return {
+      winnerUserId,
+      winnerUserIds: [winnerUserId],
+      loserUserIds: [loserUserId],
+      isTie: false,
+      resolvedAt,
+    };
+  }
+
+  const winnerUserId = challengerReached
+    ? challenger.userId
+    : challengee.userId;
+  const loserUserId =
+    winnerUserId === challenger.userId ? challengee.userId : challenger.userId;
+
+  return {
+    winnerUserId,
+    winnerUserIds: [winnerUserId],
+    loserUserIds: [loserUserId],
+    isTie: false,
+    resolvedAt,
+  };
+}
+
+export async function resolveFriendChallengeRecord(
+  db: Db,
+  friendChallenge: FriendChallengeRecord,
+  challenge: ChallengeDefinition
+): Promise<boolean> {
+  if (friendChallenge.resolvedAt) {
+    return false;
+  }
+
+  const [challengerProgress, challengeeProgress] = await Promise.all([
+    loadProgressSnapshot(db, challenge, friendChallenge.challengerId),
+    loadProgressSnapshot(db, challenge, friendChallenge.challengeeId),
+  ]);
+
+  const resolution = determineChallengeOutcome(
+    challengerProgress,
+    challengeeProgress,
+    challenge.goal
   );
 
-  if (relevantChallenges.length === 0) return [];
+  if (!resolution) {
+    return false;
+  }
 
-  // Fetch the challenge definition for the goal threshold
-  const [challengeDef] = await db
+  const participantIds = [
+    friendChallenge.challengerId,
+    friendChallenge.challengeeId,
+  ];
+  const participantUsers = await db
+    .select({ id: users.id, name: users.name })
+    .from(users)
+    .where(inArray(users.id, participantIds));
+
+  const participantNames = new Map<number, string>();
+  for (const participant of participantUsers) {
+    participantNames.set(participant.id, participant.name ?? "Your friend");
+  }
+
+  const now = resolution.resolvedAt;
+  const completedAt = resolution.isTie
+    ? (challengerProgress.goalReachedAt ??
+      challengeeProgress.goalReachedAt ??
+      now)
+    : resolution.winnerUserId === challengerProgress.userId
+      ? (challengerProgress.goalReachedAt ?? now)
+      : (challengeeProgress.goalReachedAt ?? now);
+
+  await db
+    .update(friendChallenges)
+    .set({
+      status: "completed",
+      winnerId: resolution.winnerUserId,
+      completedAt,
+      resolvedAt: now,
+      updatedAt: now,
+    })
+    .where(eq(friendChallenges.id, friendChallenge.id));
+
+  if (resolution.isTie) {
+    for (const participantId of resolution.winnerUserIds) {
+      const opponentId =
+        participantId === friendChallenge.challengerId
+          ? friendChallenge.challengeeId
+          : friendChallenge.challengerId;
+      await createNotification(db, {
+        userId: participantId,
+        type: "friend_challenge_tied",
+        title: "You won the challenge! 🏆",
+        body: `You and ${participantNames.get(opponentId) ?? "your friend"} finished ${challenge.name} at the same time. You both win!`,
+        link: "/friends?tab=challenges",
+      });
+      await awardWinnerBonus(
+        db,
+        participantId,
+        friendChallenge.id,
+        challenge.name
+      );
+    }
+
+    await db
+      .update(friendChallenges)
+      .set({ winnerNotified: true, loserNotified: true, updatedAt: new Date() })
+      .where(eq(friendChallenges.id, friendChallenge.id));
+
+    return true;
+  }
+
+  const winnerUserId = resolution.winnerUserId;
+  if (!winnerUserId) {
+    return true;
+  }
+
+  const loserUserId =
+    winnerUserId === friendChallenge.challengerId
+      ? friendChallenge.challengeeId
+      : friendChallenge.challengerId;
+
+  if (!friendChallenge.winnerNotified) {
+    await createNotification(db, {
+      userId: winnerUserId,
+      type: "friend_challenge_won",
+      title: "You won the challenge! 🏆",
+      body: `You beat ${participantNames.get(loserUserId) ?? "your friend"} in ${challenge.name}.`,
+      link: "/friends?tab=challenges",
+    });
+    await awardWinnerBonus(
+      db,
+      winnerUserId,
+      friendChallenge.id,
+      challenge.name
+    );
+    await db
+      .update(friendChallenges)
+      .set({ winnerNotified: true, updatedAt: new Date() })
+      .where(eq(friendChallenges.id, friendChallenge.id));
+  }
+
+  if (!friendChallenge.loserNotified) {
+    await createNotification(db, {
+      userId: loserUserId,
+      type: "friend_challenge_lost",
+      title: "Challenge complete — better luck next time",
+      body: `${participantNames.get(winnerUserId) ?? "Your friend"} reached the ${challenge.name} goal first.`,
+      link: "/friends?tab=challenges",
+    });
+    await db
+      .update(friendChallenges)
+      .set({ loserNotified: true, updatedAt: new Date() })
+      .where(eq(friendChallenges.id, friendChallenge.id));
+  }
+
+  return true;
+}
+
+async function getAcceptedFriendChallenges(
+  db: Db,
+  filters?: { challengeId?: number; userId?: number }
+): Promise<FriendChallengeRecord[]> {
+  const conditions = [
+    eq(friendChallenges.status, "accepted"),
+    isNull(friendChallenges.resolvedAt),
+  ];
+
+  if (typeof filters?.challengeId === "number") {
+    conditions.push(eq(friendChallenges.challengeId, filters.challengeId));
+  }
+
+  if (typeof filters?.userId === "number") {
+    const userCondition = or(
+      eq(friendChallenges.challengerId, filters.userId),
+      eq(friendChallenges.challengeeId, filters.userId)
+    );
+    if (userCondition) conditions.push(userCondition);
+  }
+
+  return db
+    .select()
+    .from(friendChallenges)
+    .where(and(...conditions));
+}
+
+async function resolveFriendChallenges(
+  db: Db,
+  activeChallenges: FriendChallengeRecord[]
+): Promise<void> {
+  for (const friendChallenge of activeChallenges) {
+    try {
+      const [challenge] = await db
+        .select()
+        .from(challenges)
+        .where(eq(challenges.id, friendChallenge.challengeId))
+        .limit(1);
+
+      if (!challenge) {
+        continue;
+      }
+
+      await resolveFriendChallengeRecord(db, friendChallenge, challenge);
+    } catch (error) {
+      console.error(
+        "[challengeCompletion] Failed to resolve friend challenge",
+        friendChallenge.id,
+        error
+      );
+    }
+  }
+}
+
+export async function checkAndResolveFriendChallenges(
+  challengeId: number,
+  userId: number
+): Promise<void> {
+  try {
+    const db = await getDb();
+    if (!db) return;
+
+    const activeChallenges = await getAcceptedFriendChallenges(db, {
+      challengeId,
+      userId,
+    });
+
+    if (activeChallenges.length === 0) {
+      return;
+    }
+
+    await resolveFriendChallenges(db, activeChallenges);
+  } catch (error) {
+    console.error(
+      "[challengeCompletion] checkAndResolveFriendChallenges failed",
+      { challengeId, userId },
+      error
+    );
+  }
+}
+
+export const checkAndResolveFriendChallenge = checkAndResolveFriendChallenges;
+
+export async function checkAndResolveFriendChallengesForUser(
+  userId: number
+): Promise<void> {
+  try {
+    const db = await getDb();
+    if (!db) return;
+
+    const activeChallenges = await getAcceptedFriendChallenges(db, { userId });
+    if (activeChallenges.length === 0) {
+      return;
+    }
+
+    await resolveFriendChallenges(db, activeChallenges);
+  } catch (error) {
+    console.error(
+      "[challengeCompletion] checkAndResolveFriendChallengesForUser failed",
+      { userId },
+      error
+    );
+  }
+}
+
+export async function resolveAllPendingFriendChallenges(): Promise<number> {
+  try {
+    const db = await getDb();
+    if (!db) return 0;
+
+    const activeChallenges = await getAcceptedFriendChallenges(db);
+    if (activeChallenges.length === 0) {
+      return 0;
+    }
+
+    let resolved = 0;
+    for (const friendChallenge of activeChallenges) {
+      try {
+        const [challenge] = await db
+          .select()
+          .from(challenges)
+          .where(eq(challenges.id, friendChallenge.challengeId))
+          .limit(1);
+
+        if (!challenge) {
+          continue;
+        }
+
+        if (
+          await resolveFriendChallengeRecord(db, friendChallenge, challenge)
+        ) {
+          resolved += 1;
+        }
+      } catch (error) {
+        console.error(
+          "[challengeCompletion] Failed to resolve pending challenge",
+          friendChallenge.id,
+          error
+        );
+      }
+    }
+
+    return resolved;
+  } catch (error) {
+    console.error(
+      "[challengeCompletion] resolveAllPendingFriendChallenges failed",
+      error
+    );
+    return 0;
+  }
+}
+
+export async function getChallengeScores(
+  challengeId: number,
+  userIds: number[]
+): Promise<Record<number, ChallengeProgressSnapshot>> {
+  const db = await getDb();
+  if (!db) {
+    return {};
+  }
+
+  const [challenge] = await db
     .select()
     .from(challenges)
     .where(eq(challenges.id, challengeId))
     .limit(1);
 
-  if (!challengeDef) return [];
-
-  const results: ResolutionResult[] = [];
-
-  for (const fc of relevantChallenges) {
-    const result = await resolveOneFriendChallenge(db, fc, challengeDef);
-    if (result) results.push(result);
+  if (!challenge) {
+    return {};
   }
 
-  return results;
+  const snapshots = await Promise.all(
+    userIds.map(userId => loadProgressSnapshot(db, challenge, userId))
+  );
+
+  return Object.fromEntries(
+    snapshots.map(snapshot => [snapshot.userId, snapshot])
+  );
 }
 
-/**
- * Resolve a single friend challenge record.
- * Returns null if the challenge cannot be resolved yet.
- */
-async function resolveOneFriendChallenge(
-  db: NonNullable<Db>,
-  fc: typeof friendChallenges.$inferSelect,
-  challengeDef: typeof challenges.$inferSelect
-): Promise<ResolutionResult | null> {
-  // Fetch progress for both participants
-  const [challengerProgress] = await db
-    .select()
-    .from(challengeProgress)
-    .where(
-      and(
-        eq(challengeProgress.userId, fc.challengerId),
-        eq(challengeProgress.challengeId, fc.challengeId)
-      )
-    )
-    .limit(1);
-
-  const [challengeeProgress] = await db
-    .select()
-    .from(challengeProgress)
-    .where(
-      and(
-        eq(challengeProgress.userId, fc.challengeeId),
-        eq(challengeProgress.challengeId, fc.challengeId)
-      )
-    )
-    .limit(1);
-
-  const challengerDone = challengerProgress?.completed === true;
-  const challengeeDone = challengeeProgress?.completed === true;
-
-  // Neither participant has finished — nothing to resolve yet
-  if (!challengerDone && !challengeeDone) return null;
-
-  const now = new Date();
-  let winnerId: number | null = null;
-  let isTie = false;
-
-  if (challengerDone && challengeeDone) {
-    // Both finished — compare completedAt timestamps for tie-break
-    const cTime = challengerProgress?.completedAt?.getTime() ?? 0;
-    const eTime = challengeeProgress?.completedAt?.getTime() ?? 0;
-    const TOLERANCE_MS = 60_000; // within 60 s counts as a tie
-
-    if (Math.abs(cTime - eTime) <= TOLERANCE_MS) {
-      isTie = true;
-      winnerId = null; // tie — both get winner treatment
-    } else {
-      winnerId = cTime < eTime ? fc.challengerId : fc.challengeeId;
-    }
-  } else {
-    // Only one has finished — they win
-    winnerId = challengerDone ? fc.challengerId : fc.challengeeId;
-  }
-
-  // Persist resolution
-  await db
-    .update(friendChallenges)
-    .set({
-      status: "completed",
-      winnerId: isTie ? null : winnerId,
-      completedAt: now,
-      resolvedAt: now,
-    })
-    .where(eq(friendChallenges.id, fc.id));
-
-  // Fetch user names for notification bodies
-  const participantIds = [fc.challengerId, fc.challengeeId];
-  const participantUsers = await db
-    .select({ id: users.id, name: users.name })
-    .from(users)
-    .where(inArray(users.id, participantIds))
-    .limit(2);
-
-  // Build a name lookup
-  const nameMap = new Map<number, string>();
-  for (const participantUser of participantUsers) {
-    nameMap.set(participantUser.id, participantUser.name ?? "Your opponent");
-  }
-
-  const challengerName = nameMap.get(fc.challengerId) ?? "Your opponent";
-  const challengeeName = nameMap.get(fc.challengeeId) ?? "Your opponent";
-  const challengeName = challengeDef.name;
-
-  if (isTie) {
-    // Notify both as co-winners
-    for (const participantId of [fc.challengerId, fc.challengeeId]) {
-      const opponentName = participantId === fc.challengerId ? challengeeName : challengerName;
-      await createNotification(db, {
-        userId: participantId,
-        type: "challenge_tie",
-        title: "It's a Tie! 🤝",
-        body: `You and ${opponentName} both completed "${challengeName}" at the same time. You both earn the full reward!`,
-        link: "/friends",
-      });
-      await awardBonusPoints(
-        db,
-        participantId,
-        WINNER_BONUS_POINTS,
-        `Tie in friend challenge: ${challengeName}`,
-        String(fc.id)
-      );
-    }
-
-    // Mark both as notified
-    await db
-      .update(friendChallenges)
-      .set({ winnerNotified: true, loserNotified: true })
-      .where(eq(friendChallenges.id, fc.id));
-  } else if (winnerId !== null) {
-    const loserId = winnerId === fc.challengerId ? fc.challengeeId : fc.challengerId;
-    const winnerName = nameMap.get(winnerId) ?? "You";
-    const loserOpponentName = nameMap.get(winnerId) ?? "Your opponent";
-
-    // Notify winner
-    if (!fc.winnerNotified) {
-      await createNotification(db, {
-        userId: winnerId,
-        type: "challenge_won",
-        title: "You Won! 🏆",
-        body: `You beat ${loserOpponentName} in the "${challengeName}" challenge! +${WINNER_BONUS_POINTS} bonus points awarded.`,
-        link: "/friends",
-      });
-      await awardBonusPoints(
-        db,
-        winnerId,
-        WINNER_BONUS_POINTS,
-        `Won friend challenge: ${challengeName}`,
-        String(fc.id)
-      );
-      await db
-        .update(friendChallenges)
-        .set({ winnerNotified: true })
-        .where(eq(friendChallenges.id, fc.id));
-    }
-
-    // Notify loser
-    if (!fc.loserNotified) {
-      await createNotification(db, {
-        userId: loserId,
-        type: "challenge_lost",
-        title: "Challenge Complete",
-        body: `${winnerName} completed "${challengeName}" before you. Keep going — you can challenge them again!`,
-        link: "/friends",
-      });
-      await db
-        .update(friendChallenges)
-        .set({ loserNotified: true })
-        .where(eq(friendChallenges.id, fc.id));
-    }
-  }
-
-  return {
-    resolved: true,
-    winnerId: isTie ? null : winnerId,
-    isTie,
-    friendChallengeId: fc.id,
-  };
-}
-
-/**
- * Admin/cron utility: scan ALL accepted friend challenges and resolve any
- * that have undetected completions. Safe to call repeatedly (idempotent).
- */
-export async function resolveAllPendingFriendChallenges(): Promise<number> {
-  const db = await getDb();
-  if (!db) return 0;
-
-  const accepted = await db
-    .select()
-    .from(friendChallenges)
-    .where(eq(friendChallenges.status, "accepted"));
-
-  if (accepted.length === 0) return 0;
-
-  let resolved = 0;
-
-  for (const fc of accepted) {
-    const [challengeDef] = await db
-      .select()
-      .from(challenges)
-      .where(eq(challenges.id, fc.challengeId))
-      .limit(1);
-
-    if (!challengeDef) continue;
-
-    const result = await resolveOneFriendChallenge(db, fc, challengeDef);
-    if (result?.resolved) resolved++;
-  }
-
-  return resolved;
-}
+export const challengeCompletionInternals = {
+  inferChallengeMetric,
+  buildSnapshotFromEvents,
+  determineChallengeOutcome,
+};

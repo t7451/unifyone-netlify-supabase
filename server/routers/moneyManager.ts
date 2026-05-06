@@ -11,7 +11,7 @@ import {
   pointsTransactions,
 } from "../../drizzle/schema";
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
-import { checkAndResolveFriendChallenge } from "../challengeCompletion";
+import { checkAndResolveFriendChallengesForUser } from "../challengeCompletion";
 import { getAppUrl } from "../_core/env";
 import { invokeLLM } from "../_core/llm";
 
@@ -197,21 +197,8 @@ export const moneyManagerRouter = router({
         String(input.shiftId)
       );
 
-      // Auto-detect friend challenge completion for any challenge the user has joined
-      try {
-        const { challengeProgress: cpTable } = await import(
-          "../../drizzle/schema"
-        );
-        const joined = await db
-          .select({ challengeId: cpTable.challengeId })
-          .from(cpTable)
-          .where(eq(cpTable.userId, ctx.user.id));
-        for (const { challengeId } of joined) {
-          await checkAndResolveFriendChallenge(challengeId, ctx.user.id);
-        }
-      } catch {
-        /* non-critical: don't fail shift end if completion check errors */
-      }
+      // Auto-detect friend challenge completion after shift progress updates.
+      await checkAndResolveFriendChallengesForUser(ctx.user.id);
 
       // Fire Meta CAPI GigShiftCompleted event (non-blocking)
       try {
@@ -406,21 +393,8 @@ export const moneyManagerRouter = router({
         `Logged ${input.miles} miles — $${(deductionCents / 100).toFixed(2)} deduction`
       );
 
-      // Auto-detect friend challenge completion for mileage-based challenges
-      try {
-        const { challengeProgress: cpTable } = await import(
-          "../../drizzle/schema"
-        );
-        const joined = await db
-          .select({ challengeId: cpTable.challengeId })
-          .from(cpTable)
-          .where(eq(cpTable.userId, ctx.user.id));
-        for (const { challengeId } of joined) {
-          await checkAndResolveFriendChallenge(challengeId, ctx.user.id);
-        }
-      } catch {
-        /* non-critical */
-      }
+      // Auto-detect friend challenge completion after mileage progress updates.
+      await checkAndResolveFriendChallengesForUser(ctx.user.id);
 
       // Fire Meta CAPI MileageLogged event (non-blocking)
       try {
@@ -544,21 +518,8 @@ export const moneyManagerRouter = router({
         `Created financial rule: ${input.name}`
       );
 
-      // Auto-detect friend challenge completion for rule-based challenges
-      try {
-        const { challengeProgress: cpTable } = await import(
-          "../../drizzle/schema"
-        );
-        const joined = await db
-          .select({ challengeId: cpTable.challengeId })
-          .from(cpTable)
-          .where(eq(cpTable.userId, ctx.user.id));
-        for (const { challengeId } of joined) {
-          await checkAndResolveFriendChallenge(challengeId, ctx.user.id);
-        }
-      } catch {
-        /* non-critical */
-      }
+      // Auto-detect friend challenge completion after rule progress updates.
+      await checkAndResolveFriendChallengesForUser(ctx.user.id);
 
       return { success: true };
     }),

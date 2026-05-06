@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { protectedProcedure, adminProcedure, router } from "../_core/trpc";
-import { resolveAllPendingFriendChallenges } from "../challengeCompletion";
+import {
+  checkAndResolveFriendChallenges,
+  getChallengeScores,
+  resolveAllPendingFriendChallenges,
+} from "../challengeCompletion";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import {
@@ -770,6 +774,8 @@ export const socialFriendsRouter = router({
         } catch {
           /* CAPI failure is non-critical */
         }
+
+        await checkAndResolveFriendChallenges(fc.challengeId, ctx.user.id);
       }
 
       return { success: true };
@@ -872,6 +878,10 @@ export const socialFriendsRouter = router({
           .from(challenges)
           .where(eq(challenges.id, fc.challengeId))
           .limit(1);
+        const scores = await getChallengeScores(fc.challengeId, [
+          ctx.user.id,
+          opponentId,
+        ]);
 
         const iWon = fc.winnerId === ctx.user.id;
         const isTie = fc.status === "completed" && fc.winnerId === null;
@@ -884,8 +894,13 @@ export const socialFriendsRouter = router({
           opponentName: u?.name ?? "Unknown",
           opponentId,
           winnerId: fc.winnerId,
+          winnerUserId: fc.winnerId,
           iWon,
           isTie,
+          goal: ch?.goal ?? 0,
+          unit: ch?.unit ?? "count",
+          myScore: scores[ctx.user.id]?.progress ?? 0,
+          opponentScore: scores[opponentId]?.progress ?? 0,
           resolvedAt: fc.resolvedAt,
           completedAt: fc.completedAt,
           myRole:

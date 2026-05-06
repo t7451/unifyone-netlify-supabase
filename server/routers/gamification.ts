@@ -13,7 +13,7 @@ import {
 } from "../../drizzle/schema";
 import { eq, desc, and, sql, lte, gte, inArray } from "drizzle-orm";
 import {
-  checkAndResolveFriendChallenge,
+  checkAndResolveFriendChallenges,
   resolveAllPendingFriendChallenges,
 } from "../challengeCompletion";
 
@@ -283,6 +283,8 @@ export const gamificationRouter = router({
         .set({ participantCount: sql`${challenges.participantCount} + 1` })
         .where(eq(challenges.id, input.challengeId));
 
+      await checkAndResolveFriendChallenges(input.challengeId, ctx.user.id);
+
       return { success: true };
     }),
 
@@ -425,10 +427,7 @@ export const gamificationRouter = router({
         })
         .where(eq(challengeProgress.id, existing.id));
 
-      // Auto-detect and resolve any friend challenges
-      if (nowCompleted) {
-        await checkAndResolveFriendChallenge(input.challengeId, ctx.user.id);
-      }
+      await checkAndResolveFriendChallenges(input.challengeId, ctx.user.id);
 
       return {
         progress: newProgress,
