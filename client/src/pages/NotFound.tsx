@@ -1,61 +1,77 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, Home } from "lucide-react";
-import { Link } from "wouter";
 import { Helmet } from "react-helmet-async";
+import { Link } from "wouter";
+import PublicLayout from "@/components/PublicLayout";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+    <PublicLayout>
       <Helmet>
+        <title>404 — Page Not Found | UnifyOne</title>
         <meta name="robots" content="noindex, follow" />
       </Helmet>
-      <Card className="w-full max-w-lg mx-4 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-        <CardContent className="pt-8 pb-8 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="relative">
-              <div className="absolute inset-0 bg-red-100 rounded-full animate-pulse" />
-              <AlertCircle className="relative h-16 w-16 text-red-500" />
-            </div>
-          </div>
 
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">404</h1>
-
-          <h2 className="text-xl font-semibold text-slate-700 mb-4">
-            Page Not Found
-          </h2>
-
-          <p className="text-slate-600 mb-8 leading-relaxed">
-            Sorry, the page you are looking for doesn't exist.
-            <br />
-            It may have been moved or deleted.
-          </p>
-
+      <section style={{ paddingTop: "8rem", paddingBottom: "6rem" }}>
+        <div className="max-w-4xl mx-auto px-6 sm:px-8">
           <div
-            id="not-found-button-group"
-            className="flex flex-col sm:flex-row gap-3 justify-center"
+            className="text-center px-6 py-12 sm:px-10 sm:py-16"
+            style={{
+              backgroundColor: "#020202",
+              border: "1px solid #242424",
+              boxShadow: "inset 0 1px 0 rgba(212,168,67,0.08)",
+            }}
           >
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+            <div
+              className="font-cinzel text-7xl sm:text-[8rem] font-black leading-none mb-6"
+              style={{ color: "#D4A843" }}
             >
-              <Home className="w-4 h-4 mr-2" />
-              Go Home
-            </Link>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center justify-center border border-slate-300 text-slate-700 hover:bg-slate-50 px-6 py-2.5 rounded-lg transition-colors"
+              404
+            </div>
+
+            <h1
+              className="font-cinzel text-3xl sm:text-5xl font-black mb-5"
+              style={{ color: "#F0E8D0" }}
             >
-              View Pricing
-            </Link>
-            <Link
-              href="/contact"
-              className="inline-flex items-center justify-center border border-slate-300 text-slate-700 hover:bg-slate-50 px-6 py-2.5 rounded-lg transition-colors"
+              Page Not Found
+            </h1>
+
+            <p
+              className="font-crimson text-lg sm:text-xl mb-10"
+              style={{ color: "#6A6A6A", fontStyle: "italic" }}
             >
-              Contact
-            </Link>
+              The page you&apos;re looking for doesn&apos;t exist or has been
+              moved.
+            </p>
+
+            <div
+              id="not-found-button-group"
+              className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4"
+            >
+              <Link href="/">
+                <span className="btn-illuminate inline-block cursor-pointer">
+                  Go Home
+                </span>
+              </Link>
+              <Link href="/pricing">
+                <span className="btn-ghost-gold inline-block cursor-pointer">
+                  View Pricing
+                </span>
+              </Link>
+              <Link href="/contact">
+                <span className="btn-ghost-gold inline-block cursor-pointer">
+                  Contact
+                </span>
+              </Link>
+            </div>
+
+            <p
+              className="font-crimson text-sm sm:text-base mt-8"
+              style={{ color: "#5A5A5A", fontStyle: "italic" }}
+            >
+              Use the navigation above to find your way back.
+            </p>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </section>
+    </PublicLayout>
   );
 }

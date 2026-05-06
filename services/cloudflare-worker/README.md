@@ -8,11 +8,11 @@ It exposes a small HTTP API backed by [Cloudflare Workers AI](https://developers
 
 ## Endpoints
 
-| Method | Path      | Description                                     |
-| ------ | --------- | ----------------------------------------------- |
-| GET    | `/`       | Service info                                    |
-| GET    | `/health` | Liveness probe (`{ ok: true }`)                 |
-| POST   | `/chat`   | AI chat. Streams SSE by default.                |
+| Method | Path      | Description                      |
+| ------ | --------- | -------------------------------- |
+| GET    | `/`       | Service info                     |
+| GET    | `/health` | Liveness probe (`{ ok: true }`)  |
+| POST   | `/chat`   | AI chat. Streams SSE by default. |
 
 ### `POST /chat` body
 

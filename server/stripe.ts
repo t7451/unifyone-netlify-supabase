@@ -28,6 +28,7 @@ import { ENV, getAppUrl } from "./_core/env";
 import { flushAllOverages, flushUserOverages } from "./creditMeter";
 import { errMsg } from "./_core/errors";
 import { getStripe } from "./_core/stripeClient";
+import { PLAN_CATALOG, PLAN_CATALOG_BY_SLUG } from "../shared/pricing";
 
 // Supabase admin client for subscription/credit sync (service role — no RLS)
 function getSupabaseAdmin() {
@@ -1913,11 +1914,8 @@ export async function registerStripeFetchRoutes(
   }
 
   // ── /api/stripe/admin/setup-products (admin-only, idempotent) ───────
-  // Creates "UnifyOne Pro" and "UnifyOne Scale" products with monthly +
-  // yearly recurring prices ($19/$190, $99/$990) if they don't already
-  // exist (matched by metadata.unifyone_plan_slug = pro|scale). Then
-  // upserts the corresponding rows into the `plans` table with the real
-  // Stripe price IDs. Safe to re-run.
+  // Creates canonical paid-plan Stripe products based on ../shared/pricing
+  // and upserts matching rows in the `plans` table. Safe to re-run.
   if (path === "/api/stripe/admin/setup-products" && method === "POST") {
     const adminKey = req.headers.get("x-admin-key") || "";
     if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
@@ -1927,53 +1925,9 @@ export async function registerStripeFetchRoutes(
       return Response.json({ error: "Stripe not configured" }, { status: 503 });
     }
     try {
-      const tiers: Array<{
-        slug: "pro" | "scale";
-        name: string;
-        description: string;
-        monthlyCents: number;
-        yearlyCents: number;
-        maxProducts: number;
-        maxOrders: number;
-        maxUsers: number;
-        features: string[];
-      }> = [
-        {
-          slug: "pro",
-          name: "UnifyOne Pro",
-          description:
-            "Unlimited platforms, 500 Kai credits/mo, quarterly estimates + 1099 prep, full MCP config dashboard.",
-          monthlyCents: 1900,
-          yearlyCents: 19000,
-          maxProducts: 1000,
-          maxOrders: 10000,
-          maxUsers: 5,
-          features: [
-            "Unlimited platforms",
-            "Quarterly estimates + 1099 prep",
-            "500 Kai credits/mo",
-            "1 storefront",
-            "API key mgmt",
-          ],
-        },
-        {
-          slug: "scale",
-          name: "UnifyOne Scale",
-          description:
-            "Multi-tenant, white-label, 10000 Kai credits/mo, custom MCP routing, Slack support 4hr SLA.",
-          monthlyCents: 9900,
-          yearlyCents: 99000,
-          maxProducts: 1000000,
-          maxOrders: 1000000,
-          maxUsers: 1000000,
-          features: [
-            "Unlimited tenants",
-            "White-label",
-            "10000 Kai credits/mo",
-            "Slack support 4hr SLA",
-          ],
-        },
-      ];
+      const tiers = PLAN_CATALOG.filter(
+        plan => plan.slug === "pro" || plan.slug === "scale"
+      );
 
       const results: Array<Record<string, unknown>> = [];
 
@@ -1986,16 +1940,16 @@ export async function registerStripeFetchRoutes(
         let product = search.data[0];
         if (!product) {
           product = await stripe!.products.create({
-            name: t.name,
-            description: t.description,
+            name: t.stripeProductName ?? t.name,
+            description: t.stripeProductDescription ?? t.description,
             metadata: { unifyone_plan_slug: t.slug },
             tax_code: "txcd_10000000", // SaaS / general business services
           });
         } else {
           // Keep name/desc in sync.
           await stripe!.products.update(product.id, {
-            name: t.name,
-            description: t.description,
+            name: t.stripeProductName ?? t.name,
+            description: t.stripeProductDescription ?? t.description,
             active: true,
           });
         }
@@ -2011,12 +1965,12 @@ export async function registerStripeFetchRoutes(
         for (const p of existingPrices.data) {
           if (
             p.recurring?.interval === "month" &&
-            p.unit_amount === t.monthlyCents
+            p.unit_amount === t.monthlyPriceCents
           ) {
             monthlyPrice = p;
           } else if (
             p.recurring?.interval === "year" &&
-            p.unit_amount === t.yearlyCents
+            p.unit_amount === t.yearlyPriceCents
           ) {
             yearlyPrice = p;
           }
@@ -2024,7 +1978,7 @@ export async function registerStripeFetchRoutes(
         if (!monthlyPrice) {
           monthlyPrice = await stripe!.prices.create({
             product: product.id,
-            unit_amount: t.monthlyCents,
+            unit_amount: t.monthlyPriceCents,
             currency: "usd",
             recurring: { interval: "month" },
             nickname: `${t.slug}_monthly`,
@@ -2035,7 +1989,7 @@ export async function registerStripeFetchRoutes(
         if (!yearlyPrice) {
           yearlyPrice = await stripe!.prices.create({
             product: product.id,
-            unit_amount: t.yearlyCents,
+            unit_amount: t.yearlyPriceCents,
             currency: "usd",
             recurring: { interval: "year" },
             nickname: `${t.slug}_yearly`,
@@ -2055,8 +2009,8 @@ export async function registerStripeFetchRoutes(
               .set({
                 name: t.name,
                 description: t.description,
-                priceMonthly: (t.monthlyCents / 100).toFixed(2),
-                priceYearly: (t.yearlyCents / 100).toFixed(2),
+                priceMonthly: (t.monthlyPriceCents / 100).toFixed(2),
+                priceYearly: (t.yearlyPriceCents / 100).toFixed(2),
                 stripePriceIdMonthly: monthlyPrice.id,
                 stripePriceIdYearly: yearlyPrice.id,
                 features: t.features,
@@ -2068,8 +2022,8 @@ export async function registerStripeFetchRoutes(
               slug: t.slug,
               name: t.name,
               description: t.description,
-              priceMonthly: (t.monthlyCents / 100).toFixed(2),
-              priceYearly: (t.yearlyCents / 100).toFixed(2),
+              priceMonthly: (t.monthlyPriceCents / 100).toFixed(2),
+              priceYearly: (t.yearlyPriceCents / 100).toFixed(2),
               stripePriceIdMonthly: monthlyPrice.id,
               stripePriceIdYearly: yearlyPrice.id,
               maxProducts: t.maxProducts,
@@ -2094,18 +2048,19 @@ export async function registerStripeFetchRoutes(
       if (db) {
         const allPlans = await db.select().from(plans);
         if (!allPlans.find(p => p.slug === "starter")) {
+          const starter = PLAN_CATALOG_BY_SLUG.starter;
           await db.insert(plans).values({
-            slug: "starter",
-            name: "Starter",
-            description: "Free forever. 50 Kai credits/mo, 2 platforms.",
-            priceMonthly: "0.00",
-            priceYearly: "0.00",
+            slug: starter.slug,
+            name: starter.name,
+            description: starter.description,
+            priceMonthly: (starter.monthlyPriceCents / 100).toFixed(2),
+            priceYearly: (starter.yearlyPriceCents / 100).toFixed(2),
             stripePriceIdMonthly: null,
             stripePriceIdYearly: null,
-            maxProducts: 100,
-            maxOrders: 1000,
-            maxUsers: 2,
-            features: ["50 Kai credits/mo", "2 platforms", "Money Manager"],
+            maxProducts: starter.maxProducts,
+            maxOrders: starter.maxOrders,
+            maxUsers: starter.maxUsers,
+            features: starter.features,
             isActive: true,
           });
         }

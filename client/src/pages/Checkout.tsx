@@ -8,6 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
+  PLAN_CATALOG_BY_SLUG,
+  formatUsdCents,
+  isPlanSlug,
+  type PlanSlug,
+} from "@shared/pricing";
+import {
   CreditCard,
   Loader2,
   CheckCircle,
@@ -18,39 +24,6 @@ import {
   Shield,
   AlertCircle,
 } from "lucide-react";
-
-const PLAN_FEATURES: Record<string, string[]> = {
-  starter: [
-    "1 tenant",
-    "Up to 100 products",
-    "500 orders/mo",
-    "2 team members",
-    "Core analytics",
-    "100 Kai unified API credits/month",
-  ],
-  pro: [
-    "5 tenants",
-    "Unlimited products",
-    "5,000 orders/mo",
-    "10 team members",
-    "Advanced analytics",
-    "2,000 Kai unified API credits/month",
-    "Unified model pricing ($0.04/credit overage)",
-    "Full automation layer",
-  ],
-  scale: [
-    "Unlimited tenants",
-    "Unlimited products",
-    "Unlimited orders",
-    "Unlimited team members",
-    "20,000 Kai unified API credits/month",
-    "Unified model pricing ($0.03/credit overage)",
-    "White-label support",
-    "Priority support",
-  ],
-};
-
-type PlanSlug = "starter" | "pro" | "scale";
 type PaymentRail = "stripe" | "paypal" | "shopify" | "square";
 
 export default function Checkout() {
@@ -61,7 +34,7 @@ export default function Checkout() {
   // Keep the destructure but rename to satisfy the no-unused-vars lint rule.
   const { user: _user } = useAuth();
   const [selectedRail, setSelectedRail] = useState<PaymentRail>("stripe");
-  const [amount, setAmount] = useState("29.00");
+  const [amount, setAmount] = useState("19.00");
   const [description, setDescription] = useState("UnifyOne Pro Subscription");
   const [linkedOrderId, setLinkedOrderId] = useState<number | null>(null);
   const [planSlug, setPlanSlug] = useState<PlanSlug | null>(null);
@@ -83,6 +56,8 @@ export default function Checkout() {
   const activePlan = planSlug
     ? ((plansQuery.data ?? []).find((p: any) => p.slug === planSlug) ?? null)
     : null;
+  const canonicalPlan = planSlug ? PLAN_CATALOG_BY_SLUG[planSlug] : null;
+  const checkoutFeatures = canonicalPlan?.features ?? [];
 
   const createSubscriptionCheckout =
     trpc.subscription.createCheckout.useMutation({
@@ -105,13 +80,11 @@ export default function Checkout() {
     if (params.get("orderId"))
       setLinkedOrderId(parseInt(params.get("orderId")!, 10));
     const planParam = params.get("plan");
-    if (
-      planParam &&
-      (["starter", "pro", "scale"] as PlanSlug[]).includes(
-        planParam as PlanSlug
-      )
-    ) {
-      setPlanSlug(planParam as PlanSlug);
+    if (planParam && isPlanSlug(planParam)) {
+      const selectedPlan = PLAN_CATALOG_BY_SLUG[planParam];
+      setPlanSlug(planParam);
+      setAmount((selectedPlan.monthlyPriceCents / 100).toFixed(2));
+      setDescription(`UnifyOne ${selectedPlan.name} Subscription`);
     }
     // Check for PayPal return
     if (params.get("paypal_return") === "1") {
@@ -393,19 +366,21 @@ export default function Checkout() {
                         Selected Plan
                       </p>
                       <p className="text-white text-xl font-bold">
-                        {activePlan.name}
+                        {canonicalPlan?.name ?? activePlan.name}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-[#00D9FF] text-2xl font-bold">
-                        ${Number(activePlan.priceMonthly ?? 0).toFixed(0)}
+                        {canonicalPlan
+                          ? formatUsdCents(canonicalPlan.monthlyPriceCents)
+                          : `$${Number(activePlan.priceMonthly ?? 0).toFixed(0)}`}
                       </p>
                       <p className="text-gray-500 text-xs">/ month</p>
                     </div>
                   </div>
-                  {(PLAN_FEATURES[planSlug] ?? []).length > 0 && (
+                  {checkoutFeatures.length > 0 && (
                     <ul className="space-y-1.5 mt-4">
-                      {(PLAN_FEATURES[planSlug] ?? []).map(f => (
+                      {checkoutFeatures.map(f => (
                         <li
                           key={f}
                           className="flex items-center gap-2 text-xs text-gray-400"
@@ -452,7 +427,10 @@ export default function Checkout() {
                     <>
                       <CreditCard className="w-4 h-4 mr-2" />
                       Subscribe — $
-                      {Number(activePlan.priceMonthly ?? 0).toFixed(0)}/mo
+                      {canonicalPlan
+                        ? canonicalPlan.monthlyPriceCents / 100
+                        : Number(activePlan.priceMonthly ?? 0).toFixed(0)}
+                      /mo
                     </>
                   )}
                 </Button>
@@ -506,7 +484,7 @@ export default function Checkout() {
                       value={amount}
                       onChange={e => setAmount(e.target.value)}
                       className="w-24 h-7 text-right bg-white/5 border-white/10 text-white text-sm font-bold p-1"
-                      placeholder="29.00"
+                      placeholder="19.00"
                     />
                   </div>
                   <p className="text-gray-500 text-xs mt-1">USD</p>

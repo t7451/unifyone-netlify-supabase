@@ -78,8 +78,8 @@ export const SEO_PAGES: SeoPage[] = [
           "Multi-tenant by design — isolate data per tenant with zero bleed.",
           "AI Intelligence built-in — earnings insights, route optimization, tax deductions.",
           "All major payment rails — Stripe, PayPal, Square, and Shopify Payments.",
-          "White-label ready — Cathedral tier includes custom domains + branding.",
-          "Transparent pricing — free Acolyte tier, $49 Architect, $149 Cathedral.",
+          "White-label ready — the Scale tier includes custom domains + branding.",
+          "Transparent pricing — free Starter tier, $19 Pro, $99 Scale.",
         ],
       },
       {
@@ -100,7 +100,7 @@ export const SEO_PAGES: SeoPage[] = [
       },
       {
         q: "How do I try UnifyOne for free?",
-        a: "Start with the Acolyte tier — free forever, no credit card required. It includes one tenant, core commerce tools, Stripe checkout, and basic analytics.",
+        a: "Start with the Starter tier — free forever, no credit card required. It includes one tenant, Stripe checkout, and core analytics on the same infrastructure as paid plans.",
       },
     ],
     related: [
@@ -233,7 +233,7 @@ export const SEO_PAGES: SeoPage[] = [
     tagline:
       "Sign in to UnifyOne — the 1Commerce (UnifOne / OneCommerc) multi-tenant commerce platform.",
     description:
-      "UnifyOne login — sign in to your 1Commerce / UnifyOne Solutions tenant. New here? Start a free Acolyte account.",
+      "UnifyOne login — sign in to your 1Commerce / UnifyOne Solutions tenant. New here? Start a free Starter account.",
     keywords: brand(["UnifyOne login", "1commerce login", "UnifOne sign in"]),
     sections: [
       {
@@ -259,12 +259,12 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unifyone-pricing",
-    title: "UnifyOne Pricing — Plans from 1Commerce (Free, $49, $149)",
+    title: "UnifyOne Pricing — Plans from 1Commerce (Free, $19, $99)",
     h1: "UnifyOne Pricing",
     tagline:
-      "Three tiers: Acolyte (free), Architect ($49/mo), Cathedral ($149/mo). Transparent, flat-rate pricing from 1Commerce LLC.",
+      "Three tiers: Starter (free), Pro ($19/mo), Scale ($99/mo). Transparent, flat-rate pricing from 1Commerce LLC.",
     description:
-      "UnifyOne pricing — Acolyte free, Architect $49/mo, Cathedral $149/mo. 14-day free trial, no credit card. By 1Commerce LLC / OneCommerce.",
+      "UnifyOne pricing — Starter free, Pro $19/mo, Scale $99/mo. One catalog across public pricing and checkout. By 1Commerce LLC / OneCommerce.",
     keywords: brand([
       "UnifyOne pricing",
       "1commerce pricing",
@@ -277,20 +277,20 @@ export const SEO_PAGES: SeoPage[] = [
           "UnifyOne ships three flat-rate tiers with no per-seat gotchas.",
         ],
         bullets: [
-          "Acolyte — Free. 1 tenant, core commerce, Stripe checkout, basic analytics.",
-          "Architect — $49/month. 5 tenants, Kai AI Intelligence, all payment rails, automations.",
-          "Cathedral — $149/month. Unlimited tenants, white-label, custom domains, SLA.",
+          "Starter — Free. 1 tenant, core commerce, Stripe checkout, and core analytics.",
+          "Pro — $19/month. 5 tenants, Kai AI, automation layer, and priority support.",
+          "Scale — $99/month. Unlimited tenants, white-label, custom domains, and SLA-backed support.",
         ],
       },
     ],
     faq: [
       {
         q: "Is there a free UnifyOne plan?",
-        a: "Yes — Acolyte is free forever and includes one tenant, Stripe checkout, and basic analytics.",
+        a: "Yes — Starter is free forever and includes one tenant, Stripe checkout, and core analytics.",
       },
       {
         q: "Does UnifyOne require a credit card to start?",
-        a: "No — the 14-day free trial and Acolyte tier both require zero payment details.",
+        a: "No — the Starter tier requires zero payment details.",
       },
     ],
     related: ["unifyone-free-trial", "unifyone-enterprise"],
@@ -600,7 +600,7 @@ export const SEO_PAGES: SeoPage[] = [
     faq: [
       {
         q: "Is there a OneCommerce free trial?",
-        a: "Yes — Acolyte is free forever, and the Architect tier includes a 14-day free trial.",
+        a: "Yes — Starter is free forever and uses the same infrastructure as the paid plans.",
       },
     ],
     related: ["unifyone-platform", "onecommerce"],
@@ -948,14 +948,14 @@ export const SEO_PAGES: SeoPage[] = [
       {
         heading: "Affiliate infrastructure without a separate tool",
         paragraphs: [
-          "UnifyOne ships affiliate tracking, referral attribution, and payout automation in the Architect tier — no Refersion, no PartnerStack, no third-party middleware.",
+          "UnifyOne ships affiliate tracking, referral attribution, and payout automation in the Pro tier — no Refersion, no PartnerStack, no third-party middleware.",
         ],
       },
     ],
     faq: [
       {
         q: "Can I run white-label affiliate programs in UnifyOne?",
-        a: "Yes — white-label affiliate programs are included with the Cathedral tier.",
+        a: "Yes — white-label affiliate programs are included with the Scale tier.",
       },
     ],
     related: ["unifyone", "unifyone-subscription-billing"],
@@ -994,7 +994,7 @@ export const SEO_PAGES: SeoPage[] = [
     tagline:
       "Subscription billing by 1Commerce — Stripe-powered, webhook-verified, multi-tier, multi-tenant.",
     description:
-      "UnifyOne subscription billing — Stripe-powered, webhook-verified. Acolyte, Architect, and Cathedral tiers.",
+      "UnifyOne subscription billing — Stripe-powered, webhook-verified. Starter, Pro, and Scale tiers.",
     keywords: brand(["UnifyOne billing", "subscription billing SaaS"]),
     sections: [
       {
@@ -1044,9 +1044,9 @@ export const SEO_PAGES: SeoPage[] = [
     title: "UnifyOne Free Trial — Start Free on 1Commerce Today",
     h1: "UnifyOne Free Trial",
     tagline:
-      "Start on Acolyte (free forever) or take a 14-day Architect trial — no credit card required.",
+      "Start on Starter (free forever) and upgrade to Pro or Scale when you need more automation and throughput.",
     description:
-      "UnifyOne free trial — Acolyte is free forever; Architect ships with a 14-day free trial. No credit card required. By 1Commerce LLC.",
+      "UnifyOne free trial — Starter is free forever and uses the same infrastructure as paid plans. No credit card required. By 1Commerce LLC.",
     keywords: brand(["UnifyOne free trial", "1commerce free trial"]),
     sections: [
       {
@@ -1059,7 +1059,7 @@ export const SEO_PAGES: SeoPage[] = [
     faq: [
       {
         q: "Does the free trial require a credit card?",
-        a: "No — Acolyte is free forever and the Architect trial does not require a card.",
+        a: "No — Starter is free forever and does not require a card.",
       },
     ],
     related: ["unifyone-pricing", "unifyone"],
@@ -1067,12 +1067,12 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unifyone-enterprise",
-    title: "UnifyOne Enterprise — The Cathedral Tier by 1Commerce",
-    h1: "UnifyOne Enterprise (Cathedral Tier)",
+    title: "UnifyOne Enterprise — The Scale Tier by 1Commerce",
+    h1: "UnifyOne Enterprise (Scale Tier)",
     tagline:
-      "White-label, unlimited tenants, custom domains, and SLA — the Cathedral tier is UnifyOne for agencies and enterprises.",
+      "White-label, unlimited tenants, custom domains, and SLA — the Scale tier is UnifyOne for agencies and enterprises.",
     description:
-      "UnifyOne Enterprise — the Cathedral tier from 1Commerce LLC. White-label, unlimited tenants, custom domains, SLA guarantee.",
+      "UnifyOne Enterprise — the Scale tier from 1Commerce LLC. White-label, unlimited tenants, custom domains, SLA guarantee.",
     keywords: brand([
       "UnifyOne enterprise",
       "1Commerce enterprise",
@@ -1080,15 +1080,15 @@ export const SEO_PAGES: SeoPage[] = [
     ]),
     sections: [
       {
-        heading: "Cathedral tier capabilities",
+        heading: "Scale tier capabilities",
         paragraphs: [
-          "Cathedral ($149/month) unlocks unlimited tenants, full white-label branding, custom domains, SLA guarantees, and dedicated infrastructure — ideal for agencies reselling UnifyOne as their own product.",
+          "Scale ($99/month) unlocks unlimited tenants, full white-label branding, custom domains, SLA guarantees, and dedicated infrastructure — ideal for agencies reselling UnifyOne as their own product.",
         ],
       },
     ],
     faq: [
       {
-        q: "Does Cathedral include a dedicated support channel?",
+        q: "Does Scale include a dedicated support channel?",
         a: "Yes — dedicated Slack Connect, priority incident routing, and SLA-backed response times.",
       },
     ],

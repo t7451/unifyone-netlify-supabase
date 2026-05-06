@@ -35,11 +35,11 @@ const DEFAULT_SYSTEM_PROMPT =
 
 export function corsHeaders(
   request: Request,
-  env: Pick<Env, "ALLOWED_ORIGINS">,
+  env: Pick<Env, "ALLOWED_ORIGINS">
 ): Record<string, string> {
   const origin = request.headers.get("Origin");
   const allowed = env.ALLOWED_ORIGINS.split(",")
-    .map((s) => s.trim())
+    .map(s => s.trim())
     .filter(Boolean);
 
   const headers: Record<string, string> = {
@@ -63,7 +63,7 @@ function jsonResponse(
   body: unknown,
   init: ResponseInit,
   request: Request,
-  env: Env,
+  env: Env
 ): Response {
   return new Response(JSON.stringify(body), {
     ...init,
@@ -82,7 +82,7 @@ export function normalizeMessages(body: ChatRequestBody): ChatMessage[] {
   } else if (typeof body.message === "string" && body.message.trim()) {
     msgs.push({ role: "user", content: body.message });
   }
-  if (!msgs.some((m) => m.role === "system")) {
+  if (!msgs.some(m => m.role === "system")) {
     msgs.unshift({ role: "system", content: DEFAULT_SYSTEM_PROMPT });
   }
   return msgs;
@@ -97,17 +97,17 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
       { error: "Invalid JSON body" },
       { status: 400 },
       request,
-      env,
+      env
     );
   }
 
   const messages = normalizeMessages(body);
-  if (messages.filter((m) => m.role !== "system").length === 0) {
+  if (messages.filter(m => m.role !== "system").length === 0) {
     return jsonResponse(
       { error: "Missing 'message' or 'messages'" },
       { status: 400 },
       request,
-      env,
+      env
     );
   }
 
@@ -120,7 +120,7 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
   type ChatRunResult = ReadableStream | Record<string, unknown>;
   const aiRun = env.AI.run as unknown as (
     model: string,
-    options: ChatRunOptions,
+    options: ChatRunOptions
   ) => Promise<ChatRunResult>;
 
   try {
@@ -167,7 +167,7 @@ export default {
         },
         { status: 200 },
         request,
-        env,
+        env
       );
     }
 
@@ -175,11 +175,6 @@ export default {
       return handleChat(request, env);
     }
 
-    return jsonResponse(
-      { error: "Not Found" },
-      { status: 404 },
-      request,
-      env,
-    );
+    return jsonResponse({ error: "Not Found" }, { status: 404 }, request, env);
   },
 } satisfies ExportedHandler<Env>;

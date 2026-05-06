@@ -64,8 +64,7 @@ export default function NlwebChat() {
           });
         });
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Unknown error";
+        const message = err instanceof Error ? err.message : "Unknown error";
         setMessages(prev => {
           const last = prev[prev.length - 1];
           const updated = [...prev];
@@ -86,7 +85,7 @@ export default function NlwebChat() {
         setIsLoading(false);
       }
     },
-    [messages],
+    [messages]
   );
 
   const workerUrl = getNlwebWorkerUrl();
@@ -106,13 +105,11 @@ export default function NlwebChat() {
               <Sparkles className="w-3.5 h-3.5" />
               <span>1commerce-nlweb</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-semibold mb-3">
-              AI Chat
-            </h1>
+            <h1 className="text-3xl sm:text-4xl font-semibold mb-3">AI Chat</h1>
             <p className="text-sm text-[rgba(240,232,208,0.7)] max-w-2xl mx-auto">
               Streaming responses from the{" "}
-              <code className="text-[#D4A843]">1commerce-nlweb</code>{" "}
-              Cloudflare Worker. Each message round-trips to{" "}
+              <code className="text-[#D4A843]">1commerce-nlweb</code> Cloudflare
+              Worker. Each message round-trips to{" "}
               <span className="text-[#D4A843]">{workerUrl}</span>.
             </p>
           </header>

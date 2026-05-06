@@ -65,7 +65,7 @@ export function parseSseChunks(raw: string): string[] {
  */
 export async function streamNlwebChat(
   req: NlwebChatRequest,
-  onChunk: (delta: string) => void,
+  onChunk: (delta: string) => void
 ): Promise<string> {
   const res = await fetch(`${getNlwebWorkerUrl()}/chat`, {
     method: "POST",
@@ -81,7 +81,7 @@ export async function streamNlwebChat(
   if (!res.ok || !res.body) {
     const text = await res.text().catch(() => "");
     throw new Error(
-      `nlweb chat failed: ${res.status} ${res.statusText} ${text}`.trim(),
+      `nlweb chat failed: ${res.status} ${res.statusText} ${text}`.trim()
     );
   }
 

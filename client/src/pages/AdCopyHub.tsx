@@ -129,9 +129,9 @@ const AD_COPIES: AdCopy[] = [
     platform: "Meta/LinkedIn",
     format: "Video",
     headline: "You Built the Foundation. Now Light the Spire.",
-    subheadline: "Upgrade to Cathedral. Unlimited tenants. White-label ready.",
-    body: "You've proven the concept. You've automated the flow. Now it's time to scale without limits. Cathedral tier: Unlimited tenants. Custom domains. SLA guarantee. Dedicated infrastructure. API access. Concierge onboarding. The same system that runs 5 subsidiaries for $149/month.",
-    cta: "Upgrade to Cathedral",
+    subheadline: "Upgrade to Scale. Unlimited tenants. White-label ready.",
+    body: "You've proven the concept. You've automated the flow. Now it's time to scale without limits. Scale tier: Unlimited tenants. Custom domains. SLA guarantee. Dedicated infrastructure. API access. Concierge onboarding. The same system that runs 5 subsidiaries for $99/month.",
+    cta: "Upgrade to Scale",
     charCount: 920,
     voiceRatio: "30S/70C",
     element: "Scale Phase Expansion",
@@ -154,7 +154,14 @@ const AD_COPIES: AdCopy[] = [
 ];
 
 const PLATFORMS = ["All", "Meta", "Google", "LinkedIn", "Instagram"];
-const CAMPAIGNS = ["All", "AWARENESS_CHAOS", "CONSIDERATION_CATHEDRAL", "DECISION_EXCELLENCE", "RETENTION_UPGRADE", "RETARGETING_VISITOR"];
+const CAMPAIGNS = [
+  "All",
+  "AWARENESS_CHAOS",
+  "CONSIDERATION_CATHEDRAL",
+  "DECISION_EXCELLENCE",
+  "RETENTION_UPGRADE",
+  "RETARGETING_VISITOR",
+];
 
 export default function AdCopyHub() {
   const [selectedPlatform, setSelectedPlatform] = useState("All");
@@ -162,9 +169,12 @@ export default function AdCopyHub() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredAds = AD_COPIES.filter(ad => {
-    const platformMatch = selectedPlatform === "All" || ad.platform.includes(selectedPlatform);
-    const campaignMatch = selectedCampaign === "All" || ad.campaign === selectedCampaign;
-    const searchMatch = searchTerm === "" || 
+    const platformMatch =
+      selectedPlatform === "All" || ad.platform.includes(selectedPlatform);
+    const campaignMatch =
+      selectedCampaign === "All" || ad.campaign === selectedCampaign;
+    const searchMatch =
+      searchTerm === "" ||
       ad.headline.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ad.body.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ad.element.toLowerCase().includes(searchTerm.toLowerCase());
@@ -179,7 +189,8 @@ export default function AdCopyHub() {
   const getCampaignColor = (campaign: string) => {
     const colors: Record<string, string> = {
       AWARENESS_CHAOS: "bg-blue-500/20 text-blue-400 border-blue-500/40",
-      CONSIDERATION_CATHEDRAL: "bg-purple-500/20 text-purple-400 border-purple-500/40",
+      CONSIDERATION_CATHEDRAL:
+        "bg-purple-500/20 text-purple-400 border-purple-500/40",
       DECISION_EXCELLENCE: "bg-amber-500/20 text-amber-400 border-amber-500/40",
       RETENTION_UPGRADE: "bg-green-500/20 text-green-400 border-green-500/40",
       RETARGETING_VISITOR: "bg-red-500/20 text-red-400 border-red-500/40",
@@ -210,7 +221,9 @@ export default function AdCopyHub() {
           <div className="space-y-4">
             <h1 className="text-4xl font-bold text-foreground">Ad Copy Hub</h1>
             <p className="text-lg text-muted-foreground max-w-2xl">
-              Platform-specific ad copy templates optimized for awareness, consideration, decision, retention, and retargeting campaigns. Copy, customize, and deploy.
+              Platform-specific ad copy templates optimized for awareness,
+              consideration, decision, retention, and retargeting campaigns.
+              Copy, customize, and deploy.
             </p>
           </div>
         </div>
@@ -226,7 +239,7 @@ export default function AdCopyHub() {
               type="text"
               placeholder="Search by headline, copy, or element..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -238,10 +251,12 @@ export default function AdCopyHub() {
               Platform
             </label>
             <div className="flex flex-wrap gap-2">
-              {PLATFORMS.map((platform) => (
+              {PLATFORMS.map(platform => (
                 <Button
                   key={platform}
-                  variant={selectedPlatform === platform ? "default" : "outline"}
+                  variant={
+                    selectedPlatform === platform ? "default" : "outline"
+                  }
                   size="sm"
                   onClick={() => setSelectedPlatform(platform)}
                 >
@@ -258,14 +273,18 @@ export default function AdCopyHub() {
               Campaign Stage
             </label>
             <div className="flex flex-wrap gap-2">
-              {CAMPAIGNS.map((campaign) => (
+              {CAMPAIGNS.map(campaign => (
                 <Button
                   key={campaign}
-                  variant={selectedCampaign === campaign ? "default" : "outline"}
+                  variant={
+                    selectedCampaign === campaign ? "default" : "outline"
+                  }
                   size="sm"
                   onClick={() => setSelectedCampaign(campaign)}
                 >
-                  {campaign === "All" ? "All Stages" : campaign.replace(/_/g, " ")}
+                  {campaign === "All"
+                    ? "All Stages"
+                    : campaign.replace(/_/g, " ")}
                 </Button>
               ))}
             </div>
@@ -278,12 +297,17 @@ export default function AdCopyHub() {
         <div className="container max-w-6xl mx-auto px-4">
           {filteredAds.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No ads match your filters. Try adjusting your search.</p>
+              <p className="text-muted-foreground">
+                No ads match your filters. Try adjusting your search.
+              </p>
             </div>
           ) : (
             <div className="space-y-6">
-              {filteredAds.map((ad) => (
-                <Card key={ad.id} className="p-6 hover:shadow-lg transition-shadow">
+              {filteredAds.map(ad => (
+                <Card
+                  key={ad.id}
+                  className="p-6 hover:shadow-lg transition-shadow"
+                >
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="space-y-2">
@@ -296,16 +320,24 @@ export default function AdCopyHub() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground">{ad.charCount} chars</p>
-                      <p className="text-xs text-muted-foreground">{ad.voiceRatio}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {ad.charCount} chars
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {ad.voiceRatio}
+                      </p>
                     </div>
                   </div>
 
                   {/* Content */}
                   <div className="space-y-4 mb-6">
                     <div>
-                      <h3 className="text-lg font-bold text-foreground">{ad.headline}</h3>
-                      <p className="text-sm text-muted-foreground italic">{ad.subheadline}</p>
+                      <h3 className="text-lg font-bold text-foreground">
+                        {ad.headline}
+                      </h3>
+                      <p className="text-sm text-muted-foreground italic">
+                        {ad.subheadline}
+                      </p>
                     </div>
                     <p className="text-foreground leading-relaxed">{ad.body}</p>
                     <div className="flex gap-2">
@@ -325,7 +357,9 @@ export default function AdCopyHub() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleCopy(ad.headline + "\n\n" + ad.body)}
+                        onClick={() =>
+                          handleCopy(ad.headline + "\n\n" + ad.body)
+                        }
                         className="gap-2"
                       >
                         <Copy className="h-4 w-4" />
@@ -349,15 +383,21 @@ export default function AdCopyHub() {
         <div className="container max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
-              <p className="text-3xl font-bold text-primary">{AD_COPIES.length}</p>
+              <p className="text-3xl font-bold text-primary">
+                {AD_COPIES.length}
+              </p>
               <p className="text-sm text-muted-foreground">Total Ad Copies</p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-primary">{new Set(AD_COPIES.map(a => a.platform)).size}</p>
+              <p className="text-3xl font-bold text-primary">
+                {new Set(AD_COPIES.map(a => a.platform)).size}
+              </p>
               <p className="text-sm text-muted-foreground">Platforms</p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-primary">{new Set(AD_COPIES.map(a => a.campaign)).size}</p>
+              <p className="text-3xl font-bold text-primary">
+                {new Set(AD_COPIES.map(a => a.campaign)).size}
+              </p>
               <p className="text-sm text-muted-foreground">Campaign Stages</p>
             </div>
             <div>
@@ -371,9 +411,12 @@ export default function AdCopyHub() {
       {/* CTA Section */}
       <section className="py-12 border-t border-border">
         <div className="container max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-4">Export Your Campaign</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-4">
+            Export Your Campaign
+          </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-            Download the complete ad copy matrix as a CSV or JSON file for import into your ad management platform.
+            Download the complete ad copy matrix as a CSV or JSON file for
+            import into your ad management platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="gap-2">

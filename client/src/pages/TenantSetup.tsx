@@ -249,7 +249,7 @@ export default function TenantSetup() {
 
               <p className="text-xs text-gray-500 text-center">
                 All stores start on the free{" "}
-                <span className="text-[#00D9FF]">Acolyte</span> tier. You can
+                <span className="text-[#00D9FF]">Starter</span> tier. You can
                 upgrade anytime from{" "}
                 <Link
                   href="/billing"
@@ -463,11 +463,11 @@ export default function TenantSetup() {
             {/* Billing upgrade CTA */}
             <div className="mb-6 p-4 rounded-xl bg-[#00D9FF]/5 border border-[#00D9FF]/20 text-left">
               <p className="text-[#00D9FF] text-xs font-medium mb-1">
-                You&apos;re on the free Acolyte tier
+                You&apos;re on the free Starter tier
               </p>
               <p className="text-gray-400 text-xs mb-3">
-                Unlock unlimited products, advanced analytics, and AI automation
-                by upgrading your plan.
+                Unlock 5 tenants, the automation layer, and advanced AI-assisted
+                operations by upgrading your plan.
               </p>
               <Link
                 href="/billing"
