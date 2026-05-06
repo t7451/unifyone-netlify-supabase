@@ -147,6 +147,32 @@ function mockSuccessfulLlm(responseId = "resp-kai") {
   });
 }
 
+function mockSuccessfulLlmSequence(prefix = "resp-kai-stress") {
+  let counter = 0;
+  invokeLLMMock.mockImplementation(async () => {
+    counter += 1;
+    return {
+      id: `${prefix}-${counter}`,
+      created: counter,
+      model: "gemini-2.5-flash",
+      choices: [
+        {
+          index: 0,
+          message: { role: "assistant", content: `Kai response ${counter}` },
+          finish_reason: "stop",
+        },
+      ],
+      usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+      metering: {
+        estimatedCredits: 1,
+        chargedCredits: 1,
+        balanceAfter: 999 - counter,
+        success: true,
+      },
+    };
+  });
+}
+
 describe("aiRouter Kai Neon credit enforcement", () => {
   beforeEach(() => {
     vi.mocked(getDb).mockReset();
@@ -331,6 +357,56 @@ describe("aiRouter Kai Neon credit enforcement", () => {
       userId: 7,
       creditDelta: -1,
     });
+  });
+
+  it("stress: handles concurrent Kai chats with unique ledger debits", async () => {
+    const rows: LedgerRow[] = [
+      {
+        id: 1,
+        tenantId: 44,
+        userId: 7,
+        type: "purchase",
+        creditDelta: 100,
+        idempotencyKey: "stress-purchase",
+      },
+    ];
+    vi.mocked(getDb).mockResolvedValue(createAiDb(rows) as any);
+    mockSuccessfulLlmSequence();
+
+    const caller = aiRouter.createCaller(ctx as any);
+    const results = await Promise.all(
+      Array.from({ length: 25 }, (_, index) =>
+        caller.chat({
+          message: `Stress chat ${index}`,
+          context: "general",
+          model: "kai-fast",
+        })
+      )
+    );
+
+    const usageRows = rows.filter(row => row.type === "usage");
+    expect(results).toHaveLength(25);
+    expect(invokeLLMMock).toHaveBeenCalledTimes(25);
+    expect(usageRows).toHaveLength(25);
+    expect(new Set(usageRows.map(row => row.idempotencyKey)).size).toBe(25);
+    expect(usageRows.reduce((sum, row) => sum + row.creditDelta, 0)).toBe(-25);
+    for (const row of usageRows) {
+      expect(row).toMatchObject({
+        tenantId: 44,
+        userId: 7,
+        type: "usage",
+        creditDelta: -1,
+      });
+      expect(row.idempotencyKey).toMatch(/^kai_chat_usage:44:7:resp-kai-stress-/);
+    }
+    for (const result of results) {
+      expect(result.reply).toMatch(/^Kai response /);
+      expect(result.metadata.credits).toMatchObject({
+        charged: 1,
+        enforcement: "neon",
+        ledgerDebited: true,
+      });
+    }
   });
 
   it("fails closed when Neon is unavailable before production chat LLM work", async () => {
