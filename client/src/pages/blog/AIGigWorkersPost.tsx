@@ -1,68 +1,20 @@
 import { Link } from "wouter";
-import { SITE_URL } from "@/lib/siteConfig";
-import BlogPostHead from "@/components/BlogPostHead";
-
-const CANONICAL = `${SITE_URL}/blog/manus-ai-gig-workers`;
-const TITLE =
-  "Kai AI for Gig Workers: From Data to Decisions in Seconds | 1Commerce";
-const DESCRIPTION =
-  "How Kai embedded inside UnifyOne transforms raw gig earnings data into actionable route optimization, tax deduction tracking, and challenge strategy — without leaving the dashboard.";
-const OG_IMAGE =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/unifyone-og-card.png";
-
-const JSON_LD = [
-  {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: "Kai AI for Gig Workers: From Data to Decisions in Seconds",
-    description: DESCRIPTION,
-    image: OG_IMAGE,
-    author: {
-      "@type": "Organization",
-      name: "1Commerce",
-      url: SITE_URL,
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "1Commerce",
-      logo: { "@type": "ImageObject", url: `${SITE_URL}/favicon.ico` },
-    },
-    datePublished: "2026-03-06",
-    dateModified: "2026-04-04",
-    mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL },
-    keywords: [
-      "Kai AI gig workers",
-      "AI earnings insights",
-      "gig worker AI assistant",
-      "DoorDash AI optimization",
-      "Uber Eats route AI",
-      "gig economy artificial intelligence",
-    ],
-    articleSection: "AI Integration",
-    wordCount: 1050,
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "Blog",
-        item: `${SITE_URL}/blog`,
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: "Kai AI for Gig Workers",
-        item: CANONICAL,
-      },
-    ],
-  },
-];
+import PageHead from "@/components/PageHead";
+import {
+  BLOG_POSTS,
+  BlogBackLink,
+  RelatedPostsSection,
+  buildArticleJsonLd,
+  buildArticleMeta,
+  formatBlogDate,
+  getReadingTimeText,
+} from "./blogPostShared";
 
 export default function AIGigWorkersPost() {
+  const post = BLOG_POSTS.aiGigWorkers;
+  const publishedDate = formatBlogDate(post.publishedAt);
+  const readingTime = getReadingTimeText(post.wordCount);
+
   return (
     <div
       style={{
@@ -71,13 +23,14 @@ export default function AIGigWorkersPost() {
         minHeight: "100vh",
       }}
     >
-      <BlogPostHead
-        canonical={CANONICAL}
-        title={TITLE}
-        description={DESCRIPTION}
-        ogImage={OG_IMAGE}
-        breadcrumbName="Kai AI for Gig Workers"
-        jsonLd={JSON_LD}
+      <PageHead
+        title={post.title}
+        description={post.description}
+        canonical={post.canonical}
+        ogImage={post.ogImage}
+        ogType="article"
+        meta={buildArticleMeta(post)}
+        jsonLd={buildArticleJsonLd(post)}
       />
 
       <nav
@@ -132,27 +85,15 @@ export default function AIGigWorkersPost() {
               </Link>
             </li>
             <li style={{ color: "#242424" }}>›</li>
-            <li style={{ color: "#D4A843" }}>Kai AI</li>
+            <li style={{ color: "#D4A843" }}>{post.breadcrumbName}</li>
           </ol>
         </nav>
-        <div className="mb-8">
-          <Link href="/blog">
-            <span
-              className="text-xs cursor-pointer hover:text-amber-400 transition-colors"
-              style={{
-                fontFamily: "Cinzel, serif",
-                letterSpacing: "0.15em",
-                color: "#5A5A5A",
-              }}
-            >
-              ← Back to Blog
-            </span>
-          </Link>
-        </div>
+
+        <BlogBackLink className="mb-8" />
 
         <header className="mb-12">
           <span className="inscription block mb-4">
-            AI Integration · March 2026
+            {post.category} · {publishedDate}
           </span>
           <h1
             className="font-cinzel text-3xl sm:text-5xl font-black mb-6"
@@ -162,7 +103,7 @@ export default function AIGigWorkersPost() {
               letterSpacing: "0.01em",
             }}
           >
-            Kai AI for Gig Workers: From Data to Decisions in Seconds
+            {post.headline}
           </h1>
           <div
             className="flex flex-wrap items-center gap-4 mb-6 text-xs"
@@ -173,12 +114,12 @@ export default function AIGigWorkersPost() {
             }}
           >
             <span>
-              By <span style={{ color: "#D4A843" }}>UnifyOne Team</span>
+              By <span style={{ color: "#D4A843" }}>{post.author}</span>
             </span>
             <span style={{ color: "#242424" }}>·</span>
-            <time dateTime="2026-03-06">March 6, 2026</time>
+            <time dateTime={post.publishedAt}>{publishedDate}</time>
             <span style={{ color: "#242424" }}>·</span>
-            <span>5 min read</span>
+            <span>{readingTime}</span>
           </div>
           <p
             className="font-crimson text-xl sm:text-2xl"
@@ -217,11 +158,11 @@ export default function AIGigWorkersPost() {
             </p>
             <p className="mt-4">
               When you open the Gig Command page, Kai has already read your last
-              30 days of shifts. When you ask "Where should I drive tonight?",
-              it answers with your specific zone performance data, not a generic
-              tip about surge pricing. When you ask "How much can I deduct this
-              year?", it calculates your exact IRS standard mileage deduction
-              based on your logged miles.
+              30 days of shifts. When you ask &quot;Where should I drive
+              tonight?&quot;, it answers with your specific zone performance
+              data, not a generic tip about surge pricing. When you ask
+              &quot;How much can I deduct this year?&quot;, it calculates your
+              exact IRS standard mileage deduction based on your logged miles.
             </p>
           </section>
 
@@ -294,8 +235,8 @@ export default function AIGigWorkersPost() {
               Challenge Strategy: The Competitive Edge
             </h2>
             <p>
-              UnifyOne's social challenge system lets gig operators compete on
-              earnings, mileage, and shift metrics. Kai provides
+              UnifyOne&apos;s social challenge system lets gig operators compete
+              on earnings, mileage, and shift metrics. Kai provides
               challenge-specific strategy: which challenge to enter based on
               your current performance trajectory, how many shifts you need to
               win, and what zone or platform to prioritize to close the gap on a
@@ -316,10 +257,10 @@ export default function AIGigWorkersPost() {
               Privacy and Data Ownership
             </h2>
             <p>
-              Your earnings data never leaves UnifyOne's infrastructure. Kai
-              processes your data server-side — your shift history, mileage, and
-              earnings are never transmitted to a third-party AI provider in raw
-              form. The AI receives only the structured context object
+              Your earnings data never leaves UnifyOne&apos;s infrastructure.
+              Kai processes your data server-side — your shift history, mileage,
+              and earnings are never transmitted to a third-party AI provider in
+              raw form. The AI receives only the structured context object
               (platform, avg $/hr, YTD miles, etc.) that you can see in the UI.
               You own your data. You control what the AI sees.
             </p>
@@ -351,67 +292,7 @@ export default function AIGigWorkersPost() {
           </div>
         </div>
 
-        {/* Related */}
-        <div
-          className="mt-16 pt-12"
-          style={{ borderTop: "1px solid rgba(212,168,67,0.08)" }}
-        >
-          <span className="inscription block mb-6">Further Reading</span>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <Link href="/blog/gig-economy-commerce-platform">
-              <div className="stone-card p-6 cursor-pointer group">
-                <span
-                  className="inscription block mb-2"
-                  style={{ color: "#3A3A3A" }}
-                >
-                  Gig Economy
-                </span>
-                <h4
-                  className="font-cinzel text-sm font-600 group-hover:text-amber-400 transition-colors"
-                  style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
-                >
-                  How Gig Economy Workers Can Build a Commerce Platform That
-                  Scales
-                </h4>
-              </div>
-            </Link>
-            <Link href="/blog/multi-tenant-ecommerce-saas">
-              <div className="stone-card p-6 cursor-pointer group">
-                <span
-                  className="inscription block mb-2"
-                  style={{ color: "#3A3A3A" }}
-                >
-                  Architecture
-                </span>
-                <h4
-                  className="font-cinzel text-sm font-600 group-hover:text-amber-400 transition-colors"
-                  style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
-                >
-                  Why Multi-Tenant SaaS Is the Right Architecture for Commerce
-                  Teams
-                </h4>
-              </div>
-            </Link>
-          </div>
-        </div>
-        {/* Back to Blog */}
-        <div
-          className="mt-12 pt-8"
-          style={{ borderTop: "1px solid rgba(212,168,67,0.08)" }}
-        >
-          <Link href="/blog">
-            <span
-              className="text-xs cursor-pointer hover:text-amber-400 transition-colors"
-              style={{
-                fontFamily: "Cinzel, serif",
-                letterSpacing: "0.15em",
-                color: "#5A5A5A",
-              }}
-            >
-              ← Back to Blog
-            </span>
-          </Link>
-        </div>
+        <RelatedPostsSection currentPost="aiGigWorkers" />
       </article>
     </div>
   );

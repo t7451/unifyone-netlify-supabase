@@ -1,8 +1,11 @@
 import { Helmet } from "react-helmet-async";
 import { SITE_URL } from "@/lib/siteConfig";
 
-const DEFAULT_OG_IMAGE =
-  "/og-image.png";
+const DEFAULT_OG_IMAGE = "/og-image.png";
+
+type PageHeadMetaTag =
+  | { name: string; content: string; property?: never }
+  | { property: string; content: string; name?: never };
 
 interface PageHeadProps {
   /** <title> text — keep under 60 chars */
@@ -15,6 +18,8 @@ interface PageHeadProps {
   ogImage?: string;
   /** OG type. Defaults to "website". */
   ogType?: "website" | "article";
+  /** Additional meta tags for page-specific SEO needs. */
+  meta?: PageHeadMetaTag[];
   /** Schema.org JSON-LD blocks (optional). */
   jsonLd?: Record<string, unknown>[];
 }
@@ -35,6 +40,7 @@ export default function PageHead({
   canonical,
   ogImage = DEFAULT_OG_IMAGE,
   ogType = "website",
+  meta,
   jsonLd,
 }: PageHeadProps) {
   return (
@@ -60,6 +66,22 @@ export default function PageHead({
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
+
+      {meta?.map((tag, i) =>
+        "name" in tag ? (
+          <meta
+            key={`${tag.name}-${i}`}
+            name={tag.name}
+            content={tag.content}
+          />
+        ) : (
+          <meta
+            key={`${tag.property}-${i}`}
+            property={tag.property}
+            content={tag.content}
+          />
+        )
+      )}
 
       {/* JSON-LD structured data */}
       {jsonLd?.map((schema, i) => (
