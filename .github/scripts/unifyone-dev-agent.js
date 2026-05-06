@@ -85,7 +85,7 @@ async function applyFix(fix) {
 }
 
 async function main() {
-  console.log('🚀 UnifyOne Dev-Agent starting autonomous direct-push scan...');
+  console.log('🚀 UnifyOne Dev-Agent starting autonomous direct-push scan... [v1.1 - MANUAL TRIGGER]');
 
   // Fetch latest TODO.md
   const todoRes = await fetch(`https://raw.githubusercontent.com/${REPO}/main/TODO.md`);
