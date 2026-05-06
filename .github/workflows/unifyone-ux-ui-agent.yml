@@ -64,6 +64,7 @@ jobs:
           path: |
             .agent-output/*
             test-results/**
+          include-hidden-files: true
 
       - name: Commit fixes if any
         run: |

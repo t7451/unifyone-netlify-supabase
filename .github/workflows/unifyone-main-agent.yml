@@ -51,6 +51,7 @@ jobs:
         with:
           name: mission-briefing
           path: .agent-output/*
+          include-hidden-files: true
 
   agents:
     needs: mission
@@ -80,6 +81,7 @@ jobs:
         with:
           name: agent-${{ matrix.agent }}-report
           path: .agent-output/*
+          include-hidden-files: true
 
   issue-reporter:
     if: always()

@@ -66,6 +66,7 @@ jobs:
         with:
           name: dev-agent-report
           path: .agent-output/*
+          include-hidden-files: true
 
       - name: Push changes (if any were made)
         run: |
