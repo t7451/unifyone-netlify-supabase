@@ -91,6 +91,10 @@ export type InvokeParams = {
     /** Override automatic token→credit conversion */
     fixedCredits?: number;
   };
+  /** Override the default model. */
+  model?: string;
+  /** Ordered fallback chain: tried left-to-right when a model fails with a retryable error. */
+  modelChain?: string[];
 };
 
 export type ToolCall = {
@@ -292,7 +296,41 @@ const normalizeResponseFormat = ({
   };
 };
 
-export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
+export const DEFAULT_MODEL = "gemini-2.5-flash";
+export const DEFAULT_FALLBACK_CHAIN = [
+  DEFAULT_MODEL,
+  "claude-3-5-haiku",
+  "gpt-4o-mini",
+];
+
+function isRetryableError(err: unknown): boolean {
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase();
+    if (
+      msg.includes("401") ||
+      msg.includes("403") ||
+      msg.includes("invalid_api_key")
+    )
+      return false;
+    if (msg.includes("400") && !msg.includes("rate")) return false;
+    if (
+      msg.includes("5") ||
+      msg.includes("timeout") ||
+      msg.includes("econnreset") ||
+      msg.includes("rate") ||
+      msg.includes("fetch failed") ||
+      msg.includes("network")
+    ) {
+      return true;
+    }
+  }
+  return true;
+}
+
+async function invokeOnce(
+  model: string,
+  params: InvokeParams
+): Promise<InvokeResult> {
   assertApiKey();
 
   const {
@@ -307,7 +345,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   } = params;
 
   const payload: Record<string, unknown> = {
-    model: "gemini-2.5-flash",
+    model,
     messages: messages.map(normalizeMessage),
   };
 
@@ -324,9 +362,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   }
 
   payload.max_tokens = params.maxTokens ?? params.max_tokens ?? 32768;
-  payload.thinking = {
-    budget_tokens: 128,
-  };
+  payload.thinking = { budget_tokens: 128 };
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
@@ -357,7 +393,6 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
 
   const result = (await response.json()) as InvokeResult;
 
-  // ── Credit metering: log & debit this call ────────────────────────
   if (params.meter) {
     const tokensIn = result.usage?.prompt_tokens ?? 0;
     const tokensOut = result.usage?.completion_tokens ?? 0;
@@ -370,7 +405,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
       action: params.meter.action,
       tokensIn,
       tokensOut,
-      model: String(payload.model ?? ""),
+      model,
       tenantId: params.meter.tenantId,
       requestId: params.meter.requestId,
       metadata: { finish_reason: result.choices[0]?.finish_reason ?? null },
@@ -380,4 +415,37 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   }
 
   return result;
+}
+
+export async function invokeLLMWithFallback(
+  params: InvokeParams
+): Promise<InvokeResult> {
+  const requested = params.model ?? DEFAULT_MODEL;
+  const chain = params.modelChain ?? DEFAULT_FALLBACK_CHAIN;
+  const ordered = [requested, ...chain.filter(m => m !== requested)];
+
+  let lastError: unknown = null;
+  for (let i = 0; i < ordered.length; i++) {
+    const model = ordered[i];
+    try {
+      return await invokeOnce(model, params);
+    } catch (err) {
+      lastError = err;
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (!isRetryableError(err) || i === ordered.length - 1) {
+        throw err;
+      }
+      const next = ordered[i + 1];
+      console.warn(
+        `[LLM] Model fallback: ${model} -> ${next} reason="${errMsg.slice(0, 200)}"`
+      );
+    }
+  }
+  throw (
+    lastError ?? new Error("LLM invocation failed across all fallback models")
+  );
+}
+
+export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
+  return invokeLLMWithFallback(params);
 }

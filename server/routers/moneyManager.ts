@@ -235,6 +235,30 @@ export const moneyManagerRouter = router({
         /* CAPI failure is non-critical */
       }
 
+      // Evaluate user financial rules against this income event (non-blocking)
+      try {
+        const totalEarningsCents = Math.round(
+          (Number(input.grossEarnings) +
+            Number(input.tips) +
+            Number(input.bonuses)) *
+            100
+        );
+        if (totalEarningsCents > 0) {
+          const { evaluateRulesForEvent } = await import("../lib/ruleEngine");
+          await evaluateRulesForEvent({
+            userId: ctx.user.id,
+            event: {
+              type: "income_received",
+              amountCents: totalEarningsCents,
+              platform: existing.platform,
+            },
+          });
+        }
+      } catch (e) {
+        console.error("[moneyManager.endShift] Rule engine failed:", e);
+        // Non-blocking: shift still completes successfully
+      }
+
       return { success: true, durationMinutes };
     }),
 
@@ -1189,6 +1213,111 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
   }),
 
   /**
+   * Comprehensive tax estimate: SE tax, federal income tax, quarterly payment due.
+   * Uses YTD gigShifts gross + mileageLogs deductions to project annual obligations.
+   */
+  getTaxEstimate: protectedProcedure
+    .input(
+      z
+        .object({ bracketRate: z.number().min(0).max(0.5).optional() })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) {
+        return null;
+      }
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const dayOfYear = Math.ceil(
+        (now.getTime() - startOfYear.getTime()) / 86400000
+      );
+      const daysInYear = now.getFullYear() % 4 === 0 ? 366 : 365;
+
+      const shifts = await db
+        .select({
+          grossEarnings: gigShifts.grossEarnings,
+          tips: gigShifts.tips,
+          bonuses: gigShifts.bonuses,
+          totalMiles: gigShifts.totalMiles,
+        })
+        .from(gigShifts)
+        .where(
+          and(
+            eq(gigShifts.userId, ctx.user.id),
+            eq(gigShifts.status, "completed"),
+            gte(gigShifts.startTime, startOfYear)
+          )
+        );
+
+      const { mileageLogs } = await import("../../drizzle/schema");
+      const manualLogs = await db
+        .select({
+          deductionCents: mileageLogs.deductionCents,
+          miles: mileageLogs.miles,
+        })
+        .from(mileageLogs)
+        .where(
+          and(
+            eq(mileageLogs.userId, ctx.user.id),
+            gte(mileageLogs.date, startOfYear)
+          )
+        );
+
+      const ytdGrossCents = Math.round(
+        shifts.reduce(
+          (s, r) =>
+            s + Number(r.grossEarnings) + Number(r.tips) + Number(r.bonuses),
+          0
+        ) * 100
+      );
+      const shiftMiles = shifts.reduce((s, r) => s + Number(r.totalMiles), 0);
+      const ytdMileageDeductionCents =
+        Math.round(shiftMiles * 70) +
+        manualLogs.reduce((s, r) => s + r.deductionCents, 0);
+
+      const {
+        computeAnnualProjection,
+        computeQuarterlyEstimate,
+        getNextQuarterlyDueDate,
+        TAX_CONSTANTS,
+      } = await import("../lib/taxEstimator");
+
+      const annualProjection = computeAnnualProjection({
+        ytdGrossCents,
+        ytdMileageDeductionCents,
+        dayOfYear,
+        daysInYear,
+        bracketRate: input?.bracketRate,
+      });
+
+      const ytdNetCents = Math.max(0, ytdGrossCents - ytdMileageDeductionCents);
+      const quartersElapsed = Math.min(
+        4,
+        Math.max(1, Math.ceil((now.getMonth() + 1) / 3))
+      ) as 1 | 2 | 3 | 4;
+      const quarterly = computeQuarterlyEstimate(
+        ytdNetCents,
+        quartersElapsed,
+        input?.bracketRate ?? TAX_CONSTANTS.DEFAULT_FED_BRACKET
+      );
+      const nextDue = getNextQuarterlyDueDate(now);
+
+      return {
+        ytdGrossCents,
+        ytdMileageDeductionCents,
+        ytdNetCents,
+        annualProjection,
+        quarterly: {
+          ...quarterly,
+          quarter: nextDue.quarter,
+          dueDate: nextDue.dueDate.toISOString(),
+        },
+        bracketRate: input?.bracketRate ?? TAX_CONSTANTS.DEFAULT_FED_BRACKET,
+      };
+    }),
+
+  /**
    * Kai-ready data context for gig-command and money-manager pages.
    * Returns a compact JSON string the AI system prompt can inject directly.
    */
@@ -1281,5 +1410,27 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
         contextJson: JSON.stringify(ctx_data, null, 2),
         hasSufficientData: allShifts.length >= 3,
       };
+    }),
+
+  /**
+   * Earnings anomaly detection: flags platforms where the user's recent $/hr
+   * has deviated significantly from their baseline.
+   */
+  getAnomalies: protectedProcedure
+    .input(
+      z
+        .object({
+          lookbackDays: z.number().min(7).max(180).default(30),
+          recentSampleSize: z.number().min(2).max(10).default(3),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const { detectAnomalies } = await import("../lib/earningsAnomaly");
+      return detectAnomalies({
+        userId: ctx.user.id,
+        lookbackDays: input?.lookbackDays,
+        recentSampleSize: input?.recentSampleSize,
+      });
     }),
 });
