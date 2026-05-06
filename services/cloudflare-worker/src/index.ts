@@ -34,18 +34,26 @@ const DEFAULT_SYSTEM_PROMPT =
   "Answer questions about products, orders, and the platform. If unsure, say so.";
 
 function corsHeaders(request: Request, env: Env): Record<string, string> {
-  const origin = request.headers.get("Origin") ?? "";
+  const origin = request.headers.get("Origin");
   const allowed = env.ALLOWED_ORIGINS.split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  const allowOrigin = allowed.includes(origin) ? origin : allowed[0] ?? "*";
-  return {
-    "Access-Control-Allow-Origin": allowOrigin,
+
+  const headers: Record<string, string> = {
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
+
+  // Only reflect the Origin if it is in the allow-list. Otherwise omit
+  // Access-Control-Allow-Origin entirely, which causes the browser to block
+  // the response (the desired behavior for disallowed origins).
+  if (origin && allowed.includes(origin)) {
+    headers["Access-Control-Allow-Origin"] = origin;
+  }
+
+  return headers;
 }
 
 function jsonResponse(
@@ -103,12 +111,17 @@ async function handleChat(request: Request, env: Env): Promise<Response> {
   const model = body.model ?? env.DEFAULT_MODEL;
   const wantStream = body.stream !== false;
 
+  // Workers AI's `run` is heavily overloaded per model. We narrow it to the
+  // chat-completion shape we actually use rather than reaching for `any`.
+  type ChatRunOptions = { messages: ChatMessage[]; stream: boolean };
+  type ChatRunResult = ReadableStream | Record<string, unknown>;
+  const aiRun = env.AI.run as unknown as (
+    model: string,
+    options: ChatRunOptions,
+  ) => Promise<ChatRunResult>;
+
   try {
-    const result = await env.AI.run(model as keyof AiModels, {
-      messages,
-      stream: wantStream,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+    const result = await aiRun(model, { messages, stream: wantStream });
 
     if (wantStream && result instanceof ReadableStream) {
       return new Response(result, {
