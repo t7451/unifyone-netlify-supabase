@@ -21,7 +21,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Power, Trash2, Tag, Loader2 } from "lucide-react";
+import { Plus, Power, Trash2, Tag, Loader2, AlertTriangle } from "lucide-react";
+import { QueryErrorState } from "@/components/QueryErrorState";
 
 export default function DiscountsPage() {
   const utils = trpc.useUtils();
@@ -194,6 +195,17 @@ export default function DiscountsPage() {
           {list.isLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+            </div>
+          ) : list.isError ? (
+            <div className="flex justify-center py-8">
+              <QueryErrorState
+                icon={AlertTriangle}
+                title="Failed to load discounts"
+                message={list.error.message}
+                onRetry={() => void list.refetch()}
+                isRetrying={list.isFetching}
+                size="sm"
+              />
             </div>
           ) : !list.data?.length ? (
             <p className="text-sm text-gray-500 py-4">

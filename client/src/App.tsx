@@ -212,6 +212,14 @@ function Router() {
         )}
       />
       <Route
+        path="/orders/:id"
+        component={() => (
+          <DashboardRoute>
+            <Orders />
+          </DashboardRoute>
+        )}
+      />
+      <Route
         path="/customers"
         component={() => (
           <DashboardRoute>

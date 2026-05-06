@@ -59,6 +59,7 @@ import {
   ShieldCheck,
   TerminalSquare,
   SlidersHorizontal,
+  Tag,
 } from "lucide-react";
 import { AIChatBox } from "@/components/AIChatBox";
 import type { Message } from "@/components/AIChatBox";
@@ -77,6 +78,7 @@ const menuItems = [
   { icon: ShoppingCart, label: "Orders", path: "/orders" },
   { icon: Users, label: "Customers", path: "/customers" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
+  { icon: Tag, label: "Discounts", path: "/discounts" },
   { icon: Zap, label: "Integrations", path: "/integrations" },
   { icon: Settings, label: "Settings", path: "/settings" },
   { icon: CreditCard, label: "Billing", path: "/billing" },
@@ -360,7 +362,8 @@ function DashboardLayoutContent({
                 const isActive =
                   location === item.path ||
                   (item.path === "/settings" &&
-                    location.startsWith("/settings/"));
+                    location.startsWith("/settings/")) ||
+                  (item.path === "/orders" && location.startsWith("/orders/"));
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton

@@ -173,7 +173,9 @@ export const teamRouter = router({
       await db
         .update(teamInvites)
         .set({ status: "revoked" })
-        .where(eq(teamInvites.id, input.id));
+        .where(
+          and(eq(teamInvites.id, input.id), eq(teamInvites.tenantId, tenantId))
+        );
 
       return { success: true };
     }),
@@ -211,7 +213,7 @@ export const teamRouter = router({
       await db
         .update(users)
         .set({ role: input.role })
-        .where(eq(users.id, input.userId));
+        .where(and(eq(users.id, input.userId), eq(users.tenantId, tenantId)));
 
       return { success: true };
     }),
@@ -245,7 +247,7 @@ export const teamRouter = router({
       await db
         .update(users)
         .set({ tenantId: null as unknown as number })
-        .where(eq(users.id, input.userId));
+        .where(and(eq(users.id, input.userId), eq(users.tenantId, tenantId)));
 
       return { success: true };
     }),

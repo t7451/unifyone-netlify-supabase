@@ -171,7 +171,12 @@ export const moneyManagerRouter = router({
           notes: input.notes,
           status: "completed",
         })
-        .where(eq(gigShifts.id, input.shiftId));
+        .where(
+          and(
+            eq(gigShifts.id, input.shiftId),
+            eq(gigShifts.userId, ctx.user.id)
+          )
+        );
 
       // Auto-log mileage if provided
       if (input.totalMiles > 0) {
@@ -674,7 +679,12 @@ export const moneyManagerRouter = router({
       await db
         .update(gigShifts)
         .set({ routeWaypoints: waypoints })
-        .where(eq(gigShifts.id, input.shiftId));
+        .where(
+          and(
+            eq(gigShifts.id, input.shiftId),
+            eq(gigShifts.userId, ctx.user.id)
+          )
+        );
 
       return { ok: true, waypointCount: waypoints.length };
     }),

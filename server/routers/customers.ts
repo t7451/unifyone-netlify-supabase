@@ -122,7 +122,12 @@ export const customersRouter = router({
         await db
           .update(customers)
           .set(update)
-          .where(eq(customers.id, existing[0].id));
+          .where(
+            and(
+              eq(customers.id, existing[0].id),
+              eq(customers.tenantId, tenantId)
+            )
+          );
         return { ...existing[0], ...update, alreadyExisted: true as const };
       }
 

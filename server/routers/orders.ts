@@ -514,7 +514,12 @@ export const ordersRouter = router({
                 usageCount: sql`${discounts.usageCount} + 1`,
                 updatedAt: new Date(),
               })
-              .where(eq(discounts.id, discountIdApplied));
+              .where(
+                and(
+                  eq(discounts.id, discountIdApplied),
+                  eq(discounts.tenantId, tenantId)
+                )
+              );
           }
         } catch (err) {
           logger.warn("discount usageCount increment failed", {

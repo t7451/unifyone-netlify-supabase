@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useRealtimeOrders } from "@/lib/supabaseRealtime";
 import { RealtimeStatus } from "@/components/RealtimeStatus";
@@ -174,6 +174,7 @@ const emptyItem = (): OrderItem => ({
 
 export default function Orders() {
   const [, navigate] = useLocation();
+  const [isOrderDetailRoute, orderDetailParams] = useRoute("/orders/:id");
   const isMobile = useIsMobile();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
@@ -289,10 +290,14 @@ export default function Orders() {
       !["delivered", "cancelled", "refunded"].includes(String(order.status))
   ).length;
 
-  const selectedOrderId: number = selectedOrder?.id ?? 0;
+  const routeOrderId = isOrderDetailRoute ? Number(orderDetailParams?.id) : 0;
+  const selectedOrderId: number =
+    selectedOrder?.id ??
+    (Number.isInteger(routeOrderId) && routeOrderId > 0 ? routeOrderId : 0);
+  const detailDialogOpen = showDetail || selectedOrderId > 0;
   const orderDetail = trpc.orders.get.useQuery(
     { id: selectedOrderId },
-    { enabled: selectedOrderId > 0 && showDetail }
+    { enabled: selectedOrderId > 0 && detailDialogOpen }
   );
   const orderData = orderDetail.data as OrderDetailData | undefined;
 
@@ -475,6 +480,7 @@ export default function Orders() {
   const openDetail = (order: OrderSummary) => {
     setSelectedOrder(order);
     setShowDetail(true);
+    navigate(`/orders/${order.id}`);
   };
 
   const exportToCSV = () => {
@@ -1029,18 +1035,38 @@ export default function Orders() {
         )}
       </div>
       {/* Order Detail Modal */}
-      <Dialog open={showDetail} onOpenChange={setShowDetail}>
+      <Dialog
+        open={detailDialogOpen}
+        onOpenChange={open => {
+          setShowDetail(open);
+          if (!open) {
+            setSelectedOrder(null);
+            if (isOrderDetailRoute) navigate("/orders");
+          }
+        }}
+      >
         <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Package className="w-5 h-5 text-[#00D9FF]" />
-              Order {selectedOrder?.orderNumber}
+              Order {selectedOrder?.orderNumber ?? orderData?.orderNumber ?? ""}
             </DialogTitle>
           </DialogHeader>
 
           {orderDetail.isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-[#00D9FF]" />
+            </div>
+          ) : orderDetail.isError ? (
+            <div className="flex justify-center py-8">
+              <QueryErrorState
+                icon={AlertTriangle}
+                title="Failed to load order"
+                message={orderDetail.error.message}
+                onRetry={() => void orderDetail.refetch()}
+                isRetrying={orderDetail.isFetching}
+                size="sm"
+              />
             </div>
           ) : orderData ? (
             <div className="space-y-5">
