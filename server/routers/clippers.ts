@@ -13,11 +13,7 @@
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import {
-  adminProcedure,
-  protectedProcedure,
-  router,
-} from "../_core/trpc";
+import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
 import {
   createClippingJob,
   getClippingJobById,
@@ -40,10 +36,11 @@ const createJobInput = z.object({
   style: z.string().default("default"),
   /**
    * Clipper engine adapter to use.
-   * Use "stub" (default) for fast end-to-end testing without heavy ML deps.
-   * Use "basic" for the real transcription + highlight-scoring pipeline.
+   * "basic" runs the real transcription + highlight-scoring pipeline.
+   * "stub" produces synthetic clips fast for end-to-end testing without
+   * heavy ML deps — pass it explicitly when smoke-testing.
    */
-  engine: z.enum(["stub", "basic"]).default("stub"),
+  engine: z.enum(["stub", "basic"]).default("basic"),
 });
 
 // ── Router ────────────────────────────────────────────────────────────────────

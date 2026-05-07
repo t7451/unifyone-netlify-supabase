@@ -134,16 +134,21 @@ Things noticed during the audit-fix rollout that aren't blocking revenue but are
 - **6 Dependabot alerts** on the default branch (2 high, 4 moderate) per the latest push. Triage during a maintenance window — most are likely transitive.
 - **`SHOPIFY_API_SECRET`** must be set on Netlify for the Shopify webhook receiver to accept anything. Without it, `validateShopifyWebhook` fails closed (intentional security default).
 - **Image upload requires Netlify Blobs** to be available — works automatically on Netlify Functions runtime, but local dev returns 501 unless you set up a local blob store.
-- **Customers schema has no `notes` column** — added it to the input schema and dropped it; if you want notes on customers, add the column via drizzle-kit push and re-add `notes` to the create/update mutations.
+- **Customers schema has no `notes` column** — ✅ resolved in `d01099e` (`customers.notes` restored across schema, server input, and `AddCustomerDialog`).
 - **BillingSettings page** (drafted in `__finalize.py` but not shipped — the existing top-level Billing page already covers it). If you want a settings-scoped Billing dashboard distinct from `/billing`, it can be revived from the scratch directory.
-- **Subscription plan switching** — works via `/pricing` redirect; no in-place plan-change flow yet.
-- **Discount usage counting** — `usageCount` increments via the `resolveCode` query but the actual increment happens at checkout; verify the orders flow consumes a discount when present.
-- **Voice transcription scaffolding** in `server/_core/voiceTranscription.ts` is documented but commented out — wire it into a router when needed.
+- **Subscription plan switching** — ✅ shipped in `c34e979` via `<ChangePlanCard />` mounted on `/billing`; in-place monthly/yearly toggle calls `subscription.changePlan` with proration.
+- **Discount usage counting** — ✅ verified: `orders.create` (`server/routers/orders.ts:507-545`) increments `discounts.usageCount` atomically after the order commits.
+- **Voice transcription scaffolding** in `server/_core/voiceTranscription.ts` is documented but no router imports `transcribeAudio()` — wire a `voiceRouter` when audio capture becomes a feature.
 - **UnifyOne Shopify storefront — catalog pollution audit** — Keith was actively culling dropshipped items from the active SKU list. ~20 digital products remain valid; the ones flagged "sold out" are being normalized. Coordinate with the Shopify admin at `unifyone-2.myshopify.com`.
 - **Shopify Collective supplier sync** — physical-product sync issue under investigation. Distinct from the webhook receiver (CR4) — this is the inbound product-import path from suppliers.
 - **AES-256-GCM Shopify token encryption + DB-backed CSRF** shipped in PR #116 (`0d8b929`) — verify SHOPIFY_ENCRYPTION_KEY env var is set on Netlify and the migration that adds the encryption columns has been applied.
-- **IncomeCalculator** also landed in PR #116 — surface a route or page for it if customers should access.
+- **IncomeCalculator** — ✅ surfaced at `client/src/pages/Referrals.tsx:414`.
 - **Branch protection** has `enforce_admins=false` for solo-dev workflow; flip to true once a second engineer joins.
+- **n8n inbound webhook** — ✅ verified payloads now persist to `webhook_events` (source="n8n") instead of being dropped. Tenant-scoped when payload carries `tenantId`, otherwise system-level. Still no async processor that drains pending rows — that's a separate scope.
+- **Tenant isolation in MCP-proxy routers** — ✅ fixed: `dealflow`, `pixelforge`, `terpforge`, `knowledgeGraph` now drop `tenantId` from input and pass `authoritativeTenantId: ctx.user.tenantId` to every `mcpCallTool` call. Regression tests live in `server/__tests__/mcpRouterTenantIsolation.test.ts`.
+- **Automation event coverage** — ✅ partially closed: `order.created`, `order.status.*`, `payment.succeeded` (Stripe-synchronous + status updates), `payment.failed` (status updates), `subscription.activated`, `subscription.cancelled`, `social.post.published` are now wired through `server/lib/automationDispatch.ts`. Still TODO: `referral.converted` (the referral status transition itself isn't yet implemented), and `payment.succeeded` from PayPal/Square direct webhook handlers (currently update DB without firing the event).
+- **Clipper engine default** — ✅ flipped from `"stub"` to `"basic"` for the public `clippers.createJob` mutation; admin `testJob` keeps the `"stub"` default for fast smoke tests.
+- **Vapor features removed** — ✅ deleted `social.connectAccount` / `social.getAccounts` (UI never showed connected accounts because OAuth was never implemented), and `client/src/pages/AuthorizationHub.tsx` (UI shell with `Simulate Connect` and no backend).
 
 ---
 

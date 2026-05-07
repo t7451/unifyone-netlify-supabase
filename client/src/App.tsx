@@ -91,7 +91,6 @@ const GovernanceDashboard = lazy(() => import("./pages/GovernanceDashboard"));
 const DocsChat = lazy(() => import("./pages/DocsChat"));
 const NlwebChat = lazy(() => import("./pages/NlwebChat"));
 const DeveloperHub = lazy(() => import("./pages/DeveloperHub"));
-const AuthorizationHub = lazy(() => import("./pages/AuthorizationHub"));
 const Terminal = lazy(() => import("./pages/Terminal"));
 const RevenueCommand = lazy(() => import("./pages/RevenueCommand"));
 const MasterControl = lazy(() => import("./pages/MasterControl"));
@@ -452,14 +451,6 @@ function Router() {
         component={() => (
           <DashboardRoute>
             <AIAssistant />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/auth-hub"
-        component={() => (
-          <DashboardRoute>
-            <AuthorizationHub />
           </DashboardRoute>
         )}
       />

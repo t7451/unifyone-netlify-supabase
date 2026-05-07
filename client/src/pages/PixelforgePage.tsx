@@ -220,7 +220,6 @@ export default function PixelforgePage() {
               disabled={!form.name.trim() || createAsset.isPending}
               onClick={() =>
                 createAsset.mutate({
-                  tenantId: 1,
                   name: form.name.trim(),
                   width: form.width,
                   height: form.height,

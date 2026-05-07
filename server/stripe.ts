@@ -36,6 +36,7 @@ import {
   parseKaiCreditCheckoutMetadata,
 } from "./lib/kaiCredits";
 import { normalizeCheckoutOrigin } from "./paymentFallback";
+import { fireAutomations } from "./lib/automationDispatch";
 
 // Supabase admin client for subscription/credit sync (service role — no RLS)
 function getSupabaseAdmin() {
@@ -258,6 +259,30 @@ function mapSubStatus(
       return "cancelled";
     default:
       return "none";
+  }
+}
+
+// Fire `subscription.activated` / `subscription.cancelled` automation events.
+// Best-effort: never blocks a webhook ack. Looks up the tenant by Stripe
+// customer id so the dispatcher can scope to that tenant's n8n/Zapier hooks.
+async function fireSubscriptionAutomation(
+  sub: Stripe.Subscription,
+  event: "subscription.activated" | "subscription.cancelled"
+): Promise<void> {
+  try {
+    const tenant = await getTenantByStripeCustomerId(sub.customer as string);
+    if (!tenant) return;
+    await fireAutomations(tenant.id, event, {
+      subscriptionId: sub.id,
+      stripeCustomerId: sub.customer as string,
+      status: sub.status,
+      priceId: sub.items.data[0]?.price?.id ?? null,
+    });
+  } catch (err) {
+    console.warn(
+      `[Stripe] fireSubscriptionAutomation(${event}) failed:`,
+      err instanceof Error ? err.message : String(err)
+    );
   }
 }
 
@@ -766,6 +791,12 @@ export function registerStripeRoutes(app: Express) {
           case "customer.subscription.updated": {
             const sub = event.data.object as Stripe.Subscription;
             await syncSubscription(sub);
+            if (
+              event.type === "customer.subscription.created" &&
+              (sub.status === "active" || sub.status === "trialing")
+            ) {
+              await fireSubscriptionAutomation(sub, "subscription.activated");
+            }
             break;
           }
 
@@ -794,6 +825,7 @@ export function registerStripeRoutes(app: Express) {
                 })
                 .eq("id", sub.id);
             }
+            await fireSubscriptionAutomation(sub, "subscription.cancelled");
             console.log(`[Stripe] Subscription cancelled: ${sub.id}`);
             break;
           }
@@ -1493,7 +1525,14 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
 
       case "customer.subscription.created":
       case "customer.subscription.updated": {
-        await syncSubscription(event.data.object as Stripe.Subscription);
+        const sub = event.data.object as Stripe.Subscription;
+        await syncSubscription(sub);
+        if (
+          event.type === "customer.subscription.created" &&
+          (sub.status === "active" || sub.status === "trialing")
+        ) {
+          await fireSubscriptionAutomation(sub, "subscription.activated");
+        }
         break;
       }
 
@@ -1521,6 +1560,7 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
             })
             .eq("id", sub.id);
         }
+        await fireSubscriptionAutomation(sub, "subscription.cancelled");
         console.log(`[Stripe] Subscription cancelled: ${sub.id}`);
         break;
       }

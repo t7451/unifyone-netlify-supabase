@@ -40,6 +40,7 @@ import {
   verifyStripeCheckoutSession,
   verifyStripePaymentIntent,
 } from "../_core/verifyPurchase";
+import { fireAutomations } from "../lib/automationDispatch";
 
 // Discriminated union: every order must reference a real provider object so we
 // can audit it back against the provider's API. Stripe ids are verified live
@@ -544,6 +545,29 @@ export const ordersRouter = router({
         }).catch(() => {});
       }
 
+      // Fire automation hooks (n8n + Zapier) for order.created and, if the
+      // order was paid synchronously, payment.succeeded. Operators wire the
+      // matching trigger events in /automations.
+      void fireAutomations(tenantId, "order.created", {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        total: String(total),
+        currency: input.currency,
+        itemCount: input.items.length,
+        customerEmail: input.customerEmail ?? null,
+        paymentMethod: providerFields.paymentMethod,
+        paymentStatus: providerFields.paymentStatus,
+      });
+      if (providerFields.paymentStatus === "paid") {
+        void fireAutomations(tenantId, "payment.succeeded", {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          amount: String(total),
+          currency: input.currency,
+          paymentMethod: providerFields.paymentMethod,
+        });
+      }
+
       return order;
     }),
 
@@ -575,6 +599,36 @@ export const ordersRouter = router({
         input.status,
         input.paymentStatus
       );
+
+      // Fire automation hooks for the new status. The trigger event names
+      // (`order.status.shipped` etc.) are exposed in /automations so
+      // operators can wire n8n/Zapier flows against them.
+      const statusChanged = order.status !== input.status;
+      if (statusChanged) {
+        void fireAutomations(tenantId, `order.status.${input.status}`, {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          previousStatus: order.status,
+          status: input.status,
+        });
+      }
+      if (input.paymentStatus && input.paymentStatus !== order.paymentStatus) {
+        const paymentEvent =
+          input.paymentStatus === "paid"
+            ? "payment.succeeded"
+            : input.paymentStatus === "failed"
+              ? "payment.failed"
+              : null;
+        if (paymentEvent) {
+          void fireAutomations(tenantId, paymentEvent, {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            amount: order.total,
+            currency: order.currency,
+            paymentMethod: order.paymentMethod,
+          });
+        }
+      }
       return { success: true };
     }),
 

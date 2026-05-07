@@ -3,6 +3,10 @@
  *
  * tRPC router for Knowledge Graph — personal knowledge graph system.
  * All procedures are protected (require auth) and proxy to the MCP tool layer.
+ *
+ * Tenant isolation: every mcpCallTool() invocation passes
+ * `authoritativeTenantId: ctx.user.tenantId` so the MCP worker scopes
+ * graph operations to the caller's authenticated tenant.
  */
 
 import { z } from "zod";
@@ -14,6 +18,14 @@ import { mcpRateLimiter } from "../_core/rateLimiter";
 // All procedures proxy to an external Cloudflare MCP worker — rate-limit
 // per user to cap abuse and runaway egress costs.
 const protectedProcedure = rateLimitedProcedure(mcpRateLimiter, "mcp:kg");
+
+function requireTenantId(ctx: { user: { tenantId: number | null } }): number {
+  const tenantId = ctx.user.tenantId;
+  if (tenantId == null) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "No active tenant" });
+  }
+  return tenantId;
+}
 
 export const knowledgeGraphRouter = router({
   queryGraph: protectedProcedure
@@ -34,22 +46,32 @@ export const knowledgeGraphRouter = router({
         limit: z.number().int().positive().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenantId(ctx);
       try {
-        return await mcpCallTool("query_graph", {
-          node_type: input.nodeType,
-          label: input.label,
-          limit: input.limit,
-        });
+        return await mcpCallTool(
+          "query_graph",
+          {
+            node_type: input.nodeType,
+            label: input.label,
+            limit: input.limit,
+          },
+          { authoritativeTenantId: tenantId }
+        );
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });
       }
     }),
 
-  getStats: protectedProcedure.query(async () => {
+  getStats: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = requireTenantId(ctx);
     try {
-      return await mcpCallTool("get_graph_stats", {});
+      return await mcpCallTool(
+        "get_graph_stats",
+        {},
+        { authoritativeTenantId: tenantId }
+      );
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });
@@ -63,12 +85,17 @@ export const knowledgeGraphRouter = router({
         config: z.record(z.string(), z.unknown()).optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = requireTenantId(ctx);
       try {
-        return await mcpCallTool("trigger_graph_ingest", {
-          source: input.source,
-          config: input.config,
-        });
+        return await mcpCallTool(
+          "trigger_graph_ingest",
+          {
+            source: input.source,
+            config: input.config,
+          },
+          { authoritativeTenantId: tenantId }
+        );
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });
@@ -83,13 +110,18 @@ export const knowledgeGraphRouter = router({
         limit: z.number().int().positive().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenantId(ctx);
       try {
-        return await mcpCallTool("search_graph_nodes", {
-          query: input.query,
-          node_type: input.nodeType,
-          limit: input.limit,
-        });
+        return await mcpCallTool(
+          "search_graph_nodes",
+          {
+            query: input.query,
+            node_type: input.nodeType,
+            limit: input.limit,
+          },
+          { authoritativeTenantId: tenantId }
+        );
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });
@@ -98,20 +130,30 @@ export const knowledgeGraphRouter = router({
 
   getBrainActivity: protectedProcedure
     .input(z.object({ seconds: z.number().int().positive().optional() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenantId(ctx);
       try {
-        return await mcpCallTool("get_brain_activity", {
-          seconds: input.seconds,
-        });
+        return await mcpCallTool(
+          "get_brain_activity",
+          {
+            seconds: input.seconds,
+          },
+          { authoritativeTenantId: tenantId }
+        );
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });
       }
     }),
 
-  getConnectors: protectedProcedure.query(async () => {
+  getConnectors: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = requireTenantId(ctx);
     try {
-      return await mcpCallTool("get_connector_configs", {});
+      return await mcpCallTool(
+        "get_connector_configs",
+        {},
+        { authoritativeTenantId: tenantId }
+      );
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });

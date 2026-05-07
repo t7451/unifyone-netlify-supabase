@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import {
   Card,
@@ -19,13 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -39,7 +32,6 @@ import {
   Calendar,
   Clock,
   BarChart3,
-  Plus,
   Trash2,
   CheckCircle2,
   AlertCircle,
@@ -131,17 +123,11 @@ export default function Social() {
   const [scheduledAt, setScheduledAt] = useState("");
   const [campaignTag, setCampaignTag] = useState("");
   const [aiPosts, setAiPosts] = useState<Record<string, string>>({});
-  const [connectPlatform, setConnectPlatform] = useState<Platform | "">("");
-  const [connectHandle, setConnectHandle] = useState("");
-  const [connectDialogOpen, setConnectDialogOpen] = useState(false);
-
   // Queries
   const { data: posts, refetch: refetchPosts } = trpc.social.list.useQuery({
     status: "all",
   });
   const { data: analytics } = trpc.social.getAnalytics.useQuery();
-  const { data: accounts, refetch: refetchAccounts } =
-    trpc.social.getAccounts.useQuery();
 
   // Mutations
   const aiCompose = trpc.social.aiCompose.useMutation({
@@ -185,15 +171,6 @@ export default function Social() {
     },
   });
 
-  const connectAccount = trpc.social.connectAccount.useMutation({
-    onSuccess: () => {
-      refetchAccounts();
-      setConnectDialogOpen(false);
-      setConnectHandle("");
-      toast.success(`@${connectHandle} connected.`);
-    },
-  });
-
   const awardShare = trpc.referral.awardSocialShare.useMutation({
     onSuccess: data => {
       toast.success(
@@ -232,12 +209,6 @@ export default function Social() {
     awardShare.mutate({ platform, postId });
   };
 
-  const connectedPlatforms = useMemo(() => {
-    return new Set(
-      (accounts ?? []).filter(a => a.isConnected).map(a => a.platform)
-    );
-  }, [accounts]);
-
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -250,66 +221,6 @@ export default function Social() {
             Compose, schedule, and earn credits by promoting your store
           </p>
         </div>
-        <Dialog open={connectDialogOpen} onOpenChange={setConnectDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" /> Connect Account
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Connect Social Account</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-2">
-              <div className="space-y-2">
-                <Label>Platform</Label>
-                <Select
-                  value={connectPlatform}
-                  onValueChange={v => setConnectPlatform(v as Platform)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select platform" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PLATFORMS.map(p => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Handle / Username</Label>
-                <Input
-                  placeholder="@yourhandle"
-                  value={connectHandle}
-                  onChange={e =>
-                    setConnectHandle(e.target.value.replace("@", ""))
-                  }
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Register your handle to enable scheduling, credit tracking, and
-                cross-platform analytics.
-              </p>
-              <Button
-                className="w-full"
-                disabled={
-                  !connectPlatform || !connectHandle || connectAccount.isPending
-                }
-                onClick={() =>
-                  connectAccount.mutate({
-                    platform: connectPlatform as Platform,
-                    handle: connectHandle,
-                  })
-                }
-              >
-                Connect Account
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {/* Analytics Strip */}
@@ -376,7 +287,6 @@ export default function Social() {
                     const selected = selectedPlatforms.includes(
                       p.id as Platform
                     );
-                    const connected = connectedPlatforms.has(p.id as Platform);
                     return (
                       <button
                         key={p.id}
@@ -389,9 +299,6 @@ export default function Social() {
                       >
                         <p.icon className="h-3.5 w-3.5" />
                         {p.label}
-                        {connected && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 ml-0.5" />
-                        )}
                       </button>
                     );
                   })}
