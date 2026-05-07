@@ -143,7 +143,18 @@ input.
 
 **Fix:** change each router to pass
 `{ authoritativeTenantId: ctx.user.tenantId }` and drop the
-`tenantId` field from the input schema.
+`tenantId` field from the input schema. Add a router-level regression
+test per affected procedure that simulates an authenticated request
+with a `tenantId` field that differs from `ctx.user.tenantId` and
+asserts the downstream `mcpCallTool` invocation receives the
+authenticated tenant — so this can't silently regress.
+
+### How to reproduce
+
+1. Sign in as a user whose JWT carries `tenantId: 1`.
+2. Call `dealflow.listDeals` (or `pixelforge.listAssets`, `terpforge.listCompounds`, `knowledgeGraph.queryGraph`) over tRPC with the input `{ tenantId: 2 }`.
+3. **Actual:** the request reaches the MCP worker as `tools/call` with `arguments.tenant_id = 2` because `normalizeMcpToolArguments` (`server/lib/mcpClient.ts:199-203`) falls back to the user-supplied `args.tenant_id` whenever the caller omits `authoritativeTenantId`. The response contains tenant-2 data.
+4. **Expected (after fix):** the router passes `{ authoritativeTenantId: ctx.user.tenantId }` so `tenant_id` is overwritten to `1` regardless of input, and the procedure removes `tenantId` from the Zod schema entirely.
 
 ---
 
