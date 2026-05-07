@@ -30,186 +30,93 @@ const TOOLS = [
   {
     name: "list_stores",
     description: "List all stores / tenants registered on the platform",
-    inputSchema: {
-      type: "object",
-      properties: { limit: { type: "number", description: "Max results" } },
-    },
+    inputSchema: { type: "object", properties: { limit: { type: "number", description: "Max results" } } },
   },
   {
     name: "get_tenant_info",
     description: "Get tenant details by numeric tenant ID",
-    inputSchema: {
-      type: "object",
-      required: ["tenant_id"],
-      properties: { tenant_id: { type: "number" } },
-    },
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" } } },
   },
   // Walls — Products (5)
   {
     name: "list_products",
     description: "List products for a tenant with optional limit filters",
-    inputSchema: {
-      type: "object",
-      required: ["tenant_id"],
-      properties: { tenant_id: { type: "number" }, limit: { type: "number" } },
-    },
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" }, limit: { type: "number" } } },
   },
   {
     name: "get_product",
     description: "Get a single product by its numeric ID",
-    inputSchema: {
-      type: "object",
-      required: ["product_id", "tenant_id"],
-      properties: {
-        product_id: { type: "number" },
-        tenant_id: { type: "number" },
-      },
-    },
+    inputSchema: { type: "object", required: ["product_id", "tenant_id"], properties: { product_id: { type: "number" }, tenant_id: { type: "number" } } },
   },
   {
     name: "search_products",
     description: "Full-text search across product names and descriptions",
-    inputSchema: {
-      type: "object",
-      required: ["query", "tenant_id"],
-      properties: { query: { type: "string" }, tenant_id: { type: "number" } },
-    },
+    inputSchema: { type: "object", required: ["query", "tenant_id"], properties: { query: { type: "string" }, tenant_id: { type: "number" } } },
   },
   {
     name: "get_inventory",
     description: "Get current inventory levels for a tenant",
-    inputSchema: {
-      type: "object",
-      required: ["tenant_id"],
-      properties: {
-        tenant_id: { type: "number" },
-        product_id: { type: "number" },
-      },
-    },
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" }, product_id: { type: "number" } } },
   },
   {
     name: "get_low_stock_products",
     description: "Return products whose stock is at or below a threshold",
-    inputSchema: {
-      type: "object",
-      required: ["tenant_id"],
-      properties: {
-        tenant_id: { type: "number" },
-        threshold: { type: "number", default: 5 },
-      },
-    },
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" }, threshold: { type: "number", default: 5 } } },
   },
   // Walls — Orders (2)
   {
     name: "list_orders",
     description: "List orders for a tenant with optional limit filters",
-    inputSchema: {
-      type: "object",
-      required: ["tenant_id"],
-      properties: { tenant_id: { type: "number" }, limit: { type: "number" } },
-    },
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" }, limit: { type: "number" } } },
   },
   {
     name: "get_order",
     description: "Get a single order with its line items",
-    inputSchema: {
-      type: "object",
-      required: ["order_id", "tenant_id"],
-      properties: {
-        order_id: { type: "number" },
-        tenant_id: { type: "number" },
-      },
-    },
+    inputSchema: { type: "object", required: ["order_id", "tenant_id"], properties: { order_id: { type: "number" }, tenant_id: { type: "number" } } },
   },
   // Walls — Customers (2)
   {
     name: "list_customers",
     description: "List customers for a tenant",
-    inputSchema: {
-      type: "object",
-      required: ["tenant_id"],
-      properties: { tenant_id: { type: "number" }, limit: { type: "number" } },
-    },
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" }, limit: { type: "number" } } },
   },
   {
     name: "get_customer",
     description: "Get a customer by their numeric ID",
-    inputSchema: {
-      type: "object",
-      required: ["customer_id", "tenant_id"],
-      properties: {
-        customer_id: { type: "number" },
-        tenant_id: { type: "number" },
-      },
-    },
+    inputSchema: { type: "object", required: ["customer_id", "tenant_id"], properties: { customer_id: { type: "number" }, tenant_id: { type: "number" } } },
   },
   // Walls — Catalog (1)
   {
     name: "get_categories",
     description: "List product categories for a tenant",
-    inputSchema: {
-      type: "object",
-      required: ["tenant_id"],
-      properties: { tenant_id: { type: "number" } },
-    },
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" } } },
   },
   // Vaults — Analytics (4)
   {
     name: "get_analytics_summary",
     description: "Revenue, order count, and customer summary for a tenant",
-    inputSchema: {
-      type: "object",
-      required: ["tenant_id"],
-      properties: {
-        tenant_id: { type: "number" },
-        days: { type: "number", default: 30 },
-      },
-    },
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" }, days: { type: "number", default: 30 } } },
   },
   {
     name: "get_revenue_by_day",
     description: "Daily revenue breakdown for a tenant",
-    inputSchema: {
-      type: "object",
-      required: ["tenant_id"],
-      properties: {
-        tenant_id: { type: "number" },
-        days: { type: "number", default: 30 },
-      },
-    },
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" }, days: { type: "number", default: 30 } } },
   },
   {
     name: "get_top_products",
     description: "Top-selling products by revenue for a tenant",
-    inputSchema: {
-      type: "object",
-      required: ["tenant_id"],
-      properties: {
-        tenant_id: { type: "number" },
-        limit: { type: "number", default: 5 },
-      },
-    },
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" }, limit: { type: "number", default: 5 } } },
   },
   {
     name: "get_webhook_events",
     description: "Recent webhook events for a tenant",
-    inputSchema: {
-      type: "object",
-      required: ["tenant_id"],
-      properties: {
-        tenant_id: { type: "number" },
-        limit: { type: "number", default: 50 },
-      },
-    },
+    inputSchema: { type: "object", required: ["tenant_id"], properties: { tenant_id: { type: "number" }, limit: { type: "number", default: 50 } } },
   },
   // Spire — Platform (2)
   {
     name: "get_notifications",
     description: "Platform-wide notifications (most recent first)",
-    inputSchema: {
-      type: "object",
-      properties: { limit: { type: "number", default: 20 } },
-    },
+    inputSchema: { type: "object", properties: { limit: { type: "number", default: 20 } } },
   },
   {
     name: "get_platform_stats",
@@ -219,17 +126,13 @@ const TOOLS = [
   // Spire — AI (2, new)
   {
     name: "ask_kai",
-    description:
-      "Ask Kai, the UnifyOne AI assistant, a commerce-related question",
+    description: "Ask Kai, the UnifyOne AI assistant, a commerce-related question",
     inputSchema: {
       type: "object",
       required: ["question"],
       properties: {
         question: { type: "string" },
-        context: {
-          type: "object",
-          description: "Optional additional context (tenant_id, page, etc.)",
-        },
+        context: { type: "object", description: "Optional additional context (tenant_id, page, etc.)" },
       },
     },
   },
@@ -244,20 +147,9 @@ const TOOLS = [
         customer_email: { type: "string" },
         items: {
           type: "array",
-          items: {
-            type: "object",
-            required: ["product_id", "quantity"],
-            properties: {
-              product_id: { type: "number" },
-              quantity: { type: "number" },
-              unit_price: { type: "number" },
-            },
-          },
+          items: { type: "object", required: ["product_id", "quantity"], properties: { product_id: { type: "number" }, quantity: { type: "number" }, unit_price: { type: "number" } } },
         },
-        payment_method: {
-          type: "string",
-          enum: ["stripe", "paypal", "square", "shopify"],
-        },
+        payment_method: { type: "string", enum: ["stripe", "paypal", "square", "shopify"] },
         notes: { type: "string" },
       },
     },
@@ -265,18 +157,13 @@ const TOOLS = [
   // DealFlow — Referral & Affiliate (9)
   {
     name: "list_deals",
-    description:
-      "List referral/affiliate deals with optional category, difficulty, and search filters",
+    description: "List referral/affiliate deals with optional category, difficulty, and search filters",
     inputSchema: {
       type: "object",
       properties: {
         tenant_id: { type: "number", description: "Filter by tenant" },
         category: { type: "string", description: "Category filter" },
-        difficulty: {
-          type: "string",
-          enum: ["easy", "medium", "hard"],
-          description: "Difficulty filter",
-        },
+        difficulty: { type: "string", enum: ["easy", "medium", "hard"], description: "Difficulty filter" },
         search: { type: "string", description: "Search term" },
         limit: { type: "number", description: "Max results" },
       },
@@ -284,8 +171,7 @@ const TOOLS = [
   },
   {
     name: "get_deal",
-    description:
-      "Get a single deal by ID with full details, requirements, and promo code",
+    description: "Get a single deal by ID with full details, requirements, and promo code",
     inputSchema: {
       type: "object",
       required: ["deal_id"],
@@ -294,8 +180,7 @@ const TOOLS = [
   },
   {
     name: "search_deals",
-    description:
-      "Full-text search across deal titles, descriptions, and brands",
+    description: "Full-text search across deal titles, descriptions, and brands",
     inputSchema: {
       type: "object",
       required: ["query"],
@@ -308,8 +193,7 @@ const TOOLS = [
   },
   {
     name: "get_deal_recommendations",
-    description:
-      "Get personalized deal recommendations based on user behavior and preferences",
+    description: "Get personalized deal recommendations based on user behavior and preferences",
     inputSchema: {
       type: "object",
       required: ["user_id"],
@@ -322,8 +206,7 @@ const TOOLS = [
   },
   {
     name: "manage_wishlist",
-    description:
-      "Add or remove a deal from a user's wishlist; action=add|remove|list",
+    description: "Add or remove a deal from a user's wishlist; action=add|remove|list",
     inputSchema: {
       type: "object",
       required: ["user_id", "action"],
@@ -350,24 +233,19 @@ const TOOLS = [
   },
   {
     name: "generate_deal_content",
-    description:
-      "Generate AI-written blog post or SEO landing page content for a deal",
+    description: "Generate AI-written blog post or SEO landing page content for a deal",
     inputSchema: {
       type: "object",
       required: ["deal_id", "content_type"],
       properties: {
         deal_id: { type: "string" },
-        content_type: {
-          type: "string",
-          enum: ["blog_post", "landing_page", "description"],
-        },
+        content_type: { type: "string", enum: ["blog_post", "landing_page", "description"] },
       },
     },
   },
   {
     name: "get_feature_flags",
-    description:
-      "List all A/B test feature flags and their current rollout percentages",
+    description: "List all A/B test feature flags and their current rollout percentages",
     inputSchema: {
       type: "object",
       properties: { tenant_id: { type: "number" } },
@@ -375,8 +253,7 @@ const TOOLS = [
   },
   {
     name: "set_feature_flag",
-    description:
-      "Enable/disable a feature flag or change its rollout percentage",
+    description: "Enable/disable a feature flag or change its rollout percentage",
     inputSchema: {
       type: "object",
       required: ["flag_id", "enabled"],
@@ -390,8 +267,7 @@ const TOOLS = [
   // Shopify Theme (5)
   {
     name: "get_theme_sections",
-    description:
-      "List all available Shopify theme sections with their schema settings",
+    description: "List all available Shopify theme sections with their schema settings",
     inputSchema: {
       type: "object",
       properties: { tenant_id: { type: "number" } },
@@ -427,26 +303,14 @@ const TOOLS = [
       required: ["tenant_id", "section", "settings"],
       properties: {
         tenant_id: { type: "number" },
-        section: {
-          type: "string",
-          enum: [
-            "hero",
-            "trust-bar",
-            "featured-collections",
-            "brand-story",
-            "featured-products",
-            "testimonials",
-            "newsletter",
-          ],
-        },
+        section: { type: "string", enum: ["hero", "trust-bar", "featured-collections", "brand-story", "featured-products", "testimonials", "newsletter"] },
         settings: { type: "object" },
       },
     },
   },
   {
     name: "get_loyalty_config",
-    description:
-      "Get the loyalty program configuration for a tenant's Shopify theme",
+    description: "Get the loyalty program configuration for a tenant's Shopify theme",
     inputSchema: {
       type: "object",
       required: ["tenant_id"],
@@ -476,8 +340,7 @@ const TOOLS = [
   },
   {
     name: "simulate_compound_purity",
-    description:
-      "Run a purity simulation for a terpene compound at a given concentration",
+    description: "Run a purity simulation for a terpene compound at a given concentration",
     inputSchema: {
       type: "object",
       required: ["compound_slug", "purity_percentage"],
@@ -489,8 +352,7 @@ const TOOLS = [
   },
   {
     name: "get_coa_data",
-    description:
-      "Retrieve Certificate of Analysis (COA) entries with lab results",
+    description: "Retrieve Certificate of Analysis (COA) entries with lab results",
     inputSchema: {
       type: "object",
       properties: {
@@ -501,8 +363,7 @@ const TOOLS = [
   },
   {
     name: "list_terp_products",
-    description:
-      "List TerpForge products by category with pricing and terpene profiles",
+    description: "List TerpForge products by category with pricing and terpene profiles",
     inputSchema: {
       type: "object",
       properties: {
@@ -519,34 +380,18 @@ const TOOLS = [
       type: "object",
       required: ["compound_slugs"],
       properties: {
-        compound_slugs: {
-          type: "array",
-          items: { type: "string" },
-          minItems: 2,
-        },
+        compound_slugs: { type: "array", items: { type: "string" }, minItems: 2 },
       },
     },
   },
   // Knowledge Graph (6)
   {
     name: "query_graph",
-    description:
-      "Query the knowledge graph with a filter to find nodes and edges",
+    description: "Query the knowledge graph with a filter to find nodes and edges",
     inputSchema: {
       type: "object",
       properties: {
-        node_type: {
-          type: "string",
-          enum: [
-            "project",
-            "session",
-            "file",
-            "tool",
-            "model",
-            "commit",
-            "author",
-          ],
-        },
+        node_type: { type: "string", enum: ["project", "session", "file", "tool", "model", "commit", "author"] },
         label: { type: "string" },
         limit: { type: "number" },
       },
@@ -559,8 +404,7 @@ const TOOLS = [
   },
   {
     name: "trigger_graph_ingest",
-    description:
-      "Trigger a data ingestion run for a specified connector source",
+    description: "Trigger a data ingestion run for a specified connector source",
     inputSchema: {
       type: "object",
       required: ["source"],
@@ -572,8 +416,7 @@ const TOOLS = [
   },
   {
     name: "search_graph_nodes",
-    description:
-      "Full-text search across knowledge graph node labels and metadata",
+    description: "Full-text search across knowledge graph node labels and metadata",
     inputSchema: {
       type: "object",
       required: ["query"],
@@ -586,8 +429,7 @@ const TOOLS = [
   },
   {
     name: "get_brain_activity",
-    description:
-      "Get recent Brain layer activity — spike rates, weight-change rates, and region histograms",
+    description: "Get recent Brain layer activity — spike rates, weight-change rates, and region histograms",
     inputSchema: {
       type: "object",
       properties: { seconds: { type: "number" } },
@@ -601,24 +443,19 @@ const TOOLS = [
   // PixelForge Studio (5)
   {
     name: "list_pixel_assets",
-    description:
-      "List pixel art assets (sprites, tilesets, animations) for a tenant",
+    description: "List pixel art assets (sprites, tilesets, animations) for a tenant",
     inputSchema: {
       type: "object",
       properties: {
         tenant_id: { type: "number" },
-        asset_type: {
-          type: "string",
-          enum: ["sprite", "tileset", "animation"],
-        },
+        asset_type: { type: "string", enum: ["sprite", "tileset", "animation"] },
         limit: { type: "number" },
       },
     },
   },
   {
     name: "get_pixel_asset",
-    description:
-      "Get a single pixel art asset with its frame data, palette, and export URLs",
+    description: "Get a single pixel art asset with its frame data, palette, and export URLs",
     inputSchema: {
       type: "object",
       required: ["asset_id"],
@@ -636,17 +473,13 @@ const TOOLS = [
         name: { type: "string" },
         width: { type: "number" },
         height: { type: "number" },
-        asset_type: {
-          type: "string",
-          enum: ["sprite", "tileset", "animation"],
-        },
+        asset_type: { type: "string", enum: ["sprite", "tileset", "animation"] },
       },
     },
   },
   {
     name: "export_sprite_sheet",
-    description:
-      "Export a pixel asset's frames as a base64-encoded PNG sprite sheet",
+    description: "Export a pixel asset's frames as a base64-encoded PNG sprite sheet",
     inputSchema: {
       type: "object",
       required: ["asset_id"],
@@ -659,8 +492,7 @@ const TOOLS = [
   },
   {
     name: "get_asset_metadata",
-    description:
-      "Get metadata for a pixel asset including palette, frame count, size, and creation date",
+    description: "Get metadata for a pixel asset including palette, frame count, size, and creation date",
     inputSchema: {
       type: "object",
       required: ["asset_id"],
@@ -670,11 +502,7 @@ const TOOLS = [
 ];
 
 // ── Tool dispatcher ───────────────────────────────────────────────────────────
-function parsePositiveInteger(
-  value,
-  name,
-  { required = true, defaultValue } = {}
-) {
+function parsePositiveInteger(value, name, { required = true, defaultValue } = {}) {
   if (value == null || value === "") {
     if (required) throw new Error(`Missing required numeric ${name}`);
     return defaultValue;
@@ -687,10 +515,7 @@ function parsePositiveInteger(
 }
 
 function parseLimit(value, defaultValue) {
-  return parsePositiveInteger(value, "limit", {
-    required: false,
-    defaultValue,
-  });
+  return parsePositiveInteger(value, "limit", { required: false, defaultValue });
 }
 
 function parseDays(value, defaultValue = 30) {
@@ -720,32 +545,19 @@ async function callTool(name, args) {
     }
 
     case "get_tenant_info":
-      return db.getTenantById(
-        parsePositiveInteger(args.tenant_id, "tenant_id")
-      );
+      return db.getTenantById(parsePositiveInteger(args.tenant_id, "tenant_id"));
 
     case "list_products":
-      return db.getProducts(parsePositiveInteger(args.tenant_id, "tenant_id"), {
-        limit: parseLimit(args.limit, 50),
-      });
+      return db.getProducts(parsePositiveInteger(args.tenant_id, "tenant_id"), { limit: parseLimit(args.limit, 50) });
 
     case "get_product":
-      return db.getProductById(
-        parsePositiveInteger(args.product_id, "product_id"),
-        parsePositiveInteger(args.tenant_id, "tenant_id")
-      );
+      return db.getProductById(parsePositiveInteger(args.product_id, "product_id"), parsePositiveInteger(args.tenant_id, "tenant_id"));
 
     case "search_products": {
       const tenantId = parsePositiveInteger(args.tenant_id, "tenant_id");
-      const all = await db.getProducts(tenantId, {
-        search: String(args.query ?? ""),
-      });
+      const all = await db.getProducts(tenantId, { search: String(args.query ?? "") });
       const q = String(args.query ?? "").toLowerCase();
-      return all.filter(
-        p =>
-          p.name?.toLowerCase().includes(q) ||
-          p.description?.toLowerCase().includes(q)
-      );
+      return all.filter((p) => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
     }
 
     case "get_inventory":
@@ -755,67 +567,38 @@ async function callTool(name, args) {
       );
 
     case "get_low_stock_products": {
-      const rows = await db.getLowStockProducts(
-        parsePositiveInteger(args.tenant_id, "tenant_id")
-      );
-      const threshold = parsePositiveInteger(args.threshold, "threshold", {
-        required: false,
-      });
+      const rows = await db.getLowStockProducts(parsePositiveInteger(args.tenant_id, "tenant_id"));
+      const threshold = parsePositiveInteger(args.threshold, "threshold", { required: false });
       if (threshold == null) return rows;
-      return rows.filter(row => Number(row?.inv?.quantity) <= threshold);
+      return rows.filter((row) => Number(row?.inv?.quantity) <= threshold);
     }
 
     case "list_orders":
-      return db.getOrders(parsePositiveInteger(args.tenant_id, "tenant_id"), {
-        limit: parseLimit(args.limit, 50),
-      });
+      return db.getOrders(parsePositiveInteger(args.tenant_id, "tenant_id"), { limit: parseLimit(args.limit, 50) });
 
     case "get_order":
-      return db.getOrderWithItems(
-        parsePositiveInteger(args.order_id, "order_id"),
-        parsePositiveInteger(args.tenant_id, "tenant_id")
-      );
+      return db.getOrderWithItems(parsePositiveInteger(args.order_id, "order_id"), parsePositiveInteger(args.tenant_id, "tenant_id"));
 
     case "list_customers":
-      return db.getCustomers(
-        parsePositiveInteger(args.tenant_id, "tenant_id"),
-        { limit: parseLimit(args.limit, 50) }
-      );
+      return db.getCustomers(parsePositiveInteger(args.tenant_id, "tenant_id"), { limit: parseLimit(args.limit, 50) });
 
     case "get_customer":
-      return db.getCustomerById(
-        parsePositiveInteger(args.customer_id, "customer_id"),
-        parsePositiveInteger(args.tenant_id, "tenant_id")
-      );
+      return db.getCustomerById(parsePositiveInteger(args.customer_id, "customer_id"), parsePositiveInteger(args.tenant_id, "tenant_id"));
 
     case "get_categories":
-      return db.getCategories(
-        parsePositiveInteger(args.tenant_id, "tenant_id")
-      );
+      return db.getCategories(parsePositiveInteger(args.tenant_id, "tenant_id"));
 
     case "get_analytics_summary":
-      return db.getAnalyticsSummary(
-        parsePositiveInteger(args.tenant_id, "tenant_id"),
-        parseDays(args.days)
-      );
+      return db.getAnalyticsSummary(parsePositiveInteger(args.tenant_id, "tenant_id"), parseDays(args.days));
 
     case "get_revenue_by_day":
-      return db.getRevenueByDay(
-        parsePositiveInteger(args.tenant_id, "tenant_id"),
-        parseDays(args.days)
-      );
+      return db.getRevenueByDay(parsePositiveInteger(args.tenant_id, "tenant_id"), parseDays(args.days));
 
     case "get_top_products":
-      return db.getTopProducts(
-        parsePositiveInteger(args.tenant_id, "tenant_id"),
-        parseLimit(args.limit, 5)
-      );
+      return db.getTopProducts(parsePositiveInteger(args.tenant_id, "tenant_id"), parseLimit(args.limit, 5));
 
     case "get_webhook_events":
-      return db.getWebhookEvents(
-        parsePositiveInteger(args.tenant_id, "tenant_id"),
-        parseLimit(args.limit, 50)
-      );
+      return db.getWebhookEvents(parsePositiveInteger(args.tenant_id, "tenant_id"), parseLimit(args.limit, 50));
 
     case "get_notifications": {
       const drizzle = await db.getDb();
@@ -832,19 +615,16 @@ async function callTool(name, args) {
     case "get_platform_stats": {
       const tenants = await db.getAllTenants();
       const tenantIds = tenants
-        .map(tenant => Number(tenant?.id))
-        .filter(tenantId => Number.isSafeInteger(tenantId) && tenantId > 0);
+        .map((tenant) => Number(tenant?.id))
+        .filter((tenantId) => Number.isSafeInteger(tenantId) && tenantId > 0);
       const summaries = await Promise.all(
-        tenantIds.map(tenantId =>
-          db.getAnalyticsSummary(tenantId, 30).catch(() => null)
-        )
+        tenantIds.map((tenantId) => db.getAnalyticsSummary(tenantId, 30).catch(() => null))
       );
       const totals = summaries.reduce(
         (acc, summary) => ({
           totalRevenue: acc.totalRevenue + Number(summary?.totalRevenue ?? 0),
           orderCount: acc.orderCount + Number(summary?.orderCount ?? 0),
-          customerCount:
-            acc.customerCount + Number(summary?.customerCount ?? 0),
+          customerCount: acc.customerCount + Number(summary?.customerCount ?? 0),
           productCount: acc.productCount + Number(summary?.productCount ?? 0),
         }),
         { totalRevenue: 0, orderCount: 0, customerCount: 0, productCount: 0 }
@@ -896,46 +676,27 @@ async function callTool(name, args) {
         throw new Error("Missing required order items");
       }
       const items = args.items.map((item, index) => {
-        const productId = parsePositiveInteger(
-          item?.product_id,
-          `items[${index}].product_id`
-        );
-        const quantity = parsePositiveInteger(
-          item?.quantity,
-          `items[${index}].quantity`
-        );
-        const unitPrice = parseNonNegativeNumber(
-          item?.unit_price,
-          `items[${index}].unit_price`
-        );
+        const productId = parsePositiveInteger(item?.product_id, `items[${index}].product_id`);
+        const quantity = parsePositiveInteger(item?.quantity, `items[${index}].quantity`);
+        const unitPrice = parseNonNegativeNumber(item?.unit_price, `items[${index}].unit_price`);
         return {
           productId,
-          productName:
-            item?.product_name != null
-              ? String(item.product_name)
-              : `Product #${productId}`,
+          productName: item?.product_name != null ? String(item.product_name) : `Product #${productId}`,
           quantity,
           unitPrice,
         };
       });
-      const subtotal = items.reduce(
-        (sum, item) => sum + item.unitPrice * item.quantity,
-        0
-      );
+      const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
       const orderNumber = `MCP-${Date.now()}`;
       return db.createOrder(
         {
           tenantId,
           orderNumber,
-          customerEmail:
-            args.customer_email != null ? String(args.customer_email) : null,
+          customerEmail: args.customer_email != null ? String(args.customer_email) : null,
           subtotal: subtotal.toFixed(2),
           total: subtotal.toFixed(2),
           status: "pending",
-          paymentMethod:
-            args.payment_method != null
-              ? String(args.payment_method)
-              : "stripe",
+          paymentMethod: args.payment_method != null ? String(args.payment_method) : "stripe",
           notes: args.notes != null ? String(args.notes) : null,
         },
         items
@@ -948,13 +709,8 @@ async function callTool(name, args) {
       return {
         deals: [],
         total: 0,
-        message:
-          "Connect DealFlow (ksksrbiz-arch/reddit-referral-mark) to load deals.",
-        filters: {
-          category: args.category,
-          difficulty: args.difficulty,
-          search: args.search,
-        },
+        message: "Connect DealFlow (ksksrbiz-arch/reddit-referral-mark) to load deals.",
+        filters: { category: args.category, difficulty: args.difficulty, search: args.search },
       };
 
     case "get_deal":
@@ -975,27 +731,13 @@ async function callTool(name, args) {
       return { deals: [], total: 0, query: String(args.query) };
 
     case "get_deal_recommendations":
-      return {
-        recommendations: [],
-        user_id: String(args.user_id),
-        message: "Connect DealFlow for personalized recommendations.",
-      };
+      return { recommendations: [], user_id: String(args.user_id), message: "Connect DealFlow for personalized recommendations." };
 
     case "manage_wishlist":
-      return {
-        action: String(args.action),
-        user_id: String(args.user_id),
-        items: [],
-        success: true,
-      };
+      return { action: String(args.action), user_id: String(args.user_id), items: [], success: true };
 
     case "track_deal_conversion":
-      return {
-        tracked: true,
-        deal_id: String(args.deal_id),
-        event_type: String(args.event_type),
-        ts: new Date().toISOString(),
-      };
+      return { tracked: true, deal_id: String(args.deal_id), event_type: String(args.event_type), ts: new Date().toISOString() };
 
     case "generate_deal_content":
       return {
@@ -1008,153 +750,50 @@ async function callTool(name, args) {
     case "get_feature_flags":
       return {
         flags: [
-          {
-            id: "flag_hero_v2",
-            name: "Hero V2",
-            enabled: true,
-            rollout_percentage: 50,
-          },
-          {
-            id: "flag_deals_grid",
-            name: "Deals Grid Layout",
-            enabled: false,
-            rollout_percentage: 0,
-          },
+          { id: "flag_hero_v2", name: "Hero V2", enabled: true, rollout_percentage: 50 },
+          { id: "flag_deals_grid", name: "Deals Grid Layout", enabled: false, rollout_percentage: 0 },
         ],
         tenant_id: args.tenant_id ?? null,
       };
 
     case "set_feature_flag":
-      return {
-        flag_id: String(args.flag_id),
-        enabled: Boolean(args.enabled),
-        rollout_percentage: args.rollout_percentage ?? 100,
-        updated: true,
-      };
+      return { flag_id: String(args.flag_id), enabled: Boolean(args.enabled), rollout_percentage: args.rollout_percentage ?? 100, updated: true };
 
     // ── Shopify Theme ─────────────────────────────────────────────────────────
 
     case "get_theme_sections":
       return {
         sections: [
-          {
-            name: "hero",
-            enabled: true,
-            description: "Full-width hero banner with CTA",
-          },
-          {
-            name: "trust-bar",
-            enabled: true,
-            description: "Trust signals and feature icons",
-          },
-          {
-            name: "featured-collections",
-            enabled: true,
-            description: "Highlighted product collections",
-          },
-          {
-            name: "brand-story",
-            enabled: true,
-            description: "Brand narrative and values",
-          },
-          {
-            name: "featured-products",
-            enabled: true,
-            description: "Hand-picked featured products",
-          },
-          {
-            name: "testimonials",
-            enabled: true,
-            description: "Customer reviews and ratings",
-          },
-          {
-            name: "newsletter",
-            enabled: true,
-            description: "Email signup with discount offer",
-          },
+          { name: "hero", enabled: true, description: "Full-width hero banner with CTA" },
+          { name: "trust-bar", enabled: true, description: "Trust signals and feature icons" },
+          { name: "featured-collections", enabled: true, description: "Highlighted product collections" },
+          { name: "brand-story", enabled: true, description: "Brand narrative and values" },
+          { name: "featured-products", enabled: true, description: "Hand-picked featured products" },
+          { name: "testimonials", enabled: true, description: "Customer reviews and ratings" },
+          { name: "newsletter", enabled: true, description: "Email signup with discount offer" },
         ],
       };
 
     case "sync_theme_config":
-      return {
-        synced: true,
-        tenant_id: Number(args.tenant_id),
-        section: String(args.section),
-        ts: new Date().toISOString(),
-      };
+      return { synced: true, tenant_id: Number(args.tenant_id), section: String(args.section), ts: new Date().toISOString() };
 
     case "get_theme_performance":
-      return {
-        tenant_id: Number(args.tenant_id),
-        performance: 94,
-        accessibility: 98,
-        seo: 100,
-        best_practices: 96,
-        ts: new Date().toISOString(),
-      };
+      return { tenant_id: Number(args.tenant_id), performance: 94, accessibility: 98, seo: 100, best_practices: 96, ts: new Date().toISOString() };
 
     case "update_section_settings":
-      return {
-        updated: true,
-        tenant_id: Number(args.tenant_id),
-        section: String(args.section),
-        settings: args.settings,
-        ts: new Date().toISOString(),
-      };
+      return { updated: true, tenant_id: Number(args.tenant_id), section: String(args.section), settings: args.settings, ts: new Date().toISOString() };
 
     case "get_loyalty_config":
-      return {
-        tenant_id: Number(args.tenant_id),
-        provider: "smile.io",
-        points_per_dollar: 10,
-        tiers: ["Bronze", "Silver", "Gold"],
-        enabled: true,
-      };
+      return { tenant_id: Number(args.tenant_id), provider: "smile.io", points_per_dollar: 10, tiers: ["Bronze", "Silver", "Gold"], enabled: true };
 
     // ── TerpForge ─────────────────────────────────────────────────────────────
 
     case "list_compounds":
       return {
         compounds: [
-          {
-            name: "Beta-Caryophyllene",
-            slug: "beta-caryophyllene",
-            formula: "C15H24",
-            mw: "204.35",
-            bp: "130°C",
-            density: "0.905",
-            logP: "4.7",
-            profile: "CALM",
-            profileColor: "#6366f1",
-            aroma: "Spicy, woody, peppery",
-            description: "A sesquiterpene found in black pepper and cloves.",
-          },
-          {
-            name: "Limonene",
-            slug: "limonene",
-            formula: "C10H16",
-            mw: "136.23",
-            bp: "176°C",
-            density: "0.840",
-            logP: "4.57",
-            profile: "FOCUS",
-            profileColor: "#f59e0b",
-            aroma: "Citrus, fresh, bright",
-            description: "A monocyclic monoterpene with uplifting properties.",
-          },
-          {
-            name: "Linalool",
-            slug: "linalool",
-            formula: "C10H18O",
-            mw: "154.25",
-            bp: "198°C",
-            density: "0.858",
-            logP: "2.97",
-            profile: "CALM",
-            profileColor: "#8b5cf6",
-            aroma: "Floral, lavender, sweet",
-            description: "Found in over 200 plants with calming effects.",
-          },
+          { name: "Beta-Caryophyllene", slug: "beta-caryophyllene", formula: "C15H24", mw: "204.35", bp: "130°C", density: "0.905", logP: "4.7", profile: "CALM", profileColor: "#6366f1", aroma: "Spicy, woody, peppery", description: "A sesquiterpene found in black pepper and cloves." },
+          { name: "Limonene", slug: "limonene", formula: "C10H16", mw: "136.23", bp: "176°C", density: "0.840", logP: "4.57", profile: "FOCUS", profileColor: "#f59e0b", aroma: "Citrus, fresh, bright", description: "A monocyclic monoterpene with uplifting properties." },
+          { name: "Linalool", slug: "linalool", formula: "C10H18O", mw: "154.25", bp: "198°C", density: "0.858", logP: "2.97", profile: "CALM", profileColor: "#8b5cf6", aroma: "Floral, lavender, sweet", description: "Found in over 200 plants with calming effects." },
         ],
         total: 3,
         profile_filter: args.profile ?? null,
@@ -1162,89 +801,26 @@ async function callTool(name, args) {
 
     case "get_compound": {
       const compounds = {
-        "beta-caryophyllene": {
-          name: "Beta-Caryophyllene",
-          slug: "beta-caryophyllene",
-          formula: "C15H24",
-          mw: "204.35",
-          bp: "130°C",
-          density: "0.905",
-          logP: "4.7",
-          profile: "CALM",
-          profileColor: "#6366f1",
-          aroma: "Spicy, woody, peppery",
-          description: "A sesquiterpene found in black pepper.",
-          radar: {
-            recovery: 0.6,
-            focus: 0.4,
-            calm: 0.9,
-            antiInflammatory: 0.95,
-            aromaticStrength: 0.7,
-            bioavailability: 0.65,
-          },
-          bars: {
-            potency: 0.8,
-            volatility: 0.4,
-            polarity: 0.3,
-            abundance: 0.75,
-          },
-        },
+        "beta-caryophyllene": { name: "Beta-Caryophyllene", slug: "beta-caryophyllene", formula: "C15H24", mw: "204.35", bp: "130°C", density: "0.905", logP: "4.7", profile: "CALM", profileColor: "#6366f1", aroma: "Spicy, woody, peppery", description: "A sesquiterpene found in black pepper.", radar: { recovery: 0.6, focus: 0.4, calm: 0.9, antiInflammatory: 0.95, aromaticStrength: 0.7, bioavailability: 0.65 }, bars: { potency: 0.8, volatility: 0.4, polarity: 0.3, abundance: 0.75 } },
       };
-      return (
-        compounds[String(args.slug)] ?? {
-          error: `Compound '${args.slug}' not found.`,
-        }
-      );
+      return compounds[String(args.slug)] ?? { error: `Compound '${args.slug}' not found.` };
     }
 
     case "simulate_compound_purity": {
       const pct = Number(args.purity_percentage);
       let tier, note, pass;
-      if (pct >= 95) {
-        tier = "Pharmaceutical";
-        note = "Exceptional purity, suitable for medical applications.";
-        pass = true;
-      } else if (pct >= 85) {
-        tier = "Premium";
-        note = "High purity, suitable for premium consumer products.";
-        pass = true;
-      } else if (pct >= 70) {
-        tier = "Standard";
-        note = "Acceptable purity for general use.";
-        pass = true;
-      } else {
-        tier = "Below Standard";
-        note = "Purity below acceptable threshold. Reformulation recommended.";
-        pass = false;
-      }
-      return {
-        compound_slug: String(args.compound_slug),
-        purity_percentage: pct,
-        tier,
-        note,
-        pass,
-      };
+      if (pct >= 95) { tier = "Pharmaceutical"; note = "Exceptional purity, suitable for medical applications."; pass = true; }
+      else if (pct >= 85) { tier = "Premium"; note = "High purity, suitable for premium consumer products."; pass = true; }
+      else if (pct >= 70) { tier = "Standard"; note = "Acceptable purity for general use."; pass = true; }
+      else { tier = "Below Standard"; note = "Purity below acceptable threshold. Reformulation recommended."; pass = false; }
+      return { compound_slug: String(args.compound_slug), purity_percentage: pct, tier, note, pass };
     }
 
     case "get_coa_data":
       return {
         entries: [
-          {
-            id: "coa-001",
-            product: "Beta-Caryophyllene 99%",
-            lab: "ACS Labs",
-            terpenes_pct: 98.7,
-            pass: true,
-            date: "2025-01-15",
-          },
-          {
-            id: "coa-002",
-            product: "Limonene Blend",
-            lab: "SC Labs",
-            terpenes_pct: 94.2,
-            pass: true,
-            date: "2025-01-20",
-          },
+          { id: "coa-001", product: "Beta-Caryophyllene 99%", lab: "ACS Labs", terpenes_pct: 98.7, pass: true, date: "2025-01-15" },
+          { id: "coa-002", product: "Limonene Blend", lab: "SC Labs", terpenes_pct: 94.2, pass: true, date: "2025-01-20" },
         ],
         total: 2,
       };
@@ -1252,27 +828,9 @@ async function callTool(name, args) {
     case "list_terp_products":
       return {
         products: [
-          {
-            id: "tp-001",
-            name: "TerpForge Hoodie",
-            category: "apparel",
-            price: 65.0,
-            profile: null,
-          },
-          {
-            id: "tp-002",
-            name: "Ultrasonic Diffuser Pro",
-            category: "hardware",
-            price: 89.99,
-            profile: "CALM",
-          },
-          {
-            id: "tp-003",
-            name: "CBD Wellness Drops",
-            category: "wellness",
-            price: 45.0,
-            profile: "RECOVERY",
-          },
+          { id: "tp-001", name: "TerpForge Hoodie", category: "apparel", price: 65.00, profile: null },
+          { id: "tp-002", name: "Ultrasonic Diffuser Pro", category: "hardware", price: 89.99, profile: "CALM" },
+          { id: "tp-003", name: "CBD Wellness Drops", category: "wellness", price: 45.00, profile: "RECOVERY" },
         ],
         total: 3,
         category_filter: args.category ?? null,
@@ -1280,19 +838,9 @@ async function callTool(name, args) {
 
     case "compare_terpene_profiles":
       return {
-        compounds: (Array.isArray(args.compound_slugs)
-          ? args.compound_slugs
-          : []
-        ).map(slug => ({
+        compounds: (Array.isArray(args.compound_slugs) ? args.compound_slugs : []).map(slug => ({
           slug,
-          radar: {
-            recovery: Math.random(),
-            focus: Math.random(),
-            calm: Math.random(),
-            antiInflammatory: Math.random(),
-            aromaticStrength: Math.random(),
-            bioavailability: Math.random(),
-          },
+          radar: { recovery: Math.random(), focus: Math.random(), calm: Math.random(), antiInflammatory: Math.random(), aromaticStrength: Math.random(), bioavailability: Math.random() },
         })),
       };
 
@@ -1302,119 +850,47 @@ async function callTool(name, args) {
       return {
         nodes: [],
         edges: [],
-        filter: {
-          node_type: args.node_type ?? null,
-          label: args.label ?? null,
-        },
-        message:
-          "Connect the Knowledge Graph (ksksrbiz-arch/Graph) to query real data.",
+        filter: { node_type: args.node_type ?? null, label: args.label ?? null },
+        message: "Connect the Knowledge Graph (ksksrbiz-arch/Graph) to query real data.",
       };
 
     case "get_graph_stats":
-      return {
-        total_nodes: 0,
-        total_edges: 0,
-        by_type: {},
-        last_ingested: null,
-        message: "No data ingested yet. Run a connector to populate the graph.",
-      };
+      return { total_nodes: 0, total_edges: 0, by_type: {}, last_ingested: null, message: "No data ingested yet. Run a connector to populate the graph." };
 
     case "trigger_graph_ingest":
-      return {
-        job_id: `ingest-${Date.now()}`,
-        status: "queued",
-        source: String(args.source),
-        ts: new Date().toISOString(),
-      };
+      return { job_id: `ingest-${Date.now()}`, status: "queued", source: String(args.source), ts: new Date().toISOString() };
 
     case "search_graph_nodes":
-      return {
-        nodes: [],
-        query: String(args.query),
-        message: "No nodes found. Ingest data first.",
-      };
+      return { nodes: [], query: String(args.query), message: "No nodes found. Ingest data first." };
 
     case "get_brain_activity":
-      return {
-        spikes_per_sec: 0,
-        weight_changes: 0,
-        regions: {},
-        seconds: Number(args.seconds ?? 60),
-        message: "Brain layer inactive. Connect the Graph system to activate.",
-      };
+      return { spikes_per_sec: 0, weight_changes: 0, regions: {}, seconds: Number(args.seconds ?? 60), message: "Brain layer inactive. Connect the Graph system to activate." };
 
     case "get_connector_configs":
       return {
         connectors: [
-          {
-            id: "claude_code",
-            name: "Claude Code Sessions",
-            type: "claude_code",
-            connected: false,
-          },
+          { id: "claude_code", name: "Claude Code Sessions", type: "claude_code", connected: false },
           { id: "git", name: "Git History", type: "git", connected: false },
-          {
-            id: "markdown",
-            name: "Markdown Notes",
-            type: "markdown",
-            connected: false,
-          },
+          { id: "markdown", name: "Markdown Notes", type: "markdown", connected: false },
         ],
       };
 
     // ── PixelForge Studio ─────────────────────────────────────────────────────
 
     case "list_pixel_assets":
-      return {
-        assets: [],
-        total: 0,
-        message:
-          "No assets yet. Create your first pixel art asset in the PixelForge Studio.",
-      };
+      return { assets: [], total: 0, message: "No assets yet. Create your first pixel art asset in the PixelForge Studio." };
 
     case "get_pixel_asset":
-      return {
-        id: String(args.asset_id),
-        name: "Unknown Asset",
-        asset_type: "sprite",
-        width: 16,
-        height: 16,
-        frames: [],
-        palette: [],
-        message: "Asset not found.",
-      };
+      return { id: String(args.asset_id), name: "Unknown Asset", asset_type: "sprite", width: 16, height: 16, frames: [], palette: [], message: "Asset not found." };
 
     case "create_pixel_asset":
-      return {
-        id: `pf-${Date.now()}`,
-        tenant_id: Number(args.tenant_id),
-        name: String(args.name),
-        width: Number(args.width),
-        height: Number(args.height),
-        asset_type: String(args.asset_type),
-        frames: 1,
-        created_at: new Date().toISOString(),
-      };
+      return { id: `pf-${Date.now()}`, tenant_id: Number(args.tenant_id), name: String(args.name), width: Number(args.width), height: Number(args.height), asset_type: String(args.asset_type), frames: 1, created_at: new Date().toISOString() };
 
     case "export_sprite_sheet":
-      return {
-        asset_id: String(args.asset_id),
-        png_base64: "",
-        width: 0,
-        height: 0,
-        frame_count: 0,
-        message: "Export requires the PixelForge Studio to be connected.",
-      };
+      return { asset_id: String(args.asset_id), png_base64: "", width: 0, height: 0, frame_count: 0, message: "Export requires the PixelForge Studio to be connected." };
 
     case "get_asset_metadata":
-      return {
-        asset_id: String(args.asset_id),
-        palette: [],
-        frame_count: 0,
-        size_bytes: 0,
-        created_at: null,
-        message: "Asset metadata not found.",
-      };
+      return { asset_id: String(args.asset_id), palette: [], frame_count: 0, size_bytes: 0, created_at: null, message: "Asset metadata not found." };
 
     default:
       throw new Error(`Unknown tool: ${name}`);
@@ -1430,17 +906,14 @@ function rpcOk(id, result) {
 }
 
 function rpcErr(id, code, message) {
-  return new Response(
-    JSON.stringify({ jsonrpc: "2.0", id, error: { code, message } }),
-    {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
-    }
-  );
+  return new Response(JSON.stringify({ jsonrpc: "2.0", id, error: { code, message } }), {
+    status: 200,
+    headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+  });
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
-export default async req => {
+export default async (req) => {
   const method = req.method.toUpperCase();
 
   // CORS preflight
@@ -1458,10 +931,7 @@ export default async req => {
         tools: TOOLS.length,
         timestamp: new Date().toISOString(),
       }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
-      }
+      { status: 200, headers: { "Content-Type": "application/json", ...CORS_HEADERS } }
     );
   }
 
@@ -1477,17 +947,10 @@ export default async req => {
   if (mcpApiKey) {
     const authHeader = req.headers.get("Authorization") ?? "";
     if (authHeader !== `Bearer ${mcpApiKey}`) {
-      return new Response(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          id: null,
-          error: { code: -32000, message: "Unauthorized" },
-        }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32000, message: "Unauthorized" } }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
   }
 
@@ -1517,14 +980,9 @@ export default async req => {
       if (!toolName) return rpcErr(id, -32602, "Missing params.name");
       try {
         const result = await callTool(toolName, params.arguments ?? {});
-        return rpcOk(id, {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-        });
+        return rpcOk(id, { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] });
       } catch (e) {
-        return rpcOk(id, {
-          content: [{ type: "text", text: e.message }],
-          isError: true,
-        });
+        return rpcOk(id, { content: [{ type: "text", text: e.message }], isError: true });
       }
     }
 
