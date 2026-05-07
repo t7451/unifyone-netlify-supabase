@@ -10,13 +10,14 @@
  * Required env: N8N_WEBHOOK_SECRET. n8n must be configured to send the
  * header `X-N8N-Signature: sha256=<hex digest of body>`.
  *
- * The body is intentionally NOT processed yet — this is a verified-receipt
- * stub. Wire event-specific handlers (workflow run completion, etc.) once
- * the contract with the n8n side is finalized.
+ * Verified bodies are parsed and persisted to the `webhook_events` table
+ * for audit. Type-specific handlers can pick up rows by source="n8n" and
+ * status="pending" and process them out-of-band.
  */
 import express, { type Express, type Request, type Response } from "express";
 import crypto from "crypto";
 import { errMsg } from "./_core/errors";
+import { logSystemWebhookEvent, logWebhookEvent } from "./db";
 
 function safeEqual(a: string, b: string): boolean {
   const ab = Buffer.from(a);
@@ -46,6 +47,31 @@ export function verifyN8nSignature(
   return safeEqual(provided, expected);
 }
 
+/**
+ * Coerce a tenant id from common shapes seen in n8n payloads. n8n
+ * workflows typically forward UnifyOne event payloads that already
+ * contain `tenant_id` / `tenantId`. Returns `null` if absent or
+ * non-numeric so the row falls through to the system-level log.
+ */
+function extractTenantId(event: unknown): number | null {
+  if (!event || typeof event !== "object") return null;
+  const obj = event as Record<string, unknown>;
+  const candidates = [
+    obj.tenantId,
+    obj.tenant_id,
+    (obj.payload as Record<string, unknown> | undefined)?.tenantId,
+    (obj.payload as Record<string, unknown> | undefined)?.tenant_id,
+  ];
+  for (const c of candidates) {
+    if (typeof c === "number" && Number.isFinite(c) && c > 0) return c;
+    if (typeof c === "string") {
+      const n = Number(c);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+  }
+  return null;
+}
+
 export function registerN8nWebhookRoutes(app: Express) {
   app.post(
     "/api/n8n/webhook",
@@ -66,8 +92,6 @@ export function registerN8nWebhookRoutes(app: Express) {
           return res.status(401).json({ error: "Invalid signature" });
         }
 
-        // Parse and dispatch — currently a stub. Persist to webhook_events
-        // for audit once event types are defined.
         let event: unknown;
         try {
           event = JSON.parse(rawBody);
@@ -75,8 +99,29 @@ export function registerN8nWebhookRoutes(app: Express) {
           return res.status(400).json({ error: "Invalid JSON" });
         }
         const evt = event as { type?: string; workflowId?: string };
+        const eventType = evt.type ?? "unknown";
+
+        // Persist for audit + downstream processing. Tenant-scope when the
+        // payload carries a tenantId; otherwise log as system-level.
+        const tenantId = extractTenantId(event);
+        const payload =
+          event && typeof event === "object"
+            ? (event as Record<string, unknown>)
+            : { raw: rawBody };
+        try {
+          if (tenantId != null) {
+            await logWebhookEvent("n8n", eventType, payload, tenantId);
+          } else {
+            await logSystemWebhookEvent("n8n", eventType, payload);
+          }
+        } catch (err: unknown) {
+          // Persistence failure shouldn't fail the webhook ack — n8n would
+          // retry and we'd ack twice. Log and continue.
+          console.error("[n8n] failed to persist webhook event:", errMsg(err));
+        }
+
         console.log(
-          `[n8n] Webhook verified: type=${evt.type ?? "unknown"} workflow=${evt.workflowId ?? "unknown"}`
+          `[n8n] Webhook verified: type=${eventType} workflow=${evt.workflowId ?? "unknown"} tenantId=${tenantId ?? "system"}`
         );
 
         res.status(200).json({ received: true });

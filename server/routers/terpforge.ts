@@ -3,6 +3,10 @@
  *
  * tRPC router for TerpForge — terpene-science commerce platform.
  * All procedures are protected (require auth) and proxy to the MCP tool layer.
+ *
+ * Tenant isolation: every mcpCallTool() invocation passes
+ * `authoritativeTenantId: ctx.user.tenantId` so the MCP worker scopes
+ * results to the caller's authenticated tenant.
  */
 
 import { z } from "zod";
@@ -15,6 +19,14 @@ import { mcpRateLimiter } from "../_core/rateLimiter";
 // per user to cap abuse and runaway egress costs.
 const protectedProcedure = rateLimitedProcedure(mcpRateLimiter, "mcp:terp");
 
+function requireTenantId(ctx: { user: { tenantId: number | null } }): number {
+  const tenantId = ctx.user.tenantId;
+  if (tenantId == null) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "No active tenant" });
+  }
+  return tenantId;
+}
+
 export const terpforgeRouter = router({
   listCompounds: protectedProcedure
     .input(
@@ -23,12 +35,17 @@ export const terpforgeRouter = router({
         limit: z.number().int().positive().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenantId(ctx);
       try {
-        return await mcpCallTool("list_compounds", {
-          profile: input.profile,
-          limit: input.limit,
-        });
+        return await mcpCallTool(
+          "list_compounds",
+          {
+            profile: input.profile,
+            limit: input.limit,
+          },
+          { authoritativeTenantId: tenantId }
+        );
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });
@@ -37,9 +54,14 @@ export const terpforgeRouter = router({
 
   getCompound: protectedProcedure
     .input(z.object({ slug: z.string().min(1) }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenantId(ctx);
       try {
-        return await mcpCallTool("get_compound", { slug: input.slug });
+        return await mcpCallTool(
+          "get_compound",
+          { slug: input.slug },
+          { authoritativeTenantId: tenantId }
+        );
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });
@@ -53,12 +75,17 @@ export const terpforgeRouter = router({
         purityPercentage: z.number().min(0).max(100),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = requireTenantId(ctx);
       try {
-        return await mcpCallTool("simulate_compound_purity", {
-          compound_slug: input.compoundSlug,
-          purity_percentage: input.purityPercentage,
-        });
+        return await mcpCallTool(
+          "simulate_compound_purity",
+          {
+            compound_slug: input.compoundSlug,
+            purity_percentage: input.purityPercentage,
+          },
+          { authoritativeTenantId: tenantId }
+        );
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });
@@ -72,12 +99,17 @@ export const terpforgeRouter = router({
         limit: z.number().int().positive().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenantId(ctx);
       try {
-        return await mcpCallTool("get_coa_data", {
-          product_id: input.productId,
-          limit: input.limit,
-        });
+        return await mcpCallTool(
+          "get_coa_data",
+          {
+            product_id: input.productId,
+            limit: input.limit,
+          },
+          { authoritativeTenantId: tenantId }
+        );
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });
@@ -92,13 +124,18 @@ export const terpforgeRouter = router({
         limit: z.number().int().positive().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenantId(ctx);
       try {
-        return await mcpCallTool("list_terp_products", {
-          category: input.category,
-          profile: input.profile,
-          limit: input.limit,
-        });
+        return await mcpCallTool(
+          "list_terp_products",
+          {
+            category: input.category,
+            profile: input.profile,
+            limit: input.limit,
+          },
+          { authoritativeTenantId: tenantId }
+        );
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });
@@ -107,11 +144,16 @@ export const terpforgeRouter = router({
 
   compareProfiles: protectedProcedure
     .input(z.object({ compoundSlugs: z.array(z.string().min(1)).min(2) }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenantId(ctx);
       try {
-        return await mcpCallTool("compare_terpene_profiles", {
-          compound_slugs: input.compoundSlugs,
-        });
+        return await mcpCallTool(
+          "compare_terpene_profiles",
+          {
+            compound_slugs: input.compoundSlugs,
+          },
+          { authoritativeTenantId: tenantId }
+        );
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });

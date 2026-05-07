@@ -2,13 +2,10 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
-import {
-  socialPosts,
-  socialAccounts,
-  webhookEvents,
-} from "../../drizzle/schema";
+import { socialPosts } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { invokeLLM } from "../_core/llm";
+import { fireAutomations } from "../lib/automationDispatch";
 
 async function requireDb() {
   const db = await getDb();
@@ -192,7 +189,12 @@ Return JSON with keys: ${input.platforms.join(", ")}`;
       return posts;
     }),
 
-  // ── Publish Post (mark as published) ───────────────────────────────────────
+  // ── Publish Post ────────────────────────────────────────────────────────────
+  // Marks the post as published in the local DB and fires the
+  // `social.post.published` automation event so operator-configured n8n /
+  // Zapier workflows can perform the actual cross-posting to platform APIs.
+  // UnifyOne itself does not own per-platform OAuth tokens — distribution is
+  // delegated to the operator's automation tools.
   publish: protectedProcedure
     .input(z.object({ postId: z.number() }))
     .mutation(async ({ ctx, input }) => {
@@ -211,24 +213,19 @@ Return JSON with keys: ${input.platforms.join(", ")}`;
           )
         );
 
-      // Fire n8n webhook for social_share event
       try {
         const [post] = await db
           .select()
           .from(socialPosts)
           .where(eq(socialPosts.id, input.postId));
         if (post) {
-          await db.insert(webhookEvents).values({
-            tenantId,
-            source: "internal",
-            eventType: "social_share",
-            payload: {
-              postId: post.id,
-              platforms: post.platforms,
-              userId: ctx.user.id,
-              campaignTag: post.campaignTag,
-            },
-            status: "pending",
+          await fireAutomations(tenantId, "social.post.published", {
+            postId: post.id,
+            platforms: post.platforms,
+            userId: ctx.user.id,
+            campaignTag: post.campaignTag,
+            content: post.content,
+            utmCampaign: post.utmCampaign,
           });
         }
       } catch {
@@ -255,65 +252,6 @@ Return JSON with keys: ${input.platforms.join(", ")}`;
             eq(socialPosts.tenantId, tenantId)
           )
         );
-      return { success: true };
-    }),
-
-  // ── Get Accounts ────────────────────────────────────────────────────────────
-  getAccounts: protectedProcedure.query(async ({ ctx }) => {
-    const db = await requireDb();
-    const tenantId = ctx.user.tenantId;
-    if (!tenantId) return [];
-
-    return db
-      .select()
-      .from(socialAccounts)
-      .where(eq(socialAccounts.tenantId, tenantId));
-  }),
-
-  // ── Connect Account (stub — real OAuth per platform) ───────────────────────
-  connectAccount: protectedProcedure
-    .input(
-      z.object({
-        platform: z.enum([
-          "twitter",
-          "instagram",
-          "linkedin",
-          "facebook",
-          "tiktok",
-        ]),
-        handle: z.string().min(1),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const db = await requireDb();
-      const tenantId = ctx.user.tenantId;
-      if (!tenantId)
-        throw new TRPCError({ code: "FORBIDDEN", message: "No active tenant" });
-
-      // Upsert: update if exists, insert if not
-      const existing = await db
-        .select()
-        .from(socialAccounts)
-        .where(
-          and(
-            eq(socialAccounts.tenantId, tenantId),
-            eq(socialAccounts.platform, input.platform)
-          )
-        );
-
-      if (existing.length > 0) {
-        await db
-          .update(socialAccounts)
-          .set({ handle: input.handle, isConnected: false })
-          .where(eq(socialAccounts.id, existing[0].id));
-      } else {
-        await db.insert(socialAccounts).values({
-          tenantId,
-          platform: input.platform,
-          handle: input.handle,
-          isConnected: false,
-        });
-      }
       return { success: true };
     }),
 

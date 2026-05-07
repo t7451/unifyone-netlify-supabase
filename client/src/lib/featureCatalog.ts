@@ -125,17 +125,6 @@ export const FEATURE_CATEGORIES: FeatureCategory[] = [
           "Confirm profile, security, timezone, and notification settings.",
         icon: Settings,
       },
-      {
-        label: "Authorization Hub",
-        path: "/auth-hub",
-        description:
-          "Review access posture, authentication rails, and permission-sensitive controls.",
-        outcome:
-          "Keep user access and identity systems understandable as the platform grows.",
-        firstAction:
-          "Check connected auth providers and role-sensitive routes.",
-        icon: ShieldCheck,
-      },
     ],
   },
   {

@@ -14,11 +14,11 @@ The challenge system (`gamification` module) has logic to resolve challenges, bu
 three columns required for automated completion tracking were not included in the
 initial schema:
 
-| Missing column | Table | Purpose |
-|---|---|---|
-| `resolvedAt` | `challenges` | Timestamp when the challenge was closed/resolved |
-| `winnerNotified` | `challenges` | Flag — `true` once the winner has been emailed |
-| `loserNotified` | `challenges` | Flag — `true` once the losing participant has been emailed |
+| Missing column   | Table        | Purpose                                                    |
+| ---------------- | ------------ | ---------------------------------------------------------- |
+| `resolvedAt`     | `challenges` | Timestamp when the challenge was closed/resolved           |
+| `winnerNotified` | `challenges` | Flag — `true` once the winner has been emailed             |
+| `loserNotified`  | `challenges` | Flag — `true` once the losing participant has been emailed |
 
 **To implement:** Add a Drizzle migration adding these columns to the `challenges`
 table, then wire the challenge-completion cron/webhook to set them.
@@ -27,18 +27,11 @@ table, then wire the challenge-completion cron/webhook to set them.
 
 ## Phase 23 — Meta Conversions API (CAPI)
 
-**Status:** Partially implemented — event emission exists; storage tables are missing.
-
-Two tables referenced in the Meta CAPI integration are not yet created:
-
-| Missing table | Purpose |
-|---|---|
-| `meta_capi_events` | Persist each event sent to the Meta Conversions API for deduplication and audit |
-| `n8n_schedules` | Store n8n workflow schedule definitions for event-driven CAPI triggers |
-
-**To implement:** Add a migration creating both tables, then update
-`server/meta/capi.ts` to write events to `meta_capi_events` before/after
-forwarding them to Facebook.
+**Status:** ✅ Tables exist — both `meta_capi_events` and `n8n_schedules`
+are defined in `drizzle/schema.ts` (lines 1193 and 1215 as of 2026-05-07).
+What still remains is wiring `server/meta/capi.ts` to insert into
+`meta_capi_events` before/after the Facebook forward — currently CAPI
+emission is fire-and-forget without persistence.
 
 ---
 
@@ -48,27 +41,27 @@ The following integrations have placeholder code or are stubbed out. They are
 intentionally deferred until there is sufficient user demand or budget for the
 required API subscriptions.
 
-| Integration | Status | Notes |
-|---|---|---|
-| **Mailchimp** | Stub | Audience sync is planned; API credentials not yet configured |
-| **Zapier** | Stub | Webhook trigger exists; Zapier app submission is pending |
-| **Plaid** | Not started | Needed for bank account linking in the Money Manager |
-| **Google Maps** | Not started | Store location picker on the tenant settings page |
-| **Twilio** | Not started | SMS notifications for order status updates |
-| **SendGrid** | Not started | Alternative email provider to Resend (for volume pricing) |
-| **Slack** | Not started | Internal alerts (low stock, new order) to a Slack channel |
+| Integration     | Status                        | Notes                                                                                                                        |
+| --------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Mailchimp**   | Live HTTP ping + saved config | `automation.ts:227-248` validates credentials against Mailchimp `/3.0/ping`; outstanding piece is two-way audience sync      |
+| **Zapier**      | Webhook hooks live            | `automation.ts:131-186` issues outbound POSTs end-to-end; outstanding piece is publishing UnifyOne as an official Zapier app |
+| **Plaid**       | Not started                   | Needed for bank account linking in the Money Manager                                                                         |
+| **Google Maps** | Not started                   | Store location picker on the tenant settings page                                                                            |
+| **Twilio**      | Not started                   | SMS notifications for order status updates                                                                                   |
+| **SendGrid**    | Not started                   | Alternative email provider to Resend (for volume pricing)                                                                    |
+| **Slack**       | Not started                   | Internal alerts (low stock, new order) to a Slack channel                                                                    |
 
 ---
 
 ## Planned Security Improvements
 
-| Item | Priority | Notes |
-|---|---|---|
-| **Two-Factor Authentication (2FA)** | High | TOTP-based 2FA for admin accounts. Requires `totp_secrets` table and a QR-code setup flow. |
-| **Social Login** | Medium | Google / GitHub OAuth as alternatives to email+password. |
-| **GDPR Review** | High | Data export (`/api/user/export`) and account deletion (`/api/user/delete`) endpoints are required for EU users. A cookie-consent banner is also needed. |
-| **Refresh Token Rotation** | Medium | Current JWTs are long-lived (1 year). Implementing short-lived access tokens + refresh rotation would significantly reduce blast radius on token theft. |
-| **Admin IP Allowlist** | Low | Restrict `/api/admin/*` endpoints to known IP ranges in production. |
+| Item                                | Priority | Notes                                                                                                                                                   |
+| ----------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Two-Factor Authentication (2FA)** | High     | TOTP-based 2FA for admin accounts. Requires `totp_secrets` table and a QR-code setup flow.                                                              |
+| **Social Login**                    | Medium   | Google / GitHub OAuth as alternatives to email+password.                                                                                                |
+| **GDPR Review**                     | High     | Data export (`/api/user/export`) and account deletion (`/api/user/delete`) endpoints are required for EU users. A cookie-consent banner is also needed. |
+| **Refresh Token Rotation**          | Medium   | Current JWTs are long-lived (1 year). Implementing short-lived access tokens + refresh rotation would significantly reduce blast radius on token theft. |
+| **Admin IP Allowlist**              | Low      | Restrict `/api/admin/*` endpoints to known IP ranges in production.                                                                                     |
 
 ---
 
@@ -82,6 +75,7 @@ and logs every event, but only processes `customer.subscription.*` and
 
 **Planned improvement:** Move credit top-up handling (currently synchronous in
 `server/billing.ts`) to this background function. This will:
+
 - Prevent Stripe from retrying due to slow fulfillment (> 30 s)
 - Enable idempotent retry logic backed by the `stripe_events` table
 - Decouple credit fulfillment from the main request path
