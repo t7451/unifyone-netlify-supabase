@@ -640,7 +640,7 @@ async function callTool(name, args) {
     case "ask_kai": {
       const question = String(args.question ?? "").trim();
       if (!question) {
-        throw new Error("Missing required question");
+        throw new Error("ask_kai requires a non-empty question parameter");
       }
       const context =
         args.context && typeof args.context === "object"
