@@ -147,7 +147,10 @@ function mockSuccessfulLlm(responseId = "resp-kai") {
   });
 }
 
-function mockRefusalLlm(responseId = "resp-refusal") {
+function mockRefusalLlm(
+  content = "Sorry, I can't help with that.",
+  responseId = "resp-refusal"
+) {
   invokeLLMMock.mockResolvedValue({
     id: responseId,
     created: 1,
@@ -155,7 +158,7 @@ function mockRefusalLlm(responseId = "resp-refusal") {
     choices: [
       {
         index: 0,
-        message: { role: "assistant", content: "Sorry, I can't help with that." },
+        message: { role: "assistant", content },
         finish_reason: "stop",
       },
     ],
@@ -432,28 +435,35 @@ describe("aiRouter Kai Neon credit enforcement", () => {
   });
 
   it("replaces generic refusal replies with an actionable Kai fallback message", async () => {
-    const rows: LedgerRow[] = [
-      {
-        id: 1,
-        tenantId: 44,
-        userId: 7,
-        type: "purchase",
-        creditDelta: 5,
-        idempotencyKey: "purchase",
-      },
+    const refusalVariants = [
+      "Sorry, I can't help with that.",
+      "I'm sorry, I cannot assist with that.",
     ];
-    vi.mocked(getDb).mockResolvedValue(createAiDb(rows) as any);
-    mockRefusalLlm("resp-refusal-fallback");
 
-    const caller = aiRouter.createCaller(ctx as any);
-    const result = await caller.chat({
-      message: "Help me plan sales for next week",
-      context: "dashboard",
-      model: "kai-fast",
-    });
+    for (const [index, refusal] of refusalVariants.entries()) {
+      const rows: LedgerRow[] = [
+        {
+          id: 1,
+          tenantId: 44,
+          userId: 7,
+          type: "purchase",
+          creditDelta: 5,
+          idempotencyKey: `purchase-${index}`,
+        },
+      ];
+      vi.mocked(getDb).mockResolvedValue(createAiDb(rows) as any);
+      mockRefusalLlm(refusal, `resp-refusal-fallback-${index}`);
 
-    expect(result.reply).toContain("I can help with your dashboard workflow.");
-    expect(result.reply).toContain("concrete action plan");
+      const caller = aiRouter.createCaller(ctx as any);
+      const result = await caller.chat({
+        message: "Help me plan sales for next week",
+        context: "dashboard",
+        model: "kai-fast",
+      });
+
+      expect(result.reply).toContain("I can help with your dashboard workflow.");
+      expect(result.reply).toContain("concrete action plan");
+    }
   });
 
   it("fails closed when Neon is unavailable before production chat LLM work", async () => {

@@ -35,19 +35,36 @@ const CONTEXT_PROMPTS: Record<string, string> = {
   leads: `You are Kai, the UnifyOne AI assistant. The user is managing their leads pipeline. Help them qualify leads, draft outreach messages, suggest follow-up timing, and identify patterns in their conversion funnel. Be sales-focused and direct.`,
 };
 
+// Matches generic refusal variants such as:
+// - "Sorry, I can't help with that."
+// - "I'm sorry, I cannot assist with that."
+// Pattern structure:
+// 1) apology prefix (sorry / i'm sorry)
+// 2) refusal verb (can't/cannot help|assist)
+// 3) target object (that/with that)
 const KAI_IN_SCOPE_REFUSAL_PATTERN =
   /\b(?:sorry|i(?:'|’)m sorry)[^.!?]*\b(?:can(?:not|['’]t)\s+help|can(?:not|['’]t)\s+assist)\b[^.!?]*\b(?:that|with that)\b/i;
+const KAI_CONTEXT_KEY_SET = new Set(Object.keys(CONTEXT_PROMPTS));
+
+function formatKaiContextLabel(context: string): string {
+  if (!KAI_CONTEXT_KEY_SET.has(context)) {
+    return "current";
+  }
+  // Context keys in this router are kebab-case (e.g. "money-manager").
+  return context.replace(/-/g, " ");
+}
 
 function recoverKaiGenericRefusal(
   reply: string,
   context: string
 ): string | null {
-  if (!KAI_IN_SCOPE_REFUSAL_PATTERN.test(reply.trim())) {
+  const trimmedReply = reply.trim();
+  if (!KAI_IN_SCOPE_REFUSAL_PATTERN.test(trimmedReply)) {
     return null;
   }
 
-  const contextLabel = context.replace(/-/g, " ");
-  return `I can help with your ${contextLabel} workflow. I don’t have enough live context yet, so share your goal, timeframe, and key numbers (revenue/orders/traffic), and I’ll give you a concrete action plan.`;
+  const contextLabel = formatKaiContextLabel(context);
+  return `I can help with your ${contextLabel} workflow. I don’t have enough live context yet, so share your goal, timeframe, and relevant metrics, and I’ll give you a concrete action plan.`;
 }
 
 const CONTEXT_SUGGESTIONS: Record<string, string[]> = {
