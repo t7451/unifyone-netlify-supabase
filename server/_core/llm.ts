@@ -359,6 +359,8 @@ export const DEFAULT_FALLBACK_CHAIN = [
 ];
 
 const FORGE_THINKING_MODELS = new Set(["gemini-2.5-flash", "gemini-2.5-pro"]);
+// Keep the default conservative for OpenAI-compatible providers; callers that
+// need long-form output can still opt in with maxTokens/max_tokens.
 const DEFAULT_MAX_TOKENS = 4096;
 
 const RETRYABLE_400_ERROR_CODES = new Set([

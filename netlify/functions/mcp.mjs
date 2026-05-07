@@ -17,6 +17,7 @@ export const config = { path: "/mcp" };
 
 const SERVICE_NAME = "unifyone-mcp";
 const SERVICE_VERSION = "2.1.0";
+const KAI_MAX_TOKENS = 1024;
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -647,7 +648,7 @@ async function callTool(name, args) {
           : "";
       const { invokeLLM } = await import("../../server/_core/llm.js");
       const response = await invokeLLM({
-        maxTokens: 1024,
+        maxTokens: KAI_MAX_TOKENS,
         messages: [
           {
             role: "system",
