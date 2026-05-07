@@ -147,6 +147,28 @@ function mockSuccessfulLlm(responseId = "resp-kai") {
   });
 }
 
+function mockRefusalLlm(responseId = "resp-refusal") {
+  invokeLLMMock.mockResolvedValue({
+    id: responseId,
+    created: 1,
+    model: "gemini-2.5-flash",
+    choices: [
+      {
+        index: 0,
+        message: { role: "assistant", content: "Sorry, I can't help with that." },
+        finish_reason: "stop",
+      },
+    ],
+    usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+    metering: {
+      estimatedCredits: 1,
+      chargedCredits: 1,
+      balanceAfter: 999,
+      success: true,
+    },
+  });
+}
+
 function mockSuccessfulLlmSequence(prefix = "resp-kai-stress") {
   let counter = 0;
   invokeLLMMock.mockImplementation(async () => {
@@ -407,6 +429,31 @@ describe("aiRouter Kai Neon credit enforcement", () => {
         ledgerDebited: true,
       });
     }
+  });
+
+  it("replaces generic refusal replies with an actionable Kai fallback message", async () => {
+    const rows: LedgerRow[] = [
+      {
+        id: 1,
+        tenantId: 44,
+        userId: 7,
+        type: "purchase",
+        creditDelta: 5,
+        idempotencyKey: "purchase",
+      },
+    ];
+    vi.mocked(getDb).mockResolvedValue(createAiDb(rows) as any);
+    mockRefusalLlm("resp-refusal-fallback");
+
+    const caller = aiRouter.createCaller(ctx as any);
+    const result = await caller.chat({
+      message: "Help me plan sales for next week",
+      context: "dashboard",
+      model: "kai-fast",
+    });
+
+    expect(result.reply).toContain("I can help with your dashboard workflow.");
+    expect(result.reply).toContain("concrete action plan");
   });
 
   it("fails closed when Neon is unavailable before production chat LLM work", async () => {

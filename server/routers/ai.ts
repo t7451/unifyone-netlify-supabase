@@ -35,6 +35,21 @@ const CONTEXT_PROMPTS: Record<string, string> = {
   leads: `You are Kai, the UnifyOne AI assistant. The user is managing their leads pipeline. Help them qualify leads, draft outreach messages, suggest follow-up timing, and identify patterns in their conversion funnel. Be sales-focused and direct.`,
 };
 
+const KAI_IN_SCOPE_REFUSAL_PATTERN =
+  /\b(?:sorry|i(?:'|’)m sorry)[^.!?]*\b(?:can(?:not|['’]t)\s+help|can(?:not|['’]t)\s+assist)\b[^.!?]*\b(?:that|with that)\b/i;
+
+function recoverKaiGenericRefusal(
+  reply: string,
+  context: string
+): string | null {
+  if (!KAI_IN_SCOPE_REFUSAL_PATTERN.test(reply.trim())) {
+    return null;
+  }
+
+  const contextLabel = context.replace(/-/g, " ");
+  return `I can help with your ${contextLabel} workflow. I don’t have enough live context yet, so share your goal, timeframe, and key numbers (revenue/orders/traffic), and I’ll give you a concrete action plan.`;
+}
+
 const CONTEXT_SUGGESTIONS: Record<string, string[]> = {
   general: [
     "What can UnifyOne help me with today?",
@@ -228,6 +243,7 @@ export const aiRouter = router({
 
         const systemPrompt = [
           baseSystemPrompt,
+          "For in-scope commerce/workflow questions, do not give generic refusals. If data is missing, state what is missing and provide best-effort actionable guidance.",
           input.dataContext
             ? `\nUser-provided context:\n${input.dataContext}`
             : "",
@@ -352,6 +368,13 @@ export const aiRouter = router({
                 agentResult.toolCalls.map(t => t.name).join(", ")
               );
             }
+            const recovered = recoverKaiGenericRefusal(
+              assistantContent,
+              input.context
+            );
+            if (recovered) {
+              assistantContent = recovered;
+            }
           } else {
             const response = await invokeLLM({
               messages: llmMessages,
@@ -382,6 +405,13 @@ export const aiRouter = router({
               typeof rawContent === "string"
                 ? rawContent
                 : "I'm sorry, I couldn't generate a response. Please try again.";
+            const recovered = recoverKaiGenericRefusal(
+              assistantContent,
+              input.context
+            );
+            if (recovered) {
+              assistantContent = recovered;
+            }
           }
         } catch (llmError) {
           console.error(
