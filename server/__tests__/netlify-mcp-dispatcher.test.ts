@@ -18,8 +18,12 @@ const dbMock = vi.hoisted(() => ({
   createOrder: vi.fn(),
   getDb: vi.fn(),
 }));
+const invokeLLMMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../../server/db.js", () => dbMock);
+vi.mock("../../server/_core/llm.js", () => ({
+  invokeLLM: invokeLLMMock,
+}));
 
 const { default: handler } = await import("../../netlify/functions/mcp.mjs");
 
@@ -59,6 +63,14 @@ describe("Netlify MCP dispatcher", () => {
       orderCount: 2,
       customerCount: 3,
       productCount: 4,
+    });
+    invokeLLMMock.mockResolvedValue({
+      model: "gemini-2.5-flash",
+      choices: [
+        {
+          message: { content: "Kai says hello" },
+        },
+      ],
     });
   });
 
@@ -115,6 +127,31 @@ describe("Netlify MCP dispatcher", () => {
     expect(dbMock.getAnalyticsSummary).toHaveBeenCalledWith(8, 30);
     expect(dbMock.getAnalyticsSummary).not.toHaveBeenCalledWith(0, 30);
     expect(dbMock.getAnalyticsSummary).not.toHaveBeenCalledWith(undefined, 30);
+  });
+
+  it("routes ask_kai to the LLM-backed Kai responder", async () => {
+    const body = await callTool("ask_kai", {
+      question: "How do I grow revenue?",
+      context: { tenant_id: 7, page: "dashboard" },
+    });
+
+    expect(body.result.isError).toBeUndefined();
+    const payload = JSON.parse(body.result.content[0].text);
+    expect(payload).toMatchObject({
+      answer: "Kai says hello",
+      model: "gemini-2.5-flash",
+    });
+    expect(invokeLLMMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maxTokens: 1024,
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: "user",
+            content: expect.stringContaining("How do I grow revenue?"),
+          }),
+        ]),
+      })
+    );
   });
 
   it("keeps GET health, initialize, tools/list, and ping compatible", async () => {

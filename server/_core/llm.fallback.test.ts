@@ -105,9 +105,7 @@ describe("invokeLLMWithFallback", () => {
       modelChain: [GROQ_FALLBACK_MODEL],
     });
 
-    expect(out.choices[0].message.content).toBe(
-      `from ${GROQ_FALLBACK_MODEL}`
-    );
+    expect(out.choices[0].message.content).toBe(`from ${GROQ_FALLBACK_MODEL}`);
     expect(fetchSpy).toHaveBeenCalledTimes(2);
     expect(fetchSpy.mock.calls[1][0]).toBe(
       "https://api.groq.com/openai/v1/chat/completions"
@@ -168,6 +166,25 @@ describe("invokeLLMWithFallback", () => {
     expect(JSON.parse(fetchSpy.mock.calls[0][1].body)).not.toHaveProperty(
       "thinking"
     );
+    expect(JSON.parse(fetchSpy.mock.calls[0][1].body).max_tokens).toBe(4096);
+  });
+
+  it("falls back when a provider rejects an incompatible token limit", async () => {
+    fetchSpy
+      .mockImplementationOnce(() =>
+        mockErr(400, "bad request", "max_tokens is too large for this model")
+      )
+      .mockImplementationOnce(() => mockOk("gpt-4o-mini"));
+
+    const out = await invokeLLMWithFallback({
+      messages: [{ role: "user", content: "hi" }],
+      model: "claude-3-5-haiku",
+      modelChain: ["gpt-4o-mini"],
+      maxTokens: 32768,
+    });
+
+    expect(out.choices[0].message.content).toBe("from gpt-4o-mini");
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
   it("applies minimum credits and returns awaited metering metadata", async () => {

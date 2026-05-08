@@ -260,8 +260,7 @@ const resolveProviderUrl = (
   defaultBaseUrl: string,
   path: string
 ) => {
-  const root =
-    baseUrl && baseUrl.trim().length > 0 ? baseUrl : defaultBaseUrl;
+  const root = baseUrl && baseUrl.trim().length > 0 ? baseUrl : defaultBaseUrl;
   return `${root.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
 };
 
@@ -360,6 +359,10 @@ export const DEFAULT_FALLBACK_CHAIN = [
 ];
 
 const FORGE_THINKING_MODELS = new Set(["gemini-2.5-flash", "gemini-2.5-pro"]);
+// 4096 balances useful response length with broad OpenAI-compatible provider
+// limits; callers that need long-form output can still opt in with
+// maxTokens/max_tokens.
+const DEFAULT_MAX_TOKENS = 4096;
 
 const RETRYABLE_400_ERROR_CODES = new Set([
   "invalid_model",
@@ -375,6 +378,10 @@ const RETRYABLE_400_PATTERNS = [
   "does not exist",
   "unsupported model",
   "unsupported parameter",
+  "max_tokens",
+  "maximum context",
+  "maximum output",
+  "too many tokens",
   "unrecognized",
   "unknown parameter",
 ];
@@ -499,7 +506,8 @@ async function invokeOnce(
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = params.maxTokens ?? params.max_tokens ?? 32768;
+  payload.max_tokens =
+    params.maxTokens ?? params.max_tokens ?? DEFAULT_MAX_TOKENS;
   if (provider === "forge" && FORGE_THINKING_MODELS.has(providerModel)) {
     // The provider guard is intentional: a Groq-routed model such as
     // "groq/gemini-2.5-flash" is normalized to "gemini-2.5-flash", but Groq's

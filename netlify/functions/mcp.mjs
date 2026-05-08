@@ -17,6 +17,7 @@ export const config = { path: "/mcp" };
 
 const SERVICE_NAME = "unifyone-mcp";
 const SERVICE_VERSION = "2.1.0";
+const KAI_MAX_TOKENS = 1024;
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -637,11 +638,35 @@ async function callTool(name, args) {
     }
 
     case "ask_kai": {
-      // Stub: real implementation would call the LLM service / claudeGovernance router.
-      // Returns a structured placeholder so callers can verify the tool is wired.
+      const question = String(args.question ?? "").trim();
+      if (!question) {
+        throw new Error("ask_kai requires a non-empty question parameter");
+      }
+      const context =
+        args.context && typeof args.context === "object"
+          ? `\n\nContext:\n${JSON.stringify(args.context, null, 2)}`
+          : "";
+      const { invokeLLM } = await import("../../server/_core/llm.js");
+      const response = await invokeLLM({
+        maxTokens: KAI_MAX_TOKENS,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are Kai, the UnifyOne AI assistant. Answer commerce and platform questions concisely, tactically, and with clear next steps.",
+          },
+          {
+            role: "user",
+            content: `${question}${context}`,
+          },
+        ],
+      });
+      const answer =
+        response.choices?.[0]?.message?.content ||
+        "Kai could not generate a response.";
       return {
-        answer: `Kai received your question: "${args.question}". Connect MCP_API_KEY and BUILT_IN_FORGE_API_KEY to enable full AI responses.`,
-        model: "kai-stub",
+        answer,
+        model: response.model ?? "kai",
         ts: new Date().toISOString(),
       };
     }
