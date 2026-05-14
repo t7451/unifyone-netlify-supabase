@@ -56,7 +56,7 @@ const PRODUCTION_ORIGIN_HOSTS = new Set([
   "1commerce.online",
   "www.1commerce.online",
 ]);
-const DEV_ONLY_ORIGIN_HOSTS = new Set(["localhost", "127.0.0.1"]);
+const DEV_ONLY_ORIGIN_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 function isOriginAllowed(hostname: string): boolean {
   if (PRODUCTION_ORIGIN_HOSTS.has(hostname)) return true;

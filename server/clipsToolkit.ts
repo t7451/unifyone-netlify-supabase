@@ -110,8 +110,12 @@ export async function buildClipsDownloadResponse(
     );
   }
 
-  // Pass an ArrayBuffer slice — accepted as BodyInit by the standard
-  // Response constructor across both Node and Netlify fetch adapters.
+  // Buffer is a Node-only type; the standard `Response` constructor accepts
+  // `ArrayBuffer` (BodyInit) across both the Express and Netlify fetch
+  // adapters. Slice produces a new ArrayBuffer covering exactly the file's
+  // bytes — `as ArrayBuffer` is required because TS's `slice()` return type
+  // is `ArrayBufferLike` (which also includes SharedArrayBuffer that
+  // `Response` rejects).
   const arrayBuffer = body.buffer.slice(
     body.byteOffset,
     body.byteOffset + body.byteLength
