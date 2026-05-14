@@ -232,8 +232,12 @@ export const tenantRouter = router({
                 target: kaiCreditLedger.idempotencyKey,
               });
           }
-        } catch {
+        } catch (grantError) {
           // Intentionally non-fatal — tenant creation succeeds regardless.
+          console.error(
+            "[tenant.create] Starter Kai credit grant failed:",
+            grantError instanceof Error ? grantError.message : String(grantError)
+          );
         }
       })();
 

@@ -513,8 +513,10 @@ function FloatingAIWidget() {
     },
     onError: err => {
       const message = err.message || "";
-      const isCreditError =
-        err.data?.code === "FORBIDDEN" || /insufficient|credit/i.test(message);
+      // Only treat as a credit error when the message explicitly mentions
+      // insufficient credits — avoids conflating with other FORBIDDEN causes
+      // such as tenantProcedure blocking a user with no tenant context.
+      const isCreditError = /insufficient|credit/i.test(message);
       setMessages(prev => [
         ...prev,
         {
