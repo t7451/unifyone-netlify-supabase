@@ -48,13 +48,26 @@ function getPriceCents(): number {
  * Allow-list of origins the Checkout success/cancel URLs may point back to.
  * We never reflect an arbitrary client-supplied origin into Stripe — that would
  * let an attacker turn this endpoint into an open redirect.
+ *
+ * `localhost` is only permitted outside production so local dev still works.
  */
-const ALLOWED_ORIGIN_HOSTS = new Set([
+const PRODUCTION_ORIGIN_HOSTS = new Set([
   "clips.1commerce.online",
   "1commerce.online",
   "www.1commerce.online",
-  "localhost",
 ]);
+const DEV_ONLY_ORIGIN_HOSTS = new Set(["localhost", "127.0.0.1"]);
+
+function isOriginAllowed(hostname: string): boolean {
+  if (PRODUCTION_ORIGIN_HOSTS.has(hostname)) return true;
+  if (
+    process.env.NODE_ENV !== "production" &&
+    DEV_ONLY_ORIGIN_HOSTS.has(hostname)
+  ) {
+    return true;
+  }
+  return false;
+}
 
 function normalizeOrigin(input: string): string {
   let parsed: URL;
@@ -66,7 +79,7 @@ function normalizeOrigin(input: string): string {
   if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
     throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid origin" });
   }
-  if (!ALLOWED_ORIGIN_HOSTS.has(parsed.hostname)) {
+  if (!isOriginAllowed(parsed.hostname)) {
     throw new TRPCError({
       code: "BAD_REQUEST",
       message: "Origin not allowed for clips toolkit checkout",

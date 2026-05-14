@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   AlertTriangle,
@@ -24,23 +24,27 @@ export default function ClipsToolkitSuccess() {
 
   const getDownload = trpc.clipsToolkit.getDownload.useMutation();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Guard so the mutation fires exactly once per session id — Stripe redirects
+  // here with a stable session_id and we don't want to re-mint tokens on every
+  // render or React StrictMode double-invoke.
+  const fetchedForSessionRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!sessionId) {
       setErrorMessage("Missing checkout session id.");
       return;
     }
-    getDownload
-      .mutateAsync({ sessionId })
-      .catch((err: unknown) => {
-        const message =
-          err instanceof Error
-            ? err.message
-            : "Could not verify your purchase. Please contact support.";
-        setErrorMessage(message);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId]);
+    if (fetchedForSessionRef.current === sessionId) return;
+    fetchedForSessionRef.current = sessionId;
+
+    getDownload.mutateAsync({ sessionId }).catch((err: unknown) => {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Could not verify your purchase. Please contact support.";
+      setErrorMessage(message);
+    });
+  }, [sessionId, getDownload]);
 
   const downloadInfo = getDownload.data;
   const isVerifying = !errorMessage && !downloadInfo;

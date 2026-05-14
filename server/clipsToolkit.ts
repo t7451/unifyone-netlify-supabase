@@ -17,8 +17,6 @@ import type {
 } from "express";
 import { jwtVerify, SignJWT } from "jose";
 
-import { ENV } from "./_core/env";
-
 export const CLIPS_DOWNLOAD_FILENAME =
   "1Commerce_GenAI_Video_Startups_Funding_Analysis.xlsx";
 export const CLIPS_DOWNLOAD_CONTENT_TYPE =
@@ -35,9 +33,9 @@ const ASSET_PATH = path.join(
 );
 
 function getSecret(): Uint8Array {
-  // Read process.env directly so tests (and runtime secret rotation) work
-  // without needing the cached ENV object to be reinitialised.
-  const secret = process.env.JWT_SECRET || ENV.cookieSecret;
+  // Read process.env directly so the same secret is used as the rest of the
+  // app's session JWTs and so secret rotation takes effect without a restart.
+  const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error("JWT_SECRET is required to sign download tokens");
   }
