@@ -85,6 +85,17 @@ function normalizeOrigin(input: string): string {
       message: "Origin not allowed for clips toolkit checkout",
     });
   }
+
+  const isDevOnlyHost = DEV_ONLY_ORIGIN_HOSTS.has(parsed.hostname);
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (parsed.protocol === "http:" && (isProduction || !isDevOnlyHost)) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "HTTPS origin required for clips toolkit checkout",
+    });
+  }
+
   return `${parsed.protocol}//${parsed.host}`;
 }
 
