@@ -262,7 +262,7 @@ export const syncMonitorRouter = router({
         .groupBy(
           sql`DATE_TRUNC('hour', ${shopifySyncLog.createdAt})`
         )
-        .orderBy(sql`DATE_TRUNC('hour', ${shopifySyncLog.createdAt}) ASC`);
+        .orderBy(sql`hour ASC`);
 
       return rows.map(r => ({
         hour: r.hour,
