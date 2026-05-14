@@ -244,10 +244,10 @@ export const syncMonitorRouter = router({
         ...(input.storeId ? [eq(shopifySyncLog.storeId, input.storeId)] : [])
       );
 
-      // Group by hour bucket
+      // Group by hour bucket (PostgreSQL: DATE_TRUNC + TO_CHAR)
       const rows = await db
         .select({
-          hour: sql<string>`DATE_FORMAT(${shopifySyncLog.createdAt}, '%Y-%m-%d %H:00:00')`.as(
+          hour: sql<string>`TO_CHAR(DATE_TRUNC('hour', ${shopifySyncLog.createdAt}), 'YYYY-MM-DD HH24:00:00')`.as(
             "hour"
           ),
           avgLatency: avg(shopifySyncLog.latencyMs),
@@ -260,9 +260,9 @@ export const syncMonitorRouter = router({
         .from(shopifySyncLog)
         .where(baseWhere)
         .groupBy(
-          sql`DATE_FORMAT(${shopifySyncLog.createdAt}, '%Y-%m-%d %H:00:00')`
+          sql`DATE_TRUNC('hour', ${shopifySyncLog.createdAt})`
         )
-        .orderBy(sql`hour ASC`);
+        .orderBy(sql`DATE_TRUNC('hour', ${shopifySyncLog.createdAt}) ASC`);
 
       return rows.map(r => ({
         hour: r.hour,
