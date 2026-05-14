@@ -105,6 +105,8 @@ const Contact = lazy(() => import("./pages/Contact"));
 const SeoIndex = lazy(() => import("./pages/SeoIndex"));
 const SeoLanding = lazy(() => import("./pages/SeoLanding"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ClipsToolkit = lazy(() => import("./pages/ClipsToolkit"));
+const ClipsToolkitSuccess = lazy(() => import("./pages/ClipsToolkitSuccess"));
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -613,6 +615,8 @@ function Router() {
         )}
       />
       <Route path="/404" component={() => <NotFound />} />
+      <Route path="/clips" component={() => <ClipsToolkit />} />
+      <Route path="/clips/success" component={() => <ClipsToolkitSuccess />} />
       <Route>{() => <NotFound />}</Route>
     </Switch>
   );

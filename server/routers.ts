@@ -49,6 +49,7 @@ import { customersRouter } from "./routers/customers";
 import { discountsRouter } from "./routers/discounts";
 import { masterControlRouter } from "./routers/masterControl";
 import { kaiCreditsRouter } from "./routers/kaiCredits";
+import { clipsToolkitRouter } from "./routers/clipsToolkit";
 
 export const appRouter = router({
   system: systemRouter,
@@ -132,6 +133,7 @@ export const appRouter = router({
   discounts: discountsRouter,
   masterControl: masterControlRouter,
   kaiCredits: kaiCreditsRouter,
+  clipsToolkit: clipsToolkitRouter,
 });
 
 export type AppRouter = typeof appRouter;
