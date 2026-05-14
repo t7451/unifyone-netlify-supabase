@@ -57,6 +57,11 @@ export async function buildNonTrpcHandler(): Promise<
   ).catch(() => ({
     registerResourceDownloadFetchRoutes: null as unknown as FetchHandler | null,
   }));
+  const { registerClipsToolkitFetchRoutes } = await import(
+    "../clipsToolkit"
+  ).catch(() => ({
+    registerClipsToolkitFetchRoutes: null as unknown as FetchHandler | null,
+  }));
   const { registerAdminOpsFetchRoutes } = await import("../adminOps").catch(
     () => ({
       registerAdminOpsFetchRoutes: null as unknown as FetchHandler | null,
@@ -174,6 +179,21 @@ export async function buildNonTrpcHandler(): Promise<
       try {
         const result = await (
           registerResourceDownloadFetchRoutes as FetchHandler
+        )(req);
+        if (result) return result;
+      } catch (e: unknown) {
+        return Response.json({ error: (e as Error).message }, { status: 500 });
+      }
+    }
+
+    // Standalone clips toolkit instant-delivery download.
+    if (
+      path.startsWith("/api/clips-toolkit/") &&
+      registerClipsToolkitFetchRoutes
+    ) {
+      try {
+        const result = await (
+          registerClipsToolkitFetchRoutes as FetchHandler
         )(req);
         if (result) return result;
       } catch (e: unknown) {

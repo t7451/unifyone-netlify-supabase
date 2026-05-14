@@ -24,6 +24,7 @@ import { registerCliWebSocket } from "./cliWebSocket";
 import { resolveDatabaseUrl } from "../lib/databaseUrl";
 import { getNgrokUrl, startNgrokTunnel } from "./ngrok";
 import { registerResourceDownloadRoutes } from "../resourceDownloads";
+import { registerClipsToolkitRoutes } from "../clipsToolkit";
 
 /** Validate critical environment variables before the server accepts traffic. */
 function validateEnv() {
@@ -257,6 +258,7 @@ async function startServer() {
   registerOAuthRoutes(app);
   registerCustomAuthExpressRoutes(app);
   registerResourceDownloadRoutes(app);
+  registerClipsToolkitRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",
