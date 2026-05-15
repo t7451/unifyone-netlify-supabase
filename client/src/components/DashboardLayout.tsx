@@ -511,12 +511,19 @@ function FloatingAIWidget() {
       ]);
       if (!open) setUnread(n => n + 1);
     },
-    onError: () => {
+    onError: err => {
+      const message = err.message || "";
+      // Only treat as a credit error when the message explicitly mentions
+      // insufficient credits — avoids conflating with other FORBIDDEN causes
+      // such as tenantProcedure blocking a user with no tenant context.
+      const isCreditError = /insufficient|credit/i.test(message);
       setMessages(prev => [
         ...prev,
         {
           role: "assistant",
-          content: "Sorry, I encountered an error. Please try again.",
+          content: isCreditError
+            ? "You need Kai credits to continue. Visit the AI Assistant page to purchase a credit pack."
+            : "Sorry, I encountered an error. Please try again.",
         },
       ]);
     },
