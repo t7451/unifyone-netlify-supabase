@@ -244,12 +244,16 @@ export const syncMonitorRouter = router({
         ...(input.storeId ? [eq(shopifySyncLog.storeId, input.storeId)] : [])
       );
 
-      // Group by hour bucket
+      // Group by hour bucket (PostgreSQL).
+      // Use the same TO_CHAR expression in both SELECT and GROUP BY so
+      // PostgreSQL doesn't complain about a non-aggregate not being in the
+      // GROUP BY. The format produces a proper ISO-8601 UTC string
+      // (e.g. "2024-01-15T14:00:00Z") so that new Date(hour) parses
+      // correctly in all browsers including Safari.
+      const hourExpr = sql<string>`TO_CHAR(DATE_TRUNC('hour', ${shopifySyncLog.createdAt}) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')`;
       const rows = await db
         .select({
-          hour: sql<string>`DATE_FORMAT(${shopifySyncLog.createdAt}, '%Y-%m-%d %H:00:00')`.as(
-            "hour"
-          ),
+          hour: hourExpr.as("hour"),
           avgLatency: avg(shopifySyncLog.latencyMs),
           eventCount: count(),
           errorCount:
@@ -259,9 +263,7 @@ export const syncMonitorRouter = router({
         })
         .from(shopifySyncLog)
         .where(baseWhere)
-        .groupBy(
-          sql`DATE_FORMAT(${shopifySyncLog.createdAt}, '%Y-%m-%d %H:00:00')`
-        )
+        .groupBy(hourExpr)
         .orderBy(sql`hour ASC`);
 
       return rows.map(r => ({
