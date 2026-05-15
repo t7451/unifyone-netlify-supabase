@@ -1,7 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { count, eq } from "drizzle-orm";
 import { z } from "zod";
-import { products, type InsertProduct } from "../../drizzle/schema";
+import {
+  kaiCreditLedger,
+  products,
+  type InsertProduct,
+} from "../../drizzle/schema";
 import {
   createTenant,
   getAllTenants,
@@ -206,6 +210,37 @@ export const tenantRouter = router({
       await updateUserTenant(ctx.user.id, newTenant.id, {
         promoteToAdmin: true,
       });
+
+      // Grant starter Kai credits so new tenants can use Kai immediately.
+      // Non-blocking — don't fail tenant creation if the credit insert errors.
+      void (async () => {
+        try {
+          const db = await getDb();
+          if (db) {
+            await db
+              .insert(kaiCreditLedger)
+              .values({
+                tenantId: newTenant.id,
+                userId: ctx.user.id,
+                type: "adjustment",
+                creditDelta: 25,
+                idempotencyKey: `starter_grant:t${newTenant.id}:u${ctx.user.id}`,
+                description: "Welcome — 25 starter Kai credits",
+                metadata: { reason: "starter_grant" },
+              })
+              .onConflictDoNothing({
+                target: kaiCreditLedger.idempotencyKey,
+              });
+          }
+        } catch (grantError) {
+          // Intentionally non-fatal — tenant creation succeeds regardless.
+          console.error(
+            "[tenant.create] Starter Kai credit grant failed:",
+            grantError instanceof Error ? grantError.message : String(grantError)
+          );
+        }
+      })();
+
       void import("../auditLogger").then(({ logAudit }) =>
         logAudit({
           action: "tenant.created",
