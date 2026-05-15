@@ -216,6 +216,28 @@ export const tenantRouter = router({
           metadata: { name: input.name, slug: input.slug },
         }).catch(() => {})
       );
+      // Grant 25 free Kai credits to new tenants so Kai works immediately.
+      // Fire-and-forget: failure is non-fatal (credits can be granted manually).
+      // Idempotency key prevents double-grants on network retries.
+      void getDb()
+        .then(async db => {
+          if (!db) return;
+          const { kaiCreditLedger } = await import("../../drizzle/schema");
+          await db
+            .insert(kaiCreditLedger)
+            .values({
+              tenantId: newTenant.id,
+              userId: ctx.user.id,
+              type: "adjustment",
+              creditDelta: 25,
+              idempotencyKey: `kai_welcome_bonus:${newTenant.id}:${ctx.user.id}`,
+              description: "Welcome bonus — 25 free Kai credits",
+            })
+            .onConflictDoNothing({ target: kaiCreditLedger.idempotencyKey });
+        })
+        .catch(err =>
+          console.error("[tenant.create] Failed to grant Kai welcome credits:", err)
+        );
       return newTenant;
     }),
 

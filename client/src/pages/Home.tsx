@@ -752,7 +752,7 @@ export default function Home() {
           <p
             data-reveal
             data-reveal-delay="200"
-            className="font-crimson text-xl mx-auto mb-10 mobile-visibility-copy"
+            className="font-crimson text-xl mx-auto mb-4 mobile-visibility-copy"
             style={{
               color: "#6A6A6A",
               fontStyle: "italic",
@@ -765,6 +765,21 @@ export default function Home() {
             <em style={{ color: "#9A9A9A" }}>
               Not generic advice — intelligence built on your numbers.
             </em>
+          </p>
+
+          <p
+            data-reveal
+            data-reveal-delay="225"
+            className="font-crimson text-base mx-auto mb-10"
+            style={{
+              color: "#5A5A5A",
+              maxWidth: 540,
+              lineHeight: 1.65,
+            }}
+          >
+            Also runs your multi-tenant Shopify stores, routes 300+ AI models
+            through one unified API, and automates the workflows that normally
+            require a dev team.
           </p>
 
           <div
@@ -877,6 +892,84 @@ export default function Home() {
             >
               First time here? Learn how UnifyOne works →
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── WHAT YOU GET ─────────────────────────────────────────────────── */}
+      <section
+        style={{
+          borderTop: "1px solid #242424",
+          borderBottom: "1px solid #242424",
+          backgroundColor: "#050505",
+          padding: "4rem 0",
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-10">
+            <span className="inscription" style={{ color: "#D4A843" }}>
+              WHAT YOU GET
+            </span>
+            <h2
+              className="font-cinzel text-2xl sm:text-3xl font-black mt-3"
+              style={{ color: "#F0E8D0" }}
+            >
+              Three concrete outcomes from day one.
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: "⏱",
+                headline: "Know your best-paying hours",
+                body: "Kai reads your actual shift earnings and tells you exactly which hours, zones, and platforms earn the most after fuel and expenses — so you can stop guessing and start scheduling smarter.",
+                accent: "#F0D080",
+                audience: "For gig operators",
+              },
+              {
+                icon: "🏪",
+                headline: "Run every store from one dashboard",
+                body: "Connect Shopify, Stripe, PayPal, and Square once. Manage orders, products, and customers across all your tenants without switching tabs or tools — full tenant isolation built in.",
+                accent: "#6EE7B7",
+                audience: "For commerce teams",
+              },
+              {
+                icon: "⚡",
+                headline: "Use any AI model with one bill",
+                body: "Route to Claude for analysis, GPT for code, Gemini for speed — all through a single Kai credit system. No separate vendor accounts. No per-model billing surprises.",
+                accent: "#93C5FD",
+                audience: "For developers & teams",
+              },
+            ].map(item => (
+              <div
+                key={item.headline}
+                className="rounded-2xl p-7"
+                style={{
+                  border: "1px solid #242424",
+                  backgroundColor: "#020202",
+                }}
+              >
+                <div className="text-3xl mb-4">{item.icon}</div>
+                <p
+                  className="font-cinzel text-[0.6rem] uppercase tracking-[0.22em] mb-2"
+                  style={{ color: item.accent, opacity: 0.7 }}
+                >
+                  {item.audience}
+                </p>
+                <h3
+                  className="font-cinzel text-base font-bold mb-3"
+                  style={{ color: "#F0E8D0", lineHeight: 1.4 }}
+                >
+                  {item.headline}
+                </h3>
+                <p
+                  className="font-crimson text-base"
+                  style={{ color: "#7A7A7A", lineHeight: 1.75 }}
+                >
+                  {item.body}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
