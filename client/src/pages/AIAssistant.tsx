@@ -50,7 +50,7 @@ import {
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 
 type KaiChatInput = inferRouterInputs<AppRouter>["ai"]["chat"];
 type KaiModelId = NonNullable<KaiChatInput["model"]>;
@@ -610,12 +610,12 @@ export default function AIAssistant() {
                     <p className="mt-1 text-xs text-muted-foreground">
                       New tenants receive 25 free credits automatically. If
                       yours didn&apos;t arrive, finish your{" "}
-                      <a
+                      <Link
                         href="/setup"
                         className="underline underline-offset-2 hover:text-foreground"
                       >
                         tenant setup
-                      </a>{" "}
+                      </Link>{" "}
                       to claim them — or buy a credit pack in the panel on the
                       right to start chatting immediately.
                     </p>

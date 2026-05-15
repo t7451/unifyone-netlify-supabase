@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { count, eq } from "drizzle-orm";
 import { z } from "zod";
-import { products, type InsertProduct } from "../../drizzle/schema";
+import { products, kaiCreditLedger, type InsertProduct } from "../../drizzle/schema";
 import {
   createTenant,
   getAllTenants,
@@ -222,7 +222,6 @@ export const tenantRouter = router({
       void getDb()
         .then(async db => {
           if (!db) return;
-          const { kaiCreditLedger } = await import("../../drizzle/schema");
           await db
             .insert(kaiCreditLedger)
             .values({
