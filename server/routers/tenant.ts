@@ -1,7 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { count, eq } from "drizzle-orm";
 import { z } from "zod";
-import { products, kaiCreditLedger, type InsertProduct } from "../../drizzle/schema";
+import {
+  kaiCreditLedger,
+  products,
+  type InsertProduct,
+} from "../../drizzle/schema";
 import {
   createTenant,
   getAllTenants,
@@ -206,6 +210,37 @@ export const tenantRouter = router({
       await updateUserTenant(ctx.user.id, newTenant.id, {
         promoteToAdmin: true,
       });
+
+      // Grant 25 free Kai credits to new tenants so Kai works immediately.
+      // Non-blocking — don't fail tenant creation if the credit insert errors.
+      // Idempotency key prevents double-grants on network retries.
+      void (async () => {
+        try {
+          const db = await getDb();
+          if (db) {
+            await db
+              .insert(kaiCreditLedger)
+              .values({
+                tenantId: newTenant.id,
+                userId: ctx.user.id,
+                type: "adjustment",
+                creditDelta: 25,
+                idempotencyKey: `kai_welcome_bonus:${newTenant.id}:${ctx.user.id}`,
+                description: "Welcome bonus — 25 free Kai credits",
+              })
+              .onConflictDoNothing({
+                target: kaiCreditLedger.idempotencyKey,
+              });
+          }
+        } catch (grantError) {
+          // Intentionally non-fatal — tenant creation succeeds regardless.
+          console.error(
+            "[tenant.create] Failed to grant Kai welcome credits:",
+            grantError instanceof Error ? grantError.message : String(grantError)
+          );
+        }
+      })();
+
       void import("../auditLogger").then(({ logAudit }) =>
         logAudit({
           action: "tenant.created",
@@ -216,27 +251,6 @@ export const tenantRouter = router({
           metadata: { name: input.name, slug: input.slug },
         }).catch(() => {})
       );
-      // Grant 25 free Kai credits to new tenants so Kai works immediately.
-      // Fire-and-forget: failure is non-fatal (credits can be granted manually).
-      // Idempotency key prevents double-grants on network retries.
-      void getDb()
-        .then(async db => {
-          if (!db) return;
-          await db
-            .insert(kaiCreditLedger)
-            .values({
-              tenantId: newTenant.id,
-              userId: ctx.user.id,
-              type: "adjustment",
-              creditDelta: 25,
-              idempotencyKey: `kai_welcome_bonus:${newTenant.id}:${ctx.user.id}`,
-              description: "Welcome bonus — 25 free Kai credits",
-            })
-            .onConflictDoNothing({ target: kaiCreditLedger.idempotencyKey });
-        })
-        .catch(err =>
-          console.error("[tenant.create] Failed to grant Kai welcome credits:", err)
-        );
       return newTenant;
     }),
 
