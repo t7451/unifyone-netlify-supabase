@@ -211,8 +211,9 @@ export const tenantRouter = router({
         promoteToAdmin: true,
       });
 
-      // Grant starter Kai credits so new tenants can use Kai immediately.
+      // Grant 25 free Kai credits to new tenants so Kai works immediately.
       // Non-blocking — don't fail tenant creation if the credit insert errors.
+      // Idempotency key prevents double-grants on network retries.
       void (async () => {
         try {
           const db = await getDb();
@@ -224,9 +225,8 @@ export const tenantRouter = router({
                 userId: ctx.user.id,
                 type: "adjustment",
                 creditDelta: 25,
-                idempotencyKey: `starter_grant:t${newTenant.id}:u${ctx.user.id}`,
-                description: "Welcome — 25 starter Kai credits",
-                metadata: { reason: "starter_grant" },
+                idempotencyKey: `kai_welcome_bonus:${newTenant.id}:${ctx.user.id}`,
+                description: "Welcome bonus — 25 free Kai credits",
               })
               .onConflictDoNothing({
                 target: kaiCreditLedger.idempotencyKey,
@@ -235,7 +235,7 @@ export const tenantRouter = router({
         } catch (grantError) {
           // Intentionally non-fatal — tenant creation succeeds regardless.
           console.error(
-            "[tenant.create] Starter Kai credit grant failed:",
+            "[tenant.create] Failed to grant Kai welcome credits:",
             grantError instanceof Error ? grantError.message : String(grantError)
           );
         }

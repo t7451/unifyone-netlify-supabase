@@ -45,11 +45,12 @@ import {
   Coins,
   AlertCircle,
   RefreshCw,
+  Gift,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 
 type KaiChatInput = inferRouterInputs<AppRouter>["ai"]["chat"];
 type KaiModelId = NonNullable<KaiChatInput["model"]>;
@@ -270,6 +271,8 @@ export default function AIAssistant() {
   const selectedModelMinimum = selectedModelInfo?.minimumCredits ?? 1;
   const hasLowCredits =
     !!balanceData && remainingCredits < selectedModelMinimum;
+  const hasZeroCredits =
+    !!balanceData && remainingCredits === 0 && !creditNotice;
   const ContextIcon = CONTEXT_ICONS[activeContext] ?? Bot;
 
   const handleCheckout = (pkg: (typeof creditPackages)[number]) => {
@@ -596,6 +599,30 @@ export default function AIAssistant() {
 
           {/* AIChatBox + credits */}
           <div className="flex-1 min-h-0 overflow-auto p-4">
+            {hasZeroCredits && (
+              <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+                <div className="flex items-start gap-3">
+                  <Gift className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-amber-300">
+                      You have 0 Kai credits
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      New tenants receive 25 free credits automatically. If
+                      yours didn&apos;t arrive, finish your{" "}
+                      <Link
+                        href="/setup"
+                        className="underline underline-offset-2 hover:text-foreground"
+                      >
+                        tenant setup
+                      </Link>{" "}
+                      to claim them — or buy a credit pack in the panel on the
+                      right to start chatting immediately.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="grid h-full min-h-[34rem] grid-cols-1 gap-4 xl:min-h-0 xl:grid-cols-[minmax(0,1fr)_20rem]">
               <AIChatBox
                 messages={messages}
