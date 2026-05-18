@@ -189,6 +189,10 @@ export function normalizeMcpToolName(toolName: string): string {
 
   // Prefer the canonical snake_case form when an alias exists, so the wire
   // protocol stays consistent regardless of which form the caller used.
+  // Note: camelCase tool names (e.g. "listProducts") are advertised in
+  // tools/list for backward compatibility, but `mcpCallTool("listProducts")`
+  // is still rewritten to "list_products" before being sent — server-side
+  // dispatchers for both forms ultimately invoke the same handler.
   if (CAMEL_CASE_TOOL_ALIASES[trimmed]) return CAMEL_CASE_TOOL_ALIASES[trimmed];
   if (MCP_TOOL_NAME_SET.has(trimmed)) return trimmed;
 
