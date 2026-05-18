@@ -12,6 +12,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 /**
  * UnifyOne Design System — public reference page documenting the
@@ -248,6 +252,16 @@ function SemanticSwatch({
   );
 }
 
+const SECTIONS: Array<{ id: string; label: string }> = [
+  { id: "principles", label: "Principles" },
+  { id: "color", label: "Color" },
+  { id: "typography", label: "Typography" },
+  { id: "layout", label: "Layout" },
+  { id: "motion", label: "Motion" },
+  { id: "components", label: "Components" },
+  { id: "implementation", label: "Implementation" },
+];
+
 function SectionHeader({
   eyebrow,
   title,
@@ -298,7 +312,7 @@ export default function DesignSystem() {
                 <Link href="/components">Browse component library</Link>
               </Button>
               <Button variant="outline" asChild>
-                <a href="#color">Jump to tokens</a>
+                <a href="#principles">Jump to tokens</a>
               </Button>
             </div>
             <div className="mt-8 flex flex-wrap gap-2">
@@ -311,8 +325,32 @@ export default function DesignSystem() {
         </div>
       </section>
 
+      {/* In-page TOC */}
+      <nav
+        aria-label="Design system sections"
+        className="sticky top-16 z-30 border-b border-border bg-background/85 backdrop-blur"
+      >
+        <div className="container mx-auto px-6">
+          <ul className="flex flex-wrap gap-x-6 gap-y-2 py-3 text-xs">
+            {SECTIONS.map(s => (
+              <li key={s.id}>
+                <a
+                  href={`#${s.id}`}
+                  className="inscription text-muted-foreground hover:text-gold transition-colors"
+                >
+                  {s.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
+
       {/* Principles */}
-      <section className="container mx-auto px-6 py-16 md:py-20">
+      <section
+        id="principles"
+        className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
+      >
         <SectionHeader
           eyebrow="Principles"
           title="Sequential, structural, built to endure"
@@ -352,7 +390,10 @@ export default function DesignSystem() {
       <Separator />
 
       {/* Color */}
-      <section id="color" className="container mx-auto px-6 py-16 md:py-20">
+      <section
+        id="color"
+        className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
+      >
         <SectionHeader
           eyebrow="Color"
           title="Stone & illumination"
@@ -397,7 +438,10 @@ export default function DesignSystem() {
       <Separator />
 
       {/* Typography */}
-      <section className="container mx-auto px-6 py-16 md:py-20">
+      <section
+        id="typography"
+        className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
+      >
         <SectionHeader
           eyebrow="Typography"
           title="Three voices, one stack"
@@ -506,7 +550,10 @@ export default function DesignSystem() {
       <Separator />
 
       {/* Spacing & Radii */}
-      <section className="container mx-auto px-6 py-16 md:py-20">
+      <section
+        id="layout"
+        className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
+      >
         <SectionHeader
           eyebrow="Layout"
           title="Spacing & geometry"
@@ -568,8 +615,160 @@ export default function DesignSystem() {
 
       <Separator />
 
+      {/* Motion */}
+      <section
+        id="motion"
+        className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
+      >
+        <SectionHeader
+          eyebrow="Motion"
+          title="Restrained, purposeful, never decorative"
+          description="Motion in UnifyOne signals state changes and draws the eye toward illumination. Durations are short, easings are gentle, and ambient animation is reserved for loading and brand moments. Honor reduced-motion preferences."
+        />
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="stone-card">
+            <CardHeader>
+              <CardTitle className="font-cinzel text-lg text-gold-apex">
+                Durations
+              </CardTitle>
+              <CardDescription>Tailwind transition tokens</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm">
+                <li className="flex justify-between">
+                  <code className="text-gold font-mono text-xs">
+                    duration-150
+                  </code>
+                  <span className="text-muted-foreground">
+                    Hover &amp; focus
+                  </span>
+                </li>
+                <li className="flex justify-between">
+                  <code className="text-gold font-mono text-xs">
+                    duration-200
+                  </code>
+                  <span className="text-muted-foreground">
+                    Button / link states
+                  </span>
+                </li>
+                <li className="flex justify-between">
+                  <code className="text-gold font-mono text-xs">
+                    duration-300
+                  </code>
+                  <span className="text-muted-foreground">
+                    Surface transitions
+                  </span>
+                </li>
+                <li className="flex justify-between">
+                  <code className="text-gold font-mono text-xs">
+                    duration-500
+                  </code>
+                  <span className="text-muted-foreground">
+                    Reveal on scroll
+                  </span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="stone-card">
+            <CardHeader>
+              <CardTitle className="font-cinzel text-lg text-gold-apex">
+                Easings
+              </CardTitle>
+              <CardDescription>Standard curves only</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm">
+                <li className="flex justify-between">
+                  <code className="text-gold font-mono text-xs">
+                    ease-out
+                  </code>
+                  <span className="text-muted-foreground">
+                    Default — enter
+                  </span>
+                </li>
+                <li className="flex justify-between">
+                  <code className="text-gold font-mono text-xs">
+                    ease-in
+                  </code>
+                  <span className="text-muted-foreground">Exit / dismiss</span>
+                </li>
+                <li className="flex justify-between">
+                  <code className="text-gold font-mono text-xs">
+                    ease-in-out
+                  </code>
+                  <span className="text-muted-foreground">
+                    Loops &amp; floats
+                  </span>
+                </li>
+                <li className="flex justify-between">
+                  <code className="text-gold font-mono text-xs">linear</code>
+                  <span className="text-muted-foreground">
+                    Spinners &amp; grids
+                  </span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="stone-card overflow-hidden">
+            <CardHeader>
+              <CardTitle className="font-cinzel text-lg text-gold-apex">
+                Brand animations
+              </CardTitle>
+              <CardDescription>
+                Reserved for loading &amp; hero moments
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="relative h-16 overflow-hidden border border-border">
+                <div className="loading-grid absolute inset-0" aria-hidden />
+              </div>
+              <ul className="space-y-1 text-xs font-mono">
+                <li>
+                  <code className="text-gold">.loading-grid</code>
+                  <span className="text-muted-foreground"> — ambient pan</span>
+                </li>
+                <li>
+                  <code className="text-gold">.loading-orbit</code>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    — rotation 10s
+                  </span>
+                </li>
+                <li>
+                  <code className="text-gold">.loading-float</code>
+                  <span className="text-muted-foreground"> — drift 3.8s</span>
+                </li>
+                <li>
+                  <code className="text-gold">.loading-shimmer</code>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    — sweep 2.8s
+                  </span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+
+        <p className="text-xs text-muted-foreground mt-6 max-w-2xl">
+          Animations live in <code className="text-gold">client/src/index.css</code>{" "}
+          alongside the tokens. Always wrap new motion in a{" "}
+          <code className="text-gold">prefers-reduced-motion</code> guard if it
+          loops or moves significantly.
+        </p>
+      </section>
+
+      <Separator />
+
       {/* Components */}
-      <section className="container mx-auto px-6 py-16 md:py-20">
+      <section
+        id="components"
+        className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
+      >
         <SectionHeader
           eyebrow="Components"
           title="A library of stone blocks"
@@ -607,6 +806,61 @@ export default function DesignSystem() {
               <Badge variant="destructive">Destructive</Badge>
             </CardContent>
           </Card>
+
+          <Card className="stone-card">
+            <CardHeader>
+              <CardTitle>Form controls</CardTitle>
+              <CardDescription>
+                Input, checkbox, switch — all inherit ring &amp; border tokens.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="ds-email">Email</Label>
+                <Input
+                  id="ds-email"
+                  type="email"
+                  placeholder="you@1commerce.online"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <Checkbox id="ds-check" defaultChecked />
+                <Label htmlFor="ds-check" className="text-sm font-normal">
+                  Subscribe to release notes
+                </Label>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch id="ds-switch" defaultChecked />
+                <Label htmlFor="ds-switch" className="text-sm font-normal">
+                  Enable automation
+                </Label>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="stone-card">
+            <CardHeader>
+              <CardTitle>Interaction states</CardTitle>
+              <CardDescription>
+                Hover, focus-visible, disabled — driven entirely by tokens.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                <Button>Default</Button>
+                <Button className="hover:bg-primary/90">Hover</Button>
+                <Button className="ring-2 ring-ring ring-offset-2 ring-offset-background">
+                  Focus
+                </Button>
+                <Button disabled>Disabled</Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Focus rings use <code className="text-gold">--ring</code> with
+                an offset against <code className="text-gold">--background</code>{" "}
+                for accessibility against any surface.
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="mt-10 stone-card p-8 text-center">
@@ -628,7 +882,10 @@ export default function DesignSystem() {
       <Separator />
 
       {/* Implementation */}
-      <section className="container mx-auto px-6 py-16 md:py-24">
+      <section
+        id="implementation"
+        className="container mx-auto px-6 py-16 md:py-24 scroll-mt-24"
+      >
         <SectionHeader
           eyebrow="Implementation"
           title="Where the tokens live"
