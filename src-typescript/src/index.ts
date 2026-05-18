@@ -17,7 +17,7 @@
  *         "command": "node",
  *         "args": ["/path/to/src-typescript/dist/index.js"],
  *         "env": {
- *           "ONECOMMERCE_API_URL": "https://1commerce.online",
+ *           "ONECOMMERCE_API_URL": "https://mcp-p.1commerce.online",
  *           "MCP_API_KEY": "<your-key>"
  *         }
  *       }

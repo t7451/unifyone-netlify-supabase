@@ -34,7 +34,7 @@ The server is configured purely through environment variables:
 
 | Variable              | Required | Default                    | Purpose                                                                                                    |
 | --------------------- | -------- | -------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `ONECOMMERCE_API_URL` | no       | `https://1commerce.online` | Base URL of the UnifyOne platform to proxy calls to.                                                       |
+| `ONECOMMERCE_API_URL` | no       | `https://mcp-p.1commerce.online` | Base URL of the UnifyOne MCP host to proxy calls to.                                                 |
 | `MCP_API_KEY`         | yes\*    | _(empty)_                  | Bearer token presented to the platform's `/mcp` endpoint. Required when the upstream server enforces auth. |
 
 ## Usage with Claude Desktop
@@ -48,7 +48,7 @@ Add an entry to `claude_desktop_config.json`:
       "command": "node",
       "args": ["./node_modules/@t7451/mcp-server/dist/index.js"],
       "env": {
-        "ONECOMMERCE_API_URL": "https://1commerce.online",
+        "ONECOMMERCE_API_URL": "https://mcp-p.1commerce.online",
         "MCP_API_KEY": "<your-mcp-key>"
       }
     }
