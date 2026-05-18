@@ -174,4 +174,150 @@ describe("Netlify MCP dispatcher", () => {
       expect(body.error).toBeUndefined();
     }
   });
+
+  describe("camelCase alias dispatch (18 tools)", () => {
+    it("advertises all 18 camelCase aliases in tools/list", async () => {
+      const response = await handler(
+        new Request("https://example.com/mcp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "tools/list",
+          }),
+        })
+      );
+      const body = await response.json();
+      const toolNames = new Set(body.result.tools.map((t: any) => t.name));
+      const aliases = [
+        "listStores",
+        "getTenantInfo",
+        "listProducts",
+        "getProduct",
+        "searchProducts",
+        "listOrders",
+        "getOrder",
+        "listCustomers",
+        "getCustomer",
+        "getInventory",
+        "getLowStockProducts",
+        "getAnalyticsSummary",
+        "getRevenueByDay",
+        "getTopProducts",
+        "getWebhookEvents",
+        "getCategories",
+        "getNotifications",
+        "getPlatformStats",
+      ];
+      for (const alias of aliases) expect(toolNames.has(alias)).toBe(true);
+      expect(body.result.tools.length).toBe(69);
+    });
+
+    it("listStores delegates to getAllTenants and respects limit", async () => {
+      await callTool("listStores", { limit: 1 });
+      expect(dbMock.getAllTenants).toHaveBeenCalled();
+    });
+
+    it("getTenantInfo normalizes tenantId → tenant_id", async () => {
+      const getTenantById = vi.fn().mockResolvedValue({ id: 7 });
+      (dbMock as any).getTenantById = getTenantById;
+      await callTool("getTenantInfo", { tenantId: 7 });
+      expect(getTenantById).toHaveBeenCalledWith(7);
+    });
+
+    it("listProducts normalizes tenantId → tenant_id", async () => {
+      await callTool("listProducts", { tenantId: 7, limit: 3 });
+      expect(dbMock.getProducts).toHaveBeenCalledWith(7, { limit: 3 });
+    });
+
+    it("getProduct normalizes productId and tenantId", async () => {
+      await callTool("getProduct", { productId: 44, tenantId: 7 });
+      expect(dbMock.getProductById).toHaveBeenCalledWith(44, 7);
+    });
+
+    it("searchProducts delegates to getProducts with search", async () => {
+      dbMock.getProducts.mockResolvedValueOnce([
+        { name: "Widget", description: "" },
+      ]);
+      await callTool("searchProducts", { query: "Widget", tenantId: 7 });
+      expect(dbMock.getProducts).toHaveBeenCalledWith(7, { search: "Widget" });
+    });
+
+    it("listOrders normalizes tenantId → tenant_id", async () => {
+      await callTool("listOrders", { tenantId: 7, limit: 4 });
+      expect(dbMock.getOrders).toHaveBeenCalledWith(7, { limit: 4 });
+    });
+
+    it("getOrder normalizes orderId and tenantId", async () => {
+      await callTool("getOrder", { orderId: 55, tenantId: 7 });
+      expect(dbMock.getOrderWithItems).toHaveBeenCalledWith(55, 7);
+    });
+
+    it("listCustomers normalizes tenantId → tenant_id", async () => {
+      await callTool("listCustomers", { tenantId: 7, limit: 5 });
+      expect(dbMock.getCustomers).toHaveBeenCalledWith(7, { limit: 5 });
+    });
+
+    it("getCustomer normalizes customerId and tenantId", async () => {
+      await callTool("getCustomer", { customerId: 66, tenantId: 7 });
+      expect(dbMock.getCustomerById).toHaveBeenCalledWith(66, 7);
+    });
+
+    it("getInventory normalizes tenantId → tenant_id", async () => {
+      await callTool("getInventory", { tenantId: 7 });
+      expect(dbMock.getInventory).toHaveBeenCalledWith(7, undefined);
+    });
+
+    it("getLowStockProducts normalizes tenantId and filters by threshold", async () => {
+      const body = await callTool("getLowStockProducts", {
+        tenantId: 7,
+        threshold: 5,
+      });
+      expect(dbMock.getLowStockProducts).toHaveBeenCalledWith(7);
+      const filtered = JSON.parse(body.result.content[0].text);
+      expect(filtered).toEqual([{ inv: { quantity: 2 } }]);
+    });
+
+    it("getAnalyticsSummary normalizes tenantId and days", async () => {
+      await callTool("getAnalyticsSummary", { tenantId: 7, days: 14 });
+      expect(dbMock.getAnalyticsSummary).toHaveBeenCalledWith(7, 14);
+    });
+
+    it("getRevenueByDay normalizes tenantId and days", async () => {
+      await callTool("getRevenueByDay", { tenantId: 7, days: 14 });
+      expect(dbMock.getRevenueByDay).toHaveBeenCalledWith(7, 14);
+    });
+
+    it("getTopProducts normalizes tenantId and limit", async () => {
+      await callTool("getTopProducts", { tenantId: 7, limit: 2 });
+      expect(dbMock.getTopProducts).toHaveBeenCalledWith(7, 2);
+    });
+
+    it("getWebhookEvents normalizes tenantId and limit", async () => {
+      await callTool("getWebhookEvents", { tenantId: 7, limit: 9 });
+      expect(dbMock.getWebhookEvents).toHaveBeenCalledWith(7, 9);
+    });
+
+    it("getCategories normalizes tenantId → tenant_id", async () => {
+      await callTool("getCategories", { tenantId: 7 });
+      expect(dbMock.getCategories).toHaveBeenCalledWith(7);
+    });
+
+    it("getNotifications returns an empty list when DB is unavailable", async () => {
+      dbMock.getDb.mockResolvedValueOnce(null);
+      const body = await callTool("getNotifications", { limit: 3 });
+      expect(body.result.isError).toBeUndefined();
+      expect(JSON.parse(body.result.content[0].text)).toEqual([]);
+    });
+
+    it("getPlatformStats aggregates getAnalyticsSummary per tenant", async () => {
+      const body = await callTool("getPlatformStats");
+      expect(body.result.isError).toBeUndefined();
+      expect(dbMock.getAnalyticsSummary).toHaveBeenCalledWith(7, 30);
+      expect(dbMock.getAnalyticsSummary).toHaveBeenCalledWith(8, 30);
+      const payload = JSON.parse(body.result.content[0].text);
+      expect(payload).toMatchObject({ tenant_count: 2 });
+    });
+  });
 });
