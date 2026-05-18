@@ -25,7 +25,7 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-// ── Tool definitions (51 tools, 4 Cathedral phases + 5 integrations) ──────────
+// ── Tool definitions (69 tools, 4 Cathedral phases + 5 integrations + 18 camelCase aliases) ─
 const TOOLS = [
   // Foundation (2)
   {
@@ -500,6 +500,163 @@ const TOOLS = [
       properties: { asset_id: { type: "string" } },
     },
   },
+  // ── camelCase aliases (18 tools) ─────────────────────────────────────────
+  // Mirror the legacy camelCase MCP surface; dispatch normalizes args and
+  // delegates to the corresponding snake_case implementation above.
+  // Foundation (2)
+  {
+    name: "listStores",
+    description: "List all stores/tenants (camelCase alias of list_stores)",
+    inputSchema: { type: "object", properties: { limit: { type: "number" } } },
+  },
+  {
+    name: "getTenantInfo",
+    description: "Get tenant details by ID (camelCase alias of get_tenant_info)",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" } },
+    },
+  },
+  // Walls (11)
+  {
+    name: "listProducts",
+    description: "List products with filters (camelCase alias of list_products)",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, limit: { type: "number" } },
+    },
+  },
+  {
+    name: "getProduct",
+    description: "Get product by ID (camelCase alias of get_product)",
+    inputSchema: {
+      type: "object",
+      required: ["productId", "tenantId"],
+      properties: { productId: { type: "number" }, tenantId: { type: "number" } },
+    },
+  },
+  {
+    name: "searchProducts",
+    description: "Search products by keyword (camelCase alias of search_products)",
+    inputSchema: {
+      type: "object",
+      required: ["query", "tenantId"],
+      properties: { query: { type: "string" }, tenantId: { type: "number" } },
+    },
+  },
+  {
+    name: "listOrders",
+    description: "List orders (camelCase alias of list_orders)",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, limit: { type: "number" } },
+    },
+  },
+  {
+    name: "getOrder",
+    description: "Get order with line items (camelCase alias of get_order)",
+    inputSchema: {
+      type: "object",
+      required: ["orderId", "tenantId"],
+      properties: { orderId: { type: "number" }, tenantId: { type: "number" } },
+    },
+  },
+  {
+    name: "listCustomers",
+    description: "List customers (camelCase alias of list_customers)",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, limit: { type: "number" } },
+    },
+  },
+  {
+    name: "getCustomer",
+    description: "Get customer by ID (camelCase alias of get_customer)",
+    inputSchema: {
+      type: "object",
+      required: ["customerId", "tenantId"],
+      properties: { customerId: { type: "number" }, tenantId: { type: "number" } },
+    },
+  },
+  {
+    name: "getInventory",
+    description: "Get inventory levels (camelCase alias of get_inventory)",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" } },
+    },
+  },
+  {
+    name: "getLowStockProducts",
+    description: "Products below stock threshold (camelCase alias of get_low_stock_products)",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, threshold: { type: "number" } },
+    },
+  },
+  {
+    name: "getAnalyticsSummary",
+    description: "Revenue, order, customer summary (camelCase alias of get_analytics_summary)",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, days: { type: "number" } },
+    },
+  },
+  {
+    name: "getRevenueByDay",
+    description: "Daily revenue breakdown (camelCase alias of get_revenue_by_day)",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, days: { type: "number" } },
+    },
+  },
+  // Vaults (3)
+  {
+    name: "getTopProducts",
+    description: "Top products by revenue (camelCase alias of get_top_products)",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, limit: { type: "number" } },
+    },
+  },
+  {
+    name: "getWebhookEvents",
+    description: "Recent webhook events (camelCase alias of get_webhook_events)",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" }, limit: { type: "number" } },
+    },
+  },
+  {
+    name: "getCategories",
+    description: "Product categories (camelCase alias of get_categories)",
+    inputSchema: {
+      type: "object",
+      required: ["tenantId"],
+      properties: { tenantId: { type: "number" } },
+    },
+  },
+  // Spire (2)
+  {
+    name: "getNotifications",
+    description: "Platform notifications (camelCase alias of get_notifications)",
+    inputSchema: { type: "object", properties: { limit: { type: "number" } } },
+  },
+  {
+    name: "getPlatformStats",
+    description: "Aggregated platform statistics (camelCase alias of get_platform_stats)",
+    inputSchema: { type: "object", properties: {} },
+  },
 ];
 
 // ── Tool dispatcher ───────────────────────────────────────────────────────────
@@ -536,7 +693,52 @@ function applyLimit(rows, limit) {
   return typeof limit === "number" ? rows.slice(0, limit) : rows;
 }
 
+// Map of camelCase tool aliases → canonical snake_case tool names.
+// Used by the dispatcher to delegate alias invocations after normalizing args.
+const CAMEL_TOOL_ALIASES = {
+  listStores: "list_stores",
+  getTenantInfo: "get_tenant_info",
+  listProducts: "list_products",
+  getProduct: "get_product",
+  searchProducts: "search_products",
+  listOrders: "list_orders",
+  getOrder: "get_order",
+  listCustomers: "list_customers",
+  getCustomer: "get_customer",
+  getInventory: "get_inventory",
+  getLowStockProducts: "get_low_stock_products",
+  getAnalyticsSummary: "get_analytics_summary",
+  getRevenueByDay: "get_revenue_by_day",
+  getTopProducts: "get_top_products",
+  getWebhookEvents: "get_webhook_events",
+  getCategories: "get_categories",
+  getNotifications: "get_notifications",
+  getPlatformStats: "get_platform_stats",
+};
+
+function snakeCaseKey(key) {
+  return key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+}
+
+// Normalize argument keys from camelCase to snake_case so camelCase alias
+// callers (e.g. { tenantId: 7 }) hit the same dispatch logic as snake_case
+// callers (e.g. { tenant_id: 7 }). Keys already in snake_case are preserved.
+function normalizeCamelArgs(args) {
+  if (!args || typeof args !== "object") return {};
+  const out = {};
+  for (const [key, value] of Object.entries(args)) {
+    const normalized = key.includes("_") ? key : snakeCaseKey(key);
+    out[normalized] = value;
+  }
+  return out;
+}
+
 async function callTool(name, args) {
+  // camelCase alias → delegate to canonical snake_case handler with normalized args.
+  if (Object.prototype.hasOwnProperty.call(CAMEL_TOOL_ALIASES, name)) {
+    return callTool(CAMEL_TOOL_ALIASES[name], normalizeCamelArgs(args));
+  }
+
   const db = await import("../../server/db.js");
 
   switch (name) {

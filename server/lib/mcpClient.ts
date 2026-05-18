@@ -126,6 +126,25 @@ export const MCP_TOOL_NAMES = [
   "create_pixel_asset",
   "export_sprite_sheet",
   "get_asset_metadata",
+  // camelCase aliases (18) — delegate to snake_case dispatchers on the server.
+  "listStores",
+  "getTenantInfo",
+  "listProducts",
+  "getProduct",
+  "searchProducts",
+  "listOrders",
+  "getOrder",
+  "listCustomers",
+  "getCustomer",
+  "getInventory",
+  "getLowStockProducts",
+  "getAnalyticsSummary",
+  "getRevenueByDay",
+  "getTopProducts",
+  "getWebhookEvents",
+  "getCategories",
+  "getNotifications",
+  "getPlatformStats",
 ] as const;
 
 export type McpKnownToolName = (typeof MCP_TOOL_NAMES)[number];
@@ -145,7 +164,14 @@ function toCamelCase(value: string): string {
 
 const CAMEL_CASE_TOOL_ALIASES = MCP_TOOL_NAMES.reduce<Record<string, string>>(
   (aliases, toolName) => {
-    aliases[toCamelCase(toolName)] = toolName;
+    const camel = toCamelCase(toolName);
+    // Only register an alias when it differs from the canonical name and
+    // hasn't already been claimed by a snake_case entry. This preserves the
+    // camelCase → snake_case mapping even when the camelCase variant also
+    // appears in MCP_TOOL_NAMES as an explicitly advertised tool.
+    if (camel !== toolName && !(camel in aliases)) {
+      aliases[camel] = toolName;
+    }
     return aliases;
   },
   {}
@@ -161,8 +187,10 @@ export function normalizeMcpToolName(toolName: string): string {
     throw new McpClientError(`Invalid MCP tool name "${toolName}"`);
   }
 
-  if (MCP_TOOL_NAME_SET.has(trimmed)) return trimmed;
+  // Prefer the canonical snake_case form when an alias exists, so the wire
+  // protocol stays consistent regardless of which form the caller used.
   if (CAMEL_CASE_TOOL_ALIASES[trimmed]) return CAMEL_CASE_TOOL_ALIASES[trimmed];
+  if (MCP_TOOL_NAME_SET.has(trimmed)) return trimmed;
 
   const snakeName = toSnakeCase(trimmed);
   return snakeName;
