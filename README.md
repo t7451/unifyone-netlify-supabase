@@ -147,7 +147,7 @@ Add the following to your Claude Desktop `claude_desktop_config.json`:
 {
   "mcpServers": {
     "unifyone": {
-      "url": "https://1commerce.online/mcp",
+      "url": "https://mcp-p.1commerce.online/mcp",
       "headers": {
         "Authorization": "Bearer <YOUR_MCP_API_KEY>"
       }
@@ -197,7 +197,7 @@ Add it to Claude Desktop:
       "command": "node",
       "args": ["./node_modules/@t7451/mcp-server/dist/index.js"],
       "env": {
-        "ONECOMMERCE_API_URL": "https://1commerce.online",
+        "ONECOMMERCE_API_URL": "https://mcp-p.1commerce.online",
         "MCP_API_KEY": "<YOUR_MCP_API_KEY>"
       }
     }
@@ -212,7 +212,7 @@ versions automatically.
 ### Test with cURL
 
 ```bash
-curl -s -X POST https://1commerce.online/mcp \
+curl -s -X POST https://mcp-p.1commerce.online/mcp \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $MCP_API_KEY" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'

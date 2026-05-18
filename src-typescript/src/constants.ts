@@ -7,7 +7,7 @@
 
 /** Base URL of the UnifyOne / 1Commerce platform. */
 export const API_BASE_URL =
-  process.env.ONECOMMERCE_API_URL ?? "https://1commerce.online";
+  process.env.ONECOMMERCE_API_URL ?? "https://mcp-p.1commerce.online";
 
 /** MCP JSON-RPC endpoint derived from the base URL. */
 export const MCP_ENDPOINT = `${API_BASE_URL}/mcp`;
