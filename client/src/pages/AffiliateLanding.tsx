@@ -14,6 +14,7 @@ import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const AFFILIATE_CANONICAL = `${SITE_URL}/affiliate-program`;
+const CONTAINER_CLASS = "container mx-auto max-w-6xl px-4";
 
 const SERVICES = [
   {
@@ -86,7 +87,7 @@ export default function AffiliateLanding() {
       />
 
       <section className="border-b border-border bg-card py-16">
-        <div className="container mx-auto max-w-6xl px-4">
+        <div className={CONTAINER_CLASS}>
           <div className="max-w-3xl space-y-6">
             <Badge variant="secondary">Creator Growth + Affiliate Revenue</Badge>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
@@ -111,7 +112,7 @@ export default function AffiliateLanding() {
       </section>
 
       <section className="py-14">
-        <div className="container mx-auto max-w-6xl px-4 space-y-6">
+        <div className={`${CONTAINER_CLASS} space-y-6`}>
           <h2 className="text-2xl font-semibold">What We Automate for You</h2>
           <div className="grid gap-4 md:grid-cols-3">
             {SERVICES.map(service => (
@@ -130,7 +131,7 @@ export default function AffiliateLanding() {
       </section>
 
       <section className="border-y border-border bg-card/60 py-14">
-        <div className="container mx-auto max-w-6xl px-4 grid gap-6 lg:grid-cols-2">
+        <div className={`${CONTAINER_CLASS} grid gap-6 lg:grid-cols-2`}>
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold">
               Why Creators Join This Program
@@ -154,15 +155,12 @@ export default function AffiliateLanding() {
       </section>
 
       <section className="py-14">
-        <div className="container mx-auto max-w-6xl px-4 space-y-6">
+        <div className={`${CONTAINER_CLASS} space-y-6`}>
           <h2 className="text-2xl font-semibold">How It Works</h2>
           <div className="grid gap-4 md:grid-cols-3">
-            {STEPS.map((step, index) => (
+            {STEPS.map(step => (
               <Card key={step.title}>
                 <CardContent className="space-y-3 p-6">
-                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                    {index + 1}
-                  </div>
                   <step.icon className="h-5 w-5 text-primary" />
                   <h3 className="font-semibold">{step.title}</h3>
                   <p className="text-sm text-muted-foreground">
