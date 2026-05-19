@@ -17,18 +17,21 @@ const AFFILIATE_CANONICAL = `${SITE_URL}/affiliate-program`;
 
 const SERVICES = [
   {
+    id: "social-distribution",
     title: "Automated Social Distribution",
     description:
       "We publish and schedule high-performing short-form and long-form promo content across key social channels.",
     icon: Megaphone,
   },
   {
+    id: "campaign-loops",
     title: "Creator Campaign Loops",
     description:
       "Automated repost and collaboration loops keep your affiliate message in front of new audiences every week.",
     icon: Repeat2,
   },
   {
+    id: "ai-variations",
     title: "AI Content Variations",
     description:
       "We generate multiple ad-copy and creative angles to match each platform and creator niche.",
@@ -112,7 +115,7 @@ export default function AffiliateLanding() {
           <h2 className="text-2xl font-semibold">What We Automate for You</h2>
           <div className="grid gap-4 md:grid-cols-3">
             {SERVICES.map(service => (
-              <Card key={service.title}>
+              <Card key={service.id}>
                 <CardContent className="space-y-3 p-6">
                   <service.icon className="h-5 w-5 text-primary" />
                   <h3 className="font-semibold">{service.title}</h3>
@@ -138,9 +141,12 @@ export default function AffiliateLanding() {
             </p>
           </div>
           <ul className="space-y-3">
-            {BENEFITS.map(item => (
-              <li key={item} className="rounded-md border border-border p-3 text-sm">
-                {item}
+            {BENEFITS.map(benefit => (
+              <li
+                key={benefit}
+                className="rounded-md border border-border p-3 text-sm"
+              >
+                {benefit}
               </li>
             ))}
           </ul>
@@ -151,11 +157,11 @@ export default function AffiliateLanding() {
         <div className="container mx-auto max-w-6xl px-4 space-y-6">
           <h2 className="text-2xl font-semibold">How It Works</h2>
           <div className="grid gap-4 md:grid-cols-3">
-            {STEPS.map((step, idx) => (
+            {STEPS.map((step, index) => (
               <Card key={step.title}>
                 <CardContent className="space-y-3 p-6">
                   <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                    {idx + 1}
+                    {index + 1}
                   </div>
                   <step.icon className="h-5 w-5 text-primary" />
                   <h3 className="font-semibold">{step.title}</h3>
