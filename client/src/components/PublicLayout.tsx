@@ -340,6 +340,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                     href: BLOG_POSTS.aiGigWorkers.href,
                   },
                   { label: "Resources", href: "/resources" },
+                  { label: "Design System", href: "/design-system" },
                   { label: "Docs Chat", href: "/docs-chat" },
                   { label: "Sovereign Access", href: "/sovereign" },
                 ].map(item => (
