@@ -55,6 +55,7 @@ const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const Rewards = lazy(() => import("./pages/Rewards"));
 const RevenueStreams = lazy(() => import("./pages/RevenueStreams"));
 const Affiliates = lazy(() => import("./pages/Affiliates"));
+const AffiliateLanding = lazy(() => import("./pages/AffiliateLanding"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Sovereign = lazy(() => import("./pages/Sovereign"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
@@ -499,6 +500,7 @@ function Router() {
       <Route path="/blog" component={() => <BlogIndex />} />
       <Route path="/chat" component={() => <NlwebChat />} />
       <Route path="/resources" component={() => <Resources />} />
+      <Route path="/affiliate-program" component={() => <AffiliateLanding />} />
       <Route path="/video-production" component={() => <VideoProduction />} />
       <Route path="/marketing/ad-copy" component={() => <AdCopyHub />} />
       <Route path="/governance" component={() => <GovernanceDashboard />} />
