@@ -21,6 +21,8 @@ import {
   AtSign,
 } from "lucide-react";
 import { useClerk, useSession } from "@clerk/clerk-react";
+import { pixel, getFbpCookie, getFbcCookie } from "@/lib/pixel";
+import { trpc } from "@/lib/trpc";
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
   | string
@@ -216,6 +218,7 @@ export default function Login({
 
   const returnTo = getReturnTo();
   const tenantSlug = getTenantSlug();
+  const relayEvent = trpc.meta.relayEvent.useMutation();
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
@@ -404,6 +407,27 @@ export default function Login({
           setError(data.error || "Failed to create account.");
         }
         return;
+      }
+
+      // Fire deduped CompleteRegistration (Pixel + CAPI relay). Non-blocking:
+      // analytics failures must not affect signup UX.
+      try {
+        const eventId = pixel.completeRegistration();
+        relayEvent.mutate({
+          eventName: "CompleteRegistration",
+          eventId,
+          eventSourceUrl: window.location.href,
+          userData: {
+            email,
+            externalId: data.user?.openId,
+            fbp: getFbpCookie(),
+            fbc: getFbcCookie(),
+          },
+          customData: { status: "registered" },
+        });
+      } catch (err) {
+        // Swallow — never let tracking block signup.
+        console.warn("[signup] tracking failed", err);
       }
 
       // If the server requires email verification, surface the check-your-email
