@@ -80,6 +80,7 @@ const plugins = [
       { path: "/docs-chat" },
       { path: "/resources" },
       { path: "/sovereign" },
+      { path: "/design-system" },
       { path: "/login" },
       { path: "/register" },
     ],
@@ -220,6 +221,12 @@ const plugins = [
         changefreq: "monthly",
         priority: 0.6,
         lastmod: "2026-05-06",
+      },
+      {
+        path: "/design-system",
+        changefreq: "monthly",
+        priority: 0.5,
+        lastmod: "2026-05-18",
       },
       {
         path: "/login",
