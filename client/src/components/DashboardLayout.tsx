@@ -69,6 +69,7 @@ import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { SubscriptionWidget } from "./SubscriptionWidget";
 import { NotificationCenter } from "./NotificationCenter";
 import { Button } from "./ui/button";
+import { useSignupTracker } from "@/hooks/useSignupTracker";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -134,6 +135,9 @@ export default function DashboardLayout({
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
   const { loading, user } = useAuth();
+  // Fires a deduped CompleteRegistration (Pixel + CAPI) on first dashboard
+  // load when the OAuth callback appended `?signup=1` for a new account.
+  useSignupTracker();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());

@@ -136,6 +136,12 @@ export type AuthResult = {
   sessionToken?: string;
   /** Raw refresh token — caller embeds this in the HttpOnly refresh cookie. */
   refreshToken?: string;
+  /**
+   * True when this auth call created a brand-new local user row (signup),
+   * false when it linked / signed-in an existing user. Used by OAuth callbacks
+   * to fire `CompleteRegistration` (Pixel + CAPI) for new accounts.
+   */
+  isNewUser?: boolean;
   user?: {
     openId: string;
     email: string;
@@ -453,6 +459,7 @@ async function signInWithExternalOAuthProfile(
     let openId = existingUser?.openId ?? providerOpenId;
     let username = existingUser?.username ?? null;
     let sessionName = displayName;
+    const isNewUser = !existingUser;
 
     if (existingUser) {
       if (
@@ -514,6 +521,7 @@ async function signInWithExternalOAuthProfile(
       success: true,
       sessionToken,
       refreshToken,
+      isNewUser,
       user: {
         openId,
         email: emailLower,

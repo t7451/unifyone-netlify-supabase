@@ -449,6 +449,7 @@ describe("signInWithGoogleProfile", () => {
     });
 
     expect(result.success).toBe(true);
+    expect(result.isNewUser).toBe(true);
     expect(result.sessionToken).toBe("mock-session-token");
     expect(result.user).toMatchObject({
       email: "new-google@example.com",
@@ -487,6 +488,7 @@ describe("signInWithGoogleProfile", () => {
     });
 
     expect(result.success).toBe(true);
+    expect(result.isNewUser).toBe(false);
     expect(result.user).toMatchObject({
       openId: "existing-open-id",
       email: "existing@example.com",
@@ -547,6 +549,7 @@ describe("signInWithAuth0Profile", () => {
     });
 
     expect(result.success).toBe(true);
+    expect(result.isNewUser).toBe(true);
     expect(result.sessionToken).toBe("mock-session-token");
     expect(result.user).toMatchObject({
       email: "new-auth0@example.com",
@@ -583,6 +586,7 @@ describe("signInWithAuth0Profile", () => {
     });
 
     expect(result.success).toBe(true);
+    expect(result.isNewUser).toBe(false);
     expect(result.user).toMatchObject({
       openId: "existing-open-id",
       email: "existing@example.com",
