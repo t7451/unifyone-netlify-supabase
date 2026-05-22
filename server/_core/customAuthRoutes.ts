@@ -275,6 +275,26 @@ function buildLoginRedirect(error: string, returnTo = "/dashboard"): string {
   return redirectUrl.toString();
 }
 
+/**
+ * Append a `signup=1` query flag to a post-OAuth return path so the client
+ * can fire a deduped `CompleteRegistration` Pixel/CAPI event on landing.
+ *
+ * The path may already have a query string (e.g. `/checkout?plan=pro`); use
+ * URL parsing against a dummy base to safely merge params.
+ */
+function appendSignupFlag(returnTo: string): string {
+  try {
+    const url = new URL(returnTo, "http://placeholder.local");
+    url.searchParams.set("signup", "1");
+    // Strip the placeholder origin and return only path + query + hash.
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    // Fallback for unexpected input — preserve original path with a separator.
+    const sep = returnTo.includes("?") ? "&" : "?";
+    return `${returnTo}${sep}signup=1`;
+  }
+}
+
 function getStateSecret(): Buffer {
   return Buffer.from(ENV.cookieSecret || process.env.JWT_SECRET || "", "utf8");
 }
@@ -720,7 +740,7 @@ async function completeGoogleOAuthCallback(params: {
     );
 
     return {
-      redirectTo: returnTo,
+      redirectTo: result.isNewUser ? appendSignupFlag(returnTo) : returnTo,
       sessionToken: result.sessionToken,
       refreshToken: result.refreshToken,
     };
@@ -958,7 +978,7 @@ async function completeAuth0OAuthCallback(params: {
     );
 
     return {
-      redirectTo: returnTo,
+      redirectTo: result.isNewUser ? appendSignupFlag(returnTo) : returnTo,
       sessionToken: result.sessionToken,
       refreshToken: result.refreshToken,
     };
