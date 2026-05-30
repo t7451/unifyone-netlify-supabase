@@ -5,6 +5,7 @@ const invokeLLMMock = vi.hoisted(() => vi.fn());
 vi.mock("../../_core/llm", () => ({
   invokeLLM: invokeLLMMock,
   GROQ_FALLBACK_MODEL: "llama-3.3-70b-versatile",
+  VERCEL_AI_GATEWAY_FALLBACK_MODEL: "openai/gpt-5.5",
 }));
 
 vi.mock("../../db", () => ({
