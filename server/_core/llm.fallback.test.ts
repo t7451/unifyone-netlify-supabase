@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("./env", () => ({
-  ENV: { forgeApiKey: "test-key", groqApiKey: "groq-test-key" },
+  ENV: {
+    forgeApiKey: "test-key",
+    groqApiKey: "groq-test-key",
+    vercelOidcToken: "vercel-oidc-test-token",
+  },
 }));
 
 vi.mock("../creditMeter", () => ({
@@ -18,6 +22,7 @@ import {
   invokeLLMWithFallback,
   DEFAULT_FALLBACK_CHAIN,
   GROQ_FALLBACK_MODEL,
+  VERCEL_AI_GATEWAY_FALLBACK_MODEL,
 } from "./llm";
 import { meterCredits } from "../creditMeter";
 
@@ -92,6 +97,31 @@ describe("invokeLLMWithFallback", () => {
 
     expect(out.choices[0].message.content).toBe("from claude-3-5-haiku");
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("falls back to Vercel AI Gateway with VERCEL_OIDC_TOKEN", async () => {
+    fetchSpy
+      .mockImplementationOnce(() => mockErr(503, "service unavailable"))
+      .mockImplementationOnce(() => mockOk(VERCEL_AI_GATEWAY_FALLBACK_MODEL));
+
+    const out = await invokeLLMWithFallback({
+      messages: [{ role: "user", content: "hi" }],
+      model: "gemini-2.5-flash",
+      modelChain: [VERCEL_AI_GATEWAY_FALLBACK_MODEL],
+    });
+
+    expect(out.choices[0].message.content).toBe(
+      `from ${VERCEL_AI_GATEWAY_FALLBACK_MODEL}`
+    );
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy.mock.calls[1][0]).toBe(
+      "https://ai-gateway.vercel.sh/v1/chat/completions"
+    );
+    const authHeader = fetchSpy.mock.calls[1][1].headers.authorization;
+    expect(authHeader).toContain("vercel-oidc-test-token");
+    expect(JSON.parse(fetchSpy.mock.calls[1][1].body)).toEqual(
+      expect.objectContaining({ model: VERCEL_AI_GATEWAY_FALLBACK_MODEL })
+    );
   });
 
   it("falls back to Groq using the Groq API key and endpoint", async () => {
@@ -240,6 +270,7 @@ describe("invokeLLMWithFallback", () => {
 
   it("exports DEFAULT_FALLBACK_CHAIN", () => {
     expect(DEFAULT_FALLBACK_CHAIN).toContain("gemini-2.5-flash");
+    expect(DEFAULT_FALLBACK_CHAIN).toContain(VERCEL_AI_GATEWAY_FALLBACK_MODEL);
     expect(DEFAULT_FALLBACK_CHAIN).toContain(GROQ_FALLBACK_MODEL);
   });
 });

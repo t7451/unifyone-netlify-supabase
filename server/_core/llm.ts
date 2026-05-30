@@ -278,17 +278,39 @@ const resolveGroqApiUrl = () =>
     "openai/v1/chat/completions"
   );
 
+const resolveVercelAiGatewayApiUrl = () =>
+  resolveProviderUrl(
+    ENV.vercelAiGatewayApiUrl,
+    "https://ai-gateway.vercel.sh/v1",
+    "chat/completions"
+  );
+
 export const GROQ_FALLBACK_MODEL = "llama-3.3-70b-versatile";
+export const VERCEL_AI_GATEWAY_FALLBACK_MODEL = "openai/gpt-5.5";
 
 // The allowlist uses the concrete fallback model; "groq/<model>" is reserved
 // for future explicit Groq model routing without exposing arbitrary providers.
 const isGroqModel = (model: string) =>
   model === GROQ_FALLBACK_MODEL || model.startsWith("groq/");
 
+const isVercelAiGatewayModel = (model: string) => {
+  if (isGroqModel(model)) return false;
+  return /^[a-z0-9_-]+\/[a-z0-9._:-]+$/i.test(model);
+};
+
 const toProviderModel = (model: string) =>
   model.startsWith("groq/") ? model.slice("groq/".length) : model;
 
-const assertApiKey = (provider: "forge" | "groq") => {
+const assertApiKey = (provider: "forge" | "groq" | "vercelAiGateway") => {
+  if (provider === "vercelAiGateway") {
+    if (!ENV.vercelOidcToken) {
+      throw new Error(
+        "VERCEL_OIDC_TOKEN is not configured. Run `vc env pull .env.local` to enable Vercel AI Gateway fallback."
+      );
+    }
+    return;
+  }
+
   if (provider === "groq") {
     if (!ENV.groqApiKey) {
       throw new Error(
@@ -355,6 +377,7 @@ export const DEFAULT_FALLBACK_CHAIN = [
   DEFAULT_MODEL,
   "claude-3-5-haiku",
   "gpt-4o-mini",
+  VERCEL_AI_GATEWAY_FALLBACK_MODEL,
   GROQ_FALLBACK_MODEL,
 ];
 
@@ -474,9 +497,13 @@ async function invokeOnce(
   model: string,
   params: InvokeParams
 ): Promise<InvokeResult> {
-  const provider = isGroqModel(model) ? "groq" : "forge";
+  const provider = isGroqModel(model)
+    ? "groq"
+    : isVercelAiGatewayModel(model)
+      ? "vercelAiGateway"
+      : "forge";
   assertApiKey(provider);
-  const providerModel = toProviderModel(model);
+  const providerModel = provider === "groq" ? toProviderModel(model) : model;
 
   const {
     messages,
@@ -531,13 +558,21 @@ async function invokeOnce(
   }
 
   const response = await fetch(
-    provider === "groq" ? resolveGroqApiUrl() : resolveApiUrl(),
+    provider === "groq"
+      ? resolveGroqApiUrl()
+      : provider === "vercelAiGateway"
+        ? resolveVercelAiGatewayApiUrl()
+        : resolveApiUrl(),
     {
       method: "POST",
       headers: {
         "content-type": "application/json",
         authorization: `Bearer ${
-          provider === "groq" ? ENV.groqApiKey : ENV.forgeApiKey
+          provider === "groq"
+            ? ENV.groqApiKey
+            : provider === "vercelAiGateway"
+              ? ENV.vercelOidcToken
+              : ENV.forgeApiKey
         }`,
       },
       body: JSON.stringify(payload),

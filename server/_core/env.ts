@@ -32,6 +32,8 @@ export const ENV = {
   },
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  vercelAiGatewayApiUrl: process.env.VERCEL_AI_GATEWAY_API_URL ?? "",
+  vercelOidcToken: process.env.VERCEL_OIDC_TOKEN ?? "",
   groqApiUrl: process.env.GROQ_API_URL ?? "",
   groqApiKey: process.env.GROQ_API_KEY ?? "",
   squareAccessToken: process.env.SQUARE_ACCESS_TOKEN ?? "",

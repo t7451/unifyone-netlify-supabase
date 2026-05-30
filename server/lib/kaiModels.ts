@@ -1,4 +1,7 @@
-import { GROQ_FALLBACK_MODEL } from "../_core/llm";
+import {
+  GROQ_FALLBACK_MODEL,
+  VERCEL_AI_GATEWAY_FALLBACK_MODEL,
+} from "../_core/llm";
 
 export const KAI_MODEL_IDS = [
   "gemini-2.5-flash",
@@ -31,6 +34,7 @@ const DEFAULT_FALLBACK_MODELS = [
   "gemini-2.5-flash",
   "claude-3-5-haiku",
   "gpt-4o-mini",
+  VERCEL_AI_GATEWAY_FALLBACK_MODEL,
   GROQ_FALLBACK_MODEL,
 ];
 
