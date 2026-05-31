@@ -1,0 +1,49 @@
+%PDF-1.4
+%ÿÿÿÿ
+1 0 obj
+<</Type /Catalog /Pages 2 0 R>>
+endobj
+2 0 obj
+<</Type /Pages /Kids [3 0 R] /Count 1>>
+endobj
+3 0 obj
+<</Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources <</Font <</F1 5 0 R>>>>>>
+endobj
+4 0 obj
+<</Length 719>>
+stream
+BT
+/F1 24 Tf
+1 0 0 1 72 712 Tm (UnifyOne  Cathedral Blueprint) Tj
+/F1 12 Tf
+1 0 0 1 72 662 Tm (The architecture guide behind the platform.) Tj
+1 0 0 1 72 632 Tm () Tj
+1 0 0 1 72 607 Tm (1. Multi-tenant data model) Tj
+1 0 0 1 72 582 Tm (2. Sequential construction \(Six Pillars\)) Tj
+1 0 0 1 72 557 Tm (3. AI routing via Vercel AI Gateway + Kai) Tj
+1 0 0 1 72 532 Tm (4. Gig income intelligence layer) Tj
+1 0 0 1 72 507 Tm (5. Webhook-first integrations \(Stripe, Shopify, PayPal, Square\)) Tj
+1 0 0 1 72 482 Tm () Tj
+/F1 10 Tf
+1 0 0 1 72 442 Tm (This is a placeholder. The full blueprint PDF will be) Tj
+1 0 0 1 72 427 Tm (attached to your welcome email.) Tj
+1 0 0 1 72 392 Tm (© PNW Enterprises / 1Commerce LLC) Tj
+ET
+endstream
+endobj
+5 0 obj
+<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000015 00000 n 
+0000000062 00000 n 
+0000000117 00000 n 
+0000000237 00000 n 
+0000001005 00000 n 
+trailer
+<</Size 6 /Root 1 0 R>>
+startxref
+1100
+%%EOF

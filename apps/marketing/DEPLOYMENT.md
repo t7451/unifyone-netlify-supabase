@@ -30,6 +30,7 @@ every PR). To activate it:
    NEXT_PUBLIC_GA4_ID=                # e.g. G-XXXXXXXXXX
    NEXT_PUBLIC_CLARITY_ID=            # e.g. abcdefghij
    ```
+
 5. Click **Deploy**. You'll get a `*.vercel.app` URL — verify it looks right.
 
 ### 2. Wire up CI auto-deploy (one time)
@@ -37,11 +38,11 @@ every PR). To activate it:
 In GitHub → **Settings → Secrets and variables → Actions → New repository
 secret**, add three secrets:
 
-| Secret              | Where to find it                                                                  |
-| ------------------- | --------------------------------------------------------------------------------- |
-| `VERCEL_TOKEN`      | <https://vercel.com/account/tokens> → Create Token (scope: full account)          |
-| `VERCEL_ORG_ID`     | Vercel project → Settings → General → "Project ID" section shows the Team/Org ID  |
-| `VERCEL_PROJECT_ID` | Vercel project → Settings → General → Project ID                                  |
+| Secret              | Where to find it                                                                 |
+| ------------------- | -------------------------------------------------------------------------------- |
+| `VERCEL_TOKEN`      | <https://vercel.com/account/tokens> → Create Token (scope: full account)         |
+| `VERCEL_ORG_ID`     | Vercel project → Settings → General → "Project ID" section shows the Team/Org ID |
+| `VERCEL_PROJECT_ID` | Vercel project → Settings → General → Project ID                                 |
 
 Once these three secrets exist, every push to `main` ships to Vercel
 production automatically. The workflow skips cleanly (no failure) if the
@@ -50,6 +51,7 @@ secrets are missing.
 ### 3. Cut DNS over to Vercel (do this **last**, after `app.1commerce.online` is live)
 
 > ⚠️ **Pre-flight check before flipping apex DNS:**
+>
 > 1. Confirm `https://app.1commerce.online` loads the product app (set up
 >    via a new Netlify domain alias on the existing site, or migrate the
 >    product app to a fresh host pointing at the `app` CNAME).

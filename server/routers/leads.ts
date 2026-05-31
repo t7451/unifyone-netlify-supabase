@@ -12,6 +12,7 @@ import { TRPCError } from "@trpc/server";
 import { notifyOwner } from "../_core/notification";
 import { getAppUrl } from "../_core/env";
 import { fireAutomations } from "../lib/automationDispatch";
+import { sendBlueprintEmail } from "../_core/blueprintEmail";
 
 async function requireDb() {
   const db = await getDb();
@@ -119,6 +120,20 @@ export const leadsRouter = router({
         /* CAPI failure is non-critical */
       }
 
+      // Send the Cathedral Blueprint lead-magnet email when the lead came from
+      // the landing-page blueprint form. Non-blocking — log on failure so the
+      // mutation still succeeds and the lead is preserved.
+      let blueprintEmailSent = false;
+      if (input.source === "landing_page_blueprint") {
+        const result = await sendBlueprintEmail(input.email);
+        blueprintEmailSent = result.success;
+        if (!result.success) {
+          console.warn(
+            `[leads.submit] Blueprint email not sent to ${input.email}: ${result.error}`
+          );
+        }
+      }
+
       // Update automation tracking flags
       if (notificationSent || autoResults.n8n || autoResults.zapier) {
         try {
@@ -140,6 +155,7 @@ export const leadsRouter = router({
         leadId,
         notificationSent,
         automations: autoResults,
+        blueprintEmailSent,
       };
     }),
 
