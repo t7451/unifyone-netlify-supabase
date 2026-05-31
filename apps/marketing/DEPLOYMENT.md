@@ -4,6 +4,73 @@ This document covers deploying the **new Next.js 15 marketing site** at
 `apps/marketing/` as the **root domain** (`https://1commerce.online`) and
 relocating the existing product app to `https://app.1commerce.online`.
 
+---
+
+## 🚀 Go-live in 5 minutes (automated path)
+
+The repo ships with `.github/workflows/deploy-marketing.yml`, which deploys
+this site to Vercel on every push to `main` (and creates a preview URL on
+every PR). To activate it:
+
+### 1. Create the Vercel project (one time)
+
+1. Go to <https://vercel.com/new> → **Import Git Repository** → pick
+   `t7451/unifyone-netlify-supabase`.
+2. **Root Directory:** leave as repository root (the root `vercel.json`
+   already targets `apps/marketing`).
+3. **Framework Preset:** Next.js (auto-detected).
+4. **Environment Variables** — add these in Project Settings → Environment
+   Variables (Production + Preview):
+
+   ```env
+   NEXT_PUBLIC_APP_URL=https://app.1commerce.online
+   NEXT_PUBLIC_SIGNUP_URL=https://app.1commerce.online/signup
+   NEXT_PUBLIC_LOGIN_URL=https://app.1commerce.online/login
+   NEXT_PUBLIC_DEMO_VIDEO_URL=        # optional, leave blank for placeholder
+   NEXT_PUBLIC_GA4_ID=                # e.g. G-XXXXXXXXXX
+   NEXT_PUBLIC_CLARITY_ID=            # e.g. abcdefghij
+   ```
+5. Click **Deploy**. You'll get a `*.vercel.app` URL — verify it looks right.
+
+### 2. Wire up CI auto-deploy (one time)
+
+In GitHub → **Settings → Secrets and variables → Actions → New repository
+secret**, add three secrets:
+
+| Secret              | Where to find it                                                                  |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `VERCEL_TOKEN`      | <https://vercel.com/account/tokens> → Create Token (scope: full account)          |
+| `VERCEL_ORG_ID`     | Vercel project → Settings → General → "Project ID" section shows the Team/Org ID  |
+| `VERCEL_PROJECT_ID` | Vercel project → Settings → General → Project ID                                  |
+
+Once these three secrets exist, every push to `main` ships to Vercel
+production automatically. The workflow skips cleanly (no failure) if the
+secrets are missing.
+
+### 3. Cut DNS over to Vercel (do this **last**, after `app.1commerce.online` is live)
+
+> ⚠️ **Pre-flight check before flipping apex DNS:**
+> 1. Confirm `https://app.1commerce.online` loads the product app (set up
+>    via a new Netlify domain alias on the existing site, or migrate the
+>    product app to a fresh host pointing at the `app` CNAME).
+> 2. Confirm the Vercel deployment of the marketing site renders cleanly at
+>    its `*.vercel.app` URL.
+> 3. Notify any active customers of a brief DNS-propagation window.
+
+Then in **Cloudflare → DNS** (full records table in §2 below):
+
+```
+A     @     76.76.21.21              Proxied OFF  (Vercel anycast)
+CNAME www   cname.vercel-dns.com.    Proxied OFF
+CNAME app   <existing-netlify-host>  Proxied OFF
+```
+
+And in **Vercel → Project → Settings → Domains**: add `1commerce.online`
+and `www.1commerce.online` (Vercel will issue Let's Encrypt certs
+automatically within a few minutes).
+
+---
+
 DNS is managed via **Cloudflare**. Hosting target is **Vercel**.
 
 ---
