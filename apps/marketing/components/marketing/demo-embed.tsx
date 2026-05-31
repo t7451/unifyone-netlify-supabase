@@ -18,8 +18,8 @@ export function DemoEmbed() {
       <div className="flex h-full flex-col items-center justify-center gap-4 p-10 text-center text-ink-500">
         <PlayCircle className="h-12 w-12 text-brand-400" />
         <p className="max-w-sm text-sm">
-          Our new 60-second product walkthrough drops shortly. Want it in
-          your inbox the day it lands?
+          Our new 60-second product walkthrough drops shortly. Want it in your
+          inbox the day it lands?
         </p>
         <a
           href={APP_URLS.signup}

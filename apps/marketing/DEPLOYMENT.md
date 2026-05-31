@@ -10,12 +10,12 @@ DNS is managed via **Cloudflare**. Hosting target is **Vercel**.
 
 ## 0. Architecture after migration
 
-| URL                              | What lives there                                 | Hosting    |
-| -------------------------------- | ------------------------------------------------ | ---------- |
-| `https://1commerce.online`       | New marketing site (`apps/marketing/`)           | **Vercel** |
-| `https://www.1commerce.online`   | 301 → `https://1commerce.online`                 | Vercel     |
-| `https://app.1commerce.online`   | Existing product app (Express + React/Vite)      | Existing host (Netlify / Render / your current target) |
-| `https://status.1commerce.online`| Status page (already in footer)                  | External   |
+| URL                               | What lives there                            | Hosting                                                |
+| --------------------------------- | ------------------------------------------- | ------------------------------------------------------ |
+| `https://1commerce.online`        | New marketing site (`apps/marketing/`)      | **Vercel**                                             |
+| `https://www.1commerce.online`    | 301 → `https://1commerce.online`            | Vercel                                                 |
+| `https://app.1commerce.online`    | Existing product app (Express + React/Vite) | Existing host (Netlify / Render / your current target) |
+| `https://status.1commerce.online` | Status page (already in footer)             | External                                               |
 
 ---
 
@@ -62,6 +62,7 @@ flipping DNS.
 ## 2. Cloudflare DNS
 
 You will:
+
 - Point the **apex** (`1commerce.online`) at Vercel
 - Point **`www`** at Vercel (301-redirected to apex by Vercel)
 - Point **`app`** at the existing product app host
@@ -74,11 +75,11 @@ You will:
 Replace `existing-app-host.example.com` with wherever the product app currently
 lives (Netlify, Render, Fly, etc).
 
-| Type    | Name | Content                                  | Proxy |
-| ------- | ---- | ---------------------------------------- | ----- |
-| `A`     | `@`  | `76.76.21.21` (Vercel anycast)           | OFF   |
-| `CNAME` | `www`| `cname.vercel-dns.com`                   | OFF   |
-| `CNAME` | `app`| `<existing-app-host.example.com>`        | OFF   |
+| Type    | Name  | Content                           | Proxy |
+| ------- | ----- | --------------------------------- | ----- |
+| `A`     | `@`   | `76.76.21.21` (Vercel anycast)    | OFF   |
+| `CNAME` | `www` | `cname.vercel-dns.com`            | OFF   |
+| `CNAME` | `app` | `<existing-app-host.example.com>` | OFF   |
 
 > If your existing app host already requires Cloudflare proxy ON, leave it
 > proxied — only the records Vercel terminates need to be grey-cloud while
@@ -94,6 +95,7 @@ lives (Netlify, Render, Fly, etc).
 ### 2c. Optional: re-enable Cloudflare proxy
 
 After Vercel issues certs and the site loads cleanly on apex:
+
 1. Cloudflare → SSL/TLS → set to **Full (strict)**.
 2. Flip the `A @` and `CNAME www` records to **Proxied** (orange-cloud).
 3. Disable any Cloudflare **Auto Minify** (Next.js already optimizes) and any
@@ -121,13 +123,13 @@ Examples:
 
 Anywhere the product app currently assumes the apex domain:
 
-| File / env                  | Old                          | New                                 |
-| --------------------------- | ---------------------------- | ----------------------------------- |
-| `PUBLIC_APP_URL` (server)   | `https://1commerce.online`   | `https://app.1commerce.online`      |
-| OAuth redirect URIs         | `https://1commerce.online/*` | `https://app.1commerce.online/*`    |
-| Cookie `domain`             | `.1commerce.online`          | leave as `.1commerce.online` to allow future SSO between apex & app, OR scope to `app.1commerce.online` for tighter isolation |
-| Stripe / PayPal webhooks    | apex URLs                    | `app.1commerce.online` equivalents  |
-| `VITE_*` URLs               | apex                         | `app.1commerce.online`              |
+| File / env                | Old                          | New                                                                                                                           |
+| ------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `PUBLIC_APP_URL` (server) | `https://1commerce.online`   | `https://app.1commerce.online`                                                                                                |
+| OAuth redirect URIs       | `https://1commerce.online/*` | `https://app.1commerce.online/*`                                                                                              |
+| Cookie `domain`           | `.1commerce.online`          | leave as `.1commerce.online` to allow future SSO between apex & app, OR scope to `app.1commerce.online` for tighter isolation |
+| Stripe / PayPal webhooks  | apex URLs                    | `app.1commerce.online` equivalents                                                                                            |
+| `VITE_*` URLs             | apex                         | `app.1commerce.online`                                                                                                        |
 
 Update OAuth providers (Google, Manus, etc.) **before** flipping DNS, or users
 will fail to log in for a few minutes.
@@ -135,6 +137,7 @@ will fail to log in for a few minutes.
 ### 3c. Test the product app on the new hostname BEFORE the marketing DNS swap
 
 Hit `https://app.1commerce.online` and verify:
+
 - Login flow works end-to-end
 - Stripe checkout completes
 - Webhooks deliver (`stripe events resend …`)
@@ -151,9 +154,11 @@ You only need to override via env vars if your app host changes.
 ```ts
 // apps/marketing/lib/utils.ts
 export const APP_URLS = {
-  signup: process.env.NEXT_PUBLIC_SIGNUP_URL ?? "https://app.1commerce.online/signup",
-  login:  process.env.NEXT_PUBLIC_LOGIN_URL  ?? "https://app.1commerce.online/login",
-  app:    process.env.NEXT_PUBLIC_APP_URL    ?? "https://app.1commerce.online",
+  signup:
+    process.env.NEXT_PUBLIC_SIGNUP_URL ?? "https://app.1commerce.online/signup",
+  login:
+    process.env.NEXT_PUBLIC_LOGIN_URL ?? "https://app.1commerce.online/login",
+  app: process.env.NEXT_PUBLIC_APP_URL ?? "https://app.1commerce.online",
 };
 ```
 
@@ -176,14 +181,14 @@ they’re bounced to `app.1commerce.online`:
 
 ### Marketing (Vercel)
 
-| Variable                       | Required | Notes                                  |
-| ------------------------------ | -------- | -------------------------------------- |
-| `NEXT_PUBLIC_APP_URL`          | yes      | `https://app.1commerce.online`         |
-| `NEXT_PUBLIC_SIGNUP_URL`       | yes      | `…/signup`                             |
-| `NEXT_PUBLIC_LOGIN_URL`        | yes      | `…/login`                              |
-| `NEXT_PUBLIC_DEMO_VIDEO_URL`   | no       | YouTube/Loom embed URL; blank shows placeholder |
-| `NEXT_PUBLIC_GA4_ID`           | optional | `G-XXXXXXX` — scripts only inject when set |
-| `NEXT_PUBLIC_CLARITY_ID`       | optional | Clarity project ID                     |
+| Variable                     | Required | Notes                                           |
+| ---------------------------- | -------- | ----------------------------------------------- |
+| `NEXT_PUBLIC_APP_URL`        | yes      | `https://app.1commerce.online`                  |
+| `NEXT_PUBLIC_SIGNUP_URL`     | yes      | `…/signup`                                      |
+| `NEXT_PUBLIC_LOGIN_URL`      | yes      | `…/login`                                       |
+| `NEXT_PUBLIC_DEMO_VIDEO_URL` | no       | YouTube/Loom embed URL; blank shows placeholder |
+| `NEXT_PUBLIC_GA4_ID`         | optional | `G-XXXXXXX` — scripts only inject when set      |
+| `NEXT_PUBLIC_CLARITY_ID`     | optional | Clarity project ID                              |
 
 ### Product app (existing host)
 
@@ -274,7 +279,7 @@ pnpm --filter @unifyone/marketing typecheck   # tsc --noEmit
 ## 9. Future hardening (optional)
 
 - Add a **Content-Security-Policy** header in `vercel.json` once the analytics
-  + embed sources are finalized.
+  - embed sources are finalized.
 - Consider Cloudflare **Bot Fight Mode** (off by default — can interfere with
   GA4) on the apex.
 - Wire `/api/lead` and `/api/contact` to Resend, Loops, or n8n — currently

@@ -13,7 +13,7 @@ const ROUTES = [
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://1commerce.online";
-  return ROUTES.map((r) => ({
+  return ROUTES.map(r => ({
     url: `${base}${r}`,
     lastModified: new Date(),
     changeFrequency: "weekly",

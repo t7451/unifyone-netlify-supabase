@@ -112,7 +112,11 @@ export function PricingGrid({ compact = false }: { compact?: boolean }) {
             variant={t.highlighted ? "primary" : "secondary"}
             className="mt-6"
           >
-            <a href={t.cta.href} data-analytics-cta={`pricing-${t.id}`} data-tier={t.id}>
+            <a
+              href={t.cta.href}
+              data-analytics-cta={`pricing-${t.id}`}
+              data-tier={t.id}
+            >
               {t.cta.label}
             </a>
           </Button>

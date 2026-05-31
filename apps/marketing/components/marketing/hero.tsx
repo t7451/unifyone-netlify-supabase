@@ -32,9 +32,8 @@ export function Hero() {
             transition={{ duration: 0.5 }}
             className="headline mt-5"
           >
-            Earn more.{" "}
-            <span className="text-brand-600">Owe less.</span> Stop juggling
-            apps.
+            Earn more. <span className="text-brand-600">Owe less.</span> Stop
+            juggling apps.
           </motion.h1>
 
           <p className="subheadline max-w-xl">

@@ -162,8 +162,7 @@ function GigIqPanel() {
         body={
           <>
             Skip Tuesday lunch shifts. Last 4 weeks averaged{" "}
-            <strong>$11/hr</strong> vs <strong>$28/hr</strong> Thursday
-            dinners.
+            <strong>$11/hr</strong> vs <strong>$28/hr</strong> Thursday dinners.
           </>
         }
       />
@@ -191,9 +190,7 @@ function TaxPanel() {
       </div>
 
       <div className="rounded-xl border border-ink-900/10 bg-white p-4">
-        <p className="text-sm font-semibold text-ink-900">
-          Quarterly progress
-        </p>
+        <p className="text-sm font-semibold text-ink-900">Quarterly progress</p>
         <p className="text-xs text-ink-500">
           Auto-set aside · 24.6% of net income
         </p>
@@ -215,8 +212,8 @@ function TaxPanel() {
         title="Ready for your CPA"
         body={
           <>
-            One-click <strong>Schedule C export</strong> with mileage,
-            platform 1099s reconciled, and category totals.
+            One-click <strong>Schedule C export</strong> with mileage, platform
+            1099s reconciled, and category totals.
           </>
         }
       />
