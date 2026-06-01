@@ -1,8 +1,8 @@
 # UnifyOne marketing site (Astro 5)
 
-Static-first Astro app for **`marketing.1commerce.online`**. Deploys to a
-**separate** Netlify project (`operation-v3`) — the legacy React SPA at
-`1commerce.online` is served from the repo root and uses the root
+Static-first Astro app for **`marketing.1commerce.online`**. Deploys as a
+separate base-directory build on the **`unify0ne`** Netlify project — the main
+React SPA at `1commerce.online` is served from the repo root and uses the root
 `netlify.toml`.
 
 ## Stack
@@ -34,7 +34,7 @@ pnpm --filter unifyone dev               # http://localhost:4321
 | `/api/waitlist`                                                        | on-demand                | POSTs to `WAITLIST_N8N_WEBHOOK_URL`       |
 | `/api/unsubscribe`                                                     | on-demand                | HMAC-verified suppression list write      |
 
-## Go-live checklist (Netlify project `operation-v3`)
+## Go-live checklist (Netlify project `unify0ne`)
 
 1. **Site settings → Build & deploy → Continuous deployment**
    - Repository: `t7451/unifyone-netlify-supabase`
