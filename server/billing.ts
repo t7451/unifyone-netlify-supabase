@@ -321,20 +321,18 @@ export function registerBillingRoutes(app: Express) {
 } // end registerBillingRoutes
 
 /** Verify the session cookie from a Fetch API Request and return the openId. */
-async function getSessionOpenIdFromFetch(
-  req: Request
-): Promise<string | null> {
+async function getSessionOpenIdFromFetch(req: Request): Promise<string | null> {
   const cookieHeader = req.headers.get("cookie") ?? "";
   const cookies = parseCookieHeader(cookieHeader);
   const session = await sdk.verifySession(cookies[COOKIE_NAME]);
   return session?.openId ?? null;
 }
 
-async function safeBillingJson<T>(req: Request): Promise<T> {
+async function safeBillingJson<T>(req: Request): Promise<T | null> {
   try {
     return (await req.json()) as T;
   } catch {
-    return {} as T;
+    return null;
   }
 }
 
@@ -364,13 +362,15 @@ export async function registerBillingFetchRoutes(
         { status: 503 }
       );
     try {
-      const { packageId, userEmail, userId, origin } =
-        await safeBillingJson<{
-          packageId: PackageId;
-          userEmail?: string;
-          userId?: string;
-          origin?: string;
-        }>(req);
+      const body = await safeBillingJson<{
+        packageId: PackageId;
+        userEmail?: string;
+        userId?: string;
+        origin?: string;
+      }>(req);
+      if (!body)
+        return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+      const { packageId, userEmail, userId, origin } = body;
       const pkg = findPackage(packageId);
       if (!pkg)
         return Response.json({ error: "Invalid packageId" }, { status: 400 });
@@ -479,9 +479,22 @@ export async function registerBillingFetchRoutes(
         .maybeSingle();
       if (existing) return Response.json({ received: true, duplicate: true });
 
-      await db
-        .from("stripe_events")
-        .insert({ id: event.id, type: event.type, user_id: userId || null, payload: session });
+      const { error: insertErr } = await db.from("stripe_events").insert({
+        id: event.id,
+        type: event.type,
+        user_id: userId || null,
+        payload: session,
+      });
+      if (insertErr) {
+        logger.error("[Billing Webhook] Failed to record stripe_events", {
+          stripeEventId: event.id,
+          error: insertErr.message,
+        });
+        return Response.json(
+          { error: "Failed to record event" },
+          { status: 500 }
+        );
+      }
 
       if (userId && totalCredits > 0) {
         await db.rpc("add_credits", {

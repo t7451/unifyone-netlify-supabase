@@ -14,10 +14,7 @@
 import { spawn } from "child_process";
 import { readFile } from "fs/promises";
 import path from "path";
-import {
-  updateClippingJobStatus,
-  insertClip,
-} from "../db";
+import { updateClippingJobStatus, insertClip } from "../db";
 import { storagePut } from "../storage";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -42,7 +39,7 @@ export interface ProcessJobOptions {
   targetDuration?: number;
   /** Output style preset (default "default"). */
   style?: string;
-  /** Clipper engine adapter name (default "stub"). */
+  /** Clipper engine adapter name (default "basic"). */
   engine?: string;
 }
 
@@ -80,11 +77,7 @@ export async function processClippingJob(
 
   try {
     // ── Step 1: run the Python engine ────────────────────────────────────────
-    const scriptPath = path.resolve(
-      process.cwd(),
-      "clippers",
-      "run_job.py"
-    );
+    const scriptPath = path.resolve(process.cwd(), "clippers", "run_job.py");
     const pythonArgs = buildPythonArgs(scriptPath, options);
 
     await updateClippingJobStatus(jobId, tenantId, {
@@ -151,8 +144,7 @@ export async function processClippingJob(
     await updateClippingJobStatus(jobId, tenantId, {
       status: "failed",
       currentStage: "failed",
-      errorMessage:
-        err instanceof Error ? err.message : String(err),
+      errorMessage: err instanceof Error ? err.message : String(err),
     });
     throw err;
   }
@@ -166,10 +158,14 @@ function buildPythonArgs(
 ): string[] {
   const args = [
     scriptPath,
-    "--engine", options.engine ?? "basic",
-    "--num-clips", String(options.numClips),
-    "--target-duration", String(options.targetDuration ?? 45),
-    "--style", options.style ?? "default",
+    "--engine",
+    options.engine ?? "basic",
+    "--num-clips",
+    String(options.numClips),
+    "--target-duration",
+    String(options.targetDuration ?? 45),
+    "--style",
+    options.style ?? "default",
   ];
   if (options.videoPath) {
     args.push("--video", options.videoPath);
@@ -184,9 +180,7 @@ function buildPythonArgs(
  * Spawn `python3 <scriptPath> [args]`, collect stdout, and parse JSON.
  * Returns the `clips` array from the engine output.
  */
-export function runPythonEngine(
-  args: string[]
-): Promise<ClipEngineResult[]> {
+export function runPythonEngine(args: string[]): Promise<ClipEngineResult[]> {
   return new Promise((resolve, reject) => {
     const py = spawn("python3", args, {
       stdio: ["ignore", "pipe", "pipe"],

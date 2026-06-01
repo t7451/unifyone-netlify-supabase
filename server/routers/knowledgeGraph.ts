@@ -97,7 +97,11 @@ export const knowledgeGraphRouter = router({
         }
         return await graphMcpCall(
           "graph-query",
-          { label: input.label, type: input.nodeType, limit: input.limit ?? 10 },
+          {
+            label: input.label,
+            type: input.nodeType,
+            limit: input.limit ?? 10,
+          },
           tenantId
         );
       } catch (e: unknown) {
@@ -120,7 +124,6 @@ export const knowledgeGraphRouter = router({
     .input(
       z.object({
         query: z.string().min(1),
-        nodeType: z.string().optional(),
         limit: z.number().int().positive().optional(),
       })
     )
@@ -191,6 +194,9 @@ export const knowledgeGraphRouter = router({
     )
     .mutation(async ({ ctx, _input }) => {
       requireTenantId(ctx);
-      return { queued: false, message: "Ingest is scheduled automatically by the Graph Worker crons." };
+      return {
+        queued: false,
+        message: "Ingest is scheduled automatically by the Graph Worker crons.",
+      };
     }),
 });
