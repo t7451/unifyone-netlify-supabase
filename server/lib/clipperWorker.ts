@@ -166,7 +166,7 @@ function buildPythonArgs(
 ): string[] {
   const args = [
     scriptPath,
-    "--engine", options.engine ?? "stub",
+    "--engine", options.engine ?? "basic",
     "--num-clips", String(options.numClips),
     "--target-duration", String(options.targetDuration ?? 45),
     "--style", options.style ?? "default",
