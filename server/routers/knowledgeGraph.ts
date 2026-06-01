@@ -192,7 +192,7 @@ export const knowledgeGraphRouter = router({
         config: z.record(z.string(), z.unknown()).optional(),
       })
     )
-    .mutation(async ({ ctx, _input }) => {
+    .mutation(async ({ ctx }) => {
       requireTenantId(ctx);
       return {
         queued: false,

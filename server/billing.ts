@@ -321,14 +321,16 @@ export function registerBillingRoutes(app: Express) {
 } // end registerBillingRoutes
 
 /** Verify the session cookie from a Fetch API Request and return the openId. */
-async function getSessionOpenIdFromFetch(req: Request): Promise<string | null> {
+async function getSessionOpenIdFromFetch(
+  req: globalThis.Request
+): Promise<string | null> {
   const cookieHeader = req.headers.get("cookie") ?? "";
   const cookies = parseCookieHeader(cookieHeader);
   const session = await sdk.verifySession(cookies[COOKIE_NAME]);
   return session?.openId ?? null;
 }
 
-async function safeBillingJson<T>(req: Request): Promise<T | null> {
+async function safeBillingJson<T>(req: globalThis.Request): Promise<T | null> {
   try {
     return (await req.json()) as T;
   } catch {
@@ -341,8 +343,8 @@ async function safeBillingJson<T>(req: Request): Promise<T | null> {
  * Mirrors registerBillingRoutes but uses the Web Fetch API.
  */
 export async function registerBillingFetchRoutes(
-  req: Request
-): Promise<Response | null> {
+  req: globalThis.Request
+): Promise<globalThis.Response | null> {
   const url = new URL(req.url);
   const path = url.pathname;
   const method = req.method.toUpperCase();
