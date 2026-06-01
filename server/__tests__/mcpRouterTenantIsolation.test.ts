@@ -219,19 +219,52 @@ describe("terpforge router — tenant isolation", () => {
 
 // ──────────────────────────────────────────────────────────────────────────────
 // knowledgeGraph
+// knowledgeGraph uses a dedicated fetch-based client (graphMcpCall) that calls
+// ENV.graphMcpUrl directly — it does NOT go through mcpCallTool. Tenant
+// isolation is enforced by passing requireTenantId(ctx) as the x-cortex-user-id
+// header on every outbound request.
 // ──────────────────────────────────────────────────────────────────────────────
 
 describe("knowledgeGraph router — tenant isolation", () => {
-  it("queryGraph: scopes to ctx tenant", async () => {
-    const caller = knowledgeGraphRouter.createCaller(makeCtx(makeUser()));
-    await caller.queryGraph({ nodeType: "project" });
-    assertScopedToTenant(100);
+  const fetchMock = vi.fn(
+    async () =>
+      new Response(
+        JSON.stringify({ result: { content: [{ type: "text", text: "{}" }] } }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }
+      )
+  );
+
+  beforeEach(() => {
+    fetchMock.mockClear();
+    // @ts-expect-error — replace global fetch for this describe block
+    globalThis.fetch = fetchMock;
   });
 
-  it("getStats: scopes to ctx tenant", async () => {
+  it("queryGraph: scopes to ctx tenant via x-cortex-user-id header", async () => {
+    const caller = knowledgeGraphRouter.createCaller(makeCtx(makeUser()));
+    await caller.queryGraph({ nodeType: "project" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers["x-cortex-user-id"]).toBe("100");
+    // Must not contain client-controllable tenant fields in the JSON body
+    const body = JSON.parse(init.body as string) as {
+      params: { arguments: Record<string, unknown> };
+    };
+    expect(body.params.arguments).not.toHaveProperty("tenant_id");
+    expect(body.params.arguments).not.toHaveProperty("tenantId");
+  });
+
+  it("getStats: scopes to ctx tenant via x-cortex-user-id header", async () => {
     const caller = knowledgeGraphRouter.createCaller(makeCtx(makeUser()));
     await caller.getStats();
-    assertScopedToTenant(100);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers["x-cortex-user-id"]).toBe("100");
   });
 
   it("queryGraph: rejects when user has no tenantId", async () => {
@@ -239,6 +272,6 @@ describe("knowledgeGraph router — tenant isolation", () => {
       makeCtx(makeUser({ tenantId: null }))
     );
     await expect(caller.queryGraph({})).rejects.toThrow("No active tenant");
-    expect(mcpCallToolMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
