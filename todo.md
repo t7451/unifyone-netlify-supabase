@@ -53,7 +53,7 @@
 - [x] Build product CRUD modal: edit product form
 - [x] Build product CRUD modal: delete confirmation
 - [x] Add inventory management inline in Products page
-- [x] Configure netlify.toml for operation-v3.netlify.app
+- [x] Configure netlify.toml for unify0ne (1commerce.online)
 - [x] Update app title and meta tags for production
 - [x] Run full test suite (14/14 passing) and save checkpoint
 

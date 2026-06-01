@@ -1,20 +1,23 @@
 # UnifyOne — Netlify Deployment Guide
 
-## Target: operation-v3.netlify.app
+## Target: unify0ne (1commerce.online)
+
+The active Netlify project is **`unify0ne`**, serving the main app at
+`1commerce.online` from the repo root via the root `netlify.toml`.
 
 ### Prerequisites
 
-1. Netlify account connected to `ksksrbiz-arch` GitHub org
+1. Netlify account connected to `t7451` GitHub account
 2. Stripe live keys configured (Settings → Payment)
-3. Database provisioned (already done via Manus managed DB)
+3. Database provisioned (Neon PostgreSQL via `DATABASE_URL`)
 
 ---
 
 ## Step 1 — Connect GitHub Repo to Netlify
 
 1. Go to [app.netlify.com](https://app.netlify.com) → **Add new site** → **Import an existing project**
-2. Select **GitHub** → authorize `ksksrbiz-arch` org
-3. Choose the `unifyone-platform` repository (or the Manus-exported repo)
+2. Select **GitHub** → authorize `t7451` account
+3. Choose the `unifyone-netlify-supabase` repository
 4. Configure build settings:
    - **Base directory:** _(leave empty — root)_
    - **Build command:** `pnpm build`
@@ -27,27 +30,29 @@
 
 Go to **Site settings → Environment variables** and add:
 
-| Variable                      | Value                                         |
-| ----------------------------- | --------------------------------------------- |
-| `DATABASE_URL`                | Your PostgreSQL (Neon) connection string             |
-| `JWT_SECRET`                  | Your JWT signing secret                       |
-| `OAUTH_CLIENT_ID`             | OAuth client ID from your identity provider   |
-| `OAUTH_CLIENT_SECRET`         | OAuth client secret (if required by provider) |
-| `OAUTH_AUTHORIZE_URL`         | Provider authorize endpoint                   |
-| `OAUTH_TOKEN_URL`             | Provider token endpoint                       |
-| `OAUTH_USERINFO_URL`          | Provider userinfo endpoint                    |
-| `OAUTH_SCOPE`                 | Scopes, e.g. `openid profile email`           |
-| `STRIPE_SECRET_KEY`           | `sk_live_...` from Stripe Dashboard           |
-| `STRIPE_WEBHOOK_SECRET`       | `whsec_...` from Stripe Webhooks              |
-| `VITE_STRIPE_PUBLISHABLE_KEY` | `pk_live_...` from Stripe Dashboard           |
-| `NODE_ENV`                    | `production`                                  |
+| Variable                      | Value                                            |
+| ----------------------------- | ------------------------------------------------ |
+| `DATABASE_URL`                | Neon PostgreSQL connection string                |
+| `JWT_SECRET`                  | JWT signing secret (≥ 32 chars)                  |
+| `SUPABASE_URL`                | Supabase project URL                             |
+| `SUPABASE_ANON_KEY`           | Supabase anon key                                |
+| `SUPABASE_SERVICE_ROLE_KEY`   | Supabase service role key                        |
+| `SUPABASE_JWT_SECRET`         | Supabase JWT secret (fallback for `JWT_SECRET`)  |
+| `VITE_SUPABASE_URL`           | Same as `SUPABASE_URL`                           |
+| `VITE_SUPABASE_ANON_KEY`      | Same as `SUPABASE_ANON_KEY`                      |
+| `STRIPE_SECRET_KEY`           | `sk_live_...` from Stripe Dashboard              |
+| `STRIPE_WEBHOOK_SECRET`       | `whsec_...` from Stripe Webhooks                 |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | `pk_live_...` from Stripe Dashboard              |
+| `GRAPH_MCP_URL`               | Graph Worker MCP endpoint URL                    |
+| `GRAPH_MCP_TOKEN`             | Bearer token for Graph Worker auth (optional)    |
+| `NODE_ENV`                    | `production`                                     |
 
 ---
 
 ## Step 3 — Configure Stripe Webhook
 
 1. Go to [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks)
-2. **Add endpoint:** `https://operation-v3.netlify.app/api/stripe/webhook`
+2. **Add endpoint:** `https://1commerce.online/api/billing/webhook`
 3. Select events to listen for:
    - `checkout.session.completed`
    - `customer.subscription.created`
@@ -59,21 +64,21 @@ Go to **Site settings → Environment variables** and add:
 
 ---
 
-## Step 4 — Rename Site to operation-v3
+## Step 4 — Domain Configuration
 
-1. In Netlify → **Site settings → General → Site details**
-2. Click **Change site name** → enter `operation-v3`
-3. Your site will be live at `https://operation-v3.netlify.app`
+1. In Netlify → **Site settings → Domain management**
+2. Add `1commerce.online` as a custom domain
+3. Set up DNS records as instructed by Netlify
+4. Issue HTTPS cert (automatic via Let's Encrypt)
 
 ---
 
 ## Step 5 — Test the Deployment
 
-1. Visit `https://operation-v3.netlify.app`
-2. Click **Start Free Trial** → authenticate via configured OAuth provider
-3. Create your first tenant store
-4. Add a product using the new CRUD modal
-5. Test Stripe checkout with card `4242 4242 4242 4242`
+1. Visit `https://1commerce.online`
+2. Sign in with your credentials
+3. Create a tenant store and verify the dashboard loads
+4. Test Stripe checkout with card `4242 4242 4242 4242`
 
 ---
 
@@ -91,6 +96,6 @@ Use any future expiry date and any 3-digit CVV.
 
 ## Architecture Notes
 
-This app runs as a **full-stack Express server** deployed on Netlify. The `netlify.toml` routes all `/api/*` traffic to the server and all other routes to the React SPA via the `index.html` fallback.
-
-For true serverless Netlify Functions, a future migration to individual function files under `netlify/functions/` would be needed — but the current Express adapter works for the initial deployment.
+This app runs as a **full-stack Express server** deployed on Netlify Functions.
+The `netlify.toml` routes all `/api/*` traffic to the server function and all
+other routes to the React SPA via the `index.html` fallback.

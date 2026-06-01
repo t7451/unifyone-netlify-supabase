@@ -7,15 +7,14 @@ export const ENV = {
     process.env.DEPLOY_PRIME_URL ??
     process.env.DEPLOY_URL ??
     "",
-  // Cookie/JWT signing secret — JWT_SECRET only.
+  // Cookie/JWT signing secret — prefer JWT_SECRET, fall back to SUPABASE_JWT_SECRET.
   //
-  // We previously fell back to SUPABASE_JWT_SECRET so the platform could
-  // bootstrap during the Supabase migration. That fallback has been removed
-  // because (a) Supabase is being decommissioned (see SUPABASE_REMOVAL.md)
-  // and (b) silently signing app sessions with the upstream Supabase JWT
-  // secret couples session validity to a third-party rotation we don't
-  // control. Operators MUST set a dedicated JWT_SECRET (>= 32 chars).
-  cookieSecret: process.env.JWT_SECRET ?? "",
+  // The SUPABASE_JWT_SECRET fallback is retained temporarily so existing
+  // deployments that haven't yet set JWT_SECRET keep working. Operators
+  // MUST set a dedicated JWT_SECRET (>= 32 chars) and stop relying on
+  // SUPABASE_JWT_SECRET once Supabase decommissioning is complete
+  // (see SUPABASE_REMOVAL.md).
+  cookieSecret: process.env.JWT_SECRET ?? process.env.SUPABASE_JWT_SECRET ?? "",
   /**
    * Explicit cookie domain — restricts the session cookie to your root domain
    * and prevents it leaking to unrelated subdomains.
@@ -45,6 +44,15 @@ export const ENV = {
   supabaseUrl: process.env.SUPABASE_URL ?? "",
   supabaseJwtSecret: process.env.SUPABASE_JWT_SECRET ?? "",
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+  // Graph Worker MCP endpoint (ksksrbiz-arch/graph Cloudflare Worker).
+  // Tools: recall, graph-query, recent-events, stats, write-note.
+  // Optional: Bearer token for Graph Worker inbound auth.
+  graphMcpUrl:
+    process.env.GRAPH_MCP_URL ?? "https://graph.skdev-371.workers.dev/mcp",
+  graphMcpToken: process.env.GRAPH_MCP_TOKEN ?? "",
+  // Built Media clipping platform URL (ksksrbiz-arch/built-media).
+  builtMediaUrl: process.env.BUILT_MEDIA_URL ?? "",
+  builtMediaApiKey: process.env.BUILT_MEDIA_API_KEY ?? "",
 };
 
 /**
