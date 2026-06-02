@@ -31,6 +31,61 @@
   path = "/api/oauth/*"
   function = "rate-limit"
 
+# ── Specific API function routes — MUST come before the /api/* catch-all ──────
+# These paths are owned by their own dedicated Netlify Functions, but the
+# /api/* rewrite below would otherwise swallow them and hand the request to
+# server.ts (which doesn't implement them → 404, or in the webhook-async case,
+# was reaching the wrong handler). Listing them explicitly above the catch-all
+# guarantees they reach the right function. force=true so they win even though
+# the function also declares the same path via in-code config.
+[[redirects]]
+  from = "/api/stripe/webhook-async"
+  to = "/.netlify/functions/stripe-webhook-background"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/golf/order"
+  to = "/.netlify/functions/golf-order"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/golf/config"
+  to = "/.netlify/functions/golf-config"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/golf/logo-url"
+  to = "/.netlify/functions/golf-logo-url"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/golf/stripe-webhook"
+  to = "/.netlify/functions/golf-stripe-webhook-background"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/deploys/notify"
+  to = "/.netlify/functions/deploy-notifier"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/flush-overages"
+  to = "/.netlify/functions/flush-user-overages-background"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/health"
+  to = "/.netlify/functions/health"
+  status = 200
+  force = true
+
 # Redirect API calls to the server function
 # server.ts uses in-code config { path: "/api/*" } — Netlify auto-routes it
 [[redirects]]
@@ -47,7 +102,7 @@
   status = 200
 
 # MCP (Model Context Protocol) server endpoint
-# mcp.mjs uses in-code config { path: "/mcp" } — Netlify auto-routes it.
+# mcp.mts uses in-code config { path: "/mcp" } — Netlify auto-routes it.
 # This redirect is kept as a belt-and-suspenders fallback.
 [[redirects]]
   from = "/mcp"

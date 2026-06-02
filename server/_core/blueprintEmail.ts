@@ -24,8 +24,13 @@ import { getAppUrl } from "./env";
 const FROM = "UnifyOne <hello@1commerce.online>";
 const SUBJECT = "Your Cathedral Blueprint is inside";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const PDF_PATH = resolve(__dirname, "..", "assets", "cathedral-blueprint.pdf");
+// Note: do NOT name this `__dirname`. When esbuild bundles this module into
+// the Netlify function as ESM, it injects its own `const __dirname` shim for
+// CommonJS interop; a same-named top-level declaration here collides with it
+// ("Identifier '__dirname' has already been declared"), crashing the entire
+// /api/* function at load.
+const moduleDir = dirname(fileURLToPath(import.meta.url));
+const PDF_PATH = resolve(moduleDir, "..", "assets", "cathedral-blueprint.pdf");
 
 function html(downloadUrl: string | null): string {
   const cta = downloadUrl
