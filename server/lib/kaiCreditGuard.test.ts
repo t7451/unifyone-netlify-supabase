@@ -9,8 +9,10 @@ import {
   buildKaiUsageLedgerIdempotencyKey,
   checkKaiCreditAllowance,
   debitKaiCreditUsage,
+  MASTER_CONTROL_KAI_BALANCE,
   toKaiLedgerCreditAmount,
 } from "./kaiCreditGuard";
+import { MASTER_CONTROL_ACCOUNT_ID } from "./masterControl";
 
 type LedgerRow = {
   id: number;
@@ -244,5 +246,38 @@ describe("Kai Neon credit guard", () => {
       metadata: { selectedModel: "kai-fast" },
     });
     expect(replay.balanceAfter).toBe(7);
+  });
+
+  it("grants master_control unlimited credits without touching the ledger", async () => {
+    // getDb is reset (returns undefined); if the bypass touched the DB this
+    // would throw, so a clean resolve also proves no ledger access occurred.
+    const allowance = await checkKaiCreditAllowance({
+      tenantId: 2,
+      userId: 7,
+      minimumCredits: 1000,
+      openId: MASTER_CONTROL_ACCOUNT_ID,
+    });
+    expect(allowance).toMatchObject({
+      allowed: true,
+      balance: MASTER_CONTROL_KAI_BALANCE,
+      enforcement: "neon",
+    });
+    expect(getDb).not.toHaveBeenCalled();
+  });
+
+  it("never debits master_control for Kai usage", async () => {
+    const debit = await debitKaiCreditUsage({
+      tenantId: 2,
+      userId: 7,
+      credits: 50,
+      idempotencyKey: "kai_chat_usage:2:7:resp",
+      openId: MASTER_CONTROL_ACCOUNT_ID,
+    });
+    expect(debit).toMatchObject({
+      debited: false,
+      chargedCredits: 0,
+      balanceAfter: MASTER_CONTROL_KAI_BALANCE,
+    });
+    expect(getDb).not.toHaveBeenCalled();
   });
 });
