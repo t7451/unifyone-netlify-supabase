@@ -1651,8 +1651,17 @@ export async function registerStripeFetchRoutes(
   const path = url.pathname;
   const method = req.method.toUpperCase();
 
-  // ── /api/stripe/webhook ─────────────────────────────────────────────
-  if (path === "/api/stripe/webhook" && method === "POST") {
+  // ── /api/stripe/webhook (+ /webhook-async alias) ────────────────────
+  // The "-async" path exists as a separate background function
+  // (stripe-webhook-background.mts), but background functions don't reliably
+  // auto-route via config.path, so requests fall through to this /api/* server
+  // function. Handle the alias here so any Stripe Dashboard endpoint pointed at
+  // /api/stripe/webhook-async is processed (signature-verified) instead of 404ing.
+  if (
+    (path === "/api/stripe/webhook" ||
+      path === "/api/stripe/webhook-async") &&
+    method === "POST"
+  ) {
     return handleStripeWebhook(req);
   }
 

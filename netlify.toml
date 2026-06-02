@@ -31,84 +31,29 @@
   path = "/api/oauth/*"
   function = "rate-limit"
 
-# ── Specific API function routes — MUST come before the /api/* catch-all ──────
-# These paths are owned by their own dedicated Netlify Functions, but the
-# /api/* rewrite below would otherwise swallow them and hand the request to
-# server.ts (which doesn't implement them → 404, or in the webhook-async case,
-# was reaching the wrong handler). Listing them explicitly above the catch-all
-# guarantees they reach the right function. force=true so they win even though
-# the function also declares the same path via in-code config.
-[[redirects]]
-  from = "/api/stripe/webhook-async"
-  to = "/.netlify/functions/stripe-webhook-background"
-  status = 200
-  force = true
+# Routing note: Netlify Functions that declare an in-code `config.path` (server.ts
+# → "/api/*", health.mts → "/api/health", blobs-serve.mts → "/blobs/*",
+# mcp.mts → "/mcp", etc.) auto-route at that path. They are NOT served at
+# `/.netlify/functions/<name>` — hitting that URL 404s. So do NOT add
+# `force = true` redirects pointing at `/.netlify/functions/<name>`; that
+# overrides the function's own auto-route with a dead target (this is exactly
+# what previously broke /api/health and /mcp). Dedicated functions for specific
+# paths (stripe webhook-async, golf, deploys/notify, flush-overages) likewise
+# auto-route via their own config.path and win over the /api/* catch-all below.
 
-[[redirects]]
-  from = "/api/golf/order"
-  to = "/.netlify/functions/golf-order"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/golf/config"
-  to = "/.netlify/functions/golf-config"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/golf/logo-url"
-  to = "/.netlify/functions/golf-logo-url"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/golf/stripe-webhook"
-  to = "/.netlify/functions/golf-stripe-webhook-background"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/deploys/notify"
-  to = "/.netlify/functions/deploy-notifier"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/flush-overages"
-  to = "/.netlify/functions/flush-user-overages-background"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/health"
-  to = "/.netlify/functions/health"
-  status = 200
-  force = true
-
-# Redirect API calls to the server function
-# server.ts uses in-code config { path: "/api/*" } — Netlify auto-routes it
+# Catch-all for the main API server function. Redundant with server.ts's in-code
+# config { path: "/api/*" }, kept as a non-force fallback (auto-route wins).
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/server"
   status = 200
 
 # Netlify Blobs serving function — public reads of stored objects.
-# blobs-serve.mts uses in-code config { path: "/blobs/*" }; this redirect
-# is a belt-and-suspenders fallback.
+# blobs-serve.mts uses in-code config { path: "/blobs/*" }; non-force fallback.
 [[redirects]]
   from = "/blobs/*"
   to = "/.netlify/functions/blobs-serve"
   status = 200
-
-# MCP (Model Context Protocol) server endpoint
-# mcp.mts uses in-code config { path: "/mcp" } — Netlify auto-routes it.
-# This redirect is kept as a belt-and-suspenders fallback.
-[[redirects]]
-  from = "/mcp"
-  to = "/.netlify/functions/mcp"
-  status = 200
-  force = true
 
 # Canonical host: redirect www → apex (requires www.1commerce.online to be
 # added as a domain alias in the Netlify dashboard for this rule to fire).
