@@ -10,7 +10,7 @@
  *   GET  /api/billing/credits
  */
 import type Stripe from "stripe";
-import express, { Express, Request, Response } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import { createClient } from "@supabase/supabase-js";
 import { errMsg } from "./_core/errors";
 import { sdk } from "./_core/sdk";
