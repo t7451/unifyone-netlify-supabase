@@ -203,6 +203,7 @@ export const aiRouter = router({
           tenantId: ctx.tenantId,
           userId: user.id,
           minimumCredits: selectedModel.minimumCredits,
+          openId: user.openId,
         });
         if (!creditAllowance.allowed) {
           throw new TRPCError({
@@ -458,6 +459,7 @@ export const aiRouter = router({
               userId: user.id,
               credits: ledgerCreditsToDebit,
               idempotencyKey: debitIdempotencyKey,
+              openId: user.openId,
               description: `Kai chat ${input.context} (${selectedModel.id})`,
               metadata: {
                 context: input.context,

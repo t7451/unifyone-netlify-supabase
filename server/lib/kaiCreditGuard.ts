@@ -1,6 +1,16 @@
 import { and, eq, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { kaiCreditLedger } from "../../drizzle/schema";
+import { isMasterControlOpenId } from "./masterControl";
+
+/**
+ * The master_control (platform owner) account is exempt from Kai credit
+ * metering: it is always allowed and is never debited. We surface a large
+ * sentinel balance so the UI renders an effectively-unlimited state instead of
+ * a real ledger sum. This also keeps the master account working even if the
+ * kai_credit_* tables are missing/unmigrated.
+ */
+export const MASTER_CONTROL_KAI_BALANCE = 999_999_999;
 
 export interface KaiCreditAllowance {
   allowed: boolean;
@@ -79,9 +89,21 @@ export async function checkKaiCreditAllowance(input: {
   tenantId: string | number;
   userId: string | number;
   minimumCredits: number;
+  openId?: string | null;
 }): Promise<KaiCreditAllowance> {
   const minimumCredits = Math.max(0, input.minimumCredits);
   const minimumLedgerCredits = toKaiLedgerCreditAmount(minimumCredits);
+
+  // master_control is exempt from metering — always allowed, never charged.
+  if (isMasterControlOpenId(input.openId)) {
+    return {
+      allowed: true,
+      minimumCredits,
+      minimumLedgerCredits,
+      balance: MASTER_CONTROL_KAI_BALANCE,
+      enforcement: "neon",
+    };
+  }
 
   let tenantId: number;
   let userId: number;
@@ -158,7 +180,18 @@ export async function debitKaiCreditUsage(input: {
   idempotencyKey: string;
   description?: string;
   metadata?: Record<string, unknown>;
+  openId?: string | null;
 }): Promise<KaiCreditDebitResult> {
+  // master_control is never charged for Kai usage.
+  if (isMasterControlOpenId(input.openId)) {
+    return {
+      debited: false,
+      chargedCredits: 0,
+      balanceAfter: MASTER_CONTROL_KAI_BALANCE,
+      idempotencyKey: input.idempotencyKey,
+    };
+  }
+
   const tenantId = parsePositiveInteger(input.tenantId, "tenantId");
   const userId = parsePositiveInteger(input.userId, "userId");
   const chargedCredits = toKaiLedgerCreditAmount(input.credits);

@@ -18,6 +18,8 @@ import {
   kaiCreditPurchases,
   type KaiCreditPackage,
 } from "../../drizzle/schema";
+import { isMasterControlUser } from "../lib/masterControl";
+import { MASTER_CONTROL_KAI_BALANCE } from "../lib/kaiCreditGuard";
 
 function toPackageDto(pkg: KaiCreditPackage): KaiCreditPackageDto {
   return {
@@ -63,6 +65,18 @@ export const kaiCreditsRouter = router({
       const user = ctx.user;
       if (!user) throw new TRPCError({ code: "UNAUTHORIZED" });
       const userId = user.id;
+
+      // master_control is exempt from metering — report an unlimited balance
+      // and no transactions, without touching the ledger.
+      if (isMasterControlUser(user)) {
+        return {
+          purchased: MASTER_CONTROL_KAI_BALANCE,
+          used: 0,
+          remaining: MASTER_CONTROL_KAI_BALANCE,
+          transactions: [],
+        };
+      }
+
       const db = await getDb();
       if (!db) {
         throw new TRPCError({
