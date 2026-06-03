@@ -1380,7 +1380,7 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
         return Response.json({ received: true, duplicate: true });
       }
     }
-  } catch (_dedupErr) {
+  } catch {
     // Non-fatal: if dedup check fails, continue processing.
   }
 
