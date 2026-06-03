@@ -605,6 +605,18 @@ export function registerPayPalRoutes(app: Express) {
         }
         const event = JSON.parse(rawBody) as PayPalWebhookEvent;
         await recordPayPalWebhookEvent(event, "received");
+        // Dedup: skip events we already successfully processed.
+        const dedupDb = await getDb();
+        if (dedupDb && event.id) {
+          const existing = await dedupDb
+            .select({ status: paypalWebhookEvents.status })
+            .from(paypalWebhookEvents)
+            .where(eq(paypalWebhookEvents.eventId, event.id))
+            .limit(1);
+          if (existing[0]?.status === "processed") {
+            return res.status(200).json({ received: true, duplicate: true });
+          }
+        }
         try {
           await applyPayPalEvent(event);
           await recordPayPalWebhookEvent(event, "processed");
@@ -789,6 +801,18 @@ async function handlePayPalWebhook(req: Request): Promise<Response> {
     eventId: event.id,
   });
   await recordPayPalWebhookEvent(event, "received");
+  // Dedup: skip events we already successfully processed.
+  const dedupDb = await getDb();
+  if (dedupDb && event.id) {
+    const existing = await dedupDb
+      .select({ status: paypalWebhookEvents.status })
+      .from(paypalWebhookEvents)
+      .where(eq(paypalWebhookEvents.eventId, event.id))
+      .limit(1);
+    if (existing[0]?.status === "processed") {
+      return Response.json({ received: true, duplicate: true });
+    }
+  }
   try {
     await applyPayPalEvent(event);
     await recordPayPalWebhookEvent(event, "processed");

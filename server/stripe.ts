@@ -313,7 +313,7 @@ async function syncSubscription(sub: Stripe.Subscription) {
     if (matched) planId = matched.id;
   }
 
-  await db
+  const updated = await db
     .update(tenants)
     .set({
       stripeSubscriptionId: sub.id,
@@ -321,7 +321,36 @@ async function syncSubscription(sub: Stripe.Subscription) {
       subscriptionCurrentPeriodEnd: periodEnd,
       ...(planId ? { planId } : {}),
     })
-    .where(eq(tenants.stripeCustomerId, sub.customer as string));
+    .where(eq(tenants.stripeCustomerId, sub.customer as string))
+    .returning({ id: tenants.id });
+
+  // If no tenant was matched by stripeCustomerId (new subscriber whose checkout
+  // event was missed or arrived out of order), try to link via metadata.
+  if (updated.length === 0) {
+    try {
+      const tenant = await resolveTenantForSubscription(sub);
+      if (tenant) {
+        await db
+          .update(tenants)
+          .set({
+            stripeCustomerId: sub.customer as string,
+            stripeSubscriptionId: sub.id,
+            subscriptionStatus: status,
+            subscriptionCurrentPeriodEnd: periodEnd,
+            ...(planId ? { planId } : {}),
+          })
+          .where(eq(tenants.id, tenant.id));
+        console.log(
+          `[Stripe] syncSubscription: linked tenant ${tenant.id} via metadata for customer ${sub.customer}`
+        );
+      }
+    } catch (err) {
+      console.warn(
+        `[Stripe] syncSubscription: resolveTenantForSubscription failed:`,
+        err instanceof Error ? err.message : String(err)
+      );
+    }
+  }
 
   // Also sync to Supabase stripe_subscriptions table
   const supabase = getSupabaseAdmin();
@@ -1336,6 +1365,24 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
   console.log(`[Stripe Webhook] Received event: ${event.type} (${event.id})`);
   // PATCHED: persist for forensic + idempotency.
   await recordWebhookEvent(event, "received");
+
+  // Dedup: skip events we already successfully processed (Stripe retries).
+  try {
+    const db = await getDb();
+    if (db) {
+      const existing = await db
+        .select({ status: stripeWebhookEvents.status })
+        .from(stripeWebhookEvents)
+        .where(eq(stripeWebhookEvents.eventId, event.id))
+        .limit(1);
+      if (existing[0]?.status === "processed") {
+        console.log(`[Stripe Webhook] Duplicate event skipped: ${event.id}`);
+        return Response.json({ received: true, duplicate: true });
+      }
+    }
+  } catch (_dedupErr) {
+    // Non-fatal: if dedup check fails, continue processing.
+  }
 
   try {
     switch (event.type) {

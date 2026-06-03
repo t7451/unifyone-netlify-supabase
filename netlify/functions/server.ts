@@ -12,6 +12,21 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import "../../server/_core/sentry";
 
+// ── Cold-start env sanity check (non-fatal — logs loudly, never crashes) ───
+const REQUIRED_VARS = [
+  "JWT_SECRET",
+  "DATABASE_URL",
+  "STRIPE_SECRET_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+] as const;
+const missing = REQUIRED_VARS.filter(v => !process.env[v]);
+if (missing.length > 0) {
+  console.error(
+    `[UnifyOne] WARNING: missing required env vars at cold start: ${missing.join(", ")}. ` +
+      "Requests that depend on these will fail at runtime."
+  );
+}
+
 // ── Lazy singletons — avoid re-importing on every warm invocation ───────────
 let _routerModule: any = null;
 let _nonTrpcHandler: ((req: Request) => Promise<Response | null>) | null = null;

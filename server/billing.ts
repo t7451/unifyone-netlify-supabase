@@ -108,12 +108,15 @@ export function registerBillingRoutes(app: Express) {
           .json({ error: "Billing service not configured" });
       }
       try {
-        const { packageId, userEmail, userId, origin } = req.body as {
+        const { packageId, userEmail, origin } = req.body as {
           packageId: PackageId;
           userEmail?: string;
-          userId?: string;
           origin?: string;
         };
+        // Derive the crediting identity from the verified session — never trust
+        // a client-supplied userId, which would let a payer credit any account.
+        const openId = await getSessionOpenId(req);
+        if (!openId) return res.status(401).json({ error: "Unauthorized" });
         const pkg = findPackage(packageId);
         if (!pkg) return res.status(400).json({ error: "Invalid packageId" });
 
@@ -158,7 +161,7 @@ export function registerBillingRoutes(app: Express) {
             package_id: pkg.id,
             credits: String(pkg.credits),
             bonus: String(pkg.bonus),
-            user_id: userId || "",
+            user_id: openId,
           },
           success_url: `${baseUrl}/dashboard/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${baseUrl}/dashboard/billing?canceled=true`,
@@ -200,6 +203,18 @@ export function registerBillingRoutes(app: Express) {
       const session = event.data.object as Stripe.Checkout.Session;
       if (session.metadata?.purchase_type !== "credits")
         return res.json({ received: true, skipped: "not credits" });
+
+      if (
+        session.payment_status !== "paid" ||
+        (session.amount_total ?? 0) <= 0
+      ) {
+        logger.warn("[Billing Webhook] Skipping unpaid/zero-amount session", {
+          stripeEventId: event.id,
+          paymentStatus: session.payment_status,
+          amountTotal: session.amount_total,
+        });
+        return res.json({ received: true, skipped: "unpaid" });
+      }
 
       try {
         const db = getBillingDb();
@@ -372,7 +387,12 @@ export async function registerBillingFetchRoutes(
       }>(req);
       if (!body)
         return Response.json({ error: "Invalid JSON body" }, { status: 400 });
-      const { packageId, userEmail, userId, origin } = body;
+      const { packageId, userEmail, origin } = body;
+      // Derive the crediting identity from the verified session — never trust a
+      // client-supplied userId, which would let a payer credit any account.
+      const openId = await getSessionOpenIdFromFetch(req);
+      if (!openId)
+        return Response.json({ error: "Unauthorized" }, { status: 401 });
       const pkg = findPackage(packageId);
       if (!pkg)
         return Response.json({ error: "Invalid packageId" }, { status: 400 });
@@ -413,7 +433,7 @@ export async function registerBillingFetchRoutes(
           package_id: pkg.id,
           credits: String(pkg.credits),
           bonus: String(pkg.bonus),
-          user_id: userId || "",
+          user_id: openId,
         },
         success_url: `${baseUrl}/dashboard/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/dashboard/billing?canceled=true`,
@@ -473,6 +493,21 @@ export async function registerBillingFetchRoutes(
       const bonus = parseFloat(session.metadata?.bonus || "0");
       const totalCredits = credits + bonus;
       const amountUsd = (session.amount_total || 0) / 100;
+
+      // Only fulfill genuinely-paid sessions. Guards against a 100%-off
+      // promotion code (amount_total === 0) granting full credits for free.
+      // Partial discounts (amount_total > 0) still fulfill normally.
+      if (
+        session.payment_status !== "paid" ||
+        (session.amount_total ?? 0) <= 0
+      ) {
+        logger.warn("[Billing Webhook] Skipping unpaid/zero-amount session", {
+          stripeEventId: event.id,
+          paymentStatus: session.payment_status,
+          amountTotal: session.amount_total,
+        });
+        return Response.json({ received: true, skipped: "unpaid" });
+      }
 
       const { data: existing } = await db
         .from("stripe_events")

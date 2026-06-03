@@ -627,6 +627,20 @@ export function registerSquareRoutes(app: Express) {
       }
 
       await recordSquareWebhookEvent(event, "received");
+      // Dedup: skip events we already successfully processed.
+      if (event.event_id) {
+        const dedupDb = await getDb();
+        if (dedupDb) {
+          const existing = await dedupDb
+            .select({ status: squareWebhookEvents.status })
+            .from(squareWebhookEvents)
+            .where(eq(squareWebhookEvents.eventId, event.event_id))
+            .limit(1);
+          if (existing[0]?.status === "processed") {
+            return res.json({ received: true, duplicate: true });
+          }
+        }
+      }
       try {
         await applySquareEvent(event);
         await recordSquareWebhookEvent(event, "processed");
@@ -700,6 +714,20 @@ async function handleSquareWebhook(req: Request): Promise<Response> {
     eventId: event.event_id,
   });
   await recordSquareWebhookEvent(event, "received");
+  // Dedup: skip events we already successfully processed.
+  if (event.event_id) {
+    const dedupDb = await getDb();
+    if (dedupDb) {
+      const existing = await dedupDb
+        .select({ status: squareWebhookEvents.status })
+        .from(squareWebhookEvents)
+        .where(eq(squareWebhookEvents.eventId, event.event_id))
+        .limit(1);
+      if (existing[0]?.status === "processed") {
+        return Response.json({ received: true, duplicate: true });
+      }
+    }
+  }
   try {
     await applySquareEvent(event);
     await recordSquareWebhookEvent(event, "processed");
