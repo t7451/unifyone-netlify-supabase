@@ -90,7 +90,6 @@ const Resources = lazy(() => import("./pages/Resources"));
 const ManusAI = lazy(() => import("./pages/ManusAI"));
 const VideoProduction = lazy(() => import("./pages/VideoProduction"));
 const AdCopyHub = lazy(() => import("./pages/AdCopyHub"));
-const GovernanceDashboard = lazy(() => import("./pages/GovernanceDashboard"));
 const DocsChat = lazy(() => import("./pages/DocsChat"));
 const NlwebChat = lazy(() => import("./pages/NlwebChat"));
 const DeveloperHub = lazy(() => import("./pages/DeveloperHub"));
@@ -506,7 +505,6 @@ function Router() {
       <Route path="/affiliate-program" component={() => <AffiliateLanding />} />
       <Route path="/video-production" component={() => <VideoProduction />} />
       <Route path="/marketing/ad-copy" component={() => <AdCopyHub />} />
-      <Route path="/governance" component={() => <GovernanceDashboard />} />
       <Route
         path="/blog/gig-ecommerce"
         component={() => <GigEcommercePost />}

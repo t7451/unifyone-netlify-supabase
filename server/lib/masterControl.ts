@@ -95,7 +95,7 @@ export const PLATFORM_MODULES = [
   {
     key: "governance",
     label: "Governance",
-    path: "/governance",
+    path: "/master-control",
     category: "ai-governance",
     defaultEnabled: true,
     flagType: "hard",
