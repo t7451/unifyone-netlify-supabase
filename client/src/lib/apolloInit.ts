@@ -33,13 +33,14 @@ export function initApollo(): void {
   if (window.ApolloIdentify) return;
 
   // Set up a queuing stub so calls made before the SDK loads are buffered.
+  const queue: unknown[][] = [];
   const ai: Window["ApolloIdentify"] = {
-    q: [],
+    q: queue,
     identify: function (...args: unknown[]) {
-      (ai.q = ai.q ?? []).push(["identify", args]);
+      queue.push(["identify", args]);
     },
     track: function (...args: unknown[]) {
-      (ai.q = ai.q ?? []).push(["track", args]);
+      queue.push(["track", args]);
     },
   };
   window.ApolloIdentify = ai;

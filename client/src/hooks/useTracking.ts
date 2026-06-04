@@ -29,10 +29,11 @@ export function useTracking(): void {
       identifiedRef.current = null;
       return;
     }
-    if (identifiedRef.current === user.id) return;
+    const userId = String(user.id);
+    if (identifiedRef.current === userId) return;
 
-    identifiedRef.current = user.id;
-    identifyUser(user.id, {
+    identifiedRef.current = userId;
+    identifyUser(userId, {
       email: user.email ?? undefined,
       name: user.name ?? undefined,
     });
