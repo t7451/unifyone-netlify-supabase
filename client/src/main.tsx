@@ -16,6 +16,7 @@ import { getLoginUrl } from "./const";
 import "./index.css";
 import "./lib/metaPixelInit";
 import "./lib/analyticsInit";
+import "./lib/apolloInit";
 import "./lib/impactCapture";
 
 const FETCH_TIMEOUT_MS = 15_000;
