@@ -300,7 +300,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                   { label: "Tithes", href: "/tithes" },
                   { label: "Pricing", href: "/pricing" },
                   { label: "Theme Store", href: "/themes" },
-                  { label: "Governance", href: "/governance" },
+                  { label: "Governance", href: "/master-control" },
                 ].map(item => (
                   <Link key={item.href} href={item.href}>
                     <span

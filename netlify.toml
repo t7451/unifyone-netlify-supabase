@@ -76,6 +76,13 @@
   status = 301
   force = true
 
+# Governance should never resolve as a client-side route.
+[[redirects]]
+  from = "/governance"
+  to = "/master-control"
+  status = 301
+  force = true
+
 # SPA fallback — all non-API routes serve the React app
 [[redirects]]
   from = "/*"

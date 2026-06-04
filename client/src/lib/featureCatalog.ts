@@ -531,7 +531,7 @@ export const FEATURE_CATEGORIES: FeatureCategory[] = [
       },
       {
         label: "Governance Dashboard",
-        path: "/governance",
+        path: "/master-control",
         description:
           "Review platform governance, policies, risk controls, and operational constraints.",
         outcome:
