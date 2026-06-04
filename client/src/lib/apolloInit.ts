@@ -45,6 +45,8 @@ export function initApollo(): void {
   window.ApolloIdentify = ai;
 
   // Inject the tracker SDK asynchronously.
+  // The `nocache` param uses Math.random() per Apollo's documented approach to
+  // ensure the browser always fetches the latest script version from their CDN.
   const script = document.createElement("script");
   script.async = true;
   script.src =
@@ -55,6 +57,12 @@ export function initApollo(): void {
   // Identify the visitor once the SDK is ready.
   script.onload = () => {
     window.ApolloIdentify?.identify({ apiKey });
+  };
+
+  script.onerror = () => {
+    if (import.meta.env.DEV) {
+      console.warn("[apolloInit] Failed to load Apollo website tracker script.");
+    }
   };
 }
 
