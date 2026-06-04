@@ -8,11 +8,28 @@
 
 declare global {
   interface Window {
-    plausible?: (event: string, opts?: { props?: Record<string, unknown> }) => void;
+    // The Plausible script may set window.plausible as a non-callable object
+    // (queue stub) before the SDK finishes loading. Always guard with
+    // typeof === "function" before calling it — never use optional chaining
+    // alone, because ?. only skips null/undefined, not non-function values.
+    plausible?: unknown;
     umami?: {
       track: (event: string | Record<string, unknown>, data?: Record<string, unknown>) => void;
       identify: (userId: string, data?: Record<string, unknown>) => void;
     };
+  }
+}
+
+type PlausibleFn = (event: string, opts?: { props?: Record<string, unknown> }) => void;
+
+/**
+ * Safely call window.plausible only when it is a live callable function.
+ * Guards against the Plausible script setting the global to a non-callable
+ * object (queue stub) while its SDK is still loading.
+ */
+function callPlausible(event: string, opts?: { props?: Record<string, unknown> }): void {
+  if (typeof window !== "undefined" && typeof window.plausible === "function") {
+    (window.plausible as PlausibleFn)(event, opts);
   }
 }
 
@@ -22,7 +39,7 @@ export function trackPageView(url?: string): void {
   const path = url ?? (typeof window !== "undefined" ? window.location.pathname : "/");
 
   // Plausible — manual pageview (needed for SPA navigations after the initial load)
-  window.plausible?.("pageview");
+  callPlausible("pageview");
 
   // Umami — track with explicit URL so the path is recorded correctly
   window.umami?.track({ url: path, title: document.title });
@@ -42,9 +59,9 @@ export function identifyUser(
 
   // Plausible — tag subsequent events with the internal userId as a custom prop
   // (useful in Goal funnels; Plausible never exposes PII in aggregate reports)
-  if (window.plausible && traits?.email) {
+  if (traits?.email) {
     // We only send a hashed/anonymous identifier, never raw email
-    window.plausible("identify", { props: { userId } });
+    callPlausible("identify", { props: { userId } });
   }
 }
 
@@ -54,7 +71,7 @@ export function trackEvent(
   name: string,
   props?: Record<string, string | number | boolean>
 ): void {
-  window.plausible?.(name, { props });
+  callPlausible(name, { props });
   window.umami?.track(name, props);
 }
 
