@@ -12,6 +12,7 @@ import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
 import { getLoginUrl } from "./const";
 import { trpc } from "./lib/trpc";
+import { useTracking } from "./hooks/useTracking";
 
 const Home = lazy(() => import("./pages/Home"));
 const Discounts = lazy(() => import("./pages/Discounts"));
@@ -170,6 +171,8 @@ function TenantGuard({ children }: { children: ReactNode }) {
 }
 
 function Router() {
+  useTracking();
+
   return (
     <Switch>
       <Route path="/" component={() => <Home />} />
