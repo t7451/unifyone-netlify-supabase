@@ -8,6 +8,11 @@
  * Non-tRPC routes (Stripe, PayPal, Square, billing webhooks, OAuth) are
  * handled by a lightweight inline router BEFORE tRPC so raw-body parsing
  * is preserved for webhook signature verification.
+ *
+ * NOTE: /api/health is handled exclusively by netlify/functions/health.mts,
+ * which runs real dependency probes (DB / Stripe / Resend / Redis). The
+ * former inline stub that lived here was removed — it returned a static
+ * "ok" without pinging any dependency, masking real outages.
  */
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import "../../server/_core/sentry";
@@ -53,24 +58,6 @@ async function getNonTrpcHandler() {
 // ── Main handler ─────────────────────────────────────────────────────────────
 
 export default async (req: Request): Promise<Response> => {
-  const url = new URL(req.url);
-
-  // Health check — no auth required
-  if (url.pathname === "/api/health" || url.pathname.endsWith("/api/health")) {
-    const jwtSecret =
-      process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET || "";
-    return Response.json({
-      status: "ok",
-      version: "2.2.0",
-      jwt_secret_set: jwtSecret.length > 0,
-      database_url_set: !!(
-        process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL
-      ),
-      stripe_key_set: !!process.env.STRIPE_SECRET_KEY,
-      ts: new Date().toISOString(),
-    });
-  }
-
   // CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, {
