@@ -139,6 +139,30 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>__APP_URL__/affiliate-program</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>__APP_URL__/video-production</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>__APP_URL__/gig-worker-plans</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>__APP_URL__/chat</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>__APP_URL__/login</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>monthly</changefreq>

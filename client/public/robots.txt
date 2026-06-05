@@ -1,12 +1,46 @@
 User-agent: *
 Allow: /
+
+# ── Authenticated / protected routes ─────────────────────────────────────────
 Disallow: /dashboard
+Disallow: /setup
 Disallow: /settings
 Disallow: /products
 Disallow: /orders
 Disallow: /customers
 Disallow: /analytics
+Disallow: /integrations
 Disallow: /team
 Disallow: /billing
+Disallow: /social
+Disallow: /referrals
+Disallow: /leads
+Disallow: /automations
+Disallow: /notifications
+Disallow: /my-themes
+Disallow: /admin/
+Disallow: /rewards
+Disallow: /revenue-streams
+Disallow: /affiliates
+Disallow: /shopify/
+Disallow: /checkout
+Disallow: /master-control
+Disallow: /revenue-command
+Disallow: /discounts
+Disallow: /clips
+Disallow: /marketing/
+Disallow: /gig-worker-plans
+
+# ── Auth flow pages ───────────────────────────────────────────────────────────
+Disallow: /auth/
+Disallow: /reset-password
+Disallow: /verify-email
+
+# ── Dev / internal pages ──────────────────────────────────────────────────────
+Disallow: /components
+Disallow: /design-system
+
+# ── API surface ───────────────────────────────────────────────────────────────
 Disallow: /api/
+
 Sitemap: https://1commerce.online/sitemap.xml

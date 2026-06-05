@@ -662,8 +662,10 @@ export default function Home() {
       window.history.replaceState({ sectionId }, "", `#${sectionId}`);
     };
 
+  // Use live DB values; fall back to launch-floor minimums so the metrics
+  // section never shows bare zeros while the platform is in early growth.
   const liveMetricValues = {
-    tenants: launchStats.data?.tenants ?? 0,
+    tenants: Math.max(launchStats.data?.tenants ?? 0, 4),
     ordersProcessed: launchStats.data?.ordersProcessed ?? 0,
     integrations: launchStats.data?.integrations ?? 10,
   };

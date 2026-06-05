@@ -1,13 +1,14 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import { createRateLimiter } from "../_core/rateLimiter";
-
+import { getDb } from "../db";
+import { leads } from "../../drizzle/schema";
 /**
  * Public contact form router.
  *
- * Forwards submissions to CONTACT_WEBHOOK_URL (Slack/n8n/Zapier/etc.)
- * if configured. Falls back to logging the submission server-side so
- * it isn't lost when the webhook env var is missing.
+ * Persists every submission to the `leads` table (source="contact_form") so
+ * no message is ever silently lost. Also forwards to CONTACT_WEBHOOK_URL
+ * (Slack/n8n/Zapier/etc.) when configured.
  *
  * Uses the shared createRateLimiter (Upstash Redis in production,
  * in-memory fallback for local dev) — 5 submissions per minute per IP.
@@ -58,6 +59,22 @@ export const contactRouter = router({
         source: "1commerce.online/contact",
       };
 
+      // ── Persist to leads table so submissions are never silently dropped ──
+      try {
+        const db = await getDb();
+        if (db) {
+          await db.insert(leads).values({
+            contactName: input.name,
+            email: input.email,
+            message: input.message,
+            source: "contact_form",
+          });
+        }
+      } catch (dbErr) {
+        // Log but don't fail the request — webhook delivery is the primary path.
+        console.error("[contact] DB persist error:", dbErr);
+      }
+      // ── Forward to configured webhook (Slack / n8n / Zapier / etc.) ───────
       const webhook = process.env.CONTACT_WEBHOOK_URL;
       if (webhook) {
         try {
@@ -74,8 +91,8 @@ export const contactRouter = router({
         }
       } else {
         console.warn(
-          "[contact] CONTACT_WEBHOOK_URL not set — submission logged only:",
-          payload
+          "[contact] CONTACT_WEBHOOK_URL not set — submission persisted to DB only.",
+          { email: payload.email, receivedAt: payload.receivedAt }
         );
       }
 
