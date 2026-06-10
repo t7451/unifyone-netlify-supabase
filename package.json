@@ -174,7 +174,9 @@
       "hono": ">=4.12.21",
       "uuid@13": ">=14.0.0",
       "uuid@12": ">=14.0.0",
-      "esbuild@<0.25.0": ">=0.25.0"
+      "esbuild@<0.25.0": ">=0.25.0",
+      "miniflare>undici": ">=6.24.0 <7",
+      "miniflare>ws": ">=8.20.1"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",

@@ -35,5 +35,10 @@
     "typescript": "^5.6.3",
     "eslint": "^9.14.0",
     "eslint-config-next": "^15.0.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": ">=8.5.10"
+    }
   }
 }
