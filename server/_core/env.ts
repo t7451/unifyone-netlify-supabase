@@ -29,6 +29,14 @@ export const ENV = {
   get isProduction() {
     return process.env.NODE_ENV === "production";
   },
+  // OpenRouter (https://openrouter.ai). When OPENROUTER_API_KEY is set it
+  // becomes the PRIMARY LLM provider: every Kai/UnifyAI invocation is routed
+  // to OpenRouter using OPENROUTER_MODEL (defaults to the free Hermes 3
+  // Llama 3.1 405B model). Forge/Groq/Vercel routing applies only when the
+  // key is unset.
+  openRouterApiUrl: process.env.OPENROUTER_API_URL ?? "",
+  openRouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
+  openRouterModel: process.env.OPENROUTER_MODEL ?? "",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   vercelAiGatewayApiUrl: process.env.VERCEL_AI_GATEWAY_API_URL ?? "",
