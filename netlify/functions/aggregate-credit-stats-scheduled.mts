@@ -26,12 +26,17 @@ import { createClient } from "@supabase/supabase-js";
 
 export default async (req: Request) => {
   const { next_run } = await req.json().catch(() => ({ next_run: "unknown" }));
-  console.log(`[aggregate-credit-stats] Hourly aggregation start. Next: ${next_run}`);
+  console.log(
+    `[aggregate-credit-stats] Hourly aggregation start. Next: ${next_run}`
+  );
 
   // PATCHED: removed NEXT_PUBLIC_SUPABASE_URL fallback — Vite app uses VITE_SUPABASE_URL,
   // server uses SUPABASE_URL. NEXT_PUBLIC_ var was a relic from a Next.js prototype.
   const supabaseUrl = Netlify.env.get("SUPABASE_URL");
-  const supabaseKey = Netlify.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  // New key format (sb_secret_…) preferred; legacy service_role JWT fallback.
+  const supabaseKey =
+    Netlify.env.get("SUPABASE_SECRET_KEY") ??
+    Netlify.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !supabaseKey) {
     console.error("[aggregate-credit-stats] Supabase env vars missing");
@@ -87,9 +92,14 @@ export default async (req: Request) => {
       .upsert(rows, { onConflict: "tenant_id,hour" });
 
     if (upsertError) {
-      console.error("[aggregate-credit-stats] Upsert error:", upsertError.message);
+      console.error(
+        "[aggregate-credit-stats] Upsert error:",
+        upsertError.message
+      );
     } else {
-      console.log(`[aggregate-credit-stats] Aggregated ${events.length} events across ${rows.length} tenants`);
+      console.log(
+        `[aggregate-credit-stats] Aggregated ${events.length} events across ${rows.length} tenants`
+      );
     }
   } catch (err) {
     console.error("[aggregate-credit-stats] Unexpected error:", err);

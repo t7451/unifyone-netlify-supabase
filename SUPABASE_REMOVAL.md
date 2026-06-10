@@ -1,5 +1,15 @@
 # Supabase Removal Summary
 
+> **⚠️ SUPERSEDED (June 2026):** The full-removal plan below (including the
+> "Supabase Migration Sprint") is **no longer being pursued**. The decision is
+> to keep Supabase permanently as the specialized credit-metering + Stripe
+> billing layer alongside Neon (primary DB), with Supabase OAuth active in
+> parallel for external OAuth flows. The current architecture is documented
+> in `docs/DATABASE_ARCHITECTURE.md` and `docs/OAUTH.md`. The Supabase
+> project also moved to ref `shohkfceyjdhepfrysga` with the new API key
+> format (`sb_publishable_…` / `sb_secret_…`). This file is kept for the
+> historical record of the **auth** migration off Supabase, which DID happen.
+
 ## What Changed
 
 ### Files Modified

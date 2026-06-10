@@ -11,7 +11,6 @@
  */
 import type Stripe from "stripe";
 import express, { type Express, type Request, type Response } from "express";
-import { createClient } from "@supabase/supabase-js";
 import { errMsg } from "./_core/errors";
 import { sdk } from "./_core/sdk";
 import { COOKIE_NAME } from "../shared/const";
@@ -19,17 +18,13 @@ import { parse as parseCookieHeader } from "cookie";
 import { getStripe } from "./_core/stripeClient";
 import { getAppUrl } from "./_core/env";
 import { logger } from "./_core/logger";
+import { getSupabaseAdmin } from "./_core/supabaseAdmin";
 
 // Mirror the stripe.ts pattern: fail gracefully when the key is absent.
 const stripe = getStripe();
 
 function getBillingDb() {
-  const url = process.env.SUPABASE_URL || "";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-  if (!url || !key) {
-    return null;
-  }
-  return createClient(url, key, { auth: { persistSession: false } });
+  return getSupabaseAdmin();
 }
 
 export const CREDIT_PACKAGES = [
