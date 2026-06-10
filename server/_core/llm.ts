@@ -1,4 +1,4 @@
-import { ENV } from "./env";
+import { ENV, getAppUrl } from "./env";
 import {
   meterCredits,
   tokensToCredits,
@@ -271,6 +271,13 @@ const resolveApiUrl = () =>
     "v1/chat/completions"
   );
 
+const resolveOpenRouterApiUrl = () =>
+  resolveProviderUrl(
+    ENV.openRouterApiUrl,
+    "https://openrouter.ai/api",
+    "v1/chat/completions"
+  );
+
 const resolveGroqApiUrl = () =>
   resolveProviderUrl(
     ENV.groqApiUrl,
@@ -284,6 +291,19 @@ const resolveVercelAiGatewayApiUrl = () =>
     "https://ai-gateway.vercel.sh/v1",
     "chat/completions"
   );
+
+export const OPENROUTER_DEFAULT_MODEL =
+  "nousresearch/hermes-3-llama-3.1-405b:free";
+
+const isOpenRouterEnabled = () => (ENV.openRouterApiKey ?? "").length > 0;
+
+// Catalog/gateway model ids (e.g. "gemini-2.5-flash", "claude-3-5-sonnet")
+// all collapse onto the configured OpenRouter model; an explicit
+// "openrouter/<vendor>/<model>" id routes to that exact OpenRouter model.
+const toOpenRouterModel = (model: string) =>
+  model.startsWith("openrouter/")
+    ? model.slice("openrouter/".length)
+    : (ENV.openRouterModel ?? "").trim() || OPENROUTER_DEFAULT_MODEL;
 
 export const GROQ_FALLBACK_MODEL = "llama-3.3-70b-versatile";
 export const VERCEL_AI_GATEWAY_FALLBACK_MODEL = "openai/gpt-5.5";
@@ -301,7 +321,18 @@ const isVercelAiGatewayModel = (model: string) => {
 const toProviderModel = (model: string) =>
   model.startsWith("groq/") ? model.slice("groq/".length) : model;
 
-const assertApiKey = (provider: "forge" | "groq" | "vercelAiGateway") => {
+const assertApiKey = (
+  provider: "forge" | "groq" | "vercelAiGateway" | "openRouter"
+) => {
+  if (provider === "openRouter") {
+    if (!ENV.openRouterApiKey) {
+      throw new Error(
+        "OPENROUTER_API_KEY is not configured. Set this environment variable to enable AI features."
+      );
+    }
+    return;
+  }
+
   if (provider === "vercelAiGateway") {
     if (!ENV.vercelOidcToken) {
       throw new Error(
@@ -497,13 +528,22 @@ async function invokeOnce(
   model: string,
   params: InvokeParams
 ): Promise<InvokeResult> {
-  const provider = isGroqModel(model)
-    ? "groq"
-    : isVercelAiGatewayModel(model)
-      ? "vercelAiGateway"
-      : "forge";
+  // OpenRouter, when configured, takes over ALL LLM traffic so every Kai /
+  // UnifyAI feature works off a single key and model.
+  const provider = isOpenRouterEnabled()
+    ? "openRouter"
+    : isGroqModel(model)
+      ? "groq"
+      : isVercelAiGatewayModel(model)
+        ? "vercelAiGateway"
+        : "forge";
   assertApiKey(provider);
-  const providerModel = provider === "groq" ? toProviderModel(model) : model;
+  const providerModel =
+    provider === "openRouter"
+      ? toOpenRouterModel(model)
+      : provider === "groq"
+        ? toProviderModel(model)
+        : model;
 
   const {
     messages,
@@ -558,22 +598,30 @@ async function invokeOnce(
   }
 
   const response = await fetch(
-    provider === "groq"
-      ? resolveGroqApiUrl()
-      : provider === "vercelAiGateway"
-        ? resolveVercelAiGatewayApiUrl()
-        : resolveApiUrl(),
+    provider === "openRouter"
+      ? resolveOpenRouterApiUrl()
+      : provider === "groq"
+        ? resolveGroqApiUrl()
+        : provider === "vercelAiGateway"
+          ? resolveVercelAiGatewayApiUrl()
+          : resolveApiUrl(),
     {
       method: "POST",
       headers: {
         "content-type": "application/json",
         authorization: `Bearer ${
-          provider === "groq"
-            ? ENV.groqApiKey
-            : provider === "vercelAiGateway"
-              ? ENV.vercelOidcToken
-              : ENV.forgeApiKey
+          provider === "openRouter"
+            ? ENV.openRouterApiKey
+            : provider === "groq"
+              ? ENV.groqApiKey
+              : provider === "vercelAiGateway"
+                ? ENV.vercelOidcToken
+                : ENV.forgeApiKey
         }`,
+        // Optional OpenRouter attribution headers (https://openrouter.ai/docs).
+        ...(provider === "openRouter"
+          ? { "HTTP-Referer": getAppUrl(), "X-Title": "UnifyOne" }
+          : {}),
       },
       body: JSON.stringify(payload),
     }
