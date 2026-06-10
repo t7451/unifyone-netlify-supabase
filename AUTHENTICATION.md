@@ -2,7 +2,7 @@
 
 ## Overview
 
-UnifyOne uses **custom JWT-based authentication** with email/password, Google OAuth sign-in, and Auth0 sign-in. Supabase is **NOT required** for authentication — it is only used for optional real-time features (live updates, presence).
+UnifyOne uses **custom JWT-based authentication** with email/password, Google OAuth sign-in, and Auth0 sign-in, backed by Drizzle on Neon. Supabase is **NOT** the primary auth provider — but its OAuth endpoints remain active in parallel for external OAuth flows and specific integrations (see `docs/OAUTH.md`), and Supabase also backs the credit-metering/Stripe billing layer and optional real-time features (see `docs/DATABASE_ARCHITECTURE.md`).
 
 ## Primary Auth Method: Email + Password
 
@@ -135,15 +135,25 @@ https://1commerce.online/api/auth/auth0/callback
 - **Setup**: Set `FIREBASE_PROJECT_ID` and `FIREBASE_API_KEY` in `.env`, add Firebase SDK to frontend
 - **How it works**: Firebase authenticates user → frontend sends ID token to `/api/auth/firebase` → server verifies with Firebase Admin SDK → issues app session cookie
 
-## Supabase (Optional — Real-time Only)
+## Supabase
 
-Supabase is **NOT** used for authentication. It's only used for:
+Supabase is **NOT** the primary authentication provider. Its roles today:
 
-- Real-time subscriptions (`client/src/lib/supabaseRealtime.ts`)
-- Live presence indicators
-- Push notifications
+- **Supabase OAuth (parallel, external flows)** — the project's OAuth
+  endpoints stay active for external clients, MCP tools, and specific login
+  providers. A Supabase access token can be exchanged for an app session via
+  `POST /api/auth/supabase-session` (`server/_core/oauth.ts`). Tokens from
+  new Supabase projects are verified against the project JWKS
+  (`${SUPABASE_URL}/auth/v1/.well-known/jwks.json`); legacy HS256 tokens use
+  `SUPABASE_JWT_SECRET`. Endpoint reference: `docs/OAUTH.md`.
+- **Credit metering + Stripe billing layer** — `server/creditMeter.ts`,
+  `server/billing.ts`, `server/stripe.ts` (see `docs/DATABASE_ARCHITECTURE.md`)
+- **Real-time subscriptions** (`client/src/lib/supabaseRealtime.ts`), live
+  presence, push notifications
 
-If `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are not set, the app gracefully degrades to polling mode.
+If `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (or the legacy
+`VITE_SUPABASE_ANON_KEY`) are not set, the client gracefully degrades to
+polling mode.
 
 ## Session Flow
 
@@ -176,16 +186,23 @@ If `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are not set, the app gracefu
 - `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_AUDIENCE` — Enable Auth0 sign-in through the Netlify Auth0 extension
 - `CLERK_SECRET_KEY` — Enable Clerk fallback auth
 - `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY` — Enable Firebase fallback auth
-- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — Enable real-time features
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (legacy: `VITE_SUPABASE_ANON_KEY`) — Enable real-time features
+- `SUPABASE_URL` — Also used to derive the JWKS endpoint for verifying Supabase OAuth tokens (`docs/OAUTH.md`)
 
 ## Migration from Supabase Auth
 
-If you're migrating from Supabase auth:
+The migration of **primary** auth off Supabase is complete (custom JWT on
+Neon). What deliberately remains:
 
-1. **Remove Supabase client calls** from your frontend (already done in this repo)
-2. **Remove `/api/auth/supabase-session` endpoint** if no longer needed (legacy, still present for backward compatibility)
-3. **Update OAuth flows** if using Supabase OAuth providers → migrate to Google OAuth, Clerk, or Firebase
-4. **Keep Supabase for Realtime** if you use live updates/presence (it's optional and doesn't affect auth)
+1. **`/api/auth/supabase-session` endpoint** — kept and actively supported
+   for the parallel Supabase OAuth flows (external clients, MCP tools); it
+   verifies tokens via JWKS for new projects or `SUPABASE_JWT_SECRET` for
+   legacy HS256 tokens
+2. **Supabase OAuth endpoints** — active for external integrations
+   (`docs/OAUTH.md`)
+3. **Supabase for Realtime** — optional live updates/presence
+4. **Supabase as the credit/billing data layer** — load-bearing, see
+   `docs/DATABASE_ARCHITECTURE.md`
 
 ## Testing
 

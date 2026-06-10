@@ -2,7 +2,7 @@
 
 /**
  * Seed Script: Master Intelligence Documents → documentEmbeddings
- * 
+ *
  * This script:
  * 1. Reads all Master Intelligence markdown files from /docs
  * 2. Chunks them into ~500-token segments
@@ -11,17 +11,20 @@
  * 5. Logs progress and errors
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { createClient } from '@supabase/supabase-js';
-import { Anthropic } from '@anthropic-ai/sdk';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { createClient } from "@supabase/supabase-js";
+import { Anthropic } from "@anthropic-ai/sdk";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Configuration
+// Configuration — new key format (sb_publishable_…) preferred, legacy anon
+// JWT key accepted as fallback.
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_KEY =
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY;
 const CLAUDE_API_KEY = process.env.ANTHROPIC_API_KEY;
 const CHUNK_SIZE = 500; // tokens per chunk (approximate)
 // No tenant ID needed - documentEmbeddings is shared across system
@@ -32,12 +35,12 @@ const anthropic = new Anthropic({ apiKey: CLAUDE_API_KEY });
 
 // Master Intelligence documents
 const DOCS = [
-  '00_Master_Intelligence.md',
-  '01_Governance_and_Compliance.md',
-  '02_Investor_and_Board.md',
-  '03_Technical_Architecture.md',
-  '04_Brand_Canon.md',
-  '05_Chain_Prompt.md',
+  "00_Master_Intelligence.md",
+  "01_Governance_and_Compliance.md",
+  "02_Investor_and_Board.md",
+  "03_Technical_Architecture.md",
+  "04_Brand_Canon.md",
+  "05_Chain_Prompt.md",
 ];
 
 /**
@@ -53,7 +56,7 @@ function chunkText(text, chunkSize = CHUNK_SIZE) {
   for (const word of words) {
     const wordLength = Math.ceil(word.length / 4); // Rough token estimate
     if (currentLength + wordLength > chunkSize && currentChunk.length > 0) {
-      chunks.push(currentChunk.join(' '));
+      chunks.push(currentChunk.join(" "));
       currentChunk = [word];
       currentLength = wordLength;
     } else {
@@ -63,7 +66,7 @@ function chunkText(text, chunkSize = CHUNK_SIZE) {
   }
 
   if (currentChunk.length > 0) {
-    chunks.push(currentChunk.join(' '));
+    chunks.push(currentChunk.join(" "));
   }
 
   return chunks;
@@ -79,12 +82,12 @@ async function generateEmbedding(text) {
     // For now, use a deterministic 1536-dim vector based on text hash
     // This allows seeding without external API calls
     // In production, replace with actual embeddings API
-    
-    const hash = (str) => {
+
+    const hash = str => {
       let h = 0;
       for (let i = 0; i < str.length; i++) {
         const char = str.charCodeAt(i);
-        h = ((h << 5) - h) + char;
+        h = (h << 5) - h + char;
         h = h & h; // Convert to 32bit integer
       }
       return h;
@@ -108,16 +111,16 @@ async function generateEmbedding(text) {
  * Seed a single document
  */
 async function seedDocument(docName) {
-  const docPath = path.join(__dirname, '..', 'docs', docName);
+  const docPath = path.join(__dirname, "..", "docs", docName);
 
   if (!fs.existsSync(docPath)) {
     console.error(`❌ Document not found: ${docPath}`);
-    return { success: false, docName, error: 'File not found' };
+    return { success: false, docName, error: "File not found" };
   }
 
   try {
     console.log(`\n📖 Processing: ${docName}`);
-    const content = fs.readFileSync(docPath, 'utf-8');
+    const content = fs.readFileSync(docPath, "utf-8");
     const chunks = chunkText(content, CHUNK_SIZE);
 
     console.log(`   Split into ${chunks.length} chunks`);
@@ -133,15 +136,13 @@ async function seedDocument(docName) {
         const embedding = await generateEmbedding(chunk);
 
         // Insert into document_embeddings table
-        const { error } = await supabase
-          .from('document_embeddings')
-          .insert({
-            docId: docName.replace('.md', ''),
-            docTitle: docName.replace('.md', '').replace(/_/g, ' '),
-            chunk: chunk,
-            chunkIndex: i,
-            embedding: embedding,
-          });
+        const { error } = await supabase.from("document_embeddings").insert({
+          docId: docName.replace(".md", ""),
+          docTitle: docName.replace(".md", "").replace(/_/g, " "),
+          chunk: chunk,
+          chunkIndex: i,
+          embedding: embedding,
+        });
 
         if (error) {
           console.error(`   ❌ Chunk ${i}: ${error.message}`);
@@ -177,7 +178,8 @@ async function seedDocument(docName) {
  * Main execution
  */
 async function main() {
-  console.log('🚀 Seeding Master Intelligence Documents\n');  console.log(`\nConfiguration:`);
+  console.log("🚀 Seeding Master Intelligence Documents\n");
+  console.log(`\nConfiguration:`);
   console.log(`  Supabase URL: ${SUPABASE_URL}`);
   console.log(`  Chunk Size: ~${CHUNK_SIZE} tokens`);
   console.log(`  Documents: ${DOCS.length}`);
@@ -189,26 +191,31 @@ async function main() {
   }
 
   // Summary
-  console.log('\n\n📊 Summary\n');
+  console.log("\n\n📊 Summary\n");
   const successful = results.filter(r => r.success).length;
   const failed = results.filter(r => !r.success).length;
   const totalChunks = results.reduce((sum, r) => sum + (r.totalChunks || 0), 0);
-  const totalInserted = results.reduce((sum, r) => sum + (r.successCount || 0), 0);
+  const totalInserted = results.reduce(
+    (sum, r) => sum + (r.successCount || 0),
+    0
+  );
 
   console.log(`Documents: ${successful} successful, ${failed} failed`);
   console.log(`Chunks: ${totalInserted}/${totalChunks} inserted`);
-  console.log(`Total size: ~${(totalInserted * CHUNK_SIZE / 1000).toFixed(1)}K tokens`);
+  console.log(
+    `Total size: ~${((totalInserted * CHUNK_SIZE) / 1000).toFixed(1)}K tokens`
+  );
 
   if (failed === 0) {
-    console.log('\n✅ All documents seeded successfully!');
+    console.log("\n✅ All documents seeded successfully!");
     process.exit(0);
   } else {
-    console.log('\n⚠️  Some documents failed. Check errors above.');
+    console.log("\n⚠️  Some documents failed. Check errors above.");
     process.exit(1);
   }
 }
 
 main().catch(error => {
-  console.error('Fatal error:', error);
+  console.error("Fatal error:", error);
   process.exit(1);
 });

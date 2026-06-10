@@ -58,7 +58,8 @@ cp .env.example .env
 
 **Optional variables** (add as needed):
 
-- `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` — enable realtime features via Supabase
+- `SUPABASE_URL` / `SUPABASE_SECRET_KEY` — Supabase credit-metering + Stripe billing layer (see `docs/DATABASE_ARCHITECTURE.md`)
+- `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` — enable realtime features via Supabase (legacy `VITE_SUPABASE_ANON_KEY` also accepted)
 - Payment provider keys — `STRIPE_SECRET_KEY`, `PAYPAL_CLIENT_ID`, `SQUARE_ACCESS_TOKEN`, `SHOPIFY_*`
 - `MCP_API_KEY` — protects the `/mcp` endpoint with bearer-token authentication
 

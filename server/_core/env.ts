@@ -9,11 +9,11 @@ export const ENV = {
     "",
   // Cookie/JWT signing secret — prefer JWT_SECRET, fall back to SUPABASE_JWT_SECRET.
   //
-  // The SUPABASE_JWT_SECRET fallback is retained temporarily so existing
-  // deployments that haven't yet set JWT_SECRET keep working. Operators
-  // MUST set a dedicated JWT_SECRET (>= 32 chars) and stop relying on
-  // SUPABASE_JWT_SECRET once Supabase decommissioning is complete
-  // (see SUPABASE_REMOVAL.md).
+  // The SUPABASE_JWT_SECRET fallback is retained so existing deployments
+  // that haven't yet set JWT_SECRET keep working. Operators MUST set a
+  // dedicated JWT_SECRET (>= 32 chars). Note: new Supabase projects use
+  // asymmetric JWT signing keys (verified via JWKS), so SUPABASE_JWT_SECRET
+  // only exists on legacy projects (see docs/OAUTH.md).
   cookieSecret: process.env.JWT_SECRET ?? process.env.SUPABASE_JWT_SECRET ?? "",
   /**
    * Explicit cookie domain — restricts the session cookie to your root domain
@@ -41,9 +41,23 @@ export const ENV = {
   squareEnvironment: (process.env.SQUARE_ENVIRONMENT ?? "production") as
     | "sandbox"
     | "production",
+  // Supabase backs the credit-metering + Stripe billing layer and optional
+  // Realtime — it is NOT the primary database (that's Neon via DATABASE_URL)
+  // and NOT the primary auth provider. See docs/DATABASE_ARCHITECTURE.md.
   supabaseUrl: process.env.SUPABASE_URL ?? "",
+  // Legacy HS256 JWT secret. New Supabase projects sign tokens with
+  // asymmetric keys verified via JWKS instead — leave this empty for them.
   supabaseJwtSecret: process.env.SUPABASE_JWT_SECRET ?? "",
-  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+  // Server-side Supabase key. New key format is sb_secret_… via
+  // SUPABASE_SECRET_KEY; legacy service_role JWTs via
+  // SUPABASE_SERVICE_ROLE_KEY are still accepted as a fallback.
+  supabaseSecretKey:
+    process.env.SUPABASE_SECRET_KEY ??
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    "",
+  // Browser-safe Supabase key (sb_publishable_… or legacy anon JWT).
+  supabasePublishableKey:
+    process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY ?? "",
   // Graph Worker MCP endpoint (ksksrbiz-arch/graph Cloudflare Worker).
   // Tools: recall, graph-query, recent-events, stats, write-note.
   // Optional: Bearer token for Graph Worker inbound auth.

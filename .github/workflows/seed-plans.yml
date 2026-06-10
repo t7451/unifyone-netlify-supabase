@@ -38,6 +38,10 @@ jobs:
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      # New key format (sb_publishable_… / sb_secret_…); legacy keys kept as
+      # fallbacks until the repo secrets are rotated.
+      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 

@@ -21,6 +21,10 @@ services:
       OAUTH_ISSUER: "${OAUTH_ISSUER}"
       OAUTH_JWKS_URL: "${OAUTH_JWKS_URL}"
       SUPABASE_URL: "${SUPABASE_URL}"
+      # New key format (sb_secret_… / sb_publishable_…); legacy keys below
+      # are still accepted as fallbacks.
+      SUPABASE_SECRET_KEY: "${SUPABASE_SECRET_KEY}"
+      SUPABASE_PUBLISHABLE_KEY: "${SUPABASE_PUBLISHABLE_KEY}"
       SUPABASE_SERVICE_ROLE_KEY: "${SUPABASE_SERVICE_ROLE_KEY}"
       SUPABASE_JWT_SECRET: "${SUPABASE_JWT_SECRET}"
       STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY}"

@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createClient } from "@supabase/supabase-js";
 import {
   protectedIpRateLimitedProcedure,
   protectedProcedure,
@@ -32,13 +31,7 @@ import {
   type PaymentProvider,
 } from "../paymentFallback";
 import { subscriptionChangePlanLimiter } from "../_core/rateLimiter";
-
-function getSupabaseAdmin() {
-  const url = process.env.SUPABASE_URL || "";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-  if (!url || !key) return null;
-  return createClient(url, key, { auth: { persistSession: false } });
-}
+import { getSupabaseAdmin } from "../_core/supabaseAdmin";
 
 export const subscriptionRouter = router({
   /**

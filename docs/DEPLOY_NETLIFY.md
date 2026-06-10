@@ -30,22 +30,28 @@ The active Netlify project is **`unify0ne`**, serving the main app at
 
 Go to **Site settings → Environment variables** and add:
 
-| Variable                      | Value                                            |
-| ----------------------------- | ------------------------------------------------ |
-| `DATABASE_URL`                | Neon PostgreSQL connection string                |
-| `JWT_SECRET`                  | JWT signing secret (≥ 32 chars)                  |
-| `SUPABASE_URL`                | Supabase project URL                             |
-| `SUPABASE_ANON_KEY`           | Supabase anon key                                |
-| `SUPABASE_SERVICE_ROLE_KEY`   | Supabase service role key                        |
-| `SUPABASE_JWT_SECRET`         | Supabase JWT secret (fallback for `JWT_SECRET`)  |
-| `VITE_SUPABASE_URL`           | Same as `SUPABASE_URL`                           |
-| `VITE_SUPABASE_ANON_KEY`      | Same as `SUPABASE_ANON_KEY`                      |
-| `STRIPE_SECRET_KEY`           | `sk_live_...` from Stripe Dashboard              |
-| `STRIPE_WEBHOOK_SECRET`       | `whsec_...` from Stripe Webhooks                 |
-| `VITE_STRIPE_PUBLISHABLE_KEY` | `pk_live_...` from Stripe Dashboard              |
-| `GRAPH_MCP_URL`               | Graph Worker MCP endpoint URL                    |
-| `GRAPH_MCP_TOKEN`             | Bearer token for Graph Worker auth (optional)    |
-| `NODE_ENV`                    | `production`                                     |
+| Variable                        | Value                                            |
+| ------------------------------- | ------------------------------------------------ |
+| `DATABASE_URL`                  | Neon PostgreSQL connection string                |
+| `JWT_SECRET`                    | JWT signing secret (≥ 32 chars)                  |
+| `SUPABASE_URL`                  | Supabase project URL (credit/billing layer)      |
+| `SUPABASE_PUBLISHABLE_KEY`      | Supabase publishable key (`sb_publishable_…`)    |
+| `SUPABASE_SECRET_KEY`           | Supabase secret key (`sb_secret_…`, server only) |
+| `VITE_SUPABASE_URL`             | Same as `SUPABASE_URL`                           |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Same as `SUPABASE_PUBLISHABLE_KEY`               |
+
+Legacy Supabase key names (`SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+`VITE_SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET`) are still accepted as
+fallbacks for older projects — see `docs/DATABASE_ARCHITECTURE.md`.
+
+| Variable                      | Value                                         |
+| ----------------------------- | --------------------------------------------- |
+| `STRIPE_SECRET_KEY`           | `sk_live_...` from Stripe Dashboard           |
+| `STRIPE_WEBHOOK_SECRET`       | `whsec_...` from Stripe Webhooks              |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | `pk_live_...` from Stripe Dashboard           |
+| `GRAPH_MCP_URL`               | Graph Worker MCP endpoint URL                 |
+| `GRAPH_MCP_TOKEN`             | Bearer token for Graph Worker auth (optional) |
+| `NODE_ENV`                    | `production`                                  |
 
 ---
 

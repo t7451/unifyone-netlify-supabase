@@ -20,21 +20,36 @@
 
 ### Persistence stack (read carefully -- NOT a single source of truth)
 
-UnifyOne writes to **two** Postgres clusters depending on the feature:
+UnifyOne deliberately writes to **two** Postgres clusters depending on the
+feature (hybrid architecture, current as of June 2026 — see
+`docs/DATABASE_ARCHITECTURE.md`):
 
-| Feature                              | Backed by         | Code                         |
-| ------------------------------------ | ----------------- | ---------------------------- |
-| Auth (signup/signin)                 | Neon via Drizzle  | server/\_core/customAuth.ts  |
-| Tenants/products/orders              | Neon via Drizzle  | server/routers/\*, drizzle/  |
-| Credit metering                      | Supabase RPC      | server/creditMeter.ts        |
-| Stripe subscriptions/products/prices | Supabase          | server/stripe.ts             |
-| Real-time push (optional)            | Supabase Realtime | client/src/lib/supabase\*.ts |
+| Feature                              | Backed by         | Code                           |
+| ------------------------------------ | ----------------- | ------------------------------ |
+| Auth (signup/signin)                 | Neon via Drizzle  | server/\_core/customAuth.ts    |
+| Tenants/products/orders              | Neon via Drizzle  | server/routers/\*, drizzle/    |
+| Credit metering                      | Supabase RPC      | server/creditMeter.ts          |
+| Credit top-up billing                | Supabase          | server/billing.ts              |
+| Stripe subscriptions/products/prices | Supabase          | server/stripe.ts               |
+| Shared Supabase admin client         | Supabase          | server/\_core/supabaseAdmin.ts |
+| Real-time push (optional)            | Supabase Realtime | client/src/lib/supabase\*.ts   |
 
-The Supabase parts predate the auth migration. Removing them is in-flight (see
-`SUPABASE_REMOVAL.md`). Until that work is done, all of these env vars are
-required: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
-`SUPABASE_JWT_SECRET`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. Don't sweep
-them as dead -- they are load-bearing.
+**Neon** (`DATABASE_URL`) is the primary database (~77 tables, source of
+truth for most of the app). **Supabase** is the kept-on-purpose specialized
+layer: credit balances/usage/overage queue, Stripe object storage, and the
+atomic `consume_credits_with_meter()` RPC. The earlier full-removal plan in
+`SUPABASE_REMOVAL.md` is superseded — do NOT sweep the Supabase code or env
+vars as dead, they are load-bearing.
+
+Required Supabase env vars: `SUPABASE_URL`, `VITE_SUPABASE_URL`, plus keys in
+the new format (`SUPABASE_SECRET_KEY`, `SUPABASE_PUBLISHABLE_KEY`,
+`VITE_SUPABASE_PUBLISHABLE_KEY`) — the legacy names
+(`SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`, `VITE_SUPABASE_ANON_KEY`,
+`SUPABASE_JWT_SECRET`) are still accepted as fallbacks.
+
+Supabase is also NOT the primary auth provider (custom JWT on Neon is), but
+its OAuth endpoints stay active in parallel for external OAuth flows — see
+`docs/OAUTH.md`.
 
 ---
 

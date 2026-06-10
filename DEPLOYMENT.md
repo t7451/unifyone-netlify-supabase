@@ -2,14 +2,14 @@
 
 ## Architecture Overview
 
-| Layer       | Technology                | Notes                                            |
-| ----------- | ------------------------- | ------------------------------------------------ |
-| Frontend    | React 19 SPA (Vite)       | Built to `dist/public`, served by Netlify CDN    |
-| Backend API | Express + tRPC 11         | Runs as Netlify Function via `serverless-http`   |
-| Database    | PostgreSQL / Neon (Drizzle ORM) | External — connection via `DATABASE_URL`    |
-| Real-time   | Supabase (optional)       | Graceful degradation if not configured           |
-| Auth        | Custom OAuth + PKCE + JWT | Session cookies, dynamic redirect URIs           |
-| Payments    | Stripe, PayPal, Square    | Webhook routes registered before JSON middleware |
+| Layer       | Technology                      | Notes                                            |
+| ----------- | ------------------------------- | ------------------------------------------------ |
+| Frontend    | React 19 SPA (Vite)             | Built to `dist/public`, served by Netlify CDN    |
+| Backend API | Express + tRPC 11               | Runs as Netlify Function via `serverless-http`   |
+| Database    | PostgreSQL / Neon (Drizzle ORM) | External — connection via `DATABASE_URL`         |
+| Real-time   | Supabase (optional)             | Graceful degradation if not configured           |
+| Auth        | Custom OAuth + PKCE + JWT       | Session cookies, dynamic redirect URIs           |
+| Payments    | Stripe, PayPal, Square          | Webhook routes registered before JSON middleware |
 
 ## Phase 1: DNS Migration (from legacy Manus infrastructure)
 
@@ -79,11 +79,12 @@ This is the canonical URL used by:
 
 ### Client-side (prefixed with `VITE_`)
 
-| Variable                 | Required | Description               |
-| ------------------------ | -------- | ------------------------- |
-| `VITE_SUPABASE_URL`      | No       | Supabase project URL      |
-| `VITE_SUPABASE_ANON_KEY` | No       | Supabase anonymous key    |
-| `VITE_PAYPAL_CLIENT_ID`  | No       | PayPal client-side SDK ID |
+| Variable                        | Required | Description                                   |
+| ------------------------------- | -------- | --------------------------------------------- |
+| `VITE_SUPABASE_URL`             | No       | Supabase project URL                          |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | No       | Supabase publishable key (`sb_publishable_…`) |
+| `VITE_SUPABASE_ANON_KEY`        | No       | Legacy Supabase anon key (fallback)           |
+| `VITE_PAYPAL_CLIENT_ID`         | No       | PayPal client-side SDK ID                     |
 
 ## Phase 3: OAuth Redirect URLs
 

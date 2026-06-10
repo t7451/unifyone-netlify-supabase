@@ -5,7 +5,6 @@ import type {
   Response as ExpressResponse,
 } from "express";
 import express from "express";
-import { createClient } from "@supabase/supabase-js";
 import {
   getDb,
   getTenantByStripeCustomerId,
@@ -26,7 +25,7 @@ import {
 } from "../drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { capi } from "./meta/capi";
-import { ENV, getAppUrl } from "./_core/env";
+import { getAppUrl } from "./_core/env";
 import { flushAllOverages, flushUserOverages } from "./creditMeter";
 import { errMsg } from "./_core/errors";
 import { getStripe } from "./_core/stripeClient";
@@ -37,14 +36,9 @@ import {
 } from "./lib/kaiCredits";
 import { normalizeCheckoutOrigin } from "./paymentFallback";
 import { fireAutomations } from "./lib/automationDispatch";
-
-// Supabase admin client for subscription/credit sync (service role — no RLS)
-function getSupabaseAdmin() {
-  const url = ENV.supabaseUrl;
-  const key = ENV.supabaseServiceRoleKey;
-  if (!url || !key) return null;
-  return createClient(url, key, { auth: { persistSession: false } });
-}
+// Supabase admin client for subscription/credit sync (secret key — no RLS).
+// Supabase is the billing/credit layer only; core data lives on Neon.
+import { getSupabaseAdmin } from "./_core/supabaseAdmin";
 
 const stripe = getStripe();
 
@@ -1705,8 +1699,7 @@ export async function registerStripeFetchRoutes(
   // function. Handle the alias here so any Stripe Dashboard endpoint pointed at
   // /api/stripe/webhook-async is processed (signature-verified) instead of 404ing.
   if (
-    (path === "/api/stripe/webhook" ||
-      path === "/api/stripe/webhook-async") &&
+    (path === "/api/stripe/webhook" || path === "/api/stripe/webhook-async") &&
     method === "POST"
   ) {
     return handleStripeWebhook(req);

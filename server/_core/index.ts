@@ -76,13 +76,18 @@ function validateEnv() {
 
     // Recommended-but-not-blocking. Log loudly so ops sees them but don't
     // refuse to boot — these gate optional features (Shopify integration,
-    // OAuth login provider, the in-flight Supabase removal).
+    // OAuth login providers) and the Supabase credit-metering/billing layer
+    // (see docs/DATABASE_ARCHITECTURE.md — without it, credit metering and
+    // Stripe overage billing become no-ops).
     const recommended: string[] = [];
     if (!process.env.SHOPIFY_API_KEY) recommended.push("SHOPIFY_API_KEY");
     if (!process.env.SHOPIFY_API_SECRET) recommended.push("SHOPIFY_API_SECRET");
     if (!process.env.SUPABASE_URL) recommended.push("SUPABASE_URL");
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY)
-      recommended.push("SUPABASE_SERVICE_ROLE_KEY");
+    if (
+      !process.env.SUPABASE_SECRET_KEY &&
+      !process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+      recommended.push("SUPABASE_SECRET_KEY (or SUPABASE_SERVICE_ROLE_KEY)");
     if (!process.env.GOOGLE_OAUTH_CLIENT_ID)
       recommended.push("GOOGLE_OAUTH_CLIENT_ID");
     if (!process.env.GOOGLE_OAUTH_CLIENT_SECRET)

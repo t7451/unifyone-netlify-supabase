@@ -31,9 +31,10 @@
  *   if (!result.success) throw new Error(result.error);
  */
 import Stripe from "stripe";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { errMsg } from "./_core/errors";
 import { getStripe as getSharedStripe } from "./_core/stripeClient";
+import { getSupabaseAdmin } from "./_core/supabaseAdmin";
 
 // ── Types ─────────────────────────────────────────────────────────────
 export type CreditSource =
@@ -100,14 +101,8 @@ export function tokensToCredits(tokensIn = 0, tokensOut = 0): number {
 }
 
 // ── Clients ───────────────────────────────────────────────────────────
-let _supabase: SupabaseClient | null = null;
 function getSupabase(): SupabaseClient | null {
-  if (_supabase) return _supabase;
-  const url = process.env.SUPABASE_URL || "";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-  if (!url || !key) return null;
-  _supabase = createClient(url, key, { auth: { persistSession: false } });
-  return _supabase;
+  return getSupabaseAdmin();
 }
 
 let _stripe: Stripe | null = null;

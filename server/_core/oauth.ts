@@ -1,12 +1,33 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
-import { jwtVerify } from "jose";
+import {
+  createRemoteJWKSet,
+  decodeProtectedHeader,
+  jwtVerify,
+  type JWTPayload,
+} from "jose";
 import { getSessionCookieOptions } from "./cookies";
 import { ENV } from "./env";
 import { sdk } from "./sdk";
 
+// Remote JWKS for the Supabase project (cached by jose between calls).
+// New Supabase projects sign access tokens with asymmetric keys published
+// at /auth/v1/.well-known/jwks.json; legacy projects use a shared HS256
+// secret (SUPABASE_JWT_SECRET). See docs/OAUTH.md for the full endpoint map.
+let _supabaseJwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+function getSupabaseJwks(): ReturnType<typeof createRemoteJWKSet> | null {
+  if (_supabaseJwks) return _supabaseJwks;
+  if (!ENV.supabaseUrl) return null;
+  _supabaseJwks = createRemoteJWKSet(
+    new URL(`${ENV.supabaseUrl}/auth/v1/.well-known/jwks.json`)
+  );
+  return _supabaseJwks;
+}
+
 /**
- * Verify a Supabase access token (JWT) using the project's JWT secret.
+ * Verify a Supabase access token (JWT). HS256 tokens are verified with the
+ * legacy project JWT secret; asymmetric tokens (ES256/RS256) are verified
+ * against the project's JWKS endpoint.
  * Returns the decoded payload or null if verification fails.
  */
 async function verifySupabaseToken(accessToken: string): Promise<{
@@ -14,16 +35,31 @@ async function verifySupabaseToken(accessToken: string): Promise<{
   email?: string;
   user_metadata?: { full_name?: string; name?: string };
 } | null> {
-  if (!ENV.supabaseJwtSecret) {
-    console.error("[Auth] SUPABASE_JWT_SECRET is not configured");
-    return null;
-  }
-
   try {
-    const secret = new TextEncoder().encode(ENV.supabaseJwtSecret);
-    const { payload } = await jwtVerify(accessToken, secret, {
-      algorithms: ["HS256"],
-    });
+    let payload: JWTPayload;
+    const { alg } = decodeProtectedHeader(accessToken);
+
+    if (alg === "HS256") {
+      if (!ENV.supabaseJwtSecret) {
+        console.error(
+          "[Auth] HS256 Supabase token received but SUPABASE_JWT_SECRET is not configured"
+        );
+        return null;
+      }
+      const secret = new TextEncoder().encode(ENV.supabaseJwtSecret);
+      ({ payload } = await jwtVerify(accessToken, secret, {
+        algorithms: ["HS256"],
+      }));
+    } else {
+      const jwks = getSupabaseJwks();
+      if (!jwks) {
+        console.error(
+          "[Auth] SUPABASE_URL is not configured — cannot verify Supabase token via JWKS"
+        );
+        return null;
+      }
+      ({ payload } = await jwtVerify(accessToken, jwks));
+    }
 
     const sub = payload.sub;
     if (typeof sub !== "string" || sub.length === 0) {
