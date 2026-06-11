@@ -8,9 +8,15 @@
  */
 import Stripe from "stripe";
 
-/** Canonical Stripe API version used across the entire application. */
-export const STRIPE_API_VERSION =
-  "2026-03-25.dahlia" as Stripe.LatestApiVersion;
+/**
+ * Canonical Stripe API version used across the entire application.
+ *
+ * MUST match the version shipped by the installed `stripe` SDK
+ * (Stripe.LatestApiVersion). Pinning a version Stripe doesn't recognize
+ * makes the API reject EVERY request, which surfaces as "payment link
+ * returning errors" across all checkout/subscription flows.
+ */
+export const STRIPE_API_VERSION: Stripe.LatestApiVersion = "2026-02-25.clover";
 
 let _stripe: Stripe | null = null;
 
