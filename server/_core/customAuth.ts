@@ -954,8 +954,36 @@ export async function requestPasswordReset(
     .where(eq(users.email, emailLower))
     .limit(1);
 
-  // Always return success to avoid email enumeration
-  if (!result[0] || !result[0].passwordHash) {
+  // Always return success to avoid email enumeration.
+  if (!result[0]) {
+    return { success: true };
+  }
+  // OAuth account (no password): send a helpful "use your provider" email
+  // instead of a silent dead-end, while keeping the response uniform.
+  if (!result[0].passwordHash) {
+    const oauthUser = result[0];
+    const providerLabel =
+      oauthUser.loginMethod && oauthUser.loginMethod !== "password"
+        ? oauthUser.loginMethod.charAt(0).toUpperCase() +
+          oauthUser.loginMethod.slice(1)
+        : "a social login";
+    const loginUrl = `${getAppUrl()}/login`;
+    await sendEmail({
+      to: emailLower,
+      subject: "Signing in to UnifyOne",
+      html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#0a0f1e;color:#f0e8d0;border-radius:8px;">
+        <h2 style="color:#00d9ff;margin-top:0;">Use ${providerLabel} to sign in</h2>
+        <p>We received a password reset request for your UnifyOne account, but this account was created with ${providerLabel} and has no password set.</p>
+        <p style="margin:32px 0;">
+          <a href="${loginUrl}" style="background:#00d9ff;color:#020202;padding:12px 28px;text-decoration:none;border-radius:4px;font-weight:bold;display:inline-block;">Sign in</a>
+        </p>
+        <p style="font-size:12px;color:#6b7280;">If you didn't request this, you can safely ignore this email.</p>
+      </div>
+    `,
+    }).catch(err =>
+      console.error("[auth] OAuth reset-guidance email failed:", err)
+    );
     return { success: true };
   }
 
