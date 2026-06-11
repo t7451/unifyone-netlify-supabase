@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, tenantProcedure } from "../_core/trpc";
 import { runSandboxedCode } from "../lib/codeSandbox";
-import { MCP_TOOL_NAMES } from "../lib/mcpClient";
+import { mcpListTools, MCP_TOOL_NAMES } from "../lib/mcpClient";
 
 export const sandboxRouter = router({
   /** Execute user-authored JS in the platform QuickJS WASM sandbox. */
@@ -25,8 +25,23 @@ export const sandboxRouter = router({
       return { run: result };
     }),
 
-  /** Tool names available to callTool() inside the sandbox. */
-  listTools: tenantProcedure.query(() => ({
-    tools: [...MCP_TOOL_NAMES],
-  })),
+  /**
+   * Tools available to callTool() inside the sandbox. Always prefer the
+   * LIVE worker list — the static allowlist can drift from what the MCP
+   * worker actually serves.
+   */
+  listTools: tenantProcedure.query(async () => {
+    try {
+      const live = await mcpListTools();
+      if (live.length > 0) {
+        return {
+          tools: live.map(t => t.name),
+          source: "live" as const,
+        };
+      }
+    } catch {
+      // Worker unreachable — fall through to the static list.
+    }
+    return { tools: [...MCP_TOOL_NAMES], source: "static" as const };
+  }),
 });
