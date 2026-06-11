@@ -70,6 +70,7 @@ const GigCommand = lazy(() => import("./pages/GigCommand"));
 const GigWorkerPlans = lazy(() => import("./pages/GigWorkerPlans"));
 const MobileAutomation = lazy(() => import("./pages/MobileAutomation"));
 const AIAssistant = lazy(() => import("./pages/AIAssistant"));
+const Sandbox = lazy(() => import("./pages/Sandbox"));
 const ShopifyInstall = lazy(() => import("./pages/ShopifyInstall"));
 const ShopifySuccess = lazy(() => import("./pages/ShopifySuccess"));
 const SyncMonitor = lazy(() => import("./pages/SyncMonitor"));
@@ -459,6 +460,14 @@ function Router() {
         component={() => (
           <DashboardRoute>
             <MobileAutomation />
+          </DashboardRoute>
+        )}
+      />
+      <Route
+        path="/sandbox"
+        component={() => (
+          <DashboardRoute>
+            <Sandbox />
           </DashboardRoute>
         )}
       />
