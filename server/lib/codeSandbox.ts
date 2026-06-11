@@ -21,6 +21,7 @@
 import { newQuickJSAsyncWASMModuleFromVariant } from "quickjs-emscripten-core";
 import variant from "@jitl/quickjs-singlefile-cjs-release-asyncify";
 import { mcpCallTool } from "./mcpClient";
+import { executeNativeTool, isNativeTool } from "./kaiNativeTools";
 
 export interface SandboxUser {
   id: string | number;
@@ -204,7 +205,13 @@ async function runSandboxedCodeInner(
             delete safeArgs.tenantId;
           }
           try {
-            const result = await mcpCallTool(name, safeArgs);
+            // Native app-layer tools first (web search, workspace fs, …);
+            // everything else routes to the MCP worker.
+            const result = isNativeTool(name)
+              ? await executeNativeTool(name, safeArgs, {
+                  user: options.user,
+                })
+              : await mcpCallTool(name, safeArgs);
             toolCalls.push({ name, args: safeArgs, ok: true });
             const json = JSON.stringify(result ?? null);
             const handle = ctx.evalCode(`(${json ?? "null"})`);

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { router, tenantProcedure } from "../_core/trpc";
 import { runSandboxedCode } from "../lib/codeSandbox";
 import { mcpListTools, MCP_TOOL_NAMES } from "../lib/mcpClient";
+import { listNativeToolNames } from "../lib/kaiNativeTools";
 
 export const sandboxRouter = router({
   /** Execute user-authored JS in the platform QuickJS WASM sandbox. */
@@ -31,17 +32,21 @@ export const sandboxRouter = router({
    * worker actually serves.
    */
   listTools: tenantProcedure.query(async () => {
+    const native = listNativeToolNames();
     try {
       const live = await mcpListTools();
       if (live.length > 0) {
         return {
-          tools: live.map(t => t.name),
+          tools: [...live.map(t => t.name), ...native],
           source: "live" as const,
         };
       }
     } catch {
       // Worker unreachable — fall through to the static list.
     }
-    return { tools: [...MCP_TOOL_NAMES], source: "static" as const };
+    return {
+      tools: [...MCP_TOOL_NAMES, ...native],
+      source: "static" as const,
+    };
   }),
 });

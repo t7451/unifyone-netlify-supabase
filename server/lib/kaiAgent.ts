@@ -18,6 +18,11 @@ import {
   type InvokeResult,
 } from "../_core/llm";
 import { mcpListTools, mcpCallTool, type McpTool } from "./mcpClient";
+import {
+  executeNativeTool,
+  isNativeTool,
+  listNativeToolDefinitions,
+} from "./kaiNativeTools";
 import { runSandboxedCode } from "./codeSandbox";
 import type { CreditSource } from "../creditMeter";
 
@@ -185,6 +190,21 @@ async function executeToolCall(
       : { name, args: { code }, error: sandbox.error ?? "Sandbox error" };
   }
 
+  // App-layer native tools (web search, page fetch, workspace fs, browser,
+  // Linear, …). Tenant scoping for these is enforced inside the registry.
+  if (isNativeTool(name)) {
+    try {
+      const result = await executeNativeTool(name, parsedArgs, { user });
+      return { name, args: parsedArgs, result };
+    } catch (e) {
+      return {
+        name,
+        args: parsedArgs,
+        error: e instanceof Error ? e.message : String(e),
+      };
+    }
+  }
+
   // ── CRITICAL: never trust LLM-provided tenantId. Always inject server-side.
   const safeArgs = { ...parsedArgs };
   const userTenantId =
@@ -215,7 +235,11 @@ export async function runKaiAgent(
   const maxIterations = Math.max(1, Math.min(10, input.maxIterations ?? 4));
   const enableTools = input.enableTools !== false;
   const tools = enableTools
-    ? [...(await loadKaiToolDefinitions()), RUN_CODE_TOOL]
+    ? [
+        ...(await loadKaiToolDefinitions()),
+        ...listNativeToolDefinitions(),
+        RUN_CODE_TOOL,
+      ]
     : [];
   const toolCallLog: RunKaiAgentResult["toolCalls"] = [];
   const modelUsage: RunKaiAgentResult["modelUsage"] = [];
