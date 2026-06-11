@@ -33,13 +33,16 @@ const EXAMPLES: Record<string, string> = {
 const nums = [1, 2, 3, 4, 5];
 console.log("sum:", nums.reduce((s, n) => s + n, 0));
 nums.map(n => n * n)`,
-  "Low-stock report": `// callTool() gives you live, tenant-scoped platform data.
-const inventory = callTool("get_low_stock_products", { threshold: 10 });
-console.log("low stock items:", JSON.stringify(inventory).slice(0, 500));
-inventory`,
-  "Revenue summary": `const summary = callTool("get_analytics_summary", {});
-const byDay = callTool("get_revenue_by_day", { days: 7 });
-({ summary, last7Days: byDay })`,
+  "My stores": `// callTool() gives you live, tenant-scoped platform data.
+const stores = callTool("oc_list_stores", {});
+console.log(JSON.stringify(stores).slice(0, 500));
+stores`,
+  "Product inventory": `// Most tools need a store_id — get it from oc_list_stores first.
+const stores = callTool("oc_list_stores", {});
+const storeId = stores?.stores?.[0]?.id ?? stores?.[0]?.id;
+const products = callTool("oc_list_products", { store_id: storeId });
+console.log("store:", storeId);
+products`,
 };
 
 export default function Sandbox() {
