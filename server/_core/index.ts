@@ -68,6 +68,12 @@ function validateEnv() {
     // auto-scopes to the request host and leaks across deploy previews.
     if (!process.env.COOKIE_DOMAIN) required.push("COOKIE_DOMAIN");
 
+    // Email delivery. Without RESEND_API_KEY, signUp() auto-marks new
+    // accounts emailVerified=true (see customAuth.ts) — i.e. email
+    // verification is silently disabled, which is a security regression in
+    // production, not a degraded optional feature.
+    if (!process.env.RESEND_API_KEY) required.push("RESEND_API_KEY");
+
     if (required.length > 0) {
       throw new Error(
         `[startup] Production environment is missing required vars: ${required.join(", ")}.`
