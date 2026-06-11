@@ -40,15 +40,26 @@ async function listActivePackages(): Promise<KaiCreditPackageDto[]> {
   const db = await getDb();
   if (!db) return DEFAULT_KAI_CREDIT_PACKAGES;
 
-  const packages = await db
-    .select()
-    .from(kaiCreditPackages)
-    .where(eq(kaiCreditPackages.isActive, true))
-    .orderBy(asc(kaiCreditPackages.sortOrder), asc(kaiCreditPackages.id));
+  try {
+    const packages = await db
+      .select()
+      .from(kaiCreditPackages)
+      .where(eq(kaiCreditPackages.isActive, true))
+      .orderBy(asc(kaiCreditPackages.sortOrder), asc(kaiCreditPackages.id));
 
-  return packages.length
-    ? packages.map(toPackageDto)
-    : DEFAULT_KAI_CREDIT_PACKAGES;
+    return packages.length
+      ? packages.map(toPackageDto)
+      : DEFAULT_KAI_CREDIT_PACKAGES;
+  } catch (error) {
+    // The kai_credit_packages table may not exist yet (migration 0041 not
+    // applied). Fall back to the built-in defaults rather than failing the
+    // whole packages query — otherwise the UI shows "no packs available".
+    console.warn(
+      "[KaiCredits] package table read failed, using defaults:",
+      error instanceof Error ? error.message : String(error)
+    );
+    return DEFAULT_KAI_CREDIT_PACKAGES;
+  }
 }
 
 export const kaiCreditsRouter = router({
