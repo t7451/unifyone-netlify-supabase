@@ -37,6 +37,21 @@ export const ENV = {
   openRouterApiUrl: process.env.OPENROUTER_API_URL ?? "",
   openRouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
   openRouterModel: process.env.OPENROUTER_MODEL ?? "",
+  // ── Kai native tool keys (all optional — tools self-disable when unset) ──
+  // Brave Search API (https://brave.com/search/api) → web_search tool.
+  braveSearchApiKey: process.env.BRAVE_SEARCH_API_KEY ?? "",
+  // Firecrawl (https://firecrawl.dev) → fetch_page uses it when set,
+  // otherwise falls back to native fetch + HTML→Markdown conversion.
+  firecrawlApiKey: process.env.FIRECRAWL_API_KEY ?? "",
+  // Browserless (https://browserless.io) → browser_screenshot /
+  // browser_get_content tools for real-browser automation.
+  browserlessApiKey: process.env.BROWSERLESS_API_KEY ?? "",
+  browserlessUrl:
+    process.env.BROWSERLESS_URL ?? "https://chrome.browserless.io",
+  // Linear (https://linear.app/settings/api) → linear_* issue tools.
+  linearApiKey: process.env.LINEAR_API_KEY ?? "",
+  // Optional GitHub token for read_github (higher rate limits, private repos).
+  githubToken: process.env.GITHUB_TOKEN ?? "",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   vercelAiGatewayApiUrl: process.env.VERCEL_AI_GATEWAY_API_URL ?? "",
