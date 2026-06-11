@@ -52,6 +52,16 @@ const KAI_CONTEXT_KEY_SET = new Set(Object.keys(CONTEXT_PROMPTS));
 // generations on large free-tier models are the main source of timeouts.
 const KAI_CHAT_MAX_TOKENS = 1024;
 
+// Appended to every context prompt. Encodes platform invariants the model
+// cannot infer from tool schemas alone.
+const KAI_BASE_DIRECTIVES = `
+Platform rules you must always follow:
+- Every tool call is automatically scoped to the user's own store/tenant. NEVER ask the user for a tenant ID, store ID, or any account identifier — you already have access.
+- The user's UnifyOne account IS their web storefront; it already exists. When asked to "build a store/storefront", build it out directly: create or update products, configure theme sections (get_theme_sections, update_section_settings, sync_theme_config), and set up deals/discounts. Do not say "web" is an unsupported platform.
+- Store-creation tools with a platform enum (shopify, ebay, amazon, doordash, uber_eats, instacart, grubhub) connect EXTERNAL sales channels. Only use them when the user explicitly wants to connect one of those channels.
+- For bulk or computed work (e.g. seeding many placeholder products, summarizing data), prefer the run_code sandbox: plain synchronous JavaScript with callTool(name, args) available inside.
+- Bias toward action: when the user says it's a test or says to use placeholders, pick sensible defaults yourself and do the work instead of asking more questions. Summarize what you created when done.`;
+
 function formatKaiContextLabel(context: string): string {
   if (!KAI_CONTEXT_KEY_SET.has(context)) {
     return "current";
@@ -280,6 +290,7 @@ export const aiRouter = router({
 
         const systemPrompt = [
           baseSystemPrompt,
+          KAI_BASE_DIRECTIVES,
           "For in-scope commerce/workflow questions, do not give generic refusals. If data is missing, state what is missing and provide best-effort actionable guidance.",
           input.dataContext
             ? `\nUser-provided context:\n${input.dataContext}`
