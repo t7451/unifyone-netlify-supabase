@@ -4,6 +4,15 @@ import {
 } from "../_core/llm";
 
 export const KAI_MODEL_IDS = [
+  // ── Free tier (OpenRouter :free models — zero credits, available to all) ──
+  "hermes-3-405b",
+  "gpt-oss-120b",
+  "gpt-oss-20b",
+  "qwen3-coder-480b",
+  "qwen3-next-80b",
+  "nemotron-nano-9b",
+  "venice-uncensored",
+  // ── Premium tier (credit-metered) ──
   "gemini-2.5-flash",
   "claude-3-5-haiku",
   "gpt-4o-mini",
@@ -17,18 +26,51 @@ export const KAI_MODEL_IDS = [
 
 export type KaiModelId = (typeof KAI_MODEL_IDS)[number];
 
-export type KaiModelProvider = "google" | "anthropic" | "openai";
+export type KaiModelProvider =
+  | "google"
+  | "anthropic"
+  | "openai"
+  | "nous"
+  | "qwen"
+  | "nvidia"
+  | "venice";
+
+export type KaiModelTier = "free" | "premium";
 
 export interface KaiModelCatalogEntry {
   id: KaiModelId;
   label: string;
   provider: KaiModelProvider;
+  tier: KaiModelTier;
   gatewayModel: string;
   description: string;
   creditMultiplier: number;
   minimumCredits: number;
   fallbackModels: string[];
 }
+
+// Explicit "openrouter/<slug>" ids route to that exact OpenRouter model
+// (see server/_core/llm.ts). Free models never charge credits.
+const FREE_GATEWAY = {
+  hermes: "openrouter/nousresearch/hermes-3-llama-3.1-405b:free",
+  gptOss120b: "openrouter/openai/gpt-oss-120b:free",
+  gptOss20b: "openrouter/openai/gpt-oss-20b:free",
+  qwen3Coder: "openrouter/qwen/qwen3-coder:free",
+  qwen3Next: "openrouter/qwen/qwen3-next-80b-a3b-instruct:free",
+  nemotron: "openrouter/nvidia/nemotron-nano-9b-v2:free",
+  venice:
+    "openrouter/cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
+} as const;
+
+// Free models fall back across other free models only, so a rate-limited
+// :free endpoint can never silently roll a user onto a metered model.
+const FREE_FALLBACK_MODELS = [
+  FREE_GATEWAY.hermes,
+  FREE_GATEWAY.gptOss120b,
+  FREE_GATEWAY.qwen3Next,
+  FREE_GATEWAY.gptOss20b,
+  FREE_GATEWAY.nemotron,
+];
 
 const DEFAULT_FALLBACK_MODELS = [
   "gemini-2.5-flash",
@@ -38,13 +80,84 @@ const DEFAULT_FALLBACK_MODELS = [
   GROQ_FALLBACK_MODEL,
 ];
 
+const freeModel = (
+  id: KaiModelId,
+  label: string,
+  provider: KaiModelProvider,
+  gatewayModel: string,
+  description: string
+): KaiModelCatalogEntry => ({
+  id,
+  label,
+  provider,
+  tier: "free",
+  gatewayModel,
+  description,
+  creditMultiplier: 0,
+  minimumCredits: 0,
+  fallbackModels: [
+    gatewayModel,
+    ...FREE_FALLBACK_MODELS.filter(m => m !== gatewayModel),
+  ],
+});
+
 export const KAI_MODEL_CATALOG: Record<KaiModelId, KaiModelCatalogEntry> = {
+  "hermes-3-405b": freeModel(
+    "hermes-3-405b",
+    "Hermes 3 405B (Free)",
+    "nous",
+    FREE_GATEWAY.hermes,
+    "Free flagship 405B model — the default Kai brain, great all-rounder."
+  ),
+  "gpt-oss-120b": freeModel(
+    "gpt-oss-120b",
+    "GPT-OSS 120B (Free)",
+    "openai",
+    FREE_GATEWAY.gptOss120b,
+    "Free open-weight OpenAI MoE model for high-reasoning, agentic tasks."
+  ),
+  "gpt-oss-20b": freeModel(
+    "gpt-oss-20b",
+    "GPT-OSS 20B (Free)",
+    "openai",
+    FREE_GATEWAY.gptOss20b,
+    "Free low-latency open-weight OpenAI model for quick questions."
+  ),
+  "qwen3-coder-480b": freeModel(
+    "qwen3-coder-480b",
+    "Qwen3 Coder 480B (Free)",
+    "qwen",
+    FREE_GATEWAY.qwen3Coder,
+    "Free code-specialist MoE model — automations, APIs, and tool use."
+  ),
+  "qwen3-next-80b": freeModel(
+    "qwen3-next-80b",
+    "Qwen3 Next 80B (Free)",
+    "qwen",
+    FREE_GATEWAY.qwen3Next,
+    "Free fast instruct model with strong long-context reasoning."
+  ),
+  "nemotron-nano-9b": freeModel(
+    "nemotron-nano-9b",
+    "Nemotron Nano 9B (Free)",
+    "nvidia",
+    FREE_GATEWAY.nemotron,
+    "Free compact NVIDIA reasoning model — fastest free option."
+  ),
+  "venice-uncensored": freeModel(
+    "venice-uncensored",
+    "Venice Uncensored (Free)",
+    "venice",
+    FREE_GATEWAY.venice,
+    "Free steerable instruct model with minimal default refusals."
+  ),
   "gemini-2.5-flash": {
     id: "gemini-2.5-flash",
     label: "Gemini 2.5 Flash",
     provider: "google",
+    tier: "premium",
     gatewayModel: "gemini-2.5-flash",
-    description: "Default fast Kai model for everyday commerce questions.",
+    description: "Fast premium model for everyday commerce questions.",
     creditMultiplier: 1,
     minimumCredits: 1,
     fallbackModels: DEFAULT_FALLBACK_MODELS,
@@ -53,6 +166,7 @@ export const KAI_MODEL_CATALOG: Record<KaiModelId, KaiModelCatalogEntry> = {
     id: "claude-3-5-haiku",
     label: "Claude 3.5 Haiku",
     provider: "anthropic",
+    tier: "premium",
     gatewayModel: "claude-3-5-haiku",
     description: "Low-latency Anthropic model for concise operational help.",
     creditMultiplier: 1.25,
@@ -63,6 +177,7 @@ export const KAI_MODEL_CATALOG: Record<KaiModelId, KaiModelCatalogEntry> = {
     id: "gpt-4o-mini",
     label: "GPT-4o mini",
     provider: "openai",
+    tier: "premium",
     gatewayModel: "gpt-4o-mini",
     description: "Efficient OpenAI model for short Kai conversations.",
     creditMultiplier: 1.1,
@@ -73,6 +188,7 @@ export const KAI_MODEL_CATALOG: Record<KaiModelId, KaiModelCatalogEntry> = {
     id: "gemini-2.5-pro",
     label: "Gemini 2.5 Pro",
     provider: "google",
+    tier: "premium",
     gatewayModel: "gemini-2.5-pro",
     description: "Higher-reasoning Google model for complex analysis.",
     creditMultiplier: 3,
@@ -83,6 +199,7 @@ export const KAI_MODEL_CATALOG: Record<KaiModelId, KaiModelCatalogEntry> = {
     id: "claude-3-5-sonnet",
     label: "Claude 3.5 Sonnet",
     provider: "anthropic",
+    tier: "premium",
     gatewayModel: "claude-3-5-sonnet",
     description: "Premium Anthropic model for deeper planning and synthesis.",
     creditMultiplier: 4,
@@ -93,6 +210,7 @@ export const KAI_MODEL_CATALOG: Record<KaiModelId, KaiModelCatalogEntry> = {
     id: "gpt-4o",
     label: "GPT-4o",
     provider: "openai",
+    tier: "premium",
     gatewayModel: "gpt-4o",
     description: "Premium OpenAI model for complex store operations.",
     creditMultiplier: 3.5,
@@ -103,8 +221,9 @@ export const KAI_MODEL_CATALOG: Record<KaiModelId, KaiModelCatalogEntry> = {
     id: "kai-fast",
     label: "Kai Fast",
     provider: "google",
+    tier: "premium",
     gatewayModel: "gemini-2.5-flash",
-    description: "Alias for the fastest supported Kai default.",
+    description: "Alias for the fastest supported premium model.",
     creditMultiplier: 1,
     minimumCredits: 1,
     fallbackModels: DEFAULT_FALLBACK_MODELS,
@@ -113,6 +232,7 @@ export const KAI_MODEL_CATALOG: Record<KaiModelId, KaiModelCatalogEntry> = {
     id: "kai-balanced",
     label: "Kai Balanced",
     provider: "anthropic",
+    tier: "premium",
     gatewayModel: "claude-3-5-haiku",
     description: "Alias for balanced quality and latency.",
     creditMultiplier: 1.25,
@@ -123,6 +243,7 @@ export const KAI_MODEL_CATALOG: Record<KaiModelId, KaiModelCatalogEntry> = {
     id: "kai-premium",
     label: "Kai Premium",
     provider: "anthropic",
+    tier: "premium",
     gatewayModel: "claude-3-5-sonnet",
     description: "Alias for premium reasoning when available.",
     creditMultiplier: 4,
@@ -135,7 +256,7 @@ export const KAI_MODEL_CATALOG: Record<KaiModelId, KaiModelCatalogEntry> = {
   },
 };
 
-export const DEFAULT_KAI_MODEL_ID: KaiModelId = "gemini-2.5-flash";
+export const DEFAULT_KAI_MODEL_ID: KaiModelId = "hermes-3-405b";
 
 export function isKaiModelId(value: string): value is KaiModelId {
   return (KAI_MODEL_IDS as readonly string[]).includes(value);
@@ -143,6 +264,11 @@ export function isKaiModelId(value: string): value is KaiModelId {
 
 export function resolveKaiModel(requested?: KaiModelId): KaiModelCatalogEntry {
   return KAI_MODEL_CATALOG[requested ?? DEFAULT_KAI_MODEL_ID];
+}
+
+/** Free models never gate on or debit Kai credits. */
+export function isFreeKaiModel(entry: KaiModelCatalogEntry): boolean {
+  return entry.tier === "free";
 }
 
 export function buildKaiChatMeterMetadata(
@@ -163,6 +289,7 @@ export function getKaiModelCatalogForClient() {
       id: entry.id,
       label: entry.label,
       provider: entry.provider,
+      tier: entry.tier,
       description: entry.description,
       creditMultiplier: entry.creditMultiplier,
       minimumCredits: entry.minimumCredits,

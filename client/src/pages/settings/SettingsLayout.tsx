@@ -10,6 +10,7 @@ import {
   Settings2,
   CreditCard,
   Users,
+  KeyRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/useMobile";
@@ -57,6 +58,12 @@ const settingsNav = [
     path: "/team",
     icon: Users,
     description: "Invite teammates and manage roles",
+  },
+  {
+    label: "AI & API Keys",
+    path: "/settings/api-keys",
+    icon: KeyRound,
+    description: "Bring your own AI provider keys",
   },
   {
     label: "Appearance",

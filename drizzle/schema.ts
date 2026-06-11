@@ -2128,3 +2128,31 @@ export const discounts = pgTable(
 
 export type Discount = typeof discounts.$inferSelect;
 export type InsertDiscount = typeof discounts.$inferInsert;
+
+// ── User-supplied AI provider API keys (BYOK) ────────────────────────────────
+// Users can store their own provider keys (currently OpenRouter) in Settings.
+// Keys are encrypted at rest (AES-256-GCM, see server/lib/apiKeyVault.ts);
+// only the last 4 characters are stored in clear for display. When a user has
+// a key, their Kai chats are billed to that key and never debit Kai credits.
+export const userApiKeys = pgTable(
+  "user_api_keys",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("userId").notNull(),
+    tenantId: integer("tenantId"),
+    provider: varchar("provider", { length: 32 }).notNull(),
+    encryptedKey: text("encryptedKey").notNull(),
+    last4: varchar("last4", { length: 8 }).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  (table) => ({
+    userProviderUniq: uniqueIndex("user_api_keys_user_provider_uniq").on(
+      table.userId,
+      table.provider
+    ),
+  })
+);
+
+export type UserApiKey = typeof userApiKeys.$inferSelect;
+export type InsertUserApiKey = typeof userApiKeys.$inferInsert;

@@ -103,6 +103,12 @@ export type InvokeParams = {
   model?: string;
   /** Ordered fallback chain: tried left-to-right when a model fails with a retryable error. */
   modelChain?: string[];
+  /**
+   * Bring-your-own-key: a user-supplied OpenRouter API key. When set, the
+   * request is always routed to OpenRouter and authenticated with this key
+   * instead of the platform key.
+   */
+  providerApiKey?: string;
 };
 
 export type ToolCall = {
@@ -297,13 +303,25 @@ export const OPENROUTER_DEFAULT_MODEL =
 
 const isOpenRouterEnabled = () => (ENV.openRouterApiKey ?? "").length > 0;
 
-// Catalog/gateway model ids (e.g. "gemini-2.5-flash", "claude-3-5-sonnet")
-// all collapse onto the configured OpenRouter model; an explicit
-// "openrouter/<vendor>/<model>" id routes to that exact OpenRouter model.
-const toOpenRouterModel = (model: string) =>
-  model.startsWith("openrouter/")
-    ? model.slice("openrouter/".length)
-    : (ENV.openRouterModel ?? "").trim() || OPENROUTER_DEFAULT_MODEL;
+// Premium catalog/gateway model ids map to their real (paid) OpenRouter
+// slugs so paying users get the model they selected. Anything not mapped
+// and not explicitly "openrouter/"-prefixed collapses onto the configured
+// default model (the free tier).
+const OPENROUTER_MODEL_MAP: Record<string, string> = {
+  "gemini-2.5-flash": "google/gemini-2.5-flash",
+  "gemini-2.5-pro": "google/gemini-2.5-pro",
+  "claude-3-5-haiku": "anthropic/claude-3.5-haiku",
+  "claude-3-5-sonnet": "anthropic/claude-3.5-sonnet",
+  "gpt-4o-mini": "openai/gpt-4o-mini",
+  "gpt-4o": "openai/gpt-4o",
+  "llama-3.3-70b-versatile": "meta-llama/llama-3.3-70b-instruct",
+};
+
+const toOpenRouterModel = (model: string) => {
+  if (model.startsWith("openrouter/")) return model.slice("openrouter/".length);
+  if (OPENROUTER_MODEL_MAP[model]) return OPENROUTER_MODEL_MAP[model];
+  return (ENV.openRouterModel ?? "").trim() || OPENROUTER_DEFAULT_MODEL;
+};
 
 export const GROQ_FALLBACK_MODEL = "llama-3.3-70b-versatile";
 export const VERCEL_AI_GATEWAY_FALLBACK_MODEL = "openai/gpt-5.5";
@@ -529,15 +547,18 @@ async function invokeOnce(
   params: InvokeParams
 ): Promise<InvokeResult> {
   // OpenRouter, when configured, takes over ALL LLM traffic so every Kai /
-  // UnifyAI feature works off a single key and model.
-  const provider = isOpenRouterEnabled()
-    ? "openRouter"
-    : isGroqModel(model)
-      ? "groq"
-      : isVercelAiGatewayModel(model)
-        ? "vercelAiGateway"
-        : "forge";
-  assertApiKey(provider);
+  // UnifyAI feature works off a single key and model. A user-supplied BYOK
+  // key forces OpenRouter routing even when the platform key is unset.
+  const byokKey = params.providerApiKey?.trim() || undefined;
+  const provider =
+    byokKey || isOpenRouterEnabled()
+      ? "openRouter"
+      : isGroqModel(model)
+        ? "groq"
+        : isVercelAiGatewayModel(model)
+          ? "vercelAiGateway"
+          : "forge";
+  if (!byokKey) assertApiKey(provider);
   const providerModel =
     provider === "openRouter"
       ? toOpenRouterModel(model)
@@ -611,7 +632,7 @@ async function invokeOnce(
         "content-type": "application/json",
         authorization: `Bearer ${
           provider === "openRouter"
-            ? ENV.openRouterApiKey
+            ? (byokKey ?? ENV.openRouterApiKey)
             : provider === "groq"
               ? ENV.groqApiKey
               : provider === "vercelAiGateway"
@@ -663,6 +684,16 @@ async function invokeOnce(
         ...(params.meter.metadata ?? {}),
       },
     };
+    if (amount <= 0) {
+      // Free-tier and BYOK requests are never metered — record a zero-charge
+      // result so callers still get consistent metering metadata.
+      result.metering = {
+        estimatedCredits: 0,
+        chargedCredits: 0,
+        success: true,
+      };
+      return result;
+    }
     result.metering = { estimatedCredits: amount };
     const meteringPromise = meterCredits(meterPayload);
     if (params.meter.awaitResult) {

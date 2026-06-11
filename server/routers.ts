@@ -49,6 +49,7 @@ import { customersRouter } from "./routers/customers";
 import { discountsRouter } from "./routers/discounts";
 import { masterControlRouter } from "./routers/masterControl";
 import { kaiCreditsRouter } from "./routers/kaiCredits";
+import { apiKeysRouter } from "./routers/apiKeys";
 import { clipsToolkitRouter } from "./routers/clipsToolkit";
 
 export const appRouter = router({
@@ -133,6 +134,7 @@ export const appRouter = router({
   discounts: discountsRouter,
   masterControl: masterControlRouter,
   kaiCredits: kaiCreditsRouter,
+  apiKeys: apiKeysRouter,
   clipsToolkit: clipsToolkitRouter,
 });
 

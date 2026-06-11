@@ -30,6 +30,7 @@ const NotificationSettings = lazy(
 const SecuritySettings = lazy(
   () => import("./pages/settings/SecuritySettings")
 );
+const ApiKeySettings = lazy(() => import("./pages/settings/ApiKeySettings"));
 const AppearanceSettings = lazy(
   () => import("./pages/settings/AppearanceSettings")
 );
@@ -269,6 +270,14 @@ function Router() {
         component={() => (
           <DashboardRoute>
             <SecuritySettings />
+          </DashboardRoute>
+        )}
+      />
+      <Route
+        path="/settings/api-keys"
+        component={() => (
+          <DashboardRoute>
+            <ApiKeySettings />
           </DashboardRoute>
         )}
       />

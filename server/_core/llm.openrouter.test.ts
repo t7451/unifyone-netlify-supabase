@@ -51,8 +51,8 @@ describe("OpenRouter primary routing", () => {
     fetchSpy.mockRestore();
   });
 
-  it("routes default Kai calls to OpenRouter with the Hermes model", async () => {
-    fetchSpy.mockImplementationOnce(() => mockOk(OPENROUTER_DEFAULT_MODEL));
+  it("routes default calls to OpenRouter with the platform key", async () => {
+    fetchSpy.mockImplementationOnce(() => mockOk("google/gemini-2.5-flash"));
 
     await invokeLLMWithFallback({
       messages: [{ role: "user", content: "hi" }],
@@ -66,12 +66,14 @@ describe("OpenRouter primary routing", () => {
     expect(headers.authorization).toBe("Bearer sk-or-test-key");
     expect(headers["X-Title"]).toBe("UnifyOne");
     expect(JSON.parse(fetchSpy.mock.calls[0][1].body)).toEqual(
-      expect.objectContaining({ model: OPENROUTER_DEFAULT_MODEL })
+      expect.objectContaining({ model: "google/gemini-2.5-flash" })
     );
   });
 
-  it("collapses catalog gateway models onto the OpenRouter model", async () => {
-    fetchSpy.mockImplementationOnce(() => mockOk(OPENROUTER_DEFAULT_MODEL));
+  it("maps premium catalog models to their paid OpenRouter slugs", async () => {
+    fetchSpy.mockImplementationOnce(() =>
+      mockOk("anthropic/claude-3.5-sonnet")
+    );
 
     await invokeLLMWithFallback({
       messages: [{ role: "user", content: "hi" }],
@@ -79,8 +81,46 @@ describe("OpenRouter primary routing", () => {
     });
 
     expect(JSON.parse(fetchSpy.mock.calls[0][1].body)).toEqual(
+      expect.objectContaining({ model: "anthropic/claude-3.5-sonnet" })
+    );
+  });
+
+  it("collapses unmapped model ids onto the default OpenRouter model", async () => {
+    fetchSpy.mockImplementationOnce(() => mockOk(OPENROUTER_DEFAULT_MODEL));
+
+    await invokeLLMWithFallback({
+      messages: [{ role: "user", content: "hi" }],
+      model: "some-unknown-model",
+    });
+
+    expect(JSON.parse(fetchSpy.mock.calls[0][1].body)).toEqual(
       expect.objectContaining({ model: OPENROUTER_DEFAULT_MODEL })
     );
+  });
+
+  it("uses a BYOK key for auth and never calls the platform meter", async () => {
+    fetchSpy.mockImplementationOnce(() => mockOk(OPENROUTER_DEFAULT_MODEL));
+
+    const out = await invokeLLMWithFallback({
+      messages: [{ role: "user", content: "hi" }],
+      providerApiKey: "sk-or-user-byok-key",
+      meter: {
+        userId: 1,
+        action: "kai.chat:test",
+        creditMultiplier: 0,
+        minimumCredits: 0,
+        awaitResult: true,
+      },
+    });
+
+    expect(fetchSpy.mock.calls[0][1].headers.authorization).toBe(
+      "Bearer sk-or-user-byok-key"
+    );
+    expect(out.metering).toEqual({
+      estimatedCredits: 0,
+      chargedCredits: 0,
+      success: true,
+    });
   });
 
   it("honors explicit openrouter-prefixed model ids", async () => {

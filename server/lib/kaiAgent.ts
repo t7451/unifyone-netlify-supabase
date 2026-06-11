@@ -84,6 +84,8 @@ export interface RunKaiAgentInput {
   meterRequestId?: string;
   /** If true, expose MCP tools. Default true. */
   enableTools?: boolean;
+  /** BYOK: user-supplied OpenRouter key forwarded to every LLM call. */
+  providerApiKey?: string;
 }
 
 export interface RunKaiAgentResult {
@@ -175,6 +177,7 @@ export async function runKaiAgent(
       ...(tools.length > 0 ? { tools, toolChoice: "auto" } : {}),
       model: input.model,
       modelChain: input.modelChain,
+      providerApiKey: input.providerApiKey,
       meter: {
         userId: input.user.id,
         source: input.meterSource ?? "ai_chat",
