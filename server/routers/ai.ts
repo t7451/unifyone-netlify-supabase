@@ -48,6 +48,10 @@ const KAI_IN_SCOPE_REFUSAL_PATTERN =
   /\b(?:sorry|i(?:'|’)m sorry)[^.!?]*\b(?:can(?:not|['’]t)\s+help|can(?:not|['’]t)\s+assist)\b[^.!?]*\b(?:that|with that)\b/i;
 const KAI_CONTEXT_KEY_SET = new Set(Object.keys(CONTEXT_PROMPTS));
 
+// Cap Kai chat completions well below the 4096 gateway default — long
+// generations on large free-tier models are the main source of timeouts.
+const KAI_CHAT_MAX_TOKENS = 1024;
+
 function formatKaiContextLabel(context: string): string {
   if (!KAI_CONTEXT_KEY_SET.has(context)) {
     return "current";
@@ -359,6 +363,9 @@ export const aiRouter = router({
               maxIterations: 4,
               model: selectedModel.gatewayModel,
               modelChain: selectedModel.fallbackModels,
+              // Keep replies snappy: large free-tier models are slow, and
+              // Netlify function + browser timeouts bound the whole exchange.
+              maxTokens: KAI_CHAT_MAX_TOKENS,
               providerApiKey: byokKey ?? undefined,
               meterSource: "ai_chat",
               meterAction: `kai.chat:${input.context}`,
@@ -416,6 +423,7 @@ export const aiRouter = router({
               messages: llmMessages,
               model: selectedModel.gatewayModel,
               modelChain: selectedModel.fallbackModels,
+              maxTokens: KAI_CHAT_MAX_TOKENS,
               providerApiKey: byokKey ?? undefined,
               meter: {
                 userId: user.id,

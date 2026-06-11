@@ -20,6 +20,11 @@ import "./lib/apolloInit";
 import "./lib/impactCapture";
 
 const FETCH_TIMEOUT_MS = 15_000;
+// Kai/LLM calls can legitimately take much longer than ordinary queries —
+// large free-tier models with conversation history often exceed 15s.
+const AI_FETCH_TIMEOUT_MS = 90_000;
+const isSlowAiRequest = (input: RequestInfo | URL) =>
+  /\bai\.|documentChat\.|knowledgeGraph\./.test(String(input));
 
 const getTrpcErrorCode = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return null;
@@ -106,7 +111,9 @@ const trpcClient = trpc.createClient({
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
-          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+          signal: AbortSignal.timeout(
+            isSlowAiRequest(input) ? AI_FETCH_TIMEOUT_MS : FETCH_TIMEOUT_MS
+          ),
         });
       },
     }),

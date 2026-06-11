@@ -86,6 +86,8 @@ export interface RunKaiAgentInput {
   enableTools?: boolean;
   /** BYOK: user-supplied OpenRouter key forwarded to every LLM call. */
   providerApiKey?: string;
+  /** Max completion tokens per LLM iteration. */
+  maxTokens?: number;
 }
 
 export interface RunKaiAgentResult {
@@ -177,6 +179,7 @@ export async function runKaiAgent(
       ...(tools.length > 0 ? { tools, toolChoice: "auto" } : {}),
       model: input.model,
       modelChain: input.modelChain,
+      maxTokens: input.maxTokens,
       providerApiKey: input.providerApiKey,
       meter: {
         userId: input.user.id,
