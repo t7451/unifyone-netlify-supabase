@@ -348,9 +348,10 @@ export const aiRouter = router({
           estimatedCredits?: number;
           responseId?: string;
         }> = [];
-        const useAgent = ["dashboard", "money-manager", "gig-command"].includes(
-          input.context
-        );
+        // All contexts run the agentic loop so Kai can use MCP tools and the
+        // run_code sandbox anywhere; models that don't need tools simply
+        // answer in one iteration.
+        const useAgent = true;
         try {
           if (useAgent) {
             const { runKaiAgent } = await import("../lib/kaiAgent");

@@ -18,7 +18,36 @@ import {
   type InvokeResult,
 } from "../_core/llm";
 import { mcpListTools, mcpCallTool, type McpTool } from "./mcpClient";
+import { runSandboxedCode } from "./codeSandbox";
 import type { CreditSource } from "../creditMeter";
+
+/**
+ * Built-in code interpreter tool. Executes JS in the platform's QuickJS WASM
+ * sandbox (see codeSandbox.ts) with the same tenant-scoped MCP tool access
+ * as the rest of the agent loop.
+ */
+export const RUN_CODE_TOOL: Tool = {
+  type: "function",
+  function: {
+    name: "run_code",
+    description:
+      "Execute JavaScript in a secure sandbox to compute, analyze, or transform data. " +
+      "Inside the sandbox you can call platform tools synchronously via " +
+      'callTool(name, args) — e.g. const orders = callTool("list_orders", { limit: 50 }). ' +
+      "Use console.log for intermediate output; the final expression is returned as the result. " +
+      "No network, filesystem, require/import, or await — plain synchronous JavaScript only.",
+    parameters: {
+      type: "object",
+      properties: {
+        code: {
+          type: "string",
+          description: "JavaScript source to execute.",
+        },
+      },
+      required: ["code"],
+    },
+  },
+};
 
 let _toolsCache: Tool[] | null = null;
 let _toolsCacheLoadedAt = 0;
@@ -135,6 +164,27 @@ async function executeToolCall(
     parsedArgs = {};
   }
 
+  // Built-in code interpreter: runs in the QuickJS WASM sandbox, which
+  // enforces its own tenant injection for any callTool() it makes.
+  if (name === RUN_CODE_TOOL.function.name) {
+    const code = typeof parsedArgs.code === "string" ? parsedArgs.code : "";
+    if (!code.trim()) {
+      return { name, args: parsedArgs, error: "run_code requires code" };
+    }
+    const sandbox = await runSandboxedCode({ code, user });
+    const summary = {
+      ok: sandbox.ok,
+      result: sandbox.result,
+      logs: sandbox.logs,
+      error: sandbox.error,
+      toolCalls: sandbox.toolCalls.map(t => ({ name: t.name, ok: t.ok })),
+      durationMs: sandbox.durationMs,
+    };
+    return sandbox.ok
+      ? { name, args: { code }, result: summary }
+      : { name, args: { code }, error: sandbox.error ?? "Sandbox error" };
+  }
+
   // ── CRITICAL: never trust LLM-provided tenantId. Always inject server-side.
   const safeArgs = { ...parsedArgs };
   const userTenantId =
@@ -164,7 +214,9 @@ export async function runKaiAgent(
 ): Promise<RunKaiAgentResult> {
   const maxIterations = Math.max(1, Math.min(10, input.maxIterations ?? 4));
   const enableTools = input.enableTools !== false;
-  const tools = enableTools ? await loadKaiToolDefinitions() : [];
+  const tools = enableTools
+    ? [...(await loadKaiToolDefinitions()), RUN_CODE_TOOL]
+    : [];
   const toolCallLog: RunKaiAgentResult["toolCalls"] = [];
   const modelUsage: RunKaiAgentResult["modelUsage"] = [];
 

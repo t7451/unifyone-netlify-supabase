@@ -103,6 +103,7 @@ const menuItems = [
   { icon: UserRound, label: "Friends & Social", path: "/friends" },
   { icon: Smartphone, label: "Mobile Automation", path: "/mobile-automation" },
   { icon: Sparkles, label: "AI Assistant", path: "/ai-assistant" },
+  { icon: Code2, label: "Code Sandbox", path: "/sandbox" },
   { icon: Code2, label: "Developer Hub", path: "/developer" },
   { icon: TerminalSquare, label: "Terminal", path: "/terminal" },
   { icon: Target, label: "DealFlow", path: "/dashboard/dealflow" },
