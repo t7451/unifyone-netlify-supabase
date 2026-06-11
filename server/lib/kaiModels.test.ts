@@ -46,6 +46,30 @@ describe("Kai model allowlist", () => {
     });
   });
 
+  it("defaults to a free model and keeps free fallbacks inside the free tier", () => {
+    const defaultModel = resolveKaiModel();
+    expect(defaultModel.tier).toBe("free");
+    expect(defaultModel.creditMultiplier).toBe(0);
+    expect(defaultModel.minimumCredits).toBe(0);
+
+    for (const id of KAI_MODEL_IDS) {
+      const entry = KAI_MODEL_CATALOG[id];
+      if (entry.tier !== "free") continue;
+      expect(entry.creditMultiplier).toBe(0);
+      expect(entry.minimumCredits).toBe(0);
+      // Every free fallback must be an explicit free OpenRouter slug.
+      for (const fallback of entry.fallbackModels) {
+        expect(fallback).toMatch(/^openrouter\/.+:free$/);
+      }
+    }
+  });
+
+  it("exposes the tier in the client catalog", () => {
+    const catalog = getKaiModelCatalogForClient();
+    expect(catalog.some(m => m.tier === "free")).toBe(true);
+    expect(catalog.some(m => m.tier === "premium")).toBe(true);
+  });
+
   it("includes Groq in backend fallback chains without exposing fallback internals", () => {
     expect(KAI_MODEL_CATALOG["kai-fast"].fallbackModels).toContain(
       "llama-3.3-70b-versatile"

@@ -9,9 +9,11 @@ import { mcpClient } from "../lib/mcpClient";
 import {
   buildKaiChatMeterMetadata,
   getKaiModelCatalogForClient,
+  isFreeKaiModel,
   KAI_MODEL_IDS,
   resolveKaiModel,
 } from "../lib/kaiModels";
+import { getUserProviderKey } from "../lib/userApiKeys";
 import {
   buildKaiUsageLedgerIdempotencyKey,
   checkKaiCreditAllowance,
@@ -199,12 +201,25 @@ export const aiRouter = router({
           selectedModel,
           input.model
         );
-        const creditAllowance = await checkKaiCreditAllowance({
-          tenantId: ctx.tenantId,
-          userId: user.id,
-          minimumCredits: selectedModel.minimumCredits,
-          openId: user.openId,
-        });
+        // BYOK: when the user stored their own OpenRouter key, route every
+        // call through it and never gate on or debit Kai credits.
+        const byokKey = await getUserProviderKey(Number(user.id), "openrouter");
+        // Free-tier models are available to everyone, always, at zero credits.
+        const isUnmetered = isFreeKaiModel(selectedModel) || Boolean(byokKey);
+        const creditAllowance = isUnmetered
+          ? {
+              allowed: true as const,
+              minimumCredits: 0,
+              minimumLedgerCredits: 0,
+              balance: null,
+              enforcement: "neon" as const,
+            }
+          : await checkKaiCreditAllowance({
+              tenantId: ctx.tenantId,
+              userId: user.id,
+              minimumCredits: selectedModel.minimumCredits,
+              openId: user.openId,
+            });
         if (!creditAllowance.allowed) {
           throw new TRPCError({
             code:
@@ -344,10 +359,13 @@ export const aiRouter = router({
               maxIterations: 4,
               model: selectedModel.gatewayModel,
               modelChain: selectedModel.fallbackModels,
+              providerApiKey: byokKey ?? undefined,
               meterSource: "ai_chat",
               meterAction: `kai.chat:${input.context}`,
-              creditMultiplier: selectedModel.creditMultiplier,
-              minimumCredits: selectedModel.minimumCredits,
+              creditMultiplier: isUnmetered
+                ? 0
+                : selectedModel.creditMultiplier,
+              minimumCredits: isUnmetered ? 0 : selectedModel.minimumCredits,
               meterMetadata,
               awaitMetering: true,
               meterRequestId: kaiUsageRequestId,
@@ -398,13 +416,16 @@ export const aiRouter = router({
               messages: llmMessages,
               model: selectedModel.gatewayModel,
               modelChain: selectedModel.fallbackModels,
+              providerApiKey: byokKey ?? undefined,
               meter: {
                 userId: user.id,
                 source: "ai_chat",
                 action: `kai.chat:${input.context}`,
                 tenantId: ctx.tenantId,
-                creditMultiplier: selectedModel.creditMultiplier,
-                minimumCredits: selectedModel.minimumCredits,
+                creditMultiplier: isUnmetered
+                  ? 0
+                  : selectedModel.creditMultiplier,
+                minimumCredits: isUnmetered ? 0 : selectedModel.minimumCredits,
                 metadata: meterMetadata,
                 awaitResult: true,
                 requestId: kaiUsageRequestId,
@@ -440,7 +461,7 @@ export const aiRouter = router({
             "I encountered a temporary issue processing your request. Please try again in a moment.";
         }
 
-        if (llmSucceeded) {
+        if (llmSucceeded && !isUnmetered) {
           const creditsToDebit = Math.max(
             chargedCredits || 0,
             estimatedCredits || 0,
@@ -561,12 +582,15 @@ export const aiRouter = router({
               requested: input.model ?? null,
               selected: selectedModel.id,
               label: selectedModel.label,
+              tier: selectedModel.tier,
               provider: selectedModel.provider,
               gatewayModel: selectedModel.gatewayModel,
               actual: actualModel,
               fallbackModels: selectedModel.fallbackModels,
             },
             credits: {
+              unmetered: isUnmetered,
+              byok: Boolean(byokKey),
               minimum: selectedModel.minimumCredits,
               multiplier: selectedModel.creditMultiplier,
               estimated: estimatedCredits || selectedModel.minimumCredits,

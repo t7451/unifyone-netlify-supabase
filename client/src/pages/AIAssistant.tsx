@@ -20,7 +20,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -46,6 +48,7 @@ import {
   AlertCircle,
   RefreshCw,
   Gift,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -108,6 +111,13 @@ export default function AIAssistant() {
   const { data: modelsData, isLoading: modelsLoading } =
     trpc.ai.listModels.useQuery(undefined, { enabled: !!user });
 
+  // BYOK: when the user has saved their own OpenRouter key, every model is
+  // billed to that key and Kai credits are never used.
+  const { data: apiKeysData } = trpc.apiKeys.list.useQuery(undefined, {
+    enabled: !!user,
+  });
+  const hasOwnKey = !!apiKeysData?.keys.some(k => k.provider === "openrouter");
+
   // Fetch conversation list
   const { data: historyData, isLoading: historyLoading } =
     trpc.ai.listConversations.useQuery({ limit: 20 }, { enabled: !!user });
@@ -121,10 +131,20 @@ export default function AIAssistant() {
   useEffect(() => {
     const models = modelsData?.models ?? [];
     if (selectedModel || models.length === 0) return;
+    // Restore the last-used model, otherwise default to the first free model
+    // so every user can chat without credits.
+    const remembered = localStorage.getItem("kai:model");
     const recommended =
-      models.find(model => model.id === "gemini-2.5-flash") ?? models[0];
+      models.find(model => model.id === remembered) ??
+      models.find(model => model.tier === "free") ??
+      models[0];
     setSelectedModel(recommended.id);
   }, [modelsData?.models, selectedModel]);
+
+  const handleModelChange = useCallback((value: string) => {
+    setSelectedModel(value as KaiModelId);
+    localStorage.setItem("kai:model", value);
+  }, []);
 
   // Chat mutation
   const chatMutation = trpc.ai.chat.useMutation({
@@ -269,10 +289,15 @@ export default function AIAssistant() {
     models.find(model => model.id === selectedModel) ?? models[0];
   const remainingCredits = balanceData?.remaining ?? 0;
   const selectedModelMinimum = selectedModelInfo?.minimumCredits ?? 1;
+  const freeModels = models.filter(model => model.tier === "free");
+  const premiumModels = models.filter(model => model.tier !== "free");
+  // Free models and BYOK chats never consume credits, so credit warnings
+  // only matter when a premium model runs on platform billing.
+  const usesCredits = selectedModelInfo?.tier === "premium" && !hasOwnKey;
   const hasLowCredits =
-    !!balanceData && remainingCredits < selectedModelMinimum;
+    usesCredits && !!balanceData && remainingCredits < selectedModelMinimum;
   const hasZeroCredits =
-    !!balanceData && remainingCredits === 0 && !creditNotice;
+    usesCredits && !!balanceData && remainingCredits === 0 && !creditNotice;
   const ContextIcon = CONTEXT_ICONS[activeContext] ?? Bot;
 
   const handleCheckout = (pkg: (typeof creditPackages)[number]) => {
@@ -557,32 +582,70 @@ export default function AIAssistant() {
               </div>
             </div>
             <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-              <Badge
-                variant={hasLowCredits ? "destructive" : "secondary"}
-                className="text-xs"
-              >
-                <Coins className="h-3 w-3 mr-1" />
-                {remainingCredits} credits
-              </Badge>
+              {hasOwnKey ? (
+                <Badge
+                  variant="secondary"
+                  className="text-xs text-emerald-400"
+                  title="Your OpenRouter key is active — chats never use Kai credits"
+                >
+                  <KeyRound className="h-3 w-3 mr-1" />
+                  Your API key
+                </Badge>
+              ) : usesCredits ? (
+                <Badge
+                  variant={hasLowCredits ? "destructive" : "secondary"}
+                  className="text-xs"
+                >
+                  <Coins className="h-3 w-3 mr-1" />
+                  {remainingCredits} credits
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="text-xs text-emerald-400">
+                  <Gift className="h-3 w-3 mr-1" />
+                  Free model
+                </Badge>
+              )}
               <Select
                 value={selectedModel}
-                onValueChange={value => setSelectedModel(value as KaiModelId)}
+                onValueChange={handleModelChange}
                 disabled={modelsLoading || models.length === 0}
               >
                 <SelectTrigger size="sm" className="w-[13rem]">
                   <SelectValue placeholder="Select model" />
                 </SelectTrigger>
                 <SelectContent align="end">
-                  {models.map(model => (
-                    <SelectItem key={model.id} value={model.id}>
-                      <span className="flex flex-col">
-                        <span>{model.label}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {model.minimumCredits} min credits
+                  <SelectGroup>
+                    <SelectLabel>Free — unlimited for everyone</SelectLabel>
+                    {freeModels.map(model => (
+                      <SelectItem key={model.id} value={model.id}>
+                        <span className="flex flex-col">
+                          <span>{model.label}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {model.description}
+                          </span>
                         </span>
-                      </span>
-                    </SelectItem>
-                  ))}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel>
+                      {hasOwnKey
+                        ? "Premium — billed to your API key"
+                        : "Premium — uses Kai credits"}
+                    </SelectLabel>
+                    {premiumModels.map(model => (
+                      <SelectItem key={model.id} value={model.id}>
+                        <span className="flex flex-col">
+                          <span>{model.label}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {hasOwnKey
+                              ? model.description
+                              : `${model.minimumCredits} min credits`}
+                          </span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
               <Button
