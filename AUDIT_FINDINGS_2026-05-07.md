@@ -229,3 +229,47 @@ To balance the picture:
 5. **§1.4 (Billing fetch routes)** — implement `registerBillingFetchRoutes` for Netlify, or remove the `null` re-export and the conditional in `nonTrpcRoutes.ts`.
 6. **§1.8 (clipper default)** — change the engine default from `"stub"` to `"basic"` in `createJobInput` so production callers don't get synthetic clips.
 7. **Doc hygiene** — `TODO.md` and `POST_LAUNCH_ROADMAP.md` carry stale items (§5). One pass to mark them ✅ would prevent future audits from chasing them.
+
+---
+
+## Addendum — Client-side & Netlify functions audit (2026-06-12)
+
+Follow-up sweep of `client/src/**`, `netlify/functions/**`, and
+`netlify/edge-functions/**`. Baseline re-verified: `pnpm check` 0 errors,
+`pnpm lint` 0 errors / 14 fast-refresh warnings.
+
+### A.1 `rate-limit.ts` edge function is a no-op (misleading)
+
+`netlify/edge-functions/rate-limit.ts:10-16` builds a `rateLimitKey`, then
+`void`s it and passes every request through, while still attaching an
+`X-RateLimit-Policy: 10;w=900` header — advertising a limit that this layer
+never enforces. Mitigating context: real rate limiting lives server-side and
+`server/_core/index.ts:115-127` hard-fails startup on Netlify without
+Upstash credentials, so this is **misleading dead code**, not an open
+brute-force hole. Recommend either implementing the edge limit (Upstash
+REST works in edge runtime) or deleting the function + header.
+
+### A.2 Deferred TODOs in Netlify background functions (cosmetic)
+
+- `netlify/functions/golf-stripe-webhook-background.mts:54-55` —
+  `TODO(phase-2)`: GLB generation enqueue and Impact.com conversion forward.
+- `netlify/functions/stripe-webhook-background.mts:68-71` — credit top-up
+  fulfillment still synchronous in `server/billing.ts` (tracked in
+  POST_LAUNCH_ROADMAP.md).
+
+### A.3 Client verified healthy
+
+Cross-checks that came back clean:
+
+- All client tRPC calls resolve to real procedures (291 procedures checked
+  against `server/routers/*`).
+- All `<Link>`/`navigate()` targets exist in the wouter route table.
+- No empty `onClick` handlers, "coming soon" toasts, or forms that drop
+  input; mutations have onSuccess/onError handling.
+- Every `VITE_*` var referenced is documented in `.env.example`.
+- Golf-studio hooks (`useGolfStudio.ts`) wire correctly to `/api/golf/*`
+  Netlify functions; Supabase realtime client degrades to a silent no-op
+  when unconfigured (intended).
+
+Server-side items from the May audit (§1–§2) were re-checked and remain in
+the same state.
