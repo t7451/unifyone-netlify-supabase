@@ -982,7 +982,9 @@ export async function requestPasswordReset(
       </div>
     `,
     }).catch(err =>
-      console.error("[auth] OAuth reset-guidance email failed:", err)
+      logger.warn("customAuth: OAuth reset-guidance email failed", {
+        error: err instanceof Error ? err.message : String(err),
+      })
     );
     return { success: true };
   }
