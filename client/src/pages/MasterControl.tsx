@@ -131,6 +131,33 @@ function emptyToNull(value: string) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+/**
+ * Render an `ask_kai` MCP result into displayable text. MCP tool results are
+ * commonly `{ content: [{ type: "text", text }] }`, but may also be a plain
+ * string or an object with `answer`/`text`. Fall back to pretty JSON.
+ */
+function formatKaiAnswer(answer: unknown): string {
+  if (typeof answer === "string") return answer;
+  if (answer && typeof answer === "object") {
+    const obj = answer as Record<string, unknown>;
+    if (Array.isArray(obj.content)) {
+      const text = obj.content
+        .map(part =>
+          part && typeof part === "object" && "text" in part
+            ? String((part as Record<string, unknown>).text ?? "")
+            : ""
+        )
+        .filter(Boolean)
+        .join("\n")
+        .trim();
+      if (text) return text;
+    }
+    if (typeof obj.answer === "string") return obj.answer;
+    if (typeof obj.text === "string") return obj.text;
+  }
+  return JSON.stringify(answer, null, 2);
+}
+
 function recordFrom(value: unknown): Record<string, unknown> {
   return value && typeof value === "object"
     ? (value as Record<string, unknown>)
@@ -289,7 +316,7 @@ export default function MasterControl() {
     {
       role: "Kai",
       content:
-        "Ready for owner commands: summarize tenant risk, draft rollout plans, or prepare a credit grant.",
+        "Ask me anything about the selected tenant — risk summaries, payment trends, or platform insights. I answer questions only and won't run any commands.",
     },
   ]);
 
@@ -503,19 +530,37 @@ export default function MasterControl() {
     toast.success("Tenant CSV exported");
   };
 
+  const askKai = trpc.masterControl.askKai.useMutation();
+
   const runKaiCommand = (prompt?: string) => {
     const content = (prompt ?? kaiCommand).trim();
-    if (!content) return;
-    const tenantLabel = selectedTenant?.name ?? "the selected tenant";
-    setChatMessages(current => [
-      ...current,
-      { role: "Owner", content },
-      {
-        role: "Kai",
-        content: `Mock command queued for ${tenantLabel}: ${content}. Connect this panel to masterControl commands when the backend exposes them.`,
-      },
-    ]);
+    if (!content || askKai.isPending) return;
+    setChatMessages(current => [...current, { role: "Owner", content }]);
     setKaiCommand("");
+    askKai.mutate(
+      {
+        question: content,
+        ...(selectedTenant ? { tenantId: selectedTenant.id } : {}),
+      },
+      {
+        onSuccess: data => {
+          setChatMessages(current => [
+            ...current,
+            { role: "Kai", content: formatKaiAnswer(data.answer) },
+          ]);
+        },
+        onError: error => {
+          toast.error(error.message);
+          setChatMessages(current => [
+            ...current,
+            {
+              role: "Kai",
+              content: `⚠️ Kai could not respond: ${error.message}`,
+            },
+          ]);
+        },
+      }
+    );
   };
 
   return (
@@ -1407,8 +1452,9 @@ export default function MasterControl() {
                     <MessageSquare className="h-4 w-4" /> Kai Command Panel
                   </CardTitle>
                   <CardDescription>
-                    Local mock command surface, ready to wire to backend command
-                    execution.
+                    Read-only Q&amp;A with Kai (the ask_kai assistant), scoped
+                    to the selected tenant. This panel answers questions only —
+                    it does not execute platform commands.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1423,6 +1469,7 @@ export default function MasterControl() {
                         key={prompt}
                         variant="outline"
                         size="sm"
+                        disabled={askKai.isPending}
                         onClick={() => runKaiCommand(prompt)}
                       >
                         {prompt}
@@ -1450,9 +1497,17 @@ export default function MasterControl() {
                     />
                     <Button
                       className="sm:self-end"
+                      disabled={
+                        askKai.isPending || kaiCommand.trim().length === 0
+                      }
                       onClick={() => runKaiCommand()}
                     >
-                      <Bot className="h-4 w-4" /> Send
+                      {askKai.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Bot className="h-4 w-4" />
+                      )}{" "}
+                      {askKai.isPending ? "Asking…" : "Send"}
                     </Button>
                   </div>
                 </CardContent>
