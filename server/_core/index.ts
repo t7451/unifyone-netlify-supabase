@@ -25,6 +25,8 @@ import { resolveDatabaseUrl } from "../lib/databaseUrl";
 import { getNgrokUrl, startNgrokTunnel } from "./ngrok";
 import { registerResourceDownloadRoutes } from "../resourceDownloads";
 import { registerClipsToolkitRoutes } from "../clipsToolkit";
+import { registerSseClient } from "./sseManager";
+import { sdk } from "./sdk";
 
 /** Validate critical environment variables before the server accepts traffic. */
 function validateEnv() {
@@ -270,6 +272,56 @@ async function startServer() {
   registerCustomAuthExpressRoutes(app);
   registerResourceDownloadRoutes(app);
   registerClipsToolkitRoutes(app);
+
+  // SSE event stream — authenticated users connect here for real-time push.
+  // Each connection is kept alive by a 30s heartbeat in sseManager.ts.
+  // Netlify Functions can't hold open connections, so this endpoint only
+  // works in the Express (local dev / Docker) deployment. The client
+  // EventSource auto-reconnects; if the server is Netlify it will fail fast
+  // and the UI falls back to tRPC polling naturally.
+  app.get("/api/events", async (req, res) => {
+    // Verify the session cookie without going through tRPC context
+    const { parse: parseCookieHeader } = await import("cookie");
+    const { COOKIE_NAME } = await import("../../shared/const");
+    const cookies = parseCookieHeader(req.headers.cookie ?? "");
+    const session = await sdk.verifySession(cookies[COOKIE_NAME]);
+    if (!session) {
+      res.status(401).end();
+      return;
+    }
+    // Look up numeric userId from openId
+    const { getDb } = await import("../db");
+    const { users } = await import("../../drizzle/schema");
+    const { eq } = await import("drizzle-orm");
+    const db = await getDb();
+    if (!db) {
+      res.status(503).end();
+      return;
+    }
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.openId, session.openId))
+      .limit(1);
+    if (!user) {
+      res.status(401).end();
+      return;
+    }
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no"); // disable nginx buffering
+    res.flushHeaders();
+
+    // Send initial connected event
+    res.write(`event: connected\ndata: {"userId":${user.id}}\n\n`);
+
+    const cleanup = registerSseClient(user.id, session.openId, res);
+    req.on("close", cleanup);
+    req.on("error", cleanup);
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",

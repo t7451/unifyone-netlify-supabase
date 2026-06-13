@@ -18,8 +18,12 @@ const GOLD = "#D4A843";
 const PARCHMENT = "#F0E8D0";
 const MUTED = "#6A6A6A";
 
-const POLL_MS = 2000;
-const MAX_POLLS = 30; // 60s ceiling before we stop spinning
+// SSE `credit_balance` events (useServerEvents at app root) invalidate the
+// getCreditBalance query immediately when the Stripe webhook lands.
+// We keep a slow poll (5s) as a safety net in case SSE isn't available
+// (Netlify serverless), capped at 60s.
+const POLL_MS = 5_000;
+const MAX_POLLS = 12; // 60s ceiling before we stop spinning
 
 export default function BillingSuccess() {
   const [polls, setPolls] = useState(0);
