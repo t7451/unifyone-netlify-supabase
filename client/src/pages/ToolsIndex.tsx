@@ -178,7 +178,7 @@ export default function ToolsIndex() {
     <div className="min-h-screen bg-background text-foreground">
       <PageHead
         title="Free Tools for Gig Workers & Sellers | UnifyOne"
-        description="Free calculators and estimators for 1099 gig workers, resellers, and multi-platform sellers — mileage deductions, quarterly taxes, earnings consolidation, and more. No account required."
+        description="Free tools for 1099 gig workers: mileage, quarterly tax, earnings consolidation, break-even pricing, and cash-flow tracking. No account required."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />

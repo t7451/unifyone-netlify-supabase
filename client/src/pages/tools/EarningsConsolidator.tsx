@@ -199,7 +199,7 @@ export default function EarningsConsolidator() {
     <>
       <PageHead
         title="Multi-Platform Gig Earnings Consolidator | True Hourly Rate | UnifyOne"
-        description="Free calculator: enter your gross earnings, hours, and expenses from DoorDash, Uber Eats, Instacart, and more to see your true hourly rate after all costs. Find out which app pays best."
+        description="Free gig earnings calculator. See your true hourly rate after expenses across DoorDash, Uber Eats, Instacart, and more — no account required."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />

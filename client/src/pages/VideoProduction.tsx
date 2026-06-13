@@ -357,7 +357,7 @@ export default function VideoProduction() {
     <div className="min-h-screen bg-background">
       <PageHead
         title="Video Production | UnifyOne"
-        description="OneStack Cinematic — professional AI-generated video assets for landing pages, social media, pitch decks, and email campaigns. Ultra-realistic production quality."
+        description="OneStack Cinematic — professional AI-generated video assets for landing pages, social media, pitch decks, and email campaigns. Ultra-realistic quality."
         canonical={VP_CANONICAL}
         jsonLd={buildWebPageJsonLd({
           canonical: VP_CANONICAL,
