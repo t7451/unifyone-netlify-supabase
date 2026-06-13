@@ -22,22 +22,85 @@ import path from "node:path";
 // These are the exact questions our target users type into ChatGPT / Perplexity.
 // Do NOT change slugs — we track delta over time.
 const TARGET_QUERIES: Array<{ id: string; query: string }> = [
-  { id: "gig-tax-estimator", query: "best free quarterly tax estimator for gig workers 1099" },
-  { id: "multi-platform-earnings", query: "how to track earnings from multiple gig apps like Uber DoorDash together" },
-  { id: "mileage-deduction-calculator", query: "gig worker mileage deduction calculator 2024 IRS" },
-  { id: "ecommerce-saas-small-business", query: "multi-tenant ecommerce platform for small business Shopify alternative" },
-  { id: "unified-payments-dashboard", query: "single dashboard for Stripe PayPal Square sellers" },
-  { id: "side-hustle-income-tracker", query: "free side hustle income tracker multiple platforms" },
-  { id: "reseller-break-even-calculator", query: "reseller break-even pricing calculator eBay Etsy" },
-  { id: "subscription-billing-saas", query: "affordable subscription billing SaaS for indie builders" },
-  { id: "1099-quarterly-tax-tool", query: "1099 contractor quarterly estimated tax payment tool free" },
-  { id: "gig-economy-commerce-platform", query: "ecommerce platform built for gig economy workers" },
+  {
+    id: "gig-tax-estimator",
+    query: "best free quarterly tax estimator for gig workers 1099",
+  },
+  {
+    id: "multi-platform-earnings",
+    query:
+      "how to track earnings from multiple gig apps like Uber DoorDash together",
+  },
+  {
+    id: "mileage-deduction-calculator",
+    query: "gig worker mileage deduction calculator 2024 IRS",
+  },
+  {
+    id: "ecommerce-saas-small-business",
+    query:
+      "multi-tenant ecommerce platform for small business Shopify alternative",
+  },
+  {
+    id: "unified-payments-dashboard",
+    query: "single dashboard for Stripe PayPal Square sellers",
+  },
+  {
+    id: "side-hustle-income-tracker",
+    query: "free side hustle income tracker multiple platforms",
+  },
+  {
+    id: "reseller-break-even-calculator",
+    query: "reseller break-even pricing calculator eBay Etsy",
+  },
+  {
+    id: "subscription-billing-saas",
+    query: "affordable subscription billing SaaS for indie builders",
+  },
+  {
+    id: "1099-quarterly-tax-tool",
+    query: "1099 contractor quarterly estimated tax payment tool free",
+  },
+  {
+    id: "gig-economy-commerce-platform",
+    query: "ecommerce platform built for gig economy workers",
+  },
+  // Searchable visibility gap queries (Income Aggregation, Tax Management, Earnings Optimization, Financial Intelligence, Route Optimization)
+  {
+    id: "income-aggregation-gig",
+    query:
+      "best app to aggregate income from multiple gig platforms DoorDash Uber Instacart",
+  },
+  {
+    id: "tax-management-1099",
+    query: "best tax management app for 1099 gig workers quarterly payments",
+  },
+  {
+    id: "earnings-optimization-gig",
+    query: "how to optimize earnings as a gig worker delivery driver",
+  },
+  {
+    id: "financial-intelligence-gig",
+    query: "financial intelligence platform for independent gig workers",
+  },
+  {
+    id: "route-optimization-delivery",
+    query: "route optimization tool for delivery drivers Uber Eats DoorDash",
+  },
   // Brand / competitor awareness queries
   { id: "brand-unifyone", query: "what is UnifyOne 1commerce" },
   { id: "brand-1commerce", query: "1commerce.online review" },
-  { id: "competitor-gig-saas", query: "best SaaS platform for freelancers and gig workers" },
-  { id: "competitor-unified-commerce", query: "unified commerce platform for multi-channel sellers" },
-  { id: "ai-powered-ecommerce", query: "AI powered ecommerce platform for independent sellers 2024" },
+  {
+    id: "competitor-gig-saas",
+    query: "best SaaS platform for freelancers and gig workers",
+  },
+  {
+    id: "competitor-unified-commerce",
+    query: "unified commerce platform for multi-channel sellers",
+  },
+  {
+    id: "ai-powered-ecommerce",
+    query: "AI powered ecommerce platform for independent sellers 2024",
+  },
 ];
 
 // ── Brand signals we look for in answers ─────────────────────────────────────
@@ -72,12 +135,15 @@ interface AuditReport {
 }
 
 // ── Perplexity provider ───────────────────────────────────────────────────────
-async function queryPerplexity(query: string): Promise<{ text: string; citations: string[] }> {
+async function queryPerplexity(
+  query: string
+): Promise<{ text: string; citations: string[] }> {
   const apiKey = process.env.PERPLEXITY_API_KEY;
   if (!apiKey) throw new Error("PERPLEXITY_API_KEY not set");
 
   const resp = await fetch("https://api.perplexity.ai/chat/completions", {
     method: "POST",
+    signal: AbortSignal.timeout(15000),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
@@ -90,7 +156,8 @@ async function queryPerplexity(query: string): Promise<{ text: string; citations
     }),
   });
 
-  if (!resp.ok) throw new Error(`Perplexity ${resp.status}: ${await resp.text()}`);
+  if (!resp.ok)
+    throw new Error(`Perplexity ${resp.status}: ${await resp.text()}`);
   const data = (await resp.json()) as {
     choices: Array<{ message: { content: string } }>;
     citations?: string[];
@@ -102,12 +169,15 @@ async function queryPerplexity(query: string): Promise<{ text: string; citations
 }
 
 // ── OpenAI (ChatGPT) provider — uses web search via responses API ─────────────
-async function queryOpenAI(query: string): Promise<{ text: string; citations: string[] }> {
+async function queryOpenAI(
+  query: string
+): Promise<{ text: string; citations: string[] }> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY not set");
 
   const resp = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
+    signal: AbortSignal.timeout(15000),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
@@ -121,7 +191,10 @@ async function queryOpenAI(query: string): Promise<{ text: string; citations: st
 
   if (!resp.ok) throw new Error(`OpenAI ${resp.status}: ${await resp.text()}`);
   const data = (await resp.json()) as {
-    output: Array<{ type: string; content?: Array<{ type: string; text?: string }> }>;
+    output: Array<{
+      type: string;
+      content?: Array<{ type: string; text?: string }>;
+    }>;
   };
 
   const textParts: string[] = [];
@@ -154,10 +227,25 @@ function detectBrand(text: string): { cited: boolean; excerpt?: string } {
 
 // ── Detect competitor mentions (rough heuristic) ──────────────────────────────
 const COMPETITOR_SIGNALS = [
-  "shopify", "woocommerce", "bigcommerce", "squarespace", "wix",
-  "honeybook", "bonsai", "quickbooks self-employed", "stride", "hurdlr",
-  "freeagent", "freshbooks", "wave", "paymo", "toggl", "harvest",
-  "doordash earnings", "gridwise", "para",
+  "shopify",
+  "woocommerce",
+  "bigcommerce",
+  "squarespace",
+  "wix",
+  "honeybook",
+  "bonsai",
+  "quickbooks self-employed",
+  "stride",
+  "hurdlr",
+  "freeagent",
+  "freshbooks",
+  "wave",
+  "paymo",
+  "toggl",
+  "harvest",
+  "doordash earnings",
+  "gridwise",
+  "para",
 ];
 
 function detectCompetitors(text: string): string[] {
@@ -221,29 +309,33 @@ async function runAudit(): Promise<AuditReport> {
 
   const citedCount = results.filter(r => r.cited).length;
   const totalQueries = results.filter(r => !r.error).length;
-  const shareOfVoice = totalQueries > 0
-    ? Math.round((citedCount / totalQueries) * 100)
-    : 0;
+  const shareOfVoice =
+    totalQueries > 0 ? Math.round((citedCount / totalQueries) * 100) : 0;
 
   return { date, shareOfVoice, totalQueries, citedCount, results };
 }
 
 async function main() {
   console.log("UnifyOne AI Citation Audit — " + new Date().toISOString());
-  console.log(`Checking ${TARGET_QUERIES.length} queries across providers...\n`);
+  console.log(
+    `Checking ${TARGET_QUERIES.length} queries across providers...\n`
+  );
 
   const report = await runAudit();
 
   // Write report
   const reportsDir = path.join(import.meta.dirname ?? ".", "citation-reports");
   fs.mkdirSync(reportsDir, { recursive: true });
-  const outPath = path.join(reportsDir, `${report.date}.json`);
+  const runStamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const outPath = path.join(reportsDir, `${report.date}_${runStamp}.json`);
   fs.writeFileSync(outPath, JSON.stringify(report, null, 2), "utf-8");
 
   // Console summary
   console.log("\n── Summary ──────────────────────────────────────────");
   console.log(`Date:            ${report.date}`);
-  console.log(`Share of voice:  ${report.shareOfVoice}% (${report.citedCount}/${report.totalQueries} queries)`);
+  console.log(
+    `Share of voice:  ${report.shareOfVoice}% (${report.citedCount}/${report.totalQueries} queries)`
+  );
   console.log(`Report written:  ${outPath}`);
   console.log("\nCited queries:");
   for (const r of report.results.filter(r => r.cited)) {
@@ -254,7 +346,8 @@ async function main() {
   for (const r of report.results.filter(r => !r.cited && !r.error)) {
     console.log(`  ✗ [${r.provider}] ${r.queryId}`);
     const topCompetitor = r.competitors[0];
-    if (topCompetitor) console.log(`      (competitor cited: ${topCompetitor})`);
+    if (topCompetitor)
+      console.log(`      (competitor cited: ${topCompetitor})`);
   }
 }
 

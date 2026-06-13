@@ -44,12 +44,7 @@ export const discoverabilityRouter = router({
     const [loginResult] = await db
       .select({ count: count() })
       .from(users)
-      .where(
-        and(
-          gte(users.lastSignedIn, since),
-          isNull(users.deletedAt)
-        )
-      );
+      .where(and(gte(users.lastSignedIn, since), isNull(users.deletedAt)));
 
     // Distinct tenants with at least one order in the window (core commerce action)
     const [orderResult] = await db
@@ -79,7 +74,7 @@ export const discoverabilityRouter = router({
       actionTakerCount: actionTakers,
       // Conservative MAU: min of logged-in and action-takers
       // (real overlap requires a subquery; this is a safe lower bound)
-      mauLowerBound: Math.min(loginCount, Math.max(actionTakers, 1)),
+      mauLowerBound: Math.min(loginCount, actionTakers),
       computedAt: new Date().toISOString(),
       note: "mauLowerBound = min(loggedIn28d, actionTakers28d). For exact overlap run the SQL in scripts/mau-exact.sql.",
     };
@@ -101,12 +96,7 @@ export const discoverabilityRouter = router({
           count: count(),
         })
         .from(users)
-        .where(
-          and(
-            gte(users.createdAt, since),
-            isNull(users.deletedAt)
-          )
-        )
+        .where(and(gte(users.createdAt, since), isNull(users.deletedAt)))
         .groupBy(users.loginMethod);
 
       const [totalResult] = await db
@@ -118,13 +108,13 @@ export const discoverabilityRouter = router({
         .select({ count: count() })
         .from(users)
         .where(
-          and(
-            gte(users.lastSignedIn, windowStart()),
-            isNull(users.deletedAt)
-          )
+          and(gte(users.lastSignedIn, windowStart()), isNull(users.deletedAt))
         );
 
-      const newSignups = signupsByMethod.reduce((s, r) => s + (r.count ?? 0), 0);
+      const newSignups = signupsByMethod.reduce(
+        (s, r) => s + (r.count ?? 0),
+        0
+      );
       const totalUsers = totalResult?.count ?? 0;
       const activeUsers = activeResult?.count ?? 0;
 
@@ -134,7 +124,10 @@ export const discoverabilityRouter = router({
         byMethod: signupsByMethod,
         totalUsers,
         activeUsers28d: activeUsers,
-        activationRate: totalUsers > 0 ? ((activeUsers / totalUsers) * 100).toFixed(1) + "%" : "0%",
+        activationRate:
+          totalUsers > 0
+            ? ((activeUsers / totalUsers) * 100).toFixed(1) + "%"
+            : "0%",
       };
     }),
 });

@@ -3,7 +3,7 @@
 
 [build]
   base = ""
-  command = "pnpm install --no-frozen-lockfile && NODE_ENV=production pnpm build && node scripts/ping-sitemaps.mjs"
+  command = "pnpm install --no-frozen-lockfile && NODE_ENV=production pnpm build && (node scripts/ping-sitemaps.mjs || true)"
   publish = "dist/public"
   functions = "netlify/functions"
 

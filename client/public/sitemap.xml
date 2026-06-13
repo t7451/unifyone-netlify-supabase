@@ -61,6 +61,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>__APP_URL__/blog/gig-worker-shift-intelligence</loc>
+    <lastmod>2026-06-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>__APP_URL__/blog/gig-economy-commerce-platform</loc>
     <lastmod>2026-05-06</lastmod>
     <changefreq>monthly</changefreq>
