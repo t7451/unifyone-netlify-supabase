@@ -29,7 +29,7 @@ function vitePluginAppUrl(): Plugin {
     closeBundle() {
       // Replace __APP_URL__ in static public files copied to dist
       const outDir = path.resolve(import.meta.dirname, "dist/public");
-      for (const file of ["robots.txt", "sitemap.xml"]) {
+      for (const file of ["robots.txt", "sitemap.xml", "llms.txt"]) {
         const filePath = path.join(outDir, file);
         if (fs.existsSync(filePath)) {
           const content = fs.readFileSync(filePath, "utf-8");
@@ -69,6 +69,7 @@ const plugins = [
       { path: "/documents/case-studies" },
       { path: "/documents/integrations" },
       { path: "/documents/work-proof" },
+      { path: "/tools" },
       { path: "/blog" },
       { path: "/blog/gig-economy-commerce-platform" },
       { path: "/blog/multi-tenant-ecommerce-saas" },

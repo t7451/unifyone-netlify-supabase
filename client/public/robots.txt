@@ -1,3 +1,25 @@
+# ── AI crawler explicit allows ────────────────────────────────────────────────
+# GPTBot (ChatGPT/OpenAI) — feeds Bing/ChatGPT, crawls ~8× more than Googlebot
+User-agent: GPTBot
+Allow: /
+
+# OAI-SearchBot (OpenAI SearchGPT)
+User-agent: OAI-SearchBot
+Allow: /
+
+# PerplexityBot
+User-agent: PerplexityBot
+Allow: /
+
+# ClaudeBot (Anthropic)
+User-agent: ClaudeBot
+Allow: /
+
+# Google-Extended (Gemini / AI Overviews training)
+User-agent: Google-Extended
+Allow: /
+
+# ── All other crawlers ────────────────────────────────────────────────────────
 User-agent: *
 Allow: /
 
