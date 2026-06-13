@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import type { inferRouterOutputs } from "@trpc/server";
 import {
@@ -344,6 +344,9 @@ function KpiSkeleton() {
 export default function Dashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
+  const utils = trpc.useUtils();
+  const provisionDefault = trpc.tenant.provisionDefault.useMutation();
+  const provisioningRef = useRef(false);
   const [chartRange, setChartRange] = useState<ChartRange>("month");
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [onboardingInitialCategoryId, setOnboardingInitialCategoryId] =
@@ -363,10 +366,25 @@ export default function Dashboard() {
   const recentOrders = trpc.orders.recentOrders.useQuery();
 
   useEffect(() => {
-    if (user && !user.tenantId) {
-      navigate("/setup");
-    }
-    // `navigate` from wouter is stable; omitted to avoid unnecessary re-runs.
+    // A signed-in user with no tenant gets a default workspace auto-provisioned
+    // so they land directly in the product — no mandatory /setup gate. If
+    // provisioning fails, fall back to the manual setup flow. Naming/renaming
+    // and demo-data seeding remain available at /setup.
+    if (!user || user.tenantId) return;
+    if (provisioningRef.current) return;
+    provisioningRef.current = true;
+
+    provisionDefault.mutate(undefined, {
+      onSuccess: () => {
+        // Reload the session so user.tenantId is populated; stay on /dashboard.
+        void utils.auth.me.invalidate();
+      },
+      onError: () => {
+        provisioningRef.current = false;
+        navigate("/setup");
+      },
+    });
+    // `navigate`/`utils`/mutation are stable; omitted to avoid re-runs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
