@@ -53,6 +53,7 @@ import { apiKeysRouter } from "./routers/apiKeys";
 import { sandboxRouter } from "./routers/sandbox";
 import { clipsToolkitRouter } from "./routers/clipsToolkit";
 import { discoverabilityRouter } from "./routers/discoverability";
+import { voiceRouter } from "./routers/voice";
 
 export const appRouter = router({
   system: systemRouter,
@@ -140,6 +141,7 @@ export const appRouter = router({
   sandbox: sandboxRouter,
   clipsToolkit: clipsToolkitRouter,
   discoverability: discoverabilityRouter,
+  voice: voiceRouter,
 });
 
 export type AppRouter = typeof appRouter;
