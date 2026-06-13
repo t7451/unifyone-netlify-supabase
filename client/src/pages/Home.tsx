@@ -43,9 +43,9 @@ const JSON_LD = [
     "@type": "WebPage",
     "@id": CANONICAL,
     url: CANONICAL,
-    name: "UnifyOne | AI-Powered Multi-Tenant Commerce Platform",
+    name: "UnifyOne by 1Commerce — Gig Earnings, Tax Tools & Commerce Platform",
     description:
-      "UnifyOne is the multi-tenant commerce platform for gig operators and e-commerce teams. AI-powered earnings insights, order management, and Shopify integration.",
+      "UnifyOne unifies multi-tenant Shopify stores, gig earnings intelligence, IRS deduction tracking, and 300+ AI models in one platform. Free to start.",
     isPartOf: { "@id": `${SITE_URL}/#website` },
     inLanguage: "en-US",
   },
@@ -678,7 +678,7 @@ export default function Home() {
         </title>
         <meta
           name="description"
-          content="Track income across DoorDash, Uber Eats & Instacart, calculate quarterly taxes, and manage multi-tenant commerce — all in one platform. Free to start."
+          content="UnifyOne unifies multi-tenant Shopify stores, gig earnings intelligence, IRS deduction tracking, and 300+ AI models in one platform. Free to start."
         />
         <link rel="canonical" href={CANONICAL} />
         <meta
@@ -687,7 +687,7 @@ export default function Home() {
         />
         <meta
           property="og:description"
-          content="Track income across DoorDash, Uber Eats & Instacart, calculate quarterly taxes, and manage multi-tenant commerce — all in one platform. Free to start."
+          content="UnifyOne unifies multi-tenant Shopify stores, gig earnings intelligence, IRS deduction tracking, and 300+ AI models in one platform. Free to start."
         />
         <meta property="og:url" content={CANONICAL} />
         <meta property="og:type" content="website" />
@@ -1697,6 +1697,58 @@ export default function Home() {
         </div>
       </section>
       <StickyCTA />
+
+      {/* Static partner links — visible to AI crawlers in initial HTML */}
+      <aside aria-label="Platform integrations" className="sr-only">
+        <p>UnifyOne integrates with:</p>
+        <ul>
+          <li>
+            <a
+              href="https://stripe.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Stripe — payment processing
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://www.paypal.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              PayPal — payment processing
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://www.shopify.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Shopify — e-commerce platform
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://www.anthropic.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Anthropic — Claude AI models
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              IRS Self-Employment Tax guidance
+            </a>
+          </li>
+        </ul>
+      </aside>
     </PublicLayout>
   );
 }
