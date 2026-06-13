@@ -132,6 +132,13 @@ interface AuditReport {
   totalQueries: number;
   citedCount: number;
   results: CitationResult[];
+  delta?: {
+    previousDate: string;
+    previousSov: number;
+    sovChange: number;
+    gained: string[];
+    lost: string[];
+  };
 }
 
 // ── OpenRouter provider (proxies Perplexity sonar for live web search) ────────
@@ -351,17 +358,66 @@ async function runAudit(): Promise<AuditReport> {
   return { date, shareOfVoice, totalQueries, citedCount, results };
 }
 
+// ── Delta tracking ────────────────────────────────────────────────────────────
+
+function loadPreviousReport(reportsDir: string): AuditReport | null {
+  if (!fs.existsSync(reportsDir)) return null;
+  const files = fs
+    .readdirSync(reportsDir)
+    .filter(f => f.endsWith(".json"))
+    .sort()
+    .reverse(); // newest first
+  if (files.length === 0) return null;
+  try {
+    return JSON.parse(
+      fs.readFileSync(path.join(reportsDir, files[0]), "utf-8")
+    ) as AuditReport;
+  } catch {
+    return null;
+  }
+}
+
+function computeDelta(
+  current: AuditReport,
+  previous: AuditReport
+): AuditReport["delta"] {
+  const prevCitedKeys = new Set(
+    previous.results.filter(r => r.cited).map(r => `${r.provider}:${r.queryId}`)
+  );
+  const currCitedKeys = new Set(
+    current.results.filter(r => r.cited).map(r => `${r.provider}:${r.queryId}`)
+  );
+
+  const gained = [...currCitedKeys].filter(k => !prevCitedKeys.has(k));
+  const lost = [...prevCitedKeys].filter(k => !currCitedKeys.has(k));
+
+  return {
+    previousDate: previous.date,
+    previousSov: previous.shareOfVoice,
+    sovChange: current.shareOfVoice - previous.shareOfVoice,
+    gained,
+    lost,
+  };
+}
+
 async function main() {
   console.log("UnifyOne AI Citation Audit — " + new Date().toISOString());
   console.log(
     `Checking ${TARGET_QUERIES.length} queries across providers...\n`
   );
 
-  const report = await runAudit();
-
-  // Write report
   const reportsDir = path.join(import.meta.dirname ?? ".", "citation-reports");
   fs.mkdirSync(reportsDir, { recursive: true });
+
+  const previous = loadPreviousReport(reportsDir);
+  const report = await runAudit();
+
+  // Attach delta if we have a prior run
+  if (previous) {
+    report.delta = computeDelta(report, previous);
+  }
+
+  // Write report
   const runStamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
   const outPath = path.join(reportsDir, `${report.date}_${runStamp}.json`);
   fs.writeFileSync(outPath, JSON.stringify(report, null, 2), "utf-8");
@@ -369,10 +425,29 @@ async function main() {
   // Console summary
   console.log("\n── Summary ──────────────────────────────────────────");
   console.log(`Date:            ${report.date}`);
-  console.log(
-    `Share of voice:  ${report.shareOfVoice}% (${report.citedCount}/${report.totalQueries} queries)`
-  );
+
+  const sovLine = `Share of voice:  ${report.shareOfVoice}% (${report.citedCount}/${report.totalQueries} queries)`;
+  if (report.delta) {
+    const sign = report.delta.sovChange >= 0 ? "+" : "";
+    console.log(
+      `${sovLine}  [${sign}${report.delta.sovChange}% vs ${report.delta.previousDate}]`
+    );
+  } else {
+    console.log(sovLine + "  [baseline — no previous report]");
+  }
   console.log(`Report written:  ${outPath}`);
+
+  if (report.delta) {
+    if (report.delta.gained.length > 0) {
+      console.log("\n🟢 Newly cited this week:");
+      for (const k of report.delta.gained) console.log(`  + ${k}`);
+    }
+    if (report.delta.lost.length > 0) {
+      console.log("\n🔴 Lost citations vs last week:");
+      for (const k of report.delta.lost) console.log(`  - ${k}`);
+    }
+  }
+
   console.log("\nCited queries:");
   for (const r of report.results.filter(r => r.cited)) {
     console.log(`  ✓ [${r.provider}] ${r.queryId}`);
@@ -384,6 +459,28 @@ async function main() {
     const topCompetitor = r.competitors[0];
     if (topCompetitor)
       console.log(`      (competitor cited: ${topCompetitor})`);
+  }
+
+  // Emit GitHub Actions summary if running in CI
+  const summaryFile = process.env.GITHUB_STEP_SUMMARY;
+  if (summaryFile) {
+    const deltaNote = report.delta
+      ? `| Delta vs ${report.delta.previousDate} | ${report.delta.sovChange >= 0 ? "+" : ""}${report.delta.sovChange}% |\n` +
+        (report.delta.gained.length
+          ? `| Gained | ${report.delta.gained.join(", ")} |\n`
+          : "") +
+        (report.delta.lost.length
+          ? `| Lost | ${report.delta.lost.join(", ")} |\n`
+          : "")
+      : "| Baseline | first run |\n";
+
+    const md =
+      `## UnifyOne AI Citation Audit — ${report.date}\n\n` +
+      `| Metric | Value |\n|---|---|\n` +
+      `| Share of Voice | **${report.shareOfVoice}%** |\n` +
+      `| Cited | ${report.citedCount} / ${report.totalQueries} queries |\n` +
+      deltaNote;
+    fs.appendFileSync(summaryFile, md, "utf-8");
   }
 }
 
