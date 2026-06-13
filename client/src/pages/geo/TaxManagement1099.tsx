@@ -302,6 +302,10 @@ export default function TaxManagement1099() {
                 href: "/tools/se-tax-calculator",
               },
               {
+                label: "Tax Set-Aside Calculator",
+                href: "/tools/tax-set-aside",
+              },
+              {
                 label: "IRS Mileage Deduction Calculator",
                 href: "/tools/mileage-deduction-calculator",
               },

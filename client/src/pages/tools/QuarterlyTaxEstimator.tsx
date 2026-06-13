@@ -522,6 +522,10 @@ export default function QuarterlyTaxEstimator() {
           <div className="grid sm:grid-cols-2 gap-3">
             {[
               {
+                label: "Tax Set-Aside Calculator",
+                href: "/tools/tax-set-aside",
+              },
+              {
                 label: "Mileage Deduction Calculator",
                 href: "/tools/mileage-deduction-calculator",
               },
