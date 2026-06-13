@@ -175,14 +175,20 @@ export function trackSignupStart(source?: string): void {
   trackEvent("signup_start", { source: source ?? getAcquisitionSource() });
 }
 
-/** Fired when signup completes (replaces the previous bare trackSignup). */
+/**
+ * Fired when signup completes (replaces the previous bare trackSignup).
+ *
+ * Records the funnel event in Plausible/Umami only. The Meta pixel
+ * `CompleteRegistration` is intentionally NOT fired here — it is sent via the
+ * deduped pixel + CAPI relay path in `@/lib/pixel` at each call site, so firing
+ * `fbq` here as well would double-count the conversion and corrupt attribution.
+ */
 export function trackSignupComplete(
   method: "email" | "oauth" | "magic-link" = "email",
   source?: string
 ): void {
   const acqSource = source ?? getAcquisitionSource();
   trackEvent("signup_complete", { method, source: acqSource });
-  window.fbq?.("track", "CompleteRegistration");
 }
 
 /** Fired on the user's first "activation" action — first product created, first order, etc. */
