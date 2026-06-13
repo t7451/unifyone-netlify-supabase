@@ -19,6 +19,7 @@ import { getStripe } from "./_core/stripeClient";
 import { getAppUrl } from "./_core/env";
 import { logger } from "./_core/logger";
 import { getSupabaseAdmin } from "./_core/supabaseAdmin";
+import { broadcastToOpenId } from "./_core/sseManager";
 
 // Mirror the stripe.ts pattern: fail gracefully when the key is absent.
 const stripe = getStripe();
@@ -259,6 +260,12 @@ export function registerBillingRoutes(app: Express) {
               userId,
               totalCredits,
               stripeEventId: event.id,
+            });
+          } else {
+            // Push credit_balance event so BillingSuccess stops polling
+            broadcastToOpenId(userId, "credit_balance", {
+              added: totalCredits,
+              packageId: session.metadata?.package_id,
             });
           }
         } else if (!userId) {
@@ -561,6 +568,11 @@ export async function registerBillingFetchRoutes(
             userId,
             totalCredits,
             stripeEventId: event.id,
+          });
+        } else {
+          broadcastToOpenId(userId, "credit_balance", {
+            added: totalCredits,
+            packageId: session.metadata?.package_id,
           });
         }
       } else if (!userId) {

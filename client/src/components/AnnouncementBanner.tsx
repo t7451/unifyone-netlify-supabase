@@ -67,9 +67,11 @@ function saveDismissedIds(ids: Set<number>): void {
 // ── AnnouncementBanner ────────────────────────────────────────────────────────
 export function AnnouncementBanner() {
   const utils = trpc.useUtils();
+  // SSE `announcement` events (useServerEvents at app root) invalidate this
+  // query instantly when a new announcement is published.
   const { data: announcements = [] } =
     trpc.notifications.listAnnouncements.useQuery(undefined, {
-      refetchInterval: 60_000,
+      staleTime: 5 * 60_000,
     });
 
   const dismiss = trpc.notifications.dismissAnnouncement.useMutation({

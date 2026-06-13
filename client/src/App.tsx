@@ -13,6 +13,7 @@ import DashboardLayout from "./components/DashboardLayout";
 import { getLoginUrl } from "./const";
 import { trpc } from "./lib/trpc";
 import { useTracking } from "./hooks/useTracking";
+import { useServerEvents } from "./hooks/useServerEvents";
 
 const Home = lazy(() => import("./pages/Home"));
 const Discounts = lazy(() => import("./pages/Discounts"));
@@ -203,6 +204,10 @@ function TenantGuard({ children }: { children: ReactNode }) {
 
 function Router() {
   useTracking();
+  // Connect to the SSE stream. Only establishes when the user is in an
+  // authenticated session (EventSource uses cookies). Gives up after 5
+  // consecutive failures (Netlify serverless — falls back to polling).
+  useServerEvents();
 
   return (
     <Switch>

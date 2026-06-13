@@ -1,6 +1,21 @@
 import { useState, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { Bell, Check, CheckCheck, Trash2, ExternalLink, Info, AlertTriangle, AlertCircle, CheckCircle2, ShoppingCart, CreditCard, Users, Share2, Target } from "lucide-react";
+import {
+  Bell,
+  Check,
+  CheckCheck,
+  Trash2,
+  ExternalLink,
+  Info,
+  AlertTriangle,
+  AlertCircle,
+  CheckCircle2,
+  ShoppingCart,
+  CreditCard,
+  Users,
+  Share2,
+  Target,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -40,13 +55,18 @@ export function NotificationCenter() {
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
 
-  const { data: notifs = [], isLoading } = trpc.notifications.list.useQuery(
-    { limit: 30 },
-    { refetchInterval: 30_000 } // poll every 30s
-  );
-  const { data: unread } = trpc.notifications.unreadCount.useQuery(undefined, {
-    refetchInterval: 30_000,
-  });
+  // No polling interval — SSE events (useServerEvents hook at app root) invalidate
+  // these queries instantly when new notifications arrive. Falls back to stale
+  // data in serverless environments; a manual refetch on panel open keeps it fresh.
+  const {
+    data: notifs = [],
+    isLoading,
+    refetch: refetchList,
+  } = trpc.notifications.list.useQuery({ limit: 30 }, { staleTime: 60_000 });
+  const { data: unread, refetch: refetchCount } =
+    trpc.notifications.unreadCount.useQuery(undefined, {
+      staleTime: 60_000,
+    });
 
   const markRead = trpc.notifications.markRead.useMutation({
     onSuccess: () => {
@@ -100,7 +120,14 @@ export function NotificationCenter() {
         variant="ghost"
         size="icon"
         className="relative h-9 w-9 text-slate-400 hover:text-white hover:bg-white/10"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          const opening = !open;
+          setOpen(opening);
+          if (opening) {
+            refetchList();
+            refetchCount();
+          }
+        }}
         aria-label="Notifications"
       >
         <Bell className="h-5 w-5" />
@@ -118,9 +145,14 @@ export function NotificationCenter() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
             <div className="flex items-center gap-2">
               <Bell className="h-4 w-4 text-cyan-400" />
-              <span className="text-sm font-semibold text-white">Notifications</span>
+              <span className="text-sm font-semibold text-white">
+                Notifications
+              </span>
               {unreadCount > 0 && (
-                <Badge variant="secondary" className="bg-cyan-500/20 text-cyan-400 border-0 text-xs px-1.5 py-0">
+                <Badge
+                  variant="secondary"
+                  className="bg-cyan-500/20 text-cyan-400 border-0 text-xs px-1.5 py-0"
+                >
                   {unreadCount} new
                 </Badge>
               )}
@@ -152,7 +184,7 @@ export function NotificationCenter() {
               </div>
             ) : (
               <div className="divide-y divide-white/5">
-                {notifs.map((n) => {
+                {notifs.map(n => {
                   const typeInfo = TYPE_ICONS[n.type] ?? TYPE_ICONS.info;
                   const Icon = typeInfo.icon;
                   return (
@@ -167,7 +199,9 @@ export function NotificationCenter() {
                       onClick={() => handleNotifClick(n)}
                     >
                       {/* Icon */}
-                      <div className={cn("mt-0.5 flex-shrink-0", typeInfo.color)}>
+                      <div
+                        className={cn("mt-0.5 flex-shrink-0", typeInfo.color)}
+                      >
                         <Icon className="h-4 w-4" />
                       </div>
 
@@ -177,7 +211,9 @@ export function NotificationCenter() {
                           <p
                             className={cn(
                               "text-sm leading-tight truncate",
-                              n.read ? "text-slate-300" : "text-white font-medium"
+                              n.read
+                                ? "text-slate-300"
+                                : "text-white font-medium"
                             )}
                           >
                             {n.title}
@@ -187,7 +223,9 @@ export function NotificationCenter() {
                           )}
                         </div>
                         {n.body && (
-                          <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.body}</p>
+                          <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                            {n.body}
+                          </p>
                         )}
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[11px] text-slate-600">
@@ -204,7 +242,7 @@ export function NotificationCenter() {
                         {!n.read && (
                           <button
                             className="p-1 rounded text-slate-500 hover:text-cyan-400 hover:bg-white/10"
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
                               markRead.mutate({ id: n.id });
                             }}
@@ -215,7 +253,7 @@ export function NotificationCenter() {
                         )}
                         <button
                           className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-white/10"
-                          onClick={(e) => {
+                          onClick={e => {
                             e.stopPropagation();
                             deleteNotif.mutate({ id: n.id });
                           }}
