@@ -340,18 +340,16 @@ function SocialProofCounter() {
     return () => window.cancelAnimationFrame(frameId);
   }, [started]);
 
+  // Deeper accent tones so the stat numbers stay legible on the light canvas.
+  const lightAccents = ["#9A7B22", "#1F9D6B", "#3B6FB0", "#7C5CD0"];
+
   return (
     <div ref={ref} className="space-y-8 py-4">
       <div className="text-center">
-        <p
-          className="font-cinzel text-xs tracking-[0.24em] uppercase"
-          style={{ color: "#D4A843" }}
-        >
-          Trusted by operators
-        </p>
+        <p className="inscription-ink">Trusted by operators</p>
         <p
           className="font-crimson text-base sm:text-lg mt-3"
-          style={{ color: "#9A9A9A", fontStyle: "italic" }}
+          style={{ color: "var(--ink-soft)", fontStyle: "italic" }}
         >
           Join 2,400+ operators already running their commerce stack on
           UnifyOne.
@@ -362,22 +360,17 @@ function SocialProofCounter() {
         {SOCIAL_PROOF.map((sp, index) => (
           <div
             key={sp.label}
-            className="rounded-2xl border px-4 py-5 text-center sm:px-6"
-            style={{
-              borderColor: "rgba(36,36,36,0.9)",
-              background:
-                "linear-gradient(180deg, rgba(10,10,10,0.95), rgba(3,3,3,0.92))",
-            }}
+            className="surface-card px-4 py-6 text-center sm:px-6"
           >
             <div
               className="font-cinzel text-3xl sm:text-4xl font-black"
-              style={{ color: sp.accent }}
+              style={{ color: lightAccents[index] ?? "#9A7B22" }}
             >
               {formatSocialProofValue(counts[index] ?? 0, sp.format)}
             </div>
             <p
               className="mt-2 font-crimson text-xs uppercase tracking-[0.18em] sm:text-sm"
-              style={{ color: "#6A6A6A" }}
+              style={{ color: "var(--ink-faint)" }}
             >
               {sp.label}
             </p>
@@ -697,60 +690,46 @@ export default function Home() {
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section
         ref={heroRef}
-        className="apex-light"
+        className="apex-light-soft"
         style={{
-          paddingTop: "8rem",
-          paddingBottom: "6rem",
+          paddingTop: "7rem",
+          paddingBottom: "5rem",
         }}
       >
         <div className="max-w-5xl mx-auto px-6 sm:px-8 text-center">
-          <div data-reveal data-reveal-delay="0">
-            <span className="inscription" style={{ color: "#D4A843" }}>
-              COMMERCE INFRASTRUCTURE
-            </span>
-          </div>
-
           <div
             data-reveal
-            data-reveal-delay="50"
-            className="flex flex-wrap items-center justify-center gap-3 mt-6"
+            data-reveal-delay="0"
+            className="flex justify-center"
           >
-            {[
-              "Launch your first tenant in under 10 minutes",
-              "Starter stays free until you need automation",
-              "Checkout-ready on day one",
-            ].map(item => (
+            <span className="chip-light">
               <span
-                key={item}
-                className="rounded-full px-4 py-2 text-xs sm:text-sm mobile-visibility-chip"
                 style={{
-                  color: "#9A9A9A",
-                  border: "1px solid rgba(212,168,67,0.18)",
-                  backgroundColor: "rgba(212,168,67,0.04)",
-                  fontFamily: "Cinzel, serif",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: "#3FAE7E",
+                  display: "inline-block",
                 }}
-              >
-                {item}
-              </span>
-            ))}
+              />
+              Built for gig workers &amp; independent operators
+            </span>
           </div>
 
           <h1
             data-reveal
             data-reveal-delay="100"
-            className="font-cinzel mt-6 mb-6"
+            className="font-cinzel mt-7 mb-6"
             style={{
-              fontSize: "clamp(2.4rem, 5.5vw, 4.5rem)",
+              fontSize: "clamp(2.4rem, 5.6vw, 4.6rem)",
               fontWeight: 800,
-              lineHeight: 1.06,
-              color: "#F0E8D0",
+              lineHeight: 1.05,
+              color: "var(--ink)",
             }}
           >
-            UnifyOne: Your AI Knows
+            Know exactly what every
             <br />
-            What You Actually Earn.
+            shift <span className="gradient-gold">actually earns</span> you.
           </h1>
 
           <p
@@ -758,16 +737,16 @@ export default function Home() {
             data-reveal-delay="200"
             className="font-crimson text-xl mx-auto mb-4 mobile-visibility-copy"
             style={{
-              color: "#6A6A6A",
-              fontStyle: "italic",
-              maxWidth: 560,
+              color: "var(--ink-soft)",
+              maxWidth: 600,
               lineHeight: 1.7,
             }}
           >
-            UnifyOne reads your real shift data, tracks every deduction, and
-            tells you exactly where you're leaving money on the table.{" "}
-            <em style={{ color: "#9A9A9A" }}>
-              Not generic advice — intelligence built on your numbers.
+            UnifyOne reads your real DoorDash, Uber Eats, and Instacart data,
+            auto-tracks every IRS mileage deduction, and tells you which hours
+            and zones pay the most after expenses.{" "}
+            <em style={{ color: "var(--gold-ink)" }}>
+              Intelligence built on your numbers — not generic advice.
             </em>
           </p>
 
@@ -776,14 +755,13 @@ export default function Home() {
             data-reveal-delay="225"
             className="font-crimson text-base mx-auto mb-10"
             style={{
-              color: "#5A5A5A",
-              maxWidth: 540,
+              color: "var(--ink-faint)",
+              maxWidth: 560,
               lineHeight: 1.65,
             }}
           >
-            Also runs your multi-tenant Shopify stores, routes 300+ AI models
-            through one unified API, and automates the workflows that normally
-            require a dev team.
+            The same platform runs your multi-tenant Shopify stores and routes
+            300+ AI models through one unified API — no dev team required.
           </p>
 
           <div
@@ -791,60 +769,45 @@ export default function Home() {
             data-reveal-delay="300"
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <a href={getSignupUrl()} className="btn-illuminate">
-              Start Free Trial
+            <a href={getSignupUrl()} className="btn-solid-gold">
+              Start Free — No Card
             </a>
-            <a
-              href="#pricing"
-              onClick={scrollToSection("pricing")}
-              className="btn-ghost-gold cursor-pointer"
-            >
-              See Live Plans ↓
-            </a>
+            <Link href="/tools">
+              <span className="btn-line-ink cursor-pointer">
+                Try the free calculators
+              </span>
+            </Link>
           </div>
 
           <p
             data-reveal
-            data-reveal-delay="300"
-            className="font-crimson text-sm mt-3 mobile-visibility-copy"
-            style={{ color: "#9A9A9A", fontStyle: "italic" }}
-          >
-            No credit card required · 14-day free trial
-          </p>
-
-          <p
-            data-reveal
-            data-reveal-delay="325"
+            data-reveal-delay="320"
             className="font-crimson text-sm mt-4 mobile-visibility-copy"
-            style={{ color: "#D7CBA5", fontStyle: "italic" }}
+            style={{ color: "var(--ink-faint)" }}
           >
-            Join 2,400+ operators already running their commerce stack on
-            UnifyOne.
+            No credit card required · 14-day free trial · Join{" "}
+            <span style={{ color: "var(--gold-ink)", fontWeight: 600 }}>
+              2,400+ operators
+            </span>{" "}
+            already on UnifyOne.
           </p>
 
           <div
             data-reveal
             data-reveal-delay="340"
-            className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:gap-4"
+            className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-3"
           >
             <span
-              className="font-cinzel text-[0.65rem] uppercase tracking-[0.24em]"
-              style={{ color: "#5A5A5A" }}
+              className="font-cinzel text-[0.62rem] uppercase tracking-[0.24em]"
+              style={{ color: "var(--ink-faint)" }}
             >
               Powered by
             </span>
             {TRUST_BADGES.map(badge => (
               <span
                 key={badge}
-                className={classNames(
-                  "rounded-full border px-3 py-1 text-[0.7rem] font-cinzel tracking-[0.18em] uppercase sm:text-xs",
-                  "mobile-visibility-brand"
-                )}
-                style={{
-                  color: "#8A8A8A",
-                  borderColor: "rgba(138,138,138,0.18)",
-                  backgroundColor: "rgba(255,255,255,0.02)",
-                }}
+                className="font-cinzel text-[0.72rem] tracking-[0.16em] uppercase sm:text-xs mobile-visibility-brand"
+                style={{ color: "var(--ink-soft)", fontWeight: 600 }}
               >
                 {badge}
               </span>
@@ -853,70 +816,114 @@ export default function Home() {
 
           <p
             data-reveal
-            data-reveal-delay="350"
-            className="font-crimson text-sm mt-5 mobile-visibility-subtle"
-            style={{ color: "#5A5A5A", fontStyle: "italic" }}
+            data-reveal-delay="360"
+            className="font-crimson text-sm mt-7 mobile-visibility-subtle"
+            style={{ color: "var(--ink-faint)" }}
           >
-            Need proof first? Review{" "}
+            Prefer the full picture first? See{" "}
             <Link href="/the-system">
               <span
                 className="cursor-pointer underline"
-                style={{ color: "#D4A843" }}
+                style={{ color: "var(--gold-ink)" }}
               >
-                how the full system works
+                how the whole system works
               </span>
-            </Link>{" "}
-            or jump straight to the blueprint.
+            </Link>
+            .
           </p>
+        </div>
+      </section>
 
-          <div
-            data-reveal
-            data-reveal-delay="400"
-            className="flex justify-center mt-4"
-          >
-            <a
-              href="#blueprint"
-              onClick={scrollToSection("blueprint")}
-              className="font-crimson text-sm underline"
-              style={{ color: "#D4A843" }}
+      {/* ── WHY UNIFYONE (DIFFERENTIATORS) ───────────────────────────────── */}
+      <section
+        className="parchment-alt-bg"
+        style={{
+          padding: "5rem 0",
+          borderTop: "1px solid var(--parchment-line)",
+          borderBottom: "1px solid var(--parchment-line)",
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-12">
+            <span className="inscription-ink">Why UnifyOne</span>
+            <h2
+              className="font-cinzel text-3xl sm:text-4xl font-black mt-3"
+              style={{ color: "var(--ink)" }}
             >
-              Get the Cathedral Blueprint →
-            </a>
+              What no other platform does.
+            </h2>
           </div>
-
-          <div
-            data-reveal
-            data-reveal-delay="450"
-            className="flex justify-center mt-3"
-          >
-            <a
-              href="https://marketing.1commerce.online"
-              className="font-crimson text-sm underline"
-              style={{ color: "#9A9A9A", fontStyle: "italic" }}
-            >
-              First time here? Learn how UnifyOne works →
-            </a>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                tag: "Only",
+                headline:
+                  "The only gig platform that auto-tracks IRS deductions",
+                body: "Every logged shift captures mileage at the current IRS rate automatically. A real-time, year-to-date write-off figure — no spreadsheets, no shoebox of receipts.",
+                accent: "#6EE7B7",
+              },
+              {
+                tag: "First",
+                headline: "300+ AI models through one key and one bill",
+                body: "Route to Claude, GPT, or Gemini and pay a single, predictable Kai credit cost. No per-vendor accounts, no juggling three invoices, zero lock-in.",
+                accent: "#93C5FD",
+              },
+              {
+                tag: "Unified",
+                headline:
+                  "Commerce and gig income intelligence in one dashboard",
+                body: "Multi-tenant Shopify stores and your real earnings data live side by side — the only place your storefronts and your shift income are managed together.",
+                accent: "#F0D080",
+              },
+            ].map((d, i) => (
+              <div
+                key={d.headline}
+                data-reveal
+                data-reveal-delay={String(i * 90)}
+                className="diff-card p-7"
+              >
+                <span
+                  className="font-cinzel text-[0.6rem] uppercase tracking-[0.22em] inline-block mb-4 px-2 py-1 rounded-full"
+                  style={{
+                    color: "#2a1c04",
+                    backgroundColor: `${d.accent}33`,
+                    border: `1px solid ${d.accent}`,
+                  }}
+                >
+                  {d.tag}
+                </span>
+                <h3
+                  className="font-cinzel text-base font-bold mb-3"
+                  style={{ color: "var(--ink)", lineHeight: 1.4 }}
+                >
+                  {d.headline}
+                </h3>
+                <p
+                  className="font-crimson text-base"
+                  style={{ color: "var(--ink-soft)", lineHeight: 1.7 }}
+                >
+                  {d.body}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* ── WHAT YOU GET ─────────────────────────────────────────────────── */}
       <section
+        className="parchment-bg"
         style={{
-          borderTop: "1px solid #242424",
-          borderBottom: "1px solid #242424",
-          backgroundColor: "#050505",
-          padding: "4rem 0",
+          borderBottom: "1px solid var(--parchment-line)",
+          padding: "5rem 0",
         }}
       >
         <div className="max-w-6xl mx-auto px-6 sm:px-8">
-          <div className="text-center mb-10">
-            <span className="inscription" style={{ color: "#D4A843" }}>
-              WHAT YOU GET
-            </span>
+          <div className="text-center mb-12">
+            <span className="inscription-ink">What you get</span>
             <h2
               className="font-cinzel text-2xl sm:text-3xl font-black mt-3"
-              style={{ color: "#F0E8D0" }}
+              style={{ color: "var(--ink)" }}
             >
               Three concrete outcomes from day one.
             </h2>
@@ -945,30 +952,23 @@ export default function Home() {
                 audience: "For developers & teams",
               },
             ].map(item => (
-              <div
-                key={item.headline}
-                className="rounded-2xl p-7"
-                style={{
-                  border: "1px solid #242424",
-                  backgroundColor: "#020202",
-                }}
-              >
+              <div key={item.headline} className="surface-card p-7">
                 <div className="text-3xl mb-4">{item.icon}</div>
                 <p
                   className="font-cinzel text-[0.6rem] uppercase tracking-[0.22em] mb-2"
-                  style={{ color: item.accent, opacity: 0.7 }}
+                  style={{ color: "var(--gold-ink)" }}
                 >
                   {item.audience}
                 </p>
                 <h3
                   className="font-cinzel text-base font-bold mb-3"
-                  style={{ color: "#F0E8D0", lineHeight: 1.4 }}
+                  style={{ color: "var(--ink)", lineHeight: 1.4 }}
                 >
                   {item.headline}
                 </h3>
                 <p
                   className="font-crimson text-base"
-                  style={{ color: "#7A7A7A", lineHeight: 1.75 }}
+                  style={{ color: "var(--ink-soft)", lineHeight: 1.75 }}
                 >
                   {item.body}
                 </p>
@@ -980,10 +980,9 @@ export default function Home() {
 
       {/* ── SOCIAL PROOF COUNTERS ────────────────────────────────────────── */}
       <section
+        className="parchment-alt-bg"
         style={{
-          borderTop: "1px solid #242424",
-          backgroundColor: "#030303",
-          padding: "2rem 0",
+          padding: "3rem 0 4rem",
         }}
       >
         <div className="max-w-4xl mx-auto px-6 sm:px-8">

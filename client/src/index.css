@@ -760,3 +760,160 @@ section > .absolute.inset-0 > img {
     color-scheme: dark;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   HYBRID REFRESH — Cathedral Light
+   A lightened "parchment" surface layer for the marketing landing page.
+   Keeps the gold + Cinzel/Crimson brand moments, but on a warm light
+   canvas with softened (non-zero) radii for a modern SaaS feel. Dark
+   "manuscript" bands still use the stone tokens above for contrast.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Parchment palette — the illuminated page */
+  --parchment: #fbf8f1; /* primary light canvas */
+  --parchment-alt: #f4ecdd; /* alternating section band */
+  --parchment-sink: #efe6d3; /* recessed panel */
+  --ink: #1c1a16; /* primary heading ink */
+  --ink-soft: #4f4a40; /* body copy on light */
+  --ink-faint: #847c6c; /* muted/secondary on light */
+  --parchment-line: #e7ddca; /* hairline borders on light */
+  --gold-ink: #9a7b22; /* gold readable as text on light */
+  --radius-soft: 14px; /* hybrid card radius */
+  --radius-pill: 999px;
+}
+
+.parchment-bg {
+  background-color: var(--parchment);
+}
+.parchment-alt-bg {
+  background-color: var(--parchment-alt);
+}
+
+/* Warm radial light from the top — the rose-window glow, lightened */
+.apex-light-soft {
+  background:
+    radial-gradient(
+      ellipse 70% 50% at 50% -5%,
+      rgba(212, 168, 67, 0.16) 0%,
+      transparent 65%
+    ),
+    var(--parchment);
+}
+
+/* Light surface card — modern, soft-rounded, subtle lift on hover */
+.surface-card {
+  background: #fffdf8;
+  border: 1px solid var(--parchment-line);
+  border-radius: var(--radius-soft);
+  box-shadow:
+    0 1px 2px rgba(28, 26, 22, 0.04),
+    0 8px 24px -16px rgba(28, 26, 22, 0.18);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+.surface-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(212, 168, 67, 0.45);
+  box-shadow:
+    0 2px 4px rgba(28, 26, 22, 0.05),
+    0 18px 40px -20px rgba(28, 26, 22, 0.28);
+}
+
+/* Solid gold CTA — rounded, works on the light canvas */
+.btn-solid-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(180deg, #e0b84e 0%, var(--gold-illuminate) 100%);
+  color: #2a1c04;
+  font-family: "Cinzel", serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 0.95rem 2.1rem;
+  box-shadow: 0 8px 20px -8px rgba(184, 135, 42, 0.55);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    filter 0.18s ease;
+}
+.btn-solid-gold:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+  box-shadow: 0 12px 26px -8px rgba(184, 135, 42, 0.7);
+}
+
+/* Outline CTA on light */
+.btn-line-ink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--ink);
+  font-family: "Cinzel", serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid rgba(28, 26, 22, 0.22);
+  border-radius: var(--radius-pill);
+  padding: 0.95rem 2.1rem;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+.btn-line-ink:hover {
+  border-color: var(--gold-illuminate);
+  background: rgba(212, 168, 67, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Light chip / pill */
+.chip-light {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--parchment-line);
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0.4rem 0.9rem;
+  font-family: "Cinzel", serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Inscription variant readable on the light canvas */
+.inscription-ink {
+  font-family: "Cinzel", serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold-ink);
+}
+
+/* Differentiator marker — the explicit "only platform that…" claims */
+.diff-card {
+  background: #fffdf8;
+  border: 1px solid var(--parchment-line);
+  border-left: 3px solid var(--gold-illuminate);
+  border-radius: var(--radius-soft);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.diff-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px -22px rgba(28, 26, 22, 0.3);
+}
