@@ -15,7 +15,7 @@ const JSON_LD = [
     url: CANONICAL,
     name: "Architecture — UnifyOne Cathedral Framework",
     description:
-      "Explore the six structural pillars of UnifyOne: multi-tenant foundation, commerce infrastructure, payment orchestration, automation mesh, social intelligence, and Kai. Built on the Cathedral Framework — sequential, structural, built to endure.",
+      "Explore UnifyOne's six structural pillars: multi-tenant foundation, payment orchestration, automation mesh, social intelligence, and Kai. Built on the Cathedral Framework — sequential and built to endure.",
     isPartOf: { "@id": `${SITE_URL}/#website` },
     inLanguage: "en-US",
     publisher: {
@@ -195,7 +195,7 @@ export default function Architecture() {
         <title>Architecture — Cathedral Framework | UnifyOne</title>
         <meta
           name="description"
-          content="Explore the six structural pillars of UnifyOne: multi-tenant foundation, commerce infrastructure, payment orchestration, automation mesh, social intelligence, and Kai. Built on the Cathedral Framework — sequential, structural, built to endure."
+          content="Explore UnifyOne's six structural pillars: multi-tenant foundation, payment orchestration, automation mesh, social intelligence, and Kai. Built on the Cathedral Framework — sequential and built to endure."
         />
         <link rel="canonical" href={CANONICAL} />
         <meta

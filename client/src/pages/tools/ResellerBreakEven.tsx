@@ -185,7 +185,7 @@ export default function ResellerBreakEven() {
     <>
       <PageHead
         title="Reseller Break-Even & Pricing Calculator — eBay, Etsy, Amazon | UnifyOne"
-        description="Free reseller pricing calculator. Enter item cost, marketplace fees, shipping, and return rate to find your break-even price and target sale price on eBay, Etsy, Amazon, or any marketplace."
+        description="Free reseller pricing calculator. Enter item cost, fees, shipping, and return rate to find your break-even price and target margin on eBay, Etsy, or Amazon."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />

@@ -4,10 +4,9 @@ import { SITE_URL } from "@/lib/siteConfig";
 import { SEO_PAGES } from "@/content/seoPages";
 
 const CANONICAL = `${SITE_URL}/seo`;
-const TITLE =
-  "UnifyOne Guides — 1Commerce, UnifOne, OneCommerce, 1-Commerce";
+const TITLE = "UnifyOne Guides — 1Commerce, UnifOne, OneCommerce, 1-Commerce";
 const DESCRIPTION =
-  "Complete index of UnifyOne guides — covering every brand variation operators search for: UnifyOne, UnifOne, 1Commerce, 1-commerce, 1Commerce LLC, OneCommerc, OneCommerce, UnifyOne Solutions, PNW Enterprises.";
+  "Index of UnifyOne guides covering brand variations: UnifyOne, UnifOne, 1Commerce, 1-commerce, OneCommerce, UnifyOne Solutions, and PNW Enterprises.";
 
 const JSON_LD = [
   {
@@ -22,7 +21,7 @@ const JSON_LD = [
       name: "UnifyOne by 1Commerce",
       url: `${SITE_URL}/`,
     },
-    hasPart: SEO_PAGES.map((p) => ({
+    hasPart: SEO_PAGES.map(p => ({
       "@type": "WebPage",
       name: p.h1,
       url: `${SITE_URL}/seo/${p.slug}`,
@@ -140,7 +139,7 @@ export default function SeoIndex() {
         </header>
 
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {SEO_PAGES.map((p) => (
+          {SEO_PAGES.map(p => (
             <Link key={p.slug} href={`/seo/${p.slug}`}>
               <article className="stone-card p-6 cursor-pointer group h-full">
                 <span
