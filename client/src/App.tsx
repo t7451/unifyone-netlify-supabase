@@ -99,6 +99,7 @@ const ResellerBreakEven = lazy(() => import("./pages/tools/ResellerBreakEven"));
 const CashflowTracker = lazy(() => import("./pages/tools/CashflowTracker"));
 const SETaxCalculator = lazy(() => import("./pages/tools/SETaxCalculator"));
 const GigHourlyRate = lazy(() => import("./pages/tools/GigHourlyRate"));
+const TaxSetAside = lazy(() => import("./pages/tools/TaxSetAside"));
 const GigIncomeAggregator = lazy(
   () => import("./pages/geo/GigIncomeAggregator")
 );
@@ -626,6 +627,7 @@ function Router() {
         path="/tools/gig-hourly-rate"
         component={() => <GigHourlyRate />}
       />
+      <Route path="/tools/tax-set-aside" component={() => <TaxSetAside />} />
       {/* GEO landing pages */}
       <Route
         path="/gig-income-aggregator"

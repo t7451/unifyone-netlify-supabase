@@ -134,6 +134,23 @@ const TOOLS_REGISTRY: ToolMeta[] = [
     ],
     live: true,
   },
+  {
+    slug: "tax-set-aside",
+    title: "1099 Tax Set-Aside Calculator",
+    tagline:
+      "Know exactly what percentage of each gig payment to save for taxes",
+    description:
+      "Enter your net income, filing status, and state rate to get a personalized set-aside percentage combining SE tax, federal income tax, and state tax — plus the dollar amount to save per payment.",
+    audience:
+      "1099 gig workers and freelancers who want to avoid a tax-time surprise",
+    keywords: [
+      "how much to set aside for taxes 1099",
+      "gig worker tax savings",
+      "self-employment tax set aside",
+      "1099 tax percentage",
+    ],
+    live: true,
+  },
 ];
 
 const CANONICAL = `${SITE_URL}/tools`;
