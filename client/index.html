@@ -81,292 +81,307 @@
     <!-- ── Fonts: Cinzel + Crimson Pro + Inter ──────────────────────────── -->
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-    <!-- ── JSON-LD: SoftwareApplication ────────────────────────────────── -->
+    <!-- ── JSON-LD: @graph (consolidated structured data) ───────────────── -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "UnifyOne",
-      "alternateName": ["UnifyOne Commerce", "1Commerce UnifyOne", "UnifOne", "OneCommerce", "OneCommerc", "1-commerce", "1Commerce", "UnifyOne Solutions"],
-      "applicationCategory": "BusinessApplication",
-      "applicationSubCategory": "E-Commerce Platform",
-      "operatingSystem": "Web, iOS, Android",
-      "description": "UnifyOne is a multi-tenant commerce platform engineered on the Cathedral Framework — sequential, structural infrastructure for gig operators and e-commerce teams. AI-Powered Commerce Platform for intelligent earnings insights, route optimization, and challenge strategy.",
-      "url": "__APP_URL__/",
-      "screenshot": "/og-image.png",
-      "featureList": [
-        "Multi-tenant commerce management",
-        "AI Intelligence earnings insights",
-        "Gig economy route optimization",
-        "Order management system",
-        "Shopify integration",
-        "PayPal and Stripe payment processing",
-        "Real-time analytics dashboard",
-        "Social challenges and leaderboards",
-        "Referral and affiliate system",
-        "Meta Pixel CAPI integration"
-      ],
-      "author": {
-        "@type": "Organization",
-        "name": "1Commerce Solutions",
-        "alternateName": "PNW Enterprises",
-        "url": "__APP_URL__",
-        "email": "skdev@1commercesolutions.com",
-        "telephone": "+14065944343",
-        "address": {
-          "@type": "PostalAddress",
-          "addressRegion": "WA",
-          "addressCountry": "US"
-        }
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "PNW Enterprises",
-        "url": "__APP_URL__"
-      },
-      "offers": [
+      "@graph": [
         {
-          "@type": "Offer",
-          "name": "Acolyte",
-          "price": "0",
-          "priceCurrency": "USD",
-          "description": "Free tier — 1 tenant, core commerce tools, Stripe checkout, basic analytics",
-          "availability": "https://schema.org/InStock"
+          "@type": "Organization",
+          "@id": "__APP_URL__/#organization",
+          "name": "1Commerce Solutions",
+          "alternateName": ["PNW Enterprises", "1Commerce LLC", "PNW Enterprises / 1Commerce LLC", "1Commerce", "1-Commerce", "UnifyOne Solutions"],
+          "url": "__APP_URL__",
+          "logo": "__APP_URL__/favicon.ico",
+          "description": "PNW Enterprises / 1Commerce LLC is a multifaceted digital commerce ecosystem operating in the Pacific Northwest. Specializing in e-commerce systems, digital strategy, and commerce infrastructure — delivering agency-grade tools without the agency price tag.",
+          "email": "skdev@1commercesolutions.com",
+          "telephone": "+14065944343",
+          "address": {
+            "@type": "PostalAddress",
+            "addressRegion": "WA",
+            "addressCountry": "US"
+          },
+          "areaServed": "US",
+          "foundingDate": "2025",
+          "sameAs": [
+            "https://github.com/unifyone",
+            "https://x.com/unifyone",
+            "https://1commerce.online"
+          ],
+          "knowsAbout": [
+            "Multi-tenant e-commerce",
+            "Gig economy platforms",
+            "Commerce infrastructure",
+            "AI Intelligence integration",
+            "Shopify development",
+            "Meta CAPI",
+            "Google Cloud Platform"
+          ]
         },
         {
-          "@type": "Offer",
-          "name": "Architect",
-          "price": "49",
-          "priceCurrency": "USD",
-          "description": "Professional tier — 5 tenants, AI Intelligence, all payment rails, automation layer, priority support",
-          "availability": "https://schema.org/InStock",
-          "priceSpecification": {
-            "@type": "UnitPriceSpecification",
-            "price": "49",
-            "priceCurrency": "USD",
-            "unitText": "MONTH"
+          "@type": "WebSite",
+          "@id": "__APP_URL__/#website",
+          "name": "UnifyOne by 1Commerce",
+          "url": "__APP_URL__/",
+          "description": "Multi-tenant commerce platform powered by AI Intelligence — built on the Cathedral Framework for gig operators and e-commerce teams.",
+          "publisher": { "@id": "__APP_URL__/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "__APP_URL__/blog?q={search_term_string}",
+            "query-input": "required name=search_term_string"
           }
         },
         {
-          "@type": "Offer",
-          "name": "Cathedral",
-          "price": "149",
-          "priceCurrency": "USD",
-          "description": "Enterprise tier — unlimited tenants, white-label, custom domains, SLA guarantee, dedicated infrastructure",
-          "availability": "https://schema.org/InStock",
-          "priceSpecification": {
-            "@type": "UnitPriceSpecification",
-            "price": "149",
-            "priceCurrency": "USD",
-            "unitText": "MONTH"
+          "@type": "WebPage",
+          "@id": "__APP_URL__/#webpage",
+          "url": "__APP_URL__/",
+          "name": "UnifyOne — AI-Powered Multi-Tenant Commerce Platform",
+          "description": "UnifyOne is a multi-tenant commerce platform built on the Cathedral Framework. AI Intelligence earnings insights, gig economy analytics, Shopify and payment-rail integrations for operators and agencies.",
+          "isPartOf": { "@id": "__APP_URL__/#website" },
+          "about": { "@id": "__APP_URL__/#software" },
+          "publisher": { "@id": "__APP_URL__/#organization" },
+          "speakable": {
+            "@type": "SpeakableSpecification",
+            "xpath": [
+              "/html/head/title",
+              "/html/head/meta[@name='description']/@content"
+            ]
           }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "__APP_URL__/#software",
+          "name": "UnifyOne",
+          "alternateName": ["UnifyOne Commerce", "1Commerce UnifyOne", "OneCommerce", "1-commerce", "1Commerce", "UnifyOne Solutions"],
+          "applicationCategory": "BusinessApplication",
+          "applicationSubCategory": "E-Commerce Platform",
+          "operatingSystem": "Web, iOS, Android",
+          "description": "UnifyOne is a multi-tenant commerce platform engineered on the Cathedral Framework — sequential, structural infrastructure for gig operators and e-commerce teams. AI-Powered Commerce Platform for intelligent earnings insights, route optimization, and challenge strategy.",
+          "url": "__APP_URL__/",
+          "screenshot": "/og-image.png",
+          "featureList": [
+            "Multi-tenant commerce management",
+            "AI Intelligence earnings insights",
+            "Gig economy route optimization",
+            "Order management system",
+            "Shopify integration",
+            "PayPal and Stripe payment processing",
+            "Real-time analytics dashboard",
+            "Social challenges and leaderboards",
+            "Referral and affiliate system",
+            "Meta Pixel CAPI integration"
+          ],
+          "author": { "@id": "__APP_URL__/#organization" },
+          "publisher": { "@id": "__APP_URL__/#organization" },
+          "offers": [
+            {
+              "@type": "Offer",
+              "name": "Acolyte",
+              "price": "0",
+              "priceCurrency": "USD",
+              "description": "Free tier — 1 tenant, core commerce tools, Stripe checkout, basic analytics",
+              "availability": "https://schema.org/InStock"
+            },
+            {
+              "@type": "Offer",
+              "name": "Architect",
+              "price": "49",
+              "priceCurrency": "USD",
+              "description": "Professional tier — 5 tenants, AI Intelligence, all payment rails, automation layer, priority support",
+              "availability": "https://schema.org/InStock",
+              "priceSpecification": {
+                "@type": "UnitPriceSpecification",
+                "price": "49",
+                "priceCurrency": "USD",
+                "unitText": "MONTH"
+              }
+            },
+            {
+              "@type": "Offer",
+              "name": "Cathedral",
+              "price": "149",
+              "priceCurrency": "USD",
+              "description": "Enterprise tier — unlimited tenants, white-label, custom domains, SLA guarantee, dedicated infrastructure",
+              "availability": "https://schema.org/InStock",
+              "priceSpecification": {
+                "@type": "UnitPriceSpecification",
+                "price": "149",
+                "priceCurrency": "USD",
+                "unitText": "MONTH"
+              }
+            }
+          ]
+        },
+        {
+          "@type": "Service",
+          "@id": "__APP_URL__/#service",
+          "name": "UnifyOne Multi-Tenant Commerce Platform",
+          "description": "UnifyOne is a full-stack multi-tenant e-commerce SaaS service engineered on the Cathedral Framework. It provides AI-powered commerce management, gig economy analytics, Shopify and payment-rail integrations, subscription billing, and white-label infrastructure for operators, agencies, and e-commerce teams.",
+          "url": "__APP_URL__/",
+          "serviceType": "E-Commerce SaaS Platform",
+          "areaServed": "US",
+          "provider": { "@id": "__APP_URL__/#organization" }
+        },
+        {
+          "@type": "HowTo",
+          "@id": "__APP_URL__/#howto",
+          "name": "How to Get Started with UnifyOne",
+          "description": "Start your free 14-day trial on UnifyOne's AI-powered commerce platform in four steps — no credit card required.",
+          "totalTime": "PT10M",
+          "step": [
+            {
+              "@type": "HowToStep",
+              "position": "1",
+              "name": "Create your free account",
+              "text": "Click 'Begin Construction' on the homepage and sign up. No credit card required — your 14-day trial starts immediately.",
+              "url": "__APP_URL__/auth/register"
+            },
+            {
+              "@type": "HowToStep",
+              "position": "2",
+              "name": "Set up your first tenant",
+              "text": "Name your tenant, configure your branding, and select your business category. Multi-brand operators and agencies can add additional tenants at any time.",
+              "url": "__APP_URL__/dashboard"
+            },
+            {
+              "@type": "HowToStep",
+              "position": "3",
+              "name": "Connect your integrations",
+              "text": "Link Shopify, Stripe, PayPal, or Square in one click. Gig operators can connect DoorDash, Uber Eats, Instacart, and Amazon Flex earnings feeds.",
+              "url": "__APP_URL__/settings/integrations"
+            },
+            {
+              "@type": "HowToStep",
+              "position": "4",
+              "name": "Activate AI Intelligence",
+              "text": "Open the AI Intelligence panel and ask Kai — UnifyOne's built-in AI sidekick — for your first earnings analysis, tax deduction summary, or route optimization briefing.",
+              "url": "__APP_URL__/dashboard"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "__APP_URL__/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is UnifyOne?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "UnifyOne is a multi-tenant commerce platform built on the Cathedral Framework by 1Commerce / PNW Enterprises. It unifies products, orders, payments, and analytics across every tenant, channel, and integration — with AI Intelligence built in for intelligent earnings insights and route optimization for gig operators."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the Cathedral Framework?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Cathedral Framework is 1Commerce's proprietary development philosophy — sequential, phased construction that prioritizes automated infrastructure before scaling traffic. Like a cathedral, every system is built to endure: foundational layers are completed and hardened before the next phase begins."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does AI Intelligence work inside UnifyOne?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "AI Intelligence is embedded directly into UnifyOne's dashboard, Money Manager, and Gig Command pages. It analyzes your real earnings data, shift history, mileage, and platform performance to generate context-aware insights — route optimization tips, tax deduction summaries, challenge strategy, and daily business briefings."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is UnifyOne suitable for gig economy workers?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. UnifyOne was purpose-built for gig operators on platforms like DoorDash, Uber Eats, Instacart, and Amazon Flex. The Gig Command module tracks shifts, mileage, earnings per hour, and platform performance. AI Intelligence then surfaces actionable insights to maximize your hourly rate and minimize tax liability."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What integrations does UnifyOne support?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "UnifyOne integrates with Shopify, Stripe, PayPal, Meta (Facebook/Instagram) via CAPI, Google Analytics, Mailchimp, DoorDash, Uber, Instacart, Amazon Flex, and AI Intelligence. Additional integrations are available through the API and webhook system."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How much does UnifyOne cost?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "UnifyOne offers three tiers: Acolyte (free — 1 tenant, core commerce tools), Architect ($49/month — 5 tenants, AI Intelligence, all payment rails, automation layer), and Cathedral ($149/month — unlimited tenants, white-label, custom domains, SLA guarantee). All plans include a 14-day free trial with no credit card required."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is multi-tenant commerce?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Multi-tenant commerce means a single platform instance serves multiple independent businesses (tenants) with isolated data, branding, and settings. UnifyOne lets agencies, franchises, and holding companies manage multiple storefronts, brands, or client accounts from one unified dashboard — without data bleed between tenants."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does UnifyOne support white-label reselling?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. The Cathedral tier includes full white-label support — custom domain, custom branding, and the ability to resell UnifyOne as your own product to clients. This is ideal for agencies and managed service providers who want to offer commerce infrastructure under their own brand."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is UnifyOne GDPR and SOC 2 compliant?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "UnifyOne is built with compliance-first architecture. The platform is GDPR-ready with data isolation per tenant, right-to-erasure workflows, and consent management. SOC 2 compliance is maintained through infrastructure-level controls on the underlying cloud provider."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I get started with UnifyOne?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Click 'Begin Construction' on the homepage to start your free 14-day trial. No credit card required. You'll be guided through tenant setup, integration configuration, and your first AI Intelligence insight within minutes of signing up."
+              }
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "__APP_URL__/#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "__APP_URL__/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Features",
+              "item": "__APP_URL__/#features"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "AI Intelligence",
+              "item": "__APP_URL__/#ai-intelligence"
+            },
+            {
+              "@type": "ListItem",
+              "position": 4,
+              "name": "Pricing",
+              "item": "__APP_URL__/#pricing"
+            },
+            {
+              "@type": "ListItem",
+              "position": 5,
+              "name": "Blog",
+              "item": "__APP_URL__/blog/gig-economy-commerce-platform"
+            }
+          ]
         }
       ]
-    }
-    </script>
-
-    <!-- ── JSON-LD: Organization ─────────────────────────────────────────── -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "1Commerce Solutions",
-      "alternateName": ["PNW Enterprises", "1Commerce LLC", "PNW Enterprises / 1Commerce LLC", "1Commerce", "1-Commerce", "OneCommerce", "OneCommerc", "UnifyOne Solutions"],
-      "url": "__APP_URL__",
-      "logo": "__APP_URL__/favicon.ico",
-      "description": "PNW Enterprises / 1Commerce LLC is a multifaceted digital commerce ecosystem operating in the Pacific Northwest. Specializing in e-commerce systems, digital strategy, and commerce infrastructure — delivering agency-grade tools without the agency price tag.",
-      "email": "skdev@1commercesolutions.com",
-      "telephone": "+14065944343",
-      "address": {
-        "@type": "PostalAddress",
-        "addressRegion": "WA",
-        "addressCountry": "US"
-      },
-      "areaServed": "US",
-      "foundingDate": "2025",
-      "sameAs": [
-        "__APP_URL__"
-      ],
-      "knowsAbout": [
-        "Multi-tenant e-commerce",
-        "Gig economy platforms",
-        "Commerce infrastructure",
-        "AI Intelligence integration",
-        "Shopify development",
-        "Meta CAPI",
-        "Google Cloud Platform"
-      ]
-    }
-    </script>
-
-    <!-- ── JSON-LD: WebSite ──────────────────────────────────────────────── -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "UnifyOne by 1Commerce",
-      "url": "__APP_URL__/",
-      "description": "Multi-tenant commerce platform powered by AI Intelligence — built on the Cathedral Framework for gig operators and e-commerce teams.",
-      "publisher": {
-        "@type": "Organization",
-        "name": "1Commerce Solutions"
-      }
-    }
-    </script>
-
-    <!-- ── JSON-LD: FAQPage ──────────────────────────────────────────────── -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "What is UnifyOne?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "UnifyOne is a multi-tenant commerce platform built on the Cathedral Framework by 1Commerce / PNW Enterprises. It unifies products, orders, payments, and analytics across every tenant, channel, and integration — with AI Intelligence built in for intelligent earnings insights and route optimization for gig operators."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What is the Cathedral Framework?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "The Cathedral Framework is 1Commerce's proprietary development philosophy — sequential, phased construction that prioritizes automated infrastructure before scaling traffic. Like a cathedral, every system is built to endure: foundational layers are completed and hardened before the next phase begins."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How does AI Intelligence work inside UnifyOne?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "AI Intelligence is embedded directly into UnifyOne's dashboard, Money Manager, and Gig Command pages. It analyzes your real earnings data, shift history, mileage, and platform performance to generate context-aware insights — route optimization tips, tax deduction summaries, challenge strategy, and daily business briefings."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Is UnifyOne suitable for gig economy workers?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. UnifyOne was purpose-built for gig operators on platforms like DoorDash, Uber Eats, Instacart, and Amazon Flex. The Gig Command module tracks shifts, mileage, earnings per hour, and platform performance. AI Intelligence then surfaces actionable insights to maximize your hourly rate and minimize tax liability."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What integrations does UnifyOne support?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "UnifyOne integrates with Shopify, Stripe, PayPal, Meta (Facebook/Instagram) via CAPI, Google Analytics, Mailchimp, DoorDash, Uber, Instacart, Amazon Flex, and AI Intelligence. Additional integrations are available through the API and webhook system."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How much does UnifyOne cost?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "UnifyOne offers three tiers: Acolyte (free — 1 tenant, core commerce tools), Architect ($49/month — 5 tenants, AI Intelligence, all payment rails, automation layer), and Cathedral ($149/month — unlimited tenants, white-label, custom domains, SLA guarantee). All plans include a 14-day free trial with no credit card required."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What is multi-tenant commerce?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Multi-tenant commerce means a single platform instance serves multiple independent businesses (tenants) with isolated data, branding, and settings. UnifyOne lets agencies, franchises, and holding companies manage multiple storefronts, brands, or client accounts from one unified dashboard — without data bleed between tenants."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Does UnifyOne support white-label reselling?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. The Cathedral tier includes full white-label support — custom domain, custom branding, and the ability to resell UnifyOne as your own product to clients. This is ideal for agencies and managed service providers who want to offer commerce infrastructure under their own brand."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Is UnifyOne GDPR and SOC 2 compliant?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "UnifyOne is built with compliance-first architecture. The platform is GDPR-ready with data isolation per tenant, right-to-erasure workflows, and consent management. SOC 2 compliance is maintained through infrastructure-level controls on the underlying cloud provider."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How do I get started with UnifyOne?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Click 'Begin Construction' on the homepage to start your free 14-day trial. No credit card required. You'll be guided through tenant setup, integration configuration, and your first AI Intelligence insight within minutes of signing up."
-          }
-        }
-      ]
-    }
-    </script>
-
-    <!-- ── JSON-LD: BreadcrumbList ───────────────────────────────────────── -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "__APP_URL__/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Features",
-          "item": "__APP_URL__/#features"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "AI Intelligence",
-          "item": "__APP_URL__/#ai-intelligence"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Pricing",
-          "item": "__APP_URL__/#pricing"
-        },
-        {
-          "@type": "ListItem",
-          "position": 5,
-          "name": "Blog",
-          "item": "__APP_URL__/blog/gig-economy-commerce-platform"
-        }
-      ]
-    }
-    </script>
-
-    <!-- ── JSON-LD: Service ────────────────────────────────────────────────── -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Service",
-      "name": "UnifyOne Multi-Tenant Commerce Platform",
-      "description": "UnifyOne is a full-stack multi-tenant e-commerce SaaS service engineered on the Cathedral Framework. It provides AI-powered commerce management, gig economy analytics, Shopify and payment-rail integrations, subscription billing, and white-label infrastructure for operators, agencies, and e-commerce teams.",
-      "url": "__APP_URL__/",
-      "serviceType": "E-Commerce SaaS Platform",
-      "areaServed": "US",
-      "provider": {
-        "@type": "Organization",
-        "name": "1Commerce Solutions",
-        "alternateName": "PNW Enterprises",
-        "url": "__APP_URL__",
-        "email": "skdev@1commercesolutions.com",
-        "telephone": "+14065944343",
-        "address": {
-          "@type": "PostalAddress",
-          "addressRegion": "WA",
-          "addressCountry": "US"
-        }
-      }
     }
     </script>
 
