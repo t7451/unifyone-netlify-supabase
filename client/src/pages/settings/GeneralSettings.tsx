@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Building2,
@@ -64,6 +65,36 @@ export default function GeneralSettings() {
       setTimeout(() => setCopiedSlug(false), 2000);
     }
   };
+
+  if (tenantList.isLoading) {
+    return (
+      <SettingsLayout>
+        <div className="space-y-6">
+          {[0, 1].map(i => (
+            <Card key={i} className="bg-card border-border">
+              <CardHeader>
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-4 w-64" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          <div className="flex justify-end">
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+      </SettingsLayout>
+    );
+  }
 
   return (
     <SettingsLayout>
@@ -194,7 +225,8 @@ export default function GeneralSettings() {
                     try {
                       const parsed = new URL(rawSrc ?? "");
                       safeSrc =
-                        parsed.protocol === "https:" || parsed.protocol === "http:"
+                        parsed.protocol === "https:" ||
+                        parsed.protocol === "http:"
                           ? parsed.href
                           : undefined;
                     } catch {

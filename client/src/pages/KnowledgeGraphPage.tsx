@@ -4,7 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, Database, GitBranch, FileText, Activity } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Loader2,
+  Search,
+  Database,
+  GitBranch,
+  FileText,
+  Activity,
+  Network,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export default function KnowledgeGraphPage() {
@@ -20,17 +29,21 @@ export default function KnowledgeGraphPage() {
   );
 
   const triggerIngest = trpc.knowledgeGraph.triggerIngest.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       const d = data as Record<string, unknown>;
       toast.success(`Ingest queued — job ${String(d.job_id ?? "")}`);
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
   const stats = (statsQuery.data as Record<string, unknown> | undefined) ?? {};
-  const connectors = (connectorsQuery.data as Record<string, unknown>[] | undefined) ?? [];
+  const connectors =
+    (connectorsQuery.data as Record<string, unknown>[] | undefined) ?? [];
   const brain = (brainQuery.data as Record<string, unknown> | undefined) ?? {};
-  const searchResults = (searchNodesQuery.data as Record<string, unknown>[] | undefined) ?? null;
+  const searchResults =
+    (searchNodesQuery.data as Record<string, unknown>[] | undefined) ?? null;
+
+  const statsLoading = statsQuery.isLoading || brainQuery.isLoading;
 
   function handleSearch() {
     const q = searchQuery.trim();
@@ -46,53 +59,83 @@ export default function KnowledgeGraphPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">🕸️ Knowledge Graph</h1>
+        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <Network className="h-6 w-6 text-primary" /> Knowledge Graph
+        </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Explore your personal knowledge graph — nodes, edges, and ingestion connectors.
+          Explore your personal knowledge graph — nodes, edges, and ingestion
+          connectors.
         </p>
       </div>
 
       {/* Stats Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground font-medium">Total Nodes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{Number(stats.total_nodes ?? 0).toLocaleString()}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground font-medium">Total Edges</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{Number(stats.total_edges ?? 0).toLocaleString()}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground flex items-center gap-1">
-              <Activity className="h-3 w-3" /> Spikes/sec
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{Number(brain.spikes_per_sec ?? 0).toFixed(1)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground font-medium">Last Ingested</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm font-medium">
-              {stats.last_ingested
-                ? new Date(String(stats.last_ingested)).toLocaleDateString()
-                : "Never"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {statsLoading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map(i => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-20" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs text-muted-foreground font-medium">
+                Total Nodes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">
+                {Number(stats.total_nodes ?? 0).toLocaleString()}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs text-muted-foreground font-medium">
+                Total Edges
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">
+                {Number(stats.total_edges ?? 0).toLocaleString()}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs text-muted-foreground flex items-center gap-1">
+                <Activity className="h-3 w-3" /> Spikes/sec
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">
+                {Number(brain.spikes_per_sec ?? 0).toFixed(1)}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs text-muted-foreground font-medium">
+                Last Ingested
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm font-medium">
+                {stats.last_ingested
+                  ? new Date(String(stats.last_ingested)).toLocaleDateString()
+                  : "Never"}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Ingest Triggers */}
       <Card>
@@ -112,7 +155,7 @@ export default function KnowledgeGraphPage() {
               ) : (
                 <Icon className="h-4 w-4 mr-2" />
               )}
-              {label}
+              {triggerIngest.isPending ? "Ingesting…" : label}
             </Button>
           ))}
         </CardContent>
@@ -131,8 +174,8 @@ export default function KnowledgeGraphPage() {
                 className="pl-8"
                 placeholder="Search nodes..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
+                onChange={e => setSearchQuery(e.target.value)}
+                onKeyDown={e => {
                   if (e.key === "Enter") handleSearch();
                 }}
               />
@@ -142,7 +185,10 @@ export default function KnowledgeGraphPage() {
               onClick={handleSearch}
             >
               {searchNodesQuery.isFetching ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Searching…
+                </>
               ) : (
                 "Search"
               )}
@@ -163,10 +209,16 @@ export default function KnowledgeGraphPage() {
                     className="flex items-center justify-between py-2 border-b last:border-0"
                   >
                     <div>
-                      <p className="text-sm font-medium">{String(node.label ?? "—")}</p>
-                      <p className="text-xs text-muted-foreground">{String(node.sourceId ?? "")}</p>
+                      <p className="text-sm font-medium">
+                        {String(node.label ?? "—")}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {String(node.sourceId ?? "")}
+                      </p>
                     </div>
-                    <Badge variant="secondary">{String(node.type ?? "—")}</Badge>
+                    <Badge variant="secondary">
+                      {String(node.type ?? "—")}
+                    </Badge>
                   </div>
                 ))
               )}
@@ -186,7 +238,9 @@ export default function KnowledgeGraphPage() {
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : connectors.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No connectors configured.</p>
+            <p className="text-muted-foreground text-sm">
+              No connectors configured.
+            </p>
           ) : (
             <div className="space-y-2">
               {connectors.map((c, i) => (
@@ -194,7 +248,9 @@ export default function KnowledgeGraphPage() {
                   key={String(c.id ?? i)}
                   className="flex items-center justify-between py-2 border-b last:border-0"
                 >
-                  <p className="text-sm font-medium">{String(c.name ?? c.type ?? "Connector")}</p>
+                  <p className="text-sm font-medium">
+                    {String(c.name ?? c.type ?? "Connector")}
+                  </p>
                   <Badge variant={c.connected ? "outline" : "secondary"}>
                     {c.connected ? "Connected" : "Disconnected"}
                   </Badge>
