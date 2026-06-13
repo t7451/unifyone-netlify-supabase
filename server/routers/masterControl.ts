@@ -44,6 +44,7 @@ import {
   type TemplateKey,
   type TenantSettings,
 } from "../lib/masterControl";
+import { mcpCallTool } from "../lib/mcpClient";
 import { protectedProcedure, router } from "../_core/trpc";
 
 const tenantStatusSchema = z.enum([
@@ -1115,6 +1116,47 @@ export const masterControlRouter = router({
       },
     };
   }),
+
+  /**
+   * Read-only Kai Q&A for the Master Control plane.
+   *
+   * Proxies the question to the `ask_kai` MCP tool. This is intentionally a
+   * question-answering surface only — it does NOT execute platform commands.
+   * Owner-only (requireMasterControl). The owner may scope the question to a
+   * selected tenant; we pass that tenant authoritatively to the MCP worker
+   * (the same cross-tenant pattern the rest of Master Control uses), falling
+   * back to the owner's own tenant when none is selected.
+   */
+  askKai: protectedProcedure
+    .input(
+      z.object({
+        question: z.string().trim().min(1).max(2000),
+        tenantId: z.number().int().positive().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      requireMasterControl(ctx);
+      const tenantId = input.tenantId ?? ctx.user.tenantId ?? null;
+      try {
+        const result = await mcpCallTool(
+          "ask_kai",
+          { question: input.question },
+          { authoritativeTenantId: tenantId }
+        );
+        await auditMasterControl({
+          ctx,
+          action: "master_control.ask_kai",
+          tenantId: input.tenantId,
+          metadata: { questionLength: input.question.length },
+        });
+        return { answer: result };
+      } catch (e: unknown) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }),
 
   grantTemporaryCredits: protectedProcedure
     .input(
