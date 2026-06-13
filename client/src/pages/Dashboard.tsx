@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import type { inferRouterOutputs } from "@trpc/server";
 import {
@@ -17,13 +17,14 @@ import {
   ArrowUpRight,
   Clock,
   CreditCard,
+  Navigation,
   PackagePlus,
   Percent,
   ShieldCheck,
   ShoppingCart,
   TrendingUp,
-  UserPlus,
   Users,
+  Wallet,
 } from "lucide-react";
 
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -40,6 +41,7 @@ import {
 } from "@/lib/featureCatalog";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
+import { trackEvent } from "@/lib/userTracking";
 import type { AppRouter } from "../../../server/routers";
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
@@ -99,23 +101,31 @@ const STATUS_COLORS: Record<string, string> = {
 
 const STARTER_ACTIONS: StarterAction[] = [
   {
+    title: "Track your first shift",
+    description:
+      "Start a GPS-tracked gig shift to see your real $/hour, mileage, and tax deduction.",
+    href: "/gig-command",
+    icon: Navigation,
+  },
+  {
+    title: "Open your money manager",
+    description:
+      "Pull your earnings together across every platform and see where the money goes.",
+    href: "/money-manager",
+    icon: Wallet,
+  },
+  {
     title: "Add your first product",
     description:
-      "Create a sellable product so orders and revenue can start flowing.",
+      "Selling too? Create a product so orders and revenue can start flowing.",
     href: "/products",
     icon: PackagePlus,
   },
   {
-    title: "Connect Stripe",
-    description: "Link your payment rails to start collecting paid orders.",
+    title: "Connect a payment method",
+    description: "Link Stripe or PayPal to start collecting paid orders.",
     href: "/integrations",
     icon: CreditCard,
-  },
-  {
-    title: "Invite a teammate",
-    description: "Bring in your ops or fulfillment team to help run the store.",
-    href: "/team",
-    icon: UserPlus,
   },
 ];
 
@@ -343,6 +353,9 @@ function KpiSkeleton() {
 export default function Dashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
+  const utils = trpc.useUtils();
+  const provisionDefault = trpc.tenant.provisionDefault.useMutation();
+  const provisioningRef = useRef(false);
   const [chartRange, setChartRange] = useState<ChartRange>("month");
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [onboardingInitialCategoryId, setOnboardingInitialCategoryId] =
@@ -362,10 +375,25 @@ export default function Dashboard() {
   const recentOrders = trpc.orders.recentOrders.useQuery();
 
   useEffect(() => {
-    if (user && !user.tenantId) {
-      navigate("/setup");
-    }
-    // `navigate` from wouter is stable; omitted to avoid unnecessary re-runs.
+    // A signed-in user with no tenant gets a default workspace auto-provisioned
+    // so they land directly in the product — no mandatory /setup gate. If
+    // provisioning fails, fall back to the manual setup flow. Naming/renaming
+    // and demo-data seeding remain available at /setup.
+    if (!user || user.tenantId) return;
+    if (provisioningRef.current) return;
+    provisioningRef.current = true;
+
+    provisionDefault.mutate(undefined, {
+      onSuccess: () => {
+        // Reload the session so user.tenantId is populated; stay on /dashboard.
+        void utils.auth.me.invalidate();
+      },
+      onError: () => {
+        provisioningRef.current = false;
+        navigate("/setup");
+      },
+    });
+    // `navigate`/`utils`/mutation are stable; omitted to avoid re-runs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -699,17 +727,24 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="text-white">Getting started</CardTitle>
             <p className="text-sm text-slate-400">
-              Your dashboard is ready. Complete these next steps to unlock live
-              commerce metrics.
+              Your workspace is ready. Pick a starting point — track your gig
+              shifts, manage your money, or set up your store.
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {STARTER_ACTIONS.map(action => (
                 <button
                   key={action.title}
                   type="button"
-                  onClick={() => navigate(action.href)}
+                  onClick={() => {
+                    // Funnel: which first action a new user pursues from the
+                    // getting-started empty state (intent → activation_event).
+                    trackEvent("getting_started_click", {
+                      action: action.href,
+                    });
+                    navigate(action.href);
+                  }}
                   className="rounded-xl border border-border bg-background/40 p-4 text-left transition-colors hover:border-[#00D9FF]/40 hover:bg-[#00D9FF]/5"
                 >
                   <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-[#00D9FF]/10 text-[#00D9FF]">

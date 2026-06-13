@@ -28,6 +28,48 @@ import {
 import { protectedProcedure, router } from "../_core/trpc";
 import { setEdgeCache, EDGE_CACHE } from "../_core/cacheControl";
 
+/** Server-side slug generator, mirroring the client TenantSetup slugify(). */
+function slugifyName(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60);
+}
+
+/**
+ * Grant the 25-credit Kai welcome bonus to a freshly created tenant.
+ * Non-blocking and idempotent (idempotencyKey guards double-grants on retry).
+ * Shared by tenant.create and tenant.provisionDefault.
+ */
+function grantKaiWelcomeBonus(tenantId: number, userId: number): void {
+  void (async () => {
+    try {
+      const db = await getDb();
+      if (db) {
+        await db
+          .insert(kaiCreditLedger)
+          .values({
+            tenantId,
+            userId,
+            type: "adjustment",
+            creditDelta: 25,
+            idempotencyKey: `kai_welcome_bonus:${tenantId}:${userId}`,
+            description: "Welcome bonus — 25 free Kai credits",
+          })
+          .onConflictDoNothing({ target: kaiCreditLedger.idempotencyKey });
+      }
+    } catch (grantError) {
+      console.error(
+        "[tenant] Failed to grant Kai welcome credits:",
+        grantError instanceof Error ? grantError.message : String(grantError)
+      );
+    }
+  })();
+}
+
 const googleOAuthInputSchema = z.object({
   enabled: z.boolean(),
   clientId: z.string().trim().max(255),
@@ -212,34 +254,8 @@ export const tenantRouter = router({
       });
 
       // Grant 25 free Kai credits to new tenants so Kai works immediately.
-      // Non-blocking — don't fail tenant creation if the credit insert errors.
-      // Idempotency key prevents double-grants on network retries.
-      void (async () => {
-        try {
-          const db = await getDb();
-          if (db) {
-            await db
-              .insert(kaiCreditLedger)
-              .values({
-                tenantId: newTenant.id,
-                userId: ctx.user.id,
-                type: "adjustment",
-                creditDelta: 25,
-                idempotencyKey: `kai_welcome_bonus:${newTenant.id}:${ctx.user.id}`,
-                description: "Welcome bonus — 25 free Kai credits",
-              })
-              .onConflictDoNothing({
-                target: kaiCreditLedger.idempotencyKey,
-              });
-          }
-        } catch (grantError) {
-          // Intentionally non-fatal — tenant creation succeeds regardless.
-          console.error(
-            "[tenant.create] Failed to grant Kai welcome credits:",
-            grantError instanceof Error ? grantError.message : String(grantError)
-          );
-        }
-      })();
+      // Non-blocking and idempotent (see helper).
+      grantKaiWelcomeBonus(newTenant.id, ctx.user.id);
 
       void import("../auditLogger").then(({ logAudit }) =>
         logAudit({
@@ -253,6 +269,74 @@ export const tenantRouter = router({
       );
       return newTenant;
     }),
+
+  // Auto-provision a default workspace for a user who has none, so signup can
+  // land directly in the product instead of forcing the /setup gate. Fully
+  // idempotent: returns the user's existing/owned tenant if one is present,
+  // and the generated slug retries on collision.
+  provisionDefault: protectedProcedure.mutation(async ({ ctx }) => {
+    // Already linked to a tenant — nothing to do.
+    if (ctx.user.tenantId) {
+      const current = await getTenantById(ctx.user.tenantId);
+      if (current) return current;
+    }
+
+    // Owns a tenant but isn't linked (e.g. an interrupted setup) — relink it
+    // rather than creating a duplicate.
+    const owned = await getTenantsByOwner(ctx.user.id);
+    if (owned.length > 0) {
+      await updateUserTenant(ctx.user.id, owned[0].id, {
+        promoteToAdmin: true,
+      });
+      return owned[0];
+    }
+
+    const displayName =
+      ctx.user.name?.trim() || ctx.user.email?.split("@")[0] || "My";
+    const name = `${displayName}'s Workspace`;
+    const baseSlug = slugifyName(name) || "workspace";
+
+    // Resolve a free slug, appending a short random suffix on collision.
+    let slug = baseSlug;
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const taken = await getTenantBySlug(slug);
+      if (!taken) break;
+      slug = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+    }
+
+    let tenant;
+    try {
+      tenant = await createTenant({ name, slug, ownerId: ctx.user.id });
+    } catch (err) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to provision your workspace. Please try again.",
+        cause: err,
+      });
+    }
+    if (!tenant) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Workspace was created but could not be retrieved.",
+      });
+    }
+
+    await updateUserTenant(ctx.user.id, tenant.id, { promoteToAdmin: true });
+    grantKaiWelcomeBonus(tenant.id, ctx.user.id);
+
+    void import("../auditLogger").then(({ logAudit }) =>
+      logAudit({
+        action: "tenant.created",
+        resource: "tenant",
+        resourceId: String(tenant.id),
+        severity: "low",
+        userId: ctx.user.id,
+        metadata: { name, slug, autoProvisioned: true },
+      }).catch(() => {})
+    );
+
+    return tenant;
+  }),
 
   seedDemoData: protectedProcedure
     .input(

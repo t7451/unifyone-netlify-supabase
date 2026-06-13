@@ -14,6 +14,10 @@ import { getLoginUrl } from "./const";
 import { trpc } from "./lib/trpc";
 import { useTracking } from "./hooks/useTracking";
 import { useServerEvents } from "./hooks/useServerEvents";
+import {
+  useCreditBalanceRealtime,
+  useCreditUsageRealtime,
+} from "./lib/supabaseRealtime";
 
 const Home = lazy(() => import("./pages/Home"));
 const Discounts = lazy(() => import("./pages/Discounts"));
@@ -208,6 +212,12 @@ function Router() {
   // authenticated session (EventSource uses cookies). Gives up after 5
   // consecutive failures (Netlify serverless — falls back to polling).
   useServerEvents();
+
+  // Subscribe to Supabase Realtime for credit balance / usage — supplements
+  // the SSE credit_balance event for environments where SSE isn't available.
+  const { user } = useAuth();
+  useCreditBalanceRealtime(user?.openId);
+  useCreditUsageRealtime(user?.openId);
 
   return (
     <Switch>
