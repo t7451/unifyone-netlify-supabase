@@ -1,0 +1,132 @@
+name: SEO Gates
+
+# Runs on every PR and main push that touches content or infrastructure.
+# Two blocking gates (JSON-LD source · sitemap coverage) + one non-blocking
+# Lighthouse audit that uploads a report artifact.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "client/src/pages/**"
+      - "client/src/content/**"
+      - "client/public/**"
+      - "vite.config.ts"
+      - "vite-plugin-prerender-seo.ts"
+      - "vite-plugin-sitemap.ts"
+      - "scripts/validate-jsonld.mjs"
+      - "scripts/check-sitemap-routes.mjs"
+      - ".lighthouserc.json"
+      - ".github/workflows/seo-gates.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "client/src/pages/**"
+      - "client/src/content/**"
+      - "client/public/**"
+      - "vite.config.ts"
+      - "vite-plugin-prerender-seo.ts"
+      - "vite-plugin-sitemap.ts"
+      - "scripts/validate-jsonld.mjs"
+      - "scripts/check-sitemap-routes.mjs"
+      - ".lighthouserc.json"
+      - ".github/workflows/seo-gates.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  # ── Gate 1: JSON-LD source validation ─────────────────────────────────────
+  # No build required — validates TypeScript source directly.
+  # Fails fast if a tool page is missing @context, @type, or FAQS content.
+  jsonld-source:
+    name: JSON-LD source
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate JSON-LD in tool source files
+        run: node scripts/validate-jsonld.mjs
+
+  # ── Gate 2: Build + sitemap route coverage ─────────────────────────────────
+  # Builds the full app (prerender plugin runs here) and then checks that
+  # every public sitemap URL has a corresponding prerendered .html file.
+  sitemap-coverage:
+    name: Sitemap coverage
+    runs-on: ubuntu-latest
+    needs: jsonld-source
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+        env:
+          PUBLIC_APP_URL: "https://1commerce.online"
+
+      - name: Check sitemap route coverage
+        run: node scripts/check-sitemap-routes.mjs
+
+      - name: Upload dist/public for Lighthouse job
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-public-${{ github.run_id }}
+          path: dist/public/
+          retention-days: 1
+
+  # ── Audit: Lighthouse CI (non-blocking) ────────────────────────────────────
+  # Measures CWV + SEO scores against the prerendered static build.
+  # continue-on-error: true — score regressions warn but don't fail the PR.
+  # Scores are visible in the uploaded artifact and LHCI temporary storage.
+  lighthouse:
+    name: Lighthouse (non-blocking)
+    runs-on: ubuntu-latest
+    needs: sitemap-coverage
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download built dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-public-${{ github.run_id }}
+          path: dist/public/
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli
+
+      - name: Install Chrome
+        id: chrome
+        run: |
+          npx @puppeteer/browsers install chrome@stable
+          CHROME=$(find ~/.cache/puppeteer -name 'chrome' -type f 2>/dev/null | head -1)
+          echo "path=${CHROME}" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Run Lighthouse CI
+        run: lhci autorun
+        env:
+          CHROME_PATH: ${{ steps.chrome.outputs.path }}
+        continue-on-error: true
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-${{ github.run_id }}
+          path: .lighthouseci/
+          retention-days: 14
+          if-no-files-found: ignore
