@@ -113,3 +113,4 @@ temp/
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
 package-lock.json
+scripts/citation-reports/
