@@ -27,15 +27,20 @@ function vitePluginAppUrl(): Plugin {
       return html.replaceAll("__APP_URL__", SITE_HOSTNAME);
     },
     closeBundle() {
-      // Replace __APP_URL__ in static public files copied to dist
+      // Replace __APP_URL__ (and __BUILD_DATE__ for llms.txt freshness) in
+      // static public files copied to dist. The build date re-stamps on every
+      // deploy so LLM crawlers see a recently-updated llms.txt.
       const outDir = path.resolve(import.meta.dirname, "dist/public");
-      for (const file of ["robots.txt", "sitemap.xml"]) {
+      const buildDate = new Date().toISOString().split("T")[0];
+      for (const file of ["robots.txt", "sitemap.xml", "llms.txt"]) {
         const filePath = path.join(outDir, file);
         if (fs.existsSync(filePath)) {
           const content = fs.readFileSync(filePath, "utf-8");
           fs.writeFileSync(
             filePath,
-            content.replaceAll("__APP_URL__", SITE_HOSTNAME),
+            content
+              .replaceAll("__APP_URL__", SITE_HOSTNAME)
+              .replaceAll("__BUILD_DATE__", buildDate),
             "utf-8"
           );
         }

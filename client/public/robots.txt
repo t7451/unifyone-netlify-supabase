@@ -1,3 +1,12 @@
+# UnifyOne — robots.txt
+# Public marketing/tool/content surface is open to all crawlers; the
+# authenticated app, auth flows, and API surface are disallowed.
+#
+# The AI/search-engine crawlers below are named explicitly (per the
+# Discoverability Engine spec, WS1b) so their access is unambiguous —
+# robots.txt groups do not merge, so each named group repeats the same
+# protected-route Disallow set as the wildcard group.
+
 User-agent: *
 Allow: /
 
@@ -43,4 +52,52 @@ Disallow: /design-system
 # ── API surface ───────────────────────────────────────────────────────────────
 Disallow: /api/
 
-Sitemap: https://1commerce.online/sitemap.xml
+# ── Search + AI crawlers (explicitly allowed) ─────────────────────────────────
+# Googlebot/Bingbot feed Google + Bing (Bing also feeds ChatGPT search).
+# GPTBot/OAI-SearchBot (OpenAI), PerplexityBot, ClaudeBot (Anthropic), and
+# Google-Extended (Gemini/AI Overviews) are the AI-answer crawlers we want
+# extracting our public pages. Same protected-route Disallow set applies.
+User-agent: Googlebot
+User-agent: Bingbot
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: PerplexityBot
+User-agent: ClaudeBot
+User-agent: Google-Extended
+Allow: /
+Disallow: /dashboard
+Disallow: /setup
+Disallow: /settings
+Disallow: /products
+Disallow: /orders
+Disallow: /customers
+Disallow: /analytics
+Disallow: /integrations
+Disallow: /team
+Disallow: /billing
+Disallow: /social
+Disallow: /referrals
+Disallow: /leads
+Disallow: /automations
+Disallow: /notifications
+Disallow: /my-themes
+Disallow: /admin/
+Disallow: /rewards
+Disallow: /revenue-streams
+Disallow: /affiliates
+Disallow: /shopify/
+Disallow: /checkout
+Disallow: /master-control
+Disallow: /revenue-command
+Disallow: /discounts
+Disallow: /clips
+Disallow: /marketing/
+Disallow: /gig-worker-plans
+Disallow: /auth/
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /components
+Disallow: /design-system
+Disallow: /api/
+
+Sitemap: __APP_URL__/sitemap.xml

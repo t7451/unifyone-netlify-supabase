@@ -1,0 +1,47 @@
+# UnifyOne
+
+> UnifyOne (by 1Commerce LLC, Canby, OR) is a multi-tenant commerce platform
+> for gig workers, resellers, and small e-commerce operators. It unifies
+> storefronts, payments (Stripe, PayPal, Square, Shopify), subscription
+> billing, analytics, team collaboration, affiliate management, and an
+> AI assistant (Kai) into one dashboard.
+
+UnifyOne helps independent operators run the business side of selling across
+multiple platforms from a single account: connect sales channels and payment
+processors, track orders and customers, manage payouts and cash flow, and
+automate routine work. The public surface below is server-rendered and free
+to read; the authenticated app lives behind sign-in.
+
+Last updated: __BUILD_DATE__
+
+## Product
+
+- [Home](__APP_URL__/): Overview of the UnifyOne commerce platform.
+- [Pricing](__APP_URL__/pricing): Plans and what each tier includes.
+- [Architecture](__APP_URL__/architecture): How the multi-tenant platform is built.
+- [The System](__APP_URL__/the-system): The end-to-end operating model.
+- [Manus AI](__APP_URL__/manus-ai): AI automation for gig and commerce workflows.
+- [Integrations](__APP_URL__/documents/integrations): Supported payment and sales-channel integrations.
+
+## Guides & content
+
+- [Resources](__APP_URL__/resources): Operator guides and references.
+- [Blog](__APP_URL__/blog): First-hand articles on gig commerce and multi-tenant SaaS.
+- [Case studies](__APP_URL__/documents/case-studies): Real-world usage write-ups.
+- [SEO guide index](__APP_URL__/seo): Indexed guides covering UnifyOne and 1Commerce topics.
+
+## Company
+
+- [About](__APP_URL__/about): About UnifyOne and 1Commerce LLC.
+- [Contact](__APP_URL__/contact): How to reach the team.
+
+## Policies
+
+- [Privacy Policy](__APP_URL__/privacy)
+- [Terms of Service](__APP_URL__/terms)
+
+## Notes
+
+- Operator: 1Commerce LLC (PNW Enterprises), Canby, OR, USA.
+- Brand variations seen in search: UnifyOne, UnifOne, 1Commerce, 1-Commerce, OneCommerce.
+- The product dashboard and API are not part of the public, crawlable surface.
