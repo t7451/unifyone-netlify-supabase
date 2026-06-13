@@ -17,13 +17,14 @@ import {
   ArrowUpRight,
   Clock,
   CreditCard,
+  Navigation,
   PackagePlus,
   Percent,
   ShieldCheck,
   ShoppingCart,
   TrendingUp,
-  UserPlus,
   Users,
+  Wallet,
 } from "lucide-react";
 
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -100,23 +101,31 @@ const STATUS_COLORS: Record<string, string> = {
 
 const STARTER_ACTIONS: StarterAction[] = [
   {
+    title: "Track your first shift",
+    description:
+      "Start a GPS-tracked gig shift to see your real $/hour, mileage, and tax deduction.",
+    href: "/gig-command",
+    icon: Navigation,
+  },
+  {
+    title: "Open your money manager",
+    description:
+      "Pull your earnings together across every platform and see where the money goes.",
+    href: "/money-manager",
+    icon: Wallet,
+  },
+  {
     title: "Add your first product",
     description:
-      "Create a sellable product so orders and revenue can start flowing.",
+      "Selling too? Create a product so orders and revenue can start flowing.",
     href: "/products",
     icon: PackagePlus,
   },
   {
-    title: "Connect Stripe",
-    description: "Link your payment rails to start collecting paid orders.",
+    title: "Connect a payment method",
+    description: "Link Stripe or PayPal to start collecting paid orders.",
     href: "/integrations",
     icon: CreditCard,
-  },
-  {
-    title: "Invite a teammate",
-    description: "Bring in your ops or fulfillment team to help run the store.",
-    href: "/team",
-    icon: UserPlus,
   },
 ];
 
@@ -718,12 +727,12 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="text-white">Getting started</CardTitle>
             <p className="text-sm text-slate-400">
-              Your dashboard is ready. Complete these next steps to unlock live
-              commerce metrics.
+              Your workspace is ready. Pick a starting point — track your gig
+              shifts, manage your money, or set up your store.
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {STARTER_ACTIONS.map(action => (
                 <button
                   key={action.title}
