@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
   Dialog,
@@ -95,8 +96,11 @@ export default function Referrals() {
   const [redeemAmount, setRedeemAmount] = useState(500);
   const [redeemDialogOpen, setRedeemDialogOpen] = useState(false);
 
-  const { data: stats, refetch: refetchStats } =
-    trpc.referral.getStats.useQuery();
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    refetch: refetchStats,
+  } = trpc.referral.getStats.useQuery();
   const { data: transactions } = trpc.referral.getTransactions.useQuery({
     limit: 20,
   });
@@ -117,6 +121,7 @@ export default function Referrals() {
       refetchStats();
       toast.success(`+${data.creditsAwarded} credits earned!`);
     },
+    onError: e => toast.error(e.message),
   });
 
   const referralUrl = stats?.referralCode
@@ -166,9 +171,13 @@ export default function Referrals() {
         <div className="relative grid md:grid-cols-3 gap-6 items-center">
           <div className="md:col-span-2 space-y-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-5xl font-bold text-white">
-                {creditBalance.toLocaleString()}
-              </span>
+              {statsLoading ? (
+                <Skeleton className="h-12 w-40" />
+              ) : (
+                <span className="text-5xl font-bold text-white">
+                  {creditBalance.toLocaleString()}
+                </span>
+              )}
               <span className="text-violet-300 text-lg">credits</span>
             </div>
             <p className="text-violet-200/70 text-sm">
@@ -198,33 +207,44 @@ export default function Referrals() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {[
-              {
-                label: "Link Clicks",
-                value: stats?.totalClicks ?? 0,
-                icon: TrendingUp,
-              },
-              { label: "Signups", value: stats?.signups ?? 0, icon: Users },
-              {
-                label: "Conversions",
-                value: stats?.conversions ?? 0,
-                icon: CheckCircle2,
-              },
-              {
-                label: "Total Earned",
-                value: `${(stats?.totalCreditsEarned ?? 0).toLocaleString()} cr`,
-                icon: Star,
-              },
-            ].map(s => (
-              <div
-                key={s.label}
-                className="rounded-lg bg-white/5 border border-white/10 p-2.5 text-center"
-              >
-                <s.icon className="h-4 w-4 mx-auto mb-1 text-violet-300" />
-                <p className="text-lg font-bold text-white">{s.value}</p>
-                <p className="text-[10px] text-violet-300/70">{s.label}</p>
-              </div>
-            ))}
+            {statsLoading
+              ? [0, 1, 2, 3].map(i => (
+                  <div
+                    key={i}
+                    className="rounded-lg bg-white/5 border border-white/10 p-2.5 flex flex-col items-center gap-1.5"
+                  >
+                    <Skeleton className="h-4 w-4 rounded-full" />
+                    <Skeleton className="h-5 w-12" />
+                    <Skeleton className="h-2 w-14" />
+                  </div>
+                ))
+              : [
+                  {
+                    label: "Link Clicks",
+                    value: stats?.totalClicks ?? 0,
+                    icon: TrendingUp,
+                  },
+                  { label: "Signups", value: stats?.signups ?? 0, icon: Users },
+                  {
+                    label: "Conversions",
+                    value: stats?.conversions ?? 0,
+                    icon: CheckCircle2,
+                  },
+                  {
+                    label: "Total Earned",
+                    value: `${(stats?.totalCreditsEarned ?? 0).toLocaleString()} cr`,
+                    icon: Star,
+                  },
+                ].map(s => (
+                  <div
+                    key={s.label}
+                    className="rounded-lg bg-white/5 border border-white/10 p-2.5 text-center"
+                  >
+                    <s.icon className="h-4 w-4 mx-auto mb-1 text-violet-300" />
+                    <p className="text-lg font-bold text-white">{s.value}</p>
+                    <p className="text-[10px] text-violet-300/70">{s.label}</p>
+                  </div>
+                ))}
           </div>
         </div>
       </div>

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ import {
   TrendingUp,
   CheckCircle2,
   XCircle,
+  AlertCircle,
 } from "lucide-react";
 
 // ─── Form ─────────────────────────────────────────────────────────────────────
@@ -259,20 +261,41 @@ export default function Affiliates() {
   const {
     data: programs,
     isLoading,
+    isError: listError,
     refetch,
   } = trpc.affiliates.list.useQuery();
-  const { data: summary } = trpc.affiliates.getSummary.useQuery();
+  const {
+    data: summary,
+    isLoading: summaryLoading,
+    isError: summaryError,
+  } = trpc.affiliates.getSummary.useQuery();
+
+  const invalidateAffiliates = async () => {
+    await utils.affiliates.list.invalidate();
+    await utils.affiliates.getSummary.invalidate();
+    await refetch();
+  };
+
   const createMutation = trpc.affiliates.create.useMutation({
+    onSuccess: () => {
+      void invalidateAffiliates();
+    },
     onError: error => {
       toast.error(error.message || "Failed to create affiliate link.");
     },
   });
   const updateMutation = trpc.affiliates.update.useMutation({
+    onSuccess: () => {
+      void invalidateAffiliates();
+    },
     onError: error => {
       toast.error(error.message || "Failed to update affiliate commission.");
     },
   });
   const deleteMutation = trpc.affiliates.delete.useMutation({
+    onSuccess: () => {
+      void invalidateAffiliates();
+    },
     onError: error => {
       toast.error(error.message || "Failed to delete affiliate program.");
     },
@@ -306,9 +329,6 @@ export default function Affiliates() {
         await createMutation.mutateAsync(payload);
         toast.success("Affiliate link created");
       }
-      await utils.affiliates.list.invalidate();
-      await utils.affiliates.getSummary.invalidate();
-      await refetch();
       setDialogOpen(false);
       setEditingId(null);
       setEditingForm(null);
@@ -324,9 +344,6 @@ export default function Affiliates() {
     try {
       await deleteMutation.mutateAsync({ id });
       toast.success("Affiliate program deleted");
-      await utils.affiliates.list.invalidate();
-      await utils.affiliates.getSummary.invalidate();
-      await refetch();
     } catch {
       return;
     }
@@ -396,49 +413,69 @@ export default function Affiliates() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="border-teal-500/30 bg-teal-500/5">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Monthly Earnings</p>
-            <p className="text-2xl font-bold text-teal-400 mt-1">
-              $
-              {(summary?.totalMonthly ?? 0).toLocaleString("en-US", {
-                minimumFractionDigits: 0,
-              })}
-            </p>
+      {summaryError ? (
+        <Card className="border-red-500/30 bg-red-500/5">
+          <CardContent className="py-6 text-center text-sm text-red-400">
+            <AlertCircle className="w-5 h-5 mx-auto mb-2" />
+            Failed to load summary.
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Pending Payout</p>
-            <p className="text-2xl font-bold text-yellow-400 mt-1">
-              $
-              {(summary?.totalPending ?? 0).toLocaleString("en-US", {
-                minimumFractionDigits: 0,
-              })}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Active Programs</p>
-            <p className="text-2xl font-bold text-emerald-400 mt-1">
-              {summary?.activeCount ?? 0}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Zap className="w-3 h-3 text-yellow-400" />
-              Instant Payout
-            </p>
-            <p className="text-2xl font-bold mt-1">
-              {summary?.instantPayoutCount ?? 0}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      ) : summaryLoading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map(i => (
+            <Card key={i}>
+              <CardContent className="p-4 space-y-2">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-7 w-20" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Card className="border-teal-500/30 bg-teal-500/5">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Monthly Earnings</p>
+              <p className="text-2xl font-bold text-teal-400 mt-1">
+                $
+                {(summary?.totalMonthly ?? 0).toLocaleString("en-US", {
+                  minimumFractionDigits: 0,
+                })}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Pending Payout</p>
+              <p className="text-2xl font-bold text-yellow-400 mt-1">
+                $
+                {(summary?.totalPending ?? 0).toLocaleString("en-US", {
+                  minimumFractionDigits: 0,
+                })}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Active Programs</p>
+              <p className="text-2xl font-bold text-emerald-400 mt-1">
+                {summary?.activeCount ?? 0}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Zap className="w-3 h-3 text-yellow-400" />
+                Instant Payout
+              </p>
+              <p className="text-2xl font-bold mt-1">
+                {summary?.instantPayoutCount ?? 0}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Program List */}
       {isLoading ? (
@@ -446,6 +483,23 @@ export default function Affiliates() {
           <Loader2 className="w-5 h-5 animate-spin mr-2" />
           Loading programs...
         </div>
+      ) : listError ? (
+        <Card className="border-red-500/30 bg-red-500/5">
+          <CardContent className="py-16 text-center text-red-400">
+            <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-60" />
+            <p className="font-medium text-lg">Failed to load programs</p>
+            <p className="text-sm mt-1 mb-4 text-muted-foreground">
+              Something went wrong fetching your affiliate programs.
+            </p>
+            <Button
+              onClick={() => refetch()}
+              variant="outline"
+              className="border-red-500/40 text-red-400"
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
       ) : !programs?.length ? (
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground">
