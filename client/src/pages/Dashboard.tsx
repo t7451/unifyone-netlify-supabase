@@ -40,6 +40,7 @@ import {
 } from "@/lib/featureCatalog";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
+import { trackEvent } from "@/lib/userTracking";
 import type { AppRouter } from "../../../server/routers";
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
@@ -727,7 +728,14 @@ export default function Dashboard() {
                 <button
                   key={action.title}
                   type="button"
-                  onClick={() => navigate(action.href)}
+                  onClick={() => {
+                    // Funnel: which first action a new user pursues from the
+                    // getting-started empty state (intent → activation_event).
+                    trackEvent("getting_started_click", {
+                      action: action.href,
+                    });
+                    navigate(action.href);
+                  }}
                   className="rounded-xl border border-border bg-background/40 p-4 text-left transition-colors hover:border-[#00D9FF]/40 hover:bg-[#00D9FF]/5"
                 >
                   <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-[#00D9FF]/10 text-[#00D9FF]">

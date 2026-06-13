@@ -10,6 +10,7 @@ import {
   users,
 } from "../../drizzle/schema";
 import { eq, and, desc, isNull, or, gte, lte, sql } from "drizzle-orm";
+import { broadcastToUser, broadcastToAll } from "../_core/sseManager";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const adminGuard = (role: string) => {
@@ -164,14 +165,25 @@ export const notificationsRouter = router({
           message: "Cannot send notifications to users outside your tenant",
         });
       }
-      await db.insert(notifications).values({
-        userId: input.userId,
-        tenantId: ctx.user.tenantId ?? undefined,
+      const [inserted] = await db
+        .insert(notifications)
+        .values({
+          userId: input.userId,
+          tenantId: ctx.user.tenantId ?? undefined,
+          type: input.type,
+          title: input.title,
+          body: input.body,
+          link: input.link,
+          read: false,
+        })
+        .returning();
+      // Push to connected SSE client immediately (best-effort)
+      broadcastToUser(input.userId, "notification", {
+        id: inserted?.id,
         type: input.type,
         title: input.title,
         body: input.body,
         link: input.link,
-        read: false,
       });
       return { success: true };
     }),
@@ -229,6 +241,18 @@ export const notificationsRouter = router({
         read: false as boolean,
       }));
       await db.insert(notifications).values(rows);
+      // Push to each connected tenant user via SSE
+      for (const u of tenantUsers) {
+        const row = rows.find(r => r.userId === u.id);
+        if (row) {
+          broadcastToUser(u.id, "notification", {
+            type: row.type,
+            title: row.title,
+            body: row.body,
+            link: row.link,
+          });
+        }
+      }
       return { sent: rows.length };
     }),
 
@@ -299,6 +323,13 @@ export const notificationsRouter = router({
           active: true,
         })
         .returning();
+      // Notify all connected clients about the new announcement
+      broadcastToAll("announcement", {
+        id: result.id,
+        title: input.title,
+        type: input.type,
+        severity: input.severity,
+      });
       return { id: result.id, success: true };
     }),
 

@@ -48,8 +48,8 @@ export default function ShopifyThemePage() {
   const [editingSection, setEditingSection] = useState<SectionKey | null>(null);
   const [editSettings, setEditSettings] = useState<Record<string, string>>({});
 
-  const sectionsQuery = trpc.shopifyTheme.getSections.useQuery({});
-  const performanceQuery = trpc.shopifyTheme.getPerformance.useQuery({ tenantId: 1 });
+  const sectionsQuery = trpc.shopifyTheme.getSections.useQuery();
+  const performanceQuery = trpc.shopifyTheme.getPerformance.useQuery();
 
   const updateSection = trpc.shopifyTheme.updateSection.useMutation({
     onSuccess: () => {
@@ -57,19 +57,21 @@ export default function ShopifyThemePage() {
       setEditingSection(null);
       void sectionsQuery.refetch();
     },
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
   const syncConfig = trpc.shopifyTheme.syncConfig.useMutation({
     onSuccess: () => toast.success("Theme synced to Shopify"),
-    onError: (e) => toast.error(e.message),
+    onError: e => toast.error(e.message),
   });
 
-  const sections = (sectionsQuery.data as Record<string, unknown>[] | undefined) ?? [];
-  const perf = (performanceQuery.data as Record<string, unknown> | undefined) ?? {};
+  const sections =
+    (sectionsQuery.data as Record<string, unknown>[] | undefined) ?? [];
+  const perf =
+    (performanceQuery.data as Record<string, unknown> | undefined) ?? {};
 
   const getSectionData = (key: SectionKey) =>
-    sections.find((s) => s.name === key || s.section === key) ?? {};
+    sections.find(s => s.name === key || s.section === key) ?? {};
 
   return (
     <div className="p-6 space-y-6">
@@ -85,7 +87,6 @@ export default function ShopifyThemePage() {
         <Button
           onClick={() =>
             syncConfig.mutate({
-              tenantId: 1,
               section: "all",
               settings: {},
             })
@@ -113,26 +114,28 @@ export default function ShopifyThemePage() {
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           ) : (
             <>
-              {["performance", "accessibility", "seo", "best_practices"].map((metric) => (
-                <div key={metric} className="text-center">
-                  <p
-                    className="text-2xl font-bold"
-                    style={{
-                      color:
-                        Number(perf[metric] ?? 0) >= 90
-                          ? "#22c55e"
-                          : Number(perf[metric] ?? 0) >= 50
-                            ? "#f59e0b"
-                            : "#ef4444",
-                    }}
-                  >
-                    {Number(perf[metric] ?? 0)}
-                  </p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {metric.replace("_", " ")}
-                  </p>
-                </div>
-              ))}
+              {["performance", "accessibility", "seo", "best_practices"].map(
+                metric => (
+                  <div key={metric} className="text-center">
+                    <p
+                      className="text-2xl font-bold"
+                      style={{
+                        color:
+                          Number(perf[metric] ?? 0) >= 90
+                            ? "#22c55e"
+                            : Number(perf[metric] ?? 0) >= 50
+                              ? "#f59e0b"
+                              : "#ef4444",
+                      }}
+                    >
+                      {Number(perf[metric] ?? 0)}
+                    </p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {metric.replace("_", " ")}
+                    </p>
+                  </div>
+                )
+              )}
             </>
           )}
         </CardContent>
@@ -140,7 +143,7 @@ export default function ShopifyThemePage() {
 
       {/* Section Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {ALL_SECTIONS.map((sectionKey) => {
+        {ALL_SECTIONS.map(sectionKey => {
           const data = getSectionData(sectionKey);
           return (
             <Card key={sectionKey}>
@@ -148,9 +151,13 @@ export default function ShopifyThemePage() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <span>{SECTION_ICONS[sectionKey]}</span>
-                    <span className="capitalize">{sectionKey.replace(/-/g, " ")}</span>
+                    <span className="capitalize">
+                      {sectionKey.replace(/-/g, " ")}
+                    </span>
                   </CardTitle>
-                  <Badge variant={data.enabled !== false ? "outline" : "secondary"}>
+                  <Badge
+                    variant={data.enabled !== false ? "outline" : "secondary"}
+                  >
                     {data.enabled !== false ? "Active" : "Disabled"}
                   </Badge>
                 </div>
@@ -180,7 +187,7 @@ export default function ShopifyThemePage() {
       {/* Edit Settings Dialog */}
       <Dialog
         open={editingSection !== null}
-        onOpenChange={(open) => !open && setEditingSection(null)}
+        onOpenChange={open => !open && setEditingSection(null)}
       >
         <DialogContent>
           <DialogHeader>
@@ -195,8 +202,8 @@ export default function ShopifyThemePage() {
               <Input
                 placeholder="Enter heading text..."
                 value={editSettings.heading ?? ""}
-                onChange={(e) =>
-                  setEditSettings((s) => ({ ...s, heading: e.target.value }))
+                onChange={e =>
+                  setEditSettings(s => ({ ...s, heading: e.target.value }))
                 }
               />
             </div>
@@ -205,8 +212,8 @@ export default function ShopifyThemePage() {
               <Input
                 placeholder="Enter subheading text..."
                 value={editSettings.subheading ?? ""}
-                onChange={(e) =>
-                  setEditSettings((s) => ({ ...s, subheading: e.target.value }))
+                onChange={e =>
+                  setEditSettings(s => ({ ...s, subheading: e.target.value }))
                 }
               />
             </div>
@@ -220,7 +227,6 @@ export default function ShopifyThemePage() {
               onClick={() => {
                 if (!editingSection) return;
                 updateSection.mutate({
-                  tenantId: 1,
                   section: editingSection,
                   settings: editSettings,
                 });
