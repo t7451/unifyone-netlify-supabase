@@ -14,7 +14,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
+  AlertTriangle,
   ArrowRight,
   ArrowUpRight,
   BadgeDollarSign,
@@ -56,6 +58,17 @@ export default function RevenueCommand() {
   );
   const currentPlan = subscriptionStatus.data?.plan?.name ?? "No paid plan";
   const paidPlans = [PLAN_CATALOG_BY_SLUG.pro, PLAN_CATALOG_BY_SLUG.scale];
+
+  const summaryLoading =
+    leadsStats.isLoading ||
+    revenueSummary.isLoading ||
+    affiliateSummary.isLoading ||
+    subscriptionStatus.isLoading;
+  const summaryError =
+    leadsStats.isError ||
+    revenueSummary.isError ||
+    affiliateSummary.isError ||
+    subscriptionStatus.isError;
 
   const funnelStages = [
     {
@@ -177,53 +190,77 @@ export default function RevenueCommand() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Card className="border-emerald-500/20 bg-emerald-500/5">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">
-              Tracked Monthly Revenue
-            </p>
-            <p className="text-2xl font-bold text-emerald-400 mt-1">
-              {money(monthlyRevenue)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              {mrrProgress}% of {money(MRR_TARGET)} MRR target
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Lead Pipeline</p>
-            <p className="text-2xl font-bold mt-1">
-              {leadsStats.data?.total ?? 0}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              {leadsStats.data?.qualified ?? 0} qualified /{" "}
-              {leadsStats.data?.converted ?? 0} converted
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Affiliate Monthly</p>
-            <p className="text-2xl font-bold text-teal-400 mt-1">
-              {money(affiliateRevenue)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              {affiliateSummary.data?.activeCount ?? 0} active programs
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Current Tenant Plan</p>
-            <p className="text-2xl font-bold mt-1">{currentPlan}</p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Status: {subscriptionStatus.data?.status ?? "none"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {summaryError && (
+        <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          Some revenue metrics failed to load. Showing the latest available
+          values.
+        </div>
+      )}
+
+      {summaryLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map(i => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <Skeleton className="h-3 w-28" />
+                <Skeleton className="h-8 w-24 mt-2" />
+                <Skeleton className="h-3 w-32 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <Card className="border-emerald-500/20 bg-emerald-500/5">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">
+                Tracked Monthly Revenue
+              </p>
+              <p className="text-2xl font-bold text-emerald-400 mt-1">
+                {money(monthlyRevenue)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {mrrProgress}% of {money(MRR_TARGET)} MRR target
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Lead Pipeline</p>
+              <p className="text-2xl font-bold mt-1">
+                {leadsStats.data?.total ?? 0}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {leadsStats.data?.qualified ?? 0} qualified /{" "}
+                {leadsStats.data?.converted ?? 0} converted
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Affiliate Monthly</p>
+              <p className="text-2xl font-bold text-teal-400 mt-1">
+                {money(affiliateRevenue)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                {affiliateSummary.data?.activeCount ?? 0} active programs
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">
+                Current Tenant Plan
+              </p>
+              <p className="text-2xl font-bold mt-1">{currentPlan}</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Status: {subscriptionStatus.data?.status ?? "none"}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6">
         <Card>
