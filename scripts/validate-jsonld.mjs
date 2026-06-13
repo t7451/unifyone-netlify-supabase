@@ -29,6 +29,8 @@ const REQUIRED_TOOLS = [
   "EarningsConsolidator.tsx",
   "ResellerBreakEven.tsx",
   "CashflowTracker.tsx",
+  "SETaxCalculator.tsx",
+  "GigHourlyRate.tsx",
 ];
 
 let failures = 0;
