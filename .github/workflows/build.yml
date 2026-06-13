@@ -11,6 +11,12 @@ on:
 permissions:
   contents: read
 
+# Cancel superseded runs for the same ref so an outdated commit doesn't keep a
+# runner (or report a spurious failure when GitHub Actions can't assign one).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
