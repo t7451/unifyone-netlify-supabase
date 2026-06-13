@@ -56,7 +56,7 @@ export default async (req: Request) => {
 
     const { data: events, error } = await supabase
       .from("credit_usage_events")
-      .select("tenant_id, amount")
+      .select("tenant_id, amount_credits")
       .gte("created_at", hourStart.toISOString())
       .lt("created_at", hourEnd.toISOString());
 
@@ -75,7 +75,7 @@ export default async (req: Request) => {
     for (const e of events) {
       const tid = e.tenant_id ?? "global";
       if (!byTenant[tid]) byTenant[tid] = { total: 0, count: 0 };
-      byTenant[tid].total += Number(e.amount ?? 0);
+      byTenant[tid].total += Number(e.amount_credits ?? 0);
       byTenant[tid].count += 1;
     }
 
