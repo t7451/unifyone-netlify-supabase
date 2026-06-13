@@ -177,6 +177,23 @@ export default function Team() {
               </div>
             ))}
           </div>
+        ) : members.isError ? (
+          <div className="p-12 text-center">
+            <XCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+            <p className="text-gray-400 font-medium">
+              Failed to load team members
+            </p>
+            <p className="text-gray-600 text-sm mt-1">
+              {members.error?.message || "Something went wrong."}
+            </p>
+            <Button
+              variant="ghost"
+              className="mt-3 border border-white/10 text-gray-300 hover:bg-white/5"
+              onClick={() => members.refetch()}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" /> Retry
+            </Button>
+          </div>
         ) : (members.data ?? []).length === 0 ? (
           <div className="p-12 text-center">
             <Users className="w-10 h-10 text-gray-600 mx-auto mb-3" />
@@ -300,6 +317,49 @@ export default function Team() {
           </table>
         )}
       </div>
+
+      {/* Invites loading */}
+      {isAdmin && invites.isLoading && (
+        <div className="rounded-xl border border-border overflow-hidden">
+          <div className="px-4 py-3 bg-white/3 border-b border-border flex items-center gap-2">
+            <Clock className="w-4 h-4 text-amber-400" />
+            <span className="text-gray-300 text-sm font-medium">Invites</span>
+          </div>
+          <div className="divide-y divide-border">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3">
+                <Skeleton className="h-3.5 w-40" />
+                <Skeleton className="h-6 w-16 rounded-full" />
+                <Skeleton className="h-3 w-20 ml-auto" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Invites error */}
+      {isAdmin && invites.isError && (
+        <div className="rounded-xl border border-border overflow-hidden">
+          <div className="px-4 py-3 bg-white/3 border-b border-border flex items-center gap-2">
+            <Clock className="w-4 h-4 text-amber-400" />
+            <span className="text-gray-300 text-sm font-medium">Invites</span>
+          </div>
+          <div className="p-8 text-center">
+            <XCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
+            <p className="text-gray-400 text-sm">Failed to load invites</p>
+            <p className="text-gray-600 text-xs mt-1">
+              {invites.error?.message || "Something went wrong."}
+            </p>
+            <Button
+              variant="ghost"
+              className="mt-3 border border-white/10 text-gray-300 hover:bg-white/5"
+              onClick={() => invites.refetch()}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" /> Retry
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Pending Invites */}
       {isAdmin && pendingInvites.length > 0 && (
