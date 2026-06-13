@@ -673,19 +673,21 @@ export default function Home() {
   return (
     <PublicLayout>
       <Helmet>
-        <title>UnifyOne | AI-Powered Multi-Tenant Commerce Platform</title>
+        <title>
+          UnifyOne by 1Commerce — Gig Earnings, Tax Tools & Commerce Platform
+        </title>
         <meta
           name="description"
-          content="UnifyOne is the multi-tenant commerce platform for gig operators and e-commerce teams. AI-powered earnings insights, order management, and Shopify integration."
+          content="Track income across DoorDash, Uber Eats & Instacart, calculate quarterly taxes, and manage multi-tenant commerce — all in one platform. Free to start."
         />
         <link rel="canonical" href={CANONICAL} />
         <meta
           property="og:title"
-          content="UnifyOne | AI-Powered Multi-Tenant Commerce Platform"
+          content="UnifyOne by 1Commerce — Gig Earnings, Tax Tools & Commerce Platform"
         />
         <meta
           property="og:description"
-          content="Commerce infrastructure engineered like a cathedral — sequential, structural, and built to outlast every platform trend. AI-powered insights for gig operators. Start free."
+          content="Track income across DoorDash, Uber Eats & Instacart, calculate quarterly taxes, and manage multi-tenant commerce — all in one platform. Free to start."
         />
         <meta property="og:url" content={CANONICAL} />
         <meta property="og:type" content="website" />
