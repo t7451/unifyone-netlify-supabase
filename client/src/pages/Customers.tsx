@@ -28,6 +28,7 @@ import {
   Loader2,
   ChevronRight,
   Package,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRealtimeTable } from "@/lib/supabaseRealtime";
@@ -558,6 +559,11 @@ export default function Customers() {
                   <div className="flex items-center gap-2 text-gray-500 text-sm py-4">
                     <Loader2 className="w-4 h-4 animate-spin" /> Loading
                     orders...
+                  </div>
+                ) : customerOrders.isError ? (
+                  <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    Failed to load order history. Please try again.
                   </div>
                 ) : customerOrderList.length === 0 ? (
                   <div className="text-center py-6 text-gray-500">
