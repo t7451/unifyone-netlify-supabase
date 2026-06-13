@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trackActivation } from "@/lib/userTracking";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -151,6 +152,8 @@ export default function TenantSetup() {
 
   const createTenant = trpc.tenant.create.useMutation({
     onSuccess: tenant => {
+      // Funnel: tenant creation is the mandatory first-value gate after signup.
+      trackActivation("tenant_created");
       setCreatedTenantId(tenant.id);
       setDemoSeeded(false);
       setStep(2);
