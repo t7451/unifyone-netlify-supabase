@@ -57,7 +57,7 @@ export default function GigEarningsOptimizer() {
     <div className="min-h-screen bg-background text-foreground">
       <PageHead
         title="Gig Earnings Optimizer — Maximize Net Pay Across DoorDash, Uber, Instacart | UnifyOne"
-        description="Find out which gig apps, zones, and shifts generate the highest net pay after expenses. UnifyOne's GigIQ engine compares your real earnings across DoorDash, Uber Eats, Instacart, and more."
+        description="Find which gig apps and shifts generate the highest net pay after expenses. UnifyOne compares real net earnings per hour across all platforms."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />
@@ -198,6 +198,70 @@ export default function GigEarningsOptimizer() {
                   {a}
                 </p>
               </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">
+            Authoritative resources for gig worker earnings
+          </h2>
+          <ul className="space-y-2">
+            {[
+              {
+                label: "IRS: Standard Mileage Rates",
+                href: "https://www.irs.gov/tax-professionals/standard-mileage-rates",
+              },
+              {
+                label:
+                  "IRS: Self-Employment Tax (Social Security and Medicare)",
+                href: "https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes",
+              },
+            ].map(({ label, href }) => (
+              <li key={href}>
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline"
+                >
+                  {label} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">
+            Related tools and guides
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {[
+              {
+                label: "Gig Income Aggregator",
+                href: "/gig-income-aggregator",
+              },
+              {
+                label: "Financial Intelligence for Gig Workers",
+                href: "/financial-intelligence-gig-workers",
+              },
+              {
+                label: "Route Intelligence for Gig Drivers",
+                href: "/gig-route-intelligence",
+              },
+              {
+                label: "Mileage Deduction Calculator",
+                href: "/tools/mileage-deduction-calculator",
+              },
+            ].map(({ label, href }) => (
+              <Link
+                key={href}
+                href={href}
+                className="rounded-lg border p-4 text-sm font-medium hover:bg-muted transition-colors block"
+              >
+                {label} →
+              </Link>
             ))}
           </div>
         </section>
