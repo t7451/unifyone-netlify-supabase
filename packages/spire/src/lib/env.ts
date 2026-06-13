@@ -20,6 +20,10 @@ const schema = {
   MAILERLITE_API_KEY: z.string().optional(),
   DIGEST_TO_EMAIL: z.string().email().optional(),
   DIGEST_TO_NAME: z.string().optional(),
+  // Verified MailerLite sender + recipient group for the weekly digest campaign.
+  DIGEST_FROM_EMAIL: z.string().email().optional(),
+  DIGEST_FROM_NAME: z.string().optional(),
+  DIGEST_GROUP_NAME: z.string().optional(),
   SPIRE_MODEL: z.string().default("claude-opus-4-7"),
   SPIRE_TICK_BRIEFS_PER_RUN: z
     .string()
