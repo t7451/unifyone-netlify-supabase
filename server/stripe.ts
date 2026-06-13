@@ -994,8 +994,8 @@ export function registerStripeRoutes(app: Express) {
               im_click_id: imClickId || "",
             },
             automatic_tax: { enabled: true },
-            success_url: `${baseUrl}/dashboard?stripe=success`,
-            cancel_url: `${baseUrl}/checkout?stripe=cancelled`,
+            success_url: `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${baseUrl}/pricing?stripe=cancelled`,
           });
           return res.json({ url: session.url });
         }
@@ -1033,8 +1033,8 @@ export function registerStripeRoutes(app: Express) {
             customer_email: effectiveUserEmail || "",
             customer_name: userName || "",
           },
-          success_url: `${baseUrl}/dashboard?stripe=success`,
-          cancel_url: `${baseUrl}/checkout?stripe=cancelled`,
+          success_url: `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${baseUrl}/pricing?stripe=cancelled`,
         });
 
         res.json({ url: session.url });
@@ -1793,8 +1793,8 @@ export async function registerStripeFetchRoutes(
             im_click_id: imClickId || "",
           },
           automatic_tax: { enabled: true },
-          success_url: `${baseUrl}/dashboard?stripe=success`,
-          cancel_url: `${baseUrl}/checkout?stripe=cancelled`,
+          success_url: `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${baseUrl}/pricing?stripe=cancelled`,
         });
         return Response.json({ url: session.url });
       }
@@ -1832,8 +1832,8 @@ export async function registerStripeFetchRoutes(
           customer_email: userEmail || "",
           customer_name: userName || "",
         },
-        success_url: `${baseUrl}/dashboard?stripe=success`,
-        cancel_url: `${baseUrl}/checkout?stripe=cancelled`,
+        success_url: `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/pricing?stripe=cancelled`,
       });
 
       return Response.json({ url: session.url });

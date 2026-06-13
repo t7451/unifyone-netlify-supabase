@@ -68,9 +68,25 @@ export async function buildNonTrpcHandler(): Promise<
     })
   );
 
+  const { registerNeonAuthFetchRoutes } = await import(
+    "../neonAuthWebhook"
+  ).catch(() => ({
+    registerNeonAuthFetchRoutes: null as unknown as FetchHandler | null,
+  }));
+
   return async (req: Request): Promise<Response | null> => {
     const url = new URL(req.url);
     const path = url.pathname;
+
+    // Neon Auth webhooks
+    if (path === "/api/neon/auth-webhook" && registerNeonAuthFetchRoutes) {
+      try {
+        const result = await (registerNeonAuthFetchRoutes as FetchHandler)(req);
+        if (result) return result;
+      } catch (e: unknown) {
+        return Response.json({ error: (e as Error).message }, { status: 500 });
+      }
+    }
 
     // Stripe webhooks
     if (path.startsWith("/api/stripe/") && registerStripeFetchRoutes) {
@@ -192,9 +208,9 @@ export async function buildNonTrpcHandler(): Promise<
       registerClipsToolkitFetchRoutes
     ) {
       try {
-        const result = await (
-          registerClipsToolkitFetchRoutes as FetchHandler
-        )(req);
+        const result = await (registerClipsToolkitFetchRoutes as FetchHandler)(
+          req
+        );
         if (result) return result;
       } catch (e: unknown) {
         return Response.json({ error: (e as Error).message }, { status: 500 });
