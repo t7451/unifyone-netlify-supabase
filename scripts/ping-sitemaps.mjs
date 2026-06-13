@@ -55,4 +55,8 @@ for (const url of PING_URLS) {
 // Also ping llms.txt freshness (no standard ping endpoint — just log for manual awareness)
 console.log(`[sitemap-ping] llms.txt live at ${siteUrl}/llms.txt`);
 
-process.exit(allOk ? 0 : 1);
+// Always exit 0 — ping failures are non-critical warnings, not build errors
+if (!allOk) {
+  console.warn("[sitemap-ping] One or more pings failed — deploy continues normally.");
+}
+process.exit(0);
