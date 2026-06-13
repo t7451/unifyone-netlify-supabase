@@ -7,6 +7,15 @@ import { MapView } from "@/components/Map";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,14 +118,26 @@ export default function GigCommand() {
   const [showEndForm, setShowEndForm] = useState(false);
 
   // tRPC queries
-  const { data: activeShift, refetch: refetchActive } =
-    trpc.moneyManager.getActiveShift.useQuery(undefined, {
-      refetchInterval: timerActive ? 30000 : false,
-    });
-  const { data: mileageSummary } = trpc.moneyManager.getMileageSummary.useQuery(
-    { year: new Date().getFullYear() }
-  );
-  const { data: shiftsData } = trpc.moneyManager.listShifts.useQuery({
+  const {
+    data: activeShift,
+    refetch: refetchActive,
+    isLoading: loadingActive,
+    isError: activeError,
+  } = trpc.moneyManager.getActiveShift.useQuery(undefined, {
+    refetchInterval: timerActive ? 30000 : false,
+  });
+  const {
+    data: mileageSummary,
+    isLoading: loadingMileage,
+    isError: mileageError,
+  } = trpc.moneyManager.getMileageSummary.useQuery({
+    year: new Date().getFullYear(),
+  });
+  const {
+    data: shiftsData,
+    isLoading: loadingShifts,
+    isError: shiftsError,
+  } = trpc.moneyManager.listShifts.useQuery({
     limit: 10,
     offset: 0,
   });
@@ -125,6 +146,7 @@ export default function GigCommand() {
     data: routeIntelligence,
     refetch: refetchIntelligence,
     isFetching: fetchingIntel,
+    isError: intelError,
   } = trpc.moneyManager.getRouteIntelligence.useQuery(
     {
       lat: intelligencePos?.lat ?? 47.6062,
@@ -135,10 +157,18 @@ export default function GigCommand() {
   );
 
   // tRPC mutations
-  const startShift = trpc.moneyManager.startShift.useMutation();
-  const endShift = trpc.moneyManager.endShift.useMutation();
-  const updateGPS = trpc.moneyManager.updateShiftGPS.useMutation();
-  const generateShortcuts = trpc.moneyManager.generateAIShortcuts.useMutation();
+  const startShift = trpc.moneyManager.startShift.useMutation({
+    onError: e => toast.error(e.message),
+  });
+  const endShift = trpc.moneyManager.endShift.useMutation({
+    onError: e => toast.error(e.message),
+  });
+  const updateGPS = trpc.moneyManager.updateShiftGPS.useMutation({
+    onError: e => toast.error(e.message),
+  });
+  const generateShortcuts = trpc.moneyManager.generateAIShortcuts.useMutation({
+    onError: e => toast.error(e.message),
+  });
   const { data: gigSubscription } = trpc.gigWorker.getSubscription.useQuery();
   const [shortcuts, setShortcuts] = useState<
     Array<{
@@ -216,12 +246,16 @@ export default function GigCommand() {
     if (!timerActive || !activeShift || !currentPos) return;
     const interval = setInterval(async () => {
       if (currentPos) {
-        await updateGPS.mutateAsync({
-          shiftId: activeShift.id,
-          lat: currentPos.lat,
-          lng: currentPos.lng,
-          appendWaypoint: true,
-        });
+        // A failed GPS sync should not throw unhandled; the mutation's
+        // onError already surfaces a toast.
+        await updateGPS
+          .mutateAsync({
+            shiftId: activeShift.id,
+            lat: currentPos.lat,
+            lng: currentPos.lng,
+            appendWaypoint: true,
+          })
+          .catch(() => {});
       }
     }, 60000);
     gpsIntervalRef.current = interval;
@@ -346,8 +380,10 @@ export default function GigCommand() {
             <div className="flex items-center gap-2 text-sm text-violet-200">
               <span className="text-violet-400">⚡</span>
               <span>
-                <strong>{gigSubscription.plan.name}</strong> — {gigSubscription.aiCreditsRemaining} AI credits remaining this month.
-                Upgrade for route optimizer, tax export &amp; more AI credits.
+                <strong>{gigSubscription.plan.name}</strong> —{" "}
+                {gigSubscription.aiCreditsRemaining} AI credits remaining this
+                month. Upgrade for route optimizer, tax export &amp; more AI
+                credits.
               </span>
             </div>
             <Button
@@ -372,7 +408,18 @@ export default function GigCommand() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {!timerActive ? (
+                {loadingActive ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-9 w-full" />
+                    <Skeleton className="h-9 w-full" />
+                  </div>
+                ) : activeError ? (
+                  <div className="flex flex-col items-center gap-2 py-4 text-center text-sm text-muted-foreground">
+                    <AlertTriangle className="h-5 w-5 text-amber-400" />
+                    <p>Could not load shift status. Try again later.</p>
+                  </div>
+                ) : !timerActive ? (
                   <>
                     <div className="space-y-2">
                       <Label className="text-xs text-muted-foreground">
@@ -535,9 +582,15 @@ export default function GigCommand() {
                       YTD Miles
                     </span>
                   </div>
-                  <p className="text-xl font-bold text-foreground">
-                    {(mileageSummary?.totalMiles ?? 0).toFixed(0)}
-                  </p>
+                  {loadingMileage ? (
+                    <Skeleton className="h-7 w-16" />
+                  ) : (
+                    <p className="text-xl font-bold text-foreground">
+                      {mileageError
+                        ? "—"
+                        : (mileageSummary?.totalMiles ?? 0).toFixed(0)}
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground">miles logged</p>
                 </CardContent>
               </Card>
@@ -549,9 +602,13 @@ export default function GigCommand() {
                       Tax Deduction
                     </span>
                   </div>
-                  <p className="text-xl font-bold text-foreground">
-                    ${ytdDeduction.toFixed(0)}
-                  </p>
+                  {loadingMileage ? (
+                    <Skeleton className="h-7 w-16" />
+                  ) : (
+                    <p className="text-xl font-bold text-foreground">
+                      {mileageError ? "—" : `$${ytdDeduction.toFixed(0)}`}
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     YTD @ $0.70/mi
                   </p>
@@ -747,8 +804,18 @@ export default function GigCommand() {
                     </p>
                   </div>
                 ) : fetchingIntel ? (
-                  <div className="text-center py-6 text-muted-foreground text-sm animate-pulse">
-                    Analyzing demand patterns…
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Skeleton className="h-16 w-full" />
+                      <Skeleton className="h-16 w-full" />
+                    </div>
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ) : intelError ? (
+                  <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-muted-foreground">
+                    <AlertTriangle className="h-6 w-6 text-amber-400" />
+                    <p>Could not load route intelligence. Try refreshing.</p>
                   </div>
                 ) : routeIntelligence ? (
                   <div className="space-y-4">
@@ -860,73 +927,79 @@ export default function GigCommand() {
                 </div>
 
                 {/* Recent shifts table */}
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-border/50">
-                        <th className="text-left py-2 px-2 text-muted-foreground font-medium">
-                          Date
-                        </th>
-                        <th className="text-left py-2 px-2 text-muted-foreground font-medium">
-                          Platform
-                        </th>
-                        <th className="text-right py-2 px-2 text-muted-foreground font-medium">
-                          Miles
-                        </th>
-                        <th className="text-right py-2 px-2 text-muted-foreground font-medium">
-                          Earnings
-                        </th>
-                        <th className="text-right py-2 px-2 text-muted-foreground font-medium">
-                          Deduction
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentShifts.slice(0, 8).map(shift => {
-                        const miles = parseFloat(String(shift.totalMiles));
-                        const earnings =
-                          parseFloat(String(shift.grossEarnings)) +
-                          parseFloat(String(shift.tips));
-                        const deduction = miles * IRS_RATE;
-                        return (
-                          <tr
-                            key={shift.id}
-                            className="border-b border-border/20 hover:bg-muted/20 transition-colors"
-                          >
-                            <td className="py-2 px-2 text-muted-foreground">
-                              {new Date(shift.startTime).toLocaleDateString(
-                                "en-US",
-                                { month: "short", day: "numeric" }
-                              )}
-                            </td>
-                            <td className="py-2 px-2 text-foreground">
-                              {shift.platform}
-                            </td>
-                            <td className="py-2 px-2 text-right text-foreground">
-                              {miles.toFixed(1)}
-                            </td>
-                            <td className="py-2 px-2 text-right text-emerald-400">
-                              ${earnings.toFixed(2)}
-                            </td>
-                            <td className="py-2 px-2 text-right text-amber-400">
-                              ${deduction.toFixed(2)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {(!recentShifts || recentShifts.length === 0) && (
-                        <tr>
-                          <td
-                            colSpan={5}
-                            className="py-6 text-center text-muted-foreground"
-                          >
-                            No shifts logged yet. Start your first shift above.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                {loadingShifts ? (
+                  <div className="space-y-2">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <Skeleton key={i} className="h-8 w-full" />
+                    ))}
+                  </div>
+                ) : shiftsError ? (
+                  <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-muted-foreground">
+                    <AlertTriangle className="h-6 w-6 text-amber-400" />
+                    <p>Could not load shifts. Try again later.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table className="text-xs">
+                      <TableHeader>
+                        <TableRow className="border-border/50">
+                          <TableHead>Date</TableHead>
+                          <TableHead>Platform</TableHead>
+                          <TableHead className="text-right">Miles</TableHead>
+                          <TableHead className="text-right">Earnings</TableHead>
+                          <TableHead className="text-right">
+                            Deduction
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {recentShifts.slice(0, 8).map(shift => {
+                          const miles = parseFloat(String(shift.totalMiles));
+                          const earnings =
+                            parseFloat(String(shift.grossEarnings)) +
+                            parseFloat(String(shift.tips));
+                          const deduction = miles * IRS_RATE;
+                          return (
+                            <TableRow
+                              key={shift.id}
+                              className="border-border/20 hover:bg-muted/20"
+                            >
+                              <TableCell className="text-muted-foreground">
+                                {new Date(shift.startTime).toLocaleDateString(
+                                  "en-US",
+                                  { month: "short", day: "numeric" }
+                                )}
+                              </TableCell>
+                              <TableCell className="text-foreground">
+                                {shift.platform}
+                              </TableCell>
+                              <TableCell className="text-right text-foreground">
+                                {miles.toFixed(1)}
+                              </TableCell>
+                              <TableCell className="text-right text-emerald-400">
+                                ${earnings.toFixed(2)}
+                              </TableCell>
+                              <TableCell className="text-right text-amber-400">
+                                ${deduction.toFixed(2)}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                        {recentShifts.length === 0 && (
+                          <TableRow>
+                            <TableCell
+                              colSpan={5}
+                              className="py-6 text-center text-muted-foreground"
+                            >
+                              No shifts logged yet. Start your first shift
+                              above.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
