@@ -38,7 +38,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
       "IRS mileage rate",
       "tax deduction calculator",
     ],
-    live: false,
+    live: true,
   },
   {
     slug: "earnings-consolidator",
@@ -69,7 +69,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
       "1099 taxes",
       "safe harbor",
     ],
-    live: false,
+    live: true,
   },
   {
     slug: "reseller-break-even",
