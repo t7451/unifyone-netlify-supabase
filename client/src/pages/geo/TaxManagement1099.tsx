@@ -298,6 +298,10 @@ export default function TaxManagement1099() {
                 href: "/tools/quarterly-tax-estimator",
               },
               {
+                label: "Self-Employment Tax Calculator",
+                href: "/tools/se-tax-calculator",
+              },
+              {
                 label: "IRS Mileage Deduction Calculator",
                 href: "/tools/mileage-deduction-calculator",
               },

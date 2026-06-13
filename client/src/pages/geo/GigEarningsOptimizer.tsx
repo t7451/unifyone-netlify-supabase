@@ -251,6 +251,10 @@ export default function GigEarningsOptimizer() {
                 href: "/gig-route-intelligence",
               },
               {
+                label: "Real Hourly Rate Calculator",
+                href: "/tools/gig-hourly-rate",
+              },
+              {
                 label: "Mileage Deduction Calculator",
                 href: "/tools/mileage-deduction-calculator",
               },
@@ -282,10 +286,10 @@ export default function GigEarningsOptimizer() {
               Compare your platforms →
             </Link>
             <Link
-              href="/gig-income-aggregator"
+              href="/tools/gig-hourly-rate"
               className="inline-flex items-center justify-center rounded-md border px-6 py-3 text-sm font-medium hover:bg-muted transition-colors"
             >
-              See income aggregation
+              Try the free hourly rate calculator
             </Link>
           </div>
         </section>
