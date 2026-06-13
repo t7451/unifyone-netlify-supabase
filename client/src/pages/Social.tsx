@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Twitter,
@@ -124,10 +125,16 @@ export default function Social() {
   const [campaignTag, setCampaignTag] = useState("");
   const [aiPosts, setAiPosts] = useState<Record<string, string>>({});
   // Queries
-  const { data: posts, refetch: refetchPosts } = trpc.social.list.useQuery({
+  const {
+    data: posts,
+    refetch: refetchPosts,
+    isLoading: postsLoading,
+    isError: postsError,
+  } = trpc.social.list.useQuery({
     status: "all",
   });
-  const { data: analytics } = trpc.social.getAnalytics.useQuery();
+  const { data: analytics, isLoading: analyticsLoading } =
+    trpc.social.getAnalytics.useQuery();
 
   // Mutations
   const aiCompose = trpc.social.aiCompose.useMutation({
@@ -177,6 +184,7 @@ export default function Social() {
         `+${data.creditsAwarded} credits earned and credited to your wallet!`
       );
     },
+    onError: e => toast.error(e.message),
   });
 
   const togglePlatform = (p: Platform) => {
@@ -225,42 +233,56 @@ export default function Social() {
 
       {/* Analytics Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          {
-            label: "Total Posts",
-            value: analytics?.totalPosts ?? 0,
-            icon: Globe,
-            color: "text-violet-400",
-          },
-          {
-            label: "Published",
-            value: analytics?.published ?? 0,
-            icon: CheckCircle2,
-            color: "text-emerald-400",
-          },
-          {
-            label: "Scheduled",
-            value: analytics?.scheduled ?? 0,
-            icon: Clock,
-            color: "text-amber-400",
-          },
-          {
-            label: "Drafts",
-            value: analytics?.drafts ?? 0,
-            icon: FileEdit,
-            color: "text-muted-foreground",
-          },
-        ].map(stat => (
-          <Card key={stat.label} className="bg-card/50">
-            <CardContent className="p-4 flex items-center gap-3">
-              <stat.icon className={`h-8 w-8 ${stat.color}`} />
-              <div>
-                <p className="text-2xl font-bold">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {analyticsLoading
+          ? [...Array(4)].map((_, i) => (
+              <Card key={i} className="bg-card/50">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <Skeleton className="h-8 w-8 rounded-md shrink-0" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-6 w-10" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          : [
+              {
+                label: "Total Posts",
+                value: analytics?.totalPosts ?? 0,
+                icon: Globe,
+                color: "text-violet-400",
+              },
+              {
+                label: "Published",
+                value: analytics?.published ?? 0,
+                icon: CheckCircle2,
+                color: "text-emerald-400",
+              },
+              {
+                label: "Scheduled",
+                value: analytics?.scheduled ?? 0,
+                icon: Clock,
+                color: "text-amber-400",
+              },
+              {
+                label: "Drafts",
+                value: analytics?.drafts ?? 0,
+                icon: FileEdit,
+                color: "text-muted-foreground",
+              },
+            ].map(stat => (
+              <Card key={stat.label} className="bg-card/50">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <stat.icon className={`h-8 w-8 ${stat.color}`} />
+                  <div>
+                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {stat.label}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
       </div>
 
       <div className="grid lg:grid-cols-5 gap-6">
@@ -515,102 +537,136 @@ export default function Social() {
                   tab => (
                     <TabsContent key={tab} value={tab} className="mt-0">
                       <div className="divide-y divide-border max-h-[520px] overflow-y-auto">
-                        {(posts ?? [])
-                          .filter(p => tab === "all" || p.status === tab)
-                          .map(post => {
-                            const statusCfg =
-                              STATUS_CONFIG[
-                                post.status as keyof typeof STATUS_CONFIG
-                              ] ?? STATUS_CONFIG.draft;
-                            const platforms =
-                              (post.platforms as string[]) ?? [];
-                            return (
-                              <div
-                                key={post.id}
-                                className="p-3 space-y-2 hover:bg-muted/30 transition-colors"
-                              >
+                        {postsLoading ? (
+                          <div className="p-3 space-y-3">
+                            {[...Array(3)].map((_, i) => (
+                              <div key={i} className="space-y-2">
                                 <div className="flex items-start justify-between gap-2">
-                                  <p className="text-xs text-foreground line-clamp-2 flex-1">
-                                    {post.content}
-                                  </p>
-                                  <Badge
-                                    variant={statusCfg.badge}
-                                    className="text-[10px] shrink-0"
-                                  >
-                                    {statusCfg.label}
-                                  </Badge>
+                                  <Skeleton className="h-3 w-3/4" />
+                                  <Skeleton className="h-4 w-16 rounded-full shrink-0" />
                                 </div>
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  {platforms.map(p => {
-                                    const cfg = PLATFORMS.find(x => x.id === p);
-                                    if (!cfg) return null;
-                                    return (
-                                      <span
-                                        key={p}
-                                        className={`text-[10px] px-1.5 py-0.5 rounded border ${cfg.bg} ${cfg.color}`}
-                                      >
-                                        {cfg.label}
-                                      </span>
-                                    );
-                                  })}
-                                  {post.campaignTag && (
-                                    <span className="text-[10px] text-muted-foreground">
-                                      #{post.campaignTag}
-                                    </span>
-                                  )}
-                                  {post.aiGenerated && (
-                                    <span className="text-[10px] text-violet-400 flex items-center gap-0.5">
-                                      <Sparkles className="h-2.5 w-2.5" /> AI
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[10px] text-muted-foreground flex-1">
-                                    {post.scheduledAt
-                                      ? `Scheduled: ${new Date(post.scheduledAt).toLocaleDateString()}`
-                                      : new Date(
-                                          post.createdAt
-                                        ).toLocaleDateString()}
-                                  </span>
-                                  {post.status === "draft" ||
-                                  post.status === "scheduled" ? (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-6 text-[10px] px-2 text-emerald-400 border-emerald-400/30 hover:bg-emerald-400/10"
-                                      disabled={publishPost.isPending}
-                                      onClick={() =>
-                                        handlePublishAndEarn(
-                                          post.id,
-                                          platforms[0] as Platform
-                                        )
-                                      }
-                                    >
-                                      <Send className="h-2.5 w-2.5 mr-1" />{" "}
-                                      Publish & Earn
-                                    </Button>
-                                  ) : null}
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-6 w-6 p-0 text-muted-foreground hover:text-red-400"
-                                    onClick={() =>
-                                      deletePost.mutate({ postId: post.id })
-                                    }
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
+                                <Skeleton className="h-3 w-1/2" />
                               </div>
-                            );
-                          })}
-                        {(posts ?? []).filter(
-                          p => tab === "all" || p.status === tab
-                        ).length === 0 && (
-                          <div className="p-8 text-center text-muted-foreground text-xs">
-                            <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                            No {tab === "all" ? "" : tab} posts yet
+                            ))}
                           </div>
+                        ) : postsError ? (
+                          <div className="p-8 text-center text-muted-foreground text-xs">
+                            <AlertCircle className="h-8 w-8 mx-auto mb-2 text-red-400/60" />
+                            Failed to load posts. Please try again.
+                            <div className="mt-3">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs"
+                                onClick={() => refetchPosts()}
+                              >
+                                Retry
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            {(posts ?? [])
+                              .filter(p => tab === "all" || p.status === tab)
+                              .map(post => {
+                                const statusCfg =
+                                  STATUS_CONFIG[
+                                    post.status as keyof typeof STATUS_CONFIG
+                                  ] ?? STATUS_CONFIG.draft;
+                                const platforms =
+                                  (post.platforms as string[]) ?? [];
+                                return (
+                                  <div
+                                    key={post.id}
+                                    className="p-3 space-y-2 hover:bg-muted/30 transition-colors"
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <p className="text-xs text-foreground line-clamp-2 flex-1">
+                                        {post.content}
+                                      </p>
+                                      <Badge
+                                        variant={statusCfg.badge}
+                                        className="text-[10px] shrink-0"
+                                      >
+                                        {statusCfg.label}
+                                      </Badge>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      {platforms.map(p => {
+                                        const cfg = PLATFORMS.find(
+                                          x => x.id === p
+                                        );
+                                        if (!cfg) return null;
+                                        return (
+                                          <span
+                                            key={p}
+                                            className={`text-[10px] px-1.5 py-0.5 rounded border ${cfg.bg} ${cfg.color}`}
+                                          >
+                                            {cfg.label}
+                                          </span>
+                                        );
+                                      })}
+                                      {post.campaignTag && (
+                                        <span className="text-[10px] text-muted-foreground">
+                                          #{post.campaignTag}
+                                        </span>
+                                      )}
+                                      {post.aiGenerated && (
+                                        <span className="text-[10px] text-violet-400 flex items-center gap-0.5">
+                                          <Sparkles className="h-2.5 w-2.5" />{" "}
+                                          AI
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[10px] text-muted-foreground flex-1">
+                                        {post.scheduledAt
+                                          ? `Scheduled: ${new Date(post.scheduledAt).toLocaleDateString()}`
+                                          : new Date(
+                                              post.createdAt
+                                            ).toLocaleDateString()}
+                                      </span>
+                                      {post.status === "draft" ||
+                                      post.status === "scheduled" ? (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="h-6 text-[10px] px-2 text-emerald-400 border-emerald-400/30 hover:bg-emerald-400/10"
+                                          disabled={publishPost.isPending}
+                                          onClick={() =>
+                                            handlePublishAndEarn(
+                                              post.id,
+                                              platforms[0] as Platform
+                                            )
+                                          }
+                                        >
+                                          <Send className="h-2.5 w-2.5 mr-1" />{" "}
+                                          Publish & Earn
+                                        </Button>
+                                      ) : null}
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 w-6 p-0 text-muted-foreground hover:text-red-400"
+                                        onClick={() =>
+                                          deletePost.mutate({ postId: post.id })
+                                        }
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            {(posts ?? []).filter(
+                              p => tab === "all" || p.status === tab
+                            ).length === 0 && (
+                              <div className="p-8 text-center text-muted-foreground text-xs">
+                                <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                                No {tab === "all" ? "" : tab} posts yet
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </TabsContent>
