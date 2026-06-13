@@ -476,8 +476,8 @@ export default function ThemeStore() {
   return (
     <div className="min-h-screen bg-[#060D1F] text-white">
       <PageHead
-        title="Theme Store | UnifyOne — Premium Commerce Templates"
-        description="Browse professionally designed website templates for your UnifyOne storefront. Free and paid themes for every industry — launch faster with premium commerce designs."
+        title="Theme Store | UnifyOne — Commerce Themes & Storefront Designs"
+        description="Browse free and paid themes for your UnifyOne storefront. Professionally designed for e-commerce and gig worker platforms — preview and install in minutes."
         canonical={`${SITE_URL}/themes`}
         ogType="website"
         jsonLd={[
