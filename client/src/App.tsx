@@ -52,6 +52,7 @@ const ThemeStore = lazy(() => import("./pages/ThemeStore"));
 const MyThemes = lazy(() => import("./pages/MyThemes"));
 const AdminThemes = lazy(() => import("./pages/AdminThemes"));
 const BlogIndex = lazy(() => import("./pages/BlogIndex"));
+const ToolsIndex = lazy(() => import("./pages/ToolsIndex"));
 const Login = lazy(() => import("./pages/Login"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -519,6 +520,7 @@ function Router() {
       />
       <Route path="/documents/work-proof" component={() => <WorkProof />} />
       <Route path="/docs-chat" component={() => <DocsChat />} />
+      <Route path="/tools" component={() => <ToolsIndex />} />
       <Route path="/blog" component={() => <BlogIndex />} />
       <Route path="/chat" component={() => <NlwebChat />} />
       <Route path="/resources" component={() => <Resources />} />

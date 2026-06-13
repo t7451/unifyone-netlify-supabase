@@ -52,6 +52,7 @@ import { kaiCreditsRouter } from "./routers/kaiCredits";
 import { apiKeysRouter } from "./routers/apiKeys";
 import { sandboxRouter } from "./routers/sandbox";
 import { clipsToolkitRouter } from "./routers/clipsToolkit";
+import { discoverabilityRouter } from "./routers/discoverability";
 
 export const appRouter = router({
   system: systemRouter,
@@ -138,6 +139,7 @@ export const appRouter = router({
   apiKeys: apiKeysRouter,
   sandbox: sandboxRouter,
   clipsToolkit: clipsToolkitRouter,
+  discoverability: discoverabilityRouter,
 });
 
 export type AppRouter = typeof appRouter;

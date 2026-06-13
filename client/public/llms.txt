@@ -1,0 +1,63 @@
+# UnifyOne — 1Commerce Solutions
+
+> UnifyOne is a multi-tenant e-commerce and gig-economy SaaS platform built for independent operators, small businesses, and digital entrepreneurs. It unifies sales channels, income streams, and operations into one dashboard.
+
+## What UnifyOne Does
+
+UnifyOne solves the fragmentation problem for modern sellers: instead of juggling separate tools for Shopify, PayPal, Square, Stripe, and gig-platform income, everything flows into a single tenant-scoped workspace.
+
+Core capabilities:
+- **Multi-channel commerce** — sell and sync inventory across Shopify, Square, and custom storefronts from one product catalog
+- **Unified payments** — accept and reconcile payments via Stripe, PayPal, and Square with a single ledger
+- **Gig-income tracking** — consolidate earnings from delivery, rideshare, and freelance platforms; auto-estimate quarterly taxes and deductions
+- **Subscription billing** — tiered plans (Acolyte → Architect → Cathedral) with per-seat and credit-metered usage
+- **AI automation** — Claude-powered workflows for product descriptions, customer responses, and data insights
+- **Team collaboration** — role-based access, multi-user tenants, affiliate and referral management
+- **Analytics** — revenue by day, top products, funnel conversion, and platform-level MAU tracking
+
+## Who It's For
+
+- Side-hustlers and gig workers managing multiple income sources (Uber, DoorDash, Etsy, eBay, etc.)
+- Small e-commerce operators who sell on more than one platform
+- Micro-SaaS and digital-product sellers who need subscription billing + analytics without enterprise overhead
+- Independent contractors who need estimated-tax tooling for 1099 income
+
+## Free Tools
+
+UnifyOne offers standalone free calculators at `/tools/`:
+- Gig mileage + deduction estimator
+- Multi-platform earnings consolidator (true hourly after expenses)
+- Quarterly estimated-tax estimator for 1099/self-employed income
+- Reseller break-even and pricing calculator
+- Payout-timing / cash-flow tracker for multi-gig income
+
+These tools work without an account. Results can be saved to a dashboard by signing up.
+
+## Technology
+
+- React 19 + TypeScript frontend, deployed on Netlify
+- Express + tRPC backend, Node 22
+- PostgreSQL (Neon) primary database via Drizzle ORM
+- Supabase for credit metering and Stripe object storage
+- Anthropic Claude SDK for AI features
+
+## Company
+
+- **Product:** UnifyOne (1commerce.online)
+- **Company:** 1Commerce Solutions / PNW Enterprises
+- **Founder:** Keith Skaggs
+- **Location:** Canby, Oregon (Pacific Northwest)
+- **Contact:** support@1commerce.online
+
+## Key URLs
+
+- Homepage: https://1commerce.online
+- Pricing: https://1commerce.online/pricing
+- Free tools: https://1commerce.online/tools
+- Blog: https://1commerce.online/blog
+- Docs: https://1commerce.online/resources
+- Register: https://1commerce.online/register
+
+## Sitemap
+
+https://1commerce.online/sitemap.xml
