@@ -2,6 +2,8 @@
 
 > UnifyOne is a multi-tenant e-commerce and gig-economy SaaS platform built for independent operators, small businesses, and digital entrepreneurs. It unifies sales channels, income streams, and operations into one dashboard.
 
+Last updated: __BUILD_DATE__
+
 ## What UnifyOne Does
 
 UnifyOne solves the fragmentation problem for modern sellers and gig workers: instead of juggling separate tools for Shopify, PayPal, Square, Stripe, and gig-platform income, everything flows into a single tenant-scoped workspace powered by Kai, UnifyOne's built-in AI.

@@ -39,6 +39,18 @@ export const discoverabilityRouter = router({
     const db = await getDb();
     const since = windowStart();
 
+    if (!db) {
+      return {
+        windowDays: WINDOW_DAYS,
+        since: since.toISOString(),
+        loggedInCount: 0,
+        actionTakerCount: 0,
+        mauLowerBound: 0,
+        computedAt: new Date().toISOString(),
+        note: "Database not configured; no MAU data available.",
+      };
+    }
+
     // Users who signed in within the window (fast approximation — includes users
     // who logged in but took no further action; refine with order/product join below)
     const [loginResult] = await db
@@ -89,6 +101,17 @@ export const discoverabilityRouter = router({
       const db = await getDb();
       const since = new Date();
       since.setDate(since.getDate() - input.days);
+
+      if (!db) {
+        return {
+          days: input.days,
+          newSignups: 0,
+          byMethod: [] as { method: string | null; count: number }[],
+          totalUsers: 0,
+          activeUsers28d: 0,
+          activationRate: "0%",
+        };
+      }
 
       const signupsByMethod = await db
         .select({
