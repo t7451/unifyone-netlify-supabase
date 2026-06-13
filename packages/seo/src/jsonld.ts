@@ -89,6 +89,31 @@ export function faqPage(faqs: FaqItem[]) {
   };
 }
 
+export interface ServiceInput {
+  name: string;
+  description: string;
+  url?: string;
+  serviceType?: string;
+  areaServed?: string;
+}
+
+export function service(input: ServiceInput) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: input.name,
+    description: input.description,
+    ...(input.url ? { url: input.url } : {}),
+    ...(input.serviceType ? { serviceType: input.serviceType } : {}),
+    ...(input.areaServed ? { areaServed: input.areaServed } : {}),
+    provider: {
+      "@type": "Organization",
+      name: "1Commerce Solutions",
+      url: SITE_URL,
+    },
+  };
+}
+
 export interface BreadcrumbItem {
   name: string;
   url: string;
