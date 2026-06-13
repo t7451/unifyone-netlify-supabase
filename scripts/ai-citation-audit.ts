@@ -134,6 +134,41 @@ interface AuditReport {
   results: CitationResult[];
 }
 
+// ── OpenRouter provider (proxies Perplexity sonar for live web search) ────────
+async function queryOpenRouter(
+  query: string
+): Promise<{ text: string; citations: string[] }> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY not set");
+
+  const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    signal: AbortSignal.timeout(30000),
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://1commerce.online",
+      "X-Title": "UnifyOne Citation Audit",
+    },
+    body: JSON.stringify({
+      model: "perplexity/sonar",
+      messages: [{ role: "user", content: query }],
+      max_tokens: 512,
+    }),
+  });
+
+  if (!resp.ok)
+    throw new Error(`OpenRouter ${resp.status}: ${await resp.text()}`);
+  const data = (await resp.json()) as {
+    choices: Array<{ message: { content: string } }>;
+    citations?: string[];
+  };
+  return {
+    text: data.choices[0]?.message?.content ?? "",
+    citations: data.citations ?? [],
+  };
+}
+
 // ── Perplexity provider ───────────────────────────────────────────────────────
 async function queryPerplexity(
   query: string
@@ -263,6 +298,7 @@ async function runAudit(): Promise<AuditReport> {
     fn: (q: string) => Promise<{ text: string; citations: string[] }>;
     envKey: string;
   }> = [
+    { name: "openrouter", fn: queryOpenRouter, envKey: "OPENROUTER_API_KEY" },
     { name: "perplexity", fn: queryPerplexity, envKey: "PERPLEXITY_API_KEY" },
     { name: "openai", fn: queryOpenAI, envKey: "OPENAI_API_KEY" },
   ];
