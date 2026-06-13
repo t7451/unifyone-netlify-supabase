@@ -49,11 +49,11 @@ GigIQ's route intelligence module maps your historical earnings per zone and tim
 ## Free Tools
 
 UnifyOne offers standalone free calculators at `/tools/`:
-- Gig mileage + deduction estimator
-- Multi-platform earnings consolidator (true hourly after expenses)
-- Quarterly estimated-tax estimator for 1099/self-employed income
-- Reseller break-even and pricing calculator
-- Payout-timing / cash-flow tracker for multi-gig income
+- **Gig mileage + deduction estimator** — `/tools/mileage-deduction-calculator`
+- **Multi-platform earnings consolidator** (true hourly after expenses) — `/tools/earnings-consolidator`
+- **Quarterly estimated-tax estimator** for 1099/self-employed income — `/tools/quarterly-tax-estimator`
+- **Reseller break-even and pricing calculator** — `/tools/reseller-break-even`
+- **Payout-timing / cash-flow tracker** for multi-gig income — `/tools/cashflow-tracker`
 
 These tools work without an account. Results can be saved to a dashboard by signing up.
 

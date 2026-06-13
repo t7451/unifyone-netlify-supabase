@@ -87,6 +87,11 @@ const MileageCalculator = lazy(() => import("./pages/tools/MileageCalculator"));
 const QuarterlyTaxEstimator = lazy(
   () => import("./pages/tools/QuarterlyTaxEstimator")
 );
+const EarningsConsolidator = lazy(
+  () => import("./pages/tools/EarningsConsolidator")
+);
+const ResellerBreakEven = lazy(() => import("./pages/tools/ResellerBreakEven"));
+const CashflowTracker = lazy(() => import("./pages/tools/CashflowTracker"));
 const GigIncomeAggregator = lazy(
   () => import("./pages/geo/GigIncomeAggregator")
 );
@@ -583,6 +588,18 @@ function Router() {
       <Route
         path="/tools/quarterly-tax-estimator"
         component={() => <QuarterlyTaxEstimator />}
+      />
+      <Route
+        path="/tools/earnings-consolidator"
+        component={() => <EarningsConsolidator />}
+      />
+      <Route
+        path="/tools/reseller-break-even"
+        component={() => <ResellerBreakEven />}
+      />
+      <Route
+        path="/tools/cashflow-tracker"
+        component={() => <CashflowTracker />}
       />
       {/* GEO landing pages */}
       <Route

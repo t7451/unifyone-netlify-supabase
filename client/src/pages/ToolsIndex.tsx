@@ -54,7 +54,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
       "true hourly rate",
       "side hustle income",
     ],
-    live: false,
+    live: true,
   },
   {
     slug: "quarterly-tax-estimator",
@@ -85,7 +85,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
       "eBay pricing",
       "Etsy fees",
     ],
-    live: false,
+    live: true,
   },
   {
     slug: "cashflow-tracker",
@@ -100,7 +100,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
       "gig worker finances",
       "income timing",
     ],
-    live: false,
+    live: true,
   },
 ];
 
