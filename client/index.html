@@ -78,8 +78,21 @@
     <link rel="dns-prefetch" href="https://d2xsxph8kpxj0f.cloudfront.net" />
     <link rel="dns-prefetch" href="https://connect.facebook.net" />
 
-    <!-- ── Fonts: Cinzel + Crimson Pro + Inter ──────────────────────────── -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- ── Fonts: Cinzel + Crimson Pro + Inter (non-blocking) ───────────── -->
+    <!-- media="print" trick: browser fetches without blocking render, then
+         onload flips it to "all" so the fonts apply once ready. -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap"
+      />
+    </noscript>
 
     <!-- ── JSON-LD: @graph (consolidated structured data) ───────────────── -->
     <script type="application/ld+json">
