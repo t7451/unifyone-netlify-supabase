@@ -4,12 +4,13 @@ import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { getSignupUrl } from "@/const";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
-import { TIERS } from "@/content/pricing";
 import { SITE_URL } from "@/lib/siteConfig";
 import { cn as classNames } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import BuildProcessAnimation from "@/components/BuildProcessAnimation";
+import LandingPricing from "@/components/landing/LandingPricing";
+import StickyCTA from "@/components/landing/StickyCTA";
 
 const CANONICAL = `${SITE_URL}/`;
 
@@ -615,7 +616,6 @@ export default function Home() {
   const heroRef = useScrollReveal();
   const statsRef = useScrollReveal();
   const pillarsRef = useScrollReveal();
-  const pricingRef = useScrollReveal();
   const ctaRef = useScrollReveal();
   const launchStats = trpc.system.launchStats.useQuery(undefined, {
     staleTime: 60_000,
@@ -1569,130 +1569,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── PRICING PREVIEW ──────────────────────────────────────────────── */}
-      <section id="pricing" style={{ padding: "6rem 0" }}>
-        <div className="max-w-7xl mx-auto px-6 sm:px-8">
-          <div className="text-center mb-16">
-            <span className="inscription" style={{ color: "#D4A843" }}>
-              PRICING
-            </span>
-            <h2
-              className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
-              style={{ color: "#F0E8D0" }}
-            >
-              Built like the rest of the cathedral.
-            </h2>
-            <p
-              className="font-crimson text-lg"
-              style={{ color: "#6A6A6A", fontStyle: "italic" }}
-            >
-              Clear, structural, no surprises. Kai unified API credits are
-              included in every paid tier.
-            </p>
-          </div>
-
-          <div
-            ref={pricingRef}
-            className="grid grid-cols-1 md:grid-cols-3 gap-0"
-          >
-            {TIERS.map((tier, i) => (
-              <div
-                key={tier.id}
-                data-reveal
-                data-reveal-delay={String(i * 100)}
-                className="relative p-8 sm:p-10"
-                style={{
-                  backgroundColor: tier.highlight ? "#0A0A0A" : "#020202",
-                  border: tier.highlight
-                    ? "1px solid rgba(212,168,67,0.4)"
-                    : "1px solid #242424",
-                  boxShadow: tier.highlight
-                    ? "0 0 60px rgba(212,168,67,0.08), inset 0 1px 0 rgba(212,168,67,0.2)"
-                    : "none",
-                }}
-              >
-                {tier.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span
-                      className="inscription px-3 py-1"
-                      style={{ backgroundColor: "#D4A843", color: "#020202" }}
-                    >
-                      Most Chosen
-                    </span>
-                  </div>
-                )}
-
-                <div
-                  className="inscription mb-6"
-                  style={{ color: "rgba(212,168,67,0.5)" }}
-                >
-                  {tier.name.toUpperCase()}
-                </div>
-
-                <div className="mb-2">
-                  <span
-                    className="font-cinzel text-4xl font-black"
-                    style={{ color: tier.highlight ? "#F0D080" : "#F0E8D0" }}
-                  >
-                    {tier.price}
-                  </span>
-                  <span
-                    className="font-crimson text-sm ml-2 mobile-visibility-subtle"
-                    style={{ color: "#5A5A5A" }}
-                  >
-                    / {tier.period}
-                  </span>
-                </div>
-
-                <p
-                  className="font-crimson text-base mb-8 mobile-visibility-subtle"
-                  style={{ color: "#5A5A5A", fontStyle: "italic" }}
-                >
-                  {tier.description}
-                </p>
-
-                <div className="space-y-3 mb-10">
-                  {tier.features.map(f => (
-                    <div key={f} className="flex items-center gap-3">
-                      <div
-                        className="w-3 h-px shrink-0"
-                        style={{ backgroundColor: "#D4A843" }}
-                      />
-                      <span
-                        className="font-crimson text-sm mobile-visibility-copy"
-                        style={{ color: "#6A6A6A" }}
-                      >
-                        {f}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <Link
-                  href={`/login?plan=${tier.id}`}
-                  className={classNames(
-                    "block text-center",
-                    tier.highlight ? "btn-illuminate" : "btn-ghost-gold"
-                  )}
-                >
-                  {tier.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-10">
-            <Link href="/pricing">
-              <span
-                className="font-crimson text-base cursor-pointer underline"
-                style={{ color: "#D4A843" }}
-              >
-                Compare all features →
-              </span>
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* ── PRICING ──────────────────────────────────────────────────────── */}
+      <LandingPricing />
 
       {/* ── EMAIL CAPTURE ────────────────────────────────────────────────── */}
       <EmailCapture />
@@ -1816,6 +1694,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <StickyCTA />
     </PublicLayout>
   );
 }

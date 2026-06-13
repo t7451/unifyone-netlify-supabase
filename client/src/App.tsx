@@ -39,6 +39,8 @@ const AdvancedSettings = lazy(
 );
 const TenantSetup = lazy(() => import("./pages/TenantSetup"));
 const Checkout = lazy(() => import("./pages/Checkout"));
+const PlanCheckout = lazy(() => import("./pages/PlanCheckout"));
+const BillingSuccess = lazy(() => import("./pages/BillingSuccess"));
 const Billing = lazy(() => import("./pages/Billing"));
 const Team = lazy(() => import("./pages/Team"));
 const Social = lazy(() => import("./pages/Social"));
@@ -549,6 +551,22 @@ function Router() {
       <Route path="/blog/:slug" component={() => <DynamicBlogPost />} />
       <Route path="/seo" component={() => <SeoIndex />} />
       <Route path="/seo/:slug" component={() => <SeoLanding />} />
+      <Route
+        path="/checkout/plan"
+        component={() => (
+          <ProtectedRoute>
+            <PlanCheckout />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/billing/success"
+        component={() => (
+          <ProtectedRoute>
+            <BillingSuccess />
+          </ProtectedRoute>
+        )}
+      />
       <Route
         path="/checkout"
         component={() => (

@@ -91,7 +91,7 @@ const FAQ = [
 export default function Pricing() {
   const tiersRef = useScrollReveal();
   const faqRef = useScrollReveal();
-  const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+  const [billing, setBilling] = useState<"monthly" | "annual">("annual");
 
   return (
     <PublicLayout>
@@ -289,7 +289,14 @@ export default function Pricing() {
                   </div>
 
                   <a
-                    href={getSignupUrl(undefined, `/checkout?plan=${tier.id}`)}
+                    href={
+                      tier.id === "starter"
+                        ? getSignupUrl(undefined, "/dashboard")
+                        : getSignupUrl(
+                            undefined,
+                            `/checkout/plan?plan=${tier.id}&period=${showAnnual ? "yearly" : "monthly"}`
+                          )
+                    }
                     className={
                       tier.highlight
                         ? "btn-illuminate block text-center"
@@ -298,6 +305,14 @@ export default function Pricing() {
                   >
                     {tier.cta}
                   </a>
+                  {tier.id !== "starter" && (
+                    <p
+                      className="font-crimson text-xs text-center mt-3"
+                      style={{ color: "#4A4A4A" }}
+                    >
+                      14-day full refund · cancel anytime
+                    </p>
+                  )}
                 </div>
               );
             })}
