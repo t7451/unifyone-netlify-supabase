@@ -22,6 +22,11 @@ import {
 } from "lucide-react";
 import { useClerk, useSession } from "@clerk/clerk-react";
 import { pixel, getFbpCookie, getFbcCookie } from "@/lib/pixel";
+import {
+  trackSignupStart,
+  trackSignupComplete,
+  trackLogin,
+} from "@/lib/userTracking";
 import { trpc } from "@/lib/trpc";
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
@@ -226,6 +231,12 @@ export default function Login({
     }
   }, [isAuthenticated, loading, navigate, returnTo]);
 
+  // Funnel: record when the signup form is presented so we can measure the
+  // signup_start → signup_complete conversion rate.
+  useEffect(() => {
+    if (intent === "signup") trackSignupStart();
+  }, [intent]);
+
   useEffect(() => {
     const controller = new AbortController();
     const params = new URLSearchParams();
@@ -363,6 +374,7 @@ export default function Login({
       }
 
       // Session cookie set by server — redirect
+      trackLogin("email");
       navigate(returnTo);
     } catch {
       setError("An unexpected error occurred. Please try again.");
@@ -429,6 +441,10 @@ export default function Login({
         // Swallow — never let tracking block signup.
         console.warn("[signup] tracking failed", err);
       }
+
+      // Funnel: record signup completion in Plausible/Umami. (Meta pixel
+      // CompleteRegistration is handled by the deduped pixel block above.)
+      trackSignupComplete("email");
 
       // If the server requires email verification, surface the check-your-email
       // screen instead of redirecting silently.

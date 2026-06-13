@@ -38,6 +38,7 @@ import { QueryErrorState } from "@/components/QueryErrorState";
 import { DashboardPageShell } from "@/components/DashboardPageShell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { trackActivation } from "@/lib/userTracking";
 import { useDebounce } from "@/hooks/useDebounce";
 
 type ProductStatus = "active" | "draft" | "archived";
@@ -381,6 +382,8 @@ export default function Products() {
 
   const createMutation = trpc.products.create.useMutation({
     onSuccess: () => {
+      // Funnel: creating a product is a core activation action for new tenants.
+      trackActivation("product_created");
       toast.success("Product created successfully");
       setCreateOpen(false);
       setForm({ ...EMPTY_FORM });
