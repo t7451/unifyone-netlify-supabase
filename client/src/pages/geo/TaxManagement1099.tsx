@@ -65,7 +65,7 @@ export default function TaxManagement1099() {
     <div className="min-h-screen bg-background text-foreground">
       <PageHead
         title="1099 Tax Management for Gig Workers — Quarterly Estimates & Deductions | UnifyOne"
-        description="Automate 1099 tax management: quarterly estimated payments calculated from live gig earnings, SE tax, mileage deductions, and IRS-ready records. Works across DoorDash, Uber Eats, Instacart, and more."
+        description="Automated 1099 tax management for gig workers: quarterly payments from live earnings, SE tax, mileage deductions, and IRS-ready records."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />
@@ -249,6 +249,74 @@ export default function TaxManagement1099() {
                   {a}
                 </p>
               </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">
+            Authoritative IRS resources for gig workers
+          </h2>
+          <ul className="space-y-2">
+            {[
+              {
+                label: "IRS: Estimated Taxes",
+                href: "https://www.irs.gov/businesses/small-businesses-self-employed/estimated-taxes",
+              },
+              {
+                label:
+                  "IRS: Self-Employment Tax (Social Security and Medicare)",
+                href: "https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes",
+              },
+              {
+                label: "IRS: Standard Mileage Rates",
+                href: "https://www.irs.gov/tax-professionals/standard-mileage-rates",
+              },
+            ].map(({ label, href }) => (
+              <li key={href}>
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline"
+                >
+                  {label} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">
+            Related tools and guides
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {[
+              {
+                label: "Free Quarterly Tax Estimator",
+                href: "/tools/quarterly-tax-estimator",
+              },
+              {
+                label: "Self-Employment Tax Calculator",
+                href: "/tools/se-tax-calculator",
+              },
+              {
+                label: "IRS Mileage Deduction Calculator",
+                href: "/tools/mileage-deduction-calculator",
+              },
+              {
+                label: "Gig Income Aggregator",
+                href: "/gig-income-aggregator",
+              },
+            ].map(({ label, href }) => (
+              <Link
+                key={href}
+                href={href}
+                className="rounded-lg border p-4 text-sm font-medium hover:bg-muted transition-colors block"
+              >
+                {label} →
+              </Link>
             ))}
           </div>
         </section>

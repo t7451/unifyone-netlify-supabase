@@ -120,7 +120,7 @@ export default function MileageCalculator() {
     <div className="min-h-screen bg-background text-foreground">
       <PageHead
         title="IRS Mileage Deduction Calculator for Gig Workers 2025 | UnifyOne"
-        description="Free IRS mileage deduction calculator for DoorDash, Uber, Instacart, and 1099 gig workers. Enter your miles to see your total deduction and tax savings at the 2025 rate of $0.70/mile."
+        description="Free IRS mileage deduction calculator for gig workers. Enter miles driven to see your $0.70/mile deduction and estimated tax savings at 4 federal brackets."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />
@@ -362,6 +362,73 @@ export default function MileageCalculator() {
                   {a}
                 </p>
               </div>
+            ))}
+          </div>
+        </section>
+
+        {/* IRS Resources */}
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">
+            Authoritative IRS resources
+          </h2>
+          <ul className="space-y-2">
+            {[
+              {
+                label: "IRS: Standard Mileage Rates (2025)",
+                href: "https://www.irs.gov/tax-professionals/standard-mileage-rates",
+              },
+              {
+                label: "IRS: How to Deduct Business Mileage",
+                href: "https://www.irs.gov/businesses/small-businesses-self-employed/standard-mileage-rates",
+              },
+              {
+                label: "IRS Publication 463 (Travel Expenses)",
+                href: "https://www.irs.gov/publications/p463",
+              },
+            ].map(({ label, href }) => (
+              <li key={href}>
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline"
+                >
+                  {label} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Related Tools */}
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">Related free tools</h2>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {[
+              {
+                label: "Quarterly Estimated Tax Calculator",
+                href: "/tools/quarterly-tax-estimator",
+              },
+              {
+                label: "Gig Income Aggregator",
+                href: "/gig-income-aggregator",
+              },
+              {
+                label: "1099 Tax Management Guide",
+                href: "/1099-tax-management",
+              },
+              {
+                label: "Financial Intelligence for Gig Workers",
+                href: "/financial-intelligence-gig-workers",
+              },
+            ].map(({ label, href }) => (
+              <Link
+                key={href}
+                href={href}
+                className="rounded-lg border p-4 text-sm font-medium hover:bg-muted transition-colors block"
+              >
+                {label} →
+              </Link>
             ))}
           </div>
         </section>

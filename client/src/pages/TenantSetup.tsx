@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trackActivation } from "@/lib/userTracking";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -126,6 +127,7 @@ export default function TenantSetup() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
+  const [showSlug, setShowSlug] = useState(false);
   const [seedDemo, setSeedDemo] = useState(false);
   const [demoSeeded, setDemoSeeded] = useState(false);
   const [createdTenantId, setCreatedTenantId] = useState<number | null>(
@@ -151,6 +153,8 @@ export default function TenantSetup() {
 
   const createTenant = trpc.tenant.create.useMutation({
     onSuccess: tenant => {
+      // Funnel: tenant creation is the mandatory first-value gate after signup.
+      trackActivation("tenant_created");
       setCreatedTenantId(tenant.id);
       setDemoSeeded(false);
       setStep(2);
@@ -282,36 +286,53 @@ export default function TenantSetup() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="slug"
-                    className="text-sm font-medium text-gray-300"
-                  >
-                    Store URL Slug
-                    <span className="ml-2 text-xs font-normal text-gray-500">
-                      (auto-generated)
-                    </span>
-                  </Label>
-                  <div className="flex items-center overflow-hidden rounded-lg border border-white/10 bg-white/5 transition-colors focus-within:border-[#00D9FF]/50">
-                    <span className="whitespace-nowrap border-r border-white/10 bg-white/3 px-3 py-2.5 text-sm text-gray-500">
-                      unifyone.app/
-                    </span>
-                    <Input
-                      id="slug"
-                      value={slug}
-                      onChange={e => {
-                        setSlug(e.target.value);
-                        setSlugTouched(true);
-                      }}
-                      placeholder="my-store"
-                      pattern="[a-z0-9-]+"
-                      className="h-11 border-0 bg-transparent text-white placeholder:text-gray-500 focus-visible:ring-0"
-                      required
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Lowercase letters, numbers, and hyphens only. Cannot be
-                    changed later.
-                  </p>
+                  {!showSlug ? (
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5">
+                      <p className="truncate text-sm text-gray-400">
+                        Your store URL:{" "}
+                        <span className="text-gray-300">
+                          unifyone.app/{slug || "your-store"}
+                        </span>
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowSlug(true)}
+                        className="whitespace-nowrap text-xs font-medium text-[#00D9FF] hover:underline"
+                      >
+                        Customize
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <Label
+                        htmlFor="slug"
+                        className="text-sm font-medium text-gray-300"
+                      >
+                        Store URL Slug
+                      </Label>
+                      <div className="flex items-center overflow-hidden rounded-lg border border-white/10 bg-white/5 transition-colors focus-within:border-[#00D9FF]/50">
+                        <span className="whitespace-nowrap border-r border-white/10 bg-white/3 px-3 py-2.5 text-sm text-gray-500">
+                          unifyone.app/
+                        </span>
+                        <Input
+                          id="slug"
+                          value={slug}
+                          onChange={e => {
+                            setSlug(e.target.value);
+                            setSlugTouched(true);
+                          }}
+                          placeholder="my-store"
+                          pattern="[a-z0-9-]+"
+                          className="h-11 border-0 bg-transparent text-white placeholder:text-gray-500 focus-visible:ring-0"
+                          required
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Lowercase letters, numbers, and hyphens only. Choose
+                        carefully — your store URL can&apos;t be changed later.
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 <p className="text-center text-xs text-gray-500">

@@ -13,31 +13,31 @@ import { useState } from "react";
 import { TIERS } from "@/content/pricing";
 import { getSignupUrl } from "@/const";
 
-const GOLD = "#D4A843";
-const PARCHMENT = "#F0E8D0";
-
 export default function LandingPricing() {
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
 
   return (
     <section
       id="pricing"
-      style={{ padding: "5rem 0", backgroundColor: "#020202" }}
+      className="parchment-alt-bg"
+      style={{ padding: "5rem 0" }}
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-8">
         <div className="text-center mb-10">
-          <div className="inscription mb-4" style={{ color: GOLD }}>
-            PRICING
-          </div>
+          <div className="inscription-ink mb-4">PRICING</div>
           <h2
             className="font-cinzel text-3xl sm:text-5xl font-black mb-4"
-            style={{ color: PARCHMENT }}
+            style={{ color: "var(--ink)" }}
           >
             Start free. Upgrade when it pays for itself.
           </h2>
           <p
             className="font-crimson text-lg mx-auto"
-            style={{ color: "#6A6A6A", fontStyle: "italic", maxWidth: 480 }}
+            style={{
+              color: "var(--ink-soft)",
+              fontStyle: "italic",
+              maxWidth: 480,
+            }}
           >
             One unified Kai cost across every model. No per-vendor bills, no
             surprises.
@@ -49,8 +49,9 @@ export default function LandingPricing() {
           <div
             className="inline-flex items-center p-1"
             style={{
-              border: "1px solid rgba(212,168,67,0.25)",
-              borderRadius: 4,
+              border: "1px solid var(--parchment-line)",
+              borderRadius: "var(--radius-soft)",
+              backgroundColor: "var(--parchment)",
             }}
           >
             {(["annual", "monthly"] as const).map(mode => (
@@ -60,9 +61,11 @@ export default function LandingPricing() {
                 onClick={() => setBilling(mode)}
                 className="px-4 py-2 font-cinzel text-sm transition-colors"
                 style={{
-                  backgroundColor: billing === mode ? GOLD : "transparent",
-                  color: billing === mode ? "#020202" : "#6A6A6A",
-                  borderRadius: 4,
+                  backgroundColor:
+                    billing === mode ? "var(--gold-ink)" : "transparent",
+                  color:
+                    billing === mode ? "var(--parchment)" : "var(--ink-faint)",
+                  borderRadius: "calc(var(--radius-soft) - 2px)",
                 }}
               >
                 {mode === "annual" ? (
@@ -71,7 +74,8 @@ export default function LandingPricing() {
                     <span
                       className="ml-2 font-crimson"
                       style={{
-                        color: billing === "annual" ? "#020202" : "#6EE7B7",
+                        color:
+                          billing === "annual" ? "var(--parchment)" : "#1F9D6B",
                       }}
                     >
                       — 2 months free
@@ -85,8 +89,8 @@ export default function LandingPricing() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
-          {TIERS.map((tier, i) => {
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {TIERS.map(tier => {
             const showAnnual =
               billing === "annual" && Boolean(tier.annualPrice);
             const displayedPrice = showAnnual ? tier.annualPrice : tier.price;
@@ -104,54 +108,53 @@ export default function LandingPricing() {
             return (
               <div
                 key={tier.id}
-                className="relative p-8 sm:p-10"
-                style={{
-                  backgroundColor: tier.highlight ? "#0A0A0A" : "#020202",
-                  border: tier.highlight
-                    ? "1px solid rgba(212,168,67,0.4)"
-                    : "1px solid #242424",
-                  borderRight:
-                    i < 2 && !tier.highlight ? "1px solid #242424" : undefined,
-                  boxShadow: tier.highlight
-                    ? "0 0 60px rgba(212,168,67,0.08), inset 0 1px 0 rgba(212,168,67,0.2)"
-                    : "none",
-                }}
+                className="surface-card relative p-8 sm:p-10"
+                style={
+                  tier.highlight
+                    ? {
+                        border: "2px solid var(--gold-ink)",
+                        boxShadow:
+                          "0 0 0 4px rgba(154,123,34,0.08), 0 8px 32px rgba(154,123,34,0.12)",
+                      }
+                    : undefined
+                }
               >
                 {tier.highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <span
                       className="inscription px-3 py-1"
-                      style={{ backgroundColor: GOLD, color: "#020202" }}
+                      style={{
+                        backgroundColor: "var(--gold-ink)",
+                        color: "var(--parchment)",
+                        borderRadius: "var(--radius-pill)",
+                      }}
                     >
                       Most Chosen
                     </span>
                   </div>
                 )}
 
-                <div
-                  className="inscription mb-6"
-                  style={{ color: "rgba(212,168,67,0.5)" }}
-                >
+                <div className="inscription-ink mb-6">
                   {tier.name.toUpperCase()}
                 </div>
 
                 <div className="mb-2">
                   <span
                     className="font-cinzel text-4xl font-black"
-                    style={{ color: tier.highlight ? "#F0D080" : PARCHMENT }}
+                    style={{ color: "var(--ink)" }}
                   >
                     {displayedPrice}
                   </span>
                   <div
                     className="font-crimson text-sm"
-                    style={{ color: "#5A5A5A" }}
+                    style={{ color: "var(--ink-faint)" }}
                   >
                     / {displayedPeriod}
                   </div>
                   {showAnnual && tier.annualSubtext && (
                     <div
                       className="font-crimson text-sm mt-1"
-                      style={{ color: "#5A5A5A" }}
+                      style={{ color: "var(--ink-faint)" }}
                     >
                       {tier.annualSubtext}
                     </div>
@@ -160,7 +163,7 @@ export default function LandingPricing() {
 
                 <p
                   className="font-crimson text-base mb-6"
-                  style={{ color: "#5A5A5A", fontStyle: "italic" }}
+                  style={{ color: "var(--ink-soft)", fontStyle: "italic" }}
                 >
                   {tier.description}
                 </p>
@@ -170,11 +173,11 @@ export default function LandingPricing() {
                     <div key={f} className="flex items-center gap-3">
                       <div
                         className="w-3 h-px shrink-0"
-                        style={{ backgroundColor: GOLD }}
+                        style={{ backgroundColor: "var(--gold-ink)" }}
                       />
                       <span
                         className="font-crimson text-sm"
-                        style={{ color: "#6A6A6A" }}
+                        style={{ color: "var(--ink-soft)" }}
                       >
                         {f}
                       </span>
@@ -186,8 +189,8 @@ export default function LandingPricing() {
                   href={href}
                   className={
                     tier.highlight
-                      ? "btn-illuminate block text-center"
-                      : "btn-ghost-gold block text-center"
+                      ? "btn-solid-gold block text-center"
+                      : "btn-line-ink block text-center"
                   }
                 >
                   {tier.cta}
@@ -197,7 +200,7 @@ export default function LandingPricing() {
                 {isPaid && (
                   <p
                     className="font-crimson text-xs text-center mt-3"
-                    style={{ color: "#4A4A4A" }}
+                    style={{ color: "var(--ink-faint)" }}
                   >
                     14-day full refund · cancel anytime
                   </p>

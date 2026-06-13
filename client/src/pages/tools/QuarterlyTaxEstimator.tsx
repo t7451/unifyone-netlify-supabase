@@ -173,7 +173,7 @@ export default function QuarterlyTaxEstimator() {
     <div className="min-h-screen bg-background text-foreground">
       <PageHead
         title="Quarterly Estimated Tax Calculator — 1099 Self-Employed | UnifyOne"
-        description="Free quarterly estimated tax calculator for 1099 gig workers and freelancers. Enter your net self-employment income to see your SE tax + federal income tax and exact quarterly payment amounts with 2026 due dates."
+        description="Free 1099 quarterly tax calculator for gig workers. See your SE tax + income tax and exact quarterly payment amounts with 2026 due dates."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />
@@ -474,6 +474,77 @@ export default function QuarterlyTaxEstimator() {
                   {a}
                 </p>
               </div>
+            ))}
+          </div>
+        </section>
+
+        {/* IRS Resources */}
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">
+            Authoritative IRS resources
+          </h2>
+          <ul className="space-y-2">
+            {[
+              {
+                label: "IRS: Estimated Taxes for Individuals",
+                href: "https://www.irs.gov/businesses/small-businesses-self-employed/estimated-taxes",
+              },
+              {
+                label: "IRS: Self-Employment Tax (SE Tax)",
+                href: "https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes",
+              },
+              {
+                label: "IRS: Standard Mileage Rates",
+                href: "https://www.irs.gov/tax-professionals/standard-mileage-rates",
+              },
+              {
+                label: "IRS Form 1040-ES",
+                href: "https://www.irs.gov/forms-pubs/about-form-1040-es",
+              },
+            ].map(({ label, href }) => (
+              <li key={href}>
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline"
+                >
+                  {label} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Related Tools */}
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">Related free tools</h2>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {[
+              {
+                label: "Mileage Deduction Calculator",
+                href: "/tools/mileage-deduction-calculator",
+              },
+              {
+                label: "Gig Income Aggregator",
+                href: "/gig-income-aggregator",
+              },
+              {
+                label: "1099 Tax Management Guide",
+                href: "/1099-tax-management",
+              },
+              {
+                label: "Financial Intelligence for Gig Workers",
+                href: "/financial-intelligence-gig-workers",
+              },
+            ].map(({ label, href }) => (
+              <Link
+                key={href}
+                href={href}
+                className="rounded-lg border p-4 text-sm font-medium hover:bg-muted transition-colors block"
+              >
+                {label} →
+              </Link>
             ))}
           </div>
         </section>

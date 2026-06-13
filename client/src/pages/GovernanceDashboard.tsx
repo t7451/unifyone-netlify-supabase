@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { AlertCircle, CheckCircle, Clock, Shield, Zap, TrendingUp, RefreshCw, Plus } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Shield,
+  Zap,
+  TrendingUp,
+  RefreshCw,
+  Plus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,15 +46,31 @@ function statusBadge(status: string) {
 export default function GovernanceDashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
-  const [activeTab, setActiveTab] = useState<"audit" | "escalations" | "authority" | "rules">("audit");
+  const [activeTab, setActiveTab] = useState<
+    "audit" | "escalations" | "authority" | "rules"
+  >("audit");
 
   // ── tRPC queries ─────────────────────────────────────────────────────────────
-  const auditQuery = trpc.governance.getAuditLogs.useQuery(undefined, { retry: false });
-  const escalationsQuery = trpc.governance.getEscalations.useQuery(undefined, { retry: false });
-  const killSwitchesQuery = trpc.governance.getKillSwitches.useQuery(undefined, { retry: false });
-  const rulesQuery = trpc.governance.getRules.useQuery(undefined, { retry: false });
-  const metricsQuery = trpc.governance.getMetrics.useQuery(undefined, { retry: false });
-  const authorityQuery = trpc.governance.getDecisionAuthority.useQuery(undefined, { retry: false });
+  const auditQuery = trpc.governance.getAuditLogs.useQuery(undefined, {
+    retry: false,
+  });
+  const escalationsQuery = trpc.governance.getEscalations.useQuery(undefined, {
+    retry: false,
+  });
+  const killSwitchesQuery = trpc.governance.getKillSwitches.useQuery(
+    undefined,
+    { retry: false }
+  );
+  const rulesQuery = trpc.governance.getRules.useQuery(undefined, {
+    retry: false,
+  });
+  const metricsQuery = trpc.governance.getMetrics.useQuery(undefined, {
+    retry: false,
+  });
+  const authorityQuery = trpc.governance.getDecisionAuthority.useQuery(
+    undefined,
+    { retry: false }
+  );
 
   // ── tRPC mutations ────────────────────────────────────────────────────────────
   const resolveEscalation = trpc.governance.resolveEscalation.useMutation({
@@ -64,7 +89,9 @@ export default function GovernanceDashboard() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="p-8 max-w-md text-center">
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-2">
+            Access Denied
+          </h1>
           <p className="text-muted-foreground mb-6">
             Only administrators can access the Governance Dashboard.
           </p>
@@ -84,15 +111,19 @@ export default function GovernanceDashboard() {
   const metrics = metricsQuery.data;
   const authority = authorityQuery.data ?? [];
 
-  const pendingEscalations = escalations.filter((e: any) => e.status === "pending").length;
-  const activeKillSwitches = killSwitches.filter((ks: any) => ks.isActive).length;
+  const pendingEscalations = escalations.filter(
+    (e: any) => e.status === "pending"
+  ).length;
+  const activeKillSwitches = killSwitches.filter(
+    (ks: any) => ks.isActive
+  ).length;
   const isLoading = auditQuery.isLoading || metricsQuery.isLoading;
 
   return (
     <div className="min-h-screen bg-background">
       <PageHead
         title="Governance | UnifyOne Platform"
-        description="Platform governance dashboard — audit logs, escalation queues, decision authority matrix, emergency controls, and governance rules for UnifyOne commerce infrastructure."
+        description="Platform governance dashboard — audit logs, escalation queues, decision authority matrix, emergency controls, and governance rules for UnifyOne."
         canonical={GOV_CANONICAL}
         jsonLd={buildWebPageJsonLd({
           canonical: GOV_CANONICAL,
@@ -105,7 +136,8 @@ export default function GovernanceDashboard() {
       {/* Header */}
       <div
         style={{
-          background: "linear-gradient(135deg, rgba(10,10,15,0.98) 0%, rgba(20,15,35,0.98) 50%, rgba(10,10,15,0.98) 100%)",
+          background:
+            "linear-gradient(135deg, rgba(10,10,15,0.98) 0%, rgba(20,15,35,0.98) 50%, rgba(10,10,15,0.98) 100%)",
           borderBottom: "1px solid rgba(212,168,67,0.2)",
           padding: "2rem 1.5rem",
         }}
@@ -144,7 +176,9 @@ export default function GovernanceDashboard() {
               disabled={isLoading}
               className="gap-2"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+              />
               Refresh
             </Button>
           </div>
@@ -156,13 +190,15 @@ export default function GovernanceDashboard() {
                 label: "Pending Escalations",
                 value: pendingEscalations,
                 icon: <Clock className="h-5 w-5 text-yellow-400" />,
-                color: pendingEscalations > 0 ? "text-yellow-400" : "text-green-400",
+                color:
+                  pendingEscalations > 0 ? "text-yellow-400" : "text-green-400",
               },
               {
                 label: "Active Kill Switches",
                 value: activeKillSwitches,
                 icon: <Zap className="h-5 w-5 text-red-400" />,
-                color: activeKillSwitches > 0 ? "text-red-400" : "text-green-400",
+                color:
+                  activeKillSwitches > 0 ? "text-red-400" : "text-green-400",
               },
               {
                 label: "Compliance Score",
@@ -179,8 +215,12 @@ export default function GovernanceDashboard() {
             ].map((stat, idx) => (
               <Card key={idx} className="p-4 bg-card/50 border border-border">
                 <div className="flex items-center gap-2 mb-2">{stat.icon}</div>
-                <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
-                <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
+                <div className={`text-2xl font-bold ${stat.color}`}>
+                  {stat.value}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {stat.label}
+                </div>
               </Card>
             ))}
           </div>
@@ -190,17 +230,25 @@ export default function GovernanceDashboard() {
       {/* Tabs */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-2 mb-6 flex-wrap">
-          {(["audit", "escalations", "authority", "rules"] as const).map(tab => (
-            <Button
-              key={tab}
-              variant={activeTab === tab ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveTab(tab)}
-              className="capitalize"
-            >
-              {tab === "audit" ? "Audit Log" : tab === "escalations" ? `Escalations${pendingEscalations > 0 ? ` (${pendingEscalations})` : ""}` : tab === "authority" ? "Decision Authority" : "Governance Rules"}
-            </Button>
-          ))}
+          {(["audit", "escalations", "authority", "rules"] as const).map(
+            tab => (
+              <Button
+                key={tab}
+                variant={activeTab === tab ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveTab(tab)}
+                className="capitalize"
+              >
+                {tab === "audit"
+                  ? "Audit Log"
+                  : tab === "escalations"
+                    ? `Escalations${pendingEscalations > 0 ? ` (${pendingEscalations})` : ""}`
+                    : tab === "authority"
+                      ? "Decision Authority"
+                      : "Governance Rules"}
+              </Button>
+            )
+          )}
         </div>
 
         {/* ── Audit Log Tab ──────────────────────────────────────────────────── */}
@@ -208,39 +256,67 @@ export default function GovernanceDashboard() {
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-foreground">Audit Log</h2>
             {auditQuery.isLoading ? (
-              <Card className="p-8 text-center text-muted-foreground">Loading audit logs…</Card>
+              <Card className="p-8 text-center text-muted-foreground">
+                Loading audit logs…
+              </Card>
             ) : auditLogs.length === 0 ? (
               <Card className="p-8 text-center text-muted-foreground">
-                No audit log entries yet. Operations will be recorded here as they occur.
+                No audit log entries yet. Operations will be recorded here as
+                they occur.
               </Card>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="text-left py-3 px-4 font-semibold text-foreground">Action</th>
-                      <th className="text-left py-3 px-4 font-semibold text-foreground">Entity</th>
-                      <th className="text-left py-3 px-4 font-semibold text-foreground">Authority</th>
-                      <th className="text-left py-3 px-4 font-semibold text-foreground">Escalated</th>
-                      <th className="text-left py-3 px-4 font-semibold text-foreground">Time</th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">
+                        Action
+                      </th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">
+                        Entity
+                      </th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">
+                        Authority
+                      </th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">
+                        Escalated
+                      </th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">
+                        Time
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {auditLogs.map((log: any) => (
-                      <tr key={log.id} className="border-b border-border hover:bg-card/50">
-                        <td className="py-3 px-4 text-foreground max-w-xs truncate">{log.action}</td>
-                        <td className="py-3 px-4 text-muted-foreground">{log.entityType ?? "—"}</td>
+                      <tr
+                        key={log.id}
+                        className="border-b border-border hover:bg-card/50"
+                      >
+                        <td className="py-3 px-4 text-foreground max-w-xs truncate">
+                          {log.action}
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground">
+                          {log.entityType ?? "—"}
+                        </td>
                         <td className="py-3 px-4">
-                          <Badge variant="outline">{log.decisionAuthority ?? "operator"}</Badge>
+                          <Badge variant="outline">
+                            {log.decisionAuthority ?? "operator"}
+                          </Badge>
                         </td>
                         <td className="py-3 px-4">
                           {log.escalationTriggered ? (
-                            <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/40">Yes</Badge>
+                            <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/40">
+                              Yes
+                            </Badge>
                           ) : (
-                            <Badge className="bg-green-500/20 text-green-400 border-green-500/40">No</Badge>
+                            <Badge className="bg-green-500/20 text-green-400 border-green-500/40">
+                              No
+                            </Badge>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-muted-foreground text-xs">{formatDate(log.createdAt)}</td>
+                        <td className="py-3 px-4 text-muted-foreground text-xs">
+                          {formatDate(log.createdAt)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -253,12 +329,17 @@ export default function GovernanceDashboard() {
         {/* ── Escalations Tab ────────────────────────────────────────────────── */}
         {activeTab === "escalations" && (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-foreground">Escalation Queue</h2>
+            <h2 className="text-xl font-bold text-foreground">
+              Escalation Queue
+            </h2>
             {escalationsQuery.isLoading ? (
-              <Card className="p-8 text-center text-muted-foreground">Loading escalations…</Card>
+              <Card className="p-8 text-center text-muted-foreground">
+                Loading escalations…
+              </Card>
             ) : escalations.length === 0 ? (
               <Card className="p-8 text-center text-muted-foreground">
-                No escalations in the queue. All operations are within governance parameters.
+                No escalations in the queue. All operations are within
+                governance parameters.
               </Card>
             ) : (
               escalations.map((item: any) => (
@@ -266,21 +347,42 @@ export default function GovernanceDashboard() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-foreground">{item.decisionType}</h3>
-                        <Badge className={statusBadge(item.status)}>{item.status}</Badge>
+                        <h3 className="font-semibold text-foreground">
+                          {item.decisionType}
+                        </h3>
+                        <Badge className={statusBadge(item.status)}>
+                          {item.status}
+                        </Badge>
                       </div>
                       <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
-                        <span>Authority: <span className="text-foreground">{item.authorityLevel}</span></span>
+                        <span>
+                          Authority:{" "}
+                          <span className="text-foreground">
+                            {item.authorityLevel}
+                          </span>
+                        </span>
                         {item.thresholdExceeded && (
-                          <span>Exceeded: <span className="text-red-400">${Number(item.thresholdExceeded).toLocaleString()}</span></span>
+                          <span>
+                            Exceeded:{" "}
+                            <span className="text-red-400">
+                              ${Number(item.thresholdExceeded).toLocaleString()}
+                            </span>
+                          </span>
                         )}
                         {item.thresholdLimit && (
-                          <span>Limit: <span className="text-foreground">${Number(item.thresholdLimit).toLocaleString()}</span></span>
+                          <span>
+                            Limit:{" "}
+                            <span className="text-foreground">
+                              ${Number(item.thresholdLimit).toLocaleString()}
+                            </span>
+                          </span>
                         )}
                         <span>Expires: {formatDate(item.expiresAt)}</span>
                       </div>
                       {item.resolutionNotes && (
-                        <p className="text-sm text-muted-foreground italic">Note: {item.resolutionNotes}</p>
+                        <p className="text-sm text-muted-foreground italic">
+                          Note: {item.resolutionNotes}
+                        </p>
                       )}
                     </div>
                     {item.status === "pending" && (
@@ -290,7 +392,13 @@ export default function GovernanceDashboard() {
                           variant="outline"
                           className="border-green-500/40 text-green-400 hover:bg-green-500/10"
                           disabled={resolveEscalation.isPending}
-                          onClick={() => resolveEscalation.mutate({ id: item.id, status: "approved", resolutionNotes: "Approved by admin" })}
+                          onClick={() =>
+                            resolveEscalation.mutate({
+                              id: item.id,
+                              status: "approved",
+                              resolutionNotes: "Approved by admin",
+                            })
+                          }
                         >
                           Approve
                         </Button>
@@ -299,7 +407,13 @@ export default function GovernanceDashboard() {
                           variant="outline"
                           className="border-red-500/40 text-red-400 hover:bg-red-500/10"
                           disabled={resolveEscalation.isPending}
-                          onClick={() => resolveEscalation.mutate({ id: item.id, status: "rejected", resolutionNotes: "Rejected by admin" })}
+                          onClick={() =>
+                            resolveEscalation.mutate({
+                              id: item.id,
+                              status: "rejected",
+                              resolutionNotes: "Rejected by admin",
+                            })
+                          }
                         >
                           Reject
                         </Button>
@@ -315,43 +429,84 @@ export default function GovernanceDashboard() {
         {/* ── Decision Authority Tab ─────────────────────────────────────────── */}
         {activeTab === "authority" && (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-foreground mb-6">Decision Authority Matrix</h2>
+            <h2 className="text-xl font-bold text-foreground mb-6">
+              Decision Authority Matrix
+            </h2>
             <Card className="overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-card/50 border-b border-border">
                     <tr>
-                      <th className="text-left py-3 px-4 font-semibold text-foreground">User ID</th>
-                      <th className="text-left py-3 px-4 font-semibold text-foreground">Authority Level</th>
-                      <th className="text-left py-3 px-4 font-semibold text-foreground">Approval Threshold</th>
-                      <th className="text-left py-3 px-4 font-semibold text-foreground">Permissions</th>
-                      <th className="text-left py-3 px-4 font-semibold text-foreground">Status</th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">
+                        User ID
+                      </th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">
+                        Authority Level
+                      </th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">
+                        Approval Threshold
+                      </th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">
+                        Permissions
+                      </th>
+                      <th className="text-left py-3 px-4 font-semibold text-foreground">
+                        Status
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {authorityQuery.isLoading ? (
-                      <tr><td colSpan={5} className="py-8 text-center text-muted-foreground">Loading…</td></tr>
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="py-8 text-center text-muted-foreground"
+                        >
+                          Loading…
+                        </td>
+                      </tr>
                     ) : authority.length === 0 ? (
-                      <tr><td colSpan={5} className="py-8 text-center text-muted-foreground">No authority records. Defaults apply.</td></tr>
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="py-8 text-center text-muted-foreground"
+                        >
+                          No authority records. Defaults apply.
+                        </td>
+                      </tr>
                     ) : (
                       authority.map((row: any) => (
-                        <tr key={row.id} className="border-b border-border hover:bg-card/50">
-                          <td className="py-3 px-4 text-foreground">User #{row.userId}</td>
+                        <tr
+                          key={row.id}
+                          className="border-b border-border hover:bg-card/50"
+                        >
+                          <td className="py-3 px-4 text-foreground">
+                            User #{row.userId}
+                          </td>
                           <td className="py-3 px-4">
-                            <Badge variant="outline">{row.authorityLevel}</Badge>
+                            <Badge variant="outline">
+                              {row.authorityLevel}
+                            </Badge>
                           </td>
                           <td className="py-3 px-4 text-muted-foreground">
-                            {row.approvalThreshold ? `$${Number(row.approvalThreshold).toLocaleString()}` : "Unlimited"}
+                            {row.approvalThreshold
+                              ? `$${Number(row.approvalThreshold).toLocaleString()}`
+                              : "Unlimited"}
                           </td>
                           <td className="py-3 px-4 text-muted-foreground text-xs">
                             {[
                               row.canAccessAuditLogs && "Audit",
                               row.canOverrideDecisions && "Override",
                               row.canModifyGovernance && "Modify",
-                            ].filter(Boolean).join(", ") || "View"}
+                            ]
+                              .filter(Boolean)
+                              .join(", ") || "View"}
                           </td>
                           <td className="py-3 px-4">
-                            <Badge className={statusBadge(row.active ? "active" : "expired")}>
+                            <Badge
+                              className={statusBadge(
+                                row.active ? "active" : "expired"
+                              )}
+                            >
                               {row.active ? "Active" : "Inactive"}
                             </Badge>
                           </td>
@@ -369,27 +524,39 @@ export default function GovernanceDashboard() {
         {activeTab === "rules" && (
           <div className="space-y-4">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-foreground">Governance Rules</h2>
+              <h2 className="text-xl font-bold text-foreground">
+                Governance Rules
+              </h2>
               <Button size="sm" className="gap-2" disabled>
                 <Plus className="h-4 w-4" />
                 Add Rule
               </Button>
             </div>
             {rulesQuery.isLoading ? (
-              <Card className="p-8 text-center text-muted-foreground">Loading rules…</Card>
+              <Card className="p-8 text-center text-muted-foreground">
+                Loading rules…
+              </Card>
             ) : rules.length === 0 ? (
-              <Card className="p-8 text-center text-muted-foreground">No governance rules defined.</Card>
+              <Card className="p-8 text-center text-muted-foreground">
+                No governance rules defined.
+              </Card>
             ) : (
               rules.map((rule: any) => (
                 <Card key={rule.id} className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-foreground mb-2">{rule.ruleName}</h3>
+                      <h3 className="font-semibold text-foreground mb-2">
+                        {rule.ruleName}
+                      </h3>
                       <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
                         <span>Type: {rule.ruleType}</span>
-                        {rule.entityType && <span>Entity: {rule.entityType}</span>}
+                        {rule.entityType && (
+                          <span>Entity: {rule.entityType}</span>
+                        )}
                         <span>Action: {rule.actionOnViolation}</span>
-                        {rule.authorityLevelRequired && <span>Requires: {rule.authorityLevelRequired}</span>}
+                        {rule.authorityLevelRequired && (
+                          <span>Requires: {rule.authorityLevelRequired}</span>
+                        )}
                       </div>
                       {rule.conditionJson && (
                         <pre className="text-xs text-muted-foreground bg-card/50 rounded p-2 overflow-x-auto">
@@ -397,7 +564,11 @@ export default function GovernanceDashboard() {
                         </pre>
                       )}
                     </div>
-                    <Badge className={statusBadge(rule.isActive ? "active" : "expired")}>
+                    <Badge
+                      className={statusBadge(
+                        rule.isActive ? "active" : "expired"
+                      )}
+                    >
                       {rule.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </div>
@@ -410,9 +581,13 @@ export default function GovernanceDashboard() {
 
       {/* Kill Switch Section */}
       <div className="max-w-7xl mx-auto px-4 py-8 border-t border-border">
-        <h2 className="text-xl font-bold text-foreground mb-6">Emergency Controls</h2>
+        <h2 className="text-xl font-bold text-foreground mb-6">
+          Emergency Controls
+        </h2>
         {killSwitchesQuery.isLoading ? (
-          <Card className="p-6 text-center text-muted-foreground">Loading kill switches…</Card>
+          <Card className="p-6 text-center text-muted-foreground">
+            Loading kill switches…
+          </Card>
         ) : (
           <div className="space-y-4">
             {killSwitches.map((ks: any) => (
@@ -425,16 +600,28 @@ export default function GovernanceDashboard() {
                     <h3 className="font-semibold text-foreground mb-1 capitalize">
                       {ks.switchName.replace(/_/g, " ")}
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-3">{ks.description}</p>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {ks.description}
+                    </p>
                     {ks.impactScope && (
-                      <p className="text-xs text-muted-foreground">Impact: {ks.impactScope}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Impact: {ks.impactScope}
+                      </p>
                     )}
                     {ks.isActive && ks.reason && (
-                      <p className="text-sm text-red-400 mt-2">Reason: {ks.reason}</p>
+                      <p className="text-sm text-red-400 mt-2">
+                        Reason: {ks.reason}
+                      </p>
                     )}
                     <div className="flex gap-2 mt-3">
-                      <Badge className={statusBadge(ks.isActive ? "rejected" : "active")}>
-                        {ks.isActive ? "ACTIVE — Systems Halted" : "All Systems Operational"}
+                      <Badge
+                        className={statusBadge(
+                          ks.isActive ? "rejected" : "active"
+                        )}
+                      >
+                        {ks.isActive
+                          ? "ACTIVE — Systems Halted"
+                          : "All Systems Operational"}
                       </Badge>
                     </div>
                   </div>
@@ -447,7 +634,9 @@ export default function GovernanceDashboard() {
                       toggleKillSwitch.mutate({
                         switchName: ks.switchName,
                         isActive: !ks.isActive,
-                        reason: ks.isActive ? undefined : "Emergency activation by admin",
+                        reason: ks.isActive
+                          ? undefined
+                          : "Emergency activation by admin",
                       })
                     }
                   >

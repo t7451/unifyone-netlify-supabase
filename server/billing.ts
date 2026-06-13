@@ -183,7 +183,9 @@ export function registerBillingRoutes(app: Express) {
         event = stripe.webhooks.constructEvent(
           req.body,
           sig,
-          process.env.STRIPE_WEBHOOK_SECRET || ""
+          process.env.STRIPE_BILLING_WEBHOOK_SECRET ||
+            process.env.STRIPE_WEBHOOK_SECRET ||
+            ""
         );
       } catch (err: unknown) {
         logger.error("[Billing Webhook] Stripe signature verification failed", {
@@ -243,7 +245,7 @@ export function registerBillingRoutes(app: Express) {
         });
 
         if (userId && totalCredits > 0) {
-          await db.rpc("add_credits", {
+          const { error: creditError } = await db.rpc("add_credits", {
             p_user_id: userId,
             p_amount: totalCredits,
             p_type: "credit",
@@ -251,6 +253,22 @@ export function registerBillingRoutes(app: Express) {
             p_reference_type: "stripe_checkout",
             p_reference_id: session.id,
           });
+          if (creditError) {
+            logger.error("[Billing Webhook] add_credits RPC failed", {
+              error: creditError.message,
+              userId,
+              totalCredits,
+              stripeEventId: event.id,
+            });
+          }
+        } else if (!userId) {
+          logger.warn(
+            "[Billing Webhook] user_id missing from session metadata — credits not applied",
+            {
+              stripeEventId: event.id,
+              stripeSessionId: session.id,
+            }
+          );
         }
 
         if (userId) {
@@ -529,7 +547,7 @@ export async function registerBillingFetchRoutes(
       }
 
       if (userId && totalCredits > 0) {
-        await db.rpc("add_credits", {
+        const { error: creditError } = await db.rpc("add_credits", {
           p_user_id: userId,
           p_amount: totalCredits,
           p_type: "credit",
@@ -537,6 +555,22 @@ export async function registerBillingFetchRoutes(
           p_reference_type: "stripe_checkout",
           p_reference_id: session.id,
         });
+        if (creditError) {
+          logger.error("[Billing Webhook] add_credits RPC failed", {
+            error: creditError.message,
+            userId,
+            totalCredits,
+            stripeEventId: event.id,
+          });
+        }
+      } else if (!userId) {
+        logger.warn(
+          "[Billing Webhook] user_id missing from session metadata — credits not applied",
+          {
+            stripeEventId: event.id,
+            stripeSessionId: session.id,
+          }
+        );
       }
 
       if (userId) {

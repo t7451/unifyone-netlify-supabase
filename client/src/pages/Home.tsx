@@ -43,9 +43,9 @@ const JSON_LD = [
     "@type": "WebPage",
     "@id": CANONICAL,
     url: CANONICAL,
-    name: "UnifyOne | AI-Powered Multi-Tenant Commerce Platform",
+    name: "UnifyOne by 1Commerce — Gig Earnings, Tax Tools & Commerce Platform",
     description:
-      "UnifyOne is the multi-tenant commerce platform for gig operators and e-commerce teams. AI-powered earnings insights, order management, and Shopify integration.",
+      "UnifyOne unifies multi-tenant Shopify stores, gig earnings intelligence, IRS deduction tracking, and 300+ AI models in one platform. Free to start.",
     isPartOf: { "@id": `${SITE_URL}/#website` },
     inLanguage: "en-US",
   },
@@ -89,17 +89,17 @@ const LAUNCH_METRICS = [
   {
     key: "tenants",
     label: "tenants launched",
-    accent: "#D4A843",
+    accent: "#B8872A",
   },
   {
     key: "ordersProcessed",
     label: "orders processed",
-    accent: "#6EE7B7",
+    accent: "#1F9D6B",
   },
   {
     key: "integrations",
     label: "integrations ready",
-    accent: "#93C5FD",
+    accent: "#3B6FB0",
   },
 ] as const;
 
@@ -340,18 +340,16 @@ function SocialProofCounter() {
     return () => window.cancelAnimationFrame(frameId);
   }, [started]);
 
+  // Deeper accent tones so the stat numbers stay legible on the light canvas.
+  const lightAccents = ["#9A7B22", "#1F9D6B", "#3B6FB0", "#7C5CD0"];
+
   return (
     <div ref={ref} className="space-y-8 py-4">
       <div className="text-center">
-        <p
-          className="font-cinzel text-xs tracking-[0.24em] uppercase"
-          style={{ color: "#D4A843" }}
-        >
-          Trusted by operators
-        </p>
+        <p className="inscription-ink">Trusted by operators</p>
         <p
           className="font-crimson text-base sm:text-lg mt-3"
-          style={{ color: "#9A9A9A", fontStyle: "italic" }}
+          style={{ color: "var(--ink-soft)", fontStyle: "italic" }}
         >
           Join 2,400+ operators already running their commerce stack on
           UnifyOne.
@@ -362,22 +360,17 @@ function SocialProofCounter() {
         {SOCIAL_PROOF.map((sp, index) => (
           <div
             key={sp.label}
-            className="rounded-2xl border px-4 py-5 text-center sm:px-6"
-            style={{
-              borderColor: "rgba(36,36,36,0.9)",
-              background:
-                "linear-gradient(180deg, rgba(10,10,10,0.95), rgba(3,3,3,0.92))",
-            }}
+            className="surface-card px-4 py-6 text-center sm:px-6"
           >
             <div
               className="font-cinzel text-3xl sm:text-4xl font-black"
-              style={{ color: sp.accent }}
+              style={{ color: lightAccents[index] ?? "#9A7B22" }}
             >
               {formatSocialProofValue(counts[index] ?? 0, sp.format)}
             </div>
             <p
               className="mt-2 font-crimson text-xs uppercase tracking-[0.18em] sm:text-sm"
-              style={{ color: "#6A6A6A" }}
+              style={{ color: "var(--ink-faint)" }}
             >
               {sp.label}
             </p>
@@ -425,27 +418,25 @@ function EmailCapture() {
   return (
     <section
       id="blueprint"
-      className="cathedral-bg"
+      className="parchment-alt-bg"
       style={{
         padding: "5rem 0",
-        borderTop: "1px solid #242424",
-        borderBottom: "1px solid #242424",
+        borderTop: "1px solid var(--parchment-line)",
+        borderBottom: "1px solid var(--parchment-line)",
       }}
     >
       <div className="max-w-xl mx-auto px-6 sm:px-8 text-center">
-        <span className="inscription" style={{ color: "#D4A843" }}>
-          FREE RESOURCE
-        </span>
+        <span className="inscription-ink">Free resource</span>
         <h2
           className="font-cinzel text-2xl sm:text-3xl font-black mt-4 mb-3"
-          style={{ color: "#F0E8D0" }}
+          style={{ color: "var(--ink)" }}
         >
           Get the Cathedral Blueprint — the exact system architecture we use to
           run 8 revenue streams from one platform.
         </h2>
         <p
           className="font-crimson text-lg mb-8 mobile-visibility-copy"
-          style={{ color: "#6A6A6A", fontStyle: "italic" }}
+          style={{ color: "var(--ink-soft)", fontStyle: "italic" }}
         >
           The architecture guide behind UnifyOne: multi-tenant design, AI
           routing, and gig income intelligence — all in one downloadable PDF.
@@ -454,13 +445,13 @@ function EmailCapture() {
           <div
             className="rounded-xl p-6 text-center"
             style={{
-              border: "1px solid rgba(212,168,67,0.3)",
-              backgroundColor: "rgba(212,168,67,0.05)",
+              border: "1px solid rgba(212,168,67,0.5)",
+              backgroundColor: "rgba(212,168,67,0.1)",
             }}
           >
             <p
               className="font-crimson text-base mobile-visibility-copy"
-              style={{ color: "#D4A843" }}
+              style={{ color: "var(--gold-ink)" }}
             >
               ✓ You&apos;re on the list! Check your inbox for the Cathedral
               Blueprint.
@@ -500,12 +491,12 @@ function EmailCapture() {
                   aria-label="Email address"
                   aria-invalid={Boolean(error)}
                   className={classNames(
-                    "w-full rounded-lg border px-4 py-3 text-sm transition-colors",
-                    error ? "border-red-500" : "border-[#242424]"
+                    "w-full rounded-full border px-5 py-3 text-sm transition-colors",
+                    error ? "border-red-500" : "border-[#e7ddca]"
                   )}
                   style={{
-                    backgroundColor: "#0A0A0A",
-                    color: "#F0E8D0",
+                    backgroundColor: "#fffdf8",
+                    color: "var(--ink)",
                     outline: "none",
                   }}
                   required
@@ -513,7 +504,7 @@ function EmailCapture() {
                 {error && (
                   <p
                     className="mt-1 text-left text-xs"
-                    style={{ color: "#EF4444" }}
+                    style={{ color: "#DC2626" }}
                   >
                     {error}
                   </p>
@@ -523,7 +514,7 @@ function EmailCapture() {
                 type="submit"
                 disabled={submitLead.isPending}
                 className={classNames(
-                  "btn-illuminate shrink-0 whitespace-nowrap",
+                  "btn-solid-gold shrink-0 whitespace-nowrap",
                   submitLead.isPending && "opacity-70"
                 )}
               >
@@ -532,13 +523,13 @@ function EmailCapture() {
             </form>
             <p
               className="font-crimson text-xs mt-4 mobile-visibility-subtle"
-              style={{ color: "#3A3A3A" }}
+              style={{ color: "var(--ink-faint)" }}
             >
               No spam. Unsubscribe anytime. We respect your privacy.{" "}
               <Link href="/privacy">
                 <span
                   className="underline cursor-pointer mobile-visibility-subtle"
-                  style={{ color: "#4A4A4A" }}
+                  style={{ color: "var(--gold-ink)" }}
                 >
                   Privacy Policy
                 </span>
@@ -588,14 +579,7 @@ function CountUpMetric({
   }, [loading, value]);
 
   return (
-    <div
-      className="stone-card p-6 text-center"
-      style={{
-        borderColor: "rgba(36,36,36,0.9)",
-        background:
-          "linear-gradient(180deg, rgba(10,10,10,0.98), rgba(3,3,3,0.96))",
-      }}
-    >
+    <div className="surface-card p-6 text-center">
       <div
         className="font-cinzel text-3xl sm:text-4xl font-black mb-2"
         style={{ color: accent }}
@@ -604,7 +588,7 @@ function CountUpMetric({
       </div>
       <p
         className="font-crimson text-sm uppercase tracking-[0.18em]"
-        style={{ color: "#6A6A6A" }}
+        style={{ color: "var(--ink-faint)" }}
       >
         {label}
       </p>
@@ -673,19 +657,21 @@ export default function Home() {
   return (
     <PublicLayout>
       <Helmet>
-        <title>UnifyOne | AI-Powered Multi-Tenant Commerce Platform</title>
+        <title>
+          UnifyOne by 1Commerce — Gig Earnings, Tax Tools & Commerce Platform
+        </title>
         <meta
           name="description"
-          content="UnifyOne is the multi-tenant commerce platform for gig operators and e-commerce teams. AI-powered earnings insights, order management, and Shopify integration."
+          content="UnifyOne unifies multi-tenant Shopify stores, gig earnings intelligence, IRS deduction tracking, and 300+ AI models in one platform. Free to start."
         />
         <link rel="canonical" href={CANONICAL} />
         <meta
           property="og:title"
-          content="UnifyOne | AI-Powered Multi-Tenant Commerce Platform"
+          content="UnifyOne by 1Commerce — Gig Earnings, Tax Tools & Commerce Platform"
         />
         <meta
           property="og:description"
-          content="Commerce infrastructure engineered like a cathedral — sequential, structural, and built to outlast every platform trend. AI-powered insights for gig operators. Start free."
+          content="UnifyOne unifies multi-tenant Shopify stores, gig earnings intelligence, IRS deduction tracking, and 300+ AI models in one platform. Free to start."
         />
         <meta property="og:url" content={CANONICAL} />
         <meta property="og:type" content="website" />
@@ -695,60 +681,46 @@ export default function Home() {
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section
         ref={heroRef}
-        className="apex-light"
+        className="apex-light-soft"
         style={{
-          paddingTop: "8rem",
-          paddingBottom: "6rem",
+          paddingTop: "7rem",
+          paddingBottom: "5rem",
         }}
       >
         <div className="max-w-5xl mx-auto px-6 sm:px-8 text-center">
-          <div data-reveal data-reveal-delay="0">
-            <span className="inscription" style={{ color: "#D4A843" }}>
-              COMMERCE INFRASTRUCTURE
-            </span>
-          </div>
-
           <div
             data-reveal
-            data-reveal-delay="50"
-            className="flex flex-wrap items-center justify-center gap-3 mt-6"
+            data-reveal-delay="0"
+            className="flex justify-center"
           >
-            {[
-              "Launch your first tenant in under 10 minutes",
-              "Starter stays free until you need automation",
-              "Checkout-ready on day one",
-            ].map(item => (
+            <span className="chip-light">
               <span
-                key={item}
-                className="rounded-full px-4 py-2 text-xs sm:text-sm mobile-visibility-chip"
                 style={{
-                  color: "#9A9A9A",
-                  border: "1px solid rgba(212,168,67,0.18)",
-                  backgroundColor: "rgba(212,168,67,0.04)",
-                  fontFamily: "Cinzel, serif",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: "#3FAE7E",
+                  display: "inline-block",
                 }}
-              >
-                {item}
-              </span>
-            ))}
+              />
+              Built for gig workers &amp; independent operators
+            </span>
           </div>
 
           <h1
             data-reveal
             data-reveal-delay="100"
-            className="font-cinzel mt-6 mb-6"
+            className="font-cinzel mt-7 mb-6"
             style={{
-              fontSize: "clamp(2.4rem, 5.5vw, 4.5rem)",
+              fontSize: "clamp(2.4rem, 5.6vw, 4.6rem)",
               fontWeight: 800,
-              lineHeight: 1.06,
-              color: "#F0E8D0",
+              lineHeight: 1.05,
+              color: "var(--ink)",
             }}
           >
-            UnifyOne: Your AI Knows
+            Know exactly what every
             <br />
-            What You Actually Earn.
+            shift <span className="gradient-gold">actually earns</span> you.
           </h1>
 
           <p
@@ -756,16 +728,16 @@ export default function Home() {
             data-reveal-delay="200"
             className="font-crimson text-xl mx-auto mb-4 mobile-visibility-copy"
             style={{
-              color: "#6A6A6A",
-              fontStyle: "italic",
-              maxWidth: 560,
+              color: "var(--ink-soft)",
+              maxWidth: 600,
               lineHeight: 1.7,
             }}
           >
-            UnifyOne reads your real shift data, tracks every deduction, and
-            tells you exactly where you're leaving money on the table.{" "}
-            <em style={{ color: "#9A9A9A" }}>
-              Not generic advice — intelligence built on your numbers.
+            UnifyOne reads your real DoorDash, Uber Eats, and Instacart data,
+            auto-tracks every IRS mileage deduction, and tells you which hours
+            and zones pay the most after expenses.{" "}
+            <em style={{ color: "var(--gold-ink)" }}>
+              Intelligence built on your numbers — not generic advice.
             </em>
           </p>
 
@@ -774,14 +746,13 @@ export default function Home() {
             data-reveal-delay="225"
             className="font-crimson text-base mx-auto mb-10"
             style={{
-              color: "#5A5A5A",
-              maxWidth: 540,
+              color: "var(--ink-faint)",
+              maxWidth: 560,
               lineHeight: 1.65,
             }}
           >
-            Also runs your multi-tenant Shopify stores, routes 300+ AI models
-            through one unified API, and automates the workflows that normally
-            require a dev team.
+            The same platform runs your multi-tenant Shopify stores and routes
+            300+ AI models through one unified API — no dev team required.
           </p>
 
           <div
@@ -789,60 +760,45 @@ export default function Home() {
             data-reveal-delay="300"
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <a href={getSignupUrl()} className="btn-illuminate">
-              Start Free Trial
+            <a href={getSignupUrl()} className="btn-solid-gold">
+              Start Free — No Card
             </a>
-            <a
-              href="#pricing"
-              onClick={scrollToSection("pricing")}
-              className="btn-ghost-gold cursor-pointer"
-            >
-              See Live Plans ↓
-            </a>
+            <Link href="/tools">
+              <span className="btn-line-ink cursor-pointer">
+                Try the free calculators
+              </span>
+            </Link>
           </div>
 
           <p
             data-reveal
-            data-reveal-delay="300"
-            className="font-crimson text-sm mt-3 mobile-visibility-copy"
-            style={{ color: "#9A9A9A", fontStyle: "italic" }}
-          >
-            No credit card required · 14-day free trial
-          </p>
-
-          <p
-            data-reveal
-            data-reveal-delay="325"
+            data-reveal-delay="320"
             className="font-crimson text-sm mt-4 mobile-visibility-copy"
-            style={{ color: "#D7CBA5", fontStyle: "italic" }}
+            style={{ color: "var(--ink-faint)" }}
           >
-            Join 2,400+ operators already running their commerce stack on
-            UnifyOne.
+            No credit card required · 14-day free trial · Join{" "}
+            <span style={{ color: "var(--gold-ink)", fontWeight: 600 }}>
+              2,400+ operators
+            </span>{" "}
+            already on UnifyOne.
           </p>
 
           <div
             data-reveal
             data-reveal-delay="340"
-            className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:gap-4"
+            className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-3"
           >
             <span
-              className="font-cinzel text-[0.65rem] uppercase tracking-[0.24em]"
-              style={{ color: "#5A5A5A" }}
+              className="font-cinzel text-[0.62rem] uppercase tracking-[0.24em]"
+              style={{ color: "var(--ink-faint)" }}
             >
               Powered by
             </span>
             {TRUST_BADGES.map(badge => (
               <span
                 key={badge}
-                className={classNames(
-                  "rounded-full border px-3 py-1 text-[0.7rem] font-cinzel tracking-[0.18em] uppercase sm:text-xs",
-                  "mobile-visibility-brand"
-                )}
-                style={{
-                  color: "#8A8A8A",
-                  borderColor: "rgba(138,138,138,0.18)",
-                  backgroundColor: "rgba(255,255,255,0.02)",
-                }}
+                className="font-cinzel text-[0.72rem] tracking-[0.16em] uppercase sm:text-xs mobile-visibility-brand"
+                style={{ color: "var(--ink-soft)", fontWeight: 600 }}
               >
                 {badge}
               </span>
@@ -851,70 +807,114 @@ export default function Home() {
 
           <p
             data-reveal
-            data-reveal-delay="350"
-            className="font-crimson text-sm mt-5 mobile-visibility-subtle"
-            style={{ color: "#5A5A5A", fontStyle: "italic" }}
+            data-reveal-delay="360"
+            className="font-crimson text-sm mt-7 mobile-visibility-subtle"
+            style={{ color: "var(--ink-faint)" }}
           >
-            Need proof first? Review{" "}
+            Prefer the full picture first? See{" "}
             <Link href="/the-system">
               <span
                 className="cursor-pointer underline"
-                style={{ color: "#D4A843" }}
+                style={{ color: "var(--gold-ink)" }}
               >
-                how the full system works
+                how the whole system works
               </span>
-            </Link>{" "}
-            or jump straight to the blueprint.
+            </Link>
+            .
           </p>
+        </div>
+      </section>
 
-          <div
-            data-reveal
-            data-reveal-delay="400"
-            className="flex justify-center mt-4"
-          >
-            <a
-              href="#blueprint"
-              onClick={scrollToSection("blueprint")}
-              className="font-crimson text-sm underline"
-              style={{ color: "#D4A843" }}
+      {/* ── WHY UNIFYONE (DIFFERENTIATORS) ───────────────────────────────── */}
+      <section
+        className="parchment-alt-bg"
+        style={{
+          padding: "5rem 0",
+          borderTop: "1px solid var(--parchment-line)",
+          borderBottom: "1px solid var(--parchment-line)",
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-12">
+            <span className="inscription-ink">Why UnifyOne</span>
+            <h2
+              className="font-cinzel text-3xl sm:text-4xl font-black mt-3"
+              style={{ color: "var(--ink)" }}
             >
-              Get the Cathedral Blueprint →
-            </a>
+              What no other platform does.
+            </h2>
           </div>
-
-          <div
-            data-reveal
-            data-reveal-delay="450"
-            className="flex justify-center mt-3"
-          >
-            <a
-              href="https://marketing.1commerce.online"
-              className="font-crimson text-sm underline"
-              style={{ color: "#9A9A9A", fontStyle: "italic" }}
-            >
-              First time here? Learn how UnifyOne works →
-            </a>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                tag: "Only",
+                headline:
+                  "The only gig platform that auto-tracks IRS deductions",
+                body: "Every logged shift captures mileage at the current IRS rate automatically. A real-time, year-to-date write-off figure — no spreadsheets, no shoebox of receipts.",
+                accent: "#6EE7B7",
+              },
+              {
+                tag: "First",
+                headline: "300+ AI models through one key and one bill",
+                body: "Route to Claude, GPT, or Gemini and pay a single, predictable Kai credit cost. No per-vendor accounts, no juggling three invoices, zero lock-in.",
+                accent: "#93C5FD",
+              },
+              {
+                tag: "Unified",
+                headline:
+                  "Commerce and gig income intelligence in one dashboard",
+                body: "Multi-tenant Shopify stores and your real earnings data live side by side — the only place your storefronts and your shift income are managed together.",
+                accent: "#F0D080",
+              },
+            ].map((d, i) => (
+              <div
+                key={d.headline}
+                data-reveal
+                data-reveal-delay={String(i * 90)}
+                className="diff-card p-7"
+              >
+                <span
+                  className="font-cinzel text-[0.6rem] uppercase tracking-[0.22em] inline-block mb-4 px-2 py-1 rounded-full"
+                  style={{
+                    color: "#2a1c04",
+                    backgroundColor: `${d.accent}33`,
+                    border: `1px solid ${d.accent}`,
+                  }}
+                >
+                  {d.tag}
+                </span>
+                <h3
+                  className="font-cinzel text-base font-bold mb-3"
+                  style={{ color: "var(--ink)", lineHeight: 1.4 }}
+                >
+                  {d.headline}
+                </h3>
+                <p
+                  className="font-crimson text-base"
+                  style={{ color: "var(--ink-soft)", lineHeight: 1.7 }}
+                >
+                  {d.body}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* ── WHAT YOU GET ─────────────────────────────────────────────────── */}
       <section
+        className="parchment-bg"
         style={{
-          borderTop: "1px solid #242424",
-          borderBottom: "1px solid #242424",
-          backgroundColor: "#050505",
-          padding: "4rem 0",
+          borderBottom: "1px solid var(--parchment-line)",
+          padding: "5rem 0",
         }}
       >
         <div className="max-w-6xl mx-auto px-6 sm:px-8">
-          <div className="text-center mb-10">
-            <span className="inscription" style={{ color: "#D4A843" }}>
-              WHAT YOU GET
-            </span>
+          <div className="text-center mb-12">
+            <span className="inscription-ink">What you get</span>
             <h2
               className="font-cinzel text-2xl sm:text-3xl font-black mt-3"
-              style={{ color: "#F0E8D0" }}
+              style={{ color: "var(--ink)" }}
             >
               Three concrete outcomes from day one.
             </h2>
@@ -943,30 +943,23 @@ export default function Home() {
                 audience: "For developers & teams",
               },
             ].map(item => (
-              <div
-                key={item.headline}
-                className="rounded-2xl p-7"
-                style={{
-                  border: "1px solid #242424",
-                  backgroundColor: "#020202",
-                }}
-              >
+              <div key={item.headline} className="surface-card p-7">
                 <div className="text-3xl mb-4">{item.icon}</div>
                 <p
                   className="font-cinzel text-[0.6rem] uppercase tracking-[0.22em] mb-2"
-                  style={{ color: item.accent, opacity: 0.7 }}
+                  style={{ color: "var(--gold-ink)" }}
                 >
                   {item.audience}
                 </p>
                 <h3
                   className="font-cinzel text-base font-bold mb-3"
-                  style={{ color: "#F0E8D0", lineHeight: 1.4 }}
+                  style={{ color: "var(--ink)", lineHeight: 1.4 }}
                 >
                   {item.headline}
                 </h3>
                 <p
                   className="font-crimson text-base"
-                  style={{ color: "#7A7A7A", lineHeight: 1.75 }}
+                  style={{ color: "var(--ink-soft)", lineHeight: 1.75 }}
                 >
                   {item.body}
                 </p>
@@ -978,10 +971,9 @@ export default function Home() {
 
       {/* ── SOCIAL PROOF COUNTERS ────────────────────────────────────────── */}
       <section
+        className="parchment-alt-bg"
         style={{
-          borderTop: "1px solid #242424",
-          backgroundColor: "#030303",
-          padding: "2rem 0",
+          padding: "3rem 0 4rem",
         }}
       >
         <div className="max-w-4xl mx-auto px-6 sm:px-8">
@@ -991,26 +983,25 @@ export default function Home() {
 
       {/* ── STATS ────────────────────────────────────────────────────────── */}
       <section
+        className="parchment-bg"
         style={{
-          borderTop: "1px solid #242424",
-          borderBottom: "1px solid #242424",
+          borderTop: "1px solid var(--parchment-line)",
+          borderBottom: "1px solid var(--parchment-line)",
         }}
       >
         <div ref={statsRef} className="max-w-7xl mx-auto px-6 sm:px-8 py-16">
           <div className="text-center mb-10">
-            <span className="inscription" style={{ color: "#D4A843" }}>
-              LIVE LAUNCH STATS
-            </span>
+            <span className="inscription-ink">Live launch stats</span>
             <h2
               className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
-              style={{ color: "#F0E8D0" }}
+              style={{ color: "var(--ink)" }}
             >
               Real traction, not vanity copy.
             </h2>
             <p
               className="font-crimson text-lg mobile-visibility-copy"
               style={{
-                color: "#6A6A6A",
+                color: "var(--ink-soft)",
                 fontStyle: "italic",
                 maxWidth: 560,
                 margin: "0 auto",
@@ -1046,10 +1037,15 @@ export default function Home() {
                 data-reveal-delay={String(i * 80)}
                 className="text-center"
               >
-                <div className="stat-value mb-2">{stat.value}</div>
+                <div
+                  className="stat-value mb-2"
+                  style={{ color: "var(--gold-ink)" }}
+                >
+                  {stat.value}
+                </div>
                 <p
                   className="font-crimson text-sm mobile-visibility-subtle"
-                  style={{ color: "#5A5A5A", lineHeight: 1.5 }}
+                  style={{ color: "var(--ink-faint)", lineHeight: 1.5 }}
                 >
                   {stat.label}
                 </p>
@@ -1059,44 +1055,51 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── BUILD PROCESS ANIMATION ──────────────────────────────────────── */}
+      {/* ── BUILD PROCESS ANIMATION (dark terminal inset) ────────────────── */}
       <section
+        className="parchment-bg"
         style={{
-          padding: "6rem 0",
-          borderTop: "1px solid #242424",
-          borderBottom: "1px solid #242424",
-          backgroundColor: "#030303",
+          padding: "5rem 0",
+          borderBottom: "1px solid var(--parchment-line)",
         }}
       >
         <div className="max-w-6xl mx-auto px-6 sm:px-8">
-          <BuildProcessAnimation />
+          <div
+            style={{
+              backgroundColor: "#050505",
+              border: "1px solid #242424",
+              borderRadius: "var(--radius-soft)",
+              padding: "2.5rem 1.75rem",
+              boxShadow: "0 24px 60px -30px rgba(28,26,22,0.45)",
+            }}
+          >
+            <BuildProcessAnimation />
+          </div>
         </div>
       </section>
 
       {/* ── HOW IT WORKS ─────────────────────────────────────────────────── */}
       <section
         id="how-it-works"
+        className="parchment-alt-bg"
         style={{
           padding: "6rem 0",
-          borderTop: "1px solid #242424",
-          borderBottom: "1px solid #242424",
+          borderBottom: "1px solid var(--parchment-line)",
         }}
       >
         <div className="max-w-6xl mx-auto px-6 sm:px-8">
           <div className="text-center mb-16">
-            <span className="inscription" style={{ color: "#D4A843" }}>
-              HOW IT WORKS
-            </span>
+            <span className="inscription-ink">How it works</span>
             <h2
               className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
-              style={{ color: "#F0E8D0" }}
+              style={{ color: "var(--ink)" }}
             >
               Three steps to unified commerce intelligence.
             </h2>
             <p
               className="font-crimson text-lg"
               style={{
-                color: "#9A9A9A",
+                color: "var(--ink-soft)",
                 fontStyle: "italic",
                 maxWidth: 480,
                 margin: "0 auto",
@@ -1107,40 +1110,36 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {HOW_IT_WORKS.map((step, i) => (
               <div
                 key={step.step}
                 data-reveal
                 data-reveal-delay={String(i * 100)}
-                className="relative p-8 sm:p-10"
-                style={{
-                  border: "1px solid #242424",
-                  backgroundColor: "#020202",
-                }}
+                className="surface-card relative p-8 sm:p-10 overflow-hidden"
               >
                 <div
                   className="font-cinzel text-4xl font-black mb-4"
-                  style={{ color: step.color, opacity: 0.25 }}
+                  style={{ color: step.color }}
                 >
                   {step.step}
                 </div>
                 <h3
                   className="font-cinzel text-lg font-bold mb-3"
-                  style={{ color: "#F0E8D0", letterSpacing: "0.04em" }}
+                  style={{ color: "var(--ink)", letterSpacing: "0.04em" }}
                 >
                   {step.heading}
                 </h3>
                 <p
                   className="font-crimson text-base"
-                  style={{ color: "#9A9A9A", lineHeight: 1.75 }}
+                  style={{ color: "var(--ink-soft)", lineHeight: 1.75 }}
                 >
                   {step.body}
                 </p>
                 <div
-                  className="absolute bottom-0 left-0 right-0 h-px"
+                  className="absolute top-0 left-0 right-0 h-1"
                   style={{
-                    background: `linear-gradient(to right, ${step.color}33, transparent)`,
+                    background: `linear-gradient(to right, ${step.color}, transparent)`,
                   }}
                 />
               </div>
@@ -1152,24 +1151,25 @@ export default function Home() {
       {/* ── PLATFORM PILLARS ─────────────────────────────────────────────── */}
       <section
         id="platform"
-        className="cathedral-bg"
-        style={{ padding: "6rem 0" }}
+        className="parchment-bg"
+        style={{
+          padding: "6rem 0",
+          borderBottom: "1px solid var(--parchment-line)",
+        }}
       >
         <div className="max-w-7xl mx-auto px-6 sm:px-8">
           <div className="text-center mb-16">
-            <span className="inscription" style={{ color: "#D4A843" }}>
-              THE PLATFORM
-            </span>
+            <span className="inscription-ink">The platform</span>
             <h2
               className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
-              style={{ color: "#F0E8D0" }}
+              style={{ color: "var(--ink)" }}
             >
               Six load-bearing pillars.
             </h2>
             <p
               className="font-crimson text-lg mobile-visibility-copy"
               style={{
-                color: "#6A6A6A",
+                color: "var(--ink-soft)",
                 fontStyle: "italic",
                 maxWidth: 480,
                 margin: "0 auto",
@@ -1181,38 +1181,43 @@ export default function Home() {
 
           <div
             ref={pillarsRef}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px"
-            style={{ border: "1px solid #242424" }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {PILLARS.map((pillar, i) => (
               <div
                 key={pillar.name}
                 data-reveal
                 data-reveal-delay={String(i * 80)}
-                className="stone-card p-8"
-                style={{ borderColor: "#242424" }}
+                className="surface-card p-8"
               >
                 <div
-                  className="font-cinzel text-2xl mb-4"
-                  style={{ color: pillar.color }}
+                  className="flex items-center justify-center mb-5 font-cinzel text-2xl"
+                  style={{
+                    width: "3rem",
+                    height: "3rem",
+                    borderRadius: "12px",
+                    color: pillar.color,
+                    backgroundColor: `${pillar.color}1f`,
+                    border: `1px solid ${pillar.color}55`,
+                  }}
                 >
                   {pillar.glyph}
                 </div>
                 <div
-                  className="inscription mb-2"
-                  style={{ color: pillar.color, opacity: 0.7 }}
+                  className="font-cinzel text-[0.62rem] uppercase tracking-[0.24em] mb-2"
+                  style={{ color: "var(--gold-ink)" }}
                 >
                   {pillar.name}
                 </div>
                 <h3
                   className="font-cinzel text-lg font-700 mb-3"
-                  style={{ color: "#F0E8D0" }}
+                  style={{ color: "var(--ink)" }}
                 >
                   {pillar.title}
                 </h3>
                 <p
                   className="font-crimson text-base mobile-visibility-copy"
-                  style={{ color: "#6A6A6A", lineHeight: 1.7 }}
+                  style={{ color: "var(--ink-soft)", lineHeight: 1.7 }}
                 >
                   {pillar.body}
                 </p>
@@ -1225,28 +1230,25 @@ export default function Home() {
       {/* ── WHO IT'S FOR ─────────────────────────────────────────────────── */}
       <section
         id="who-its-for"
+        className="parchment-alt-bg"
         style={{
           padding: "6rem 0",
-          borderTop: "1px solid #242424",
-          borderBottom: "1px solid #242424",
-          backgroundColor: "#030303",
+          borderBottom: "1px solid var(--parchment-line)",
         }}
       >
         <div className="max-w-6xl mx-auto px-6 sm:px-8">
           <div className="text-center mb-16">
-            <span className="inscription" style={{ color: "#D4A843" }}>
-              WHO UNIFYONE IS BUILT FOR
-            </span>
+            <span className="inscription-ink">Who UnifyOne is built for</span>
             <h2
               className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
-              style={{ color: "#F0E8D0" }}
+              style={{ color: "var(--ink)" }}
             >
               Built for operators, not analysts.
             </h2>
             <p
               className="font-crimson text-lg"
               style={{
-                color: "#9A9A9A",
+                color: "var(--ink-soft)",
                 fontStyle: "italic",
                 maxWidth: 500,
                 margin: "0 auto",
@@ -1263,19 +1265,25 @@ export default function Home() {
                 key={item.audience}
                 data-reveal
                 data-reveal-delay={String(i * 100)}
-                className="stone-card p-8"
-                style={{ borderColor: "#242424" }}
+                className="surface-card p-8"
               >
                 <div
-                  className="font-cinzel text-2xl mb-4"
-                  style={{ color: item.color }}
+                  className="flex items-center justify-center mb-5 font-cinzel text-2xl"
+                  style={{
+                    width: "3rem",
+                    height: "3rem",
+                    borderRadius: "12px",
+                    color: item.color,
+                    backgroundColor: `${item.color}1f`,
+                    border: `1px solid ${item.color}55`,
+                  }}
                 >
                   {item.icon}
                 </div>
                 <h3
                   className="font-cinzel text-base font-bold mb-3"
                   style={{
-                    color: "#F0E8D0",
+                    color: "var(--ink)",
                     letterSpacing: "0.06em",
                     textTransform: "uppercase",
                   }}
@@ -1284,7 +1292,7 @@ export default function Home() {
                 </h3>
                 <p
                   className="font-crimson text-base"
-                  style={{ color: "#9A9A9A", lineHeight: 1.75 }}
+                  style={{ color: "var(--ink-soft)", lineHeight: 1.75 }}
                 >
                   {item.body}
                 </p>
@@ -1297,28 +1305,25 @@ export default function Home() {
       {/* ── TESTIMONIALS ─────────────────────────────────────────────────── */}
       <section
         id="testimonials"
+        className="parchment-bg"
         style={{
           padding: "6rem 0",
-          borderTop: "1px solid #242424",
-          borderBottom: "1px solid #242424",
-          backgroundColor: "#030303",
+          borderBottom: "1px solid var(--parchment-line)",
         }}
       >
         <div className="max-w-6xl mx-auto px-6 sm:px-8">
           <div className="text-center mb-16">
-            <span className="inscription" style={{ color: "#D4A843" }}>
-              OPERATOR VOICES
-            </span>
+            <span className="inscription-ink">Operator voices</span>
             <h2
               className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
-              style={{ color: "#F0E8D0" }}
+              style={{ color: "var(--ink)" }}
             >
               From the operators using it.
             </h2>
             <p
               className="font-crimson text-lg"
               style={{
-                color: "#9A9A9A",
+                color: "var(--ink-soft)",
                 fontStyle: "italic",
                 maxWidth: 480,
                 margin: "0 auto",
@@ -1329,23 +1334,19 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {TESTIMONIALS.map((t, i) => (
               <div
                 key={t.name}
                 data-reveal
                 data-reveal-delay={String(i * 80)}
-                className="p-8 relative"
-                style={{
-                  border: "1px solid #242424",
-                  backgroundColor: "#020202",
-                }}
+                className="surface-card p-8 relative"
               >
                 <div className="flex gap-1 mb-4">
                   {Array.from({ length: 5 }).map((_, s) => (
                     <span
                       key={s}
-                      style={{ color: t.accent, fontSize: "0.75rem" }}
+                      style={{ color: "#E0A92E", fontSize: "0.8rem" }}
                     >
                       ★
                     </span>
@@ -1355,7 +1356,7 @@ export default function Home() {
                 <p
                   className="font-crimson text-base mb-6"
                   style={{
-                    color: "#9A9A9A",
+                    color: "var(--ink-soft)",
                     fontStyle: "italic",
                     lineHeight: 1.75,
                   }}
@@ -1365,11 +1366,11 @@ export default function Home() {
 
                 <div className="flex items-center gap-3">
                   <div
-                    className="w-9 h-9 flex items-center justify-center shrink-0 font-cinzel text-xs font-bold"
+                    className="w-9 h-9 flex items-center justify-center shrink-0 font-cinzel text-xs font-bold rounded-full"
                     style={{
-                      backgroundColor: `${t.accent}18`,
-                      border: `1px solid ${t.accent}40`,
-                      color: t.accent,
+                      backgroundColor: `${t.accent}26`,
+                      border: `1px solid ${t.accent}`,
+                      color: "#2a1c04",
                     }}
                   >
                     {t.initials}
@@ -1377,13 +1378,13 @@ export default function Home() {
                   <div>
                     <p
                       className="font-cinzel text-xs font-bold"
-                      style={{ color: "#F0E8D0", letterSpacing: "0.06em" }}
+                      style={{ color: "var(--ink)", letterSpacing: "0.06em" }}
                     >
                       {t.name}
                     </p>
                     <p
                       className="font-crimson text-xs"
-                      style={{ color: "#5A5A5A" }}
+                      style={{ color: "var(--ink-faint)" }}
                     >
                       {t.role}
                     </p>
@@ -1395,12 +1396,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── KAI / AI SIDEKICK ────────────────────────────────────────────── */}
+      {/* ── KAI / AI SIDEKICK (dark AI showcase band) ────────────────────── */}
       <section
         id="kai"
+        className="cathedral-bg"
         style={{
           padding: "6rem 0",
-          borderTop: "1px solid #242424",
+          borderTop: "1px solid rgba(212,168,67,0.25)",
         }}
       >
         <div className="max-w-5xl mx-auto px-6 sm:px-8">
@@ -1578,27 +1580,25 @@ export default function Home() {
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       <section
         id="faq"
+        className="parchment-bg"
         style={{
           padding: "6rem 0",
-          borderTop: "1px solid #242424",
-          borderBottom: "1px solid #242424",
-          backgroundColor: "#030303",
+          borderTop: "1px solid var(--parchment-line)",
+          borderBottom: "1px solid var(--parchment-line)",
         }}
       >
         <div className="max-w-3xl mx-auto px-6 sm:px-8">
           <div className="text-center mb-14">
-            <span className="inscription" style={{ color: "#D4A843" }}>
-              FAQ
-            </span>
+            <span className="inscription-ink">FAQ</span>
             <h2
               className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
-              style={{ color: "#F0E8D0" }}
+              style={{ color: "var(--ink)" }}
             >
               Frequently asked questions.
             </h2>
             <p
               className="font-crimson text-lg"
-              style={{ color: "#9A9A9A", fontStyle: "italic" }}
+              style={{ color: "var(--ink-soft)", fontStyle: "italic" }}
             >
               Everything you need to know about UnifyOne and 1Commerce LLC.
             </p>
@@ -1609,14 +1609,14 @@ export default function Home() {
               <div
                 key={item.q}
                 style={{
-                  borderTop: "1px solid #242424",
+                  borderTop: "1px solid var(--parchment-line)",
                   padding: "1.75rem 0",
                 }}
               >
                 <h3
                   className="font-cinzel text-base font-semibold mb-3"
                   style={{
-                    color: "#F0E8D0",
+                    color: "var(--ink)",
                     letterSpacing: "0.04em",
                   }}
                 >
@@ -1624,20 +1624,20 @@ export default function Home() {
                 </h3>
                 <p
                   className="font-crimson text-base"
-                  style={{ color: "#9A9A9A", lineHeight: 1.8 }}
+                  style={{ color: "var(--ink-soft)", lineHeight: 1.8 }}
                 >
                   {item.a}
                 </p>
               </div>
             ))}
-            <div style={{ borderTop: "1px solid #242424" }} />
+            <div style={{ borderTop: "1px solid var(--parchment-line)" }} />
           </div>
 
           <div className="text-center mt-12">
             <Link href="/contact">
               <span
                 className="font-crimson text-base cursor-pointer underline"
-                style={{ color: "#D4A843" }}
+                style={{ color: "var(--gold-ink)" }}
               >
                 Have a different question? Contact 1Commerce →
               </span>
@@ -1649,10 +1649,9 @@ export default function Home() {
       {/* ── FINAL CTA ────────────────────────────────────────────────────── */}
       <section
         ref={ctaRef}
-        className="apex-light"
+        className="apex-light-soft"
         style={{
-          padding: "6rem 0",
-          borderTop: "1px solid #242424",
+          padding: "7rem 0",
         }}
       >
         <div
@@ -1660,12 +1659,10 @@ export default function Home() {
           data-reveal-delay="0"
           className="max-w-3xl mx-auto px-6 sm:px-8 text-center"
         >
-          <span className="inscription" style={{ color: "#D4A843" }}>
-            BEGIN CONSTRUCTION
-          </span>
+          <span className="inscription-ink">Begin construction</span>
           <h2
             className="font-cinzel text-3xl sm:text-4xl font-black mt-6 mb-6"
-            style={{ color: "#F0E8D0" }}
+            style={{ color: "var(--ink)" }}
           >
             The foundation is ready.
             <br />
@@ -1673,7 +1670,7 @@ export default function Home() {
           </h2>
           <p
             className="font-crimson text-lg mb-10 mobile-visibility-copy"
-            style={{ color: "#6A6A6A", fontStyle: "italic" }}
+            style={{ color: "var(--ink-soft)", fontStyle: "italic" }}
           >
             Start free. No credit card. The Starter tier runs on the same
             infrastructure as every paid plan. When you're ready to scale,
@@ -1681,13 +1678,13 @@ export default function Home() {
             cost model.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href={getSignupUrl()} className="btn-illuminate">
+            <a href={getSignupUrl()} className="btn-solid-gold">
               Start Free Trial
             </a>
             <a
               href="#blueprint"
               onClick={scrollToSection("blueprint")}
-              className="btn-ghost-gold cursor-pointer"
+              className="btn-line-ink cursor-pointer"
             >
               Claim the Blueprint →
             </a>
@@ -1695,6 +1692,58 @@ export default function Home() {
         </div>
       </section>
       <StickyCTA />
+
+      {/* Static partner links — visible to AI crawlers in initial HTML */}
+      <aside aria-label="Platform integrations" className="sr-only">
+        <p>UnifyOne integrates with:</p>
+        <ul>
+          <li>
+            <a
+              href="https://stripe.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Stripe — payment processing
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://www.paypal.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              PayPal — payment processing
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://www.shopify.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Shopify — e-commerce platform
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://www.anthropic.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Anthropic — Claude AI models
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              IRS Self-Employment Tax guidance
+            </a>
+          </li>
+        </ul>
+      </aside>
     </PublicLayout>
   );
 }

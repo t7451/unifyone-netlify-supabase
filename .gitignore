@@ -113,4 +113,5 @@ temp/
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
 package-lock.json
-scripts/citation-reports/
+# citation-reports are tracked so the weekly workflow can commit SOV history
+# scripts/citation-reports/
