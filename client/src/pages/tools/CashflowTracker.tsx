@@ -129,6 +129,13 @@ interface PlatformConfig {
   weeklyEarnings: string;
 }
 
+interface DayResult {
+  dayOfWeek: number;
+  label: string;
+  platforms: string[];
+  amount: number;
+}
+
 export default function CashflowTracker() {
   const [configs, setConfigs] = useState<PlatformConfig[]>(
     PLATFORM_DEFS.map(p => ({
@@ -159,13 +166,6 @@ export default function CashflowTracker() {
     setConfigs(cs =>
       cs.map(c => (c.id === id ? { ...c, weeklyEarnings: value } : c))
     );
-  }
-
-  interface DayResult {
-    dayOfWeek: number;
-    label: string;
-    platforms: string[];
-    amount: number;
   }
 
   const results = useMemo<DayResult[] | null>(() => {
@@ -275,8 +275,12 @@ export default function CashflowTracker() {
             Select your active platforms
           </h2>
           <div className="space-y-3">
-            {PLATFORM_DEFS.map((def, i) => {
-              const cfg = configs[i];
+            {PLATFORM_DEFS.map(def => {
+              const cfg = configs.find(c => c.id === def.id) ?? {
+                id: def.id,
+                active: false,
+                weeklyEarnings: "",
+              };
               return (
                 <div
                   key={def.id}

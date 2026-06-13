@@ -93,6 +93,15 @@ function mkRow(name = ""): PlatformRow {
   };
 }
 
+interface RowResult {
+  name: string;
+  gross: number;
+  hours: number;
+  expenses: number;
+  net: number;
+  hourly: number;
+}
+
 export default function EarningsConsolidator() {
   const [platforms, setPlatforms] = useState<PlatformRow[]>([
     mkRow("DoorDash"),
@@ -126,15 +135,6 @@ export default function EarningsConsolidator() {
       setStarted(true);
       trackToolUsage("earnings-consolidator", "start");
     }
-  }
-
-  interface RowResult {
-    name: string;
-    gross: number;
-    hours: number;
-    expenses: number;
-    net: number;
-    hourly: number;
   }
 
   const results = useMemo<RowResult[]>(() => {
@@ -401,7 +401,7 @@ export default function EarningsConsolidator() {
                       .slice()
                       .sort((a, b) => b.hourly - a.hourly)
                       .map(r => (
-                        <tr key={r.name + r.gross}>
+                        <tr key={`${r.name}-${r.gross}-${r.hours}`}>
                           <td className="py-2.5 font-medium">{r.name}</td>
                           <td className="py-2.5 text-right tabular-nums">
                             {fmt(r.gross)}

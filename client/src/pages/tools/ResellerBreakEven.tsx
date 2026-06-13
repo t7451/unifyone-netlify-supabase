@@ -443,8 +443,8 @@ export default function ResellerBreakEven() {
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {calc.ladder.map(row => (
-                      <tr key={row.price}>
+                    {calc.ladder.map((row, idx) => (
+                      <tr key={idx}>
                         <td className="py-2 tabular-nums">
                           {fmtDollar(row.price)}
                         </td>
