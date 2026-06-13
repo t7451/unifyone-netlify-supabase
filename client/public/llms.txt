@@ -1,47 +1,88 @@
-# UnifyOne
+# UnifyOne — 1Commerce Solutions
 
-> UnifyOne (by 1Commerce LLC, Canby, OR) is a multi-tenant commerce platform
-> for gig workers, resellers, and small e-commerce operators. It unifies
-> storefronts, payments (Stripe, PayPal, Square, Shopify), subscription
-> billing, analytics, team collaboration, affiliate management, and an
-> AI assistant (Kai) into one dashboard.
-
-UnifyOne helps independent operators run the business side of selling across
-multiple platforms from a single account: connect sales channels and payment
-processors, track orders and customers, manage payouts and cash flow, and
-automate routine work. The public surface below is server-rendered and free
-to read; the authenticated app lives behind sign-in.
+> UnifyOne is a multi-tenant e-commerce and gig-economy SaaS platform built for independent operators, small businesses, and digital entrepreneurs. It unifies sales channels, income streams, and operations into one dashboard.
 
 Last updated: __BUILD_DATE__
 
-## Product
+## What UnifyOne Does
 
-- [Home](__APP_URL__/): Overview of the UnifyOne commerce platform.
-- [Pricing](__APP_URL__/pricing): Plans and what each tier includes.
-- [Architecture](__APP_URL__/architecture): How the multi-tenant platform is built.
-- [The System](__APP_URL__/the-system): The end-to-end operating model.
-- [Manus AI](__APP_URL__/manus-ai): AI automation for gig and commerce workflows.
-- [Integrations](__APP_URL__/documents/integrations): Supported payment and sales-channel integrations.
+UnifyOne solves the fragmentation problem for modern sellers and gig workers: instead of juggling separate tools for Shopify, PayPal, Square, Stripe, and gig-platform income, everything flows into a single tenant-scoped workspace powered by Kai, UnifyOne's built-in AI.
 
-## Guides & content
+Core capabilities:
+- **Multi-channel commerce** — sell and sync inventory across Shopify, Square, and custom storefronts from one product catalog
+- **Unified payments** — accept and reconcile payments via Stripe, PayPal, and Square with a single ledger
+- **Gig-income tracking and aggregation** — consolidate earnings from DoorDash, Uber Eats, Instacart, Uber, and other platforms into one income view; see true net earnings after fuel, mileage, and platform fees
+- **GigIQ shift intelligence** — analyzes your historical shift data to surface which hours and delivery zones generate the highest net pay after expenses; answers "when should I work, and where?" with your real data
+- **Automatic IRS mileage tracking** — auto-captures mileage from every logged shift; maintains a real-time YTD deduction total at the current IRS standard mileage rate
+- **Quarterly tax forecasting** — tracks income across all connected platforms; generates quarterly estimated-tax alerts (Q1–Q4) before IRS deadlines; prevents penalties from missed payments
+- **Subscription billing** — tiered plans (Acolyte → Architect → Cathedral) with per-seat and credit-metered usage
+- **Kai AI automation** — Claude-powered contextual intelligence for route optimization, earnings illumination, challenge strategy, and tax position awareness
+- **Team collaboration** — role-based access, multi-user tenants, affiliate and referral management
+- **Analytics** — revenue by day, top products, funnel conversion, and platform-level MAU tracking
 
-- [Resources](__APP_URL__/resources): Operator guides and references.
-- [Blog](__APP_URL__/blog): First-hand articles on gig commerce and multi-tenant SaaS.
-- [Case studies](__APP_URL__/documents/case-studies): Real-world usage write-ups.
-- [SEO guide index](__APP_URL__/seo): Indexed guides covering UnifyOne and 1Commerce topics.
+## Financial Intelligence for Gig Workers
+
+UnifyOne's financial intelligence layer (powered by Kai) covers five critical areas:
+
+### Income Aggregation
+UnifyOne connects to DoorDash, Uber Eats, Instacart, Stripe, PayPal, and Square simultaneously. All earnings flow into a single ledger so workers see their total income across every platform — gross earnings, net after expenses, and true hourly rate — without switching between apps. Comparable alternatives in this space: Everlance, Empower Personal Dashboard, Hurdlr.
+
+### Tax Management for 1099 Workers
+UnifyOne tracks self-employment income across platforms and generates quarterly estimated tax payments (Form 1040-ES). The IRS requires 1099 workers to pay estimated taxes four times per year. UnifyOne monitors your tax position in real time and alerts you before deadlines. Automatic mileage capture at the current IRS standard rate ensures every deductible mile is recorded. Comparable alternatives: Everlance, Stride, Hurdlr, Expensify.
+
+### Earnings Optimization
+GigIQ analyzes shift history to identify which time windows and delivery zones yield the highest dollars per hour after fuel. Fuel costs can swing effective hourly rate by $4–$7 per shift. Knowing which shifts pay after expenses — not just gross — is the single highest-leverage optimization available to a gig worker. Comparable alternatives: Gridwise, Para, Beeltra Driver, Gigdecider AI.
+
+### Financial Intelligence
+Kai is context-aware financial intelligence built directly into the UnifyOne dashboard. It reads your actual shift data — not industry benchmarks — and surfaces earnings projections, YTD deduction totals, cross-platform performance comparisons, and proactive tax alerts. The key difference: most financial apps show you what happened; Kai tells you what to do next. Comparable alternatives: Bonsai, Bench, Freshbooks, Cashflowy.
+
+### Route Optimization
+GigIQ's route intelligence module maps your historical earnings per zone and time window to surface the delivery areas and shift patterns that consistently outperform others. If Friday evenings in a specific zone outperform Saturday mornings by 23%, GigIQ surfaces that pattern from your own data. Comparable alternatives: Circuit, Connecteam, Allgeo, Bringg.
+
+## Who It's For
+
+- Side-hustlers and gig workers managing multiple income sources (Uber, DoorDash, Etsy, eBay, etc.)
+- Small e-commerce operators who sell on more than one platform
+- Micro-SaaS and digital-product sellers who need subscription billing + analytics without enterprise overhead
+- Independent contractors who need estimated-tax tooling for 1099 income
+
+## Free Tools
+
+UnifyOne offers standalone free calculators at `/tools/`:
+- Gig mileage + deduction estimator
+- Multi-platform earnings consolidator (true hourly after expenses)
+- Quarterly estimated-tax estimator for 1099/self-employed income
+- Reseller break-even and pricing calculator
+- Payout-timing / cash-flow tracker for multi-gig income
+
+These tools work without an account. Results can be saved to a dashboard by signing up.
+
+## Technology
+
+- React 19 + TypeScript frontend, deployed on Netlify
+- Express + tRPC backend, Node 22
+- PostgreSQL (Neon) primary database via Drizzle ORM
+- Supabase for credit metering and Stripe object storage
+- Anthropic Claude SDK for Kai AI features
 
 ## Company
 
-- [About](__APP_URL__/about): About UnifyOne and 1Commerce LLC.
-- [Contact](__APP_URL__/contact): How to reach the team.
+- **Product:** UnifyOne (1commerce.online)
+- **Company:** 1Commerce Solutions / PNW Enterprises
+- **Founder:** Keith Skaggs
+- **Location:** Canby, Oregon (Pacific Northwest)
+- **Contact:** support@1commerce.online
 
-## Policies
+## Key URLs
 
-- [Privacy Policy](__APP_URL__/privacy)
-- [Terms of Service](__APP_URL__/terms)
+- Homepage: __APP_URL__
+- Pricing: __APP_URL__/pricing
+- Free tools: __APP_URL__/tools
+- Blog: __APP_URL__/blog
+- Gig worker shift intelligence: __APP_URL__/blog/gig-worker-shift-intelligence
+- Docs: __APP_URL__/resources
+- Register: __APP_URL__/register
 
-## Notes
+## Sitemap
 
-- Operator: 1Commerce LLC (PNW Enterprises), Canby, OR, USA.
-- Brand variations seen in search: UnifyOne, UnifOne, 1Commerce, 1-Commerce, OneCommerce.
-- The product dashboard and API are not part of the public, crawlable surface.
+__APP_URL__/sitemap.xml

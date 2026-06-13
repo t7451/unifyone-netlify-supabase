@@ -19,7 +19,10 @@
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "prepare": "is-ci || husky",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "seo:ping": "node scripts/ping-sitemaps.mjs",
+    "seo:citation-audit": "tsx scripts/ai-citation-audit.ts",
+    "seo:mau": "psql $DATABASE_URL -f scripts/mau-exact.sql"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

@@ -52,6 +52,7 @@ const ThemeStore = lazy(() => import("./pages/ThemeStore"));
 const MyThemes = lazy(() => import("./pages/MyThemes"));
 const AdminThemes = lazy(() => import("./pages/AdminThemes"));
 const BlogIndex = lazy(() => import("./pages/BlogIndex"));
+const ToolsIndex = lazy(() => import("./pages/ToolsIndex"));
 const Login = lazy(() => import("./pages/Login"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -79,6 +80,26 @@ const SyncMonitor = lazy(() => import("./pages/SyncMonitor"));
 const GigEcommercePost = lazy(() => import("./pages/blog/GigEcommercePost"));
 const MultiTenantPost = lazy(() => import("./pages/blog/MultiTenantPost"));
 const AIGigWorkersPost = lazy(() => import("./pages/blog/AIGigWorkersPost"));
+const GigWorkerShiftIntelligencePost = lazy(
+  () => import("./pages/blog/GigWorkerShiftIntelligencePost")
+);
+const MileageCalculator = lazy(() => import("./pages/tools/MileageCalculator"));
+const QuarterlyTaxEstimator = lazy(
+  () => import("./pages/tools/QuarterlyTaxEstimator")
+);
+const GigIncomeAggregator = lazy(
+  () => import("./pages/geo/GigIncomeAggregator")
+);
+const TaxManagement1099 = lazy(() => import("./pages/geo/TaxManagement1099"));
+const GigEarningsOptimizer = lazy(
+  () => import("./pages/geo/GigEarningsOptimizer")
+);
+const FinancialIntelligenceGig = lazy(
+  () => import("./pages/geo/FinancialIntelligenceGig")
+);
+const GigRouteIntelligence = lazy(
+  () => import("./pages/geo/GigRouteIntelligence")
+);
 const DigitalRetailGuidePost = lazy(
   () => import("./pages/blog/DigitalRetailGuidePost")
 );
@@ -519,6 +540,7 @@ function Router() {
       />
       <Route path="/documents/work-proof" component={() => <WorkProof />} />
       <Route path="/docs-chat" component={() => <DocsChat />} />
+      <Route path="/tools" component={() => <ToolsIndex />} />
       <Route path="/blog" component={() => <BlogIndex />} />
       <Route path="/chat" component={() => <NlwebChat />} />
       <Route path="/resources" component={() => <Resources />} />
@@ -544,11 +566,45 @@ function Router() {
         component={() => <AIGigWorkersPost />}
       />
       <Route
+        path="/blog/gig-worker-shift-intelligence"
+        component={() => <GigWorkerShiftIntelligencePost />}
+      />
+      <Route
         path="/blog/digital-retail-guide"
         component={() => <DigitalRetailGuidePost />}
       />
       {/* Dynamic AI-generated blog posts from the seo_content_jobs table */}
       <Route path="/blog/:slug" component={() => <DynamicBlogPost />} />
+      {/* Free tools */}
+      <Route
+        path="/tools/mileage-deduction-calculator"
+        component={() => <MileageCalculator />}
+      />
+      <Route
+        path="/tools/quarterly-tax-estimator"
+        component={() => <QuarterlyTaxEstimator />}
+      />
+      {/* GEO landing pages */}
+      <Route
+        path="/gig-income-aggregator"
+        component={() => <GigIncomeAggregator />}
+      />
+      <Route
+        path="/1099-tax-management"
+        component={() => <TaxManagement1099 />}
+      />
+      <Route
+        path="/gig-earnings-optimizer"
+        component={() => <GigEarningsOptimizer />}
+      />
+      <Route
+        path="/financial-intelligence-gig-workers"
+        component={() => <FinancialIntelligenceGig />}
+      />
+      <Route
+        path="/gig-route-intelligence"
+        component={() => <GigRouteIntelligence />}
+      />
       <Route path="/seo" component={() => <SeoIndex />} />
       <Route path="/seo/:slug" component={() => <SeoLanding />} />
       <Route
