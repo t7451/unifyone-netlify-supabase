@@ -84,6 +84,7 @@ const plugins = [
       { path: "/tools/cashflow-tracker" },
       { path: "/tools/se-tax-calculator" },
       { path: "/tools/gig-hourly-rate" },
+      { path: "/tools/tax-set-aside" },
       { path: "/gig-income-aggregator" },
       { path: "/1099-tax-management" },
       { path: "/gig-earnings-optimizer" },
@@ -231,6 +232,12 @@ const plugins = [
       },
       {
         path: "/tools/gig-hourly-rate",
+        changefreq: "monthly",
+        priority: 0.9,
+        lastmod: "2026-06-13",
+      },
+      {
+        path: "/tools/tax-set-aside",
         changefreq: "monthly",
         priority: 0.9,
         lastmod: "2026-06-13",

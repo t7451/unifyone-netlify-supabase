@@ -115,3 +115,6 @@ temp/
 package-lock.json
 # citation-reports are tracked so the weekly workflow can commit SOV history
 # scripts/citation-reports/
+
+# Claude Code agent worktrees (ephemeral)
+.claude/worktrees/

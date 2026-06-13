@@ -14,6 +14,10 @@ import { getLoginUrl } from "./const";
 import { trpc } from "./lib/trpc";
 import { useTracking } from "./hooks/useTracking";
 import { useServerEvents } from "./hooks/useServerEvents";
+import {
+  useCreditBalanceRealtime,
+  useCreditUsageRealtime,
+} from "./lib/supabaseRealtime";
 
 const Home = lazy(() => import("./pages/Home"));
 const Discounts = lazy(() => import("./pages/Discounts"));
@@ -95,6 +99,7 @@ const ResellerBreakEven = lazy(() => import("./pages/tools/ResellerBreakEven"));
 const CashflowTracker = lazy(() => import("./pages/tools/CashflowTracker"));
 const SETaxCalculator = lazy(() => import("./pages/tools/SETaxCalculator"));
 const GigHourlyRate = lazy(() => import("./pages/tools/GigHourlyRate"));
+const TaxSetAside = lazy(() => import("./pages/tools/TaxSetAside"));
 const GigIncomeAggregator = lazy(
   () => import("./pages/geo/GigIncomeAggregator")
 );
@@ -208,6 +213,12 @@ function Router() {
   // authenticated session (EventSource uses cookies). Gives up after 5
   // consecutive failures (Netlify serverless — falls back to polling).
   useServerEvents();
+
+  // Subscribe to Supabase Realtime for credit balance / usage — supplements
+  // the SSE credit_balance event for environments where SSE isn't available.
+  const { user } = useAuth();
+  useCreditBalanceRealtime(user?.openId);
+  useCreditUsageRealtime(user?.openId);
 
   return (
     <Switch>
@@ -616,6 +627,7 @@ function Router() {
         path="/tools/gig-hourly-rate"
         component={() => <GigHourlyRate />}
       />
+      <Route path="/tools/tax-set-aside" component={() => <TaxSetAside />} />
       {/* GEO landing pages */}
       <Route
         path="/gig-income-aggregator"

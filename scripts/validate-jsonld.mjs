@@ -31,6 +31,7 @@ const REQUIRED_TOOLS = [
   "CashflowTracker.tsx",
   "SETaxCalculator.tsx",
   "GigHourlyRate.tsx",
+  "TaxSetAside.tsx",
 ];
 
 let failures = 0;
