@@ -5,7 +5,7 @@ import { trackOrganicLanding } from "@/lib/userTracking";
 import { useEffect } from "react";
 
 /** Metadata shape for a free tool listing. */
-export interface ToolMeta {
+interface ToolMeta {
   slug: string;
   title: string;
   tagline: string;
@@ -23,25 +23,37 @@ export interface ToolMeta {
  * Add new tools here once Keith confirms the pivot direction (WS2).
  * Each entry: unique slug, distinct search query, live=false until reviewed.
  */
-export const TOOLS_REGISTRY: ToolMeta[] = [
+const TOOLS_REGISTRY: ToolMeta[] = [
   {
     slug: "mileage-deduction-calculator",
     title: "Gig Worker Mileage & Deduction Calculator",
-    tagline: "Estimate your IRS mileage deduction for Uber, DoorDash, and other gig apps",
+    tagline:
+      "Estimate your IRS mileage deduction for Uber, DoorDash, and other gig apps",
     description:
-      "Enter your miles driven and app income to calculate your 2024 IRS standard mileage deduction. Works for all 1099 gig workers.",
+      "Enter your miles driven and app income to calculate the current IRS standard mileage deduction. Works for all 1099 gig workers.",
     audience: "Rideshare and delivery drivers, gig workers",
-    keywords: ["mileage deduction", "1099 gig worker", "IRS mileage rate", "tax deduction calculator"],
+    keywords: [
+      "mileage deduction",
+      "1099 gig worker",
+      "IRS mileage rate",
+      "tax deduction calculator",
+    ],
     live: false,
   },
   {
     slug: "earnings-consolidator",
     title: "Multi-Platform Earnings Consolidator",
-    tagline: "Add up your true hourly rate across Uber, DoorDash, Etsy, eBay, and more",
+    tagline:
+      "Add up your true hourly rate across Uber, DoorDash, Etsy, eBay, and more",
     description:
       "Enter gross earnings from each gig platform, plus time spent and estimated expenses, and see your real take-home hourly rate after all deductions.",
     audience: "Gig workers with multiple income streams",
-    keywords: ["gig earnings calculator", "multi-platform income", "true hourly rate", "side hustle income"],
+    keywords: [
+      "gig earnings calculator",
+      "multi-platform income",
+      "true hourly rate",
+      "side hustle income",
+    ],
     live: false,
   },
   {
@@ -51,17 +63,28 @@ export const TOOLS_REGISTRY: ToolMeta[] = [
     description:
       "Based on your net self-employment income, calculate your Q1–Q4 estimated tax payments using the IRS safe-harbor method.",
     audience: "Freelancers, contractors, gig workers, side-hustle earners",
-    keywords: ["quarterly estimated tax", "self-employed tax calculator", "1099 taxes", "safe harbor"],
+    keywords: [
+      "quarterly estimated tax",
+      "self-employed tax calculator",
+      "1099 taxes",
+      "safe harbor",
+    ],
     live: false,
   },
   {
     slug: "reseller-break-even",
     title: "Reseller Break-Even & Pricing Calculator",
-    tagline: "Find your minimum sale price on eBay, Etsy, Amazon FBA, or any marketplace",
+    tagline:
+      "Find your minimum sale price on eBay, Etsy, Amazon FBA, or any marketplace",
     description:
       "Enter item cost, marketplace fees, shipping, and returns rate to calculate your break-even price and target margin.",
     audience: "eBay, Etsy, and Amazon resellers; e-commerce sellers",
-    keywords: ["reseller break-even calculator", "marketplace fee calculator", "eBay pricing", "Etsy fees"],
+    keywords: [
+      "reseller break-even calculator",
+      "marketplace fee calculator",
+      "eBay pricing",
+      "Etsy fees",
+    ],
     live: false,
   },
   {
@@ -71,7 +94,12 @@ export const TOOLS_REGISTRY: ToolMeta[] = [
     description:
       "Each app pays on different schedules. Enter your platforms and estimated weekly earnings to see a 30-day cash-flow forecast.",
     audience: "Full-time gig workers managing cash flow",
-    keywords: ["gig payout schedule", "cash flow tracker", "gig worker finances", "income timing"],
+    keywords: [
+      "gig payout schedule",
+      "cash flow tracker",
+      "gig worker finances",
+      "income timing",
+    ],
     live: false,
   },
 ];
@@ -90,9 +118,10 @@ const jsonLd = [
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "Free Tools for Gig Workers and Sellers",
-    description: "Standalone free calculators and estimators. No account required.",
-    numberOfItems: TOOLS_REGISTRY.length,
-    itemListElement: TOOLS_REGISTRY.map((tool, i) => ({
+    description:
+      "Standalone free calculators and estimators. No account required.",
+    numberOfItems: TOOLS_REGISTRY.filter(t => t.live).length,
+    itemListElement: TOOLS_REGISTRY.filter(t => t.live).map((tool, i) => ({
       "@type": "ListItem",
       position: i + 1,
       item: {
@@ -125,13 +154,16 @@ export default function ToolsIndex() {
       {/* Hero */}
       <section className="border-b bg-muted/30 py-14 px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-medium text-primary uppercase tracking-wide mb-3">Free Tools</p>
+          <p className="text-sm font-medium text-primary uppercase tracking-wide mb-3">
+            Free Tools
+          </p>
           <h1 className="text-4xl font-bold tracking-tight mb-4">
             Calculators & Estimators for Independent Earners
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Standalone tools for 1099 gig workers, multi-platform sellers, and side-hustle earners.
-            Real computed output — not guesses. No account required.
+            Standalone tools for 1099 gig workers, multi-platform sellers, and
+            side-hustle earners. Real computed output — not guesses. No account
+            required.
           </p>
         </div>
       </section>
@@ -150,10 +182,12 @@ export default function ToolsIndex() {
       {/* Conversion CTA — separate from tool content, clearly marked */}
       <section className="border-t bg-muted/20 py-12 px-6">
         <div className="mx-auto max-w-xl text-center">
-          <h2 className="text-xl font-semibold mb-2">Save your results to a dashboard</h2>
+          <h2 className="text-xl font-semibold mb-2">
+            Save your results to a dashboard
+          </h2>
           <p className="text-muted-foreground mb-6">
-            Create a free UnifyOne account to store calculations, track earnings across platforms,
-            and get quarterly tax reminders automatically.
+            Create a free UnifyOne account to store calculations, track earnings
+            across platforms, and get quarterly tax reminders automatically.
           </p>
           <Link
             href="/register"
@@ -167,7 +201,9 @@ export default function ToolsIndex() {
       {/* FAQ — boosts AI citation */}
       <section className="border-t py-12 px-6">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-2xl font-semibold mb-8">Frequently Asked Questions</h2>
+          <h2 className="text-2xl font-semibold mb-8">
+            Frequently Asked Questions
+          </h2>
           <div className="space-y-6">
             <Faq
               q="Are these tools really free?"
@@ -210,7 +246,8 @@ function ToolCard({ tool }: { tool: ToolMeta }) {
     </div>
   );
 
-  if (!tool.live) return <div className="opacity-70 cursor-default">{inner}</div>;
+  if (!tool.live)
+    return <div className="opacity-70 cursor-default">{inner}</div>;
   return <Link href={`/tools/${tool.slug}`}>{inner}</Link>;
 }
 

@@ -51,13 +51,13 @@ These tools work without an account. Results can be saved to a dashboard by sign
 
 ## Key URLs
 
-- Homepage: https://1commerce.online
-- Pricing: https://1commerce.online/pricing
-- Free tools: https://1commerce.online/tools
-- Blog: https://1commerce.online/blog
-- Docs: https://1commerce.online/resources
-- Register: https://1commerce.online/register
+- Homepage: __APP_URL__
+- Pricing: __APP_URL__/pricing
+- Free tools: __APP_URL__/tools
+- Blog: __APP_URL__/blog
+- Docs: __APP_URL__/resources
+- Register: __APP_URL__/register
 
 ## Sitemap
 
-https://1commerce.online/sitemap.xml
+__APP_URL__/sitemap.xml

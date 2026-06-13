@@ -158,10 +158,16 @@ const plugins = [
         lastmod: "2026-05-06",
       },
       {
+        path: "/tools",
+        changefreq: "weekly",
+        priority: 0.9,
+        lastmod: "2026-06-13",
+      },
+      {
         path: "/blog",
-        changefreq: "monthly",
+        changefreq: "weekly",
         priority: 0.8,
-        lastmod: "2026-05-06",
+        lastmod: "2026-06-13",
       },
       {
         path: "/blog/gig-economy-commerce-platform",
