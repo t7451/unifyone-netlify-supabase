@@ -1,0 +1,188 @@
+{
+  "date": "2026-06-13",
+  "shareOfVoice": 0,
+  "totalQueries": 0,
+  "citedCount": 0,
+  "results": [
+    {
+      "queryId": "gig-tax-estimator",
+      "query": "best free quarterly tax estimator for gig workers 1099",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:10.917Z"
+    },
+    {
+      "queryId": "multi-platform-earnings",
+      "query": "how to track earnings from multiple gig apps like Uber DoorDash together",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:10.947Z"
+    },
+    {
+      "queryId": "mileage-deduction-calculator",
+      "query": "gig worker mileage deduction calculator 2024 IRS",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:10.991Z"
+    },
+    {
+      "queryId": "ecommerce-saas-small-business",
+      "query": "multi-tenant ecommerce platform for small business Shopify alternative",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.018Z"
+    },
+    {
+      "queryId": "unified-payments-dashboard",
+      "query": "single dashboard for Stripe PayPal Square sellers",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.058Z"
+    },
+    {
+      "queryId": "side-hustle-income-tracker",
+      "query": "free side hustle income tracker multiple platforms",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.084Z"
+    },
+    {
+      "queryId": "reseller-break-even-calculator",
+      "query": "reseller break-even pricing calculator eBay Etsy",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.110Z"
+    },
+    {
+      "queryId": "subscription-billing-saas",
+      "query": "affordable subscription billing SaaS for indie builders",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.138Z"
+    },
+    {
+      "queryId": "1099-quarterly-tax-tool",
+      "query": "1099 contractor quarterly estimated tax payment tool free",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.171Z"
+    },
+    {
+      "queryId": "gig-economy-commerce-platform",
+      "query": "ecommerce platform built for gig economy workers",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.214Z"
+    },
+    {
+      "queryId": "income-aggregation-gig",
+      "query": "best app to aggregate income from multiple gig platforms DoorDash Uber Instacart",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.242Z"
+    },
+    {
+      "queryId": "tax-management-1099",
+      "query": "best tax management app for 1099 gig workers quarterly payments",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.269Z"
+    },
+    {
+      "queryId": "earnings-optimization-gig",
+      "query": "how to optimize earnings as a gig worker delivery driver",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.295Z"
+    },
+    {
+      "queryId": "financial-intelligence-gig",
+      "query": "financial intelligence platform for independent gig workers",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.331Z"
+    },
+    {
+      "queryId": "route-optimization-delivery",
+      "query": "route optimization tool for delivery drivers Uber Eats DoorDash",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.359Z"
+    },
+    {
+      "queryId": "brand-unifyone",
+      "query": "what is UnifyOne 1commerce",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.386Z"
+    },
+    {
+      "queryId": "brand-1commerce",
+      "query": "1commerce.online review",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.414Z"
+    },
+    {
+      "queryId": "competitor-gig-saas",
+      "query": "best SaaS platform for freelancers and gig workers",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.442Z"
+    },
+    {
+      "queryId": "competitor-unified-commerce",
+      "query": "unified commerce platform for multi-channel sellers",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.467Z"
+    },
+    {
+      "queryId": "ai-powered-ecommerce",
+      "query": "AI powered ecommerce platform for independent sellers 2024",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 404: {\"error\":{\"message\":\"No endpoints found for perplexity/llama-3.1-sonar-small-128k-online.\",\"code\":404},\"user_id\":\"user_3Dle2vC2XG3tWzks01OeRHjA5K8\"}",
+      "checkedAt": "2026-06-13T06:39:11.493Z"
+    }
+  ]
+}

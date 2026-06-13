@@ -1,0 +1,190 @@
+{
+  "date": "2026-06-13",
+  "shareOfVoice": 11,
+  "totalQueries": 18,
+  "citedCount": 2,
+  "results": [
+    {
+      "queryId": "gig-tax-estimator",
+      "query": "best free quarterly tax estimator for gig workers 1099",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "rawExcerpt": "The **best free quarterly tax estimator** for gig workers with 1099 income is likely **ShiftTracker’s 1099 Tax Calculator** because it is explicitly free, requires **no signup**, and calculates **self-employment tax, federal tax, state tax, and quarterly estimated payment** in the browser.[1]\n\nIf you want a few strong free alternatives, these stand out:\n\n- **Solo1099** — free tax tools for self-em",
+      "checkedAt": "2026-06-13T18:39:48.198Z"
+    },
+    {
+      "queryId": "multi-platform-earnings",
+      "query": "how to track earnings from multiple gig apps like Uber DoorDash together",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": ["gridwise", "para"],
+      "rawExcerpt": "The simplest way to track **earnings from multiple gig apps** is to use **one system for all platforms** and log each payout with the app name, date, hours, mileage, and expenses in the same place.[3][4][14] If you want a low-effort setup, apps like **Gridwise**, **Giglytics**, or similar gig bookkeeping tools are built to combine Uber, DoorDash, Instacart, Lyft, and other gig income into one dash",
+      "checkedAt": "2026-06-13T18:39:53.415Z"
+    },
+    {
+      "queryId": "mileage-deduction-calculator",
+      "query": "gig worker mileage deduction calculator 2024 IRS",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": ["quickbooks self-employed", "gridwise"],
+      "rawExcerpt": "For **2024**, the IRS standard mileage rate for business driving is **$0.67 per mile**. This is the primary deduction gig workers (1099 independent contractors) can claim on their **Schedule C** if they own or lease their vehicle.\n\n### How to Calculate Your 2024 Mileage Deduction\n1. **Track your total business miles** driven for gig work (e.g., Uber, DoorDash, Amazon Flex).\n2. **Multiply** those m",
+      "checkedAt": "2026-06-13T18:39:58.829Z"
+    },
+    {
+      "queryId": "ecommerce-saas-small-business",
+      "query": "multi-tenant ecommerce platform for small business Shopify alternative",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": ["shopify", "woocommerce", "bigcommerce", "wix", "para"],
+      "rawExcerpt": "If you need a **multi-tenant e-commerce platform** for a small business or a small agency building stores for multiple clients, the strongest Shopify alternatives in your results are **Spree Commerce**, **TLCommerce**, and **OpenCart**. For a simpler, lower-maintenance SMB setup, **BigCommerce**, **Wix eCommerce**, or **WooCommerce** are more practical, but they are not primarily positioned as tru",
+      "checkedAt": "2026-06-13T18:40:05.619Z"
+    },
+    {
+      "queryId": "unified-payments-dashboard",
+      "query": "single dashboard for Stripe PayPal Square sellers",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": ["shopify", "para"],
+      "rawExcerpt": "If you want a **single dashboard** for sellers using **Stripe, PayPal, and Square**, the strongest matches in the results are **North One Revenue Dashboard** and **SegMetrics**. North One explicitly says it can show a single view across **Stripe, PayPal, and Square** accounts, while SegMetrics offers dashboards for **Stripe**, **PayPal**, and **Square** sales performance.[1][3]\n\n- **North One Reve",
+      "checkedAt": "2026-06-13T18:40:10.703Z"
+    },
+    {
+      "queryId": "side-hustle-income-tracker",
+      "query": "free side hustle income tracker multiple platforms",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": ["gridwise"],
+      "rawExcerpt": "If you want a **free side hustle income tracker for multiple platforms**, the strongest options in the results are **Gridwise**, **SideStream**, and a few **free templates/calculators** that work across several income sources.[3][9][4]\n\n- **Gridwise** is free to download and is built for tracking earnings and expenses across gig platforms in one place, especially for rideshare and delivery work.[3",
+      "checkedAt": "2026-06-13T18:40:15.904Z"
+    },
+    {
+      "queryId": "reseller-break-even-calculator",
+      "query": "reseller break-even pricing calculator eBay Etsy",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "rawExcerpt": "If you want a **reseller break-even pricing calculator** for **eBay** or **Etsy**, the core idea is the same: enter your item cost and all selling costs, then compute the minimum sale price that covers them without losing money.[1][4]\n\nA practical formula used by reseller tools is:\n\n\\[\\text{Break-even price} = \\frac{\\text{Total cost} + \\text{fixed fees}}{1 - \\text{fee rate}}\n\\]\n\nUnderpriced’s exam",
+      "checkedAt": "2026-06-13T18:40:20.217Z"
+    },
+    {
+      "queryId": "subscription-billing-saas",
+      "query": "affordable subscription billing SaaS for indie builders",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "rawExcerpt": "If you want an **affordable subscription billing SaaS for indie builders**, the strongest low-cost options in these results are **Lemon Squeezy**, **Stripe Billing**, **Zoho Billing**, and **Pabbly Subscription Billing**.[1][2][4][12]\n\n- **Best all-around for indie digital products:** **Lemon Squeezy** is positioned for “indie developers and small SaaS,” with no monthly platform fee on the entry p",
+      "checkedAt": "2026-06-13T18:40:25.590Z"
+    },
+    {
+      "queryId": "1099-quarterly-tax-tool",
+      "query": "1099 contractor quarterly estimated tax payment tool free",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "rawExcerpt": "If you want a **free 1099 contractor quarterly estimated tax payment tool**, good options include **Quarterly1099**, **Jupid Tools**, and **QuickBiz Tax Tools**—all are described as free to use and built for freelancers/contractors.[1][4][5]\n\n- **Quarterly1099**: free, no signup required, and it estimates federal, state, and self-employment tax, then shows quarterly amounts and IRS due dates.[1]\n-",
+      "checkedAt": "2026-06-13T18:40:30.213Z"
+    },
+    {
+      "queryId": "gig-economy-commerce-platform",
+      "query": "ecommerce platform built for gig economy workers",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": ["shopify"],
+      "rawExcerpt": "If you mean an **ecommerce platform designed for gig economy workers**, the closest fit in your results is **Taskmo**, which positions itself as a gig marketplace and task-fulfillment platform serving ecommerce and related sectors with a network of gig workers.[1][4]\n\nIf you mean a **platform used by gig workers to sell products or services online**, the best-known examples are **Amazon, Etsy, eBa",
+      "checkedAt": "2026-06-13T18:40:35.381Z"
+    },
+    {
+      "queryId": "income-aggregation-gig",
+      "query": "best app to aggregate income from multiple gig platforms DoorDash Uber Instacart",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "rawExcerpt": "If you want the **best app to aggregate income across DoorDash, Uber, and Instacart**, the strongest match in the results is **ShiftTracker** because it explicitly consolidates earnings, hours, and mileage across those platforms into one dashboard and can show your *true hourly rate after expenses*.[2][4]\n\nA practical ranking from the results is:\n\n- **Best for multi-app earnings tracking:** **Shif",
+      "checkedAt": "2026-06-13T18:40:39.450Z"
+    },
+    {
+      "queryId": "tax-management-1099",
+      "query": "best tax management app for 1099 gig workers quarterly payments",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "rawExcerpt": "For **1099 gig workers who need quarterly estimated payments**, the strongest fit in your results is **Kronos** because it explicitly tracks gig income in real time, calculates quarterly obligations as deposits come in, and helps you set money aside automatically for estimated taxes.[1] The IRS requires quarterly estimated tax payments for many gig workers, with due dates on **April 15, June 15, S",
+      "checkedAt": "2026-06-13T18:40:44.208Z"
+    },
+    {
+      "queryId": "earnings-optimization-gig",
+      "query": "how to optimize earnings as a gig worker delivery driver",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "rawExcerpt": "To **optimize earnings** as a gig delivery driver, focus on four levers: work the **highest-demand hours**, accept only **high-value offers**, reduce **dead miles and idle time**, and track **net profit per hour** rather than gross pay.[2][3][4]\n\n- Work during **peak windows** such as lunch, dinner, weekends, commute periods, major events, and bad weather, since demand and bonuses are higher then.",
+      "checkedAt": "2026-06-13T18:40:50.014Z"
+    },
+    {
+      "queryId": "financial-intelligence-gig",
+      "query": "financial intelligence platform for independent gig workers",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": ["para"],
+      "rawExcerpt": "If you mean a **financial intelligence platform for independent gig workers**, the strongest matches in the results are **GigFlow** and **MyGigsters**. Both are positioned as all-in-one tools for gig workers that combine **income tracking, tax automation, expense management, and real-time financial insights**.[2][3][5]\n\nA few notable options by focus:\n\n- **GigFlow**: AI-powered financial tools for",
+      "checkedAt": "2026-06-13T18:40:54.392Z"
+    },
+    {
+      "queryId": "route-optimization-delivery",
+      "query": "route optimization tool for delivery drivers Uber Eats DoorDash",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "rawExcerpt": "If you want a **route optimization tool for delivery drivers** doing **Uber Eats** or **DoorDash**, the strongest matches in the results are **Route Me**, **Courier Route Planner**, and **Upper Route Planner**.[1][2][11]\n\n- **Route Me: Multi Stop Planner** — built for delivery drivers and couriers, including **DoorDash, Uber Eats, Instacart, FedEx, UPS, and Amazon Flex**; it supports **up to 100 s",
+      "checkedAt": "2026-06-13T18:40:59.289Z"
+    },
+    {
+      "queryId": "brand-unifyone",
+      "query": "what is UnifyOne 1commerce",
+      "provider": "openrouter",
+      "cited": true,
+      "citedAs": "...**UnifyOne** appears to be a **1Commerce** product: a multi-tenant commerce and gig-economy intelligence platform that combines Sh...",
+      "competitors": ["shopify"],
+      "rawExcerpt": "**UnifyOne** appears to be a **1Commerce** product: a multi-tenant commerce and gig-economy intelligence platform that combines Shopify store management, Stripe/PayPal payment processing, AI earnings analytics, and tax-deduction tracking in one dashboard.[1][2]\n\nThe clearest description in the results says it is built by **1Commerce LLC** and is meant to unify commerce operations and financial int",
+      "checkedAt": "2026-06-13T18:41:03.299Z"
+    },
+    {
+      "queryId": "brand-1commerce",
+      "query": "1commerce.online review",
+      "provider": "openrouter",
+      "cited": true,
+      "citedAs": "...**1commerce.online** appears to be the same or closely related to **1Commerce / UnifyOne**, an AI-powered multi-tenant commerce platform, ...",
+      "competitors": ["shopify"],
+      "rawExcerpt": "**1commerce.online** appears to be the same or closely related to **1Commerce / UnifyOne**, an AI-powered multi-tenant commerce platform, but the search results do **not** provide enough independent customer feedback to make a strong “good or bad” verdict.[6][9][14]\n\nWhat the available evidence suggests:\n\n- The site presents itself as an **AI-powered commerce platform** with plans ranging from **f",
+      "checkedAt": "2026-06-13T18:41:07.733Z"
+    },
+    {
+      "queryId": "competitor-gig-saas",
+      "query": "best SaaS platform for freelancers and gig workers",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 402: {\"error\":{\"message\":\"Insufficient credits. This account never purchased credits. Make sure your key is on the correct account or org, and if so, purchase more at https://openrouter.ai/settings/credits\",\"code\":402}}",
+      "checkedAt": "2026-06-13T18:41:08.974Z"
+    },
+    {
+      "queryId": "competitor-unified-commerce",
+      "query": "unified commerce platform for multi-channel sellers",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": [],
+      "error": "Error: OpenRouter 402: {\"error\":{\"message\":\"Insufficient credits. This account never purchased credits. Make sure your key is on the correct account or org, and if so, purchase more at https://openrouter.ai/settings/credits\",\"code\":402}}",
+      "checkedAt": "2026-06-13T18:41:09.086Z"
+    },
+    {
+      "queryId": "ai-powered-ecommerce",
+      "query": "AI powered ecommerce platform for independent sellers 2024",
+      "provider": "openrouter",
+      "cited": false,
+      "competitors": ["shopify", "bigcommerce", "wix"],
+      "rawExcerpt": "If you’re looking for an **AI-powered ecommerce platform for independent sellers in 2024**, the most relevant options in the results are **ExaStore**, **DigiHaat**, and broader AI commerce platforms like **Shopify**, **BigCommerce**, and **Wix eCommerce** with built-in AI features.[2][3][10]\n\n- **ExaStore** is the most directly aligned with *independent sellers*: it offers a branded storefront, **",
+      "checkedAt": "2026-06-13T18:41:12.799Z"
+    }
+  ]
+}
