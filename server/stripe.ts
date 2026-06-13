@@ -350,43 +350,57 @@ async function syncSubscription(sub: Stripe.Subscription) {
   const supabase = getSupabaseAdmin();
   if (supabase) {
     const customerId = sub.customer as string;
-    // Look up user_id from metadata or tenant's owner
-    const userId =
-      sub.metadata?.user_id || sub.metadata?.tenant_id || customerId;
-    await supabase.from("stripe_subscriptions").upsert([
-      {
-        id: sub.id,
-        user_id: userId,
-        stripe_customer_id: customerId,
-        status: sub.status,
-        metadata: sub.metadata,
-        price_id: priceId || null,
-        quantity: sub.items.data[0]?.quantity ?? 1,
-        cancel_at_period_end: sub.cancel_at_period_end,
-        current_period_start:
-          typeof subRecord.current_period_start === "number"
-            ? new Date(subRecord.current_period_start * 1000).toISOString()
-            : new Date().toISOString(),
-        current_period_end:
-          periodEnd?.toISOString() || new Date().toISOString(),
-        created: new Date(sub.created * 1000).toISOString(),
-        ended_at: sub.ended_at
-          ? new Date(sub.ended_at * 1000).toISOString()
-          : null,
-        cancel_at: sub.cancel_at
-          ? new Date(sub.cancel_at * 1000).toISOString()
-          : null,
-        canceled_at: sub.canceled_at
-          ? new Date(sub.canceled_at * 1000).toISOString()
-          : null,
-        trial_start: sub.trial_start
-          ? new Date(sub.trial_start * 1000).toISOString()
-          : null,
-        trial_end: sub.trial_end
-          ? new Date(sub.trial_end * 1000).toISOString()
-          : null,
-      },
-    ]);
+    // user_id comes from subscription metadata (stamped at checkout creation).
+    // Do NOT fall back to customerId — it is a Stripe customer ID string and
+    // would corrupt the user_id column, breaking overage flush lookups.
+    const userId = sub.metadata?.user_id || sub.metadata?.tenant_id || null;
+    if (!userId) {
+      console.warn(
+        `[Stripe] syncSubscription: no user_id in metadata for sub ${sub.id}, Supabase stripe_subscriptions.user_id will be null`
+      );
+    }
+    const { error: upsertError } = await supabase
+      .from("stripe_subscriptions")
+      .upsert([
+        {
+          id: sub.id,
+          user_id: userId,
+          stripe_customer_id: customerId,
+          status: sub.status,
+          metadata: sub.metadata,
+          price_id: priceId || null,
+          quantity: sub.items.data[0]?.quantity ?? 1,
+          cancel_at_period_end: sub.cancel_at_period_end,
+          current_period_start:
+            typeof subRecord.current_period_start === "number"
+              ? new Date(subRecord.current_period_start * 1000).toISOString()
+              : new Date().toISOString(),
+          current_period_end:
+            periodEnd?.toISOString() || new Date().toISOString(),
+          created: new Date(sub.created * 1000).toISOString(),
+          ended_at: sub.ended_at
+            ? new Date(sub.ended_at * 1000).toISOString()
+            : null,
+          cancel_at: sub.cancel_at
+            ? new Date(sub.cancel_at * 1000).toISOString()
+            : null,
+          canceled_at: sub.canceled_at
+            ? new Date(sub.canceled_at * 1000).toISOString()
+            : null,
+          trial_start: sub.trial_start
+            ? new Date(sub.trial_start * 1000).toISOString()
+            : null,
+          trial_end: sub.trial_end
+            ? new Date(sub.trial_end * 1000).toISOString()
+            : null,
+        },
+      ]);
+    if (upsertError) {
+      console.error(
+        `[Stripe] Supabase stripe_subscriptions upsert failed for ${sub.id}:`,
+        upsertError.message
+      );
+    }
   }
 
   console.log(
@@ -441,7 +455,7 @@ async function grantSubscriptionCredits(
   const supabase = getSupabaseAdmin();
   if (!supabase || !stripe) return;
 
-  const priceId = sub.items.data[0]?.price.id;
+  const priceId = sub.items.data[0]?.price?.id;
   if (!priceId) return;
 
   // Look up tier credits from subscription_tiers table
