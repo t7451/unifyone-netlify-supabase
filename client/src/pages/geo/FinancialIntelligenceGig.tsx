@@ -59,7 +59,7 @@ export default function FinancialIntelligenceGig() {
     <div className="min-h-screen bg-background text-foreground">
       <PageHead
         title="Financial Intelligence for Gig Workers — AI-Powered Earnings Analytics | UnifyOne"
-        description="Real-time financial intelligence for gig workers: AI earnings analysis, tax forecasting, expense tracking, and net income visibility across DoorDash, Uber Eats, Instacart, Stripe, PayPal, and Square."
+        description="AI-powered financial intelligence for gig workers: real-time earnings analysis, tax forecasting, and net income visibility across all platforms."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />
@@ -198,6 +198,74 @@ export default function FinancialIntelligenceGig() {
                   {a}
                 </p>
               </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">
+            Authoritative resources for gig worker finances
+          </h2>
+          <ul className="space-y-2">
+            {[
+              {
+                label:
+                  "IRS: Self-Employment Tax (Social Security and Medicare)",
+                href: "https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes",
+              },
+              {
+                label: "IRS: Estimated Taxes",
+                href: "https://www.irs.gov/businesses/small-businesses-self-employed/estimated-taxes",
+              },
+              {
+                label: "IRS: Standard Mileage Rates",
+                href: "https://www.irs.gov/tax-professionals/standard-mileage-rates",
+              },
+            ].map(({ label, href }) => (
+              <li key={href}>
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline"
+                >
+                  {label} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">
+            Related tools and guides
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {[
+              {
+                label: "Gig Income Aggregator",
+                href: "/gig-income-aggregator",
+              },
+              {
+                label: "Gig Earnings Optimizer",
+                href: "/gig-earnings-optimizer",
+              },
+              {
+                label: "1099 Tax Management",
+                href: "/1099-tax-management",
+              },
+              {
+                label: "Free Tax Estimator",
+                href: "/tools/quarterly-tax-estimator",
+              },
+            ].map(({ label, href }) => (
+              <Link
+                key={href}
+                href={href}
+                className="rounded-lg border p-4 text-sm font-medium hover:bg-muted transition-colors block"
+              >
+                {label} →
+              </Link>
             ))}
           </div>
         </section>
