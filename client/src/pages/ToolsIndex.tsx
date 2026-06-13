@@ -102,6 +102,38 @@ const TOOLS_REGISTRY: ToolMeta[] = [
     ],
     live: true,
   },
+  {
+    slug: "se-tax-calculator",
+    title: "Self-Employment Tax Calculator — 1099 Gig Workers",
+    tagline:
+      "See exactly how much SE tax you owe, your deductible half, and quarterly payment amounts",
+    description:
+      "Enter your net self-employment income to calculate Social Security + Medicare tax (15.3%), the deductible half that lowers your AGI, and how much to pay each quarter.",
+    audience: "1099 contractors, freelancers, gig workers",
+    keywords: [
+      "self-employment tax calculator",
+      "SE tax 1099",
+      "gig worker taxes",
+      "Schedule SE",
+    ],
+    live: true,
+  },
+  {
+    slug: "gig-hourly-rate",
+    title: "Gig Worker Real Hourly Rate Calculator",
+    tagline:
+      "Find your true effective hourly rate across DoorDash, Uber Eats, Instacart, and more",
+    description:
+      "Enter gross earnings, hours, and miles per platform to calculate your real net hourly rate after vehicle costs. Compare platforms side by side to see where your time pays most.",
+    audience: "Delivery drivers and gig workers on multiple platforms",
+    keywords: [
+      "gig worker hourly rate",
+      "DoorDash earnings calculator",
+      "true hourly rate",
+      "earnings optimizer",
+    ],
+    live: true,
+  },
 ];
 
 const CANONICAL = `${SITE_URL}/tools`;

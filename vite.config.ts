@@ -82,6 +82,8 @@ const plugins = [
       { path: "/tools/earnings-consolidator" },
       { path: "/tools/reseller-break-even" },
       { path: "/tools/cashflow-tracker" },
+      { path: "/tools/se-tax-calculator" },
+      { path: "/tools/gig-hourly-rate" },
       { path: "/gig-income-aggregator" },
       { path: "/1099-tax-management" },
       { path: "/gig-earnings-optimizer" },
@@ -217,6 +219,18 @@ const plugins = [
       },
       {
         path: "/tools/cashflow-tracker",
+        changefreq: "monthly",
+        priority: 0.9,
+        lastmod: "2026-06-13",
+      },
+      {
+        path: "/tools/se-tax-calculator",
+        changefreq: "monthly",
+        priority: 0.9,
+        lastmod: "2026-06-13",
+      },
+      {
+        path: "/tools/gig-hourly-rate",
         changefreq: "monthly",
         priority: 0.9,
         lastmod: "2026-06-13",

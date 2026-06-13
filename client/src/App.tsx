@@ -92,6 +92,8 @@ const EarningsConsolidator = lazy(
 );
 const ResellerBreakEven = lazy(() => import("./pages/tools/ResellerBreakEven"));
 const CashflowTracker = lazy(() => import("./pages/tools/CashflowTracker"));
+const SETaxCalculator = lazy(() => import("./pages/tools/SETaxCalculator"));
+const GigHourlyRate = lazy(() => import("./pages/tools/GigHourlyRate"));
 const GigIncomeAggregator = lazy(
   () => import("./pages/geo/GigIncomeAggregator")
 );
@@ -600,6 +602,14 @@ function Router() {
       <Route
         path="/tools/cashflow-tracker"
         component={() => <CashflowTracker />}
+      />
+      <Route
+        path="/tools/se-tax-calculator"
+        component={() => <SETaxCalculator />}
+      />
+      <Route
+        path="/tools/gig-hourly-rate"
+        component={() => <GigHourlyRate />}
       />
       {/* GEO landing pages */}
       <Route
