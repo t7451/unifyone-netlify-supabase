@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -59,7 +60,11 @@ function N8nTab() {
     enabled: true,
   });
 
-  const { data: workflows = [], refetch } = trpc.automation.n8n.list.useQuery();
+  const {
+    data: workflows = [],
+    refetch,
+    isLoading: workflowsLoading,
+  } = trpc.automation.n8n.list.useQuery();
   const { data: events = [] } = trpc.automation.getTriggerEvents.useQuery();
 
   const create = trpc.automation.n8n.create.useMutation({
@@ -128,7 +133,18 @@ function N8nTab() {
         </Button>
       </div>
 
-      {workflows.length === 0 ? (
+      {workflowsLoading ? (
+        <div className="space-y-3">
+          {[0, 1, 2].map(i => (
+            <Card key={i} className="bg-card border-border">
+              <CardContent className="p-4 space-y-2">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-1/2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : workflows.length === 0 ? (
         <Card className="bg-card border-border">
           <CardContent className="p-10 text-center">
             <Zap className="w-10 h-10 text-orange-400/40 mx-auto mb-3" />
@@ -217,9 +233,14 @@ function N8nTab() {
                       className="gap-1 text-xs"
                     >
                       {testingId === wf.id ? (
-                        <><Loader2 className="w-3 h-3 animate-spin" /> Testing...</>
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />{" "}
+                          Testing...
+                        </>
                       ) : (
-                        <><TestTube2 className="w-3 h-3" /> Test</>
+                        <>
+                          <TestTube2 className="w-3 h-3" /> Test
+                        </>
                       )}
                     </Button>
                     <Button
@@ -310,7 +331,10 @@ function N8nTab() {
               }
             >
               {create.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</>
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
               ) : (
                 "Create Workflow"
               )}
@@ -319,12 +343,16 @@ function N8nTab() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={deletingId !== null} onOpenChange={open => !open && setDeletingId(null)}>
+      <AlertDialog
+        open={deletingId !== null}
+        onOpenChange={open => !open && setDeletingId(null)}
+      >
         <AlertDialogContent className="bg-card border-border text-white">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Workflow?</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-400">
-              This will permanently remove the workflow and stop all future triggers. This action cannot be undone.
+              This will permanently remove the workflow and stop all future
+              triggers. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -333,10 +361,15 @@ function N8nTab() {
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700 text-white"
-              onClick={() => deletingId !== null && del.mutate({ id: deletingId })}
+              onClick={() =>
+                deletingId !== null && del.mutate({ id: deletingId })
+              }
             >
               {del.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting...</>
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
               ) : (
                 "Delete"
               )}
@@ -360,7 +393,11 @@ function ZapierTab() {
     enabled: true,
   });
 
-  const { data: hooks = [], refetch } = trpc.automation.zapier.list.useQuery();
+  const {
+    data: hooks = [],
+    refetch,
+    isLoading: hooksLoading,
+  } = trpc.automation.zapier.list.useQuery();
   const { data: events = [] } = trpc.automation.getTriggerEvents.useQuery();
 
   const create = trpc.automation.zapier.create.useMutation({
@@ -413,7 +450,18 @@ function ZapierTab() {
         </Button>
       </div>
 
-      {hooks.length === 0 ? (
+      {hooksLoading ? (
+        <div className="space-y-3">
+          {[0, 1, 2].map(i => (
+            <Card key={i} className="bg-card border-border">
+              <CardContent className="p-4 space-y-2">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-1/2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : hooks.length === 0 ? (
         <Card className="bg-card border-border">
           <CardContent className="p-10 text-center">
             <Zap className="w-10 h-10 text-yellow-400/40 mx-auto mb-3" />
@@ -548,7 +596,10 @@ function ZapierTab() {
               }
             >
               {create.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</>
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
               ) : (
                 "Create Hook"
               )}
@@ -557,12 +608,16 @@ function ZapierTab() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={deletingId !== null} onOpenChange={open => !open && setDeletingId(null)}>
+      <AlertDialog
+        open={deletingId !== null}
+        onOpenChange={open => !open && setDeletingId(null)}
+      >
         <AlertDialogContent className="bg-card border-border text-white">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Zapier Hook?</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-400">
-              This will permanently remove the hook and stop all future triggers. This action cannot be undone.
+              This will permanently remove the hook and stop all future
+              triggers. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -574,7 +629,10 @@ function ZapierTab() {
               onClick={() => del.mutate({ id: deletingId! })}
             >
               {del.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Deleting...</>
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
               ) : (
                 "Delete"
               )}
@@ -597,8 +655,11 @@ function MailchimpTab() {
     enabled: true,
   });
 
-  const { data: config, refetch } =
-    trpc.automation.mailchimp.getConfig.useQuery();
+  const {
+    data: config,
+    refetch,
+    isLoading: configLoading,
+  } = trpc.automation.mailchimp.getConfig.useQuery();
   const save = trpc.automation.mailchimp.saveConfig.useMutation({
     onSuccess: () => {
       refetch();
@@ -631,9 +692,13 @@ function MailchimpTab() {
               className="gap-1.5"
             >
               {testConn.isPending ? (
-                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Testing...</>
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Testing...
+                </>
               ) : (
-                <><TestTube2 className="w-3.5 h-3.5" /> Test</>
+                <>
+                  <TestTube2 className="w-3.5 h-3.5" /> Test
+                </>
               )}
             </Button>
           )}
@@ -657,7 +722,20 @@ function MailchimpTab() {
         </div>
       </div>
 
-      {config ? (
+      {configLoading ? (
+        <Card className="bg-card border-border">
+          <CardContent className="p-4">
+            <div className="grid grid-cols-2 gap-3">
+              {[0, 1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="space-y-1.5">
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : config ? (
         <Card className="bg-card border-border">
           <CardContent className="p-4 space-y-3">
             <div className="grid grid-cols-2 gap-3 text-sm">
@@ -769,7 +847,10 @@ function MailchimpTab() {
               }
             >
               {save.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
               ) : (
                 "Save Configuration"
               )}

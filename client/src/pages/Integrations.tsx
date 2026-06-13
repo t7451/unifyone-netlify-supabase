@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Zap,
@@ -15,6 +16,7 @@ import {
   CreditCard,
   ShoppingBag,
   ExternalLink,
+  AlertCircle,
 } from "lucide-react";
 import { trackActivation } from "@/lib/userTracking";
 
@@ -66,23 +68,74 @@ export default function Integrations() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const integrationsHeader = (
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-2xl font-bold text-white">Integrations</h1>
+        <p className="text-gray-400 text-sm mt-1">
+          Connect your payment rails and external services
+        </p>
+      </div>
+      <Button
+        onClick={() => navigate("/checkout")}
+        className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold"
+      >
+        <CreditCard className="w-4 h-4 mr-2" />
+        Test Checkout
+      </Button>
+    </div>
+  );
+
+  if (intStatus.isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        {integrationsHeader}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {[0, 1, 2].map(i => (
+            <Card key={i} className="bg-card border-border">
+              <CardHeader className="pb-3">
+                <Skeleton className="h-5 w-32" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (intStatus.isError) {
+    return (
+      <div className="p-6 space-y-6">
+        {integrationsHeader}
+        <Card className="bg-card border-border">
+          <CardContent className="p-10 text-center">
+            <AlertCircle className="w-10 h-10 text-red-400/60 mx-auto mb-3" />
+            <p className="text-white font-medium">
+              Couldn&apos;t load integration status
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {intStatus.error.message}
+            </p>
+            <Button
+              variant="outline"
+              className="mt-4 border-white/10 text-gray-300"
+              onClick={() => intStatus.refetch()}
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Integrations</h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Connect your payment rails and external services
-          </p>
-        </div>
-        <Button
-          onClick={() => navigate("/checkout")}
-          className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold"
-        >
-          <CreditCard className="w-4 h-4 mr-2" />
-          Test Checkout
-        </Button>
-      </div>
+      {integrationsHeader}
 
       {/* Payment Rails */}
       <div>
