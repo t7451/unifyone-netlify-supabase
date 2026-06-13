@@ -8,10 +8,7 @@ export function organization() {
     name: "UnifyOne",
     url: SITE_URL,
     logo: LOGO_URL,
-    sameAs: [
-      "https://github.com/unifyone",
-      "https://x.com/unifyone",
-    ],
+    sameAs: ["https://github.com/unifyone", "https://x.com/unifyone"],
   };
 }
 
@@ -81,7 +78,7 @@ export function faqPage(faqs: FaqItem[]) {
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: faqs.map((f) => ({
+    mainEntity: faqs.map(f => ({
       "@type": "Question",
       name: f.question,
       acceptedAnswer: { "@type": "Answer", text: f.answer },
@@ -129,5 +126,42 @@ export function breadcrumb(items: BreadcrumbItem[]) {
       name: item.name,
       item: item.url,
     })),
+  };
+}
+
+export interface HowToStep {
+  name: string;
+  text: string;
+  url?: string;
+}
+
+export interface HowToInput {
+  name: string;
+  description: string;
+  totalTime?: string;
+  steps: HowToStep[];
+}
+
+export function howTo(input: HowToInput) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: input.name,
+    description: input.description,
+    ...(input.totalTime ? { totalTime: input.totalTime } : {}),
+    step: input.steps.map((s, idx) => ({
+      "@type": "HowToStep",
+      position: String(idx + 1),
+      name: s.name,
+      text: s.text,
+      ...(s.url ? { url: s.url } : {}),
+    })),
+  };
+}
+
+export function graph(nodes: object[]) {
+  return {
+    "@context": "https://schema.org",
+    "@graph": nodes,
   };
 }
