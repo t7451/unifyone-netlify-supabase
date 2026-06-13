@@ -80,6 +80,26 @@ export const BLOG_POSTS = {
     modifiedAt: "2026-04-04",
     wordCount: 1050,
   },
+  gigWorkerShiftIntelligence: {
+    href: "/blog/gig-worker-shift-intelligence",
+    canonical: `${SITE_URL}/blog/gig-worker-shift-intelligence`,
+    title:
+      "Stop Guessing Which Shifts Pay: How UnifyOne Tells Gig Workers Exactly Where Their Money Goes | 1Commerce",
+    headline:
+      "Stop Guessing Which Shifts Pay: How UnifyOne Tells Gig Workers Exactly Where Their Money Goes",
+    description:
+      "UnifyOne's GigIQ module analyzes your real shift history to surface which hours and zones generate the highest net pay after fuel. Automatic mileage tracking, quarterly tax forecasting, and AI-powered earnings intelligence for DoorDash, Uber Eats, and Instacart workers.",
+    shortDescription:
+      "GigIQ reads your actual shift data to show which hours and zones pay the most after expenses — plus automatic mileage deductions and quarterly tax estimates.",
+    category: "Financial Intelligence",
+    breadcrumbName: "Gig Worker Shift Intelligence",
+    ogImage:
+      "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/unifyone-og-card.png",
+    author: "UnifyOne Team",
+    publishedAt: "2026-06-13",
+    modifiedAt: "2026-06-13",
+    wordCount: 1800,
+  },
 } satisfies Record<string, StaticBlogPostMeta>;
 
 export type BlogPostKey = keyof typeof BLOG_POSTS;

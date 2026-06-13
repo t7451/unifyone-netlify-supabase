@@ -80,6 +80,9 @@ const SyncMonitor = lazy(() => import("./pages/SyncMonitor"));
 const GigEcommercePost = lazy(() => import("./pages/blog/GigEcommercePost"));
 const MultiTenantPost = lazy(() => import("./pages/blog/MultiTenantPost"));
 const AIGigWorkersPost = lazy(() => import("./pages/blog/AIGigWorkersPost"));
+const GigWorkerShiftIntelligencePost = lazy(
+  () => import("./pages/blog/GigWorkerShiftIntelligencePost")
+);
 const DigitalRetailGuidePost = lazy(
   () => import("./pages/blog/DigitalRetailGuidePost")
 );
@@ -544,6 +547,10 @@ function Router() {
       <Route
         path="/blog/manus-ai-gig-workers"
         component={() => <AIGigWorkersPost />}
+      />
+      <Route
+        path="/blog/gig-worker-shift-intelligence"
+        component={() => <GigWorkerShiftIntelligencePost />}
       />
       <Route
         path="/blog/digital-retail-guide"

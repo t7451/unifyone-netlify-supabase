@@ -71,6 +71,7 @@ const plugins = [
       { path: "/documents/work-proof" },
       { path: "/tools" },
       { path: "/blog" },
+      { path: "/blog/gig-worker-shift-intelligence" },
       { path: "/blog/gig-economy-commerce-platform" },
       { path: "/blog/multi-tenant-ecommerce-saas" },
       { path: "/blog/manus-ai-gig-workers" },
@@ -167,6 +168,12 @@ const plugins = [
         path: "/blog",
         changefreq: "weekly",
         priority: 0.8,
+        lastmod: "2026-06-13",
+      },
+      {
+        path: "/blog/gig-worker-shift-intelligence",
+        changefreq: "weekly",
+        priority: 0.9,
         lastmod: "2026-06-13",
       },
       {

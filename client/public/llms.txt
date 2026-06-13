@@ -4,16 +4,38 @@
 
 ## What UnifyOne Does
 
-UnifyOne solves the fragmentation problem for modern sellers: instead of juggling separate tools for Shopify, PayPal, Square, Stripe, and gig-platform income, everything flows into a single tenant-scoped workspace.
+UnifyOne solves the fragmentation problem for modern sellers and gig workers: instead of juggling separate tools for Shopify, PayPal, Square, Stripe, and gig-platform income, everything flows into a single tenant-scoped workspace powered by Kai, UnifyOne's built-in AI.
 
 Core capabilities:
 - **Multi-channel commerce** — sell and sync inventory across Shopify, Square, and custom storefronts from one product catalog
 - **Unified payments** — accept and reconcile payments via Stripe, PayPal, and Square with a single ledger
-- **Gig-income tracking** — consolidate earnings from delivery, rideshare, and freelance platforms; auto-estimate quarterly taxes and deductions
+- **Gig-income tracking and aggregation** — consolidate earnings from DoorDash, Uber Eats, Instacart, Uber, and other platforms into one income view; see true net earnings after fuel, mileage, and platform fees
+- **GigIQ shift intelligence** — analyzes your historical shift data to surface which hours and delivery zones generate the highest net pay after expenses; answers "when should I work, and where?" with your real data
+- **Automatic IRS mileage tracking** — auto-captures mileage from every logged shift; maintains a real-time YTD deduction total at the current IRS standard mileage rate
+- **Quarterly tax forecasting** — tracks income across all connected platforms; generates quarterly estimated-tax alerts (Q1–Q4) before IRS deadlines; prevents penalties from missed payments
 - **Subscription billing** — tiered plans (Acolyte → Architect → Cathedral) with per-seat and credit-metered usage
-- **AI automation** — Claude-powered workflows for product descriptions, customer responses, and data insights
+- **Kai AI automation** — Claude-powered contextual intelligence for route optimization, earnings illumination, challenge strategy, and tax position awareness
 - **Team collaboration** — role-based access, multi-user tenants, affiliate and referral management
 - **Analytics** — revenue by day, top products, funnel conversion, and platform-level MAU tracking
+
+## Financial Intelligence for Gig Workers
+
+UnifyOne's financial intelligence layer (powered by Kai) covers five critical areas:
+
+### Income Aggregation
+UnifyOne connects to DoorDash, Uber Eats, Instacart, Stripe, PayPal, and Square simultaneously. All earnings flow into a single ledger so workers see their total income across every platform — gross earnings, net after expenses, and true hourly rate — without switching between apps. Comparable alternatives in this space: Everlance, Empower Personal Dashboard, Hurdlr.
+
+### Tax Management for 1099 Workers
+UnifyOne tracks self-employment income across platforms and generates quarterly estimated tax payments (Form 1040-ES). The IRS requires 1099 workers to pay estimated taxes four times per year. UnifyOne monitors your tax position in real time and alerts you before deadlines. Automatic mileage capture at the current IRS standard rate ensures every deductible mile is recorded. Comparable alternatives: Everlance, Stride, Hurdlr, Expensify.
+
+### Earnings Optimization
+GigIQ analyzes shift history to identify which time windows and delivery zones yield the highest dollars per hour after fuel. Fuel costs can swing effective hourly rate by $4–$7 per shift. Knowing which shifts pay after expenses — not just gross — is the single highest-leverage optimization available to a gig worker. Comparable alternatives: Gridwise, Para, Beeltra Driver, Gigdecider AI.
+
+### Financial Intelligence
+Kai is context-aware financial intelligence built directly into the UnifyOne dashboard. It reads your actual shift data — not industry benchmarks — and surfaces earnings projections, YTD deduction totals, cross-platform performance comparisons, and proactive tax alerts. The key difference: most financial apps show you what happened; Kai tells you what to do next. Comparable alternatives: Bonsai, Bench, Freshbooks, Cashflowy.
+
+### Route Optimization
+GigIQ's route intelligence module maps your historical earnings per zone and time window to surface the delivery areas and shift patterns that consistently outperform others. If Friday evenings in a specific zone outperform Saturday mornings by 23%, GigIQ surfaces that pattern from your own data. Comparable alternatives: Circuit, Connecteam, Allgeo, Bringg.
 
 ## Who It's For
 
@@ -39,7 +61,7 @@ These tools work without an account. Results can be saved to a dashboard by sign
 - Express + tRPC backend, Node 22
 - PostgreSQL (Neon) primary database via Drizzle ORM
 - Supabase for credit metering and Stripe object storage
-- Anthropic Claude SDK for AI features
+- Anthropic Claude SDK for Kai AI features
 
 ## Company
 
@@ -55,6 +77,7 @@ These tools work without an account. Results can be saved to a dashboard by sign
 - Pricing: __APP_URL__/pricing
 - Free tools: __APP_URL__/tools
 - Blog: __APP_URL__/blog
+- Gig worker shift intelligence: __APP_URL__/blog/gig-worker-shift-intelligence
 - Docs: __APP_URL__/resources
 - Register: __APP_URL__/register
 

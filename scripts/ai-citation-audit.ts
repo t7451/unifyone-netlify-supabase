@@ -64,6 +64,28 @@ const TARGET_QUERIES: Array<{ id: string; query: string }> = [
     id: "gig-economy-commerce-platform",
     query: "ecommerce platform built for gig economy workers",
   },
+  // Searchable visibility gap queries (Income Aggregation, Tax Management, Earnings Optimization, Financial Intelligence, Route Optimization)
+  {
+    id: "income-aggregation-gig",
+    query:
+      "best app to aggregate income from multiple gig platforms DoorDash Uber Instacart",
+  },
+  {
+    id: "tax-management-1099",
+    query: "best tax management app for 1099 gig workers quarterly payments",
+  },
+  {
+    id: "earnings-optimization-gig",
+    query: "how to optimize earnings as a gig worker delivery driver",
+  },
+  {
+    id: "financial-intelligence-gig",
+    query: "financial intelligence platform for independent gig workers",
+  },
+  {
+    id: "route-optimization-delivery",
+    query: "route optimization tool for delivery drivers Uber Eats DoorDash",
+  },
   // Brand / competitor awareness queries
   { id: "brand-unifyone", query: "what is UnifyOne 1commerce" },
   { id: "brand-1commerce", query: "1commerce.online review" },
