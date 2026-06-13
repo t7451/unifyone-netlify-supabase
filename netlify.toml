@@ -23,14 +23,6 @@
   node_bundler = "esbuild"
   included_files = ["drizzle/**", "server/**"]
 
-[[edge_functions]]
-  path = "/api/auth/*"
-  function = "rate-limit"
-
-[[edge_functions]]
-  path = "/api/oauth/*"
-  function = "rate-limit"
-
 # Routing note: Netlify Functions that declare an in-code `config.path` (server.ts
 # → "/api/*", health.mts → "/api/health", blobs-serve.mts → "/blobs/*",
 # mcp.mts → "/mcp", etc.) auto-route at that path. They are NOT served at
