@@ -191,7 +191,7 @@ export default function GigHourlyRate() {
     <div className="min-h-screen bg-background text-foreground">
       <PageHead
         title="Gig Worker Real Hourly Rate Calculator — DoorDash, Uber Eats, Instacart | UnifyOne"
-        description="Find your true hourly rate from DoorDash, Uber Eats, Instacart, Grubhub, and more after vehicle costs and miles. Free gig earnings optimizer. Compare platforms side by side."
+        description="Find your true hourly rate from DoorDash, Uber Eats, Instacart, and Grubhub after vehicle costs and miles. Free gig earnings optimizer — compare platforms."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />

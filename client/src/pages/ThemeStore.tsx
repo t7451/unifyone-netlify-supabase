@@ -473,6 +473,15 @@ export default function ThemeStore() {
     [themes]
   );
 
+  // The catalog is genuinely empty (vs. a search/filter miss) — used to keep the
+  // hero copy honest instead of promising templates that aren't published yet.
+  const catalogEmpty =
+    !isLoading &&
+    themes.length === 0 &&
+    !search &&
+    priceFilter === "all" &&
+    complexityFilter === "all";
+
   return (
     <div className="min-h-screen bg-[#060D1F] text-white">
       <PageHead
@@ -526,15 +535,16 @@ export default function ThemeStore() {
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Launch faster with
+            {catalogEmpty ? "Premium templates" : "Launch faster with"}
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00D9FF] to-blue-400">
-              premium templates
+              {catalogEmpty ? "coming soon" : "premium templates"}
             </span>
           </h1>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto mb-8">
-            Browse professionally designed website templates. Free and paid
-            options for every industry and use case.
+            {catalogEmpty
+              ? "Our theme catalog is launching soon — professionally designed storefront templates for every industry are on the way."
+              : "Browse professionally designed website templates. Free and paid options for every industry and use case."}
           </p>
 
           {/* Search bar */}

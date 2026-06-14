@@ -248,7 +248,7 @@ export default function CashflowTracker() {
     <>
       <PageHead
         title="Gig Payout Timing & Cash-Flow Tracker | DoorDash, Uber, Instacart | UnifyOne"
-        description="Free gig cash-flow tool. Model when DoorDash, Uber Eats, Instacart, and Lyft payouts hit your bank and forecast your 30-day income rhythm. No account required."
+        description="Free gig cash-flow tool. Model when DoorDash, Uber Eats, Instacart, and Lyft payouts hit your bank and forecast your 30-day income rhythm."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />

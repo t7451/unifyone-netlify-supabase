@@ -134,7 +134,7 @@ export default function SETaxCalculator() {
     <div className="min-h-screen bg-background text-foreground">
       <PageHead
         title="Self-Employment Tax Calculator for 1099 Gig Workers 2025 | UnifyOne"
-        description="Free self-employment tax calculator for DoorDash, Uber, Instacart, and all 1099 workers. See your SE tax breakdown (Social Security + Medicare), deductible half, and quarterly estimated payments."
+        description="Free self-employment tax calculator for DoorDash, Uber, and Instacart 1099 workers. See your SE tax (Social Security + Medicare) and quarterly estimates."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />
