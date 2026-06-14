@@ -22,15 +22,16 @@ export const config: Config = {
 export default async (_req: Request) => {
   const env = {
     NEON_DATABASE_URL: required("NEON_DATABASE_URL"),
-    MAILERLITE_API_KEY: process.env.MAILERLITE_API_KEY ?? "",
+    // The digest is an operational, dynamically-rendered HTML email, so it
+    // goes through Resend (the transactional provider the rest of the app
+    // already uses for auth, drip, invites, blueprint, and deploy alerts).
+    // MailerLite is reserved for marketing campaigns and rejects arbitrary
+    // API-submitted HTML on the current plan.
+    RESEND_API_KEY: process.env.RESEND_API_KEY ?? "",
     DIGEST_TO_EMAIL: process.env.DIGEST_TO_EMAIL ?? "",
     DIGEST_TO_NAME: process.env.DIGEST_TO_NAME ?? "Keith",
-    // MailerLite campaigns require a *verified* sender. Without it the
-    // create-campaign call 422s, so we treat it as a precondition for sending.
     DIGEST_FROM_EMAIL: process.env.DIGEST_FROM_EMAIL ?? "",
     DIGEST_FROM_NAME: process.env.DIGEST_FROM_NAME ?? "UnifyOne Spire",
-    // Group the digest recipient is filed under; created on first send.
-    DIGEST_GROUP_NAME: process.env.DIGEST_GROUP_NAME ?? "Spire Digest Recipients",
   };
 
   const { sql: raw, db } = connectNeon(env.NEON_DATABASE_URL);
@@ -111,14 +112,13 @@ export default async (_req: Request) => {
 
     const htmlBody = renderDigestHtml(perSite, haroSummary);
 
-    if (env.MAILERLITE_API_KEY && env.DIGEST_TO_EMAIL && env.DIGEST_FROM_EMAIL) {
-      await sendViaMailerLite({
-        apiKey: env.MAILERLITE_API_KEY,
+    if (env.RESEND_API_KEY && env.DIGEST_TO_EMAIL && env.DIGEST_FROM_EMAIL) {
+      await sendDigestEmail({
+        apiKey: env.RESEND_API_KEY,
         toEmail: env.DIGEST_TO_EMAIL,
         toName: env.DIGEST_TO_NAME,
         fromEmail: env.DIGEST_FROM_EMAIL,
         fromName: env.DIGEST_FROM_NAME,
-        groupName: env.DIGEST_GROUP_NAME,
         subject: `Spire weekly digest — ${new Date().toISOString().slice(0, 10)}`,
         html: htmlBody,
       });
@@ -130,7 +130,7 @@ export default async (_req: Request) => {
           from: env.DIGEST_FROM_EMAIL || "(unset)",
           html: htmlBody.slice(0, 300) + "...",
         },
-        "Digest email skipped (MailerLite key, recipient, or verified sender missing); logging content"
+        "Digest email skipped (Resend key, recipient, or sender missing); logging content"
       );
     }
 
@@ -743,103 +743,35 @@ function escape(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-const MAILERLITE_API = "https://connect.mailerlite.com/api";
-
-async function mlFetch(
-  apiKey: string,
-  path: string,
-  init: { method: string; body?: unknown }
-): Promise<unknown> {
-  const res = await fetch(`${MAILERLITE_API}${path}`, {
-    method: init.method,
-    headers: {
-      "content-type": "application/json",
-      accept: "application/json",
-      authorization: `Bearer ${apiKey}`,
-    },
-    body: init.body === undefined ? undefined : JSON.stringify(init.body),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(
-      `MailerLite ${init.method} ${path} failed: ${res.status} ${text.slice(0, 300)}`
-    );
-  }
-  // 204 (e.g. assign-to-group) has no body.
-  if (res.status === 204) return null;
-  return res.json();
-}
-
-async function sendViaMailerLite(params: {
+async function sendDigestEmail(params: {
   apiKey: string;
   toEmail: string;
   toName: string;
   fromEmail: string;
   fromName: string;
-  groupName: string;
   subject: string;
   html: string;
 }): Promise<void> {
-  // MailerLite has no transactional/single-send endpoint. To deliver an
-  // operational email we (1) ensure a recipient group exists, (2) upsert the
-  // recipient into it, then (3) create a regular campaign scoped to that group
-  // and (4) schedule it for instant delivery. The previous implementation
-  // POSTed to /automations/triggers — a route that does not exist on the API,
-  // so every send 404'd.
-
-  // 1. Find or create the recipient group (by exact name).
-  const groupsResp = (await mlFetch(
-    params.apiKey,
-    `/groups?filter[name]=${encodeURIComponent(params.groupName)}`,
-    { method: "GET" }
-  )) as { data?: Array<{ id: string; name: string }> };
-  let groupId = groupsResp.data?.find((g) => g.name === params.groupName)?.id;
-  if (!groupId) {
-    const created = (await mlFetch(params.apiKey, "/groups", {
-      method: "POST",
-      body: { name: params.groupName },
-    })) as { data?: { id: string } };
-    groupId = created.data?.id;
-    if (!groupId) throw new Error("MailerLite: failed to create recipient group");
+  // Resend transactional send — same endpoint/pattern as the deploy notifier
+  // and the rest of the app's operational email. Resend accepts arbitrary HTML
+  // bodies, which the dynamically-rendered digest requires.
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${params.apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: `${params.fromName} <${params.fromEmail}>`,
+      to: [`${params.toName} <${params.toEmail}>`],
+      subject: params.subject,
+      html: params.html,
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Resend send failed: ${res.status} ${text.slice(0, 300)}`);
   }
-
-  // 2. Upsert the recipient and file them into the group. POST /subscribers is
-  // an upsert keyed on email; passing `groups` assigns membership in one call.
-  await mlFetch(params.apiKey, "/subscribers", {
-    method: "POST",
-    body: {
-      email: params.toEmail,
-      fields: { name: params.toName },
-      groups: [groupId],
-      status: "active",
-    },
-  });
-
-  // 3. Create the regular campaign with the rendered HTML.
-  const campaign = (await mlFetch(params.apiKey, "/campaigns", {
-    method: "POST",
-    body: {
-      name: params.subject,
-      type: "regular",
-      groups: [groupId],
-      emails: [
-        {
-          subject: params.subject,
-          from_name: params.fromName,
-          from: params.fromEmail,
-          content: params.html,
-        },
-      ],
-    },
-  })) as { data?: { id: string } };
-  const campaignId = campaign.data?.id;
-  if (!campaignId) throw new Error("MailerLite: campaign created but no id returned");
-
-  // 4. Send it now.
-  await mlFetch(params.apiKey, `/campaigns/${campaignId}/schedule`, {
-    method: "POST",
-    body: { delivery: "instant" },
-  });
 }
 
 function required(key: string): string {
