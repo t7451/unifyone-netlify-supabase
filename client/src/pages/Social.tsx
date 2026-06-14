@@ -165,9 +165,25 @@ export default function Social() {
   });
 
   const publishPost = trpc.social.publish.useMutation({
-    onSuccess: () => {
+    onSuccess: res => {
       refetchPosts();
-      toast.success("Post published — webhook fired.");
+      // Report native publish outcomes (connected accounts). Skipped platforms
+      // (no adapter / not connected) fall back to the automation event.
+      const attempted = (res?.results ?? []).filter(r => !r.skipped);
+      const failed = attempted.filter(r => !r.ok);
+      if (attempted.length === 0) {
+        toast.success("Post published — automation event fired.");
+      } else if (failed.length === 0) {
+        toast.success(
+          `Published to ${attempted.map(r => r.platform).join(", ")}.`
+        );
+      } else {
+        toast.error(
+          `Published with issues: ${failed
+            .map(r => `${r.platform} (${r.error ?? "failed"})`)
+            .join(", ")}`
+        );
+      }
     },
     onError: () => toast.error("Publish failed"),
   });

@@ -6,6 +6,10 @@ import { socialPosts } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { invokeLLM } from "../_core/llm";
 import { fireAutomations } from "../lib/automationDispatch";
+import {
+  publishToConnectedAccounts,
+  type PublishOutcome,
+} from "../lib/socialPublisher";
 
 async function requireDb() {
   const db = await getDb();
@@ -190,11 +194,13 @@ Return JSON with keys: ${input.platforms.join(", ")}`;
     }),
 
   // ── Publish Post ────────────────────────────────────────────────────────────
-  // Marks the post as published in the local DB and fires the
-  // `social.post.published` automation event so operator-configured n8n /
-  // Zapier workflows can perform the actual cross-posting to platform APIs.
-  // UnifyOne itself does not own per-platform OAuth tokens — distribution is
-  // delegated to the operator's automation tools.
+  // Two distribution paths run together:
+  //  1. Native publish to the tenant's connected accounts (e.g. Bluesky) via the
+  //     provider adapters, returning a per-target outcome list.
+  //  2. The `social.post.published` automation event — kept in place so
+  //     operator-configured n8n / Zapier flows continue to work for platforms
+  //     UnifyOne does not natively publish to.
+  // Both are best-effort and never block marking the post published.
   publish: protectedProcedure
     .input(z.object({ postId: z.number() }))
     .mutation(async ({ ctx, input }) => {
@@ -213,12 +219,23 @@ Return JSON with keys: ${input.platforms.join(", ")}`;
           )
         );
 
+      let results: PublishOutcome[] = [];
       try {
         const [post] = await db
           .select()
           .from(socialPosts)
           .where(eq(socialPosts.id, input.postId));
         if (post) {
+          const platforms = Array.isArray(post.platforms)
+            ? (post.platforms as string[])
+            : [];
+
+          // 1. Native publish to connected accounts (best-effort, per-target).
+          results = await publishToConnectedAccounts(tenantId, platforms, {
+            content: post.content ?? "",
+          });
+
+          // 2. Operator automation event (unchanged).
           await fireAutomations(tenantId, "social.post.published", {
             postId: post.id,
             platforms: post.platforms,
@@ -232,7 +249,7 @@ Return JSON with keys: ${input.platforms.join(", ")}`;
         /* non-blocking */
       }
 
-      return { success: true };
+      return { success: true, results };
     }),
 
   // ── Delete Post ─────────────────────────────────────────────────────────────
