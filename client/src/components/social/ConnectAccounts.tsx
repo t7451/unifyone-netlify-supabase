@@ -74,7 +74,7 @@ function ConnectDialog({ onConnected }: { onConnected: () => void }) {
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
           <Plus className="h-3.5 w-3.5 mr-1.5" />
-          Connect
+          Bluesky
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -147,6 +147,62 @@ function ConnectDialog({ onConnected }: { onConnected: () => void }) {
   );
 }
 
+/**
+ * Mastodon connects via per-instance OAuth: the user enters their instance and
+ * is redirected to /api/social/mastodon/start, which sends them to the
+ * instance's authorize page and back. No credentials are entered here.
+ */
+function MastodonConnectDialog() {
+  const [open, setOpen] = useState(false);
+  const [instance, setInstance] = useState("");
+
+  const go = () => {
+    const v = instance.trim();
+    if (!v) return;
+    window.location.href = `/api/social/mastodon/start?instance=${encodeURIComponent(
+      v
+    )}`;
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          <Plus className="h-3.5 w-3.5 mr-1.5" />
+          Mastodon
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Connect Mastodon</DialogTitle>
+          <DialogDescription>
+            Enter your instance. You&apos;ll be redirected to authorize UnifyOne
+            and brought back automatically.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1.5">
+          <Label htmlFor="masto-instance">Instance URL</Label>
+          <Input
+            id="masto-instance"
+            autoComplete="off"
+            placeholder="https://mastodon.social"
+            value={instance}
+            onChange={e => setInstance(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === "Enter") go();
+            }}
+          />
+        </div>
+        <DialogFooter>
+          <Button disabled={!instance.trim()} onClick={go}>
+            Continue to Mastodon
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function ConnectAccounts() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
@@ -175,9 +231,12 @@ export function ConnectAccounts() {
         <CardTitle className="text-base flex items-center gap-2">
           <Link2 className="h-4 w-4 text-sky-400" /> Connected Accounts
         </CardTitle>
-        <ConnectDialog
-          onConnected={() => utils.connectedAccounts.list.invalidate()}
-        />
+        <div className="flex items-center gap-2">
+          <ConnectDialog
+            onConnected={() => utils.connectedAccounts.list.invalidate()}
+          />
+          <MastodonConnectDialog />
+        </div>
       </CardHeader>
       <CardContent className="space-y-2">
         {isLoading ? (

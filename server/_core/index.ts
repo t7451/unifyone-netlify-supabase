@@ -8,6 +8,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStripeRoutes } from "../stripe";
 import { registerPayPalRoutes } from "../paypal";
 import { registerShopifyRoutes } from "../shopify";
+import { registerMastodonRoutes } from "../mastodonOAuth";
 import { registerSquareRoutes } from "../square";
 import { registerN8nWebhookRoutes } from "../n8nWebhook";
 import { appRouter } from "../routers";
@@ -238,6 +239,8 @@ async function startServer() {
   registerPayPalRoutes(app);
   // Register Shopify OAuth + webhook routes (webhook needs raw body BEFORE json middleware)
   registerShopifyRoutes(app);
+  // Register Mastodon per-instance OAuth connect routes
+  registerMastodonRoutes(app);
   // Register Square payment + webhook routes (webhook needs raw body for signature verification)
   registerSquareRoutes(app);
   // Register n8n inbound webhook (HMAC-verified) BEFORE json middleware
