@@ -4,13 +4,9 @@
  *
  * Security invariants:
  *  - Raw access/refresh tokens NEVER leave this module toward the client.
- *    `redactAccount` strips them; only server-side callers (publishing engine,
- *    PR 3) get decrypted tokens via `decryptConnectionTokens`.
+ *    `redactAccount` strips them; only server-side callers (the publishing
+ *    engine) get decrypted tokens via `getDecryptedConnection`.
  *  - Tokens are stored as AES-256-GCM ciphertext (socialTokenCrypto).
- *
- * The write path (storeConnection) and per-platform decrypted reads land in the
- * connect-flow PR, alongside the DB enum/column migration. PR 1 provides the
- * crypto/redaction primitives plus tenant-scoped list/disconnect.
  */
 import { and, eq } from "drizzle-orm";
 import { getDb } from "../db";
