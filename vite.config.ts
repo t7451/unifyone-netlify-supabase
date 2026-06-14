@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import { SEO_PAGES } from "./client/src/content/seoPages";
+import { ROUTE_SEO } from "./client/src/content/routeSeo";
 import { prerenderSeoPlugin } from "./vite-plugin-prerender-seo";
 import { sitemapPlugin } from "./vite-plugin-sitemap";
 
@@ -58,52 +59,12 @@ const plugins = [
     hostname: SITE_HOSTNAME,
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     pages: SEO_PAGES,
-    // Non-SEO sitemap routes — emit a flat <path>.html for each so crawlers
-    // see the page's own canonical/og:url, not the homepage's. Without this,
-    // every SPA route inherits index.html's canonical=/ and Ahrefs flags the
-    // page as "Non-canonical page in sitemap".
-    extraRoutes: [
-      { path: "/architecture" },
-      { path: "/the-system" },
-      { path: "/pricing" },
-      { path: "/about" },
-      { path: "/contact" },
-      { path: "/manus-ai" },
-      { path: "/tithes" },
-      { path: "/documents" },
-      { path: "/documents/case-studies" },
-      { path: "/documents/integrations" },
-      { path: "/documents/work-proof" },
-      { path: "/tools" },
-      { path: "/blog" },
-      { path: "/blog/gig-worker-shift-intelligence" },
-      { path: "/tools/mileage-deduction-calculator" },
-      { path: "/tools/quarterly-tax-estimator" },
-      { path: "/tools/earnings-consolidator" },
-      { path: "/tools/reseller-break-even" },
-      { path: "/tools/cashflow-tracker" },
-      { path: "/tools/se-tax-calculator" },
-      { path: "/tools/gig-hourly-rate" },
-      { path: "/tools/tax-set-aside" },
-      { path: "/gig-income-aggregator" },
-      { path: "/1099-tax-management" },
-      { path: "/gig-earnings-optimizer" },
-      { path: "/financial-intelligence-gig-workers" },
-      { path: "/gig-route-intelligence" },
-      { path: "/blog/gig-economy-commerce-platform" },
-      { path: "/blog/multi-tenant-ecommerce-saas" },
-      { path: "/blog/manus-ai-gig-workers" },
-      { path: "/blog/digital-retail-guide" },
-      { path: "/privacy" },
-      { path: "/terms" },
-      { path: "/themes" },
-      { path: "/docs-chat" },
-      { path: "/resources" },
-      { path: "/sovereign" },
-      { path: "/design-system" },
-      { path: "/login" },
-      { path: "/register" },
-    ],
+    // Non-SEO sitemap routes — emit a flat <path>.html for each with its own
+    // per-route title + meta description (from ROUTE_SEO), so crawlers see
+    // accurate, unique meta instead of inheriting the homepage's title and
+    // description. Also fixes "Non-canonical page in sitemap" by giving each
+    // route its own canonical/og:url.
+    extraRoutes: ROUTE_SEO,
   }),
   sitemapPlugin({
     hostname: SITE_HOSTNAME,
