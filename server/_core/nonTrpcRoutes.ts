@@ -23,6 +23,7 @@ export async function buildNonTrpcHandler(): Promise<
     { registerPayPalFetchRoutes },
     { registerSquareFetchRoutes },
     { registerShopifyFetchRoutes },
+    { registerMastodonFetchRoutes },
     { registerOAuthFetchRoutes },
     { registerCustomAuthFetchRoutes },
     { registerImpactFetchRoutes },
@@ -32,6 +33,9 @@ export async function buildNonTrpcHandler(): Promise<
     import("../paypal").catch(() => ({ registerPayPalFetchRoutes: null })),
     import("../square").catch(() => ({ registerSquareFetchRoutes: null })),
     import("../shopify").catch(() => ({ registerShopifyFetchRoutes: null })),
+    import("../mastodonOAuth").catch(() => ({
+      registerMastodonFetchRoutes: null,
+    })),
     import("./oauth").catch(() => ({ registerOAuthFetchRoutes: null })),
     import("./customAuthRoutes").catch(() => ({
       registerCustomAuthFetchRoutes: null,
@@ -160,6 +164,21 @@ export async function buildNonTrpcHandler(): Promise<
       try {
         const result = await (
           registerShopifyFetchRoutes as unknown as FetchHandler
+        )(req);
+        if (result) return result;
+      } catch (e: unknown) {
+        return Response.json({ error: (e as Error).message }, { status: 500 });
+      }
+    }
+
+    // Mastodon — per-instance OAuth connect (start + callback).
+    if (
+      path.startsWith("/api/social/mastodon/") &&
+      registerMastodonFetchRoutes
+    ) {
+      try {
+        const result = await (
+          registerMastodonFetchRoutes as unknown as FetchHandler
         )(req);
         if (result) return result;
       } catch (e: unknown) {

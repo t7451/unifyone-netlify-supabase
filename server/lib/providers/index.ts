@@ -6,11 +6,13 @@
  */
 import { hasProvider, registerProvider } from "../socialProviders";
 import { blueskyProvider } from "./bluesky";
+import { mastodonProvider } from "./mastodon";
 
 let registered = false;
 
 export function registerBuiltinSocialProviders(): void {
   if (registered) return;
   if (!hasProvider("bluesky")) registerProvider(blueskyProvider);
+  if (!hasProvider("mastodon")) registerProvider(mastodonProvider);
   registered = true;
 }

@@ -934,6 +934,24 @@ export const shopifyOauthStates = pgTable("shopify_oauth_states", {
 export type ShopifyOauthState = typeof shopifyOauthStates.$inferSelect;
 export type InsertShopifyOauthState = typeof shopifyOauthStates.$inferInsert;
 
+// Pending OAuth-redirect connections for social providers (e.g. Mastodon).
+// Holds the per-instance app credentials registered at "start" so the callback
+// can exchange the code. clientSecret is encrypted at rest (socialTokenCrypto).
+export const socialOauthStates = pgTable("social_oauth_states", {
+  state: varchar("state", { length: 64 }).primaryKey(),
+  platform: varchar("platform", { length: 32 }).notNull(),
+  instanceUrl: text("instanceUrl").notNull(),
+  clientId: text("clientId").notNull(),
+  clientSecret: text("clientSecret").notNull(),
+  redirectUri: text("redirectUri").notNull(),
+  userId: integer("userId"),
+  tenantId: integer("tenantId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt").defaultNow().notNull(),
+});
+export type SocialOauthState = typeof socialOauthStates.$inferSelect;
+export type InsertSocialOauthState = typeof socialOauthStates.$inferInsert;
+
 // ─── Sovereign Stack Waitlist ─────────────────────────────────────────────────
 export const sovereignWaitlist = pgTable("sovereign_waitlist", {
   id: serial("id").primaryKey(),
