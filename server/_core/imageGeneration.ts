@@ -15,7 +15,7 @@
  *     }]
  *   });
  */
-import { storagePut } from "server/storage";
+import { storagePut } from "../storage";
 import { ENV } from "./env";
 import { meterCredits, CREDIT_COST_MODEL } from "../creditMeter";
 
@@ -108,7 +108,7 @@ export async function generateImage(
         prompt: options.prompt.slice(0, 200),
         has_original: (options.originalImages?.length ?? 0) > 0,
       },
-    }).catch((err) =>
+    }).catch(err =>
       console.error("[ImageGen] Credit metering failed:", err.message)
     );
   }
