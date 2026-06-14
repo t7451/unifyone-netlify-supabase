@@ -5,11 +5,7 @@ import { getDb } from "../db";
 import { socialPosts } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { invokeLLM } from "../_core/llm";
-import { fireAutomations } from "../lib/automationDispatch";
-import {
-  publishToConnectedAccounts,
-  type PublishOutcome,
-} from "../lib/socialPublisher";
+import { publishStoredPost } from "../lib/socialScheduler";
 
 async function requireDb() {
   const db = await getDb();
@@ -204,52 +200,15 @@ Return JSON with keys: ${input.platforms.join(", ")}`;
   publish: protectedProcedure
     .input(z.object({ postId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const db = await requireDb();
+      await requireDb();
       const tenantId = ctx.user.tenantId;
       if (!tenantId)
         throw new TRPCError({ code: "FORBIDDEN", message: "No active tenant" });
 
-      await db
-        .update(socialPosts)
-        .set({ status: "published", publishedAt: new Date() })
-        .where(
-          and(
-            eq(socialPosts.id, input.postId),
-            eq(socialPosts.tenantId, tenantId)
-          )
-        );
-
-      let results: PublishOutcome[] = [];
-      try {
-        const [post] = await db
-          .select()
-          .from(socialPosts)
-          .where(eq(socialPosts.id, input.postId));
-        if (post) {
-          const platforms = Array.isArray(post.platforms)
-            ? (post.platforms as string[])
-            : [];
-
-          // 1. Native publish to connected accounts (best-effort, per-target).
-          results = await publishToConnectedAccounts(tenantId, platforms, {
-            content: post.content ?? "",
-          });
-
-          // 2. Operator automation event (unchanged).
-          await fireAutomations(tenantId, "social.post.published", {
-            postId: post.id,
-            platforms: post.platforms,
-            userId: ctx.user.id,
-            campaignTag: post.campaignTag,
-            content: post.content,
-            utmCampaign: post.utmCampaign,
-          });
-        }
-      } catch {
-        /* non-blocking */
-      }
-
-      return { success: true, results };
+      // Shared core: marks published, native-dispatches to connected accounts,
+      // and fires the social.post.published automation event. The scheduler
+      // uses the same path so manual and scheduled publishing match.
+      return publishStoredPost(tenantId, input.postId, { userId: ctx.user.id });
     }),
 
   // ── Delete Post ─────────────────────────────────────────────────────────────

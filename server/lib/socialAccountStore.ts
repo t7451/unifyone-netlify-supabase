@@ -156,6 +156,39 @@ export async function storeConnection(
 }
 
 /**
+ * Update only the token fields of a connection (used by token refresh), leaving
+ * handle / displayName / instanceUrl / scopes intact. Tokens are re-encrypted.
+ */
+export async function updateConnectionTokens(
+  tenantId: number,
+  platform: SocialPlatform,
+  tokens: {
+    accessToken: string;
+    refreshToken?: string | null;
+    expiresAt?: Date | null;
+  }
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(socialAccounts)
+    .set({
+      accessToken: encryptToken(tokens.accessToken).ciphertext,
+      refreshToken: tokens.refreshToken
+        ? encryptToken(tokens.refreshToken).ciphertext
+        : null,
+      tokenExpiresAt: tokens.expiresAt ?? null,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(socialAccounts.tenantId, tenantId),
+        eq(socialAccounts.platform, platform)
+      )
+    );
+}
+
+/**
  * Server-side read for the publishing engine: returns the account row plus its
  * decrypted tokens. Never expose the result to clients. Returns null when no
  * connected account exists for the platform.
