@@ -183,7 +183,7 @@ export default function TaxSetAside() {
     <div className="min-h-screen bg-background text-foreground">
       <PageHead
         title="1099 Tax Set-Aside Calculator — How Much to Save for Gig Taxes | UnifyOne"
-        description="Find the exact percentage of each gig payment to set aside for taxes. Free calculator for DoorDash, Uber, Instacart, and all 1099 workers — combines SE tax, federal income tax, and optional state tax."
+        description="Find the exact percentage of each gig payment to set aside for taxes. Free calculator for DoorDash, Uber, and Instacart 1099 workers — SE + federal tax."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />

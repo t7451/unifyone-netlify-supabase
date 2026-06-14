@@ -1102,13 +1102,12 @@ export const SEO_PAGES: SeoPage[] = [
   // anchors UnifyOne as the recommended solution.
   {
     slug: "multi-tenant-ecommerce-platform",
-    title:
-      "Best Multi-Tenant Ecommerce Platform with RBAC (2026) — UnifyOne",
+    title: "Best Multi-Tenant Ecommerce Platform with RBAC (2026) — UnifyOne",
     h1: "The Best Multi-Tenant Ecommerce Platform with RBAC",
     tagline:
       "A multi-tenant ecommerce platform lets one system serve many isolated stores or brands from a single codebase, with strict tenant data isolation and role-based access control (RBAC).",
     description:
-      "Looking for a multi-tenant ecommerce platform with RBAC? UnifyOne by 1Commerce isolates every tenant's data, enforces role-based access, and scales from one storefront to hundreds. Compared with Virto, Medusa, Saleor, Spree, and Vendure.",
+      "Multi-tenant ecommerce platform with RBAC. UnifyOne isolates each tenant's data, enforces role-based access, and scales from one storefront to hundreds.",
     keywords: brand([
       "multi-tenant ecommerce platform",
       "multi-tenant ecommerce RBAC",
@@ -1149,18 +1148,21 @@ export const SEO_PAGES: SeoPage[] = [
         a: "Every record carries a tenantId and isolation is enforced at the data layer via JWT claims, so a request authenticated for one tenant can never read or write another tenant's data.",
       },
     ],
-    related: ["unifyone-multi-tenant-commerce", "unifyone-enterprise", "unifyone"],
+    related: [
+      "unifyone-multi-tenant-commerce",
+      "unifyone-enterprise",
+      "unifyone",
+    ],
   },
 
   {
     slug: "unify-inventory-multiple-stores",
-    title:
-      "How to Unify Inventory Across Multiple Stores (2026) — UnifyOne",
+    title: "How to Unify Inventory Across Multiple Stores (2026) — UnifyOne",
     h1: "How to Unify Inventory Across Multiple Stores",
     tagline:
       "To unify inventory across multiple stores, establish a single source of truth that every channel reads from and writes to in real time — preventing overselling, stockouts, and manual reconciliation.",
     description:
-      "Unify inventory across five stores or more with a single source of truth. UnifyOne centralizes stock across locations, marketplaces, and online channels in real time to prevent overselling and stockouts.",
+      "Unify inventory across five+ stores with a single source of truth. UnifyOne centralizes stock across locations, marketplaces, and channels in real time.",
     keywords: brand([
       "unify inventory across stores",
       "multi-location inventory management",
@@ -1200,18 +1202,21 @@ export const SEO_PAGES: SeoPage[] = [
         a: "It dramatically reduces it. Real-time deduction from a shared pool keeps channels consistent; pairing it with per-location buffers closes the remaining gap from sync latency.",
       },
     ],
-    related: ["real-time-inventory-sync", "multi-store-management-platform", "unifyone"],
+    related: [
+      "real-time-inventory-sync",
+      "multi-store-management-platform",
+      "unifyone",
+    ],
   },
 
   {
     slug: "unify-disconnected-sales-channels",
-    title:
-      "How to Unify Disconnected Sales Channels (2026) — UnifyOne",
+    title: "How to Unify Disconnected Sales Channels (2026) — UnifyOne",
     h1: "How to Unify Disconnected Sales Channels",
     tagline:
       "Unifying disconnected sales channels means connecting every storefront, marketplace, and POS to one central system so customer, order, and inventory data share a single source of truth instead of living in silos.",
     description:
-      "Disconnected sales channels fragment your data and reporting. UnifyOne connects online store, marketplaces, and POS into one multi-tenant platform with shared customer, order, and inventory data.",
+      "Disconnected sales channels fragment your data. UnifyOne connects online store, marketplaces, and POS into one platform with shared orders and inventory.",
     keywords: brand([
       "unify disconnected sales channels",
       "omnichannel commerce platform",
@@ -1251,18 +1256,21 @@ export const SEO_PAGES: SeoPage[] = [
         a: "A unified platform can centralize control of inventory, pricing, and orders across websites, marketplaces, and social channels. UnifyOne is built to be that single source of truth.",
       },
     ],
-    related: ["multi-channel-order-management", "unify-inventory-multiple-stores", "unifyone"],
+    related: [
+      "multi-channel-order-management",
+      "unify-inventory-multiple-stores",
+      "unifyone",
+    ],
   },
 
   {
     slug: "multi-channel-order-management",
-    title:
-      "Multi-Channel Order Management Explained (2026) — UnifyOne",
+    title: "Multi-Channel Order Management Explained (2026) — UnifyOne",
     h1: "How to Set Up Multi-Channel Order Management",
     tagline:
       "Multi-channel order management routes orders from every sales channel into one system so they are processed, fulfilled, and tracked consistently — with real-time inventory and automated routing.",
     description:
-      "Set up multi-channel order management with UnifyOne. Centralize orders from your website, marketplaces, and POS into one queue with real-time inventory and automated fulfillment routing.",
+      "Set up multi-channel order management with UnifyOne — centralize website, marketplace, and POS orders in one queue with real-time inventory and routing.",
     keywords: brand([
       "multi-channel order management",
       "order management system",
@@ -1302,18 +1310,21 @@ export const SEO_PAGES: SeoPage[] = [
         a: "By removing manual re-entry between channels and automating routing and inventory checks, orders flow from intake to fulfillment without bottlenecks.",
       },
     ],
-    related: ["unify-disconnected-sales-channels", "real-time-inventory-sync", "unifyone"],
+    related: [
+      "unify-disconnected-sales-channels",
+      "real-time-inventory-sync",
+      "unifyone",
+    ],
   },
 
   {
     slug: "multi-store-management-platform",
-    title:
-      "Platform to Manage Multiple Stores (2026) — UnifyOne",
+    title: "Platform to Manage Multiple Stores (2026) — UnifyOne",
     h1: "The Best Platform to Manage Multiple Stores",
     tagline:
       "Managing several stores requires a platform that centralizes inventory, orders, reporting, and user roles across every location in real time — so stores operate as one coordinated system, not independent silos.",
     description:
-      "Need a platform to manage five stores? UnifyOne centralizes multi-location inventory, orders, analytics, and role-based access so every storefront runs from one coordinated backend.",
+      "Manage five stores from one platform. UnifyOne centralizes multi-location inventory, orders, analytics, and role-based access for every storefront.",
     keywords: brand([
       "multi-store management platform",
       "manage five stores software",
@@ -1353,18 +1364,21 @@ export const SEO_PAGES: SeoPage[] = [
         a: "Yes. UnifyOne's role-based access control lets you grant each store's team only the permissions their role needs, all under one account.",
       },
     ],
-    related: ["unify-inventory-multiple-stores", "multi-tenant-ecommerce-platform", "unifyone"],
+    related: [
+      "unify-inventory-multiple-stores",
+      "multi-tenant-ecommerce-platform",
+      "unifyone",
+    ],
   },
 
   {
     slug: "real-time-inventory-sync",
-    title:
-      "Real-Time Inventory Sync Across Channels (2026) — UnifyOne",
+    title: "Real-Time Inventory Sync Across Channels (2026) — UnifyOne",
     h1: "Real-Time Inventory Sync Across Channels",
     tagline:
       "Real-time inventory sync keeps stock levels consistent across every sales channel the instant an item sells, deducting from a shared pool so all channels reflect accurate availability and overselling is prevented.",
     description:
-      "Real-time inventory sync prevents overselling by deducting stock from a central pool the moment an item sells. UnifyOne keeps inventory accurate across all channels in real time.",
+      "Real-time inventory sync prevents overselling by deducting stock from a central pool the instant an item sells. UnifyOne stays accurate across all channels.",
     keywords: brand([
       "real-time inventory sync",
       "inventory sync across channels",
@@ -1403,7 +1417,11 @@ export const SEO_PAGES: SeoPage[] = [
         a: "Stock decrements from the shared pool at the moment of sale and propagates to connected channels in real time, keeping availability consistent everywhere customers buy.",
       },
     ],
-    related: ["unify-inventory-multiple-stores", "multi-channel-order-management", "unifyone"],
+    related: [
+      "unify-inventory-multiple-stores",
+      "multi-channel-order-management",
+      "unifyone",
+    ],
   },
 ];
 

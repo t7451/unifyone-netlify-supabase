@@ -297,7 +297,7 @@ function buildSeoIndexHtml(baseHtml: string, origin: string): string {
   const canonical = `${origin}/seo`;
   const title = "UnifyOne Guides — 1Commerce, UnifOne, OneCommerce, 1-Commerce";
   const description =
-    "Complete index of UnifyOne guides — covering every brand variation operators search for: UnifyOne, UnifOne, 1Commerce, 1-commerce, 1Commerce LLC, OneCommerc, OneCommerce, UnifyOne Solutions, PNW Enterprises.";
+    "Complete index of UnifyOne guides covering every brand variation operators search for — UnifyOne, UnifOne, 1Commerce, OneCommerce, and UnifyOne Solutions.";
   const keywords =
     "UnifyOne, UnifOne, 1Commerce, 1-commerce, 1commerce, 1Commerce LLC, 1Commerce Solutions, OneCommerc, OneCommerce, UnifyOne Solutions, PNW Enterprises, multi-tenant commerce platform";
 
