@@ -61,6 +61,13 @@ export async function publishStoredPost(
         content: post.content,
         utmCampaign: post.utmCampaign,
       });
+
+      // Persist the per-target outcomes so the UI can show per-platform status
+      // after reload (not just in the live mutation response).
+      await db
+        .update(socialPosts)
+        .set({ publishResults: results, updatedAt: new Date() })
+        .where(eq(socialPosts.id, postId));
     }
   } catch {
     /* non-blocking */
