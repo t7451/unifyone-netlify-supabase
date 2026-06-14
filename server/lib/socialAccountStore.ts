@@ -16,7 +16,7 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { socialAccounts, type SocialAccount } from "../../drizzle/schema";
 import { decryptToken, encryptToken } from "../_core/socialTokenCrypto";
-import type { ConnectionTokens } from "./socialProviders";
+import type { ConnectionTokens, SocialPlatform } from "./socialProviders";
 
 /** A social account safe to return to the client — no tokens. */
 export type PublicSocialAccount = Omit<
@@ -104,4 +104,87 @@ export async function disconnectAccount(
       )
     );
   return { success: true };
+}
+
+/**
+ * Persist a connection (encrypting tokens at rest), upserting the single row
+ * per (tenant, platform). Returns the redacted account — never tokens.
+ */
+export async function storeConnection(
+  tenantId: number,
+  platform: SocialPlatform,
+  tokens: ConnectionTokens
+): Promise<PublicSocialAccount> {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+
+  const enc = encryptConnectionTokens(tokens);
+  const values = {
+    tenantId,
+    platform,
+    handle: tokens.handle ?? null,
+    displayName: tokens.displayName ?? null,
+    platformUserId: tokens.platformUserId ?? null,
+    instanceUrl: tokens.instanceUrl ?? null,
+    scopes: tokens.scopes ?? null,
+    profileImageUrl: tokens.profileImageUrl ?? null,
+    accessToken: enc.accessToken,
+    refreshToken: enc.refreshToken,
+    tokenExpiresAt: tokens.expiresAt ?? null,
+    isConnected: true,
+    updatedAt: new Date(),
+  };
+
+  const [existing] = await db
+    .select({ id: socialAccounts.id })
+    .from(socialAccounts)
+    .where(
+      and(
+        eq(socialAccounts.tenantId, tenantId),
+        eq(socialAccounts.platform, platform)
+      )
+    )
+    .limit(1);
+
+  let row: SocialAccount;
+  if (existing) {
+    [row] = await db
+      .update(socialAccounts)
+      .set(values)
+      .where(eq(socialAccounts.id, existing.id))
+      .returning();
+  } else {
+    [row] = await db.insert(socialAccounts).values(values).returning();
+  }
+  return redactAccount(row);
+}
+
+/**
+ * Server-side read for the publishing engine: returns the account row plus its
+ * decrypted tokens. Never expose the result to clients. Returns null when no
+ * connected account exists for the platform.
+ */
+export async function getDecryptedConnection(
+  tenantId: number,
+  platform: SocialPlatform
+): Promise<{
+  account: SocialAccount;
+  accessToken: string | null;
+  refreshToken: string | null;
+} | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db
+    .select()
+    .from(socialAccounts)
+    .where(
+      and(
+        eq(socialAccounts.tenantId, tenantId),
+        eq(socialAccounts.platform, platform),
+        eq(socialAccounts.isConnected, true)
+      )
+    )
+    .limit(1);
+  if (!row) return null;
+  return { account: row, ...decryptConnectionTokens(row) };
 }
