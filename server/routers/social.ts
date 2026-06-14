@@ -5,7 +5,7 @@ import { getDb } from "../db";
 import { socialPosts } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { invokeLLM } from "../_core/llm";
-import { fireAutomations } from "../lib/automationDispatch";
+import { publishStoredPost } from "../lib/socialScheduler";
 
 async function requireDb() {
   const db = await getDb();
@@ -190,49 +190,25 @@ Return JSON with keys: ${input.platforms.join(", ")}`;
     }),
 
   // ── Publish Post ────────────────────────────────────────────────────────────
-  // Marks the post as published in the local DB and fires the
-  // `social.post.published` automation event so operator-configured n8n /
-  // Zapier workflows can perform the actual cross-posting to platform APIs.
-  // UnifyOne itself does not own per-platform OAuth tokens — distribution is
-  // delegated to the operator's automation tools.
+  // Two distribution paths run together:
+  //  1. Native publish to the tenant's connected accounts (e.g. Bluesky) via the
+  //     provider adapters, returning a per-target outcome list.
+  //  2. The `social.post.published` automation event — kept in place so
+  //     operator-configured n8n / Zapier flows continue to work for platforms
+  //     UnifyOne does not natively publish to.
+  // Both are best-effort and never block marking the post published.
   publish: protectedProcedure
     .input(z.object({ postId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const db = await requireDb();
+      await requireDb();
       const tenantId = ctx.user.tenantId;
       if (!tenantId)
         throw new TRPCError({ code: "FORBIDDEN", message: "No active tenant" });
 
-      await db
-        .update(socialPosts)
-        .set({ status: "published", publishedAt: new Date() })
-        .where(
-          and(
-            eq(socialPosts.id, input.postId),
-            eq(socialPosts.tenantId, tenantId)
-          )
-        );
-
-      try {
-        const [post] = await db
-          .select()
-          .from(socialPosts)
-          .where(eq(socialPosts.id, input.postId));
-        if (post) {
-          await fireAutomations(tenantId, "social.post.published", {
-            postId: post.id,
-            platforms: post.platforms,
-            userId: ctx.user.id,
-            campaignTag: post.campaignTag,
-            content: post.content,
-            utmCampaign: post.utmCampaign,
-          });
-        }
-      } catch {
-        /* non-blocking */
-      }
-
-      return { success: true };
+      // Shared core: marks published, native-dispatches to connected accounts,
+      // and fires the social.post.published automation event. The scheduler
+      // uses the same path so manual and scheduled publishing match.
+      return publishStoredPost(tenantId, input.postId, { userId: ctx.user.id });
     }),
 
   // ── Delete Post ─────────────────────────────────────────────────────────────
