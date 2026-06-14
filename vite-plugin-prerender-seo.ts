@@ -50,6 +50,10 @@ export interface PrerenderExtraRoute {
   title?: string;
   /** Optional: override <meta name="description"> for this route */
   description?: string;
+  /** Optional: explicit <h1>. Defaults to the title before " | ". */
+  h1?: string;
+  /** Optional: body paragraphs rendered into the prerendered <main>. */
+  body?: string[];
 }
 
 export interface PrerenderSeoOptions {
@@ -421,6 +425,65 @@ function injectExtraRouteMeta(
   return html;
 }
 
+/** Headline for a route: explicit h1, else the title before " | ". */
+function routeHeadline(route: PrerenderExtraRoute): string {
+  if (route.h1) return route.h1;
+  return (route.title ?? "").split(" | ")[0].trim() || "UnifyOne";
+}
+
+/**
+ * Build the per-route pre-hydration <main> body. Gives each non-SEO route its
+ * own crawler-visible content (unique h1 + paragraphs) and a static internal-
+ * links nav (keyword-rich anchors to every other route + the guides index), so
+ * no-JS crawlers see real content and internal links instead of the homepage's.
+ * React replaces this on hydration, so it only affects crawlers / no-JS users.
+ */
+function buildExtraRouteMain(
+  route: PrerenderExtraRoute,
+  allRoutes: PrerenderExtraRoute[]
+): string {
+  const h1 = routeHeadline(route);
+  const paras = (
+    route.body && route.body.length
+      ? route.body
+      : route.description
+        ? [route.description]
+        : []
+  )
+    .map(p => `        <p>${esc(p)}</p>`)
+    .join("\n");
+
+  const links = allRoutes
+    .filter(r => r.path !== route.path)
+    .map(
+      r => `          <li><a href="${r.path}">${esc(routeHeadline(r))}</a></li>`
+    )
+    .join("\n");
+
+  return `<main id="seo-prerender">
+        <h1>${esc(h1)}</h1>
+${paras}
+        <nav aria-label="Explore UnifyOne">
+          <h2>Explore UnifyOne</h2>
+          <ul>
+${links}
+            <li><a href="/seo">All UnifyOne guides</a></li>
+            <li><a href="/">UnifyOne home</a></li>
+          </ul>
+        </nav>
+      </main>`;
+}
+
+function injectExtraRouteBody(
+  html: string,
+  route: PrerenderExtraRoute,
+  allRoutes: PrerenderExtraRoute[]
+): string {
+  return html.replace(/<main id="seo-prerender">[\s\S]*?<\/main>/, () =>
+    buildExtraRouteMain(route, allRoutes)
+  );
+}
+
 export function prerenderSeoPlugin(options: PrerenderSeoOptions): Plugin {
   return {
     name: "vite-prerender-seo",
@@ -463,7 +526,8 @@ export function prerenderSeoPlugin(options: PrerenderSeoOptions): Plugin {
         if (!cleanPath) continue;
         const filePath = path.join(options.outDir, `${cleanPath}.html`);
         fs.mkdirSync(path.dirname(filePath), { recursive: true });
-        const html = injectExtraRouteMeta(baseHtml, route, origin);
+        let html = injectExtraRouteMeta(baseHtml, route, origin);
+        html = injectExtraRouteBody(html, route, extras);
         fs.writeFileSync(filePath, html, "utf-8");
       }
 
