@@ -54,6 +54,8 @@ export interface PrerenderExtraRoute {
   h1?: string;
   /** Optional: body paragraphs rendered into the prerendered <main>. */
   body?: string[];
+  /** Optional: authoritative outbound links rendered into the prerendered <main>. */
+  externalLinks?: { label: string; url: string }[];
 }
 
 export interface PrerenderSeoOptions {
@@ -460,6 +462,24 @@ function buildExtraRouteMain(
     )
     .join("\n");
 
+  // Authoritative outbound links (e.g. IRS, platform sites) where genuinely
+  // relevant — crawler-visible in the static HTML. rel="noopener" only; left
+  // followable so the outbound link profile is real.
+  const external = route.externalLinks?.length
+    ? `
+        <nav aria-label="External resources">
+          <h2>External resources</h2>
+          <ul>
+${route.externalLinks
+  .map(
+    l =>
+      `            <li><a href="${esc(l.url)}" rel="noopener" target="_blank">${esc(l.label)}</a></li>`
+  )
+  .join("\n")}
+          </ul>
+        </nav>`
+    : "";
+
   return `<main id="seo-prerender">
         <h1>${esc(h1)}</h1>
 ${paras}
@@ -470,7 +490,7 @@ ${links}
             <li><a href="/seo">All UnifyOne guides</a></li>
             <li><a href="/">UnifyOne home</a></li>
           </ul>
-        </nav>
+        </nav>${external}
       </main>`;
 }
 

@@ -21,7 +21,39 @@ export interface RouteSeo {
    * real per-page content. When omitted, the description is used as the intro.
    */
   body?: string[];
+  /**
+   * Optional authoritative outbound links rendered (crawler-visible) into the
+   * prerendered page — used where genuinely relevant (e.g. IRS pages for tax
+   * tools, platform sites for gig tools) to give each page a real outbound
+   * link profile and improve E-E-A-T.
+   */
+  externalLinks?: { label: string; url: string }[];
 }
+
+// Reusable authoritative outbound links.
+const IRS = {
+  mileage: {
+    label: "IRS standard mileage rates",
+    url: "https://www.irs.gov/tax-professionals/standard-mileage-rates",
+  },
+  estimated: {
+    label: "IRS estimated taxes",
+    url: "https://www.irs.gov/businesses/small-businesses-self-employed/estimated-taxes",
+  },
+  seTax: {
+    label: "IRS self-employment tax",
+    url: "https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes",
+  },
+  selfEmployedCenter: {
+    label: "IRS Self-Employed Individuals Tax Center",
+    url: "https://www.irs.gov/businesses/small-businesses-self-employed/self-employed-individuals-tax-center",
+  },
+};
+const PLATFORMS = [
+  { label: "DoorDash", url: "https://www.doordash.com" },
+  { label: "Uber Eats", url: "https://www.ubereats.com" },
+  { label: "Instacart", url: "https://www.instacart.com" },
+];
 
 export const ROUTE_SEO: RouteSeo[] = [
   {
@@ -110,6 +142,7 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/tools/mileage-deduction-calculator",
+    externalLinks: [IRS.mileage],
     title: "IRS Mileage Deduction Calculator for Gig Workers 2025 | UnifyOne",
     description:
       "Free IRS mileage deduction calculator for gig workers. Enter miles driven to see your $0.70/mile deduction and estimated tax savings at 4 federal brackets.",
@@ -120,6 +153,7 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/tools/quarterly-tax-estimator",
+    externalLinks: [IRS.estimated],
     title: "Quarterly Estimated Tax Calculator — 1099 Self-Employed | UnifyOne",
     description:
       "Free 1099 quarterly tax calculator for gig workers. See your SE tax + income tax and exact quarterly payment amounts with 2026 due dates.",
@@ -130,6 +164,7 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/tools/earnings-consolidator",
+    externalLinks: PLATFORMS,
     title:
       "Multi-Platform Gig Earnings Consolidator | True Hourly Rate | UnifyOne",
     description:
@@ -141,6 +176,11 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/tools/reseller-break-even",
+    externalLinks: [
+      { label: "eBay", url: "https://www.ebay.com" },
+      { label: "Etsy", url: "https://www.etsy.com/sell" },
+      { label: "Amazon Seller", url: "https://sell.amazon.com" },
+    ],
     title:
       "Reseller Break-Even & Pricing Calculator — eBay, Etsy, Amazon | UnifyOne",
     description:
@@ -152,6 +192,7 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/tools/cashflow-tracker",
+    externalLinks: PLATFORMS,
     title:
       "Gig Payout Timing & Cash-Flow Tracker | DoorDash, Uber, Instacart | UnifyOne",
     description:
@@ -163,6 +204,7 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/tools/se-tax-calculator",
+    externalLinks: [IRS.seTax],
     title:
       "Self-Employment Tax Calculator for 1099 Gig Workers 2025 | UnifyOne",
     description:
@@ -174,6 +216,7 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/tools/gig-hourly-rate",
+    externalLinks: PLATFORMS,
     title:
       "Gig Worker Real Hourly Rate Calculator — DoorDash, Uber Eats, Instacart | UnifyOne",
     description:
@@ -185,6 +228,7 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/tools/tax-set-aside",
+    externalLinks: [IRS.selfEmployedCenter],
     title:
       "1099 Tax Set-Aside Calculator — How Much to Save for Gig Taxes | UnifyOne",
     description:
@@ -196,6 +240,7 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/gig-income-aggregator",
+    externalLinks: PLATFORMS,
     title:
       "Gig Income Aggregator — Consolidate DoorDash, Uber, Instacart Earnings | UnifyOne",
     description:
@@ -203,6 +248,7 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/1099-tax-management",
+    externalLinks: [IRS.selfEmployedCenter, IRS.estimated],
     title:
       "1099 Tax Management for Gig Workers — Quarterly Estimates & Deductions | UnifyOne",
     description:
@@ -210,6 +256,7 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/gig-earnings-optimizer",
+    externalLinks: PLATFORMS,
     title:
       "Gig Earnings Optimizer — Maximize Net Pay Across DoorDash, Uber, Instacart | UnifyOne",
     description:
@@ -224,6 +271,7 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/gig-route-intelligence",
+    externalLinks: PLATFORMS,
     title:
       "Gig Route Intelligence — Optimize Delivery Zones for Higher Net Pay | UnifyOne",
     description:
