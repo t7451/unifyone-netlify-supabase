@@ -14,7 +14,10 @@ import { TRPCError } from "@trpc/server";
 import {
   disconnectAccount,
   listConnectedAccounts,
+  storeConnection,
 } from "../lib/socialAccountStore";
+import { getProvider } from "../lib/socialProviders";
+import { registerBuiltinSocialProviders } from "../lib/providers";
 
 function requireTenant(tenantId: number | null | undefined): number {
   if (!tenantId) {
@@ -36,5 +39,50 @@ export const connectedAccountsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
       return disconnectAccount(tenantId, input.accountId);
+    }),
+
+  /**
+   * Connect a Bluesky account via app password. Exchanges the credentials for
+   * a session server-side and stores the (encrypted) tokens. Returns the
+   * redacted account — never tokens.
+   */
+  connect: adminProcedure
+    .input(
+      z.object({
+        platform: z.enum(["bluesky"]),
+        identifier: z.string().trim().min(1).max(255),
+        appPassword: z.string().min(1).max(255),
+        instanceUrl: z.string().url().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = requireTenant(ctx.user.tenantId);
+      registerBuiltinSocialProviders();
+
+      const provider = getProvider(input.platform);
+      if (!provider?.connectWithCredentials) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Credential connect is not supported for ${input.platform}`,
+        });
+      }
+
+      let tokens;
+      try {
+        tokens = await provider.connectWithCredentials({
+          identifier: input.identifier,
+          secret: input.appPassword,
+          instanceUrl: input.instanceUrl,
+        });
+      } catch (e: unknown) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Could not connect to ${input.platform}: ${
+            e instanceof Error ? e.message : String(e)
+          }`,
+        });
+      }
+
+      return storeConnection(tenantId, input.platform, tokens);
     }),
 });

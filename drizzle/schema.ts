@@ -29,7 +29,7 @@ export const paymentMethodEnum = pgEnum("payment_method", ["stripe", "paypal", "
 export const webhookSourceEnum = pgEnum("webhook_source", ["stripe", "shopify", "n8n", "internal"]);
 export const webhookStatusEnum = pgEnum("webhook_status", ["pending", "processed", "failed", "skipped"]);
 export const teamInviteStatusEnum = pgEnum("team_invite_status", ["pending", "accepted", "expired", "revoked"]);
-export const socialPlatformEnum = pgEnum("social_platform", ["twitter", "instagram", "linkedin", "facebook", "tiktok"]);
+export const socialPlatformEnum = pgEnum("social_platform", ["twitter", "instagram", "linkedin", "facebook", "tiktok", "bluesky", "mastodon"]);
 export const socialPostStatusEnum = pgEnum("social_post_status", ["draft", "scheduled", "published", "failed", "cancelled"]);
 export const referralStatusEnum = pgEnum("referral_status", ["clicked", "signed_up", "converted", "expired"]);
 export const creditTypeEnum = pgEnum("credit_type", ["earned", "redeemed", "expired", "bonus", "adjustment"]);
@@ -466,6 +466,11 @@ export const socialAccounts = pgTable("social_accounts", {
   tenantId: integer("tenantId").notNull(),
   platform: socialPlatformEnum("platform").notNull(),
   handle: varchar("handle", { length: 255 }),
+  displayName: varchar("displayName", { length: 255 }),
+  platformUserId: varchar("platformUserId", { length: 255 }),
+  // Origin the token is valid for (e.g. Mastodon instance URL).
+  instanceUrl: text("instanceUrl"),
+  scopes: json("scopes").$type<string[]>(),
   accessToken: text("accessToken"),
   refreshToken: text("refreshToken"),
   tokenExpiresAt: timestamp("tokenExpiresAt"),
