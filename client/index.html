@@ -484,13 +484,43 @@
       #seo-prerender li { margin: 0 0 8px; }
       #seo-prerender a { color: #D4A843; }
     </style>
-  <!-- Google Tag Manager -->
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({"gtm.start":new Date().getTime(),event:"gtm.js"});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!="dataLayer"?"&l="+l:"";j.async=true;j.src="https://www.googletagmanager.com/gtm.js?id="+i+dl;f.parentNode.insertBefore(j,f);})(window,document,"script","dataLayer","GTM-K2CL4G7H");</script>
-  <!-- End Google Tag Manager -->
-  <!-- Searchable Analytics -->
-  <script>window.sa=window.sa||function(){(sa.q=sa.q||[]).push(arguments)}</script>
-  <script defer src="https://tracker.searchableanalytics.com/s.js" data-domain="1commerce.online" data-site-token="pst_1853cca031f9a590e08fce5b"></script>
-  <!-- End Searchable Analytics -->
+  <!-- Analytics bootstrap (GTM + Searchable Analytics) -->
+  <!-- The lightweight queue stubs run inline so no events are lost before the
+       tags load. The actual third-party scripts are deferred to idle/first
+       interaction so they never block first paint. -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+    window.sa = window.sa || function () { (window.sa.q = window.sa.q || []).push(arguments); };
+    (function () {
+      var loaded = false;
+      function loadAnalytics() {
+        if (loaded) return;
+        loaded = true;
+        var gtm = document.createElement("script");
+        gtm.async = true;
+        gtm.src = "https://www.googletagmanager.com/gtm.js?id=GTM-K2CL4G7H";
+        document.head.appendChild(gtm);
+        var sa = document.createElement("script");
+        sa.defer = true;
+        sa.src = "https://tracker.searchableanalytics.com/s.js";
+        sa.setAttribute("data-domain", "1commerce.online");
+        sa.setAttribute("data-site-token", "pst_1853cca031f9a590e08fce5b");
+        document.head.appendChild(sa);
+      }
+      // Load once the page is idle after load, or on the first user
+      // interaction — whichever comes first.
+      var idle = window.requestIdleCallback || function (cb) { return setTimeout(cb, 1); };
+      if (document.readyState === "complete") {
+        idle(loadAnalytics);
+      } else {
+        window.addEventListener("load", function () { idle(loadAnalytics); }, { once: true });
+      }
+      ["scroll", "pointerdown", "keydown", "touchstart"].forEach(function (evt) {
+        window.addEventListener(evt, loadAnalytics, { once: true, passive: true });
+      });
+    })();
+  </script>
   </head>
 
   <body>
