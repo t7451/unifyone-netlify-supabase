@@ -15,6 +15,12 @@ export interface RouteSeo {
   path: string;
   title: string;
   description: string;
+  /**
+   * Optional pre-hydration body paragraphs. The prerender renders these (plus a
+   * unique h1 and an internal-links nav) into the static HTML so crawlers see
+   * real per-page content. When omitted, the description is used as the intro.
+   */
+  body?: string[];
 }
 
 export const ROUTE_SEO: RouteSeo[] = [
@@ -107,12 +113,20 @@ export const ROUTE_SEO: RouteSeo[] = [
     title: "IRS Mileage Deduction Calculator for Gig Workers 2025 | UnifyOne",
     description:
       "Free IRS mileage deduction calculator for gig workers. Enter miles driven to see your $0.70/mile deduction and estimated tax savings at 4 federal brackets.",
+    body: [
+      "Every mile you drive for DoorDash, Uber Eats, Instacart, Amazon Flex, or any 1099 gig is deductible at the IRS standard mileage rate. This free calculator turns your miles into a dollar deduction and shows the estimated tax it saves across four common federal brackets.",
+      "Enter your business miles for the year to see your total deduction and how much it lowers your taxable income. For drivers who want their mileage tracked automatically alongside real earnings, UnifyOne consolidates miles, payouts, and expenses in one place.",
+    ],
   },
   {
     path: "/tools/quarterly-tax-estimator",
     title: "Quarterly Estimated Tax Calculator — 1099 Self-Employed | UnifyOne",
     description:
       "Free 1099 quarterly tax calculator for gig workers. See your SE tax + income tax and exact quarterly payment amounts with 2026 due dates.",
+    body: [
+      "1099 gig workers owe taxes four times a year, not just in April. This calculator estimates your self-employment tax and federal income tax from your net earnings, then breaks the total into the four quarterly payments the IRS expects — with the 2026 due dates.",
+      "Knowing each quarter's number in advance prevents underpayment penalties and April surprises. UnifyOne can derive these estimates from your live earnings so the amount is always current.",
+    ],
   },
   {
     path: "/tools/earnings-consolidator",
@@ -120,6 +134,10 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Multi-Platform Gig Earnings Consolidator | True Hourly Rate | UnifyOne",
     description:
       "Free gig earnings calculator. See your true hourly rate after expenses across DoorDash, Uber Eats, Instacart, and more — no account required.",
+    body: [
+      "Gross pay from gig apps hides what you actually keep. This consolidator combines earnings from DoorDash, Uber Eats, Instacart, and more, subtracts mileage and expenses, and shows your true net hourly rate across every platform.",
+      "Seeing real net-per-hour side by side reveals which apps and hours are worth your time. UnifyOne keeps this view live by syncing payouts and costs automatically.",
+    ],
   },
   {
     path: "/tools/reseller-break-even",
@@ -127,6 +145,10 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Reseller Break-Even & Pricing Calculator — eBay, Etsy, Amazon | UnifyOne",
     description:
       "Free reseller pricing calculator. Enter item cost, fees, shipping, and return rate to find your break-even price and target margin on eBay, Etsy, or Amazon.",
+    body: [
+      "Marketplace fees, shipping, and returns quietly erode reseller margins. This calculator takes your item cost, platform fees, shipping, and expected return rate and tells you the exact break-even price plus the list price you need for a target margin on eBay, Etsy, or Amazon.",
+      "Price above break-even with confidence instead of guessing. UnifyOne helps resellers track costs and margins across every channel from one dashboard.",
+    ],
   },
   {
     path: "/tools/cashflow-tracker",
@@ -134,6 +156,10 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Gig Payout Timing & Cash-Flow Tracker | DoorDash, Uber, Instacart | UnifyOne",
     description:
       "Free gig cash-flow tool. Model when DoorDash, Uber Eats, Instacart, and Lyft payouts hit your bank and forecast your 30-day income rhythm.",
+    body: [
+      "Gig pay arrives on different schedules — instant cash-outs, weekly deposits, and platform delays all collide. This tool models when DoorDash, Uber Eats, Instacart, and Lyft payouts actually land in your bank so you can forecast your 30-day income rhythm.",
+      "A clear payout timeline makes it easier to cover bills and avoid overdrafts between deposits. UnifyOne extends this with live earnings tracking across every platform.",
+    ],
   },
   {
     path: "/tools/se-tax-calculator",
@@ -141,6 +167,10 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Self-Employment Tax Calculator for 1099 Gig Workers 2025 | UnifyOne",
     description:
       "Free self-employment tax calculator for DoorDash, Uber, and Instacart 1099 workers. See your SE tax (Social Security + Medicare) and quarterly estimates.",
+    body: [
+      "Self-employed gig workers pay the full 15.3% self-employment tax — both halves of Social Security and Medicare — on top of income tax. This calculator breaks down your SE tax from net earnings, shows the deductible employer-equivalent half, and estimates your quarterly payments.",
+      "Understanding the SE portion separately from income tax makes your real tax burden clear. UnifyOne keeps the numbers current by computing them from your actual platform earnings.",
+    ],
   },
   {
     path: "/tools/gig-hourly-rate",
@@ -148,6 +178,10 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Gig Worker Real Hourly Rate Calculator — DoorDash, Uber Eats, Instacart | UnifyOne",
     description:
       "Find your true hourly rate from DoorDash, Uber Eats, Instacart, and Grubhub after vehicle costs and miles. Free gig earnings optimizer — compare platforms.",
+    body: [
+      "The hourly rate a gig app advertises ignores gas, depreciation, and dead miles. This calculator factors vehicle cost-per-mile and your actual driving into a true hourly rate for DoorDash, Uber Eats, Instacart, and Grubhub.",
+      "Comparing real net-per-hour across platforms shows where your time pays best. UnifyOne turns this one-off check into continuous optimization across every app you run.",
+    ],
   },
   {
     path: "/tools/tax-set-aside",
@@ -155,6 +189,10 @@ export const ROUTE_SEO: RouteSeo[] = [
       "1099 Tax Set-Aside Calculator — How Much to Save for Gig Taxes | UnifyOne",
     description:
       "Find the exact percentage of each gig payment to set aside for taxes. Free calculator for DoorDash, Uber, and Instacart 1099 workers — SE + federal tax.",
+    body: [
+      "The safest way to avoid a tax-season shortfall is to set aside a percentage of every gig payment as it arrives. This calculator combines self-employment tax and federal income tax to give you one set-aside percentage for DoorDash, Uber, Instacart, and any 1099 income.",
+      "Move that share into a separate account each time you cash out and quarterly taxes take care of themselves. UnifyOne can automate the set-aside from your live earnings.",
+    ],
   },
   {
     path: "/gig-income-aggregator",
