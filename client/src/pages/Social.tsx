@@ -22,6 +22,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConnectAccounts } from "@/components/social/ConnectAccounts";
 import { toast } from "sonner";
 import {
   Twitter,
@@ -505,6 +506,8 @@ export default function Social() {
               </div>
             </CardContent>
           </Card>
+
+          <ConnectAccounts />
         </div>
 
         {/* Posts Feed */}
