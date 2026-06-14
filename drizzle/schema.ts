@@ -502,6 +502,18 @@ export const socialPosts = pgTable("social_posts", {
     impressions?: number; clicks?: number; likes?: number;
     shares?: number; comments?: number; reach?: number;
   }>(),
+  // Per-target outcome of the last publish (native dispatch to connected
+  // accounts). Persisted so the UI can show per-platform status after reload.
+  publishResults: json("publishResults").$type<
+    {
+      platform: string;
+      ok: boolean;
+      externalId?: string;
+      permalink?: string;
+      error?: string;
+      skipped?: "no-provider" | "not-connected";
+    }[]
+  >(),
   aiGenerated: boolean("aiGenerated").default(false),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),

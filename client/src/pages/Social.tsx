@@ -637,6 +637,37 @@ export default function Social() {
                                         </span>
                                       )}
                                     </div>
+                                    {Array.isArray(post.publishResults) &&
+                                      post.publishResults.length > 0 && (
+                                        <div className="flex flex-wrap items-center gap-1">
+                                          {post.publishResults.map(r => (
+                                            <Badge
+                                              key={r.platform}
+                                              variant="outline"
+                                              title={
+                                                r.error ??
+                                                r.permalink ??
+                                                r.skipped ??
+                                                ""
+                                              }
+                                              className={
+                                                r.ok
+                                                  ? "text-[10px] bg-emerald-500/15 text-emerald-400 border-emerald-500/20"
+                                                  : r.skipped
+                                                    ? "text-[10px] bg-slate-500/15 text-slate-400 border-slate-500/20"
+                                                    : "text-[10px] bg-red-500/15 text-red-400 border-red-500/20"
+                                              }
+                                            >
+                                              {r.platform}:{" "}
+                                              {r.ok
+                                                ? "sent"
+                                                : r.skipped
+                                                  ? "skipped"
+                                                  : "failed"}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      )}
                                     <div className="flex items-center gap-1.5">
                                       <span className="text-[10px] text-muted-foreground flex-1">
                                         {post.scheduledAt

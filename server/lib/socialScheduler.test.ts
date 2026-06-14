@@ -51,7 +51,7 @@ describe("publishStoredPost", () => {
     selectQueue = [[post()]];
     const res = await publishStoredPost(7, 1, { userId: 3 });
 
-    expect(updateWhere).toHaveBeenCalledTimes(1); // status -> published
+    expect(updateWhere).toHaveBeenCalledTimes(2); // status -> published, then publishResults
     expect(publishToConnectedAccounts).toHaveBeenCalledWith(7, ["bluesky"], {
       content: "hello",
       mediaUrls: undefined,
