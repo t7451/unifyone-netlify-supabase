@@ -54,6 +54,7 @@ import { sandboxRouter } from "./routers/sandbox";
 import { clipsToolkitRouter } from "./routers/clipsToolkit";
 import { discoverabilityRouter } from "./routers/discoverability";
 import { voiceRouter } from "./routers/voice";
+import { connectedAccountsRouter } from "./routers/connectedAccounts";
 
 export const appRouter = router({
   system: systemRouter,
@@ -142,6 +143,7 @@ export const appRouter = router({
   clipsToolkit: clipsToolkitRouter,
   discoverability: discoverabilityRouter,
   voice: voiceRouter,
+  connectedAccounts: connectedAccountsRouter,
 });
 
 export type AppRouter = typeof appRouter;
