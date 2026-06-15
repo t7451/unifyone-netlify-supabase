@@ -16,11 +16,20 @@
 
 import { resolveKaiMcpUrl } from "../_core/ngrok";
 
-// resolveKaiMcpUrl is the single source of truth for env-based precedence:
-// it honors KAI_MCP_NGROK_URL outside production, then falls back to
-// MCP_WORKER_URL. The default below covers the case where neither is set.
+// Endpoint precedence:
+//   1. resolveKaiMcpUrl() — KAI_MCP_NGROK_URL (dev) or MCP_WORKER_URL (any env)
+//   2. The platform's own deployment origin, so the in-repo `/mcp` Netlify
+//      function — which is the complete tool backend (list_deals,
+//      list_pixel_assets, query_graph, list_compounds, ask_kai, …) — is the
+//      default target. Netlify injects DEPLOY_PRIME_URL (per-deploy, incl.
+//      deploy previews) and URL (production canonical).
+//   3. Legacy external worker, retained only as a last-resort for local dev
+//      where no deployment origin is available.
 export const MCP_WORKER_URL =
-  resolveKaiMcpUrl() || "https://unify0ne-mcp.skdev-371.workers.dev";
+  resolveKaiMcpUrl() ||
+  process.env.DEPLOY_PRIME_URL ||
+  process.env.URL ||
+  "https://unify0ne-mcp.skdev-371.workers.dev";
 
 const MCP_ENDPOINT = `${MCP_WORKER_URL}/mcp`;
 
@@ -253,8 +262,10 @@ async function rpc<T = unknown>(
     Accept: "application/json",
   };
 
+  // The in-repo `/mcp` function authenticates against MCP_API_KEY, so prefer it
+  // (falling back to the legacy ONECOMMERCE_API_KEY used by the old worker).
   const key =
-    apiKey ?? process.env.ONECOMMERCE_API_KEY ?? process.env.MCP_API_KEY ?? "";
+    apiKey ?? process.env.MCP_API_KEY ?? process.env.ONECOMMERCE_API_KEY ?? "";
   if (key) headers["Authorization"] = `Bearer ${key}`;
 
   const body = JSON.stringify({
