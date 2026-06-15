@@ -32,6 +32,7 @@ import {
 } from "../paymentFallback";
 import { subscriptionChangePlanLimiter } from "../_core/rateLimiter";
 import { getSupabaseAdmin } from "../_core/supabaseAdmin";
+import { isMasterControlUser } from "../lib/masterControl";
 
 export const subscriptionRouter = router({
   /**
@@ -46,6 +47,9 @@ export const subscriptionRouter = router({
    * and usage metrics in a single call for the dashboard widget.
    */
   getStatus: protectedProcedure.query(async ({ ctx }) => {
+    // The platform owner account never pays for its own tenant, so it should
+    // not be shown trial countdowns or upgrade upsells.
+    const isMaster = isMasterControlUser(ctx.user);
     const tenantId = ctx.user.tenantId;
     if (!tenantId) {
       return {
@@ -57,6 +61,7 @@ export const subscriptionRouter = router({
         stripeSubscriptionId: null,
         trialDaysLeft: null,
         usage: null,
+        isMaster,
       };
     }
 
@@ -113,6 +118,7 @@ export const subscriptionRouter = router({
     return {
       status: tenant.subscriptionStatus,
       tenantStatus: tenant.status,
+      isMaster,
       plan,
       billingCycle,
       subscriptionCurrentPeriodEnd: tenant.subscriptionCurrentPeriodEnd,

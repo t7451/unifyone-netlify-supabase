@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -12,15 +14,20 @@ import {
   BadgeDollarSign,
   ExternalLink,
   Globe,
+  Loader2,
   Lock,
   Megaphone,
+  MousePointerClick,
   Rocket,
+  Search,
   SearchCheck,
   Shield,
   Sparkles,
   Workflow,
 } from "lucide-react";
 import { Link } from "wouter";
+import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 import {
   DEALFLOW_ADMIN_URL,
   DEALFLOW_APP_URL,
@@ -175,6 +182,8 @@ export default function DealflowPage() {
           </p>
         </CardContent>
       </Card>
+
+      <DealflowLiveDeals />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {revenueRoles.map(role => {
@@ -358,5 +367,172 @@ export default function DealflowPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+/**
+ * Coerce the `dealflowRouter` MCP result into a flat list of deal records.
+ * The MCP worker may return an array, an object with `deals`/`results`, or a
+ * `{ content: [{ type: "text", text }] }` envelope whose text is JSON.
+ */
+function asDeals(data: unknown): Record<string, unknown>[] {
+  if (Array.isArray(data)) return data as Record<string, unknown>[];
+  if (data && typeof data === "object") {
+    const obj = data as Record<string, unknown>;
+    if (Array.isArray(obj.deals)) return obj.deals as Record<string, unknown>[];
+    if (Array.isArray(obj.results))
+      return obj.results as Record<string, unknown>[];
+    if (Array.isArray(obj.content)) {
+      const text = obj.content
+        .map(part =>
+          part && typeof part === "object" && "text" in part
+            ? String((part as Record<string, unknown>).text ?? "")
+            : ""
+        )
+        .join("");
+      try {
+        const parsed = JSON.parse(text);
+        return asDeals(parsed);
+      } catch {
+        return [];
+      }
+    }
+  }
+  return [];
+}
+
+function dealString(
+  deal: Record<string, unknown>,
+  keys: string[],
+  fallback = ""
+) {
+  for (const key of keys) {
+    const value = deal[key];
+    if (typeof value === "string" && value.trim()) return value;
+    if (typeof value === "number" && Number.isFinite(value))
+      return String(value);
+  }
+  return fallback;
+}
+
+/**
+ * Live DealFlow data, served by the `dealflow` tRPC router (MCP-backed). This
+ * is the in-app surface that actually reads tenant-scoped deals, so DealFlow is
+ * no longer only a launchpad of external links.
+ */
+function DealflowLiveDeals() {
+  const [search, setSearch] = useState("");
+  const [submitted, setSubmitted] = useState("");
+
+  const dealsQuery = trpc.dealflow.listDeals.useQuery(
+    { limit: 12, ...(submitted ? { search: submitted } : {}) },
+    { retry: false }
+  );
+
+  const trackConversion = trpc.dealflow.trackConversion.useMutation({
+    onSuccess: () => toast.success("Click tracked"),
+    onError: e => toast.error(e.message),
+  });
+
+  const deals = asDeals(dealsQuery.data);
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <BadgeDollarSign className="h-4 w-4" /> Live Deals
+            </CardTitle>
+            <CardDescription>
+              Tenant-scoped deals pulled directly from the DealFlow service.
+            </CardDescription>
+          </div>
+          <form
+            className="flex gap-2"
+            onSubmit={event => {
+              event.preventDefault();
+              setSubmitted(search.trim());
+            }}
+          >
+            <Input
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              placeholder="Search deals..."
+              className="sm:w-64"
+            />
+            <Button type="submit" variant="outline">
+              <Search className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {dealsQuery.isLoading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : dealsQuery.isError ? (
+          <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+            DealFlow service is unavailable right now (
+            {dealsQuery.error.message}
+            ). The external launch surfaces below still work.
+          </div>
+        ) : deals.length === 0 ? (
+          <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+            No deals found{submitted ? ` for “${submitted}”` : ""}.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {deals.map((deal, index) => {
+              const id = dealString(
+                deal,
+                ["id", "deal_id", "slug"],
+                String(index)
+              );
+              const title = dealString(
+                deal,
+                ["title", "name", "headline"],
+                "Untitled deal"
+              );
+              const category = dealString(deal, ["category", "type"]);
+              const reward = dealString(deal, [
+                "reward",
+                "bonus",
+                "payout",
+                "value",
+              ]);
+              return (
+                <div
+                  key={id}
+                  className="rounded-xl border border-border bg-background/50 p-4 space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-medium leading-5">{title}</p>
+                    {category && <Badge variant="outline">{category}</Badge>}
+                  </div>
+                  {reward && (
+                    <p className="text-sm text-emerald-400 font-medium">
+                      {reward}
+                    </p>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    disabled={trackConversion.isPending}
+                    onClick={() =>
+                      trackConversion.mutate({ dealId: id, eventType: "click" })
+                    }
+                  >
+                    <MousePointerClick className="h-3.5 w-3.5" /> Track Click
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

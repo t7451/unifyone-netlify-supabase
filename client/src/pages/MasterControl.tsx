@@ -91,6 +91,24 @@ const PROVISIONING_TEMPLATES = [
   },
 ] as const;
 
+type ProvisioningTemplateKey =
+  | "gig-worker-starter"
+  | "agency-commerce-pro"
+  | "white-label-scale";
+
+const TEMPLATE_KEY_BY_NAME: Record<string, ProvisioningTemplateKey> = {
+  "Gig Worker Starter": "gig-worker-starter",
+  "Agency Commerce Pro": "agency-commerce-pro",
+  "White-Label Scale": "white-label-scale",
+};
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 type TenantStatus = "active" | "suspended" | "trial" | "cancelled";
 type SubscriptionStatus =
   | "active"
@@ -114,6 +132,7 @@ type TenantForm = {
 };
 
 type ModuleFlag = {
+  key: string;
   name: string;
   globalDefault: boolean;
   tenantOverride: string;
@@ -288,6 +307,60 @@ export default function MasterControl() {
       },
       onError: error => toast.error(error.message),
     });
+  const createFromTemplate =
+    trpc.masterControl.createTenantFromTemplate.useMutation({
+      onSuccess: data => {
+        toast.success(
+          `Tenant provisioned: ${data.tenant?.name ?? "new tenant"}`
+        );
+        void utils.masterControl.snapshot.invalidate();
+      },
+      onError: error => toast.error(error.message),
+    });
+  const cloneTenant = trpc.masterControl.cloneTenant.useMutation({
+    onSuccess: data => {
+      toast.success(`Tenant cloned: ${data.tenant?.name ?? "clone"}`);
+      void utils.masterControl.snapshot.invalidate();
+    },
+    onError: error => toast.error(error.message),
+  });
+  const transferOwnership =
+    trpc.masterControl.createOwnershipTransferIntent.useMutation({
+      onSuccess: data => {
+        toast.success(
+          "Ownership transfer intent created — confirm with the token to finalize"
+        );
+        // The one-time token is only returned here; surface it so the owner can
+        // confirm the transfer. It is redacted from the audit log.
+        if (data.intent?.token) {
+          void navigator.clipboard
+            ?.writeText(data.intent.token)
+            .then(() => toast.message("Transfer token copied to clipboard"))
+            .catch(() => {});
+        }
+        void utils.masterControl.snapshot.invalidate();
+      },
+      onError: error => toast.error(error.message),
+    });
+  const quickAction = trpc.masterControl.quickAction.useMutation({
+    onSuccess: () => {
+      toast.success("Lifecycle action applied");
+      void utils.masterControl.snapshot.invalidate();
+    },
+    onError: error => toast.error(error.message),
+  });
+  const grantCredits = trpc.masterControl.grantTemporaryCredits.useMutation({
+    onSuccess: data =>
+      toast.success(`Granted ${data.grant?.amount ?? "unknown"} credits`),
+    onError: error => toast.error(error.message),
+  });
+  const updateFeatureFlags = trpc.masterControl.updateFeatureFlags.useMutation({
+    onSuccess: () => {
+      toast.success("Feature flags updated");
+      void utils.masterControl.snapshot.invalidate();
+    },
+    onError: error => toast.error(error.message),
+  });
 
   const tenants = useMemo(
     () => snapshot.data?.tenants ?? [],
@@ -308,6 +381,7 @@ export default function MasterControl() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>(
     PROVISIONING_TEMPLATES[0].name
   );
+  const [provisionName, setProvisionName] = useState("");
   const [transferEmail, setTransferEmail] = useState("");
   const [creditGrant, setCreditGrant] = useState("500");
   const [creditGrantExpires, setCreditGrantExpires] = useState("7 days");
@@ -358,34 +432,40 @@ export default function MasterControl() {
       snapshotRecord.featureFlags ?? snapshotRecord.moduleFlags
     );
     if (supplied.length) {
-      return supplied.map((row, index) => ({
-        name: getString(
+      return supplied.map((row, index) => {
+        const name = getString(
           row,
           ["name", "module", "label"],
           PLATFORM_MODULES[index] ?? "Module"
-        ),
-        globalDefault: getBoolean(
-          row,
-          ["globalDefault", "enabled", "defaultEnabled"],
-          true
-        ),
-        tenantOverride: getString(
-          row,
-          ["tenantOverride", "override", "tenantValue"],
-          "inherit"
-        ),
-        rolloutPercent: getNumber(
-          row,
-          ["rolloutPercent", "rollout", "percentage"],
-          100
-        ),
-        flagMode:
-          getString(row, ["flagMode", "mode", "enforcement"], "soft") === "hard"
-            ? "hard"
-            : "soft",
-      }));
+        );
+        return {
+          key: getString(row, ["key", "id", "module"], slugify(name)),
+          name,
+          globalDefault: getBoolean(
+            row,
+            ["globalDefault", "enabled", "defaultEnabled"],
+            true
+          ),
+          tenantOverride: getString(
+            row,
+            ["tenantOverride", "override", "tenantValue"],
+            "inherit"
+          ),
+          rolloutPercent: getNumber(
+            row,
+            ["rolloutPercent", "rollout", "percentage"],
+            100
+          ),
+          flagMode:
+            getString(row, ["flagMode", "mode", "enforcement"], "soft") ===
+            "hard"
+              ? "hard"
+              : "soft",
+        };
+      });
     }
     return PLATFORM_MODULES.map((name, index) => ({
+      key: slugify(name),
       name,
       globalDefault: index !== 1,
       tenantOverride: selectedTenant ? "inherit" : "select tenant",
@@ -923,13 +1003,14 @@ export default function MasterControl() {
                                   <Button
                                     size="sm"
                                     variant="outline"
+                                    disabled={quickAction.isPending}
                                     onClick={() =>
-                                      updateTenantControls.mutate({
-                                        tenantId: tenant.id,
-                                        status:
+                                      quickAction.mutate({
+                                        action:
                                           tenant.status === "suspended"
-                                            ? "active"
-                                            : "suspended",
+                                            ? "reactivate"
+                                            : "suspend",
+                                        tenantId: tenant.id,
                                       })
                                     }
                                   >
@@ -940,11 +1021,23 @@ export default function MasterControl() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() =>
-                                      toast(
-                                        "Impersonation intent logged for audit review"
-                                      )
-                                    }
+                                    disabled={quickAction.isPending}
+                                    onClick={() => {
+                                      const reason = window.prompt(
+                                        "Reason for impersonation intent (min 5 chars, audited):"
+                                      );
+                                      if (!reason || reason.trim().length < 5) {
+                                        toast.error(
+                                          "A reason of at least 5 characters is required"
+                                        );
+                                        return;
+                                      }
+                                      quickAction.mutate({
+                                        action: "impersonationIntent",
+                                        tenantId: tenant.id,
+                                        reason: reason.trim(),
+                                      });
+                                    }}
                                   >
                                     <UserRoundCog className="h-3.5 w-3.5" />
                                   </Button>
@@ -1009,11 +1102,43 @@ export default function MasterControl() {
                           </Badge>
                         </div>
                       ))}
+                      <div className="space-y-2">
+                        <Label>New tenant name</Label>
+                        <Input
+                          value={provisionName}
+                          onChange={event =>
+                            setProvisionName(event.target.value)
+                          }
+                          placeholder="Acme Co"
+                        />
+                      </div>
                       <Button
                         className="w-full"
-                        onClick={() => toast("Provisioning draft staged")}
+                        disabled={
+                          createFromTemplate.isPending ||
+                          provisionName.trim().length < 2
+                        }
+                        onClick={() => {
+                          const templateKey =
+                            TEMPLATE_KEY_BY_NAME[selectedTemplate];
+                          if (!templateKey) {
+                            toast.error(
+                              `Unknown template: ${selectedTemplate}`
+                            );
+                            return;
+                          }
+                          createFromTemplate.mutate({
+                            template: templateKey,
+                            name: provisionName.trim(),
+                          });
+                        }}
                       >
-                        Stage Provisioning Draft
+                        {createFromTemplate.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-4 w-4" />
+                        )}
+                        Provision Tenant
                       </Button>
                     </CardContent>
                   </Card>
@@ -1035,11 +1160,31 @@ export default function MasterControl() {
                       <Button
                         variant="outline"
                         className="w-full"
-                        onClick={() =>
-                          toast("Ownership transfer intent staged")
+                        disabled={
+                          !selectedTenant ||
+                          transferEmail.trim().length === 0 ||
+                          transferOwnership.isPending
                         }
+                        onClick={() => {
+                          if (!selectedTenant) {
+                            toast.error("Select a tenant first");
+                            return;
+                          }
+                          const target = transferEmail.trim();
+                          transferOwnership.mutate({
+                            tenantId: selectedTenant.id,
+                            ...(target.includes("@")
+                              ? { targetEmail: target }
+                              : { targetOpenId: target }),
+                          });
+                        }}
                       >
-                        <KeyRound className="h-4 w-4" /> Stage Transfer
+                        {transferOwnership.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <KeyRound className="h-4 w-4" />
+                        )}{" "}
+                        Stage Transfer
                       </Button>
                     </CardContent>
                   </Card>
@@ -1049,9 +1194,14 @@ export default function MasterControl() {
                     plans={plans}
                     selectedTenant={selectedTenant}
                     isPending={updateTenantControls.isPending}
+                    isCloning={cloneTenant.isPending}
                     onSave={saveTenant}
                     onFieldChange={updateField}
                     onExportJson={exportTenantJson}
+                    onClone={() => {
+                      if (!selectedTenant) return;
+                      cloneTenant.mutate({ sourceTenantId: selectedTenant.id });
+                    }}
                   />
                 </div>
               </div>
@@ -1089,11 +1239,50 @@ export default function MasterControl() {
                           <TableCell>
                             <Switch
                               checked={row.globalDefault}
+                              disabled={updateFeatureFlags.isPending}
                               aria-label={`${row.name} default`}
+                              onCheckedChange={checked =>
+                                updateFeatureFlags.mutate({
+                                  scope: "global",
+                                  flags: [
+                                    {
+                                      key: row.key,
+                                      enabled: checked,
+                                      rolloutPercent: row.rolloutPercent,
+                                      flagType: row.flagMode,
+                                    },
+                                  ],
+                                })
+                              }
                             />
                           </TableCell>
                           <TableCell>
-                            <Select defaultValue={row.tenantOverride}>
+                            <Select
+                              value={row.tenantOverride}
+                              disabled={updateFeatureFlags.isPending}
+                              onValueChange={value => {
+                                if (value !== "enabled" && value !== "disabled")
+                                  return;
+                                if (!selectedTenant) {
+                                  toast.error(
+                                    "Select a tenant before overriding a flag"
+                                  );
+                                  return;
+                                }
+                                updateFeatureFlags.mutate({
+                                  scope: "tenant",
+                                  tenantId: selectedTenant.id,
+                                  flags: [
+                                    {
+                                      key: row.key,
+                                      enabled: value === "enabled",
+                                      rolloutPercent: row.rolloutPercent,
+                                      flagType: row.flagMode,
+                                    },
+                                  ],
+                                });
+                              }}
+                            >
                               <SelectTrigger className="w-40">
                                 <SelectValue />
                               </SelectTrigger>
@@ -1217,11 +1406,42 @@ export default function MasterControl() {
                       </div>
                     </div>
                     <Button
-                      onClick={() =>
-                        toast.success("Temporary credit grant staged")
-                      }
+                      disabled={!selectedTenant || grantCredits.isPending}
+                      onClick={() => {
+                        if (!selectedTenant) {
+                          toast.error("Select a tenant first");
+                          return;
+                        }
+                        const amount = Number.parseInt(creditGrant, 10);
+                        if (!Number.isFinite(amount) || amount <= 0) {
+                          toast.error("Enter a positive credit amount");
+                          return;
+                        }
+                        const parsedDays = Number.parseInt(
+                          creditGrantExpires,
+                          10
+                        );
+                        const days = Number.isNaN(parsedDays) ? 7 : parsedDays;
+                        if (days <= 0) {
+                          toast.error("Expiration must be at least 1 day");
+                          return;
+                        }
+                        grantCredits.mutate({
+                          tenantId: selectedTenant.id,
+                          amount,
+                          expiresAt: new Date(
+                            Date.now() + days * 24 * 60 * 60 * 1000
+                          ),
+                          reason: `Owner console grant: ${amount} credits for ${days} days`,
+                        });
+                      }}
                     >
-                      <Gift className="h-4 w-4" /> Stage Credit Grant
+                      {grantCredits.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Gift className="h-4 w-4" />
+                      )}{" "}
+                      Grant Credits
                     </Button>
                   </CardContent>
                 </Card>
@@ -1588,20 +1808,24 @@ function TenantEditCard({
   plans,
   selectedTenant,
   isPending,
+  isCloning,
   onSave,
   onFieldChange,
   onExportJson,
+  onClone,
 }: {
   form: TenantForm | null;
   plans: Array<{ id: number; name: string; slug: string }>;
   selectedTenant: { id: number; name: string } | undefined;
   isPending: boolean;
+  isCloning: boolean;
   onSave: () => void;
   onFieldChange: <K extends keyof TenantForm>(
     key: K,
     value: TenantForm[K]
   ) => void;
   onExportJson: () => void;
+  onClone: () => void;
 }) {
   return (
     <Card>
@@ -1625,11 +1849,13 @@ function TenantEditCard({
               <Button variant="outline" onClick={onExportJson}>
                 <FileJson className="h-4 w-4" /> Export JSON
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => toast("Clone tenant intent staged")}
-              >
-                <Copy className="h-4 w-4" /> Clone Tenant
+              <Button variant="outline" disabled={isCloning} onClick={onClone}>
+                {isCloning ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}{" "}
+                Clone Tenant
               </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
