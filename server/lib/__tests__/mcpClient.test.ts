@@ -8,6 +8,8 @@ import {
 describe("mcpClient compatibility", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    delete process.env.MCP_API_KEY;
+    delete process.env.ONECOMMERCE_API_KEY;
   });
 
   it("normalizes legacy camelCase tool names to snake_case", () => {
@@ -58,5 +60,31 @@ describe("mcpClient compatibility", () => {
       name: "get_product",
       arguments: { product_id: 123, tenant_id: 9 },
     });
+  });
+
+  it("prefers MCP_API_KEY for the Authorization bearer token", async () => {
+    // The in-repo `/mcp` Netlify function authenticates against MCP_API_KEY, so
+    // when both are present the client must send MCP_API_KEY, not the legacy
+    // ONECOMMERCE_API_KEY used by the old external worker.
+    process.env.MCP_API_KEY = "mcp-secret";
+    process.env.ONECOMMERCE_API_KEY = "legacy-secret";
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          result: { content: [{ type: "text", text: "{}" }] },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await mcpCallTool("list_deals", { tenantId: 9 });
+
+    const headers = fetchMock.mock.calls[0][1].headers as Record<
+      string,
+      string
+    >;
+    expect(headers.Authorization).toBe("Bearer mcp-secret");
   });
 });
