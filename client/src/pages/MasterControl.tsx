@@ -350,7 +350,8 @@ export default function MasterControl() {
     onError: error => toast.error(error.message),
   });
   const grantCredits = trpc.masterControl.grantTemporaryCredits.useMutation({
-    onSuccess: data => toast.success(`Granted ${data.grant.amount} credits`),
+    onSuccess: data =>
+      toast.success(`Granted ${data.grant?.amount ?? "unknown"} credits`),
     onError: error => toast.error(error.message),
   });
   const updateFeatureFlags = trpc.masterControl.updateFeatureFlags.useMutation({
@@ -1117,14 +1118,20 @@ export default function MasterControl() {
                           createFromTemplate.isPending ||
                           provisionName.trim().length < 2
                         }
-                        onClick={() =>
+                        onClick={() => {
+                          const templateKey =
+                            TEMPLATE_KEY_BY_NAME[selectedTemplate];
+                          if (!templateKey) {
+                            toast.error(
+                              `Unknown template: ${selectedTemplate}`
+                            );
+                            return;
+                          }
                           createFromTemplate.mutate({
-                            template:
-                              TEMPLATE_KEY_BY_NAME[selectedTemplate] ??
-                              "gig-worker-starter",
+                            template: templateKey,
                             name: provisionName.trim(),
-                          })
-                        }
+                          });
+                        }}
                       >
                         {createFromTemplate.isPending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -1252,6 +1259,7 @@ export default function MasterControl() {
                           <TableCell>
                             <Select
                               value={row.tenantOverride}
+                              disabled={updateFeatureFlags.isPending}
                               onValueChange={value => {
                                 if (value !== "enabled" && value !== "disabled")
                                   return;
@@ -1409,8 +1417,15 @@ export default function MasterControl() {
                           toast.error("Enter a positive credit amount");
                           return;
                         }
-                        const days =
-                          Number.parseInt(creditGrantExpires, 10) || 7;
+                        const parsedDays = Number.parseInt(
+                          creditGrantExpires,
+                          10
+                        );
+                        const days = Number.isNaN(parsedDays) ? 7 : parsedDays;
+                        if (days <= 0) {
+                          toast.error("Expiration must be at least 1 day");
+                          return;
+                        }
                         grantCredits.mutate({
                           tenantId: selectedTenant.id,
                           amount,
