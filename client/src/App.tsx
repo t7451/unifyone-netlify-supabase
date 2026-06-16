@@ -141,6 +141,7 @@ const PixelforgePage = lazy(() => import("./pages/PixelforgePage"));
 const ShopifyThemePage = lazy(() => import("./pages/ShopifyThemePage"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const About = lazy(() => import("./pages/About"));
+const Press = lazy(() => import("./pages/Press"));
 const Contact = lazy(() => import("./pages/Contact"));
 const SeoIndex = lazy(() => import("./pages/SeoIndex"));
 const SeoLanding = lazy(() => import("./pages/SeoLanding"));
@@ -231,6 +232,7 @@ function Router() {
       <Route path="/verify-email" component={() => <VerifyEmail />} />
       <Route path="/pricing" component={() => <Pricing />} />
       <Route path="/about" component={() => <About />} />
+      <Route path="/press" component={() => <Press />} />
       <Route path="/contact" component={() => <Contact />} />
       <Route
         path="/setup"
