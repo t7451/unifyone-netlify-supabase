@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { label: "The System", href: "/the-system" },
   { label: "Tithes", href: "/tithes" },
   { label: "Pricing", href: "/pricing" },
+  { label: "Free Tools", href: "/tools" },
   { label: "Blog", href: "/blog" },
   { label: "Documentation", href: "/documents" },
 ];
@@ -287,7 +288,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
         }}
       >
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-16">
             {/* Brand */}
             <div>
               <div className="flex items-center gap-2 mb-4">
@@ -333,10 +334,51 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 {[
                   { label: "Architecture", href: "/architecture" },
                   { label: "The System", href: "/the-system" },
-                  { label: "Tithes", href: "/tithes" },
+                  { label: "Manus AI", href: "/manus-ai" },
                   { label: "Pricing", href: "/pricing" },
                   { label: "Theme Store", href: "/themes" },
-                  { label: "Governance", href: "/master-control" },
+                  { label: "Tithes", href: "/tithes" },
+                ].map(item => (
+                  <Link key={item.href} href={item.href}>
+                    <span
+                      className="block cursor-pointer font-cinzel text-xs tracking-widest transition-colors duration-200"
+                      style={{ color: "#8A8A8A", letterSpacing: "0.15em" }}
+                      onMouseEnter={e =>
+                        ((e.currentTarget as HTMLElement).style.color =
+                          "#D4A843")
+                      }
+                      onMouseLeave={e =>
+                        ((e.currentTarget as HTMLElement).style.color =
+                          "#8A8A8A")
+                      }
+                    >
+                      {item.label}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Free Tools */}
+            <div>
+              <span className="inscription block mb-4">Free Tools</span>
+              <div className="space-y-3">
+                {[
+                  { label: "All Free Tools", href: "/tools" },
+                  {
+                    label: "Mileage Calculator",
+                    href: "/tools/mileage-deduction-calculator",
+                  },
+                  {
+                    label: "Quarterly Tax Estimator",
+                    href: "/tools/quarterly-tax-estimator",
+                  },
+                  {
+                    label: "Self-Employment Tax",
+                    href: "/tools/se-tax-calculator",
+                  },
+                  { label: "Gig Hourly Rate", href: "/tools/gig-hourly-rate" },
+                  { label: "Tax Set-Aside", href: "/tools/tax-set-aside" },
                 ].map(item => (
                   <Link key={item.href} href={item.href}>
                     <span
@@ -363,6 +405,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               <span className="inscription block mb-4">Codex</span>
               <div className="space-y-3">
                 {[
+                  { label: "SEO Guides", href: "/seo" },
                   {
                     label: "Gig Commerce Guide",
                     href: BLOG_POSTS.gigEcommerce.href,
@@ -376,7 +419,6 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                     href: BLOG_POSTS.aiGigWorkers.href,
                   },
                   { label: "Resources", href: "/resources" },
-                  { label: "Design System", href: "/design-system" },
                   { label: "Docs Chat", href: "/docs-chat" },
                   { label: "Sovereign Access", href: "/sovereign" },
                 ].map(item => (
