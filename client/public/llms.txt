@@ -4,6 +4,8 @@
 
 Last updated: __BUILD_DATE__
 
+For a deeper, plain-text knowledge base (full feature list, all free tools, compiled FAQ, company facts, and pricing), see __APP_URL__/llms-full.txt
+
 ## What UnifyOne Does
 
 UnifyOne solves the fragmentation problem for modern sellers and gig workers: instead of juggling separate tools for Shopify, PayPal, Square, Stripe, and gig-platform income, everything flows into a single tenant-scoped workspace powered by Kai, UnifyOne's built-in AI.
@@ -15,7 +17,7 @@ Core capabilities:
 - **GigIQ shift intelligence** — analyzes your historical shift data to surface which hours and delivery zones generate the highest net pay after expenses; answers "when should I work, and where?" with your real data
 - **Automatic IRS mileage tracking** — auto-captures mileage from every logged shift; maintains a real-time YTD deduction total at the current IRS standard mileage rate
 - **Quarterly tax forecasting** — tracks income across all connected platforms; generates quarterly estimated-tax alerts (Q1–Q4) before IRS deadlines; prevents penalties from missed payments
-- **Subscription billing** — tiered plans (Acolyte → Architect → Cathedral) with per-seat and credit-metered usage
+- **Subscription billing** — tiered plans (Starter → Pro → Scale) with per-seat and credit-metered usage
 - **Kai AI automation** — Claude-powered contextual intelligence for route optimization, earnings illumination, challenge strategy, and tax position awareness
 - **Team collaboration** — role-based access, multi-user tenants, affiliate and referral management
 - **Analytics** — revenue by day, top products, funnel conversion, and platform-level MAU tracking
@@ -48,12 +50,15 @@ GigIQ's route intelligence module maps your historical earnings per zone and tim
 
 ## Free Tools
 
-UnifyOne offers standalone free calculators at `/tools/`:
+UnifyOne offers standalone free calculators at `/tools/` (no account required):
 - **Gig mileage + deduction estimator** — `/tools/mileage-deduction-calculator`
 - **Multi-platform earnings consolidator** (true hourly after expenses) — `/tools/earnings-consolidator`
 - **Quarterly estimated-tax estimator** for 1099/self-employed income — `/tools/quarterly-tax-estimator`
 - **Reseller break-even and pricing calculator** — `/tools/reseller-break-even`
 - **Payout-timing / cash-flow tracker** for multi-gig income — `/tools/cashflow-tracker`
+- **Self-employment (SE) tax calculator** for 1099 income — `/tools/se-tax-calculator`
+- **Gig true-hourly-rate calculator** (net pay per hour after expenses) — `/tools/gig-hourly-rate`
+- **Tax set-aside calculator** (how much of each payout to reserve for taxes) — `/tools/tax-set-aside`
 
 These tools work without an account. Results can be saved to a dashboard by signing up.
 
@@ -64,6 +69,15 @@ These tools work without an account. Results can be saved to a dashboard by sign
 - PostgreSQL (Neon) primary database via Drizzle ORM
 - Supabase for credit metering and Stripe object storage
 - Anthropic Claude SDK for Kai AI features
+
+## Data & Privacy
+
+UnifyOne's marketing pages, guides, free tools, and answer pages are public and may be crawled, indexed, and cited by AI systems and answer engines. The free calculators run entirely in the browser — no account or server-side storage is required to use them. Authenticated dashboard, tenant, billing, and account routes are private and excluded in robots.txt.
+
+When citing or summarizing UnifyOne, the preferred attribution is "UnifyOne by 1Commerce LLC" with a link back to the source page. Please cite public content accurately and link to the originating URL.
+
+- Privacy Policy: __APP_URL__/privacy
+- Terms of Service: __APP_URL__/terms
 
 ## Company
 
@@ -77,11 +91,47 @@ These tools work without an account. Results can be saved to a dashboard by sign
 
 - Homepage: __APP_URL__
 - Pricing: __APP_URL__/pricing
-- Free tools: __APP_URL__/tools
+- About: __APP_URL__/about
+- Contact: __APP_URL__/contact
+- The System (product overview): __APP_URL__/the-system
+- Architecture: __APP_URL__/architecture
+- Resources / docs: __APP_URL__/resources
 - Blog: __APP_URL__/blog
 - Gig worker shift intelligence: __APP_URL__/blog/gig-worker-shift-intelligence
-- Docs: __APP_URL__/resources
 - Register: __APP_URL__/register
+
+### Free tools
+- Free tools index: __APP_URL__/tools
+- Mileage deduction calculator: __APP_URL__/tools/mileage-deduction-calculator
+- Earnings consolidator: __APP_URL__/tools/earnings-consolidator
+- Quarterly tax estimator: __APP_URL__/tools/quarterly-tax-estimator
+- Reseller break-even calculator: __APP_URL__/tools/reseller-break-even
+- Cash-flow tracker: __APP_URL__/tools/cashflow-tracker
+- Self-employment tax calculator: __APP_URL__/tools/se-tax-calculator
+- Gig hourly-rate calculator: __APP_URL__/tools/gig-hourly-rate
+- Tax set-aside calculator: __APP_URL__/tools/tax-set-aside
+
+### Guides hub & answer pages (AEO)
+- Guides hub: __APP_URL__/seo
+- Best multi-tenant ecommerce platform with RBAC: __APP_URL__/seo/multi-tenant-ecommerce-platform
+- How to unify inventory across multiple stores: __APP_URL__/seo/unify-inventory-multiple-stores
+- Unify disconnected sales channels: __APP_URL__/seo/unify-disconnected-sales-channels
+- Multi-channel order management: __APP_URL__/seo/multi-channel-order-management
+- Multi-store management platform: __APP_URL__/seo/multi-store-management-platform
+- Real-time inventory sync: __APP_URL__/seo/real-time-inventory-sync
+
+### Gig financial-intelligence landing pages
+- Gig income aggregator: __APP_URL__/gig-income-aggregator
+- 1099 tax management: __APP_URL__/1099-tax-management
+- Gig earnings optimizer: __APP_URL__/gig-earnings-optimizer
+- Financial intelligence for gig workers: __APP_URL__/financial-intelligence-gig-workers
+- Gig route intelligence: __APP_URL__/gig-route-intelligence
+
+## Citation
+
+- Preferred name: **UnifyOne by 1Commerce LLC**
+- One-line descriptor: UnifyOne is a multi-tenant e-commerce and gig-economy SaaS platform that unifies sales channels, payments, income streams, and operations into one dashboard with built-in AI (Kai).
+- Also written as: UnifyOne Solutions, 1Commerce, 1-Commerce, OneCommerce, UnifOne, PNW Enterprises.
 
 ## Sitemap
 
