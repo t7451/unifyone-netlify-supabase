@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
+import { Instagram } from "lucide-react";
 import { getSignupUrl } from "@/const";
 import { usePixelPageView } from "@/hooks/usePixelPageView";
 import { CdnImage } from "@/components/CdnImage";
@@ -13,6 +14,8 @@ const NAV_LINKS = [
   { label: "Blog", href: "/blog" },
   { label: "Documentation", href: "/documents" },
 ];
+
+const INSTAGRAM_URL = "https://www.instagram.com/1commerce_llc";
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -147,6 +150,22 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
           {/* CTA */}
           <div className="flex items-center gap-3">
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Follow 1Commerce on Instagram"
+              className="hidden sm:flex items-center transition-colors duration-200"
+              style={{ color: "#5A5A5A" }}
+              onMouseEnter={e =>
+                ((e.currentTarget as HTMLElement).style.color = "#D4A843")
+              }
+              onMouseLeave={e =>
+                ((e.currentTarget as HTMLElement).style.color = "#5A5A5A")
+              }
+            >
+              <Instagram size={16} strokeWidth={1.5} />
+            </a>
             <Link href="/dashboard">
               <span
                 className="hidden sm:block cursor-pointer transition-all duration-200"
@@ -227,6 +246,23 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 </span>
               </Link>
             ))}
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-6 py-4 cursor-pointer mobile-visibility-copy"
+              style={{
+                fontFamily: "Cinzel, serif",
+                fontSize: "0.7rem",
+                letterSpacing: "0.2em",
+                textTransform: "uppercase" as const,
+                color: "#5A5A5A",
+                borderBottom: "1px solid rgba(212,168,67,0.06)",
+              }}
+            >
+              <Instagram size={14} strokeWidth={1.5} />
+              Instagram
+            </a>
             <div className="px-6 py-4">
               <a
                 href={getSignupUrl()}
@@ -444,12 +480,30 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
               © {new Date().getFullYear()} PNW Enterprises / 1Commerce
               Solutions LLC
             </span>
-            <span
-              className="inscription mobile-visibility-subtle"
-              style={{ color: "#5A5A5A" }}
-            >
-              Cathedral Framework · Built to Endure
-            </span>
+            <div className="flex items-center gap-4">
+              <a
+                href={INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Follow 1Commerce on Instagram"
+                className="transition-colors duration-200"
+                style={{ color: "#5A5A5A" }}
+                onMouseEnter={e =>
+                  ((e.currentTarget as HTMLElement).style.color = "#D4A843")
+                }
+                onMouseLeave={e =>
+                  ((e.currentTarget as HTMLElement).style.color = "#5A5A5A")
+                }
+              >
+                <Instagram size={16} strokeWidth={1.5} />
+              </a>
+              <span
+                className="inscription mobile-visibility-subtle"
+                style={{ color: "#5A5A5A" }}
+              >
+                Cathedral Framework · Built to Endure
+              </span>
+            </div>
           </div>
         </div>
       </footer>
