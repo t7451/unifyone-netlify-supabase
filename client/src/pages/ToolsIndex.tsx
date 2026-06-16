@@ -228,6 +228,47 @@ export default function ToolsIndex() {
         </div>
       </section>
 
+      {/* Related guides — internal links to gig-finance landing pages + AEO hub */}
+      <section className="border-t py-12 px-6">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-2xl font-semibold mb-2">Related guides</h2>
+          <p className="text-muted-foreground mb-8">
+            Go deeper on gig-income strategy, taxes, and multi-platform
+            earnings.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                label: "Consolidate gig income",
+                href: "/gig-income-aggregator",
+              },
+              { label: "1099 tax management", href: "/1099-tax-management" },
+              {
+                label: "Optimize gig earnings",
+                href: "/gig-earnings-optimizer",
+              },
+              {
+                label: "Financial intelligence for gig workers",
+                href: "/financial-intelligence-gig-workers",
+              },
+              {
+                label: "Gig route intelligence",
+                href: "/gig-route-intelligence",
+              },
+              { label: "Browse all SEO guides", href: "/seo" },
+            ].map(g => (
+              <Link
+                key={g.href}
+                href={g.href}
+                className="rounded-lg border bg-card px-4 py-3 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
+              >
+                {g.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Conversion CTA — separate from tool content, clearly marked */}
       <section className="border-t bg-muted/20 py-12 px-6">
         <div className="mx-auto max-w-xl text-center">
