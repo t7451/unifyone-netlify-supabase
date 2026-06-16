@@ -29,7 +29,7 @@ const POSTS = [
   },
 ];
 
-const JSON_LD = {
+const BLOG_JSON_LD = {
   "@context": "https://schema.org",
   "@type": "Blog",
   "@id": CANONICAL,
@@ -39,6 +39,12 @@ const JSON_LD = {
     "Public writing from UnifyOne on multi-tenant commerce, Manus AI, and platform architecture.",
   isPartOf: { "@id": `${SITE_URL}/#website` },
   inLanguage: "en-US",
+  publisher: {
+    "@type": "Organization",
+    name: "1Commerce by 1Commerce LLC",
+    url: SITE_URL,
+    logo: { "@type": "ImageObject", url: `${SITE_URL}/favicon.ico` },
+  },
   blogPost: POSTS.map((post, index) => ({
     "@type": "BlogPosting",
     position: index + 1,
@@ -48,6 +54,22 @@ const JSON_LD = {
   })),
 };
 
+const ITEM_LIST_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "UnifyOne Blog posts",
+  itemListOrder: "https://schema.org/ItemListOrderAscending",
+  numberOfItems: POSTS.length,
+  itemListElement: POSTS.map((post, index) => ({
+    "@type": "ListItem",
+    position: index + 1,
+    name: post.title,
+    url: `${SITE_URL}${post.href}`,
+  })),
+};
+
+const JSON_LD = [BLOG_JSON_LD, ITEM_LIST_JSON_LD];
+
 export default function BlogIndex() {
   return (
     <PublicLayout>
@@ -55,7 +77,7 @@ export default function BlogIndex() {
         title="Blog | UnifyOne by 1Commerce"
         description={DESCRIPTION}
         canonical={CANONICAL}
-        jsonLd={[JSON_LD]}
+        jsonLd={JSON_LD}
       />
 
       <section className="max-w-4xl mx-auto px-6 sm:px-8 pt-32 pb-24">

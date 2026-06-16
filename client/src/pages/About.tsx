@@ -9,9 +9,51 @@ const CANONICAL = `${SITE_URL}/about`;
 const DESCRIPTION =
   "1Commerce / PNW Enterprises builds UnifyOne — a multi-tenant commerce platform on the Cathedral Framework for gig operators and e-commerce teams. Built to endure.";
 
-const JSON_LD = {
+const LOGO_URL = `${SITE_URL}/favicon.svg`;
+const ORG_ID = `${SITE_URL}/#organization`;
+
+// Social profiles referenced in client/index.html (sameAs) plus the Instagram
+// profile linked from this page and Contact.
+const SAME_AS = [
+  "https://github.com/unifyone",
+  "https://x.com/unifyone",
+  "https://www.instagram.com/1commerce_llc",
+  "https://1commerce.online",
+];
+
+const ORGANIZATION_JSON_LD = {
   "@context": "https://schema.org",
-  "@type": "WebPage",
+  "@type": "Organization",
+  "@id": ORG_ID,
+  name: "1Commerce Solutions",
+  legalName: "1Commerce LLC",
+  alternateName: [
+    "PNW Enterprises",
+    "1Commerce LLC",
+    "PNW Enterprises / 1Commerce LLC",
+    "1Commerce",
+    "1-Commerce",
+    "UnifyOne Solutions",
+  ],
+  url: SITE_URL,
+  logo: LOGO_URL,
+  email: "support@1commerce.online",
+  description:
+    "1Commerce Solutions (legally 1Commerce LLC, also known as PNW Enterprises) builds UnifyOne — a multi-tenant e-commerce and gig-economy SaaS platform. Based in Canby, Oregon, in the Pacific Northwest.",
+  foundingDate: "2025",
+  areaServed: "US",
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Canby",
+    addressRegion: "OR",
+    addressCountry: "US",
+  },
+  sameAs: SAME_AS,
+};
+
+const WEBPAGE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
   "@id": CANONICAL,
   url: CANONICAL,
   name: "About | UnifyOne by 1Commerce",
@@ -19,14 +61,20 @@ const JSON_LD = {
     "Learn about 1Commerce / PNW Enterprises — the team building UnifyOne, a multi-tenant commerce platform engineered on the Cathedral Framework for gig operators and e-commerce teams.",
   isPartOf: { "@id": `${SITE_URL}/#website` },
   inLanguage: "en-US",
-  breadcrumb: {
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
-      { "@type": "ListItem", position: 2, name: "About", item: CANONICAL },
-    ],
-  },
+  about: { "@id": ORG_ID },
+  publisher: { "@id": ORG_ID },
 };
+
+const BREADCRUMB_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+    { "@type": "ListItem", position: 2, name: "About", item: CANONICAL },
+  ],
+};
+
+const JSON_LD = [ORGANIZATION_JSON_LD, WEBPAGE_JSON_LD, BREADCRUMB_JSON_LD];
 
 export default function About() {
   return (
@@ -35,7 +83,7 @@ export default function About() {
         title="About | UnifyOne by 1Commerce"
         description={DESCRIPTION}
         canonical={CANONICAL}
-        jsonLd={[JSON_LD]}
+        jsonLd={JSON_LD}
       />
 
       <article

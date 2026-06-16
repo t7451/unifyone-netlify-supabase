@@ -1,0 +1,94 @@
+UNIFYONE — BRAND BOILERPLATE & MEDIA KIT
+=========================================
+
+Canonical product name : UnifyOne
+Company                 : 1Commerce LLC (operating as PNW Enterprises)
+Also known as           : 1Commerce, 1Commerce Solutions, UnifyOne by 1Commerce
+Location                : Canby, Oregon, USA (Pacific Northwest)
+Press / media contact   : support@1commerce.online
+Website                 : https://1commerce.online
+Press kit (this page)   : https://1commerce.online/press
+
+Use the name and descriptor IDENTICALLY everywhere. Consistent entity data is
+what turns hedged AI mentions into confident, citable ones — please do not
+paraphrase the product name.
+
+
+-----------------------------------------------------------------------------
+COPY VARIANTS (paste verbatim)
+-----------------------------------------------------------------------------
+
+TAGLINE (<= 60 characters, for logos / cards / nav):
+
+  Unify inventory, orders & payments across every store.
+
+
+SHORT DESCRIPTION (<= 160 characters, for directory meta / search snippets):
+
+  UnifyOne is an AI-powered multi-tenant commerce platform that unifies
+  inventory, orders, payments, and analytics across all your stores in one
+  dashboard.
+
+
+MEDIUM DESCRIPTION (~80 words, for directory body / about sections):
+
+  UnifyOne by 1Commerce LLC is a multi-tenant commerce platform built for
+  operators who run multiple stores, brands, or sales channels. It centralizes
+  inventory, orders, payments, subscription billing, and analytics into a
+  single tenant-isolated system with role-based access control. Real-time
+  inventory sync prevents overselling across channels, automated order routing
+  speeds fulfillment, and built-in AI delivers earnings and operations
+  insights. Plans start free (Starter), with Pro at $19/mo and white-label
+  Scale at $99/mo.
+
+
+ONE-LINER (full sentence, for press intros):
+
+  UnifyOne by 1Commerce LLC — an AI-powered multi-tenant commerce platform that
+  unifies products, orders, payments, inventory, and analytics for operators
+  running multiple stores or brands from a single dashboard.
+
+
+-----------------------------------------------------------------------------
+CATEGORY TAGS (select on each directory)
+-----------------------------------------------------------------------------
+
+  Multi-Tenant Ecommerce · Omnichannel Retail · Inventory Management ·
+  Order Management (OMS) · Multi-Store Management · Ecommerce Integrations ·
+  SaaS Commerce Platform
+
+
+-----------------------------------------------------------------------------
+BRAND COLORS
+-----------------------------------------------------------------------------
+
+  Obsidian (ground)   #020202   rgb(2, 2, 2)
+  Illuminated Gold    #D4A843   rgb(212, 168, 67)   — primary accent
+  Parchment (text)    #F0E8D0   rgb(240, 232, 208)
+  Stone (muted text)  #8A8A8A   rgb(138, 138, 138)
+
+Typography: Cinzel (serif) for headings and the wordmark; Crimson Text (serif)
+for body copy.
+
+
+-----------------------------------------------------------------------------
+LOGO USAGE GUIDELINES
+-----------------------------------------------------------------------------
+
+Files in this folder:
+  unifyone-logo.svg   Horizontal lockup (emblem + UNIFYONE wordmark). Default.
+  unifyone-logo.png   Same lockup, 512px wide, transparent background.
+  unifyone-mark.svg   Square emblem only — use for avatars / app icons.
+
+Do:
+  - Keep clear space around the logo equal to the height of the cross emblem.
+  - Place the logo on the obsidian (#020202) ground or another dark surface.
+  - Scale proportionally; the SVG is resolution-independent.
+
+Don't:
+  - Recolor the gold or parchment, add shadows, or apply gradients.
+  - Stretch, rotate, or crop the emblem.
+  - Place the dark logo on a low-contrast or busy background.
+
+All marks © PNW Enterprises / 1Commerce LLC. Provided for editorial,
+directory-listing, and review use. Questions: support@1commerce.online

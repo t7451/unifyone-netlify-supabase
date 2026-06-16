@@ -681,6 +681,7 @@ export default function Home() {
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section
         ref={heroRef}
+        aria-labelledby="home-hero-heading"
         className="apex-light-soft"
         style={{
           paddingTop: "7rem",
@@ -708,6 +709,7 @@ export default function Home() {
           </div>
 
           <h1
+            id="home-hero-heading"
             data-reveal
             data-reveal-delay="100"
             className="font-cinzel mt-7 mb-6"
@@ -1342,10 +1344,15 @@ export default function Home() {
                 data-reveal-delay={String(i * 80)}
                 className="surface-card p-8 relative"
               >
-                <div className="flex gap-1 mb-4">
+                <div
+                  className="flex gap-1 mb-4"
+                  role="img"
+                  aria-label="Rated 5 out of 5 stars"
+                >
                   {Array.from({ length: 5 }).map((_, s) => (
                     <span
                       key={s}
+                      aria-hidden="true"
                       style={{ color: "#E0A92E", fontSize: "0.8rem" }}
                     >
                       ★

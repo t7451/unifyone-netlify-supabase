@@ -98,6 +98,62 @@ const jsonLd = [
       acceptedAnswer: { "@type": "Answer", text: a },
     })),
   },
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to use the 1099 Tax Set-Aside Calculator",
+    description:
+      "Find the exact percentage of every gig payment to move to savings so you have enough cash ready for taxes.",
+    totalTime: "PT2M",
+    tool: [{ "@type": "HowToTool", name: "Tax Set-Aside Calculator" }],
+    supply: [
+      {
+        "@type": "HowToSupply",
+        name: "Expected annual net self-employment income",
+      },
+    ],
+    step: [
+      {
+        "@type": "HowToStep",
+        name: "Enter your expected net income",
+        text: "Type your expected annual net self-employment income (gross gig earnings minus deductible expenses) into the income field.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Choose filing status and state rate",
+        text: "Select Single or Married (joint), then optionally enter your state income tax rate as a percentage (use 0 for no-income-tax states such as TX, FL, or WA).",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Calculate your set-aside percentage",
+        text: "Click 'Calculate my set-aside' to combine self-employment tax, federal income tax, and any state tax into a single percentage of every payment to save, with an annual and per-month breakdown.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Check the amount for a specific payment",
+        text: "Optionally enter a specific payment amount to see exactly how many dollars to move to savings from that payout.",
+      },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Free Tools",
+        item: `${SITE_URL}/tools`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "Tax Set-Aside Calculator",
+        item: CANONICAL,
+      },
+    ],
+  },
 ];
 
 interface SetAsideResult {

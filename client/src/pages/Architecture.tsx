@@ -6,6 +6,31 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/architecture`;
+const OG_IMAGE = `${SITE_URL}/og-image.png`;
+const LOGO_URL = `${SITE_URL}/favicon.ico`;
+
+const FAQS = [
+  {
+    q: "What is the Cathedral Framework?",
+    a: "The Cathedral Framework is UnifyOne's architectural philosophy: build the platform sequentially, with each layer load-bearing before the next is raised. Multi-tenant isolation comes before commerce features, commerce before payment rails, payment before automation, automation before analytics, and analytics before AI. Every pillar is structural, not a decorative add-on.",
+  },
+  {
+    q: "What are the six structural pillars of UnifyOne?",
+    a: "The six pillars are the Multi-Tenant Foundation (schema-level store isolation), Commerce Infrastructure (products, orders, inventory), Payment Orchestration (Stripe, PayPal, and Shopify under one roof), the Automation Nave (event-driven n8n, Zapier, and Mailchimp workflows), the Analytics Clerestory (real-time dashboards via Supabase Realtime), and the AI Spire (a context-aware co-pilot built into every page).",
+  },
+  {
+    q: "How does UnifyOne isolate data between tenants?",
+    a: "Every store is an isolated vault. Tenant data, billing, and access controls are separated at the schema level and enforced with JWT sessions and role-based access control through Drizzle ORM on PostgreSQL — not by middleware or row-level filtering alone.",
+  },
+  {
+    q: "What technology stack is UnifyOne built on?",
+    a: "The frontend uses React 19, Vite, Tailwind CSS 4, and shadcn/ui. The API layer is tRPC 11 with Zod validation on Express. Data lives in PostgreSQL (Neon) via Drizzle ORM with Supabase Realtime for live updates. Payments run through Stripe, PayPal, and Shopify; automation through n8n and Zapier; and the platform ships on Node.js 22 with GitHub Actions CI.",
+  },
+  {
+    q: "Why build payment rails before automation?",
+    a: "Because automation triggers on real commerce events. If payment events are not verified, idempotent, and reliably logged first, every downstream workflow inherits that fragility. UnifyOne seals each load-bearing layer before adding the one above it, so the system does not collapse under production load or accumulate compounding technical debt.",
+  },
+];
 
 const JSON_LD = [
   {
@@ -44,12 +69,28 @@ const JSON_LD = [
     description:
       "A deep-dive into the architectural principles behind UnifyOne — multi-tenant isolation, payment orchestration, automation mesh, and Kai integration.",
     url: CANONICAL,
-    author: { "@type": "Organization", name: "1Commerce / PNW Enterprises" },
-    publisher: { "@type": "Organization", name: "1Commerce", url: SITE_URL },
+    mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL },
+    image: OG_IMAGE,
+    author: { "@type": "Organization", name: "1Commerce Solutions" },
+    publisher: {
+      "@type": "Organization",
+      name: "1Commerce Solutions",
+      url: SITE_URL,
+      logo: { "@type": "ImageObject", url: LOGO_URL },
+    },
     keywords:
       "multi-tenant commerce architecture, Cathedral Framework, gig economy platform, commerce infrastructure, tRPC, Drizzle ORM",
     datePublished: "2026-03-06",
     dateModified: "2026-03-06",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map(f => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
   },
 ];
 
@@ -261,6 +302,16 @@ export default function Architecture() {
             Six structural pillars. Zero plugin dependencies. Built to outlast
             every platform trend.
           </p>
+          <p
+            className="font-crimson text-lg max-w-3xl mt-6"
+            style={{ color: "#7A7A7A", lineHeight: 1.7 }}
+          >
+            UnifyOne's architecture is the Cathedral Framework: a multi-tenant
+            commerce platform built in sequence — multi-tenant foundation,
+            commerce infrastructure, payment orchestration, automation,
+            analytics, and AI — where each of the six pillars is load-bearing
+            and completed before the next is raised.
+          </p>
           <div
             className="h-px mt-10 max-w-xs"
             style={{
@@ -459,6 +510,46 @@ export default function Architecture() {
                     </div>
                   ))}
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ─────────────────────────────────────────────────────────── */}
+      <section
+        className="py-24"
+        style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}
+      >
+        <div className="max-w-3xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-16">
+            <span className="inscription block mb-4">Frequently Asked</span>
+            <h2
+              className="font-cinzel text-3xl sm:text-4xl font-bold"
+              style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
+            >
+              Architecture Questions
+            </h2>
+          </div>
+          <div className="space-y-6">
+            {FAQS.map(item => (
+              <div
+                key={item.q}
+                className="p-6"
+                style={{ border: "1px solid rgba(212,168,67,0.1)" }}
+              >
+                <h3
+                  className="font-cinzel text-base font-700 mb-3"
+                  style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
+                >
+                  {item.q}
+                </h3>
+                <p
+                  className="font-crimson text-base"
+                  style={{ color: "#9A9A9A", lineHeight: 1.7 }}
+                >
+                  {item.a}
+                </p>
               </div>
             ))}
           </div>

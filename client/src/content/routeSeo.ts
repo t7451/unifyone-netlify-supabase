@@ -81,6 +81,16 @@ export const ROUTE_SEO: RouteSeo[] = [
       "UnifyOne is built by 1Commerce (PNW Enterprises) — AI-powered, multi-tenant commerce infrastructure for gig operators and e-commerce teams.",
   },
   {
+    path: "/press",
+    title: "Press & Media Kit | UnifyOne by 1Commerce",
+    description:
+      "UnifyOne press and media kit: download brand logos, copy-paste boilerplate, company facts, and category tags. By 1Commerce LLC (PNW Enterprises).",
+    body: [
+      "UnifyOne is an AI-powered multi-tenant commerce platform by 1Commerce LLC (PNW Enterprises) of Canby, Oregon. This media kit gives press, software directories, and reviewers everything needed to cover or list us accurately.",
+      "Download the brand logo (SVG and transparent PNG) and the boilerplate file with the canonical product name, 60-character, 160-character, and 80-word descriptions, category tags, and brand colors. For anything else, email support@1commerce.online.",
+    ],
+  },
+  {
     path: "/contact",
     title: "Contact | UnifyOne",
     description:

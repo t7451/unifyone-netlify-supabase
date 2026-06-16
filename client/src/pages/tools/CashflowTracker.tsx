@@ -56,6 +56,57 @@ const jsonLd = [
       acceptedAnswer: { "@type": "Answer", text: a },
     })),
   },
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to use the Gig Payout Timing & Cash-Flow Tracker",
+    description:
+      "Map which days each gig platform pays you and forecast your weekly and monthly cash-flow rhythm.",
+    totalTime: "PT2M",
+    tool: [{ "@type": "HowToTool", name: "Cash-Flow Tracker" }],
+    supply: [
+      {
+        "@type": "HowToSupply",
+        name: "Your active gig platforms and weekly earnings on each",
+      },
+    ],
+    step: [
+      {
+        "@type": "HowToStep",
+        name: "Turn on your active platforms",
+        text: "Use the toggle next to each platform — DoorDash, Uber Eats, Instacart, Lyft, Amazon Flex, Shipt, or Grubhub — to switch on the ones you currently work.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Enter weekly earnings per platform",
+        text: "For each active platform, type your typical weekly earnings in the 'Weekly' field so the tool can place income on the correct payout days.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Show your cash-flow schedule",
+        text: "Click 'Show my cash-flow schedule' to see a Monday-to-Sunday grid of which days money arrives, your number of payout days, estimated weekly and monthly income, and your longest gap without income.",
+      },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Free Tools",
+        item: `${SITE_URL}/tools`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "Cash-Flow Tracker",
+        item: CANONICAL,
+      },
+    ],
+  },
 ];
 
 // payDays: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat

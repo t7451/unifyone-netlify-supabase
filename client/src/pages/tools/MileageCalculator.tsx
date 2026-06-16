@@ -79,6 +79,57 @@ const jsonLd = [
       },
     ],
   },
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to use the IRS Mileage Deduction Calculator",
+    description:
+      "Estimate your IRS standard mileage deduction and tax savings from the business miles you drove for gig work.",
+    totalTime: "PT1M",
+    tool: [{ "@type": "HowToTool", name: "Mileage Deduction Calculator" }],
+    supply: [
+      {
+        "@type": "HowToSupply",
+        name: "Total business miles driven this year",
+      },
+    ],
+    step: [
+      {
+        "@type": "HowToStep",
+        name: "Enter your business miles",
+        text: "In the 'Business miles driven this year' field, type the total miles you drove for gig work (for example, 12000). Use only business miles — commuting from home to your first pickup does not count.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Calculate your deduction",
+        text: "Click Calculate to multiply your miles by the 2025 IRS standard rate of $0.70 per mile and see your total mileage deduction.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Review your estimated tax savings",
+        text: "Read the estimated tax savings shown for the 22%, 24%, 32%, and 35% federal brackets to gauge how much the deduction could lower your tax bill at your marginal rate.",
+      },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Free Tools",
+        item: `${SITE_URL}/tools`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "Mileage Deduction Calculator",
+        item: CANONICAL,
+      },
+    ],
+  },
 ];
 
 export default function MileageCalculator() {

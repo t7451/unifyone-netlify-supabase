@@ -220,7 +220,7 @@ export default function Resources() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background">
       <PageHead
         title="Resources | UnifyOne"
         description="Operating excellence resources for gig operators and commerce teams — playbooks, templates, analytics guides, and video walkthroughs. Download free."
@@ -234,10 +234,16 @@ export default function Resources() {
         })}
       />
       {/* Hero Section */}
-      <section className="border-b border-border bg-card py-12">
+      <section
+        aria-labelledby="resources-heading"
+        className="border-b border-border bg-card py-12"
+      >
         <div className="container max-w-6xl mx-auto px-4">
           <div className="space-y-4">
-            <h1 className="text-4xl font-bold text-foreground">
+            <h1
+              id="resources-heading"
+              className="text-4xl font-bold text-foreground"
+            >
               Operating Excellence Resources
             </h1>
             <p className="text-lg text-muted-foreground">
@@ -249,11 +255,15 @@ export default function Resources() {
       </section>
 
       {/* Main Content */}
-      <section className="py-12">
+      <section aria-label="Resource library" className="py-12">
         <div className="container max-w-6xl mx-auto px-4 space-y-8">
           {/* Search & Filter */}
           <div className="space-y-4">
+            <label htmlFor="resource-search" className="sr-only">
+              Search resources
+            </label>
             <input
+              id="resource-search"
               type="text"
               placeholder="Search resources..."
               value={searchTerm}
@@ -262,10 +272,15 @@ export default function Resources() {
             />
 
             {/* Category Filter */}
-            <div className="flex flex-wrap gap-2">
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label="Filter resources by category"
+            >
               <Button
                 variant={selectedCategory === "all" ? "default" : "outline"}
                 onClick={() => setSelectedCategory("all")}
+                aria-pressed={selectedCategory === "all"}
                 className="text-sm"
               >
                 All Resources ({RESOURCES.length})
@@ -275,6 +290,7 @@ export default function Resources() {
                   selectedCategory === "template" ? "default" : "outline"
                 }
                 onClick={() => setSelectedCategory("template")}
+                aria-pressed={selectedCategory === "template"}
                 className="text-sm"
               >
                 Templates ({categoryStats.template})
@@ -282,6 +298,7 @@ export default function Resources() {
               <Button
                 variant={selectedCategory === "guide" ? "default" : "outline"}
                 onClick={() => setSelectedCategory("guide")}
+                aria-pressed={selectedCategory === "guide"}
                 className="text-sm"
               >
                 Guides ({categoryStats.guide})
@@ -289,6 +306,7 @@ export default function Resources() {
               <Button
                 variant={selectedCategory === "video" ? "default" : "outline"}
                 onClick={() => setSelectedCategory("video")}
+                aria-pressed={selectedCategory === "video"}
                 className="text-sm"
               >
                 Videos ({categoryStats.video})
@@ -314,7 +332,10 @@ export default function Resources() {
                   >
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
-                      <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <div
+                        className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center"
+                        aria-hidden="true"
+                      >
                         <Icon className="h-6 w-6 text-primary" />
                       </div>
                       <Badge variant="secondary" className="text-xs">
@@ -344,8 +365,9 @@ export default function Resources() {
                       <a
                         href={resource.downloadUrl}
                         download={resource.filename}
+                        aria-label={`Download ${resource.title} (${resource.fileType}, ${resource.fileSize})`}
                       >
-                        <Download className="h-4 w-4" />
+                        <Download className="h-4 w-4" aria-hidden="true" />
                         Download {resource.fileType}
                       </a>
                     </Button>
@@ -358,10 +380,16 @@ export default function Resources() {
       </section>
 
       {/* CTA Section */}
-      <section className="border-t border-border bg-card py-12">
+      <section
+        aria-labelledby="resources-cta-heading"
+        className="border-t border-border bg-card py-12"
+      >
         <div className="container max-w-6xl mx-auto px-4">
           <div className="text-center space-y-4">
-            <h2 className="text-2xl font-bold text-foreground">
+            <h2
+              id="resources-cta-heading"
+              className="text-2xl font-bold text-foreground"
+            >
               Need Custom Resources?
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -370,13 +398,13 @@ export default function Resources() {
             </p>
             <Button asChild size="lg" className="gap-2">
               <Link href="/contact?topic=custom-resources">
-                <FileText className="h-4 w-4" />
+                <FileText className="h-4 w-4" aria-hidden="true" />
                 Request Custom Resources
               </Link>
             </Button>
           </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }

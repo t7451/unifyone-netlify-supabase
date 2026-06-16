@@ -11,6 +11,8 @@
  * in client/public/sitemap.xml + vite.config.ts for crawler discovery.
  */
 
+import { INTEGRATION_SEO_PAGES } from "./seo/integrations";
+
 export interface SeoPageSection {
   heading: string;
   paragraphs: string[];
@@ -1426,6 +1428,7 @@ export const SEO_PAGES: SeoPage[] = [
     ],
   },
   ...GIG_SEO_PAGES,
+  ...INTEGRATION_SEO_PAGES,
 ];
 
 export function getSeoPage(slug: string): SeoPage | undefined {

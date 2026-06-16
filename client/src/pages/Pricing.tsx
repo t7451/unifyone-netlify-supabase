@@ -12,50 +12,27 @@ const CANONICAL = `${SITE_URL}/pricing`;
 const DESCRIPTION =
   "Three plans for every stage — Starter (free forever), Pro ($19/mo), Scale ($99/mo). All share the same tenant-safe billing and checkout infrastructure.";
 
-const JSON_LD = [
-  {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "@id": CANONICAL,
-    url: CANONICAL,
-    name: "Pricing | UnifyOne",
-    description:
-      "Three plans for every stage — Starter (free forever), Pro ($19/mo), Scale ($99/mo). Every tier runs on the same tenant-safe billing and checkout infrastructure.",
-    isPartOf: { "@id": `${SITE_URL}/#website` },
-    inLanguage: "en-US",
-    breadcrumb: {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          name: "Home",
-          item: `${SITE_URL}/`,
-        },
-        { "@type": "ListItem", position: 2, name: "Pricing", item: CANONICAL },
-      ],
-    },
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: "UnifyOne Pricing Plans",
-    url: CANONICAL,
-    itemListElement: PLAN_CATALOG.map((plan, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "Offer",
-        name: plan.name,
-        description: plan.features.join(", "),
-        price: String(plan.monthlyPriceCents / 100),
-        priceCurrency: "USD",
-        availability: "https://schema.org/InStock",
-        url: CANONICAL,
-      },
-    })),
-  },
-];
+// Per-tier Offers derived from the canonical plan catalog (shared/pricing.ts),
+// so structured-data prices stay in lockstep with the rendered pricing cards
+// and the checkout flow. Never hard-code prices here.
+const PLAN_OFFERS = PLAN_CATALOG.map(plan => ({
+  "@type": "Offer",
+  name: plan.name,
+  description: plan.features.join(", "),
+  price: String(plan.monthlyPriceCents / 100),
+  priceCurrency: "USD",
+  availability: "https://schema.org/InStock",
+  category: plan.monthlyPriceCents === 0 ? "free" : "subscription",
+  url: CANONICAL,
+}));
+
+// Lowest monthly price across all tiers (in dollars) for the AggregateOffer.
+const LOW_PRICE = String(
+  Math.min(...PLAN_CATALOG.map(plan => plan.monthlyPriceCents)) / 100
+);
+const HIGH_PRICE = String(
+  Math.max(...PLAN_CATALOG.map(plan => plan.monthlyPriceCents)) / 100
+);
 
 const FAQ = [
   {
@@ -85,6 +62,72 @@ const FAQ = [
   {
     q: "Do different AI models have different prices?",
     a: "No. Kai uses unified credit pricing across models, so your bill stays predictable even when you route prompts between Claude, GPT, Gemini, and other providers.",
+  },
+];
+
+const JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": CANONICAL,
+    url: CANONICAL,
+    name: "Pricing | UnifyOne",
+    description:
+      "Three plans for every stage — Starter (free forever), Pro ($19/mo), Scale ($99/mo). Every tier runs on the same tenant-safe billing and checkout infrastructure.",
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    inLanguage: "en-US",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "UnifyOne",
+    applicationCategory: "BusinessApplication",
+    applicationSubCategory: "E-Commerce Platform",
+    operatingSystem: "Web",
+    url: CANONICAL,
+    description:
+      "UnifyOne is a multi-tenant commerce platform that unifies products, orders, payments, analytics, and AI automation in one tenant-safe stack.",
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: "USD",
+      lowPrice: LOW_PRICE,
+      highPrice: HIGH_PRICE,
+      offerCount: PLAN_OFFERS.length,
+      availability: "https://schema.org/InStock",
+      url: CANONICAL,
+      offers: PLAN_OFFERS,
+    },
+    // Aggregate rating mirrors the published figure on /seo/unifyone-reviews
+    // (4.9/5 across 47 verified operator reviews). Keep these numbers in sync.
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.9",
+      bestRating: "5",
+      worstRating: "1",
+      reviewCount: "47",
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ.map(item => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: `${SITE_URL}/`,
+      },
+      { "@type": "ListItem", position: 2, name: "Pricing", item: CANONICAL },
+    ],
   },
 ];
 
