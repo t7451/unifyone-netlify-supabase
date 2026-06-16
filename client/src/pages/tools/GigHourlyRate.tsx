@@ -70,6 +70,62 @@ const jsonLd = [
       acceptedAnswer: { "@type": "Answer", text: a },
     })),
   },
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to use the Gig Worker Real Hourly Rate Calculator",
+    description:
+      "Work out your true effective hourly rate from each gig platform after vehicle costs, and compare platforms side by side.",
+    totalTime: "PT3M",
+    tool: [{ "@type": "HowToTool", name: "Gig Hourly Rate Calculator" }],
+    supply: [
+      {
+        "@type": "HowToSupply",
+        name: "Gross earnings, hours on-app, and miles driven per platform",
+      },
+    ],
+    step: [
+      {
+        "@type": "HowToStep",
+        name: "Name each platform",
+        text: "Edit the platform name field for each row (for example DoorDash, Uber Eats, Instacart, or Grubhub) to label the income source you are measuring.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Enter earnings, hours, and miles",
+        text: "For each platform enter your gross earnings, total hours on-app (including waiting time, not just active delivery time), and miles driven for the same period.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Add more platforms",
+        text: "Use '+ Add another platform' to include up to five platforms so you can compare them on equal footing.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Calculate your real hourly rate",
+        text: "Click Calculate to subtract vehicle costs at the 2025 IRS rate of $0.70 per mile from gross earnings and see each platform's net hourly rate, ranked, plus your combined true effective hourly rate.",
+      },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Free Tools",
+        item: `${SITE_URL}/tools`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "Gig Hourly Rate Calculator",
+        item: CANONICAL,
+      },
+    ],
+  },
 ];
 
 interface PlatformRow {
