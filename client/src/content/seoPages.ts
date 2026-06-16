@@ -11,6 +11,7 @@
  * in client/public/sitemap.xml + vite.config.ts for crawler discovery.
  */
 
+import { COMPARISON_SEO_PAGES } from "./seo/comparisons";
 import { INTEGRATION_SEO_PAGES } from "./seo/integrations";
 
 export interface SeoPageSection {
@@ -1427,6 +1428,8 @@ export const SEO_PAGES: SeoPage[] = [
       "unifyone",
     ],
   },
+
+  ...COMPARISON_SEO_PAGES,
   ...GIG_SEO_PAGES,
   ...INTEGRATION_SEO_PAGES,
 ];
