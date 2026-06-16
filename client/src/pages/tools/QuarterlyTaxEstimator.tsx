@@ -117,6 +117,62 @@ const jsonLd = [
       },
     ],
   },
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to use the Quarterly Estimated Tax Calculator",
+    description:
+      "Estimate your federal self-employment and income tax and split it into four quarterly estimated payments with their 2026 due dates.",
+    totalTime: "PT2M",
+    tool: [{ "@type": "HowToTool", name: "Quarterly Tax Estimator" }],
+    supply: [
+      {
+        "@type": "HowToSupply",
+        name: "Estimated annual net self-employment income",
+      },
+    ],
+    step: [
+      {
+        "@type": "HowToStep",
+        name: "Enter your net self-employment income",
+        text: "Type your estimated annual net income after business expenses (not gross platform earnings) into the income field.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Add your business miles (optional)",
+        text: "Optionally enter the business miles you expect to drive. The tool applies the 2025 IRS rate of $0.70 per mile to reduce your taxable income.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Choose your filing status",
+        text: "Select either Single / Head of Household or Married Filing Jointly so the correct standard deduction and federal brackets are applied.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Calculate your quarterly payments",
+        text: "Click 'Calculate quarterly payments' to see your self-employment tax, federal income tax, total annual tax, and the four equal quarterly payment amounts due April 15, June 16, September 15, 2026, and January 15, 2027.",
+      },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Free Tools",
+        item: `${SITE_URL}/tools`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "Quarterly Tax Estimator",
+        item: CANONICAL,
+      },
+    ],
+  },
 ];
 
 export default function QuarterlyTaxEstimator() {

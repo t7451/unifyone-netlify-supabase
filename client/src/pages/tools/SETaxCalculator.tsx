@@ -64,6 +64,57 @@ const jsonLd = [
       acceptedAnswer: { "@type": "Answer", text: a },
     })),
   },
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to use the Self-Employment Tax Calculator",
+    description:
+      "Calculate your self-employment tax with a Social Security and Medicare breakdown, the deductible half, and a quarterly payment estimate.",
+    totalTime: "PT1M",
+    tool: [{ "@type": "HowToTool", name: "Self-Employment Tax Calculator" }],
+    supply: [
+      {
+        "@type": "HowToSupply",
+        name: "Annual net self-employment income",
+      },
+    ],
+    step: [
+      {
+        "@type": "HowToStep",
+        name: "Enter your net self-employment income",
+        text: "Type your annual net self-employment income — gross gig earnings minus deductible business expenses such as mileage, supplies, and phone — into the income field.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Calculate your SE tax",
+        text: "Click Calculate to apply the 15.3% rate to 92.35% of your net earnings (12.4% Social Security up to the wage base, plus 2.9% Medicare).",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Review the breakdown and quarterly amount",
+        text: "Read the Social Security and Medicare breakdown, the deductible half of your SE tax, and the suggested quarterly payment (total SE tax divided by four).",
+      },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Free Tools",
+        item: `${SITE_URL}/tools`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "SE Tax Calculator",
+        item: CANONICAL,
+      },
+    ],
+  },
 ];
 
 interface SEResult {

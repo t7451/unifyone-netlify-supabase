@@ -12,6 +12,7 @@
  */
 
 import { COMPARISON_SEO_PAGES } from "./seo/comparisons";
+import { INTEGRATION_SEO_PAGES } from "./seo/integrations";
 
 export interface SeoPageSection {
   heading: string;
@@ -50,6 +51,8 @@ const CORE_KEYWORDS = [
 
 const brand = (extra: string[] = []): string[] =>
   Array.from(new Set([...CORE_KEYWORDS, ...extra]));
+
+import { GIG_SEO_PAGES } from "./seo/gig";
 
 export const SEO_PAGES: SeoPage[] = [
   // ── Brand / product name variations ────────────────────────────────────
@@ -1427,6 +1430,8 @@ export const SEO_PAGES: SeoPage[] = [
   },
 
   ...COMPARISON_SEO_PAGES,
+  ...GIG_SEO_PAGES,
+  ...INTEGRATION_SEO_PAGES,
 ];
 
 export function getSeoPage(slug: string): SeoPage | undefined {

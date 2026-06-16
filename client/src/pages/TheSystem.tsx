@@ -6,6 +6,31 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/the-system`;
+const OG_IMAGE = `${SITE_URL}/og-image.png`;
+const LOGO_URL = `${SITE_URL}/favicon.ico`;
+
+const FAQS = [
+  {
+    q: "How does UnifyOne work?",
+    a: "UnifyOne is set up in four sequential phases. You lay the foundation (create your tenant and connect payment rails), raise the walls (import your product catalog and order rules), install the vaults (wire automation that fires on real commerce events), and light the spire (activate Kai, the AI co-pilot that reads your operational data). Each phase builds on the one before it.",
+  },
+  {
+    q: "How long does it take to launch on UnifyOne?",
+    a: "Foundation setup takes under 10 minutes — the onboarding wizard walks through store name, plan selection, and payment rail connection in three steps. Most operators have their first order processed end-to-end in under 30 minutes.",
+  },
+  {
+    q: "Which integrations does UnifyOne support?",
+    a: "UnifyOne ships with ten core integrations: Stripe and PayPal (payments), Shopify (commerce), Kai (intelligence), n8n and Zapier (automation), Supabase (realtime updates), Meta Ads (CAPI purchase events), Resend (email), and GitHub Actions (CI/CD). Zapier alone connects 5,000+ additional third-party apps.",
+  },
+  {
+    q: "How fast does automation fire after an order?",
+    a: "Automation is event-driven, not polled. An order placed triggers your fulfillment workflow within roughly 200ms, and a subscription renewed fires your customer-success sequence before the receipt email arrives. Webhook events are logged and retried on failure.",
+  },
+  {
+    q: "What does multi-rail checkout mean?",
+    a: "Multi-rail checkout puts Stripe, PayPal, and Shopify on a single checkout page. The customer chooses their preferred payment rail and you receive one unified order record regardless of which processor handled the transaction.",
+  },
+];
 
 const JSON_LD = [
   {
@@ -26,6 +51,27 @@ const JSON_LD = [
       { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
       { "@type": "ListItem", position: 2, name: "The System", item: CANONICAL },
     ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    headline: "The System: How UnifyOne's Commerce Platform Works",
+    description:
+      "How UnifyOne works end to end — four sequential build phases, ten integrations, and six platform features that replace three separate SaaS tools.",
+    url: CANONICAL,
+    mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL },
+    image: OG_IMAGE,
+    author: { "@type": "Organization", name: "1Commerce Solutions" },
+    publisher: {
+      "@type": "Organization",
+      name: "1Commerce Solutions",
+      url: SITE_URL,
+      logo: { "@type": "ImageObject", url: LOGO_URL },
+    },
+    keywords:
+      "how UnifyOne works, multi-tenant commerce platform, commerce integrations, automation, Stripe, PayPal, Shopify, n8n",
+    datePublished: "2026-03-06",
+    dateModified: "2026-03-06",
   },
   {
     "@context": "https://schema.org",
@@ -60,6 +106,15 @@ const JSON_LD = [
         text: "Activate Kai. Your co-pilot reads your actual operational data and surfaces insights and earnings projections.",
       },
     ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map(f => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
   },
 ];
 
@@ -268,6 +323,16 @@ export default function TheSystem() {
             Four construction phases. Ten integrations. One platform that
             replaces three separate SaaS tools.
           </p>
+          <p
+            className="font-crimson text-lg max-w-3xl mt-6"
+            style={{ color: "#7A7A7A", lineHeight: 1.7 }}
+          >
+            UnifyOne works in four sequential phases — lay the foundation
+            (tenant and payment rails), raise the walls (catalog and orders),
+            install the vaults (event-driven automation), and light the spire
+            (Kai, the AI co-pilot). Ten integrations and six platform features
+            then run your commerce operations from one dashboard.
+          </p>
           <div
             className="h-px mt-10 max-w-xs"
             style={{
@@ -436,6 +501,46 @@ export default function TheSystem() {
                   style={{ color: "#7A7A7A", lineHeight: 1.8 }}
                 >
                   {feature.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ─────────────────────────────────────────────────────────── */}
+      <section
+        className="py-24"
+        style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}
+      >
+        <div className="max-w-3xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-16">
+            <span className="inscription block mb-4">Frequently Asked</span>
+            <h2
+              className="font-cinzel text-3xl sm:text-4xl font-bold"
+              style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
+            >
+              How The System Works
+            </h2>
+          </div>
+          <div className="space-y-6">
+            {FAQS.map(item => (
+              <div
+                key={item.q}
+                className="p-6"
+                style={{ border: "1px solid rgba(212,168,67,0.1)" }}
+              >
+                <h3
+                  className="font-cinzel text-base font-700 mb-3"
+                  style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
+                >
+                  {item.q}
+                </h3>
+                <p
+                  className="font-crimson text-base"
+                  style={{ color: "#9A9A9A", lineHeight: 1.7 }}
+                >
+                  {item.a}
                 </p>
               </div>
             ))}

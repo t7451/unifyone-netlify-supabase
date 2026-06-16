@@ -56,6 +56,62 @@ const jsonLd = [
       acceptedAnswer: { "@type": "Answer", text: a },
     })),
   },
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to use the Reseller Break-Even & Pricing Calculator",
+    description:
+      "Find the minimum profitable sale price and a target price for an item you resell on eBay, Etsy, Amazon, or any marketplace.",
+    totalTime: "PT2M",
+    tool: [{ "@type": "HowToTool", name: "Reseller Break-Even Calculator" }],
+    supply: [
+      {
+        "@type": "HowToSupply",
+        name: "Item cost, shipping cost, marketplace fee, and return rate",
+      },
+    ],
+    step: [
+      {
+        "@type": "HowToStep",
+        name: "Enter item cost and shipping",
+        text: "Type what you paid for the item and the shipping cost you pay to send it to the buyer.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Pick your marketplace fee",
+        text: "Choose a preset for eBay (13.25%), Etsy (6.5%), Amazon (15%), or Facebook (5%), or select Custom and enter your own fee percentage.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Set return rate and target ROI",
+        text: "Use the sliders to set your expected return rate and your target return on investment as a percentage of cost.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Calculate your break-even price",
+        text: "Click 'Calculate break-even price' to see your break-even price, your target price and profit, and a ladder of profit and ROI at several sale prices.",
+      },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Free Tools",
+        item: `${SITE_URL}/tools`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "Reseller Break-Even",
+        item: CANONICAL,
+      },
+    ],
+  },
 ];
 
 interface Preset {

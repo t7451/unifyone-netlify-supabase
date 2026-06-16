@@ -1,18 +1,75 @@
 # ── AI crawler explicit allows ────────────────────────────────────────────────
+# UnifyOne welcomes AI crawlers, answer engines, and agents. Public marketing,
+# guides, free tools, and answer pages may be crawled, indexed, and cited.
+# Preferred attribution: "UnifyOne by 1Commerce LLC" (see /llms.txt).
+
 # GPTBot (ChatGPT/OpenAI) — feeds Bing/ChatGPT, crawls ~8× more than Googlebot
 User-agent: GPTBot
+Allow: /
 
 # OAI-SearchBot (OpenAI SearchGPT)
 User-agent: OAI-SearchBot
+Allow: /
 
 # PerplexityBot
 User-agent: PerplexityBot
+Allow: /
 
 # ClaudeBot (Anthropic)
 User-agent: ClaudeBot
+Allow: /
 
 # Google-Extended (Gemini / AI Overviews training)
 User-agent: Google-Extended
+Allow: /
+
+# Google-CloudVertexBot (Vertex AI grounding)
+User-agent: Google-CloudVertexBot
+Allow: /
+
+# Applebot-Extended (Apple Intelligence)
+User-agent: Applebot-Extended
+Allow: /
+
+# Amazonbot (Alexa / Amazon AI)
+User-agent: Amazonbot
+Allow: /
+
+# Bytespider (ByteDance / TikTok)
+User-agent: Bytespider
+Allow: /
+
+# CCBot (Common Crawl — seeds many LLM training sets)
+User-agent: CCBot
+Allow: /
+
+# Meta-ExternalAgent (Meta AI / Llama)
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# Diffbot (knowledge graph extraction)
+User-agent: Diffbot
+Allow: /
+
+# cohere-ai (Cohere)
+User-agent: cohere-ai
+Allow: /
+
+# Timpibot (Timpi)
+User-agent: Timpibot
+Allow: /
+
+# Omgilibot (Webz.io)
+User-agent: Omgilibot
+Allow: /
+
+# ImagesiftBot (Hive / ImageSift)
+User-agent: ImagesiftBot
+Allow: /
+
+# FriendlyCrawler (Friendly / research crawler)
+User-agent: FriendlyCrawler
+Allow: /
 
 # ── All other crawlers ────────────────────────────────────────────────────────
 User-agent: *
@@ -20,6 +77,7 @@ Allow: /
 
 # ── Authenticated / protected routes ─────────────────────────────────────────
 Disallow: /dashboard
+Disallow: /dashboard/
 Disallow: /setup
 Disallow: /settings
 Disallow: /products
@@ -46,7 +104,19 @@ Disallow: /revenue-command
 Disallow: /discounts
 Disallow: /clips
 Disallow: /marketing/
+Disallow: /ad-copy-hub
 Disallow: /gig-worker-plans
+Disallow: /money-manager
+Disallow: /achievements
+Disallow: /friends
+Disallow: /sync-monitor
+Disallow: /gig-command
+Disallow: /developer
+Disallow: /terminal
+Disallow: /ai-assistant
+Disallow: /sandbox
+Disallow: /mobile-automation
+Disallow: /governance
 
 # ── Auth flow pages ───────────────────────────────────────────────────────────
 Disallow: /auth/
