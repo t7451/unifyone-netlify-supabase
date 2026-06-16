@@ -73,6 +73,62 @@ const jsonLd = [
       acceptedAnswer: { "@type": "Answer", text: a },
     })),
   },
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to use the Multi-Platform Earnings Consolidator",
+    description:
+      "Compare your true hourly rate after expenses across multiple gig platforms to find which app actually pays best.",
+    totalTime: "PT3M",
+    tool: [{ "@type": "HowToTool", name: "Earnings Consolidator" }],
+    supply: [
+      {
+        "@type": "HowToSupply",
+        name: "Gross earnings, hours worked, and expenses per platform",
+      },
+    ],
+    step: [
+      {
+        "@type": "HowToStep",
+        name: "Select a platform",
+        text: "For each row, choose a platform such as DoorDash, Uber Eats, or Instacart from the dropdown — or pick Other for a custom income source.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Enter gross earnings, hours, and expenses",
+        text: "Fill in the gross earnings, hours worked, and expenses for that platform. A quick way to estimate expenses is the IRS rate of $0.70 per mile multiplied by miles driven.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Add more platforms",
+        text: "Use '+ Add platform' to include up to six income streams so you can compare them side by side in one place.",
+      },
+      {
+        "@type": "HowToStep",
+        name: "Calculate your true hourly rate",
+        text: "Click 'Calculate true hourly rate' to see net earnings divided by hours for each platform, ranked best to worst, plus your combined true hourly rate across all platforms.",
+      },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Free Tools",
+        item: `${SITE_URL}/tools`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "Earnings Consolidator",
+        item: CANONICAL,
+      },
+    ],
+  },
 ];
 
 interface PlatformRow {
