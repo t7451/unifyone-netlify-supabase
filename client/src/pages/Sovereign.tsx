@@ -32,6 +32,70 @@ import {
   Quote,
 } from "lucide-react";
 
+const SOV_OG_IMAGE = `${SITE_URL}/og-image.png`;
+const SOV_LOGO_URL = `${SITE_URL}/favicon.ico`;
+
+const SOV_FAQS = [
+  {
+    q: "What is the Sovereign Stack?",
+    a: "The Sovereign Stack is a complete corporate and technical architecture built for resilience. It pairs a multi-layered legal structure — a family trust, a holding company, operating entities, and a non-profit — with infrastructure you own: a local-first dashboard, on-device AI, an off-grid LoRa mesh, the UnifyOne commerce platform, and an automated revenue engine. It is not a course or another SaaS subscription.",
+  },
+  {
+    q: "What is the Cathedral Principle?",
+    a: "The Cathedral Principle means you build the structure that runs the business instead of being the business. Rather than hustling harder inside a fragile setup, you assemble a multi-layered corporate architecture — Trust, Holding Company, and operating arms — designed for resilience, tax efficiency, and sovereign control.",
+  },
+  {
+    q: "What do I get when you build my Sovereign Stack?",
+    a: "A white-glove, done-for-you implementation: a multi-entity corporate structure (Trust + Holding + Ops), a 501(c)(3) non-profit for grant access, the UnifyOne multi-tenant commerce platform, an automated revenue engine (n8n + Meta CAPI + Stripe), Shopify integration with quantum logistics routing, a local-first offline-capable dashboard, on-device air-gapped AI, an off-grid LoRa mesh network, a 90-day implementation roadmap, and ongoing architecture consultation.",
+  },
+  {
+    q: "How much does the Sovereign Stack cost?",
+    a: "Implementation is a one-time fee of $5,000 to $10,000. There is no recurring SaaS charge — you own the infrastructure once it is built.",
+  },
+  {
+    q: "Who is the Sovereign Stack for?",
+    a: "It is built for serious solopreneurs and gig operators who are tired of being fragile — one algorithm change, one lawsuit, or one platform ban away from zero. It is intentionally not for everyone; spots are limited and joining starts with a conversation, not a sales call.",
+  },
+];
+
+const SOV_JSON_LD = [
+  ...buildWebPageJsonLd({
+    canonical: SOV_CANONICAL,
+    name: "The Sovereign Stack | 1Commerce",
+    description:
+      "Break free from platform dependency. The Sovereign Stack gives solopreneur gig operators legal protection, operational resilience, and financial independence.",
+    breadcrumbs: [{ name: "Sovereign", item: SOV_CANONICAL }],
+  }),
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: "The Sovereign Stack: Own the Structure, Not Just the Business",
+    description:
+      "How the Sovereign Stack gives gig operators legal protection, operational resilience, and financial independence through a multi-entity corporate architecture and infrastructure they own.",
+    url: SOV_CANONICAL,
+    mainEntityOfPage: { "@type": "WebPage", "@id": SOV_CANONICAL },
+    image: SOV_OG_IMAGE,
+    author: { "@type": "Organization", name: "1Commerce Solutions" },
+    publisher: {
+      "@type": "Organization",
+      name: "1Commerce Solutions",
+      url: SITE_URL,
+      logo: { "@type": "ImageObject", url: SOV_LOGO_URL },
+    },
+    keywords:
+      "Sovereign Stack, Cathedral Principle, corporate structure, asset protection, gig operator resilience, platform independence, multi-entity architecture",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: SOV_FAQS.map(f => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  },
+];
+
 const CATHEDRAL_TIERS = [
   {
     tier: "Tier 0",
@@ -269,13 +333,7 @@ export default function Sovereign() {
         title="The Sovereign Stack | 1Commerce"
         description="The Sovereign Stack gives gig operators legal protection, financial independence, and resilience. Break free from platform lock-in. Waitlist open."
         canonical={SOV_CANONICAL}
-        jsonLd={buildWebPageJsonLd({
-          canonical: SOV_CANONICAL,
-          name: "The Sovereign Stack | 1Commerce",
-          description:
-            "Break free from platform dependency. The Sovereign Stack gives solopreneur gig operators legal protection, operational resilience, and financial independence.",
-          breadcrumbs: [{ name: "Sovereign", item: SOV_CANONICAL }],
-        })}
+        jsonLd={SOV_JSON_LD}
       />
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#030712]/90 backdrop-blur-sm border-b border-[#1E3A5F]/50">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -309,6 +367,13 @@ export default function Sovereign() {
             <br />
             <span className="text-[#00D9FF]">Own the structure.</span>
           </h1>
+          <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-6 leading-relaxed">
+            The Sovereign Stack is a complete corporate and technical
+            architecture — a family trust, holding company, operating entities,
+            and infrastructure you own — that gives solopreneur gig operators
+            legal protection, financial independence, and resilience against
+            platform lock-in.
+          </p>
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-4 leading-relaxed">
             I spent 6 months building a $10M business architecture with zero
             employees and zero VC funding. It can't be shut down. Now I'm
@@ -552,6 +617,33 @@ export default function Sovereign() {
                   <p className="text-sm font-semibold text-white">{t.name}</p>
                   <p className="text-xs text-gray-500">{t.role}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-16 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge className="bg-[#00D9FF]/10 text-[#00D9FF] border-[#00D9FF]/30 mb-4 text-xs px-3 py-1">
+              FAQ
+            </Badge>
+            <h2 className="text-3xl font-bold mb-4">
+              Sovereign Stack Questions
+            </h2>
+          </div>
+          <div className="space-y-4">
+            {SOV_FAQS.map(item => (
+              <div
+                key={item.q}
+                className="bg-[#0A1128] border border-[#1E3A5F] rounded-xl p-6"
+              >
+                <h3 className="font-semibold text-white mb-2">{item.q}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">
+                  {item.a}
+                </p>
               </div>
             ))}
           </div>
