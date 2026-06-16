@@ -334,7 +334,6 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 {[
                   { label: "Architecture", href: "/architecture" },
                   { label: "The System", href: "/the-system" },
-                  { label: "Manus AI", href: "/manus-ai" },
                   { label: "Pricing", href: "/pricing" },
                   { label: "Theme Store", href: "/themes" },
                   { label: "Tithes", href: "/tithes" },
@@ -413,10 +412,6 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                   {
                     label: "Multi-Tenant SaaS",
                     href: BLOG_POSTS.multiTenant.href,
-                  },
-                  {
-                    label: "AI for Gig Workers",
-                    href: BLOG_POSTS.aiGigWorkers.href,
                   },
                   { label: "Resources", href: "/resources" },
                   { label: "Docs Chat", href: "/docs-chat" },

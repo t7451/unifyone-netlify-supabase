@@ -480,16 +480,6 @@ export const FEATURE_CATEGORIES: FeatureCategory[] = [
         icon: Store,
       },
       {
-        label: "Manus AI",
-        path: "/manus-ai",
-        description:
-          "Review AI-worker positioning, use cases, and agentic automation context.",
-        outcome:
-          "Understand how AI workers fit into the platform's operating model.",
-        firstAction: "Read the active AI worker use-case map.",
-        icon: Sparkles,
-      },
-      {
         label: "Docs Chat",
         path: "/docs-chat",
         description:

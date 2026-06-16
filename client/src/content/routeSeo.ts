@@ -97,12 +97,6 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Get in touch with the UnifyOne team at 1Commerce — questions on multi-tenant commerce, pricing, integrations, partnerships, and support.",
   },
   {
-    path: "/manus-ai",
-    title: "Manus AI | UnifyOne by 1Commerce",
-    description:
-      "How UnifyOne uses agentic AI — Manus, Claude, and Kai — to automate commerce operations, earnings analysis, and workflow orchestration.",
-  },
-  {
     path: "/tithes",
     title: "Tithes | UnifyOne",
     description:
@@ -298,12 +292,6 @@ export const ROUTE_SEO: RouteSeo[] = [
     title: "Multi-Tenant Ecommerce SaaS | UnifyOne Blog",
     description:
       "What multi-tenant ecommerce SaaS means, how tenant isolation and RBAC work, and how UnifyOne runs many stores from one secure backend.",
-  },
-  {
-    path: "/blog/manus-ai-gig-workers",
-    title: "Manus AI for Gig Workers | UnifyOne Blog",
-    description:
-      "How agentic AI like Manus and Kai helps gig workers track earnings, forecast taxes, and optimize routes across every delivery platform.",
   },
   {
     path: "/blog/digital-retail-guide",

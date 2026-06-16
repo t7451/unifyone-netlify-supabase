@@ -75,6 +75,25 @@
   status = 301
   force = true
 
+# Deprecated Manus AI surfaces — redirect to live equivalents.
+[[redirects]]
+  from = "/manus-ai"
+  to = "/the-system"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/blog/manus-ai-gig-workers"
+  to = "/blog"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/blog/manus-ai"
+  to = "/blog"
+  status = 301
+  force = true
+
 # SPA fallback — all non-API routes serve the React app
 [[redirects]]
   from = "/*"
