@@ -92,7 +92,7 @@ const JSON_LD = [
       priceCurrency: "USD",
       lowPrice: LOW_PRICE,
       highPrice: HIGH_PRICE,
-      offerCount: String(PLAN_OFFERS.length),
+      offerCount: PLAN_OFFERS.length,
       availability: "https://schema.org/InStock",
       url: CANONICAL,
       offers: PLAN_OFFERS,
