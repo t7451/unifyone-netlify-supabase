@@ -435,7 +435,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
           {/* Instagram QR */}
           <div className="flex flex-col items-center gap-3 mb-10">
             <a
-              href="https://www.instagram.com/1commerce_llc"
+              href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="group flex flex-col items-center gap-3"
