@@ -135,40 +135,68 @@ export function buildArticleMeta(post: StaticBlogPostMeta): PageHeadMetaTag[] {
   ];
 }
 
+/**
+ * Author node for a blog post. The registry stores a team byline
+ * ("UnifyOne Team"), which is an Organization rather than a named Person, so we
+ * emit it as an Organization. If a post ever names a real individual author we
+ * can branch on that here.
+ */
+function buildAuthorJsonLd(author: string): Record<string, unknown> {
+  return {
+    "@type": "Organization",
+    name: "1Commerce Solutions",
+    alternateName: author,
+    url: SITE_URL,
+  };
+}
+
+/** Publisher node shared across blog structured data. */
+function buildPublisherJsonLd(): Record<string, unknown> {
+  return {
+    "@type": "Organization",
+    name: "1Commerce by 1Commerce LLC",
+    url: SITE_URL,
+    logo: {
+      "@type": "ImageObject",
+      url: `${SITE_URL}/favicon.ico`,
+    },
+  };
+}
+
+/**
+ * Build a schema.org `BlogPosting` node for a registered static blog post.
+ * Every field is sourced from the BLOG_POSTS registry — no invented facts.
+ * Internal helper; consumed by {@link buildArticleJsonLd}.
+ */
+function buildBlogPostingJsonLd(
+  post: StaticBlogPostMeta
+): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.headline,
+    description: post.description,
+    image: [post.ogImage],
+    datePublished: post.publishedAt,
+    dateModified: post.modifiedAt,
+    author: buildAuthorJsonLd(post.author),
+    publisher: buildPublisherJsonLd(),
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": post.canonical,
+    },
+    wordCount: post.wordCount,
+    articleSection: post.category,
+    url: post.canonical,
+    inLanguage: "en-US",
+  };
+}
+
 export function buildArticleJsonLd(
   post: StaticBlogPostMeta
 ): Record<string, unknown>[] {
   return [
-    {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      headline: post.headline,
-      description: post.description,
-      image: [post.ogImage],
-      author: {
-        "@type": "Person",
-        name: post.author,
-      },
-      publisher: {
-        "@type": "Organization",
-        name: "1Commerce / PNW Enterprises",
-        url: SITE_URL,
-        logo: {
-          "@type": "ImageObject",
-          url: `${SITE_URL}/favicon.ico`,
-        },
-      },
-      datePublished: post.publishedAt,
-      dateModified: post.modifiedAt,
-      mainEntityOfPage: {
-        "@type": "WebPage",
-        "@id": post.canonical,
-      },
-      wordCount: post.wordCount,
-      articleSection: post.category,
-      url: post.canonical,
-      inLanguage: "en-US",
-    },
+    buildBlogPostingJsonLd(post),
     ...buildWebPageJsonLd({
       canonical: post.canonical,
       name: post.title,
