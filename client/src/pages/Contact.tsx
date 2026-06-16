@@ -9,7 +9,10 @@ const CANONICAL = `${SITE_URL}/contact`;
 const DESCRIPTION =
   "Get in touch with the UnifyOne team. Questions about pricing, enterprise plans, or integrations? We respond within one business day.";
 
-const JSON_LD = {
+const SUPPORT_EMAIL = "support@1commerce.online";
+const ORG_ID = `${SITE_URL}/#organization`;
+
+const CONTACT_PAGE_JSON_LD = {
   "@context": "https://schema.org",
   "@type": "ContactPage",
   "@id": CANONICAL,
@@ -19,14 +22,61 @@ const JSON_LD = {
     "Get in touch with the UnifyOne team. Questions about pricing, enterprise plans, or integrations? We respond within one business day.",
   isPartOf: { "@id": `${SITE_URL}/#website` },
   inLanguage: "en-US",
-  breadcrumb: {
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
-      { "@type": "ListItem", position: 2, name: "Contact", item: CANONICAL },
-    ],
+  about: { "@id": ORG_ID },
+};
+
+const ORGANIZATION_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": ORG_ID,
+  name: "1Commerce Solutions",
+  legalName: "1Commerce LLC",
+  alternateName: [
+    "PNW Enterprises",
+    "1Commerce LLC",
+    "PNW Enterprises / 1Commerce LLC",
+    "1Commerce",
+    "1-Commerce",
+    "UnifyOne Solutions",
+  ],
+  url: SITE_URL,
+  logo: `${SITE_URL}/favicon.svg`,
+  email: SUPPORT_EMAIL,
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Canby",
+    addressRegion: "OR",
+    addressCountry: "US",
+  },
+  areaServed: "US",
+  sameAs: [
+    "https://github.com/unifyone",
+    "https://x.com/unifyone",
+    "https://www.instagram.com/1commerce_llc",
+    "https://1commerce.online",
+  ],
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "customer support",
+    email: SUPPORT_EMAIL,
+    availableLanguage: "en",
   },
 };
+
+const BREADCRUMB_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+    { "@type": "ListItem", position: 2, name: "Contact", item: CANONICAL },
+  ],
+};
+
+const JSON_LD = [
+  CONTACT_PAGE_JSON_LD,
+  ORGANIZATION_JSON_LD,
+  BREADCRUMB_JSON_LD,
+];
 
 function initialMessageFromQuery(): string {
   if (typeof window === "undefined") return "";
@@ -70,13 +120,13 @@ export default function Contact() {
       } else {
         setStatus("error");
         setFeedback(
-          "Something went wrong. Please email us directly at hello@1commerce.online"
+          "Something went wrong. Please email us directly at support@1commerce.online"
         );
       }
     } catch {
       setStatus("error");
       setFeedback(
-        "Something went wrong. Please email us directly at hello@1commerce.online"
+        "Something went wrong. Please email us directly at support@1commerce.online"
       );
     }
   };
@@ -87,7 +137,7 @@ export default function Contact() {
         title="Contact | UnifyOne"
         description={DESCRIPTION}
         canonical={CANONICAL}
-        jsonLd={[JSON_LD]}
+        jsonLd={JSON_LD}
       />
 
       <section
@@ -112,11 +162,11 @@ export default function Contact() {
           Sales questions, partnership ideas, support escalations — write to us
           and we'll respond within one business day. Or email{" "}
           <a
-            href="mailto:hello@1commerce.online"
+            href="mailto:support@1commerce.online"
             style={{ color: "#D4A843" }}
             className="underline"
           >
-            hello@1commerce.online
+            support@1commerce.online
           </a>{" "}
           directly.
         </p>
