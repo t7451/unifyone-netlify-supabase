@@ -49,6 +49,8 @@ const CORE_KEYWORDS = [
 const brand = (extra: string[] = []): string[] =>
   Array.from(new Set([...CORE_KEYWORDS, ...extra]));
 
+import { GIG_SEO_PAGES } from "./seo/gig";
+
 export const SEO_PAGES: SeoPage[] = [
   // ── Brand / product name variations ────────────────────────────────────
   {
@@ -1423,6 +1425,7 @@ export const SEO_PAGES: SeoPage[] = [
       "unifyone",
     ],
   },
+  ...GIG_SEO_PAGES,
 ];
 
 export function getSeoPage(slug: string): SeoPage | undefined {
