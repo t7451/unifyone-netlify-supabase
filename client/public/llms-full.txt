@@ -165,7 +165,6 @@ Blog (selected):
   https://1commerce.online/blog/gig-economy-commerce-platform
 - Multi-tenant e-commerce SaaS:
   https://1commerce.online/blog/multi-tenant-ecommerce-saas
-- AI for gig workers: https://1commerce.online/blog/manus-ai-gig-workers
 - Digital retail guide: https://1commerce.online/blog/digital-retail-guide
 
 Brand / company guides also live under /seo/ for these slugs: unifyone,

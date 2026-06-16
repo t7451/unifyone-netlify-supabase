@@ -6,7 +6,7 @@ import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/blog`;
 const DESCRIPTION =
-  "Read UnifyOne essays on gig ecommerce, multi-tenant SaaS architecture, and Manus AI in commerce operations.";
+  "Read UnifyOne essays on gig ecommerce, multi-tenant SaaS architecture, and AI-assisted commerce operations.";
 
 const POSTS = [
   {
@@ -21,12 +21,6 @@ const POSTS = [
     description:
       "Why tenant-safe architecture matters when products, orders, and analytics share one platform.",
   },
-  {
-    href: BLOG_POSTS.aiGigWorkers.href,
-    title: "Manus AI",
-    description:
-      "Where AI agents fit inside a governed commerce platform built for real operations.",
-  },
 ];
 
 const BLOG_JSON_LD = {
@@ -36,7 +30,7 @@ const BLOG_JSON_LD = {
   url: CANONICAL,
   name: "UnifyOne Blog",
   description:
-    "Public writing from UnifyOne on multi-tenant commerce, Manus AI, and platform architecture.",
+    "Public writing from UnifyOne on multi-tenant commerce, agentic AI, and platform architecture.",
   isPartOf: { "@id": `${SITE_URL}/#website` },
   inLanguage: "en-US",
   publisher: {
@@ -97,7 +91,8 @@ export default function BlogIndex() {
           style={{ color: "#6A6A6A", lineHeight: 1.7 }}
         >
           Explore the public side of UnifyOne: platform design, multi-tenant
-          operations, and the role of Manus AI inside a governed commerce stack.
+          operations, and the role of agentic AI inside a governed commerce
+          stack.
         </p>
 
         <div className="grid gap-6 md:grid-cols-3">

@@ -61,25 +61,6 @@ export const BLOG_POSTS = {
     modifiedAt: "2026-04-04",
     wordCount: 1100,
   },
-  aiGigWorkers: {
-    href: "/blog/manus-ai-gig-workers",
-    canonical: `${SITE_URL}/blog/manus-ai-gig-workers`,
-    title:
-      "Kai AI for Gig Workers: From Data to Decisions in Seconds | 1Commerce",
-    headline: "Kai AI for Gig Workers: From Data to Decisions in Seconds",
-    description:
-      "How Kai embedded inside UnifyOne transforms raw gig earnings data into actionable route optimization, tax deduction tracking, and challenge strategy — without leaving the dashboard.",
-    shortDescription:
-      "Discover how Kai turns gig earnings, mileage, and route data into actionable recommendations inside the UnifyOne dashboard.",
-    category: "AI Integration",
-    breadcrumbName: "Kai AI for Gig Workers",
-    ogImage:
-      "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/unifyone-og-card.png",
-    author: "UnifyOne Team",
-    publishedAt: "2026-03-06",
-    modifiedAt: "2026-04-04",
-    wordCount: 1050,
-  },
   gigWorkerShiftIntelligence: {
     href: "/blog/gig-worker-shift-intelligence",
     canonical: `${SITE_URL}/blog/gig-worker-shift-intelligence`,

@@ -84,7 +84,6 @@ const ShopifySuccess = lazy(() => import("./pages/ShopifySuccess"));
 const SyncMonitor = lazy(() => import("./pages/SyncMonitor"));
 const GigEcommercePost = lazy(() => import("./pages/blog/GigEcommercePost"));
 const MultiTenantPost = lazy(() => import("./pages/blog/MultiTenantPost"));
-const AIGigWorkersPost = lazy(() => import("./pages/blog/AIGigWorkersPost"));
 const GigWorkerShiftIntelligencePost = lazy(
   () => import("./pages/blog/GigWorkerShiftIntelligencePost")
 );
@@ -125,7 +124,6 @@ const CaseStudies = lazy(() => import("./pages/CaseStudies"));
 const IntegrationGuides = lazy(() => import("./pages/IntegrationGuides"));
 const WorkProof = lazy(() => import("./pages/WorkProof"));
 const Resources = lazy(() => import("./pages/Resources"));
-const ManusAI = lazy(() => import("./pages/ManusAI"));
 const VideoProduction = lazy(() => import("./pages/VideoProduction"));
 const AdCopyHub = lazy(() => import("./pages/AdCopyHub"));
 const DocsChat = lazy(() => import("./pages/DocsChat"));
@@ -544,7 +542,6 @@ function Router() {
         )}
       />
       <Route path="/sovereign" component={() => <Sovereign />} />
-      <Route path="/manus-ai" component={() => <ManusAI />} />
       <Route path="/privacy" component={() => <PrivacyPolicy />} />
       <Route path="/terms" component={() => <TermsOfService />} />
       <Route path="/architecture" component={() => <Architecture />} />
@@ -584,11 +581,6 @@ function Router() {
       <Route
         path="/blog/multi-tenant-ecommerce-saas"
         component={() => <MultiTenantPost />}
-      />
-      <Route path="/blog/manus-ai" component={() => <AIGigWorkersPost />} />
-      <Route
-        path="/blog/manus-ai-gig-workers"
-        component={() => <AIGigWorkersPost />}
       />
       <Route
         path="/blog/gig-worker-shift-intelligence"

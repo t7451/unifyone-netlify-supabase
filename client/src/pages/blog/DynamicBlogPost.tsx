@@ -4,8 +4,8 @@
  * Dynamic blog post reader for AI-generated SEO content stored in the DB.
  * Serves published posts from the `seo_content_jobs` table at /blog/:slug.
  *
- * Static legacy blog posts (GigEcommercePost, MultiTenantPost, AIGigWorkersPost)
- * continue to use their own routes and components — those are unaffected.
+ * Static legacy blog posts (GigEcommercePost, MultiTenantPost) continue to use
+ * their own routes and components — those are unaffected.
  */
 import { useRoute, Link } from "wouter";
 import { Helmet } from "react-helmet-async";
@@ -41,16 +41,30 @@ function buildJsonLd(
         name: "1Commerce",
         logo: { "@type": "ImageObject", url: `${SITE_URL}/favicon.ico` },
       },
-      datePublished: publishedAt ? new Date(publishedAt).toISOString() : undefined,
-      dateModified: publishedAt ? new Date(publishedAt).toISOString() : undefined,
+      datePublished: publishedAt
+        ? new Date(publishedAt).toISOString()
+        : undefined,
+      dateModified: publishedAt
+        ? new Date(publishedAt).toISOString()
+        : undefined,
       mainEntityOfPage: { "@type": "WebPage", "@id": canonical },
     },
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
-        { "@type": "ListItem", position: 2, name: "Blog", item: `${SITE_URL}/blog` },
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: `${SITE_URL}/`,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Blog",
+          item: `${SITE_URL}/blog`,
+        },
         { "@type": "ListItem", position: 3, name: h1, item: canonical },
       ],
     },
@@ -74,7 +88,11 @@ export default function DynamicBlogPost() {
   const [, params] = useRoute<{ slug: string }>("/blog/:slug");
   const slug = params?.slug ?? "";
 
-  const { data: post, isLoading, error } = trpc.seo.getPublished.useQuery(
+  const {
+    data: post,
+    isLoading,
+    error,
+  } = trpc.seo.getPublished.useQuery(
     { slug },
     { enabled: Boolean(slug), staleTime: 1000 * 60 * 5 }
   );
@@ -82,7 +100,11 @@ export default function DynamicBlogPost() {
   if (isLoading) {
     return (
       <div
-        style={{ backgroundColor: "#020202", color: "#F0E8D0", minHeight: "100vh" }}
+        style={{
+          backgroundColor: "#020202",
+          color: "#F0E8D0",
+          minHeight: "100vh",
+        }}
         className="flex items-center justify-center"
       >
         <span className="inscription" style={{ color: "#3A3A3A" }}>
@@ -95,11 +117,12 @@ export default function DynamicBlogPost() {
   if (error || !post) return <NotFound />;
 
   const canonical = `${SITE_URL}/blog/${post.slug}`;
-  const sections = (post.sections as Array<{
-    heading: string;
-    paragraphs: string[];
-    bullets?: string[];
-  }> | null) ?? [];
+  const sections =
+    (post.sections as Array<{
+      heading: string;
+      paragraphs: string[];
+      bullets?: string[];
+    }> | null) ?? [];
   const faq = (post.faq as Array<{ q: string; a: string }> | null) ?? [];
   const keywords = (post.keywords as string[] | null) ?? [];
   const related = (post.related as string[] | null) ?? [];
@@ -123,7 +146,11 @@ export default function DynamicBlogPost() {
 
   return (
     <div
-      style={{ backgroundColor: "#020202", color: "#F0E8D0", minHeight: "100vh" }}
+      style={{
+        backgroundColor: "#020202",
+        color: "#F0E8D0",
+        minHeight: "100vh",
+      }}
     >
       <Helmet>
         <title>{post.title}</title>
@@ -215,7 +242,11 @@ export default function DynamicBlogPost() {
           )}
           <h1
             className="font-cinzel text-3xl sm:text-5xl font-black mb-6"
-            style={{ color: "#F0E8D0", lineHeight: 1.1, letterSpacing: "0.01em" }}
+            style={{
+              color: "#F0E8D0",
+              lineHeight: 1.1,
+              letterSpacing: "0.01em",
+            }}
           >
             {post.h1}
           </h1>
@@ -258,7 +289,10 @@ export default function DynamicBlogPost() {
                 </p>
               ))}
               {section.bullets && section.bullets.length > 0 && (
-                <ul className="mt-4 space-y-3 pl-6" style={{ listStyleType: "none" }}>
+                <ul
+                  className="mt-4 space-y-3 pl-6"
+                  style={{ listStyleType: "none" }}
+                >
                   {section.bullets.map((b, i) => (
                     <li key={i} className="flex items-start gap-3">
                       <span
