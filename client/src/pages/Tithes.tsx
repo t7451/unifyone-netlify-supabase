@@ -231,8 +231,12 @@ export default function Tithes() {
         ))}
       </Helmet>
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="relative pt-32 pb-24 overflow-hidden">
+      <section
+        aria-labelledby="tithes-heading"
+        className="relative pt-32 pb-24 overflow-hidden"
+      >
         <div
+          aria-hidden="true"
           className="absolute inset-0"
           style={{
             backgroundImage: `url(${CATHEDRAL_CTA_BG})`,
@@ -242,6 +246,7 @@ export default function Tithes() {
           }}
         />
         <div
+          aria-hidden="true"
           className="absolute inset-0"
           style={{
             background:
@@ -251,6 +256,7 @@ export default function Tithes() {
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 text-center">
           <span className="inscription block mb-6">Tithes & Offerings</span>
           <h1
+            id="tithes-heading"
             className="font-cinzel text-4xl sm:text-6xl lg:text-7xl font-black mb-6"
             style={{
               color: "#F0E8D0",
@@ -280,6 +286,10 @@ export default function Tithes() {
               MONTHLY
             </span>
             <button
+              type="button"
+              role="switch"
+              aria-checked={yearly}
+              aria-label="Bill yearly (2 months free)"
               onClick={() => setYearly(!yearly)}
               className="relative w-12 h-6 transition-colors duration-300"
               style={{
@@ -290,6 +300,7 @@ export default function Tithes() {
               }}
             >
               <div
+                aria-hidden="true"
                 className="absolute top-0.5 w-5 h-5 transition-all duration-300"
                 style={{
                   backgroundColor: "#D4A843",
@@ -315,6 +326,7 @@ export default function Tithes() {
 
       {/* ── PRICING TIERS ───────────────────────────────────────────────── */}
       <section
+        aria-label="Pricing plans"
         className="py-16"
         style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}
       >
@@ -421,6 +433,7 @@ export default function Tithes() {
 
       {/* ── COMPARISON TABLE ────────────────────────────────────────────── */}
       <section
+        aria-labelledby="comparison-heading"
         className="py-24"
         style={{
           borderTop: "1px solid rgba(212,168,67,0.06)",
@@ -431,6 +444,7 @@ export default function Tithes() {
           <div className="text-center mb-16">
             <span className="inscription block mb-4">Feature Matrix</span>
             <h2
+              id="comparison-heading"
               className="font-cinzel text-3xl sm:text-4xl font-bold"
               style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
             >
@@ -439,9 +453,13 @@ export default function Tithes() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full" style={{ borderCollapse: "collapse" }}>
+              <caption className="sr-only">
+                Feature comparison across the Starter, Pro, and Scale plans
+              </caption>
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(212,168,67,0.15)" }}>
                   <th
+                    scope="col"
                     className="text-left py-4 pr-8 font-cinzel text-xs tracking-widest"
                     style={{
                       color: "#3A3A3A",
@@ -454,6 +472,7 @@ export default function Tithes() {
                   {["Starter", "Pro", "Scale"].map(name => (
                     <th
                       key={name}
+                      scope="col"
                       className="text-center py-4 px-4 font-cinzel text-xs tracking-widest"
                       style={{
                         color: name === "Pro" ? "#D4A843" : "#5A5A5A",
@@ -471,12 +490,13 @@ export default function Tithes() {
                     key={i}
                     style={{ borderBottom: "1px solid rgba(212,168,67,0.04)" }}
                   >
-                    <td
-                      className="py-4 pr-8 font-crimson text-sm"
+                    <th
+                      scope="row"
+                      className="text-left py-4 pr-8 font-crimson text-sm font-normal"
                       style={{ color: "#7A7A7A" }}
                     >
                       {row.feature}
-                    </td>
+                    </th>
                     {[row.starter, row.pro, row.scale].map((val, j) => (
                       <td
                         key={j}
@@ -490,7 +510,19 @@ export default function Tithes() {
                                 : "#9A9A9A",
                         }}
                       >
-                        {val}
+                        {val === "✓" ? (
+                          <>
+                            <span aria-hidden="true">✓</span>
+                            <span className="sr-only">Included</span>
+                          </>
+                        ) : val === "—" ? (
+                          <>
+                            <span aria-hidden="true">—</span>
+                            <span className="sr-only">Not included</span>
+                          </>
+                        ) : (
+                          val
+                        )}
                       </td>
                     ))}
                   </tr>
@@ -503,6 +535,7 @@ export default function Tithes() {
 
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}
       <section
+        aria-labelledby="tithes-faq-heading"
         className="py-24"
         style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}
       >
@@ -510,6 +543,7 @@ export default function Tithes() {
           <div className="text-center mb-16">
             <span className="inscription block mb-4">Common Questions</span>
             <h2
+              id="tithes-faq-heading"
               className="font-cinzel text-3xl sm:text-4xl font-bold"
               style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
             >
@@ -523,6 +557,10 @@ export default function Tithes() {
                 style={{ borderTop: "1px solid rgba(212,168,67,0.08)" }}
               >
                 <button
+                  type="button"
+                  aria-expanded={openFaq === i}
+                  aria-controls={`tithes-faq-answer-${i}`}
+                  id={`tithes-faq-question-${i}`}
                   className="w-full text-left py-6 flex items-start justify-between gap-4"
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   style={{
@@ -542,6 +580,7 @@ export default function Tithes() {
                     {item.q}
                   </span>
                   <span
+                    aria-hidden="true"
                     className="font-cinzel text-lg shrink-0 mt-0.5"
                     style={{ color: "#D4A843" }}
                   >
@@ -549,7 +588,12 @@ export default function Tithes() {
                   </span>
                 </button>
                 {openFaq === i && (
-                  <div className="pb-6">
+                  <div
+                    id={`tithes-faq-answer-${i}`}
+                    role="region"
+                    aria-labelledby={`tithes-faq-question-${i}`}
+                    className="pb-6"
+                  >
                     <p
                       className="font-crimson text-base"
                       style={{ color: "#7A7A7A", lineHeight: 1.8 }}
@@ -566,12 +610,14 @@ export default function Tithes() {
 
       {/* ── FINAL CTA ───────────────────────────────────────────────────── */}
       <section
+        aria-labelledby="tithes-cta-heading"
         className="py-24"
         style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}
       >
         <div className="max-w-3xl mx-auto px-6 sm:px-8 text-center">
           <span className="inscription block mb-4">Begin Construction</span>
           <h2
+            id="tithes-cta-heading"
             className="font-cinzel text-3xl sm:text-4xl font-bold mb-6"
             style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
           >
