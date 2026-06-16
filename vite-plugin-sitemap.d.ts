@@ -17,7 +17,8 @@ export interface SitemapRoute {
 
 export interface SitemapPluginOptions {
   hostname: string;
-  outDir: string;
+  /** Output directory; defaults to "dist" when omitted. */
+  outDir?: string;
   routes: SitemapRoute[];
 }
 

@@ -11,29 +11,21 @@
 //       react(),
 //       sitemapPlugin({
 //         hostname: 'https://1commerce.online',
+//         outDir: 'dist/public',
 //         routes: [
-//           { path: '/', changefreq: 'weekly', priority: 1.0, lastmod: '2026-05-06' },
-//           { path: '/pricing', changefreq: 'monthly', priority: 0.9, lastmod: '2026-05-06' },
-//           { path: '/architecture', changefreq: 'monthly', priority: 0.6, lastmod: '2026-05-06' },
-//           { path: '/the-system', changefreq: 'monthly', priority: 0.6, lastmod: '2026-05-06' },
-//           { path: '/manus-ai', changefreq: 'monthly', priority: 0.6, lastmod: '2026-05-06' },
-//           { path: '/tithes', changefreq: 'monthly', priority: 0.6, lastmod: '2026-05-06' },
-//           { path: '/blog', changefreq: 'monthly', priority: 0.8, lastmod: '2026-05-06' },
-//           { path: '/blog/gig-ecommerce', changefreq: 'monthly', priority: 0.8, lastmod: '2026-05-06' },
-//           { path: '/blog/multi-tenant', changefreq: 'monthly', priority: 0.8, lastmod: '2026-05-06' },
-//           { path: '/blog/manus-ai', changefreq: 'monthly', priority: 0.8, lastmod: '2026-05-06' },
-//           { path: '/privacy', changefreq: 'monthly', priority: 0.6, lastmod: '2026-05-06' },
-//           { path: '/terms', changefreq: 'monthly', priority: 0.6, lastmod: '2026-05-06' },
-//           { path: '/themes', changefreq: 'monthly', priority: 0.6, lastmod: '2026-05-06' },
-//           { path: '/docs-chat', changefreq: 'monthly', priority: 0.6, lastmod: '2026-05-06' },
-//           { path: '/resources', changefreq: 'monthly', priority: 0.6, lastmod: '2026-05-06' },
-//           { path: '/sovereign', changefreq: 'monthly', priority: 0.6, lastmod: '2026-05-06' },
-//           { path: '/login', changefreq: 'monthly', priority: 0.6, lastmod: '2026-05-06' },
-//           { path: '/register', changefreq: 'monthly', priority: 0.6, lastmod: '2026-05-06' },
+//           { path: '/', changefreq: 'weekly', priority: 1.0 },
+//           { path: '/pricing', changefreq: 'monthly', priority: 0.9 },
 //         ],
 //       }),
 //     ],
 //   })
+//
+// Behavior:
+//   - sitemap.xml is ALWAYS (re)generated from `routes`, so it never drifts
+//     from the route registries that feed it.
+//   - robots.txt is only written when the output directory does NOT already
+//     contain one — the hand-maintained client/public/robots.txt is copied to
+//     dist by Vite and must never be overwritten.
 
 import { existsSync, writeFileSync } from "fs";
 import { resolve } from "path";
@@ -50,11 +42,22 @@ import { resolve } from "path";
  * @typedef {Object} SitemapPluginOptions
  * @property {string}       hostname  — Full origin with protocol (e.g. 'https://1commerce.online')
  * @property {RouteEntry[]} routes    — Array of route entries
- * @property {string}       [outDir]  — Override output directory; defaults to Vite's build.outDir
+ * @property {string}       [outDir]  — Override output directory; defaults to 'dist'
  */
 
+/** Escape the five XML-significant characters for use inside element text. */
+function escapeXml(value) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 /**
- * Vite plugin that generates sitemap.xml and robots.txt at build time.
+ * Vite plugin that generates sitemap.xml at build time (always) and a fallback
+ * robots.txt (only when one is not already present in the output directory).
  * @param {SitemapPluginOptions} options
  * @returns {import('vite').Plugin}
  */
@@ -78,18 +81,13 @@ export function sitemapPlugin(options) {
       const sitemapPath = resolve(outDir, "sitemap.xml");
       const robotsPath = resolve(outDir, "robots.txt");
 
-      // Skip generation if hand-crafted files already exist (copied from public/)
-      if (existsSync(sitemapPath) && existsSync(robotsPath)) {
-        console.log(
-          "[sitemap] Existing sitemap.xml and robots.txt found — skipping generation"
-        );
-        return;
-      }
-
-      // ── Build sitemap.xml ──────────────────────────────────────────
+      // ── Build sitemap.xml (always regenerated from `routes`) ───────────
+      // Always (re)write so the sitemap can never drift from the route
+      // registries that feed it. Any stale public/sitemap.xml copied into the
+      // output dir is overwritten here.
       const urls = routes
         .map(r => {
-          const loc = `${origin}${r.path}`;
+          const loc = escapeXml(`${origin}${r.path}`);
           const lastmod = r.lastmod || today;
           const changefreq = r.changefreq || "monthly";
           const priority = r.priority ?? 0.5;
@@ -113,9 +111,21 @@ export function sitemapPlugin(options) {
       ].join("\n");
 
       writeFileSync(sitemapPath, sitemap, "utf-8");
-      console.log(`[sitemap] Generated ${sitemapPath}`);
+      console.log(
+        `[sitemap] Generated ${sitemapPath} (${routes.length} routes)`
+      );
 
-      // ── Build robots.txt ───────────────────────────────────────────
+      // ── Fallback robots.txt ────────────────────────────────────────────
+      // The hand-maintained client/public/robots.txt is copied into the output
+      // dir by Vite — never overwrite it. Only emit a minimal fallback when no
+      // robots.txt exists (e.g. that source file was removed).
+      if (existsSync(robotsPath)) {
+        console.log(
+          "[sitemap] Existing robots.txt found — leaving it untouched"
+        );
+        return;
+      }
+
       const robots = [
         "User-agent: *",
         "Allow: /",
@@ -133,7 +143,7 @@ export function sitemapPlugin(options) {
       ].join("\n");
 
       writeFileSync(robotsPath, robots, "utf-8");
-      console.log(`[sitemap] Generated ${robotsPath}`);
+      console.log(`[sitemap] Generated fallback ${robotsPath}`);
     },
   };
 }

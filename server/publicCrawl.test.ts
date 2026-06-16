@@ -1,9 +1,23 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { ROUTE_SEO } from "@/content/routeSeo";
+import { SEO_PAGES } from "@/content/seoPages";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 const CLIENT_SRC = join(ROOT, "client/src");
+
+// Mirror of the sitemap paths derived in vite.config.ts (SITEMAP_ROUTES): the
+// homepage, the /seo guides index, every ROUTE_SEO path, and one /seo/:slug per
+// SEO_PAGES entry. The sitemap.xml is generated from these registries at build
+// time (vite-plugin-sitemap.js), so this is the source of truth to check
+// against — not a hand-maintained file.
+const sitemapPaths = [
+  "/",
+  "/seo",
+  ...ROUTE_SEO.map(route => route.path),
+  ...SEO_PAGES.map(page => `/seo/${page.slug}`),
+];
 
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap(entry => {
@@ -65,17 +79,12 @@ describe("public crawl readiness", () => {
     expect(missing).toEqual([]);
   });
 
-  it("keeps public sitemap entries aligned with registered routes", () => {
+  it("keeps derived sitemap entries aligned with registered routes", () => {
     const routes = appRoutes();
-    const sitemap = readFileSync(
-      join(ROOT, "client/public/sitemap.xml"),
-      "utf8"
-    );
-    const paths = [...sitemap.matchAll(/<loc>__APP_URL__([^<]+)<\/loc>/g)].map(
-      match => match[1]
-    );
 
-    expect(paths.length).toBeGreaterThan(0);
-    expect(paths.filter(path => !routeMatches(path, routes))).toEqual([]);
+    expect(sitemapPaths.length).toBeGreaterThan(0);
+    expect(sitemapPaths.filter(path => !routeMatches(path, routes))).toEqual(
+      []
+    );
   });
 });
