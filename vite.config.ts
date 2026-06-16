@@ -16,6 +16,136 @@ const SITE_HOSTNAME = (
   "https://1commerce.online"
 ).replace(/\/+$/, "");
 
+type SitemapRoute = {
+  path: string;
+  changefreq:
+    | "always"
+    | "hourly"
+    | "daily"
+    | "weekly"
+    | "monthly"
+    | "yearly"
+    | "never";
+  priority: number;
+};
+
+// Build date stamped on every sitemap entry so crawlers see fresh lastmod on
+// each deploy. Matches the format other build-time freshness stamps use.
+const BUILD_DATE = new Date().toISOString().slice(0, 10);
+
+// Path prefixes that must never be sitemapped — the canonical source is the
+// hand-maintained client/public/robots.txt Disallow list (auth/app/dev/API
+// surface). Mirrored here so any route derived from the registries that lands
+// under one of these is dropped, keeping the sitemap and robots.txt in sync.
+const SITEMAP_DISALLOW_PREFIXES = [
+  "/dashboard",
+  "/setup",
+  "/settings",
+  "/products",
+  "/orders",
+  "/customers",
+  "/analytics",
+  "/integrations",
+  "/team",
+  "/billing",
+  "/social",
+  "/referrals",
+  "/leads",
+  "/automations",
+  "/notifications",
+  "/my-themes",
+  "/admin",
+  "/rewards",
+  "/revenue-streams",
+  "/affiliates",
+  "/shopify",
+  "/checkout",
+  "/master-control",
+  "/revenue-command",
+  "/discounts",
+  "/clips",
+  "/marketing",
+  "/gig-worker-plans",
+  "/auth",
+  "/reset-password",
+  "/verify-email",
+  "/components",
+  "/design-system",
+  "/api",
+];
+
+function isDisallowed(routePath: string): boolean {
+  return SITEMAP_DISALLOW_PREFIXES.some(
+    prefix => routePath === prefix || routePath.startsWith(`${prefix}/`)
+  );
+}
+
+// Assign changefreq/priority by section so the derived sitemap matches the
+// hand-tuned weights without per-route bookkeeping.
+function classifyRoute(routePath: string): {
+  changefreq: SitemapRoute["changefreq"];
+  priority: number;
+} {
+  if (routePath === "/") return { changefreq: "weekly", priority: 1.0 };
+
+  // Pricing + the free tools hub and every individual tool: top conversion
+  // value, crawl weekly-to-monthly.
+  if (routePath === "/pricing") return { changefreq: "monthly", priority: 0.9 };
+  if (routePath === "/tools") return { changefreq: "weekly", priority: 0.9 };
+  if (routePath.startsWith("/tools/"))
+    return { changefreq: "monthly", priority: 0.9 };
+
+  // Blog index + posts.
+  if (routePath === "/blog") return { changefreq: "weekly", priority: 0.8 };
+  if (routePath.startsWith("/blog/"))
+    return { changefreq: "monthly", priority: 0.8 };
+
+  // /seo guides index and the data-driven /seo/:slug answer pages.
+  if (routePath === "/seo") return { changefreq: "weekly", priority: 0.6 };
+  if (routePath.startsWith("/seo/"))
+    return { changefreq: "monthly", priority: 0.8 };
+
+  // Gig / GEO landing pages and high-intent product pages.
+  if (
+    routePath === "/about" ||
+    routePath === "/contact" ||
+    routePath === "/documents" ||
+    routePath === "/gig-income-aggregator" ||
+    routePath === "/1099-tax-management" ||
+    routePath === "/gig-earnings-optimizer" ||
+    routePath === "/financial-intelligence-gig-workers" ||
+    routePath === "/gig-route-intelligence"
+  ) {
+    return { changefreq: "monthly", priority: 0.7 };
+  }
+
+  // Everything else (legal, docs, secondary marketing, login/register).
+  return { changefreq: "monthly", priority: 0.6 };
+}
+
+// Single source of truth for the sitemap: the homepage, the guides index, every
+// ROUTE_SEO path, and every /seo/:slug page — all derived at config time from
+// the same registries that drive prerendering, then filtered against the
+// robots.txt Disallow list and deduped. No hand-maintained route list.
+const SITEMAP_ROUTES: SitemapRoute[] = (() => {
+  const paths = [
+    "/",
+    "/seo",
+    ...ROUTE_SEO.map(r => r.path),
+    ...SEO_PAGES.map(p => `/seo/${p.slug}`),
+  ];
+
+  const seen = new Set<string>();
+  const routes: SitemapRoute[] = [];
+  for (const routePath of paths) {
+    if (seen.has(routePath)) continue;
+    seen.add(routePath);
+    if (isDisallowed(routePath)) continue;
+    routes.push({ path: routePath, ...classifyRoute(routePath) });
+  }
+  return routes;
+})();
+
 /**
  * Replace __APP_URL__ placeholder in index.html with the resolved site hostname.
  * This allows SEO metadata and structured data (JSON-LD) to use the correct
@@ -69,249 +199,10 @@ const plugins = [
   sitemapPlugin({
     hostname: SITE_HOSTNAME,
     outDir: path.resolve(import.meta.dirname, "dist/public"),
-    routes: [
-      { path: "/", changefreq: "weekly", priority: 1.0, lastmod: "2026-05-06" },
-      {
-        path: "/pricing",
-        changefreq: "monthly",
-        priority: 0.9,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/about",
-        changefreq: "monthly",
-        priority: 0.7,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/contact",
-        changefreq: "monthly",
-        priority: 0.7,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/architecture",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/the-system",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/manus-ai",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/tithes",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/documents",
-        changefreq: "monthly",
-        priority: 0.7,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/documents/case-studies",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/documents/integrations",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/documents/work-proof",
-        changefreq: "monthly",
-        priority: 0.5,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/tools",
-        changefreq: "weekly",
-        priority: 0.9,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/blog",
-        changefreq: "weekly",
-        priority: 0.8,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/blog/gig-worker-shift-intelligence",
-        changefreq: "weekly",
-        priority: 0.9,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/tools/mileage-deduction-calculator",
-        changefreq: "monthly",
-        priority: 0.9,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/tools/quarterly-tax-estimator",
-        changefreq: "monthly",
-        priority: 0.9,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/tools/earnings-consolidator",
-        changefreq: "monthly",
-        priority: 0.9,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/tools/reseller-break-even",
-        changefreq: "monthly",
-        priority: 0.9,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/tools/cashflow-tracker",
-        changefreq: "monthly",
-        priority: 0.9,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/tools/se-tax-calculator",
-        changefreq: "monthly",
-        priority: 0.9,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/tools/gig-hourly-rate",
-        changefreq: "monthly",
-        priority: 0.9,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/tools/tax-set-aside",
-        changefreq: "monthly",
-        priority: 0.9,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/gig-income-aggregator",
-        changefreq: "monthly",
-        priority: 0.8,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/1099-tax-management",
-        changefreq: "monthly",
-        priority: 0.8,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/gig-earnings-optimizer",
-        changefreq: "monthly",
-        priority: 0.8,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/financial-intelligence-gig-workers",
-        changefreq: "monthly",
-        priority: 0.8,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/gig-route-intelligence",
-        changefreq: "monthly",
-        priority: 0.8,
-        lastmod: "2026-06-13",
-      },
-      {
-        path: "/blog/gig-economy-commerce-platform",
-        changefreq: "monthly",
-        priority: 0.8,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/blog/multi-tenant-ecommerce-saas",
-        changefreq: "monthly",
-        priority: 0.8,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/blog/manus-ai-gig-workers",
-        changefreq: "monthly",
-        priority: 0.8,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/blog/digital-retail-guide",
-        changefreq: "monthly",
-        priority: 0.8,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/privacy",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/terms",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/themes",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/docs-chat",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/resources",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/sovereign",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/design-system",
-        changefreq: "monthly",
-        priority: 0.5,
-        lastmod: "2026-05-18",
-      },
-      {
-        path: "/login",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-      {
-        path: "/register",
-        changefreq: "monthly",
-        priority: 0.6,
-        lastmod: "2026-05-06",
-      },
-    ],
+    // Derived from SEO_PAGES + ROUTE_SEO (see SITEMAP_ROUTES above) so the
+    // sitemap is always in lockstep with the prerendered routes. lastmod is
+    // the build date so every deploy re-stamps freshness.
+    routes: SITEMAP_ROUTES.map(r => ({ ...r, lastmod: BUILD_DATE })),
   }),
 ];
 
