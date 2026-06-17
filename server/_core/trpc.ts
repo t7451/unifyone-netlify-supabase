@@ -5,6 +5,24 @@ import type { TrpcContext } from "./context";
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
+  // Prevent unexpected/internal errors (e.g. raw DB/SQL driver errors, whose
+  // message can contain SQL text, schema, or connection detail) from leaking
+  // to the client in production. Deliberate TRPCErrors (UNAUTHORIZED,
+  // FORBIDDEN, BAD_REQUEST, TOO_MANY_REQUESTS, …) keep their safe, intentional
+  // messages. The original error is still thrown and logged server-side.
+  errorFormatter({ shape, error }) {
+    if (
+      process.env.NODE_ENV === "production" &&
+      error.code === "INTERNAL_SERVER_ERROR"
+    ) {
+      return {
+        ...shape,
+        message: "Internal server error. Please try again.",
+        data: { ...shape.data, stack: undefined },
+      };
+    }
+    return shape;
+  },
 });
 
 export const router = t.router;
