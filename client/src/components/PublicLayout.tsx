@@ -4,6 +4,7 @@ import { Instagram } from "lucide-react";
 import { getSignupUrl } from "@/const";
 import { usePixelPageView } from "@/hooks/usePixelPageView";
 import { CdnImage } from "@/components/CdnImage";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { BLOG_POSTS } from "@/pages/blog/blogPostShared";
 
 const NAV_LINKS = [
@@ -278,7 +279,10 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
       </nav>
 
       {/* ── PAGE CONTENT ───────────────────────────────────────────────── */}
-      <main>{children}</main>
+      <main>
+        <Breadcrumbs />
+        {children}
+      </main>
 
       {/* ── FOOTER ─────────────────────────────────────────────────────── */}
       <footer
