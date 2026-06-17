@@ -10,6 +10,7 @@ import LoadingExperience from "./components/LoadingExperience";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { useAuth } from "./_core/hooks/useAuth";
 import DashboardLayout from "./components/DashboardLayout";
+import GigResourceLinks from "./components/GigResourceLinks";
 import { getLoginUrl } from "./const";
 import { trpc } from "./lib/trpc";
 import { useTracking } from "./hooks/useTracking";
@@ -625,23 +626,48 @@ function Router() {
       {/* GEO landing pages */}
       <Route
         path="/gig-income-aggregator"
-        component={() => <GigIncomeAggregator />}
+        component={() => (
+          <>
+            <GigIncomeAggregator />
+            <GigResourceLinks />
+          </>
+        )}
       />
       <Route
         path="/1099-tax-management"
-        component={() => <TaxManagement1099 />}
+        component={() => (
+          <>
+            <TaxManagement1099 />
+            <GigResourceLinks />
+          </>
+        )}
       />
       <Route
         path="/gig-earnings-optimizer"
-        component={() => <GigEarningsOptimizer />}
+        component={() => (
+          <>
+            <GigEarningsOptimizer />
+            <GigResourceLinks />
+          </>
+        )}
       />
       <Route
         path="/financial-intelligence-gig-workers"
-        component={() => <FinancialIntelligenceGig />}
+        component={() => (
+          <>
+            <FinancialIntelligenceGig />
+            <GigResourceLinks />
+          </>
+        )}
       />
       <Route
         path="/gig-route-intelligence"
-        component={() => <GigRouteIntelligence />}
+        component={() => (
+          <>
+            <GigRouteIntelligence />
+            <GigResourceLinks />
+          </>
+        )}
       />
       <Route path="/seo" component={() => <SeoIndex />} />
       <Route path="/seo/:slug" component={() => <SeoLanding />} />
