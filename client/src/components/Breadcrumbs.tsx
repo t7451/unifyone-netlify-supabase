@@ -28,12 +28,40 @@ const SEGMENT_LABELS: Record<string, string> = {
   press: "Media Kit",
   register: "Register",
   login: "Sign In",
+  "gig-income-aggregator": "Gig Income Aggregator",
+  "1099-tax-management": "1099 Tax Management",
+  "gig-earnings-optimizer": "Gig Earnings Optimizer",
+  "financial-intelligence-gig-workers":
+    "Financial Intelligence for Gig Workers",
+  "gig-route-intelligence": "Gig Route Intelligence",
+};
+
+/** Tokens that need explicit casing rather than naive title-casing. */
+const TOKEN_CASING: Record<string, string> = {
+  ai: "AI",
+  saas: "SaaS",
+  seo: "SEO",
+  geo: "GEO",
+  faq: "FAQ",
+  irs: "IRS",
+  crm: "CRM",
+  api: "API",
+  vs: "vs",
+  pnw: "PNW",
+  unifyone: "UnifyOne",
+  "1commerce": "1Commerce",
+  onecommerce: "OneCommerce",
 };
 
 function titleCase(slug: string): string {
   return slug
     .split("-")
-    .map(word => (word ? word[0].toUpperCase() + word.slice(1) : word))
+    .map(word => {
+      if (!word) return word;
+      const lower = word.toLowerCase();
+      if (lower in TOKEN_CASING) return TOKEN_CASING[lower];
+      return word[0].toUpperCase() + word.slice(1);
+    })
     .join(" ");
 }
 
