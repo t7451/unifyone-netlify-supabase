@@ -573,7 +573,7 @@ export default function Dashboard() {
               What you can run in UnifyOne
             </CardTitle>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              The platform is organized into {FEATURE_CATEGORIES.length}
+              The platform is organized into {FEATURE_CATEGORIES.length}{" "}
               operating areas and {FEATURE_COUNT} guided modules. Use this map
               to pick a lane, then open the wizard for module-by-module next
               actions.
