@@ -55,6 +55,27 @@ const PLATFORMS = [
   { label: "Instacart", url: "https://www.instacart.com" },
 ];
 
+// Authoritative resources for the platform-specific tax guides: the IRS
+// self-employed center + estimated taxes, plus the relevant platform site.
+const DOORDASH_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "DoorDash", url: "https://www.doordash.com" },
+];
+const UBER_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Uber", url: "https://www.uber.com" },
+];
+const INSTACART_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Instacart", url: "https://www.instacart.com" },
+];
+
 export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/architecture",
@@ -280,6 +301,48 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Gig Route Intelligence — Optimize Delivery Zones for Higher Net Pay | UnifyOne",
     description:
       "Discover which delivery zones generate your highest net pay per hour. UnifyOne maps your actual earnings history to show where your time is worth most.",
+  },
+  {
+    path: "/doordash-taxes",
+    externalLinks: DOORDASH_TAX_LINKS,
+    title:
+      "DoorDash Taxes: A Dasher's Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How DoorDash taxes work for Dashers: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "DoorDash doesn't withhold taxes from your pay. As a Dasher you're an independent contractor, so you owe federal and state income tax plus the 15.3% self-employment tax on your net earnings.",
+      "If you earned $600 or more, DoorDash issues a 1099-NEC through Stripe. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Your largest deduction is business mileage at the IRS standard mileage rate for every mile driven while dashing. Phone use, hot bags, tolls, and parking are deductible too. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty.",
+    ],
+  },
+  {
+    path: "/uber-driver-taxes",
+    externalLinks: UBER_TAX_LINKS,
+    title:
+      "Uber Driver Taxes: 1099-K vs 1099-NEC, Deductions & Estimates | UnifyOne",
+    description:
+      "Uber driver taxes explained: the 1099-K vs 1099-NEC, your Tax Summary, self-employment tax, mileage deductions, and quarterly estimates. Not tax advice.",
+    body: [
+      "Uber treats drivers as independent contractors and withholds no taxes. You owe income tax plus the 15.3% self-employment tax on your net earnings, whether you drive UberX, Uber Eats, or both.",
+      "Uber may send two forms: a 1099-K for the gross fares riders and customers paid, and a 1099-NEC for incentives, referrals, and bonuses. Your Uber Tax Summary reconciles both — and you must report all earnings regardless of which forms arrive.",
+      "Business mileage at the IRS standard mileage rate is usually the biggest deduction, and because Uber only reports online miles, your real deductible mileage is often higher. Service fees, phone use, tolls, and rider amenities are deductible too.",
+      "If you expect to owe $1,000 or more for the year, the IRS generally expects quarterly estimated payments — around April 15, June 15, September 15, and January 15.",
+    ],
+  },
+  {
+    path: "/instacart-taxes",
+    externalLinks: INSTACART_TAX_LINKS,
+    title:
+      "Instacart Taxes: A Shopper's Guide to 1099s & Deductions | UnifyOne",
+    description:
+      "Instacart taxes for full-service shoppers: the 1099-NEC, self-employment tax, mileage and supply deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "How you're taxed on Instacart depends on your role. Full-service shoppers who shop and deliver are independent contractors responsible for their own taxes; in-store-only shoppers are part-time W-2 employees with taxes withheld.",
+      "Full-service shoppers who earned $600 or more receive a 1099-NEC, usually delivered through Stripe by late January. You must report all income even if a form doesn't arrive.",
+      "Full-service shoppers can deduct business mileage at the IRS standard mileage rate, plus phone use, insulated bags, and other supplies. A common rule of thumb is to set aside 25–30% of net earnings for self-employment and income tax.",
+      "Independent-contractor shoppers generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an underpayment penalty.",
+    ],
   },
   {
     path: "/blog/gig-economy-commerce-platform",

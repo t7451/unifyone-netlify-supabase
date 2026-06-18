@@ -113,6 +113,7 @@ const FinancialIntelligenceGig = lazy(
 const GigRouteIntelligence = lazy(
   () => import("./pages/geo/GigRouteIntelligence")
 );
+const PlatformTaxGuide = lazy(() => import("./pages/geo/PlatformTaxGuide"));
 const DigitalRetailGuidePost = lazy(
   () => import("./pages/blog/DigitalRetailGuidePost")
 );
@@ -665,6 +666,34 @@ function Router() {
         component={() => (
           <>
             <GigRouteIntelligence />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      {/* Platform-specific gig tax guides (data-driven, shared component) */}
+      <Route
+        path="/doordash-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="doordash-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/uber-driver-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="uber-driver-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/instacart-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="instacart-taxes" />
             <GigResourceLinks />
           </>
         )}
