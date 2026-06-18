@@ -238,6 +238,10 @@ export default function ToolsIndex() {
           </p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
+              { label: "Gig worker taxes: complete guide", href: "/gig-taxes" },
+              { label: "DoorDash taxes", href: "/doordash-taxes" },
+              { label: "Uber driver taxes", href: "/uber-driver-taxes" },
+              { label: "Instacart taxes", href: "/instacart-taxes" },
               {
                 label: "Consolidate gig income",
                 href: "/gig-income-aggregator",

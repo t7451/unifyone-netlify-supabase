@@ -81,6 +81,16 @@ export default function GigResourceLinks() {
                   </Link>
                 </li>
               ))}
+              {location !== "/gig-taxes" && (
+                <li>
+                  <Link
+                    href="/gig-taxes"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Gig worker taxes guide →
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
           <div>
