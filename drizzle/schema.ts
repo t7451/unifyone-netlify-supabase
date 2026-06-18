@@ -2139,7 +2139,9 @@ export const discounts = pgTable(
   "discounts",
   {
     id: serial("id").primaryKey(),
-    tenantId: integer("tenantId").notNull(),
+    tenantId: integer("tenantId")
+      .notNull()
+      .references(() => tenants.id),
     code: varchar("code", { length: 64 }).notNull(),
     description: text("description"),
     type: discountTypeEnum("type").notNull(),
