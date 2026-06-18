@@ -148,6 +148,188 @@
       "when": 1772810697615,
       "tag": "0020_violet_slayback",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1772811000000,
+      "tag": "0021_square_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1772812000000,
+      "tag": "0022_auth_tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1772813000000,
+      "tag": "0023_indexes_and_customer_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1772814000000,
+      "tag": "0024_password_changed_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1772815000000,
+      "tag": "0025_user_preferences",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1772816000000,
+      "tag": "0026_foreign_keys_and_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1772817000000,
+      "tag": "0027_corrective_square_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1772818000000,
+      "tag": "0028_governance_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "5",
+      "when": 1772819000000,
+      "tag": "0029_core_workflow_data_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "5",
+      "when": 1772820000000,
+      "tag": "0030_api_keys",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1772821000000,
+      "tag": "0031_clippers_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1772822000000,
+      "tag": "0032_seo_content_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1772823000000,
+      "tag": "0033_stripe_payment_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "5",
+      "when": 1772824000000,
+      "tag": "0034_corrective_shopify_checkout_url",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "5",
+      "when": 1772825000000,
+      "tag": "0035_corrective_mobile_automation_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "5",
+      "when": 1772826000000,
+      "tag": "0036_corrective_friend_challenge_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "5",
+      "when": 1772827000000,
+      "tag": "0037_refresh_tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "5",
+      "when": 1772828000000,
+      "tag": "0038_impact_affiliate_tracking",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "5",
+      "when": 1772829000000,
+      "tag": "0039_deploy_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "5",
+      "when": 1772830000000,
+      "tag": "0040_paypal_square_webhook_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "5",
+      "when": 1772831000000,
+      "tag": "0041_kai_credits",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "5",
+      "when": 1772832000000,
+      "tag": "0042_user_api_keys",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "5",
+      "when": 1772833000000,
+      "tag": "0043_social_connect",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "5",
+      "when": 1772834000000,
+      "tag": "0044_social_oauth_states",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "5",
+      "when": 1772835000000,
+      "tag": "0045_social_post_publish_results",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "5",
+      "when": 1750262400000,
+      "tag": "0046_discounts",
+      "breakpoints": true
     }
   ]
 }
