@@ -11,6 +11,12 @@ const GEO_GUIDES = [
   { path: "/gig-route-intelligence", label: "Gig route intelligence" },
 ];
 
+const PLATFORM_TAX_GUIDES = [
+  { path: "/doordash-taxes", label: "DoorDash taxes" },
+  { path: "/uber-driver-taxes", label: "Uber driver taxes" },
+  { path: "/instacart-taxes", label: "Instacart taxes" },
+];
+
 const KEY_TOOLS = [
   { path: "/tools/earnings-consolidator", label: "Earnings Consolidator" },
   { path: "/tools/gig-hourly-rate", label: "Real Hourly Rate Calculator" },
@@ -26,12 +32,15 @@ const KEY_TOOLS = [
 export default function GigResourceLinks() {
   const [location] = useLocation();
   const guides = GEO_GUIDES.filter(guide => guide.path !== location);
+  const taxGuides = PLATFORM_TAX_GUIDES.filter(
+    guide => guide.path !== location
+  );
 
   return (
     <section className="border-t bg-muted/20 px-6 py-12 text-foreground">
       <div className="mx-auto max-w-5xl">
         <h2 className="mb-6 text-xl font-semibold">Keep going</h2>
-        <div className="grid gap-8 md:grid-cols-2">
+        <div className="grid gap-8 md:grid-cols-3">
           <div>
             <h3 className="mb-3 text-sm font-medium text-muted-foreground">
               Free calculators
@@ -55,6 +64,23 @@ export default function GigResourceLinks() {
                   All free tools →
                 </Link>
               </li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+              Platform tax guides
+            </h3>
+            <ul className="space-y-2">
+              {taxGuides.map(guide => (
+                <li key={guide.path}>
+                  <Link
+                    href={guide.path}
+                    className="text-sm transition-colors hover:text-primary"
+                  >
+                    {guide.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
           <div>
