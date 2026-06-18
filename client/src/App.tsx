@@ -114,6 +114,7 @@ const GigRouteIntelligence = lazy(
   () => import("./pages/geo/GigRouteIntelligence")
 );
 const PlatformTaxGuide = lazy(() => import("./pages/geo/PlatformTaxGuide"));
+const GigTaxesHub = lazy(() => import("./pages/geo/GigTaxesHub"));
 const DigitalRetailGuidePost = lazy(
   () => import("./pages/blog/DigitalRetailGuidePost")
 );
@@ -670,7 +671,16 @@ function Router() {
           </>
         )}
       />
-      {/* Platform-specific gig tax guides (data-driven, shared component) */}
+      {/* Gig tax topic cluster: pillar hub + platform-specific spokes */}
+      <Route
+        path="/gig-taxes"
+        component={() => (
+          <>
+            <GigTaxesHub />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       <Route
         path="/doordash-taxes"
         component={() => (
