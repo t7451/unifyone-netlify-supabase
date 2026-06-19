@@ -303,6 +303,19 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Discover which delivery zones generate your highest net pay per hour. UnifyOne maps your actual earnings history to show where your time is worth most.",
   },
   {
+    path: "/gig-taxes",
+    externalLinks: [IRS.selfEmployedCenter, IRS.estimated, IRS.seTax],
+    title: "Gig Worker Taxes: The Complete Guide for 1099 Earners | UnifyOne",
+    description:
+      "How gig worker taxes work: self-employment tax, 1099-NEC vs 1099-K, deductions, and quarterly payments — plus guides for DoorDash, Uber & Instacart.",
+    body: [
+      "Driving for DoorDash, Uber, or Instacart makes you an independent contractor — nobody withholds taxes for you. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings, and you pay it yourself as you go.",
+      "You're taxed on profit, not gross payouts. Deductions — business mileage at the IRS standard mileage rate, phone use, hot bags, tolls, and platform fees — lower the income you're taxed on, so tracking them all year is the single biggest way to cut your bill.",
+      "A common rule of thumb is to set aside 25–30% of net earnings for taxes. If you expect to owe $1,000 or more, the IRS expects quarterly estimated payments around April 15, June 15, September 15, and January 15 to avoid an underpayment penalty.",
+      "A 1099-NEC reports direct pay for your services; a 1099-K reports payments processed through a platform (like Uber's gross fares). You must report all income whether or not a form arrives. See the platform-specific guides for DoorDash, Uber, and Instacart.",
+    ],
+  },
+  {
     path: "/doordash-taxes",
     externalLinks: DOORDASH_TAX_LINKS,
     title:
@@ -342,6 +355,19 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Full-service shoppers who earned $600 or more receive a 1099-NEC, usually delivered through Stripe by late January. You must report all income even if a form doesn't arrive.",
       "Full-service shoppers can deduct business mileage at the IRS standard mileage rate, plus phone use, insulated bags, and other supplies. A common rule of thumb is to set aside 25–30% of net earnings for self-employment and income tax.",
       "Independent-contractor shoppers generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an underpayment penalty.",
+    ],
+  },
+  {
+    path: "/1099-nec-vs-1099-k",
+    externalLinks: [IRS.selfEmployedCenter, IRS.estimated],
+    title: "1099-NEC vs 1099-K: What Gig Workers Need to Know | UnifyOne",
+    description:
+      "1099-NEC vs 1099-K for gig workers: what each form is, who issues which, why thresholds change yearly, and how both flow onto Schedule C. Not tax advice.",
+    body: [
+      "Gig workers can receive a 1099-NEC, a 1099-K, both, or neither. A 1099-NEC reports nonemployee compensation — money a business paid you directly for your services, such as DoorDash or Instacart delivery earnings. A 1099-K reports the gross amount of payments settled through a third-party platform or card processor, like the fares riders pay through Uber or Lyft. The forms describe how money reached you, not whether it is taxable.",
+      "Which form you get depends on how the platform pays you. DoorDash and Instacart generally issue a 1099-NEC; Uber and Lyft often send a 1099-K for gross fares plus a 1099-NEC for incentives and referrals. Their annual tax summaries reconcile the two so you can report each dollar once without double-counting overlapping amounts.",
+      "The IRS reporting thresholds that decide whether a platform must issue a form change from year to year, especially for the 1099-K — so confirm the current figures on IRS.gov rather than relying on a number you read online. Critically, a threshold only governs whether a form is sent; it never changes whether income is taxable. If no form arrives, you still owe income tax and the 15.3% self-employment tax on your net profit.",
+      "Both forms flow to the same place: gross income goes on Schedule C, where you subtract business expenses like the standard mileage deduction to reach net profit. That net profit carries to Schedule SE for self-employment tax and to Form 1040 for income tax. This page is educational, not tax advice — verify your situation with the IRS or a qualified professional.",
     ],
   },
   {

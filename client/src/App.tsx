@@ -114,6 +114,8 @@ const GigRouteIntelligence = lazy(
   () => import("./pages/geo/GigRouteIntelligence")
 );
 const PlatformTaxGuide = lazy(() => import("./pages/geo/PlatformTaxGuide"));
+const GigTaxesHub = lazy(() => import("./pages/geo/GigTaxesHub"));
+const Form1099Explainer = lazy(() => import("./pages/geo/Form1099Explainer"));
 const DigitalRetailGuidePost = lazy(
   () => import("./pages/blog/DigitalRetailGuidePost")
 );
@@ -670,6 +672,16 @@ function Router() {
           </>
         )}
       />
+      {/* Gig tax topic cluster: pillar hub + platform-specific spokes */}
+      <Route
+        path="/gig-taxes"
+        component={() => (
+          <>
+            <GigTaxesHub />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Platform-specific gig tax guides (data-driven, shared component) */}
       <Route
         path="/doordash-taxes"
@@ -694,6 +706,15 @@ function Router() {
         component={() => (
           <>
             <PlatformTaxGuide slug="instacart-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/1099-nec-vs-1099-k"
+        component={() => (
+          <>
+            <Form1099Explainer />
             <GigResourceLinks />
           </>
         )}
