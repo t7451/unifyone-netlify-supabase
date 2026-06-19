@@ -316,6 +316,20 @@ export const ROUTE_SEO: RouteSeo[] = [
     ],
   },
   {
+    path: "/gig-quarterly-taxes",
+    externalLinks: [IRS.estimated, IRS.selfEmployedCenter, IRS.seTax],
+    title:
+      "Quarterly Estimated Taxes for Gig Workers: A Practical Guide | UnifyOne",
+    description:
+      "How quarterly estimated taxes work for gig workers: who pays, the four due dates, the safe-harbor rule, how to estimate and pay, and the underpayment penalty.",
+    body: [
+      "Gig platforms like DoorDash, Uber, and Instacart withhold no tax, so independent contractors pay the IRS in four installments through the year instead of once in April. As a general rule you should make estimated payments if you expect to owe $1,000 or more for the year after withholding and credits — and most gig workers do, because gig income carries both income tax and the 15.3% self-employment tax.",
+      "Federal estimated taxes are due four times a year, with deadlines that usually fall around April 15, June 15, September 15, and January 15 of the following year. Each date shifts to the next business day when it lands on a weekend or holiday, so confirm the current year's exact dates with the IRS.",
+      "To avoid an underpayment penalty, the safe-harbor rule says your payments and withholding should cover at least 90% of this year's tax or 100% of last year's tax — 110% if your prior-year adjusted gross income was over $150,000. Estimate each payment from your net earnings (income after deductions like mileage), then pay via IRS Direct Pay, EFTPS, or by mailing Form 1040-ES.",
+      "If you fall short, the IRS charges an underpayment penalty calculated like interest on the amount underpaid for the time it was late, not a flat fine. This guide is educational information, not tax advice — confirm thresholds, due dates, and rates with the IRS or a qualified tax professional.",
+    ],
+  },
+  {
     path: "/doordash-taxes",
     externalLinks: DOORDASH_TAX_LINKS,
     title:
