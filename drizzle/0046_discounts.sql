@@ -12,7 +12,7 @@ END; $$;
 
 CREATE TABLE IF NOT EXISTS "discounts" (
   "id"           serial PRIMARY KEY,
-  "tenantId"     integer NOT NULL,
+  "tenantId"     integer NOT NULL REFERENCES "tenants"("id"),
   "code"         varchar(64) NOT NULL,
   "description"  text,
   "type"         "discount_type" NOT NULL,

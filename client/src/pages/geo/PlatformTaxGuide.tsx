@@ -134,6 +134,11 @@ export default function PlatformTaxGuide({ slug }: { slug: string }) {
           <p className="text-lg text-muted-foreground leading-relaxed">
             {guide.intro}
           </p>
+          <p className="mt-4 text-sm">
+            <Link href="/gig-taxes" className="text-primary hover:underline">
+              ← Part of the complete Gig Worker Taxes guide
+            </Link>
+          </p>
         </header>
 
         <section className="rounded-xl border bg-card p-6 mb-10 space-y-4">
