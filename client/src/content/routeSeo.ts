@@ -76,6 +76,36 @@ const INSTACART_TAX_LINKS = [
   { label: "Instacart", url: "https://www.instacart.com" },
 ];
 
+// Authoritative resources for the gig platform comparison guides. The IRS
+// self-employed center + estimated taxes anchor the (educational, not advice)
+// tax framing; the two platform sites being compared give each page a real,
+// relevant outbound link profile.
+const PLATFORM_LINKS = {
+  doordash: { label: "DoorDash", url: "https://www.doordash.com" },
+  uberEats: { label: "Uber Eats", url: "https://www.ubereats.com" },
+  uber: { label: "Uber", url: "https://www.uber.com" },
+  lyft: { label: "Lyft", url: "https://www.lyft.com" },
+  instacart: { label: "Instacart", url: "https://www.instacart.com" },
+};
+const DOORDASH_VS_UBER_EATS_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.doordash,
+  PLATFORM_LINKS.uberEats,
+];
+const INSTACART_VS_DOORDASH_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.instacart,
+  PLATFORM_LINKS.doordash,
+];
+const UBER_VS_LYFT_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.uber,
+  PLATFORM_LINKS.lyft,
+];
+
 export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/architecture",
@@ -355,6 +385,45 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Full-service shoppers who earned $600 or more receive a 1099-NEC, usually delivered through Stripe by late January. You must report all income even if a form doesn't arrive.",
       "Full-service shoppers can deduct business mileage at the IRS standard mileage rate, plus phone use, insulated bags, and other supplies. A common rule of thumb is to set aside 25–30% of net earnings for self-employment and income tax.",
       "Independent-contractor shoppers generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an underpayment penalty.",
+    ],
+  },
+  {
+    path: "/doordash-vs-uber-eats",
+    externalLinks: DOORDASH_VS_UBER_EATS_LINKS,
+    title: "DoorDash vs Uber Eats: Which Pays More for Drivers? | UnifyOne",
+    description:
+      "DoorDash vs Uber Eats compared on how pay is structured, fees, 1099 forms, mileage, scheduling, and payout speed — plus how to compute your own net pay.",
+    body: [
+      "DoorDash and Uber Eats both pay couriers as independent contractors, so neither withholds taxes and your take-home depends far more on your market and hours than on the app. There's no universal winner — the only number that matters is what you net per hour, which we show you how to compute rather than quoting figures that go stale.",
+      "Both apps are per-offer: each delivery shows a base or upfront amount plus promotions and tips before you accept. DoorDash adds Peak Pay and Challenges in busy periods; Uber Eats adds Surge/Boost zones and Quests. Neither deducts the restaurant's commission from your courier pay, and both default to weekly deposits with faster cash-out options for a possible fee.",
+      "On taxes, DoorDash issues a 1099-NEC if you earn $600 or more in a year. Uber may issue a 1099-NEC for incentives and referrals plus a 1099-K for processed delivery fares, with thresholds that change yearly. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income whether or not a form arrives.",
+      "To compare them honestly, run a few similar shifts on each, track your active hours and the business miles you drove, subtract mileage and expenses, and divide by hours. The free Real Hourly Rate calculator and Earnings Consolidator do that math. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/instacart-vs-doordash",
+    externalLinks: INSTACART_VS_DOORDASH_LINKS,
+    title: "Instacart vs DoorDash: Which Is Better for Gig Workers? | UnifyOne",
+    description:
+      "Instacart vs DoorDash compared on how pay works (batches vs offers), fees, 1099 forms, mileage, scheduling, and payouts — plus how to compute your net pay.",
+    body: [
+      "Instacart and DoorDash are both independent-contractor gig apps, but the work differs: Instacart full-service shoppers shop a cart and deliver groceries, while DoorDash Dashers pick up and drop off prepared orders. That changes how pay is structured and what your time and mileage look like, so which one is better depends on your market and how you value your time — not on a single pay figure.",
+      "Instacart pays per batch, an estimated amount based on factors like item count and distance plus tips, and your time includes shopping in-store. DoorDash pays per delivery offer with a base plus promotions and tips, and your time is mostly driving. Because Instacart batches include shopping time, compare them on net pay per active hour rather than per delivery.",
+      "Both withhold no taxes and issue a 1099-NEC at $600 or more in earnings; Instacart in-store-only shoppers are W-2 employees instead, while full-service shoppers who also deliver get the 1099-NEC. You owe income tax plus the 15.3% self-employment tax on combined net earnings, and you must report all income even if no form arrives.",
+      "To decide, work comparable shifts on each, log your active hours (shopping plus driving for Instacart) and your business miles, subtract mileage and expenses, and divide by hours. The free Real Hourly Rate calculator and Earnings Consolidator compute this for you. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/uber-vs-lyft-driver",
+    externalLinks: UBER_VS_LYFT_LINKS,
+    title: "Uber vs Lyft: Which Is Better for Drivers? | UnifyOne",
+    description:
+      "Uber vs Lyft for drivers, compared on how pay works, fees, 1099-K vs 1099-NEC, mileage, scheduling, and payout speed — plus how to compute your own net pay.",
+    body: [
+      "Uber and Lyft are the two largest US rideshare platforms, and both pay drivers as independent contractors. The apps are structurally similar — upfront fares, surge-style bonuses, and weekly or instant payouts — so which one nets you more comes down to your local market, the hours you drive, and your vehicle costs rather than the brand.",
+      "On both, you see an upfront estimated fare and trip details before accepting and keep 100% of tips, and both raise pay during high demand (Uber surge and promotions; Lyft Personal Power Zones and bonuses). Each takes a service fee out of every fare, which is a deductible business expense itemized on your Uber Tax Summary or Lyft Annual Summary.",
+      "Both issue similar tax forms: a 1099-K reporting the gross ride fares processed through the platform, plus a 1099-NEC for incentives, referrals, and bonuses; reporting thresholds change by year. You owe income tax plus the 15.3% self-employment tax on net earnings, and you must report all income regardless of which forms you receive.",
+      "To compare your own pay, drive comparable hours on each, log your active time and the business miles you drove (including miles between trips, which are often deductible), subtract fees, mileage, and expenses, and divide by hours. The free Real Hourly Rate calculator and Earnings Consolidator do this. This is educational information, not financial or tax advice.",
     ],
   },
   {

@@ -115,6 +115,7 @@ const GigRouteIntelligence = lazy(
 );
 const PlatformTaxGuide = lazy(() => import("./pages/geo/PlatformTaxGuide"));
 const GigTaxesHub = lazy(() => import("./pages/geo/GigTaxesHub"));
+const PlatformComparison = lazy(() => import("./pages/geo/PlatformComparison"));
 const DigitalRetailGuidePost = lazy(
   () => import("./pages/blog/DigitalRetailGuidePost")
 );
@@ -704,6 +705,34 @@ function Router() {
         component={() => (
           <>
             <PlatformTaxGuide slug="instacart-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      {/* Gig platform comparison cluster (data-driven, no fabricated $) */}
+      <Route
+        path="/doordash-vs-uber-eats"
+        component={() => (
+          <>
+            <PlatformComparison slug="doordash-vs-uber-eats" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/instacart-vs-doordash"
+        component={() => (
+          <>
+            <PlatformComparison slug="instacart-vs-doordash" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/uber-vs-lyft-driver"
+        component={() => (
+          <>
+            <PlatformComparison slug="uber-vs-lyft-driver" />
             <GigResourceLinks />
           </>
         )}
