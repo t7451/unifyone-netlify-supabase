@@ -76,6 +76,61 @@ const INSTACART_TAX_LINKS = [
   { label: "Instacart", url: "https://www.instacart.com" },
 ];
 
+// State tax-agency links for the state-level gig-worker tax guides. Each guide
+// pairs the IRS self-employed/estimated/SE-tax links with its state's agency so
+// the prerendered page ships an authoritative outbound link profile.
+const CA_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "California Franchise Tax Board (Form 540-ES)",
+    url: "https://www.ftb.ca.gov/pay/estimated-tax-payments.html",
+  },
+];
+const TX_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  { label: "Texas Comptroller", url: "https://comptroller.texas.gov/" },
+];
+const FL_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Florida Department of Revenue",
+    url: "https://floridarevenue.com/",
+  },
+];
+const NY_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "NY Dept. of Taxation and Finance (Form IT-2105)",
+    url: "https://www.tax.ny.gov/pit/estimated_tax/default.htm",
+  },
+];
+const IL_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Illinois Department of Revenue (Form IL-1040-ES)",
+    url: "https://tax.illinois.gov/individuals/estimatedpayments.html",
+  },
+];
+const WA_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Washington Department of Revenue",
+    url: "https://dor.wa.gov/",
+  },
+];
+
 export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/architecture",
@@ -342,6 +397,108 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Full-service shoppers who earned $600 or more receive a 1099-NEC, usually delivered through Stripe by late January. You must report all income even if a form doesn't arrive.",
       "Full-service shoppers can deduct business mileage at the IRS standard mileage rate, plus phone use, insulated bags, and other supplies. A common rule of thumb is to set aside 25–30% of net earnings for self-employment and income tax.",
       "Independent-contractor shoppers generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an underpayment penalty.",
+    ],
+  },
+  {
+    path: "/gig-taxes",
+    externalLinks: [
+      IRS.selfEmployedCenter,
+      IRS.estimated,
+      IRS.seTax,
+      IRS.mileage,
+    ],
+    title: "Gig Worker Taxes: The Complete Guide | UnifyOne",
+    description:
+      "The complete gig worker tax guide: the 15.3% self-employment tax, 1099s, deductions, quarterly estimates, plus platform and state breakdowns. Not tax advice.",
+    body: [
+      "Gig platforms pay you as an independent contractor and withhold nothing, so you handle your own taxes. You owe federal income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings, in every state.",
+      "Your biggest deduction is business mileage at the IRS standard mileage rate, alongside the business-use share of your phone, supplies, tolls, and parking. You must report all income whether or not a platform sends a 1099-NEC or 1099-K.",
+      "Because nothing is withheld, the IRS expects quarterly estimated payments — generally around April 15, June 15, September 15, and January 15 — if you'll owe $1,000 or more for the year, to avoid an underpayment penalty.",
+      "From here, see the platform-specific guides (DoorDash, Uber, Instacart) and the state-specific guides (California, Texas, Florida, New York, Illinois, Washington) for how the rules apply to you. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/california-gig-worker-taxes",
+    externalLinks: CA_TAX_LINKS,
+    title:
+      "California Gig Worker Taxes: SE Tax, State Income Tax & Estimates | UnifyOne",
+    description:
+      "California gig worker taxes: the 15.3% federal SE tax plus CA state income tax, FTB estimated payments (Form 540-ES), mileage deductions. Not tax advice.",
+    body: [
+      "Gig platforms pay California workers as independent contractors and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "California also has a progressive state income tax, with rates reaching roughly 13.3% at the very top, that applies to your net gig profit on top of federal tax. Pay California estimates to the Franchise Tax Board using Form 540-ES.",
+      "Your biggest deduction is business mileage at the IRS standard mileage rate, alongside the business-use share of your phone, supplies, tolls, and parking. App-based drivers are generally treated as independent contractors under Proposition 22.",
+      "Federal and California estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/texas-gig-worker-taxes",
+    externalLinks: TX_TAX_LINKS,
+    title:
+      "Texas Gig Worker Taxes: No State Income Tax, but SE Tax Still Applies | UnifyOne",
+    description:
+      "Texas gig worker taxes: there's no Texas state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    body: [
+      "Texas has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Track business mileage and deduct it at the IRS standard mileage rate — usually the largest deduction — along with the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not you get a 1099.",
+      "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/florida-gig-worker-taxes",
+    externalLinks: FL_TAX_LINKS,
+    title:
+      "Florida Gig Worker Taxes: No State Income Tax, Federal & SE Tax Only | UnifyOne",
+    description:
+      "Florida gig worker taxes: no Florida state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    body: [
+      "Florida has no personal state income tax, so there's no state income-tax return on your gig earnings and no state estimated payments to make.",
+      "Federal taxes still apply the same as everywhere else: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Deduct business mileage at the IRS standard mileage rate — typically your biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking. You must report all income whether or not a platform sends a 1099.",
+      "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/new-york-gig-worker-taxes",
+    externalLinks: NY_TAX_LINKS,
+    title:
+      "New York Gig Worker Taxes: State & NYC Income Tax, SE Tax, IT-2105 | UnifyOne",
+    description:
+      "New York gig worker taxes: the 15.3% federal SE tax plus NY state income tax (and NYC local tax for city residents), estimated via Form IT-2105. Not advice.",
+    body: [
+      "New York gig platforms pay you as an independent contractor with nothing withheld, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "New York also levies a progressive state income tax on your net gig profit, and New York City residents owe an additional NYC local income tax on the same earnings. Pay state estimates to the Department of Taxation and Finance using Form IT-2105.",
+      "Your largest deduction is business mileage at the IRS standard mileage rate, plus the business-use share of your phone, supplies, tolls, and parking — lowering both federal and New York taxable income.",
+      "Federal and state estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/illinois-gig-worker-taxes",
+    externalLinks: IL_TAX_LINKS,
+    title:
+      "Illinois Gig Worker Taxes: Flat State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Illinois gig worker taxes: a flat state income tax (around 4.95%) plus the 15.3% federal SE tax, with IL-1040-ES estimates. Not tax advice.",
+    body: [
+      "Illinois gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Illinois has a flat state income tax of roughly 4.95% (confirm the current rate with the Illinois Department of Revenue) that applies to your net gig profit on top of federal tax. Pay state estimates using Form IL-1040-ES.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering your federal and Illinois taxable income.",
+      "Federal and Illinois estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/washington-gig-worker-taxes",
+    externalLinks: WA_TAX_LINKS,
+    title:
+      "Washington Gig Worker Taxes: No State Income Tax, Federal & SE Tax | UnifyOne",
+    description:
+      "Washington gig worker taxes: no personal state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    body: [
+      "Washington has no personal state income tax, so you won't file a state income-tax return on your ordinary gig earnings and there are no state income-tax estimates to make.",
+      "Federal taxes still apply in full: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
+      "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
     ],
   },
   {
