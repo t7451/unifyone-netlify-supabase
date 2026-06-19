@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { PLATFORM_TAX_GUIDES as PLATFORM_GUIDES } from "@/content/geo/platformTaxGuides";
 
 const GEO_GUIDES = [
   { path: "/gig-income-aggregator", label: "Consolidate gig income" },
@@ -11,11 +12,12 @@ const GEO_GUIDES = [
   { path: "/gig-route-intelligence", label: "Gig route intelligence" },
 ];
 
-const PLATFORM_TAX_GUIDES = [
-  { path: "/doordash-taxes", label: "DoorDash taxes" },
-  { path: "/uber-driver-taxes", label: "Uber driver taxes" },
-  { path: "/instacart-taxes", label: "Instacart taxes" },
-];
+// Derived from the centralized platform-guide content so slugs/labels can't
+// drift out of sync with the actual pages.
+const PLATFORM_TAX_GUIDES = PLATFORM_GUIDES.map(guide => ({
+  path: `/${guide.slug}`,
+  label: `${guide.platform} taxes`,
+}));
 
 const KEY_TOOLS = [
   { path: "/tools/earnings-consolidator", label: "Earnings Consolidator" },
