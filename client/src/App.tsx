@@ -115,6 +115,7 @@ const GigRouteIntelligence = lazy(
 );
 const PlatformTaxGuide = lazy(() => import("./pages/geo/PlatformTaxGuide"));
 const GigTaxesHub = lazy(() => import("./pages/geo/GigTaxesHub"));
+const HowToFileGigTaxes = lazy(() => import("./pages/geo/HowToFileGigTaxes"));
 const DigitalRetailGuidePost = lazy(
   () => import("./pages/blog/DigitalRetailGuidePost")
 );
@@ -704,6 +705,15 @@ function Router() {
         component={() => (
           <>
             <PlatformTaxGuide slug="instacart-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/how-to-file-gig-worker-taxes"
+        component={() => (
+          <>
+            <HowToFileGigTaxes />
             <GigResourceLinks />
           </>
         )}

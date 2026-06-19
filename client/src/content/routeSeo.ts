@@ -316,6 +316,19 @@ export const ROUTE_SEO: RouteSeo[] = [
     ],
   },
   {
+    path: "/how-to-file-gig-worker-taxes",
+    externalLinks: [IRS.selfEmployedCenter, IRS.estimated, IRS.seTax],
+    title: "How to File Taxes as a Gig Worker: Step-by-Step | UnifyOne",
+    description:
+      "File gig worker taxes step by step: gather 1099s, total income, complete Schedule C and Schedule SE, finish Form 1040, and set up quarterly payments.",
+    body: [
+      "Filing as a 1099 gig worker follows a predictable order. Start by gathering every 1099-NEC and 1099-K your platforms issued, plus your own earnings records and mileage log — then total your gross income and report all of it, even amounts under $600 or income that never generated a form.",
+      "Report that income and your business deductions on Schedule C to arrive at your net profit. Deductions like business mileage at the IRS standard mileage rate, phone use, supplies, tolls, and platform fees lower the profit you're taxed on, so accurate year-round records matter.",
+      "Calculate self-employment tax on Schedule SE — 15.3% (12.4% Social Security + 2.9% Medicare) on your net earnings — then carry your net profit and SE tax to Form 1040, where you deduct half of the self-employment tax. File a state return too if your state has an income tax.",
+      "Going forward, the IRS generally expects quarterly estimated payments via Form 1040-ES if you'll owe $1,000 or more, due around April 15, June 15, September 15, and January 15. The annual return is generally due around April 15. You can file with IRS Free File, commercial software, or a tax professional.",
+    ],
+  },
+  {
     path: "/doordash-taxes",
     externalLinks: DOORDASH_TAX_LINKS,
     title:
