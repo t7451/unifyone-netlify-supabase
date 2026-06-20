@@ -280,6 +280,219 @@ export const PLATFORM_COMPARISONS: PlatformComparison[] = [
       },
     ],
   },
+  {
+    slug: "doordash-vs-grubhub",
+    platformA: "DoorDash",
+    platformB: "Grubhub",
+    eyebrow: "Gig Platform Comparison",
+    title: "DoorDash vs Grubhub: Which Pays More for Drivers?",
+    metaDescription:
+      "DoorDash vs Grubhub compared on how pay is structured, fees, 1099 forms, mileage, scheduling, and payout speed — plus how to compute your own net pay.",
+    h1: "DoorDash vs Grubhub: Which Pays More for Drivers?",
+    intro:
+      "DoorDash and Grubhub both pay couriers as independent contractors to deliver prepared food, and on both apps your take-home depends far more on your market and hours than on the brand. Rather than quote pay numbers that go stale the moment demand shifts, this guide compares the two on the structural factors that actually drive net pay — then shows you how to measure your own real hourly rate on each so you can decide with your own data.",
+    dimensions: [
+      {
+        aspect: "How pay is structured",
+        a: "Per-offer: each delivery shows a guaranteed base pay plus promotions and 100% of tips before you accept it.",
+        b: "Per-offer: each delivery shows a base pay (calculated from mileage and time) plus promotions and 100% of tips before you accept it.",
+      },
+      {
+        aspect: "Promotions / surge",
+        a: "Peak Pay adds a per-delivery bonus in busy zones and times; Challenges pay extra for completing a set number of deliveries.",
+        b: "Special Offers and Mission bonuses add extra pay during busy periods or for completing a set number of deliveries.",
+      },
+      {
+        aspect: "Platform fees / commission",
+        a: "You're paid per completed offer; DoorDash's restaurant commission isn't deducted from your courier pay.",
+        b: "You're paid per completed offer; Grubhub's restaurant commission isn't deducted from your courier pay.",
+      },
+      {
+        aspect: "Tax forms issued",
+        a: "1099-NEC if you earn $600 or more in a year (delivered through Stripe).",
+        b: "1099-NEC if you earn $600 or more in a year (delivered through its payment processor).",
+      },
+      {
+        aspect: "Mileage / expense profile",
+        a: "Car-based delivery; you track and deduct every business mile. DoorDash reports limited mileage, so keep your own log.",
+        b: "Car-based delivery (bikes/scooters in some cities); track every business mile. Keep your own log, since reported mileage is limited.",
+      },
+      {
+        aspect: "Scheduling / flexibility",
+        a: "Dash Now when zones are busy, or schedule a dash in advance; higher acceptance can unlock Top Dasher priority.",
+        b: "Schedule blocks in advance or tap on when regions are busy; a higher acceptance/attendance rating can unlock earlier scheduling access.",
+      },
+      {
+        aspect: "Payout speed",
+        a: "Weekly direct deposit by default; instant cash-out options are available, sometimes for a fee.",
+        b: "Weekly direct deposit by default; Instant Cashout lets you cash out more frequently, sometimes for a fee.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does DoorDash or Grubhub pay more for drivers?",
+        a: COMPARE_YOUR_OWN_PAY_ANSWER,
+      },
+      {
+        q: "How is pay structured on DoorDash vs Grubhub?",
+        a: "Both are per-offer: you see an amount plus promotions and tips before accepting each delivery. DoorDash shows a guaranteed base plus Peak Pay and Challenges; Grubhub calculates base pay from mileage and time and adds Special Offers and Missions. Neither deducts the restaurant's commission from your courier pay.",
+      },
+      {
+        q: "What tax forms do DoorDash and Grubhub send?",
+        a: "Both treat you as an independent contractor with no tax withheld, and both issue a 1099-NEC if you earn $600 or more in a year (DoorDash through Stripe; Grubhub through its payment processor). You owe income tax plus the 15.3% self-employment tax on net earnings, and you must report all income regardless of which forms arrive.",
+      },
+      {
+        q: "Can I drive for both DoorDash and Grubhub at the same time?",
+        a: "Yes — many couriers run both apps to reduce idle time between offers and accept whichever delivery pays better at the moment. Just track mileage and earnings per platform so you can see which one actually nets more in your market, and report income from both.",
+      },
+      {
+        q: "How do I figure out which one nets me more per hour?",
+        a: "Work a few comparable shifts on each, log your active hours and the miles you drove, then divide net earnings (after mileage and expenses) by hours. The free Real Hourly Rate calculator and Earnings Consolidator do this so you can compare both platforms side by side.",
+      },
+    ],
+  },
+  {
+    slug: "amazon-flex-vs-spark",
+    platformA: "Amazon Flex",
+    platformB: "Spark",
+    eyebrow: "Gig Platform Comparison",
+    title: "Amazon Flex vs Spark: Which Delivery Gig Is Better?",
+    metaDescription:
+      "Amazon Flex vs Walmart Spark compared on how pay works (blocks vs offers), fees, 1099 forms, mileage, scheduling, and payouts — plus how to find your net pay.",
+    h1: "Amazon Flex vs Spark: Which Delivery Gig Is Better?",
+    intro:
+      "Amazon Flex and the Walmart Spark Driver program are both independent-contractor delivery gigs, but they're structured differently: Amazon Flex pays for reserved delivery blocks of a set length, while Spark pays per accepted delivery offer. That changes how your time and mileage look. Instead of quoting earnings that shift by market and week, this guide compares the two structurally and shows you how to measure your own net hourly rate on each.",
+    dimensions: [
+      {
+        aspect: "How pay is structured",
+        a: "Per-block: you reserve a delivery block of a set length that shows an estimated total before you accept; tips (for Amazon-store/grocery deliveries) are added after.",
+        b: "Per-offer: each delivery or trip shows an estimated payment plus 100% of tips before you accept.",
+      },
+      {
+        aspect: "Promotions / bonuses",
+        a: "Surge blocks pay more when demand is high; estimated block pay can rise during busy windows.",
+        b: "Incentives and bonus offers add extra pay during busy periods or for completing a set number of trips.",
+      },
+      {
+        aspect: "Platform fees / commission",
+        a: "You're paid per completed block; no separate platform commission is deducted from your driver pay.",
+        b: "You're paid per completed offer; no separate platform commission is deducted from your driver pay.",
+      },
+      {
+        aspect: "Tax forms issued",
+        a: "1099-NEC if you earn $600 or more in a year, delivered through Amazon's tax-document portal.",
+        b: "1099-NEC if you earn $600 or more in a year, delivered through its payment partner.",
+      },
+      {
+        aspect: "Mileage / expense profile",
+        a: "Car-based; deduct every business mile, including miles between stops on a route. Keep your own log, since reported mileage is limited.",
+        b: "Car-based; deduct every business mile, including miles to the store and between stops. Keep your own log, since reported mileage is limited.",
+      },
+      {
+        aspect: "Scheduling / flexibility",
+        a: "You reserve blocks in advance (or grab same-day blocks when available); you commit to the block's window once accepted.",
+        b: "You browse and accept available offers, or schedule reservations where offered; more tap-on, tap-off than fixed blocks.",
+      },
+      {
+        aspect: "Payout speed",
+        a: "Direct deposit on a set schedule (typically twice a week); availability of instant options varies.",
+        b: "Direct deposit through its payment partner, often available frequently; an instant cash-out option is also offered, sometimes for a fee.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Is Amazon Flex or Spark better for delivery drivers?",
+        a: COMPARE_YOUR_OWN_PAY_ANSWER,
+      },
+      {
+        q: "How is pay different on Amazon Flex vs Spark?",
+        a: "Amazon Flex pays for reserved blocks of a set length — you see an estimated block total before accepting, and tips on eligible deliveries are added after. Spark pays per accepted offer with an estimate plus tips shown upfront. Because a Flex block is a fixed time commitment and Spark is offer-by-offer, compare them on net pay per active hour rather than per stop.",
+      },
+      {
+        q: "What tax forms do Amazon Flex and Spark send?",
+        a: "Both pay you as an independent contractor with nothing withheld, and both issue a 1099-NEC if you earn $600 or more in a year (Amazon through its tax-document portal; Spark through its payment partner). You owe income tax plus the 15.3% self-employment tax on net earnings, and you must report all income whether or not a form arrives.",
+      },
+      {
+        q: "Can I do both Amazon Flex and Spark?",
+        a: "Yes — many drivers run both to fill their schedule, reserving Flex blocks when they want guaranteed hours and taking Spark offers around them. Track mileage and earnings per app so you can see which nets more of your time in your area, and report income from both.",
+      },
+      {
+        q: "How do I compare my real earnings on each?",
+        a: "Work a few comparable shifts on each, record your active hours and the miles you drove, then divide net earnings after expenses by hours. The free Real Hourly Rate calculator and Earnings Consolidator compute this so you can compare both directly.",
+      },
+    ],
+  },
+  {
+    slug: "instacart-vs-shipt",
+    platformA: "Instacart",
+    platformB: "Shipt",
+    eyebrow: "Gig Platform Comparison",
+    title: "Instacart vs Shipt: Which Is Better for Shoppers?",
+    metaDescription:
+      "Instacart vs Shipt compared on how pay works, fees, 1099 forms, mileage, scheduling, and payout speed — plus how to compute your own net pay as a shopper.",
+    h1: "Instacart vs Shipt: Which Is Better for Shoppers?",
+    intro:
+      "Instacart and Shipt are the two largest grocery-shopping gig apps, and both pay shoppers as independent contractors to shop a cart and deliver it. The work is similar — you shop in-store, then drive the order to the customer — so which one nets you more comes down to your market, the hours you work, and your vehicle costs. Rather than quote per-hour figures that vary city to city, this guide compares them on the factors that drive net pay and shows you how to measure your own real hourly rate on each.",
+    dimensions: [
+      {
+        aspect: "How pay is structured",
+        a: "Per-batch: each batch shows an estimated payment (a base plus factors like item count and distance) and tips before you accept.",
+        b: "Per-order: each order shows an estimated payment (factoring in the order's effort) plus tips; on some markets pay is shown before you claim it.",
+      },
+      {
+        aspect: "Promotions / bonuses",
+        a: "Peak Boost adds extra pay during busy windows; tips can be a large share of a batch and may adjust after delivery.",
+        b: "Promo pay and bonuses add extra during busy periods; tips can be a large share of an order and may adjust after delivery.",
+      },
+      {
+        aspect: "Platform fees / commission",
+        a: "You're paid per completed batch; Instacart's customer service/markup fees aren't deducted from your shopper pay.",
+        b: "You're paid per completed order; Shipt's customer membership/fees aren't deducted from your shopper pay.",
+      },
+      {
+        aspect: "Tax forms issued",
+        a: "Full-service shoppers get a 1099-NEC at $600 or more (in-store-only shoppers are W-2 employees instead).",
+        b: "1099-NEC if you earn $600 or more in a year, delivered through its payment processor.",
+      },
+      {
+        aspect: "Mileage / expense profile",
+        a: "Car-based; deduct business miles. You also spend time on foot in-store, which isn't mileage but is still working time.",
+        b: "Car-based; deduct business miles. You also spend time on foot in-store, which isn't mileage but is still working time.",
+      },
+      {
+        aspect: "Scheduling / flexibility",
+        a: "You browse and claim available batches; early access to batches can be tied to a shopper rating.",
+        b: "You can claim open orders or schedule availability windows; a higher shopper rating can unlock earlier access to orders.",
+      },
+      {
+        aspect: "Payout speed",
+        a: "Weekly direct deposit by default; Instant Cashout is available, sometimes for a fee.",
+        b: "Weekly direct deposit by default; Instant Pay lets you cash out more frequently, sometimes for a fee.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Is Instacart or Shipt better for shoppers?",
+        a: COMPARE_YOUR_OWN_PAY_ANSWER,
+      },
+      {
+        q: "How is pay different on Instacart vs Shipt?",
+        a: "Both pay you to shop and deliver groceries, and on both your time includes shopping in-store plus driving. Instacart pays per batch — an estimated amount based on factors like item count and distance, plus tips. Shipt pays per order with an estimate that factors in the order's effort, plus tips. Because both bundle shopping time into the job, compare them on net pay per active hour rather than per order.",
+      },
+      {
+        q: "What tax forms do Instacart and Shipt send?",
+        a: "Both pay shoppers as independent contractors with nothing withheld, and both issue a 1099-NEC if you earn $600 or more in a year. One nuance: Instacart in-store-only shoppers are W-2 part-time employees, while full-service shoppers (who also deliver) get the 1099-NEC; all Shipt shoppers who deliver are independent contractors. You owe income tax plus the 15.3% self-employment tax on net earnings, and you must report all income whether or not a form arrives.",
+      },
+      {
+        q: "Can I shop for both Instacart and Shipt?",
+        a: "Yes — many shoppers run both to fill gaps, claiming batches on one app and orders on the other depending on demand. Track mileage and earnings per app so you can see which nets more of your time in your area, and report income from both.",
+      },
+      {
+        q: "How do I compare my real earnings on each?",
+        a: "Work a few comparable shifts on each, record your active hours (shopping plus driving) and the miles you drove, then divide net earnings after expenses by hours. The free Real Hourly Rate calculator and Earnings Consolidator compute this so you can compare both directly.",
+      },
+    ],
+  },
 ];
 
 export function getPlatformComparison(
