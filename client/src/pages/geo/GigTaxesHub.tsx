@@ -2,6 +2,19 @@ import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 import { PLATFORM_TAX_GUIDES } from "@/content/geo/platformTaxGuides";
+import { STATE_TAX_GUIDES } from "@/content/geo/stateTaxGuides";
+import { PLATFORM_COMPARISONS } from "@/content/geo/platformComparisons";
+
+/** Standalone explainers/guides in the gig-tax cluster. */
+const MORE_GUIDES = [
+  { href: "/1099-nec-vs-1099-k", label: "1099-NEC vs 1099-K explained" },
+  { href: "/gig-worker-tax-deductions", label: "Tax deductions checklist" },
+  {
+    href: "/how-to-file-gig-worker-taxes",
+    label: "How to file, step by step",
+  },
+  { href: "/gig-quarterly-taxes", label: "Quarterly estimated taxes" },
+];
 
 const CANONICAL = `${SITE_URL}/gig-taxes`;
 
@@ -177,6 +190,64 @@ export default function GigTaxesHub() {
                 <p className="text-xs text-muted-foreground mt-1">
                   Guide for {g.workerNoun}
                 </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">Taxes by state</h2>
+          <p className="text-muted-foreground text-sm mb-4">
+            State income tax varies — some states have none. See how your state
+            treats gig income on top of federal self-employment tax.
+          </p>
+          <div className="grid sm:grid-cols-3 gap-3">
+            {STATE_TAX_GUIDES.map(s => (
+              <Link
+                key={s.slug}
+                href={`/${s.slug}`}
+                className="rounded-lg border p-4 hover:bg-muted transition-colors block"
+              >
+                <p className="text-sm font-semibold">{s.state} →</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Gig worker taxes
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">Compare platforms</h2>
+          <p className="text-muted-foreground text-sm mb-4">
+            Deciding where to drive? Compare how pay, fees, and tax forms stack
+            up — then compute your own net pay.
+          </p>
+          <div className="grid sm:grid-cols-3 gap-3">
+            {PLATFORM_COMPARISONS.map(c => (
+              <Link
+                key={c.slug}
+                href={`/${c.slug}`}
+                className="rounded-lg border p-4 hover:bg-muted transition-colors block"
+              >
+                <p className="text-sm font-semibold">
+                  {c.platformA} vs {c.platformB} →
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">More tax guides</h2>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {MORE_GUIDES.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="rounded-lg border p-4 hover:bg-muted transition-colors block"
+              >
+                <p className="text-sm font-medium">{label} →</p>
               </Link>
             ))}
           </div>

@@ -115,6 +115,12 @@ const GigRouteIntelligence = lazy(
 );
 const PlatformTaxGuide = lazy(() => import("./pages/geo/PlatformTaxGuide"));
 const GigTaxesHub = lazy(() => import("./pages/geo/GigTaxesHub"));
+const StateTaxGuide = lazy(() => import("./pages/geo/StateTaxGuide"));
+const PlatformComparison = lazy(() => import("./pages/geo/PlatformComparison"));
+const Form1099Explainer = lazy(() => import("./pages/geo/Form1099Explainer"));
+const GigDeductionsGuide = lazy(() => import("./pages/geo/GigDeductionsGuide"));
+const HowToFileGigTaxes = lazy(() => import("./pages/geo/HowToFileGigTaxes"));
+const GigQuarterlyTaxes = lazy(() => import("./pages/geo/GigQuarterlyTaxes"));
 const DigitalRetailGuidePost = lazy(
   () => import("./pages/blog/DigitalRetailGuidePost")
 );
@@ -704,6 +710,126 @@ function Router() {
         component={() => (
           <>
             <PlatformTaxGuide slug="instacart-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      {/* Gig-tax cluster: state guides */}
+      <Route
+        path="/california-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="california-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/texas-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="texas-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/florida-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="florida-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/new-york-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="new-york-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/illinois-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="illinois-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/washington-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="washington-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      {/* Gig-tax cluster: platform comparisons */}
+      <Route
+        path="/doordash-vs-uber-eats"
+        component={() => (
+          <>
+            <PlatformComparison slug="doordash-vs-uber-eats" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/instacart-vs-doordash"
+        component={() => (
+          <>
+            <PlatformComparison slug="instacart-vs-doordash" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/uber-vs-lyft-driver"
+        component={() => (
+          <>
+            <PlatformComparison slug="uber-vs-lyft-driver" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      {/* Gig-tax cluster: explainers & guides */}
+      <Route
+        path="/1099-nec-vs-1099-k"
+        component={() => (
+          <>
+            <Form1099Explainer />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gig-worker-tax-deductions"
+        component={() => (
+          <>
+            <GigDeductionsGuide />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/how-to-file-gig-worker-taxes"
+        component={() => (
+          <>
+            <HowToFileGigTaxes />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gig-quarterly-taxes"
+        component={() => (
+          <>
+            <GigQuarterlyTaxes />
             <GigResourceLinks />
           </>
         )}

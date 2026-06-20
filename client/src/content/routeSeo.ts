@@ -76,7 +76,269 @@ const INSTACART_TAX_LINKS = [
   { label: "Instacart", url: "https://www.instacart.com" },
 ];
 
+// ── Gig-tax cluster: state guides, platform comparisons, explainers ──────────
+// State tax-agency links for the state-level gig-worker tax guides. Each guide
+// pairs the IRS self-employed/estimated/SE-tax links with its state's agency so
+// the prerendered page ships an authoritative outbound link profile.
+const CA_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "California Franchise Tax Board (Form 540-ES)",
+    url: "https://www.ftb.ca.gov/pay/estimated-tax-payments.html",
+  },
+];
+const TX_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  { label: "Texas Comptroller", url: "https://comptroller.texas.gov/" },
+];
+const FL_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Florida Department of Revenue",
+    url: "https://floridarevenue.com/",
+  },
+];
+const NY_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "NY Dept. of Taxation and Finance (Form IT-2105)",
+    url: "https://www.tax.ny.gov/pit/estimated_tax/default.htm",
+  },
+];
+const IL_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Illinois Department of Revenue (Form IL-1040-ES)",
+    url: "https://tax.illinois.gov/individuals/estimatedpayments.html",
+  },
+];
+const WA_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Washington Department of Revenue",
+    url: "https://dor.wa.gov/",
+  },
+];
+
+// Authoritative resources for the gig platform comparison guides. The IRS
+// self-employed center + estimated taxes anchor the (educational, not advice)
+// tax framing; the two platform sites being compared give each page a real,
+// relevant outbound link profile.
+const PLATFORM_LINKS = {
+  doordash: { label: "DoorDash", url: "https://www.doordash.com" },
+  uberEats: { label: "Uber Eats", url: "https://www.ubereats.com" },
+  uber: { label: "Uber", url: "https://www.uber.com" },
+  lyft: { label: "Lyft", url: "https://www.lyft.com" },
+  instacart: { label: "Instacart", url: "https://www.instacart.com" },
+};
+const DOORDASH_VS_UBER_EATS_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.doordash,
+  PLATFORM_LINKS.uberEats,
+];
+const INSTACART_VS_DOORDASH_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.instacart,
+  PLATFORM_LINKS.doordash,
+];
+const UBER_VS_LYFT_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.uber,
+  PLATFORM_LINKS.lyft,
+];
+
 export const ROUTE_SEO: RouteSeo[] = [
+  {
+    path: "/california-gig-worker-taxes",
+    externalLinks: CA_TAX_LINKS,
+    title:
+      "California Gig Worker Taxes: SE Tax, State Income Tax & Estimates | UnifyOne",
+    description:
+      "California gig worker taxes: the 15.3% federal SE tax plus CA state income tax, FTB estimated payments (Form 540-ES), mileage deductions. Not tax advice.",
+    body: [
+      "Gig platforms pay California workers as independent contractors and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "California also has a progressive state income tax, with rates reaching roughly 13.3% at the very top, that applies to your net gig profit on top of federal tax. Pay California estimates to the Franchise Tax Board using Form 540-ES.",
+      "Your biggest deduction is business mileage at the IRS standard mileage rate, alongside the business-use share of your phone, supplies, tolls, and parking. App-based drivers are generally treated as independent contractors under Proposition 22.",
+      "Federal and California estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/texas-gig-worker-taxes",
+    externalLinks: TX_TAX_LINKS,
+    title:
+      "Texas Gig Worker Taxes: No State Income Tax, but SE Tax Still Applies | UnifyOne",
+    description:
+      "Texas gig worker taxes: there's no Texas state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    body: [
+      "Texas has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Track business mileage and deduct it at the IRS standard mileage rate — usually the largest deduction — along with the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not you get a 1099.",
+      "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/florida-gig-worker-taxes",
+    externalLinks: FL_TAX_LINKS,
+    title:
+      "Florida Gig Worker Taxes: No State Income Tax, Federal & SE Tax Only | UnifyOne",
+    description:
+      "Florida gig worker taxes: no Florida state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    body: [
+      "Florida has no personal state income tax, so there's no state income-tax return on your gig earnings and no state estimated payments to make.",
+      "Federal taxes still apply the same as everywhere else: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Deduct business mileage at the IRS standard mileage rate — typically your biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking. You must report all income whether or not a platform sends a 1099.",
+      "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/new-york-gig-worker-taxes",
+    externalLinks: NY_TAX_LINKS,
+    title:
+      "New York Gig Worker Taxes: State & NYC Income Tax, SE Tax, IT-2105 | UnifyOne",
+    description:
+      "New York gig worker taxes: the 15.3% federal SE tax plus NY state income tax (and NYC local tax for city residents), estimated via Form IT-2105. Not advice.",
+    body: [
+      "New York gig platforms pay you as an independent contractor with nothing withheld, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "New York also levies a progressive state income tax on your net gig profit, and New York City residents owe an additional NYC local income tax on the same earnings. Pay state estimates to the Department of Taxation and Finance using Form IT-2105.",
+      "Your largest deduction is business mileage at the IRS standard mileage rate, plus the business-use share of your phone, supplies, tolls, and parking — lowering both federal and New York taxable income.",
+      "Federal and state estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/illinois-gig-worker-taxes",
+    externalLinks: IL_TAX_LINKS,
+    title:
+      "Illinois Gig Worker Taxes: Flat State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Illinois gig worker taxes: a flat state income tax (around 4.95%) plus the 15.3% federal SE tax, with IL-1040-ES estimates. Not tax advice.",
+    body: [
+      "Illinois gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Illinois has a flat state income tax of roughly 4.95% (confirm the current rate with the Illinois Department of Revenue) that applies to your net gig profit on top of federal tax. Pay state estimates using Form IL-1040-ES.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering your federal and Illinois taxable income.",
+      "Federal and Illinois estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/washington-gig-worker-taxes",
+    externalLinks: WA_TAX_LINKS,
+    title:
+      "Washington Gig Worker Taxes: No State Income Tax, Federal & SE Tax | UnifyOne",
+    description:
+      "Washington gig worker taxes: no personal state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    body: [
+      "Washington has no personal state income tax, so you won't file a state income-tax return on your ordinary gig earnings and there are no state income-tax estimates to make.",
+      "Federal taxes still apply in full: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
+      "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/doordash-vs-uber-eats",
+    externalLinks: DOORDASH_VS_UBER_EATS_LINKS,
+    title: "DoorDash vs Uber Eats: Which Pays More for Drivers? | UnifyOne",
+    description:
+      "DoorDash vs Uber Eats compared on how pay is structured, fees, 1099 forms, mileage, scheduling, and payout speed — plus how to compute your own net pay.",
+    body: [
+      "DoorDash and Uber Eats both pay couriers as independent contractors, so neither withholds taxes and your take-home depends far more on your market and hours than on the app. There's no universal winner — the only number that matters is what you net per hour, which we show you how to compute rather than quoting figures that go stale.",
+      "Both apps are per-offer: each delivery shows a base or upfront amount plus promotions and tips before you accept. DoorDash adds Peak Pay and Challenges in busy periods; Uber Eats adds Surge/Boost zones and Quests. Neither deducts the restaurant's commission from your courier pay, and both default to weekly deposits with faster cash-out options for a possible fee.",
+      "On taxes, DoorDash issues a 1099-NEC if you earn $600 or more in a year. Uber may issue a 1099-NEC for incentives and referrals plus a 1099-K for processed delivery fares, with thresholds that change yearly. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income whether or not a form arrives.",
+      "To compare them honestly, run a few similar shifts on each, track your active hours and the business miles you drove, subtract mileage and expenses, and divide by hours. The free Real Hourly Rate calculator and Earnings Consolidator do that math. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/instacart-vs-doordash",
+    externalLinks: INSTACART_VS_DOORDASH_LINKS,
+    title: "Instacart vs DoorDash: Which Is Better for Gig Workers? | UnifyOne",
+    description:
+      "Instacart vs DoorDash compared on how pay works (batches vs offers), fees, 1099 forms, mileage, scheduling, and payouts — plus how to compute your net pay.",
+    body: [
+      "Instacart and DoorDash are both independent-contractor gig apps, but the work differs: Instacart full-service shoppers shop a cart and deliver groceries, while DoorDash Dashers pick up and drop off prepared orders. That changes how pay is structured and what your time and mileage look like, so which one is better depends on your market and how you value your time — not on a single pay figure.",
+      "Instacart pays per batch, an estimated amount based on factors like item count and distance plus tips, and your time includes shopping in-store. DoorDash pays per delivery offer with a base plus promotions and tips, and your time is mostly driving. Because Instacart batches include shopping time, compare them on net pay per active hour rather than per delivery.",
+      "Both withhold no taxes and issue a 1099-NEC at $600 or more in earnings; Instacart in-store-only shoppers are W-2 employees instead, while full-service shoppers who also deliver get the 1099-NEC. You owe income tax plus the 15.3% self-employment tax on combined net earnings, and you must report all income even if no form arrives.",
+      "To decide, work comparable shifts on each, log your active hours (shopping plus driving for Instacart) and your business miles, subtract mileage and expenses, and divide by hours. The free Real Hourly Rate calculator and Earnings Consolidator compute this for you. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/uber-vs-lyft-driver",
+    externalLinks: UBER_VS_LYFT_LINKS,
+    title: "Uber vs Lyft: Which Is Better for Drivers? | UnifyOne",
+    description:
+      "Uber vs Lyft for drivers, compared on how pay works, fees, 1099-K vs 1099-NEC, mileage, scheduling, and payout speed — plus how to compute your own net pay.",
+    body: [
+      "Uber and Lyft are the two largest US rideshare platforms, and both pay drivers as independent contractors. The apps are structurally similar — upfront fares, surge-style bonuses, and weekly or instant payouts — so which one nets you more comes down to your local market, the hours you drive, and your vehicle costs rather than the brand.",
+      "On both, you see an upfront estimated fare and trip details before accepting and keep 100% of tips, and both raise pay during high demand (Uber surge and promotions; Lyft Personal Power Zones and bonuses). Each takes a service fee out of every fare, which is a deductible business expense itemized on your Uber Tax Summary or Lyft Annual Summary.",
+      "Both issue similar tax forms: a 1099-K reporting the gross ride fares processed through the platform, plus a 1099-NEC for incentives, referrals, and bonuses; reporting thresholds change by year. You owe income tax plus the 15.3% self-employment tax on net earnings, and you must report all income regardless of which forms you receive.",
+      "To compare your own pay, drive comparable hours on each, log your active time and the business miles you drove (including miles between trips, which are often deductible), subtract fees, mileage, and expenses, and divide by hours. The free Real Hourly Rate calculator and Earnings Consolidator do this. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/1099-nec-vs-1099-k",
+    externalLinks: [IRS.selfEmployedCenter, IRS.estimated],
+    title: "1099-NEC vs 1099-K: What Gig Workers Need to Know | UnifyOne",
+    description:
+      "1099-NEC vs 1099-K for gig workers: what each form is, who issues which, why thresholds change yearly, and how both flow onto Schedule C. Not tax advice.",
+    body: [
+      "Gig workers can receive a 1099-NEC, a 1099-K, both, or neither. A 1099-NEC reports nonemployee compensation — money a business paid you directly for your services, such as DoorDash or Instacart delivery earnings. A 1099-K reports the gross amount of payments settled through a third-party platform or card processor, like the fares riders pay through Uber or Lyft. The forms describe how money reached you, not whether it is taxable.",
+      "Which form you get depends on how the platform pays you. DoorDash and Instacart generally issue a 1099-NEC; Uber and Lyft often send a 1099-K for gross fares plus a 1099-NEC for incentives and referrals. Their annual tax summaries reconcile the two so you can report each dollar once without double-counting overlapping amounts.",
+      "The IRS reporting thresholds that decide whether a platform must issue a form change from year to year, especially for the 1099-K — so confirm the current figures on IRS.gov rather than relying on a number you read online. Critically, a threshold only governs whether a form is sent; it never changes whether income is taxable. If no form arrives, you still owe income tax and the 15.3% self-employment tax on your net profit.",
+      "Both forms flow to the same place: gross income goes on Schedule C, where you subtract business expenses like the standard mileage deduction to reach net profit. That net profit carries to Schedule SE for self-employment tax and to Form 1040 for income tax. This page is educational, not tax advice — verify your situation with the IRS or a qualified professional.",
+    ],
+  },
+  {
+    path: "/how-to-file-gig-worker-taxes",
+    externalLinks: [IRS.selfEmployedCenter, IRS.estimated, IRS.seTax],
+    title: "How to File Taxes as a Gig Worker: Step-by-Step | UnifyOne",
+    description:
+      "File gig worker taxes step by step: gather 1099s, total income, complete Schedule C and Schedule SE, finish Form 1040, and set up quarterly payments.",
+    body: [
+      "Filing as a 1099 gig worker follows a predictable order. Start by gathering every 1099-NEC and 1099-K your platforms issued, plus your own earnings records and mileage log — then total your gross income and report all of it, even amounts under $600 or income that never generated a form.",
+      "Report that income and your business deductions on Schedule C to arrive at your net profit. Deductions like business mileage at the IRS standard mileage rate, phone use, supplies, tolls, and platform fees lower the profit you're taxed on, so accurate year-round records matter.",
+      "Calculate self-employment tax on Schedule SE — 15.3% (12.4% Social Security + 2.9% Medicare) on your net earnings — then carry your net profit and SE tax to Form 1040, where you deduct half of the self-employment tax. File a state return too if your state has an income tax.",
+      "Going forward, the IRS generally expects quarterly estimated payments via Form 1040-ES if you'll owe $1,000 or more, due around April 15, June 15, September 15, and January 15. The annual return is generally due around April 15. You can file with IRS Free File, commercial software, or a tax professional.",
+    ],
+  },
+  {
+    path: "/gig-quarterly-taxes",
+    externalLinks: [IRS.estimated, IRS.selfEmployedCenter, IRS.seTax],
+    title:
+      "Quarterly Estimated Taxes for Gig Workers: A Practical Guide | UnifyOne",
+    description:
+      "How quarterly estimated taxes work for gig workers: who pays, the four due dates, the safe-harbor rule, how to estimate and pay, and the underpayment penalty.",
+    body: [
+      "Gig platforms like DoorDash, Uber, and Instacart withhold no tax, so independent contractors pay the IRS in four installments through the year instead of once in April. As a general rule you should make estimated payments if you expect to owe $1,000 or more for the year after withholding and credits — and most gig workers do, because gig income carries both income tax and the 15.3% self-employment tax.",
+      "Federal estimated taxes are due four times a year, with deadlines that usually fall around April 15, June 15, September 15, and January 15 of the following year. Each date shifts to the next business day when it lands on a weekend or holiday, so confirm the current year's exact dates with the IRS.",
+      "To avoid an underpayment penalty, the safe-harbor rule says your payments and withholding should cover at least 90% of this year's tax or 100% of last year's tax — 110% if your prior-year adjusted gross income was over $150,000. Estimate each payment from your net earnings (income after deductions like mileage), then pay via IRS Direct Pay, EFTPS, or by mailing Form 1040-ES.",
+      "If you fall short, the IRS charges an underpayment penalty calculated like interest on the amount underpaid for the time it was late, not a flat fine. This guide is educational information, not tax advice — confirm thresholds, due dates, and rates with the IRS or a qualified tax professional.",
+    ],
+  },
+  {
+    path: "/gig-worker-tax-deductions",
+    externalLinks: [IRS.selfEmployedCenter, IRS.mileage, IRS.seTax],
+    title: "Gig Worker Tax Deductions: The Complete Checklist | UnifyOne",
+    description:
+      "The business expenses gig workers most often miss: mileage, phone, hot bags, tolls, platform fees, health insurance, half of SE tax & home office.",
+    body: [
+      "Gig workers are taxed on profit, not gross payouts, so every legitimate business expense you track lowers the income you pay tax on. This checklist covers the deductions DoorDash, Uber, Instacart, and other 1099 workers most commonly miss.",
+      "Business mileage is usually the largest deduction. You pick one method per vehicle for the year — the IRS standard mileage rate (70¢ per mile for 2025) or the actual-expense method for the business-use share of gas, insurance, repairs, and depreciation. You can't combine them, and the rate changes annually.",
+      "Other commonly missed write-offs include the business-use share of your phone and data, hot bags and equipment, tolls and parking paid while working, platform service fees, supplies, the self-employed health insurance deduction, and the deductible half of the 15.3% self-employment tax. A home office is deductible only with a space used regularly and exclusively for the business.",
+      "Deductions only count if you can substantiate them. Keep a contemporaneous mileage log noting the date, miles, and purpose of each trip, and save receipts for every expense. This is educational information, not tax advice — confirm current figures with the IRS or a tax professional.",
+    ],
+  },
   {
     path: "/architecture",
     title: "Architecture | UnifyOne by 1Commerce",
