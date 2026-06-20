@@ -216,7 +216,9 @@ export default function Form1099Explainer() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/40 text-left">
-                  <th className="p-3 font-semibold w-1/4"> </th>
+                  <th className="p-3 font-semibold w-1/4">
+                    <span className="sr-only">Category</span>
+                  </th>
                   <th className="p-3 font-semibold">1099-NEC</th>
                   <th className="p-3 font-semibold">1099-K</th>
                 </tr>

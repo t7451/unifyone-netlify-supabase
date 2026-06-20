@@ -150,7 +150,7 @@ const jsonLd = [
       {
         "@type": "HowToStep",
         name: "Calculate your quarterly payments",
-        text: "Click 'Calculate quarterly payments' to see your self-employment tax, federal income tax, total annual tax, and the four equal quarterly payment amounts due April 15, June 16, September 15, 2026, and January 15, 2027.",
+        text: "Click 'Calculate quarterly payments' to see your self-employment tax, federal income tax, total annual tax, and the four equal quarterly payment amounts due April 15, June 15, September 15, 2026, and January 15, 2027.",
       },
     ],
   },
