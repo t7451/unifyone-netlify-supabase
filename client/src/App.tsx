@@ -117,6 +117,9 @@ const PlatformTaxGuide = lazy(() => import("./pages/geo/PlatformTaxGuide"));
 const GigTaxesHub = lazy(() => import("./pages/geo/GigTaxesHub"));
 const StateTaxGuide = lazy(() => import("./pages/geo/StateTaxGuide"));
 const PlatformComparison = lazy(() => import("./pages/geo/PlatformComparison"));
+const GettingStartedGuide = lazy(
+  () => import("./pages/geo/GettingStartedGuide")
+);
 const Form1099Explainer = lazy(() => import("./pages/geo/Form1099Explainer"));
 const GigDeductionsGuide = lazy(() => import("./pages/geo/GigDeductionsGuide"));
 const HowToFileGigTaxes = lazy(() => import("./pages/geo/HowToFileGigTaxes"));
@@ -976,6 +979,43 @@ function Router() {
         component={() => (
           <>
             <PlatformComparison slug="instacart-vs-shipt" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      {/* Getting-started cluster: "how to make money on <platform>" guides */}
+      <Route
+        path="/how-to-make-money-on-doordash"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-on-doordash" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/how-to-make-money-driving-for-uber"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-driving-for-uber" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/how-to-make-money-with-instacart"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-with-instacart" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/how-to-make-money-with-amazon-flex"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-with-amazon-flex" />
             <GigResourceLinks />
           </>
         )}
