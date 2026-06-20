@@ -243,6 +243,22 @@ export default function ToolsIndex() {
               { label: "Uber driver taxes", href: "/uber-driver-taxes" },
               { label: "Instacart taxes", href: "/instacart-taxes" },
               {
+                label: "How to make money on DoorDash",
+                href: "/how-to-make-money-on-doordash",
+              },
+              {
+                label: "How to make money driving for Uber",
+                href: "/how-to-make-money-driving-for-uber",
+              },
+              {
+                label: "How to make money with Instacart",
+                href: "/how-to-make-money-with-instacart",
+              },
+              {
+                label: "How to make money with Amazon Flex",
+                href: "/how-to-make-money-with-amazon-flex",
+              },
+              {
                 label: "Consolidate gig income",
                 href: "/gig-income-aggregator",
               },

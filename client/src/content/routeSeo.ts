@@ -195,6 +195,33 @@ const SHIPT_TAX_LINKS = [
   { label: "Shipt", url: "https://www.shipt.com" },
 ];
 
+// Getting-started ("how to make money on <platform>") guides: the platform's
+// own signup/driver page anchors each page's outbound profile, paired with the
+// IRS self-employed center so the (educational, not advice) tax framing is
+// authoritative. No earnings figures are quoted on these pages.
+const DOORDASH_START_LINKS = [
+  { label: "Become a Dasher (DoorDash)", url: "https://dasher.doordash.com" },
+  PLATFORM_LINKS.doordash,
+  IRS.selfEmployedCenter,
+];
+const UBER_START_LINKS = [
+  { label: "Drive with Uber", url: "https://www.uber.com/us/en/drive/" },
+  PLATFORM_LINKS.uber,
+  IRS.selfEmployedCenter,
+];
+const INSTACART_START_LINKS = [
+  {
+    label: "Become an Instacart shopper",
+    url: "https://shoppers.instacart.com",
+  },
+  PLATFORM_LINKS.instacart,
+  IRS.selfEmployedCenter,
+];
+const AMAZON_FLEX_START_LINKS = [
+  { label: "Amazon Flex", url: "https://flex.amazon.com" },
+  IRS.selfEmployedCenter,
+];
+
 export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/amazon-flex-taxes",
@@ -718,6 +745,58 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Full-service shoppers who earned $600 or more receive a 1099-NEC, usually delivered through Stripe by late January. You must report all income even if a form doesn't arrive.",
       "Full-service shoppers can deduct business mileage at the IRS standard mileage rate, plus phone use, insulated bags, and other supplies. A common rule of thumb is to set aside 25–30% of net earnings for self-employment and income tax.",
       "Independent-contractor shoppers generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an underpayment penalty.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-on-doordash",
+    externalLinks: DOORDASH_START_LINKS,
+    title: "How to Make Money on DoorDash: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money on DoorDash: requirements, how to sign up, how Dasher pay works, and how to compute your real net hourly rate. Beginner's guide.",
+    body: [
+      "DoorDash lets you earn on your own schedule by delivering food and other orders nearby. Dashers are independent contractors who use their own car, bike, or scooter, choose when to work, and accept or decline each delivery offer.",
+      "To start you generally need to be at least 18, have a way to deliver, carry a smartphone, and pass a background check. Requirements vary by market and change over time, so confirm the current criteria with DoorDash before applying.",
+      "Pay is per delivery — base pay plus any active promotions, with 100% of customer tips on top — and there is no guaranteed wage. Because no taxes are withheld and you cover your own gas and vehicle wear, your gross earnings overstate your take-home.",
+      "To know what you'd really make, track a few shifts and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-driving-for-uber",
+    externalLinks: UBER_START_LINKS,
+    title: "How to Make Money Driving for Uber: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money driving for Uber: requirements, how to sign up, how driver pay works, and how to compute your real net hourly rate. Beginner's guide.",
+    body: [
+      "Driving for Uber lets you earn by giving rides on your own schedule in your own car. Drivers are independent contractors who decide when to go online, where to drive, and which trips to accept in the app.",
+      "Rideshare driving typically requires you to be at least 21, have an eligible four-door vehicle, carry valid insurance and registration, and pass a background and driving-record check. Requirements vary by city and change, so confirm the current criteria with Uber.",
+      "Uber shows an upfront fare before you accept, with surge pricing and promotions during high demand and 100% of tips on top. There's no guaranteed wage, Uber takes a service fee from fares, and you pay for your own gas and vehicle costs.",
+      "To understand your real earnings, track a few shifts and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay after costs. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-with-instacart",
+    externalLinks: INSTACART_START_LINKS,
+    title: "How to Make Money with Instacart: A Shopper's Guide | UnifyOne",
+    description:
+      "How to make money with Instacart: requirements, how to sign up, how full-service shopper pay works, and how to compute your real net hourly rate.",
+    body: [
+      "Instacart lets you earn by shopping for groceries and delivering them on your own schedule. Full-service shoppers are independent contractors who use their own car to shop a customer's order in-store and drive it to the door.",
+      "To start as a full-service shopper you generally need to be at least 18, have a car and a smartphone, be able to lift and carry groceries, and pass a background check. Requirements vary by market and change, so confirm the current criteria with Instacart.",
+      "Instacart pays per batch, an estimated amount based on factors like item count and distance, with 100% of tips on top and no guaranteed wage. Your working time includes shopping in-store, not just driving, and you cover your own fuel and vehicle costs.",
+      "To know your real take-home, track your active hours and expenses and use the free Real Hourly Rate calculator and Earnings Consolidator to compute net pay. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-with-amazon-flex",
+    externalLinks: AMAZON_FLEX_START_LINKS,
+    title: "How to Make Money with Amazon Flex: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money with Amazon Flex: requirements, how to sign up, how delivery-block pay works, and how to compute your real net hourly rate.",
+    body: [
+      "Amazon Flex lets you earn by delivering Amazon packages during scheduled blocks of time in your own vehicle. Drivers are independent contractors who reserve the blocks that fit their schedule and get paid for the block.",
+      "To start you generally need to be at least 21, have a qualifying vehicle (often mid-size or larger with adequate cargo space), carry valid insurance, have a compatible smartphone, and pass a background check. Requirements vary by location and change, so confirm them with Amazon Flex.",
+      "Amazon Flex pays per block, showing an estimated pay before you reserve it; most package-delivery blocks don't include tips. If a route runs long your effective rate drops, no taxes are withheld, and you cover your own fuel and vehicle costs.",
+      "To understand your real earnings, track your actual block time and expenses and use the free Real Hourly Rate calculator and Earnings Consolidator to compute net pay. This is educational information, not financial advice, and not a guarantee of income.",
     ],
   },
   {
