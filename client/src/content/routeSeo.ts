@@ -312,7 +312,8 @@ const INSTACART_START_LINKS = [
   IRS.selfEmployedCenter,
 ];
 const AMAZON_FLEX_START_LINKS = [
-  { label: "Amazon Flex", url: "https://flex.amazon.com" },
+  { label: "Sign up for Amazon Flex", url: "https://flex.amazon.com" },
+  PLATFORM_LINKS.amazonFlex,
   IRS.selfEmployedCenter,
 ];
 
