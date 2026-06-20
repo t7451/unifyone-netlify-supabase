@@ -131,6 +131,78 @@ const WA_TAX_LINKS = [
     url: "https://dor.wa.gov/",
   },
 ];
+const GA_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Georgia Department of Revenue (Form 500-ES)",
+    url: "https://dor.georgia.gov/500-es-individual-and-fiduciary-estimated-tax-payment-voucher",
+  },
+];
+const PA_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Pennsylvania Department of Revenue (Form PA-40 ES)",
+    url: "https://www.pa.gov/agencies/revenue/forms-and-publications.html",
+  },
+];
+const NJ_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "NJ Division of Taxation (Form NJ-1040-ES)",
+    url: "https://www.nj.gov/treasury/taxation/njit20.shtml",
+  },
+];
+const AZ_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Arizona Department of Revenue (Form 140ES)",
+    url: "https://azdor.gov/forms/individual/individual-estimated-tax-payment-form",
+  },
+];
+const OH_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Ohio Department of Taxation (Form IT 1040ES)",
+    url: "https://tax.ohio.gov/individual/resources/estimated-payments",
+  },
+];
+const NC_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "North Carolina Department of Revenue (Form NC-40)",
+    url: "https://www.ncdor.gov/taxes-forms/individual-income-tax/estimated-income-tax",
+  },
+];
+const MI_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Michigan Department of Treasury (Form MI-1040ES)",
+    url: "https://www.michigan.gov/taxes/iit/estimated-payments",
+  },
+];
+const CO_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Colorado Department of Revenue (Form DR 0104EP)",
+    url: "https://tax.colorado.gov/individual-income-tax-estimated-payments",
+  },
+];
 
 // Authoritative resources for the gig platform comparison guides. The IRS
 // self-employed center + estimated taxes anchor the (educational, not advice)
@@ -142,6 +214,10 @@ const PLATFORM_LINKS = {
   uber: { label: "Uber", url: "https://www.uber.com" },
   lyft: { label: "Lyft", url: "https://www.lyft.com" },
   instacart: { label: "Instacart", url: "https://www.instacart.com" },
+  grubhub: { label: "Grubhub", url: "https://www.grubhub.com" },
+  amazonFlex: { label: "Amazon Flex", url: "https://flex.amazon.com" },
+  spark: { label: "Walmart Spark", url: "https://drive4spark.walmart.com" },
+  shipt: { label: "Shipt", url: "https://www.shipt.com" },
 };
 const DOORDASH_VS_UBER_EATS_LINKS = [
   IRS.selfEmployedCenter,
@@ -160,6 +236,24 @@ const UBER_VS_LYFT_LINKS = [
   IRS.estimated,
   PLATFORM_LINKS.uber,
   PLATFORM_LINKS.lyft,
+];
+const DOORDASH_VS_GRUBHUB_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.doordash,
+  PLATFORM_LINKS.grubhub,
+];
+const AMAZON_FLEX_VS_SPARK_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.amazonFlex,
+  PLATFORM_LINKS.spark,
+];
+const INSTACART_VS_SHIPT_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.instacart,
+  PLATFORM_LINKS.shipt,
 ];
 
 // Additional platform-specific tax-guide link bundles (Amazon Flex, Grubhub,
@@ -193,6 +287,34 @@ const SHIPT_TAX_LINKS = [
   IRS.estimated,
   IRS.mileage,
   { label: "Shipt", url: "https://www.shipt.com" },
+];
+
+// Getting-started ("how to make money on <platform>") guides: the platform's
+// own signup/driver page anchors each page's outbound profile, paired with the
+// IRS self-employed center so the (educational, not advice) tax framing is
+// authoritative. No earnings figures are quoted on these pages.
+const DOORDASH_START_LINKS = [
+  { label: "Become a Dasher (DoorDash)", url: "https://dasher.doordash.com" },
+  PLATFORM_LINKS.doordash,
+  IRS.selfEmployedCenter,
+];
+const UBER_START_LINKS = [
+  { label: "Drive with Uber", url: "https://www.uber.com/us/en/drive/" },
+  PLATFORM_LINKS.uber,
+  IRS.selfEmployedCenter,
+];
+const INSTACART_START_LINKS = [
+  {
+    label: "Become an Instacart shopper",
+    url: "https://shoppers.instacart.com",
+  },
+  PLATFORM_LINKS.instacart,
+  IRS.selfEmployedCenter,
+];
+const AMAZON_FLEX_START_LINKS = [
+  { label: "Sign up for Amazon Flex", url: "https://flex.amazon.com" },
+  PLATFORM_LINKS.amazonFlex,
+  IRS.selfEmployedCenter,
 ];
 
 export const ROUTE_SEO: RouteSeo[] = [
@@ -349,6 +471,118 @@ export const ROUTE_SEO: RouteSeo[] = [
     ],
   },
   {
+    path: "/georgia-gig-worker-taxes",
+    externalLinks: GA_TAX_LINKS,
+    title:
+      "Georgia Gig Worker Taxes: Flat State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Georgia gig worker taxes: a flat state income tax (around 5.39%, phasing down) plus the 15.3% federal SE tax, with Form 500-ES estimates. Not tax advice.",
+    body: [
+      "Georgia gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Georgia has a flat state income tax — roughly 5.39% in recent years and being phased down under scheduled reductions, so confirm the current rate with the Georgia Department of Revenue — that applies to your net gig profit on top of federal tax. Pay state estimates using Form 500-ES.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering your federal taxable income and Georgia's.",
+      "Federal and Georgia estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/pennsylvania-gig-worker-taxes",
+    externalLinks: PA_TAX_LINKS,
+    title:
+      "Pennsylvania Gig Worker Taxes: Flat 3.07% Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Pennsylvania gig worker taxes: a flat 3.07% state income tax plus the 15.3% federal SE tax, with PA-40 ES estimates and possible local EIT. Not tax advice.",
+    body: [
+      "Pennsylvania gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Pennsylvania has a flat state income tax of 3.07% that applies to your net gig profit on top of federal tax; confirm the current rate with the Pennsylvania Department of Revenue. Pay state estimates using the PA-40 ES vouchers.",
+      "Many Pennsylvania municipalities and school districts also levy a local earned-income tax (EIT), commonly around 1%, that can apply to self-employment net profits — check your local rate with your municipality or its appointed tax collector.",
+      "Deduct business mileage at the IRS standard mileage rate plus the business-use share of your phone, supplies, tolls, and parking. Federal and state estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/new-jersey-gig-worker-taxes",
+    externalLinks: NJ_TAX_LINKS,
+    title:
+      "New Jersey Gig Worker Taxes: Progressive State Tax + Federal SE Tax | UnifyOne",
+    description:
+      "New Jersey gig worker taxes: the 15.3% federal SE tax plus NJ's progressive state income tax, with Form NJ-1040-ES estimates. Not tax advice.",
+    body: [
+      "New Jersey gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "New Jersey has a progressive state income tax that applies to your net gig profit on top of federal tax; your rate depends on your total income and bracket, so confirm the current brackets with the New Jersey Division of Taxation. Pay state estimates using Form NJ-1040-ES.",
+      "New Jersey computes business net profit under its own rules, so the income figure on your state return may differ from your federal Schedule C. Deduct business mileage at the IRS standard mileage rate plus the business-use share of your phone, supplies, tolls, and parking.",
+      "Federal and New Jersey estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/arizona-gig-worker-taxes",
+    externalLinks: AZ_TAX_LINKS,
+    title:
+      "Arizona Gig Worker Taxes: Flat 2.5% State Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Arizona gig worker taxes: a flat 2.5% state income tax plus the 15.3% federal SE tax, with Form 140ES estimates and mileage deductions. Not tax advice.",
+    body: [
+      "Arizona gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Arizona has a flat state income tax of 2.5% — one of the lowest in the country — that applies to your net gig profit on top of federal tax. Confirm the current rate with the Arizona Department of Revenue, and pay state estimates using Form 140ES.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering your federal taxable income and Arizona's.",
+      "Federal and Arizona estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/ohio-gig-worker-taxes",
+    externalLinks: OH_TAX_LINKS,
+    title:
+      "Ohio Gig Worker Taxes: State & Local Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Ohio gig worker taxes: the 15.3% federal SE tax plus Ohio's state income tax and possible city municipal tax, with Form IT 1040ES estimates. Not tax advice.",
+    body: [
+      "Ohio gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Ohio has a progressive state income tax with an exemption for income below a set threshold, so low earners may owe little or none; above that it applies to your net gig profit on top of federal tax. Confirm current figures with the Ohio Department of Taxation, and pay state estimates using Form IT 1040ES.",
+      "Many Ohio cities also levy a local municipal income tax — commonly around 1.5%–3% — that can apply to self-employment net profits, administered separately (often through RITA or CCA). Check your municipality's rate and filing rules.",
+      "Deduct business mileage at the IRS standard mileage rate plus the business-use share of your phone, supplies, tolls, and parking. Federal and state estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/north-carolina-gig-worker-taxes",
+    externalLinks: NC_TAX_LINKS,
+    title:
+      "North Carolina Gig Worker Taxes: Flat State Tax + Federal SE Tax | UnifyOne",
+    description:
+      "North Carolina gig worker taxes: a flat state income tax (around 4.5%, declining) plus the 15.3% federal SE tax, with Form NC-40 estimates. Not tax advice.",
+    body: [
+      "North Carolina gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "North Carolina has a flat state income tax — roughly 4.5% in recent years and declining under scheduled reductions — that applies to your net gig profit on top of federal tax. Confirm the current rate with the North Carolina Department of Revenue, and pay state estimates using Form NC-40.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering your federal taxable income and North Carolina's.",
+      "Federal and North Carolina estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/michigan-gig-worker-taxes",
+    externalLinks: MI_TAX_LINKS,
+    title:
+      "Michigan Gig Worker Taxes: Flat State & Local Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Michigan gig worker taxes: a flat state income tax (around 4.25%) plus possible city tax and the 15.3% federal SE tax, with Form MI-1040ES. Not tax advice.",
+    body: [
+      "Michigan gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Michigan has a flat state income tax of roughly 4.25% that applies to your net gig profit on top of federal tax. Confirm the current rate with the Michigan Department of Treasury, and pay state estimates using Form MI-1040ES.",
+      "Some Michigan cities — including Detroit and Grand Rapids — also levy a local city income tax that can apply to self-employment net profits, filed separately with that city. Check whether the city where you live or work imposes one and at what rate.",
+      "Deduct business mileage at the IRS standard mileage rate plus the business-use share of your phone, supplies, tolls, and parking. Federal and state estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/colorado-gig-worker-taxes",
+    externalLinks: CO_TAX_LINKS,
+    title:
+      "Colorado Gig Worker Taxes: Flat 4.4% State Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Colorado gig worker taxes: a flat state income tax (around 4.4%) plus the 15.3% federal SE tax, with Form DR 0104EP estimates. Not tax advice.",
+    body: [
+      "Colorado gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Colorado has a flat state income tax of roughly 4.4%, applied to your federal taxable income with state adjustments, so your net gig profit flows through on top of federal tax. The rate can be adjusted, so confirm the current figure with the Colorado Department of Revenue, and pay state estimates using Form DR 0104EP.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Colorado's flat tax is built on.",
+      "Federal and Colorado estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
     path: "/doordash-vs-uber-eats",
     externalLinks: DOORDASH_VS_UBER_EATS_LINKS,
     title: "DoorDash vs Uber Eats: Which Pays More for Drivers? | UnifyOne",
@@ -385,6 +619,45 @@ export const ROUTE_SEO: RouteSeo[] = [
       "On both, you see an upfront estimated fare and trip details before accepting and keep 100% of tips, and both raise pay during high demand (Uber surge and promotions; Lyft Personal Power Zones and bonuses). Each takes a service fee out of every fare, which is a deductible business expense itemized on your Uber Tax Summary or Lyft Annual Summary.",
       "Both issue similar tax forms: a 1099-K reporting the gross ride fares processed through the platform, plus a 1099-NEC for incentives, referrals, and bonuses; reporting thresholds change by year. You owe income tax plus the 15.3% self-employment tax on net earnings, and you must report all income regardless of which forms you receive.",
       "To compare your own pay, drive comparable hours on each, log your active time and the business miles you drove (including miles between trips, which are often deductible), subtract fees, mileage, and expenses, and divide by hours. The free Real Hourly Rate calculator and Earnings Consolidator do this. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/doordash-vs-grubhub",
+    externalLinks: DOORDASH_VS_GRUBHUB_LINKS,
+    title: "DoorDash vs Grubhub: Which Pays More for Drivers? | UnifyOne",
+    description:
+      "DoorDash vs Grubhub compared on how pay is structured, fees, 1099 forms, mileage, scheduling, and payout speed — plus how to compute your own net pay.",
+    body: [
+      "DoorDash and Grubhub both pay couriers as independent contractors to deliver prepared food, so neither withholds taxes and your take-home depends far more on your market and hours than on the app. There's no universal winner — the only number that matters is what you net per hour, which we show you how to compute rather than quoting figures that go stale.",
+      "Both apps are per-offer: each delivery shows an amount plus promotions and tips before you accept. DoorDash shows a guaranteed base plus Peak Pay and Challenges; Grubhub calculates base pay from mileage and time and adds Special Offers and Missions. Neither deducts the restaurant's commission from your courier pay, and both default to weekly deposits with faster cash-out options for a possible fee.",
+      "On taxes, both treat you as an independent contractor and issue a 1099-NEC if you earn $600 or more in a year — DoorDash through Stripe, Grubhub through its payment processor. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income whether or not a form arrives.",
+      "To compare them honestly, run a few similar shifts on each, track your active hours and the business miles you drove, subtract mileage and expenses, and divide by hours. The free Real Hourly Rate calculator and Earnings Consolidator do that math. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/amazon-flex-vs-spark",
+    externalLinks: AMAZON_FLEX_VS_SPARK_LINKS,
+    title: "Amazon Flex vs Spark: Which Delivery Gig Is Better? | UnifyOne",
+    description:
+      "Amazon Flex vs Walmart Spark compared on how pay works (blocks vs offers), fees, 1099 forms, mileage, scheduling, and payouts — plus how to find your net pay.",
+    body: [
+      "Amazon Flex and the Walmart Spark Driver program are both independent-contractor delivery gigs, but they're structured differently: Amazon Flex pays for reserved delivery blocks of a set length, while Spark pays per accepted delivery offer. That changes what your time and mileage look like, so which one is better depends on your market and how you value your time — not on a single pay figure.",
+      "Amazon Flex shows an estimated total for a block before you reserve it, with tips added afterward on eligible deliveries; Spark shows an estimate plus tips on each offer before you accept. Neither deducts a separate platform commission from your driver pay, and both default to direct deposit, with instant cash-out availability that varies. Because a Flex block is a fixed time commitment, compare the two on net pay per active hour rather than per stop.",
+      "On taxes, both pay you as an independent contractor with nothing withheld and issue a 1099-NEC if you earn $600 or more in a year — Amazon through its tax-document portal, Spark through its payment partner. You owe income tax plus the 15.3% self-employment tax on net earnings, and you must report all income whether or not a form arrives.",
+      "To decide, work comparable shifts on each, log your active hours and the business miles you drove (including miles between stops), subtract mileage and expenses, and divide by hours. The free Real Hourly Rate calculator and Earnings Consolidator compute this for you. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/instacart-vs-shipt",
+    externalLinks: INSTACART_VS_SHIPT_LINKS,
+    title: "Instacart vs Shipt: Which Is Better for Shoppers? | UnifyOne",
+    description:
+      "Instacart vs Shipt compared on how pay works, fees, 1099 forms, mileage, scheduling, and payout speed — plus how to compute your own net pay as a shopper.",
+    body: [
+      "Instacart and Shipt are the two largest grocery-shopping gig apps, and both pay shoppers as independent contractors to shop a cart and deliver it. The work is similar — you shop in-store, then drive the order to the customer — so which one nets you more comes down to your market, the hours you work, and your vehicle costs rather than the brand.",
+      "Instacart pays per batch, an estimated amount based on factors like item count and distance plus tips; Shipt pays per order with an estimate that factors in the order's effort, plus tips. Because both bundle shopping time into the job, compare them on net pay per active hour rather than per order. Neither deducts customer fees from your shopper pay, and both default to weekly deposits with faster cash-out options for a possible fee.",
+      "On taxes, both pay you as an independent contractor and issue a 1099-NEC at $600 or more in earnings. One nuance: Instacart in-store-only shoppers are W-2 employees, while full-service shoppers who also deliver get the 1099-NEC; Shipt shoppers who deliver are independent contractors. You owe income tax plus the 15.3% self-employment tax on net earnings, and you must report all income even if no form arrives.",
+      "To compare your own pay, work comparable shifts on each, log your active hours (shopping plus driving) and the business miles you drove, subtract mileage and expenses, and divide by hours. The free Real Hourly Rate calculator and Earnings Consolidator do this. This is educational information, not financial or tax advice.",
     ],
   },
   {
@@ -718,6 +991,58 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Full-service shoppers who earned $600 or more receive a 1099-NEC, usually delivered through Stripe by late January. You must report all income even if a form doesn't arrive.",
       "Full-service shoppers can deduct business mileage at the IRS standard mileage rate, plus phone use, insulated bags, and other supplies. A common rule of thumb is to set aside 25–30% of net earnings for self-employment and income tax.",
       "Independent-contractor shoppers generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an underpayment penalty.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-on-doordash",
+    externalLinks: DOORDASH_START_LINKS,
+    title: "How to Make Money on DoorDash: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money on DoorDash: requirements, how to sign up, how Dasher pay works, and how to compute your real net hourly rate. Beginner's guide.",
+    body: [
+      "DoorDash lets you earn on your own schedule by delivering food and other orders nearby. Dashers are independent contractors who use their own car, bike, or scooter, choose when to work, and accept or decline each delivery offer.",
+      "To start you generally need to be at least 18, have a way to deliver, carry a smartphone, and pass a background check. Requirements vary by market and change over time, so confirm the current criteria with DoorDash before applying.",
+      "Pay is per delivery — base pay plus any active promotions, with 100% of customer tips on top — and there is no guaranteed wage. Because no taxes are withheld and you cover your own gas and vehicle wear, your gross earnings overstate your take-home.",
+      "To know what you'd really make, track a few shifts and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-driving-for-uber",
+    externalLinks: UBER_START_LINKS,
+    title: "How to Make Money Driving for Uber: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money driving for Uber: requirements, how to sign up, how driver pay works, and how to compute your real net hourly rate. Beginner's guide.",
+    body: [
+      "Driving for Uber lets you earn by giving rides on your own schedule in your own car. Drivers are independent contractors who decide when to go online, where to drive, and which trips to accept in the app.",
+      "Rideshare driving typically requires you to be at least 21, have an eligible four-door vehicle, carry valid insurance and registration, and pass a background and driving-record check. Requirements vary by city and change, so confirm the current criteria with Uber.",
+      "Uber shows an upfront fare before you accept, with surge pricing and promotions during high demand and 100% of tips on top. There's no guaranteed wage, Uber takes a service fee from fares, and you pay for your own gas and vehicle costs.",
+      "To understand your real earnings, track a few shifts and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay after costs. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-with-instacart",
+    externalLinks: INSTACART_START_LINKS,
+    title: "How to Make Money with Instacart: A Shopper's Guide | UnifyOne",
+    description:
+      "How to make money with Instacart: requirements, how to sign up, how full-service shopper pay works, and how to compute your real net hourly rate.",
+    body: [
+      "Instacart lets you earn by shopping for groceries and delivering them on your own schedule. Full-service shoppers are independent contractors who use their own car to shop a customer's order in-store and drive it to the door.",
+      "To start as a full-service shopper you generally need to be at least 18, have a car and a smartphone, be able to lift and carry groceries, and pass a background check. Requirements vary by market and change, so confirm the current criteria with Instacart.",
+      "Instacart pays per batch, an estimated amount based on factors like item count and distance, with 100% of tips on top and no guaranteed wage. Your working time includes shopping in-store, not just driving, and you cover your own fuel and vehicle costs.",
+      "To know your real take-home, track your active hours and expenses and use the free Real Hourly Rate calculator and Earnings Consolidator to compute net pay. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-with-amazon-flex",
+    externalLinks: AMAZON_FLEX_START_LINKS,
+    title: "How to Make Money with Amazon Flex: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money with Amazon Flex: requirements, how to sign up, how delivery-block pay works, and how to compute your real net hourly rate.",
+    body: [
+      "Amazon Flex lets you earn by delivering Amazon packages during scheduled blocks of time in your own vehicle. Drivers are independent contractors who reserve the blocks that fit their schedule and get paid for the block.",
+      "To start you generally need to be at least 21, have a qualifying vehicle (often mid-size or larger with adequate cargo space), carry valid insurance, have a compatible smartphone, and pass a background check. Requirements vary by location and change, so confirm them with Amazon Flex.",
+      "Amazon Flex pays per block, showing an estimated pay before you reserve it; most package-delivery blocks don't include tips. If a route runs long your effective rate drops, no taxes are withheld, and you cover your own fuel and vehicle costs.",
+      "To understand your real earnings, track your actual block time and expenses and use the free Real Hourly Rate calculator and Earnings Consolidator to compute net pay. This is educational information, not financial advice, and not a guarantee of income.",
     ],
   },
   {
