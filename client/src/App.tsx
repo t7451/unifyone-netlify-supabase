@@ -879,6 +879,34 @@ function Router() {
           </>
         )}
       />
+      {/* Gig-tax cluster: additional platform comparisons */}
+      <Route
+        path="/doordash-vs-grubhub"
+        component={() => (
+          <>
+            <PlatformComparison slug="doordash-vs-grubhub" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/amazon-flex-vs-spark"
+        component={() => (
+          <>
+            <PlatformComparison slug="amazon-flex-vs-spark" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/instacart-vs-shipt"
+        component={() => (
+          <>
+            <PlatformComparison slug="instacart-vs-shipt" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       <Route path="/seo" component={() => <SeoIndex />} />
       <Route path="/seo/:slug" component={() => <SeoLanding />} />
       <Route
