@@ -162,7 +162,108 @@ const UBER_VS_LYFT_LINKS = [
   PLATFORM_LINKS.lyft,
 ];
 
+// Additional platform-specific tax-guide link bundles (Amazon Flex, Grubhub,
+// Lyft, Spark, Shipt) — IRS resources + the relevant platform's driver site.
+const AMAZON_FLEX_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Amazon Flex", url: "https://flex.amazon.com" },
+];
+const GRUBHUB_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Grubhub for Drivers", url: "https://driver.grubhub.com" },
+];
+const LYFT_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Lyft", url: "https://www.lyft.com" },
+];
+const SPARK_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Spark Driver", url: "https://drive4spark.walmart.com" },
+];
+const SHIPT_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Shipt", url: "https://www.shipt.com" },
+];
+
 export const ROUTE_SEO: RouteSeo[] = [
+  {
+    path: "/amazon-flex-taxes",
+    externalLinks: AMAZON_FLEX_TAX_LINKS,
+    title:
+      "Amazon Flex Taxes: A Driver's Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How Amazon Flex taxes work: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Amazon Flex pays you as an independent contractor, so no taxes are withheld from your delivery blocks. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "If you earned $600 or more, Amazon issues a 1099-NEC through its tax-document portal. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Your largest deduction is business mileage at the IRS standard mileage rate for every mile driven during a block, including between stops. Phone use, tolls, parking, and supplies are deductible too. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/grubhub-taxes",
+    externalLinks: GRUBHUB_TAX_LINKS,
+    title:
+      "Grubhub Taxes: A Driver's Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How Grubhub taxes work for drivers: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Grubhub pays you as an independent contractor, so nothing is withheld from your delivery pay. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "If you earned $600 or more, Grubhub issues a 1099-NEC through its payment processor. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Your largest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering. Phone use, insulated bags, tolls, and parking are deductible too. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/lyft-driver-taxes",
+    externalLinks: LYFT_TAX_LINKS,
+    title:
+      "Lyft Driver Taxes: 1099-K vs 1099-NEC, Deductions & Estimates | UnifyOne",
+    description:
+      "Lyft driver taxes explained: the 1099-K vs 1099-NEC, your Annual Summary, self-employment tax, mileage deductions, and quarterly estimates. Not tax advice.",
+    body: [
+      "Lyft treats drivers as independent contractors and withholds no taxes, so you owe income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "Lyft may send two forms: a 1099-K for the gross fares riders paid, and a 1099-NEC for bonuses, referrals, and incentives. Your Lyft Annual Summary reconciles both — and you must report all earnings regardless of which forms arrive.",
+      "Business mileage at the IRS standard mileage rate is usually the biggest deduction, and because Lyft reports only online miles, your real deductible mileage is often higher. Service fees, phone use, tolls, and rider amenities are deductible too.",
+      "If you expect to owe $1,000 or more for the year, the IRS generally expects quarterly estimated payments — around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/spark-driver-taxes",
+    externalLinks: SPARK_TAX_LINKS,
+    title: "Spark Driver Taxes: A Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How Walmart Spark driver taxes work: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "The Walmart Spark Driver program pays you as an independent contractor, so no taxes are withheld from your deliveries. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "If you earned $600 or more, the Spark Driver program issues a 1099-NEC through its payment partner. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Your largest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering. Phone use, insulated bags, tolls, and parking are deductible too. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/shipt-shopper-taxes",
+    externalLinks: SHIPT_TAX_LINKS,
+    title: "Shipt Taxes: A Shopper's Guide to 1099s & Deductions | UnifyOne",
+    description:
+      "Shipt taxes for shoppers: the 1099-NEC, self-employment tax, mileage and supply deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Shipt shoppers are independent contractors, so Shipt withholds no taxes from your pay. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "Shoppers who earned $600 or more receive a 1099-NEC, usually delivered through Shipt's payment processor by late January. You must report all income whether or not a form arrives.",
+      "Because you both shop and drive, track every working mile and deduct it at the IRS standard mileage rate — typically the largest deduction — plus phone use, insulated bags, tolls, and parking. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
   {
     path: "/california-gig-worker-taxes",
     externalLinks: CA_TAX_LINKS,

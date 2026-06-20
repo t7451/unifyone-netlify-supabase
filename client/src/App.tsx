@@ -714,6 +714,51 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/amazon-flex-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="amazon-flex-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/grubhub-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="grubhub-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/lyft-driver-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="lyft-driver-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/spark-driver-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="spark-driver-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/shipt-shopper-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="shipt-shopper-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Gig-tax cluster: state guides */}
       <Route
         path="/california-gig-worker-taxes"
