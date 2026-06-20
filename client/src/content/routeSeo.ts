@@ -131,6 +131,78 @@ const WA_TAX_LINKS = [
     url: "https://dor.wa.gov/",
   },
 ];
+const GA_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Georgia Department of Revenue (Form 500-ES)",
+    url: "https://dor.georgia.gov/500-es-individual-and-fiduciary-estimated-tax-payment-voucher",
+  },
+];
+const PA_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Pennsylvania Department of Revenue (Form PA-40 ES)",
+    url: "https://www.pa.gov/agencies/revenue/forms-and-publications.html",
+  },
+];
+const NJ_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "NJ Division of Taxation (Form NJ-1040-ES)",
+    url: "https://www.nj.gov/treasury/taxation/njit20.shtml",
+  },
+];
+const AZ_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Arizona Department of Revenue (Form 140ES)",
+    url: "https://azdor.gov/forms/individual/individual-estimated-tax-payment-form",
+  },
+];
+const OH_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Ohio Department of Taxation (Form IT 1040ES)",
+    url: "https://tax.ohio.gov/individual/resources/estimated-payments",
+  },
+];
+const NC_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "North Carolina Department of Revenue (Form NC-40)",
+    url: "https://www.ncdor.gov/taxes-forms/individual-income-tax/estimated-income-tax",
+  },
+];
+const MI_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Michigan Department of Treasury (Form MI-1040ES)",
+    url: "https://www.michigan.gov/taxes/iit/estimated-payments",
+  },
+];
+const CO_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Colorado Department of Revenue (Form DR 0104EP)",
+    url: "https://tax.colorado.gov/individual-income-tax-estimated-payments",
+  },
+];
 
 // Authoritative resources for the gig platform comparison guides. The IRS
 // self-employed center + estimated taxes anchor the (educational, not advice)
@@ -346,6 +418,118 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Federal taxes still apply in full: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
       "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
       "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/georgia-gig-worker-taxes",
+    externalLinks: GA_TAX_LINKS,
+    title:
+      "Georgia Gig Worker Taxes: Flat State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Georgia gig worker taxes: a flat state income tax (around 5.39%, phasing down) plus the 15.3% federal SE tax, with Form 500-ES estimates. Not tax advice.",
+    body: [
+      "Georgia gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Georgia has a flat state income tax — roughly 5.39% in recent years and being phased down under scheduled reductions, so confirm the current rate with the Georgia Department of Revenue — that applies to your net gig profit on top of federal tax. Pay state estimates using Form 500-ES.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering your federal taxable income and Georgia's.",
+      "Federal and Georgia estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/pennsylvania-gig-worker-taxes",
+    externalLinks: PA_TAX_LINKS,
+    title:
+      "Pennsylvania Gig Worker Taxes: Flat 3.07% Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Pennsylvania gig worker taxes: a flat 3.07% state income tax plus the 15.3% federal SE tax, with PA-40 ES estimates and possible local EIT. Not tax advice.",
+    body: [
+      "Pennsylvania gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Pennsylvania has a flat state income tax of 3.07% that applies to your net gig profit on top of federal tax; confirm the current rate with the Pennsylvania Department of Revenue. Pay state estimates using the PA-40 ES vouchers.",
+      "Many Pennsylvania municipalities and school districts also levy a local earned-income tax (EIT), commonly around 1%, that can apply to self-employment net profits — check your local rate with your municipality or its appointed tax collector.",
+      "Deduct business mileage at the IRS standard mileage rate plus the business-use share of your phone, supplies, tolls, and parking. Federal and state estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/new-jersey-gig-worker-taxes",
+    externalLinks: NJ_TAX_LINKS,
+    title:
+      "New Jersey Gig Worker Taxes: Progressive State Tax + Federal SE Tax | UnifyOne",
+    description:
+      "New Jersey gig worker taxes: the 15.3% federal SE tax plus NJ's progressive state income tax, with Form NJ-1040-ES estimates. Not tax advice.",
+    body: [
+      "New Jersey gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "New Jersey has a progressive state income tax that applies to your net gig profit on top of federal tax; your rate depends on your total income and bracket, so confirm the current brackets with the New Jersey Division of Taxation. Pay state estimates using Form NJ-1040-ES.",
+      "New Jersey computes business net profit under its own rules, so the income figure on your state return may differ from your federal Schedule C. Deduct business mileage at the IRS standard mileage rate plus the business-use share of your phone, supplies, tolls, and parking.",
+      "Federal and New Jersey estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/arizona-gig-worker-taxes",
+    externalLinks: AZ_TAX_LINKS,
+    title:
+      "Arizona Gig Worker Taxes: Flat 2.5% State Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Arizona gig worker taxes: a flat 2.5% state income tax plus the 15.3% federal SE tax, with Form 140ES estimates and mileage deductions. Not tax advice.",
+    body: [
+      "Arizona gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Arizona has a flat state income tax of 2.5% — one of the lowest in the country — that applies to your net gig profit on top of federal tax. Confirm the current rate with the Arizona Department of Revenue, and pay state estimates using Form 140ES.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering your federal taxable income and Arizona's.",
+      "Federal and Arizona estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/ohio-gig-worker-taxes",
+    externalLinks: OH_TAX_LINKS,
+    title:
+      "Ohio Gig Worker Taxes: State & Local Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Ohio gig worker taxes: the 15.3% federal SE tax plus Ohio's state income tax and possible city municipal tax, with Form IT 1040ES estimates. Not tax advice.",
+    body: [
+      "Ohio gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Ohio has a progressive state income tax with an exemption for income below a set threshold, so low earners may owe little or none; above that it applies to your net gig profit on top of federal tax. Confirm current figures with the Ohio Department of Taxation, and pay state estimates using Form IT 1040ES.",
+      "Many Ohio cities also levy a local municipal income tax — commonly around 1.5%–3% — that can apply to self-employment net profits, administered separately (often through RITA or CCA). Check your municipality's rate and filing rules.",
+      "Deduct business mileage at the IRS standard mileage rate plus the business-use share of your phone, supplies, tolls, and parking. Federal and state estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/north-carolina-gig-worker-taxes",
+    externalLinks: NC_TAX_LINKS,
+    title:
+      "North Carolina Gig Worker Taxes: Flat State Tax + Federal SE Tax | UnifyOne",
+    description:
+      "North Carolina gig worker taxes: a flat state income tax (around 4.5%, declining) plus the 15.3% federal SE tax, with Form NC-40 estimates. Not tax advice.",
+    body: [
+      "North Carolina gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "North Carolina has a flat state income tax — roughly 4.5% in recent years and declining under scheduled reductions — that applies to your net gig profit on top of federal tax. Confirm the current rate with the North Carolina Department of Revenue, and pay state estimates using Form NC-40.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering your federal taxable income and North Carolina's.",
+      "Federal and North Carolina estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/michigan-gig-worker-taxes",
+    externalLinks: MI_TAX_LINKS,
+    title:
+      "Michigan Gig Worker Taxes: Flat State & Local Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Michigan gig worker taxes: a flat state income tax (around 4.25%) plus possible city tax and the 15.3% federal SE tax, with Form MI-1040ES. Not tax advice.",
+    body: [
+      "Michigan gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Michigan has a flat state income tax of roughly 4.25% that applies to your net gig profit on top of federal tax. Confirm the current rate with the Michigan Department of Treasury, and pay state estimates using Form MI-1040ES.",
+      "Some Michigan cities — including Detroit and Grand Rapids — also levy a local city income tax that can apply to self-employment net profits, filed separately with that city. Check whether the city where you live or work imposes one and at what rate.",
+      "Deduct business mileage at the IRS standard mileage rate plus the business-use share of your phone, supplies, tolls, and parking. Federal and state estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/colorado-gig-worker-taxes",
+    externalLinks: CO_TAX_LINKS,
+    title:
+      "Colorado Gig Worker Taxes: Flat 4.4% State Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Colorado gig worker taxes: a flat state income tax (around 4.4%) plus the 15.3% federal SE tax, with Form DR 0104EP estimates. Not tax advice.",
+    body: [
+      "Colorado gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Colorado has a flat state income tax of roughly 4.4%, applied to your federal taxable income with state adjustments, so your net gig profit flows through on top of federal tax. The rate can be adjusted, so confirm the current figure with the Colorado Department of Revenue, and pay state estimates using Form DR 0104EP.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Colorado's flat tax is built on.",
+      "Federal and Colorado estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
     ],
   },
   {

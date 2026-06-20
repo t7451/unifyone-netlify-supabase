@@ -879,6 +879,79 @@ function Router() {
           </>
         )}
       />
+      {/* Gig-tax cluster: more state guides */}
+      <Route
+        path="/georgia-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="georgia-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/pennsylvania-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="pennsylvania-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/new-jersey-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="new-jersey-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/arizona-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="arizona-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/ohio-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="ohio-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/north-carolina-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="north-carolina-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/michigan-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="michigan-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/colorado-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="colorado-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       <Route path="/seo" component={() => <SeoIndex />} />
       <Route path="/seo/:slug" component={() => <SeoLanding />} />
       <Route
