@@ -4,6 +4,7 @@ import { SITE_URL } from "@/lib/siteConfig";
 import { PLATFORM_TAX_GUIDES } from "@/content/geo/platformTaxGuides";
 import { STATE_TAX_GUIDES } from "@/content/geo/stateTaxGuides";
 import { PLATFORM_COMPARISONS } from "@/content/geo/platformComparisons";
+import { GETTING_STARTED_GUIDES } from "@/content/geo/gettingStartedGuides";
 
 /** Standalone explainers/guides in the gig-tax cluster. */
 const MORE_GUIDES = [
@@ -248,6 +249,28 @@ export default function GigTaxesHub() {
                 className="rounded-lg border p-4 hover:bg-muted transition-colors block"
               >
                 <p className="text-sm font-medium">{label} →</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">
+            New to gig work? Start here
+          </h2>
+          <p className="text-muted-foreground text-sm mb-4">
+            Beginner guides to getting started and earning on each platform.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {GETTING_STARTED_GUIDES.map(g => (
+              <Link
+                key={g.slug}
+                href={`/${g.slug}`}
+                className="rounded-lg border p-4 hover:bg-muted transition-colors block"
+              >
+                <p className="text-sm font-medium">
+                  How to make money on {g.platform} →
+                </p>
               </Link>
             ))}
           </div>
