@@ -48,6 +48,30 @@ const jsonLd = [
           text: "Multi-apping (running multiple platforms simultaneously) can increase earnings per hour, but only if managed well. The key is accepting orders that stack efficiently without conflicting pickup times. UnifyOne shows your earnings per hour by platform and time window so you can see which platform combinations work best in your market.",
         },
       },
+      {
+        "@type": "Question",
+        name: "What's the difference between gross and net gig pay?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Gross pay is the total a platform reports before any costs; net pay is what's left after subtracting fuel, the IRS mileage deduction, platform fees, and other vehicle expenses. Two drivers can show identical gross earnings yet keep very different amounts, which is why net pay per hour — not gross — is the figure worth optimizing.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How often should I re-check which platform pays best?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "The top-earning platform isn't fixed — pay models, promotions, and local demand shift week to week, so a platform that led last month can fall behind. Reviewing your net pay per hour by platform on a rolling basis, rather than deciding once, keeps your time on whichever app is currently strongest. UnifyOne updates this comparison continuously as new earnings come in.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Do bonuses and promotions count as taxable income?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes. Quests, peak-pay, referral bonuses, and promotional incentives are part of your gross self-employment income and are taxed the same as base order pay, whether or not they appear on a 1099. They do, however, raise your net pay because they add revenue without adding miles. This is educational information, not tax advice.",
+        },
+      },
     ],
   },
 ];
@@ -190,6 +214,18 @@ export default function GigEarningsOptimizer() {
               {
                 q: "Should I work multiple gig apps at the same time?",
                 a: "Multi-apping can increase earnings per hour if managed well — but only if orders don't conflict. UnifyOne shows earnings per hour by platform and time window so you can see which combinations work best in your specific market.",
+              },
+              {
+                q: "What's the difference between gross and net gig pay?",
+                a: "Gross is the total the platform reports before costs; net is what's left after fuel, the IRS mileage deduction, platform fees, and vehicle wear. Two drivers with identical gross can keep very different amounts, so net pay per hour is the number worth optimizing.",
+              },
+              {
+                q: "How often should I re-check which platform pays best?",
+                a: "The top platform isn't fixed — pay models, promos, and demand shift week to week, so last month's leader can fall behind. Review your net pay per hour by platform on a rolling basis rather than deciding once. UnifyOne updates this comparison continuously as new earnings arrive.",
+              },
+              {
+                q: "Do bonuses and promotions count as taxable income?",
+                a: "Yes. Quests, peak-pay, referral bonuses, and promos are part of your gross self-employment income and are taxed like base order pay, whether or not they hit a 1099. They do raise your net pay, though, because they add revenue without adding miles. Educational information, not tax advice.",
               },
             ].map(({ q, a }) => (
               <div key={q} className="border-b pb-6 last:border-0">

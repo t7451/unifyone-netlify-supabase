@@ -36,7 +36,7 @@ const BRACKETS_MFJ = [
 // 2026 due dates
 const DUE_DATES = [
   "April 15, 2026",
-  "June 16, 2026",
+  "June 15, 2026",
   "September 15, 2026",
   "January 15, 2027",
 ];
@@ -88,7 +88,7 @@ const jsonLd = [
         name: "When are the 2026 quarterly estimated tax due dates?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "The 2026 quarterly estimated tax due dates are: Q1 — April 15, 2026; Q2 — June 16, 2026; Q3 — September 15, 2026; Q4 — January 15, 2027.",
+          text: "The 2026 quarterly estimated tax due dates are: Q1 — April 15, 2026; Q2 — June 15, 2026; Q3 — September 15, 2026; Q4 — January 15, 2027.",
         },
       },
       {
@@ -509,7 +509,7 @@ export default function QuarterlyTaxEstimator() {
               },
               {
                 q: "When are the 2026 quarterly tax due dates?",
-                a: "Q1: April 15, 2026 · Q2: June 16, 2026 · Q3: September 15, 2026 · Q4: January 15, 2027.",
+                a: "Q1: April 15, 2026 · Q2: June 15, 2026 · Q3: September 15, 2026 · Q4: January 15, 2027.",
               },
               {
                 q: "What is self-employment tax?",

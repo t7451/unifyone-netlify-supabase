@@ -50,6 +50,30 @@ const jsonLd = [
           text: "Kai is UnifyOne's AI financial intelligence layer. It aggregates earnings from all connected gig platforms, calculates real net income after mileage deductions and fees, forecasts quarterly tax payments, and identifies your highest-value earning patterns — all in real time, without manual data entry.",
         },
       },
+      {
+        "@type": "Question",
+        name: "How do I budget with irregular gig income?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "A common approach is to budget from a baseline — your typical low-earning week or a trailing average — rather than your best weeks, then route surplus from strong weeks into a buffer that smooths the slow ones. Building your monthly plan around net pay after taxes and vehicle costs, not gross deposits, keeps the budget realistic. This is educational information, not financial advice.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How much should I save for taxes as a gig worker?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Many gig workers set aside roughly 25–30% of their net earnings to cover self-employment tax (15.3% on 92.35% of net) plus federal and any state income tax, though your exact rate depends on your bracket, deductions, and state. Moving that share into a separate account as you earn — instead of at year end — helps avoid a shortfall at the quarterly due dates. This is educational information, not tax advice.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How do I track business expenses for gig work?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Keep a contemporaneous record of every deductible cost — business miles, phone and data (business-use percentage), platform fees, hot bags, and supplies — and retain receipts in case the IRS asks. A continuous mileage log matters most, since miles driven while working are typically deductible but your personal commute is not. UnifyOne logs these from your live platform data; this is educational information, not tax advice.",
+        },
+      },
     ],
   },
 ];
@@ -190,6 +214,18 @@ export default function FinancialIntelligenceGig() {
               {
                 q: "What is Kai in UnifyOne?",
                 a: "Kai is UnifyOne's AI financial intelligence layer. It aggregates earnings from all connected gig platforms, calculates real net income after mileage and fees, forecasts quarterly taxes, and identifies your highest-value earning patterns in real time.",
+              },
+              {
+                q: "How do I budget with irregular gig income?",
+                a: "Budget from a baseline — a typical slow week or trailing average — rather than your best weeks, and move surplus from strong weeks into a buffer that smooths the slow ones. Build the plan around net pay after taxes and vehicle costs, not gross deposits. Educational information, not financial advice.",
+              },
+              {
+                q: "How much should I save for taxes as a gig worker?",
+                a: "Many gig workers set aside about 25–30% of net earnings to cover SE tax (15.3% on 92.35% of net) plus income tax, though your exact rate depends on your bracket, deductions, and state. Moving that share into a separate account as you earn helps avoid a shortfall at quarterly due dates. Educational information, not tax advice.",
+              },
+              {
+                q: "How do I track business expenses for gig work?",
+                a: "Keep a contemporaneous record of every deductible cost — business miles, phone and data (business-use %), platform fees, and supplies — and retain receipts. The mileage log matters most: miles driven while working are typically deductible, but your personal commute is not. UnifyOne logs these from live platform data. Educational information, not tax advice.",
               },
             ].map(({ q, a }) => (
               <div key={q} className="border-b pb-6 last:border-0">

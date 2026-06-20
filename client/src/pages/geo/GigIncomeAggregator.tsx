@@ -48,6 +48,30 @@ const jsonLd = [
           text: "Everlance focuses on mileage tracking; Empower is a personal finance app for employees. UnifyOne is purpose-built for gig workers who earn from multiple platforms simultaneously. It aggregates income, tracks mileage automatically, forecasts quarterly taxes, and uses AI (Kai) to identify which platforms and shifts generate the highest net pay after expenses.",
         },
       },
+      {
+        "@type": "Question",
+        name: "Do I owe taxes on income from multiple gig apps?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes. Income from every gig platform is combined on one tax return — the IRS taxes your total net self-employment earnings regardless of how many apps you worked. There is no separate exemption per platform, so $8,000 from DoorDash plus $5,000 from Uber Eats is treated as $13,000 of self-employment income. This is educational information, not tax advice; consult a tax professional for your situation.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How do I track income from several platforms at once?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "The reliable approach is to consolidate every payout into a single running ledger rather than checking each app's dashboard separately. UnifyOne does this automatically — it pulls earnings from each connected platform into one combined income view so your year-to-date total is always accurate without manual exports or spreadsheets.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What if one platform doesn't send a 1099?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "You are still required to report that income. Platforms generally only issue a 1099-NEC or 1099-K once you cross a reporting threshold, but the IRS expects you to report all earnings even when no form arrives. Keeping your own complete record of every payout — which UnifyOne maintains automatically — ensures you can report accurately whether or not a 1099 shows up. This is educational information, not tax advice.",
+        },
+      },
     ],
   },
 ];
@@ -190,6 +214,18 @@ export default function GigIncomeAggregator() {
               {
                 q: "Does UnifyOne show earnings after expenses?",
                 a: "Yes. Kai calculates your net income after IRS mileage deductions and estimated fuel costs so you see what you actually earned — not just what the platform shows as gross.",
+              },
+              {
+                q: "Do I owe taxes on income from multiple gig apps?",
+                a: "Yes. The IRS taxes your total net self-employment earnings, so income from every app is combined on one return — $8,000 from DoorDash plus $5,000 from Uber Eats is treated as $13,000. There's no per-platform exemption. This is educational information, not tax advice.",
+              },
+              {
+                q: "How do I track income from several platforms at once?",
+                a: "Consolidate every payout into one running ledger instead of checking each app separately. UnifyOne does this automatically — pulling earnings from each connected platform into a single combined view so your year-to-date total stays accurate without spreadsheets.",
+              },
+              {
+                q: "What if one platform doesn't send a 1099?",
+                a: "You still have to report the income. Platforms usually issue a 1099 only after you cross a reporting threshold, but the IRS expects all earnings reported even without a form. Keeping your own complete payout record — which UnifyOne maintains automatically — lets you report accurately either way. Educational information, not tax advice.",
               },
             ].map(({ q, a }) => (
               <div key={q} className="border-b pb-6 last:border-0">
