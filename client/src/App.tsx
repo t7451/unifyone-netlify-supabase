@@ -1525,6 +1525,51 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/how-to-make-money-with-lyft"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-with-lyft" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/how-to-make-money-delivering-for-grubhub"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-delivering-for-grubhub" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/how-to-make-money-as-a-spark-driver"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-as-a-spark-driver" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/how-to-make-money-on-taskrabbit"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-on-taskrabbit" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/how-to-make-money-with-rover"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-with-rover" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Gig finance cluster: money topics beyond taxes */}
       <Route
         path="/gig-worker-retirement"
