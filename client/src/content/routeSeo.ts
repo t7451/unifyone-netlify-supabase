@@ -272,6 +272,96 @@ const NV_TAX_LINKS = [
   IRS.seTax,
   { label: "Nevada Department of Taxation", url: "https://tax.nv.gov/" },
 ];
+const WI_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Wisconsin Department of Revenue (Form 1-ES)",
+    url: "https://www.revenue.wi.gov/",
+  },
+];
+const OR_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Oregon Department of Revenue (estimated income tax)",
+    url: "https://www.oregon.gov/dor/",
+  },
+];
+const SC_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "South Carolina Department of Revenue (Form SC1040ES)",
+    url: "https://dor.sc.gov/",
+  },
+];
+const AL_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Alabama Department of Revenue (Form 40ES)",
+    url: "https://www.revenue.alabama.gov/",
+  },
+];
+const LA_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Louisiana Department of Revenue (Form IT-540ES)",
+    url: "https://revenue.louisiana.gov/",
+  },
+];
+const KY_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Kentucky Department of Revenue (Form 740-ES)",
+    url: "https://revenue.ky.gov/",
+  },
+];
+const OK_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Oklahoma Tax Commission (Form OW-8-ES)",
+    url: "https://oklahoma.gov/tax.html",
+  },
+];
+const CT_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Connecticut Department of Revenue Services (Form CT-1040ES)",
+    url: "https://portal.ct.gov/DRS",
+  },
+];
+const UT_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Utah State Tax Commission (Form TC-546)",
+    url: "https://tax.utah.gov/",
+  },
+];
+const IA_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Iowa Department of Revenue (Form IA 1040ES)",
+    url: "https://revenue.iowa.gov/",
+  },
+];
 
 // Authoritative resources for the gig platform comparison guides. The IRS
 // self-employed center + estimated taxes anchor the (educational, not advice)
@@ -659,6 +749,146 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
       "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
       "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/wisconsin-gig-worker-taxes",
+    externalLinks: WI_TAX_LINKS,
+    title:
+      "Wisconsin Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Wisconsin gig worker taxes: a progressive state income tax (up to ~7.65%) plus the 15.3% federal SE tax, with Form 1-ES estimates. Not tax advice.",
+    body: [
+      "Wisconsin gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Wisconsin layers on a progressive state income tax topping out around 7.65%, applied to your net gig profit on top of federal tax. Pay state estimates to the Department of Revenue using Form 1-ES, generally on the same quarterly schedule as your federal estimates.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Wisconsin starts from.",
+      "Federal and Wisconsin estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/oregon-gig-worker-taxes",
+    externalLinks: OR_TAX_LINKS,
+    title:
+      "Oregon Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Oregon gig worker taxes: a progressive income tax (up to ~9.9%) plus the 15.3% federal SE tax, and Portland-area local taxes. Not tax advice.",
+    body: [
+      "Oregon gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Oregon has one of the highest state income taxes, progressive up to around 9.9%, and no general sales tax. If you work in the Portland metro, you may also owe local taxes such as the Metro Supportive Housing Services and Multnomah County Preschool for All taxes on higher earnings. Pay state estimates through the Department of Revenue.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Oregon starts from.",
+      "Federal and Oregon estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/south-carolina-gig-worker-taxes",
+    externalLinks: SC_TAX_LINKS,
+    title:
+      "South Carolina Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "South Carolina gig worker taxes: a progressive state income tax (top ~6.2%) plus the 15.3% federal SE tax, with SC1040ES estimates. Not tax advice.",
+    body: [
+      "South Carolina gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "South Carolina has a progressive state income tax with a top rate around 6.2% (being reduced over time), applied to your net gig profit on top of federal tax. Pay state estimates to the Department of Revenue using Form SC1040ES, and confirm the current rate.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income South Carolina starts from.",
+      "Federal and South Carolina estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/alabama-gig-worker-taxes",
+    externalLinks: AL_TAX_LINKS,
+    title:
+      "Alabama Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Alabama gig worker taxes: a state income tax (up to 5%) plus possible city occupational taxes and the 15.3% federal SE tax. Not tax advice.",
+    body: [
+      "Alabama gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Alabama has a progressive state income tax topping out at 5%, and some cities (such as Birmingham) levy a local occupational or business tax on earnings made there. Pay state estimates to the Department of Revenue using Form 40ES.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Alabama starts from.",
+      "Federal and Alabama estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/louisiana-gig-worker-taxes",
+    externalLinks: LA_TAX_LINKS,
+    title:
+      "Louisiana Gig Worker Taxes: Flat State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Louisiana gig worker taxes: a flat ~3% state income tax plus the 15.3% federal SE tax, with Form IT-540ES estimates. Not tax advice.",
+    body: [
+      "Louisiana gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Louisiana recently moved to a flat individual income tax of about 3% (replacing its graduated brackets), applied to your net gig profit on top of federal tax. Pay state estimates to the Department of Revenue using Form IT-540ES, and confirm the current rate.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Louisiana starts from.",
+      "Federal and Louisiana estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/kentucky-gig-worker-taxes",
+    externalLinks: KY_TAX_LINKS,
+    title:
+      "Kentucky Gig Worker Taxes: Flat State + Local Tax & Federal SE Tax | UnifyOne",
+    description:
+      "Kentucky gig worker taxes: a flat state income tax (~4%) plus local occupational taxes and the 15.3% federal SE tax. Not tax advice.",
+    body: [
+      "Kentucky gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Kentucky has a flat state income tax (around 3.5–4% and declining), plus many counties and cities levy a local occupational license tax on net self-employment profit earned there. Pay state estimates to the Department of Revenue using Form 740-ES, and confirm the current rate.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Kentucky starts from.",
+      "Federal and Kentucky estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/oklahoma-gig-worker-taxes",
+    externalLinks: OK_TAX_LINKS,
+    title:
+      "Oklahoma Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Oklahoma gig worker taxes: a progressive state income tax (top ~4.75%) plus the 15.3% federal SE tax, with Form OW-8-ES. Not tax advice.",
+    body: [
+      "Oklahoma gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Oklahoma has a progressive state income tax with a top rate around 4.75%, applied to your net gig profit on top of federal tax. Pay state estimates to the Oklahoma Tax Commission using Form OW-8-ES, generally on the same quarterly schedule as your federal estimates.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Oklahoma starts from.",
+      "Federal and Oklahoma estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/connecticut-gig-worker-taxes",
+    externalLinks: CT_TAX_LINKS,
+    title:
+      "Connecticut Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Connecticut gig worker taxes: a progressive state income tax (up to ~6.99%) plus the 15.3% federal SE tax, with Form CT-1040ES. Not tax advice.",
+    body: [
+      "Connecticut gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Connecticut has a progressive state income tax topping out at 6.99%, applied to your net gig profit on top of federal tax. Pay state estimates to the Department of Revenue Services using Form CT-1040ES, generally on the same quarterly schedule as your federal estimates.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Connecticut starts from.",
+      "Federal and Connecticut estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/utah-gig-worker-taxes",
+    externalLinks: UT_TAX_LINKS,
+    title:
+      "Utah Gig Worker Taxes: Flat State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Utah gig worker taxes: a flat state income tax (~4.55%) plus the 15.3% federal SE tax, with TC-546 prepayments. Not tax advice.",
+    body: [
+      "Utah gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Utah has a flat state income tax (around 4.5%), applied to your net gig profit on top of federal tax. Utah uses a prepayment system (Form TC-546) rather than traditional quarterly vouchers — pay in enough during the year to avoid an underpayment penalty, and confirm the current rate.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Utah starts from.",
+      "Federal estimates are generally due around April 15, June 15, September 15, and January 15; make your Utah prepayments on a similar schedule. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/iowa-gig-worker-taxes",
+    externalLinks: IA_TAX_LINKS,
+    title:
+      "Iowa Gig Worker Taxes: Flat State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Iowa gig worker taxes: a flat ~3.8% state income tax plus the 15.3% federal SE tax, with IA 1040ES estimates. Not tax advice.",
+    body: [
+      "Iowa gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Iowa recently moved to a flat individual income tax of about 3.8% (replacing its graduated brackets), applied to your net gig profit on top of federal tax. Pay state estimates to the Department of Revenue using Form IA 1040ES, and confirm the current rate.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Iowa starts from.",
+      "Federal and Iowa estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
     ],
   },
   {

@@ -1028,6 +1028,96 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/wisconsin-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="wisconsin-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/oregon-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="oregon-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/south-carolina-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="south-carolina-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/alabama-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="alabama-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/louisiana-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="louisiana-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/kentucky-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="kentucky-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/oklahoma-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="oklahoma-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/connecticut-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="connecticut-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/utah-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="utah-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/iowa-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="iowa-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Gig-tax cluster: additional platform comparisons */}
       <Route
         path="/doordash-vs-grubhub"
