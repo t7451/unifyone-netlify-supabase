@@ -120,6 +120,7 @@ const PlatformComparison = lazy(() => import("./pages/geo/PlatformComparison"));
 const GettingStartedGuide = lazy(
   () => import("./pages/geo/GettingStartedGuide")
 );
+const GigFinanceGuide = lazy(() => import("./pages/geo/GigFinanceGuide"));
 const Form1099Explainer = lazy(() => import("./pages/geo/Form1099Explainer"));
 const GigDeductionsGuide = lazy(() => import("./pages/geo/GigDeductionsGuide"));
 const HowToFileGigTaxes = lazy(() => import("./pages/geo/HowToFileGigTaxes"));
@@ -1124,6 +1125,43 @@ function Router() {
         component={() => (
           <>
             <GettingStartedGuide slug="how-to-make-money-with-amazon-flex" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      {/* Gig finance cluster: money topics beyond taxes */}
+      <Route
+        path="/gig-worker-retirement"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="gig-worker-retirement" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gig-worker-health-insurance"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="gig-worker-health-insurance" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gig-worker-bookkeeping"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="gig-worker-bookkeeping" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gig-worker-budgeting"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="gig-worker-budgeting" />
             <GigResourceLinks />
           </>
         )}
