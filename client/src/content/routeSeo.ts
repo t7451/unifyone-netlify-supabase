@@ -539,6 +539,8 @@ const PLATFORM_LINKS = {
   amazonFlex: { label: "Amazon Flex", url: "https://flex.amazon.com" },
   spark: { label: "Walmart Spark", url: "https://drive4spark.walmart.com" },
   shipt: { label: "Shipt", url: "https://www.shipt.com" },
+  taskrabbit: { label: "TaskRabbit", url: "https://www.taskrabbit.com" },
+  rover: { label: "Rover", url: "https://www.rover.com" },
 };
 const DOORDASH_VS_UBER_EATS_LINKS = [
   IRS.selfEmployedCenter,
@@ -695,6 +697,40 @@ const INSTACART_START_LINKS = [
 const AMAZON_FLEX_START_LINKS = [
   { label: "Sign up for Amazon Flex", url: "https://flex.amazon.com" },
   PLATFORM_LINKS.amazonFlex,
+  IRS.selfEmployedCenter,
+];
+const LYFT_START_LINKS = [
+  { label: "Drive with Lyft", url: "https://www.lyft.com/drivers" },
+  PLATFORM_LINKS.lyft,
+  IRS.selfEmployedCenter,
+];
+const GRUBHUB_START_LINKS = [
+  { label: "Become a Grubhub driver", url: "https://driver.grubhub.com" },
+  PLATFORM_LINKS.grubhub,
+  IRS.selfEmployedCenter,
+];
+const SPARK_START_LINKS = [
+  {
+    label: "Join the Spark Driver platform",
+    url: "https://drive4spark.walmart.com",
+  },
+  PLATFORM_LINKS.spark,
+  IRS.selfEmployedCenter,
+];
+const TASKRABBIT_START_LINKS = [
+  {
+    label: "Become a Tasker (TaskRabbit)",
+    url: "https://www.taskrabbit.com/become-a-tasker",
+  },
+  PLATFORM_LINKS.taskrabbit,
+  IRS.selfEmployedCenter,
+];
+const ROVER_START_LINKS = [
+  {
+    label: "Become a Rover sitter",
+    url: "https://www.rover.com/become-a-sitter/",
+  },
+  PLATFORM_LINKS.rover,
   IRS.selfEmployedCenter,
 ];
 
@@ -2163,6 +2199,72 @@ export const ROUTE_SEO: RouteSeo[] = [
       "To start you generally need to be at least 21, have a qualifying vehicle (often mid-size or larger with adequate cargo space), carry valid insurance, have a compatible smartphone, and pass a background check. Requirements vary by location and change, so confirm them with Amazon Flex.",
       "Amazon Flex pays per block, showing an estimated pay before you reserve it; most package-delivery blocks don't include tips. If a route runs long your effective rate drops, no taxes are withheld, and you cover your own fuel and vehicle costs.",
       "To understand your real earnings, track your actual block time and expenses and use the free Real Hourly Rate calculator and Earnings Consolidator to compute net pay. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-with-lyft",
+    externalLinks: LYFT_START_LINKS,
+    title: "How to Make Money with Lyft: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money with Lyft: requirements, how to sign up, how driver pay works, and how to compute your real net hourly rate. Beginner's guide.",
+    body: [
+      "Driving with Lyft lets you earn by giving rides on your own schedule in your own car. Drivers are independent contractors who decide when to go online, where to drive, and which ride requests to accept in the app.",
+      "Rideshare driving typically requires you to be at least 21, have an eligible four-door vehicle, carry valid insurance and registration, and pass a background and driving-record check. Requirements vary by city and change, so confirm the current criteria with Lyft.",
+      "Lyft shows upfront trip details before you accept, with Prime Time and promotions during busy periods and 100% of tips on top. There's no guaranteed wage, Lyft takes a service fee from fares, and you pay for your own gas and vehicle costs.",
+      "To understand your real earnings, track a few shifts and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay after costs. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-delivering-for-grubhub",
+    externalLinks: GRUBHUB_START_LINKS,
+    title:
+      "How to Make Money Delivering for Grubhub: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money delivering for Grubhub: requirements, how to sign up, how driver pay works, and how to compute your real net hourly rate.",
+    body: [
+      "Grubhub lets you earn on your own schedule by delivering food orders to customers nearby. Drivers are independent contractors who use their own car, bike, or scooter, choose when to work, and accept or decline each offer.",
+      "To start you generally need to be at least 18, have a way to deliver, carry a smartphone, and pass a background check. Requirements vary by market and change over time, so confirm the current criteria with Grubhub before applying.",
+      "Pay is per delivery — a base amount plus any bonuses, with 100% of customer tips on top — and there is no guaranteed wage. Because no taxes are withheld and you cover your own gas and vehicle wear, your gross earnings overstate your take-home.",
+      "To know what you'd really make, track a few shifts and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-as-a-spark-driver",
+    externalLinks: SPARK_START_LINKS,
+    title: "How to Make Money as a Spark Driver: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money as a Spark driver: requirements, how to sign up, how Walmart delivery pay works, and how to compute your real net hourly rate.",
+    body: [
+      "The Spark Driver platform lets you earn by delivering orders for Walmart and other businesses in your own car. Drivers are independent contractors who accept or decline offers in the app and deliver them along a route.",
+      "To start you generally need to be at least 18, have a reliable vehicle, carry valid insurance, have a smartphone, and pass a background check. Requirements vary by location and change, so confirm the current criteria on the Spark Driver platform.",
+      "Each offer shows estimated pay and details before you accept; some are single deliveries and others are batched, with 100% of customer tips on top. There's no guaranteed wage, no taxes are withheld, and you cover your own fuel and vehicle costs.",
+      "To understand your real earnings, track a few shifts and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay after costs. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-on-taskrabbit",
+    externalLinks: TASKRABBIT_START_LINKS,
+    title: "How to Make Money on TaskRabbit: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money on TaskRabbit: requirements, how to sign up, how Tasker pay works, and how to compute your real net hourly rate. Beginner's guide.",
+    body: [
+      "TaskRabbit lets you earn by doing tasks for clients — assembly, moving help, mounting, cleaning, and handyman work. Taskers are independent contractors who list their categories, set their own hourly rates, and accept the jobs they want in the app.",
+      "To start you generally need to be at least 18, bring the skills and tools for your categories, have a smartphone and a way to reach jobs, complete registration, and pass a background check. Requirements vary by market and change, so confirm them with TaskRabbit.",
+      "You set your own rates and are paid for the time a job takes, minus a TaskRabbit service fee, with any client tips on top. There's no guaranteed wage, no taxes are withheld, and you cover your own tools, supplies, and travel.",
+      "To know what you'd really make, track your active hours and expenses and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-with-rover",
+    externalLinks: ROVER_START_LINKS,
+    title: "How to Make Money with Rover: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money with Rover: requirements, how to sign up, how sitter and walker pay works, and how to compute your real net hourly rate.",
+    body: [
+      "Rover lets you earn by caring for pets — boarding, house sitting, drop-in visits, day care, and dog walking — on your own schedule. Sitters are independent contractors who list services, set their own prices, and accept or decline bookings in the app.",
+      "To start you generally need to be at least 18, be comfortable and reliable with animals (and have a pet-friendly space if you board), have a smartphone, build a profile for approval, and pass a background check. Requirements vary by market and change, so confirm them with Rover.",
+      "You set your own prices and are paid for completed bookings, minus a Rover service fee, with any owner tips on top. There's no guaranteed wage, no taxes are withheld, and you cover your own supplies, travel, and any boarding costs.",
+      "To know what you'd really make, track your active hours and expenses and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay. This is educational information, not financial advice, and not a guarantee of income.",
     ],
   },
   {
