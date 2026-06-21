@@ -292,7 +292,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
         }}
       >
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-10 mb-16">
             {/* Brand */}
             <div>
               <div className="flex items-center gap-2 mb-4">
@@ -382,6 +382,46 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                   },
                   { label: "Gig Hourly Rate", href: "/tools/gig-hourly-rate" },
                   { label: "Tax Set-Aside", href: "/tools/tax-set-aside" },
+                ].map(item => (
+                  <Link key={item.href} href={item.href}>
+                    <span
+                      className="block cursor-pointer font-cinzel text-xs tracking-widest transition-colors duration-200"
+                      style={{ color: "#8A8A8A", letterSpacing: "0.15em" }}
+                      onMouseEnter={e =>
+                        ((e.currentTarget as HTMLElement).style.color =
+                          "#D4A843")
+                      }
+                      onMouseLeave={e =>
+                        ((e.currentTarget as HTMLElement).style.color =
+                          "#8A8A8A")
+                      }
+                    >
+                      {item.label}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Gig Worker Guides */}
+            <div>
+              <span className="inscription block mb-4">Gig Worker</span>
+              <div className="space-y-3">
+                {[
+                  { label: "Gig Worker Taxes", href: "/gig-taxes" },
+                  { label: "DoorDash Taxes", href: "/doordash-taxes" },
+                  {
+                    label: "Make Money on DoorDash",
+                    href: "/how-to-make-money-on-doordash",
+                  },
+                  {
+                    label: "Consolidate Gig Income",
+                    href: "/gig-income-aggregator",
+                  },
+                  {
+                    label: "Optimize Earnings",
+                    href: "/gig-earnings-optimizer",
+                  },
                 ].map(item => (
                   <Link key={item.href} href={item.href}>
                     <span

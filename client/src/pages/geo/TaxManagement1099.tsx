@@ -45,7 +45,7 @@ const jsonLd = [
         name: "When are 1099 quarterly tax payments due in 2026?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "2026 quarterly estimated tax due dates: Q1 — April 15, 2026; Q2 — June 16, 2026; Q3 — September 15, 2026; Q4 — January 15, 2027. Missing a payment triggers IRS underpayment penalties even if you pay the full amount at filing.",
+          text: "2026 quarterly estimated tax due dates: Q1 — April 15, 2026; Q2 — June 15, 2026; Q3 — September 15, 2026; Q4 — January 15, 2027. Missing a payment can trigger IRS underpayment penalties even if you pay the full amount at filing. This is educational information, not tax advice.",
         },
       },
       {
@@ -54,6 +54,30 @@ const jsonLd = [
         acceptedAnswer: {
           "@type": "Answer",
           text: "QuickBooks Self-Employed requires manual income entry and focuses on single-platform workers. UnifyOne automatically aggregates income from DoorDash, Uber Eats, Instacart, Stripe, PayPal, and Square — then calculates your quarterly tax position in real time from live multi-platform earnings, not estimates you type in.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "When will I get my 1099 from gig platforms?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Platforms generally must send 1099-NEC or 1099-K forms by January 31 for the prior tax year, with electronic copies often posted in your account portal around the same time. You may not receive a form from a platform where your earnings fell below the reporting threshold, but you still must report that income. This is educational information, not tax advice.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What if my 1099 amount looks wrong?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "First reconcile the form against your own payout records — 1099-K figures often include gross volume before platform fees and refunds, so a number that looks high may still be correct. If a genuine error remains, contact the platform that issued it to request a corrected form rather than simply ignoring it. UnifyOne's complete earnings ledger makes this reconciliation straightforward; this is educational information, not tax advice.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Do I need to pay taxes quarterly as a 1099 worker?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Generally yes — the IRS expects estimated payments throughout the year if you anticipate owing about $1,000 or more, because no employer withholds tax from gig pay. Skipping the quarterly due dates can trigger underpayment penalties even if you pay in full at filing. UnifyOne shows your running quarterly liability so you know each payment before it's due; this is educational information, not tax advice.",
         },
       },
     ],
@@ -193,7 +217,7 @@ export default function TaxManagement1099() {
               },
               {
                 quarter: "Q2 2026",
-                due: "June 16, 2026",
+                due: "June 15, 2026",
                 period: "Apr 1 – May 31",
               },
               {
@@ -239,8 +263,24 @@ export default function TaxManagement1099() {
                 a: "IRS standard mileage ($0.70/mile in 2025), phone and data (business use %), platform fees, equipment, supplies, health insurance premiums (if self-employed), and half of SE tax. Mileage is usually the largest deduction.",
               },
               {
+                q: "When are 1099 quarterly tax payments due in 2026?",
+                a: "2026 due dates: Q1 — April 15, 2026; Q2 — June 15, 2026; Q3 — September 15, 2026; Q4 — January 15, 2027. Missing a payment can trigger IRS underpayment penalties even if you pay the full amount at filing. Educational information, not tax advice.",
+              },
+              {
                 q: "How is UnifyOne different from QuickBooks Self-Employed?",
                 a: "QuickBooks requires manual income entry and is built for single-platform workers. UnifyOne auto-aggregates income from all your gig platforms and calculates your quarterly tax position from live data — not numbers you type in.",
+              },
+              {
+                q: "When will I get my 1099 from gig platforms?",
+                a: "Platforms generally must send 1099-NEC or 1099-K forms by January 31 for the prior year, often posting electronic copies in your account portal around the same time. If your earnings on a platform fell below the reporting threshold you may not get a form, but you still must report the income. Educational information, not tax advice.",
+              },
+              {
+                q: "What if my 1099 amount looks wrong?",
+                a: "Reconcile it against your own payout records first — 1099-K totals often show gross volume before fees and refunds, so a high-looking number can still be right. If a real error remains, ask the issuing platform for a corrected form instead of ignoring it. UnifyOne's earnings ledger makes this easy. Educational information, not tax advice.",
+              },
+              {
+                q: "Do I need to pay taxes quarterly as a 1099 worker?",
+                a: "Generally yes — the IRS expects estimated payments if you'll owe about $1,000 or more, since no employer withholds from gig pay. Skipping the quarterly due dates can trigger underpayment penalties even if you pay in full in April. UnifyOne shows your running quarterly liability so each payment is known in advance. Educational information, not tax advice.",
               },
             ].map(({ q, a }) => (
               <div key={q} className="border-b pb-6 last:border-0">

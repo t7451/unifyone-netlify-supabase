@@ -104,6 +104,45 @@ export default function ToolLayout({
             View all free tools →
           </Link>
         </section>
+
+        {/* Gig worker guides — backlink each calculator into the gig-tax cluster. */}
+        <section className="mt-10 border-t pt-8">
+          <h2 className="text-sm font-semibold text-muted-foreground mb-4">
+            Gig worker guides
+          </h2>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {[
+              { href: "/gig-taxes", label: "Gig Worker Taxes: complete guide" },
+              {
+                href: "/gig-worker-tax-deductions",
+                label: "Tax deductions checklist",
+              },
+              {
+                href: "/gig-quarterly-taxes",
+                label: "Quarterly estimated taxes",
+              },
+              {
+                href: "/1099-nec-vs-1099-k",
+                label: "1099-NEC vs 1099-K explained",
+              },
+            ].map(guide => (
+              <li key={guide.href}>
+                <Link
+                  href={guide.href}
+                  className="block rounded-lg border bg-card px-4 py-3 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
+                >
+                  {guide.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Link
+            href="/gig-taxes"
+            className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            All gig worker tax guides →
+          </Link>
+        </section>
       </main>
     </div>
   );

@@ -243,6 +243,22 @@ export default function ToolsIndex() {
               { label: "Uber driver taxes", href: "/uber-driver-taxes" },
               { label: "Instacart taxes", href: "/instacart-taxes" },
               {
+                label: "How to make money on DoorDash",
+                href: "/how-to-make-money-on-doordash",
+              },
+              {
+                label: "How to make money driving for Uber",
+                href: "/how-to-make-money-driving-for-uber",
+              },
+              {
+                label: "How to make money with Instacart",
+                href: "/how-to-make-money-with-instacart",
+              },
+              {
+                label: "How to make money with Amazon Flex",
+                href: "/how-to-make-money-with-amazon-flex",
+              },
+              {
                 label: "Consolidate gig income",
                 href: "/gig-income-aggregator",
               },
@@ -258,6 +274,22 @@ export default function ToolsIndex() {
               {
                 label: "Gig route intelligence",
                 href: "/gig-route-intelligence",
+              },
+              {
+                label: "Retirement accounts for gig workers",
+                href: "/gig-worker-retirement",
+              },
+              {
+                label: "Health insurance for gig workers",
+                href: "/gig-worker-health-insurance",
+              },
+              {
+                label: "Bookkeeping for gig workers",
+                href: "/gig-worker-bookkeeping",
+              },
+              {
+                label: "Budgeting on irregular income",
+                href: "/gig-worker-budgeting",
               },
               { label: "Browse all SEO guides", href: "/seo" },
             ].map(g => (

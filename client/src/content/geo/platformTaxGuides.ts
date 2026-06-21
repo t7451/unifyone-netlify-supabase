@@ -213,6 +213,240 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
     ],
   },
+  {
+    slug: "amazon-flex-taxes",
+    platform: "Amazon Flex",
+    workerNoun: "Amazon Flex drivers",
+    workType: "package delivery",
+    eyebrow: "Gig Tax Guide",
+    title: "Amazon Flex Taxes: A Driver's Guide to 1099 Filing & Deductions",
+    metaDescription:
+      "How Amazon Flex taxes work: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    h1: "Amazon Flex Taxes: What Every Driver Needs to Know",
+    intro:
+      "Amazon Flex pays you as an independent contractor, so no taxes are withheld from your delivery blocks. You're responsible for your own federal, state, and self-employment taxes — but the miles you drive during a block, including between stops, are deductible if you track them. Here's how Amazon Flex taxes work.",
+    formsHeading: "Do you get a 1099 from Amazon Flex?",
+    formsBody: [
+      "If you earned $600 or more driving for Amazon Flex in a year, you'll receive a 1099-NEC reporting your nonemployee compensation, available through Amazon's tax-document portal.",
+      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+    ],
+    extraDeductions: [
+      {
+        label: "Phone mount & delivery supplies",
+        desc: "Phone mounts, chargers, and any supplies you buy to complete delivery blocks.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Amazon Flex take out taxes for me?",
+        a: "No. Amazon Flex pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for Amazon Flex taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from Amazon Flex?",
+        a: "If you earned $600 or more, Amazon issues a 1099-NEC through its tax-document portal. Below that you may not receive a form, but you must still report the income.",
+      },
+      {
+        q: "What can Amazon Flex drivers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven during your delivery blocks, including between stops. You can also deduct the business-use share of your phone, tolls, parking, and supplies.",
+      },
+      {
+        q: "When are Amazon Flex taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "grubhub-taxes",
+    platform: "Grubhub",
+    workerNoun: "Grubhub drivers",
+    workType: "food delivery",
+    eyebrow: "Gig Tax Guide",
+    title: "Grubhub Taxes: A Driver's Guide to 1099 Filing & Deductions",
+    metaDescription:
+      "How Grubhub taxes work for drivers: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    h1: "Grubhub Taxes: What Every Driver Needs to Know",
+    intro:
+      "Grubhub pays you as an independent contractor, so nothing is withheld from your delivery pay. You owe your own federal, state, and self-employment taxes — and tracking your mileage is the single biggest way to lower what you owe. Here's how Grubhub taxes work.",
+    formsHeading: "Do you get a 1099 from Grubhub?",
+    formsBody: [
+      "If you earned $600 or more on Grubhub in a year, you'll receive a 1099-NEC (issued through Grubhub's payment processor) reporting your nonemployee compensation.",
+      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+    ],
+    extraDeductions: [
+      {
+        label: "Insulated bags & supplies",
+        desc: "Insulated delivery bags, phone mounts, and supplies bought to complete deliveries.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Grubhub take out taxes for me?",
+        a: "No. Grubhub pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for Grubhub taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from Grubhub?",
+        a: "If you earned $600 or more, Grubhub issues a 1099-NEC through its payment processor. Below that you may not receive a form, but you must still report the income.",
+      },
+      {
+        q: "What can Grubhub drivers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering. You can also deduct the business-use share of your phone, insulated bags, tolls, and parking.",
+      },
+      {
+        q: "When are Grubhub taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "lyft-driver-taxes",
+    platform: "Lyft",
+    workerNoun: "Lyft drivers",
+    workType: "rideshare",
+    eyebrow: "Gig Tax Guide",
+    title: "Lyft Driver Taxes: 1099-K vs 1099-NEC, Deductions & Estimates",
+    metaDescription:
+      "Lyft driver taxes explained: the 1099-K vs 1099-NEC, your Annual Summary, self-employment tax, mileage deductions, and quarterly estimates. Not tax advice.",
+    h1: "Lyft Driver Taxes: The Complete Breakdown",
+    intro:
+      "Lyft treats drivers as independent contractors and withholds no taxes, so you're responsible for your own income and self-employment taxes — and you'll likely receive more than one tax form. Here's how to read them and keep your bill as low as legally possible.",
+    formsHeading: "1099-K vs 1099-NEC: which one does Lyft send?",
+    formsBody: [
+      "Lyft may issue two forms. A 1099-K reports the gross amount riders paid for your rides (processed through Lyft as a third-party platform). A 1099-NEC reports other income like bonuses, referrals, and incentives.",
+      "Form thresholds change from year to year, so you might not receive a 1099-K in a low-volume year. Either way, your Lyft Annual Summary lists your gross earnings, Lyft's fees, and online miles — and you must report all of it regardless of which forms arrive.",
+    ],
+    extraDeductions: [
+      {
+        label: "Lyft service fees & commissions",
+        desc: "Fees Lyft deducts from each fare are a business expense — your Annual Summary breaks them out.",
+      },
+      {
+        label: "Water, mints & rider amenities",
+        desc: "Reasonable amenities you provide for passengers are deductible.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Lyft withhold taxes from my pay?",
+        a: "No. Lyft drivers are independent contractors, so no tax is withheld. You set aside and pay your own income tax plus the 15.3% self-employment tax.",
+      },
+      {
+        q: "What's the difference between the 1099-K and 1099-NEC from Lyft?",
+        a: "The 1099-K reports the gross fares riders paid for your rides. The 1099-NEC reports non-ride income such as bonuses, referrals, and incentives. Your Lyft Annual Summary reconciles both with your actual take-home.",
+      },
+      {
+        q: "How much should I set aside for Lyft taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "What can Lyft drivers deduct?",
+        a: "Business mileage at the IRS standard mileage rate is usually the largest deduction — and because Lyft reports only your online miles, your real deductible mileage (including miles between rides) is often higher. You can also deduct Lyft's service fees, the business-use share of your phone, tolls, parking, and rider amenities.",
+      },
+      {
+        q: "Do Lyft drivers have to pay quarterly taxes?",
+        a: "If you expect to owe $1,000 or more for the year, the IRS generally expects quarterly estimated payments — around April 15, June 15, September 15, and January 15 — to avoid an underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "spark-driver-taxes",
+    platform: "Spark Driver",
+    workerNoun: "Spark drivers",
+    workType: "delivery for Walmart",
+    eyebrow: "Gig Tax Guide",
+    title: "Spark Driver Taxes: A Guide to 1099 Filing & Deductions",
+    metaDescription:
+      "How Walmart Spark driver taxes work: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    h1: "Spark Driver Taxes: What Every Driver Needs to Know",
+    intro:
+      "The Walmart Spark Driver program pays you as an independent contractor, so no taxes are withheld from your deliveries. You owe your own federal, state, and self-employment taxes — and your mileage is usually your largest deduction. Here's how Spark Driver taxes work.",
+    formsHeading: "Do you get a 1099 from Spark Driver?",
+    formsBody: [
+      "If you earned $600 or more delivering through the Spark Driver app in a year, you'll receive a 1099-NEC reporting your nonemployee compensation, delivered through the app's payment partner.",
+      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+    ],
+    extraDeductions: [
+      {
+        label: "Insulated bags & delivery supplies",
+        desc: "Insulated bags, hand trucks, phone mounts, and supplies bought to complete Walmart deliveries.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Spark Driver take out taxes for me?",
+        a: "No. The Spark Driver program pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for Spark Driver taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from Spark Driver?",
+        a: "If you earned $600 or more, the Spark Driver program issues a 1099-NEC through its payment partner. Below that you may not receive a form, but you must still report the income.",
+      },
+      {
+        q: "What can Spark drivers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering. You can also deduct the business-use share of your phone, insulated bags, tolls, and parking.",
+      },
+      {
+        q: "When are Spark Driver taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "shipt-shopper-taxes",
+    platform: "Shipt",
+    workerNoun: "Shipt shoppers",
+    workType: "grocery shopping and delivery",
+    eyebrow: "Gig Tax Guide",
+    title: "Shipt Taxes: A Shopper's Guide to 1099s & Deductions",
+    metaDescription:
+      "Shipt taxes for shoppers: the 1099-NEC, self-employment tax, mileage and supply deductions, and quarterly payments. Not tax advice.",
+    h1: "Shipt Taxes: A Shopper's Guide",
+    intro:
+      "Shipt shoppers are independent contractors, so Shipt withholds no taxes from your pay. You owe your own federal, state, and self-employment taxes — and because you both shop and drive, tracking your working miles matters. Here's how Shipt taxes work.",
+    formsHeading: "Do Shipt shoppers get a 1099?",
+    formsBody: [
+      "Shipt shoppers who earned $600 or more in a year receive a 1099-NEC reporting their nonemployee compensation, typically delivered through Shipt's payment processor by the end of January.",
+      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+    ],
+    extraDeductions: [
+      {
+        label: "Insulated bags & coolers",
+        desc: "Cooler bags and equipment you buy to keep groceries fresh are deductible.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Shipt take out taxes for me?",
+        a: "No. Shipt pays shoppers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for Shipt taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from Shipt?",
+        a: "Shipt shoppers who earned $600 or more get a 1099-NEC, usually delivered through Shipt's payment processor by late January. Below that threshold you may not get a form but must still report the income.",
+      },
+      {
+        q: "Can Shipt shoppers deduct mileage?",
+        a: "Yes. Shipt shoppers can deduct business mileage at the IRS standard mileage rate for miles driven while working — typically the largest deduction. Track every working mile, since Shipt doesn't report your mileage for you.",
+      },
+      {
+        q: "When do Shipt shoppers pay taxes?",
+        a: "Independent-contractor shoppers generally make quarterly estimated payments — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Quarterly payments avoid an IRS underpayment penalty.",
+      },
+    ],
+  },
 ];
 
 export function getPlatformTaxGuide(

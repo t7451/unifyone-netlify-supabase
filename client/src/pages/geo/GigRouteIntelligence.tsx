@@ -48,6 +48,30 @@ const jsonLd = [
           text: "The only reliable way is to analyze your own historical earnings by zone. Generic market data doesn't account for your specific vehicle costs, preferred platforms, or local supply and demand. UnifyOne maps your earnings per hour by pickup zone from your actual platform data — showing which areas have consistently generated your highest net pay.",
         },
       },
+      {
+        "@type": "Question",
+        name: "Are miles driven between deliveries tax-deductible?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Generally yes. Miles driven while you are actively working — including driving to a pickup, between stacked orders, and repositioning to your delivery zone after you've logged on — are typically deductible business miles. The drive from home before you go online and the drive home after you log off are usually treated as non-deductible commuting. Keep a contemporaneous mileage log; this is educational information, not tax advice.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What makes a delivery zone worth working?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "A strong zone combines high order density with short pickup-to-drop distances, so you spend more time on paid miles and less on deadhead. Dense clusters of restaurants or stores near the customers they serve usually beat sprawling areas with long gaps between orders, even when the per-order payout looks similar. UnifyOne ranks your zones by net pay per hour so the comparison reflects both density and distance.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Does driving more always mean earning more?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Not necessarily. Past a certain point, extra miles can add fuel, maintenance, and wear faster than they add pay — so two drivers logging the same hours can keep very different net earnings depending on how many of those miles were paid. The goal is higher net pay per hour and a lower deadhead ratio, not simply more total miles, which is what UnifyOne tracks for each zone.",
+        },
+      },
     ],
   },
 ];
@@ -184,6 +208,18 @@ export default function GigRouteIntelligence() {
               {
                 q: "How do I know which delivery zones pay the most?",
                 a: "Only by analyzing your own earnings history. Generic market data doesn't account for your vehicle costs, preferred platforms, or local conditions. UnifyOne maps your earnings per hour by pickup zone from your actual platform data.",
+              },
+              {
+                q: "Are miles driven between deliveries tax-deductible?",
+                a: "Generally yes — miles driven while actively working, including to a pickup, between stacked orders, and repositioning to your zone after logging on, are typically deductible business miles. The drive from home before you go online and back after you log off is usually non-deductible commuting. Keep a contemporaneous log. Educational information, not tax advice.",
+              },
+              {
+                q: "What makes a delivery zone worth working?",
+                a: "High order density paired with short pickup-to-drop distances, so more of your time is paid miles and less is deadhead. Dense restaurant or store clusters near their customers usually beat sprawling areas with long gaps, even at similar per-order pay. UnifyOne ranks your zones by net pay per hour, capturing both density and distance.",
+              },
+              {
+                q: "Does driving more always mean earning more?",
+                a: "Not necessarily. Past a point, extra miles can add fuel, maintenance, and wear faster than pay, so two drivers logging the same hours can keep very different net earnings depending on how many miles were paid. The goal is higher net pay per hour and a lower deadhead ratio — not just more miles.",
               },
             ].map(({ q, a }) => (
               <div key={q} className="border-b pb-6 last:border-0">
