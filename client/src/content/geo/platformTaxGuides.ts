@@ -792,6 +792,252 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
     ],
   },
+  {
+    slug: "favor-taxes",
+    platform: "Favor",
+    workerNoun: "Runners",
+    workType: "delivery",
+    eyebrow: "Gig Tax Guide",
+    title: "Favor Taxes: A Runner's Guide to 1099 Filing & Deductions",
+    metaDescription:
+      "How Favor taxes work for Runners: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    h1: "Favor Taxes: What Every Runner Needs to Know",
+    intro:
+      "Favor pays its Runners as independent contractors, so no taxes are withheld from your deliveries. You owe your own federal, state, and self-employment taxes — and because you drive your own vehicle across Texas, mileage is usually your single largest deduction. Here's how Favor taxes work.",
+    formsHeading: "Do you get a 1099 from Favor?",
+    formsBody: [
+      "If you earned $600 or more running for Favor in a year, you'll receive a 1099-NEC reporting your nonemployee compensation, delivered through Favor's payment processor.",
+      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+    ],
+    extraDeductions: [
+      {
+        label: "Insulated bags & delivery supplies",
+        desc: "Insulated bags, phone mounts, chargers, and supplies bought to complete Favor deliveries.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Favor take out taxes for me?",
+        a: "No. Favor pays Runners as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for Favor taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from Favor?",
+        a: "If you earned $600 or more, Favor issues a 1099-NEC through its payment processor. Below that you may not receive a form, but you must still report the income.",
+      },
+      {
+        q: "What can Favor Runners deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering. You can also deduct the business-use share of your phone, insulated bags, tolls, and parking.",
+      },
+      {
+        q: "When are Favor taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "veho-taxes",
+    platform: "Veho",
+    workerNoun: "Veho drivers",
+    workType: "package delivery",
+    eyebrow: "Gig Tax Guide",
+    title: "Veho Taxes: A Driver's Guide to 1099 Filing & Deductions",
+    metaDescription:
+      "How Veho taxes work for drivers: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    h1: "Veho Taxes: What Every Driver Needs to Know",
+    intro:
+      "Veho pays its drivers as independent contractors, so no taxes are withheld from your routes. You owe your own federal, state, and self-employment taxes — and the miles you drive while delivering packages are deductible if you track them. Here's how Veho taxes work.",
+    formsHeading: "Do you get a 1099 from Veho?",
+    formsBody: [
+      "If you earned $600 or more driving for Veho in a year, you'll receive a 1099-NEC reporting your nonemployee compensation, delivered through Veho's payment processor.",
+      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+    ],
+    extraDeductions: [
+      {
+        label: "Insulated bags & delivery supplies",
+        desc: "Insulated bags, hand trucks, phone mounts, and supplies bought to complete Veho routes.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Veho take out taxes for me?",
+        a: "No. Veho pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for Veho taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from Veho?",
+        a: "If you earned $600 or more, Veho issues a 1099-NEC through its payment processor. Below that you may not receive a form, but you must still report the income.",
+      },
+      {
+        q: "What can Veho drivers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering packages, including between stops. You can also deduct the business-use share of your phone, tolls, parking, and supplies.",
+      },
+      {
+        q: "When are Veho taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "dolly-taxes",
+    platform: "Dolly",
+    workerNoun: "Helpers",
+    workType: "moving and hauling",
+    eyebrow: "Gig Tax Guide",
+    title: "Dolly Taxes: A Helper's Guide to 1099 Filing & Deductions",
+    metaDescription:
+      "How Dolly taxes work for Helpers: the 1099, self-employment tax, what to set aside, equipment and mileage deductions, and quarterly payments. Not tax advice.",
+    h1: "Dolly Taxes: What Every Helper Needs to Know",
+    intro:
+      "Dolly pays its Helpers as independent contractors, so no taxes are withheld from your jobs. You owe your own federal, state, and self-employment taxes — and because you use your own vehicle and moving gear, your mileage and equipment are usually your biggest deductions. Here's how Dolly taxes work.",
+    formsHeading: "Do you get a 1099 from Dolly?",
+    formsBody: [
+      "If you earned enough to meet the reporting threshold, Dolly issues a 1099 through its payment processor reporting your earnings. Dolly emails instructions for retrieving your tax documents.",
+      "If you earned below the threshold you may not get a form — but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+    ],
+    extraDeductions: [
+      {
+        label: "Moving equipment",
+        desc: "Hand trucks, dollies, moving blankets, straps, ramps, and tools bought to complete Dolly jobs (larger items may be depreciated).",
+      },
+      {
+        label: "Vehicle & truck costs",
+        desc: "If you use a truck or van, mileage at the IRS standard mileage rate — or actual vehicle expenses — covers the driving you do for jobs.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Dolly take out taxes for me?",
+        a: "No. Dolly pays Helpers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for Dolly taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from Dolly?",
+        a: "If you meet the reporting threshold, Dolly issues a 1099 through its payment processor. Below that you may not receive a form, but you must still report the income to the IRS.",
+      },
+      {
+        q: "What can Dolly Helpers deduct?",
+        a: "Moving equipment — hand trucks, dollies, blankets, and straps — and the business-use share of your phone are common deductions. Because you drive your own vehicle to jobs, business mileage at the IRS standard mileage rate (or actual vehicle expenses) is usually the largest deduction, along with tolls and parking.",
+      },
+      {
+        q: "When are Dolly taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "goshare-taxes",
+    platform: "GoShare",
+    workerNoun: "GoShare drivers",
+    workType: "moving and delivery",
+    eyebrow: "Gig Tax Guide",
+    title: "GoShare Taxes: A Driver's Guide to 1099 Filing & Deductions",
+    metaDescription:
+      "How GoShare taxes work for drivers: the 1099-NEC, self-employment tax, equipment and mileage deductions, and quarterly payments. Not tax advice.",
+    h1: "GoShare Taxes: What Every Driver Needs to Know",
+    intro:
+      "GoShare pays its drivers as independent contractors, so no taxes are withheld from your jobs. You owe your own federal, state, and self-employment taxes — and because you supply your own truck or van and moving gear, your mileage and equipment are usually your biggest deductions. Here's how GoShare taxes work.",
+    formsHeading: "Do you get a 1099 from GoShare?",
+    formsBody: [
+      "If you earned $600 or more driving for GoShare in a year, you'll receive a 1099-NEC reporting your nonemployee compensation, delivered through GoShare's payment processor.",
+      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+    ],
+    extraDeductions: [
+      {
+        label: "Moving equipment",
+        desc: "Hand trucks, dollies, moving blankets, straps, ramps, and tools bought to complete GoShare jobs (larger items may be depreciated).",
+      },
+      {
+        label: "Truck & van costs",
+        desc: "The driving you do in your truck or van for jobs is deductible at the IRS standard mileage rate, or via actual vehicle expenses if that's larger.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does GoShare take out taxes for me?",
+        a: "No. GoShare pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for GoShare taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from GoShare?",
+        a: "If you earned $600 or more, GoShare issues a 1099-NEC through its payment processor. Below that you may not receive a form, but you must still report the income.",
+      },
+      {
+        q: "What can GoShare drivers deduct?",
+        a: "Business mileage at the IRS standard mileage rate (or actual truck/van expenses) for every mile driven to and during jobs is usually the largest deduction. You can also deduct moving equipment like hand trucks and blankets, the business-use share of your phone, tolls, and parking.",
+      },
+      {
+        q: "When are GoShare taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "wag-taxes",
+    platform: "Wag",
+    workerNoun: "Wag walkers and sitters",
+    workType: "pet care",
+    eyebrow: "Gig Tax Guide",
+    title: "Wag Taxes: A Dog Walker's Guide to 1099-K & Deductions",
+    metaDescription:
+      "How Wag taxes work for walkers and sitters: the 1099-K, self-employment tax, pet-care and mileage deductions, and quarterly payments. Not tax advice.",
+    h1: "Wag Taxes: What Every Walker and Sitter Needs to Know",
+    intro:
+      "Wag treats walkers and sitters as independent contractors, so no taxes are withheld from your earnings. You owe your own federal, state, and self-employment taxes on your net income — and pet supplies, mileage to clients, and even part of your home (if you board) can be deductible. Here's how Wag taxes work.",
+    formsHeading: "Do Wag walkers and sitters get a 1099?",
+    formsBody: [
+      "Wag processes payments as a third-party platform, so it generally reports earnings on a Form 1099-K when you meet the IRS reporting threshold for that year. The 1099-K reflects gross earnings before Wag's service fee.",
+      "Reporting thresholds for the 1099-K have changed in recent years, so you may not always receive a form. Either way, you must report all of your Wag income — and you deduct Wag's service fee as a business expense.",
+    ],
+    extraDeductions: [
+      {
+        label: "Pet-care supplies",
+        desc: "Leashes, treats, waste bags, toys, crates, and cleaning supplies bought for the animals in your care.",
+      },
+      {
+        label: "Wag service fees",
+        desc: "The percentage Wag takes from each booking is a deductible business expense.",
+      },
+      {
+        label: "Home use for boarding",
+        desc: "If you board pets in your home, a portion of home expenses may be deductible — the rules are strict, so confirm with a tax professional.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Wag take out taxes for me?",
+        a: "No. Wag pays walkers and sitters as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for Wag taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from Wag?",
+        a: "Wag typically issues a 1099-K (it processes payments as a third-party platform) when you meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — but you must report all income regardless.",
+      },
+      {
+        q: "What can Wag walkers and sitters deduct?",
+        a: "Pet-care supplies, Wag's service fees, and the business-use share of your phone are common deductions. Mileage driven to walks and client homes is deductible at the IRS standard mileage rate, and if you board pets in your home, part of your home expenses may qualify (the rules are strict — get advice).",
+      },
+      {
+        q: "When are Wag taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
 ];
 
 export function getPlatformTaxGuide(
