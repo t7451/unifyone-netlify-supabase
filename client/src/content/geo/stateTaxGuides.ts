@@ -264,6 +264,86 @@ const NV_TAX = {
   label: "Nevada Department of Taxation",
   href: "https://tax.nv.gov/",
 };
+const WI_DOR = {
+  label: "Wisconsin Department of Revenue",
+  href: "https://www.revenue.wi.gov/",
+};
+const WI_1ES = {
+  label: "Wisconsin: Estimated tax (Form 1-ES)",
+  href: "https://www.revenue.wi.gov/Pages/FAQS/pcs-estimate.aspx",
+};
+const OR_DOR = {
+  label: "Oregon Department of Revenue",
+  href: "https://www.oregon.gov/dor/",
+};
+const OR_ESTIMATED = {
+  label: "Oregon: Estimated income tax",
+  href: "https://www.oregon.gov/dor/programs/individuals/pages/estimated-payments.aspx",
+};
+const SC_DOR = {
+  label: "South Carolina Department of Revenue",
+  href: "https://dor.sc.gov/",
+};
+const SC_SC1040ES = {
+  label: "South Carolina: Estimated tax (SC1040ES)",
+  href: "https://dor.sc.gov/forms",
+};
+const AL_DOR = {
+  label: "Alabama Department of Revenue",
+  href: "https://www.revenue.alabama.gov/",
+};
+const AL_40ES = {
+  label: "Alabama: Estimated tax (Form 40ES)",
+  href: "https://www.revenue.alabama.gov/individual-corporate/",
+};
+const LA_DOR = {
+  label: "Louisiana Department of Revenue",
+  href: "https://revenue.louisiana.gov/",
+};
+const LA_IT540ES = {
+  label: "Louisiana: Estimated tax (Form IT-540ES)",
+  href: "https://revenue.louisiana.gov/individualincometax",
+};
+const KY_DOR = {
+  label: "Kentucky Department of Revenue",
+  href: "https://revenue.ky.gov/",
+};
+const KY_740ES = {
+  label: "Kentucky: Estimated tax (Form 740-ES)",
+  href: "https://revenue.ky.gov/Individual/Individual-Income-Tax/Pages/default.aspx",
+};
+const OK_TAX = {
+  label: "Oklahoma Tax Commission",
+  href: "https://oklahoma.gov/tax.html",
+};
+const OK_OW8ES = {
+  label: "Oklahoma: Estimated tax (Form OW-8-ES)",
+  href: "https://oklahoma.gov/tax/individuals.html",
+};
+const CT_DRS = {
+  label: "Connecticut Department of Revenue Services",
+  href: "https://portal.ct.gov/DRS",
+};
+const CT_1040ES = {
+  label: "Connecticut: Estimated tax (Form CT-1040ES)",
+  href: "https://portal.ct.gov/DRS/Individuals/Individual-Tax-Page",
+};
+const UT_TAX = {
+  label: "Utah State Tax Commission",
+  href: "https://tax.utah.gov/",
+};
+const UT_TC546 = {
+  label: "Utah: Estimated tax prepayment (TC-546)",
+  href: "https://incometax.utah.gov/paying/prepayments",
+};
+const IA_DOR = {
+  label: "Iowa Department of Revenue",
+  href: "https://revenue.iowa.gov/",
+};
+const IA_1040ES = {
+  label: "Iowa: Estimated tax (IA 1040ES)",
+  href: "https://revenue.iowa.gov/taxes/file-my-taxes/estimated-income-tax",
+};
 
 export const STATE_TAX_GUIDES: StateTaxGuide[] = [
   {
@@ -1191,6 +1271,427 @@ export const STATE_TAX_GUIDES: StateTaxGuide[] = [
       {
         q: "What can Nevada gig workers deduct?",
         a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working. You can also deduct the business-use share of your phone, supplies, tolls, and parking — all of which reduce your federal taxable income.",
+      },
+    ],
+  },
+  {
+    slug: "wisconsin-gig-worker-taxes",
+    state: "Wisconsin",
+    stateAdjective: "Wisconsin",
+    eyebrow: "State Gig Tax Guide",
+    title: "Wisconsin Gig Worker Taxes: State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Wisconsin gig worker taxes: a progressive state income tax (up to ~7.65%) plus the 15.3% federal SE tax, with Form 1-ES estimates. Not tax advice.",
+    h1: "Wisconsin Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Wisconsin, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Wisconsin's progressive state income tax also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Wisconsin have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Wisconsin has a progressive state income tax topping out around 7.65%, applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Confirm current brackets with the Wisconsin Department of Revenue.",
+      "There's no separate Wisconsin self-employment tax — the 15.3% SE tax is federal only — but you report and pay state income tax on your net earnings.",
+      "Pay Wisconsin estimated income tax to the Department of Revenue using Form 1-ES, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [WI_DOR, WI_1ES],
+    faqs: [
+      {
+        q: "Do Wisconsin gig workers pay state income tax?",
+        a: "Yes. Wisconsin's progressive income tax (up to about 7.65%) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form 1-ES and confirm current brackets with the Wisconsin Department of Revenue.",
+      },
+      {
+        q: "How much should I set aside for taxes in Wisconsin?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "How do I pay Wisconsin estimated taxes as a gig worker?",
+        a: "Use Wisconsin Form 1-ES to pay state estimated income tax to the Department of Revenue, generally four times a year alongside your federal estimates. You can pay online through the department's portal. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Wisconsin gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and Wisconsin taxable income.",
+      },
+      {
+        q: "When are Wisconsin gig taxes due?",
+        a: "Federal and Wisconsin estimated payments are generally due around April 15, June 15, September 15, and January 15, with annual returns due in mid-April. Paying quarterly avoids underpayment penalties.",
+      },
+    ],
+  },
+  {
+    slug: "oregon-gig-worker-taxes",
+    state: "Oregon",
+    stateAdjective: "Oregon",
+    eyebrow: "State Gig Tax Guide",
+    title: "Oregon Gig Worker Taxes: High State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Oregon gig worker taxes: a progressive state income tax (up to ~9.9%) plus the 15.3% federal SE tax, and possible Portland-area local taxes. Not tax advice.",
+    h1: "Oregon Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Oregon, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Oregon has one of the higher state income taxes in the country, which also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Oregon have a state income tax for gig workers?",
+    stateBody: [
+      "Yes — and it's relatively high. Oregon's progressive state income tax tops out around 9.9%, applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Oregon has no statewide sales tax, but the income tax is significant. Confirm current brackets with the Oregon Department of Revenue.",
+      "If you live or work in the Portland metro area, you may also owe local income taxes (such as the Metro Supportive Housing Services tax or Multnomah County's Preschool for All tax) above certain income thresholds — check whether they apply to you.",
+      "There's no separate Oregon self-employment tax — the 15.3% SE tax is federal only — but you report and pay state (and any applicable local) income tax on your net earnings, generally via Oregon's estimated-payment system alongside your federal estimates.",
+    ],
+    stateResources: [OR_DOR, OR_ESTIMATED],
+    faqs: [
+      {
+        q: "Do Oregon gig workers pay state income tax?",
+        a: "Yes. Oregon's progressive income tax (up to about 9.9%) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax — and Portland-area residents may owe local income taxes too. Confirm current rates with the Oregon Department of Revenue.",
+      },
+      {
+        q: "How much should I set aside for taxes in Oregon?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "Do Portland gig workers owe extra local taxes?",
+        a: "Possibly. The Portland metro area has local income taxes (such as the Metro SHS and Multnomah County Preschool for All taxes) that apply above certain income thresholds. If you live or work there, check whether they apply and factor them into your set-aside.",
+      },
+      {
+        q: "How do I pay Oregon estimated taxes as a gig worker?",
+        a: "Pay Oregon estimated income tax to the Department of Revenue (online or by voucher), generally four times a year alongside your federal estimates. Any applicable Portland-area local taxes are paid separately to those programs. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Oregon gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and Oregon taxable income.",
+      },
+    ],
+  },
+  {
+    slug: "south-carolina-gig-worker-taxes",
+    state: "South Carolina",
+    stateAdjective: "South Carolina",
+    eyebrow: "State Gig Tax Guide",
+    title: "South Carolina Gig Worker Taxes: State Income Tax + Federal SE Tax",
+    metaDescription:
+      "South Carolina gig worker taxes: a progressive state income tax (top rate ~6.2%, declining) plus the 15.3% federal SE tax, with SC1040ES. Not tax advice.",
+    h1: "South Carolina Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in South Carolina, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and South Carolina's state income tax also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading:
+      "Does South Carolina have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. South Carolina has a progressive state income tax with a top rate around 6.2% that is scheduled to step down over time, applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Confirm the current rate with the South Carolina Department of Revenue.",
+      "There's no separate South Carolina self-employment tax — the 15.3% SE tax is federal only — but you report and pay state income tax on your net earnings.",
+      "Pay South Carolina estimated income tax to the Department of Revenue using Form SC1040ES, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [SC_DOR, SC_SC1040ES],
+    faqs: [
+      {
+        q: "Do South Carolina gig workers pay state income tax?",
+        a: "Yes. South Carolina's progressive income tax (top rate around 6.2% and declining) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form SC1040ES and confirm the current rate with the South Carolina Department of Revenue.",
+      },
+      {
+        q: "How much should I set aside for taxes in South Carolina?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "How do I pay South Carolina estimated taxes as a gig worker?",
+        a: "Use Form SC1040ES to pay state estimated income tax to the Department of Revenue, generally four times a year alongside your federal estimates. You can pay online through MyDORWAY. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can South Carolina gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and South Carolina taxable income.",
+      },
+      {
+        q: "When are South Carolina gig taxes due?",
+        a: "Federal and South Carolina estimated payments are generally due around April 15, June 15, September 15, and January 15, with annual returns due in mid-April. Paying quarterly avoids underpayment penalties.",
+      },
+    ],
+  },
+  {
+    slug: "alabama-gig-worker-taxes",
+    state: "Alabama",
+    stateAdjective: "Alabama",
+    eyebrow: "State Gig Tax Guide",
+    title: "Alabama Gig Worker Taxes: State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Alabama gig worker taxes: a progressive state income tax (top 5%) plus the 15.3% federal SE tax, with Form 40ES — and possible city taxes. Not tax advice.",
+    h1: "Alabama Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Alabama, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Alabama's state income tax also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Alabama have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Alabama has a progressive state income tax topping out at 5%, applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Confirm current brackets with the Alabama Department of Revenue.",
+      "Some Alabama cities also levy a local occupational tax on earnings; whether it reaches self-employment income depends on the locality, so check your city's rules if you work in one of them.",
+      "Pay Alabama estimated income tax to the Department of Revenue using Form 40ES, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [AL_DOR, AL_40ES],
+    faqs: [
+      {
+        q: "Do Alabama gig workers pay state income tax?",
+        a: "Yes. Alabama's progressive income tax (top rate 5%) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form 40ES and confirm current brackets with the Alabama Department of Revenue.",
+      },
+      {
+        q: "How much should I set aside for taxes in Alabama?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "Do Alabama cities have a local tax for gig workers?",
+        a: "Some Alabama cities levy a local occupational tax on earnings. Whether it applies to self-employment income depends on the city, so check the rules where you work and factor it into your set-aside if it applies.",
+      },
+      {
+        q: "How do I pay Alabama estimated taxes as a gig worker?",
+        a: "Use Alabama Form 40ES to pay state estimated income tax to the Department of Revenue, generally four times a year alongside your federal estimates. You can pay online through My Alabama Taxes. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Alabama gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and Alabama taxable income.",
+      },
+    ],
+  },
+  {
+    slug: "louisiana-gig-worker-taxes",
+    state: "Louisiana",
+    stateAdjective: "Louisiana",
+    eyebrow: "State Gig Tax Guide",
+    title: "Louisiana Gig Worker Taxes: State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Louisiana gig worker taxes: a state income tax (moving to a flat ~3%) plus the 15.3% federal SE tax, with Form IT-540ES. Not tax advice.",
+    h1: "Louisiana Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Louisiana, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Louisiana's state income tax also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Louisiana have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Louisiana has been moving its individual income tax toward a flat rate (around 3% under recent reform), applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Because the structure changed recently, confirm the current rate with the Louisiana Department of Revenue.",
+      "There's no separate Louisiana self-employment tax — the 15.3% SE tax is federal only — but you report and pay state income tax on your net earnings.",
+      "Pay Louisiana estimated income tax to the Department of Revenue using Form IT-540ES, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [LA_DOR, LA_IT540ES],
+    faqs: [
+      {
+        q: "Do Louisiana gig workers pay state income tax?",
+        a: "Yes. Louisiana's state income tax (recently moving toward a flat rate around 3%) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form IT-540ES and confirm the current rate with the Louisiana Department of Revenue.",
+      },
+      {
+        q: "How much should I set aside for taxes in Louisiana?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "How do I pay Louisiana estimated taxes as a gig worker?",
+        a: "Use Louisiana Form IT-540ES to pay state estimated income tax to the Department of Revenue, generally four times a year alongside your federal estimates. You can pay online through Louisiana File Online. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Louisiana gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and Louisiana taxable income.",
+      },
+      {
+        q: "When are Louisiana gig taxes due?",
+        a: "Federal and Louisiana estimated payments are generally due around April 15, June 15, September 15, and January 15, with annual returns due in mid-May for Louisiana. Paying quarterly avoids underpayment penalties.",
+      },
+    ],
+  },
+  {
+    slug: "kentucky-gig-worker-taxes",
+    state: "Kentucky",
+    stateAdjective: "Kentucky",
+    eyebrow: "State Gig Tax Guide",
+    title: "Kentucky Gig Worker Taxes: Flat State Tax + Federal SE Tax",
+    metaDescription:
+      "Kentucky gig worker taxes: a flat state income tax (~4%, declining) plus the 15.3% federal SE tax and possible local taxes, with Form 740-ES. Not tax advice.",
+    h1: "Kentucky Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Kentucky, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Kentucky adds a flat state income tax, plus local taxes in many areas. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Kentucky have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Kentucky taxes individual income at a flat rate (around 4% and scheduled to keep declining), applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Because it's flat, the same percentage applies regardless of income. Confirm the current rate with the Kentucky Department of Revenue.",
+      "Kentucky is notable for local taxes: many counties and cities levy a local occupational license tax (often on net profits from self-employment). If you work in such an area, you may owe a local tax in addition to the state tax — check with the local jurisdiction.",
+      "Pay Kentucky estimated income tax to the Department of Revenue using Form 740-ES, generally on the same quarterly schedule as your federal estimates. Local occupational taxes are filed separately with the local jurisdiction.",
+    ],
+    stateResources: [KY_DOR, KY_740ES],
+    faqs: [
+      {
+        q: "Do Kentucky gig workers pay state income tax?",
+        a: "Yes. Kentucky has a flat state income tax (around 4%, declining) that applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Many Kentucky localities also levy a local occupational tax. Pay state estimates with Form 740-ES and confirm current rates with the Kentucky Department of Revenue.",
+      },
+      {
+        q: "How much should I set aside for taxes in Kentucky?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "Do Kentucky gig workers owe local taxes?",
+        a: "Often, yes. Many Kentucky counties and cities levy a local occupational license tax that can apply to net profits from self-employment. If you work in one, you may owe a local tax on top of the state tax — check with the local jurisdiction and include it in your set-aside.",
+      },
+      {
+        q: "How do I pay Kentucky estimated taxes as a gig worker?",
+        a: "Use Kentucky Form 740-ES to pay state estimated income tax to the Department of Revenue, generally four times a year alongside your federal estimates. Local occupational taxes are filed separately with the local jurisdiction. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Kentucky gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and Kentucky taxable income.",
+      },
+    ],
+  },
+  {
+    slug: "oklahoma-gig-worker-taxes",
+    state: "Oklahoma",
+    stateAdjective: "Oklahoma",
+    eyebrow: "State Gig Tax Guide",
+    title: "Oklahoma Gig Worker Taxes: State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Oklahoma gig worker taxes: a progressive state income tax (top ~4.75%) plus the 15.3% federal SE tax, with Form OW-8-ES estimates. Not tax advice.",
+    h1: "Oklahoma Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Oklahoma, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Oklahoma's state income tax also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Oklahoma have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Oklahoma has a progressive state income tax with a top rate around 4.75%, applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Confirm current brackets with the Oklahoma Tax Commission.",
+      "There's no separate Oklahoma self-employment tax — the 15.3% SE tax is federal only — but you report and pay state income tax on your net earnings.",
+      "Pay Oklahoma estimated income tax to the Tax Commission using Form OW-8-ES, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [OK_TAX, OK_OW8ES],
+    faqs: [
+      {
+        q: "Do Oklahoma gig workers pay state income tax?",
+        a: "Yes. Oklahoma's progressive income tax (top rate around 4.75%) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form OW-8-ES and confirm current brackets with the Oklahoma Tax Commission.",
+      },
+      {
+        q: "How much should I set aside for taxes in Oklahoma?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "How do I pay Oklahoma estimated taxes as a gig worker?",
+        a: "Use Oklahoma Form OW-8-ES to pay state estimated income tax to the Tax Commission, generally four times a year alongside your federal estimates. You can pay online through OkTAP. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Oklahoma gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and Oklahoma taxable income.",
+      },
+      {
+        q: "When are Oklahoma gig taxes due?",
+        a: "Federal and Oklahoma estimated payments are generally due around April 15, June 15, September 15, and January 15, with annual returns due in mid-April. Paying quarterly avoids underpayment penalties.",
+      },
+    ],
+  },
+  {
+    slug: "connecticut-gig-worker-taxes",
+    state: "Connecticut",
+    stateAdjective: "Connecticut",
+    eyebrow: "State Gig Tax Guide",
+    title: "Connecticut Gig Worker Taxes: State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Connecticut gig worker taxes: a progressive state income tax (up to ~6.99%) plus the 15.3% federal SE tax, with Form CT-1040ES. Not tax advice.",
+    h1: "Connecticut Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Connecticut, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Connecticut's progressive state income tax also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Connecticut have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Connecticut has a progressive state income tax topping out around 6.99%, applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Confirm current brackets with the Connecticut Department of Revenue Services.",
+      "There's no separate Connecticut self-employment tax — the 15.3% SE tax is federal only — but you report and pay state income tax on your net earnings.",
+      "Pay Connecticut estimated income tax to the Department of Revenue Services using Form CT-1040ES, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [CT_DRS, CT_1040ES],
+    faqs: [
+      {
+        q: "Do Connecticut gig workers pay state income tax?",
+        a: "Yes. Connecticut's progressive income tax (up to about 6.99%) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form CT-1040ES and confirm current brackets with the Connecticut Department of Revenue Services.",
+      },
+      {
+        q: "How much should I set aside for taxes in Connecticut?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "How do I pay Connecticut estimated taxes as a gig worker?",
+        a: "Use Connecticut Form CT-1040ES to pay state estimated income tax to the Department of Revenue Services, generally four times a year alongside your federal estimates. You can pay online through myconneCT. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Connecticut gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and Connecticut taxable income.",
+      },
+      {
+        q: "When are Connecticut gig taxes due?",
+        a: "Federal and Connecticut estimated payments are generally due around April 15, June 15, September 15, and January 15, with annual returns due in mid-April. Paying quarterly avoids underpayment penalties.",
+      },
+    ],
+  },
+  {
+    slug: "utah-gig-worker-taxes",
+    state: "Utah",
+    stateAdjective: "Utah",
+    eyebrow: "State Gig Tax Guide",
+    title: "Utah Gig Worker Taxes: Flat State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Utah gig worker taxes: a flat state income tax (~4.55%, declining) plus the 15.3% federal SE tax, with Form TC-546 prepayments. Not tax advice.",
+    h1: "Utah Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Utah, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and because Utah levies a flat state income tax, you also owe state income tax on your net earnings. The flat rate keeps the state piece easy to estimate. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Utah have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Utah taxes individual income at a single flat rate (around 4.55% and being gradually reduced), applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Because it's flat, the same percentage applies regardless of income level. Confirm the current rate with the Utah State Tax Commission.",
+      "There's no separate Utah self-employment tax — the 15.3% SE tax is federal only — but you report and pay the flat state income tax on your net earnings.",
+      "Utah uses a prepayment system rather than quarterly vouchers for many filers; you can make estimated prepayments (Form TC-546) to the Tax Commission to avoid a balance due. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [UT_TAX, UT_TC546],
+    faqs: [
+      {
+        q: "Do Utah gig workers pay state income tax?",
+        a: "Yes. Utah has a flat state income tax (around 4.55%, declining) that applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Make prepayments with Form TC-546 and confirm the current rate with the Utah State Tax Commission.",
+      },
+      {
+        q: "How much should I set aside for taxes in Utah?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "What is the Utah income tax rate for gig workers?",
+        a: "Utah uses a single flat individual income tax rate (around 4.55% recently and scheduled to decline), so the same percentage applies to your net gig earnings no matter your income. Confirm the current rate with the Utah State Tax Commission.",
+      },
+      {
+        q: "How do I pay Utah estimated taxes as a gig worker?",
+        a: "Utah uses a prepayment system; make state income-tax prepayments (Form TC-546) to the Tax Commission, generally alongside your federal estimates, to avoid a balance due. You can pay online through Taxpayer Access Point (TAP). This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Utah gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering the federal taxable income Utah builds on.",
+      },
+    ],
+  },
+  {
+    slug: "iowa-gig-worker-taxes",
+    state: "Iowa",
+    stateAdjective: "Iowa",
+    eyebrow: "State Gig Tax Guide",
+    title: "Iowa Gig Worker Taxes: Flat State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Iowa gig worker taxes: a flat state income tax (~3.8%) plus the 15.3% federal SE tax, with IA 1040ES estimates. Not tax advice.",
+    h1: "Iowa Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Iowa, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Iowa, which recently moved to a flat state income tax, also taxes your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Iowa have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Iowa has moved to a flat individual income tax (around 3.8%), applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Because the structure changed recently, confirm the current rate with the Iowa Department of Revenue.",
+      "There's no separate Iowa self-employment tax — the 15.3% SE tax is federal only — but you report and pay the flat state income tax on your net earnings.",
+      "Pay Iowa estimated income tax to the Department of Revenue using Form IA 1040ES, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [IA_DOR, IA_1040ES],
+    faqs: [
+      {
+        q: "Do Iowa gig workers pay state income tax?",
+        a: "Yes. Iowa's flat state income tax (around 3.8%) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form IA 1040ES and confirm the current rate with the Iowa Department of Revenue.",
+      },
+      {
+        q: "How much should I set aside for taxes in Iowa?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "How do I pay Iowa estimated taxes as a gig worker?",
+        a: "Use Iowa Form IA 1040ES to pay state estimated income tax to the Department of Revenue, generally four times a year alongside your federal estimates. You can pay online through GovConnectIowa. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Iowa gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and Iowa taxable income.",
+      },
+      {
+        q: "When are Iowa gig taxes due?",
+        a: "Federal Iowa estimated payments are generally due around April 15, June 15, September 15, and January 15; Iowa's annual return is due at the end of April. Paying quarterly avoids underpayment penalties.",
       },
     ],
   },
