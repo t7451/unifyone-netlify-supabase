@@ -633,6 +633,42 @@ const SHIPT_TAX_LINKS = [
   IRS.mileage,
   { label: "Shipt", url: "https://www.shipt.com" },
 ];
+const ROADIE_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Roadie", url: "https://www.roadie.com" },
+];
+const GOPUFF_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Gopuff Driver", url: "https://driver.gopuff.com" },
+];
+const TASKRABBIT_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "TaskRabbit", url: "https://www.taskrabbit.com" },
+];
+const ROVER_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Rover", url: "https://www.rover.com" },
+];
+const UPWORK_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  { label: "Upwork", url: "https://www.upwork.com" },
+];
+const FIVERR_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  { label: "Fiverr", url: "https://www.fiverr.com" },
+];
 
 // Getting-started ("how to make money on <platform>") guides: the platform's
 // own signup/driver page anchors each page's outbound profile, paired with the
@@ -1384,6 +1420,89 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Shipt shoppers are independent contractors, so Shipt withholds no taxes from your pay. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
       "Shoppers who earned $600 or more receive a 1099-NEC, usually delivered through Shipt's payment processor by late January. You must report all income whether or not a form arrives.",
       "Because you both shop and drive, track every working mile and deduct it at the IRS standard mileage rate — typically the largest deduction — plus phone use, insulated bags, tolls, and parking. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/roadie-taxes",
+    externalLinks: ROADIE_TAX_LINKS,
+    title:
+      "Roadie Taxes: A Driver's Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How Roadie taxes work: the 1099, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Roadie (a UPS company) pays drivers as independent contractors, so no taxes are withheld from your deliveries. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "If you meet the reporting threshold, Roadie issues a 1099 (typically a 1099-NEC) through its payment processor. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Your largest deduction is business mileage at the IRS standard mileage rate for every mile driven to pick up and drop off gigs. Phone use, hauling supplies, tolls, and parking are deductible too. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/gopuff-taxes",
+    externalLinks: GOPUFF_TAX_LINKS,
+    title:
+      "Gopuff Taxes: A Driver's Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How Gopuff driver taxes work: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Gopuff pays its delivery drivers as independent contractors, so no taxes are withheld. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "If you earned $600 or more, Gopuff issues a 1099-NEC through its payment partner. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Your largest deduction is business mileage at the IRS standard mileage rate for every mile driven from the fulfillment center to customers. Phone use, insulated bags, tolls, and parking are deductible too. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/taskrabbit-taxes",
+    externalLinks: TASKRABBIT_TAX_LINKS,
+    title:
+      "TaskRabbit Taxes: A Tasker's Guide to 1099-K & Deductions | UnifyOne",
+    description:
+      "How TaskRabbit taxes work for Taskers: the 1099-K, self-employment tax, tool and mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "TaskRabbit treats Taskers as independent contractors, so no taxes are withheld. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "TaskRabbit processes client payments as a third-party platform, so it generally reports earnings on a Form 1099-K (not a 1099-NEC) when you meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — report all income regardless.",
+      "Big deductions for Taskers are tools and equipment, job supplies and materials, and TaskRabbit's service fees, plus the business-use share of your phone. If you drive to jobs or haul materials, business mileage at the IRS standard mileage rate is deductible too. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/rover-taxes",
+    externalLinks: ROVER_TAX_LINKS,
+    title:
+      "Rover Taxes: A Pet Sitter's Guide to 1099-K & Deductions | UnifyOne",
+    description:
+      "How Rover taxes work for sitters and walkers: the 1099-K, self-employment tax, pet-care and mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Rover treats sitters and walkers as independent contractors, so no taxes are withheld. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "Rover processes payments as a third-party platform, so it generally reports earnings on a Form 1099-K when you meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — report all income regardless.",
+      "Deduct pet-care supplies, Rover's service fees, and the business-use share of your phone. Mileage to walks and client homes is deductible at the IRS standard mileage rate, and if you board pets in your home, part of your home expenses may qualify (the rules are strict — get advice). A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/upwork-taxes",
+    externalLinks: UPWORK_TAX_LINKS,
+    title:
+      "Upwork Taxes: A Freelancer's Guide to 1099-K & Deductions | UnifyOne",
+    description:
+      "How Upwork taxes work for freelancers: the 1099-K, self-employment tax, home-office and software deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Upwork treats freelancers as independent contractors, so no taxes are withheld. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "Upwork processes client payments as a third-party platform, so it issues US freelancers a Form 1099-K when they meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — report all income regardless.",
+      "Because the work is desk-based, the biggest deductions are usually the home office, your computer and software, internet and phone, and Upwork's service fees — not mileage. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/fiverr-taxes",
+    externalLinks: FIVERR_TAX_LINKS,
+    title: "Fiverr Taxes: A Seller's Guide to 1099-K & Deductions | UnifyOne",
+    description:
+      "How Fiverr taxes work for sellers: the 1099-K, self-employment tax, home-office and software deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Fiverr treats sellers as independent contractors, so no taxes are withheld. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "Fiverr processes buyer payments as a third-party platform, so it issues US sellers a Form 1099-K when they meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — report all income regardless.",
+      "Because gigs are delivered from a desk, the biggest deductions are usually the home office, software and tools, internet and phone, and the commission Fiverr keeps — not mileage. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
       "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
     ],
   },

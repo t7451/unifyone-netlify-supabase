@@ -42,7 +42,7 @@ const HOW_IT_WORKS = [
   },
   {
     title: "Deductions lower your taxable income",
-    body: "Mileage, phone, and supplies reduce the net earnings you're taxed on. Tracked properly, they often save more than any other single move.",
+    body: "Business expenses — equipment, software, supplies, phone, and mileage — reduce the net earnings you're taxed on. Tracked properly, they often save more than any other single move.",
   },
   {
     title: "You pay as you go, quarterly",
@@ -94,7 +94,10 @@ export default function PlatformTaxGuide({ slug }: { slug: string }) {
   }
 
   const canonical = `${SITE_URL}/${guide.slug}`;
-  const deductions = [...SHARED_DEDUCTIONS, ...guide.extraDeductions];
+  const deductions = guide.deductionsOverride ?? [
+    ...SHARED_DEDUCTIONS,
+    ...(guide.extraDeductions ?? []),
+  ];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -181,12 +184,14 @@ export default function PlatformTaxGuide({ slug }: { slug: string }) {
               </div>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-4">
-            You can deduct the IRS standard mileage rate <em>or</em> your actual
-            vehicle expenses — not both. For most drivers the standard mileage
-            rate is simpler and larger. Keep a contemporaneous mileage log
-            either way.
-          </p>
+          {guide.vehicleBased !== false && (
+            <p className="text-xs text-muted-foreground mt-4">
+              You can deduct the IRS standard mileage rate <em>or</em> your
+              actual vehicle expenses — not both. For most drivers the standard
+              mileage rate is simpler and larger. Keep a contemporaneous mileage
+              log either way.
+            </p>
+          )}
         </section>
 
         <section className="mb-10">
@@ -266,7 +271,8 @@ export default function PlatformTaxGuide({ slug }: { slug: string }) {
             Stop guessing what you owe
           </h2>
           <p className="text-muted-foreground text-sm mb-4">
-            UnifyOne tracks your {guide.workType} earnings, mileage, and tax
+            UnifyOne tracks your {guide.workType} earnings,{" "}
+            {guide.vehicleBased === false ? "expenses" : "mileage"}, and tax
             set-aside automatically — so quarterly taxes are never a surprise.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
