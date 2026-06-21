@@ -354,6 +354,22 @@ export default function FinancialIntelligenceGig() {
                 label: "New gig worker tax checklist",
                 href: "/new-gig-worker-tax-checklist",
               },
+              {
+                label: "Self-employment tax explained",
+                href: "/self-employment-tax-explained",
+              },
+              {
+                label: "Home office deduction",
+                href: "/gig-worker-home-office-deduction",
+              },
+              {
+                label: "Common gig tax mistakes",
+                href: "/gig-worker-tax-mistakes",
+              },
+              {
+                label: "Roth IRA for gig workers",
+                href: "/gig-worker-roth-ira",
+              },
             ].map(({ label, href }) => (
               <Link
                 key={href}

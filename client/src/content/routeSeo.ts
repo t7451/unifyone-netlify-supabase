@@ -926,6 +926,28 @@ const MULTI_STATE_LINKS = [
   IRS.selfEmployedCenter,
 ];
 const NEW_GIG_CHECKLIST_LINKS = [IRS.estimated, IRS.selfEmployedCenter];
+const SE_TAX_EXPLAINED_LINKS = [IRS.seTax, IRS.selfEmployedCenter];
+const HOME_OFFICE_LINKS = [
+  {
+    label: "IRS: Home office deduction",
+    url: "https://www.irs.gov/businesses/small-businesses-self-employed/home-office-deduction",
+  },
+  IRS.selfEmployedCenter,
+];
+const TAX_MISTAKES_LINKS = [
+  {
+    label: "IRS: Gig Economy Tax Center",
+    url: "https://www.irs.gov/businesses/gig-economy-tax-center",
+  },
+  IRS.estimated,
+];
+const ROTH_IRA_LINKS = [
+  {
+    label: "IRS: Roth IRAs",
+    url: "https://www.irs.gov/retirement-plans/roth-iras",
+  },
+  IRS.selfEmployedCenter,
+];
 
 export const ROUTE_SEO: RouteSeo[] = [
   {
@@ -1078,6 +1100,60 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Report all income, even from platforms that send no 1099, and open a separate bank account so your statement doubles as a ledger. From your very first payout, set aside about 25–30% of net for taxes and treat it as money that was never yours.",
       "Start a contemporaneous mileage log immediately — date, miles, and purpose of each trip — since reconstructed mileage is what gets disallowed, and it's usually the biggest deduction. Learn the quarterly estimated-tax schedule and the roughly $1,000-owed threshold.",
       "At tax time you'll file Schedule C and Schedule SE; skipping the set-aside all year is the classic first-year surprise. Confirm current rules with the IRS. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/self-employment-tax-explained",
+    externalLinks: SE_TAX_EXPLAINED_LINKS,
+    title:
+      "Self-Employment Tax Explained: What Gig Workers Pay and Why | UnifyOne",
+    description:
+      "Self-employment tax explained: the 15.3% rate, how it's figured on 92.35% of net, the deductible half, and the Social Security wage cap. Not advice.",
+    body: [
+      "Self-employment (SE) tax is the part of gig taxes that surprises people most: it's separate from income tax, it isn't withheld, and it's why a 1099 gig can owe more than a W-2 job at the same pay. As your own employer and employee, you cover the full 15.3% — 12.4% Social Security plus 2.9% Medicare.",
+      "SE tax is figured on about 92.35% of your net self-employment profit, not your gross, so every legitimate deduction (like mileage) lowers it. It's on top of regular income tax, which is why setting aside only for income tax leaves gig workers short.",
+      "Two things soften it: you deduct one-half of your SE tax above the line (reducing income tax), and the 12.4% Social Security portion only applies up to an annual wage base (Medicare's 2.9% has no cap, and high earners may owe Additional Medicare Tax).",
+      "These thresholds change yearly — confirm the current wage base and rules with the IRS. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/gig-worker-home-office-deduction",
+    externalLinks: HOME_OFFICE_LINKS,
+    title:
+      "The Home Office Deduction for Gig Workers: Who Qualifies | UnifyOne",
+    description:
+      "The home office deduction for gig workers: the regular-and-exclusive-use test, simplified vs actual method, and why drivers often don't qualify. Not advice.",
+    body: [
+      "The home office deduction is valuable for desk-based gig workers — freelancers, online sellers, tutors — but it has a strict test and doesn't fit every kind of gig work. To qualify you generally must use a specific area of your home both regularly and exclusively for the business, as your principal place of business.",
+      "There are two methods: the simplified method (a set IRS rate per square foot, up to a cap, with minimal recordkeeping) and the actual-expense method (the business-use share of rent/mortgage interest, utilities, and insurance). You can pick whichever gives the larger deduction.",
+      "Most rideshare and delivery drivers don't qualify — their work happens in the car, and mileage is their big deduction — while desk-based freelancers and sellers who use a dedicated space often do. The deduction lowers the net profit that income tax (and indirectly SE tax) is figured on.",
+      "Confirm eligibility and the current simplified rate with the IRS (Publication 587). This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/gig-worker-tax-mistakes",
+    externalLinks: TAX_MISTAKES_LINKS,
+    title: "Common Gig Worker Tax Mistakes (and How to Avoid Them) | UnifyOne",
+    description:
+      "Common gig worker tax mistakes: skipping the set-aside, no mileage log, missing quarterly estimates, and not reporting sub-threshold income. Not advice.",
+    body: [
+      "Most gig-worker tax pain comes from a few avoidable mistakes. The biggest: not setting money aside. Because nothing is withheld, move roughly 25–30% of each payout's net into a separate account as you earn — and remember the bill includes both income tax and the 15.3% self-employment tax.",
+      "Second: not tracking mileage and expenses. Mileage is usually the largest deduction and the most commonly lost, since reconstructed mileage is what gets disallowed — keep a contemporaneous log and save receipts.",
+      "Third: skipping quarterly estimated taxes. If you expect to owe about $1,000 or more, the IRS generally expects quarterly payments, and waiting until April can trigger an underpayment penalty. Fourth: underreporting — all income is reportable whether or not a 1099 arrives — and mixing business and personal money.",
+      "Open a separate account, report everything, and pay quarterly from your set-aside. Confirm current rules with the IRS. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/gig-worker-roth-ira",
+    externalLinks: ROTH_IRA_LINKS,
+    title: "Roth IRAs for Gig Workers: Tax-Free Retirement Savings | UnifyOne",
+    description:
+      "Roth IRAs for gig workers: after-tax contributions, tax-free growth, income limits, and how a Roth fits with a SEP-IRA or Solo 401(k). Not advice.",
+    body: [
+      "A Roth IRA is one of the simplest, most flexible ways for a gig worker to save for retirement. You contribute after-tax dollars, the money grows tax-free, and qualified withdrawals in retirement are tax-free — you pay tax now in exchange for never paying it on the growth.",
+      "It shines in lower-earning years, when paying tax on the contribution while your rate is low is a bargain. You can also withdraw your own contributions (not earnings) without penalty in a pinch, which suits variable income — though it's best left to grow.",
+      "Roth IRAs have an annual contribution cap (smaller than SEP-IRA or Solo 401(k) limits) and income phase-outs for high earners; both change yearly, so confirm current figures with the IRS. Contributions aren't deductible, so they don't lower this year's income or self-employment tax.",
+      "Many gig workers use a Roth IRA alongside a SEP-IRA or Solo 401(k) — see our retirement guides to compare. This is educational information, not investment advice.",
     ],
   },
   {

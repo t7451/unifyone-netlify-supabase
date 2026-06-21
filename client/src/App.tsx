@@ -1760,6 +1760,42 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/self-employment-tax-explained"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="self-employment-tax-explained" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gig-worker-home-office-deduction"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="gig-worker-home-office-deduction" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gig-worker-tax-mistakes"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="gig-worker-tax-mistakes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gig-worker-roth-ira"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="gig-worker-roth-ira" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       <Route path="/seo" component={() => <SeoIndex />} />
       <Route path="/seo/:slug" component={() => <SeoLanding />} />
       <Route
