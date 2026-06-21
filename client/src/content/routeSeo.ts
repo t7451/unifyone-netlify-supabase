@@ -362,6 +362,96 @@ const IA_TAX_LINKS = [
     url: "https://revenue.iowa.gov/",
   },
 ];
+const KS_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Kansas Department of Revenue (Form K-40ES)",
+    url: "https://www.ksrevenue.gov/",
+  },
+];
+const NM_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "New Mexico Taxation and Revenue Department (Form PIT-ES)",
+    url: "https://www.tax.newmexico.gov/",
+  },
+];
+const NE_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Nebraska Department of Revenue (Form 1040N-ES)",
+    url: "https://revenue.nebraska.gov/",
+  },
+];
+const MS_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Mississippi Department of Revenue (Form 80-106)",
+    url: "https://www.dor.ms.gov/",
+  },
+];
+const AR_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Arkansas Dept. of Finance and Administration (Form AR1000ES)",
+    url: "https://www.dfa.arkansas.gov/income-tax/individual-income-tax/",
+  },
+];
+const WV_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "West Virginia Tax Division (Form IT-140ES)",
+    url: "https://tax.wv.gov/",
+  },
+];
+const ID_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Idaho State Tax Commission (Form 51)",
+    url: "https://tax.idaho.gov/",
+  },
+];
+const HI_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Hawaii Department of Taxation (Form N-200V & GET)",
+    url: "https://tax.hawaii.gov/",
+  },
+];
+const ME_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Maine Revenue Services (Form 1040ES-ME)",
+    url: "https://www.maine.gov/revenue/",
+  },
+];
+const RI_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Rhode Island Division of Taxation (Form RI-1040ES)",
+    url: "https://tax.ri.gov/",
+  },
+];
 
 // Authoritative resources for the gig platform comparison guides. The IRS
 // self-employed center + estimated taxes anchor the (educational, not advice)
@@ -889,6 +979,146 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Iowa recently moved to a flat individual income tax of about 3.8% (replacing its graduated brackets), applied to your net gig profit on top of federal tax. Pay state estimates to the Department of Revenue using Form IA 1040ES, and confirm the current rate.",
       "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Iowa starts from.",
       "Federal and Iowa estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/kansas-gig-worker-taxes",
+    externalLinks: KS_TAX_LINKS,
+    title:
+      "Kansas Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Kansas gig worker taxes: a two-bracket state income tax (top ~5.58%) plus the 15.3% federal SE tax, with Form K-40ES. Not tax advice.",
+    body: [
+      "Kansas gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Kansas has a two-bracket state income tax with a top rate around 5.58%, applied to your net gig profit on top of federal tax. Pay state estimates to the Department of Revenue using Form K-40ES, generally on the same quarterly schedule as your federal estimates.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Kansas starts from.",
+      "Federal and Kansas estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/new-mexico-gig-worker-taxes",
+    externalLinks: NM_TAX_LINKS,
+    title:
+      "New Mexico Gig Worker Taxes: Income Tax, Gross Receipts Tax & SE Tax | UnifyOne",
+    description:
+      "New Mexico gig worker taxes: state income tax (up to ~5.9%), the 15.3% federal SE tax, and a gross receipts tax on many services. Not tax advice.",
+    body: [
+      "New Mexico gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "New Mexico has a progressive state income tax topping out around 5.9%, applied to your net gig profit on top of federal tax. It also has a gross receipts tax (GRT) that can apply to many services performed in the state — some independent contractors must register for and pay GRT on their receipts. Pay income-tax estimates using Form PIT-ES, and check your GRT obligations with the Taxation and Revenue Department.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income New Mexico starts from.",
+      "Federal and New Mexico income-tax estimates are generally due around April 15, June 15, September 15, and January 15; GRT, if it applies, is filed separately. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/nebraska-gig-worker-taxes",
+    externalLinks: NE_TAX_LINKS,
+    title:
+      "Nebraska Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Nebraska gig worker taxes: a progressive state income tax (top ~4.55%, declining) plus the 15.3% federal SE tax, with Form 1040N-ES. Not tax advice.",
+    body: [
+      "Nebraska gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Nebraska has a progressive state income tax with a top rate around 4.55% and scheduled to fall to 3.99%, applied to your net gig profit on top of federal tax. Pay state estimates to the Department of Revenue using Form 1040N-ES, and confirm the current rate.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Nebraska starts from.",
+      "Federal and Nebraska estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/mississippi-gig-worker-taxes",
+    externalLinks: MS_TAX_LINKS,
+    title:
+      "Mississippi Gig Worker Taxes: Flat State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Mississippi gig worker taxes: a flat ~4% state income tax (declining) plus the 15.3% federal SE tax, with Form 80-106. Not tax advice.",
+    body: [
+      "Mississippi gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Mississippi has a flat state income tax around 4% on income above a threshold, applied to your net gig profit on top of federal tax. Under recent legislation the rate is scheduled to decline over time, so confirm the current rate. Pay state estimates to the Department of Revenue using Form 80-106.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Mississippi starts from.",
+      "Federal and Mississippi estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/arkansas-gig-worker-taxes",
+    externalLinks: AR_TAX_LINKS,
+    title:
+      "Arkansas Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Arkansas gig worker taxes: a state income tax (top ~3.9%, declining) plus the 15.3% federal SE tax, with Form AR1000ES. Not tax advice.",
+    body: [
+      "Arkansas gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Arkansas has a state income tax with a top rate around 3.9% (reduced in recent years), applied to your net gig profit on top of federal tax. Pay state estimates to the Department of Finance and Administration using Form AR1000ES, and confirm the current rate.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Arkansas starts from.",
+      "Federal and Arkansas estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/west-virginia-gig-worker-taxes",
+    externalLinks: WV_TAX_LINKS,
+    title:
+      "West Virginia Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "West Virginia gig worker taxes: a progressive state income tax (top ~5%, declining) plus the 15.3% federal SE tax, with Form IT-140ES. Not tax advice.",
+    body: [
+      "West Virginia gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "West Virginia has a progressive state income tax with a top rate around 5% (cut in recent years and subject to further reductions), applied to your net gig profit on top of federal tax. Pay state estimates to the Tax Division using Form IT-140ES, and confirm the current rate.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income West Virginia starts from.",
+      "Federal and West Virginia estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/idaho-gig-worker-taxes",
+    externalLinks: ID_TAX_LINKS,
+    title:
+      "Idaho Gig Worker Taxes: Flat State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Idaho gig worker taxes: a flat state income tax (~5.3%) plus the 15.3% federal SE tax, with Form 51 estimates. Not tax advice.",
+    body: [
+      "Idaho gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Idaho has a flat state income tax around 5.3% (reduced in recent years), applied to your net gig profit on top of federal tax. Pay state estimates to the State Tax Commission using Form 51, and confirm the current rate.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Idaho starts from.",
+      "Federal and Idaho estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/hawaii-gig-worker-taxes",
+    externalLinks: HI_TAX_LINKS,
+    title:
+      "Hawaii Gig Worker Taxes: Income Tax, General Excise Tax & SE Tax | UnifyOne",
+    description:
+      "Hawaii gig worker taxes: a progressive income tax (up to 11%), the 15.3% federal SE tax, and a general excise tax on business. Not tax advice.",
+    body: [
+      "Hawaii gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Hawaii has a progressive state income tax topping out at 11% — one of the highest in the country — plus a general excise tax (GET) on nearly all business activity, typically 4% (4.5% on Oahu) charged on gross income rather than profit. Most independent contractors must register for a GET license. Pay income-tax estimates using Form N-200V and check your GET obligations with the Department of Taxation.",
+      "For income tax, deduct business mileage at the IRS standard mileage rate plus the business-use share of your phone, supplies, tolls, and parking. Note GET is generally based on gross receipts, so those deductions don't reduce it.",
+      "Federal and Hawaii income-tax estimates are generally due around April 15, June 15, September 15, and January 15; GET is filed periodically. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/maine-gig-worker-taxes",
+    externalLinks: ME_TAX_LINKS,
+    title:
+      "Maine Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Maine gig worker taxes: a progressive state income tax (up to ~7.15%) plus the 15.3% federal SE tax, with Form 1040ES-ME. Not tax advice.",
+    body: [
+      "Maine gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Maine has a progressive state income tax topping out around 7.15%, applied to your net gig profit on top of federal tax. Pay state estimates to Maine Revenue Services using Form 1040ES-ME, generally on the same quarterly schedule as your federal estimates.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Maine starts from.",
+      "Federal and Maine estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/rhode-island-gig-worker-taxes",
+    externalLinks: RI_TAX_LINKS,
+    title:
+      "Rhode Island Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Rhode Island gig worker taxes: a progressive state income tax (up to ~5.99%) plus the 15.3% federal SE tax, with Form RI-1040ES. Not tax advice.",
+    body: [
+      "Rhode Island gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Rhode Island has a progressive state income tax topping out around 5.99%, applied to your net gig profit on top of federal tax. Pay state estimates to the Division of Taxation using Form RI-1040ES, generally on the same quarterly schedule as your federal estimates.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Rhode Island starts from.",
+      "Federal and Rhode Island estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
     ],
   },
   {
