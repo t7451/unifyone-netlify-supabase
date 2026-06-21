@@ -424,6 +424,62 @@ const RI_1040ES = {
   label: "Rhode Island: Estimated tax (Form RI-1040ES)",
   href: "https://tax.ri.gov/forms/individual/income",
 };
+const AK_DOR = {
+  label: "Alaska Department of Revenue",
+  href: "https://dor.alaska.gov/",
+};
+const NH_DRA = {
+  label: "New Hampshire Department of Revenue Administration",
+  href: "https://www.revenue.nh.gov/",
+};
+const SD_DOR = {
+  label: "South Dakota Department of Revenue",
+  href: "https://dor.sd.gov/",
+};
+const WY_DOR = {
+  label: "Wyoming Department of Revenue",
+  href: "https://revenue.wyo.gov/",
+};
+const DE_DOR = {
+  label: "Delaware Division of Revenue",
+  href: "https://revenue.delaware.gov/",
+};
+const DE_200ES = {
+  label: "Delaware: Estimated tax (Form 200-ES)",
+  href: "https://revenue.delaware.gov/individual-income-tax/",
+};
+const MT_DOR = {
+  label: "Montana Department of Revenue",
+  href: "https://mtrevenue.gov/",
+};
+const MT_ESTIMATE = {
+  label: "Montana: Estimated income tax payments",
+  href: "https://mtrevenue.gov/taxes/individual-income-tax/",
+};
+const ND_TAX = {
+  label: "North Dakota Office of State Tax Commissioner",
+  href: "https://www.tax.nd.gov/",
+};
+const ND_1ES = {
+  label: "North Dakota: Estimated tax (Form ND-1ES)",
+  href: "https://www.tax.nd.gov/individual",
+};
+const VT_TAX = {
+  label: "Vermont Department of Taxes",
+  href: "https://tax.vermont.gov/",
+};
+const VT_IN114 = {
+  label: "Vermont: Estimated tax (Form IN-114)",
+  href: "https://tax.vermont.gov/individuals/estimated-income-tax",
+};
+const DC_OTR = {
+  label: "DC Office of Tax and Revenue",
+  href: "https://otr.cfo.dc.gov/",
+};
+const DC_D40ES = {
+  label: "D.C.: Estimated tax (Form D-40ES)",
+  href: "https://otr.cfo.dc.gov/page/individual-income-tax-forms",
+};
 
 export const STATE_TAX_GUIDES: StateTaxGuide[] = [
   {
@@ -2194,6 +2250,388 @@ export const STATE_TAX_GUIDES: StateTaxGuide[] = [
       {
         q: "When are Rhode Island gig taxes due?",
         a: "Federal and Rhode Island estimated payments are generally due around April 15, June 15, September 15, and January 15, with annual returns due in mid-April. Paying quarterly avoids underpayment penalties.",
+      },
+    ],
+  },
+  {
+    slug: "alaska-gig-worker-taxes",
+    state: "Alaska",
+    stateAdjective: "Alaska",
+    eyebrow: "State Gig Tax Guide",
+    title: "Alaska Gig Worker Taxes: No State Income Tax, Federal & SE Tax",
+    metaDescription:
+      "Alaska gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    h1: "Alaska Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Alaska, platforms pay you as an independent contractor and withhold nothing. The good news: Alaska has no personal state income tax — and no statewide sales tax either. The catch: your federal obligations — income tax plus the 15.3% self-employment tax — apply in full. Here's how it works.",
+    hasStateIncomeTax: false,
+    stateHeading: "Does Alaska have a state income tax for gig workers?",
+    stateBody: [
+      "No. Alaska does not levy a personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state income-tax estimates to make. Some Alaska boroughs and cities do levy local sales taxes, but those aren't income taxes on your earnings.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Because there's no state income tax to pay, you only send federal estimated payments to the IRS — but you should still make those quarterly if you expect to owe $1,000 or more for the year.",
+    ],
+    stateResources: [AK_DOR],
+    faqs: [
+      {
+        q: "Do Alaska gig workers pay state income tax?",
+        a: "No. Alaska has no personal state income tax, so your gig earnings aren't subject to state income tax and there are no state estimated payments. You still owe federal income tax and the 15.3% federal self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for taxes in Alaska?",
+        a: SET_ASIDE_NO_STATE_TAX,
+      },
+      {
+        q: "Is gig income tax-free in Alaska?",
+        a: "No. While Alaska charges no state income tax, your federal obligations apply in full: federal income tax on your net profit plus the 15.3% self-employment tax. Report all income whether or not a platform sends a 1099.",
+      },
+      {
+        q: "Do Alaska gig workers pay quarterly taxes?",
+        a: "Yes — federal quarterly estimated payments. If you expect to owe $1,000 or more in federal tax for the year, the IRS generally expects payments around April 15, June 15, September 15, and January 15. There are no Alaska state estimates to make.",
+      },
+      {
+        q: "What can Alaska gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working. You can also deduct the business-use share of your phone, supplies, tolls, and parking — all of which reduce your federal taxable income.",
+      },
+    ],
+  },
+  {
+    slug: "new-hampshire-gig-worker-taxes",
+    state: "New Hampshire",
+    stateAdjective: "New Hampshire",
+    eyebrow: "State Gig Tax Guide",
+    title: "New Hampshire Gig Worker Taxes: No Income Tax on Earnings + SE Tax",
+    metaDescription:
+      "New Hampshire gig worker taxes: no income tax on earned income; federal income tax + the 15.3% SE tax still apply. Not tax advice.",
+    h1: "New Hampshire Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in New Hampshire, platforms pay you as an independent contractor and withhold nothing. The good news: New Hampshire does not tax earned income, and its old interest & dividends tax was repealed in 2025. The catch: your federal obligations — income tax plus the 15.3% self-employment tax — apply in full. Here's how it works.",
+    hasStateIncomeTax: false,
+    stateHeading: "Does New Hampshire have a state income tax for gig workers?",
+    stateBody: [
+      "No. New Hampshire has never taxed earned income (wages or self-employment), and its separate tax on interest and dividends was fully repealed effective 2025. So your gig earnings face no New Hampshire income tax, and there are no state income-tax estimates to make.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Because there's no state income tax to pay, you only send federal estimated payments to the IRS — but you should still make those quarterly if you expect to owe $1,000 or more for the year.",
+    ],
+    stateResources: [NH_DRA],
+    faqs: [
+      {
+        q: "Do New Hampshire gig workers pay state income tax?",
+        a: "No. New Hampshire doesn't tax earned income, and its interest & dividends tax ended in 2025, so your gig earnings aren't subject to state income tax. You still owe federal income tax and the 15.3% federal self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for taxes in New Hampshire?",
+        a: SET_ASIDE_NO_STATE_TAX,
+      },
+      {
+        q: "Is gig income tax-free in New Hampshire?",
+        a: "Not at the federal level. New Hampshire charges no income tax on your earnings, but your federal obligations apply in full: federal income tax on your net profit plus the 15.3% self-employment tax. Report all income whether or not a platform sends a 1099.",
+      },
+      {
+        q: "Do New Hampshire gig workers pay quarterly taxes?",
+        a: "Yes — federal quarterly estimated payments. If you expect to owe $1,000 or more in federal tax for the year, the IRS generally expects payments around April 15, June 15, September 15, and January 15. There are no New Hampshire state estimates to make.",
+      },
+      {
+        q: "What can New Hampshire gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working. You can also deduct the business-use share of your phone, supplies, tolls, and parking — all of which reduce your federal taxable income.",
+      },
+    ],
+  },
+  {
+    slug: "south-dakota-gig-worker-taxes",
+    state: "South Dakota",
+    stateAdjective: "South Dakota",
+    eyebrow: "State Gig Tax Guide",
+    title:
+      "South Dakota Gig Worker Taxes: No State Income Tax, Federal & SE Tax",
+    metaDescription:
+      "South Dakota gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    h1: "South Dakota Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in South Dakota, platforms pay you as an independent contractor and withhold nothing. The good news: South Dakota has no personal state income tax. The catch: your federal obligations — income tax plus the 15.3% self-employment tax — apply in full. Here's how it works.",
+    hasStateIncomeTax: false,
+    stateHeading: "Does South Dakota have a state income tax for gig workers?",
+    stateBody: [
+      "No. South Dakota does not levy a personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state income-tax estimates to make.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Because there's no state income tax to pay, you only send federal estimated payments to the IRS — but you should still make those quarterly if you expect to owe $1,000 or more for the year.",
+    ],
+    stateResources: [SD_DOR],
+    faqs: [
+      {
+        q: "Do South Dakota gig workers pay state income tax?",
+        a: "No. South Dakota has no personal state income tax, so your gig earnings aren't subject to state income tax and there are no state estimated payments. You still owe federal income tax and the 15.3% federal self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for taxes in South Dakota?",
+        a: SET_ASIDE_NO_STATE_TAX,
+      },
+      {
+        q: "Is gig income tax-free in South Dakota?",
+        a: "No. While South Dakota charges no state income tax, your federal obligations apply in full: federal income tax on your net profit plus the 15.3% self-employment tax. Report all income whether or not a platform sends a 1099.",
+      },
+      {
+        q: "Do South Dakota gig workers pay quarterly taxes?",
+        a: "Yes — federal quarterly estimated payments. If you expect to owe $1,000 or more in federal tax for the year, the IRS generally expects payments around April 15, June 15, September 15, and January 15. There are no South Dakota state estimates to make.",
+      },
+      {
+        q: "What can South Dakota gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working. You can also deduct the business-use share of your phone, supplies, tolls, and parking — all of which reduce your federal taxable income.",
+      },
+    ],
+  },
+  {
+    slug: "wyoming-gig-worker-taxes",
+    state: "Wyoming",
+    stateAdjective: "Wyoming",
+    eyebrow: "State Gig Tax Guide",
+    title: "Wyoming Gig Worker Taxes: No State Income Tax, Federal & SE Tax",
+    metaDescription:
+      "Wyoming gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    h1: "Wyoming Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Wyoming, platforms pay you as an independent contractor and withhold nothing. The good news: Wyoming has no personal state income tax. The catch: your federal obligations — income tax plus the 15.3% self-employment tax — apply in full. Here's how it works.",
+    hasStateIncomeTax: false,
+    stateHeading: "Does Wyoming have a state income tax for gig workers?",
+    stateBody: [
+      "No. Wyoming does not levy a personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state income-tax estimates to make.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Because there's no state income tax to pay, you only send federal estimated payments to the IRS — but you should still make those quarterly if you expect to owe $1,000 or more for the year.",
+    ],
+    stateResources: [WY_DOR],
+    faqs: [
+      {
+        q: "Do Wyoming gig workers pay state income tax?",
+        a: "No. Wyoming has no personal state income tax, so your gig earnings aren't subject to state income tax and there are no state estimated payments. You still owe federal income tax and the 15.3% federal self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for taxes in Wyoming?",
+        a: SET_ASIDE_NO_STATE_TAX,
+      },
+      {
+        q: "Is gig income tax-free in Wyoming?",
+        a: "No. While Wyoming charges no state income tax, your federal obligations apply in full: federal income tax on your net profit plus the 15.3% self-employment tax. Report all income whether or not a platform sends a 1099.",
+      },
+      {
+        q: "Do Wyoming gig workers pay quarterly taxes?",
+        a: "Yes — federal quarterly estimated payments. If you expect to owe $1,000 or more in federal tax for the year, the IRS generally expects payments around April 15, June 15, September 15, and January 15. There are no Wyoming state estimates to make.",
+      },
+      {
+        q: "What can Wyoming gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working. You can also deduct the business-use share of your phone, supplies, tolls, and parking — all of which reduce your federal taxable income.",
+      },
+    ],
+  },
+  {
+    slug: "delaware-gig-worker-taxes",
+    state: "Delaware",
+    stateAdjective: "Delaware",
+    eyebrow: "State Gig Tax Guide",
+    title: "Delaware Gig Worker Taxes: State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Delaware gig worker taxes: a progressive state income tax (up to ~6.6%) plus the 15.3% federal SE tax, with Form 200-ES. Not tax advice.",
+    h1: "Delaware Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Delaware, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Delaware's progressive state income tax also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Delaware have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Delaware has a progressive state income tax topping out around 6.6%, applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Confirm current brackets with the Delaware Division of Revenue. (Note: the city of Wilmington also levies a local earned-income tax on work performed there.)",
+      "There's no separate Delaware self-employment tax — the 15.3% SE tax is federal only — but you report and pay state income tax on your net earnings.",
+      "Pay Delaware estimated income tax to the Division of Revenue using Form 200-ES, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [DE_DOR, DE_200ES],
+    faqs: [
+      {
+        q: "Do Delaware gig workers pay state income tax?",
+        a: "Yes. Delaware's progressive income tax (up to about 6.6%) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form 200-ES and confirm current brackets with the Delaware Division of Revenue.",
+      },
+      {
+        q: "How much should I set aside for taxes in Delaware?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "How do I pay Delaware estimated taxes as a gig worker?",
+        a: "Use Delaware Form 200-ES to pay state estimated income tax to the Division of Revenue, generally four times a year alongside your federal estimates. You can pay online through the state's portal. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Delaware gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and Delaware taxable income.",
+      },
+      {
+        q: "When are Delaware gig taxes due?",
+        a: "Federal and Delaware estimated payments are generally due around April 15, June 15, September 15, and January 15, with annual returns due around the end of April. Paying quarterly avoids underpayment penalties.",
+      },
+    ],
+  },
+  {
+    slug: "montana-gig-worker-taxes",
+    state: "Montana",
+    stateAdjective: "Montana",
+    eyebrow: "State Gig Tax Guide",
+    title: "Montana Gig Worker Taxes: State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Montana gig worker taxes: a state income tax (top ~5.65%, declining) plus the 15.3% federal SE tax, with estimated payments. Not tax advice.",
+    h1: "Montana Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Montana, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Montana's state income tax also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Montana have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Montana has a two-bracket state income tax with a top rate around 5.65% (reduced from 5.9% and scheduled to fall further), applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Confirm the current rate with the Montana Department of Revenue. Montana also has no general sales tax.",
+      "There's no separate Montana self-employment tax — the 15.3% SE tax is federal only — but you report and pay state income tax on your net earnings.",
+      "Pay Montana estimated income tax to the Department of Revenue, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [MT_DOR, MT_ESTIMATE],
+    faqs: [
+      {
+        q: "Do Montana gig workers pay state income tax?",
+        a: "Yes. Montana's income tax (top rate around 5.65% and declining) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates to the Department of Revenue and confirm the current rate.",
+      },
+      {
+        q: "How much should I set aside for taxes in Montana?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "How do I pay Montana estimated taxes as a gig worker?",
+        a: "Make Montana estimated income tax payments to the Department of Revenue, generally four times a year alongside your federal estimates. You can pay online through the state's TransAction Portal. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Montana gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and Montana taxable income.",
+      },
+      {
+        q: "When are Montana gig taxes due?",
+        a: "Federal and Montana estimated payments are generally due around April 15, June 15, September 15, and January 15, with annual returns due in mid-April. Paying quarterly avoids underpayment penalties.",
+      },
+    ],
+  },
+  {
+    slug: "north-dakota-gig-worker-taxes",
+    state: "North Dakota",
+    stateAdjective: "North Dakota",
+    eyebrow: "State Gig Tax Guide",
+    title:
+      "North Dakota Gig Worker Taxes: Low State Income Tax + Federal SE Tax",
+    metaDescription:
+      "North Dakota gig worker taxes: a low state income tax (top ~2.5%) plus the 15.3% federal SE tax, with Form ND-1ES. Not tax advice.",
+    h1: "North Dakota Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in North Dakota, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and North Dakota's (low) state income tax also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does North Dakota have a state income tax for gig workers?",
+    stateBody: [
+      "Yes, but it's low. After a 2023 reform, North Dakota has just three brackets — 0%, about 1.95%, and a top rate around 2.5%, among the lowest in the country — applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Confirm current brackets with the North Dakota Office of State Tax Commissioner.",
+      "There's no separate North Dakota self-employment tax — the 15.3% SE tax is federal only — but you report and pay state income tax on your net earnings.",
+      "Pay North Dakota estimated income tax to the Office of State Tax Commissioner using Form ND-1ES, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [ND_TAX, ND_1ES],
+    faqs: [
+      {
+        q: "Do North Dakota gig workers pay state income tax?",
+        a: "Yes, but North Dakota's rates are among the lowest in the nation — three brackets of 0%, ~1.95%, and a top of ~2.5%. That applies on top of federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form ND-1ES.",
+      },
+      {
+        q: "How much should I set aside for taxes in North Dakota?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "How do I pay North Dakota estimated taxes as a gig worker?",
+        a: "Use North Dakota Form ND-1ES to pay state estimated income tax to the Office of State Tax Commissioner, generally four times a year alongside your federal estimates. You can pay online through the ND TAP portal. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can North Dakota gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and North Dakota taxable income.",
+      },
+      {
+        q: "When are North Dakota gig taxes due?",
+        a: "Federal and North Dakota estimated payments are generally due around April 15, June 15, September 15, and January 15, with annual returns due in mid-April. Paying quarterly avoids underpayment penalties.",
+      },
+    ],
+  },
+  {
+    slug: "vermont-gig-worker-taxes",
+    state: "Vermont",
+    stateAdjective: "Vermont",
+    eyebrow: "State Gig Tax Guide",
+    title: "Vermont Gig Worker Taxes: State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Vermont gig worker taxes: a progressive state income tax (up to ~8.75%) plus the 15.3% federal SE tax, with Form IN-114. Not tax advice.",
+    h1: "Vermont Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Vermont, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Vermont's progressive state income tax also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Vermont have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Vermont has a progressive state income tax topping out around 8.75%, applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Confirm current brackets with the Vermont Department of Taxes.",
+      "There's no separate Vermont self-employment tax — the 15.3% SE tax is federal only — but you report and pay state income tax on your net earnings.",
+      "Pay Vermont estimated income tax to the Department of Taxes using Form IN-114, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [VT_TAX, VT_IN114],
+    faqs: [
+      {
+        q: "Do Vermont gig workers pay state income tax?",
+        a: "Yes. Vermont's progressive income tax (up to about 8.75%) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form IN-114 and confirm current brackets with the Vermont Department of Taxes.",
+      },
+      {
+        q: "How much should I set aside for taxes in Vermont?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "How do I pay Vermont estimated taxes as a gig worker?",
+        a: "Use Vermont Form IN-114 to pay state estimated income tax to the Department of Taxes, generally four times a year alongside your federal estimates. You can pay online through myVTax. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Vermont gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and Vermont taxable income.",
+      },
+      {
+        q: "When are Vermont gig taxes due?",
+        a: "Federal and Vermont estimated payments are generally due around April 15, June 15, September 15, and January 15, with annual returns due in mid-April. Paying quarterly avoids underpayment penalties.",
+      },
+    ],
+  },
+  {
+    slug: "washington-dc-gig-worker-taxes",
+    state: "Washington, D.C.",
+    stateAdjective: "D.C.",
+    eyebrow: "State Gig Tax Guide",
+    title:
+      "Washington D.C. Gig Worker Taxes: Local Income Tax + Federal SE Tax",
+    metaDescription:
+      "Washington D.C. gig worker taxes: a progressive local income tax (up to ~10.75%) plus the 15.3% federal SE tax, with Form D-40ES. Not tax advice.",
+    h1: "Washington D.C. Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Washington, D.C., platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and the District's progressive local income tax also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading:
+      "Does Washington, D.C. have a local income tax for gig workers?",
+    stateBody: [
+      "Yes. The District of Columbia has a progressive income tax topping out around 10.75%, applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. D.C. taxes residents; confirm current brackets with the D.C. Office of Tax and Revenue.",
+      "There's no separate D.C. self-employment tax — the 15.3% SE tax is federal only — but District residents report and pay local income tax on their net earnings.",
+      "Pay D.C. estimated income tax to the Office of Tax and Revenue using Form D-40ES, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [DC_OTR, DC_D40ES],
+    faqs: [
+      {
+        q: "Do Washington, D.C. gig workers pay local income tax?",
+        a: "Yes. D.C. residents pay the District's progressive income tax (up to about 10.75%) on their net gig earnings, in addition to federal income tax and the 15.3% federal self-employment tax. Pay estimates with Form D-40ES and confirm current brackets with the D.C. Office of Tax and Revenue.",
+      },
+      {
+        q: "How much should I set aside for taxes in Washington, D.C.?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "How do I pay D.C. estimated taxes as a gig worker?",
+        a: "Use D.C. Form D-40ES to pay estimated local income tax to the Office of Tax and Revenue, generally four times a year alongside your federal estimates. You can pay online through MyTax.DC.gov. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Washington, D.C. gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering both your federal and D.C. taxable income.",
+      },
+      {
+        q: "When are Washington, D.C. gig taxes due?",
+        a: "Federal and D.C. estimated payments are generally due around April 15, June 15, September 15, and January 15, with annual returns due in mid-April. Paying quarterly avoids underpayment penalties.",
       },
     ],
   },

@@ -1208,6 +1208,87 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/alaska-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="alaska-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/new-hampshire-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="new-hampshire-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/south-dakota-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="south-dakota-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/wyoming-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="wyoming-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/delaware-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="delaware-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/montana-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="montana-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/north-dakota-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="north-dakota-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/vermont-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="vermont-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/washington-dc-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="washington-dc-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Gig-tax cluster: additional platform comparisons */}
       <Route
         path="/doordash-vs-grubhub"
