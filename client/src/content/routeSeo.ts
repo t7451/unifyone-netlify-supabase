@@ -525,6 +525,69 @@ const DC_TAX_LINKS = [
   },
 ];
 
+// City / local-tax guide link bundles: IRS anchors + the city revenue office
+// and its state agency, for the metros that levy a local tax on gig earnings.
+const NYC_CITY_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.seTax,
+  {
+    label: "NYC Department of Finance",
+    url: "https://www.nyc.gov/site/finance/index.page",
+  },
+  {
+    label: "New York State Department of Taxation and Finance",
+    url: "https://www.tax.ny.gov/",
+  },
+];
+const PHILLY_CITY_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.seTax,
+  {
+    label: "Philadelphia Department of Revenue",
+    url: "https://www.phila.gov/departments/department-of-revenue/",
+  },
+  {
+    label: "Pennsylvania Department of Revenue",
+    url: "https://www.revenue.pa.gov/",
+  },
+];
+const PORTLAND_CITY_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.seTax,
+  {
+    label: "City of Portland Revenue Division (Metro SHS & Multnomah PFA)",
+    url: "https://www.portland.gov/revenue/personal-tax",
+  },
+  {
+    label: "Oregon Department of Revenue",
+    url: "https://www.oregon.gov/dor/",
+  },
+];
+const DETROIT_CITY_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.seTax,
+  {
+    label: "Michigan Treasury: Detroit city income tax",
+    url: "https://www.michigan.gov/taxes/city-taxes/detroit",
+  },
+  {
+    label: "Michigan Department of Treasury",
+    url: "https://www.michigan.gov/taxes",
+  },
+];
+const KANSAS_CITY_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.seTax,
+  {
+    label: "Kansas City, MO: Earnings Tax (E-Tax)",
+    url: "https://www.kcmo.gov/city-hall/departments/finance/earnings-tax",
+  },
+  {
+    label: "Missouri Department of Revenue",
+    url: "https://dor.mo.gov/",
+  },
+];
+
 // Authoritative resources for the gig platform comparison guides. The IRS
 // self-employed center + estimated taxes anchor the (educational, not advice)
 // tax framing; the two platform sites being compared give each page a real,
@@ -1776,6 +1839,76 @@ export const ROUTE_SEO: RouteSeo[] = [
       "The District of Columbia has a progressive local income tax topping out around 10.75%, applied to D.C. residents' net gig profit on top of federal tax. Pay estimates to the D.C. Office of Tax and Revenue using Form D-40ES, generally on the same quarterly schedule as your federal estimates.",
       "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income D.C. starts from.",
       "Federal and D.C. estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/new-york-city-gig-worker-taxes",
+    externalLinks: NYC_CITY_TAX_LINKS,
+    title:
+      "New York City Gig Worker Taxes: NYC Income Tax, UBT & Estimates | UnifyOne",
+    description:
+      "New York City gig worker taxes: the NYC resident income tax (and possible UBT) on top of New York State and the 15.3% federal SE tax. Not tax advice.",
+    body: [
+      "Gig platforms pay New York City workers as independent contractors and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "If you live in NYC, the city's personal income tax applies to your net gig profit on top of New York State income tax — you pay it through your New York State return. Nonresidents who only work in the city generally don't owe the NYC personal income tax (the commuter tax was repealed), though they still owe New York State nonresident tax.",
+      "Higher-earning self-employed New Yorkers may also meet the NYC Unincorporated Business Tax (UBT) on net business income above a threshold, with a credit that offsets it for many filers — confirm with the NYC Department of Finance. Deduct business mileage and the business-use share of your phone and supplies to lower the profit these taxes start from.",
+      "Federal and New York estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/philadelphia-gig-worker-taxes",
+    externalLinks: PHILLY_CITY_TAX_LINKS,
+    title:
+      "Philadelphia Gig Worker Taxes: Net Profits Tax, BIRT & Estimates | UnifyOne",
+    description:
+      "Philadelphia gig worker taxes: the Net Profits Tax on self-employed profit (plus BIRT), on top of PA state and the 15.3% federal SE tax. Not tax advice.",
+    body: [
+      "Gig platforms pay Philadelphia workers as independent contractors and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Philadelphia taxes self-employed people directly: instead of the employee Wage Tax, you owe the Net Profits Tax (NPT) on your net business profit — residents on all of it, nonresidents on work done in the city — on top of Pennsylvania's flat state income tax.",
+      "Many self-employed Philadelphians must also file the Business Income & Receipts Tax (BIRT), though there's a filing exclusion under a gross-receipts threshold; confirm with the Philadelphia Department of Revenue. Deduct business mileage and the business-use share of your phone and supplies to lower the net profit these taxes are figured on.",
+      "Federal and Pennsylvania estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/portland-gig-worker-taxes",
+    externalLinks: PORTLAND_CITY_TAX_LINKS,
+    title:
+      "Portland, OR Gig Worker Taxes: Metro & Multnomah Local Taxes | UnifyOne",
+    description:
+      "Portland, OR gig worker taxes: the Metro SHS and Multnomah Preschool for All income taxes above thresholds, on top of Oregon and federal tax. Not advice.",
+    body: [
+      "Gig platforms pay Portland workers as independent contractors and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "The Portland area adds two local personal income taxes beyond Oregon's state tax: the Metro Supportive Housing Services (SHS) tax and Multnomah County's Preschool for All (PFA) tax. Both apply to net gig earnings, but only above set income thresholds — many gig workers below the threshold owe neither.",
+      "Above the threshold, the local tax applies only to the portion over it, on top of Oregon's relatively high state income tax. The City of Portland Revenue Division administers both; confirm current thresholds and rates. Deduct business mileage and the business-use share of your phone and supplies to lower the income these taxes start from.",
+      "Federal and Oregon estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/detroit-gig-worker-taxes",
+    externalLinks: DETROIT_CITY_TAX_LINKS,
+    title:
+      "Detroit Gig Worker Taxes: City Income Tax & Quarterly Estimates | UnifyOne",
+    description:
+      "Detroit gig worker taxes: the Detroit city income tax for residents and on work done in the city, on top of Michigan and the 15.3% SE tax. Not tax advice.",
+    body: [
+      "Gig platforms pay Detroit workers as independent contractors and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Detroit levies a city income tax that reaches gig earnings: residents owe it on all net self-employment profit, and nonresidents owe it on income from work performed in Detroit, at a lower rate. It's on top of Michigan's flat state income tax.",
+      "The Detroit city income tax is administered through the Michigan Department of Treasury, and self-employed workers file a Detroit return reporting net profit; confirm current rates and apportionment rules. Deduct business mileage and the business-use share of your phone and supplies to lower the profit the tax is figured on.",
+      "Federal and Michigan estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/kansas-city-gig-worker-taxes",
+    externalLinks: KANSAS_CITY_TAX_LINKS,
+    title:
+      "Kansas City Gig Worker Taxes: The 1% Earnings Tax Explained | UnifyOne",
+    description:
+      "Kansas City, MO gig worker taxes: the 1% earnings tax (E-Tax) on net business earnings, on top of Missouri and the 15.3% federal SE tax. Not tax advice.",
+    body: [
+      "Gig platforms pay Kansas City workers as independent contractors and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Kansas City, Missouri charges a 1% earnings tax (the 'E-Tax') that reaches self-employment income: residents owe 1% on their net business profit, and nonresidents owe 1% on work performed in the city. It's on top of Missouri's state income tax.",
+      "The earnings tax is administered by the Kansas City Revenue Division and reported on the city's profits return; nothing is withheld, so you pay it yourself. Deduct business mileage and the business-use share of your phone and supplies to lower the net profit it's figured on. (St. Louis has a similar 1% earnings tax.)",
+      "Federal and Missouri estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
     ],
   },
   {

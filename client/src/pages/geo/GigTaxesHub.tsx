@@ -3,6 +3,7 @@ import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 import { PLATFORM_TAX_GUIDES } from "@/content/geo/platformTaxGuides";
 import { STATE_TAX_GUIDES } from "@/content/geo/stateTaxGuides";
+import { CITY_TAX_GUIDES } from "@/content/geo/cityTaxGuides";
 import { PLATFORM_COMPARISONS } from "@/content/geo/platformComparisons";
 import { GETTING_STARTED_GUIDES } from "@/content/geo/gettingStartedGuides";
 
@@ -212,6 +213,28 @@ export default function GigTaxesHub() {
                 <p className="text-sm font-semibold">{s.state} →</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Gig worker taxes
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">Taxes by city</h2>
+          <p className="text-muted-foreground text-sm mb-4">
+            A few cities add a <em>local</em> income or earnings tax on top of
+            federal and state — and some hit self-employed gig workers directly.
+          </p>
+          <div className="grid sm:grid-cols-3 gap-3">
+            {CITY_TAX_GUIDES.map(c => (
+              <Link
+                key={c.slug}
+                href={`/${c.slug}`}
+                className="rounded-lg border p-4 hover:bg-muted transition-colors block"
+              >
+                <p className="text-sm font-semibold">{c.city} →</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {c.localTaxName}
                 </p>
               </Link>
             ))}

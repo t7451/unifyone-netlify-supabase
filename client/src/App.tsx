@@ -116,6 +116,7 @@ const GigRouteIntelligence = lazy(
 const PlatformTaxGuide = lazy(() => import("./pages/geo/PlatformTaxGuide"));
 const GigTaxesHub = lazy(() => import("./pages/geo/GigTaxesHub"));
 const StateTaxGuide = lazy(() => import("./pages/geo/StateTaxGuide"));
+const CityTaxGuide = lazy(() => import("./pages/geo/CityTaxGuide"));
 const PlatformComparison = lazy(() => import("./pages/geo/PlatformComparison"));
 const GettingStartedGuide = lazy(
   () => import("./pages/geo/GettingStartedGuide")
@@ -1429,6 +1430,52 @@ function Router() {
         component={() => (
           <>
             <StateTaxGuide slug="washington-dc-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      {/* Gig-tax cluster: city / local-tax guides */}
+      <Route
+        path="/new-york-city-gig-worker-taxes"
+        component={() => (
+          <>
+            <CityTaxGuide slug="new-york-city-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/philadelphia-gig-worker-taxes"
+        component={() => (
+          <>
+            <CityTaxGuide slug="philadelphia-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/portland-gig-worker-taxes"
+        component={() => (
+          <>
+            <CityTaxGuide slug="portland-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/detroit-gig-worker-taxes"
+        component={() => (
+          <>
+            <CityTaxGuide slug="detroit-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/kansas-city-gig-worker-taxes"
+        component={() => (
+          <>
+            <CityTaxGuide slug="kansas-city-gig-worker-taxes" />
             <GigResourceLinks />
           </>
         )}
