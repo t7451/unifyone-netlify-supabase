@@ -955,6 +955,78 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/virginia-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="virginia-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/massachusetts-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="massachusetts-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/maryland-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="maryland-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/minnesota-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="minnesota-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/missouri-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="missouri-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/indiana-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="indiana-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/tennessee-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="tennessee-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/nevada-gig-worker-taxes"
+        component={() => (
+          <>
+            <StateTaxGuide slug="nevada-gig-worker-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Gig-tax cluster: additional platform comparisons */}
       <Route
         path="/doordash-vs-grubhub"
