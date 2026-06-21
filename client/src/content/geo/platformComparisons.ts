@@ -493,6 +493,290 @@ export const PLATFORM_COMPARISONS: PlatformComparison[] = [
       },
     ],
   },
+  {
+    slug: "uber-vs-doordash",
+    platformA: "Uber",
+    platformB: "DoorDash",
+    eyebrow: "Gig Platform Comparison",
+    title: "Uber vs DoorDash: Which Should You Drive For?",
+    metaDescription:
+      "Uber (rideshare) vs DoorDash (delivery) compared on pay structure, requirements, 1099 forms, mileage, scheduling, and payouts — plus how to compute your net pay.",
+    h1: "Uber vs DoorDash: Which Should You Drive For?",
+    intro:
+      "Uber and DoorDash are the two best-known gig-driving apps, but they're different jobs: Uber (rideshare) carries passengers, while DoorDash carries food. That changes the requirements, the wear on your car, and how pay works — so the better choice depends on your vehicle, your market, and what you're comfortable doing. This guide compares the structural factors, then shows you how to measure your own real hourly rate on each.",
+    dimensions: [
+      {
+        aspect: "What you carry",
+        a: "Passengers — you drive people to destinations through UberX and related ride options.",
+        b: "Food and goods — you pick up orders from merchants and drop them off; no passengers.",
+      },
+      {
+        aspect: "Requirements",
+        a: "Higher bar: typically 21+ with a qualifying multi-door vehicle, more driving experience, and a stricter background and vehicle inspection.",
+        b: "Lower bar: typically 18+; in many markets you can deliver by car, and sometimes bike or scooter.",
+      },
+      {
+        aspect: "How pay is structured",
+        a: "Per-ride upfront fare shown before you accept, plus 100% of tips and any promotions.",
+        b: "Per-offer base pay shown before you accept, plus 100% of tips and any promotions.",
+      },
+      {
+        aspect: "Promotions / surge",
+        a: "Surge pricing in busy areas plus Quests and consecutive-trip bonuses.",
+        b: "Peak Pay during busy windows plus Challenges.",
+      },
+      {
+        aspect: "Tax forms issued",
+        a: "Often a 1099-K for gross fares plus a 1099-NEC for incentives; your Uber Tax Summary reconciles both.",
+        b: "A 1099-NEC if you earned $600 or more (issued via Stripe).",
+      },
+      {
+        aspect: "Mileage / expense profile",
+        a: "More miles and engine hours with passengers aboard; higher fuel and wear, but typically less waiting.",
+        b: "Shorter trips with restaurant wait time; you absorb the miles driven between merchant and customer.",
+      },
+      {
+        aspect: "Scheduling / payout",
+        a: "Log on any time; weekly direct deposit with an instant cash-out option (possible fee).",
+        b: "Log on any time (subject to market capacity); weekly direct deposit with a fast cash-out option (possible fee).",
+      },
+    ],
+    faqs: [
+      {
+        q: "Which pays more, Uber or DoorDash?",
+        a: COMPARE_YOUR_OWN_PAY_ANSWER,
+      },
+      {
+        q: "Is it easier to start with Uber or DoorDash?",
+        a: "DoorDash generally has a lower barrier to entry — often 18+ and, in many markets, the option to deliver by car or even bike. Uber rideshare usually requires being 21+ with a qualifying multi-door vehicle and a stricter vehicle/background check. Requirements vary by market and change, so confirm current criteria with each platform.",
+      },
+      {
+        q: "What tax forms do Uber and DoorDash send?",
+        a: "DoorDash issues a 1099-NEC at $600+ in earnings. Uber often issues a 1099-K for your gross fares plus a 1099-NEC for incentives and referrals, reconciled on your Uber Tax Summary. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income regardless of which forms arrive.",
+      },
+      {
+        q: "Can I drive for both Uber and DoorDash?",
+        a: "Yes. Both treat you as an independent contractor with no exclusivity, so many drivers run both and switch based on which is busier. Track each separately so you can compare net pay per hour and keep clean records for taxes.",
+      },
+      {
+        q: "What can I deduct driving for Uber or DoorDash?",
+        a: "Business mileage at the IRS standard mileage rate is usually the largest deduction on either, plus the business-use share of your phone, tolls, parking, and supplies. Because Uber rideshare often means more miles, careful mileage tracking matters even more. See the gig-tax guides for details.",
+      },
+    ],
+  },
+  {
+    slug: "uber-eats-vs-grubhub",
+    platformA: "Uber Eats",
+    platformB: "Grubhub",
+    eyebrow: "Gig Platform Comparison",
+    title: "Uber Eats vs Grubhub: Which Pays More for Drivers?",
+    metaDescription:
+      "Uber Eats vs Grubhub compared on pay structure, scheduling blocks, fees, 1099 forms, mileage, and payouts — plus how to compute your own net pay.",
+    h1: "Uber Eats vs Grubhub: Which Pays More for Drivers?",
+    intro:
+      "Uber Eats and Grubhub are both food-delivery apps that pay couriers as independent contractors, but they schedule and prioritize drivers differently. Uber Eats is mostly on-demand, while Grubhub leans on scheduled blocks and a priority tier. The better fit depends on your market and how you like to work — here's the structural comparison plus how to measure your own net pay.",
+    dimensions: [
+      {
+        aspect: "How pay is structured",
+        a: "Per-offer: an upfront amount including promotions and 100% of tips, shown before you accept.",
+        b: "Per-offer: a base amount plus mileage and 100% of tips, shown before you accept.",
+      },
+      {
+        aspect: "Scheduling model",
+        a: "Mostly on-demand — log on and accept offers whenever you want, subject to area capacity.",
+        b: "Schedule time blocks in advance (or 'toss' and go on-demand where available); blocks can improve order flow.",
+      },
+      {
+        aspect: "Priority / tiers",
+        a: "Offer flow is largely on-demand without a formal acceptance-rate tier.",
+        b: "Grubhub's Premier/Pro tiers reward higher acceptance and on-time scheduling with earlier scheduling access.",
+      },
+      {
+        aspect: "Promotions",
+        a: "Surge/Boost zones and Quests during busy periods.",
+        b: "Special pay and contribution boosts in busy areas and times.",
+      },
+      {
+        aspect: "Tax forms issued",
+        a: "Often a 1099-NEC for incentives and a 1099-K for processed delivery fares, with thresholds that change yearly.",
+        b: "A 1099-NEC if you earned $600 or more in a year.",
+      },
+      {
+        aspect: "Mileage / expense profile",
+        a: "You absorb miles between restaurant and customer; trip lengths vary by market.",
+        b: "Similar profile; base pay explicitly factors in distance, but you still track all working miles for taxes.",
+      },
+      {
+        aspect: "Scheduling / payout",
+        a: "Weekly direct deposit with an instant cash-out option (possible fee).",
+        b: "Weekly direct deposit, plus Instant Cash Out / Instant Pay options (possible fee).",
+      },
+    ],
+    faqs: [
+      {
+        q: "Which pays more, Uber Eats or Grubhub?",
+        a: COMPARE_YOUR_OWN_PAY_ANSWER,
+      },
+      {
+        q: "Does Grubhub require scheduling blocks?",
+        a: "Grubhub leans on scheduled blocks and rewards reliability through its Premier/Pro tiers, though many markets also allow 'toss' (on-demand) delivering. Uber Eats is mostly on-demand with no blocks. Scheduling rules vary by market and change over time, so confirm current details with each platform.",
+      },
+      {
+        q: "What tax forms do Uber Eats and Grubhub send?",
+        a: "Grubhub issues a 1099-NEC at $600+ in earnings. Uber Eats often issues a 1099-NEC for incentives plus a 1099-K for processed fares. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income whether or not a form arrives.",
+      },
+      {
+        q: "Can I deliver for both Uber Eats and Grubhub?",
+        a: "Yes. Both are non-exclusive independent-contractor apps, so many couriers run both and multi-app to cut downtime. Track each separately to compare net pay per hour and keep clean tax records.",
+      },
+      {
+        q: "What can Uber Eats and Grubhub drivers deduct?",
+        a: "Business mileage at the IRS standard mileage rate is usually the biggest deduction on either, plus the business-use share of your phone, insulated bags, tolls, and parking. See the gig-tax guides for the full checklist.",
+      },
+    ],
+  },
+  {
+    slug: "doordash-vs-spark",
+    platformA: "DoorDash",
+    platformB: "Spark Driver",
+    eyebrow: "Gig Platform Comparison",
+    title: "DoorDash vs Spark: Which Delivery Gig Is Better?",
+    metaDescription:
+      "DoorDash vs Walmart Spark compared on pay structure, order types, fees, 1099 forms, mileage, scheduling, and payouts — plus how to compute your net pay.",
+    h1: "DoorDash vs Spark: Which Delivery Gig Is Better?",
+    intro:
+      "DoorDash and the Walmart Spark Driver program are both per-offer delivery apps that pay you as an independent contractor, but the order mix differs: DoorDash spans restaurants, convenience, and retail, while Spark delivers Walmart and Sam's Club orders (sometimes including shopping the order). The better fit depends on your local merchant density and how you like to work. Here's the structural comparison plus how to compute your own net pay.",
+    dimensions: [
+      {
+        aspect: "Order types",
+        a: "Restaurants, grocery, convenience, and retail through DoorDash's merchant network.",
+        b: "Walmart and Sam's Club orders; some offers include shopping the order, others are delivery-only (curbside pickup).",
+      },
+      {
+        aspect: "How pay is structured",
+        a: "Per-offer base pay plus 100% of tips and promotions, shown before you accept.",
+        b: "Per-offer estimated pay (factoring distance and effort) plus 100% of tips, shown before you accept.",
+      },
+      {
+        aspect: "Promotions",
+        a: "Peak Pay during busy windows plus Challenges.",
+        b: "Incentives and busy-area bonuses that vary by zone.",
+      },
+      {
+        aspect: "Tax forms issued",
+        a: "A 1099-NEC if you earned $600 or more (via Stripe).",
+        b: "A 1099-NEC if you earned $600 or more (via its payment partner).",
+      },
+      {
+        aspect: "Coverage / availability",
+        a: "Broad merchant base in most markets, so order volume is often steady.",
+        b: "Tied to Walmart store zones; availability and slot competition depend on nearby stores.",
+      },
+      {
+        aspect: "Mileage / expense profile",
+        a: "Short-to-medium trips with restaurant wait time; you absorb between-stop miles.",
+        b: "Often longer routes from a store to customers; shopping offers add in-store time.",
+      },
+      {
+        aspect: "Scheduling / payout",
+        a: "Log on any time (subject to capacity); weekly deposit with fast cash-out (possible fee).",
+        b: "Reserve or accept zone offers; frequent/instant payout options via its payment partner.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Which pays more, DoorDash or Spark?",
+        a: COMPARE_YOUR_OWN_PAY_ANSWER,
+      },
+      {
+        q: "Does Spark require shopping the order?",
+        a: "Some Spark offers are shop-and-deliver (you pick items in the store), while others are delivery-only from curbside pickup. DoorDash is primarily pickup-and-deliver, though it has some shopping orders too. The mix varies by market — confirm current details with each platform.",
+      },
+      {
+        q: "What tax forms do DoorDash and Spark send?",
+        a: "Both issue a 1099-NEC if you earned $600 or more — DoorDash via Stripe, Spark via its payment partner. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income whether or not a form arrives.",
+      },
+      {
+        q: "Can I drive for both DoorDash and Spark?",
+        a: "Yes. Both are non-exclusive independent-contractor programs, so many drivers run both and pick whichever has better offers in their area at the time. Track each separately to compare net pay per hour and for clean tax records.",
+      },
+      {
+        q: "What can DoorDash and Spark drivers deduct?",
+        a: "Business mileage at the IRS standard mileage rate is usually the biggest deduction on either, plus the business-use share of your phone, insulated bags, tolls, and parking. See the gig-tax guides for the full checklist.",
+      },
+    ],
+  },
+  {
+    slug: "amazon-flex-vs-doordash",
+    platformA: "Amazon Flex",
+    platformB: "DoorDash",
+    eyebrow: "Gig Platform Comparison",
+    title: "Amazon Flex vs DoorDash: Which Is Better for Drivers?",
+    metaDescription:
+      "Amazon Flex vs DoorDash compared on block vs per-offer pay, requirements, 1099 forms, mileage, scheduling, and payouts — plus how to compute your net pay.",
+    h1: "Amazon Flex vs DoorDash: Which Is Better for Drivers?",
+    intro:
+      "Amazon Flex and DoorDash are both independent-contractor gigs, but they work very differently: Amazon Flex pays a set amount for a reserved delivery block of packages, while DoorDash pays per food-delivery offer with tips. One rewards predictability, the other flexibility. The better fit depends on whether you prefer scheduled, tip-free block pay or on-demand offers with tips — here's the structural comparison and how to measure your own net pay.",
+    dimensions: [
+      {
+        aspect: "How pay is structured",
+        a: "Block-based: you see a set payment for a reserved delivery block (e.g., a few hours) before you accept; tips are uncommon for standard package blocks.",
+        b: "Per-offer: base pay plus 100% of tips and promotions, shown before you accept each delivery.",
+      },
+      {
+        aspect: "What you deliver",
+        a: "Amazon packages (and some grocery/Whole Foods or Fresh in select markets).",
+        b: "Food, convenience, grocery, and retail orders from DoorDash merchants.",
+      },
+      {
+        aspect: "Requirements",
+        a: "Typically 21+ with a mid-size or larger vehicle and a smartphone; background check.",
+        b: "Typically 18+; car (and bike/scooter in some markets); background check.",
+      },
+      {
+        aspect: "Scheduling model",
+        a: "Reserve blocks in advance (or grab same-day offers); you commit to the whole block.",
+        b: "Log on any time and accept offers; no commitment to a fixed block.",
+      },
+      {
+        aspect: "Tax forms issued",
+        a: "A 1099-NEC if you earned $600 or more (via Amazon's tax portal).",
+        b: "A 1099-NEC if you earned $600 or more (via Stripe).",
+      },
+      {
+        aspect: "Mileage / expense profile",
+        a: "Many stops per block, including miles between the station and stops; predictable route density.",
+        b: "Variable trips with restaurant wait time; you absorb between-stop miles.",
+      },
+      {
+        aspect: "Scheduling / payout",
+        a: "Pay for completed blocks; deposits typically twice a week.",
+        b: "Weekly deposit with a fast cash-out option (possible fee).",
+      },
+    ],
+    faqs: [
+      {
+        q: "Which pays more, Amazon Flex or DoorDash?",
+        a: COMPARE_YOUR_OWN_PAY_ANSWER,
+      },
+      {
+        q: "What's the main difference between Amazon Flex and DoorDash?",
+        a: "Amazon Flex pays a set amount for a reserved block of package deliveries (tips uncommon), so earnings are predictable but you commit to the block. DoorDash pays per food-delivery offer with tips and lets you log on any time. Flex usually requires 21+ and a mid-size+ vehicle; DoorDash is often 18+ with a lower vehicle bar. Requirements vary by market and change.",
+      },
+      {
+        q: "What tax forms do Amazon Flex and DoorDash send?",
+        a: "Both issue a 1099-NEC if you earned $600 or more — Amazon via its tax portal, DoorDash via Stripe. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income whether or not a form arrives.",
+      },
+      {
+        q: "Can I do both Amazon Flex and DoorDash?",
+        a: "Yes. Both are non-exclusive independent-contractor gigs. Some drivers reserve Amazon Flex blocks for predictable income and fill gaps with DoorDash offers. Track each separately to compare net pay per hour and keep clean tax records.",
+      },
+      {
+        q: "What can Amazon Flex and DoorDash drivers deduct?",
+        a: "Business mileage at the IRS standard mileage rate is usually the largest deduction on either — and because Flex blocks can rack up many miles, careful tracking matters. You can also deduct the business-use share of your phone, supplies, tolls, and parking. See the gig-tax guides for the full checklist.",
+      },
+    ],
+  },
 ];
 
 export function getPlatformComparison(

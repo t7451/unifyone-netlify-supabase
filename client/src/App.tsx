@@ -1055,6 +1055,42 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/uber-vs-doordash"
+        component={() => (
+          <>
+            <PlatformComparison slug="uber-vs-doordash" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/uber-eats-vs-grubhub"
+        component={() => (
+          <>
+            <PlatformComparison slug="uber-eats-vs-grubhub" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/doordash-vs-spark"
+        component={() => (
+          <>
+            <PlatformComparison slug="doordash-vs-spark" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/amazon-flex-vs-doordash"
+        component={() => (
+          <>
+            <PlatformComparison slug="amazon-flex-vs-doordash" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Getting-started cluster: "how to make money on <platform>" guides */}
       <Route
         path="/how-to-make-money-on-doordash"

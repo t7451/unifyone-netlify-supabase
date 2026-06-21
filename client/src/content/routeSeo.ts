@@ -324,6 +324,30 @@ const INSTACART_VS_SHIPT_LINKS = [
   PLATFORM_LINKS.instacart,
   PLATFORM_LINKS.shipt,
 ];
+const UBER_VS_DOORDASH_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.uber,
+  PLATFORM_LINKS.doordash,
+];
+const UBER_EATS_VS_GRUBHUB_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.uberEats,
+  PLATFORM_LINKS.grubhub,
+];
+const DOORDASH_VS_SPARK_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.doordash,
+  PLATFORM_LINKS.spark,
+];
+const AMAZON_FLEX_VS_DOORDASH_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.amazonFlex,
+  PLATFORM_LINKS.doordash,
+];
 
 // Additional platform-specific tax-guide link bundles (Amazon Flex, Grubhub,
 // Lyft, Spark, Shipt) — IRS resources + the relevant platform's driver site.
@@ -387,6 +411,58 @@ const AMAZON_FLEX_START_LINKS = [
 ];
 
 export const ROUTE_SEO: RouteSeo[] = [
+  {
+    path: "/uber-vs-doordash",
+    externalLinks: UBER_VS_DOORDASH_LINKS,
+    title: "Uber vs DoorDash: Which Should You Drive For? | UnifyOne",
+    description:
+      "Uber (rideshare) vs DoorDash (delivery) compared on pay structure, requirements, 1099 forms, mileage, and scheduling — plus how to compute your net pay.",
+    body: [
+      "Uber and DoorDash are different jobs: Uber carries passengers, DoorDash carries food. Both pay you as an independent contractor with no taxes withheld, so your take-home depends on your market, hours, and vehicle costs — not the brand.",
+      "Uber rideshare usually has a higher bar (often 21+ with a qualifying multi-door vehicle and a stricter inspection); DoorDash is often 18+ with a lower vehicle bar and, in some markets, bike delivery. Both pay per-offer/per-ride with upfront amounts plus 100% of tips.",
+      "On taxes, DoorDash issues a 1099-NEC at $600+, while Uber often issues a 1099-K for gross fares plus a 1099-NEC for incentives. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income regardless of forms.",
+      "To compare them honestly, run comparable shifts on each, track active hours and business miles, subtract mileage and expenses, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators do the math. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/uber-eats-vs-grubhub",
+    externalLinks: UBER_EATS_VS_GRUBHUB_LINKS,
+    title: "Uber Eats vs Grubhub: Which Pays More for Drivers? | UnifyOne",
+    description:
+      "Uber Eats vs Grubhub compared on pay structure, scheduling blocks, 1099 forms, mileage, and payouts — plus how to compute your own net pay.",
+    body: [
+      "Uber Eats and Grubhub are both food-delivery apps that pay couriers as independent contractors, but they schedule drivers differently: Uber Eats is mostly on-demand, while Grubhub leans on scheduled blocks and a Premier/Pro priority tier.",
+      "Both are per-offer with upfront amounts plus 100% of tips. Grubhub rewards higher acceptance and on-time scheduling with earlier block access; Uber Eats uses Surge/Boost zones and Quests during busy periods.",
+      "Grubhub issues a 1099-NEC at $600+; Uber Eats often issues a 1099-NEC for incentives plus a 1099-K for processed fares. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income whether or not a form arrives.",
+      "To compare, work comparable shifts on each, track active hours and business miles, subtract mileage and expenses, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators handle it. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/doordash-vs-spark",
+    externalLinks: DOORDASH_VS_SPARK_LINKS,
+    title: "DoorDash vs Spark: Which Delivery Gig Is Better? | UnifyOne",
+    description:
+      "DoorDash vs Walmart Spark compared on order types, pay structure, 1099 forms, mileage, and payouts — plus how to compute your own net pay.",
+    body: [
+      "DoorDash and the Walmart Spark Driver program are both per-offer delivery apps that pay you as an independent contractor, but the order mix differs: DoorDash spans restaurants, convenience, and retail, while Spark delivers Walmart and Sam's Club orders (some offers include shopping the order).",
+      "Both show pay before you accept and pass through 100% of tips. DoorDash's broad merchant base often means steadier volume; Spark availability is tied to nearby Walmart store zones and slot competition.",
+      "Both issue a 1099-NEC if you earned $600 or more — DoorDash via Stripe, Spark via its payment partner. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income whether or not a form arrives.",
+      "To compare, run comparable shifts on each, track active hours and business miles, subtract mileage and expenses, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators do the math. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/amazon-flex-vs-doordash",
+    externalLinks: AMAZON_FLEX_VS_DOORDASH_LINKS,
+    title: "Amazon Flex vs DoorDash: Which Is Better for Drivers? | UnifyOne",
+    description:
+      "Amazon Flex vs DoorDash compared on block vs per-offer pay, requirements, 1099 forms, mileage, and scheduling — plus how to compute your own net pay.",
+    body: [
+      "Amazon Flex and DoorDash are both independent-contractor gigs that work very differently: Amazon Flex pays a set amount for a reserved block of package deliveries (tips uncommon), while DoorDash pays per food-delivery offer with tips and lets you log on any time.",
+      "Amazon Flex usually requires 21+ and a mid-size or larger vehicle, and you commit to a whole block; DoorDash is often 18+ with a lower vehicle bar and no block commitment. One rewards predictability, the other flexibility.",
+      "Both issue a 1099-NEC if you earned $600 or more — Amazon via its tax portal, DoorDash via Stripe. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income whether or not a form arrives.",
+      "To compare, run comparable shifts on each, track active hours and business miles, subtract mileage and expenses, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators handle it. This is educational information, not financial or tax advice.",
+    ],
+  },
   {
     path: "/virginia-gig-worker-taxes",
     externalLinks: VA_TAX_LINKS,
