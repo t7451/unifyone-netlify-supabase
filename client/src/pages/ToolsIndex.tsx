@@ -275,6 +275,22 @@ export default function ToolsIndex() {
                 label: "Gig route intelligence",
                 href: "/gig-route-intelligence",
               },
+              {
+                label: "Retirement accounts for gig workers",
+                href: "/gig-worker-retirement",
+              },
+              {
+                label: "Health insurance for gig workers",
+                href: "/gig-worker-health-insurance",
+              },
+              {
+                label: "Bookkeeping for gig workers",
+                href: "/gig-worker-bookkeeping",
+              },
+              {
+                label: "Budgeting on irregular income",
+                href: "/gig-worker-budgeting",
+              },
               { label: "Browse all SEO guides", href: "/seo" },
             ].map(g => (
               <Link

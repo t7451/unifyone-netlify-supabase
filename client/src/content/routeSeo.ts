@@ -410,7 +410,93 @@ const AMAZON_FLEX_START_LINKS = [
   IRS.selfEmployedCenter,
 ];
 
+// Gig finance cluster (money topics beyond taxes): IRS / HealthCare.gov / CFPB.
+const RETIREMENT_LINKS = [
+  {
+    label: "IRS: Retirement plans for the self-employed",
+    url: "https://www.irs.gov/retirement-plans/retirement-plans-for-self-employed-people",
+  },
+  IRS.selfEmployedCenter,
+];
+const HEALTH_LINKS = [
+  {
+    label: "HealthCare.gov: Coverage for self-employed people",
+    url: "https://www.healthcare.gov/self-employed/coverage/",
+  },
+  IRS.selfEmployedCenter,
+];
+const BOOKKEEPING_LINKS = [
+  {
+    label: "IRS: Recordkeeping for businesses",
+    url: "https://www.irs.gov/businesses/small-businesses-self-employed/recordkeeping",
+  },
+  IRS.selfEmployedCenter,
+];
+const BUDGETING_LINKS = [
+  {
+    label: "CFPB: Budgeting with an irregular income",
+    url: "https://www.consumerfinance.gov/about-us/blog/budgeting-when-you-have-an-irregular-income/",
+  },
+  IRS.selfEmployedCenter,
+];
+
 export const ROUTE_SEO: RouteSeo[] = [
+  {
+    path: "/gig-worker-retirement",
+    externalLinks: RETIREMENT_LINKS,
+    title:
+      "Retirement Accounts for Gig Workers: SEP-IRA, Solo 401(k) & IRAs | UnifyOne",
+    description:
+      "Retirement options for self-employed gig workers: SEP-IRA, Solo 401(k), and Traditional vs Roth IRAs — how each works and how to choose. Not advice.",
+    body: [
+      "Gig platforms don't offer a 401(k) match, so as an independent contractor your retirement is up to you — but the self-employed get access to some of the most generous tax-advantaged accounts available.",
+      "A SEP-IRA is the simplest to open and lets you contribute a percentage of net self-employment earnings, generally tax-deductible. A Solo 401(k) usually allows the largest total contribution because you save as both employee and employer, often with a Roth option.",
+      "Traditional and Roth IRAs work alongside these at lower limits, with Roth growing tax-free. Contribution limits change yearly, so confirm the current figures with the IRS before contributing.",
+      "Contributing a steady percentage of each payout — alongside your tax set-aside — builds the retirement an employer would otherwise help fund. This is educational information, not financial advice.",
+    ],
+  },
+  {
+    path: "/gig-worker-health-insurance",
+    externalLinks: HEALTH_LINKS,
+    title:
+      "Health Insurance for Gig Workers: Options & the Self-Employed Deduction | UnifyOne",
+    description:
+      "Health insurance for gig workers: the ACA marketplace and subsidies, spouse/Medicaid coverage, HSAs, and the self-employed health deduction. Not advice.",
+    body: [
+      "Gig platforms classify you as an independent contractor, so they provide no health insurance — finding your own coverage is part of the job, but the self-employed have several routes and a tax break employees don't get.",
+      "Most gig workers buy an individual plan on the ACA marketplace (HealthCare.gov), where income-based subsidies can cut the cost; estimate your variable income carefully. A spouse's employer plan or Medicaid may be cheaper if available.",
+      "If you're not eligible for an employer or spouse's plan, you can often take the self-employed health insurance deduction — an above-the-line deduction for premiums that lowers income tax (not the 15.3% SE tax). Pairing a high-deductible plan with an HSA adds more tax-advantaged savings.",
+      "Confirm current subsidy and deduction rules with HealthCare.gov and the IRS. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/gig-worker-bookkeeping",
+    externalLinks: BOOKKEEPING_LINKS,
+    title:
+      "Bookkeeping for Gig Workers: Track Income, Expenses & Mileage | UnifyOne",
+    description:
+      "Simple bookkeeping for gig workers: separate accounts, tracking all income and expenses, mileage logs, and records that hold up in an audit. Not advice.",
+    body: [
+      "As a 1099 contractor you're running a small business, and a few bookkeeping habits turn tax season into a quick task while protecting your deductions if the IRS ever asks.",
+      "Run gig income and expenses through a dedicated bank account so your statement doubles as a ledger, record income from every platform (even those that send no 1099), and reconcile monthly so you always know your true net for quarterly taxes.",
+      "Capture every deductible expense with a receipt, and keep a contemporaneous mileage log — date, miles, and purpose of each trip — since mileage is usually the biggest deduction and the most audited. Estimated, reconstructed mileage is what gets disallowed.",
+      "Keep records for at least several years (the IRS publishes specifics); digital copies are fine. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/gig-worker-budgeting",
+    externalLinks: BUDGETING_LINKS,
+    title:
+      "Budgeting on Irregular Gig Income: Smooth Pay & Build a Buffer | UnifyOne",
+    description:
+      "How to budget on irregular gig income: pay yourself a steady amount, budget from a low baseline, separate your tax set-aside, and build a buffer. Not advice.",
+    body: [
+      "The hardest part of gig work is often that money arrives unevenly — a great week and a slow week fund the same rent. A simple system smooths the bumps so a slow stretch never becomes a crisis.",
+      "Let earnings pool in a holding account and pay yourself a fixed, modest amount on a set schedule; good weeks build the account and slow weeks draw from it. Budget your essentials against a conservative, low-but-typical month rather than your best week.",
+      "Because nothing is withheld, move your tax set-aside (commonly 25–30% of net) into a separate account the moment you're paid so quarterly estimates never compete with rent. Send surplus to a buffer, then retirement and goals.",
+      "Aim for roughly a month of expenses as a buffer so a slow week or a repair is an inconvenience, not an emergency. This is educational information, not financial advice.",
+    ],
+  },
   {
     path: "/uber-vs-doordash",
     externalLinks: UBER_VS_DOORDASH_LINKS,

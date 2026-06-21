@@ -306,6 +306,38 @@ export default function FinancialIntelligenceGig() {
           </div>
         </section>
 
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">Gig finance guides</h2>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {[
+              {
+                label: "Retirement accounts (SEP-IRA, Solo 401k)",
+                href: "/gig-worker-retirement",
+              },
+              {
+                label: "Health insurance for gig workers",
+                href: "/gig-worker-health-insurance",
+              },
+              {
+                label: "Bookkeeping for gig workers",
+                href: "/gig-worker-bookkeeping",
+              },
+              {
+                label: "Budgeting on irregular income",
+                href: "/gig-worker-budgeting",
+              },
+            ].map(({ label, href }) => (
+              <Link
+                key={href}
+                href={href}
+                className="rounded-lg border p-4 text-sm font-medium hover:bg-muted transition-colors block"
+              >
+                {label} →
+              </Link>
+            ))}
+          </div>
+        </section>
+
         <section className="rounded-xl border bg-muted/30 p-6 text-center">
           <h2 className="text-lg font-semibold mb-2">
             Get the financial clarity your gig income deserves
