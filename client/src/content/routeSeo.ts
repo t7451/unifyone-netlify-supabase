@@ -430,7 +430,7 @@ const HI_TAX_LINKS = [
   IRS.estimated,
   IRS.seTax,
   {
-    label: "Hawaii Department of Taxation (Form N-200V & GET)",
+    label: "Hawaii Department of Taxation",
     url: "https://tax.hawaii.gov/",
   },
 ];

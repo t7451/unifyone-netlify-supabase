@@ -404,8 +404,8 @@ const HI_TAX = {
   label: "Hawaii Department of Taxation",
   href: "https://tax.hawaii.gov/",
 };
-const HI_N200V = {
-  label: "Hawaii: Estimated tax (Form N-200V) & General Excise Tax",
+const HI_GET = {
+  label: "Hawaii: General Excise Tax (GET)",
   href: "https://tax.hawaii.gov/geninfo/get/",
 };
 const ME_MRS = {
@@ -2089,7 +2089,7 @@ export const STATE_TAX_GUIDES: StateTaxGuide[] = [
       "Hawaii also has a general excise tax (GET) on virtually all business activity, typically 4% (4.5% on Oahu with the county surcharge), charged on your gross business income rather than profit. Most independent contractors must register for a GET license and pay GET — this is in addition to income tax, so check the rules that apply to you.",
       "Pay Hawaii estimated income tax to the department using Form N-200V, generally on the same quarterly schedule as your federal estimates. GET is reported on its own periodic schedule. Both are separate from the estimates you send the IRS.",
     ],
-    stateResources: [HI_TAX, HI_N200V],
+    stateResources: [HI_TAX, HI_GET],
     faqs: [
       {
         q: "Do Hawaii gig workers pay state income tax?",
