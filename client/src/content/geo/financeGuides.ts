@@ -80,6 +80,30 @@ const CFPB_BUDGET = {
   label: "CFPB: Budgeting with an irregular income",
   href: "https://www.consumerfinance.gov/about-us/blog/budgeting-when-you-have-an-irregular-income/",
 };
+const CFPB_EMERGENCY = {
+  label: "CFPB: Start Small, Save Up (emergency savings)",
+  href: "https://www.consumerfinance.gov/start-small-save-up/",
+};
+const FTC_DEBT = {
+  label: "FTC: Getting out of debt",
+  href: "https://consumer.ftc.gov/articles/getting-out-debt",
+};
+const IRS_SEP = {
+  label: "IRS: SEP plans (Simplified Employee Pension)",
+  href: "https://www.irs.gov/retirement-plans/plan-sponsor/simplified-employee-pension-plan-sep",
+};
+const IRS_SOLO_401K = {
+  label: "IRS: One-participant 401(k) plans",
+  href: "https://www.irs.gov/retirement-plans/one-participant-401k-plans",
+};
+const IRS_BIZ_STRUCTURES = {
+  label: "IRS: Business structures",
+  href: "https://www.irs.gov/businesses/small-businesses-self-employed/business-structures",
+};
+const SBA_STRUCTURE = {
+  label: "SBA: Choose a business structure",
+  href: "https://www.sba.gov/business-guide/launch-your-business/choose-business-structure",
+};
 
 const NOT_ADVICE =
   "This is educational information, not financial, tax, or investment advice. Rules and dollar limits change yearly — confirm current details with the IRS, HealthCare.gov, or a qualified professional for your situation.";
@@ -435,6 +459,365 @@ export const FINANCE_GUIDES: FinanceGuide[] = [
       {
         q: "How do I deal with slow gig weeks?",
         a: "Plan for them in advance: budget from a low baseline, keep a buffer of about a month of expenses, and avoid scaling up fixed costs after a great week. With a cushion in place, a slow week draws from savings instead of becoming an emergency.",
+      },
+    ],
+  },
+  {
+    slug: "gig-worker-emergency-fund",
+    eyebrow: "Gig Finance Guide",
+    navLabel: "Emergency fund",
+    title: "Emergency Funds for Gig Workers: How Much to Save & Where",
+    metaDescription:
+      "Why gig workers need a bigger emergency fund, how much to save on irregular income, where to keep it, and how to build one fast. Not advice.",
+    h1: "Emergency Funds for Gig Workers",
+    intro:
+      "Without an employer's paid sick leave, severance, or steady paycheck, gig workers feel emergencies harder — a car repair can take out both your transportation and your income at once. That's exactly why an emergency fund matters more for the self-employed, and why it pays to build one a little bigger than the standard advice. Here's how.",
+    keyPoints: [
+      {
+        label: "Aim higher",
+        desc: "3–6 months is the usual rule; variable income often warrants the higher end.",
+      },
+      {
+        label: "Buffer first",
+        desc: "Build a one-month income buffer before the full fund.",
+      },
+      {
+        label: "Keep it liquid",
+        desc: "A separate high-yield savings account — safe, accessible, not invested.",
+      },
+      {
+        label: "Don't raid taxes",
+        desc: "Your tax set-aside is not your emergency fund — keep them separate.",
+      },
+    ],
+    sections: [
+      {
+        heading: "Why gig workers need a bigger cushion",
+        body: [
+          "Employees often have a paycheck through a short illness, plus unemployment if they're laid off. As an independent contractor you usually have neither — if you can't work, the income simply stops. On top of that, your tools of the trade (often a vehicle) can be the very thing that breaks.",
+          "Because a single event can hit your income and your expenses simultaneously, most gig workers benefit from targeting the higher end of the usual emergency-fund range rather than the minimum.",
+        ],
+      },
+      {
+        heading: "How much should you save?",
+        body: [
+          "The common rule of thumb is three to six months of essential expenses. For irregular income, lean toward the larger end — closer to six months — especially if you rely on one platform, drive a high-mileage vehicle, or support a family on your gig income.",
+          "Base the target on your essential expenses (housing, food, utilities, insurance, minimum debt payments), not your total spending. Knowing that number is also the foundation of budgeting on irregular income.",
+        ],
+      },
+      {
+        heading: "Where to keep it",
+        body: [
+          "An emergency fund should be safe and liquid, not invested for growth. A separate high-yield savings account — ideally at a different bank from your daily checking, so it's a little harder to dip into — is the standard home for it. You want it accessible within a day or two, without market risk.",
+          "Keep it distinct from both your spending account and your tax set-aside account. Mixing them is how 'emergencies' quietly become quarterly tax payments you forgot to plan for.",
+        ],
+      },
+      {
+        heading: "How to build it without a steady paycheck",
+        body: [
+          "Start with a small, concrete milestone — a few hundred dollars — then a one-month income buffer, then the full fund. On variable income, the most reliable method is to save a percentage of every payout rather than a fixed monthly amount, so good weeks contribute more.",
+          "Funnel windfalls (a strong week, a tax refund, a referral bonus) straight to the fund, and once it's full, redirect that same percentage toward retirement or other goals. Automating a transfer the day you're paid keeps it from competing with spending.",
+        ],
+      },
+    ],
+    resources: [CFPB_EMERGENCY, IRS_SE_CENTER],
+    tools: [
+      { label: "Tax Set-Aside Calculator", href: "/tools/tax-set-aside" },
+      {
+        label: "Payout & Cash-Flow Tracker",
+        href: "/tools/cashflow-tracker",
+      },
+    ],
+    faqs: [
+      {
+        q: "How much emergency fund should a gig worker have?",
+        a: "Most guidance says three to six months of essential expenses; gig workers with variable income often aim for the higher end (closer to six months), especially if they rely on one platform or a single vehicle. Base the target on essentials — housing, food, utilities, insurance, minimum debt payments — not total spending.",
+      },
+      {
+        q: "Why do gig workers need a bigger emergency fund than employees?",
+        a: "Independent contractors usually have no paid sick leave, severance, or unemployment cushion, and their income stops entirely if they can't work. A single event — like a car breakdown — can knock out both your earning ability and your budget at once, so a larger cushion is prudent.",
+      },
+      {
+        q: "Where should I keep my emergency fund?",
+        a: "In a safe, liquid place — typically a separate high-yield savings account, ideally at a different bank from your checking so it's harder to dip into. Keep it out of investments (no market risk) and separate from your tax set-aside account.",
+      },
+      {
+        q: "Is my tax set-aside the same as an emergency fund?",
+        a: "No. Your tax set-aside is money you already owe the IRS and state for quarterly estimates — it isn't savings. Keep it in its own account, separate from your emergency fund, so a real emergency doesn't accidentally spend money earmarked for taxes.",
+      },
+      {
+        q: "How do I build an emergency fund on irregular income?",
+        a: "Save a percentage of every payout rather than a fixed monthly amount, so strong weeks contribute more. Start with a small milestone, then a one-month buffer, then the full fund, and route windfalls straight in. Automating the transfer on payday keeps it from competing with spending.",
+      },
+    ],
+  },
+  {
+    slug: "gig-worker-debt-payoff",
+    eyebrow: "Gig Finance Guide",
+    navLabel: "Paying off debt",
+    title: "Paying Off Debt on a Gig Income: Avalanche, Snowball & Cash Flow",
+    metaDescription:
+      "How gig workers pay off debt on irregular income: budget from a low baseline, choose avalanche vs snowball, and use surplus weeks. Not advice.",
+    h1: "Paying Off Debt on a Gig Income",
+    intro:
+      "Paying down debt is hard enough with a steady paycheck; doing it on income that swings week to week takes a system. The good news is that the same habits that smooth irregular income — budgeting from a low baseline and saving the surplus — are exactly what let you attack debt without missing a tax payment or a rent check. Here's how to approach it.",
+    keyPoints: [
+      {
+        label: "Stabilize first",
+        desc: "A small buffer keeps a slow week from creating new debt.",
+      },
+      {
+        label: "Avalanche",
+        desc: "Pay highest-interest debt first to minimize total interest.",
+      },
+      {
+        label: "Snowball",
+        desc: "Pay smallest balance first for quick, motivating wins.",
+      },
+      {
+        label: "Attack with surplus",
+        desc: "Throw strong-week earnings at debt, not lifestyle creep.",
+      },
+    ],
+    sections: [
+      {
+        heading: "Stabilize before you accelerate",
+        body: [
+          "Before throwing everything at debt, build a small starter buffer (even a few hundred dollars) so a slow week or a surprise expense doesn't put you right back on a credit card. Paying off debt only to re-borrow during the next dry spell is the trap irregular income sets.",
+          "Keep making at least the minimum payment on every debt no matter what — that protects your credit while you work the plan.",
+        ],
+      },
+      {
+        heading: "Avalanche vs snowball",
+        body: [
+          "The avalanche method pays minimums on everything and directs extra money to the highest-interest debt first. It saves the most money mathematically and is usually best for expensive credit-card debt.",
+          "The snowball method instead targets the smallest balance first for a quick payoff and a motivation boost, then rolls that payment into the next-smallest. It can cost a little more interest but keeps many people going. Both work — pick the one you'll actually stick with.",
+        ],
+      },
+      {
+        heading: "Use a percentage, and attack with surplus weeks",
+        body: [
+          "On variable income, commit a percentage of each payout to debt rather than a fixed monthly sum, so strong weeks pay down more. Budget your essentials from a conservative, low-but-typical month; when you out-earn that baseline, the surplus goes to debt instead of lifestyle creep.",
+          "Direct windfalls — a great week, a referral bonus, a tax refund — straight at the target balance. That's where irregular income becomes an advantage: the upside weeks accelerate your payoff.",
+        ],
+      },
+      {
+        heading: "Don't sacrifice taxes to pay debt",
+        body: [
+          "It's tempting to throw your tax set-aside at a credit card, but unpaid federal taxes carry penalties and interest and can't be discharged easily — falling behind on estimates just trades one debt for a worse one. Keep moving your set-aside (commonly 25–30% of net) out on payday before you budget for debt.",
+          "If debt is overwhelming, a non-profit credit counselor (look for NFCC-affiliated agencies) can help you build a plan. This is educational information, not financial advice.",
+        ],
+      },
+    ],
+    resources: [FTC_DEBT, CFPB_BUDGET],
+    tools: [
+      { label: "Tax Set-Aside Calculator", href: "/tools/tax-set-aside" },
+      {
+        label: "Payout & Cash-Flow Tracker",
+        href: "/tools/cashflow-tracker",
+      },
+    ],
+    faqs: [
+      {
+        q: "How do gig workers pay off debt on irregular income?",
+        a: "Build a small buffer first so slow weeks don't create new debt, keep paying every minimum, then commit a percentage of each payout to debt (so strong weeks pay more). Budget essentials from a low baseline and aim surplus and windfalls at the target balance.",
+      },
+      {
+        q: "Avalanche or snowball — which is better for gig workers?",
+        a: "The avalanche method (highest interest first) saves the most money; the snowball method (smallest balance first) gives quicker motivating wins. Both work on variable income — choose the one you'll stick with, and fund it with a percentage of each payout rather than a fixed monthly amount.",
+      },
+      {
+        q: "Should I pay off debt or build an emergency fund first?",
+        a: "Usually a little of both: build a small starter buffer first so an unexpected cost doesn't send you back into debt, then focus on high-interest debt while maintaining minimums. Once high-interest debt is gone, finish building a full emergency fund.",
+      },
+      {
+        q: "Should I use my tax set-aside to pay off debt?",
+        a: "No. Unpaid federal taxes carry penalties and interest and are hard to discharge, so raiding your set-aside just creates a worse debt. Move your tax set-aside (often 25–30% of net) into a separate account on payday and budget debt payments from what's left.",
+      },
+      {
+        q: "Where can gig workers get help with overwhelming debt?",
+        a: "A non-profit credit counseling agency (such as those affiliated with the NFCC) can help you build a repayment plan, and the FTC publishes guidance on getting out of debt. Be cautious with for-profit 'debt settlement' offers. This is educational information, not financial advice.",
+      },
+    ],
+  },
+  {
+    slug: "sep-ira-vs-solo-401k",
+    eyebrow: "Gig Finance Guide",
+    navLabel: "SEP-IRA vs Solo 401(k)",
+    title: "SEP-IRA vs Solo 401(k): Which Is Better for Gig Workers?",
+    metaDescription:
+      "SEP-IRA vs Solo 401(k) for self-employed gig workers: contributions, Roth options, paperwork, and deadlines compared — and how to choose. Not advice.",
+    h1: "SEP-IRA vs Solo 401(k) for Gig Workers",
+    intro:
+      "Two of the most powerful retirement accounts for the self-employed are the SEP-IRA and the Solo 401(k). Both let gig workers shelter far more than a regular IRA, but they differ on contribution limits, Roth options, paperwork, and deadlines. Here's a head-to-head to help you pick — and it pairs with our broader gig-worker retirement guide.",
+    keyPoints: [
+      {
+        label: "SEP-IRA",
+        desc: "Simplest to open and fund; employer-style contribution only.",
+      },
+      {
+        label: "Solo 401(k)",
+        desc: "Highest potential total; employee + employer contributions.",
+      },
+      {
+        label: "Roth option",
+        desc: "Solo 401(k)s often allow Roth; SEP-IRAs traditionally don't.",
+      },
+      {
+        label: "Deadlines differ",
+        desc: "A Solo 401(k) usually must be opened by year-end; SEP-IRAs are more flexible.",
+      },
+    ],
+    sections: [
+      {
+        heading: "How the SEP-IRA works",
+        body: [
+          "A SEP-IRA is the simplest self-employed plan: most brokerages open one free in minutes, and contributions are a percentage of your net self-employment earnings up to an annual IRS cap, generally tax-deductible. There's only an 'employer' contribution — no separate employee deferral.",
+          "Its big advantages are simplicity and flexibility: you can vary or skip contributions year to year, and you can typically open and fund it up to your tax-filing deadline (including extensions). That makes it ideal if your income is unpredictable or you decide to contribute after year-end.",
+        ],
+      },
+      {
+        heading: "How the Solo 401(k) works",
+        body: [
+          "A Solo 401(k) (one-participant 401(k)) is for self-employed people with no employees. You contribute in two roles: as the 'employee' (an elective deferral up to the annual limit) and as the 'employer' (a profit-sharing percentage). Combining both usually allows a larger total contribution than a SEP-IRA at the same income — especially at low-to-moderate earnings.",
+          "Many providers also offer a Roth option on the employee portion, letting you lock in tax-free growth. The trade-offs: a bit more setup and paperwork, an annual filing once the balance is large, and a stricter deadline to establish the plan.",
+        ],
+      },
+      {
+        heading: "Head-to-head",
+        body: [
+          "Contributions: the Solo 401(k) usually wins, because the employee deferral lets you reach a high contribution at a lower income than a SEP-IRA's percentage-only formula. Simplicity: the SEP-IRA wins — less paperwork and no plan document. Roth: the Solo 401(k) typically offers it; the SEP-IRA traditionally doesn't.",
+          "Deadlines: SEP-IRAs are more forgiving (often fundable up to the extended filing deadline), while a Solo 401(k) generally must be established by December 31 to defer that year's income. Exact limits and deadlines change yearly — confirm them with the IRS or your provider.",
+        ],
+      },
+      {
+        heading: "How to choose",
+        body: [
+          "If you want maximum simplicity or you're deciding after year-end, the SEP-IRA is hard to beat. If you want to contribute the most possible (especially at moderate income), want a Roth option, and don't mind a little paperwork, the Solo 401(k) usually wins.",
+          "Note you generally can't max both at the same time on the same income, and having employees changes the picture. A tax professional or fee-only advisor can run the numbers for your situation. This is educational information, not investment advice.",
+        ],
+      },
+    ],
+    resources: [IRS_SEP, IRS_SOLO_401K, IRS_RETIREMENT],
+    tools: [
+      { label: "Tax Set-Aside Calculator", href: "/tools/tax-set-aside" },
+      {
+        label: "Self-Employment Tax Calculator",
+        href: "/tools/se-tax-calculator",
+      },
+    ],
+    faqs: [
+      {
+        q: "Is a SEP-IRA or Solo 401(k) better for gig workers?",
+        a: "It depends. A Solo 401(k) usually allows higher total contributions (employee + employer) and often a Roth option, making it great for higher savers who don't mind paperwork. A SEP-IRA is simpler, more flexible, and can be opened after year-end — ideal for unpredictable income. Confirm current limits with the IRS.",
+      },
+      {
+        q: "Can a gig worker contribute more to a Solo 401(k) than a SEP-IRA?",
+        a: "Often yes, especially at low-to-moderate income, because a Solo 401(k) adds an employee elective deferral on top of the employer profit-sharing contribution, while a SEP-IRA is employer-contribution only. At high income the gap narrows. Check the current year's IRS limits.",
+      },
+      {
+        q: "Does a SEP-IRA or Solo 401(k) have a Roth option?",
+        a: "Solo 401(k)s commonly offer a Roth option on the employee deferral, letting contributions grow tax-free. SEP-IRAs traditionally have not offered Roth treatment, though rules evolve — confirm what your provider supports and the current IRS guidance.",
+      },
+      {
+        q: "What are the deadlines to open each account?",
+        a: "A SEP-IRA can typically be opened and funded up to your tax-filing deadline (including extensions), while a Solo 401(k) generally must be established by December 31 to defer that year's income (funding can come later). Always confirm current deadlines with the IRS or your provider.",
+      },
+      {
+        q: "Can I have both a SEP-IRA and a Solo 401(k)?",
+        a: "You can have both accounts, but you generally can't max out both on the same self-employment income because of combined limits, and contributing to both adds complexity. Most gig workers pick one primary plan. A tax professional can help you optimize.",
+      },
+    ],
+  },
+  {
+    slug: "llc-vs-sole-proprietorship",
+    eyebrow: "Gig Finance Guide",
+    navLabel: "LLC vs sole prop",
+    title: "LLC vs Sole Proprietorship for Gig Workers: Do You Need an LLC?",
+    metaDescription:
+      "LLC vs sole proprietorship for gig workers: liability, taxes, cost, and when an LLC is worth it (and the S-corp question). Not advice.",
+    h1: "LLC vs Sole Proprietorship for Gig Workers",
+    intro:
+      '"Should I form an LLC?" is one of the most common questions gig workers ask — and the honest answer is usually "maybe, but not for the reason you think." An LLC mainly changes your liability exposure, not your taxes (at least by default). Here\'s what actually differs, so you can decide with eyes open. This is educational information, not legal or tax advice.',
+    keyPoints: [
+      {
+        label: "Sole prop = default",
+        desc: "Do nothing and you're already a sole proprietor.",
+      },
+      {
+        label: "LLC = liability",
+        desc: "Its main benefit is separating business and personal liability.",
+      },
+      {
+        label: "Same taxes by default",
+        desc: "A single-member LLC is taxed the same as a sole proprietor.",
+      },
+      {
+        label: "S-corp is separate",
+        desc: "Tax savings come from an S-corp election, not the LLC itself.",
+      },
+    ],
+    sections: [
+      {
+        heading: "You're already a sole proprietor",
+        body: [
+          "If you drive, deliver, or freelance without forming anything, you're automatically a sole proprietor. You report income and expenses on Schedule C, pay self-employment tax, and can deduct all the same business expenses (mileage, phone, supplies). You don't need an LLC to claim deductions or run a legitimate business.",
+          "A sole proprietorship costs nothing to start and has the least paperwork — which is why most gig workers operate as one, at least at first.",
+        ],
+      },
+      {
+        heading: "What an LLC actually changes",
+        body: [
+          "A limited liability company is a legal structure (formed at the state level) that separates your business from you personally. Its core benefit is liability protection: if the business is sued or owes a debt, your personal assets are generally shielded — provided you keep business and personal finances truly separate.",
+          "An LLC can also add credibility and makes a clean business bank account natural. But it isn't a magic tax shield, and it adds a state filing fee (sometimes annual), some paperwork, and recordkeeping discipline.",
+        ],
+      },
+      {
+        heading: "Taxes: usually no difference by default",
+        body: [
+          "This is the part that surprises people: by default, a single-member LLC is a 'disregarded entity,' meaning the IRS taxes it exactly like a sole proprietorship — same Schedule C, same self-employment tax. Forming an LLC, by itself, does not lower your federal income tax.",
+          "Where tax savings can appear is a separate step: an LLC (or sole proprietor) can elect to be taxed as an S-corporation, which may reduce self-employment tax on part of the profit by splitting it into salary and distributions. That only makes sense above a certain profit level and adds payroll, filings, and cost — so it's a decision to make with a tax professional.",
+        ],
+      },
+      {
+        heading: "When an LLC (or S-corp) makes sense",
+        body: [
+          "Consider an LLC if you have meaningful liability exposure (clients in their homes, employees or subcontractors, significant assets to protect) or you simply want the separation and credibility. For a solo driver with modest earnings, the liability benefit may be limited and good insurance might address the real risk.",
+          "Consider the S-corp election only once your net profit is consistently high enough that the self-employment-tax savings clearly outweigh the added payroll and accounting costs. Talk to an attorney about the structure and a tax professional about the election before you file — this is educational information, not legal or tax advice.",
+        ],
+      },
+    ],
+    resources: [IRS_BIZ_STRUCTURES, SBA_STRUCTURE],
+    tools: [
+      {
+        label: "Self-Employment Tax Calculator",
+        href: "/tools/se-tax-calculator",
+      },
+      {
+        label: "Quarterly Tax Estimator",
+        href: "/tools/quarterly-tax-estimator",
+      },
+    ],
+    faqs: [
+      {
+        q: "Do gig workers need an LLC?",
+        a: "Usually not to start. Without forming anything you're a sole proprietor, which lets you deduct expenses and run a legitimate business. An LLC mainly adds liability protection — worth considering if you have real exposure or assets to protect, but it isn't required to claim deductions.",
+      },
+      {
+        q: "Does forming an LLC lower my gig taxes?",
+        a: "By default, no. A single-member LLC is a 'disregarded entity' taxed exactly like a sole proprietorship — same Schedule C and self-employment tax. Tax savings only come from a separate S-corporation election, which makes sense only above a certain profit level and adds cost and payroll.",
+      },
+      {
+        q: "What's the difference between an LLC and a sole proprietorship?",
+        a: "A sole proprietorship is the automatic default with no setup and no liability separation. An LLC is a state-registered structure that legally separates your business from you, protecting personal assets if the business is sued or owes a debt — but by default it's taxed the same way.",
+      },
+      {
+        q: "What is an S-corp election and should a gig worker make one?",
+        a: "An S-corp election changes how your business is taxed, potentially reducing self-employment tax by splitting profit into salary and distributions. It adds payroll, filings, and cost, so it generally only pays off once net profit is consistently high. Decide with a tax professional.",
+      },
+      {
+        q: "Can I deduct business expenses without an LLC?",
+        a: "Yes. Sole proprietors deduct the same business expenses — mileage, phone, supplies, platform fees — on Schedule C without any LLC. Deductions come from having legitimate business expenses and records, not from your legal structure.",
       },
     ],
   },

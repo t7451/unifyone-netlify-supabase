@@ -1481,6 +1481,42 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/gig-worker-emergency-fund"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="gig-worker-emergency-fund" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gig-worker-debt-payoff"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="gig-worker-debt-payoff" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/sep-ira-vs-solo-401k"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="sep-ira-vs-solo-401k" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/llc-vs-sole-proprietorship"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="llc-vs-sole-proprietorship" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       <Route path="/seo" component={() => <SeoIndex />} />
       <Route path="/seo/:slug" component={() => <SeoLanding />} />
       <Route
