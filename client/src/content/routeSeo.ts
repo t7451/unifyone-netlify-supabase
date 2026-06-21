@@ -669,6 +669,36 @@ const FIVERR_TAX_LINKS = [
   IRS.seTax,
   { label: "Fiverr", url: "https://www.fiverr.com" },
 ];
+const FAVOR_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Favor", url: "https://favordelivery.com" },
+];
+const VEHO_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Veho", url: "https://shipveho.com" },
+];
+const DOLLY_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Dolly", url: "https://dolly.com" },
+];
+const GOSHARE_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "GoShare", url: "https://goshare.co" },
+];
+const WAG_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Wag", url: "https://wagwalking.com" },
+];
 
 // Getting-started ("how to make money on <platform>") guides: the platform's
 // own signup/driver page anchors each page's outbound profile, paired with the
@@ -1642,6 +1672,75 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Fiverr treats sellers as independent contractors, so no taxes are withheld. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
       "Fiverr processes buyer payments as a third-party platform, so it issues US sellers a Form 1099-K when they meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — report all income regardless.",
       "Because gigs are delivered from a desk, the biggest deductions are usually the home office, software and tools, internet and phone, and the commission Fiverr keeps — not mileage. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/favor-taxes",
+    externalLinks: FAVOR_TAX_LINKS,
+    title:
+      "Favor Taxes: A Runner's Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How Favor taxes work for Runners: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Favor pays its Runners as independent contractors, so no taxes are withheld from your deliveries. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "If you earned $600 or more, Favor issues a 1099-NEC through its payment processor. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Your largest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering across Texas. Phone use, insulated bags, tolls, and parking are deductible too. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/veho-taxes",
+    externalLinks: VEHO_TAX_LINKS,
+    title:
+      "Veho Taxes: A Driver's Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How Veho taxes work for drivers: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Veho pays its drivers as independent contractors, so no taxes are withheld from your routes. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "If you earned $600 or more, Veho issues a 1099-NEC through its payment processor. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Your largest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering packages, including between stops. Phone use, supplies, tolls, and parking are deductible too. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/dolly-taxes",
+    externalLinks: DOLLY_TAX_LINKS,
+    title:
+      "Dolly Taxes: A Helper's Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How Dolly taxes work for Helpers: the 1099, self-employment tax, equipment and mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Dolly pays its Helpers as independent contractors, so no taxes are withheld from your jobs. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "If you meet the reporting threshold, Dolly issues a 1099 through its payment processor. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Because you supply your own vehicle and moving gear, your biggest deductions are usually business mileage at the IRS standard mileage rate (or actual vehicle expenses) plus moving equipment like hand trucks, dollies, and blankets, along with phone use, tolls, and parking. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/goshare-taxes",
+    externalLinks: GOSHARE_TAX_LINKS,
+    title:
+      "GoShare Taxes: A Driver's Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How GoShare taxes work for drivers: the 1099-NEC, self-employment tax, moving-equipment and mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "GoShare pays its drivers as independent contractors, so no taxes are withheld from your jobs. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "If you earned $600 or more, GoShare issues a 1099-NEC through its payment processor. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Because you supply your own truck or van and moving gear, your biggest deductions are usually business mileage at the IRS standard mileage rate (or actual vehicle expenses) plus moving equipment like hand trucks and blankets, along with phone use, tolls, and parking. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/wag-taxes",
+    externalLinks: WAG_TAX_LINKS,
+    title: "Wag Taxes: A Dog Walker's Guide to 1099-K & Deductions | UnifyOne",
+    description:
+      "How Wag taxes work for walkers and sitters: the 1099-K, self-employment tax, pet-care and mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Wag treats walkers and sitters as independent contractors, so no taxes are withheld. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "Wag processes payments as a third-party platform, so it generally reports earnings on a Form 1099-K when you meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — report all income regardless.",
+      "Deduct pet-care supplies, Wag's service fees, and the business-use share of your phone. Mileage to walks and client homes is deductible at the IRS standard mileage rate, and if you board pets in your home, part of your home expenses may qualify (the rules are strict — get advice). A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
       "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
     ],
   },

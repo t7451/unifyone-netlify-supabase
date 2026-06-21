@@ -817,6 +817,51 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/favor-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="favor-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/veho-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="veho-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/dolly-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="dolly-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/goshare-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="goshare-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/wag-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="wag-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Gig-tax cluster: state guides */}
       <Route
         path="/california-gig-worker-taxes"
