@@ -40,8 +40,19 @@ export interface PlatformTaxGuide {
   /** Which 1099 form(s) this platform issues and the key nuance. */
   formsHeading: string;
   formsBody: string[];
-  /** Platform-specific deductible expenses (merged with shared ones). */
-  extraDeductions: { label: string; desc: string }[];
+  /** Platform-specific deductible expenses (merged with the shared mileage-based set). */
+  extraDeductions?: { label: string; desc: string }[];
+  /**
+   * Replaces the deduction grid entirely. Use for non-vehicle platforms
+   * (e.g. remote freelance) where the mileage-based SHARED_DEDUCTIONS don't apply.
+   */
+  deductionsOverride?: { label: string; desc: string }[];
+  /**
+   * Whether the work is vehicle-based (default true). When false, the page hides
+   * the "standard mileage rate vs actual vehicle expenses" note and the mileage
+   * angle in the CTA — accurate for desk-based freelancers.
+   */
+  vehicleBased?: boolean;
   /** FAQ entries — power both the visible list and the FAQPage JSON-LD. */
   faqs: PlatformFaq[];
 }
@@ -444,6 +455,340 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       {
         q: "When do Shipt shoppers pay taxes?",
         a: "Independent-contractor shoppers generally make quarterly estimated payments — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Quarterly payments avoid an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "roadie-taxes",
+    platform: "Roadie",
+    workerNoun: "Roadie drivers",
+    workType: "package and item delivery",
+    eyebrow: "Gig Tax Guide",
+    title: "Roadie Taxes: A Driver's Guide to 1099 Filing & Deductions",
+    metaDescription:
+      "How Roadie taxes work: the 1099, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    h1: "Roadie Taxes: What Every Driver Needs to Know",
+    intro:
+      "Roadie (a UPS company) pays its drivers as independent contractors, so no taxes are withheld from your deliveries. You owe your own federal, state, and self-employment taxes — and because you drive your own vehicle, mileage is usually your single largest deduction. Here's how Roadie taxes work.",
+    formsHeading: "Do you get a 1099 from Roadie?",
+    formsBody: [
+      "If you earned enough to meet the reporting threshold, Roadie issues a 1099 (typically a 1099-NEC) through its payment processor reporting your earnings. Roadie emails instructions for retrieving your tax documents.",
+      "If you earned below the threshold you may not get a form — but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+    ],
+    extraDeductions: [
+      {
+        label: "Hauling & delivery supplies",
+        desc: "Hand trucks, straps, moving blankets, phone mounts, and supplies bought to complete Roadie gigs.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Roadie take out taxes for me?",
+        a: "No. Roadie pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for Roadie taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from Roadie?",
+        a: "If you meet the reporting threshold, Roadie issues a 1099 (typically a 1099-NEC) through its payment processor. Below that you may not receive a form, but you must still report the income to the IRS.",
+      },
+      {
+        q: "What can Roadie drivers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven to pick up and deliver gigs. You can also deduct the business-use share of your phone, hauling supplies, tolls, and parking.",
+      },
+      {
+        q: "When are Roadie taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "gopuff-taxes",
+    platform: "Gopuff",
+    workerNoun: "Gopuff drivers",
+    workType: "convenience and grocery delivery",
+    eyebrow: "Gig Tax Guide",
+    title: "Gopuff Taxes: A Driver's Guide to 1099 Filing & Deductions",
+    metaDescription:
+      "How Gopuff driver taxes work: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    h1: "Gopuff Taxes: What Every Driver Needs to Know",
+    intro:
+      "Gopuff pays its delivery drivers as independent contractors, so no taxes are withheld from your pay. You owe your own federal, state, and self-employment taxes — and the miles you drive from the micro-fulfillment center to customers are deductible if you track them. Here's how Gopuff taxes work.",
+    formsHeading: "Do you get a 1099 from Gopuff?",
+    formsBody: [
+      "If you earned $600 or more delivering for Gopuff in a year, you'll receive a 1099-NEC reporting your nonemployee compensation, delivered through Gopuff's payment partner.",
+      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+    ],
+    extraDeductions: [
+      {
+        label: "Insulated bags & delivery supplies",
+        desc: "Insulated bags, coolers, phone mounts, and supplies bought to complete Gopuff deliveries.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Gopuff take out taxes for me?",
+        a: "No. Gopuff pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for Gopuff taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from Gopuff?",
+        a: "If you earned $600 or more, Gopuff issues a 1099-NEC through its payment partner. Below that you may not receive a form, but you must still report the income.",
+      },
+      {
+        q: "What can Gopuff drivers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering. You can also deduct the business-use share of your phone, insulated bags, tolls, and parking.",
+      },
+      {
+        q: "When are Gopuff taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "taskrabbit-taxes",
+    platform: "TaskRabbit",
+    workerNoun: "Taskers",
+    workType: "task and handyman work",
+    eyebrow: "Gig Tax Guide",
+    title: "TaskRabbit Taxes: A Tasker's Guide to 1099-K & Deductions",
+    metaDescription:
+      "How TaskRabbit taxes work for Taskers: the 1099-K, self-employment tax, tool and mileage deductions, and quarterly payments. Not tax advice.",
+    h1: "TaskRabbit Taxes: What Every Tasker Needs to Know",
+    intro:
+      "TaskRabbit treats Taskers as independent contractors, so no taxes are withheld from your earnings. You owe your own federal, state, and self-employment taxes on your net income — and the tools, supplies, and miles you use on the job are deductible. Here's how TaskRabbit taxes work.",
+    formsHeading: "Do Taskers get a 1099 from TaskRabbit?",
+    formsBody: [
+      "TaskRabbit processes client payments as a third-party platform, so it generally reports earnings on a Form 1099-K (rather than a 1099-NEC) when you meet the IRS reporting threshold for that year. The 1099-K shows your gross earnings before TaskRabbit's service fees.",
+      "Reporting thresholds for the 1099-K have changed in recent years, so you may not always receive a form. Either way, you must report all of your TaskRabbit income — and you deduct the platform's service fees as a business expense.",
+    ],
+    extraDeductions: [
+      {
+        label: "Tools & equipment",
+        desc: "Drills, ladders, hand tools, and other equipment you buy to complete tasks are deductible (larger items may be depreciated).",
+      },
+      {
+        label: "Job supplies & materials",
+        desc: "Cleaning supplies, hardware, and consumables used on jobs — track materials you don't bill back to the client.",
+      },
+      {
+        label: "TaskRabbit service fees",
+        desc: "The fees TaskRabbit deducts from your pay are a deductible business expense.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does TaskRabbit take out taxes for me?",
+        a: "No. TaskRabbit pays Taskers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for TaskRabbit taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from TaskRabbit?",
+        a: "TaskRabbit typically issues a 1099-K (it processes client payments as a third-party platform) when you meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — but you must report all income regardless.",
+      },
+      {
+        q: "What can Taskers deduct?",
+        a: "Tools, equipment, and job supplies are major deductions, along with TaskRabbit's service fees and the business-use share of your phone. If you drive to jobs or haul materials, business mileage at the IRS standard mileage rate is deductible too.",
+      },
+      {
+        q: "When are TaskRabbit taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "rover-taxes",
+    platform: "Rover",
+    workerNoun: "Rover sitters and walkers",
+    workType: "pet care",
+    eyebrow: "Gig Tax Guide",
+    title: "Rover Taxes: A Pet Sitter's Guide to 1099-K & Deductions",
+    metaDescription:
+      "How Rover taxes work for sitters and walkers: the 1099-K, self-employment tax, pet-care and mileage deductions, and quarterly payments. Not tax advice.",
+    h1: "Rover Taxes: What Every Sitter and Walker Needs to Know",
+    intro:
+      "Rover treats sitters and walkers as independent contractors, so no taxes are withheld from your earnings. You owe your own federal, state, and self-employment taxes on your net income — and pet supplies, mileage to clients, and even part of your home (if you board) can be deductible. Here's how Rover taxes work.",
+    formsHeading: "Do Rover sitters get a 1099?",
+    formsBody: [
+      "Rover processes payments as a third-party platform, so it generally reports earnings on a Form 1099-K when you meet the IRS reporting threshold for that year. The 1099-K reflects gross earnings before Rover's service fee.",
+      "Reporting thresholds for the 1099-K have changed in recent years, so you may not always receive a form. Either way, you must report all of your Rover income — and you deduct Rover's service fee as a business expense.",
+    ],
+    extraDeductions: [
+      {
+        label: "Pet-care supplies",
+        desc: "Leashes, treats, waste bags, toys, crates, and cleaning supplies bought for the animals in your care.",
+      },
+      {
+        label: "Rover service fees",
+        desc: "The percentage Rover takes from each booking is a deductible business expense.",
+      },
+      {
+        label: "Home use for boarding",
+        desc: "If you board pets in your home, a portion of home expenses may be deductible — the rules are strict, so confirm with a tax professional.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Rover take out taxes for me?",
+        a: "No. Rover pays sitters and walkers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for Rover taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from Rover?",
+        a: "Rover typically issues a 1099-K (it processes payments as a third-party platform) when you meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — but you must report all income regardless.",
+      },
+      {
+        q: "What can Rover sitters and walkers deduct?",
+        a: "Pet-care supplies, Rover's service fees, and the business-use share of your phone are common deductions. Mileage driven to walks and client homes is deductible at the IRS standard mileage rate, and if you board pets in your home, part of your home expenses may qualify (the rules are strict — get advice).",
+      },
+      {
+        q: "When are Rover taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "upwork-taxes",
+    platform: "Upwork",
+    workerNoun: "Upwork freelancers",
+    workType: "freelance",
+    eyebrow: "Gig Tax Guide",
+    title: "Upwork Taxes: A Freelancer's Guide to 1099-K & Deductions",
+    metaDescription:
+      "How Upwork taxes work for freelancers: the 1099-K, self-employment tax, home-office and software deductions, and quarterly payments. Not tax advice.",
+    h1: "Upwork Taxes: What Every Freelancer Needs to Know",
+    intro:
+      "Upwork treats freelancers as independent contractors, so no taxes are withheld from your earnings. You owe your own federal, state, and self-employment taxes on your net income — and because most Upwork work is done from a desk, your biggest deductions are the home office, software, and equipment you use, plus Upwork's own fees. Here's how Upwork taxes work.",
+    formsHeading: "Do you get a 1099 from Upwork?",
+    formsBody: [
+      "Upwork processes client payments as a third-party platform, so it issues US freelancers a Form 1099-K when they meet the IRS reporting threshold for the year. The 1099-K reports your gross earnings before Upwork's service fees are taken out.",
+      "Reporting thresholds for the 1099-K have changed in recent years, so you may not always receive a form. Either way, you must report all of your Upwork income — and you deduct Upwork's service fees as a business expense.",
+    ],
+    vehicleBased: false,
+    deductionsOverride: [
+      {
+        label: "Home office",
+        desc: "The portion of rent/mortgage, utilities, and insurance for the part of your home used regularly and exclusively for work — often a freelancer's biggest deduction.",
+      },
+      {
+        label: "Computer, software & subscriptions",
+        desc: "Your computer, design/dev tools, and subscriptions used for client work (larger purchases may be depreciated).",
+      },
+      {
+        label: "Internet & phone",
+        desc: "The business-use share of your home internet and phone bills.",
+      },
+      {
+        label: "Upwork service fees",
+        desc: "The freelancer service fee Upwork deducts from your earnings is a fully deductible business expense.",
+      },
+      {
+        label: "Professional development",
+        desc: "Courses, certifications, and reference materials that maintain or improve your freelance skills.",
+      },
+      {
+        label: "Equipment & supplies",
+        desc: "Desk, monitor, headset, and other equipment bought for your freelance business.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Upwork take out taxes for me?",
+        a: "No. Upwork pays freelancers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for Upwork taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from Upwork?",
+        a: "Upwork issues US freelancers a 1099-K (it processes client payments as a third-party platform) when they meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — but you must report all income regardless.",
+      },
+      {
+        q: "What can Upwork freelancers deduct?",
+        a: "Because the work is desk-based, the biggest deductions are usually the home office, your computer and software, internet and phone, and Upwork's service fees. Professional development and equipment count too. Mileage generally doesn't apply unless you travel for client work.",
+      },
+      {
+        q: "When are Upwork taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "fiverr-taxes",
+    platform: "Fiverr",
+    workerNoun: "Fiverr sellers",
+    workType: "freelance",
+    eyebrow: "Gig Tax Guide",
+    title: "Fiverr Taxes: A Seller's Guide to 1099-K & Deductions",
+    metaDescription:
+      "How Fiverr taxes work for sellers: the 1099-K, self-employment tax, home-office and software deductions, and quarterly payments. Not tax advice.",
+    h1: "Fiverr Taxes: What Every Seller Needs to Know",
+    intro:
+      "Fiverr treats sellers as independent contractors, so no taxes are withheld from your earnings. You owe your own federal, state, and self-employment taxes on your net income — and since you deliver gigs from a desk, your biggest deductions are your home office, software, and equipment, plus the commission Fiverr keeps. Here's how Fiverr taxes work.",
+    formsHeading: "Do you get a 1099 from Fiverr?",
+    formsBody: [
+      "Fiverr processes buyer payments as a third-party platform, so it issues US sellers a Form 1099-K when they meet the IRS reporting threshold for the year. The 1099-K reports your gross earnings before Fiverr's commission is deducted.",
+      "Reporting thresholds for the 1099-K have changed in recent years, so you may not always receive a form. Either way, you must report all of your Fiverr income — and you deduct Fiverr's commission as a business expense.",
+    ],
+    vehicleBased: false,
+    deductionsOverride: [
+      {
+        label: "Home office",
+        desc: "The portion of rent/mortgage, utilities, and insurance for the part of your home used regularly and exclusively for your gigs — often a seller's biggest deduction.",
+      },
+      {
+        label: "Software & tools",
+        desc: "Design, writing, editing, or dev tools and subscriptions used to deliver your gigs (larger purchases may be depreciated).",
+      },
+      {
+        label: "Internet & phone",
+        desc: "The business-use share of your home internet and phone bills.",
+      },
+      {
+        label: "Fiverr commission & fees",
+        desc: "The commission Fiverr keeps from each order is a fully deductible business expense.",
+      },
+      {
+        label: "Professional development",
+        desc: "Courses and resources that maintain or improve the skills you sell on Fiverr.",
+      },
+      {
+        label: "Equipment & supplies",
+        desc: "Computer, microphone, camera, and other equipment bought to produce your gigs.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Fiverr take out taxes for me?",
+        a: "No. Fiverr pays sellers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for Fiverr taxes?",
+        a: SET_ASIDE_ANSWER,
+      },
+      {
+        q: "Do I get a 1099 from Fiverr?",
+        a: "Fiverr issues US sellers a 1099-K (it processes buyer payments as a third-party platform) when they meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — but you must report all income regardless.",
+      },
+      {
+        q: "What can Fiverr sellers deduct?",
+        a: "Because gigs are delivered from a desk, the biggest deductions are usually the home office, software and tools, internet and phone, and Fiverr's commission. Professional development and equipment count too. Mileage generally doesn't apply unless you travel for the work.",
+      },
+      {
+        q: "When are Fiverr taxes due?",
+        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
       },
     ],
   },

@@ -763,6 +763,60 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/roadie-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="roadie-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gopuff-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="gopuff-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/taskrabbit-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="taskrabbit-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/rover-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="rover-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/upwork-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="upwork-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/fiverr-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="fiverr-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Gig-tax cluster: state guides */}
       <Route
         path="/california-gig-worker-taxes"
