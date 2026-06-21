@@ -203,6 +203,75 @@ const CO_TAX_LINKS = [
     url: "https://tax.colorado.gov/individual-income-tax-estimated-payments",
   },
 ];
+const VA_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Virginia Department of Taxation (Form 760ES)",
+    url: "https://www.tax.virginia.gov/individual-estimated-tax-payments",
+  },
+];
+const MA_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Massachusetts DOR (Form 1-ES)",
+    url: "https://www.mass.gov/info-details/dor-estimated-tax-payment-vouchers",
+  },
+];
+const MD_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Comptroller of Maryland (Form PV)",
+    url: "https://www.marylandtaxes.gov/individual/income/filing/estimated-tax.php",
+  },
+];
+const MN_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Minnesota Department of Revenue (Form M14)",
+    url: "https://www.revenue.state.mn.us/estimated-tax",
+  },
+];
+const MO_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Missouri Department of Revenue (Form MO-1040ES)",
+    url: "https://dor.mo.gov/taxation/individual/tax-types/income/",
+  },
+];
+const IN_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Indiana Department of Revenue (Form ES-40)",
+    url: "https://www.in.gov/dor/individual-income-taxes/",
+  },
+];
+const TN_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Tennessee Department of Revenue",
+    url: "https://www.tn.gov/revenue.html",
+  },
+];
+const NV_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  { label: "Nevada Department of Taxation", url: "https://tax.nv.gov/" },
+];
 
 // Authoritative resources for the gig platform comparison guides. The IRS
 // self-employed center + estimated taxes anchor the (educational, not advice)
@@ -318,6 +387,118 @@ const AMAZON_FLEX_START_LINKS = [
 ];
 
 export const ROUTE_SEO: RouteSeo[] = [
+  {
+    path: "/virginia-gig-worker-taxes",
+    externalLinks: VA_TAX_LINKS,
+    title:
+      "Virginia Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Virginia gig worker taxes: a progressive state income tax (up to 5.75%) plus the 15.3% federal SE tax, with Form 760ES estimates. Not tax advice.",
+    body: [
+      "Virginia gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Virginia has a progressive state income tax topping out at 5.75%; because its brackets are compressed, most gig workers' net profit is taxed near that rate, on top of federal tax. Pay state estimates to the Department of Taxation using Form 760ES.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering both your federal and Virginia taxable income.",
+      "Federal and Virginia estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/massachusetts-gig-worker-taxes",
+    externalLinks: MA_TAX_LINKS,
+    title:
+      "Massachusetts Gig Worker Taxes: Flat State Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Massachusetts gig worker taxes: a flat 5% state income tax plus the 15.3% federal SE tax, with Form 1-ES estimates. Not tax advice.",
+    body: [
+      "Massachusetts gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Massachusetts taxes most income at a flat 5% rate that applies to your net gig profit on top of federal tax; a separate 4% surtax applies only above roughly $1 million and rarely affects gig workers. Pay state estimates using Form 1-ES.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Massachusetts starts from.",
+      "Federal and Massachusetts estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/maryland-gig-worker-taxes",
+    externalLinks: MD_TAX_LINKS,
+    title:
+      "Maryland Gig Worker Taxes: State + County Tax & Federal SE Tax | UnifyOne",
+    description:
+      "Maryland gig worker taxes: state income tax plus a county/local income tax and the 15.3% federal SE tax, with Form PV estimates. Not tax advice.",
+    body: [
+      "Maryland gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Maryland adds two layers: a progressive state income tax (about 2%–5.75%) and a county (or Baltimore City) local income tax, commonly around 2.25%–3.2%, both on your net gig profit. Pay state estimates to the Comptroller using Form PV; the county tax files with your state return.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Maryland builds on.",
+      "Federal and Maryland estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/minnesota-gig-worker-taxes",
+    externalLinks: MN_TAX_LINKS,
+    title:
+      "Minnesota Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Minnesota gig worker taxes: a progressive state income tax (5.35%–9.85%) plus the 15.3% federal SE tax, with Form M14 estimates. Not tax advice.",
+    body: [
+      "Minnesota gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Minnesota has a progressive state income tax from about 5.35% to 9.85% — among the higher state rates — applied to your net gig profit on top of federal tax. Pay state estimates to the Department of Revenue using Form M14.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering both your federal and Minnesota taxable income.",
+      "Federal and Minnesota estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/missouri-gig-worker-taxes",
+    externalLinks: MO_TAX_LINKS,
+    title:
+      "Missouri Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Missouri gig worker taxes: a progressive state income tax (top rate ~4.7%, declining) plus the 15.3% federal SE tax, with Form MO-1040ES. Not tax advice.",
+    body: [
+      "Missouri gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Missouri has a progressive state income tax with a top rate around 4.7% (being reduced); compressed brackets mean most gig profit is taxed near the top rate, on top of federal tax. Kansas City and St. Louis also levy a ~1% local earnings tax on income earned there. Pay state estimates using Form MO-1040ES.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Missouri starts from.",
+      "Federal and Missouri estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/indiana-gig-worker-taxes",
+    externalLinks: IN_TAX_LINKS,
+    title:
+      "Indiana Gig Worker Taxes: Flat State + County Tax & Federal SE Tax | UnifyOne",
+    description:
+      "Indiana gig worker taxes: a flat state income tax plus a county income tax and the 15.3% federal SE tax, with Form ES-40 estimates. Not tax advice.",
+    body: [
+      "Indiana gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Indiana adds two flat layers: a low flat state income tax (around 3.05%, declining) and a county income tax that varies by where you live, both on your net gig profit. Pay state estimates to the Department of Revenue using Form ES-40; the county tax reconciles with your state return.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Indiana's state and county taxes build on.",
+      "Federal and Indiana estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/tennessee-gig-worker-taxes",
+    externalLinks: TN_TAX_LINKS,
+    title:
+      "Tennessee Gig Worker Taxes: No State Income Tax, Federal & SE Tax | UnifyOne",
+    description:
+      "Tennessee gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    body: [
+      "Tennessee has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make. The former Hall tax on investment income has been fully repealed.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
+      "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/nevada-gig-worker-taxes",
+    externalLinks: NV_TAX_LINKS,
+    title:
+      "Nevada Gig Worker Taxes: No State Income Tax, Federal & SE Tax | UnifyOne",
+    description:
+      "Nevada gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    body: [
+      "Nevada has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
+      "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
   {
     path: "/amazon-flex-taxes",
     externalLinks: AMAZON_FLEX_TAX_LINKS,

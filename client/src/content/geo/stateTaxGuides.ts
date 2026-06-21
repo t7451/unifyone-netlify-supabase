@@ -208,6 +208,62 @@ const CO_DR0104EP = {
   label: "Colorado: Estimated tax (Form DR 0104EP)",
   href: "https://tax.colorado.gov/individual-income-tax-estimated-payments",
 };
+const VA_TAX = {
+  label: "Virginia Department of Taxation",
+  href: "https://www.tax.virginia.gov/",
+};
+const VA_760ES = {
+  label: "Virginia: Estimated tax (Form 760ES)",
+  href: "https://www.tax.virginia.gov/individual-estimated-tax-payments",
+};
+const MA_DOR = {
+  label: "Massachusetts Department of Revenue",
+  href: "https://www.mass.gov/orgs/massachusetts-department-of-revenue",
+};
+const MA_1ES = {
+  label: "Massachusetts: Estimated tax (Form 1-ES)",
+  href: "https://www.mass.gov/info-details/dor-estimated-tax-payment-vouchers",
+};
+const MD_COMP = {
+  label: "Comptroller of Maryland",
+  href: "https://www.marylandtaxes.gov/",
+};
+const MD_PV = {
+  label: "Maryland: Estimated tax (Form PV)",
+  href: "https://www.marylandtaxes.gov/individual/income/filing/estimated-tax.php",
+};
+const MN_DOR = {
+  label: "Minnesota Department of Revenue",
+  href: "https://www.revenue.state.mn.us/",
+};
+const MN_M14 = {
+  label: "Minnesota: Estimated tax (Form M14)",
+  href: "https://www.revenue.state.mn.us/estimated-tax",
+};
+const MO_DOR = {
+  label: "Missouri Department of Revenue",
+  href: "https://dor.mo.gov/",
+};
+const MO_1040ES = {
+  label: "Missouri: Estimated tax (Form MO-1040ES)",
+  href: "https://dor.mo.gov/taxation/individual/tax-types/income/",
+};
+const IN_DOR = {
+  label: "Indiana Department of Revenue",
+  href: "https://www.in.gov/dor/",
+};
+const IN_ES40 = {
+  label: "Indiana: Estimated tax (Form ES-40)",
+  href: "https://www.in.gov/dor/individual-income-taxes/",
+};
+const TN_DOR = {
+  label: "Tennessee Department of Revenue",
+  href: "https://www.tn.gov/revenue.html",
+};
+const NV_TAX = {
+  label: "Nevada Department of Taxation",
+  href: "https://tax.nv.gov/",
+};
 
 export const STATE_TAX_GUIDES: StateTaxGuide[] = [
   {
@@ -799,6 +855,342 @@ export const STATE_TAX_GUIDES: StateTaxGuide[] = [
       {
         q: "What can Colorado gig workers deduct?",
         a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working. You can also deduct the business-use share of your phone, supplies and equipment, tolls, and parking — which lower your federal taxable income, the starting point Colorado's flat tax is built on.",
+      },
+    ],
+  },
+  {
+    slug: "virginia-gig-worker-taxes",
+    state: "Virginia",
+    stateAdjective: "Virginia",
+    eyebrow: "State Gig Tax Guide",
+    title: "Virginia Gig Worker Taxes: State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Virginia gig worker taxes: a progressive state income tax (up to 5.75%) plus the 15.3% federal SE tax, with Form 760ES estimates. Not tax advice.",
+    h1: "Virginia Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Virginia, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Virginia also taxes your net earnings under its state income tax. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Virginia have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Virginia has a progressive state income tax with a top rate of 5.75% that, because its brackets are compressed, applies to most of a typical gig worker's net profit. That state tax is on top of federal income tax and the 15.3% federal self-employment tax. Confirm current brackets with the Virginia Department of Taxation.",
+      "There is no separate Virginia self-employment tax — the 15.3% SE tax is federal only — but you report and pay state income tax on your net gig earnings. Deductions that lower your federal taxable income generally flow through to your Virginia return as well.",
+      "Pay Virginia estimated income tax to the Department of Taxation using Form 760ES, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [VA_TAX, VA_760ES],
+    faqs: [
+      {
+        q: "Do Virginia gig workers pay state income tax?",
+        a: "Yes. Virginia's progressive income tax (top rate 5.75%) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form 760ES and confirm current brackets with the Virginia Department of Taxation.",
+      },
+      {
+        q: "How much should I set aside for taxes in Virginia?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "How do I pay Virginia estimated taxes as a gig worker?",
+        a: "Use Virginia Form 760ES to pay state estimated income tax to the Department of Taxation, generally four times a year alongside your federal estimates. You can pay online through the department's portal. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Virginia gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working. You can also deduct the business-use share of your phone, supplies and equipment, tolls, and parking — which lower your federal taxable income, the starting point Virginia uses.",
+      },
+      {
+        q: "When are Virginia gig taxes due?",
+        a: "Federal and Virginia estimated payments are generally due around April 15, June 15, September 15, and January 15, with annual returns due in mid-April. Paying quarterly avoids underpayment penalties at both levels.",
+      },
+    ],
+  },
+  {
+    slug: "massachusetts-gig-worker-taxes",
+    state: "Massachusetts",
+    stateAdjective: "Massachusetts",
+    eyebrow: "State Gig Tax Guide",
+    title: "Massachusetts Gig Worker Taxes: Flat State Tax + Federal SE Tax",
+    metaDescription:
+      "Massachusetts gig worker taxes: a flat 5% state income tax plus the 15.3% federal SE tax, with Form 1-ES estimates. Not tax advice.",
+    h1: "Massachusetts Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Massachusetts, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Massachusetts adds a flat state income tax on your net earnings. The flat rate keeps the state piece easy to estimate. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Massachusetts have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Massachusetts taxes most individual income at a flat 5% rate, which applies to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. A separate 4% surtax applies only to income above roughly $1 million, so it rarely affects gig workers. Confirm the current rate with the Massachusetts Department of Revenue.",
+      "There's no separate Massachusetts self-employment tax — the 15.3% SE tax is federal only — but you report and pay the flat state income tax on your net earnings. Because the rate is flat, the same percentage applies regardless of how much you earn.",
+      "Pay Massachusetts estimated income tax to the Department of Revenue using Form 1-ES, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [MA_DOR, MA_1ES],
+    faqs: [
+      {
+        q: "Do Massachusetts gig workers pay state income tax?",
+        a: "Yes. Massachusetts has a flat 5% state income tax that applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form 1-ES and confirm the current rate with the Massachusetts Department of Revenue.",
+      },
+      {
+        q: "How much should I set aside for taxes in Massachusetts?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "What is the Massachusetts income tax rate for gig workers?",
+        a: "Massachusetts uses a flat 5% individual income tax rate, so the same percentage applies to your net gig earnings regardless of income level. A 4% surtax applies only above about $1 million. Confirm the current rate with the Massachusetts Department of Revenue.",
+      },
+      {
+        q: "How do I pay Massachusetts estimated taxes as a gig worker?",
+        a: "Use Massachusetts Form 1-ES to pay state estimated income tax to the Department of Revenue, generally four times a year alongside your federal estimates. You can pay online through MassTaxConnect. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Massachusetts gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working. You can also deduct the business-use share of your phone, supplies, tolls, and parking, which lower the federal taxable income Massachusetts starts from.",
+      },
+    ],
+  },
+  {
+    slug: "maryland-gig-worker-taxes",
+    state: "Maryland",
+    stateAdjective: "Maryland",
+    eyebrow: "State Gig Tax Guide",
+    title: "Maryland Gig Worker Taxes: State + County Tax & Federal SE Tax",
+    metaDescription:
+      "Maryland gig worker taxes: state income tax plus a county/local income tax and the 15.3% federal SE tax, with Form PV estimates. Not tax advice.",
+    h1: "Maryland Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Maryland, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Maryland adds both a state income tax and a county-level local income tax on your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Maryland have a state income tax for gig workers?",
+    stateBody: [
+      "Yes — and there are two layers. Maryland levies a progressive state income tax (roughly 2% to 5.75%) on your net gig profit, plus a separate local income tax set by the county (or Baltimore City) where you live, commonly in the ~2.25%–3.2% range. Both apply on top of federal income tax and the 15.3% federal self-employment tax. Confirm current rates with the Comptroller of Maryland.",
+      "There's no separate Maryland self-employment tax — the 15.3% SE tax is federal only — but you report and pay both the state and the county income tax on your net earnings, which makes Maryland's combined rate higher than many states.",
+      "Pay Maryland estimated income tax to the Comptroller using Form PV, generally on the same quarterly schedule as your federal estimates. The county tax is filed and paid together with your state return. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [MD_COMP, MD_PV],
+    faqs: [
+      {
+        q: "Do Maryland gig workers pay state income tax?",
+        a: "Yes — both a progressive state income tax (about 2%–5.75%) and a county/local income tax (commonly ~2.25%–3.2%) apply to your net gig earnings, on top of federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form PV and confirm current rates with the Comptroller of Maryland.",
+      },
+      {
+        q: "How much should I set aside for taxes in Maryland?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "Does Maryland have a local income tax for gig workers?",
+        a: "Yes. In addition to the state income tax, each Maryland county (and Baltimore City) levies its own local income tax, commonly in the ~2.25%–3.2% range, based on where you live. It's filed with your state return, so factor it into your set-aside. Confirm your county's rate with the Comptroller of Maryland.",
+      },
+      {
+        q: "How do I pay Maryland estimated taxes as a gig worker?",
+        a: "Use Maryland Form PV to pay state estimated income tax (which includes your local county tax) to the Comptroller, generally four times a year alongside your federal estimates. You can pay online through the Comptroller's portal. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Maryland gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering the federal taxable income Maryland's state and county taxes build on.",
+      },
+    ],
+  },
+  {
+    slug: "minnesota-gig-worker-taxes",
+    state: "Minnesota",
+    stateAdjective: "Minnesota",
+    eyebrow: "State Gig Tax Guide",
+    title: "Minnesota Gig Worker Taxes: State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Minnesota gig worker taxes: a progressive state income tax (5.35%–9.85%) plus the 15.3% federal SE tax, with Form M14 estimates. Not tax advice.",
+    h1: "Minnesota Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Minnesota, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Minnesota's progressive state income tax also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Minnesota have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Minnesota has a progressive state income tax with rates from about 5.35% up to 9.85%, applied to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Your rate rises with total income. Confirm current brackets with the Minnesota Department of Revenue.",
+      "There's no separate Minnesota self-employment tax — the 15.3% SE tax is federal only — but you report and pay state income tax on your net earnings. Because Minnesota's rates are among the higher state rates, build the state piece carefully into your set-aside.",
+      "Pay Minnesota estimated income tax to the Department of Revenue using Form M14, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [MN_DOR, MN_M14],
+    faqs: [
+      {
+        q: "Do Minnesota gig workers pay state income tax?",
+        a: "Yes. Minnesota's progressive income tax (about 5.35%–9.85%) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form M14 and confirm current brackets with the Minnesota Department of Revenue.",
+      },
+      {
+        q: "How much should I set aside for taxes in Minnesota?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "How do I pay Minnesota estimated taxes as a gig worker?",
+        a: "Use Minnesota Form M14 to pay state estimated income tax to the Department of Revenue, generally four times a year alongside your federal estimates. You can pay online through the department's portal. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Minnesota gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working. You can also deduct the business-use share of your phone, supplies, tolls, and parking, which lower the federal taxable income Minnesota starts from.",
+      },
+      {
+        q: "When are Minnesota gig taxes due?",
+        a: "Federal and Minnesota estimated payments are generally due around April 15, June 15, September 15, and January 15, with annual returns due in mid-April. Paying quarterly avoids underpayment penalties.",
+      },
+    ],
+  },
+  {
+    slug: "missouri-gig-worker-taxes",
+    state: "Missouri",
+    stateAdjective: "Missouri",
+    eyebrow: "State Gig Tax Guide",
+    title: "Missouri Gig Worker Taxes: State Income Tax + Federal SE Tax",
+    metaDescription:
+      "Missouri gig worker taxes: a progressive state income tax (top rate around 4.7%, declining) plus the 15.3% federal SE tax, with Form MO-1040ES. Not tax advice.",
+    h1: "Missouri Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Missouri, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Missouri's state income tax also applies to your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Missouri have a state income tax for gig workers?",
+    stateBody: [
+      "Yes. Missouri has a progressive state income tax with a top rate around 4.7% that is being gradually reduced; because the brackets are compressed, most gig workers' net profit is taxed near the top rate. It applies on top of federal income tax and the 15.3% federal self-employment tax. Confirm the current rate with the Missouri Department of Revenue.",
+      "There's no separate Missouri self-employment tax — the 15.3% SE tax is federal only — but you report and pay state income tax on your net earnings. Note that Kansas City and St. Louis levy a local earnings tax (about 1%) on people who work in those cities, which can also apply to self-employment earnings.",
+      "Pay Missouri estimated income tax to the Department of Revenue using Form MO-1040ES, generally on the same quarterly schedule as your federal estimates. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [MO_DOR, MO_1040ES],
+    faqs: [
+      {
+        q: "Do Missouri gig workers pay state income tax?",
+        a: "Yes. Missouri's progressive income tax (top rate around 4.7% and declining) applies to your net gig earnings in addition to federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form MO-1040ES and confirm the current rate with the Missouri Department of Revenue.",
+      },
+      {
+        q: "How much should I set aside for taxes in Missouri?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "Do Kansas City or St. Louis gig workers owe a local earnings tax?",
+        a: "Yes. Kansas City and St. Louis each impose a roughly 1% local earnings tax on income earned in the city, which can include self-employment earnings. If you work in either city, factor it into your set-aside and confirm the rules with that city's collector of revenue.",
+      },
+      {
+        q: "How do I pay Missouri estimated taxes as a gig worker?",
+        a: "Use Missouri Form MO-1040ES to pay state estimated income tax to the Department of Revenue, generally four times a year alongside your federal estimates. You can pay online through the department's portal. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Missouri gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering the federal taxable income Missouri starts from.",
+      },
+    ],
+  },
+  {
+    slug: "indiana-gig-worker-taxes",
+    state: "Indiana",
+    stateAdjective: "Indiana",
+    eyebrow: "State Gig Tax Guide",
+    title: "Indiana Gig Worker Taxes: Flat State + County Tax & Federal SE Tax",
+    metaDescription:
+      "Indiana gig worker taxes: a flat state income tax plus a county income tax and the 15.3% federal SE tax, with Form ES-40 estimates. Not tax advice.",
+    h1: "Indiana Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Indiana, platforms pay you as an independent contractor and withhold nothing. You owe the 15.3% federal self-employment tax and federal income tax — and Indiana adds a flat state income tax plus a county income tax on your net earnings. Here's how it works.",
+    hasStateIncomeTax: true,
+    stateHeading: "Does Indiana have a state income tax for gig workers?",
+    stateBody: [
+      "Yes — and there are two layers. Indiana taxes individual income at a low flat state rate (around 3.05% and scheduled to keep declining), plus a county income tax set by the county where you live, which varies by county. Both apply to your net gig profit on top of federal income tax and the 15.3% federal self-employment tax. Confirm current rates with the Indiana Department of Revenue.",
+      "There's no separate Indiana self-employment tax — the 15.3% SE tax is federal only — but you report and pay both the flat state tax and your county tax on your net earnings. Because both are flat, the same combined percentage applies regardless of income level.",
+      "Pay Indiana estimated income tax to the Department of Revenue using Form ES-40, generally on the same quarterly schedule as your federal estimates. The county tax is reconciled with your state return. This is separate from the estimated payments you send the IRS.",
+    ],
+    stateResources: [IN_DOR, IN_ES40],
+    faqs: [
+      {
+        q: "Do Indiana gig workers pay state income tax?",
+        a: "Yes — a flat state income tax (around 3.05%, declining) plus a county income tax that varies by county both apply to your net gig earnings, on top of federal income tax and the 15.3% federal self-employment tax. Pay state estimates with Form ES-40 and confirm current rates with the Indiana Department of Revenue.",
+      },
+      {
+        q: "How much should I set aside for taxes in Indiana?",
+        a: SET_ASIDE_WITH_STATE_TAX,
+      },
+      {
+        q: "Does Indiana have a county income tax for gig workers?",
+        a: "Yes. In addition to the flat state income tax, each Indiana county sets its own income tax rate based on where you live, reconciled with your state return. Factor your county's rate into your set-aside and confirm it with the Indiana Department of Revenue.",
+      },
+      {
+        q: "How do I pay Indiana estimated taxes as a gig worker?",
+        a: "Use Indiana Form ES-40 to pay state estimated income tax (including county tax) to the Department of Revenue, generally four times a year alongside your federal estimates. You can pay online through INTIME. This is separate from your federal estimated payments to the IRS.",
+      },
+      {
+        q: "What can Indiana gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working, plus the business-use share of your phone, supplies, tolls, and parking — lowering the federal taxable income Indiana's state and county taxes build on.",
+      },
+    ],
+  },
+  {
+    slug: "tennessee-gig-worker-taxes",
+    state: "Tennessee",
+    stateAdjective: "Tennessee",
+    eyebrow: "State Gig Tax Guide",
+    title: "Tennessee Gig Worker Taxes: No State Income Tax, Federal & SE Tax",
+    metaDescription:
+      "Tennessee gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    h1: "Tennessee Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Tennessee, platforms pay you as an independent contractor and withhold nothing. The good news: Tennessee has no personal state income tax. The catch: your federal obligations — income tax plus the 15.3% self-employment tax — apply in full. Here's how it works.",
+    hasStateIncomeTax: false,
+    stateHeading: "Does Tennessee have a state income tax for gig workers?",
+    stateBody: [
+      "No. Tennessee does not tax personal income, so you won't file a state income-tax return on your gig earnings and there are no state income-tax estimates to make. The Hall tax on certain investment income was fully repealed, so ordinary gig earnings face no state income tax.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Because there's no state income tax to pay, you only send federal estimated payments to the IRS — but you should still make those quarterly if you expect to owe $1,000 or more for the year.",
+    ],
+    stateResources: [TN_DOR],
+    faqs: [
+      {
+        q: "Do Tennessee gig workers pay state income tax?",
+        a: "No. Tennessee has no personal state income tax, so your gig earnings aren't subject to state income tax and there are no state estimated payments. You still owe federal income tax and the 15.3% federal self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for taxes in Tennessee?",
+        a: SET_ASIDE_NO_STATE_TAX,
+      },
+      {
+        q: "Is gig income tax-free in Tennessee?",
+        a: "No. While Tennessee charges no state income tax, your federal obligations apply in full: federal income tax on your net profit plus the 15.3% self-employment tax. Report all income whether or not a platform sends a 1099.",
+      },
+      {
+        q: "Do Tennessee gig workers pay quarterly taxes?",
+        a: "Yes — federal quarterly estimated payments. If you expect to owe $1,000 or more in federal tax for the year, the IRS generally expects payments around April 15, June 15, September 15, and January 15. There are no Tennessee state estimates to make.",
+      },
+      {
+        q: "What can Tennessee gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working. You can also deduct the business-use share of your phone, supplies, tolls, and parking — all of which reduce your federal taxable income.",
+      },
+    ],
+  },
+  {
+    slug: "nevada-gig-worker-taxes",
+    state: "Nevada",
+    stateAdjective: "Nevada",
+    eyebrow: "State Gig Tax Guide",
+    title: "Nevada Gig Worker Taxes: No State Income Tax, Federal & SE Tax",
+    metaDescription:
+      "Nevada gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    h1: "Nevada Gig Worker Taxes: The Complete Breakdown",
+    intro:
+      "If you drive, deliver, or freelance in Nevada, platforms pay you as an independent contractor and withhold nothing. The good news: Nevada has no personal state income tax. The catch: your federal obligations — income tax plus the 15.3% self-employment tax — apply in full. Here's how it works.",
+    hasStateIncomeTax: false,
+    stateHeading: "Does Nevada have a state income tax for gig workers?",
+    stateBody: [
+      "No. Nevada does not levy a personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state income-tax estimates to make.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Because there's no state income tax to pay, you only send federal estimated payments to the IRS — but you should still make those quarterly if you expect to owe $1,000 or more for the year.",
+    ],
+    stateResources: [NV_TAX],
+    faqs: [
+      {
+        q: "Do Nevada gig workers pay state income tax?",
+        a: "No. Nevada has no personal state income tax, so your gig earnings aren't subject to state income tax and there are no state estimated payments. You still owe federal income tax and the 15.3% federal self-employment tax.",
+      },
+      {
+        q: "How much should I set aside for taxes in Nevada?",
+        a: SET_ASIDE_NO_STATE_TAX,
+      },
+      {
+        q: "Is gig income tax-free in Nevada?",
+        a: "No. While Nevada charges no state income tax, your federal obligations apply in full: federal income tax on your net profit plus the 15.3% self-employment tax. Report all income whether or not a platform sends a 1099.",
+      },
+      {
+        q: "Do Nevada gig workers pay quarterly taxes?",
+        a: "Yes — federal quarterly estimated payments. If you expect to owe $1,000 or more in federal tax for the year, the IRS generally expects payments around April 15, June 15, September 15, and January 15. There are no Nevada state estimates to make.",
+      },
+      {
+        q: "What can Nevada gig workers deduct?",
+        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while working. You can also deduct the business-use share of your phone, supplies, tolls, and parking — all of which reduce your federal taxable income.",
       },
     ],
   },
