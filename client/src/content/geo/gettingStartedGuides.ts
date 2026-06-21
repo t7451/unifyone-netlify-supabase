@@ -995,6 +995,512 @@ export const GETTING_STARTED_GUIDES: GettingStartedGuide[] = [
       },
     ],
   },
+  {
+    slug: "how-to-make-money-with-shipt",
+    platform: "Shipt",
+    workerNoun: "Shipt Shoppers",
+    workType: "grocery shopping and delivery",
+    taxGuideSlug: "shipt-shopper-taxes",
+    taxGuideLabel: "Shipt taxes",
+    eyebrow: "Getting Started Guide",
+    title: "How to Make Money with Shipt: A Beginner's Guide",
+    metaDescription:
+      "How to make money with Shipt: requirements, how to sign up as a shopper, how pay and tips work, and how to compute your real net hourly rate.",
+    h1: "How to Make Money with Shipt: A Beginner's Guide",
+    intro:
+      "Shipt pays you to shop for and deliver groceries and household goods to members on your own schedule. As a full-service Shipt Shopper you're an independent contractor who claims orders, shops the store, and drops off — choosing when and how much you work. This guide covers who can do it, how to sign up, how pay works, and how to figure out your real take-home — without quoting figures that don't hold up.",
+    whatItIsHeading: "What Shipt is and who it's for",
+    whatItIs: [
+      "Shipt is a same-day delivery marketplace (owned by Target). Full-service shoppers see available orders, claim the ones they want, shop the items in-store, and deliver them to the member — communicating about substitutions along the way.",
+      "It suits people with a reliable car who are organized, good with customers, and want to choose their own hours. Your results depend on your market, the hours and order types you take, and how efficiently you shop and route.",
+    ],
+    requirements: [
+      {
+        label: "Be at least 18",
+        desc: "Shipt generally requires shoppers to be 18 or older.",
+      },
+      {
+        label: "A reliable car and license",
+        desc: "You typically need access to a dependable vehicle, a valid driver's license, and auto insurance.",
+      },
+      {
+        label: "A smartphone",
+        desc: "A reasonably current phone to run the Shipt Shopper app, claim orders, and message members.",
+      },
+      {
+        label: "Pass a background check",
+        desc: "You'll complete an application and consent to a background check before you're activated.",
+      },
+    ],
+    signupSteps: [
+      {
+        title: "Apply to be a shopper",
+        body: "Fill out the Shipt Shopper application with your location, vehicle, and availability.",
+      },
+      {
+        title: "Clear the background check",
+        body: "Consent to and pass the background check; approval can take a little time to clear.",
+      },
+      {
+        title: "Complete onboarding",
+        body: "Watch the shopper basics, set up your profile, and connect your payout details.",
+      },
+      {
+        title: "Claim orders and start shopping",
+        body: "Open the app, claim the orders that fit your schedule and store, shop, and deliver.",
+      },
+    ],
+    payHeading: "How Shipt pay works",
+    payBody: [
+      "Shipt pays per completed order, with the amount reflecting the effort an order takes (items, distance, and any active promotions), and you keep 100% of member tips. You're paid for the orders you actually complete rather than a guaranteed hourly wage.",
+      "Because no taxes are withheld and you cover your own gas, mileage, and phone, your gross pay overstates your take-home. To find your real number, subtract those costs and divide by the hours an order truly takes — including time spent waiting for and driving to orders.",
+    ],
+    tips: [
+      "Learn your stores' layouts so you shop and substitute quickly — speed per order drives your real hourly rate.",
+      "Favor times and zones with steady order volume rather than chasing every promo.",
+      "Communicate proactively about substitutions; ratings and tips follow good service.",
+      "Track every working mile and expense — they're deductions and inputs to your true net pay.",
+    ],
+    pros: [
+      "You choose your own hours and which orders to claim.",
+      "You keep 100% of member tips.",
+      "Repeat members and good ratings can mean steadier orders.",
+      "No fixed shifts — work as much or as little as you want.",
+    ],
+    cons: [
+      "No guaranteed wage; pay depends on order volume and your area.",
+      "You cover gas, mileage, and vehicle wear.",
+      "Shopping in busy stores can be physically demanding and time-consuming.",
+      "No tax withholding — you handle your own self-employment taxes.",
+    ],
+    faqs: [
+      {
+        q: "What are the requirements to become a Shipt Shopper?",
+        a: "You generally need to be at least 18, have a reliable car with a valid license and insurance, have a smartphone, and pass a background check. Requirements vary by market and change over time, so confirm the current criteria with Shipt.",
+      },
+      {
+        q: "How much can you make with Shipt?",
+        a: "There's no fixed figure, and online averages are unreliable. You earn per completed order plus 100% of tips, and your take-home depends on your market, the orders you take, and your costs. Track your active hours and expenses and divide — the free Real Hourly Rate calculator does the math.",
+      },
+      {
+        q: "Is Shipt full-service shopping different from in-store?",
+        a: "Yes. Full-service shoppers shop and deliver as independent contractors and are covered by this guide. Some Shipt roles are in-store, part-time employee positions with taxes withheld — a different arrangement.",
+      },
+      {
+        q: "How and when does Shipt pay you?",
+        a: "Shipt pays out your order earnings and tips to your connected account on its regular payout schedule, with instant cash-out options in some markets. You keep 100% of member tips.",
+      },
+      {
+        q: "Do Shipt Shoppers have to pay taxes?",
+        a: "Yes. Full-service Shipt Shoppers are independent contractors, so no taxes are withheld and you owe your own income and self-employment taxes. See our Shipt taxes guide for what to set aside and how to file.",
+      },
+    ],
+  },
+  {
+    slug: "how-to-make-money-with-gopuff",
+    platform: "Gopuff",
+    workerNoun: "Gopuff drivers",
+    workType: "convenience and grocery delivery",
+    taxGuideSlug: "gopuff-taxes",
+    taxGuideLabel: "Gopuff taxes",
+    eyebrow: "Getting Started Guide",
+    title: "How to Make Money with Gopuff: A Beginner's Guide",
+    metaDescription:
+      "How to make money with Gopuff: requirements, how to sign up to deliver, how driver pay and tips work, and how to compute your real net hourly rate.",
+    h1: "How to Make Money with Gopuff: A Beginner's Guide",
+    intro:
+      "Gopuff pays you to deliver convenience and grocery items from its own local facilities to customers nearby. Unlike restaurant delivery, you pick up pre-packed orders from a Gopuff micro-fulfillment center, so there's no in-store shopping. As an independent-contractor driver you schedule delivery blocks and choose when to work. Here's how to get started and how the pay really works.",
+    whatItIsHeading: "What Gopuff is and who it's for",
+    whatItIs: [
+      "Gopuff stocks its own micro-fulfillment centers with everyday essentials, snacks, drinks, and more. Drivers pick up pre-packed orders at the facility and deliver them, often working scheduled blocks tied to a delivery zone.",
+      "It suits drivers who like predictable pickups from one location (no shopping) and want to reserve blocks in advance. Your results depend on your market, the blocks you work, and demand in your zone.",
+    ],
+    requirements: [
+      {
+        label: "Meet the minimum age",
+        desc: "Gopuff generally requires drivers to be at least 21, partly because deliveries can include alcohol.",
+      },
+      {
+        label: "A car, license, and insurance",
+        desc: "You typically need a vehicle, a valid driver's license, and auto insurance.",
+      },
+      {
+        label: "A smartphone",
+        desc: "A reasonably current phone to run the Gopuff Driver app and manage blocks and deliveries.",
+      },
+      {
+        label: "Pass a background check",
+        desc: "You'll apply and consent to a background check before you're activated.",
+      },
+    ],
+    signupSteps: [
+      {
+        title: "Apply to drive",
+        body: "Sign up on the Gopuff Driver site or app with your location and vehicle details.",
+      },
+      {
+        title: "Clear the background check",
+        body: "Consent to and pass the background check; approval can take a little time.",
+      },
+      {
+        title: "Complete onboarding",
+        body: "Finish the driver onboarding steps and connect your payout details.",
+      },
+      {
+        title: "Reserve blocks and deliver",
+        body: "Schedule delivery blocks in your zone, pick up pre-packed orders at the facility, and deliver them.",
+      },
+    ],
+    payHeading: "How Gopuff pay works",
+    payBody: [
+      "Gopuff pays per delivery (and, in some markets, offers scheduled blocks), and you keep customer tips. You're paid for the deliveries you complete rather than a guaranteed wage, and earnings vary with your market and how busy your zone is.",
+      "Because no taxes are withheld and you pay for your own gas, mileage, and phone, your gross pay overstates your take-home. To find your real number, subtract those costs and divide by the hours you're actually committed — including waiting at the facility between orders.",
+    ],
+    tips: [
+      "Reserve blocks during busier windows so you're not waiting unpaid between deliveries.",
+      "Learn your zone to route efficiently and fit in more deliveries per hour.",
+      "Be reliable with reserved blocks — consistency can help you get the schedule you want.",
+      "Track every working mile and expense — they're deductions and inputs to your real hourly rate.",
+    ],
+    pros: [
+      "No in-store shopping — you pick up pre-packed orders from one location.",
+      "Scheduled blocks can make your hours more predictable.",
+      "You keep your tips.",
+      "Choose the blocks that fit your schedule.",
+    ],
+    cons: [
+      "No guaranteed wage; pay depends on demand in your zone.",
+      "You cover gas, mileage, and vehicle wear.",
+      "Slow periods can mean waiting between deliveries.",
+      "No tax withholding — you handle your own self-employment taxes.",
+    ],
+    faqs: [
+      {
+        q: "What are the requirements to drive for Gopuff?",
+        a: "You generally need to meet the minimum age (often 21, since deliveries can include alcohol), have a car with a valid license and insurance, have a smartphone, and pass a background check. Requirements vary by market and change, so confirm the current criteria with Gopuff.",
+      },
+      {
+        q: "How much can you make with Gopuff?",
+        a: "There's no fixed figure, and online averages are unreliable. You earn per delivery plus tips, and your take-home depends on your market, the blocks you work, and your costs. Track your active hours and expenses and divide — the free Real Hourly Rate calculator does the math.",
+      },
+      {
+        q: "Do you shop for orders with Gopuff?",
+        a: "No. Unlike grocery-shopping platforms, Gopuff orders are pre-packed at its own micro-fulfillment center. You pick them up there and deliver them, which removes in-store shopping time.",
+      },
+      {
+        q: "How and when does Gopuff pay you?",
+        a: "Gopuff pays your delivery earnings and tips to your connected account on its regular payout schedule, with faster cash-out options in some markets.",
+      },
+      {
+        q: "Do Gopuff drivers have to pay taxes?",
+        a: "Yes. Gopuff drivers are independent contractors, so no taxes are withheld and you owe your own income and self-employment taxes. See our Gopuff taxes guide for what to set aside and how to file.",
+      },
+    ],
+  },
+  {
+    slug: "how-to-make-money-with-roadie",
+    platform: "Roadie",
+    workerNoun: "Roadie drivers",
+    workType: "package and item delivery",
+    taxGuideSlug: "roadie-taxes",
+    taxGuideLabel: "Roadie taxes",
+    eyebrow: "Getting Started Guide",
+    title: "How to Make Money with Roadie: A Beginner's Guide",
+    metaDescription:
+      "How to make money with Roadie: requirements, how to sign up, how gig pay and tips work, and how to compute your real net hourly rate.",
+    h1: "How to Make Money with Roadie: A Beginner's Guide",
+    intro:
+      "Roadie (a UPS company) pays you to deliver packages and items along routes you choose — from small parcels to big-and-bulky items. As an independent-contractor driver you browse available 'gigs,' claim the ones that fit your route and vehicle, and get paid on delivery. Here's how to get started and how the pay really works.",
+    whatItIsHeading: "What Roadie is and who it's for",
+    whatItIs: [
+      "Roadie is a delivery marketplace where businesses and people post deliveries ('gigs'), and drivers claim the ones they want. Gigs range from local same-day parcels to longer trips and larger items, so you can pick work that fits your vehicle and where you're already headed.",
+      "It suits drivers who want flexibility and like the idea of getting paid for deliveries along trips they'd take anyway. Your results depend on the gigs available in your area, their size and distance, and which ones you claim.",
+    ],
+    requirements: [
+      {
+        label: "Be at least 18",
+        desc: "Roadie generally requires drivers to be 18 or older.",
+      },
+      {
+        label: "A vehicle and valid license",
+        desc: "You need a vehicle suited to the gigs you take and a valid driver's license; bigger items call for a larger vehicle.",
+      },
+      {
+        label: "A smartphone",
+        desc: "A reasonably current phone to run the Roadie app, claim gigs, and confirm deliveries.",
+      },
+      {
+        label: "Account approval",
+        desc: "You'll create a driver account and agree to Roadie's terms before claiming gigs.",
+      },
+    ],
+    signupSteps: [
+      {
+        title: "Create a driver account",
+        body: "Sign up in the Roadie app with your location, vehicle, and driver details.",
+      },
+      {
+        title: "Complete your profile and agree to terms",
+        body: "Finish your driver profile and accept Roadie's driver agreement.",
+      },
+      {
+        title: "Connect your payout details",
+        body: "Add your payment information so you can be paid for completed gigs.",
+      },
+      {
+        title: "Browse and claim gigs",
+        body: "Search available gigs near you or along your route, claim the ones that fit, and deliver.",
+      },
+    ],
+    payHeading: "How Roadie pay works",
+    payBody: [
+      "Roadie shows a pay amount for each gig before you claim it, generally reflecting distance and the size or effort involved, and tips may be added. You're paid per completed gig rather than a guaranteed wage, so what you earn depends on the gigs you claim.",
+      "Because no taxes are withheld and you cover your own gas, mileage, and any handling, your gross pay overstates your take-home. To find your real number, subtract those costs and divide by the time a gig actually takes, including the drive to pick up.",
+    ],
+    tips: [
+      "Stack gigs that align with routes you're already driving to cut unpaid miles.",
+      "Read each gig's size and distance before claiming so the pay matches the effort.",
+      "Build reliability — completing gigs well can lead to more and better offers.",
+      "Track every working mile and expense — they're deductions and inputs to your real hourly rate.",
+    ],
+    pros: [
+      "Claim only the gigs that fit your route and vehicle.",
+      "Pay is shown up front before you accept.",
+      "Flexible — deliver along trips you'd already make.",
+      "No fixed shifts or schedule.",
+    ],
+    cons: [
+      "Gig availability and size vary by area and day.",
+      "You cover gas, mileage, and vehicle wear.",
+      "Big-and-bulky gigs need a suitable vehicle and effort.",
+      "No tax withholding — you handle your own self-employment taxes.",
+    ],
+    faqs: [
+      {
+        q: "What are the requirements to drive for Roadie?",
+        a: "You generally need to be at least 18, have a vehicle suited to the gigs you take and a valid license, have a smartphone, and create an approved driver account. Requirements vary and change, so confirm the current criteria with Roadie.",
+      },
+      {
+        q: "How much can you make with Roadie?",
+        a: "There's no fixed figure, and online averages are unreliable. Each gig shows its pay before you claim it, and your take-home depends on the gigs you take, their distance and size, and your costs. Track your active hours and expenses and divide — the free Real Hourly Rate calculator does the math.",
+      },
+      {
+        q: "What kinds of deliveries are on Roadie?",
+        a: "Gigs range from small local parcels and same-day deliveries to longer trips and big-and-bulky items. You choose which to claim based on your vehicle, route, and the pay shown.",
+      },
+      {
+        q: "How and when does Roadie pay you?",
+        a: "Roadie pays your gig earnings (and any tips) to your connected account after deliveries are completed, on its regular payout schedule.",
+      },
+      {
+        q: "Do Roadie drivers have to pay taxes?",
+        a: "Yes. Roadie drivers are independent contractors, so no taxes are withheld and you owe your own income and self-employment taxes. See our Roadie taxes guide for what to set aside and how to file.",
+      },
+    ],
+  },
+  {
+    slug: "how-to-make-money-with-favor",
+    platform: "Favor",
+    workerNoun: "Runners",
+    workType: "delivery",
+    taxGuideSlug: "favor-taxes",
+    taxGuideLabel: "Favor taxes",
+    eyebrow: "Getting Started Guide",
+    title: "How to Make Money with Favor: A Beginner's Guide",
+    metaDescription:
+      "How to make money with Favor as a Runner: requirements, how to sign up, how pay and tips work, and how to compute your real net hourly rate.",
+    h1: "How to Make Money with Favor: A Beginner's Guide",
+    intro:
+      "Favor is a Texas-based on-demand delivery app (part of H-E-B) that pays its 'Runners' to deliver food and other items to customers. As an independent-contractor Runner you go online, accept delivery requests, and get paid per delivery plus tips. Here's how to get started and how the pay really works — without quoting figures that don't hold up.",
+    whatItIsHeading: "What Favor is and who it's for",
+    whatItIs: [
+      "Favor is a delivery platform operating across Texas. Runners accept 'favors' (delivery requests), pick up the order, and deliver it to the customer, handling communication along the way.",
+      "It suits people in Texas markets who want flexible hours and to choose when they go online. Your results depend on your city, the hours you run, demand, and tips.",
+    ],
+    requirements: [
+      {
+        label: "Be at least 18",
+        desc: "Favor generally requires Runners to be 18 or older.",
+      },
+      {
+        label: "Live in a Favor market",
+        desc: "Favor operates in Texas, so you need to be in a city it serves.",
+      },
+      {
+        label:
+          "A vehicle (or bike/scooter in some areas), license, and insurance",
+        desc: "Most Runners drive; some areas allow bike or scooter. Driving requires a valid license and insurance.",
+      },
+      {
+        label: "A smartphone and background check",
+        desc: "You'll run the Favor app and consent to a background check before you're activated.",
+      },
+    ],
+    signupSteps: [
+      {
+        title: "Apply to run with Favor",
+        body: "Sign up on the Favor Runner site or app with your city, age, and vehicle details.",
+      },
+      {
+        title: "Clear the background check",
+        body: "Consent to and pass the background check; approval can take a little time.",
+      },
+      {
+        title: "Complete onboarding",
+        body: "Finish the Runner onboarding steps and connect your payout details.",
+      },
+      {
+        title: "Go online and accept favors",
+        body: "Open the app when you want to work, accept delivery requests, pick up, and deliver.",
+      },
+    ],
+    payHeading: "How Favor pay works",
+    payBody: [
+      "Favor pays Runners per completed delivery, and you keep 100% of customer tips; some shifts may include hourly guarantees in busier markets. You're paid for the favors you complete rather than a fixed wage, so earnings vary with demand.",
+      "Because no taxes are withheld and you cover your own gas, mileage, and phone, your gross pay overstates your take-home. To find your real number, subtract those costs and divide by the hours you're actually online and delivering.",
+    ],
+    tips: [
+      "Run during busy windows (meal times, events) when requests and tips are strongest.",
+      "Learn your city's restaurants and routes to deliver more efficiently.",
+      "Give friendly, reliable service — tips are 100% yours and follow good runs.",
+      "Track every working mile and expense — they're deductions and inputs to your real hourly rate.",
+    ],
+    pros: [
+      "Flexible — go online when you want.",
+      "You keep 100% of customer tips.",
+      "Some shifts may offer hourly guarantees in busy markets.",
+      "Choose which favors to accept.",
+    ],
+    cons: [
+      "Available only in Texas markets.",
+      "No guaranteed wage outside any promo shifts; pay depends on demand.",
+      "You cover gas, mileage, and vehicle wear.",
+      "No tax withholding — you handle your own self-employment taxes.",
+    ],
+    faqs: [
+      {
+        q: "What are the requirements to run with Favor?",
+        a: "You generally need to be at least 18, live in a Texas market Favor serves, have a vehicle (or bike/scooter where allowed) with a valid license and insurance, have a smartphone, and pass a background check. Requirements vary and change, so confirm the current criteria with Favor.",
+      },
+      {
+        q: "How much can you make with Favor?",
+        a: "There's no fixed figure, and online averages are unreliable. You earn per delivery plus 100% of tips (and any promo guarantees), and your take-home depends on your city, hours, demand, and costs. Track your active hours and expenses and divide — the free Real Hourly Rate calculator does the math.",
+      },
+      {
+        q: "Where is Favor available?",
+        a: "Favor operates across Texas. You need to be in one of its markets to run, so check the app for current coverage in your city.",
+      },
+      {
+        q: "How and when does Favor pay you?",
+        a: "Favor pays your delivery earnings and tips to your connected account on its regular payout schedule, with faster cash-out options in some cases. You keep 100% of customer tips.",
+      },
+      {
+        q: "Do Favor Runners have to pay taxes?",
+        a: "Yes. Favor Runners are independent contractors, so no taxes are withheld and you owe your own income and self-employment taxes. See our Favor taxes guide for what to set aside and how to file.",
+      },
+    ],
+  },
+  {
+    slug: "how-to-make-money-with-wag",
+    platform: "Wag",
+    workerNoun: "Wag walkers and sitters",
+    workType: "dog walking and pet care",
+    taxGuideSlug: "wag-taxes",
+    taxGuideLabel: "Wag taxes",
+    eyebrow: "Getting Started Guide",
+    title: "How to Make Money with Wag: A Beginner's Guide",
+    metaDescription:
+      "How to make money with Wag: requirements, how to sign up, how dog-walker and sitter pay works, and how to compute your real net hourly rate.",
+    h1: "How to Make Money with Wag: A Beginner's Guide",
+    intro:
+      "Wag connects pet owners with dog walkers and sitters, paying you to walk dogs and provide services like sitting, boarding, and drop-in visits on your own schedule. As an independent contractor you accept the services and bookings you want in the app. Here's how to get started and how the pay really works.",
+    whatItIsHeading: "What Wag is and who it's for",
+    whatItIs: [
+      "Wag is a pet-care marketplace. After you're approved, you can accept dog walks and other services (sitting, boarding, drop-in visits) booked by nearby owners, and complete them through the app — which tracks walks and shares updates with owners.",
+      "It suits reliable animal lovers who want flexible hours; dog walking in particular needs no vehicle if you take nearby jobs. Your results depend on your area, the services you offer, demand, and your ratings.",
+    ],
+    requirements: [
+      {
+        label: "Apply and get approved",
+        desc: "You complete an application and onboarding; Wag screens walkers before activating them.",
+      },
+      {
+        label: "Pass a background check",
+        desc: "You'll consent to a background check as part of approval.",
+      },
+      {
+        label: "Comfort and reliability with dogs",
+        desc: "You should be comfortable handling dogs safely and showing up reliably for bookings.",
+      },
+      {
+        label: "A smartphone",
+        desc: "A reasonably current phone to run the Wag app, accept bookings, and share walk updates.",
+      },
+    ],
+    signupSteps: [
+      {
+        title: "Apply to become a walker",
+        body: "Sign up on the Wag site or app and complete the walker application for your area.",
+      },
+      {
+        title: "Complete onboarding and the background check",
+        body: "Finish the onboarding steps and consent to the background check; approval can take a little time.",
+      },
+      {
+        title: "Set your services and availability",
+        body: "Choose the services you offer (walks, sitting, drop-ins) and mark when you're available.",
+      },
+      {
+        title: "Accept bookings and get paid",
+        body: "Connect your payout details, then accept nearby bookings that fit your schedule and complete them in the app.",
+      },
+    ],
+    payHeading: "How Wag pay works",
+    payBody: [
+      "Wag pays you for the services you complete, and you keep owner tips. Wag takes a service fee from bookings (a deductible business expense). You're paid for completed bookings rather than a guaranteed wage, so earnings depend on the work you take and demand in your area.",
+      "Because no taxes are withheld and you cover your own supplies and any travel, your gross pay overstates your take-home. To find your real number, subtract those costs and divide by the time a booking really takes, including travel to and from it.",
+    ],
+    tips: [
+      "Build a strong profile and reply quickly — ratings and responsiveness drive bookings.",
+      "Take nearby jobs to keep unpaid travel time low (walks often need no car).",
+      "Offer the services that fit you well and provide reliable, friendly care for repeat clients.",
+      "Track travel miles and supplies you buy — they're deductions and inputs to your real hourly rate.",
+    ],
+    pros: [
+      "Flexible hours — accept the bookings you want.",
+      "Dog walking can need no vehicle if you take nearby jobs.",
+      "You keep owner tips.",
+      "Repeat clients and good ratings can build steadier bookings.",
+    ],
+    cons: [
+      "No guaranteed wage; bookings depend on demand and ratings.",
+      "A service fee applies to bookings.",
+      "Pet care is hands-on and can include evenings, weekends, and holidays.",
+      "No tax withholding — you handle your own self-employment taxes.",
+    ],
+    faqs: [
+      {
+        q: "What are the requirements to become a Wag walker?",
+        a: "You generally need to apply and be approved, pass a background check, be comfortable and reliable with dogs, and have a smartphone. Dog walking nearby may need no vehicle. Requirements vary and change, so confirm the current criteria with Wag.",
+      },
+      {
+        q: "How much can you make with Wag?",
+        a: "There's no fixed figure, and online averages are unreliable. You earn per completed service plus tips, minus Wag's fee, and your take-home depends on your area, the services you offer, demand, and costs. Track your active hours and expenses and divide — the free Real Hourly Rate calculator does the math.",
+      },
+      {
+        q: "What services can you offer on Wag?",
+        a: "Common services include dog walking plus sitting, boarding, and drop-in visits. You choose which to offer based on your situation and availability.",
+      },
+      {
+        q: "How and when does Wag pay you?",
+        a: "Wag pays your earnings (after its service fee) and tips to your connected account on its regular payout schedule. You keep owner tips.",
+      },
+      {
+        q: "Do Wag walkers have to pay taxes?",
+        a: "Yes. Wag walkers and sitters are independent contractors, so no taxes are withheld and you owe your own income and self-employment taxes. See our Wag taxes guide for what to set aside and how to file.",
+      },
+    ],
+  },
 ];
 
 export function getGettingStartedGuide(
