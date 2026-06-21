@@ -452,6 +452,78 @@ const RI_TAX_LINKS = [
     url: "https://tax.ri.gov/",
   },
 ];
+const AK_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  { label: "Alaska Department of Revenue", url: "https://dor.alaska.gov/" },
+];
+const NH_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "New Hampshire Department of Revenue Administration",
+    url: "https://www.revenue.nh.gov/",
+  },
+];
+const SD_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  { label: "South Dakota Department of Revenue", url: "https://dor.sd.gov/" },
+];
+const WY_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  { label: "Wyoming Department of Revenue", url: "https://revenue.wyo.gov/" },
+];
+const DE_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Delaware Division of Revenue (Form 200-ES)",
+    url: "https://revenue.delaware.gov/",
+  },
+];
+const MT_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Montana Department of Revenue (estimated income tax)",
+    url: "https://mtrevenue.gov/",
+  },
+];
+const ND_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "North Dakota Office of State Tax Commissioner (Form ND-1ES)",
+    url: "https://www.tax.nd.gov/",
+  },
+];
+const VT_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "Vermont Department of Taxes (Form IN-114)",
+    url: "https://tax.vermont.gov/",
+  },
+];
+const DC_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.seTax,
+  {
+    label: "DC Office of Tax and Revenue (Form D-40ES)",
+    url: "https://otr.cfo.dc.gov/",
+  },
+];
 
 // Authoritative resources for the gig platform comparison guides. The IRS
 // self-employed center + estimated taxes anchor the (educational, not advice)
@@ -1119,6 +1191,132 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Rhode Island has a progressive state income tax topping out around 5.99%, applied to your net gig profit on top of federal tax. Pay state estimates to the Division of Taxation using Form RI-1040ES, generally on the same quarterly schedule as your federal estimates.",
       "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Rhode Island starts from.",
       "Federal and Rhode Island estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/alaska-gig-worker-taxes",
+    externalLinks: AK_TAX_LINKS,
+    title:
+      "Alaska Gig Worker Taxes: No State Income Tax, Federal & SE Tax | UnifyOne",
+    description:
+      "Alaska gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    body: [
+      "Alaska has no personal state income tax — and no statewide sales tax — so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
+      "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/new-hampshire-gig-worker-taxes",
+    externalLinks: NH_TAX_LINKS,
+    title:
+      "New Hampshire Gig Worker Taxes: No Income Tax on Earnings + SE Tax | UnifyOne",
+    description:
+      "New Hampshire gig worker taxes: no income tax on earned income; federal income tax + the 15.3% SE tax still apply. Not tax advice.",
+    body: [
+      "New Hampshire doesn't tax earned income, and its separate tax on interest and dividends was fully repealed effective 2025 — so your gig earnings face no New Hampshire income tax and there are no state estimated payments to make.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
+      "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/south-dakota-gig-worker-taxes",
+    externalLinks: SD_TAX_LINKS,
+    title:
+      "South Dakota Gig Worker Taxes: No State Income Tax, Federal & SE Tax | UnifyOne",
+    description:
+      "South Dakota gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    body: [
+      "South Dakota has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
+      "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/wyoming-gig-worker-taxes",
+    externalLinks: WY_TAX_LINKS,
+    title:
+      "Wyoming Gig Worker Taxes: No State Income Tax, Federal & SE Tax | UnifyOne",
+    description:
+      "Wyoming gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
+    body: [
+      "Wyoming has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make.",
+      "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
+      "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
+      "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/delaware-gig-worker-taxes",
+    externalLinks: DE_TAX_LINKS,
+    title:
+      "Delaware Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Delaware gig worker taxes: a progressive state income tax (up to ~6.6%) plus the 15.3% federal SE tax, with Form 200-ES. Not tax advice.",
+    body: [
+      "Delaware gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Delaware has a progressive state income tax topping out around 6.6%, applied to your net gig profit on top of federal tax (the city of Wilmington also levies a local earned-income tax on work performed there). Pay state estimates to the Division of Revenue using Form 200-ES.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Delaware starts from.",
+      "Federal and Delaware estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/montana-gig-worker-taxes",
+    externalLinks: MT_TAX_LINKS,
+    title:
+      "Montana Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Montana gig worker taxes: a state income tax (top ~5.65%, declining) plus the 15.3% federal SE tax, with estimated payments. Not tax advice.",
+    body: [
+      "Montana gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Montana has a two-bracket state income tax with a top rate around 5.65% (reduced from 5.9% and scheduled to fall further), applied to your net gig profit on top of federal tax. Montana has no general sales tax. Pay state estimates to the Department of Revenue, and confirm the current rate.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Montana starts from.",
+      "Federal and Montana estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/north-dakota-gig-worker-taxes",
+    externalLinks: ND_TAX_LINKS,
+    title:
+      "North Dakota Gig Worker Taxes: Low State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "North Dakota gig worker taxes: a low state income tax (top ~2.5%) plus the 15.3% federal SE tax, with Form ND-1ES. Not tax advice.",
+    body: [
+      "North Dakota gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "After a 2023 reform, North Dakota has just three brackets — 0%, about 1.95%, and a top of around 2.5%, among the lowest in the country — applied to your net gig profit on top of federal tax. Pay state estimates to the Office of State Tax Commissioner using Form ND-1ES.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income North Dakota starts from.",
+      "Federal and North Dakota estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/vermont-gig-worker-taxes",
+    externalLinks: VT_TAX_LINKS,
+    title:
+      "Vermont Gig Worker Taxes: State Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Vermont gig worker taxes: a progressive state income tax (up to ~8.75%) plus the 15.3% federal SE tax, with Form IN-114. Not tax advice.",
+    body: [
+      "Vermont gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "Vermont has a progressive state income tax topping out around 8.75%, applied to your net gig profit on top of federal tax. Pay state estimates to the Department of Taxes using Form IN-114, generally on the same quarterly schedule as your federal estimates.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income Vermont starts from.",
+      "Federal and Vermont estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/washington-dc-gig-worker-taxes",
+    externalLinks: DC_TAX_LINKS,
+    title:
+      "Washington D.C. Gig Worker Taxes: Local Income Tax + Federal SE Tax | UnifyOne",
+    description:
+      "Washington D.C. gig worker taxes: a progressive local income tax (up to ~10.75%) plus the 15.3% federal SE tax, with Form D-40ES. Not tax advice.",
+    body: [
+      "In Washington, D.C., gig platforms pay you as an independent contractor and withhold nothing, so you owe the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) and federal income tax on your net earnings.",
+      "The District of Columbia has a progressive local income tax topping out around 10.75%, applied to D.C. residents' net gig profit on top of federal tax. Pay estimates to the D.C. Office of Tax and Revenue using Form D-40ES, generally on the same quarterly schedule as your federal estimates.",
+      "Deduct business mileage at the IRS standard mileage rate — usually the biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking, lowering the federal taxable income D.C. starts from.",
+      "Federal and D.C. estimates are generally due around April 15, June 15, September 15, and January 15. Report all income whether or not a platform issues a 1099. This is educational information, not tax advice.",
     ],
   },
   {
