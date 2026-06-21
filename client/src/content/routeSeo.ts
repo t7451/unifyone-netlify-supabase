@@ -755,6 +755,21 @@ const LLC_SOLEPROP_LINKS = [
   },
   IRS.selfEmployedCenter,
 ];
+const W2_GIG_LINKS = [
+  {
+    label: "IRS: Tax Withholding Estimator",
+    url: "https://www.irs.gov/individuals/tax-withholding-estimator",
+  },
+  IRS.selfEmployedCenter,
+];
+const MULTI_STATE_LINKS = [
+  {
+    label: "IRS: State government websites",
+    url: "https://www.irs.gov/businesses/small-businesses-self-employed/state-government-websites",
+  },
+  IRS.selfEmployedCenter,
+];
+const NEW_GIG_CHECKLIST_LINKS = [IRS.estimated, IRS.selfEmployedCenter];
 
 export const ROUTE_SEO: RouteSeo[] = [
   {
@@ -867,6 +882,46 @@ export const ROUTE_SEO: RouteSeo[] = [
       "An LLC is a state-level legal structure whose core benefit is liability protection — separating your personal assets from the business if it's sued or owes a debt. It adds a filing fee and some paperwork, and it adds credibility, but it isn't a tax shield.",
       "By default a single-member LLC is a 'disregarded entity,' taxed exactly like a sole proprietorship — forming one doesn't lower your federal income tax. Tax savings instead come from a separate S-corporation election, which only makes sense above a certain profit level and adds payroll and cost.",
       "Consider an LLC for real liability exposure, and the S-corp election only once profit is consistently high. This is educational information, not legal or tax advice.",
+    ],
+  },
+  {
+    path: "/gig-worker-w2-job-taxes",
+    externalLinks: W2_GIG_LINKS,
+    title: "Gig Work Plus a W-2 Job: How to Handle Taxes on Both | UnifyOne",
+    description:
+      "Have a W-2 job and gig income? Report gig income on Schedule C, owe self-employment tax, and use extra W-2 withholding to cover it. Not advice.",
+    body: [
+      "A W-2 job doesn't make your side income tax-free. You report gig (1099) earnings on Schedule C, deduct related expenses, and the net profit is added to your W-2 wages — even if a platform never sends a 1099.",
+      "On that net gig profit you also owe self-employment tax (roughly 15.3%) via Schedule SE. Your paycheck already withholds the employee share of Social Security and Medicare on your wages, but your gig profit is separate and isn't covered by it.",
+      "Instead of separate quarterly estimates, you can often file a new Form W-4 to withhold extra from your paycheck to cover the gig tax; withholding counts as paid evenly across the year, which helps avoid penalties. The IRS Tax Withholding Estimator helps size it.",
+      "Both incomes stack to set your bracket, and W-2 Social Security tax already withheld counts toward the annual wage base. Confirm current figures with the IRS. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/multi-state-gig-taxes",
+    externalLinks: MULTI_STATE_LINKS,
+    title: "Multi-State Gig Taxes: Working Across State Lines | UnifyOne",
+    description:
+      "Gig work across state lines or moving mid-year: resident vs nonresident state tax, a credit for taxes paid to other states, and part-year rules. Not advice.",
+    body: [
+      "If you drive, deliver, or freelance across state lines — or moved partway through the year — your gig income can touch more than one state. The rules are designed so you're rarely taxed twice on the same dollar.",
+      "As a general rule, your resident (home) state can tax all of your income wherever earned, while a nonresident state can tax income you physically earned within its borders — for gig workers, typically where the work actually happened.",
+      "When both states tax the same income, your resident state usually grants a credit for taxes paid to the other state, offsetting the overlap (generally capped at your home state's tax on that income). Moving mid-year usually means part-year returns in both states.",
+      "Reciprocity agreements mostly cover W-2 wages and often exclude gig income, so don't assume one protects you — confirm with each state's Department of Revenue. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/new-gig-worker-tax-checklist",
+    externalLinks: NEW_GIG_CHECKLIST_LINKS,
+    title:
+      "New Gig Worker Tax Checklist: Your First Year of 1099 Income | UnifyOne",
+    description:
+      "New to gig work? A first-year tax checklist: report all income, set aside 25–30%, log mileage from day one, and learn the quarterly schedule. Not advice.",
+    body: [
+      "Your first year of gig work is when good habits or expensive mistakes get set. Nothing is withheld, no one hands you a system, and the IRS now treats you as a small business — this checklist covers what to do from day one.",
+      "Report all income, even from platforms that send no 1099, and open a separate bank account so your statement doubles as a ledger. From your very first payout, set aside about 25–30% of net for taxes and treat it as money that was never yours.",
+      "Start a contemporaneous mileage log immediately — date, miles, and purpose of each trip — since reconstructed mileage is what gets disallowed, and it's usually the biggest deduction. Learn the quarterly estimated-tax schedule and the roughly $1,000-owed threshold.",
+      "At tax time you'll file Schedule C and Schedule SE; skipping the set-aside all year is the classic first-year surprise. Confirm current rules with the IRS. This is educational information, not tax advice.",
     ],
   },
   {
