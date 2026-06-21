@@ -729,6 +729,38 @@ const WAG_TAX_LINKS = [
   IRS.mileage,
   { label: "Wag", url: "https://wagwalking.com" },
 ];
+// Marketplace-seller tax guides: the IRS self-employed center + the IRS 1099-K
+// explainer anchor the (educational, not advice) framing for goods sellers, and
+// the platform's own seller page gives each a relevant outbound link.
+const IRS_1099K = {
+  label: "IRS: Understanding your Form 1099-K",
+  url: "https://www.irs.gov/businesses/understanding-your-form-1099-k",
+};
+const ETSY_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS_1099K,
+  { label: "Sell on Etsy", url: "https://www.etsy.com/sell" },
+];
+const EBAY_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS_1099K,
+  { label: "eBay Seller Center", url: "https://www.ebay.com/sellercenter" },
+];
+const POSHMARK_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS_1099K,
+  { label: "Poshmark", url: "https://poshmark.com" },
+];
+const MERCARI_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS_1099K,
+  { label: "Mercari", url: "https://www.mercari.com" },
+];
+const DEPOP_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS_1099K,
+  { label: "Depop", url: "https://www.depop.com" },
+];
 
 // Getting-started ("how to make money on <platform>") guides: the platform's
 // own signup/driver page anchors each page's outbound profile, paired with the
@@ -1858,6 +1890,76 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Wag processes payments as a third-party platform, so it generally reports earnings on a Form 1099-K when you meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — report all income regardless.",
       "Deduct pet-care supplies, Wag's service fees, and the business-use share of your phone. Mileage to walks and client homes is deductible at the IRS standard mileage rate, and if you board pets in your home, part of your home expenses may qualify (the rules are strict — get advice). A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
       "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/etsy-taxes",
+    externalLinks: ETSY_TAX_LINKS,
+    title:
+      "Etsy Taxes: A Seller's Guide to the 1099-K, COGS & Deductions | UnifyOne",
+    description:
+      "How Etsy seller taxes work: the 1099-K, hobby vs business, deducting materials and fees as a self-employed maker, and quarterly taxes. Not tax advice.",
+    body: [
+      "Etsy doesn't withhold taxes. If you sell as a business — making goods to sell for profit — you owe income tax plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) on your net profit: sales minus your cost of materials and expenses.",
+      "Etsy processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed recently, so you may get one for modest sales — or not get one and still owe tax. It reports gross sales before fees, so it isn't your taxable profit.",
+      "Casually selling your own used items for less than you paid generally isn't taxable (and the loss isn't deductible), but making items to sell for profit is a business. Deduct your cost of materials (COGS), Etsy's fees, shipping, packaging, and a qualifying home studio. A common rule of thumb is to set aside 25–30% of net profit for taxes.",
+      "Report all business income on Schedule C whether or not a 1099-K arrives, and pay estimated taxes quarterly — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/ebay-taxes",
+    externalLinks: EBAY_TAX_LINKS,
+    title:
+      "eBay Taxes: A Reseller's Guide to the 1099-K & Deductions | UnifyOne",
+    description:
+      "How eBay taxes work for resellers: the 1099-K, hobby vs business, cost of goods, deductible fees and shipping, and quarterly taxes. Not tax advice.",
+    body: [
+      "eBay doesn't withhold taxes. If you sell as a business — buying items to resell for profit — you owe income tax plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) on your net profit: sales minus your cost of goods and expenses.",
+      "eBay processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed recently, so you may get one for modest sales — or not get one and still owe tax. It reports gross sales before fees and shipping, so it isn't your taxable profit.",
+      "Selling your own used belongings for less than you paid generally isn't taxable (and the loss isn't deductible), but reselling for profit is a business. Deduct your cost of goods sold (COGS), eBay and payment fees, shipping, packaging, a qualifying home office, and sourcing mileage. A common rule of thumb is to set aside 25–30% of net profit for taxes.",
+      "Report all business income on Schedule C whether or not a 1099-K arrives, and pay estimated taxes quarterly — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/poshmark-taxes",
+    externalLinks: POSHMARK_TAX_LINKS,
+    title:
+      "Poshmark Taxes: A Seller's Guide to the 1099-K & Deductions | UnifyOne",
+    description:
+      "How Poshmark taxes work: the 1099-K, hobby vs business, cost of goods, deductible commission and shipping, and quarterly taxes. Not tax advice.",
+    body: [
+      "Poshmark doesn't withhold taxes. If you sell as a business — buying clothing to resell for profit — you owe income tax plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) on your net profit: sales minus your cost of goods and expenses.",
+      "Poshmark processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed recently, so you may get one for modest sales — or not get one and still owe tax. It reports gross sales before commission and shipping, so it isn't your taxable profit.",
+      "Reselling your own used clothing for less than you paid generally isn't taxable (and the loss isn't deductible), but buying to resell for profit is a business. Deduct your cost of goods (COGS), Poshmark's commission, any shipping you cover, packaging, a qualifying home office, and sourcing mileage. A common rule of thumb is to set aside 25–30% of net profit for taxes.",
+      "Report all business income on Schedule C whether or not a 1099-K arrives, and pay estimated taxes quarterly — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/mercari-taxes",
+    externalLinks: MERCARI_TAX_LINKS,
+    title:
+      "Mercari Taxes: A Seller's Guide to the 1099-K & Deductions | UnifyOne",
+    description:
+      "How Mercari taxes work for sellers: the 1099-K, hobby vs business, cost of goods, deductible fees, and quarterly taxes. Not tax advice.",
+    body: [
+      "Mercari doesn't withhold taxes. If you sell as a business — buying items to resell for profit — you owe income tax plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) on your net profit: sales minus your cost of goods and expenses.",
+      "Mercari processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed recently, so you may get one for modest sales — or not get one and still owe tax. It reports gross sales before fees, so it isn't your taxable profit.",
+      "Selling your own used items for less than you paid generally isn't taxable (and the loss isn't deductible), but reselling for profit is a business. Deduct your cost of goods (COGS), Mercari's selling and processing fees, any shipping you cover, packaging, a qualifying home office, and sourcing mileage. A common rule of thumb is to set aside 25–30% of net profit for taxes.",
+      "Report all business income on Schedule C whether or not a 1099-K arrives, and pay estimated taxes quarterly — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/depop-taxes",
+    externalLinks: DEPOP_TAX_LINKS,
+    title:
+      "Depop Taxes: A Seller's Guide to the 1099-K & Deductions | UnifyOne",
+    description:
+      "How Depop taxes work for sellers: the 1099-K, hobby vs business, cost of goods, deductible fees and shipping, and quarterly taxes. Not tax advice.",
+    body: [
+      "Depop doesn't withhold taxes. If you sell as a business — sourcing items to resell for profit — you owe income tax plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare) on your net profit: sales minus your cost of goods and expenses.",
+      "Depop processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed recently, so you may get one for modest sales — or not get one and still owe tax. It reports gross sales before fees and shipping, so it isn't your taxable profit.",
+      "Reselling your own used clothing for less than you paid generally isn't taxable (and the loss isn't deductible), but buying or sourcing to resell for profit is a business. Deduct your cost of goods (COGS), Depop's fees, any shipping you cover, packaging, a qualifying home office, and sourcing mileage. A common rule of thumb is to set aside 25–30% of net profit for taxes.",
+      "Report all business income on Schedule C whether or not a 1099-K arrives, and pay estimated taxes quarterly — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
     ],
   },
   {

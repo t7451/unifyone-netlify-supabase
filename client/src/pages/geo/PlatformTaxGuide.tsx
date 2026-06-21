@@ -32,12 +32,19 @@ const RELATED_TOOLS = [
 ];
 
 /** "How it works" steps. The deductions example is vehicle-aware so desk-based
- *  platforms (vehicleBased: false) don't get mileage framing. */
-const buildHowItWorks = (vehicleBased?: boolean) => [
-  {
-    title: "You're an independent contractor",
-    body: "No taxes are withheld from your pay. You owe federal and state income tax plus self-employment tax on your net earnings.",
-  },
+ *  platforms (vehicleBased: false) don't get mileage framing; the first step is
+ *  seller-aware so marketplace sellers get goods/COGS framing instead of the
+ *  independent-contractor framing. */
+const buildHowItWorks = (vehicleBased?: boolean, sellerFraming?: boolean) => [
+  sellerFraming
+    ? {
+        title: "You're a self-employed seller",
+        body: "The marketplace doesn't withhold taxes. If you sell as a business (regularly and for profit), you owe income tax plus self-employment tax on your net profit — what's left after the cost of the goods and your selling expenses.",
+      }
+    : {
+        title: "You're an independent contractor",
+        body: "No taxes are withheld from your pay. You owe federal and state income tax plus self-employment tax on your net earnings.",
+      },
   {
     title: "Self-employment tax is 15.3%",
     body: "That's 12.4% Social Security + 2.9% Medicare on your net earnings — on top of regular income tax. It funds the benefits an employer would normally split with you.",
@@ -154,17 +161,19 @@ export default function PlatformTaxGuide({ slug }: { slug: string }) {
             How {guide.platform} taxes work
           </h2>
           <div className="space-y-4">
-            {buildHowItWorks(guide.vehicleBased).map(({ title, body }, i) => (
-              <div key={title} className="flex gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
-                  {i + 1}
+            {buildHowItWorks(guide.vehicleBased, guide.sellerFraming).map(
+              ({ title, body }, i) => (
+                <div key={title} className="flex gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+                    {i + 1}
+                  </div>
+                  <div>
+                    <p className="font-semibold mb-1">{title}</p>
+                    <p className="text-sm text-muted-foreground">{body}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold mb-1">{title}</p>
-                  <p className="text-sm text-muted-foreground">{body}</p>
-                </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
         </section>
 
