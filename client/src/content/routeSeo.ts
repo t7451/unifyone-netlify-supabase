@@ -540,7 +540,11 @@ const PLATFORM_LINKS = {
   spark: { label: "Walmart Spark", url: "https://drive4spark.walmart.com" },
   shipt: { label: "Shipt", url: "https://www.shipt.com" },
   taskrabbit: { label: "TaskRabbit", url: "https://www.taskrabbit.com" },
+  gopuff: { label: "Gopuff Driver", url: "https://driver.gopuff.com" },
   rover: { label: "Rover", url: "https://www.rover.com" },
+  wag: { label: "Wag", url: "https://wagwalking.com" },
+  upwork: { label: "Upwork", url: "https://www.upwork.com" },
+  fiverr: { label: "Fiverr", url: "https://www.fiverr.com" },
 };
 const DOORDASH_VS_UBER_EATS_LINKS = [
   IRS.selfEmployedCenter,
@@ -601,6 +605,30 @@ const AMAZON_FLEX_VS_DOORDASH_LINKS = [
   IRS.estimated,
   PLATFORM_LINKS.amazonFlex,
   PLATFORM_LINKS.doordash,
+];
+const UPWORK_VS_FIVERR_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.upwork,
+  PLATFORM_LINKS.fiverr,
+];
+const GOPUFF_VS_DOORDASH_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.gopuff,
+  PLATFORM_LINKS.doordash,
+];
+const ROVER_VS_WAG_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.rover,
+  PLATFORM_LINKS.wag,
+];
+const LYFT_VS_UBER_EATS_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.lyft,
+  PLATFORM_LINKS.uberEats,
 ];
 
 // Additional platform-specific tax-guide link bundles (Amazon Flex, Grubhub,
@@ -670,6 +698,36 @@ const FIVERR_TAX_LINKS = [
   IRS.estimated,
   IRS.seTax,
   { label: "Fiverr", url: "https://www.fiverr.com" },
+];
+const FAVOR_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Favor", url: "https://favordelivery.com" },
+];
+const VEHO_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Veho", url: "https://shipveho.com" },
+];
+const DOLLY_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Dolly", url: "https://dolly.com" },
+];
+const GOSHARE_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "GoShare", url: "https://goshare.co" },
+];
+const WAG_TAX_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  IRS.mileage,
+  { label: "Wag", url: "https://wagwalking.com" },
 ];
 
 // Getting-started ("how to make money on <platform>") guides: the platform's
@@ -763,6 +821,49 @@ const BUDGETING_LINKS = [
   },
   IRS.selfEmployedCenter,
 ];
+const EMERGENCY_FUND_LINKS = [
+  {
+    label: "CFPB: Start Small, Save Up (emergency savings)",
+    url: "https://www.consumerfinance.gov/start-small-save-up/",
+  },
+  IRS.selfEmployedCenter,
+];
+const DEBT_PAYOFF_LINKS = [
+  {
+    label: "FTC: Getting out of debt",
+    url: "https://consumer.ftc.gov/articles/getting-out-debt",
+  },
+  IRS.selfEmployedCenter,
+];
+const SEP_SOLO_LINKS = [
+  {
+    label: "IRS: One-participant 401(k) plans",
+    url: "https://www.irs.gov/retirement-plans/one-participant-401k-plans",
+  },
+  IRS.selfEmployedCenter,
+];
+const LLC_SOLEPROP_LINKS = [
+  {
+    label: "IRS: Business structures",
+    url: "https://www.irs.gov/businesses/small-businesses-self-employed/business-structures",
+  },
+  IRS.selfEmployedCenter,
+];
+const W2_GIG_LINKS = [
+  {
+    label: "IRS: Tax Withholding Estimator",
+    url: "https://www.irs.gov/individuals/tax-withholding-estimator",
+  },
+  IRS.selfEmployedCenter,
+];
+const MULTI_STATE_LINKS = [
+  {
+    label: "IRS: State government websites",
+    url: "https://www.irs.gov/businesses/small-businesses-self-employed/state-government-websites",
+  },
+  IRS.selfEmployedCenter,
+];
+const NEW_GIG_CHECKLIST_LINKS = [IRS.estimated, IRS.selfEmployedCenter];
 
 export const ROUTE_SEO: RouteSeo[] = [
   {
@@ -822,6 +923,102 @@ export const ROUTE_SEO: RouteSeo[] = [
     ],
   },
   {
+    path: "/gig-worker-emergency-fund",
+    externalLinks: EMERGENCY_FUND_LINKS,
+    title:
+      "Emergency Funds for Gig Workers: How Much to Save & Where | UnifyOne",
+    description:
+      "Why gig workers need a bigger emergency fund, how much to save on irregular income, where to keep it, and how to build one fast. Not advice.",
+    body: [
+      "Independent contractors usually have no paid sick leave, severance, or unemployment cushion, so if you can't work, the income stops — and a single event like a car repair can knock out both your earning ability and your budget at once.",
+      "That's why gig workers often target the higher end of the usual three-to-six-months-of-expenses range. Base the figure on essentials — housing, food, utilities, insurance, minimum debt payments — not total spending.",
+      "Keep the fund safe and liquid in a separate high-yield savings account, distinct from both your spending money and your tax set-aside (which is money you already owe, not savings). On variable income, save a percentage of every payout rather than a fixed monthly amount, and route windfalls straight in.",
+      "Start with a small milestone, then a one-month buffer, then the full fund. This is educational information, not financial advice.",
+    ],
+  },
+  {
+    path: "/gig-worker-debt-payoff",
+    externalLinks: DEBT_PAYOFF_LINKS,
+    title:
+      "Paying Off Debt on a Gig Income: Avalanche, Snowball & Cash Flow | UnifyOne",
+    description:
+      "How gig workers pay off debt on irregular income: budget from a low baseline, choose avalanche vs snowball, and use surplus weeks. Not advice.",
+    body: [
+      "Paying down debt on income that swings week to week takes a system. Build a small starter buffer first so a slow week doesn't put you right back on a credit card, and keep paying at least the minimum on every debt no matter what.",
+      "Choose a method: the avalanche (highest interest first) saves the most money, while the snowball (smallest balance first) gives quicker motivating wins. Both work — pick the one you'll stick with.",
+      "On variable income, commit a percentage of each payout to debt rather than a fixed monthly sum, budget essentials from a conservative low-but-typical month, and aim surplus weeks and windfalls at the target balance. Don't raid your tax set-aside — unpaid federal taxes carry penalties and are hard to discharge.",
+      "If debt is overwhelming, a non-profit credit counselor can help. This is educational information, not financial advice.",
+    ],
+  },
+  {
+    path: "/sep-ira-vs-solo-401k",
+    externalLinks: SEP_SOLO_LINKS,
+    title:
+      "SEP-IRA vs Solo 401(k): Which Is Better for Gig Workers? | UnifyOne",
+    description:
+      "SEP-IRA vs Solo 401(k) for self-employed gig workers: contributions, Roth options, paperwork, and deadlines compared — and how to choose. Not advice.",
+    body: [
+      "Both the SEP-IRA and the Solo 401(k) let self-employed gig workers shelter far more than a regular IRA, but they differ on contributions, Roth options, paperwork, and deadlines.",
+      "The SEP-IRA is the simplest — free to open in minutes, employer-style percentage contribution only, flexible year to year, and fundable up to your extended filing deadline. The Solo 401(k) adds an employee elective deferral on top of an employer contribution, usually allowing a larger total (especially at moderate income) and often a Roth option.",
+      "Trade-offs: the Solo 401(k) needs a bit more paperwork and generally must be established by December 31, while the SEP-IRA is more forgiving on deadlines. You can't max both on the same income, and limits change yearly — confirm them with the IRS.",
+      "Pick the SEP-IRA for simplicity, the Solo 401(k) to contribute the most or get a Roth option. This is educational information, not investment advice.",
+    ],
+  },
+  {
+    path: "/llc-vs-sole-proprietorship",
+    externalLinks: LLC_SOLEPROP_LINKS,
+    title:
+      "LLC vs Sole Proprietorship for Gig Workers: Do You Need an LLC? | UnifyOne",
+    description:
+      "LLC vs sole proprietorship for gig workers: liability, taxes, cost, and when an LLC is worth it (and the S-corp question). Not advice.",
+    body: [
+      "If you drive, deliver, or freelance without forming anything, you're already a sole proprietor: you report on Schedule C, pay self-employment tax, and can deduct the same business expenses. You don't need an LLC to claim deductions.",
+      "An LLC is a state-level legal structure whose core benefit is liability protection — separating your personal assets from the business if it's sued or owes a debt. It adds a filing fee and some paperwork, and it adds credibility, but it isn't a tax shield.",
+      "By default a single-member LLC is a 'disregarded entity,' taxed exactly like a sole proprietorship — forming one doesn't lower your federal income tax. Tax savings instead come from a separate S-corporation election, which only makes sense above a certain profit level and adds payroll and cost.",
+      "Consider an LLC for real liability exposure, and the S-corp election only once profit is consistently high. This is educational information, not legal or tax advice.",
+    ],
+  },
+  {
+    path: "/gig-worker-w2-job-taxes",
+    externalLinks: W2_GIG_LINKS,
+    title: "Gig Work Plus a W-2 Job: How to Handle Taxes on Both | UnifyOne",
+    description:
+      "Have a W-2 job and gig income? Report gig income on Schedule C, owe self-employment tax, and use extra W-2 withholding to cover it. Not advice.",
+    body: [
+      "A W-2 job doesn't make your side income tax-free. You report gig (1099) earnings on Schedule C, deduct related expenses, and the net profit is added to your W-2 wages — even if a platform never sends a 1099.",
+      "On that net gig profit you also owe self-employment tax (roughly 15.3%) via Schedule SE. Your paycheck already withholds the employee share of Social Security and Medicare on your wages, but your gig profit is separate and isn't covered by it.",
+      "Instead of separate quarterly estimates, you can often file a new Form W-4 to withhold extra from your paycheck to cover the gig tax; withholding counts as paid evenly across the year, which helps avoid penalties. The IRS Tax Withholding Estimator helps size it.",
+      "Both incomes stack to set your bracket, and W-2 Social Security tax already withheld counts toward the annual wage base. Confirm current figures with the IRS. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/multi-state-gig-taxes",
+    externalLinks: MULTI_STATE_LINKS,
+    title: "Multi-State Gig Taxes: Working Across State Lines | UnifyOne",
+    description:
+      "Gig work across state lines or moving mid-year: resident vs nonresident state tax, a credit for taxes paid to other states, and part-year rules. Not advice.",
+    body: [
+      "If you drive, deliver, or freelance across state lines — or moved partway through the year — your gig income can touch more than one state. The rules are designed so you're rarely taxed twice on the same dollar.",
+      "As a general rule, your resident (home) state can tax all of your income wherever earned, while a nonresident state can tax income you physically earned within its borders — for gig workers, typically where the work actually happened.",
+      "When both states tax the same income, your resident state usually grants a credit for taxes paid to the other state, offsetting the overlap (generally capped at your home state's tax on that income). Moving mid-year usually means part-year returns in both states.",
+      "Reciprocity agreements mostly cover W-2 wages and often exclude gig income, so don't assume one protects you — confirm with each state's Department of Revenue. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/new-gig-worker-tax-checklist",
+    externalLinks: NEW_GIG_CHECKLIST_LINKS,
+    title:
+      "New Gig Worker Tax Checklist: Your First Year of 1099 Income | UnifyOne",
+    description:
+      "New to gig work? A first-year tax checklist: report all income, set aside 25–30%, log mileage from day one, and learn the quarterly schedule. Not advice.",
+    body: [
+      "Your first year of gig work is when good habits or expensive mistakes get set. Nothing is withheld, no one hands you a system, and the IRS now treats you as a small business — this checklist covers what to do from day one.",
+      "Report all income, even from platforms that send no 1099, and open a separate bank account so your statement doubles as a ledger. From your very first payout, set aside about 25–30% of net for taxes and treat it as money that was never yours.",
+      "Start a contemporaneous mileage log immediately — date, miles, and purpose of each trip — since reconstructed mileage is what gets disallowed, and it's usually the biggest deduction. Learn the quarterly estimated-tax schedule and the roughly $1,000-owed threshold.",
+      "At tax time you'll file Schedule C and Schedule SE; skipping the set-aside all year is the classic first-year surprise. Confirm current rules with the IRS. This is educational information, not tax advice.",
+    ],
+  },
+  {
     path: "/uber-vs-doordash",
     externalLinks: UBER_VS_DOORDASH_LINKS,
     title: "Uber vs DoorDash: Which Should You Drive For? | UnifyOne",
@@ -871,6 +1068,58 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Amazon Flex usually requires 21+ and a mid-size or larger vehicle, and you commit to a whole block; DoorDash is often 18+ with a lower vehicle bar and no block commitment. One rewards predictability, the other flexibility.",
       "Both issue a 1099-NEC if you earned $600 or more — Amazon via its tax portal, DoorDash via Stripe. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income whether or not a form arrives.",
       "To compare, run comparable shifts on each, track active hours and business miles, subtract mileage and expenses, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators handle it. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/upwork-vs-fiverr",
+    externalLinks: UPWORK_VS_FIVERR_LINKS,
+    title: "Upwork vs Fiverr: Which Is Better for Freelancers? | UnifyOne",
+    description:
+      "Upwork vs Fiverr compared on how you get work, platform fees, 1099-K forms, payout methods, and who each suits — plus how to compute your own net pay.",
+    body: [
+      "Upwork and Fiverr are the two largest freelance marketplaces, but they work differently: on Upwork you send proposals and bill clients on hourly or fixed-price contracts, while on Fiverr you publish fixed-price gigs that buyers order directly. Both pay you as a self-employed freelancer with nothing withheld.",
+      "Both take a cut before you're paid — Upwork deducts a freelancer service fee from each contract, and Fiverr deducts a flat seller commission (around 20%) from each order, with buyers paying separate service fees on top. Those platform fees are a deductible business expense, so track them.",
+      "As third-party settlement platforms, both issue a 1099-K once your processed payments pass the IRS reporting threshold for the year rather than a 1099-NEC. Thresholds have changed recently, and you owe income tax plus the 15.3% self-employment tax on net earnings — report all income whether or not a form arrives.",
+      "To compare honestly, take comparable projects on each, log the hours you actually worked, subtract platform fees and expenses, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators do the math. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/gopuff-vs-doordash",
+    externalLinks: GOPUFF_VS_DOORDASH_LINKS,
+    title: "Gopuff vs DoorDash: Which Delivery Gig Is Better? | UnifyOne",
+    description:
+      "Gopuff vs DoorDash compared on how offers/blocks work, what you carry, scheduling, 1099-NEC forms, mileage, and payouts — plus how to compute your net pay.",
+    body: [
+      "Gopuff and DoorDash are both independent-contractor delivery gigs, but the model differs: Gopuff delivers its own convenience and grocery stock from local micro-fulfillment centers, while DoorDash delivers orders from third-party restaurants and stores.",
+      "That changes the work: on Gopuff you start each trip at the facility with the order already packed and tend to work scheduled blocks; on DoorDash you drive to the merchant first, sometimes wait, and can log on largely on-demand per offer with tips shown upfront.",
+      "Both issue a 1099-NEC if you earn $600 or more in a year — Gopuff via its payment partner, DoorDash via Stripe. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income whether or not a form arrives.",
+      "To compare, run comparable shifts on each, track active hours and business miles, subtract mileage and expenses, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators handle it. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/rover-vs-wag",
+    externalLinks: ROVER_VS_WAG_LINKS,
+    title: "Rover vs Wag: Which Is Better for Pet Care? | UnifyOne",
+    description:
+      "Rover vs Wag compared on how clients are found, service types, platform cut, scheduling control, and 1099-K forms — plus how to compute your own net pay.",
+    body: [
+      "Rover and Wag are the two largest pet-care marketplaces, connecting independent sitters and walkers with owners for dog walking, drop-in visits, boarding, and house sitting. Both pay you as a self-employed contractor with nothing withheld and take a cut of what owners pay.",
+      "On Rover you build a profile, set your own services and rates, and owners book you directly, so you tend to build repeat clients and control your calendar. Wag leans more on-demand, surfacing nearby requests you accept as they come in — quicker bookings, but less control over timing and pricing.",
+      "As third-party platforms, both issue a 1099-K once your processed payments pass the IRS reporting threshold for the year rather than a 1099-NEC. Thresholds have changed recently, and you owe income tax plus the 15.3% self-employment tax on net earnings — report all income whether or not a form arrives.",
+      "To compare, take comparable bookings on each, track the time you spent and any travel miles, subtract the platform's fee and supply costs, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators do the math. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/lyft-vs-uber-eats",
+    externalLinks: LYFT_VS_UBER_EATS_LINKS,
+    title: "Lyft vs Uber Eats: Which Should You Drive For? | UnifyOne",
+    description:
+      "Lyft (rideshare) vs Uber Eats (food delivery) compared on the work, requirements, 1099 forms, vehicle wear, and scheduling — plus how to compute your net pay.",
+    body: [
+      "Lyft and Uber Eats are both independent-contractor driving gigs, but they're different jobs: Lyft is rideshare — you carry passengers — while Uber Eats is food delivery, so you carry orders and never have a rider in the car. Both pay you with nothing withheld.",
+      "Lyft's requirements are usually stricter (often 21+ with a qualifying multi-door vehicle and a vehicle inspection), and passengers mean more miles and vehicle wear; Uber Eats has a lower bar and, in some markets, bike or scooter delivery. Both show pay before you accept and pass through 100% of tips.",
+      "On taxes, each typically issues a 1099-K for the fares the platform processes plus a 1099-NEC for incentives and referrals, reconciled on your Lyft Annual Summary or Uber Tax Summary. Thresholds change yearly, and you owe income tax plus the 15.3% self-employment tax on net earnings — report all income regardless.",
+      "To compare, work comparable hours on each, track active time and business miles, subtract mileage and expenses, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators do the math. This is educational information, not financial or tax advice.",
     ],
   },
   {
@@ -1539,6 +1788,75 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Fiverr treats sellers as independent contractors, so no taxes are withheld. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
       "Fiverr processes buyer payments as a third-party platform, so it issues US sellers a Form 1099-K when they meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — report all income regardless.",
       "Because gigs are delivered from a desk, the biggest deductions are usually the home office, software and tools, internet and phone, and the commission Fiverr keeps — not mileage. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/favor-taxes",
+    externalLinks: FAVOR_TAX_LINKS,
+    title:
+      "Favor Taxes: A Runner's Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How Favor taxes work for Runners: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Favor pays its Runners as independent contractors, so no taxes are withheld from your deliveries. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "If you earned $600 or more, Favor issues a 1099-NEC through its payment processor. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Your largest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering across Texas. Phone use, insulated bags, tolls, and parking are deductible too. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/veho-taxes",
+    externalLinks: VEHO_TAX_LINKS,
+    title:
+      "Veho Taxes: A Driver's Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How Veho taxes work for drivers: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Veho pays its drivers as independent contractors, so no taxes are withheld from your routes. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "If you earned $600 or more, Veho issues a 1099-NEC through its payment processor. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Your largest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering packages, including between stops. Phone use, supplies, tolls, and parking are deductible too. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/dolly-taxes",
+    externalLinks: DOLLY_TAX_LINKS,
+    title:
+      "Dolly Taxes: A Helper's Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How Dolly taxes work for Helpers: the 1099, self-employment tax, equipment and mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Dolly pays its Helpers as independent contractors, so no taxes are withheld from your jobs. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "If you meet the reporting threshold, Dolly issues a 1099 through its payment processor. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Because you supply your own vehicle and moving gear, your biggest deductions are usually business mileage at the IRS standard mileage rate (or actual vehicle expenses) plus moving equipment like hand trucks, dollies, and blankets, along with phone use, tolls, and parking. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/goshare-taxes",
+    externalLinks: GOSHARE_TAX_LINKS,
+    title:
+      "GoShare Taxes: A Driver's Guide to 1099 Filing & Deductions | UnifyOne",
+    description:
+      "How GoShare taxes work for drivers: the 1099-NEC, self-employment tax, moving-equipment and mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "GoShare pays its drivers as independent contractors, so no taxes are withheld from your jobs. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "If you earned $600 or more, GoShare issues a 1099-NEC through its payment processor. Below that you may not get a form — but you still have to report all income to the IRS.",
+      "Because you supply your own truck or van and moving gear, your biggest deductions are usually business mileage at the IRS standard mileage rate (or actual vehicle expenses) plus moving equipment like hand trucks and blankets, along with phone use, tolls, and parking. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
+      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
+    ],
+  },
+  {
+    path: "/wag-taxes",
+    externalLinks: WAG_TAX_LINKS,
+    title: "Wag Taxes: A Dog Walker's Guide to 1099-K & Deductions | UnifyOne",
+    description:
+      "How Wag taxes work for walkers and sitters: the 1099-K, self-employment tax, pet-care and mileage deductions, and quarterly payments. Not tax advice.",
+    body: [
+      "Wag treats walkers and sitters as independent contractors, so no taxes are withheld. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings.",
+      "Wag processes payments as a third-party platform, so it generally reports earnings on a Form 1099-K when you meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — report all income regardless.",
+      "Deduct pet-care supplies, Wag's service fees, and the business-use share of your phone. Mileage to walks and client homes is deductible at the IRS standard mileage rate, and if you board pets in your home, part of your home expenses may qualify (the rules are strict — get advice). A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
       "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty. This is educational information, not tax advice.",
     ],
   },

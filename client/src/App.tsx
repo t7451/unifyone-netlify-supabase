@@ -817,6 +817,51 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/favor-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="favor-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/veho-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="veho-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/dolly-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="dolly-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/goshare-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="goshare-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/wag-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="wag-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Gig-tax cluster: state guides */}
       <Route
         path="/california-gig-worker-taxes"
@@ -1407,6 +1452,42 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/upwork-vs-fiverr"
+        component={() => (
+          <>
+            <PlatformComparison slug="upwork-vs-fiverr" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gopuff-vs-doordash"
+        component={() => (
+          <>
+            <PlatformComparison slug="gopuff-vs-doordash" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/rover-vs-wag"
+        component={() => (
+          <>
+            <PlatformComparison slug="rover-vs-wag" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/lyft-vs-uber-eats"
+        component={() => (
+          <>
+            <PlatformComparison slug="lyft-vs-uber-eats" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Getting-started cluster: "how to make money on <platform>" guides */}
       <Route
         path="/how-to-make-money-on-doordash"
@@ -1522,6 +1603,69 @@ function Router() {
         component={() => (
           <>
             <GigFinanceGuide slug="gig-worker-budgeting" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gig-worker-emergency-fund"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="gig-worker-emergency-fund" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gig-worker-debt-payoff"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="gig-worker-debt-payoff" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/sep-ira-vs-solo-401k"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="sep-ira-vs-solo-401k" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/llc-vs-sole-proprietorship"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="llc-vs-sole-proprietorship" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gig-worker-w2-job-taxes"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="gig-worker-w2-job-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/multi-state-gig-taxes"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="multi-state-gig-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/new-gig-worker-tax-checklist"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="new-gig-worker-tax-checklist" />
             <GigResourceLinks />
           </>
         )}

@@ -326,6 +326,34 @@ export default function FinancialIntelligenceGig() {
                 label: "Budgeting on irregular income",
                 href: "/gig-worker-budgeting",
               },
+              {
+                label: "Emergency funds for gig workers",
+                href: "/gig-worker-emergency-fund",
+              },
+              {
+                label: "Paying off debt on a gig income",
+                href: "/gig-worker-debt-payoff",
+              },
+              {
+                label: "SEP-IRA vs Solo 401(k)",
+                href: "/sep-ira-vs-solo-401k",
+              },
+              {
+                label: "LLC vs sole proprietorship",
+                href: "/llc-vs-sole-proprietorship",
+              },
+              {
+                label: "Gig work plus a W-2 job",
+                href: "/gig-worker-w2-job-taxes",
+              },
+              {
+                label: "Multi-state gig taxes",
+                href: "/multi-state-gig-taxes",
+              },
+              {
+                label: "New gig worker tax checklist",
+                href: "/new-gig-worker-tax-checklist",
+              },
             ].map(({ label, href }) => (
               <Link
                 key={href}
