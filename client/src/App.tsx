@@ -1517,6 +1517,33 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/gig-worker-w2-job-taxes"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="gig-worker-w2-job-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/multi-state-gig-taxes"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="multi-state-gig-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/new-gig-worker-tax-checklist"
+        component={() => (
+          <>
+            <GigFinanceGuide slug="new-gig-worker-tax-checklist" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       <Route path="/seo" component={() => <SeoIndex />} />
       <Route path="/seo/:slug" component={() => <SeoLanding />} />
       <Route
