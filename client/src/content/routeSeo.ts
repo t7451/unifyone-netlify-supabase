@@ -539,6 +539,11 @@ const PLATFORM_LINKS = {
   amazonFlex: { label: "Amazon Flex", url: "https://flex.amazon.com" },
   spark: { label: "Walmart Spark", url: "https://drive4spark.walmart.com" },
   shipt: { label: "Shipt", url: "https://www.shipt.com" },
+  gopuff: { label: "Gopuff Driver", url: "https://driver.gopuff.com" },
+  rover: { label: "Rover", url: "https://www.rover.com" },
+  wag: { label: "Wag", url: "https://wagwalking.com" },
+  upwork: { label: "Upwork", url: "https://www.upwork.com" },
+  fiverr: { label: "Fiverr", url: "https://www.fiverr.com" },
 };
 const DOORDASH_VS_UBER_EATS_LINKS = [
   IRS.selfEmployedCenter,
@@ -599,6 +604,30 @@ const AMAZON_FLEX_VS_DOORDASH_LINKS = [
   IRS.estimated,
   PLATFORM_LINKS.amazonFlex,
   PLATFORM_LINKS.doordash,
+];
+const UPWORK_VS_FIVERR_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.upwork,
+  PLATFORM_LINKS.fiverr,
+];
+const GOPUFF_VS_DOORDASH_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.gopuff,
+  PLATFORM_LINKS.doordash,
+];
+const ROVER_VS_WAG_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.rover,
+  PLATFORM_LINKS.wag,
+];
+const LYFT_VS_UBER_EATS_LINKS = [
+  IRS.selfEmployedCenter,
+  IRS.estimated,
+  PLATFORM_LINKS.lyft,
+  PLATFORM_LINKS.uberEats,
 ];
 
 // Additional platform-specific tax-guide link bundles (Amazon Flex, Grubhub,
@@ -1004,6 +1033,58 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Amazon Flex usually requires 21+ and a mid-size or larger vehicle, and you commit to a whole block; DoorDash is often 18+ with a lower vehicle bar and no block commitment. One rewards predictability, the other flexibility.",
       "Both issue a 1099-NEC if you earned $600 or more — Amazon via its tax portal, DoorDash via Stripe. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income whether or not a form arrives.",
       "To compare, run comparable shifts on each, track active hours and business miles, subtract mileage and expenses, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators handle it. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/upwork-vs-fiverr",
+    externalLinks: UPWORK_VS_FIVERR_LINKS,
+    title: "Upwork vs Fiverr: Which Is Better for Freelancers? | UnifyOne",
+    description:
+      "Upwork vs Fiverr compared on how you get work, platform fees, 1099-K forms, payout methods, and who each suits — plus how to compute your own net pay.",
+    body: [
+      "Upwork and Fiverr are the two largest freelance marketplaces, but they work differently: on Upwork you send proposals and bill clients on hourly or fixed-price contracts, while on Fiverr you publish fixed-price gigs that buyers order directly. Both pay you as a self-employed freelancer with nothing withheld.",
+      "Both take a cut before you're paid — Upwork deducts a freelancer service fee from each contract, and Fiverr deducts a flat seller commission (around 20%) from each order, with buyers paying separate service fees on top. Those platform fees are a deductible business expense, so track them.",
+      "As third-party settlement platforms, both issue a 1099-K once your processed payments pass the IRS reporting threshold for the year rather than a 1099-NEC. Thresholds have changed recently, and you owe income tax plus the 15.3% self-employment tax on net earnings — report all income whether or not a form arrives.",
+      "To compare honestly, take comparable projects on each, log the hours you actually worked, subtract platform fees and expenses, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators do the math. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/gopuff-vs-doordash",
+    externalLinks: GOPUFF_VS_DOORDASH_LINKS,
+    title: "Gopuff vs DoorDash: Which Delivery Gig Is Better? | UnifyOne",
+    description:
+      "Gopuff vs DoorDash compared on how offers/blocks work, what you carry, scheduling, 1099-NEC forms, mileage, and payouts — plus how to compute your net pay.",
+    body: [
+      "Gopuff and DoorDash are both independent-contractor delivery gigs, but the model differs: Gopuff delivers its own convenience and grocery stock from local micro-fulfillment centers, while DoorDash delivers orders from third-party restaurants and stores.",
+      "That changes the work: on Gopuff you start each trip at the facility with the order already packed and tend to work scheduled blocks; on DoorDash you drive to the merchant first, sometimes wait, and can log on largely on-demand per offer with tips shown upfront.",
+      "Both issue a 1099-NEC if you earn $600 or more in a year — Gopuff via its payment partner, DoorDash via Stripe. You owe income tax plus the 15.3% self-employment tax on net earnings from either, and you must report all income whether or not a form arrives.",
+      "To compare, run comparable shifts on each, track active hours and business miles, subtract mileage and expenses, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators handle it. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/rover-vs-wag",
+    externalLinks: ROVER_VS_WAG_LINKS,
+    title: "Rover vs Wag: Which Is Better for Pet Care? | UnifyOne",
+    description:
+      "Rover vs Wag compared on how clients are found, service types, platform cut, scheduling control, and 1099-K forms — plus how to compute your own net pay.",
+    body: [
+      "Rover and Wag are the two largest pet-care marketplaces, connecting independent sitters and walkers with owners for dog walking, drop-in visits, boarding, and house sitting. Both pay you as a self-employed contractor with nothing withheld and take a cut of what owners pay.",
+      "On Rover you build a profile, set your own services and rates, and owners book you directly, so you tend to build repeat clients and control your calendar. Wag leans more on-demand, surfacing nearby requests you accept as they come in — quicker bookings, but less control over timing and pricing.",
+      "As third-party platforms, both issue a 1099-K once your processed payments pass the IRS reporting threshold for the year rather than a 1099-NEC. Thresholds have changed recently, and you owe income tax plus the 15.3% self-employment tax on net earnings — report all income whether or not a form arrives.",
+      "To compare, take comparable bookings on each, track the time you spent and any travel miles, subtract the platform's fee and supply costs, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators do the math. This is educational information, not financial or tax advice.",
+    ],
+  },
+  {
+    path: "/lyft-vs-uber-eats",
+    externalLinks: LYFT_VS_UBER_EATS_LINKS,
+    title: "Lyft vs Uber Eats: Which Should You Drive For? | UnifyOne",
+    description:
+      "Lyft (rideshare) vs Uber Eats (food delivery) compared on the work, requirements, 1099 forms, vehicle wear, and scheduling — plus how to compute your net pay.",
+    body: [
+      "Lyft and Uber Eats are both independent-contractor driving gigs, but they're different jobs: Lyft is rideshare — you carry passengers — while Uber Eats is food delivery, so you carry orders and never have a rider in the car. Both pay you with nothing withheld.",
+      "Lyft's requirements are usually stricter (often 21+ with a qualifying multi-door vehicle and a vehicle inspection), and passengers mean more miles and vehicle wear; Uber Eats has a lower bar and, in some markets, bike or scooter delivery. Both show pay before you accept and pass through 100% of tips.",
+      "On taxes, each typically issues a 1099-K for the fares the platform processes plus a 1099-NEC for incentives and referrals, reconciled on your Lyft Annual Summary or Uber Tax Summary. Thresholds change yearly, and you owe income tax plus the 15.3% self-employment tax on net earnings — report all income regardless.",
+      "To compare, work comparable hours on each, track active time and business miles, subtract mileage and expenses, and divide by hours — the free Real Hourly Rate and Earnings Consolidator calculators do the math. This is educational information, not financial or tax advice.",
     ],
   },
   {

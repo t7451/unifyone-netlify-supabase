@@ -1452,6 +1452,42 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/upwork-vs-fiverr"
+        component={() => (
+          <>
+            <PlatformComparison slug="upwork-vs-fiverr" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/gopuff-vs-doordash"
+        component={() => (
+          <>
+            <PlatformComparison slug="gopuff-vs-doordash" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/rover-vs-wag"
+        component={() => (
+          <>
+            <PlatformComparison slug="rover-vs-wag" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/lyft-vs-uber-eats"
+        component={() => (
+          <>
+            <PlatformComparison slug="lyft-vs-uber-eats" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Getting-started cluster: "how to make money on <platform>" guides */}
       <Route
         path="/how-to-make-money-on-doordash"

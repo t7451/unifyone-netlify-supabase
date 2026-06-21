@@ -777,6 +777,279 @@ export const PLATFORM_COMPARISONS: PlatformComparison[] = [
       },
     ],
   },
+  {
+    slug: "upwork-vs-fiverr",
+    platformA: "Upwork",
+    platformB: "Fiverr",
+    eyebrow: "Gig Platform Comparison",
+    title: "Upwork vs Fiverr: Which Is Better for Freelancers?",
+    metaDescription:
+      "Upwork vs Fiverr compared on how you get work, platform fees, 1099-K forms, payout methods, and who each suits — plus how to compute your own net pay.",
+    h1: "Upwork vs Fiverr: Which Is Better for Freelancers?",
+    intro:
+      'Upwork and Fiverr are the two largest freelance marketplaces, but they\'re structured differently: on Upwork you send proposals and bill clients on hourly or fixed-price contracts, while on Fiverr you publish fixed-price "gigs" that buyers order directly. Both are third-party platforms that pay you as a self-employed freelancer with nothing withheld. Rather than quote rates that vary wildly by skill and client, this guide compares the two structurally and shows you how to measure your own net pay on each.',
+    dimensions: [
+      {
+        aspect: "How you get work",
+        a: "You browse job posts and send proposals (sometimes spending Connects to bid); clients interview and hire you on hourly or fixed-price contracts.",
+        b: 'You publish fixed-scope "gigs" with set packages and prices; buyers find your listing and order directly, often without a back-and-forth first.',
+      },
+      {
+        aspect: "How pay is structured",
+        a: "Hourly contracts (tracked via the Upwork app) or fixed-price milestones; funds are protected in escrow and released as work is approved.",
+        b: 'Fixed price per gig package plus paid add-ons ("gig extras"); the order amount is held until you deliver and the buyer accepts.',
+      },
+      {
+        aspect: "Platform fees / commission",
+        a: "A freelancer service fee is deducted from your earnings on each contract; clients may also pay separate marketplace and processing fees.",
+        b: "Fiverr deducts a flat seller commission (around 20%) from each order before you're paid; buyers pay a separate service fee on top of your price.",
+      },
+      {
+        aspect: "Tax forms issued",
+        a: "As a third-party settlement platform, Upwork issues a 1099-K once your processed payments pass the IRS threshold for the year; the threshold changes, so report all income regardless.",
+        b: "As a third-party platform, Fiverr issues a 1099-K once your processed payments pass the IRS threshold for the year; the threshold changes, so report all income regardless.",
+      },
+      {
+        aspect: "Payout methods",
+        a: "Direct deposit/ACH, PayPal, wire, and other options on a security-hold schedule after a contract bills; instant options may carry a fee.",
+        b: "PayPal, direct deposit/bank transfer, Payoneer, or a Fiverr card after a clearing period once the order completes; faster withdrawal may carry a fee.",
+      },
+      {
+        aspect: "Who it suits",
+        a: "Service providers who want ongoing client relationships, hourly work, and larger or retainer-style projects negotiated through proposals.",
+        b: "Providers with a productized, repeatable deliverable who prefer set packages and buyers coming to them rather than bidding on jobs.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Is Upwork or Fiverr better for freelancers?",
+        a: COMPARE_YOUR_OWN_PAY_ANSWER,
+      },
+      {
+        q: "How is getting work different on Upwork vs Fiverr?",
+        a: "On Upwork you find client job posts and send proposals (sometimes using Connects to bid), then work hourly or fixed-price contracts with escrow protection. On Fiverr you list fixed-scope gigs with set packages and prices, and buyers order directly. Upwork is more proposal-and-interview; Fiverr is more publish-and-get-ordered.",
+      },
+      {
+        q: "What are the fees on Upwork vs Fiverr?",
+        a: "Both take a cut before you're paid. Upwork deducts a freelancer service fee from your contract earnings; Fiverr deducts a flat seller commission of roughly 20% from each order. Buyers also pay separate service fees on both. These platform fees are a deductible business expense, so track them.",
+      },
+      {
+        q: "What tax forms do Upwork and Fiverr send?",
+        a: "Both are third-party settlement platforms, so each issues a 1099-K once your processed payments pass the IRS reporting threshold for the year (rather than a 1099-NEC). The threshold has changed in recent years, and you owe income tax plus the 15.3% self-employment tax on your net earnings — you must report all income whether or not a 1099-K arrives.",
+      },
+      {
+        q: "Can I use both Upwork and Fiverr?",
+        a: "Yes — many freelancers list on both to widen their pipeline, taking proposal-based contracts on Upwork and selling productized gigs on Fiverr. Track earnings and platform fees per marketplace so you can see which actually nets you more after fees, and report income from both.",
+      },
+      {
+        q: "How do I compare my real earnings on each?",
+        a: "Take a few comparable projects on each platform, record the hours you actually worked and subtract the platform's fees and your expenses, then divide net earnings by hours. The free Real Hourly Rate calculator and Earnings Consolidator do this so you can compare both marketplaces side by side.",
+      },
+    ],
+  },
+  {
+    slug: "gopuff-vs-doordash",
+    platformA: "Gopuff",
+    platformB: "DoorDash",
+    eyebrow: "Gig Platform Comparison",
+    title: "Gopuff vs DoorDash: Which Delivery Gig Is Better?",
+    metaDescription:
+      "Gopuff vs DoorDash compared on how offers/blocks work, what you carry, scheduling, 1099-NEC forms, mileage, and payouts — plus how to compute your net pay.",
+    h1: "Gopuff vs DoorDash: Which Delivery Gig Is Better?",
+    intro:
+      "Gopuff and DoorDash are both independent-contractor delivery gigs, but the model differs: Gopuff delivers its own convenience and grocery stock out of local micro-fulfillment centers, while DoorDash delivers orders from third-party restaurants and stores. That changes what you carry, where you start each trip, and how you schedule. Instead of quoting earnings that shift by market and week, this guide compares the two structurally and shows you how to measure your own net hourly rate on each.",
+    dimensions: [
+      {
+        aspect: "What you carry",
+        a: "Gopuff's own convenience and grocery items — snacks, drinks, household goods — picked at a Gopuff micro-fulfillment center.",
+        b: "Orders from third-party restaurants, convenience, grocery, and retail merchants across DoorDash's network.",
+      },
+      {
+        aspect: "How offers / blocks work",
+        a: "You typically schedule or claim time blocks tied to a local facility, then deliver the orders routed to you during that block.",
+        b: "Per-offer: each delivery shows a guaranteed base pay plus promotions and 100% of tips before you accept it; you can also Dash Now in busy zones.",
+      },
+      {
+        aspect: "Where you start each trip",
+        a: "From the Gopuff micro-fulfillment center, where orders are already packed — no restaurant or store wait.",
+        b: "From the merchant: you drive to a restaurant or store, sometimes wait for the order, then deliver to the customer.",
+      },
+      {
+        aspect: "Scheduling / flexibility",
+        a: "Lean toward reserved blocks at a facility, so you commit to a window once scheduled; availability depends on the local center.",
+        b: "Largely on-demand — Dash Now when zones are busy or schedule a dash in advance; higher acceptance can unlock Top Dasher priority.",
+      },
+      {
+        aspect: "Tax forms issued",
+        a: "Pays you as an independent contractor and issues a 1099-NEC if you earn $600 or more in a year (via its payment partner).",
+        b: "1099-NEC if you earn $600 or more in a year (delivered through Stripe).",
+      },
+      {
+        aspect: "Mileage / expense profile",
+        a: "Car-based; you absorb miles from the facility to each customer and back. Keep your own mileage log, since reported mileage is limited.",
+        b: "Car-based delivery (bikes/scooters in some cities); track every business mile. DoorDash reports limited mileage, so keep your own log.",
+      },
+      {
+        aspect: "Payout speed",
+        a: "Direct deposit on a set schedule through its payment partner; an instant cash-out option is often available, sometimes for a fee.",
+        b: "Weekly direct deposit by default; instant cash-out options are available, sometimes for a fee.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Is Gopuff or DoorDash better for delivery drivers?",
+        a: COMPARE_YOUR_OWN_PAY_ANSWER,
+      },
+      {
+        q: "What's the main difference between Gopuff and DoorDash?",
+        a: "Gopuff delivers its own convenience and grocery stock from a local micro-fulfillment center, so you start each trip at the facility with the order already packed and tend to work scheduled blocks. DoorDash delivers from third-party restaurants and stores per offer, so you drive to the merchant first and can log on largely on-demand.",
+      },
+      {
+        q: "What tax forms do Gopuff and DoorDash send?",
+        a: "Both treat you as an independent contractor with no tax withheld, and both issue a 1099-NEC if you earn $600 or more in a year (Gopuff via its payment partner; DoorDash via Stripe). You owe income tax plus the 15.3% self-employment tax on net earnings, and you must report all income whether or not a form arrives.",
+      },
+      {
+        q: "Can I do both Gopuff and DoorDash?",
+        a: "Yes — both are non-exclusive independent-contractor gigs, so many drivers schedule Gopuff blocks for steadier routed orders and fill gaps with on-demand DoorDash offers. Track mileage and earnings per app so you can see which nets more of your time in your area, and report income from both.",
+      },
+      {
+        q: "How do I compare my real earnings on each?",
+        a: "Work a few comparable shifts on each, record your active hours and the miles you drove, then divide net earnings after expenses by hours. The free Real Hourly Rate calculator and Earnings Consolidator compute this so you can compare both directly.",
+      },
+    ],
+  },
+  {
+    slug: "rover-vs-wag",
+    platformA: "Rover",
+    platformB: "Wag",
+    eyebrow: "Gig Platform Comparison",
+    title: "Rover vs Wag: Which Is Better for Pet Care?",
+    metaDescription:
+      "Rover vs Wag compared on how clients are found, service types, platform cut, scheduling control, and 1099-K forms — plus how to compute your own net pay.",
+    h1: "Rover vs Wag: Which Is Better for Pet Care?",
+    intro:
+      "Rover and Wag are the two largest pet-care marketplaces, connecting independent sitters and walkers with pet owners for dog walking, drop-in visits, boarding, and house sitting. Both are third-party platforms that pay you as a self-employed contractor with nothing withheld, and both take a cut of what owners pay. Rather than quote rates that vary by city and service, this guide compares the two structurally and shows you how to measure your own net pay on each.",
+    dimensions: [
+      {
+        aspect: "How clients are found",
+        a: "You build a profile and set your own services and rates; owners search, message, and book you directly, so much of the work is repeat clients.",
+        b: "Wag surfaces nearby on-demand and scheduled requests you can accept; it leans more toward matching you with new bookings as they come in.",
+      },
+      {
+        aspect: "Service types",
+        a: "Dog walking, drop-in visits, doggy day care, boarding (in your home), and house sitting — you choose which to offer.",
+        b: "Dog walking, drop-in visits, boarding, sitting, and add-ons like training; service mix can vary by market.",
+      },
+      {
+        aspect: "Fees / platform cut",
+        a: "Rover deducts a service fee from each booking before you're paid; you keep the rest of the rate you set.",
+        b: "Wag deducts a service fee/commission from each booking before you're paid; new-client bookings can carry a different cut.",
+      },
+      {
+        aspect: "Scheduling control",
+        a: "You set your own availability, services, and prices, and approve each request — more control over your calendar and which jobs you take.",
+        b: "More on-demand: you accept requests as they appear, which can mean faster bookings but less control over timing and pricing.",
+      },
+      {
+        aspect: "Tax forms issued",
+        a: "As a third-party platform, Rover issues a 1099-K once your processed payments pass the IRS threshold for the year; the threshold changes, so report all income regardless.",
+        b: "As a third-party platform, Wag issues a 1099-K once your processed payments pass the IRS threshold for the year; the threshold changes, so report all income regardless.",
+      },
+      {
+        aspect: "Expense profile",
+        a: "Mostly your time plus any travel to clients; track business mileage to walks/sits and supplies like leashes, bags, and treats.",
+        b: "Similar — time plus travel between bookings; track business mileage and any supplies you buy for the work.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Is Rover or Wag better for pet sitters and walkers?",
+        a: COMPARE_YOUR_OWN_PAY_ANSWER,
+      },
+      {
+        q: "How is finding clients different on Rover vs Wag?",
+        a: "On Rover you build a profile, set your own services and rates, and owners search for and book you directly — so you tend to build repeat clients and control your calendar. Wag leans more on-demand, surfacing nearby requests you accept as they come in, which can mean quicker bookings but less control over timing and pricing.",
+      },
+      {
+        q: "What tax forms do Rover and Wag send?",
+        a: "Both are third-party platforms, so each issues a 1099-K once your processed payments pass the IRS reporting threshold for the year (rather than a 1099-NEC). The threshold has changed in recent years, and you owe income tax plus the 15.3% self-employment tax on your net earnings — you must report all income whether or not a 1099-K arrives.",
+      },
+      {
+        q: "Can I list on both Rover and Wag?",
+        a: "Yes — many pet-care providers list on both to fill their schedule, taking direct bookings on Rover and accepting on-demand requests on Wag. Track earnings and the platform's cut per app so you can see which actually nets you more after fees, and report income from both.",
+      },
+      {
+        q: "How do I compare my real earnings on each?",
+        a: "Take a few comparable bookings on each platform, record the time you spent and your travel miles, subtract the platform's fee and your supply costs, then divide net earnings by hours. The free Real Hourly Rate calculator and Earnings Consolidator do this so you can compare both directly.",
+      },
+    ],
+  },
+  {
+    slug: "lyft-vs-uber-eats",
+    platformA: "Lyft",
+    platformB: "Uber Eats",
+    eyebrow: "Gig Platform Comparison",
+    title: "Lyft vs Uber Eats: Which Should You Drive For?",
+    metaDescription:
+      "Lyft (rideshare) vs Uber Eats (food delivery) compared on the work, requirements, 1099 forms, vehicle wear, and scheduling — plus how to compute your net pay.",
+    h1: "Lyft vs Uber Eats: Which Should You Drive For?",
+    intro:
+      "Lyft and Uber Eats are both independent-contractor driving gigs, but they're fundamentally different jobs: Lyft is rideshare — you carry passengers — while Uber Eats is food delivery, where you carry orders and never have a rider in the car. That changes the requirements, the wear on your vehicle, and how tax forms arrive. Rather than quote per-hour figures that vary city to city, this guide compares them on the structural factors that drive net pay and shows you how to measure your own real hourly rate on each.",
+    dimensions: [
+      {
+        aspect: "What the work is",
+        a: "Rideshare: you drive passengers to their destinations; the job is carrying people, not packages.",
+        b: "Food delivery: you pick up orders from restaurants and stores and drop them off — no passengers.",
+      },
+      {
+        aspect: "Typical requirements",
+        a: "Higher bar: typically 21+ (or a few years' licensed driving) with a qualifying multi-door vehicle, a background check, and a vehicle inspection.",
+        b: "Lower bar: typically 18+; in many markets you can deliver by car, and sometimes by bike or scooter, with no rideshare-grade inspection.",
+      },
+      {
+        aspect: "How pay is structured",
+        a: "Upfront fare shown before you accept each ride, plus 100% of tips and surge/bonus promotions during high demand.",
+        b: "Per-offer upfront amount shown before you accept each delivery, plus 100% of tips and Surge/Boost or Quest promotions.",
+      },
+      {
+        aspect: "Tax forms issued",
+        a: "A 1099-K for ride fares processed through the platform plus a 1099-NEC for incentives and referrals; thresholds vary by year and your Lyft Annual Summary reconciles both.",
+        b: "Often a 1099-NEC for incentives and referrals plus a 1099-K for processed delivery fares; thresholds vary by year and your Uber Tax Summary reconciles both.",
+      },
+      {
+        aspect: "Vehicle wear / expense profile",
+        a: "Passengers and longer trips mean more miles and engine hours, higher fuel and wear, and more interior wear — but often less waiting.",
+        b: "Shorter trips with restaurant wait time and between-stop miles; generally lighter interior wear since you carry food, not people.",
+      },
+      {
+        aspect: "Scheduling / payout",
+        a: "Log on any time; weekly direct deposit by default, with Express Pay to cash out more often, sometimes for a fee.",
+        b: "Mostly on-demand, subject to area capacity; weekly direct deposit with Instant Pay to cash out more often, sometimes for a fee.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Which pays more, Lyft or Uber Eats?",
+        a: COMPARE_YOUR_OWN_PAY_ANSWER,
+      },
+      {
+        q: "What's the main difference between Lyft and Uber Eats?",
+        a: "Lyft is rideshare — you carry passengers — while Uber Eats is food delivery, so you carry orders and never have a rider in the car. Lyft's requirements are usually stricter (often 21+ with a qualifying vehicle and an inspection), and passengers mean more miles and vehicle wear. Uber Eats has a lower bar and, in some markets, bike delivery.",
+      },
+      {
+        q: "What tax forms do Lyft and Uber Eats send?",
+        a: "Both pay you as an independent contractor with nothing withheld. Each typically issues a 1099-K for the fares the platform processes plus a 1099-NEC for incentives and referrals, reconciled on your Lyft Annual Summary or Uber Tax Summary. Thresholds change yearly, and you owe income tax plus the 15.3% self-employment tax on net earnings — report all income regardless of which forms arrive.",
+      },
+      {
+        q: "Can I drive for both Lyft and Uber Eats?",
+        a: "Yes — both are non-exclusive independent-contractor apps, so many drivers run rideshare on Lyft and switch to Uber Eats deliveries when ride demand is slow. Track mileage and earnings per app so you can see which nets more of your time in your area, and report income from both.",
+      },
+      {
+        q: "How do I figure out which one nets me more per hour?",
+        a: "Work comparable hours on each, log your active time and the miles you drove, then divide net earnings (after mileage and expenses) by hours. The free Real Hourly Rate calculator and Earnings Consolidator do this math so you can compare both side by side.",
+      },
+    ],
+  },
 ];
 
 export function getPlatformComparison(
