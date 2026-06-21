@@ -545,6 +545,8 @@ const PLATFORM_LINKS = {
   wag: { label: "Wag", url: "https://wagwalking.com" },
   upwork: { label: "Upwork", url: "https://www.upwork.com" },
   fiverr: { label: "Fiverr", url: "https://www.fiverr.com" },
+  roadie: { label: "Roadie", url: "https://www.roadie.com" },
+  favor: { label: "Favor", url: "https://favordelivery.com" },
 };
 const DOORDASH_VS_UBER_EATS_LINKS = [
   IRS.selfEmployedCenter,
@@ -821,6 +823,34 @@ const ROVER_START_LINKS = [
     url: "https://www.rover.com/become-a-sitter/",
   },
   PLATFORM_LINKS.rover,
+  IRS.selfEmployedCenter,
+];
+const SHIPT_START_LINKS = [
+  {
+    label: "Become a Shipt Shopper",
+    url: "https://www.shipt.com/be-a-shopper/",
+  },
+  PLATFORM_LINKS.shipt,
+  IRS.selfEmployedCenter,
+];
+const GOPUFF_START_LINKS = [
+  { label: "Drive with Gopuff", url: "https://driver.gopuff.com" },
+  PLATFORM_LINKS.gopuff,
+  IRS.selfEmployedCenter,
+];
+const ROADIE_START_LINKS = [
+  { label: "Drive with Roadie", url: "https://www.roadie.com/drivers/" },
+  PLATFORM_LINKS.roadie,
+  IRS.selfEmployedCenter,
+];
+const FAVOR_START_LINKS = [
+  { label: "Run with Favor", url: "https://favordelivery.com/run-with-favor/" },
+  PLATFORM_LINKS.favor,
+  IRS.selfEmployedCenter,
+];
+const WAG_START_LINKS = [
+  { label: "Become a Wag walker", url: "https://wagwalking.com/dog-walker" },
+  PLATFORM_LINKS.wag,
   IRS.selfEmployedCenter,
 ];
 
@@ -2684,6 +2714,71 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Rover lets you earn by caring for pets — boarding, house sitting, drop-in visits, day care, and dog walking — on your own schedule. Sitters are independent contractors who list services, set their own prices, and accept or decline bookings in the app.",
       "To start you generally need to be at least 18, be comfortable and reliable with animals (and have a pet-friendly space if you board), have a smartphone, build a profile for approval, and pass a background check. Requirements vary by market and change, so confirm them with Rover.",
       "You set your own prices and are paid for completed bookings, minus a Rover service fee, with any owner tips on top. There's no guaranteed wage, no taxes are withheld, and you cover your own supplies, travel, and any boarding costs.",
+      "To know what you'd really make, track your active hours and expenses and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-with-shipt",
+    externalLinks: SHIPT_START_LINKS,
+    title: "How to Make Money with Shipt: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money with Shipt: requirements, how to sign up as a shopper, how pay and tips work, and how to compute your real net hourly rate.",
+    body: [
+      "Shipt pays full-service shoppers to shop for and deliver groceries to members on their own schedule. You're an independent contractor who claims orders, shops in-store, and delivers — choosing when and how much you work.",
+      "To start you generally need to be at least 18, have a reliable car with a valid license and insurance, have a smartphone, and pass a background check. Requirements vary by market and change, so confirm them with Shipt.",
+      "You're paid per completed order (reflecting items, distance, and promotions) and keep 100% of member tips. There's no guaranteed wage, no taxes are withheld, and you cover your own gas, mileage, and phone.",
+      "To know what you'd really make, track your active hours and expenses and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-with-gopuff",
+    externalLinks: GOPUFF_START_LINKS,
+    title: "How to Make Money with Gopuff: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money with Gopuff: requirements, how to sign up to deliver, how driver pay and tips work, and how to compute your real net hourly rate.",
+    body: [
+      "Gopuff pays drivers to deliver convenience and grocery items from its own micro-fulfillment centers to nearby customers — so there's no in-store shopping, just pre-packed pickups. You're an independent contractor who often works scheduled delivery blocks.",
+      "To start you generally need to meet the minimum age (often 21, since deliveries can include alcohol), have a car with a valid license and insurance, have a smartphone, and pass a background check. Requirements vary by market and change, so confirm them with Gopuff.",
+      "You're paid per delivery (with scheduled blocks in some markets) and keep your tips. There's no guaranteed wage, no taxes are withheld, and you cover your own gas, mileage, and phone.",
+      "To know what you'd really make, track your active hours and expenses and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-with-roadie",
+    externalLinks: ROADIE_START_LINKS,
+    title: "How to Make Money with Roadie: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money with Roadie: requirements, how to sign up, how gig pay and tips work, and how to compute your real net hourly rate.",
+    body: [
+      "Roadie (a UPS company) pays drivers to deliver packages and items along routes they choose — from small parcels to big-and-bulky items. You're an independent contractor who browses available gigs and claims the ones that fit your route and vehicle.",
+      "To start you generally need to be at least 18, have a vehicle suited to the gigs you take and a valid license, have a smartphone, and create an approved driver account. Requirements vary and change, so confirm them with Roadie.",
+      "Each gig shows its pay before you claim it (generally reflecting distance and size), and tips may be added. There's no guaranteed wage, no taxes are withheld, and you cover your own gas, mileage, and handling.",
+      "To know what you'd really make, track your active hours and expenses and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-with-favor",
+    externalLinks: FAVOR_START_LINKS,
+    title: "How to Make Money with Favor: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money with Favor as a Runner: requirements, how to sign up, how pay and tips work, and how to compute your real net hourly rate.",
+    body: [
+      "Favor is a Texas-based on-demand delivery app (part of H-E-B) that pays its Runners to deliver food and other items. You're an independent contractor who goes online, accepts delivery requests, and is paid per delivery plus tips.",
+      "To start you generally need to be at least 18, live in a Texas market Favor serves, have a vehicle (or bike/scooter where allowed) with a valid license and insurance, have a smartphone, and pass a background check. Requirements vary and change, so confirm them with Favor.",
+      "You're paid per completed delivery and keep 100% of customer tips, with hourly guarantees on some shifts in busier markets. There's no fixed wage otherwise, no taxes are withheld, and you cover your own gas, mileage, and phone.",
+      "To know what you'd really make, track your active hours and expenses and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay. This is educational information, not financial advice, and not a guarantee of income.",
+    ],
+  },
+  {
+    path: "/how-to-make-money-with-wag",
+    externalLinks: WAG_START_LINKS,
+    title: "How to Make Money with Wag: A Beginner's Guide | UnifyOne",
+    description:
+      "How to make money with Wag: requirements, how to sign up, how dog-walker and sitter pay works, and how to compute your real net hourly rate.",
+    body: [
+      "Wag connects pet owners with dog walkers and sitters, paying you to walk dogs and provide services like sitting, boarding, and drop-in visits on your own schedule. You're an independent contractor who accepts the bookings you want in the app.",
+      "To start you generally need to apply and be approved, pass a background check, be comfortable and reliable with dogs, and have a smartphone — dog walking nearby may need no vehicle. Requirements vary and change, so confirm them with Wag.",
+      "You're paid for completed services and keep owner tips; Wag takes a service fee from bookings. There's no guaranteed wage, no taxes are withheld, and you cover your own supplies and any travel.",
       "To know what you'd really make, track your active hours and expenses and use the free Real Hourly Rate calculator and Earnings Consolidator to compute your net pay. This is educational information, not financial advice, and not a guarantee of income.",
     ],
   },

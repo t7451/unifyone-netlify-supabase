@@ -1615,6 +1615,51 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/how-to-make-money-with-shipt"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-with-shipt" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/how-to-make-money-with-gopuff"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-with-gopuff" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/how-to-make-money-with-roadie"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-with-roadie" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/how-to-make-money-with-favor"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-with-favor" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/how-to-make-money-with-wag"
+        component={() => (
+          <>
+            <GettingStartedGuide slug="how-to-make-money-with-wag" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Gig finance cluster: money topics beyond taxes */}
       <Route
         path="/gig-worker-retirement"
