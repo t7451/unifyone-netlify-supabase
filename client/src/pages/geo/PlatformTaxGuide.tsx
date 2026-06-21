@@ -31,7 +31,9 @@ const RELATED_TOOLS = [
   },
 ];
 
-const HOW_IT_WORKS = [
+/** "How it works" steps. The deductions example is vehicle-aware so desk-based
+ *  platforms (vehicleBased: false) don't get mileage framing. */
+const buildHowItWorks = (vehicleBased?: boolean) => [
   {
     title: "You're an independent contractor",
     body: "No taxes are withheld from your pay. You owe federal and state income tax plus self-employment tax on your net earnings.",
@@ -42,7 +44,10 @@ const HOW_IT_WORKS = [
   },
   {
     title: "Deductions lower your taxable income",
-    body: "Business expenses — equipment, software, supplies, phone, and mileage — reduce the net earnings you're taxed on. Tracked properly, they often save more than any other single move.",
+    body:
+      vehicleBased === false
+        ? "Business expenses — equipment, software, supplies, and phone — reduce the net earnings you're taxed on. Tracked properly, they often save more than any other single move."
+        : "Business expenses — equipment, software, supplies, phone, and mileage — reduce the net earnings you're taxed on. Tracked properly, they often save more than any other single move.",
   },
   {
     title: "You pay as you go, quarterly",
@@ -149,7 +154,7 @@ export default function PlatformTaxGuide({ slug }: { slug: string }) {
             How {guide.platform} taxes work
           </h2>
           <div className="space-y-4">
-            {HOW_IT_WORKS.map(({ title, body }, i) => (
+            {buildHowItWorks(guide.vehicleBased).map(({ title, body }, i) => (
               <div key={title} className="flex gap-4">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
                   {i + 1}
