@@ -53,6 +53,12 @@ export interface PlatformTaxGuide {
    * angle in the CTA — accurate for desk-based freelancers.
    */
   vehicleBased?: boolean;
+  /**
+   * When true, the "how it works" framing treats the worker as a self-employed
+   * goods seller (income tax + SE tax on net profit after cost of goods) rather
+   * than an independent contractor — accurate for marketplace sellers.
+   */
+  sellerFraming?: boolean;
   /** FAQ entries — power both the visible list and the FAQPage JSON-LD. */
   faqs: PlatformFaq[];
 }
@@ -1035,6 +1041,346 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       {
         q: "When are Wag taxes due?",
         a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+      },
+    ],
+  },
+  {
+    slug: "etsy-taxes",
+    platform: "Etsy",
+    workerNoun: "Etsy sellers",
+    workType: "handmade and craft sales",
+    eyebrow: "Seller Tax Guide",
+    title: "Etsy Taxes: A Seller's Guide to the 1099-K, COGS & Deductions",
+    metaDescription:
+      "How Etsy seller taxes work: the 1099-K, hobby vs business, deducting materials and fees as a self-employed maker, and quarterly taxes. Not tax advice.",
+    h1: "Etsy Taxes: What Every Seller Needs to Know",
+    intro:
+      "Selling on Etsy can be a hobby, a side hustle, or a full business — and which one you are decides how you're taxed. Etsy doesn't withhold taxes, and the 1099-K it may send reports gross sales, not profit. Here's how Etsy taxes work once you're selling as a business.",
+    formsHeading: "Do you get a 1099-K — and is your Etsy income taxable?",
+    formsBody: [
+      "Etsy processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed in recent years, so you might get a 1099-K for fairly modest sales — or not get one and still owe tax. A 1099-K reports gross sales before fees and refunds, so it's a starting point, not your taxable profit.",
+      "Whether you owe tax depends on what you're doing. Casually selling your own used items for less than you paid is generally not taxable (and that loss isn't deductible). But making goods to sell — as most Etsy sellers do — is a business: you report it on Schedule C, deduct your cost of materials and expenses, and owe income tax plus the 15.3% self-employment tax on the net profit. Confirm your situation with the IRS.",
+    ],
+    vehicleBased: false,
+    sellerFraming: true,
+    deductionsOverride: [
+      {
+        label: "Cost of goods sold (materials)",
+        desc: "The materials and supplies that go into the items you make are deducted against your sales as COGS — keep records of what each piece costs you.",
+      },
+      {
+        label: "Etsy fees",
+        desc: "Etsy's listing, transaction, payment-processing, and optional Offsite Ads fees are deductible business expenses.",
+      },
+      {
+        label: "Shipping & postage",
+        desc: "Postage, shipping labels, and carrier fees you pay to get orders to buyers.",
+      },
+      {
+        label: "Packaging & supplies",
+        desc: "Boxes, mailers, tissue, tape, and other materials used to pack and ship orders.",
+      },
+      {
+        label: "Home studio & storage",
+        desc: "The part of your home used regularly and exclusively for making, storing, or shipping your products may qualify.",
+      },
+      {
+        label: "Tools & equipment",
+        desc: "Craft tools, a dedicated printer, and equipment bought for the business (larger items may be depreciated).",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Etsy take out taxes for me?",
+        a: "No. Etsy doesn't withhold taxes. If you sell as a business, you're responsible for income tax plus the 15.3% self-employment tax on your net profit (sales minus your cost of materials and expenses).",
+      },
+      {
+        q: "Do I get a 1099-K from Etsy?",
+        a: "Etsy issues a 1099-K when your sales reach the IRS reporting threshold for the year (the threshold has changed recently, so you may get one for modest sales). It reports gross sales before fees — report all of your business income whether or not a form arrives.",
+      },
+      {
+        q: "Is selling on Etsy taxable income?",
+        a: "If you're running a business — making items to sell for profit — yes, the net profit is taxable and reported on Schedule C. Casually selling your own used possessions for less than you paid generally isn't taxable, and that loss isn't deductible. Confirm your situation with the IRS.",
+      },
+      {
+        q: "What can Etsy sellers deduct?",
+        a: "Your cost of materials (COGS), Etsy's fees, shipping and postage, packaging, a qualifying home studio, and tools and equipment. Good records of what each item costs you to make are what make these deductions stick.",
+      },
+      {
+        q: "How much should Etsy sellers set aside for taxes?",
+        a: "A common rule of thumb is 25–30% of your net profit (sales minus cost of goods and expenses) for income tax plus the 15.3% self-employment tax — your exact rate depends on your total income and state. Use the Tax Set-Aside calculator for a tailored number.",
+      },
+    ],
+  },
+  {
+    slug: "ebay-taxes",
+    platform: "eBay",
+    workerNoun: "eBay sellers",
+    workType: "online reselling",
+    eyebrow: "Seller Tax Guide",
+    title: "eBay Taxes: A Reseller's Guide to the 1099-K & Deductions",
+    metaDescription:
+      "How eBay taxes work for resellers: the 1099-K, hobby vs business, cost of goods, deductible fees and shipping, and quarterly taxes. Not tax advice.",
+    h1: "eBay Taxes: What Every Seller Needs to Know",
+    intro:
+      "How you're taxed on eBay depends on whether you're cleaning out your closet or running a resale business. eBay doesn't withhold taxes, and the 1099-K it may send reports gross sales, not profit. Here's how eBay taxes work once you're selling as a business.",
+    formsHeading: "Do you get a 1099-K — and is your eBay income taxable?",
+    formsBody: [
+      "eBay processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed in recent years, so you might receive a 1099-K for modest sales — or not get one and still owe tax. The 1099-K shows gross sales before fees, shipping, and refunds, so it isn't your taxable profit.",
+      "Whether you owe tax depends on what you're doing. Selling your own used personal items for less than you paid is generally not taxable (and the loss isn't deductible). But buying items to resell for profit is a business: you report it on Schedule C, deduct your cost of goods and expenses, and owe income tax plus the 15.3% self-employment tax on the net profit. Confirm your situation with the IRS.",
+    ],
+    vehicleBased: false,
+    sellerFraming: true,
+    deductionsOverride: [
+      {
+        label: "Cost of goods sold (COGS)",
+        desc: "What you paid for the items you resold is subtracted from your sales as COGS — keep receipts and records of each item's cost.",
+      },
+      {
+        label: "eBay & payment fees",
+        desc: "eBay's final-value fees, listing fees, and payment-processing fees are deductible business expenses.",
+      },
+      {
+        label: "Shipping & postage",
+        desc: "Postage, labels, and carrier fees you pay to ship orders (the portion not reimbursed by the buyer).",
+      },
+      {
+        label: "Packaging & supplies",
+        desc: "Boxes, mailers, tape, and packing materials used to ship orders.",
+      },
+      {
+        label: "Home office & storage",
+        desc: "The part of your home used regularly and exclusively to store inventory or run the business may qualify.",
+      },
+      {
+        label: "Sourcing & drop-off mileage",
+        desc: "Miles driven to source inventory or drop off shipments are deductible at the IRS standard mileage rate.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does eBay take out taxes for me?",
+        a: "No. eBay doesn't withhold taxes. If you sell as a business, you owe income tax plus the 15.3% self-employment tax on your net profit (sales minus cost of goods and expenses).",
+      },
+      {
+        q: "Do I get a 1099-K from eBay?",
+        a: "eBay issues a 1099-K when your sales reach the IRS reporting threshold for the year (the threshold has changed recently). It reports gross sales before fees and shipping — report all of your business income whether or not a form arrives.",
+      },
+      {
+        q: "Is selling on eBay taxable income?",
+        a: "Reselling for profit is a taxable business reported on Schedule C. Selling your own used belongings for less than you paid generally isn't taxable, and that loss isn't deductible. A 1099-K alone doesn't make income taxable — but you must report and reconcile it. Confirm with the IRS.",
+      },
+      {
+        q: "What can eBay sellers deduct?",
+        a: "Your cost of goods sold (what you paid for the items), eBay and payment fees, shipping and packaging, a qualifying home office or storage space, and sourcing mileage. Records of each item's cost are essential.",
+      },
+      {
+        q: "How much should eBay sellers set aside for taxes?",
+        a: "A common rule of thumb is 25–30% of your net profit (sales minus cost of goods and expenses) for income tax plus the 15.3% self-employment tax — your exact rate depends on your total income and state. Use the Tax Set-Aside calculator for a tailored number.",
+      },
+    ],
+  },
+  {
+    slug: "poshmark-taxes",
+    platform: "Poshmark",
+    workerNoun: "Poshmark sellers",
+    workType: "clothing resale",
+    eyebrow: "Seller Tax Guide",
+    title: "Poshmark Taxes: A Seller's Guide to the 1099-K & Deductions",
+    metaDescription:
+      "How Poshmark taxes work: the 1099-K, hobby vs business, cost of goods, deductible commission and shipping, and quarterly taxes. Not tax advice.",
+    h1: "Poshmark Taxes: What Every Seller Needs to Know",
+    intro:
+      "Whether Poshmark is taxable comes down to whether you're reselling your own closet or running a resale business. Poshmark doesn't withhold taxes, and the 1099-K it may send reports gross sales, not profit. Here's how Poshmark taxes work once you're selling as a business.",
+    formsHeading: "Do you get a 1099-K — and is your Poshmark income taxable?",
+    formsBody: [
+      "Poshmark processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed in recent years, so you might get a 1099-K for modest sales — or not get one and still owe tax. It reports gross sales before Poshmark's commission and shipping, so it isn't your taxable profit.",
+      "Whether you owe tax depends on what you're doing. Reselling your own used clothing for less than you paid is generally not taxable (and the loss isn't deductible). But buying to resell for profit is a business: you report it on Schedule C, deduct your cost of goods and expenses, and owe income tax plus the 15.3% self-employment tax on the net profit. Confirm your situation with the IRS.",
+    ],
+    vehicleBased: false,
+    sellerFraming: true,
+    deductionsOverride: [
+      {
+        label: "Cost of goods sold (COGS)",
+        desc: "What you paid for the clothing you resold is subtracted from your sales as COGS — keep records of each item's cost.",
+      },
+      {
+        label: "Poshmark commission",
+        desc: "The commission Poshmark takes from each sale is a deductible business expense.",
+      },
+      {
+        label: "Shipping (if you cover it)",
+        desc: "Any postage or upgraded shipping you pay rather than pass to the buyer is deductible.",
+      },
+      {
+        label: "Packaging & supplies",
+        desc: "Mailers, boxes, tissue, tape, and packing materials used to ship orders.",
+      },
+      {
+        label: "Home office & storage",
+        desc: "The part of your home used regularly and exclusively to store inventory or run the business may qualify.",
+      },
+      {
+        label: "Sourcing mileage",
+        desc: "Miles driven to source inventory (thrift runs, estate sales) are deductible at the IRS standard mileage rate.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Poshmark take out taxes for me?",
+        a: "No. Poshmark doesn't withhold income tax. If you sell as a business, you owe income tax plus the 15.3% self-employment tax on your net profit (sales minus cost of goods and expenses).",
+      },
+      {
+        q: "Do I get a 1099-K from Poshmark?",
+        a: "Poshmark issues a 1099-K when your sales reach the IRS reporting threshold for the year (the threshold has changed recently). It reports gross sales before commission and shipping — report all of your business income whether or not a form arrives.",
+      },
+      {
+        q: "Is selling on Poshmark taxable income?",
+        a: "Reselling for profit is a taxable business on Schedule C. Selling your own used clothing for less than you paid generally isn't taxable, and that loss isn't deductible. A 1099-K alone doesn't make income taxable — but you must report and reconcile it. Confirm with the IRS.",
+      },
+      {
+        q: "What can Poshmark sellers deduct?",
+        a: "Your cost of goods (what you paid for items), Poshmark's commission, any shipping you cover, packaging, a qualifying home office or storage, and sourcing mileage. Records of each item's cost are essential.",
+      },
+      {
+        q: "How much should Poshmark sellers set aside for taxes?",
+        a: "A common rule of thumb is 25–30% of your net profit (sales minus cost of goods and expenses) for income tax plus the 15.3% self-employment tax — your exact rate depends on your total income and state. Use the Tax Set-Aside calculator for a tailored number.",
+      },
+    ],
+  },
+  {
+    slug: "mercari-taxes",
+    platform: "Mercari",
+    workerNoun: "Mercari sellers",
+    workType: "online reselling",
+    eyebrow: "Seller Tax Guide",
+    title: "Mercari Taxes: A Seller's Guide to the 1099-K & Deductions",
+    metaDescription:
+      "How Mercari taxes work for sellers: the 1099-K, hobby vs business, cost of goods, deductible fees, and quarterly taxes. Not tax advice.",
+    h1: "Mercari Taxes: What Every Seller Needs to Know",
+    intro:
+      "Whether Mercari is taxable depends on whether you're selling off your own things or running a resale business. Mercari doesn't withhold taxes, and the 1099-K it may send reports gross sales, not profit. Here's how Mercari taxes work once you're selling as a business.",
+    formsHeading: "Do you get a 1099-K — and is your Mercari income taxable?",
+    formsBody: [
+      "Mercari processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed in recent years, so you might receive a 1099-K for modest sales — or not get one and still owe tax. It reports gross sales before fees and shipping, so it isn't your taxable profit.",
+      "Whether you owe tax depends on what you're doing. Selling your own used items for less than you paid is generally not taxable (and the loss isn't deductible). But buying to resell for profit is a business: you report it on Schedule C, deduct your cost of goods and expenses, and owe income tax plus the 15.3% self-employment tax on the net profit. Confirm your situation with the IRS.",
+    ],
+    vehicleBased: false,
+    sellerFraming: true,
+    deductionsOverride: [
+      {
+        label: "Cost of goods sold (COGS)",
+        desc: "What you paid for the items you resold is subtracted from your sales as COGS — keep records of each item's cost.",
+      },
+      {
+        label: "Mercari selling & processing fees",
+        desc: "Mercari's selling fee and payment-processing fee are deductible business expenses.",
+      },
+      {
+        label: "Shipping (if you cover it)",
+        desc: "Any postage or shipping you pay rather than pass to the buyer is deductible.",
+      },
+      {
+        label: "Packaging & supplies",
+        desc: "Boxes, mailers, tape, and packing materials used to ship orders.",
+      },
+      {
+        label: "Home office & storage",
+        desc: "The part of your home used regularly and exclusively to store inventory or run the business may qualify.",
+      },
+      {
+        label: "Sourcing mileage",
+        desc: "Miles driven to source inventory are deductible at the IRS standard mileage rate.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Mercari take out taxes for me?",
+        a: "No. Mercari doesn't withhold taxes. If you sell as a business, you owe income tax plus the 15.3% self-employment tax on your net profit (sales minus cost of goods and expenses).",
+      },
+      {
+        q: "Do I get a 1099-K from Mercari?",
+        a: "Mercari issues a 1099-K when your sales reach the IRS reporting threshold for the year (the threshold has changed recently). It reports gross sales before fees — report all of your business income whether or not a form arrives.",
+      },
+      {
+        q: "Is selling on Mercari taxable income?",
+        a: "Reselling for profit is a taxable business on Schedule C. Selling your own used belongings for less than you paid generally isn't taxable, and that loss isn't deductible. A 1099-K alone doesn't make income taxable — but you must report and reconcile it. Confirm with the IRS.",
+      },
+      {
+        q: "What can Mercari sellers deduct?",
+        a: "Your cost of goods (what you paid for items), Mercari's fees, any shipping you cover, packaging, a qualifying home office or storage, and sourcing mileage. Records of each item's cost are essential.",
+      },
+      {
+        q: "How much should Mercari sellers set aside for taxes?",
+        a: "A common rule of thumb is 25–30% of your net profit (sales minus cost of goods and expenses) for income tax plus the 15.3% self-employment tax — your exact rate depends on your total income and state. Use the Tax Set-Aside calculator for a tailored number.",
+      },
+    ],
+  },
+  {
+    slug: "depop-taxes",
+    platform: "Depop",
+    workerNoun: "Depop sellers",
+    workType: "fashion resale",
+    eyebrow: "Seller Tax Guide",
+    title: "Depop Taxes: A Seller's Guide to the 1099-K & Deductions",
+    metaDescription:
+      "How Depop taxes work for sellers: the 1099-K, hobby vs business, cost of goods, deductible fees and shipping, and quarterly taxes. Not tax advice.",
+    h1: "Depop Taxes: What Every Seller Needs to Know",
+    intro:
+      "Whether Depop is taxable depends on whether you're clearing out your wardrobe or running a resale business. Depop doesn't withhold taxes, and the 1099-K it may send reports gross sales, not profit. Here's how Depop taxes work once you're selling as a business.",
+    formsHeading: "Do you get a 1099-K — and is your Depop income taxable?",
+    formsBody: [
+      "Depop processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed in recent years, so you might get a 1099-K for modest sales — or not get one and still owe tax. It reports gross sales before fees and shipping, so it isn't your taxable profit.",
+      "Whether you owe tax depends on what you're doing. Reselling your own used clothing for less than you paid is generally not taxable (and the loss isn't deductible). But buying or sourcing to resell for profit is a business: you report it on Schedule C, deduct your cost of goods and expenses, and owe income tax plus the 15.3% self-employment tax on the net profit. Confirm your situation with the IRS.",
+    ],
+    vehicleBased: false,
+    sellerFraming: true,
+    deductionsOverride: [
+      {
+        label: "Cost of goods sold (COGS)",
+        desc: "What you paid for the items you resold is subtracted from your sales as COGS — keep records of each item's cost.",
+      },
+      {
+        label: "Depop & payment fees",
+        desc: "Depop's selling fee and payment-processing fee are deductible business expenses.",
+      },
+      {
+        label: "Shipping (if you cover it)",
+        desc: "Any postage or shipping you pay rather than pass to the buyer is deductible.",
+      },
+      {
+        label: "Packaging & supplies",
+        desc: "Mailers, boxes, tissue, tape, and packing materials used to ship orders.",
+      },
+      {
+        label: "Home office & storage",
+        desc: "The part of your home used regularly and exclusively to store inventory or run the business may qualify.",
+      },
+      {
+        label: "Sourcing mileage",
+        desc: "Miles driven to source inventory (thrift runs, markets) are deductible at the IRS standard mileage rate.",
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Depop take out taxes for me?",
+        a: "No. Depop doesn't withhold taxes. If you sell as a business, you owe income tax plus the 15.3% self-employment tax on your net profit (sales minus cost of goods and expenses).",
+      },
+      {
+        q: "Do I get a 1099-K from Depop?",
+        a: "Depop issues a 1099-K when your sales reach the IRS reporting threshold for the year (the threshold has changed recently). It reports gross sales before fees — report all of your business income whether or not a form arrives.",
+      },
+      {
+        q: "Is selling on Depop taxable income?",
+        a: "Reselling for profit is a taxable business on Schedule C. Selling your own used clothing for less than you paid generally isn't taxable, and that loss isn't deductible. A 1099-K alone doesn't make income taxable — but you must report and reconcile it. Confirm with the IRS.",
+      },
+      {
+        q: "What can Depop sellers deduct?",
+        a: "Your cost of goods (what you paid for items), Depop's fees, any shipping you cover, packaging, a qualifying home office or storage, and sourcing mileage. Records of each item's cost are essential.",
+      },
+      {
+        q: "How much should Depop sellers set aside for taxes?",
+        a: "A common rule of thumb is 25–30% of your net profit (sales minus cost of goods and expenses) for income tax plus the 15.3% self-employment tax — your exact rate depends on your total income and state. Use the Tax Set-Aside calculator for a tailored number.",
       },
     ],
   },

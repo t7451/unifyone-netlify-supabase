@@ -862,6 +862,51 @@ function Router() {
           </>
         )}
       />
+      <Route
+        path="/etsy-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="etsy-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/ebay-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="ebay-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/poshmark-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="poshmark-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/mercari-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="mercari-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
+      <Route
+        path="/depop-taxes"
+        component={() => (
+          <>
+            <PlatformTaxGuide slug="depop-taxes" />
+            <GigResourceLinks />
+          </>
+        )}
+      />
       {/* Gig-tax cluster: state guides */}
       <Route
         path="/california-gig-worker-taxes"
