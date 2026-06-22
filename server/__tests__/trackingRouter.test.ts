@@ -174,6 +174,35 @@ describe("tracking.ingest", () => {
     });
   });
 
+  it("accepts product_engagement with dwell/scroll in props", async () => {
+    const caller = trackingRouter.createCaller(makeCtx({ id: 1, tenantId: 5 }));
+
+    const res = await caller.ingest({
+      anonymousId: "anon-11",
+      events: [
+        {
+          type: "product_engagement",
+          productId: 7,
+          props: { dwellMs: 8200, scrollPct: 75 },
+        },
+      ],
+    });
+
+    expect(res.ok).toBe(true);
+    const [, events] = trackBehaviorEventsMock.mock.calls[0] as [
+      number,
+      Array<Record<string, unknown>>,
+    ];
+    expect(events[0]).toMatchObject({
+      eventType: "product_engagement",
+      productId: 7,
+    });
+    expect(events[0].properties).toMatchObject({
+      dwellMs: 8200,
+      scrollPct: 75,
+    });
+  });
+
   it("enriches events with coarse geo from the edge header (server-side)", async () => {
     const nfGeo = Buffer.from(
       JSON.stringify({
