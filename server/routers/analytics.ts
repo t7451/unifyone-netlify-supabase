@@ -19,9 +19,14 @@ const requireTenant = (tenantId: number | null | undefined) => {
   return tenantId;
 };
 
+// Bound numeric inputs so a negative/zero limit can't error the query and an
+// oversized window can't trigger an unboundedly expensive scan.
+const daysInput = z.number().int().min(1).max(365);
+const limitInput = z.number().int().min(1).max(100);
+
 export const analyticsRouter = router({
   summary: protectedProcedure
-    .input(z.object({ days: z.number().default(30) }).optional())
+    .input(z.object({ days: daysInput.default(30) }).optional())
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
       const summary = await getAnalyticsSummary(tenantId, input?.days ?? 30);
@@ -41,28 +46,28 @@ export const analyticsRouter = router({
   }),
 
   revenueByDay: protectedProcedure
-    .input(z.object({ days: z.number().default(30) }).optional())
+    .input(z.object({ days: daysInput.default(30) }).optional())
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
       return getRevenueByDay(tenantId, input?.days ?? 30);
     }),
 
   topProducts: protectedProcedure
-    .input(z.object({ limit: z.number().default(5) }).optional())
+    .input(z.object({ limit: limitInput.default(5) }).optional())
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
       return getTopProducts(tenantId, input?.limit ?? 5);
     }),
 
   topProductsSummary: protectedProcedure
-    .input(z.object({ limit: z.number().default(5) }).optional())
+    .input(z.object({ limit: limitInput.default(5) }).optional())
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
       return getTopProductsSummary(tenantId, input?.limit ?? 5);
     }),
 
   webhookEvents: protectedProcedure
-    .input(z.object({ limit: z.number().default(20) }).optional())
+    .input(z.object({ limit: limitInput.default(20) }).optional())
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
       return getWebhookEvents(tenantId, input?.limit ?? 20);
@@ -72,7 +77,7 @@ export const analyticsRouter = router({
 
   /** View → cart → checkout → purchase funnel + unique visitors for the window. */
   behaviorSummary: protectedProcedure
-    .input(z.object({ days: z.number().default(30) }).optional())
+    .input(z.object({ days: daysInput.default(30) }).optional())
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
       return getBehaviorSummary(tenantId, input?.days ?? 30);
@@ -82,7 +87,7 @@ export const analyticsRouter = router({
   topViewedProducts: protectedProcedure
     .input(
       z
-        .object({ days: z.number().default(30), limit: z.number().default(10) })
+        .object({ days: daysInput.default(30), limit: limitInput.default(10) })
         .optional()
     )
     .query(async ({ ctx, input }) => {
@@ -98,7 +103,7 @@ export const analyticsRouter = router({
   topSearches: protectedProcedure
     .input(
       z
-        .object({ days: z.number().default(30), limit: z.number().default(20) })
+        .object({ days: daysInput.default(30), limit: limitInput.default(20) })
         .optional()
     )
     .query(async ({ ctx, input }) => {

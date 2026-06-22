@@ -48,8 +48,12 @@ export const trackingRouter = router({
     .mutation(async ({ ctx, input }) => {
       try {
         // Authenticated users are always attributed to their own tenant; only
-        // anonymous visitors may pass a tenant context in the payload.
-        const tenantId = ctx.user?.tenantId ?? input.tenantId ?? null;
+        // anonymous visitors may pass a tenant context in the payload. An
+        // authenticated user without a tenant must NOT fall back to the
+        // client-supplied tenantId — that would let them target any tenant.
+        const tenantId = ctx.user
+          ? ctx.user.tenantId
+          : (input.tenantId ?? null);
         if (!tenantId) return { ok: true, stored: 0 };
 
         const base = {
@@ -64,11 +68,13 @@ export const trackingRouter = router({
           productId: e.productId ?? null,
           value: e.value ?? null,
           properties: {
+            // Caller-supplied props first so reserved fields below always win
+            // and cannot be overwritten by a malicious/buggy client.
+            ...(e.props ?? {}),
             ...base,
             ...(e.path ? { path: e.path } : {}),
             ...(e.query ? { query: e.query } : {}),
             ...(e.resultCount != null ? { resultCount: e.resultCount } : {}),
-            ...(e.props ?? {}),
           },
         }));
 

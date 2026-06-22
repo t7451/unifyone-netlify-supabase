@@ -962,7 +962,8 @@ export async function getBehaviorSummary(tenantId: number, days = 30) {
     .where(
       and(
         eq(analyticsEvents.tenantId, tenantId),
-        gte(analyticsEvents.createdAt, since)
+        gte(analyticsEvents.createdAt, since),
+        inArray(analyticsEvents.eventType, BEHAVIOR_EVENT_FILTER)
       )
     );
 

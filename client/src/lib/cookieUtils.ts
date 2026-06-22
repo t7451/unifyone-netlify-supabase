@@ -11,7 +11,13 @@ export function readCookie(name: string): string | null {
   const parts = document.cookie ? document.cookie.split("; ") : [];
   for (const part of parts) {
     if (part.startsWith(prefix)) {
-      return decodeURIComponent(part.slice(prefix.length));
+      const raw = part.slice(prefix.length);
+      try {
+        return decodeURIComponent(raw);
+      } catch {
+        // A malformed percent-encoding must not break consent/tracking reads.
+        return raw;
+      }
     }
   }
   return null;

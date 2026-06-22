@@ -143,7 +143,7 @@ export function trackAddToCart(item: {
     type: "add_to_cart",
     productId: item.productId,
     value: item.value,
-    props: item.quantity ? { quantity: item.quantity } : undefined,
+    props: item.quantity != null ? { quantity: item.quantity } : undefined,
   });
 }
 
@@ -154,7 +154,8 @@ export function trackCheckoutStart(detail?: {
   enqueue({
     type: "checkout_start",
     value: detail?.value,
-    props: detail?.itemCount ? { itemCount: detail.itemCount } : undefined,
+    props:
+      detail?.itemCount != null ? { itemCount: detail.itemCount } : undefined,
   });
 }
 
@@ -167,6 +168,7 @@ export function trackPurchase(detail: {
     type: "purchase",
     orderId: detail.orderId,
     value: detail.value,
-    props: detail.itemCount ? { itemCount: detail.itemCount } : undefined,
+    props:
+      detail.itemCount != null ? { itemCount: detail.itemCount } : undefined,
   });
 }

@@ -24,12 +24,11 @@ function newId(): string {
 /** Stable per-browser visitor id, or null if analytics consent is not granted. */
 export function getVisitorId(): string | null {
   if (!hasAnalyticsConsent()) return null;
-  let id = readCookie(VISITOR_COOKIE);
-  if (!id) {
-    id = newId();
-    writeCookie(VISITOR_COOKIE, id, VISITOR_TTL_SECONDS);
-  }
-  return id;
+  const existing = readCookie(VISITOR_COOKIE);
+  if (existing) return existing;
+  const created = newId();
+  writeCookie(VISITOR_COOKIE, created, VISITOR_TTL_SECONDS);
+  return created;
 }
 
 /**
@@ -38,8 +37,7 @@ export function getVisitorId(): string | null {
  */
 export function getSessionId(): string | null {
   if (!hasAnalyticsConsent()) return null;
-  let id = readCookie(SESSION_COOKIE);
-  if (!id) id = newId();
+  const id = readCookie(SESSION_COOKIE) ?? newId();
   writeCookie(SESSION_COOKIE, id, SESSION_TTL_SECONDS);
   return id;
 }

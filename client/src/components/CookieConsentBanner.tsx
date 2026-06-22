@@ -50,7 +50,7 @@ export function CookieConsentBanner() {
 
   return (
     <div
-      role="dialog"
+      role="region"
       aria-live="polite"
       aria-label="Cookie consent"
       className="fixed inset-x-0 bottom-0 z-[100] border-t border-white/10 bg-neutral-950/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80"

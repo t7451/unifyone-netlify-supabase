@@ -100,6 +100,22 @@ describe("tracking.ingest", () => {
     });
   });
 
+  it("does not let an authenticated null-tenant user borrow input.tenantId", async () => {
+    // An authed user whose JWT carries no tenant must never be attributed to a
+    // client-supplied tenantId — that would defeat tenant isolation.
+    const caller = trackingRouter.createCaller(
+      makeCtx({ id: 9, tenantId: null })
+    );
+
+    const res = await caller.ingest({
+      tenantId: 777,
+      events: [{ type: "product_view", productId: 1 }],
+    });
+
+    expect(res).toEqual({ ok: true, stored: 0 });
+    expect(trackBehaviorEventsMock).not.toHaveBeenCalled();
+  });
+
   it("is a no-op when no tenant can be resolved", async () => {
     const caller = trackingRouter.createCaller(makeCtx(null));
 
