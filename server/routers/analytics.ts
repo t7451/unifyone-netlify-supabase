@@ -12,11 +12,24 @@ import {
   getRevenueByDay,
   getTopProducts,
   getTopProductsSummary,
+  getSurveyResults,
   getTopSearches,
   getTopViewedProducts,
   getWebhookEvents,
 } from "../db";
-import { protectedProcedure, router } from "../_core/trpc";
+import {
+  protectedProcedure,
+  rateLimitedProcedure,
+  router,
+} from "../_core/trpc";
+import { llmRateLimiter } from "../_core/rateLimiter";
+import { invokeLLM } from "../_core/llm";
+import {
+  buildWhyPrompt,
+  extractSummaryText,
+  hasInsightData,
+  WHY_SYSTEM_PROMPT,
+} from "../lib/whySummary";
 
 const requireTenant = (tenantId: number | null | undefined) => {
   if (!tenantId)
@@ -186,5 +199,74 @@ export const analyticsRouter = router({
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
       return getFunnelDropoff(tenantId, input?.days ?? 30);
+    }),
+
+  // ── WHY: LLM synthesis ────────────────────────────────────────────────────
+
+  /**
+   * On-demand, rate-limited LLM narrative that reads the behavior + search +
+   * survey signals and explains, in plain English, why customers are or aren't
+   * buying (plus concrete next actions). A mutation because it's an expensive,
+   * user-triggered action; grounded only in the tenant's own data.
+   */
+  whySummary: rateLimitedProcedure(llmRateLimiter, "analytics:why")
+    .input(z.object({ days: daysInput.default(30) }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = requireTenant(ctx.user.tenantId);
+      const days = input?.days ?? 30;
+
+      const [behavior, funnel, topSearches, topViewed, surveys] =
+        await Promise.all([
+          getBehaviorSummary(tenantId, days),
+          getFunnelDropoff(tenantId, days),
+          getTopSearches(tenantId, days, 10),
+          getTopViewedProducts(tenantId, days, 8),
+          getSurveyResults(tenantId, days),
+        ]);
+
+      const data = {
+        days,
+        behavior,
+        funnel,
+        topSearches: topSearches.map(s => ({
+          query: s.query,
+          searches: Number(s.searches ?? 0),
+          avgResults: Number(s.avgResults ?? 0),
+        })),
+        topViewed: topViewed.map(p => ({
+          productName: p.productName,
+          views: Number(p.views ?? 0),
+          viewToCartRate: Number(p.viewToCartRate ?? 0),
+        })),
+        surveys: {
+          total: surveys.total,
+          topAnswers: surveys.topAnswers,
+        },
+      };
+
+      if (!hasInsightData(data)) {
+        return {
+          summary:
+            "Not enough behavioral data yet to draw conclusions. Once visitors accept cookies and start browsing, searching, and answering surveys, a grounded summary will appear here.",
+          generatedAt: new Date().toISOString(),
+          days,
+          model: null as string | null,
+        };
+      }
+
+      const result = await invokeLLM({
+        messages: [
+          { role: "system", content: WHY_SYSTEM_PROMPT },
+          { role: "user", content: buildWhyPrompt(data) },
+        ],
+        maxTokens: 700,
+      });
+
+      return {
+        summary: extractSummaryText(result),
+        generatedAt: new Date().toISOString(),
+        days,
+        model: result.model ?? null,
+      };
     }),
 });

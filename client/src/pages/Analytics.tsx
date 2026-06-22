@@ -15,6 +15,7 @@ import { CustomerBehaviorPanel } from "@/components/analytics/CustomerBehaviorPa
 import { AcquisitionPanel } from "@/components/analytics/AcquisitionPanel";
 import { EngagementPanel } from "@/components/analytics/EngagementPanel";
 import { SurveyInsightsPanel } from "@/components/analytics/SurveyInsightsPanel";
+import { WhySummaryCard } from "@/components/analytics/WhySummaryCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Area,
@@ -383,6 +384,8 @@ export default function Analytics() {
       <EngagementPanel />
 
       <SurveyInsightsPanel />
+
+      <WhySummaryCard />
 
       <Card className="border-border bg-card">
         <CardHeader>
