@@ -28,6 +28,7 @@ export const fulfillmentStatusEnum = pgEnum("fulfillment_status", ["unfulfilled"
 export const paymentMethodEnum = pgEnum("payment_method", ["stripe", "paypal", "shopify", "square", "manual", "other"]);
 export const webhookSourceEnum = pgEnum("webhook_source", ["stripe", "shopify", "n8n", "internal"]);
 export const webhookStatusEnum = pgEnum("webhook_status", ["pending", "processed", "failed", "skipped"]);
+export const surveyTypeEnum = pgEnum("survey_type", ["exit_intent", "post_purchase", "custom"]);
 export const teamInviteStatusEnum = pgEnum("team_invite_status", ["pending", "accepted", "expired", "revoked"]);
 export const socialPlatformEnum = pgEnum("social_platform", ["twitter", "instagram", "linkedin", "facebook", "tiktok", "bluesky", "mastodon"]);
 export const socialPostStatusEnum = pgEnum("social_post_status", ["draft", "scheduled", "published", "failed", "cancelled"]);
@@ -446,6 +447,33 @@ export const analyticsEvents = pgTable(
 );
 
 export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
+
+// ── Survey Responses ──────────────────────────────────────────────────────────
+// Voice-of-customer microsurveys (exit-intent, post-purchase). The qualitative
+// "WHY" behind the behavioral signal in analytics_events.
+export const surveyResponses = pgTable(
+  "survey_responses",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull(),
+    surveyType: surveyTypeEnum("surveyType").notNull(),
+    question: varchar("question", { length: 300 }).notNull(),
+    answer: text("answer"),
+    rating: integer("rating"),
+    anonymousId: varchar("anonymousId", { length: 64 }),
+    userId: integer("userId"),
+    path: varchar("path", { length: 2048 }),
+    metadata: json("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({
+    tenantTypeCreatedIdx: index(
+      "survey_responses_tenant_type_created_idx"
+    ).on(table.tenantId, table.surveyType, table.createdAt),
+  })
+);
+
+export type SurveyResponse = typeof surveyResponses.$inferSelect;
 
 // ── Webhook Events ────────────────────────────────────────────────────────────
 export const webhookEvents = pgTable("webhook_events", {

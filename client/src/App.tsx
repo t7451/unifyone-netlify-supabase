@@ -15,6 +15,7 @@ import { getLoginUrl } from "./const";
 import { trpc } from "./lib/trpc";
 import { useTracking } from "./hooks/useTracking";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
+import { ExitIntentSurvey } from "./components/surveys/ExitIntentSurvey";
 import { useServerEvents } from "./hooks/useServerEvents";
 import {
   useCreditBalanceRealtime,
@@ -1969,6 +1970,7 @@ function Router() {
         <Route>{() => <NotFound />}</Route>
       </Switch>
       <CookieConsentBanner />
+      <ExitIntentSurvey />
     </>
   );
 }

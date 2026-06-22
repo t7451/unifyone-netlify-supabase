@@ -8,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trpc } from "@/lib/trpc";
 import { trackPurchase } from "@/lib/behaviorTracking";
+import { MicroSurvey } from "@/components/surveys/MicroSurvey";
+import { POST_PURCHASE_SURVEY } from "@shared/surveys";
 
 const CANONICAL = `${SITE_URL}/clips/success`;
 
@@ -143,6 +145,9 @@ export default function ClipsToolkitSuccess() {
             <Button asChild variant="ghost" className="text-muted-foreground">
               <Link href="/clips">Back to product page</Link>
             </Button>
+            <div className="pt-2 text-left">
+              <MicroSurvey definition={POST_PURCHASE_SURVEY} variant="inline" />
+            </div>
           </>
         ) : null}
       </div>
