@@ -4,6 +4,7 @@ import { publicRateLimitedProcedure, router } from "../_core/trpc";
 import { publicFormLimiter } from "../_core/rateLimiter";
 import { trackBehaviorEvents, type BehaviorEventInput } from "../db";
 import { extractGeo } from "../lib/geo";
+import { resolveAnalyticsTenant } from "../lib/analyticsTenant";
 import { logger } from "../_core/logger";
 
 /** Host portion of a URL, or undefined if it can't be parsed. */
@@ -60,12 +61,13 @@ export const trackingRouter = router({
     .mutation(async ({ ctx, input }) => {
       try {
         // Authenticated users are always attributed to their own tenant; only
-        // anonymous visitors may pass a tenant context in the payload. An
-        // authenticated user without a tenant must NOT fall back to the
-        // client-supplied tenantId — that would let them target any tenant.
-        const tenantId = ctx.user
-          ? ctx.user.tenantId
-          : (input.tenantId ?? null);
+        // anonymous visitors fall back to the client-supplied tenant or the
+        // configured default (ANALYTICS_DEFAULT_TENANT_ID). An authenticated
+        // user without a tenant must NOT borrow another tenant's id.
+        const tenantId = resolveAnalyticsTenant({
+          user: ctx.user,
+          inputTenantId: input.tenantId,
+        });
         if (!tenantId) return { ok: true, stored: 0 };
 
         // Coarse geo from the CDN edge (country/region/city) — derived

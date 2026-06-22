@@ -14,6 +14,7 @@ import { DashboardPageShell } from "@/components/DashboardPageShell";
 import { CustomerBehaviorPanel } from "@/components/analytics/CustomerBehaviorPanel";
 import { AcquisitionPanel } from "@/components/analytics/AcquisitionPanel";
 import { EngagementPanel } from "@/components/analytics/EngagementPanel";
+import { SurveyInsightsPanel } from "@/components/analytics/SurveyInsightsPanel";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Area,
@@ -380,6 +381,8 @@ export default function Analytics() {
       <AcquisitionPanel />
 
       <EngagementPanel />
+
+      <SurveyInsightsPanel />
 
       <Card className="border-border bg-card">
         <CardHeader>

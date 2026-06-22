@@ -56,6 +56,7 @@ import { discoverabilityRouter } from "./routers/discoverability";
 import { voiceRouter } from "./routers/voice";
 import { connectedAccountsRouter } from "./routers/connectedAccounts";
 import { trackingRouter } from "./routers/tracking";
+import { surveysRouter } from "./routers/surveys";
 
 export const appRouter = router({
   system: systemRouter,
@@ -146,6 +147,7 @@ export const appRouter = router({
   voice: voiceRouter,
   connectedAccounts: connectedAccountsRouter,
   tracking: trackingRouter,
+  surveys: surveysRouter,
 });
 
 export type AppRouter = typeof appRouter;
