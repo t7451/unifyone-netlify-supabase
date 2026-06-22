@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trpc } from "@/lib/trpc";
+import { trackCheckoutStart } from "@/lib/behaviorTracking";
 
 const CANONICAL = `${SITE_URL}/clips`;
 const TITLE = "1Commerce Gen AI Research Toolkit";
@@ -107,6 +108,10 @@ export default function ClipsToolkit() {
 
   async function handleBuy() {
     setErrorMessage(null);
+    trackCheckoutStart({
+      value: (productQuery.data?.priceCents ?? 4900) / 100,
+      itemCount: 1,
+    });
     try {
       const { url } = await createCheckout.mutateAsync({
         origin: window.location.origin,
@@ -293,12 +298,10 @@ export default function ClipsToolkit() {
       {/* Bottom CTA */}
       <section className="border-t border-border/40">
         <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-          <h2 className="text-3xl font-bold">
-            Skip the spreadsheet assembly.
-          </h2>
+          <h2 className="text-3xl font-bold">Skip the spreadsheet assembly.</h2>
           <p className="mt-3 text-muted-foreground">
-            One purchase. One workbook. Delivered the moment your payment
-            clears — no email confirmations to wait on, no login to create.
+            One purchase. One workbook. Delivered the moment your payment clears
+            — no email confirmations to wait on, no login to create.
           </p>
           <Button
             onClick={handleBuy}

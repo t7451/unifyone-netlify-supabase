@@ -7,6 +7,7 @@ import {
   trackSignupComplete,
 } from "@/lib/userTracking";
 import { pixel } from "@/lib/pixel";
+import { trackPageViewFirstParty } from "@/lib/behaviorTracking";
 
 /**
  * Fires a page-view event on every SPA route change and identifies the
@@ -21,9 +22,12 @@ export function useTracking(): void {
 
   const oauthSignupHandledRef = useRef(false);
 
-  // Page view on every navigation
+  // Page view on every navigation. trackPageView fans out to third-party
+  // providers; trackPageViewFirstParty records to our own analytics_events
+  // (a no-op until the visitor grants analytics consent).
   useEffect(() => {
     trackPageView(location);
+    trackPageViewFirstParty(location);
   }, [location]);
 
   // OAuth signup completion: the server appends `?signup=1` to the post-OAuth

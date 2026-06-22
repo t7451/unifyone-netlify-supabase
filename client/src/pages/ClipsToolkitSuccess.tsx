@@ -1,17 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Download,
-  Loader2,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, Loader2 } from "lucide-react";
 
 import PageHead from "@/components/PageHead";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trpc } from "@/lib/trpc";
+import { trackPurchase } from "@/lib/behaviorTracking";
 
 const CANONICAL = `${SITE_URL}/clips/success`;
 
@@ -48,6 +44,16 @@ export default function ClipsToolkitSuccess() {
 
   const downloadInfo = getDownload.data;
   const isVerifying = !errorMessage && !downloadInfo;
+
+  // Record the confirmed purchase exactly once, when Stripe verification
+  // succeeds (no-op until the visitor granted analytics consent).
+  const purchaseTrackedRef = useRef(false);
+  useEffect(() => {
+    if (downloadInfo && !purchaseTrackedRef.current) {
+      purchaseTrackedRef.current = true;
+      trackPurchase({ itemCount: 1 });
+    }
+  }, [downloadInfo]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 text-foreground">
@@ -102,7 +108,9 @@ export default function ClipsToolkitSuccess() {
                   <>
                     {" "}
                     A receipt was sent to{" "}
-                    <span className="text-foreground">{downloadInfo.email}</span>
+                    <span className="text-foreground">
+                      {downloadInfo.email}
+                    </span>
                     .
                   </>
                 ) : null}
