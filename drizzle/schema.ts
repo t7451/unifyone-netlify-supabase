@@ -416,17 +416,36 @@ export const cartItems = pgTable("cart_items", {
 }));
 
 // ── Analytics Events ──────────────────────────────────────────────────────────
-export const analyticsEvents = pgTable("analytics_events", {
-  id: serial("id").primaryKey(),
-  tenantId: integer("tenantId").notNull(),
-  eventType: varchar("eventType", { length: 100 }).notNull(),
-  userId: integer("userId"),
-  orderId: integer("orderId"),
-  productId: integer("productId"),
-  value: decimal("value", { precision: 12, scale: 2 }),
-  properties: json("properties").$type<Record<string, unknown>>(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+export const analyticsEvents = pgTable(
+  "analytics_events",
+  {
+    id: serial("id").primaryKey(),
+    tenantId: integer("tenantId").notNull(),
+    eventType: varchar("eventType", { length: 100 }).notNull(),
+    userId: integer("userId"),
+    orderId: integer("orderId"),
+    productId: integer("productId"),
+    value: decimal("value", { precision: 12, scale: 2 }),
+    properties: json("properties").$type<Record<string, unknown>>(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({
+    // Hot path: behavior-insight queries filter by tenant + eventType over a
+    // recent time window (top viewed products, search terms, cart funnel).
+    tenantEventCreatedIdx: index("analytics_events_tenant_event_created_idx").on(
+      table.tenantId,
+      table.eventType,
+      table.createdAt
+    ),
+    // Per-product roll-ups (views/add-to-cart grouped by productId).
+    tenantProductIdx: index("analytics_events_tenant_product_idx").on(
+      table.tenantId,
+      table.productId
+    ),
+  })
+);
+
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 
 // ── Webhook Events ────────────────────────────────────────────────────────────
 export const webhookEvents = pgTable("webhook_events", {

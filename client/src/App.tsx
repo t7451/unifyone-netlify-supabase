@@ -14,6 +14,7 @@ import GigResourceLinks from "./components/GigResourceLinks";
 import { getLoginUrl } from "./const";
 import { trpc } from "./lib/trpc";
 import { useTracking } from "./hooks/useTracking";
+import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import { useServerEvents } from "./hooks/useServerEvents";
 import {
   useCreditBalanceRealtime,
@@ -234,1726 +235,1741 @@ function Router() {
   useCreditUsageRealtime(user?.openId);
 
   return (
-    <Switch>
-      <Route path="/" component={() => <Home />} />
-      <Route path="/login" component={() => <Login />} />
-      <Route path="/register">{() => <Login initialIntent="signup" />}</Route>
-      <Route path="/signup">{() => <Login initialIntent="signup" />}</Route>
-      <Route path="/auth/callback" component={() => <AuthCallback />} />
-      <Route path="/reset-password" component={() => <ResetPassword />} />
-      <Route path="/verify-email" component={() => <VerifyEmail />} />
-      <Route path="/pricing" component={() => <Pricing />} />
-      <Route path="/about" component={() => <About />} />
-      <Route path="/press" component={() => <Press />} />
-      <Route path="/contact" component={() => <Contact />} />
-      <Route
-        path="/setup"
-        component={() => (
-          <ProtectedRoute>
-            <TenantSetup />
-          </ProtectedRoute>
-        )}
-      />
-      <Route
-        path="/dashboard"
-        component={() => (
-          <DashboardRoute>
-            <Dashboard />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/products"
-        component={() => (
-          <DashboardRoute>
-            <Products />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/orders"
-        component={() => (
-          <DashboardRoute>
-            <Orders />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/orders/:id"
-        component={() => (
-          <DashboardRoute>
-            <Orders />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/customers"
-        component={() => (
-          <DashboardRoute>
-            <Customers />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/analytics"
-        component={() => (
-          <DashboardRoute>
-            <Analytics />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/integrations"
-        component={() => (
-          <DashboardRoute>
-            <Integrations />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/settings/account"
-        component={() => (
-          <DashboardRoute>
-            <AccountSettings />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/settings/notifications"
-        component={() => (
-          <DashboardRoute>
-            <NotificationSettings />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/settings/security"
-        component={() => (
-          <DashboardRoute>
-            <SecuritySettings />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/settings/api-keys"
-        component={() => (
-          <DashboardRoute>
-            <ApiKeySettings />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/settings/appearance"
-        component={() => (
-          <DashboardRoute>
-            <AppearanceSettings />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/settings/advanced"
-        component={() => (
-          <DashboardRoute>
-            <AdvancedSettings />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/settings"
-        component={() => (
-          <DashboardRoute>
-            <Settings />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/billing"
-        component={() => (
-          <DashboardRoute>
-            <Billing />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/team"
-        component={() => (
-          <DashboardRoute>
-            <Team />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/social"
-        component={() => (
-          <DashboardRoute>
-            <Social />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/referrals"
-        component={() => (
-          <DashboardRoute>
-            <Referrals />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/leads"
-        component={() => (
-          <DashboardRoute>
-            <Leads />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/automations"
-        component={() => (
-          <DashboardRoute>
-            <Automations />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/notifications"
-        component={() => (
-          <DashboardRoute>
-            <Notifications />
-          </DashboardRoute>
-        )}
-      />
-      <Route path="/themes" component={() => <ThemeStore />} />
-      <Route path="/components" component={() => <ComponentShowcase />} />
-      <Route path="/design-system" component={() => <DesignSystem />} />
-      <Route
-        path="/my-themes"
-        component={() => (
-          <DashboardRoute>
-            <MyThemes />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/admin/themes"
-        component={() => (
-          <DashboardRoute>
-            <AdminThemes />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/rewards"
-        component={() => (
-          <DashboardRoute>
-            <Rewards />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/revenue-streams"
-        component={() => (
-          <DashboardRoute>
-            <RevenueStreams />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/affiliates"
-        component={() => (
-          <DashboardRoute>
-            <Affiliates />
-          </DashboardRoute>
-        )}
-      />
-      <Route path="/shopify/install" component={() => <ShopifyInstall />} />
-      <Route path="/shopify/success" component={() => <ShopifySuccess />} />
-      <Route
-        path="/sync-monitor"
-        component={() => (
-          <DashboardRoute>
-            <SyncMonitor />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/money-manager"
-        component={() => (
-          <DashboardRoute>
-            <MoneyManager />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/achievements"
-        component={() => (
-          <DashboardRoute>
-            <Achievements />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/friends"
-        component={() => (
-          <DashboardRoute>
-            <Friends />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/gig-command"
-        component={() => (
-          <DashboardRoute>
-            <GigCommand />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/gig-worker-plans"
-        component={() => (
-          <DashboardRoute>
-            <GigWorkerPlans />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/mobile-automation"
-        component={() => (
-          <DashboardRoute>
-            <MobileAutomation />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/sandbox"
-        component={() => (
-          <DashboardRoute>
-            <Sandbox />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/ai-assistant"
-        component={() => (
-          <DashboardRoute>
-            <AIAssistant />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/developer"
-        component={() => (
-          <DashboardRoute>
-            <DeveloperHub />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/terminal"
-        component={() => (
-          <DashboardRoute>
-            <Terminal />
-          </DashboardRoute>
-        )}
-      />
-      <Route path="/sovereign" component={() => <Sovereign />} />
-      <Route path="/privacy" component={() => <PrivacyPolicy />} />
-      <Route path="/terms" component={() => <TermsOfService />} />
-      <Route path="/architecture" component={() => <Architecture />} />
-      <Route path="/the-system" component={() => <TheSystem />} />
-      <Route path="/tithes" component={() => <Tithes />} />
-      <Route path="/documents" component={() => <Documents />} />
-      <Route path="/docs" component={() => <Documents />} />
-      <Route path="/docs/getting-started" component={() => <Documents />} />
-      <Route path="/documents/case-studies" component={() => <CaseStudies />} />
-      <Route path="/docs/case-studies" component={() => <CaseStudies />} />
-      <Route
-        path="/documents/integrations"
-        component={() => <IntegrationGuides />}
-      />
-      <Route
-        path="/docs/integration-guides"
-        component={() => <IntegrationGuides />}
-      />
-      <Route path="/documents/work-proof" component={() => <WorkProof />} />
-      <Route path="/docs-chat" component={() => <DocsChat />} />
-      <Route path="/tools" component={() => <ToolsIndex />} />
-      <Route path="/blog" component={() => <BlogIndex />} />
-      <Route path="/chat" component={() => <NlwebChat />} />
-      <Route path="/resources" component={() => <Resources />} />
-      <Route path="/affiliate-program" component={() => <AffiliateLanding />} />
-      <Route path="/video-production" component={() => <VideoProduction />} />
-      <Route path="/marketing/ad-copy" component={() => <AdCopyHub />} />
-      <Route
-        path="/blog/gig-ecommerce"
-        component={() => <GigEcommercePost />}
-      />
-      <Route
-        path="/blog/gig-economy-commerce-platform"
-        component={() => <GigEcommercePost />}
-      />
-      <Route path="/blog/multi-tenant" component={() => <MultiTenantPost />} />
-      <Route
-        path="/blog/multi-tenant-ecommerce-saas"
-        component={() => <MultiTenantPost />}
-      />
-      <Route
-        path="/blog/gig-worker-shift-intelligence"
-        component={() => <GigWorkerShiftIntelligencePost />}
-      />
-      <Route
-        path="/blog/digital-retail-guide"
-        component={() => <DigitalRetailGuidePost />}
-      />
-      {/* Dynamic AI-generated blog posts from the seo_content_jobs table */}
-      <Route path="/blog/:slug" component={() => <DynamicBlogPost />} />
-      {/* Free tools */}
-      <Route
-        path="/tools/mileage-deduction-calculator"
-        component={() => <MileageCalculator />}
-      />
-      <Route
-        path="/tools/quarterly-tax-estimator"
-        component={() => <QuarterlyTaxEstimator />}
-      />
-      <Route
-        path="/tools/earnings-consolidator"
-        component={() => <EarningsConsolidator />}
-      />
-      <Route
-        path="/tools/reseller-break-even"
-        component={() => <ResellerBreakEven />}
-      />
-      <Route
-        path="/tools/cashflow-tracker"
-        component={() => <CashflowTracker />}
-      />
-      <Route
-        path="/tools/se-tax-calculator"
-        component={() => <SETaxCalculator />}
-      />
-      <Route
-        path="/tools/gig-hourly-rate"
-        component={() => <GigHourlyRate />}
-      />
-      <Route path="/tools/tax-set-aside" component={() => <TaxSetAside />} />
-      {/* GEO landing pages */}
-      <Route
-        path="/gig-income-aggregator"
-        component={() => (
-          <>
-            <GigIncomeAggregator />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/1099-tax-management"
-        component={() => (
-          <>
-            <TaxManagement1099 />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gig-earnings-optimizer"
-        component={() => (
-          <>
-            <GigEarningsOptimizer />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/financial-intelligence-gig-workers"
-        component={() => (
-          <>
-            <FinancialIntelligenceGig />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gig-route-intelligence"
-        component={() => (
-          <>
-            <GigRouteIntelligence />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      {/* Gig tax topic cluster: pillar hub + platform-specific spokes */}
-      <Route
-        path="/gig-taxes"
-        component={() => (
-          <>
-            <GigTaxesHub />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/doordash-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="doordash-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/uber-driver-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="uber-driver-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/instacart-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="instacart-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/amazon-flex-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="amazon-flex-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/grubhub-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="grubhub-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/lyft-driver-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="lyft-driver-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/spark-driver-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="spark-driver-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/shipt-shopper-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="shipt-shopper-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/roadie-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="roadie-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gopuff-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="gopuff-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/taskrabbit-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="taskrabbit-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/rover-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="rover-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/upwork-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="upwork-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/fiverr-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="fiverr-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/favor-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="favor-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/veho-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="veho-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/dolly-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="dolly-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/goshare-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="goshare-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/wag-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="wag-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/etsy-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="etsy-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/ebay-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="ebay-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/poshmark-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="poshmark-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/mercari-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="mercari-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/depop-taxes"
-        component={() => (
-          <>
-            <PlatformTaxGuide slug="depop-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      {/* Gig-tax cluster: state guides */}
-      <Route
-        path="/california-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="california-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/texas-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="texas-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/florida-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="florida-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/new-york-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="new-york-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/illinois-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="illinois-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/washington-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="washington-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      {/* Gig-tax cluster: platform comparisons */}
-      <Route
-        path="/doordash-vs-uber-eats"
-        component={() => (
-          <>
-            <PlatformComparison slug="doordash-vs-uber-eats" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/instacart-vs-doordash"
-        component={() => (
-          <>
-            <PlatformComparison slug="instacart-vs-doordash" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/uber-vs-lyft-driver"
-        component={() => (
-          <>
-            <PlatformComparison slug="uber-vs-lyft-driver" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      {/* Gig-tax cluster: explainers & guides */}
-      <Route
-        path="/1099-nec-vs-1099-k"
-        component={() => (
-          <>
-            <Form1099Explainer />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gig-worker-tax-deductions"
-        component={() => (
-          <>
-            <GigDeductionsGuide />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-file-gig-worker-taxes"
-        component={() => (
-          <>
-            <HowToFileGigTaxes />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gig-quarterly-taxes"
-        component={() => (
-          <>
-            <GigQuarterlyTaxes />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      {/* Gig-tax cluster: more state guides */}
-      <Route
-        path="/georgia-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="georgia-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/pennsylvania-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="pennsylvania-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/new-jersey-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="new-jersey-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/arizona-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="arizona-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/ohio-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="ohio-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/north-carolina-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="north-carolina-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/michigan-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="michigan-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/colorado-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="colorado-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/virginia-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="virginia-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/massachusetts-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="massachusetts-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/maryland-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="maryland-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/minnesota-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="minnesota-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/missouri-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="missouri-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/indiana-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="indiana-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/tennessee-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="tennessee-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/nevada-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="nevada-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/wisconsin-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="wisconsin-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/oregon-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="oregon-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/south-carolina-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="south-carolina-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/alabama-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="alabama-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/louisiana-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="louisiana-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/kentucky-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="kentucky-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/oklahoma-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="oklahoma-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/connecticut-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="connecticut-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/utah-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="utah-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/iowa-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="iowa-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/kansas-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="kansas-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/new-mexico-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="new-mexico-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/nebraska-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="nebraska-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/mississippi-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="mississippi-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/arkansas-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="arkansas-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/west-virginia-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="west-virginia-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/idaho-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="idaho-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/hawaii-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="hawaii-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/maine-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="maine-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/rhode-island-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="rhode-island-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/alaska-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="alaska-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/new-hampshire-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="new-hampshire-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/south-dakota-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="south-dakota-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/wyoming-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="wyoming-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/delaware-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="delaware-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/montana-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="montana-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/north-dakota-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="north-dakota-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/vermont-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="vermont-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/washington-dc-gig-worker-taxes"
-        component={() => (
-          <>
-            <StateTaxGuide slug="washington-dc-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      {/* Gig-tax cluster: city / local-tax guides */}
-      <Route
-        path="/new-york-city-gig-worker-taxes"
-        component={() => (
-          <>
-            <CityTaxGuide slug="new-york-city-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/philadelphia-gig-worker-taxes"
-        component={() => (
-          <>
-            <CityTaxGuide slug="philadelphia-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/portland-gig-worker-taxes"
-        component={() => (
-          <>
-            <CityTaxGuide slug="portland-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/detroit-gig-worker-taxes"
-        component={() => (
-          <>
-            <CityTaxGuide slug="detroit-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/kansas-city-gig-worker-taxes"
-        component={() => (
-          <>
-            <CityTaxGuide slug="kansas-city-gig-worker-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      {/* Gig-tax cluster: additional platform comparisons */}
-      <Route
-        path="/doordash-vs-grubhub"
-        component={() => (
-          <>
-            <PlatformComparison slug="doordash-vs-grubhub" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/amazon-flex-vs-spark"
-        component={() => (
-          <>
-            <PlatformComparison slug="amazon-flex-vs-spark" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/instacart-vs-shipt"
-        component={() => (
-          <>
-            <PlatformComparison slug="instacart-vs-shipt" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/uber-vs-doordash"
-        component={() => (
-          <>
-            <PlatformComparison slug="uber-vs-doordash" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/uber-eats-vs-grubhub"
-        component={() => (
-          <>
-            <PlatformComparison slug="uber-eats-vs-grubhub" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/doordash-vs-spark"
-        component={() => (
-          <>
-            <PlatformComparison slug="doordash-vs-spark" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/amazon-flex-vs-doordash"
-        component={() => (
-          <>
-            <PlatformComparison slug="amazon-flex-vs-doordash" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/upwork-vs-fiverr"
-        component={() => (
-          <>
-            <PlatformComparison slug="upwork-vs-fiverr" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gopuff-vs-doordash"
-        component={() => (
-          <>
-            <PlatformComparison slug="gopuff-vs-doordash" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/rover-vs-wag"
-        component={() => (
-          <>
-            <PlatformComparison slug="rover-vs-wag" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/lyft-vs-uber-eats"
-        component={() => (
-          <>
-            <PlatformComparison slug="lyft-vs-uber-eats" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      {/* Getting-started cluster: "how to make money on <platform>" guides */}
-      <Route
-        path="/how-to-make-money-on-doordash"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-on-doordash" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-make-money-driving-for-uber"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-driving-for-uber" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-make-money-with-instacart"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-with-instacart" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-make-money-with-amazon-flex"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-with-amazon-flex" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-make-money-with-lyft"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-with-lyft" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-make-money-delivering-for-grubhub"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-delivering-for-grubhub" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-make-money-as-a-spark-driver"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-as-a-spark-driver" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-make-money-on-taskrabbit"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-on-taskrabbit" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-make-money-with-rover"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-with-rover" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-make-money-with-shipt"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-with-shipt" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-make-money-with-gopuff"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-with-gopuff" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-make-money-with-roadie"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-with-roadie" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-make-money-with-favor"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-with-favor" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/how-to-make-money-with-wag"
-        component={() => (
-          <>
-            <GettingStartedGuide slug="how-to-make-money-with-wag" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      {/* Gig finance cluster: money topics beyond taxes */}
-      <Route
-        path="/gig-worker-retirement"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="gig-worker-retirement" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gig-worker-health-insurance"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="gig-worker-health-insurance" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gig-worker-bookkeeping"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="gig-worker-bookkeeping" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gig-worker-budgeting"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="gig-worker-budgeting" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gig-worker-emergency-fund"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="gig-worker-emergency-fund" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gig-worker-debt-payoff"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="gig-worker-debt-payoff" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/sep-ira-vs-solo-401k"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="sep-ira-vs-solo-401k" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/llc-vs-sole-proprietorship"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="llc-vs-sole-proprietorship" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gig-worker-w2-job-taxes"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="gig-worker-w2-job-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/multi-state-gig-taxes"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="multi-state-gig-taxes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/new-gig-worker-tax-checklist"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="new-gig-worker-tax-checklist" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/self-employment-tax-explained"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="self-employment-tax-explained" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gig-worker-home-office-deduction"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="gig-worker-home-office-deduction" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gig-worker-tax-mistakes"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="gig-worker-tax-mistakes" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route
-        path="/gig-worker-roth-ira"
-        component={() => (
-          <>
-            <GigFinanceGuide slug="gig-worker-roth-ira" />
-            <GigResourceLinks />
-          </>
-        )}
-      />
-      <Route path="/seo" component={() => <SeoIndex />} />
-      <Route path="/seo/:slug" component={() => <SeoLanding />} />
-      <Route
-        path="/checkout/plan"
-        component={() => (
-          <ProtectedRoute>
-            <PlanCheckout />
-          </ProtectedRoute>
-        )}
-      />
-      <Route
-        path="/billing/success"
-        component={() => (
-          <ProtectedRoute>
-            <BillingSuccess />
-          </ProtectedRoute>
-        )}
-      />
-      <Route
-        path="/checkout"
-        component={() => (
-          <ProtectedRoute>
-            <Checkout />
-          </ProtectedRoute>
-        )}
-      />
-      <Route
-        path="/checkout/paypal-return"
-        component={() => (
-          <ProtectedRoute>
-            <Checkout />
-          </ProtectedRoute>
-        )}
-      />
-      <Route
-        path="/checkout/paypal-cancel"
-        component={() => (
-          <ProtectedRoute>
-            <Checkout />
-          </ProtectedRoute>
-        )}
-      />
-      <Route
-        path="/master-control"
-        component={() => (
-          <DashboardRoute>
-            <MasterControl />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/revenue-command"
-        component={() => (
-          <DashboardRoute>
-            <RevenueCommand />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/dashboard/dealflow"
-        component={() => (
-          <DashboardRoute>
-            <DealflowPage />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/dashboard/terpforge"
-        component={() => (
-          <DashboardRoute>
-            <TerpforgePage />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/dashboard/knowledge-graph"
-        component={() => (
-          <DashboardRoute>
-            <KnowledgeGraphPage />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/dashboard/pixelforge"
-        component={() => (
-          <DashboardRoute>
-            <PixelforgePage />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/dashboard/shopify-theme"
-        component={() => (
-          <DashboardRoute>
-            <ShopifyThemePage />
-          </DashboardRoute>
-        )}
-      />
-      <Route
-        path="/discounts"
-        component={() => (
-          <DashboardRoute>
-            <Discounts />
-          </DashboardRoute>
-        )}
-      />
-      <Route path="/404" component={() => <NotFound />} />
-      <Route path="/clips" component={() => <ClipsToolkit />} />
-      <Route path="/clips/success" component={() => <ClipsToolkitSuccess />} />
-      <Route>{() => <NotFound />}</Route>
-    </Switch>
+    <>
+      <Switch>
+        <Route path="/" component={() => <Home />} />
+        <Route path="/login" component={() => <Login />} />
+        <Route path="/register">{() => <Login initialIntent="signup" />}</Route>
+        <Route path="/signup">{() => <Login initialIntent="signup" />}</Route>
+        <Route path="/auth/callback" component={() => <AuthCallback />} />
+        <Route path="/reset-password" component={() => <ResetPassword />} />
+        <Route path="/verify-email" component={() => <VerifyEmail />} />
+        <Route path="/pricing" component={() => <Pricing />} />
+        <Route path="/about" component={() => <About />} />
+        <Route path="/press" component={() => <Press />} />
+        <Route path="/contact" component={() => <Contact />} />
+        <Route
+          path="/setup"
+          component={() => (
+            <ProtectedRoute>
+              <TenantSetup />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/dashboard"
+          component={() => (
+            <DashboardRoute>
+              <Dashboard />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/products"
+          component={() => (
+            <DashboardRoute>
+              <Products />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/orders"
+          component={() => (
+            <DashboardRoute>
+              <Orders />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/orders/:id"
+          component={() => (
+            <DashboardRoute>
+              <Orders />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/customers"
+          component={() => (
+            <DashboardRoute>
+              <Customers />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/analytics"
+          component={() => (
+            <DashboardRoute>
+              <Analytics />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/integrations"
+          component={() => (
+            <DashboardRoute>
+              <Integrations />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/settings/account"
+          component={() => (
+            <DashboardRoute>
+              <AccountSettings />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/settings/notifications"
+          component={() => (
+            <DashboardRoute>
+              <NotificationSettings />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/settings/security"
+          component={() => (
+            <DashboardRoute>
+              <SecuritySettings />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/settings/api-keys"
+          component={() => (
+            <DashboardRoute>
+              <ApiKeySettings />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/settings/appearance"
+          component={() => (
+            <DashboardRoute>
+              <AppearanceSettings />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/settings/advanced"
+          component={() => (
+            <DashboardRoute>
+              <AdvancedSettings />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/settings"
+          component={() => (
+            <DashboardRoute>
+              <Settings />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/billing"
+          component={() => (
+            <DashboardRoute>
+              <Billing />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/team"
+          component={() => (
+            <DashboardRoute>
+              <Team />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/social"
+          component={() => (
+            <DashboardRoute>
+              <Social />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/referrals"
+          component={() => (
+            <DashboardRoute>
+              <Referrals />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/leads"
+          component={() => (
+            <DashboardRoute>
+              <Leads />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/automations"
+          component={() => (
+            <DashboardRoute>
+              <Automations />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/notifications"
+          component={() => (
+            <DashboardRoute>
+              <Notifications />
+            </DashboardRoute>
+          )}
+        />
+        <Route path="/themes" component={() => <ThemeStore />} />
+        <Route path="/components" component={() => <ComponentShowcase />} />
+        <Route path="/design-system" component={() => <DesignSystem />} />
+        <Route
+          path="/my-themes"
+          component={() => (
+            <DashboardRoute>
+              <MyThemes />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/admin/themes"
+          component={() => (
+            <DashboardRoute>
+              <AdminThemes />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/rewards"
+          component={() => (
+            <DashboardRoute>
+              <Rewards />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/revenue-streams"
+          component={() => (
+            <DashboardRoute>
+              <RevenueStreams />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/affiliates"
+          component={() => (
+            <DashboardRoute>
+              <Affiliates />
+            </DashboardRoute>
+          )}
+        />
+        <Route path="/shopify/install" component={() => <ShopifyInstall />} />
+        <Route path="/shopify/success" component={() => <ShopifySuccess />} />
+        <Route
+          path="/sync-monitor"
+          component={() => (
+            <DashboardRoute>
+              <SyncMonitor />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/money-manager"
+          component={() => (
+            <DashboardRoute>
+              <MoneyManager />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/achievements"
+          component={() => (
+            <DashboardRoute>
+              <Achievements />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/friends"
+          component={() => (
+            <DashboardRoute>
+              <Friends />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/gig-command"
+          component={() => (
+            <DashboardRoute>
+              <GigCommand />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/gig-worker-plans"
+          component={() => (
+            <DashboardRoute>
+              <GigWorkerPlans />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/mobile-automation"
+          component={() => (
+            <DashboardRoute>
+              <MobileAutomation />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/sandbox"
+          component={() => (
+            <DashboardRoute>
+              <Sandbox />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/ai-assistant"
+          component={() => (
+            <DashboardRoute>
+              <AIAssistant />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/developer"
+          component={() => (
+            <DashboardRoute>
+              <DeveloperHub />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/terminal"
+          component={() => (
+            <DashboardRoute>
+              <Terminal />
+            </DashboardRoute>
+          )}
+        />
+        <Route path="/sovereign" component={() => <Sovereign />} />
+        <Route path="/privacy" component={() => <PrivacyPolicy />} />
+        <Route path="/terms" component={() => <TermsOfService />} />
+        <Route path="/architecture" component={() => <Architecture />} />
+        <Route path="/the-system" component={() => <TheSystem />} />
+        <Route path="/tithes" component={() => <Tithes />} />
+        <Route path="/documents" component={() => <Documents />} />
+        <Route path="/docs" component={() => <Documents />} />
+        <Route path="/docs/getting-started" component={() => <Documents />} />
+        <Route
+          path="/documents/case-studies"
+          component={() => <CaseStudies />}
+        />
+        <Route path="/docs/case-studies" component={() => <CaseStudies />} />
+        <Route
+          path="/documents/integrations"
+          component={() => <IntegrationGuides />}
+        />
+        <Route
+          path="/docs/integration-guides"
+          component={() => <IntegrationGuides />}
+        />
+        <Route path="/documents/work-proof" component={() => <WorkProof />} />
+        <Route path="/docs-chat" component={() => <DocsChat />} />
+        <Route path="/tools" component={() => <ToolsIndex />} />
+        <Route path="/blog" component={() => <BlogIndex />} />
+        <Route path="/chat" component={() => <NlwebChat />} />
+        <Route path="/resources" component={() => <Resources />} />
+        <Route
+          path="/affiliate-program"
+          component={() => <AffiliateLanding />}
+        />
+        <Route path="/video-production" component={() => <VideoProduction />} />
+        <Route path="/marketing/ad-copy" component={() => <AdCopyHub />} />
+        <Route
+          path="/blog/gig-ecommerce"
+          component={() => <GigEcommercePost />}
+        />
+        <Route
+          path="/blog/gig-economy-commerce-platform"
+          component={() => <GigEcommercePost />}
+        />
+        <Route
+          path="/blog/multi-tenant"
+          component={() => <MultiTenantPost />}
+        />
+        <Route
+          path="/blog/multi-tenant-ecommerce-saas"
+          component={() => <MultiTenantPost />}
+        />
+        <Route
+          path="/blog/gig-worker-shift-intelligence"
+          component={() => <GigWorkerShiftIntelligencePost />}
+        />
+        <Route
+          path="/blog/digital-retail-guide"
+          component={() => <DigitalRetailGuidePost />}
+        />
+        {/* Dynamic AI-generated blog posts from the seo_content_jobs table */}
+        <Route path="/blog/:slug" component={() => <DynamicBlogPost />} />
+        {/* Free tools */}
+        <Route
+          path="/tools/mileage-deduction-calculator"
+          component={() => <MileageCalculator />}
+        />
+        <Route
+          path="/tools/quarterly-tax-estimator"
+          component={() => <QuarterlyTaxEstimator />}
+        />
+        <Route
+          path="/tools/earnings-consolidator"
+          component={() => <EarningsConsolidator />}
+        />
+        <Route
+          path="/tools/reseller-break-even"
+          component={() => <ResellerBreakEven />}
+        />
+        <Route
+          path="/tools/cashflow-tracker"
+          component={() => <CashflowTracker />}
+        />
+        <Route
+          path="/tools/se-tax-calculator"
+          component={() => <SETaxCalculator />}
+        />
+        <Route
+          path="/tools/gig-hourly-rate"
+          component={() => <GigHourlyRate />}
+        />
+        <Route path="/tools/tax-set-aside" component={() => <TaxSetAside />} />
+        {/* GEO landing pages */}
+        <Route
+          path="/gig-income-aggregator"
+          component={() => (
+            <>
+              <GigIncomeAggregator />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/1099-tax-management"
+          component={() => (
+            <>
+              <TaxManagement1099 />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gig-earnings-optimizer"
+          component={() => (
+            <>
+              <GigEarningsOptimizer />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/financial-intelligence-gig-workers"
+          component={() => (
+            <>
+              <FinancialIntelligenceGig />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gig-route-intelligence"
+          component={() => (
+            <>
+              <GigRouteIntelligence />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        {/* Gig tax topic cluster: pillar hub + platform-specific spokes */}
+        <Route
+          path="/gig-taxes"
+          component={() => (
+            <>
+              <GigTaxesHub />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/doordash-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="doordash-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/uber-driver-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="uber-driver-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/instacart-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="instacart-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/amazon-flex-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="amazon-flex-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/grubhub-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="grubhub-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/lyft-driver-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="lyft-driver-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/spark-driver-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="spark-driver-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/shipt-shopper-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="shipt-shopper-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/roadie-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="roadie-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gopuff-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="gopuff-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/taskrabbit-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="taskrabbit-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/rover-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="rover-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/upwork-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="upwork-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/fiverr-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="fiverr-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/favor-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="favor-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/veho-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="veho-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/dolly-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="dolly-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/goshare-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="goshare-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/wag-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="wag-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/etsy-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="etsy-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/ebay-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="ebay-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/poshmark-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="poshmark-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/mercari-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="mercari-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/depop-taxes"
+          component={() => (
+            <>
+              <PlatformTaxGuide slug="depop-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        {/* Gig-tax cluster: state guides */}
+        <Route
+          path="/california-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="california-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/texas-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="texas-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/florida-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="florida-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/new-york-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="new-york-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/illinois-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="illinois-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/washington-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="washington-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        {/* Gig-tax cluster: platform comparisons */}
+        <Route
+          path="/doordash-vs-uber-eats"
+          component={() => (
+            <>
+              <PlatformComparison slug="doordash-vs-uber-eats" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/instacart-vs-doordash"
+          component={() => (
+            <>
+              <PlatformComparison slug="instacart-vs-doordash" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/uber-vs-lyft-driver"
+          component={() => (
+            <>
+              <PlatformComparison slug="uber-vs-lyft-driver" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        {/* Gig-tax cluster: explainers & guides */}
+        <Route
+          path="/1099-nec-vs-1099-k"
+          component={() => (
+            <>
+              <Form1099Explainer />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gig-worker-tax-deductions"
+          component={() => (
+            <>
+              <GigDeductionsGuide />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-file-gig-worker-taxes"
+          component={() => (
+            <>
+              <HowToFileGigTaxes />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gig-quarterly-taxes"
+          component={() => (
+            <>
+              <GigQuarterlyTaxes />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        {/* Gig-tax cluster: more state guides */}
+        <Route
+          path="/georgia-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="georgia-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/pennsylvania-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="pennsylvania-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/new-jersey-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="new-jersey-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/arizona-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="arizona-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/ohio-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="ohio-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/north-carolina-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="north-carolina-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/michigan-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="michigan-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/colorado-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="colorado-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/virginia-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="virginia-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/massachusetts-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="massachusetts-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/maryland-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="maryland-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/minnesota-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="minnesota-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/missouri-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="missouri-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/indiana-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="indiana-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/tennessee-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="tennessee-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/nevada-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="nevada-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/wisconsin-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="wisconsin-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/oregon-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="oregon-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/south-carolina-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="south-carolina-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/alabama-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="alabama-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/louisiana-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="louisiana-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/kentucky-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="kentucky-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/oklahoma-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="oklahoma-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/connecticut-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="connecticut-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/utah-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="utah-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/iowa-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="iowa-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/kansas-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="kansas-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/new-mexico-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="new-mexico-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/nebraska-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="nebraska-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/mississippi-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="mississippi-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/arkansas-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="arkansas-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/west-virginia-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="west-virginia-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/idaho-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="idaho-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/hawaii-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="hawaii-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/maine-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="maine-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/rhode-island-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="rhode-island-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/alaska-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="alaska-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/new-hampshire-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="new-hampshire-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/south-dakota-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="south-dakota-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/wyoming-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="wyoming-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/delaware-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="delaware-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/montana-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="montana-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/north-dakota-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="north-dakota-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/vermont-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="vermont-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/washington-dc-gig-worker-taxes"
+          component={() => (
+            <>
+              <StateTaxGuide slug="washington-dc-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        {/* Gig-tax cluster: city / local-tax guides */}
+        <Route
+          path="/new-york-city-gig-worker-taxes"
+          component={() => (
+            <>
+              <CityTaxGuide slug="new-york-city-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/philadelphia-gig-worker-taxes"
+          component={() => (
+            <>
+              <CityTaxGuide slug="philadelphia-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/portland-gig-worker-taxes"
+          component={() => (
+            <>
+              <CityTaxGuide slug="portland-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/detroit-gig-worker-taxes"
+          component={() => (
+            <>
+              <CityTaxGuide slug="detroit-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/kansas-city-gig-worker-taxes"
+          component={() => (
+            <>
+              <CityTaxGuide slug="kansas-city-gig-worker-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        {/* Gig-tax cluster: additional platform comparisons */}
+        <Route
+          path="/doordash-vs-grubhub"
+          component={() => (
+            <>
+              <PlatformComparison slug="doordash-vs-grubhub" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/amazon-flex-vs-spark"
+          component={() => (
+            <>
+              <PlatformComparison slug="amazon-flex-vs-spark" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/instacart-vs-shipt"
+          component={() => (
+            <>
+              <PlatformComparison slug="instacart-vs-shipt" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/uber-vs-doordash"
+          component={() => (
+            <>
+              <PlatformComparison slug="uber-vs-doordash" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/uber-eats-vs-grubhub"
+          component={() => (
+            <>
+              <PlatformComparison slug="uber-eats-vs-grubhub" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/doordash-vs-spark"
+          component={() => (
+            <>
+              <PlatformComparison slug="doordash-vs-spark" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/amazon-flex-vs-doordash"
+          component={() => (
+            <>
+              <PlatformComparison slug="amazon-flex-vs-doordash" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/upwork-vs-fiverr"
+          component={() => (
+            <>
+              <PlatformComparison slug="upwork-vs-fiverr" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gopuff-vs-doordash"
+          component={() => (
+            <>
+              <PlatformComparison slug="gopuff-vs-doordash" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/rover-vs-wag"
+          component={() => (
+            <>
+              <PlatformComparison slug="rover-vs-wag" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/lyft-vs-uber-eats"
+          component={() => (
+            <>
+              <PlatformComparison slug="lyft-vs-uber-eats" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        {/* Getting-started cluster: "how to make money on <platform>" guides */}
+        <Route
+          path="/how-to-make-money-on-doordash"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-on-doordash" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-make-money-driving-for-uber"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-driving-for-uber" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-make-money-with-instacart"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-with-instacart" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-make-money-with-amazon-flex"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-with-amazon-flex" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-make-money-with-lyft"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-with-lyft" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-make-money-delivering-for-grubhub"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-delivering-for-grubhub" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-make-money-as-a-spark-driver"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-as-a-spark-driver" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-make-money-on-taskrabbit"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-on-taskrabbit" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-make-money-with-rover"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-with-rover" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-make-money-with-shipt"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-with-shipt" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-make-money-with-gopuff"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-with-gopuff" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-make-money-with-roadie"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-with-roadie" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-make-money-with-favor"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-with-favor" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/how-to-make-money-with-wag"
+          component={() => (
+            <>
+              <GettingStartedGuide slug="how-to-make-money-with-wag" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        {/* Gig finance cluster: money topics beyond taxes */}
+        <Route
+          path="/gig-worker-retirement"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="gig-worker-retirement" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gig-worker-health-insurance"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="gig-worker-health-insurance" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gig-worker-bookkeeping"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="gig-worker-bookkeeping" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gig-worker-budgeting"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="gig-worker-budgeting" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gig-worker-emergency-fund"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="gig-worker-emergency-fund" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gig-worker-debt-payoff"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="gig-worker-debt-payoff" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/sep-ira-vs-solo-401k"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="sep-ira-vs-solo-401k" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/llc-vs-sole-proprietorship"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="llc-vs-sole-proprietorship" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gig-worker-w2-job-taxes"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="gig-worker-w2-job-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/multi-state-gig-taxes"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="multi-state-gig-taxes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/new-gig-worker-tax-checklist"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="new-gig-worker-tax-checklist" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/self-employment-tax-explained"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="self-employment-tax-explained" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gig-worker-home-office-deduction"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="gig-worker-home-office-deduction" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gig-worker-tax-mistakes"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="gig-worker-tax-mistakes" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route
+          path="/gig-worker-roth-ira"
+          component={() => (
+            <>
+              <GigFinanceGuide slug="gig-worker-roth-ira" />
+              <GigResourceLinks />
+            </>
+          )}
+        />
+        <Route path="/seo" component={() => <SeoIndex />} />
+        <Route path="/seo/:slug" component={() => <SeoLanding />} />
+        <Route
+          path="/checkout/plan"
+          component={() => (
+            <ProtectedRoute>
+              <PlanCheckout />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/billing/success"
+          component={() => (
+            <ProtectedRoute>
+              <BillingSuccess />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/checkout"
+          component={() => (
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/checkout/paypal-return"
+          component={() => (
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/checkout/paypal-cancel"
+          component={() => (
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/master-control"
+          component={() => (
+            <DashboardRoute>
+              <MasterControl />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/revenue-command"
+          component={() => (
+            <DashboardRoute>
+              <RevenueCommand />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/dashboard/dealflow"
+          component={() => (
+            <DashboardRoute>
+              <DealflowPage />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/dashboard/terpforge"
+          component={() => (
+            <DashboardRoute>
+              <TerpforgePage />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/dashboard/knowledge-graph"
+          component={() => (
+            <DashboardRoute>
+              <KnowledgeGraphPage />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/dashboard/pixelforge"
+          component={() => (
+            <DashboardRoute>
+              <PixelforgePage />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/dashboard/shopify-theme"
+          component={() => (
+            <DashboardRoute>
+              <ShopifyThemePage />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/discounts"
+          component={() => (
+            <DashboardRoute>
+              <Discounts />
+            </DashboardRoute>
+          )}
+        />
+        <Route path="/404" component={() => <NotFound />} />
+        <Route path="/clips" component={() => <ClipsToolkit />} />
+        <Route
+          path="/clips/success"
+          component={() => <ClipsToolkitSuccess />}
+        />
+        <Route>{() => <NotFound />}</Route>
+      </Switch>
+      <CookieConsentBanner />
+    </>
   );
 }
 

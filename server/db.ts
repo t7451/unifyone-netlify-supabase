@@ -872,6 +872,221 @@ export async function trackEvent(
   });
 }
 
+// ── Behavioral tracking (first-party) ─────────────────────────────────────────
+
+export type BehaviorEventInput = {
+  eventType: string;
+  userId?: number | null;
+  orderId?: number | null;
+  productId?: number | null;
+  value?: number | null;
+  properties?: Record<string, unknown>;
+};
+
+/**
+ * Batch-insert first-party behavioral events (product views, searches, cart and
+ * checkout actions, purchases) for a tenant. Returns the number of rows written.
+ * No-ops gracefully when the DB is unavailable so tracking never breaks a page.
+ */
+export async function trackBehaviorEvents(
+  tenantId: number,
+  events: BehaviorEventInput[]
+): Promise<number> {
+  const db = await getDb();
+  if (!db || events.length === 0) return 0;
+  await db.insert(analyticsEvents).values(
+    events.map(e => ({
+      tenantId,
+      eventType: e.eventType,
+      userId: e.userId ?? undefined,
+      orderId: e.orderId ?? undefined,
+      productId: e.productId ?? undefined,
+      value: e.value != null ? String(e.value) : undefined,
+      properties: e.properties,
+    }))
+  );
+  return events.length;
+}
+
+const BEHAVIOR_EVENT_FILTER = [
+  "page_view",
+  "product_view",
+  "search",
+  "add_to_cart",
+  "checkout_start",
+  "purchase",
+];
+
+/**
+ * High-level behavior summary for the dashboard: per-stage event counts, unique
+ * visitors, and the view → cart → checkout → purchase funnel for the window.
+ */
+export async function getBehaviorSummary(tenantId: number, days = 30) {
+  const db = await getDb();
+  const empty = {
+    pageViews: 0,
+    productViews: 0,
+    searches: 0,
+    addToCarts: 0,
+    checkoutStarts: 0,
+    purchases: 0,
+    uniqueVisitors: 0,
+    viewToCartRate: 0,
+    cartToCheckoutRate: 0,
+    checkoutToPurchaseRate: 0,
+    cartAbandonment: 0,
+  };
+  if (!db) return empty;
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const rows = await db
+    .select({
+      eventType: analyticsEvents.eventType,
+      count: sql<number>`count(*)`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        gte(analyticsEvents.createdAt, since),
+        inArray(analyticsEvents.eventType, BEHAVIOR_EVENT_FILTER)
+      )
+    )
+    .groupBy(analyticsEvents.eventType);
+
+  const visitorRow = await db
+    .select({
+      visitors: sql<number>`count(distinct ${analyticsEvents.properties}->>'anonymousId')`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        gte(analyticsEvents.createdAt, since)
+      )
+    );
+
+  const byType = new Map(rows.map(r => [r.eventType, Number(r.count)]));
+  const productViews = byType.get("product_view") ?? 0;
+  const addToCarts = byType.get("add_to_cart") ?? 0;
+  const checkoutStarts = byType.get("checkout_start") ?? 0;
+  const purchases = byType.get("purchase") ?? 0;
+  const rate = (num: number, den: number) =>
+    den > 0 ? Math.round((num / den) * 1000) / 10 : 0;
+
+  return {
+    pageViews: byType.get("page_view") ?? 0,
+    productViews,
+    searches: byType.get("search") ?? 0,
+    addToCarts,
+    checkoutStarts,
+    purchases,
+    uniqueVisitors: Number(visitorRow[0]?.visitors ?? 0),
+    viewToCartRate: rate(addToCarts, productViews),
+    cartToCheckoutRate: rate(checkoutStarts, addToCarts),
+    checkoutToPurchaseRate: rate(purchases, checkoutStarts),
+    cartAbandonment: rate(checkoutStarts - purchases, checkoutStarts),
+  };
+}
+
+/**
+ * Products ranked by how often customers *look at* them (demand intent),
+ * alongside add-to-cart counts and distinct viewers, joined to product names.
+ * This is the "what are they looking for" signal independent of what sold.
+ */
+export async function getTopViewedProducts(
+  tenantId: number,
+  days = 30,
+  limit = 10
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const rows = await db
+    .select({
+      productId: analyticsEvents.productId,
+      views: sql<number>`sum(case when ${analyticsEvents.eventType} = 'product_view' then 1 else 0 end)`,
+      addToCarts: sql<number>`sum(case when ${analyticsEvents.eventType} = 'add_to_cart' then 1 else 0 end)`,
+      viewers: sql<number>`count(distinct case when ${analyticsEvents.eventType} = 'product_view' then ${analyticsEvents.properties}->>'anonymousId' end)`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        gte(analyticsEvents.createdAt, since),
+        inArray(analyticsEvents.eventType, ["product_view", "add_to_cart"]),
+        sql`${analyticsEvents.productId} is not null`
+      )
+    )
+    .groupBy(analyticsEvents.productId)
+    .orderBy(
+      desc(
+        sql`sum(case when ${analyticsEvents.eventType} = 'product_view' then 1 else 0 end)`
+      )
+    )
+    .limit(limit);
+
+  const ids = rows
+    .map(r => r.productId)
+    .filter((id): id is number => id != null);
+  const names = ids.length
+    ? await db
+        .select({ id: products.id, name: products.name, price: products.price })
+        .from(products)
+        .where(and(eq(products.tenantId, tenantId), inArray(products.id, ids)))
+    : [];
+  const nameById = new Map(names.map(p => [p.id, p]));
+
+  return rows.map(r => {
+    const views = Number(r.views);
+    const addToCarts = Number(r.addToCarts);
+    const product = r.productId != null ? nameById.get(r.productId) : undefined;
+    return {
+      productId: r.productId,
+      productName: product?.name ?? "Unknown product",
+      price: product?.price ?? null,
+      views,
+      addToCarts,
+      viewers: Number(r.viewers),
+      viewToCartRate:
+        views > 0 ? Math.round((addToCarts / views) * 1000) / 10 : 0,
+    };
+  });
+}
+
+/**
+ * Top search queries customers typed, with distinct searchers and the average
+ * number of results returned. Low-result, high-volume queries surface unmet
+ * demand — products customers want but cannot find.
+ */
+export async function getTopSearches(tenantId: number, days = 30, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const queryExpr = sql<string>`lower(${analyticsEvents.properties}->>'query')`;
+
+  return db
+    .select({
+      query: queryExpr,
+      searches: sql<number>`count(*)`,
+      searchers: sql<number>`count(distinct ${analyticsEvents.properties}->>'anonymousId')`,
+      avgResults: sql<number>`round(avg(nullif(${analyticsEvents.properties}->>'resultCount', '')::numeric), 1)`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        eq(analyticsEvents.eventType, "search"),
+        gte(analyticsEvents.createdAt, since),
+        sql`coalesce(${analyticsEvents.properties}->>'query', '') <> ''`
+      )
+    )
+    .groupBy(queryExpr)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit);
+}
+
 export async function getAnalyticsSummary(tenantId: number, days = 30) {
   const db = await getDb();
   if (!db) return null;

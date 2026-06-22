@@ -2,10 +2,13 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
   getAnalyticsSummary,
+  getBehaviorSummary,
   getDashboardOverview,
   getRevenueByDay,
   getTopProducts,
   getTopProductsSummary,
+  getTopSearches,
+  getTopViewedProducts,
   getWebhookEvents,
 } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -63,5 +66,43 @@ export const analyticsRouter = router({
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
       return getWebhookEvents(tenantId, input?.limit ?? 20);
+    }),
+
+  // ── Customer behavior (first-party tracking) ──────────────────────────────
+
+  /** View → cart → checkout → purchase funnel + unique visitors for the window. */
+  behaviorSummary: protectedProcedure
+    .input(z.object({ days: z.number().default(30) }).optional())
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenant(ctx.user.tenantId);
+      return getBehaviorSummary(tenantId, input?.days ?? 30);
+    }),
+
+  /** Products ranked by views (demand intent), with add-to-cart conversion. */
+  topViewedProducts: protectedProcedure
+    .input(
+      z
+        .object({ days: z.number().default(30), limit: z.number().default(10) })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenant(ctx.user.tenantId);
+      return getTopViewedProducts(
+        tenantId,
+        input?.days ?? 30,
+        input?.limit ?? 10
+      );
+    }),
+
+  /** Most-searched queries with distinct searchers and average result counts. */
+  topSearches: protectedProcedure
+    .input(
+      z
+        .object({ days: z.number().default(30), limit: z.number().default(20) })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenant(ctx.user.tenantId);
+      return getTopSearches(tenantId, input?.days ?? 30, input?.limit ?? 20);
     }),
 });
