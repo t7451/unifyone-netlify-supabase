@@ -33,9 +33,12 @@ import { trackingRouter } from "../routers/tracking";
 
 type UserLike = { id: number; tenantId: number | null };
 
-function makeCtx(user: UserLike | null = null): TrpcContext {
+function makeCtx(
+  user: UserLike | null = null,
+  headers: Record<string, string> = {}
+): TrpcContext {
   return {
-    req: { ip: "127.0.0.1", headers: {} } as TrpcContext["req"],
+    req: { ip: "127.0.0.1", headers } as TrpcContext["req"],
     res: {} as TrpcContext["res"],
     user: user as TrpcContext["user"],
   };
@@ -148,5 +151,55 @@ describe("tracking.ingest", () => {
     });
 
     expect(res).toEqual({ ok: false, stored: 0 });
+  });
+
+  it("derives the destination domain from an outbound_click url", async () => {
+    const caller = trackingRouter.createCaller(makeCtx({ id: 1, tenantId: 5 }));
+
+    await caller.ingest({
+      anonymousId: "anon-9",
+      events: [
+        { type: "outbound_click", url: "https://www.partner-shop.com/item/42" },
+      ],
+    });
+
+    const [, events] = trackBehaviorEventsMock.mock.calls[0] as [
+      number,
+      Array<Record<string, unknown>>,
+    ];
+    expect(events[0].eventType).toBe("outbound_click");
+    expect(events[0].properties).toMatchObject({
+      url: "https://www.partner-shop.com/item/42",
+      destination: "partner-shop.com",
+    });
+  });
+
+  it("enriches events with coarse geo from the edge header (server-side)", async () => {
+    const nfGeo = Buffer.from(
+      JSON.stringify({
+        country: { code: "US" },
+        subdivision: { code: "CA" },
+        city: "San Francisco",
+      })
+    ).toString("base64");
+    const caller = trackingRouter.createCaller(
+      makeCtx({ id: 1, tenantId: 5 }, { "x-nf-geo": nfGeo })
+    );
+
+    await caller.ingest({
+      anonymousId: "anon-10",
+      // A client trying to spoof geo via props must be overridden server-side.
+      events: [{ type: "page_view", path: "/", props: { country: "ZZ" } }],
+    });
+
+    const [, events] = trackBehaviorEventsMock.mock.calls[0] as [
+      number,
+      Array<Record<string, unknown>>,
+    ];
+    expect(events[0].properties).toMatchObject({
+      country: "US",
+      region: "CA",
+      city: "San Francisco",
+    });
   });
 });

@@ -1,9 +1,12 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
+  getAcquisitionSources,
   getAnalyticsSummary,
   getBehaviorSummary,
   getDashboardOverview,
+  getGeoBreakdown,
+  getOutboundDestinations,
   getRevenueByDay,
   getTopProducts,
   getTopProductsSummary,
@@ -109,5 +112,51 @@ export const analyticsRouter = router({
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
       return getTopSearches(tenantId, input?.days ?? 30, input?.limit ?? 20);
+    }),
+
+  // ── WHERE: acquisition, exits, geo ────────────────────────────────────────
+
+  /** Where visitors come from — page views grouped by acquisition source. */
+  acquisitionSources: protectedProcedure
+    .input(
+      z
+        .object({ days: daysInput.default(30), limit: limitInput.default(12) })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenant(ctx.user.tenantId);
+      return getAcquisitionSources(
+        tenantId,
+        input?.days ?? 30,
+        input?.limit ?? 12
+      );
+    }),
+
+  /** Where visitors go — outbound link clicks grouped by destination domain. */
+  outboundDestinations: protectedProcedure
+    .input(
+      z
+        .object({ days: daysInput.default(30), limit: limitInput.default(12) })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenant(ctx.user.tenantId);
+      return getOutboundDestinations(
+        tenantId,
+        input?.days ?? 30,
+        input?.limit ?? 12
+      );
+    }),
+
+  /** Where visitors are — distinct visitors grouped by country (coarse geo). */
+  geoBreakdown: protectedProcedure
+    .input(
+      z
+        .object({ days: daysInput.default(30), limit: limitInput.default(12) })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenant(ctx.user.tenantId);
+      return getGeoBreakdown(tenantId, input?.days ?? 30, input?.limit ?? 12);
     }),
 });

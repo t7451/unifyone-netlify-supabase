@@ -16,6 +16,9 @@ export const BEHAVIOR_EVENT_TYPES = [
   "add_to_cart",
   "checkout_start",
   "purchase",
+  // WHERE: a click on a link that leaves the site — the destination domain is
+  // the legitimate "where they go next" signal (no off-site tracking required).
+  "outbound_click",
 ] as const;
 
 export type BehaviorEventType = (typeof BEHAVIOR_EVENT_TYPES)[number];

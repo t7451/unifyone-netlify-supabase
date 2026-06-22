@@ -1088,6 +1088,107 @@ export async function getTopSearches(tenantId: number, days = 30, limit = 20) {
     .limit(limit);
 }
 
+// ── WHERE: acquisition, exits, geo ────────────────────────────────────────────
+
+/**
+ * Where visitors come from: page views grouped by first-touch acquisition
+ * source (organic-search, ai:chatgpt, utm:*, referral:*, direct), with visit
+ * and distinct-visitor counts.
+ */
+export async function getAcquisitionSources(
+  tenantId: number,
+  days = 30,
+  limit = 12
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const sourceExpr = sql<string>`coalesce(${analyticsEvents.properties}->>'source', 'direct')`;
+
+  return db
+    .select({
+      source: sourceExpr,
+      visits: sql<number>`count(*)`,
+      visitors: sql<number>`count(distinct ${analyticsEvents.properties}->>'anonymousId')`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        eq(analyticsEvents.eventType, "page_view"),
+        gte(analyticsEvents.createdAt, since)
+      )
+    )
+    .groupBy(sourceExpr)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit);
+}
+
+/**
+ * Where visitors go when they leave: outbound link clicks grouped by
+ * destination domain, with click and distinct-visitor counts.
+ */
+export async function getOutboundDestinations(
+  tenantId: number,
+  days = 30,
+  limit = 12
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const destExpr = sql<string>`${analyticsEvents.properties}->>'destination'`;
+
+  return db
+    .select({
+      destination: destExpr,
+      clicks: sql<number>`count(*)`,
+      visitors: sql<number>`count(distinct ${analyticsEvents.properties}->>'anonymousId')`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        eq(analyticsEvents.eventType, "outbound_click"),
+        gte(analyticsEvents.createdAt, since),
+        sql`coalesce(${analyticsEvents.properties}->>'destination', '') <> ''`
+      )
+    )
+    .groupBy(destExpr)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit);
+}
+
+/**
+ * Where visitors are located: distinct visitors grouped by country (coarse,
+ * edge-derived geo). Scoped to behavioral events within the window.
+ */
+export async function getGeoBreakdown(tenantId: number, days = 30, limit = 12) {
+  const db = await getDb();
+  if (!db) return [];
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const countryExpr = sql<string>`${analyticsEvents.properties}->>'country'`;
+
+  return db
+    .select({
+      country: countryExpr,
+      visitors: sql<number>`count(distinct ${analyticsEvents.properties}->>'anonymousId')`,
+      events: sql<number>`count(*)`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        gte(analyticsEvents.createdAt, since),
+        sql`coalesce(${analyticsEvents.properties}->>'country', '') <> ''`
+      )
+    )
+    .groupBy(countryExpr)
+    .orderBy(
+      desc(sql`count(distinct ${analyticsEvents.properties}->>'anonymousId')`)
+    )
+    .limit(limit);
+}
+
 export async function getAnalyticsSummary(tenantId: number, days = 30) {
   const db = await getDb();
   if (!db) return null;
