@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DashboardPageShell } from "@/components/DashboardPageShell";
 import { CustomerBehaviorPanel } from "@/components/analytics/CustomerBehaviorPanel";
+import { AcquisitionPanel } from "@/components/analytics/AcquisitionPanel";
+import { EngagementPanel } from "@/components/analytics/EngagementPanel";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Area,
@@ -374,6 +376,10 @@ export default function Analytics() {
       </div>
 
       <CustomerBehaviorPanel />
+
+      <AcquisitionPanel />
+
+      <EngagementPanel />
 
       <Card className="border-border bg-card">
         <CardHeader>

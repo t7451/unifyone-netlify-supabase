@@ -3,7 +3,17 @@ import { isBehaviorEventType } from "@shared/behaviorEvents";
 import { publicRateLimitedProcedure, router } from "../_core/trpc";
 import { publicFormLimiter } from "../_core/rateLimiter";
 import { trackBehaviorEvents, type BehaviorEventInput } from "../db";
+import { extractGeo } from "../lib/geo";
 import { logger } from "../_core/logger";
+
+/** Host portion of a URL, or undefined if it can't be parsed. */
+function hostOf(url: string): string | undefined {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * First-party behavioral tracking ingest.
@@ -30,6 +40,8 @@ const eventSchema = z.object({
   path: z.string().max(2048).optional(),
   query: z.string().max(512).optional(),
   resultCount: z.number().int().nonnegative().optional(),
+  // Destination URL for outbound_click events (where the visitor goes next).
+  url: z.string().url().max(2048).optional(),
   props: z
     .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
     .optional(),
@@ -56,27 +68,40 @@ export const trackingRouter = router({
           : (input.tenantId ?? null);
         if (!tenantId) return { ok: true, stored: 0 };
 
+        // Coarse geo from the CDN edge (country/region/city) — derived
+        // server-side so the client can't spoof it. Privacy-friendly: no IP,
+        // no precise coordinates.
+        const geo = extractGeo(ctx.req);
+
         const base = {
           ...(input.anonymousId ? { anonymousId: input.anonymousId } : {}),
           ...(input.sessionId ? { sessionId: input.sessionId } : {}),
+          ...(geo.country ? { country: geo.country } : {}),
+          ...(geo.region ? { region: geo.region } : {}),
+          ...(geo.city ? { city: geo.city } : {}),
         };
 
-        const events: BehaviorEventInput[] = input.events.map(e => ({
-          eventType: e.type,
-          userId: ctx.user?.id ?? null,
-          orderId: e.orderId ?? null,
-          productId: e.productId ?? null,
-          value: e.value ?? null,
-          properties: {
-            // Caller-supplied props first so reserved fields below always win
-            // and cannot be overwritten by a malicious/buggy client.
-            ...(e.props ?? {}),
-            ...base,
-            ...(e.path ? { path: e.path } : {}),
-            ...(e.query ? { query: e.query } : {}),
-            ...(e.resultCount != null ? { resultCount: e.resultCount } : {}),
-          },
-        }));
+        const events: BehaviorEventInput[] = input.events.map(e => {
+          const destination = e.url ? hostOf(e.url) : undefined;
+          return {
+            eventType: e.type,
+            userId: ctx.user?.id ?? null,
+            orderId: e.orderId ?? null,
+            productId: e.productId ?? null,
+            value: e.value ?? null,
+            properties: {
+              // Caller-supplied props first so reserved fields below always win
+              // and cannot be overwritten by a malicious/buggy client.
+              ...(e.props ?? {}),
+              ...base,
+              ...(e.path ? { path: e.path } : {}),
+              ...(e.query ? { query: e.query } : {}),
+              ...(e.resultCount != null ? { resultCount: e.resultCount } : {}),
+              ...(e.url ? { url: e.url } : {}),
+              ...(destination ? { destination } : {}),
+            },
+          };
+        });
 
         const stored = await trackBehaviorEvents(tenantId, events);
         return { ok: true, stored };

@@ -1088,6 +1088,222 @@ export async function getTopSearches(tenantId: number, days = 30, limit = 20) {
     .limit(limit);
 }
 
+// ── WHERE: acquisition, exits, geo ────────────────────────────────────────────
+
+/**
+ * Where visitors come from: page views grouped by first-touch acquisition
+ * source (organic-search, ai:chatgpt, utm:*, referral:*, direct), with visit
+ * and distinct-visitor counts.
+ */
+export async function getAcquisitionSources(
+  tenantId: number,
+  days = 30,
+  limit = 12
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const sourceExpr = sql<string>`coalesce(${analyticsEvents.properties}->>'source', 'direct')`;
+
+  return db
+    .select({
+      source: sourceExpr,
+      visits: sql<number>`count(*)`,
+      visitors: sql<number>`count(distinct ${analyticsEvents.properties}->>'anonymousId')`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        eq(analyticsEvents.eventType, "page_view"),
+        gte(analyticsEvents.createdAt, since)
+      )
+    )
+    .groupBy(sourceExpr)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit);
+}
+
+/**
+ * Where visitors go when they leave: outbound link clicks grouped by
+ * destination domain, with click and distinct-visitor counts.
+ */
+export async function getOutboundDestinations(
+  tenantId: number,
+  days = 30,
+  limit = 12
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const destExpr = sql<string>`${analyticsEvents.properties}->>'destination'`;
+
+  return db
+    .select({
+      destination: destExpr,
+      clicks: sql<number>`count(*)`,
+      visitors: sql<number>`count(distinct ${analyticsEvents.properties}->>'anonymousId')`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        eq(analyticsEvents.eventType, "outbound_click"),
+        gte(analyticsEvents.createdAt, since),
+        sql`coalesce(${analyticsEvents.properties}->>'destination', '') <> ''`
+      )
+    )
+    .groupBy(destExpr)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit);
+}
+
+/**
+ * Where visitors are located: distinct visitors grouped by country (coarse,
+ * edge-derived geo). Scoped to behavioral events within the window.
+ */
+export async function getGeoBreakdown(tenantId: number, days = 30, limit = 12) {
+  const db = await getDb();
+  if (!db) return [];
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const countryExpr = sql<string>`${analyticsEvents.properties}->>'country'`;
+
+  return db
+    .select({
+      country: countryExpr,
+      visitors: sql<number>`count(distinct ${analyticsEvents.properties}->>'anonymousId')`,
+      events: sql<number>`count(*)`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        gte(analyticsEvents.createdAt, since),
+        sql`coalesce(${analyticsEvents.properties}->>'country', '') <> ''`
+      )
+    )
+    .groupBy(countryExpr)
+    .orderBy(
+      desc(sql`count(distinct ${analyticsEvents.properties}->>'anonymousId')`)
+    )
+    .limit(limit);
+}
+
+// ── WHAT (depth) + WHY (funnel) ───────────────────────────────────────────────
+
+/**
+ * Product engagement depth: average dwell time (seconds) and max scroll depth
+ * (%) per product, from product_engagement events — how *intensely* shoppers
+ * look at each product, not just whether they opened it.
+ */
+export async function getProductEngagement(
+  tenantId: number,
+  days = 30,
+  limit = 10
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const dwellAvg = sql`avg(nullif(${analyticsEvents.properties}->>'dwellMs', '')::numeric)`;
+
+  const rows = await db
+    .select({
+      productId: analyticsEvents.productId,
+      avgDwellMs: sql<number>`round(${dwellAvg})`,
+      avgScrollPct: sql<number>`round(avg(nullif(${analyticsEvents.properties}->>'scrollPct', '')::numeric))`,
+      samples: sql<number>`count(*)`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        eq(analyticsEvents.eventType, "product_engagement"),
+        gte(analyticsEvents.createdAt, since),
+        sql`${analyticsEvents.productId} is not null`
+      )
+    )
+    .groupBy(analyticsEvents.productId)
+    .orderBy(desc(dwellAvg))
+    .limit(limit);
+
+  const ids = rows
+    .map(r => r.productId)
+    .filter((id): id is number => id != null);
+  const names = ids.length
+    ? await db
+        .select({ id: products.id, name: products.name })
+        .from(products)
+        .where(and(eq(products.tenantId, tenantId), inArray(products.id, ids)))
+    : [];
+  const nameById = new Map(names.map(p => [p.id, p.name]));
+
+  return rows.map(r => ({
+    productId: r.productId,
+    productName:
+      (r.productId != null ? nameById.get(r.productId) : undefined) ??
+      "Unknown product",
+    avgDwellSec: Math.round(Number(r.avgDwellMs ?? 0) / 1000),
+    avgScrollPct: Number(r.avgScrollPct ?? 0),
+    samples: Number(r.samples),
+  }));
+}
+
+/**
+ * Session-level funnel: distinct visitors who reached each stage (viewed a
+ * product → added to cart → started checkout → purchased) and the drop-off
+ * rate between stages. Answers "where exactly are shoppers falling out".
+ */
+export async function getFunnelDropoff(tenantId: number, days = 30) {
+  const db = await getDb();
+  const empty = {
+    viewed: 0,
+    carted: 0,
+    checkedOut: 0,
+    purchased: 0,
+    viewToCart: 0,
+    cartToCheckout: 0,
+    checkoutToPurchase: 0,
+  };
+  if (!db) return empty;
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const anon = sql`${analyticsEvents.properties}->>'anonymousId'`;
+
+  const rows = await db
+    .select({
+      viewed: sql<number>`count(distinct case when ${analyticsEvents.eventType} = 'product_view' then ${anon} end)`,
+      carted: sql<number>`count(distinct case when ${analyticsEvents.eventType} = 'add_to_cart' then ${anon} end)`,
+      checkedOut: sql<number>`count(distinct case when ${analyticsEvents.eventType} = 'checkout_start' then ${anon} end)`,
+      purchased: sql<number>`count(distinct case when ${analyticsEvents.eventType} = 'purchase' then ${anon} end)`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        gte(analyticsEvents.createdAt, since)
+      )
+    );
+
+  const r = rows[0];
+  if (!r) return empty;
+  const viewed = Number(r.viewed ?? 0);
+  const carted = Number(r.carted ?? 0);
+  const checkedOut = Number(r.checkedOut ?? 0);
+  const purchased = Number(r.purchased ?? 0);
+  const rate = (num: number, den: number) =>
+    den > 0 ? Math.round((num / den) * 1000) / 10 : 0;
+
+  return {
+    viewed,
+    carted,
+    checkedOut,
+    purchased,
+    // Drop-off % between consecutive stages (share lost at each step).
+    viewToCart: rate(viewed - carted, viewed),
+    cartToCheckout: rate(carted - checkedOut, carted),
+    checkoutToPurchase: rate(checkedOut - purchased, checkedOut),
+  };
+}
+
 export async function getAnalyticsSummary(tenantId: number, days = 30) {
   const db = await getDb();
   if (!db) return null;

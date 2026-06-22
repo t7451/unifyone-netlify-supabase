@@ -16,6 +16,12 @@ export const BEHAVIOR_EVENT_TYPES = [
   "add_to_cart",
   "checkout_start",
   "purchase",
+  // WHERE: a click on a link that leaves the site — the destination domain is
+  // the legitimate "where they go next" signal (no off-site tracking required).
+  "outbound_click",
+  // WHAT (depth): how long / how far a visitor engaged with a product page —
+  // dwell time and max scroll depth, emitted when they leave the product.
+  "product_engagement",
 ] as const;
 
 export type BehaviorEventType = (typeof BEHAVIOR_EVENT_TYPES)[number];
