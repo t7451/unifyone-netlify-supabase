@@ -15,8 +15,10 @@ import {
   getSurveyResults,
   getTopSearches,
   getTopViewedProducts,
+  getUnmetDemand,
   getWebhookEvents,
 } from "../db";
+import { fetchRelatedQueries } from "../lib/googleTrends";
 import {
   protectedProcedure,
   rateLimitedProcedure,
@@ -267,6 +269,54 @@ export const analyticsRouter = router({
         generatedAt: new Date().toISOString(),
         days,
         model: result.model ?? null,
+      };
+    }),
+
+  // ── Phase 3: market intelligence ──────────────────────────────────────────
+
+  /**
+   * Unmet demand — high-volume searches on your own site that return little or
+   * nothing. Demand you're not currently stocking/surfacing. First-party only.
+   */
+  unmetDemand: protectedProcedure
+    .input(
+      z
+        .object({ days: daysInput.default(30), limit: limitInput.default(20) })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenant(ctx.user.tenantId);
+      return getUnmetDemand(tenantId, input?.days ?? 30, input?.limit ?? 20);
+    }),
+
+  /**
+   * Google Trends related/rising queries for a seed term — aggregate off-site
+   * demand. Best-effort: returns { available:false } when Trends is
+   * unreachable/rate-limited (it has no official API), never errors the page.
+   */
+  trendingQueries: rateLimitedProcedure(llmRateLimiter, "analytics:trends")
+    .input(
+      z.object({
+        term: z.string().trim().min(1).max(100),
+        geo: z
+          .string()
+          .trim()
+          .max(5)
+          .regex(/^[A-Za-z-]*$/)
+          .optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      requireTenant(ctx.user.tenantId);
+      const data = await fetchRelatedQueries(input.term, input.geo ?? "");
+      if (!data) {
+        return { available: false as const, term: input.term };
+      }
+      return {
+        available: true as const,
+        term: input.term,
+        top: data.top.slice(0, 12),
+        rising: data.rising.slice(0, 12),
       };
     }),
 });
