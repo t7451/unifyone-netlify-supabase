@@ -7,7 +7,7 @@ import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/contact`;
 const DESCRIPTION =
-  "Get in touch with the UnifyOne team. Questions about pricing, enterprise plans, or integrations? We respond within one business day.";
+  "Get in touch with the UnifyOne team. Questions about earnings tracking, mileage deductions, quarterly taxes, or pricing? We respond within one business day.";
 
 const SUPPORT_EMAIL = "support@1commerce.online";
 const ORG_ID = `${SITE_URL}/#organization`;
@@ -159,8 +159,9 @@ export default function Contact() {
           className="font-crimson text-lg mb-12"
           style={{ color: "#6A6A6A", fontStyle: "italic", lineHeight: 1.7 }}
         >
-          Sales questions, partnership ideas, support escalations — write to us
-          and we'll respond within one business day. Or email{" "}
+          Questions about your earnings, mileage deductions, or quarterly taxes
+          — plus pricing, feedback, and support — write to us and we'll respond
+          within one business day. Or email{" "}
           <a
             href="mailto:support@1commerce.online"
             style={{ color: "#D4A843" }}
@@ -218,8 +219,8 @@ export default function Contact() {
               className="font-crimson text-sm mt-1"
               style={{ color: "#5A5A5A", fontStyle: "italic" }}
             >
-              Scan to follow — behind-the-scenes builds, product updates, and
-              operator content.
+              Scan to follow — product updates, tax tips for gig workers, and
+              behind-the-scenes build notes.
             </p>
           </div>
         </div>
