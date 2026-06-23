@@ -8,11 +8,9 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import { BLOG_POSTS } from "@/pages/blog/blogPostShared";
 
 const NAV_LINKS = [
-  { label: "Architecture", href: "/architecture" },
-  { label: "The System", href: "/the-system" },
-  { label: "Tithes", href: "/tithes" },
-  { label: "Pricing", href: "/pricing" },
   { label: "Free Tools", href: "/tools" },
+  { label: "Gig Taxes", href: "/gig-taxes" },
+  { label: "Pricing", href: "/pricing" },
   { label: "Blog", href: "/blog" },
   { label: "Documentation", href: "/documents" },
 ];
@@ -325,22 +323,22 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 className="font-crimson text-sm"
                 style={{ color: "#8A8A8A", lineHeight: 1.7 }}
               >
-                Commerce infrastructure engineered like a cathedral —
-                sequential, structural, and built to outlast every platform
-                trend.
+                Know exactly what every shift actually earns you — track
+                earnings across every app, auto-log IRS mileage, and never get
+                surprised by quarterly taxes.
               </p>
             </div>
 
-            {/* Platform */}
+            {/* Product */}
             <div>
-              <span className="inscription block mb-4">Platform</span>
+              <span className="inscription block mb-4">Product</span>
               <div className="space-y-3">
                 {[
-                  { label: "Architecture", href: "/architecture" },
-                  { label: "The System", href: "/the-system" },
+                  { label: "Free Tools", href: "/tools" },
+                  { label: "Gig Taxes", href: "/gig-taxes" },
+                  { label: "Money Manager", href: "/money-manager" },
+                  { label: "Gig Command", href: "/gig-command" },
                   { label: "Pricing", href: "/pricing" },
-                  { label: "Theme Store", href: "/themes" },
-                  { label: "Tithes", href: "/tithes" },
                 ].map(item => (
                   <Link key={item.href} href={item.href}>
                     <span
@@ -445,21 +443,21 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
             {/* Resources */}
             <div>
-              <span className="inscription block mb-4">Codex</span>
+              <span className="inscription block mb-4">Resources</span>
               <div className="space-y-3">
                 {[
-                  { label: "SEO Guides", href: "/seo" },
+                  { label: "Blog", href: "/blog" },
                   {
-                    label: "Gig Commerce Guide",
-                    href: BLOG_POSTS.gigEcommerce.href,
+                    label: "Shift Intelligence",
+                    href: BLOG_POSTS.gigWorkerShiftIntelligence.href,
                   },
                   {
-                    label: "Multi-Tenant SaaS",
-                    href: BLOG_POSTS.multiTenant.href,
+                    label: "1099 Tax Management",
+                    href: "/1099-tax-management",
                   },
-                  { label: "Resources", href: "/resources" },
+                  { label: "Guides", href: "/resources" },
+                  { label: "Documentation", href: "/documents" },
                   { label: "Docs Chat", href: "/docs-chat" },
-                  { label: "Sovereign Access", href: "/sovereign" },
                 ].map(item => (
                   <Link key={item.href} href={item.href}>
                     <span
