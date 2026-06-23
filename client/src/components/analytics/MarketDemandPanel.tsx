@@ -15,10 +15,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, Search, Telescope } from "lucide-react";
+import { TrendingUp, Search, Telescope, Boxes } from "lucide-react";
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 type UnmetRow = RouterOutputs["analytics"]["unmetDemand"][number];
+type TogetherRow = RouterOutputs["analytics"]["viewedTogether"][number];
 type RankedQuery = { query: string; value: number };
 
 const WINDOWS = [7, 30, 90] as const;
@@ -35,6 +36,7 @@ function formatNumber(value: number) {
 export function MarketDemandPanel() {
   const [days, setDays] = useState<(typeof WINDOWS)[number]>(30);
   const unmet = trpc.analytics.unmetDemand.useQuery({ days });
+  const viewedTogether = trpc.analytics.viewedTogether.useQuery({ days });
 
   const trends = trpc.analytics.trendingQueries.useMutation();
   const [term, setTerm] = useState("");
@@ -197,6 +199,55 @@ export function MarketDemandPanel() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Viewed together (market basket) */}
+      <Card className="border-border bg-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base text-white">
+            <Boxes className="h-4 w-4 text-violet-300" />
+            Frequently viewed together
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {viewedTogether.isLoading ? (
+            <ListSkeleton />
+          ) : (viewedTogether.data?.length ?? 0) > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/10">
+                  <TableHead className="text-gray-400">Product</TableHead>
+                  <TableHead className="text-gray-400">
+                    Often viewed with
+                  </TableHead>
+                  <TableHead className="text-right text-gray-400">
+                    Shoppers
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(viewedTogether.data ?? []).map((row: TogetherRow) => (
+                  <TableRow
+                    key={`${row.productAId}-${row.productBId}`}
+                    className="border-white/5 hover:bg-white/5"
+                  >
+                    <TableCell className="max-w-[220px] truncate font-medium text-white">
+                      {row.productAName}
+                    </TableCell>
+                    <TableCell className="max-w-[220px] truncate text-gray-300">
+                      {row.productBName}
+                    </TableCell>
+                    <TableCell className="text-right text-gray-400">
+                      {formatNumber(row.coViewers)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <EmptyState body="Product pairs that the same shoppers look at in one visit show here — natural candidates for bundles, cross-sells, or 'you might also like'." />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
