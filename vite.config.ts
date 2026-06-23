@@ -163,7 +163,10 @@ function vitePluginAppUrl(): Plugin {
       // deploy so LLM crawlers see a recently-updated llms.txt.
       const outDir = path.resolve(import.meta.dirname, "dist/public");
       const buildDate = new Date().toISOString().split("T")[0];
-      for (const file of ["robots.txt", "sitemap.xml", "llms.txt"]) {
+      // Unique per-build token stamped into the service worker so every deploy
+      // changes sw.js → the browser detects an update → the PWA auto-refreshes.
+      const swBuild = new Date().toISOString();
+      for (const file of ["robots.txt", "sitemap.xml", "llms.txt", "sw.js"]) {
         const filePath = path.join(outDir, file);
         if (fs.existsSync(filePath)) {
           const content = fs.readFileSync(filePath, "utf-8");
@@ -171,7 +174,8 @@ function vitePluginAppUrl(): Plugin {
             filePath,
             content
               .replaceAll("__APP_URL__", SITE_HOSTNAME)
-              .replaceAll("__BUILD_DATE__", buildDate),
+              .replaceAll("__BUILD_DATE__", buildDate)
+              .replaceAll("__SW_BUILD__", swBuild),
             "utf-8"
           );
         }
