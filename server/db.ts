@@ -1089,6 +1089,40 @@ export async function getTopSearches(tenantId: number, days = 30, limit = 20) {
     .limit(limit);
 }
 
+/**
+ * Unmet demand: search terms with real volume that return little or nothing
+ * (avg results ≤ 1) — i.e. shoppers are asking for things you don't stock or
+ * can't surface. The clearest "demand you're missing" signal, all first-party.
+ */
+export async function getUnmetDemand(tenantId: number, days = 30, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const queryExpr = sql<string>`lower(${analyticsEvents.properties}->>'query')`;
+  const avgResultsExpr = sql`avg(nullif(${analyticsEvents.properties}->>'resultCount', '')::numeric)`;
+
+  return db
+    .select({
+      query: queryExpr,
+      searches: sql<number>`count(*)`,
+      searchers: sql<number>`count(distinct ${analyticsEvents.properties}->>'anonymousId')`,
+      avgResults: sql<number>`coalesce(round(${avgResultsExpr}, 1), 0)`,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        eq(analyticsEvents.eventType, "search"),
+        gte(analyticsEvents.createdAt, since),
+        sql`coalesce(${analyticsEvents.properties}->>'query', '') <> ''`
+      )
+    )
+    .groupBy(queryExpr)
+    .having(sql`coalesce(${avgResultsExpr}, 0) <= 1`)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit);
+}
+
 // ── WHERE: acquisition, exits, geo ────────────────────────────────────────────
 
 /**
