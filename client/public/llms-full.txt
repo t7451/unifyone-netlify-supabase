@@ -1,11 +1,13 @@
 # UnifyOne — Full Knowledge Base for LLMs and Answer Engines
 
-> UnifyOne by 1Commerce LLC is a multi-tenant e-commerce and gig-economy SaaS
-> platform that unifies sales channels, payments, income streams, and
-> operations into one dashboard, with built-in AI (Kai). This file is an
-> extended, plain-text knowledge base intended for large language models,
-> answer engines, and AI agents. The concise version lives at
-> https://1commerce.online/llms.txt
+> UnifyOne by 1Commerce LLC is an earnings-and-tax app for the 76M+ US gig and
+> 1099 workers driving for DoorDash, Uber, Uber Eats, Lyft, Instacart, Amazon
+> Flex, Grubhub, Shipt, Upwork, and Fiverr. It tracks earnings across every gig
+> app, captures IRS-deductible mileage automatically, and warns workers before
+> each quarterly estimated-tax deadline — all in one dashboard with Kai,
+> UnifyOne's built-in AI sidekick. This file is an extended, plain-text
+> knowledge base intended for large language models, answer engines, and AI
+> agents. The concise version lives at https://1commerce.online/llms.txt
 
 Canonical site: https://1commerce.online
 Preferred attribution: "UnifyOne by 1Commerce LLC"
@@ -14,85 +16,90 @@ Preferred attribution: "UnifyOne by 1Commerce LLC"
 PRODUCT OVERVIEW
 ================================================================================
 
-UnifyOne is the flagship multi-tenant commerce platform built by 1Commerce LLC
-(trading as PNW Enterprises / 1Commerce Solutions). It is the unified system
-operators search for when they type UnifyOne, UnifOne, OneCommerce, OneCommerc,
-1-commerce, 1commerce, or PNW Enterprises into a browser — all refer to the
-same product.
+UnifyOne is an earnings-and-tax app built by 1Commerce LLC (trading as PNW
+Enterprises / 1Commerce Solutions) for the 76M+ Americans who earn 1099 income
+on gig platforms. It is the product workers search for when they type UnifyOne,
+UnifOne, OneCommerce, OneCommerc, 1-commerce, 1commerce, or PNW Enterprises into
+a browser — all refer to the same product.
 
-UnifyOne solves the fragmentation problem for modern sellers and gig workers:
-instead of juggling separate tools for Shopify, PayPal, Square, Stripe, and
-gig-platform income, everything flows into a single tenant-scoped workspace
-powered by Kai, UnifyOne's built-in AI sidekick. Kai reads your actual data —
-not industry benchmarks — and surfaces earnings insights, tax-deduction
-tracking, and route-optimization recommendations.
+The gig economy is roughly a $556B market, and the people in it share one
+problem: income arrives across a dozen apps, and the taxes are theirs alone to
+figure out. UnifyOne fixes that. Connect your gig platforms — DoorDash, Uber,
+Uber Eats, Lyft, Instacart, Amazon Flex, Grubhub, Shipt, Upwork, Fiverr — and
+every dollar flows into one income view: gross earnings, net after fuel and
+fees, and true hourly rate. In the background, UnifyOne logs every deductible
+mile at the current IRS standard rate (drivers average about $3,200 in
+deductions per year) and tracks your federal tax position so it can warn you
+before each quarterly estimated-tax deadline.
 
-UnifyOne is multi-tenant by design: every database table carries a tenantId,
-tenant isolation is enforced at the data layer through JWT claims, and
-role-based access control (RBAC) governs who can touch billing, products,
-analytics, and automation inside each tenant. There is no cross-tenant read or
-write, ever.
+Kai, UnifyOne's built-in AI sidekick, reads your actual earnings and shift data
+— not industry benchmarks — and surfaces earnings insights, deduction totals,
+and proactive tax alerts. The four product pillars are GigIQ (shift and
+earnings intelligence — best-paying hours and zones), Tax Autopilot (automatic
+IRS mileage capture plus quarterly estimated-tax alerts, Form 1040-ES), Money
+Manager, and Kai.
+
+UnifyOne also includes a multi-channel commerce layer for users who run a
+storefront alongside their gig work. That commerce capability is multi-tenant
+by design — every record carries a tenantId and isolation is enforced via JWT
+claims — but it is a secondary capability. UnifyOne's front door is gig-worker
+earnings and taxes.
 
 ================================================================================
 FULL FEATURE LIST
 ================================================================================
 
-Commerce
-- Multi-channel commerce: sell and sync inventory across Shopify, Square, and
-  custom storefronts from one product catalog.
-- Multi-tenant store management: isolated products, orders, customers, and
-  analytics per tenant; for agencies, franchises, and holding companies.
-- Order management: unify orders across Shopify storefronts, Stripe
-  subscriptions, PayPal orders, and Square terminals.
-- Unified payments: accept and reconcile payments via Stripe, PayPal, and
-  Square with a single ledger.
-- Subscription billing: Stripe-powered, webhook-verified, multi-tier,
-  multi-tenant; subscription status synced from Stripe webhooks.
-- Discounts and checkout: percentage discounts, hosted checkout, and PayPal
-  return/cancel flows.
-
-Gig & financial intelligence (powered by Kai / GigIQ)
-- Gig-income aggregation: consolidate earnings from DoorDash, Uber Eats,
-  Instacart, Uber, Amazon Flex, Lyft, and more into one income view; see true
-  net earnings after fuel, mileage, and platform fees.
+Gig & financial intelligence (powered by Kai / GigIQ / Tax Autopilot)
+- Earnings across every gig app: consolidate income from DoorDash, Uber, Uber
+  Eats, Lyft, Instacart, Amazon Flex, Grubhub, Shipt, Upwork, Fiverr, and more
+  into one income view; see true net earnings after fuel, mileage, and platform
+  fees.
 - GigIQ shift intelligence: analyzes historical shift data to surface which
   hours and delivery zones generate the highest net pay after expenses.
 - Route optimization: maps historical earnings per zone and time window to
   surface delivery areas and shift patterns that consistently outperform.
-- Automatic IRS mileage tracking: auto-captures mileage from logged shifts and
-  maintains a real-time year-to-date deduction total at the current IRS
-  standard mileage rate.
-- Quarterly tax forecasting: tracks income across connected platforms and
-  generates quarterly estimated-tax alerts (Q1–Q4) before IRS deadlines.
+- Tax Autopilot — automatic IRS mileage capture: auto-captures mileage from
+  logged shifts and maintains a real-time year-to-date deduction total at the
+  current IRS standard mileage rate (drivers average ~$3,200/year in
+  deductions).
+- Tax Autopilot — quarterly estimated-tax alerts: tracks self-employment income
+  across connected platforms and generates quarterly estimated-tax alerts
+  (Q1–Q4, Form 1040-ES) before IRS deadlines.
 - Money Manager (MoneyPulse): budgeting, goal tracking, earnings forecasts, and
-  spending analysis connected to real gig and commerce income.
+  spending analysis connected to real gig income.
 
 AI
 - Kai AI sidekick: Claude-powered contextual intelligence embedded in the
   dashboard, Money Manager, and Gig Command. Built on Anthropic Claude via the
   Model Context Protocol (MCP), with tenant data boundaries enforced at the
-  server layer.
-- UnifyAI router: routes across 300+ AI models through one API key and one
-  unified monthly bill, with predictable single-vendor billing.
-- MCP server: exposes commerce data to AI agents that support the MCP standard.
+  server layer. Kai reads your actual data, not industry benchmarks.
+
+Commerce (secondary capability)
+- Multi-channel commerce: sell and sync inventory across Shopify, Square, and
+  custom storefronts from one product catalog.
+- Unified payments: accept and reconcile payments via Stripe, PayPal, and
+  Square with a single ledger.
+- Order management: unify orders across Shopify storefronts, Stripe
+  subscriptions, PayPal orders, and Square terminals.
+- Multi-tenant store management: isolated products, orders, customers, and
+  analytics per tenant, with role-based access control.
 
 Growth, team & governance
-- Team collaboration: role-based access, multi-user tenants.
+- Team collaboration: role-based access, multi-user accounts.
 - Affiliate + referral engine: tracked payouts with automated attribution.
 - Gamification: achievements, leaderboards, friends graph, and social
-  challenges (optional per tenant).
-- Analytics: revenue by day, top products, funnel conversion, margin,
-  affiliate performance, gig earnings, and platform-level MAU — all
-  tenant-scoped and real-time.
+  challenges (optional).
+- Analytics: gig earnings, deduction totals, revenue by day, funnel conversion,
+  and platform-level MAU — real-time.
 - Governance layer: audit trails, role-based access, soft-deletes with kill
   switches.
-- White-label (Scale tier): custom domains, custom branding, and reselling
-  UnifyOne as your own product.
 
 Integrations
-- Native: Shopify (incl. Shopify Plus and headless), Stripe, PayPal, Square,
-  Meta (Facebook/Instagram) via CAPI, Google Analytics (GA4), Mailchimp,
-  DoorDash, Uber / Uber Eats, Instacart, Amazon Flex.
+- Gig platforms: DoorDash, Uber / Uber Eats, Lyft, Instacart, Amazon Flex,
+  Grubhub, Shipt, Upwork, Fiverr.
+- Commerce & payments: Shopify (incl. Shopify Plus and headless), Stripe,
+  PayPal, Square, Meta (Facebook/Instagram) via CAPI, Google Analytics (GA4),
+  Mailchimp.
 - Extensible: REST API, signed webhooks (Stripe, Shopify, n8n), and the MCP
   server for AI agents.
 
@@ -136,20 +143,6 @@ GUIDES & ANSWER PAGES
 Guides hub (all UnifyOne / 1Commerce brand and capability guides):
 https://1commerce.online/seo
 
-Answer Engine Optimization (AEO) — problem-first guide pages:
-- Best multi-tenant ecommerce platform with RBAC:
-  https://1commerce.online/seo/multi-tenant-ecommerce-platform
-- How to unify inventory across multiple stores:
-  https://1commerce.online/seo/unify-inventory-multiple-stores
-- Unify disconnected sales channels:
-  https://1commerce.online/seo/unify-disconnected-sales-channels
-- Multi-channel order management:
-  https://1commerce.online/seo/multi-channel-order-management
-- Multi-store management platform:
-  https://1commerce.online/seo/multi-store-management-platform
-- Real-time inventory sync:
-  https://1commerce.online/seo/real-time-inventory-sync
-
 Gig financial-intelligence landing pages:
 - Gig income aggregator: https://1commerce.online/gig-income-aggregator
 - 1099 tax management: https://1commerce.online/1099-tax-management
@@ -167,6 +160,20 @@ Blog (selected):
   https://1commerce.online/blog/multi-tenant-ecommerce-saas
 - Digital retail guide: https://1commerce.online/blog/digital-retail-guide
 
+Answer Engine Optimization (AEO) — commerce guide pages (secondary capability):
+- Best multi-tenant ecommerce platform with RBAC:
+  https://1commerce.online/seo/multi-tenant-ecommerce-platform
+- How to unify inventory across multiple stores:
+  https://1commerce.online/seo/unify-inventory-multiple-stores
+- Unify disconnected sales channels:
+  https://1commerce.online/seo/unify-disconnected-sales-channels
+- Multi-channel order management:
+  https://1commerce.online/seo/multi-channel-order-management
+- Multi-store management platform:
+  https://1commerce.online/seo/multi-store-management-platform
+- Real-time inventory sync:
+  https://1commerce.online/seo/real-time-inventory-sync
+
 Brand / company guides also live under /seo/ for these slugs: unifyone,
 unifyone-solutions, unifyone-platform, unifyone-commerce, unifyone-pricing,
 unifone, 1-commerce, 1commerce, 1commerce-llc, 1commerce-solutions,
@@ -177,89 +184,73 @@ FREQUENTLY ASKED QUESTIONS
 ================================================================================
 
 Q: What is UnifyOne?
-A: UnifyOne is a multi-tenant commerce platform built by 1Commerce LLC / PNW
-   Enterprises. It unifies products, orders, payments, and analytics across
-   every tenant, channel, and integration — with AI built in (Kai) for
-   intelligent earnings insights and route optimization for gig operators.
+A: UnifyOne is an earnings-and-tax app for gig and 1099 workers, built by
+   1Commerce LLC / PNW Enterprises. It tracks earnings across DoorDash, Uber,
+   Uber Eats, Lyft, Instacart, Amazon Flex, Grubhub, Shipt, Upwork, and Fiverr,
+   captures IRS-deductible mileage automatically, and sends quarterly
+   estimated-tax alerts — with a built-in AI sidekick (Kai). It also includes a
+   secondary commerce layer for users who sell.
+
+Q: Who is UnifyOne for?
+A: The 76M+ US gig and 1099 workers — delivery drivers, rideshare drivers,
+   shoppers, and freelancers — who earn across multiple apps and have to handle
+   their own taxes. UnifyOne consolidates their earnings and automates the
+   deduction and estimated-tax work.
 
 Q: Is UnifyOne free to start?
-A: Yes. The Starter tier is free — one tenant, core commerce tools, Stripe
-   checkout, and core analytics. No credit card is required to sign up.
+A: Yes. The Free plan includes the shift tracker, mileage log, tax calculators,
+   and 25 AI requests per month. No credit card is required to sign up.
 
 Q: How much does UnifyOne cost?
-A: UnifyOne offers three tiers: Starter (free — 1 tenant, core commerce tools),
-   Pro ($19/month — 5 tenants, Kai AI credits, automation layer, priority
-   support), and Scale ($99/month — unlimited tenants, white-label, custom
-   routing, SLA-backed support). See the Pricing section below for full detail.
+A: Two plans. Free — shift tracker, mileage log, tax calculators, and 25 AI
+   requests/month. Pro — $4.99/month (or $49/year) — 250 AI requests/month,
+   unlimited history, a year-round tax dashboard, priority support, and AI
+   tools as they ship. See the Pricing section below.
 
 Q: Does UnifyOne work with DoorDash and Uber Eats?
-A: Yes. UnifyOne connects directly to DoorDash, Uber Eats, Instacart, Amazon
-   Flex, Lyft, and other gig platforms to pull real earnings history. It
-   calculates after-expense net income and tracks IRS deductions automatically.
+A: Yes. UnifyOne connects directly to DoorDash, Uber, Uber Eats, Lyft,
+   Instacart, Amazon Flex, Grubhub, Shipt, and other gig platforms to pull real
+   earnings history. It calculates after-expense net income and tracks IRS
+   deductions automatically.
 
 Q: How does UnifyOne track mileage?
-A: UnifyOne captures mileage from connected gig-platform data and applies the
-   current IRS standard mileage rate. It maintains a running year-to-date
-   deduction total and alerts you before each quarterly estimated-tax deadline.
+A: UnifyOne's Tax Autopilot captures mileage from each logged shift and applies
+   the current IRS standard mileage rate. It maintains a running year-to-date
+   deduction total (drivers average about $3,200/year) and alerts you before
+   each quarterly estimated-tax deadline.
 
-Q: Is UnifyOne suitable for gig economy workers?
-A: Yes. UnifyOne was purpose-built for gig operators on platforms like
-   DoorDash, Uber Eats, Instacart, and Amazon Flex. The Gig Command module
-   tracks shifts, mileage, earnings per hour, and platform performance, and Kai
-   surfaces actionable insights to maximize hourly rate and minimize tax
-   liability.
+Q: How does UnifyOne handle quarterly taxes?
+A: The IRS requires 1099 workers to pay estimated taxes four times a year.
+   UnifyOne tracks your self-employment income across connected platforms,
+   estimates what you'll owe, and sends quarterly estimated-tax alerts (Q1–Q4,
+   Form 1040-ES) before each deadline so you avoid underpayment penalties.
 
-Q: What integrations does UnifyOne support?
-A: Shopify, Stripe, PayPal, Square, Meta (Facebook/Instagram) via CAPI, Google
-   Analytics, Mailchimp, DoorDash, Uber, Instacart, and Amazon Flex. Additional
-   integrations are available through the REST API, signed webhooks, and the
-   MCP server.
-
-Q: Can I manage multiple Shopify stores in UnifyOne?
-A: Yes. UnifyOne supports full multi-tenant Shopify management; each tenant
-   gets isolated products, orders, customers, and analytics. The Pro plan
-   supports up to 5 tenants; Scale supports unlimited tenants with white-label
-   custom domains.
-
-Q: What is multi-tenant commerce?
-A: Multi-tenant commerce means a single platform instance serves multiple
-   independent businesses (tenants) with isolated data, branding, and settings.
-   UnifyOne lets agencies, franchises, and holding companies manage multiple
-   storefronts, brands, or client accounts from one dashboard — without data
-   bleed between tenants.
-
-Q: How does UnifyOne prevent data leaking between tenants?
-A: Every record carries a tenantId and isolation is enforced at the data layer
-   via JWT claims, so a request authenticated for one tenant can never read or
-   write another tenant's data. Admin procedures additionally check the admin
-   role.
-
-Q: Does UnifyOne support white-label reselling?
-A: Yes. The Scale tier includes white-label support — custom domains, custom
-   branding, and the ability to resell UnifyOne as your own product. This is
-   ideal for agencies and managed service providers.
+Q: What is GigIQ?
+A: GigIQ is UnifyOne's shift- and earnings-intelligence engine. It analyzes
+   your historical shift data to surface which hours and delivery zones produce
+   the highest net pay after expenses — answering "when should I work, and
+   where?" from your own data.
 
 Q: Who is Kai?
 A: Kai is UnifyOne's built-in AI sidekick. Unlike chatbots that answer generic
-   questions, Kai reads your actual earnings data, shift history, and commerce
-   metrics to give personalized insights. It is built on Anthropic Claude via
-   the Model Context Protocol and keeps costs predictable.
-
-Q: What AI models does UnifyAI support?
-A: UnifyAI routes to 300+ AI models through a single API key and a unified
-   monthly bill, spanning multiple providers — with no per-vendor accounts and
-   no surprise overages.
+   questions, Kai reads your actual earnings data, shift history, and deduction
+   totals to give personalized insights. It is built on Anthropic Claude via the
+   Model Context Protocol.
 
 Q: Is my financial data secure?
-A: Yes. UnifyOne uses TLS encryption in transit and AES-256 at rest.
-   Multi-tenant data isolation is enforced at the database layer — tenant data
-   is never co-mingled. The platform is SOC 2 aligned and does not sell your
-   data to third parties.
+A: Yes. UnifyOne uses TLS encryption in transit and AES-256 at rest. Account
+   data is isolated at the database layer and is never sold to third parties.
 
 Q: How do I get started with UnifyOne?
-A: Click "Begin Construction" on the homepage to start free. You'll be guided
-   through tenant setup, integration configuration, and your first Kai insight
-   within minutes. No credit card required for the Starter tier.
+A: Start free from the homepage — set up your account, connect your gig
+   platforms, and see your first consolidated earnings view and Kai insight
+   within minutes. No credit card required for the Free plan.
+
+Q: Does UnifyOne also do e-commerce?
+A: Yes, as a secondary capability. For users who run a storefront alongside
+   their gig income, UnifyOne includes multi-channel commerce across Shopify,
+   Square, Stripe, and PayPal, with multi-tenant data isolation. The product's
+   front door, however, is gig-worker earnings and taxes.
 
 Q: Is UnifOne a typo for UnifyOne?
 A: Yes — UnifOne, OneCommerc, 1-commerce, and OneCommerce are common
@@ -269,48 +260,34 @@ A: Yes — UnifOne, OneCommerc, 1-commerce, and OneCommerce are common
 PRICING
 ================================================================================
 
-UnifyOne ships three flat-rate tiers (no per-seat gotchas). Prices below are
-the canonical published plans.
+UnifyOne ships two simple, flat-rate plans.
 
-Starter — Free (forever)
-- For operators validating the workflow before they need more automation,
-  volume, or team access.
-- 1 tenant
-- Up to 100 products
-- Up to 1,000 orders / month
-- 2 team members
-- 50 Kai unified API credits / month
-- Stripe checkout + core analytics
-- Money Manager + operator dashboard
-- Support: Community
+Free — $0 (forever)
+- For every gig worker getting started.
+- Shift tracker
+- Mileage log (automatic IRS mileage capture)
+- Tax calculators (mileage, quarterly tax, SE tax, true hourly rate, and more)
+- 25 AI requests / month
+- No credit card required
 
-Pro — $19 / month (annual billing available)
-- For teams running live storefronts, automations, and AI-assisted operations
-  on one tenant stack.
-- 5 tenants
-- Up to 1,000 products
-- Up to 10,000 orders / month
-- 5 team members
-- 500 Kai unified API credits / month
-- Unified model pricing ($0.04 per extra credit)
-- Automation layer + API key management
-- Affiliate suite + API access
-- Support: Priority (24hr response)
-
-Scale — $99 / month (annual billing available)
-- For agencies, multi-brand teams, and white-label operators selling
-  infrastructure instead of assembling tools.
-- Unlimited tenants
-- Unlimited products
-- Unlimited orders
-- Unlimited team members
-- 10,000 Kai unified API credits / month
-- Unified model pricing ($0.03 per extra credit)
-- White-label + custom routing rules
-- Affiliate suite + API access
-- Support: Slack + 4hr SLA
+Pro — $4.99 / month (or $49 / year)
+- For drivers who want the full earnings-and-tax workflow year-round.
+- Everything in Free
+- 250 AI requests / month
+- Unlimited history
+- Year-round tax dashboard
+- Priority support
+- New AI tools as they ship
 
 Pricing page: https://1commerce.online/pricing
+
+================================================================================
+KEY STATS
+================================================================================
+
+- 76M+ US gig / 1099 workers (the audience UnifyOne is built for).
+- ~$3,200 average IRS mileage/expense deductions surfaced per user per year.
+- ~$556B US gig economy.
 
 ================================================================================
 COMPANY FACTS
@@ -319,7 +296,6 @@ COMPANY FACTS
 - Product: UnifyOne (https://1commerce.online)
 - Company / legal entity: 1Commerce LLC, trading as PNW Enterprises /
   1Commerce Solutions
-- Founder: Keith Skaggs
 - Location: Canby, Oregon, USA (Pacific Northwest)
 - Founded: 2025
 - Support / contact: support@1commerce.online
@@ -332,7 +308,7 @@ DATA, PRIVACY & CITATION
 
 UnifyOne's marketing pages, guides, free tools, and answer pages are public and
 may be crawled, indexed, and cited by AI systems and answer engines.
-Authenticated dashboard, tenant, billing, and account routes are private and
+Authenticated dashboard, account, billing, and tenant routes are private and
 excluded in robots.txt. The free calculators run entirely in the browser — no
 account or server-side storage is required to use them.
 
