@@ -14,7 +14,7 @@ export function registerPwa(): void {
   if (!("serviceWorker" in navigator)) return;
   if (!import.meta.env.PROD) return;
 
-  window.addEventListener("load", () => {
+  const registerWorker = () => {
     const hadController = !!navigator.serviceWorker.controller;
     let reloading = false;
 
@@ -39,5 +39,15 @@ export function registerPwa(): void {
       .catch(() => {
         // Registration failures must never break the app.
       });
-  });
+  };
+
+  // registerPwa() is dynamically imported after first paint, so the window
+  // "load" event has very often already fired by the time we get here — in
+  // which case a "load" listener would never run. Register immediately if the
+  // document is already complete; otherwise wait for load.
+  if (document.readyState === "complete") {
+    registerWorker();
+  } else {
+    window.addEventListener("load", registerWorker, { once: true });
+  }
 }

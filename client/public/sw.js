@@ -38,12 +38,14 @@ self.addEventListener("fetch", event => {
   const req = event.request;
   if (req.method !== "GET") return;
 
-  let url;
-  try {
-    url = new URL(req.url);
-  } catch {
-    return;
-  }
+  const url = (() => {
+    try {
+      return new URL(req.url);
+    } catch {
+      return null;
+    }
+  })();
+  if (!url) return;
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api")) return; // never cache server routes
 
@@ -51,22 +53,24 @@ self.addEventListener("fetch", event => {
   if (req.mode === "navigate") {
     event.respondWith(
       (async () => {
-        try {
-          const fresh = await fetch(req);
+        // Only the network fetch falling over should trigger the offline
+        // fallback — a failed cache write must not.
+        const fresh = await fetch(req).catch(() => null);
+        if (fresh) {
           const cache = await caches.open(CACHE);
-          cache.put(SHELL_KEY, fresh.clone());
+          // Best-effort cache write; never let it mask a good response.
+          cache.put(SHELL_KEY, fresh.clone()).catch(() => {});
           return fresh;
-        } catch {
-          const cache = await caches.open(CACHE);
-          const cached = await cache.match(SHELL_KEY);
-          return (
-            cached ||
-            new Response("You're offline.", {
-              status: 503,
-              headers: { "Content-Type": "text/plain" },
-            })
-          );
         }
+        const cache = await caches.open(CACHE);
+        const cached = await cache.match(SHELL_KEY);
+        return (
+          cached ||
+          new Response("You're offline.", {
+            status: 503,
+            headers: { "Content-Type": "text/plain" },
+          })
+        );
       })()
     );
     return;
@@ -83,13 +87,11 @@ self.addEventListener("fetch", event => {
         const cache = await caches.open(CACHE);
         const cached = await cache.match(req);
         if (cached) return cached;
-        try {
-          const fresh = await fetch(req);
-          if (fresh.ok) cache.put(req, fresh.clone());
-          return fresh;
-        } catch {
-          return cached || Response.error();
-        }
+        const fresh = await fetch(req).catch(() => null);
+        if (!fresh) return cached || Response.error();
+        // Best-effort cache write; don't let a write failure drop the response.
+        if (fresh.ok) cache.put(req, fresh.clone()).catch(() => {});
+        return fresh;
       })()
     );
   }
