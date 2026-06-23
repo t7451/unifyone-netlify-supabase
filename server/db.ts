@@ -2126,19 +2126,20 @@ export async function seedGigWorkerPlans(): Promise<void> {
   const db = await getDb();
   if (!db) return;
 
-  // onConflictDoNothing makes this safe under concurrent first-hit traffic —
-  // if two requests race to seed simultaneously, the second insert silently
-  // skips the conflicting rows instead of erroring or duplicating.
+  // onConflictDoUpdate refreshes the marketing fields on every deploy so the
+  // code is the single source of truth for pricing/features — while preserving
+  // the Stripe price IDs (seeded separately) by NOT including them in the set.
   const defaults: InsertGigWorkerPlan[] = [
     {
       name: "Gig Starter",
       slug: "gig-starter",
       tier: "starter",
-      description: "Free forever — track shifts, log mileage, basic AI tips.",
+      description:
+        "Free forever — track shifts, log mileage, and run every gig-tax calculator.",
       priceMonthly: "0.00",
       priceYearly: "0.00",
       monthlyAICredits: 25,
-      features: ["shift_tracker", "mileage_log", "basic_ai"],
+      features: ["shift_tracker", "mileage_log", "tax_calculators"],
       isActive: true,
     },
     {
@@ -2146,47 +2147,62 @@ export async function seedGigWorkerPlans(): Promise<void> {
       slug: "gig-pro",
       tier: "pro",
       description:
-        "For serious gig workers — route optimizer, tax export, unlimited rule engine.",
-      priceMonthly: "9.99",
-      priceYearly: "95.88",
+        "Everything in Starter, plus unlimited saved history, a year-round tax dashboard, priority support — and the AI tools the moment they ship, included.",
+      priceMonthly: "4.99",
+      priceYearly: "49.00",
       monthlyAICredits: 250,
       features: [
         "shift_tracker",
         "mileage_log",
-        "basic_ai",
-        "route_optimizer",
-        "tax_export",
-        "unlimited_rules",
-        "advanced_analytics",
+        "tax_calculators",
+        "unlimited_history",
+        "tax_dashboard",
+        "priority_support",
+        "early_ai_access",
       ],
       isActive: true,
     },
     {
+      // Hidden at launch (isActive=false) until the AI features are real — kept
+      // so its slug/Stripe IDs persist for an easy re-activation later.
       name: "Gig Elite",
       slug: "gig-elite",
       tier: "elite",
       description:
-        "Maximum earnings — unlimited AI, earnings forecast, priority support.",
-      priceMonthly: "24.99",
-      priceYearly: "239.88",
+        "Coming soon — full AI earnings strategy, route optimization, and forecasting.",
+      priceMonthly: "9.99",
+      priceYearly: "99.00",
       monthlyAICredits: 1000,
       features: [
         "shift_tracker",
         "mileage_log",
-        "basic_ai",
-        "route_optimizer",
-        "tax_export",
-        "unlimited_rules",
-        "advanced_analytics",
-        "earnings_forecast",
-        "ai_strategy",
+        "tax_calculators",
+        "unlimited_history",
+        "tax_dashboard",
         "priority_support",
+        "early_ai_access",
       ],
-      isActive: true,
+      isActive: false,
     },
   ];
 
-  await db.insert(gigWorkerPlans).values(defaults).onConflictDoNothing();
+  await db
+    .insert(gigWorkerPlans)
+    .values(defaults)
+    .onConflictDoUpdate({
+      target: gigWorkerPlans.slug,
+      set: {
+        name: sql`excluded.name`,
+        description: sql`excluded.description`,
+        tier: sql`excluded.tier`,
+        priceMonthly: sql`excluded."priceMonthly"`,
+        priceYearly: sql`excluded."priceYearly"`,
+        monthlyAICredits: sql`excluded."monthlyAICredits"`,
+        features: sql`excluded.features`,
+        isActive: sql`excluded."isActive"`,
+        updatedAt: new Date(),
+      },
+    });
 }
 
 // ── Clippers ────────────────────────────────────────────────────────────────────

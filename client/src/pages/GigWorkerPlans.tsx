@@ -38,17 +38,30 @@ const TIER_BADGE: Record<string, string> = {
   elite: "bg-amber-600 text-amber-100",
 };
 
-const FEATURE_LABELS: Record<string, { label: string; icon: React.ElementType }> = {
+const FEATURE_LABELS: Record<
+  string,
+  { label: string; icon: React.ElementType }
+> = {
   shift_tracker: { label: "Shift Tracker", icon: Navigation },
   mileage_log: { label: "Mileage Log (IRS Rate)", icon: TrendingUp },
   basic_ai: { label: "Basic AI Tips", icon: Brain },
   route_optimizer: { label: "Route Optimizer", icon: Navigation },
   tax_export: { label: "Tax Export (CSV/PDF)", icon: FileText },
   unlimited_rules: { label: "Unlimited Financial Rules", icon: Zap },
-  advanced_analytics: { label: "Advanced Earnings Analytics", icon: TrendingUp },
+  advanced_analytics: {
+    label: "Advanced Earnings Analytics",
+    icon: TrendingUp,
+  },
   earnings_forecast: { label: "AI Earnings Forecast", icon: Brain },
   ai_strategy: { label: "AI Strategy Coach", icon: Brain },
   priority_support: { label: "Priority Support", icon: Shield },
+  tax_calculators: {
+    label: "Tax Calculators (SE, Quarterly, Mileage)",
+    icon: FileText,
+  },
+  unlimited_history: { label: "Unlimited Saved History", icon: Zap },
+  tax_dashboard: { label: "Year-Round Tax Dashboard", icon: TrendingUp },
+  early_ai_access: { label: "AI Tools Included When They Ship", icon: Brain },
 };
 
 function PlanCard({
@@ -76,7 +89,9 @@ function PlanCard({
 }) {
   const Icon = TIER_ICONS[plan.tier] ?? Rocket;
   const price =
-    billingPeriod === "yearly" ? Number(plan.priceYearly) / 12 : Number(plan.priceMonthly);
+    billingPeriod === "yearly"
+      ? Number(plan.priceYearly) / 12
+      : Number(plan.priceMonthly);
   const yearlyTotal = Number(plan.priceYearly);
   const isFree = Number(plan.priceMonthly) === 0;
   const isPopular = plan.tier === "pro";
@@ -99,12 +114,16 @@ function PlanCard({
           </div>
           <div>
             <CardTitle className="text-lg text-white">{plan.name}</CardTitle>
-            <Badge className={`text-xs mt-1 ${TIER_BADGE[plan.tier] ?? "bg-slate-700 text-slate-300"}`}>
+            <Badge
+              className={`text-xs mt-1 ${TIER_BADGE[plan.tier] ?? "bg-slate-700 text-slate-300"}`}
+            >
               {plan.tier.charAt(0).toUpperCase() + plan.tier.slice(1)}
             </Badge>
           </div>
         </div>
-        <p className="text-sm text-slate-400 leading-relaxed">{plan.description}</p>
+        <p className="text-sm text-slate-400 leading-relaxed">
+          {plan.description}
+        </p>
 
         <div className="mt-4">
           {isFree ? (
@@ -140,7 +159,10 @@ function PlanCard({
             if (!info) return null;
             const FIcon = info.icon;
             return (
-              <li key={f} className="flex items-center gap-2 text-sm text-slate-300">
+              <li
+                key={f}
+                className="flex items-center gap-2 text-sm text-slate-300"
+              >
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                 <FIcon className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                 <span>{info.label}</span>
@@ -151,7 +173,9 @@ function PlanCard({
 
         <Button
           className="w-full mt-2"
-          variant={isCurrentPlan ? "outline" : isPopular ? "default" : "secondary"}
+          variant={
+            isCurrentPlan ? "outline" : isPopular ? "default" : "secondary"
+          }
           disabled={isCurrentPlan || loading || isFree}
           onClick={() => !isFree && onSelect(plan.slug)}
         >
@@ -170,10 +194,13 @@ function PlanCard({
 
 export default function GigWorkerPlans() {
   const [, navigate] = useLocation();
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
+    "monthly"
+  );
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
 
-  const { data: plans, isLoading: plansLoading } = trpc.gigWorker.getPlans.useQuery();
+  const { data: plans, isLoading: plansLoading } =
+    trpc.gigWorker.getPlans.useQuery();
   const { data: subscription } = trpc.gigWorker.getSubscription.useQuery();
   const createCheckout = trpc.gigWorker.createCheckout.useMutation();
 
@@ -271,7 +298,9 @@ export default function GigWorkerPlans() {
             <div className="flex items-center gap-3">
               <Brain className="w-5 h-5 text-violet-400 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-white">AI Credits This Month</p>
+                <p className="text-sm font-medium text-white">
+                  AI Credits This Month
+                </p>
                 <p className="text-xs text-slate-400">
                   {subscription.aiUsage?.requestsUsed ?? 0} used ·{" "}
                   {subscription.aiCreditsRemaining} remaining ·{" "}
@@ -291,7 +320,9 @@ export default function GigWorkerPlans() {
 
         {/* FAQ */}
         <div className="mt-12 space-y-4">
-          <h2 className="text-lg font-semibold text-white">Frequently Asked Questions</h2>
+          <h2 className="text-lg font-semibold text-white">
+            Frequently Asked Questions
+          </h2>
           {[
             {
               q: "Is the Starter plan really free forever?",
@@ -316,7 +347,9 @@ export default function GigWorkerPlans() {
             >
               <summary className="text-sm font-medium text-white list-none flex items-center justify-between">
                 {q}
-                <span className="text-slate-500 group-open:rotate-180 transition-transform">▾</span>
+                <span className="text-slate-500 group-open:rotate-180 transition-transform">
+                  ▾
+                </span>
               </summary>
               <p className="mt-2 text-sm text-slate-400 leading-relaxed">{a}</p>
             </details>
