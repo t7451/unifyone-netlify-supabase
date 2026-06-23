@@ -16,24 +16,28 @@ const CANONICAL = `${SITE_URL}/`;
 
 const HOME_FAQ = [
   {
-    q: "What is UnifyOne by 1Commerce?",
-    a: "UnifyOne is a multi-tenant commerce and gig economy intelligence platform built by 1Commerce LLC (PNW Enterprises). It unifies Shopify store management, Stripe and PayPal payment processing, AI-powered earnings analytics, and automatic IRS tax deduction tracking in one dashboard.",
+    q: "What is UnifyOne?",
+    a: "UnifyOne is an earnings and tax app built for gig and 1099 workers. It tracks what every shift actually earns you across DoorDash, Uber, Lyft, Instacart, Amazon Flex, Grubhub, Shipt, Upwork, Fiverr and more, auto-logs your IRS mileage at the standard rate, and keeps you ahead of quarterly estimated taxes — all in one dashboard.",
   },
   {
-    q: "What platforms does 1Commerce integrate with?",
-    a: "UnifyOne integrates with Shopify, Stripe, PayPal, and Square for commerce and payments. The UnifyAI multi-model router provides access to 300+ AI models including Claude, GPT-4, and Gemini through a single unified API key.",
+    q: "Which gig platforms does UnifyOne work with?",
+    a: "UnifyOne is built for the 76M+ US gig and 1099 workforce — DoorDash, Uber and Uber Eats, Lyft, Instacart, Amazon Flex, Grubhub, Shipt, Upwork, Fiverr and other delivery, rideshare, and freelance platforms. Track earnings from every app you work in one place.",
   },
   {
     q: "Is UnifyOne free to start?",
-    a: "Yes — the Starter tier is permanently free and includes tenant setup, core analytics, and Kai AI access. Paid tiers unlock workflow automation, advanced multi-tenant analytics, and higher UnifyAI credit allocations.",
+    a: "Yes. The Free plan includes the shift tracker, mileage log, tax calculators, and 25 AI requests a month — no card required. Pro is $4.99/mo (or $49/yr) and adds 250 AI requests a month, unlimited history, a year-round tax dashboard, priority support, and AI tools as they ship.",
   },
   {
     q: "What is GigIQ?",
-    a: "GigIQ is UnifyOne's shift intelligence module. It reads your real earnings data and identifies which working hours, delivery zones, and gig platforms generate the highest net income after expenses — giving you specific, actionable schedule recommendations.",
+    a: "GigIQ is UnifyOne's shift intelligence. It reads your real earnings data and identifies which working hours and delivery zones generate the highest net income after expenses — giving you specific, actionable scheduling recommendations instead of generic advice.",
   },
   {
-    q: "Who is 1Commerce LLC / PNW Enterprises?",
-    a: "1Commerce LLC (also known as PNW Enterprises, 1-commerce, or OneCommerce) is the company behind UnifyOne. Founded to serve gig workers and multi-tenant e-commerce operators who are underserved by existing single-purpose tools.",
+    q: "How does Tax Autopilot handle mileage and quarterly taxes?",
+    a: "Tax Autopilot automatically captures mileage from every logged shift at the current IRS standard rate, keeps a real-time year-to-date deduction total, and alerts you before quarterly estimated taxes are due — including the figures you need for Form 1040-ES. Workers track roughly $3,200 in deductions per year on average.",
+  },
+  {
+    q: "Who is behind UnifyOne?",
+    a: "UnifyOne is built by 1Commerce LLC (PNW Enterprises) in Canby, Oregon, founded in 2025. Questions? Reach the team at support@1commerce.online or visit 1commerce.online.",
   },
 ];
 
@@ -43,9 +47,9 @@ const JSON_LD = [
     "@type": "WebPage",
     "@id": CANONICAL,
     url: CANONICAL,
-    name: "UnifyOne by 1Commerce — Gig Earnings, Tax Tools & Commerce Platform",
+    name: "UnifyOne — Gig Earnings & Tax Tracker for 1099 Workers",
     description:
-      "UnifyOne unifies multi-tenant Shopify stores, gig earnings intelligence, IRS deduction tracking, and 300+ AI models in one platform. Free to start.",
+      "UnifyOne tracks what every gig shift actually earns you, auto-logs IRS mileage at the standard rate, and keeps you ahead of quarterly taxes. Built for DoorDash, Uber, Instacart, and freelance workers. Free to start.",
     isPartOf: { "@id": `${SITE_URL}/#website` },
     inLanguage: "en-US",
   },
@@ -70,54 +74,57 @@ const JSON_LD = [
 ];
 
 const MARKET_SIGNALS = [
-  { value: "76M+", label: "US gig workers underserved by existing tools" },
   {
-    value: "$3,200",
-    label: "avg additional deductions tracked per user annually",
+    value: "76M+",
+    label: "US gig & 1099 workers underserved by existing tools",
   },
   {
-    value: "300+",
-    label: "AI models accessible through one Kai unified API key",
+    value: "$3,200",
+    label: "avg deductions tracked per worker each year",
   },
   {
     value: "$556B",
-    label: "gig economy market with no unified intelligence layer",
+    label: "US gig economy with no worker-first earnings layer",
+  },
+  {
+    value: "$0",
+    label: "to start — free shift tracker, mileage log & tax tools",
   },
 ];
 
 const LAUNCH_METRICS = [
   {
     key: "tenants",
-    label: "tenants launched",
+    label: "workers onboarded",
     accent: "#B8872A",
   },
   {
     key: "ordersProcessed",
-    label: "orders processed",
+    label: "shifts & earnings logged",
     accent: "#1F9D6B",
   },
   {
     key: "integrations",
-    label: "integrations ready",
+    label: "gig apps supported",
     accent: "#3B6FB0",
   },
 ] as const;
 
 const SOCIAL_PROOF = [
   {
-    label: "Operators",
+    label: "Workers",
     numeric: 2400,
     accent: "#D4A843",
     format: "countPlus",
   },
   {
-    label: "Processed",
+    label: "Earnings tracked",
     numeric: 1200000,
     accent: "#6EE7B7",
     format: "currencyCompact",
   },
   {
-    label: "Integrations",
+    label: "Gig apps",
     numeric: 8,
     accent: "#93C5FD",
     format: "plain",
@@ -131,11 +138,12 @@ const SOCIAL_PROOF = [
 ] as const;
 
 const TRUST_BADGES = [
-  "Stripe",
-  "PayPal",
-  "Square",
-  "Shopify",
-  "Anthropic Claude",
+  "DoorDash",
+  "Uber",
+  "Lyft",
+  "Instacart",
+  "Amazon Flex",
+  "Upwork",
 ] as const;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -144,43 +152,29 @@ const PILLARS = [
   {
     glyph: "◈",
     name: "GigIQ",
-    title: "Shift Intelligence",
-    body: "See which hours, zones, and platforms actually pay the most. Real earnings data. Specific recommendations. Not generic advice.",
+    title: "Shift & Earnings Intelligence",
+    body: "See which hours and zones actually pay the most across every app. Real earnings data. Specific recommendations. Not generic advice.",
     color: "#F0D080",
   },
   {
     glyph: "◎",
     name: "Tax Autopilot",
-    title: "IRS Deduction Tracker",
-    body: "Auto-captures mileage from every logged shift at the current IRS rate. Real-time YTD deduction figure. Quarterly estimate alerts.",
+    title: "IRS Mileage & Quarterly Taxes",
+    body: "Auto-captures mileage from every logged shift at the IRS standard rate. Real-time YTD deduction total. Quarterly estimated-tax alerts and Form 1040-ES figures.",
     color: "#6EE7B7",
   },
   {
-    glyph: "⬡",
-    name: "UnifyAI",
-    title: "Multi-Model API Router",
-    body: "One set of credentials routes to Claude, GPT, Gemini and more. Unified credit billing means one predictable cost across models. Full MCP config dashboard. Zero vendor lock-in.",
-    color: "#93C5FD",
-  },
-  {
     glyph: "◇",
-    name: "MoneyPulse",
-    title: "Money Manager",
-    body: "Budgeting, goal tracking, earnings forecasts, and spending analysis — all connected to your actual gig income streams.",
+    name: "Money Manager",
+    title: "Budgeting on Real Income",
+    body: "Budgeting, goals, and spending analysis built on your real after-expense gig income — so your plan matches what you actually take home.",
     color: "#C4B5FD",
-  },
-  {
-    glyph: "▣",
-    name: "1Commerce",
-    title: "Commerce Engine",
-    body: "Multi-tenant storefront management, Shopify sync, affiliate network tools, and order fulfillment under one dashboard.",
-    color: "#FCA5A5",
   },
   {
     glyph: "◉",
     name: "Kai",
-    title: "AI Sidekick",
-    body: "Kai is our in-house AI, powered by UnifyAI. It reads your actual data and routes across models while keeping one unified cost.",
+    title: "Your AI Sidekick",
+    body: "Kai is your in-house sidekick for tax, route, and scheduling questions on your own numbers. AI tools are included when they ship.",
     color: "#FCD34D",
   },
 ];
@@ -188,41 +182,41 @@ const PILLARS = [
 const HOW_IT_WORKS = [
   {
     step: "01",
-    heading: "Connect Your Platforms",
-    body: "Link Shopify, Stripe, PayPal, Square, and your gig delivery apps in minutes. No developer required — UnifyOne handles every integration.",
+    heading: "Log Your Shifts & Apps",
+    body: "Track earnings from DoorDash, Uber, Lyft, Instacart, Amazon Flex, Grubhub, Shipt, Upwork and more in one place. Start a shift and your mileage logs automatically.",
     color: "#D4A843",
   },
   {
     step: "02",
-    heading: "AI Reads Your Real Data",
-    body: "Kai — UnifyOne's built-in AI — analyzes your actual shift earnings, mileage logs, and order history. Not industry benchmarks. Your numbers.",
+    heading: "See Your Real Take-Home",
+    body: "UnifyOne reads your actual earnings and mileage — not industry benchmarks — to show what every shift nets you after fuel and expenses, and the IRS deductions you're racking up.",
     color: "#6EE7B7",
   },
   {
     step: "03",
-    heading: "Get Actionable Intelligence",
-    body: "Know which hours pay the most after expenses. Track every IRS-eligible deduction automatically. Manage all tenants from one unified dashboard.",
+    heading: "Stay Ahead of Taxes",
+    body: "Get your real-time year-to-date write-off total and quarterly estimated-tax alerts with Form 1040-ES figures — so tax time is never a surprise.",
     color: "#93C5FD",
   },
 ];
 
 const WHO_IT_FOR = [
   {
-    icon: "⬡",
-    audience: "Gig Economy Operators",
-    body: "Working DoorDash, Uber Eats, Instacart, or any delivery platform? 1Commerce's GigIQ module shows which hours and zones generate the highest net pay after fuel and expenses — no spreadsheets required.",
+    icon: "◈",
+    audience: "Delivery & Rideshare Drivers",
+    body: "Driving for DoorDash, Uber, Uber Eats, Lyft, Instacart, Amazon Flex, Grubhub, or Shipt? GigIQ shows which hours and zones generate the highest net pay after fuel and expenses — no spreadsheets required.",
     color: "#F0D080",
   },
   {
-    icon: "▣",
-    audience: "Multi-Tenant Commerce Teams",
-    body: "Agencies and operators managing multiple Shopify stores get one UnifyOne dashboard with full tenant isolation, order management, affiliate tools, and real-time analytics across every storefront.",
-    color: "#FCA5A5",
+    icon: "◇",
+    audience: "Freelancers & 1099 Contractors",
+    body: "Upwork, Fiverr, contract, or self-employed? Track income across clients, see your true after-expense earnings, and budget on the money you actually take home.",
+    color: "#C4B5FD",
   },
   {
     icon: "◎",
-    audience: "Independent Contractors",
-    body: "Track mileage at the current IRS rate, forecast quarterly estimated taxes, and understand your true net income across every platform — all built into 1Commerce's core platform at no extra cost.",
+    audience: "Anyone Dreading Tax Season",
+    body: "Auto-log mileage at the IRS standard rate, watch your year-to-date deductions add up, and get quarterly estimated-tax alerts with Form 1040-ES figures — so April is never a surprise.",
     color: "#6EE7B7",
   },
 ];
@@ -238,17 +232,17 @@ const TESTIMONIALS = [
   },
   {
     quote:
-      "Managing 7 Shopify stores from one dashboard was the dream. UnifyOne's tenant isolation means my clients' data is always separate, always clean.",
+      "I drive Uber and Lyft and never tracked my miles right. UnifyOne logs them automatically — first quarter it found over $1,900 in deductions I'd have missed.",
     name: "Priya S.",
-    role: "E-Commerce Agency Owner",
+    role: "Uber & Lyft Driver",
     initials: "PS",
     accent: "#6EE7B7",
   },
   {
     quote:
-      "The Kai unified API pricing alone is worth it. I used to juggle three AI vendor bills. Now I have one credit system and one invoice.",
+      "Between Upwork gigs my income is all over the place. Now I finally know my real after-expense take-home and I'm not panicking every quarter about taxes.",
     name: "Jordan T.",
-    role: "Independent Developer",
+    role: "Freelancer, Upwork & Fiverr",
     initials: "JT",
     accent: "#93C5FD",
   },
@@ -262,17 +256,17 @@ const TESTIMONIALS = [
   },
   {
     quote:
-      "We white-labeled the whole platform in a week. Our clients think it's our proprietary tool. The Scale tier pays for itself with the first resale.",
+      "Amazon Flex pays differently every block. UnifyOne tells me which delivery windows actually clear the most after gas — I stopped taking the bad ones.",
     name: "Derek L.",
-    role: "SaaS Reseller, Scale Tier",
+    role: "Amazon Flex Driver",
     initials: "DL",
     accent: "#FCA5A5",
   },
   {
     quote:
-      "Onboarding was under 10 minutes. Stripe connected, first order in by end of day. No developer, no headaches — just a working commerce stack.",
+      "The quarterly tax alert is the whole reason I stay. I used to get blindsided every spring. Now I set money aside all year and there are no surprises.",
     name: "Aisha M.",
-    role: "New Tenant, Starter Plan",
+    role: "Grubhub & Shipt Driver",
     initials: "AM",
     accent: "#FCD34D",
   },
@@ -346,12 +340,12 @@ function SocialProofCounter() {
   return (
     <div ref={ref} className="space-y-8 py-4">
       <div className="text-center">
-        <p className="inscription-ink">Trusted by operators</p>
+        <p className="inscription-ink">Trusted by gig workers</p>
         <p
           className="font-crimson text-base sm:text-lg mt-3"
           style={{ color: "var(--ink-soft)", fontStyle: "italic" }}
         >
-          Join 2,400+ operators already running their commerce stack on
+          Join 2,400+ drivers and freelancers already tracking real earnings on
           UnifyOne.
         </p>
       </div>
@@ -431,15 +425,15 @@ function EmailCapture() {
           className="font-cinzel text-2xl sm:text-3xl font-black mt-4 mb-3"
           style={{ color: "var(--ink)" }}
         >
-          Get the Cathedral Blueprint — the exact system architecture we use to
-          run 8 revenue streams from one platform.
+          Get the Gig Worker Tax & Deduction Guide — the write-offs most drivers
+          miss every single year.
         </h2>
         <p
           className="font-crimson text-lg mb-8 mobile-visibility-copy"
           style={{ color: "var(--ink-soft)", fontStyle: "italic" }}
         >
-          The architecture guide behind UnifyOne: multi-tenant design, AI
-          routing, and gig income intelligence — all in one downloadable PDF.
+          A plain-English PDF on IRS mileage, quarterly estimated taxes, and the
+          deductions that keep more money in your pocket at tax time.
         </p>
         {submitted ? (
           <div
@@ -453,8 +447,8 @@ function EmailCapture() {
               className="font-crimson text-base mobile-visibility-copy"
               style={{ color: "var(--gold-ink)" }}
             >
-              ✓ You&apos;re on the list! Check your inbox for the Cathedral
-              Blueprint.
+              ✓ You&apos;re on the list! Check your inbox for the Gig Worker Tax
+              &amp; Deduction Guide.
             </p>
           </div>
         ) : (
@@ -518,7 +512,7 @@ function EmailCapture() {
                   submitLead.isPending && "opacity-70"
                 )}
               >
-                {submitLead.isPending ? "Sending…" : "Send My Blueprint"}
+                {submitLead.isPending ? "Sending…" : "Send My Free Guide"}
               </button>
             </form>
             <p
@@ -657,21 +651,19 @@ export default function Home() {
   return (
     <PublicLayout>
       <Helmet>
-        <title>
-          UnifyOne by 1Commerce — Gig Earnings, Tax Tools & Commerce Platform
-        </title>
+        <title>UnifyOne — Gig Earnings & Tax Tracker for 1099 Workers</title>
         <meta
           name="description"
-          content="UnifyOne unifies multi-tenant Shopify stores, gig earnings intelligence, IRS deduction tracking, and 300+ AI models in one platform. Free to start."
+          content="Know exactly what every shift earns you. UnifyOne tracks earnings across DoorDash, Uber, Instacart and more, auto-logs IRS mileage, and keeps you ahead of quarterly taxes. Free to start."
         />
         <link rel="canonical" href={CANONICAL} />
         <meta
           property="og:title"
-          content="UnifyOne by 1Commerce — Gig Earnings, Tax Tools & Commerce Platform"
+          content="UnifyOne — Gig Earnings & Tax Tracker for 1099 Workers"
         />
         <meta
           property="og:description"
-          content="UnifyOne unifies multi-tenant Shopify stores, gig earnings intelligence, IRS deduction tracking, and 300+ AI models in one platform. Free to start."
+          content="Know exactly what every shift earns you. UnifyOne tracks earnings across DoorDash, Uber, Instacart and more, auto-logs IRS mileage, and keeps you ahead of quarterly taxes. Free to start."
         />
         <meta property="og:url" content={CANONICAL} />
         <meta property="og:type" content="website" />
@@ -704,7 +696,7 @@ export default function Home() {
                   display: "inline-block",
                 }}
               />
-              Built for gig workers &amp; independent operators
+              Built for the 76M+ US gig &amp; 1099 workforce
             </span>
           </div>
 
@@ -735,9 +727,9 @@ export default function Home() {
               lineHeight: 1.7,
             }}
           >
-            UnifyOne reads your real DoorDash, Uber Eats, and Instacart data,
-            auto-tracks every IRS mileage deduction, and tells you which hours
-            and zones pay the most after expenses.{" "}
+            Track earnings across every app — DoorDash, Uber, Lyft, Instacart,
+            Amazon Flex and more — auto-log IRS mileage at the standard rate,
+            and never get surprised by quarterly taxes.{" "}
             <em style={{ color: "var(--gold-ink)" }}>
               Intelligence built on your numbers — not generic advice.
             </em>
@@ -753,8 +745,8 @@ export default function Home() {
               lineHeight: 1.65,
             }}
           >
-            The same platform runs your multi-tenant Shopify stores and routes
-            300+ AI models through one unified API — no dev team required.
+            Free to start — shift tracker, mileage log, and tax calculators, no
+            credit card. Workers track about $3,200 in deductions a year.
           </p>
 
           <div
@@ -778,9 +770,9 @@ export default function Home() {
             className="font-crimson text-sm mt-4 mobile-visibility-copy"
             style={{ color: "var(--ink-faint)" }}
           >
-            No credit card required · 14-day free trial · Join{" "}
+            Free plan, no credit card · Join{" "}
             <span style={{ color: "var(--gold-ink)", fontWeight: 600 }}>
-              2,400+ operators
+              2,400+ gig workers
             </span>{" "}
             already on UnifyOne.
           </p>
@@ -794,7 +786,7 @@ export default function Home() {
               className="font-cinzel text-[0.62rem] uppercase tracking-[0.24em]"
               style={{ color: "var(--ink-faint)" }}
             >
-              Powered by
+              Works with
             </span>
             {TRUST_BADGES.map(badge => (
               <span
@@ -850,22 +842,20 @@ export default function Home() {
             {[
               {
                 tag: "Only",
-                headline:
-                  "The only gig platform that auto-tracks IRS deductions",
-                body: "Every logged shift captures mileage at the current IRS rate automatically. A real-time, year-to-date write-off figure — no spreadsheets, no shoebox of receipts.",
+                headline: "Auto-tracks IRS mileage at the standard rate",
+                body: "Every logged shift captures mileage automatically. A real-time, year-to-date write-off figure — no spreadsheets, no shoebox of receipts.",
                 accent: "#6EE7B7",
               },
               {
-                tag: "First",
-                headline: "300+ AI models through one key and one bill",
-                body: "Route to Claude, GPT, or Gemini and pay a single, predictable Kai credit cost. No per-vendor accounts, no juggling three invoices, zero lock-in.",
+                tag: "Every app",
+                headline: "All your gig earnings in one place",
+                body: "DoorDash, Uber, Lyft, Instacart, Amazon Flex, Grubhub, Shipt, Upwork and more — see your true take-home across every platform side by side.",
                 accent: "#93C5FD",
               },
               {
-                tag: "Unified",
-                headline:
-                  "Commerce and gig income intelligence in one dashboard",
-                body: "Multi-tenant Shopify stores and your real earnings data live side by side — the only place your storefronts and your shift income are managed together.",
+                tag: "Ahead",
+                headline: "Never get blindsided by quarterly taxes",
+                body: "Quarterly estimated-tax alerts and Form 1040-ES figures, built on your real after-expense income — so you set money aside all year and April is calm.",
                 accent: "#F0D080",
               },
             ].map((d, i) => (
@@ -926,23 +916,23 @@ export default function Home() {
               {
                 icon: "⏱",
                 headline: "Know your best-paying hours",
-                body: "Kai reads your actual shift earnings and tells you exactly which hours, zones, and platforms earn the most after fuel and expenses — so you can stop guessing and start scheduling smarter.",
+                body: "UnifyOne reads your actual shift earnings and shows exactly which hours and zones earn the most after fuel and expenses — so you can stop guessing and start scheduling smarter.",
                 accent: "#F0D080",
-                audience: "For gig operators",
+                audience: "Earn more per hour",
               },
               {
-                icon: "🏪",
-                headline: "Run every store from one dashboard",
-                body: "Connect Shopify, Stripe, PayPal, and Square once. Manage orders, products, and customers across all your tenants without switching tabs or tools — full tenant isolation built in.",
+                icon: "🛣",
+                headline: "Capture every IRS mileage deduction",
+                body: "Start a shift and your miles log automatically at the IRS standard rate. Watch your year-to-date write-off total grow in real time — workers track about $3,200 a year.",
                 accent: "#6EE7B7",
-                audience: "For commerce teams",
+                audience: "Keep more at tax time",
               },
               {
-                icon: "⚡",
-                headline: "Use any AI model with one bill",
-                body: "Route to Claude for analysis, GPT for code, Gemini for speed — all through a single Kai credit system. No separate vendor accounts. No per-model billing surprises.",
+                icon: "📅",
+                headline: "Stay ahead of quarterly taxes",
+                body: "Get quarterly estimated-tax alerts and the Form 1040-ES figures you need, built on your real after-expense income. No more spring surprises.",
                 accent: "#93C5FD",
-                audience: "For developers & teams",
+                audience: "No tax-season panic",
               },
             ].map(item => (
               <div key={item.headline} className="surface-card p-7">
@@ -1009,8 +999,8 @@ export default function Home() {
                 margin: "0 auto",
               }}
             >
-              These counters update from the platform footprint so you can see
-              what is already live before you start your own build.
+              These counters update from real platform activity so you can see
+              what is already live before you sign up.
             </p>
           </div>
 
@@ -1096,7 +1086,7 @@ export default function Home() {
               className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
               style={{ color: "var(--ink)" }}
             >
-              Three steps to unified commerce intelligence.
+              Three steps to know your real pay.
             </h2>
             <p
               className="font-crimson text-lg"
@@ -1107,8 +1097,8 @@ export default function Home() {
                 margin: "0 auto",
               }}
             >
-              UnifyOne connects your data, processes it with AI, and surfaces
-              the insights that move the needle on your bottom line.
+              Log your shifts, see your true take-home, and stay ahead of taxes
+              — all on your own numbers.
             </p>
           </div>
 
@@ -1161,12 +1151,12 @@ export default function Home() {
       >
         <div className="max-w-7xl mx-auto px-6 sm:px-8">
           <div className="text-center mb-16">
-            <span className="inscription-ink">The platform</span>
+            <span className="inscription-ink">The toolkit</span>
             <h2
               className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
               style={{ color: "var(--ink)" }}
             >
-              Six load-bearing pillars.
+              Four tools that pay for themselves.
             </h2>
             <p
               className="font-crimson text-lg mobile-visibility-copy"
@@ -1177,7 +1167,8 @@ export default function Home() {
                 margin: "0 auto",
               }}
             >
-              Every module is structural. Nothing bolted on after the fact.
+              Earnings, taxes, money, and an AI sidekick — all on your real
+              numbers.
             </p>
           </div>
 
@@ -1245,7 +1236,7 @@ export default function Home() {
               className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
               style={{ color: "var(--ink)" }}
             >
-              Built for operators, not analysts.
+              Built for workers, not spreadsheets.
             </h2>
             <p
               className="font-crimson text-lg"
@@ -1256,8 +1247,8 @@ export default function Home() {
                 margin: "0 auto",
               }}
             >
-              1Commerce's UnifyOne serves three distinct operator types — each
-              with their own module stack, data flows, and intelligence layer.
+              Whether you drive, deliver, or freelance, UnifyOne turns your real
+              earnings and mileage into take-home pay and tax-ready numbers.
             </p>
           </div>
 
@@ -1315,12 +1306,12 @@ export default function Home() {
       >
         <div className="max-w-6xl mx-auto px-6 sm:px-8">
           <div className="text-center mb-16">
-            <span className="inscription-ink">Operator voices</span>
+            <span className="inscription-ink">Worker voices</span>
             <h2
               className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-4"
               style={{ color: "var(--ink)" }}
             >
-              From the operators using it.
+              From the workers using it.
             </h2>
             <p
               className="font-crimson text-lg"
@@ -1331,8 +1322,8 @@ export default function Home() {
                 margin: "0 auto",
               }}
             >
-              Real results from gig workers, agency owners, and developers who
-              replaced multiple tools with one platform.
+              Real results from drivers and freelancers who finally know what
+              every shift earns — and what they owe.
             </p>
           </div>
 
@@ -1416,39 +1407,39 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
               <span className="inscription" style={{ color: "#D4A843" }}>
-                KAI — AI SIDEKICK
+                KAI — YOUR AI SIDEKICK
               </span>
               <h2
                 className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-6"
                 style={{ color: "#F0E8D0" }}
               >
-                In-house intelligence on your actual numbers.
+                Answers built on your actual numbers.
               </h2>
               <div
                 className="font-crimson text-lg space-y-4"
                 style={{ color: "#9A9A9A", lineHeight: 1.7 }}
               >
                 <p>
-                  Kai isn't a generic chatbot. It reads your shift earnings,
-                  mileage logs, and platform comparisons — then tells you
-                  exactly which hours and zones pay the most after expenses.
+                  Kai is your sidekick for tax, route, and scheduling questions.
+                  It reads your shift earnings and mileage logs — not generic
+                  benchmarks — to answer in plain language.
                 </p>
                 <p>
                   Ask it anything:{" "}
                   <em style={{ color: "#9A9A9A" }}>
-                    "Which of my shifts this week were most profitable?" "What
-                    should I charge Client X?" "Route this prompt to the
-                    lowest-latency model."
+                    "Which of my shifts this week were most profitable?" "How
+                    much should I set aside for quarterly taxes?" "Is it worth
+                    driving to the airport zone tonight?"
                   </em>
                 </p>
-                <p>
-                  Kai runs on our unified API layer, so your team can call any
-                  supported model and pay one consolidated Kai cost.
+                <p style={{ color: "#C8A24A" }}>
+                  AI features are included when they ship — and the Free plan
+                  starts you with 25 AI requests a month.
                 </p>
               </div>
               <div className="mt-8">
                 <a href={getSignupUrl()} className="btn-ghost-gold">
-                  Activate Kai Free
+                  Start Free
                 </a>
               </div>
             </div>
@@ -1476,7 +1467,7 @@ export default function Home() {
                     background: "#6EE7B7",
                   }}
                 />
-                KAI LIVE DEMO
+                KAI · SAMPLE ANSWER
               </div>
               <p
                 style={{
@@ -1516,64 +1507,10 @@ export default function Home() {
                     letterSpacing: "0.1em",
                   }}
                 >
-                  POWERED BY KAI + UNIFYAI · ANY MODEL · ONE UNIFIED COST
+                  KAI · BUILT ON YOUR REAL EARNINGS · INCLUDED WHEN IT SHIPS
                 </p>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── UNIFYAI CALLOUT ──────────────────────────────────────────────── */}
-      <section
-        id="unifyai"
-        className="cathedral-bg"
-        style={{
-          padding: "5rem 0",
-          borderTop: "1px solid #242424",
-          borderBottom: "1px solid #242424",
-        }}
-      >
-        <div className="max-w-4xl mx-auto px-6 sm:px-8 text-center">
-          <span className="inscription" style={{ color: "#93C5FD" }}>
-            UNIFYAI — MULTI-MODEL ROUTER
-          </span>
-          <h2
-            className="font-cinzel text-3xl sm:text-4xl font-black mt-4 mb-6"
-            style={{ color: "#F0E8D0" }}
-          >
-            300+ AI models. One key. One unified cost.
-          </h2>
-          <p
-            className="font-crimson text-lg mb-8"
-            style={{
-              color: "#9A9A9A",
-              fontStyle: "italic",
-              maxWidth: 520,
-              margin: "0 auto 2rem",
-            }}
-          >
-            Route to Claude for analysis, GPT for code, Gemini for speed. Kai
-            keeps billing model-agnostic with one predictable credit system and
-            no per-model vendor accounts required.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/documents/integrations">
-              <span
-                className="btn-ghost-gold cursor-pointer"
-                style={{
-                  color: "#93C5FD",
-                  borderColor: "rgba(147,197,253,0.4)",
-                }}
-              >
-                View Integration Guides
-              </span>
-            </Link>
-            <Link href="/documents/integrations">
-              <span className="btn-ghost-gold cursor-pointer">
-                API & Integration Docs →
-              </span>
-            </Link>
           </div>
         </div>
       </section>
@@ -1607,7 +1544,7 @@ export default function Home() {
               className="font-crimson text-lg"
               style={{ color: "var(--ink-soft)", fontStyle: "italic" }}
             >
-              Everything you need to know about UnifyOne and 1Commerce LLC.
+              Everything gig and 1099 workers ask before they start.
             </p>
           </div>
 
@@ -1666,78 +1603,77 @@ export default function Home() {
           data-reveal-delay="0"
           className="max-w-3xl mx-auto px-6 sm:px-8 text-center"
         >
-          <span className="inscription-ink">Begin construction</span>
+          <span className="inscription-ink">Get started</span>
           <h2
             className="font-cinzel text-3xl sm:text-4xl font-black mt-6 mb-6"
             style={{ color: "var(--ink)" }}
           >
-            The foundation is ready.
+            Know what every shift
             <br />
-            Your tenants are not.
+            actually earns you.
           </h2>
           <p
             className="font-crimson text-lg mb-10 mobile-visibility-copy"
             style={{ color: "var(--ink-soft)", fontStyle: "italic" }}
           >
-            Start free. No credit card. The Starter tier runs on the same
-            infrastructure as every paid plan. When you're ready to scale,
-            upgrade in one click — including Kai unified API capacity with one
-            cost model.
+            Start free — no credit card. The Free plan includes the shift
+            tracker, mileage log, tax calculators, and 25 AI requests a month.
+            Upgrade to Pro for $4.99/mo whenever you're ready.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href={getSignupUrl()} className="btn-solid-gold">
-              Start Free Trial
+              Start Free — No Card
             </a>
             <a
               href="#blueprint"
               onClick={scrollToSection("blueprint")}
               className="btn-line-ink cursor-pointer"
             >
-              Claim the Blueprint →
+              Get the Free Tax Guide →
             </a>
           </div>
         </div>
       </section>
       <StickyCTA />
 
-      {/* Static partner links — visible to AI crawlers in initial HTML */}
-      <aside aria-label="Platform integrations" className="sr-only">
-        <p>UnifyOne integrates with:</p>
+      {/* Static reference links — visible to AI crawlers in initial HTML */}
+      <aside aria-label="Gig platforms and tax resources" className="sr-only">
+        <p>UnifyOne tracks earnings and taxes for gig and 1099 workers on:</p>
         <ul>
           <li>
             <a
-              href="https://stripe.com"
+              href="https://www.doordash.com"
               target="_blank"
               rel="noopener noreferrer"
             >
-              Stripe — payment processing
+              DoorDash — food delivery
             </a>
           </li>
           <li>
             <a
-              href="https://www.paypal.com"
+              href="https://www.uber.com"
               target="_blank"
               rel="noopener noreferrer"
             >
-              PayPal — payment processing
+              Uber & Uber Eats — rideshare and delivery
             </a>
           </li>
           <li>
             <a
-              href="https://www.shopify.com"
+              href="https://www.instacart.com"
               target="_blank"
               rel="noopener noreferrer"
             >
-              Shopify — e-commerce platform
+              Instacart — grocery delivery
             </a>
           </li>
           <li>
             <a
-              href="https://www.anthropic.com"
+              href="https://flex.amazon.com"
               target="_blank"
               rel="noopener noreferrer"
             >
-              Anthropic — Claude AI models
+              Amazon Flex — package delivery
             </a>
           </li>
           <li>
