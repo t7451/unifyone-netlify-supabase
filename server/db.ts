@@ -54,6 +54,7 @@ import {
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 import { isMasterControlOpenId } from "./lib/masterControl";
+import { computeViewedTogether } from "./lib/marketBasket";
 
 let _db: NeonHttpDatabase | null = null;
 
@@ -1121,6 +1122,57 @@ export async function getUnmetDemand(tenantId: number, days = 30, limit = 20) {
     .having(sql`coalesce(${avgResultsExpr}, 0) <= 1`)
     .orderBy(desc(sql`count(*)`))
     .limit(limit);
+}
+
+/**
+ * "Viewed together" — products frequently viewed by the same visitor. The
+ * pairing is computed in JS (see computeViewedTogether) over a bounded set of
+ * distinct (visitor, product) rows, then product names are joined in.
+ */
+export async function getViewedTogether(
+  tenantId: number,
+  days = 30,
+  limit = 10
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  // Bounded set of distinct (visitor, product) product-view rows.
+  const rows = await db
+    .selectDistinct({
+      visitor: sql<string>`${analyticsEvents.properties}->>'anonymousId'`,
+      productId: analyticsEvents.productId,
+    })
+    .from(analyticsEvents)
+    .where(
+      and(
+        eq(analyticsEvents.tenantId, tenantId),
+        eq(analyticsEvents.eventType, "product_view"),
+        gte(analyticsEvents.createdAt, since),
+        sql`${analyticsEvents.productId} is not null`,
+        sql`coalesce(${analyticsEvents.properties}->>'anonymousId', '') <> ''`
+      )
+    )
+    .limit(20000);
+
+  const pairs = computeViewedTogether(rows, { limit });
+  const ids = Array.from(
+    new Set(pairs.flatMap(p => [p.productAId, p.productBId]))
+  );
+  const names = ids.length
+    ? await db
+        .select({ id: products.id, name: products.name })
+        .from(products)
+        .where(and(eq(products.tenantId, tenantId), inArray(products.id, ids)))
+    : [];
+  const nameById = new Map(names.map(p => [p.id, p.name]));
+
+  return pairs.map(p => ({
+    ...p,
+    productAName: nameById.get(p.productAId) ?? "Unknown product",
+    productBName: nameById.get(p.productBId) ?? "Unknown product",
+  }));
 }
 
 // ── WHERE: acquisition, exits, geo ────────────────────────────────────────────

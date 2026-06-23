@@ -16,6 +16,7 @@ import {
   getTopSearches,
   getTopViewedProducts,
   getUnmetDemand,
+  getViewedTogether,
   getWebhookEvents,
 } from "../db";
 import { fetchRelatedQueries } from "../lib/googleTrends";
@@ -287,6 +288,18 @@ export const analyticsRouter = router({
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
       return getUnmetDemand(tenantId, input?.days ?? 30, input?.limit ?? 20);
+    }),
+
+  /** Products frequently viewed together by the same visitor (market basket). */
+  viewedTogether: protectedProcedure
+    .input(
+      z
+        .object({ days: daysInput.default(30), limit: limitInput.default(10) })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const tenantId = requireTenant(ctx.user.tenantId);
+      return getViewedTogether(tenantId, input?.days ?? 30, input?.limit ?? 10);
     }),
 
   /**
