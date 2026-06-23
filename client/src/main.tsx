@@ -198,3 +198,7 @@ if (document.readyState === "loading") {
 } else {
   initializeApp();
 }
+
+// Register the PWA service worker (production only; auto-updates + quick
+// refresh on new deploys). Kept off the critical render path.
+void import("./lib/pwa").then(({ registerPwa }) => registerPwa());
