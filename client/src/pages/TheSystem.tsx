@@ -12,23 +12,23 @@ const LOGO_URL = `${SITE_URL}/favicon.ico`;
 const FAQS = [
   {
     q: "How does UnifyOne work?",
-    a: "UnifyOne is set up in four sequential phases. You lay the foundation (create your tenant and connect payment rails), raise the walls (import your product catalog and order rules), install the vaults (wire automation that fires on real commerce events), and light the spire (activate Kai, the AI co-pilot that reads your operational data). Each phase builds on the one before it.",
+    a: "UnifyOne is set up in four sequential phases. You lay the foundation (create your account and connect the gig apps you work), raise the walls (log shifts so earnings and mileage capture automatically), install the vaults (let Tax Autopilot track IRS mileage and compute quarterly estimated taxes), and light the spire (activate Kai, the AI sidekick that answers questions on your own numbers). Each phase builds on the one before it.",
   },
   {
-    q: "How long does it take to launch on UnifyOne?",
-    a: "Foundation setup takes under 10 minutes — the onboarding wizard walks through store name, plan selection, and payment rail connection in three steps. Most operators have their first order processed end-to-end in under 30 minutes.",
+    q: "How long does it take to get started on UnifyOne?",
+    a: "Setup takes under 10 minutes — the onboarding wizard walks through your account, plan (Free or Pro), and the gig apps you drive or freelance for. Start a shift and your earnings and mileage begin logging right away. The Free plan needs no card.",
   },
   {
-    q: "Which integrations does UnifyOne support?",
-    a: "UnifyOne ships with ten core integrations: Stripe and PayPal (payments), Shopify (commerce), Kai (intelligence), n8n and Zapier (automation), Supabase (realtime updates), Meta Ads (CAPI purchase events), Resend (email), and GitHub Actions (CI/CD). Zapier alone connects 5,000+ additional third-party apps.",
+    q: "Which gig apps and tools does UnifyOne support?",
+    a: "UnifyOne tracks earnings across DoorDash, Uber, Uber Eats, Lyft, Instacart, Amazon Flex, Grubhub, Shipt, Upwork, Fiverr and more. Under the hood it runs the GigIQ shift intelligence, Tax Autopilot tax engine (IRS standard mileage rate, Form 1040-ES figures), Money Manager, and Kai, on PostgreSQL via Drizzle with Supabase metering and GitHub Actions CI.",
   },
   {
-    q: "How fast does automation fire after an order?",
-    a: "Automation is event-driven, not polled. An order placed triggers your fulfillment workflow within roughly 200ms, and a subscription renewed fires your customer-success sequence before the receipt email arrives. Webhook events are logged and retried on failure.",
+    q: "How does Tax Autopilot handle mileage and quarterly taxes?",
+    a: "Tax Autopilot auto-captures mileage from every logged shift at the IRS standard rate, keeps a real-time year-to-date deduction total, and alerts you before quarterly estimated taxes are due — including the figures you need for Form 1040-ES, built on your real after-expense income.",
   },
   {
-    q: "What does multi-rail checkout mean?",
-    a: "Multi-rail checkout puts Stripe, PayPal, and Shopify on a single checkout page. The customer chooses their preferred payment rail and you receive one unified order record regardless of which processor handled the transaction.",
+    q: "What do GigIQ and Kai do?",
+    a: "GigIQ reads your real earnings to show which hours and zones pay the most after fuel and expenses. Kai is your AI sidekick for tax, route, and scheduling questions answered on your own numbers — not generic tips. AI tools are included when they ship.",
   },
 ];
 
@@ -40,7 +40,7 @@ const JSON_LD = [
     url: CANONICAL,
     name: "The System — How UnifyOne Works | UnifyOne",
     description:
-      "How UnifyOne works: four sequential construction phases, ten integrations, and six platform features that replace three separate SaaS tools.",
+      "How UnifyOne works: four sequential phases that track your gig earnings across every app, auto-log IRS mileage, compute quarterly taxes, and surface GigIQ, Money Manager, and Kai insights.",
     isPartOf: { "@id": `${SITE_URL}/#website` },
     inLanguage: "en-US",
   },
@@ -55,9 +55,9 @@ const JSON_LD = [
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
-    headline: "The System: How UnifyOne's Commerce Platform Works",
+    headline: "The System: How UnifyOne Works for Gig Workers",
     description:
-      "How UnifyOne works end to end — four sequential build phases, ten integrations, and six platform features that replace three separate SaaS tools.",
+      "How UnifyOne works end to end — four sequential phases that track gig earnings across every app, auto-log IRS mileage, compute quarterly taxes, and surface GigIQ, Money Manager, and Kai insights.",
     url: CANONICAL,
     mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL },
     image: OG_IMAGE,
@@ -69,41 +69,41 @@ const JSON_LD = [
       logo: { "@type": "ImageObject", url: LOGO_URL },
     },
     keywords:
-      "how UnifyOne works, multi-tenant commerce platform, commerce integrations, automation, Stripe, PayPal, Shopify, n8n",
+      "how UnifyOne works, gig worker earnings tracker, IRS mileage tracking, quarterly estimated taxes, Form 1040-ES, GigIQ, Tax Autopilot, Money Manager, Kai",
     datePublished: "2026-03-06",
     dateModified: "2026-03-06",
   },
   {
     "@context": "https://schema.org",
     "@type": "HowTo",
-    name: "How to Build a Commerce Platform with UnifyOne",
+    name: "How to Track Gig Earnings and Taxes with UnifyOne",
     description:
-      "Four sequential phases to launch a fully operational multi-tenant commerce platform: foundation, walls, vaults, and spire.",
+      "Four sequential phases to track your gig earnings, auto-log IRS mileage, and stay ahead of quarterly taxes: foundation, walls, vaults, and spire.",
     url: CANONICAL,
     step: [
       {
         "@type": "HowToStep",
         position: 1,
         name: "Lay the Foundation",
-        text: "Create your tenant, configure your store identity, and connect your payment rails.",
+        text: "Create your account, pick a plan (Free or Pro), and connect the gig apps you drive or freelance for.",
       },
       {
         "@type": "HowToStep",
         position: 2,
         name: "Raise the Walls",
-        text: "Import your product catalog, configure inventory thresholds, and define your order processing rules.",
+        text: "Log your shifts so earnings and IRS mileage capture automatically across DoorDash, Uber, Instacart, Upwork and more.",
       },
       {
         "@type": "HowToStep",
         position: 3,
         name: "Install the Vaults",
-        text: "Wire your automation layer — n8n workflows, Zapier hooks, and email sequences fire on real commerce events.",
+        text: "Let Tax Autopilot track your year-to-date deductions at the IRS standard mileage rate and compute quarterly estimated taxes with Form 1040-ES figures.",
       },
       {
         "@type": "HowToStep",
         position: 4,
         name: "Light the Spire",
-        text: "Activate Kai. Your co-pilot reads your actual operational data and surfaces insights and earnings projections.",
+        text: "Activate Kai. Your AI sidekick reads your actual earnings and mileage and answers tax, route, and scheduling questions on your own numbers.",
       },
     ],
   },
@@ -125,126 +125,126 @@ const CONSTRUCTION_PHASES = [
   {
     phase: "Phase I",
     title: "Lay the Foundation",
-    body: "Create your tenant, configure your store identity, and connect your payment rails. The crypt is sealed before the nave rises. This takes under 10 minutes — the onboarding wizard walks through store name, plan selection, and payment rail connection in three steps.",
+    body: "Create your account, pick a plan, and connect the gig apps you work. The crypt is sealed before the nave rises. This takes under 10 minutes — the onboarding wizard walks through your account, Free or Pro selection, and the apps you drive or freelance for. The Free plan needs no card.",
     details: [
-      "Tenant creation with auto-slug generation",
-      "Plan selection (Starter → Pro → Scale)",
-      "Stripe + PayPal + Shopify rail connection",
-      "Team member invitations with role assignment",
+      "Account creation in three steps",
+      "Plan selection (Free or Pro $4.99/mo)",
+      "Connect DoorDash, Uber, Lyft, Instacart, Upwork and more",
+      "No credit card required to start",
     ],
   },
   {
     phase: "Phase II",
     title: "Raise the Walls",
-    body: "Import your product catalog, configure inventory thresholds, and define your order processing rules. Structure before decoration. Every product is a load-bearing element — SKU, inventory count, pricing, and fulfillment rules are set at creation, not patched in later.",
+    body: "Log your shifts and let earnings and mileage capture automatically. Structure before decoration. Every shift is a load-bearing record — payout, hours, and IRS mileage at the standard rate are captured as you work, not reconstructed from memory at tax time.",
     details: [
-      "Product catalog with categories and inventory",
-      "Order pipeline: pending → processing → shipped → delivered",
-      "Customer records with order history",
-      "Manual order entry for offline sales",
+      "Shift tracker across every gig app",
+      "Automatic IRS mileage logging at the standard rate",
+      "Real net pay after fuel and expenses",
+      "One earnings history, no spreadsheets",
     ],
   },
   {
     phase: "Phase III",
     title: "Install the Vaults",
-    body: "Wire your automation layer — n8n workflows, Zapier hooks, and email sequences fire on real commerce events. An order placed triggers your fulfillment workflow within 200ms. A subscription renewed fires your customer success sequence before the receipt email arrives.",
+    body: "Let Tax Autopilot turn your logged shifts into tax-ready numbers. Mileage rolls into a real-time year-to-date deduction total, and quarterly estimated-tax alerts surface the Form 1040-ES figures you need before each deadline — built on your real after-expense income, so April is never a surprise.",
     details: [
-      "n8n workflow builder with event triggers",
-      "Zapier hook manager for third-party integrations",
-      "Mailchimp drip sequence configuration",
-      "Webhook event log with retry on failure",
+      "Real-time YTD deduction total",
+      "Quarterly estimated-tax alerts",
+      "Form 1040-ES figures on your real income",
+      "Money Manager budgets on take-home pay",
     ],
   },
   {
     phase: "Phase IV",
     title: "Light the Spire",
-    body: "Activate Kai. Your co-pilot reads your actual operational data and surfaces insights, route optimizations, and earnings projections. The AI is context-aware — it knows which page you are on, what your last 30 days of data looks like, and what question you are most likely to ask next.",
+    body: "Activate Kai. Your AI sidekick reads your actual earnings and mileage and answers tax, route, and scheduling questions on your own numbers. It is context-aware — it knows which page you are on and what your recent shifts look like. AI tools are included when they ship.",
     details: [
       "Context-aware AI on every dashboard page",
-      "Conversation history across sessions",
-      "Route optimization for gig operators",
-      "Tax deduction tracking and projections",
+      "Answers on your own earnings and mileage",
+      "Tax, route, and scheduling questions",
+      "Included when it ships",
     ],
   },
 ];
 
 const INTEGRATIONS = [
   {
-    name: "Stripe",
-    category: "Payments",
-    desc: "Checkout sessions, customer portal, subscription billing, webhook verification.",
+    name: "DoorDash",
+    category: "Delivery",
+    desc: "Track payouts and per-shift net pay after fuel and expenses.",
   },
   {
-    name: "PayPal",
-    category: "Payments",
-    desc: "Smart Buttons, order creation and capture, OAuth token management.",
+    name: "Uber & Uber Eats",
+    category: "Rideshare",
+    desc: "Earnings and mileage capture across rides and deliveries.",
   },
   {
-    name: "Shopify",
-    category: "Commerce",
-    desc: "Product sync, order webhook ingestion, checkout URL redirect.",
+    name: "Lyft",
+    category: "Rideshare",
+    desc: "Per-shift earnings tracking with automatic IRS mileage.",
+  },
+  {
+    name: "Instacart",
+    category: "Delivery",
+    desc: "Batch earnings logged alongside the miles you drove.",
+  },
+  {
+    name: "Amazon Flex",
+    category: "Delivery",
+    desc: "Block earnings and mileage rolled into your deduction total.",
+  },
+  {
+    name: "Grubhub & Shipt",
+    category: "Delivery",
+    desc: "Delivery payouts captured shift by shift in one history.",
+  },
+  {
+    name: "Upwork & Fiverr",
+    category: "Freelance",
+    desc: "1099 freelance income tracked beside your gig driving.",
+  },
+  {
+    name: "Tax Autopilot",
+    category: "Tax Engine",
+    desc: "IRS standard mileage rate, YTD deductions, Form 1040-ES figures.",
   },
   {
     name: "Kai",
     category: "Intelligence",
-    desc: "Context-aware LLM, conversation history, streaming responses.",
+    desc: "AI sidekick that answers questions on your own numbers.",
   },
   {
-    name: "n8n",
-    category: "Automation",
-    desc: "Workflow triggers on order, subscription, and customer events.",
-  },
-  {
-    name: "Zapier",
-    category: "Automation",
-    desc: "Hook manager for 5,000+ third-party app integrations.",
-  },
-  {
-    name: "Supabase",
-    category: "Realtime",
-    desc: "Live order and inventory updates without page refresh.",
-  },
-  {
-    name: "Meta Ads",
-    category: "Marketing",
-    desc: "CAPI purchase event firing on checkout completion.",
-  },
-  {
-    name: "Resend",
-    category: "Email",
-    desc: "Transactional email and drip sequence delivery.",
-  },
-  {
-    name: "GitHub Actions",
-    category: "CI/CD",
-    desc: "Automated test runs, dependency audits, PR code review.",
+    name: "Stripe",
+    category: "Billing",
+    desc: "Pro plan billing at $4.99/mo with verified webhooks.",
   },
 ];
 
 const PLATFORM_FEATURES = [
   {
-    title: "Real-Time Order Dashboard",
-    body: "Orders update live via Supabase Realtime. Status changes propagate to every open session without polling. Your fulfillment team sees the same state as your customer portal.",
+    title: "Real-Time Earnings Dashboard",
+    body: "Your earnings across every gig app in one live view. Each logged shift updates your take-home pay after fuel and expenses without a page refresh — no spreadsheet, no shoebox of receipts.",
   },
   {
-    title: "Multi-Rail Checkout",
-    body: "Stripe, PayPal, and Shopify on a single checkout page. The customer chooses their rail. You receive a unified order record regardless of which payment processor fired.",
+    title: "Automatic IRS Mileage Log",
+    body: "Start a shift and your miles log automatically at the IRS standard rate. Watch your year-to-date write-off total grow in real time — workers track about $3,200 in deductions a year on average.",
   },
   {
-    title: "Subscription Billing",
-    body: "Stripe subscription management with trial countdowns, usage meters, invoice history, and a one-click portal link. Subscription events sync to your tenant record within the webhook handler.",
+    title: "Quarterly Tax Autopilot",
+    body: "Quarterly estimated-tax alerts and the Form 1040-ES figures you need, built on your real after-expense income. Set money aside all year so April is never a surprise.",
   },
   {
-    title: "Social Commerce Suite",
-    body: "AI-composed social posts, platform selector, content calendar, and post scheduling. The AI reads your product catalog and generates platform-specific copy on demand.",
+    title: "GigIQ Shift Intelligence",
+    body: "GigIQ reads your real earnings and shows which hours and zones generate the highest net pay after fuel and expenses. Specific scheduling recommendations, not generic advice.",
   },
   {
-    title: "Referral Engine",
-    body: "Shareable referral links, credit wallet, and leaderboard. Every referral click is tracked. Conversions award credits automatically via the webhook handler.",
+    title: "Money Manager",
+    body: "Budgeting, goals, and spending analysis built on your real after-expense gig income — so your plan matches what you actually take home, not a salaried estimate.",
   },
   {
-    title: "Team Management",
-    body: "Invite team members by email, assign roles (admin / user), revoke access, and manage pending invitations. Role-based access gates both frontend routes and tRPC procedures.",
+    title: "Kai, Your AI Sidekick",
+    body: "Ask Kai tax, route, and scheduling questions answered on your own earnings and mileage — not generic tips. AI tools are included when they ship.",
   },
 ];
 
@@ -257,7 +257,7 @@ export default function TheSystem() {
         <title>The System — How UnifyOne Works | UnifyOne</title>
         <meta
           name="description"
-          content="How UnifyOne works: four sequential construction phases, ten integrations, and six platform features that replace three separate SaaS tools. Commerce infrastructure built to endure."
+          content="How UnifyOne works: four sequential phases that track your gig earnings across every app, auto-log IRS mileage, compute quarterly taxes, and surface GigIQ, Money Manager, and Kai insights. Free to start."
         />
         <link rel="canonical" href={CANONICAL} />
         <meta
@@ -266,7 +266,7 @@ export default function TheSystem() {
         />
         <meta
           property="og:description"
-          content="Four construction phases. Ten integrations. Six platform features. One unified commerce system."
+          content="Four phases. Every gig app, one dashboard. Auto-logged IRS mileage and quarterly taxes done for you. Free to start."
         />
         <meta property="og:url" content={CANONICAL} />
         <meta property="og:type" content="article" />
@@ -276,7 +276,7 @@ export default function TheSystem() {
         />
         <meta
           name="twitter:description"
-          content="Four construction phases. Ten integrations. Six platform features. One unified commerce system."
+          content="Four phases. Every gig app, one dashboard. Auto-logged IRS mileage and quarterly taxes done for you. Free to start."
         />
         {JSON_LD.map((schema, i) => (
           <script key={i} type="application/ld+json">
@@ -320,18 +320,19 @@ export default function TheSystem() {
             className="font-crimson text-xl sm:text-2xl max-w-2xl"
             style={{ color: "#9A9A9A", fontStyle: "italic", lineHeight: 1.6 }}
           >
-            Four construction phases. Ten integrations. One platform that
-            replaces three separate SaaS tools.
+            Four phases. Every gig app in one dashboard. Auto-logged IRS mileage
+            and quarterly taxes done for you.
           </p>
           <p
             className="font-crimson text-lg max-w-3xl mt-6"
             style={{ color: "#7A7A7A", lineHeight: 1.7 }}
           >
             UnifyOne works in four sequential phases — lay the foundation
-            (tenant and payment rails), raise the walls (catalog and orders),
-            install the vaults (event-driven automation), and light the spire
-            (Kai, the AI co-pilot). Ten integrations and six platform features
-            then run your commerce operations from one dashboard.
+            (connect your gig apps), raise the walls (log shifts so earnings and
+            mileage capture automatically), install the vaults (Tax Autopilot
+            tracks IRS mileage and quarterly estimated taxes), and light the
+            spire (Kai, your AI sidekick). GigIQ, Money Manager, and Kai then
+            surface insights on your real numbers — from one dashboard.
           </p>
           <div
             className="h-px mt-10 max-w-xs"
@@ -422,12 +423,14 @@ export default function TheSystem() {
       >
         <div className="max-w-7xl mx-auto px-6 sm:px-8">
           <div className="text-center mb-16">
-            <span className="inscription block mb-4">Connected Services</span>
+            <span className="inscription block mb-4">
+              Connected Apps & Engine
+            </span>
             <h2
               className="font-cinzel text-3xl sm:text-4xl font-bold"
               style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
             >
-              Ten Integrations
+              Every App, One Dashboard
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0">
@@ -561,18 +564,18 @@ export default function TheSystem() {
           >
             The System Is Ready.
             <br />
-            Your Tenant Awaits.
+            Your Earnings Await.
           </h2>
           <p
             className="font-crimson text-xl mb-10"
             style={{ color: "#9A9A9A", fontStyle: "italic" }}
           >
-            Create your tenant, connect your payment rails, and have your first
-            order processed in under 30 minutes.
+            Connect your gig apps, log your first shift, and watch your earnings
+            and IRS mileage capture automatically — free, no card required.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href={getSignupUrl()} className="btn-illuminate">
-              Begin Construction — Free
+              Start Free — No Card
             </a>
             <Link href="/ai-assistant">
               <span className="btn-ghost-gold cursor-pointer">
