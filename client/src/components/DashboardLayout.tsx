@@ -25,40 +25,18 @@ import {
   LayoutDashboard,
   LogOut,
   PanelLeft,
-  Users,
-  ShoppingBag,
-  ShoppingCart,
-  BarChart3,
   Zap,
   Settings,
   Building2,
   ChevronDown,
   CreditCard,
   UserPlus,
-  Share2,
-  Gift,
-  Target,
-  Workflow,
   Bell,
-  Store,
-  Package,
-  Key,
-  TrendingUp,
-  Link2,
-  Activity,
-  Plug,
   DollarSign,
-  Trophy,
-  UserRound,
   Navigation,
-  Smartphone,
   Sparkles,
   Star,
   X,
-  Code2,
-  TerminalSquare,
-  SlidersHorizontal,
-  Tag,
 } from "lucide-react";
 import { AIChatBox } from "@/components/AIChatBox";
 import type { Message } from "@/components/AIChatBox";
@@ -72,53 +50,18 @@ import { Button } from "./ui/button";
 import { useSignupTracker } from "@/hooks/useSignupTracker";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: SlidersHorizontal, label: "Master Control", path: "/master-control" },
-  { icon: ShoppingBag, label: "Products", path: "/products" },
-  { icon: ShoppingCart, label: "Orders", path: "/orders" },
-  { icon: Users, label: "Customers", path: "/customers" },
-  { icon: BarChart3, label: "Analytics", path: "/analytics" },
-  { icon: Tag, label: "Discounts", path: "/discounts" },
+  // Gig-worker earnings & taxes — the front door
+  { icon: LayoutDashboard, label: "Overview", path: "/overview" },
+  { icon: Navigation, label: "Gig Command", path: "/gig-command" },
+  { icon: DollarSign, label: "Money Manager", path: "/money-manager" },
+  { icon: Star, label: "Gig Worker Plans", path: "/gig-worker-plans" },
+  // Cross-product / account
+  { icon: Sparkles, label: "AI Assistant", path: "/ai-assistant" },
+  { icon: Bell, label: "Notifications", path: "/notifications" },
   { icon: Zap, label: "Integrations", path: "/integrations" },
   { icon: Settings, label: "Settings", path: "/settings" },
   { icon: CreditCard, label: "Billing", path: "/billing" },
   { icon: UserPlus, label: "Team", path: "/team" },
-  { icon: Share2, label: "Social", path: "/social" },
-  { icon: Gift, label: "Promote & Earn", path: "/referrals" },
-  { icon: Target, label: "Leads", path: "/leads" },
-  { icon: Workflow, label: "Automations", path: "/automations" },
-  { icon: Bell, label: "Notifications", path: "/notifications" },
-  { icon: Store, label: "Theme Store", path: "/themes" },
-  { icon: Package, label: "My Themes", path: "/my-themes" },
-  { icon: Key, label: "Rewards Keys", path: "/rewards" },
-  { icon: TrendingUp, label: "Revenue Command", path: "/revenue-command" },
-  { icon: TrendingUp, label: "Revenue Streams", path: "/revenue-streams" },
-  { icon: Link2, label: "Affiliate Hub", path: "/affiliates" },
-  { icon: Activity, label: "Sync Monitor", path: "/sync-monitor" },
-  { icon: Plug, label: "Connect Shopify", path: "/shopify/install" },
-  { icon: DollarSign, label: "Money Manager", path: "/money-manager" },
-  { icon: Navigation, label: "Gig Command", path: "/gig-command" },
-  { icon: Star, label: "Gig Worker Plans", path: "/gig-worker-plans" },
-  { icon: Trophy, label: "Achievements", path: "/achievements" },
-  { icon: UserRound, label: "Friends & Social", path: "/friends" },
-  { icon: Smartphone, label: "Mobile Automation", path: "/mobile-automation" },
-  { icon: Sparkles, label: "AI Assistant", path: "/ai-assistant" },
-  { icon: Code2, label: "Code Sandbox", path: "/sandbox" },
-  { icon: Code2, label: "Developer Hub", path: "/developer" },
-  { icon: TerminalSquare, label: "Terminal", path: "/terminal" },
-  { icon: Target, label: "DealFlow", path: "/dashboard/dealflow" },
-  { icon: Plug, label: "TerpForge", path: "/dashboard/terpforge" },
-  {
-    icon: Share2,
-    label: "Knowledge Graph",
-    path: "/dashboard/knowledge-graph",
-  },
-  { icon: Store, label: "PixelForge", path: "/dashboard/pixelforge" },
-  {
-    icon: ShoppingBag,
-    label: "Shopify Theme",
-    path: "/dashboard/shopify-theme",
-  },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -365,8 +308,7 @@ function DashboardLayoutContent({
                 const isActive =
                   location === item.path ||
                   (item.path === "/settings" &&
-                    location.startsWith("/settings/")) ||
-                  (item.path === "/orders" && location.startsWith("/orders/"));
+                    location.startsWith("/settings/"));
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
