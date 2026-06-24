@@ -7,7 +7,7 @@ import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/about`;
 const DESCRIPTION =
-  "1Commerce / PNW Enterprises builds UnifyOne — a multi-tenant commerce platform on the Cathedral Framework for gig operators and e-commerce teams. Built to endure.";
+  "1Commerce / PNW Enterprises builds UnifyOne — the earnings and tax app for gig and 1099 workers. Track real take-home, capture every IRS mileage deduction, and stay ahead of quarterly taxes.";
 
 const LOGO_URL = `${SITE_URL}/favicon.svg`;
 const ORG_ID = `${SITE_URL}/#organization`;
@@ -39,7 +39,7 @@ const ORGANIZATION_JSON_LD = {
   logo: LOGO_URL,
   email: "support@1commerce.online",
   description:
-    "1Commerce Solutions (legally 1Commerce LLC, also known as PNW Enterprises) builds UnifyOne — a multi-tenant e-commerce and gig-economy SaaS platform. Based in Canby, Oregon, in the Pacific Northwest.",
+    "1Commerce Solutions (legally 1Commerce LLC, also known as PNW Enterprises) builds UnifyOne — the earnings and tax app for gig and 1099 workers. Based in Canby, Oregon, in the Pacific Northwest.",
   foundingDate: "2025",
   areaServed: "US",
   address: {
@@ -58,7 +58,7 @@ const WEBPAGE_JSON_LD = {
   url: CANONICAL,
   name: "About | UnifyOne by 1Commerce",
   description:
-    "Learn about 1Commerce / PNW Enterprises — the team building UnifyOne, a multi-tenant commerce platform engineered on the Cathedral Framework for gig operators and e-commerce teams.",
+    "Learn about 1Commerce / PNW Enterprises — the team building UnifyOne, the earnings and tax app that helps gig and 1099 workers track real take-home, capture IRS mileage deductions, and stay ahead of quarterly taxes.",
   isPartOf: { "@id": `${SITE_URL}/#website` },
   inLanguage: "en-US",
   about: { "@id": ORG_ID },
@@ -98,7 +98,7 @@ export default function About() {
           className="font-cinzel text-4xl sm:text-5xl font-black mb-8"
           style={{ color: "#F0E8D0" }}
         >
-          One product. One name. One platform.
+          Know your real pay. Keep more of it.
         </h1>
 
         <div
@@ -107,7 +107,7 @@ export default function About() {
         >
           <p>
             <strong style={{ color: "#F0E8D0" }}>UnifyOne</strong> is the
-            commerce platform.{" "}
+            earnings and tax app for gig and 1099 workers.{" "}
             <strong style={{ color: "#F0E8D0" }}>1Commerce Solutions</strong> is
             the company that builds it. If you've seen us referenced as "ONE
             STACK," "0ne Stack," or "1 Stack" elsewhere — those are legacy names
@@ -115,25 +115,25 @@ export default function About() {
           </p>
 
           <p>
-            We started with one frustration: every existing commerce stack is
-            assembled from plugins, integrations, and middleware that nobody
-            owns end-to-end. When something breaks, you debug across four
-            vendors. When you scale, the seams pull apart.
+            We started with one frustration: gig work pays in fragments. Cash
+            lands across a half-dozen apps, mileage goes untracked, and a tax
+            bill nobody set money aside for shows up every quarter. The work is
+            real, but the numbers never add up in one place.
           </p>
 
           <p>
-            UnifyOne is engineered like a cathedral instead — sequential,
-            structural, built to outlast platform trends. Multi-tenant isolation
-            at the schema level. Payment orchestration as a load-bearing wall,
-            not a plugin. Automation triggered by real commerce events, not
-            scheduled polling. Kai built into every page from day one, not
-            bolted on after launch.
+            UnifyOne puts them in one place. GigIQ shows your true take-home
+            after expenses across every platform. Tax Autopilot captures every
+            IRS standard-mileage deduction and tells you what to set aside for
+            quarterly estimated taxes before the deadline — not after. Money
+            Manager keeps the cash flow honest, and Kai answers the
+            "what-does-this-mean" questions in plain language on every page.
           </p>
 
           <p>
             We're a small team. We answer support email ourselves. We don't
-            outsource the roadmap to AI and we don't ship features we wouldn't
-            run our own business on.
+            outsource the roadmap to AI, and we don't ship features we wouldn't
+            rely on to file our own taxes.
           </p>
 
           <h2
@@ -143,9 +143,10 @@ export default function About() {
             Who it's for
           </h2>
           <p>
-            Gig operators running multiple platforms. E-commerce teams who
-            outgrew Shopify plugins. Builders who want commerce infrastructure
-            they can actually own.
+            The 76M+ Americans doing gig and 1099 work — rideshare and delivery
+            drivers, freelancers, contractors, and anyone juggling multiple
+            earning apps who wants to know what they actually made and what they
+            actually owe. Start free; Pro is $4.99/mo.
           </p>
 
           <h2
@@ -192,7 +193,7 @@ export default function About() {
           style={{ borderTop: "1px solid #242424" }}
         >
           <a href={getSignupUrl()} className="btn-illuminate">
-            Begin Construction — Free
+            Start Free
           </a>
           <Link href="/the-system">
             <span className="btn-ghost-gold cursor-pointer">
@@ -227,7 +228,7 @@ export default function About() {
               className="inscription block mb-1"
               style={{ color: "#D4A843" }}
             >
-              FOLLOW THE BUILD
+              FOLLOW ALONG
             </span>
             <a
               href="https://www.instagram.com/1commerce_llc"
@@ -248,8 +249,8 @@ export default function About() {
               className="font-crimson text-sm mt-1"
               style={{ color: "#5A5A5A", fontStyle: "italic" }}
             >
-              Product updates, operator stories, and behind-the-scenes
-              construction.
+              Product updates, tax tips for gig workers, and behind-the-scenes
+              build notes.
             </p>
           </div>
         </div>
