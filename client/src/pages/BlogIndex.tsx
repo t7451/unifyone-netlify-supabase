@@ -6,20 +6,26 @@ import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/blog`;
 const DESCRIPTION =
-  "Read UnifyOne essays on gig ecommerce, multi-tenant SaaS architecture, and AI-assisted commerce operations.";
+  "Read UnifyOne essays on gig-worker earnings, mileage and 1099 tax tracking, and AI-assisted shift intelligence for drivers and freelancers.";
 
 const POSTS = [
   {
-    href: BLOG_POSTS.gigEcommerce.href,
-    title: "Gig Ecommerce",
+    href: BLOG_POSTS.gigWorkerShiftIntelligence.href,
+    title: "Gig Worker Shift Intelligence",
     description:
-      "How UnifyOne helps operators unify storefront, payments, automation, and fulfillment in one stack.",
+      "How GigIQ reads your real shift history to show which hours and zones pay the most after fuel and expenses.",
+  },
+  {
+    href: BLOG_POSTS.gigEcommerce.href,
+    title: "Earnings & Taxes for Gig Workers",
+    description:
+      "How drivers and freelancers track income, automate mileage deductions, and plan for quarterly taxes in one app.",
   },
   {
     href: BLOG_POSTS.multiTenant.href,
-    title: "Multi-Tenant Commerce",
+    title: "The Architecture Behind UnifyOne",
     description:
-      "Why tenant-safe architecture matters when products, orders, and analytics share one platform.",
+      "A look under the hood at the tenant-safe platform that keeps every gig worker's earnings and tax data isolated and secure.",
   },
 ];
 
@@ -30,7 +36,7 @@ const BLOG_JSON_LD = {
   url: CANONICAL,
   name: "UnifyOne Blog",
   description:
-    "Public writing from UnifyOne on multi-tenant commerce, agentic AI, and platform architecture.",
+    "Public writing from UnifyOne on gig-worker earnings, 1099 taxes and mileage, and AI-assisted shift intelligence.",
   isPartOf: { "@id": `${SITE_URL}/#website` },
   inLanguage: "en-US",
   publisher: {
@@ -83,16 +89,16 @@ export default function BlogIndex() {
           className="font-cinzel text-4xl sm:text-5xl font-black mb-6"
           style={{ color: "#F0E8D0" }}
         >
-          Public writing on commerce architecture.
+          Public writing on gig earnings &amp; taxes.
         </h1>
 
         <p
           className="max-w-2xl text-lg mb-12"
           style={{ color: "#6A6A6A", lineHeight: 1.7 }}
         >
-          Explore the public side of UnifyOne: platform design, multi-tenant
-          operations, and the role of agentic AI inside a governed commerce
-          stack.
+          Explore the public side of UnifyOne: how drivers and freelancers track
+          earnings, automate mileage and 1099 taxes, and use AI to find their
+          best-paying work.
         </p>
 
         <div className="grid gap-6 md:grid-cols-3">

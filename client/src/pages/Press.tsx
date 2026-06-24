@@ -7,40 +7,40 @@ const CANONICAL = `${SITE_URL}/press`;
 const PRESS_EMAIL = "support@1commerce.online";
 
 const DESCRIPTION =
-  "UnifyOne media kit: brand logos, boilerplate copy, company facts, and category tags for press, software directories, and reviewers. By 1Commerce LLC.";
+  "UnifyOne media kit: brand logos, boilerplate copy, company facts, and category tags for press, app directories, and reviewers. By 1Commerce LLC.";
 
-// ── Copy blocks (kept identical to docs/AEO_SUBMISSION_KIT.md) ─────────────
+// ── Copy blocks (gig-first media-kit boilerplate) ──────────────────────────
 
-const TAGLINE_60 = "Unify inventory, orders & payments across every store.";
+const TAGLINE_60 = "Track gig earnings, mileage & taxes in one app.";
 
 const SHORT_160 =
-  "UnifyOne is an AI-powered multi-tenant commerce platform that unifies " +
-  "inventory, orders, payments, and analytics across all your stores in one " +
-  "dashboard.";
+  "UnifyOne is an AI-powered gig-worker earnings and tax app that tracks " +
+  "income, auto-logs mileage, and forecasts quarterly taxes across every " +
+  "platform in one dashboard.";
 
 const MEDIUM_80 =
-  "UnifyOne by 1Commerce LLC is a multi-tenant commerce platform built for " +
-  "operators who run multiple stores, brands, or sales channels. It " +
-  "centralizes inventory, orders, payments, subscription billing, and " +
-  "analytics into a single tenant-isolated system with role-based access " +
-  "control. Real-time inventory sync prevents overselling across channels, " +
-  "automated order routing speeds fulfillment, and built-in AI delivers " +
-  "earnings and operations insights. Plans start free (Starter), with Pro at " +
-  "$19/mo and white-label Scale at $99/mo.";
+  "UnifyOne by 1Commerce LLC is a gig-worker earnings and tax app built for " +
+  "drivers, couriers, and freelancers working across DoorDash, Uber, Lyft, " +
+  "Instacart, and more. It tracks income from every platform, auto-logs " +
+  "deductible mileage, and forecasts quarterly taxes in one dashboard. GigIQ " +
+  "surfaces the highest-paying hours and zones, Tax Autopilot sets aside the " +
+  "right amount and preps estimates, the Money Manager organizes deductions, " +
+  "and Kai answers earnings and tax questions. Plans start free, with Pro at " +
+  "$4.99/mo.";
 
 const ONE_LINER =
-  "UnifyOne by 1Commerce LLC — an AI-powered multi-tenant commerce platform " +
-  "that unifies products, orders, payments, inventory, and analytics for " +
-  "operators running multiple stores or brands from a single dashboard.";
+  "UnifyOne by 1Commerce LLC — an AI-powered gig-worker earnings and tax app " +
+  "that tracks income, auto-logs mileage, forecasts quarterly taxes, and " +
+  "finds the best-paying work across every gig platform from one dashboard.";
 
 const CATEGORY_TAGS = [
-  "Multi-Tenant Ecommerce",
-  "Omnichannel Retail",
-  "Inventory Management",
-  "Order Management (OMS)",
-  "Multi-Store Management",
-  "Ecommerce Integrations",
-  "SaaS Commerce Platform",
+  "Gig Economy",
+  "1099 Taxes",
+  "Mileage Tracking",
+  "Personal Finance",
+  "Earnings Tracker",
+  "Self-Employment Taxes",
+  "Expense Tracking",
 ];
 
 const FAST_FACTS: { label: string; value: string }[] = [
@@ -48,7 +48,7 @@ const FAST_FACTS: { label: string; value: string }[] = [
   { label: "Company", value: "1Commerce LLC (PNW Enterprises)" },
   { label: "Headquarters", value: "Canby, Oregon, USA" },
   { label: "Founded", value: "2025" },
-  { label: "Category", value: "Multi-tenant commerce platform" },
+  { label: "Category", value: "Gig-worker earnings & tax app" },
   { label: "Press contact", value: PRESS_EMAIL },
 ];
 

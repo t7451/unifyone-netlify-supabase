@@ -7,39 +7,39 @@ import { SITE_URL } from "@/lib/siteConfig";
 
 const BUSINESS_CASE_STUDIES = [
   {
-    id: "ecommerce-studio",
-    badge: "Scale Plan",
-    headline: "E-commerce Studio Processes $240K in 6 Months",
+    id: "rideshare-driver-deductions",
+    badge: "Tax Autopilot",
+    headline: "Rideshare Driver Tracks $11K in Deductions in 6 Months",
     subtitle:
-      "A multi-brand operator consolidated Stripe, PayPal, and affiliate operations into one revenue engine.",
+      "An Uber and Lyft driver let UnifyOne log every mile automatically and surface deductions they used to miss by tax season.",
     metrics: [
-      { value: "$240K", label: "processed in 6 months" },
-      { value: "2", label: "payment rails unified" },
-      { value: "+34%", label: "affiliate-driven growth" },
+      { value: "$11K", label: "deductions tracked in 6 months" },
+      { value: "18,400", label: "miles logged automatically" },
+      { value: "0", label: "receipts lost or forgotten" },
     ],
   },
   {
-    id: "gig-economy-platform",
-    badge: "Automation",
-    headline: "Gig Economy Platform Automates 80% of Order Fulfillment",
+    id: "freelancer-quarterly-taxes",
+    badge: "Money Manager",
+    headline: "Freelancer Saves $3,200 on Quarterly Taxes",
     subtitle:
-      "n8n orchestration, Kai workflows, and AI credit metering replaced manual operations across the order queue.",
+      "A multi-app courier used Tax Autopilot to set aside the right amount each week and file quarterly estimates without the spring panic.",
     metrics: [
-      { value: "80%", label: "fulfillment automated" },
-      { value: "14", label: "workflow steps orchestrated" },
-      { value: "24/7", label: "AI-assisted triage" },
+      { value: "$3,200", label: "saved across the tax year" },
+      { value: "4", label: "quarterly estimates filed on time" },
+      { value: "1", label: "dashboard for every platform" },
     ],
   },
   {
-    id: "white-label-agency",
-    badge: "White Label",
-    headline: "White-label Agency Deploys 12 Client Stores in One Sprint",
+    id: "gigiq-best-paying-zones",
+    badge: "GigIQ",
+    headline: "Delivery Driver Finds Best-Paying Zones with GigIQ",
     subtitle:
-      "Unlimited tenants, custom domains, and a white-label control plane let the agency ship storefronts without operational drag.",
+      "GigIQ read this DoorDash and Instacart driver's real shift history to surface which hours and zones pay the most after fuel.",
     metrics: [
-      { value: "12", label: "client stores launched" },
-      { value: "1", label: "sprint to deploy" },
-      { value: "100%", label: "brand-controlled experiences" },
+      { value: "+27%", label: "net pay per hour after expenses" },
+      { value: "3", label: "platforms compared side by side" },
+      { value: "24/7", label: "earnings intelligence on tap" },
     ],
   },
 ] as const;
@@ -278,14 +278,15 @@ export default function CaseStudies() {
               className="font-cinzel text-4xl sm:text-5xl font-bold mb-6"
               style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
             >
-              How businesses scale with UnifyOne
+              How gig workers earn more with UnifyOne
             </h1>
             <p
               className="font-crimson text-lg max-w-2xl mx-auto"
               style={{ color: "#9A9A9A", lineHeight: 1.8 }}
             >
-              Detailed technical case studies of major platform features,
-              architectural decisions, and integrations.
+              Real stories of drivers and freelancers tracking deductions,
+              saving on quarterly taxes, and finding their best-paying zones —
+              plus the technical case studies behind the platform.
             </p>
           </div>
 
@@ -296,21 +297,22 @@ export default function CaseStudies() {
                   className="font-cinzel text-xs font-bold"
                   style={{ color: "#7A7A7A", letterSpacing: "0.16em" }}
                 >
-                  OPERATOR OUTCOMES
+                  GIG WORKER OUTCOMES
                 </p>
                 <h2
                   className="font-cinzel text-2xl font-bold mt-2"
                   style={{ color: "#D4A843" }}
                 >
-                  Featured business case studies
+                  Featured gig-worker case studies
                 </h2>
               </div>
               <p
                 className="font-crimson max-w-2xl text-sm"
                 style={{ color: "#A0A0A0", lineHeight: 1.7 }}
               >
-                High-signal teasers for the operators, agencies, and
-                automation-heavy teams using UnifyOne to scale faster.
+                High-signal snapshots of the drivers and freelancers using
+                UnifyOne to track deductions, plan for taxes, and find their
+                best-paying work.
               </p>
             </div>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
