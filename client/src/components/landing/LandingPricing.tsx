@@ -3,11 +3,13 @@
  *
  * Conversion logic: every click away from the landing page sheds
  * visitors. Put the buy decision on the page itself. Annual is the
- * default (higher LTV, "2 months free" anchor), Pro is the highlighted
- * default choice, Scale anchors it as the reasonable middle, and the
- * refund guarantee sits directly under the buttons — not in a footer FAQ.
+ * default (higher LTV, "2 months free" anchor), Gig Pro is the
+ * highlighted default choice, Gig Starter (free) removes signup
+ * friction, and the refund guarantee sits directly under the buttons —
+ * not in a footer FAQ.
  *
- * Reuses the canonical TIERS content so landing and /pricing never drift.
+ * Reuses the canonical gig TIERS content so landing and /pricing never
+ * drift.
  */
 import { useState } from "react";
 import { TIERS } from "@/content/pricing";
@@ -39,8 +41,8 @@ export default function LandingPricing() {
               maxWidth: 480,
             }}
           >
-            One unified Kai cost across every model. No per-vendor bills, no
-            surprises.
+            Track every shift, mile, and dollar you owe. Free forever — go Pro
+            when it pays for itself.
           </p>
         </div>
 
@@ -89,7 +91,7 @@ export default function LandingPricing() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
           {TIERS.map(tier => {
             const showAnnual =
               billing === "annual" && Boolean(tier.annualPrice);
@@ -97,7 +99,7 @@ export default function LandingPricing() {
             const displayedPeriod = showAnnual
               ? tier.annualPeriod
               : tier.period;
-            const isPaid = tier.id !== "starter";
+            const isPaid = tier.id !== "gig-starter";
             const href = isPaid
               ? getSignupUrl(
                   undefined,
@@ -169,7 +171,7 @@ export default function LandingPricing() {
                 </p>
 
                 <div className="space-y-3 mb-8">
-                  {tier.features.slice(0, 5).map(f => (
+                  {tier.features.slice(0, 6).map(f => (
                     <div key={f} className="flex items-center gap-3">
                       <div
                         className="w-3 h-px shrink-0"

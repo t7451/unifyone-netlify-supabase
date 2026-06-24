@@ -1,15 +1,23 @@
-// Shared pricing tier definitions used by Home and Pricing pages.
-// Public pricing now derives from the canonical plan catalog in shared/pricing.ts.
+// Shared pricing tier definitions used by the public landing/pricing display.
+//
+// Public pricing derives from the gig-worker plan catalog in
+// `shared/gigPricing.ts` (Gig Starter free + Gig Pro $4.99/mo · $49/yr).
+//
+// NOTE: This is intentionally NOT sourced from `shared/pricing.ts` (the
+// commerce Starter/Pro/Scale catalog) — that file is the load-bearing backend
+// product catalog and must not be imported here. The hidden "Gig Elite" tier
+// is omitted on purpose; only Free + Pro ship publicly.
 
 import {
-  PLAN_CATALOG,
-  type PlanSlug,
-  formatUsdCents,
-  getPlanPeriodLabel,
-} from "@shared/pricing";
+  GIG_PLAN_CATALOG,
+  type GigPlanSlug,
+  formatGigPrice,
+  getGigMonthlyLabel,
+  getGigAnnualSubtext,
+} from "@shared/gigPricing";
 
 export type PricingTier = {
-  id: PlanSlug;
+  id: GigPlanSlug;
   name: string;
   price: string;
   period: string;
@@ -23,33 +31,26 @@ export type PricingTier = {
   highlight: boolean;
 };
 
-const ANNUAL_PRICING: Partial<
-  Record<
-    PlanSlug,
-    Pick<PricingTier, "annualPrice" | "annualPeriod" | "annualSubtext">
-  >
-> = {
-  pro: {
-    annualPrice: "$16",
-    annualPeriod: "per month, billed annually",
-    annualSubtext: "$192 / year",
-  },
-  scale: {
-    annualPrice: "$83",
-    annualPeriod: "per month, billed annually",
-    annualSubtext: "$996 / year",
-  },
-};
+export const TIERS: PricingTier[] = GIG_PLAN_CATALOG.map(plan => {
+  const isFree = plan.monthlyPriceCents === 0;
+  const annualSubtext = getGigAnnualSubtext(plan);
 
-export const TIERS: PricingTier[] = PLAN_CATALOG.map(plan => ({
-  id: plan.slug,
-  name: plan.name,
-  price: formatUsdCents(plan.monthlyPriceCents),
-  period: getPlanPeriodLabel(plan),
-  ...ANNUAL_PRICING[plan.slug],
-  tagline: plan.tagline,
-  description: plan.description,
-  features: plan.features,
-  cta: plan.cta,
-  highlight: plan.highlight,
-}));
+  return {
+    id: plan.slug,
+    name: plan.name,
+    price: isFree ? "Free" : formatGigPrice(plan.monthlyPriceCents),
+    period: isFree ? "forever" : "per month",
+    ...(isFree
+      ? {}
+      : {
+          annualPrice: getGigMonthlyLabel(plan, "yearly"),
+          annualPeriod: "per month, billed annually",
+          ...(annualSubtext ? { annualSubtext } : {}),
+        }),
+    tagline: plan.tagline,
+    description: plan.description,
+    features: plan.features,
+    cta: plan.cta,
+    highlight: plan.highlight,
+  };
+});
