@@ -47,7 +47,7 @@ function getReturnTo(): string {
   if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
     return returnTo;
   }
-  return "/dashboard";
+  return "/overview";
 }
 
 export default function AuthCallback() {
@@ -79,7 +79,7 @@ export default function AuthCallback() {
           return;
         }
 
-        // If no special params, redirect to returnTo (defaults to /dashboard)
+        // If no special params, redirect to returnTo (defaults to /overview)
         // Email verification is handled by /verify-email route
         // Password reset is handled by /reset-password route
         if (!cancelled) {

@@ -78,6 +78,7 @@ const DesignSystem = lazy(() => import("./pages/DesignSystem"));
 const Achievements = lazy(() => import("./pages/Achievements"));
 const Friends = lazy(() => import("./pages/Friends"));
 const GigCommand = lazy(() => import("./pages/GigCommand"));
+const GigHome = lazy(() => import("./pages/GigHome"));
 const GigWorkerPlans = lazy(() => import("./pages/GigWorkerPlans"));
 const MobileAutomation = lazy(() => import("./pages/MobileAutomation"));
 const AIAssistant = lazy(() => import("./pages/AIAssistant"));
@@ -255,6 +256,14 @@ function Router() {
             <ProtectedRoute>
               <TenantSetup />
             </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/overview"
+          component={() => (
+            <DashboardRoute>
+              <GigHome />
+            </DashboardRoute>
           )}
         />
         <Route

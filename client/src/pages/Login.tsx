@@ -34,7 +34,7 @@ const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
   | undefined;
 
 function getReturnTo(): string {
-  if (typeof window === "undefined") return "/dashboard";
+  if (typeof window === "undefined") return "/overview";
   const params = new URLSearchParams(window.location.search);
   const returnTo = params.get("returnTo") ?? params.get("next");
   const plan = params.get("plan");
@@ -42,7 +42,7 @@ function getReturnTo(): string {
   if (plan && ["starter", "pro", "scale"].includes(plan)) {
     return `/checkout?plan=${plan}`;
   }
-  return "/dashboard";
+  return "/overview";
 }
 
 function getTenantSlug(): string {
