@@ -1427,9 +1427,10 @@ export default function Home() {
                 <p>
                   Ask it anything:{" "}
                   <em style={{ color: "#9A9A9A" }}>
-                    "Which of my shifts this week were most profitable?" "How
-                    much should I set aside for quarterly taxes?" "Is it worth
-                    driving to the airport zone tonight?"
+                    &ldquo;Which of my shifts this week were most
+                    profitable?&rdquo; &ldquo;How much should I set aside for
+                    quarterly taxes?&rdquo; &ldquo;Is it worth driving to the
+                    airport zone tonight?&rdquo;
                   </em>
                 </p>
                 <p style={{ color: "#C8A24A" }}>
@@ -1618,7 +1619,7 @@ export default function Home() {
           >
             Start free — no credit card. The Free plan includes the shift
             tracker, mileage log, tax calculators, and 25 AI requests a month.
-            Upgrade to Pro for $4.99/mo whenever you're ready.
+            Upgrade to Pro for $4.99/mo whenever you&rsquo;re ready.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href={getSignupUrl()} className="btn-solid-gold">
