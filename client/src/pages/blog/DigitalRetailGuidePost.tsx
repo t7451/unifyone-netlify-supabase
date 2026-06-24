@@ -4,9 +4,9 @@ import BlogPostHead from "@/components/BlogPostHead";
 
 const CANONICAL = `${SITE_URL}/blog/digital-retail-guide`;
 const TITLE =
-  "The Digital Retail Guide: How Modern Operators Build Stores That Scale | 1Commerce";
+  "The Gig Earnings Guide: How 1099 Workers Track Pay, Mileage, and Taxes | 1Commerce";
 const DESCRIPTION =
-  "A practical guide to digital retail for SMB operators and independent merchants — covering storefront architecture, payment orchestration, multi-channel inventory, AI-powered personalization, and the infrastructure decisions that separate scaling stores from stagnant ones.";
+  "A practical guide for gig and 1099 workers on DoorDash, Uber Eats, Instacart, and Amazon Flex — covering shift-level earnings tracking, automatic mileage deductions, quarterly tax estimates, keeping your data private, and the habits that separate workers who know their numbers from those who guess.";
 const OG_IMAGE =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-hero-v2-3tFDpV7FHQo4P2qJjERF7q.png";
 
@@ -15,7 +15,7 @@ const JSON_LD = [
     "@context": "https://schema.org",
     "@type": "Article",
     headline:
-      "The Digital Retail Guide: How Modern Operators Build Stores That Scale",
+      "The Gig Earnings Guide: How 1099 Workers Track Pay, Mileage, and Taxes",
     description: DESCRIPTION,
     image: OG_IMAGE,
     author: {
@@ -32,18 +32,18 @@ const JSON_LD = [
     dateModified: "2026-04-24",
     mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL },
     keywords: [
-      "digital retail guide",
-      "digital retail platform",
-      "online retail guide",
-      "ecommerce platform guide",
-      "digital storefront",
-      "multi-channel retail",
-      "retail commerce infrastructure",
-      "SMB ecommerce",
-      "UnifyOne digital retail",
-      "1Commerce retail guide",
+      "gig earnings guide",
+      "gig worker taxes",
+      "1099 mileage deduction",
+      "DoorDash earnings tracker",
+      "Uber Eats tax tracking",
+      "Instacart mileage log",
+      "gig worker quarterly taxes",
+      "track gig income",
+      "UnifyOne gig tracker",
+      "1Commerce gig guide",
     ],
-    articleSection: "Commerce Infrastructure",
+    articleSection: "Gig Earnings",
     wordCount: 1600,
   },
   {
@@ -65,7 +65,7 @@ const JSON_LD = [
       {
         "@type": "ListItem",
         position: 3,
-        name: "Digital Retail Guide",
+        name: "Gig Earnings Guide",
         item: CANONICAL,
       },
     ],
@@ -76,26 +76,26 @@ const JSON_LD = [
     mainEntity: [
       {
         "@type": "Question",
-        name: "What is digital retail?",
+        name: "Why should gig workers track their earnings and mileage?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Digital retail is the practice of selling products and services through online channels — storefronts, marketplaces, social platforms, and mobile apps — using unified commerce infrastructure to manage inventory, payments, and customer data across all touchpoints.",
+          text: "Gig and 1099 workers are responsible for their own taxes and get no automatic mileage deduction. Tracking earnings at the shift level and logging every business mile shows your true pay per hour after fuel and protects thousands of dollars in deductions at tax time.",
         },
       },
       {
         "@type": "Question",
-        name: "What infrastructure does a digital retail operation need?",
+        name: "How does the mileage deduction work for gig workers?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "A complete digital retail operation requires: a product catalog system, order management, multi-payment-rail checkout (Stripe, PayPal, Square), inventory tracking, customer analytics, and an automation layer. Platforms like UnifyOne bundle all of this in a single multi-tenant dashboard.",
+          text: "Self-employed gig workers can deduct business miles using the IRS standard mileage rate, which is 72.5 cents per mile for 2026. UnifyOne applies that rate to your logged shifts and keeps a running year-to-date deduction figure, so your quarterly tax estimate stays accurate.",
         },
       },
       {
         "@type": "Question",
-        name: "How does UnifyOne support digital retail?",
+        name: "How does UnifyOne help gig workers?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "UnifyOne provides the full digital retail stack — product and order management, Stripe/PayPal/Square/Shopify payment orchestration, AI-powered analytics via Kai, affiliate management, subscription billing, and multi-tenant isolation — in a single platform designed for operators who want to scale without rebuilding their stack.",
+          text: "UnifyOne tracks shift-level earnings across DoorDash, Uber Eats, Instacart, and Amazon Flex, logs mileage automatically, estimates quarterly taxes, and keeps each worker's data privately isolated. The Gig Starter plan is free, and Gig Pro is $4.99/month with AI earnings tools rolling out as they ship.",
         },
       },
     ],
@@ -116,7 +116,7 @@ export default function DigitalRetailGuidePost() {
         title={TITLE}
         description={DESCRIPTION}
         ogImage={OG_IMAGE}
-        breadcrumbName="Digital Retail Guide"
+        breadcrumbName="Gig Earnings Guide"
         jsonLd={JSON_LD}
       />
 
@@ -175,7 +175,7 @@ export default function DigitalRetailGuidePost() {
               </Link>
             </li>
             <li style={{ color: "#242424" }}>›</li>
-            <li style={{ color: "#D4A843" }}>Digital Retail Guide</li>
+            <li style={{ color: "#D4A843" }}>Gig Earnings Guide</li>
           </ol>
         </nav>
         <div className="mb-8">
@@ -196,7 +196,7 @@ export default function DigitalRetailGuidePost() {
         {/* Header */}
         <header className="mb-12">
           <span className="inscription block mb-4">
-            Commerce Infrastructure · April 2026
+            Gig Earnings · April 2026
           </span>
           <h1
             className="font-cinzel text-3xl sm:text-5xl font-black mb-6"
@@ -206,8 +206,8 @@ export default function DigitalRetailGuidePost() {
               letterSpacing: "0.01em",
             }}
           >
-            The Digital Retail Guide: How Modern Operators Build Stores That
-            Scale
+            The Gig Earnings Guide: How 1099 Workers Track Pay, Mileage, and
+            Taxes
           </h1>
           <div
             className="flex flex-wrap items-center gap-4 mb-6 text-xs"
@@ -229,10 +229,10 @@ export default function DigitalRetailGuidePost() {
             className="font-crimson text-xl sm:text-2xl"
             style={{ color: "#9A9A9A", fontStyle: "italic", lineHeight: 1.6 }}
           >
-            Most digital retail operations collapse under their own complexity
-            long before they reach meaningful scale. The operators who escape
-            that fate have one thing in common: they treat infrastructure as a
-            first-order decision, not an afterthought.
+            Most gig workers have no real idea what they make per hour after
+            fuel, or how much they owe in taxes until it is too late. The
+            workers who stay ahead have one thing in common: they treat their
+            own numbers as something worth tracking, not something to guess at.
           </p>
           <div
             className="h-px mt-8"
@@ -252,23 +252,22 @@ export default function DigitalRetailGuidePost() {
               className="font-cinzel text-xl sm:text-2xl font-bold mb-4"
               style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
             >
-              What Digital Retail Actually Means in 2026
+              What Gig Earnings Really Look Like in 2026
             </h2>
             <p>
-              Digital retail is not simply "having a website." In 2026, a
-              complete digital retail operation spans a storefront, one or more
-              marketplaces, social commerce channels, a mobile experience, and
-              in many cases a subscription or recurring-revenue layer on top of
-              transactional sales. Each of those channels generates orders,
-              customer records, inventory draw-downs, and payment events — and
-              every one of them needs to be reconciled in real time.
+              Gig work is not one paycheck. In 2026, a typical 1099 worker runs
+              DoorDash, Uber Eats, Instacart, and Amazon Flex — sometimes in the
+              same day — each with its own pay structure, its own zones, and its
+              own payout schedule. Every one of those apps generates earnings,
+              miles driven, and tips that all roll up into a single tax picture
+              you alone are responsible for.
             </p>
             <p className="mt-4">
-              Operators who treat these channels as separate concerns end up
-              with five dashboards, three spreadsheets, and a support inbox that
-              can never fully reflect reality. The structural answer is a
-              unified commerce backbone that connects all channels to a single
-              source of truth for product, order, customer, and payment data.
+              Workers who treat each app as a separate world end up with four
+              earnings screens, a banking app, and a notes file that never quite
+              agree. The answer is one place that pulls all of it together — a
+              single source of truth for what you earned, what you drove, and
+              what you owe.
             </p>
           </section>
 
@@ -277,25 +276,25 @@ export default function DigitalRetailGuidePost() {
               className="font-cinzel text-xl sm:text-2xl font-bold mb-4"
               style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
             >
-              The Five Layers of a Scalable Digital Retail Stack
+              The Five Things Every Gig Worker Should Track
             </h2>
             <p>
-              Every digital retail operation that scales past its initial chaos
-              has the same five structural layers in place. Operators who skip
-              one of these layers typically discover the gap at the worst
-              possible time — during a promotion, a high-traffic event, or a
-              dispute with a payment processor.
+              Workers who actually know their numbers all track the same five
+              things. Skip one and you usually find out at the worst possible
+              time — when a tax bill lands, when fuel eats a shift you thought
+              was good, or when you realize one app has been paying far less
+              than you assumed.
             </p>
             <ul
               className="mt-4 space-y-3 pl-6"
               style={{ listStyleType: "none" }}
             >
               {[
-                "Layer 1 — Product Catalog: A normalized product database with variants, SKUs, pricing tiers, and digital-asset links. This is the foundation everything else reads from.",
-                "Layer 2 — Order Management: A single order ledger that receives events from every channel — storefront, marketplace, social — and applies consistent fulfillment logic regardless of origin.",
-                "Layer 3 — Payment Orchestration: Multi-rail payment processing (Stripe, PayPal, Square, Shopify Payments) with automatic fallback, dispute handling, and reconciliation. Never route all revenue through a single processor.",
-                "Layer 4 — Customer Intelligence: A unified customer record that aggregates purchase history, lifetime value, churn signals, and segment membership across all channels — the input for personalization and retention.",
-                "Layer 5 — Automation & AI: Rules-based and AI-driven workflows that handle reorder triggers, abandoned-cart recovery, dynamic pricing adjustments, tax calculations, and customer communications without human intervention.",
+                "Track 1 — Earnings per shift: What each shift actually paid, by platform, so you can compare DoorDash against Uber Eats on equal footing instead of by feel.",
+                "Track 2 — Mileage: Every business mile you drive, logged as you go. This is the single biggest deduction most gig workers leave on the table.",
+                "Track 3 — Fuel and expenses: Gas, tolls, phone, and supplies — the costs that quietly turn a $22/hr shift into a $15/hr one.",
+                "Track 4 — Net pay per hour: Earnings minus fuel and wear, divided by hours. This is the only number that tells you whether a shift was worth it.",
+                "Track 5 — Quarterly taxes: A running estimate of what you owe, updated as you earn, so April is never a surprise and you can set money aside in time.",
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span
@@ -319,31 +318,27 @@ export default function DigitalRetailGuidePost() {
               className="font-cinzel text-xl sm:text-2xl font-bold mb-4"
               style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
             >
-              The Payment Orchestration Problem Most Guides Skip
+              The Single-Platform Risk Most Workers Ignore
             </h2>
             <p>
-              The most underappreciated risk in digital retail is payment
-              concentration. Operators who route 100% of revenue through a
-              single processor — typically Stripe, PayPal, or Shopify Payments —
-              are one account suspension away from a complete revenue outage.
-              Payment processors routinely place holds, require verification, or
-              close accounts with minimal notice, especially for new merchants
-              and high-growth operations.
+              The most underappreciated risk in gig work is leaning on a single
+              app. Workers who run 100% of their hours on one platform are one
+              deactivation, one pay cut, or one slow week away from a complete
+              income outage. Platforms change base pay, shift surge zones, and
+              tighten batch access with little notice — and you have no say in
+              any of it.
             </p>
             <p className="mt-4">
-              The structural answer is payment orchestration: connecting
-              multiple processors in a single checkout layer, with logic that
-              routes each transaction based on processor health, transaction
-              cost, customer geography, and card type. UnifyOne's checkout
-              connects Stripe, PayPal, Square, and Shopify Payments in a single
-              integration, with automatic fallback routing if any processor
-              returns an error or becomes unavailable.
+              The practical answer is spreading your hours across several apps —
+              DoorDash, Uber Eats, Instacart, Amazon Flex — and tracking all of
+              them in one place. UnifyOne pulls every platform you drive for
+              into a single view, so when one app dries up you can see at a
+              glance where the better hours are instead of scrambling.
             </p>
             <p className="mt-4">
-              This is not a feature for enterprise operators only. Any merchant
-              processing more than $10,000/month should treat multi-rail payment
-              infrastructure as a basic risk-management requirement, not a
-              luxury.
+              This is not just for full-timers. Anyone relying on gig income for
+              real bills should treat a second platform as basic insurance, not
+              an afterthought.
             </p>
           </section>
 
@@ -352,31 +347,26 @@ export default function DigitalRetailGuidePost() {
               className="font-cinzel text-xl sm:text-2xl font-bold mb-4"
               style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
             >
-              Multi-Tenant Architecture: The Unlock for Agencies and Operators
-              Running Multiple Brands
+              Your Data, Kept Private and All in One Place
             </h2>
             <p>
-              Single-tenant commerce platforms — where each store is an isolated
-              deployment with its own database, authentication, and
-              configuration — work fine for one brand. They collapse when an
-              operator tries to manage two or three brands from the same team,
-              or when an agency needs to manage dozens of client storefronts
-              without building custom dashboards for each.
+              When you let an app hold your earnings and tax data, the fair
+              question is whether it stays yours. UnifyOne is built so that
+              every worker&apos;s information lives in its own secure space.
+              Your earnings, mileage, and tax figures are scoped to your account
+              at the database level — no other worker on the platform can see or
+              touch them.
             </p>
             <p className="mt-4">
-              Multi-tenant architecture solves this by maintaining strict data
-              isolation between tenants (brands, clients, or business units)
-              while sharing infrastructure, authentication, and tooling. Each
-              tenant sees only their data; the operator sees all tenants from a
-              single dashboard.
+              That same design is what lets you keep every platform you drive
+              for under one login without the data getting tangled. DoorDash,
+              Uber Eats, Instacart, Amazon Flex — each shows up as its own clean
+              stream inside your account, with nothing bleeding between them.
             </p>
             <p className="mt-4">
-              For digital retail operators expanding from one brand to many,
-              this is the architectural decision that determines whether the
-              second and third brand are incremental effort or exponential
-              overhead. UnifyOne was built multi-tenant from the database layer
-              up — every product, order, customer record, and payment event is
-              scoped to a tenant by design, with zero bleed between accounts.
+              The result is one place that holds the whole picture while keeping
+              your numbers private. You see everything you earn across every
+              app; nobody else sees any of it.
             </p>
           </section>
 
@@ -385,24 +375,25 @@ export default function DigitalRetailGuidePost() {
               className="font-cinzel text-xl sm:text-2xl font-bold mb-4"
               style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
             >
-              AI in Digital Retail: What Actually Works Right Now
+              Where AI Will Fit Into Your Gig Work
             </h2>
             <p>
-              The AI hype in commerce is real, but it is unevenly distributed
-              between what is theoretically possible and what is operationally
-              deployed. In 2026, the AI applications with the clearest ROI for
-              digital retail operators are narrow and specific:
+              Tracking is the foundation; making sense of the data is the next
+              layer. UnifyOne&apos;s AI tools are on the way, and when they ship
+              they are designed to work on your own numbers, not generic advice.
+              The areas with the clearest payoff for gig workers are narrow and
+              specific:
             </p>
             <ul
               className="mt-4 space-y-3 pl-6"
               style={{ listStyleType: "none" }}
             >
               {[
-                "Earnings and margin analysis: AI reading your actual transaction data to surface which products, channels, and customer segments generate the highest net margin — not gross revenue.",
-                "Dynamic reorder signals: Automated inventory reorder triggers based on sales velocity, seasonality, and lead time data rather than static par levels.",
-                "Abandoned-cart recovery: AI-generated recovery sequences personalized to cart contents, customer history, and time-of-day — not generic discount blasts.",
-                "Tax and deduction tracking: Automated calculation of business expenses, mileage deductions, and COGS — reducing the manual reconciliation burden at month and year end.",
-                "Customer churn prediction: Flagging high-LTV customers showing disengagement signals before they lapse, giving retention workflows time to activate.",
+                "Best-hours analysis: reading your real shift history to surface which platforms, zones, and times pay the most per hour after fuel — not just the highest gross.",
+                "Net-pay comparisons: showing how DoorDash, Uber Eats, Instacart, and Amazon Flex actually stack up for you, side by side, on your own data.",
+                "Smarter scheduling hints: pointing you toward the windows that have paid well historically and away from the ones that quietly lose money.",
+                "Tax and deduction help: tying your logged mileage and expenses into a clearer quarterly estimate so nothing slips through the cracks.",
+                "Plain-language insights: turning your numbers into a sentence you can act on, instead of a spreadsheet you have to decode.",
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span
@@ -420,12 +411,10 @@ export default function DigitalRetailGuidePost() {
               ))}
             </ul>
             <p className="mt-6">
-              Kai, UnifyOne's embedded AI layer, applies all five of these
-              directly to your store's actual data — no data export, no
-              third-party integration, no generic benchmarks. It reads your
-              orders, your customers, your product margins, and your payment
-              events, and generates recommendations that are specific to your
-              operation.
+              When these AI tools arrive, they are built to run on your own
+              shift data — no export, no generic benchmarks. Until then, the
+              earnings, mileage, and tax tracking underneath them is already
+              doing real work for you today.
             </p>
           </section>
 
@@ -434,29 +423,28 @@ export default function DigitalRetailGuidePost() {
               className="font-cinzel text-xl sm:text-2xl font-bold mb-4"
               style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
             >
-              The Cathedral Principle Applied to Digital Retail
+              The Cathedral Principle Applied to Your Earnings
             </h2>
             <p>
               1Commerce's operational philosophy — the Cathedral Principle —
-              holds that infrastructure precedes traffic. Medieval cathedral
-              builders did not start with the spire. They started with the
-              foundation, the load-bearing walls, the vault geometry. The
+              holds that the foundation comes before the flourish. Medieval
+              cathedral builders did not start with the spire. They started with
+              the foundation, the load-bearing walls, the vault geometry. The
               visible magnificence was the last thing added, not the first.
             </p>
             <p className="mt-4">
-              For digital retail, this means: before you spend on paid
-              acquisition, before you negotiate influencer deals, before you
-              launch on a second marketplace — make sure the order management,
-              payment orchestration, inventory tracking, and customer data
-              layers are structurally sound. Traffic into broken infrastructure
-              generates revenue you cannot fulfill, customers you cannot retain,
-              and disputes you cannot resolve.
+              For a gig worker, this means: before you chase a hot promo, before
+              you drive across town for a surge that may vanish, before you take
+              on a second job to cover a tax bill — make sure the basics are
+              solid. Know your earnings, your mileage, and your real take-home
+              per hour. Hours driven on guesswork generate income you cannot
+              plan around and a tax bill you cannot see coming.
             </p>
             <p className="mt-4">
-              The operators who build the foundation first — even when it slows
-              initial launch — are the ones still operating at scale two years
-              later. The ones who scale traffic into an unstructured stack are
-              the ones rebuilding from scratch after their second year.
+              The workers who build that foundation first — even when it means a
+              minute of logging after each shift — are the ones who still have a
+              clear picture a year later. The ones who drive on vibes are the
+              ones scrambling every April.
             </p>
           </section>
 
@@ -465,22 +453,22 @@ export default function DigitalRetailGuidePost() {
               className="font-cinzel text-xl sm:text-2xl font-bold mb-4"
               style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
             >
-              How to Evaluate a Digital Retail Platform
+              How to Evaluate a Gig Earnings Tracker
             </h2>
             <p>
-              When evaluating commerce platforms for a digital retail operation,
-              five questions cut through the marketing noise:
+              When picking a tool to run your gig finances on, five questions
+              cut through the noise:
             </p>
             <ul
               className="mt-4 space-y-3 pl-6"
               style={{ listStyleType: "none" }}
             >
               {[
-                "Can I export my complete dataset — orders, customers, products, payment history — at any time without friction?",
-                "Does the platform support multiple payment processors natively, or am I locked to one rail?",
-                "If I add a second brand or storefront, does the cost double, or does the architecture absorb it?",
-                "Is AI embedded in the operational workflow, or is it a separate dashboard I need to log into separately?",
-                "Where does my tenant data live, and what is the isolation model between my account and other tenants on the same platform?",
+                "Can I export my full data — earnings, mileage, deductions — at any time, so my records are always mine?",
+                "Does it cover every platform I drive for, or just one app at a time?",
+                "Does it log mileage and keep a running tax estimate, or do I still have to do that math myself?",
+                "Are smarter insights coming, and will they run on my own numbers rather than generic tips?",
+                "Where does my data live, and is it kept private from other workers on the same platform?",
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span
@@ -498,12 +486,11 @@ export default function DigitalRetailGuidePost() {
               ))}
             </ul>
             <p className="mt-6">
-              UnifyOne answers all five: full data portability via export at any
-              time, four-processor payment orchestration (Stripe, PayPal,
-              Square, Shopify), multi-tenant architecture that absorbs
-              additional brands without per-brand pricing, Kai AI embedded
-              directly in the dashboard, and PostgreSQL tenant isolation at the
-              database layer.
+              UnifyOne answers all five: full data export whenever you want, one
+              dashboard for every platform you drive for, automatic mileage
+              logging with a running quarterly tax estimate, AI earnings tools
+              that run on your own data as they ship, and per-worker data
+              isolation at the database layer so your numbers stay yours.
             </p>
           </section>
 
@@ -515,17 +502,17 @@ export default function DigitalRetailGuidePost() {
               Getting Started
             </h2>
             <p>
-              UnifyOne's Starter tier is free: one tenant, core product and
-              order management, and Shopify integration for operators already on
-              that platform. The Pro tier ($19/month) adds Kai AI insights, the
-              automation layer, advanced analytics, and up to five tenants. The
-              Scale tier ($99/month) is for operators running a full multi-brand
-              or white-label operation.
+              UnifyOne's Gig Starter plan is free forever: shift-level earnings
+              tracking, automatic mileage logging, and quarterly tax estimates
+              across every platform you drive for. Gig Pro is $4.99/month (or
+              $49 a year) and adds deeper earnings analytics, higher limits, and
+              access to the AI insight tools as they roll out, with 250 AI
+              requests a month.
             </p>
             <p className="mt-4">
-              Digital retail infrastructure is not an expense. It is the
-              load-bearing wall your revenue sits on. Build it right before you
-              scale the traffic.
+              Knowing your numbers is not an expense. It is the foundation your
+              income sits on. Build it right before the next tax season catches
+              you out.
             </p>
           </section>
 
@@ -540,16 +527,16 @@ export default function DigitalRetailGuidePost() {
             <div className="space-y-6">
               {[
                 {
-                  q: "What is digital retail?",
-                  a: "Digital retail is the practice of selling products and services through online channels — storefronts, marketplaces, social platforms, and mobile apps — using unified commerce infrastructure to manage inventory, payments, and customer data across all touchpoints.",
+                  q: "Why should gig workers track their earnings and mileage?",
+                  a: "Gig and 1099 workers are responsible for their own taxes and get no automatic mileage deduction. Tracking earnings at the shift level and logging every business mile shows your true pay per hour after fuel and protects thousands of dollars in deductions at tax time.",
                 },
                 {
-                  q: "What infrastructure does a digital retail operation need?",
-                  a: "A complete digital retail operation requires: a product catalog system, order management, multi-payment-rail checkout (Stripe, PayPal, Square), inventory tracking, customer analytics, and an automation layer. Platforms like UnifyOne bundle all of this in a single multi-tenant dashboard.",
+                  q: "How does the mileage deduction work for gig workers?",
+                  a: "Self-employed gig workers can deduct business miles using the IRS standard mileage rate, which is 72.5 cents per mile for 2026. UnifyOne applies that rate to your logged shifts and keeps a running year-to-date deduction figure, so your quarterly tax estimate stays accurate.",
                 },
                 {
-                  q: "How does UnifyOne support digital retail?",
-                  a: "UnifyOne provides the full digital retail stack — product and order management, Stripe/PayPal/Square/Shopify payment orchestration, AI-powered analytics via Kai, affiliate management, subscription billing, and multi-tenant isolation — in a single platform designed for operators who want to scale without rebuilding their stack.",
+                  q: "How does UnifyOne help gig workers?",
+                  a: "UnifyOne tracks shift-level earnings across DoorDash, Uber Eats, Instacart, and Amazon Flex, logs mileage automatically, estimates quarterly taxes, and keeps each worker's data privately isolated. The Gig Starter plan is free, and Gig Pro is $4.99/month with AI earnings tools rolling out as they ship.",
                 },
               ].map((item, i) => (
                 <div
@@ -585,12 +572,12 @@ export default function DigitalRetailGuidePost() {
             className="font-cinzel text-2xl font-bold mb-6"
             style={{ color: "#F0E8D0" }}
           >
-            Ready to Build Your Digital Retail Infrastructure?
+            Ready to Know Exactly What You Make?
           </h3>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link href="/">
               <span className="btn-illuminate inline-block cursor-pointer">
-                Start Free Trial
+                Get Started Free
               </span>
             </Link>
             <Link href="/pricing">
