@@ -2556,13 +2556,13 @@ export const ROUTE_SEO: RouteSeo[] = [
     path: "/pricing",
     title: "Pricing | UnifyOne",
     description:
-      "UnifyOne pricing: Starter (free forever), Pro ($19/mo), and Scale ($99/mo). Multi-tenant commerce, AI insights, and every payment rail.",
+      "UnifyOne pricing for gig workers: Free forever, or Pro at $4.99/mo ($49/yr). Track earnings across every app, auto-log IRS mileage, and stay ahead of quarterly taxes.",
   },
   {
     path: "/about",
     title: "About | UnifyOne by 1Commerce",
     description:
-      "UnifyOne is built by 1Commerce (PNW Enterprises) — AI-powered, multi-tenant commerce infrastructure for gig operators and e-commerce teams.",
+      "UnifyOne is built by 1Commerce LLC (PNW Enterprises) of Canby, Oregon — earnings & tax tools that help gig and 1099 workers track real pay, capture IRS mileage deductions, and stay ahead of quarterly taxes.",
   },
   {
     path: "/press",
@@ -2570,7 +2570,7 @@ export const ROUTE_SEO: RouteSeo[] = [
     description:
       "UnifyOne press and media kit: download brand logos, copy-paste boilerplate, company facts, and category tags. By 1Commerce LLC (PNW Enterprises).",
     body: [
-      "UnifyOne is an AI-powered multi-tenant commerce platform by 1Commerce LLC (PNW Enterprises) of Canby, Oregon. This media kit gives press, software directories, and reviewers everything needed to cover or list us accurately.",
+      "UnifyOne is an AI-powered earnings & tax app for gig and 1099 workers, built by 1Commerce LLC (PNW Enterprises) of Canby, Oregon. This media kit gives press, software directories, and reviewers everything needed to cover or list us accurately.",
       "Download the brand logo (SVG and transparent PNG) and the boilerplate file with the canonical product name, 60-character, 160-character, and 80-word descriptions, category tags, and brand colors. For anything else, email support@1commerce.online.",
     ],
   },
