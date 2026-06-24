@@ -12,23 +12,23 @@ const LOGO_URL = `${SITE_URL}/favicon.ico`;
 const FAQS = [
   {
     q: "What is the Cathedral Framework?",
-    a: "The Cathedral Framework is UnifyOne's architectural philosophy: build the platform sequentially, with each layer load-bearing before the next is raised. Multi-tenant isolation comes before commerce features, commerce before payment rails, payment before automation, automation before analytics, and analytics before AI. Every pillar is structural, not a decorative add-on.",
+    a: "The Cathedral Framework is UnifyOne's architectural philosophy: build the platform sequentially, with each layer load-bearing before the next is raised. Earnings capture comes before mileage and tax math, tax math before budgeting, and all of it before AI. Every pillar is structural, not a decorative add-on — so the numbers a gig worker relies on for quarterly taxes are accurate end to end.",
   },
   {
-    q: "What are the six structural pillars of UnifyOne?",
-    a: "The six pillars are the Multi-Tenant Foundation (schema-level store isolation), Commerce Infrastructure (products, orders, inventory), Payment Orchestration (Stripe, PayPal, and Shopify under one roof), the Automation Nave (event-driven n8n, Zapier, and Mailchimp workflows), the Analytics Clerestory (real-time dashboards via Supabase Realtime), and the AI Spire (a context-aware co-pilot built into every page).",
+    q: "What are the four structural pillars of UnifyOne?",
+    a: "The four pillars are GigIQ (shift and earnings intelligence across DoorDash, Uber, Lyft, Instacart, Amazon Flex, Grubhub, Shipt, Upwork, Fiverr and more), Tax Autopilot (IRS mileage logging at the standard rate plus quarterly estimated taxes and Form 1040-ES figures), Money Manager (budgeting and goals built on real after-expense income), and Kai (a context-aware AI sidekick for tax, route, and scheduling questions). They rest on an earnings data foundation that every pillar reads from.",
   },
   {
-    q: "How does UnifyOne isolate data between tenants?",
-    a: "Every store is an isolated vault. Tenant data, billing, and access controls are separated at the schema level and enforced with JWT sessions and role-based access control through Drizzle ORM on PostgreSQL — not by middleware or row-level filtering alone.",
+    q: "How does UnifyOne keep each worker's earnings and tax data private?",
+    a: "Every worker's account is an isolated vault. Earnings, mileage, deductions, and tax figures are separated at the schema level and enforced with JWT sessions and role-based access control through Drizzle ORM on PostgreSQL — not by convention or middleware alone.",
   },
   {
     q: "What technology stack is UnifyOne built on?",
-    a: "The frontend uses React 19, Vite, Tailwind CSS 4, and shadcn/ui. The API layer is tRPC 11 with Zod validation on Express. Data lives in PostgreSQL (Neon) via Drizzle ORM with Supabase Realtime for live updates. Payments run through Stripe, PayPal, and Shopify; automation through n8n and Zapier; and the platform ships on Node.js 22 with GitHub Actions CI.",
+    a: "The frontend uses React 19, Vite, Tailwind CSS 4, and shadcn/ui. The API layer is tRPC 11 with Zod validation on Express. Earnings, mileage, and tax data live in PostgreSQL (Neon) via Drizzle ORM, with Supabase for credit metering and live updates. The platform ships on Node.js 22 with GitHub Actions CI.",
   },
   {
-    q: "Why build payment rails before automation?",
-    a: "Because automation triggers on real commerce events. If payment events are not verified, idempotent, and reliably logged first, every downstream workflow inherits that fragility. UnifyOne seals each load-bearing layer before adding the one above it, so the system does not collapse under production load or accumulate compounding technical debt.",
+    q: "Why build the earnings foundation before the tax and AI layers?",
+    a: "Because mileage logging, quarterly estimated taxes, and Kai's insights all read from your earnings data. If shift and earnings capture is not accurate and reliable first, every downstream number — your IRS deduction total, your Form 1040-ES figures, your budget — inherits that fragility. UnifyOne seals each load-bearing layer before adding the one above it, so tax time is never built on a shaky foundation.",
   },
 ];
 
@@ -40,7 +40,7 @@ const JSON_LD = [
     url: CANONICAL,
     name: "Architecture — UnifyOne Cathedral Framework",
     description:
-      "Explore UnifyOne's six structural pillars: multi-tenant foundation, payment orchestration, automation mesh, social intelligence, and Kai. Built on the Cathedral Framework — sequential and built to endure.",
+      "Explore the engine behind UnifyOne: an earnings data foundation under GigIQ, Tax Autopilot, Money Manager, and Kai. Built on the Cathedral Framework — sequential and built to endure.",
     isPartOf: { "@id": `${SITE_URL}/#website` },
     inLanguage: "en-US",
     publisher: {
@@ -65,9 +65,9 @@ const JSON_LD = [
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
-    headline: "The Cathedral Framework: Six Structural Pillars of UnifyOne",
+    headline: "The Cathedral Framework: Structural Pillars of UnifyOne",
     description:
-      "A deep-dive into the architectural principles behind UnifyOne — multi-tenant isolation, payment orchestration, automation mesh, and Kai integration.",
+      "A deep-dive into the architecture behind UnifyOne — an earnings data foundation, GigIQ shift intelligence, Tax Autopilot for IRS mileage and quarterly taxes, Money Manager, and Kai.",
     url: CANONICAL,
     mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL },
     image: OG_IMAGE,
@@ -79,7 +79,7 @@ const JSON_LD = [
       logo: { "@type": "ImageObject", url: LOGO_URL },
     },
     keywords:
-      "multi-tenant commerce architecture, Cathedral Framework, gig economy platform, commerce infrastructure, tRPC, Drizzle ORM",
+      "gig worker earnings tracker, gig tax software, IRS mileage tracking, quarterly estimated taxes, Form 1040-ES, Cathedral Framework, tRPC, Drizzle ORM",
     datePublished: "2026-03-06",
     dateModified: "2026-03-06",
   },
@@ -100,69 +100,62 @@ const CATHEDRAL_FEATURES_BG =
 const PILLARS = [
   {
     glyph: "I",
-    title: "Multi-Tenant Foundation",
-    subtitle: "Schema-level isolation",
-    body: "Every store is an isolated vault. Tenant data, billing, and access controls are structurally separated at the schema level — not by convention, not by middleware, not by row-level filtering alone. Each tenant is a load-bearing wall in the system's foundation.",
+    title: "Earnings Data Foundation",
+    subtitle: "Every shift, every app",
+    body: "Your earnings across DoorDash, Uber, Lyft, Instacart, Amazon Flex, Grubhub, Shipt, Upwork, Fiverr and more, captured in one isolated vault. Each worker's data is structurally separated at the schema level — not by convention, not by middleware. Every shift, payout, and mile is a load-bearing record the layers above depend on.",
     tech: [
       "Drizzle ORM",
       "PostgreSQL (Neon)",
       "JWT sessions",
-      "Role-based access control",
+      "Per-worker isolation",
     ],
   },
   {
     glyph: "II",
-    title: "Commerce Infrastructure",
-    subtitle: "Products, orders, inventory",
-    body: "Products, orders, inventory, and fulfillment built as load-bearing walls. No plugin dependencies. No single points of failure. The catalog, order pipeline, and inventory system are first-class citizens of the schema — not afterthoughts bolted onto a CMS.",
+    title: "GigIQ",
+    subtitle: "Shift & earnings intelligence",
+    body: "Reads your real earnings data to show which hours and zones actually pay the most after fuel and expenses. Specific scheduling recommendations drawn from what every shift nets you — not industry benchmarks, not generic advice. The intelligence layer reads the same schema as the foundation, so the numbers are never stale.",
     tech: [
-      "tRPC procedures",
-      "Optimistic UI",
-      "Supabase Realtime",
-      "Webhook events",
+      "Net-pay analysis",
+      "Zone & hour modeling",
+      "tRPC queries",
+      "Real earnings data",
     ],
   },
   {
     glyph: "III",
-    title: "Payment Orchestration",
-    subtitle: "Three rails, one roof",
-    body: "Stripe, PayPal, and Shopify Checkout unified under one roof. Webhooks are verified, idempotent, and fire into your automation layer. Every payment event is logged, retried on failure, and linked to the order record — no orphaned transactions.",
+    title: "Tax Autopilot",
+    subtitle: "IRS mileage & quarterly taxes",
+    body: "Auto-captures mileage from every logged shift at the IRS standard rate and keeps a real-time year-to-date deduction total. Quarterly estimated-tax alerts surface the Form 1040-ES figures you need before each deadline — built on your real after-expense income, so April is never a surprise.",
     tech: [
-      "Stripe Checkout + Portal",
-      "PayPal Smart Buttons",
-      "Shopify redirect",
-      "Idempotent webhooks",
+      "IRS standard mileage rate",
+      "YTD deduction ledger",
+      "Quarterly estimate alerts",
+      "Form 1040-ES figures",
     ],
   },
   {
     glyph: "IV",
-    title: "Automation Nave",
-    subtitle: "Event-driven, not polled",
-    body: "n8n workflows, Zapier hooks, and Mailchimp drip sequences triggered by real commerce events — not scheduled polling. An order placed fires into your automation layer within 200ms. A subscription renewed triggers your fulfillment workflow before the customer closes the tab.",
+    title: "Money Manager",
+    subtitle: "Budgeting on real income",
+    body: "Budgeting, goals, and spending analysis built on your real after-expense gig income — so your plan matches what you actually take home, not a salaried estimate. Reads the same earnings and deduction records as Tax Autopilot, with no separate data entry.",
     tech: [
-      "n8n webhook triggers",
-      "Zapier hooks",
-      "Mailchimp drip",
-      "Event queue",
+      "After-expense budgets",
+      "Savings goals",
+      "Spending analysis",
+      "Set-aside for taxes",
     ],
   },
   {
     glyph: "V",
-    title: "Analytics Clerestory",
-    subtitle: "Real-time illumination",
-    body: "Revenue, orders, and customer data illuminated in real time. Supabase Realtime keeps every panel current without a page refresh. The analytics layer reads from the same schema as the commerce layer — no ETL pipeline, no data warehouse lag, no stale numbers.",
-    tech: ["Recharts", "Supabase Realtime", "tRPC queries", "BigQuery-ready"],
-  },
-  {
-    glyph: "VI",
-    title: "AI Spire",
-    subtitle: "Context-aware intelligence",
-    body: "An intelligent co-pilot built into every page. Context-aware insights drawn from your actual shift, earnings, and route data. The AI reads your operational data server-side and returns specific recommendations — not generic tips, not hallucinated metrics.",
+    title: "Kai",
+    subtitle: "Your AI sidekick",
+    body: "A context-aware sidekick for tax, route, and scheduling questions answered on your own numbers — your shift earnings and mileage logs, not generic tips. The AI reads your data server-side and returns specific answers. AI tools are included when they ship.",
     tech: [
-      "UnifyAI (invokeLLM)",
       "Context injection",
+      "Reads your numbers",
       "Conversation history",
-      "Floating widget",
+      "Included when it ships",
     ],
   },
 ];
@@ -181,7 +174,7 @@ const TECH_STACK = [
     items: [
       "Drizzle ORM",
       "PostgreSQL (Neon)",
-      "Supabase Realtime",
+      "Supabase (metering)",
       "Schema migrations",
     ],
   },
@@ -190,30 +183,35 @@ const TECH_STACK = [
     items: [
       "OAuth",
       "JWT sessions",
-      "Role-based access",
+      "Per-worker isolation",
       "Protected procedures",
     ],
   },
   {
-    layer: "Payments",
+    layer: "Tax Engine",
     items: [
-      "Stripe Checkout",
-      "PayPal SDK",
-      "Shopify redirect",
+      "IRS standard mileage rate",
+      "YTD deduction ledger",
+      "Quarterly estimates",
+      "Form 1040-ES figures",
+    ],
+  },
+  {
+    layer: "Billing",
+    items: [
+      "Free + Pro $4.99/mo",
+      "Stripe subscriptions",
+      "Credit metering",
       "Webhook verification",
     ],
   },
   {
-    layer: "Automation",
-    items: ["n8n webhooks", "Zapier hooks", "Resend email", "Event queue"],
-  },
-  {
     layer: "AI",
     items: [
-      "Kai (LLM)",
+      "Kai (sidekick)",
       "Context injection",
-      "Streaming responses",
-      "Conversation history",
+      "Reads your numbers",
+      "Included when it ships",
     ],
   },
   {
@@ -222,7 +220,7 @@ const TECH_STACK = [
       "Node.js 22",
       "pnpm workspaces",
       "GitHub Actions CI",
-      "Vitest 100 tests",
+      "Vitest suite",
     ],
   },
 ];
@@ -236,7 +234,7 @@ export default function Architecture() {
         <title>Architecture — Cathedral Framework | UnifyOne</title>
         <meta
           name="description"
-          content="Explore UnifyOne's six structural pillars: multi-tenant foundation, payment orchestration, automation mesh, social intelligence, and Kai. Built on the Cathedral Framework — sequential and built to endure."
+          content="The engine behind UnifyOne: an earnings data foundation under GigIQ, Tax Autopilot (IRS mileage + quarterly estimated taxes), Money Manager, and Kai. Built on the Cathedral Framework — sequential and built to endure."
         />
         <link rel="canonical" href={CANONICAL} />
         <meta
@@ -245,7 +243,7 @@ export default function Architecture() {
         />
         <meta
           property="og:description"
-          content="Six structural pillars. Zero plugin dependencies. Built to outlast every platform trend."
+          content="The engine that tracks gig earnings across every app, auto-logs IRS mileage, and computes quarterly taxes. Accurate end to end, built to endure."
         />
         <meta property="og:url" content={CANONICAL} />
         <meta property="og:type" content="article" />
@@ -255,7 +253,7 @@ export default function Architecture() {
         />
         <meta
           name="twitter:description"
-          content="Six structural pillars. Zero plugin dependencies. Built to outlast every platform trend."
+          content="The engine that tracks gig earnings across every app, auto-logs IRS mileage, and computes quarterly taxes. Accurate end to end, built to endure."
         />
         {JSON_LD.map((schema, i) => (
           <script key={i} type="application/ld+json">
@@ -299,18 +297,18 @@ export default function Architecture() {
             className="font-crimson text-xl sm:text-2xl max-w-2xl"
             style={{ color: "#9A9A9A", fontStyle: "italic", lineHeight: 1.6 }}
           >
-            Six structural pillars. Zero plugin dependencies. Built to outlast
-            every platform trend.
+            The engine that tracks your gig earnings across every app, auto-logs
+            IRS mileage, and keeps you ahead of quarterly taxes.
           </p>
           <p
             className="font-crimson text-lg max-w-3xl mt-6"
             style={{ color: "#7A7A7A", lineHeight: 1.7 }}
           >
-            UnifyOne's architecture is the Cathedral Framework: a multi-tenant
-            commerce platform built in sequence — multi-tenant foundation,
-            commerce infrastructure, payment orchestration, automation,
-            analytics, and AI — where each of the six pillars is load-bearing
-            and completed before the next is raised.
+            UnifyOne's architecture is the Cathedral Framework: an earnings data
+            foundation built in sequence under GigIQ, Tax Autopilot, Money
+            Manager, and Kai — where each pillar is load-bearing and completed
+            before the next is raised, so the numbers you file quarterly taxes
+            on are accurate end to end.
           </p>
           <div
             className="h-px mt-10 max-w-xs"
@@ -350,26 +348,27 @@ export default function Architecture() {
                   depended on the structural integrity of the one below it.
                 </p>
                 <p>
-                  UnifyOne is built on the same principle. Multi-tenant
-                  isolation before commerce features. Commerce features before
-                  payment rails. Payment rails before automation. Automation
-                  before analytics. Analytics before AI. Each pillar is a
-                  load-bearing wall, not a decorative facade.
+                  UnifyOne is built on the same principle. Earnings capture
+                  before mileage and tax math. Tax math before budgeting.
+                  Budgeting before AI. Each pillar is a load-bearing wall, not a
+                  decorative facade — because your IRS deduction total and your
+                  Form 1040-ES figures are only as trustworthy as the layer
+                  beneath them.
                 </p>
                 <p>
-                  The result is a platform that does not collapse under
-                  production load, does not require manual intervention at
-                  scale, and does not accumulate technical debt that compounds
-                  into operational drag.
+                  The result is a platform where the numbers a gig worker files
+                  quarterly taxes on are accurate end to end — no stale figures,
+                  no manual reconciliation at tax time, no compounding errors
+                  that surface in April.
                 </p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               {[
-                "Foundation First",
-                "Structure Before Scale",
-                "Automation Before Traffic",
-                "Proven Before Promoted",
+                "Earnings First",
+                "Accurate Before Automated",
+                "Deductions Before April",
+                "Numbers You Can File On",
               ].map((principle, i) => (
                 <div key={i} className="stone-card p-6">
                   <div
@@ -391,7 +390,7 @@ export default function Architecture() {
         </div>
       </section>
 
-      {/* ── SIX PILLARS ─────────────────────────────────────────────────── */}
+      {/* ── PILLARS ─────────────────────────────────────────────────────── */}
       <section
         className="py-24"
         style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}
@@ -403,7 +402,7 @@ export default function Architecture() {
               className="font-cinzel text-3xl sm:text-4xl font-bold"
               style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
             >
-              The Six Pillars
+              The Pillars
             </h2>
           </div>
           <div className="space-y-0" ref={pillarsRef}>
@@ -569,18 +568,18 @@ export default function Architecture() {
           >
             The Foundation Is Ready.
             <br />
-            Your Nave Awaits.
+            Your Earnings Await.
           </h2>
           <p
             className="font-crimson text-xl mb-10"
             style={{ color: "#9A9A9A", fontStyle: "italic" }}
           >
-            Start with the Starter tier — free forever. Upgrade when your
-            automation or commerce volume demands it.
+            Start free — shift tracker, mileage log, and tax tools, no card
+            required. Upgrade to Pro at $4.99/mo when you want more.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href={getSignupUrl()} className="btn-illuminate">
-              Begin Construction — Free
+              Start Free — No Card
             </a>
             <Link href="/the-system">
               <span className="btn-ghost-gold cursor-pointer">
