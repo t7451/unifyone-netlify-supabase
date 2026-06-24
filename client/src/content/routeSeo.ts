@@ -1014,6 +1014,18 @@ const ROTH_IRA_LINKS = [
 
 export const ROUTE_SEO: RouteSeo[] = [
   {
+    path: "/",
+    externalLinks: [IRS.mileage, IRS.estimated, IRS.selfEmployedCenter],
+    title: "UnifyOne — Track Gig Earnings & Set Aside Taxes | Free + Pro $4.99",
+    description:
+      "Track gig earnings from DoorDash, Uber, Lyft, Instacart, Amazon Flex & Grubhub. Log IRS mileage and set aside quarterly taxes. Free + Pro $4.99/mo.",
+    body: [
+      "UnifyOne is built for the 76M+ US gig and 1099 workers who drive, deliver, and shop across DoorDash, Uber, Uber Eats, Lyft, Instacart, Amazon Flex, and Grubhub. It pulls your earnings into one place so you finally know what you actually made — and what you owe.",
+      "GigIQ turns your shifts and payouts into clear earnings intelligence, so you can see which hours and platforms pay best. Tax Autopilot tracks deductible miles at the IRS standard mileage rate and estimates your quarterly Form 1040-ES payments, so a surprise tax bill never wrecks your year.",
+      "Money Manager keeps your set-aside, deductions, and cash flow organized, and Kai helps you make sense of the numbers. Start free, or upgrade to Pro for $4.99/month — no commerce contracts, no per-seat gotchas.",
+    ],
+  },
+  {
     path: "/gig-worker-retirement",
     externalLinks: RETIREMENT_LINKS,
     title:
