@@ -58,33 +58,32 @@ export const SEO_PAGES: SeoPage[] = [
   // ── Brand / product name variations ────────────────────────────────────
   {
     slug: "unifyone",
-    title:
-      "UnifyOne — The AI-Powered Multi-Tenant Commerce Platform by 1Commerce",
-    h1: "UnifyOne: The Commerce Platform Built to Endure",
+    title: "UnifyOne — Track Gig Earnings & Taxes by 1Commerce | Free + $4.99",
+    h1: "UnifyOne: Earnings & Tax Intelligence for Gig Workers",
     tagline:
-      "UnifyOne (also written as UnifOne or OneCommerc) is the flagship product of 1Commerce LLC — a multi-tenant commerce platform engineered on the Cathedral Framework by PNW Enterprises.",
+      "UnifyOne (also written as UnifOne or OneCommerc) is the gig-worker earnings and tax app from 1Commerce LLC — track every payout, log IRS mileage, and set aside quarterly taxes in one place.",
     description:
-      "UnifyOne by 1Commerce LLC (PNW Enterprises) — the AI-powered multi-tenant commerce platform. Unify products, orders, payments, and analytics in one tenant.",
+      "UnifyOne by 1Commerce LLC — the earnings and tax app for gig workers. Track DoorDash, Uber, Lyft & Instacart payouts, IRS mileage, and quarterly taxes. Free + Pro $4.99.",
     keywords: brand(["UnifyOne login", "UnifyOne platform", "UnifyOne app"]),
     sections: [
       {
         heading: "What is UnifyOne?",
         paragraphs: [
-          "UnifyOne is the flagship multi-tenant commerce platform built by 1Commerce LLC (a PNW Enterprises company). It is the unified system operators search for when they type UnifyOne, UnifOne, OneCommerc, OneCommerce, 1-commerce, or 1commerce into a browser.",
-          "UnifyOne Solutions ships AI-powered insights, real-time analytics, subscription billing, affiliate management, and gig-economy automation in a single multi-tenant dashboard — engineered from the ground up for teams that refuse to duct-tape five SaaS tools together.",
+          "UnifyOne is the earnings and tax app built for gig and 1099 workers by 1Commerce LLC. It is the system drivers and shoppers search for when they type UnifyOne, UnifOne, OneCommerc, OneCommerce, 1-commerce, or 1commerce into a browser.",
+          "UnifyOne brings your DoorDash, Uber, Uber Eats, Lyft, Instacart, Amazon Flex, and Grubhub earnings into one dashboard, tracks deductible miles at the IRS standard rate, and estimates your quarterly Form 1040-ES taxes — so you always know what you made and what you owe.",
         ],
       },
       {
-        heading: "Why teams choose UnifyOne over fragmented commerce stacks",
+        heading: "Why gig workers choose UnifyOne",
         paragraphs: [
-          "Most commerce stacks are a patchwork of Shopify, Stripe, Klaviyo, spreadsheets, and a prayer. UnifyOne replaces that patchwork with one multi-tenant spine that scales from a single storefront to an agency running hundreds of tenants.",
+          "Most gig workers juggle five driver apps, a mileage notebook, and a shoebox of screenshots at tax time. UnifyOne replaces that with one place for earnings, mileage, and taxes — built around the four pillars below.",
         ],
         bullets: [
-          "Multi-tenant by design — isolate data per tenant with zero bleed.",
-          "AI Intelligence built-in — earnings insights, route optimization, tax deductions.",
-          "All major payment rails — Stripe, PayPal, Square, and Shopify Payments.",
-          "White-label ready — the Scale tier includes custom domains + branding.",
-          "Transparent pricing — free Starter tier, $19 Pro, $99 Scale.",
+          "GigIQ — shift and earnings intelligence so you can see which hours and platforms pay best.",
+          "Tax Autopilot — IRS mileage tracking plus quarterly estimated taxes (Form 1040-ES).",
+          "Money Manager — set-aside, deductions, and cash flow in one ledger.",
+          "Kai — helps you make sense of your numbers in plain language.",
+          "Honest pricing — Free to start, Pro just $4.99/month. No commerce contracts.",
         ],
       },
       {
@@ -97,7 +96,7 @@ export const SEO_PAGES: SeoPage[] = [
     faq: [
       {
         q: "Is UnifyOne the same as 1Commerce?",
-        a: "UnifyOne is the flagship commerce platform built by 1Commerce LLC (legally PNW Enterprises / 1Commerce Solutions). When people search for 1-commerce, 1commerce, or OneCommerc, they are looking for UnifyOne.",
+        a: "UnifyOne is the gig-worker earnings and tax app built by 1Commerce LLC. When people search for 1-commerce, 1commerce, or OneCommerc, they are looking for UnifyOne.",
       },
       {
         q: "Is UnifOne a typo for UnifyOne?",
@@ -105,7 +104,7 @@ export const SEO_PAGES: SeoPage[] = [
       },
       {
         q: "How do I try UnifyOne for free?",
-        a: "Start with the Starter tier — free forever, no credit card required. It includes one tenant, Stripe checkout, and core analytics on the same infrastructure as paid plans.",
+        a: "Start on the Free plan — no credit card required. Track your gig earnings, log IRS mileage, and see your estimated tax set-aside, then upgrade to Pro for $4.99/month when you want the full toolkit.",
       },
     ],
     related: [
@@ -118,37 +117,32 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unifyone-solutions",
-    title: "UnifyOne Solutions — Commerce Infrastructure by 1Commerce LLC",
-    h1: "UnifyOne Solutions: Commerce Infrastructure, Not Just Software",
+    title: "UnifyOne Solutions — Gig Earnings & Tax Tools by 1Commerce LLC",
+    h1: "UnifyOne Solutions: Everything Gig Workers Need in One App",
     tagline:
-      "UnifyOne Solutions is the 1Commerce LLC product suite that unifies payments, analytics, AI, and multi-tenant operations under a single cathedral-grade platform.",
+      "UnifyOne Solutions is the 1Commerce LLC product suite that brings gig earnings, IRS mileage, quarterly taxes, and money management together for independent workers.",
     description:
-      "UnifyOne Solutions — commerce infrastructure suite from 1Commerce LLC (PNW Enterprises). Multi-tenant, AI insights, Stripe, PayPal, Shopify, Square in one.",
-    keywords: brand([
-      "UnifyOne Solutions",
-      "commerce infrastructure",
-      "SaaS commerce suite",
-    ]),
+      "UnifyOne Solutions — the gig-worker suite from 1Commerce LLC. GigIQ earnings intelligence, Tax Autopilot, Money Manager, and Kai in one app. Free + Pro $4.99.",
+    keywords: brand(["UnifyOne Solutions", "gig earnings app", "gig tax app"]),
     sections: [
       {
         heading: "What are UnifyOne Solutions?",
         paragraphs: [
-          "UnifyOne Solutions is the umbrella for every capability shipped by 1Commerce LLC: the core UnifyOne platform, the Gig Command module, Money Manager, Kai AI Intelligence, and the Cathedral white-label tier. Together they form a commerce stack that agencies, operators, and gig workers actually want to run long-term.",
-          "Operators frequently search UnifyOne Solutions, 1-commerce solutions, 1commerce solutions, OneCommerce solutions, or UnifOne solutions — all resolve to the same product line.",
+          "UnifyOne Solutions is the umbrella for everything shipped by 1Commerce LLC for gig and 1099 workers: GigIQ earnings intelligence, Tax Autopilot, Money Manager, and the Kai assistant. Together they cover the full money side of gig work — what you earn, what you can deduct, and what you owe.",
+          "Workers frequently search UnifyOne Solutions, 1-commerce solutions, 1commerce solutions, OneCommerce solutions, or UnifOne solutions — all resolve to the same product line.",
         ],
       },
       {
-        heading: "The modules inside UnifyOne Solutions",
+        heading: "The pillars inside UnifyOne Solutions",
         paragraphs: [
-          "Every module is first-party, tightly integrated, and governed by tenant isolation at the database layer.",
+          "Each pillar is first-party and tightly integrated, so your earnings, mileage, and taxes stay in sync.",
         ],
         bullets: [
-          "UnifyOne Core — multi-tenant dashboard, products, orders, customers.",
-          "Kai AI Intelligence — contextual insights across Gig Command and Money Manager.",
-          "Gig Command — shift, mileage, and platform performance tracker.",
-          "Money Manager — real-time tax deduction accumulator and P&L.",
-          "Affiliate + Referral engine — tracked payouts with automated attribution.",
-          "Governance layer — audit trails, role-based access, soft-deletes with kill switches.",
+          "GigIQ — shift and earnings intelligence across every platform you drive for.",
+          "Tax Autopilot — IRS standard-rate mileage tracking and quarterly Form 1040-ES estimates.",
+          "Money Manager — tax set-aside, deduction tracking, and cash-flow view.",
+          "Kai — plain-language help understanding your earnings and tax picture.",
+          "Honest pricing — Free to start, Pro $4.99/month.",
         ],
       },
     ],
@@ -167,28 +161,29 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unifyone-platform",
-    title: "UnifyOne Platform — Multi-Tenant SaaS by 1Commerce",
+    title: "UnifyOne Platform — The Gig Earnings & Tax App by 1Commerce",
     h1: "The UnifyOne Platform",
     tagline:
-      "UnifyOne is a React 19 + tRPC 11 multi-tenant SaaS platform engineered for commerce teams and gig operators.",
+      "UnifyOne is the earnings and tax platform for gig workers — GigIQ, Tax Autopilot, Money Manager, and Kai on a secure, modern stack built by 1Commerce LLC.",
     description:
-      "UnifyOne Platform overview — React 19, TypeScript, tRPC, PostgreSQL multi-tenant architecture built by 1Commerce LLC (UnifOne / OneCommerc / 1-commerce).",
+      "UnifyOne Platform overview — the gig-worker earnings and tax app from 1Commerce LLC (UnifOne / OneCommerc / 1-commerce). GigIQ, Tax Autopilot, Money Manager, Kai.",
     keywords: brand([
       "UnifyOne platform",
-      "multi-tenant SaaS",
-      "React commerce platform",
+      "gig earnings platform",
+      "gig tax platform",
     ]),
     sections: [
       {
-        heading: "Platform architecture",
+        heading: "What the UnifyOne platform does",
         paragraphs: [
-          "The UnifyOne platform runs on React 19, TypeScript, tRPC 11, Express, and PostgreSQL via Drizzle ORM. Every tenant is isolated at the query layer through a mandatory tenantId filter — there is no cross-tenant leakage by design.",
+          "The UnifyOne platform is built for the 76M+ US gig and 1099 workers driving and delivering across DoorDash, Uber, Lyft, Instacart, Amazon Flex, and Grubhub. It consolidates earnings, tracks IRS mileage, and estimates quarterly Form 1040-ES taxes in one place.",
+          "Under the hood it runs on a modern, secure stack — your data stays isolated and protected — so you can focus on driving while UnifyOne keeps the money and tax side organized.",
         ],
         bullets: [
-          "Type-safe client ↔ server via tRPC (no loose REST contracts).",
-          "Serverless-ready via Netlify Functions + Docker (Node 22 Alpine).",
-          "JWT auth with role-based access control and OAuth + PKCE.",
-          "Webhooks verified by signature for Stripe, Shopify, and n8n.",
+          "GigIQ — earnings intelligence across every platform you work.",
+          "Tax Autopilot — IRS standard-rate mileage and quarterly estimated taxes.",
+          "Money Manager — set-aside, deductions, and cash flow in one ledger.",
+          "Secure by design — your account and data are isolated and protected.",
         ],
       },
     ],
@@ -236,16 +231,16 @@ export const SEO_PAGES: SeoPage[] = [
     title: "UnifyOne Login — Sign in to 1Commerce UnifyOne",
     h1: "UnifyOne Login",
     tagline:
-      "Sign in to UnifyOne — the 1Commerce (UnifOne / OneCommerc) multi-tenant commerce platform.",
+      "Sign in to UnifyOne — the 1Commerce (UnifOne / OneCommerc) earnings and tax app for gig workers.",
     description:
-      "UnifyOne login — sign in to your 1Commerce / UnifyOne Solutions tenant. New here? Start a free Starter account.",
+      "UnifyOne login — sign in to your 1Commerce / UnifyOne account to track gig earnings, mileage, and taxes. New here? Start free, or go Pro for $4.99/mo.",
     keywords: brand(["UnifyOne login", "1commerce login", "UnifOne sign in"]),
     sections: [
       {
         heading: "Sign in to UnifyOne",
         paragraphs: [
-          "Head to the login page to access your UnifyOne tenant. UnifyOne supports OAuth + PKCE authentication with JWT-backed sessions, so your credentials never leave the authorized provider.",
-          "If you previously signed up at 1-commerce, 1commerce, OneCommerc, or UnifOne — the same credentials work here. It is all the same platform.",
+          "Head to the login page to access your UnifyOne account and pick up your gig earnings, mileage, and tax set-aside right where you left off. UnifyOne uses secure, modern authentication, so your credentials stay protected.",
+          "If you previously signed up at 1-commerce, 1commerce, OneCommerc, or UnifOne — the same credentials work here. It is all the same app.",
         ],
       },
     ],
@@ -264,12 +259,12 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unifyone-pricing",
-    title: "UnifyOne Pricing — Plans from 1Commerce (Free, $19, $99)",
+    title: "UnifyOne Pricing — Free + Pro $4.99/mo from 1Commerce",
     h1: "UnifyOne Pricing",
     tagline:
-      "Three tiers: Starter (free), Pro ($19/mo), Scale ($99/mo). Transparent, flat-rate pricing from 1Commerce LLC.",
+      "Two simple plans for gig workers: Free, and Pro at $4.99/month. Honest, flat-rate pricing from 1Commerce LLC — no per-platform fees.",
     description:
-      "UnifyOne pricing — Starter free, Pro $19/mo, Scale $99/mo. One catalog across public pricing and checkout. By 1Commerce LLC / OneCommerce.",
+      "UnifyOne pricing — Free to start, Pro just $4.99/mo. Track gig earnings, IRS mileage, and quarterly taxes for one flat rate. By 1Commerce LLC / OneCommerce.",
     keywords: brand([
       "UnifyOne pricing",
       "1commerce pricing",
@@ -277,25 +272,24 @@ export const SEO_PAGES: SeoPage[] = [
     ]),
     sections: [
       {
-        heading: "UnifyOne pricing tiers",
+        heading: "UnifyOne pricing plans",
         paragraphs: [
-          "UnifyOne ships three flat-rate tiers with no per-seat gotchas.",
+          "UnifyOne keeps pricing simple for gig workers — two flat plans, no per-platform or per-seat gotchas.",
         ],
         bullets: [
-          "Starter — Free. 1 tenant, core commerce, Stripe checkout, and core analytics.",
-          "Pro — $19/month. 5 tenants, Kai AI, automation layer, and priority support.",
-          "Scale — $99/month. Unlimited tenants, white-label, custom domains, and SLA-backed support.",
+          "Free — Track earnings, log mileage, and see your estimated tax set-aside. No credit card.",
+          "Pro — $4.99/month. Full GigIQ earnings intelligence, Tax Autopilot quarterly estimates, Money Manager, and Kai.",
         ],
       },
     ],
     faq: [
       {
         q: "Is there a free UnifyOne plan?",
-        a: "Yes — Starter is free forever and includes one tenant, Stripe checkout, and core analytics.",
+        a: "Yes — UnifyOne is free to start, with earnings tracking, mileage logging, and an estimated tax set-aside. No credit card required.",
       },
       {
-        q: "Does UnifyOne require a credit card to start?",
-        a: "No — the Starter tier requires zero payment details.",
+        q: "How much is UnifyOne Pro?",
+        a: "Pro is $4.99 per month and unlocks full GigIQ earnings intelligence, Tax Autopilot quarterly estimates, Money Manager, and the Kai assistant.",
       },
     ],
     related: ["unifyone-free-trial", "unifyone-enterprise"],
@@ -402,23 +396,23 @@ export const SEO_PAGES: SeoPage[] = [
     title: "1Commerce — The Company Behind UnifyOne",
     h1: "1Commerce",
     tagline:
-      "1Commerce is the product and brand that ships UnifyOne, Kai AI, Gig Command, and Money Manager.",
+      "1Commerce is the brand behind UnifyOne — the gig-worker earnings and tax app with GigIQ, Tax Autopilot, Money Manager, and Kai.",
     description:
-      "1Commerce (1-commerce, OneCommerce) is the company that ships UnifyOne — the multi-tenant AI commerce platform by PNW Enterprises / 1Commerce LLC.",
+      "1Commerce (1-commerce, OneCommerce) is the company that ships UnifyOne — the earnings and tax app for gig workers, from 1Commerce LLC in Canby, Oregon.",
     keywords: brand(["1commerce", "1commerce.online", "1commerce platform"]),
     sections: [
       {
         heading: "1Commerce at a glance",
         paragraphs: [
-          "1Commerce is the brand. 1Commerce LLC is the legal entity. PNW Enterprises is the holding company. UnifyOne is the product.",
-          "When operators search 1commerce, 1commerce.online, 1-commerce, or OneCommerce — they are looking for UnifyOne.",
+          "1Commerce is the brand. 1Commerce LLC is the legal entity. UnifyOne is the product — an earnings and tax app built for gig and 1099 workers.",
+          "When workers search 1commerce, 1commerce.online, 1-commerce, or OneCommerce — they are looking for UnifyOne.",
         ],
       },
     ],
     faq: [
       {
         q: "Where is 1Commerce based?",
-        a: "1Commerce LLC operates out of the Pacific Northwest (Washington State, USA).",
+        a: "1Commerce LLC is based in Canby, Oregon, USA, and was founded in 2025. Reach support at support@1commerce.online.",
       },
     ],
     related: ["1commerce-llc", "pnw-enterprises", "1-commerce"],
