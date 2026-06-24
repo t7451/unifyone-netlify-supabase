@@ -32,166 +32,166 @@ interface Resource {
 }
 
 const RESOURCES: Resource[] = [
-  // Excel Templates
+  // Trackers & Templates
   {
     id: "weekly-dashboard",
-    title: "Weekly Execution Dashboard",
+    title: "Weekly Earnings Dashboard",
     description:
-      "Track weekly KPIs, tasks, revenue targets, and team metrics in one unified view.",
+      "Track your weekly take-home, hours, and goals across every gig platform in one view.",
     category: "template",
     icon: BarChart3,
     downloadUrl: "/api/resources/weekly-dashboard/download",
     filename: "weekly-dashboard.csv",
     fileSize: "<1 KB",
     fileType: "CSV",
-    tags: ["KPI", "Weekly", "Dashboard"],
+    tags: ["Earnings", "Weekly", "Tracker"],
   },
   {
     id: "lead-pipeline",
-    title: "Lead Pipeline Tracker",
+    title: "Gig & Client Tracker",
     description:
-      "Manage leads from prospecting through conversion with status tracking and notes.",
+      "Keep tabs on gigs and clients from first contact through payout, with status and notes.",
     category: "template",
     icon: Users,
     downloadUrl: "/api/resources/lead-pipeline/download",
     filename: "lead-pipeline.csv",
     fileSize: "<1 KB",
     fileType: "CSV",
-    tags: ["Sales", "Leads", "Pipeline"],
+    tags: ["Gigs", "Clients", "Tracker"],
   },
   {
     id: "revenue-command",
-    title: "Revenue Command Center",
+    title: "Multi-Platform Income Tracker",
     description:
-      "Multi-stream revenue tracking with forecasting, margin analysis, and growth targets.",
+      "Track income across every gig app with set-aside targets and tax buckets in one sheet.",
     category: "template",
     icon: BarChart3,
     downloadUrl: "/api/resources/revenue-command/download",
     filename: "revenue-command.csv",
     fileSize: "<1 KB",
     fileType: "CSV",
-    tags: ["Revenue", "Forecasting", "Finance"],
+    tags: ["Income", "Taxes", "Set-Aside"],
   },
   {
     id: "content-calendar",
-    title: "Content Engine Calendar",
+    title: "Mileage & Expense Log",
     description:
-      "Plan, schedule, and track content across all platforms with editorial calendar.",
+      "Log trips and deductible expenses week by week so your IRS mileage is ready at tax time.",
     category: "template",
     icon: Calendar,
     downloadUrl: "/api/resources/content-calendar/download",
     filename: "content-calendar.csv",
     fileSize: "<1 KB",
     fileType: "CSV",
-    tags: ["Content", "Social", "Marketing"],
+    tags: ["Mileage", "Expenses", "Deductions"],
   },
 
-  // Strategic Guides
+  // Guides
   {
     id: "cathedral-principle",
-    title: "The Cathedral Principle",
+    title: "Keep More of What You Earn",
     description:
-      "Sequential, structural commerce infrastructure built to outlast platform trends.",
+      "A simple framework for tracking income, claiming deductions, and setting aside for taxes.",
     category: "guide",
     icon: BookOpen,
     downloadUrl: "/api/resources/cathedral-principle/download",
     filename: "cathedral-principle.md",
     fileSize: "1 KB",
     fileType: "Markdown",
-    tags: ["Strategy", "Architecture", "Framework"],
+    tags: ["Earnings", "Deductions", "Framework"],
   },
   {
     id: "unifyone-guide",
-    title: "UnifyOne Platform Guide",
+    title: "UnifyOne Getting Started Guide",
     description:
-      "Comprehensive guide to UnifyOne multi-tenant commerce system architecture and operations.",
+      "How to set up UnifyOne to track earnings, log IRS mileage, and stay ahead of quarterly taxes.",
     category: "guide",
     icon: BookOpen,
     downloadUrl: "/api/resources/unifyone-guide/download",
     filename: "unifyone-guide.md",
     fileSize: "1 KB",
     fileType: "Markdown",
-    tags: ["Platform", "Guide", "Operations"],
+    tags: ["Getting Started", "Guide", "Taxes"],
   },
   {
     id: "enterprise-ai",
-    title: "Enterprise AI & SaaS Solutions",
+    title: "Quarterly Estimated Taxes 101",
     description:
-      "OneStack framework for enterprise-grade AI integration and SaaS delivery.",
+      "What gig workers need to know about estimated taxes — when to pay, how to project, and what to set aside.",
     category: "guide",
     icon: Zap,
     downloadUrl: "/api/resources/enterprise-ai/download",
     filename: "enterprise-ai.md",
     fileSize: "1 KB",
     fileType: "Markdown",
-    tags: ["AI", "SaaS", "Enterprise"],
+    tags: ["Taxes", "Quarterly", "Estimates"],
   },
   {
     id: "day1-viral",
-    title: "Day 1 Viral Distribution Posts",
+    title: "Your First Week on UnifyOne",
     description:
-      "Launch-day social media strategy with platform-specific viral post templates.",
+      "A day-by-day checklist to connect your earnings, log your first trips, and see your real take-home.",
     category: "guide",
     icon: BookOpen,
     downloadUrl: "/api/resources/day1-viral/download",
     filename: "day1-viral.md",
     fileSize: "1 KB",
     fileType: "Markdown",
-    tags: ["Marketing", "Social", "Launch"],
+    tags: ["Onboarding", "Checklist", "Earnings"],
   },
   {
     id: "sovereign-solopreneur",
-    title: "The Sovereign Solopreneur Strategy",
+    title: "The Independent Worker Playbook",
     description:
-      "Build a multinational business with zero employees using systems and automation.",
+      "Run your gig work like a business — track every dollar, claim every deduction, and stay tax-ready.",
     category: "guide",
     icon: BookOpen,
     downloadUrl: "/api/resources/sovereign-solopreneur/download",
     filename: "sovereign-solopreneur.md",
     fileSize: "1 KB",
     fileType: "Markdown",
-    tags: ["Strategy", "Solopreneur", "Growth"],
+    tags: ["Gig Work", "Taxes", "Growth"],
   },
   {
     id: "ai-operating-system",
-    title: "AI Operating System Guide",
+    title: "Money Manager Setup Guide",
     description:
-      "Framework for autonomous agent orchestration and decision-making systems.",
+      "Set up income, expenses, and automatic set-aside so your tax money is always there when you need it.",
     category: "guide",
     icon: Zap,
     downloadUrl: "/api/resources/ai-operating-system/download",
     filename: "ai-operating-system.md",
     fileSize: "1 KB",
     fileType: "Markdown",
-    tags: ["AI", "Automation", "Systems"],
+    tags: ["Money Manager", "Set-Aside", "Expenses"],
   },
   {
     id: "ai-prompt-library",
-    title: "AI Prompt Library",
+    title: "Gig Deduction Checklist",
     description:
-      "Curated prompts for content creation, analysis, and business automation.",
+      "A curated list of common deductions gig workers miss — mileage, supplies, fees, and more.",
     category: "guide",
     icon: BookOpen,
     downloadUrl: "/api/resources/ai-prompt-library/download",
     filename: "ai-prompt-library.md",
     fileSize: "1 KB",
     fileType: "Markdown",
-    tags: ["AI", "Prompts", "Content"],
+    tags: ["Deductions", "Taxes", "Checklist"],
   },
 
   // Video Assets
   {
     id: "onestack-video",
-    title: "OneStack Cinematic Reel Brief",
+    title: "UnifyOne Overview Reel Brief",
     description:
-      "Downloadable production brief for a OneStack enterprise AI cinematic reel.",
+      "Downloadable brief for a short reel walking through earnings tracking, mileage, and tax estimates.",
     category: "video",
     icon: Video,
     downloadUrl: "/api/resources/onestack-video/download",
     filename: "onestack-video.md",
     fileSize: "1 KB",
     fileType: "Markdown",
-    tags: ["Video", "OneStack", "Cinematic"],
+    tags: ["Video", "Overview", "Walkthrough"],
   },
 ];
 
@@ -223,13 +223,13 @@ export default function Resources() {
     <main className="min-h-screen bg-background">
       <PageHead
         title="Resources | UnifyOne"
-        description="Operating excellence resources for gig operators and commerce teams — playbooks, templates, analytics guides, and video walkthroughs. Download free."
+        description="Free resources for gig workers — earnings trackers, mileage and expense logs, tax guides, and walkthroughs to help you keep more of what you earn. Download free."
         canonical={RESOURCES_CANONICAL}
         jsonLd={buildWebPageJsonLd({
           canonical: RESOURCES_CANONICAL,
           name: "Resources | UnifyOne",
           description:
-            "Operating excellence resources for gig operators and commerce teams — playbooks, templates, analytics guides, and video walkthroughs. Download free.",
+            "Free resources for gig workers — earnings trackers, mileage and expense logs, tax guides, and walkthroughs to help you keep more of what you earn. Download free.",
           breadcrumbs: [{ name: "Resources", item: RESOURCES_CANONICAL }],
         })}
       />
@@ -244,11 +244,11 @@ export default function Resources() {
               id="resources-heading"
               className="text-4xl font-bold text-foreground"
             >
-              Operating Excellence Resources
+              Gig Worker Resources
             </h1>
             <p className="text-lg text-muted-foreground">
-              Strategic templates, guides, and assets to accelerate your
-              commerce infrastructure.
+              Free trackers, guides, and tools to help you track your earnings,
+              claim every deduction, and stay ahead of quarterly taxes.
             </p>
           </div>
         </div>
@@ -390,11 +390,11 @@ export default function Resources() {
               id="resources-cta-heading"
               className="text-2xl font-bold text-foreground"
             >
-              Need Custom Resources?
+              Need Something Specific?
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Contact our team to request custom templates, guides, or training
-              materials tailored to your business.
+              Tell us what would help your gig work — a tracker, a tax guide, or
+              a walkthrough — and we'll add it to the library.
             </p>
             <Button asChild size="lg" className="gap-2">
               <Link href="/contact?topic=custom-resources">
