@@ -17,56 +17,56 @@ import { SITE_URL } from "@/lib/siteConfig";
 
 const DOCUMENTS_CANONICAL = `${SITE_URL}/documents`;
 const DOCUMENTS_DESCRIPTION =
-  "Complete documentation, case studies, integration guides, and proof of work for UnifyOne platform.";
+  "Documentation, guides, and build proof for UnifyOne — the earnings and tax app for gig workers. Earnings tracking, IRS mileage, and quarterly tax estimates.";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: "📋" },
-  { id: "case-studies", label: "Case Studies", icon: "📊" },
-  { id: "integrations", label: "Integrations", icon: "⚙️" },
-  { id: "work-proof", label: "Work Proof", icon: "✓" },
+  { id: "case-studies", label: "Guides", icon: "📊" },
+  { id: "integrations", label: "Tax & Mileage", icon: "⚙️" },
+  { id: "work-proof", label: "Build Proof", icon: "✓" },
 ];
 
 const DOC_AREAS = [
   {
     title: "Getting Started",
     description:
-      "Start with the architecture, platform orientation, and the fastest path to exploring UnifyOne's docs surface.",
+      "Connect your gig income, see your real take-home, and set up earnings tracking in minutes — the fastest path to your first tax estimate.",
     href: "/docs/getting-started",
     Icon: BookOpen,
     badge: "Quickstart",
   },
   {
-    title: "Integration Guides",
+    title: "Tax Autopilot Guide",
     description:
-      "Review setup patterns for commerce, automation, and AI integrations spanning payments, workflows, and messaging.",
+      "How UnifyOne tracks IRS standard-mileage deductions and projects your quarterly estimated taxes so nothing sneaks up at filing time.",
     href: "/docs/integration-guides",
     Icon: Plug,
-    badge: "Platform",
+    badge: "Taxes",
   },
   {
     title: "API Reference",
     description:
-      "Download the Postman collection covering auth, payments, admin flows, and the core REST endpoints exposed by UnifyOne.",
+      "Download the Postman collection covering auth, earnings imports, and the core endpoints that power your UnifyOne account.",
     href: "/api/postman/collection.json",
     Icon: Code2,
     badge: "Download",
     download: true,
   },
   {
-    title: "Case Studies",
+    title: "Earnings & Mileage Tracking",
     description:
-      "See how operators scale revenue, automate fulfillment, and launch tenant portfolios using the UnifyOne control plane.",
+      "See how GigIQ and Money Manager turn raw payouts and trips into clean records you can act on across every gig platform.",
     href: "/docs/case-studies",
     Icon: BarChart2,
-    badge: "Stories",
+    badge: "Guides",
   },
   {
-    title: "Architecture",
+    title: "How It Works",
     description:
-      "Dive into the Cathedral Principle, multi-tenant patterns, and the systems thinking behind UnifyOne's product design.",
+      "The thinking behind UnifyOne — built so independent workers keep more of what they earn and stay ready for tax season.",
     href: "/architecture",
     Icon: Layers,
-    badge: "Systems",
+    badge: "Overview",
   },
 ] as const;
 
@@ -123,14 +123,15 @@ export default function Documents() {
               className="font-cinzel text-4xl sm:text-5xl font-bold mb-6"
               style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
             >
-              The Cathedral Documented
+              UnifyOne Documentation
             </h1>
             <p
               className="font-crimson text-lg max-w-2xl mx-auto"
               style={{ color: "#9A9A9A", lineHeight: 1.8 }}
             >
-              Complete technical documentation, case studies, integration
-              guides, and proof of work for the UnifyOne platform.
+              Guides, walkthroughs, and build proof for UnifyOne — the earnings
+              and tax app that helps gig workers track income, log IRS mileage,
+              and stay ahead of quarterly taxes.
             </p>
           </div>
 
@@ -184,32 +185,27 @@ export default function Documents() {
                   style={{ color: "#C0C0C0", lineHeight: 1.8 }}
                 >
                   <p>
-                    UnifyOne is a multi-tenant commerce platform engineered with
-                    the Cathedral Principle — sequential, structural
-                    construction that prioritizes foundational strength before
-                    scaling traffic. This documentation covers the complete
-                    architecture, integration patterns, and proof of work across
-                    36 development phases.
+                    UnifyOne is the earnings and tax app built for gig workers —
+                    drivers, couriers, and freelancers who need to know their
+                    real take-home and stay ready for tax season. This
+                    documentation covers setup, day-to-day tracking, and the
+                    build proof behind the product.
                   </p>
                   <p>
-                    The platform combines{" "}
-                    <strong style={{ color: "#D4A843" }}>
-                      Kai AI integration
-                    </strong>{" "}
-                    for intelligent task automation,{" "}
-                    <strong style={{ color: "#D4A843" }}>
-                      multi-tenant isolation
-                    </strong>{" "}
-                    for SaaS scalability, and{" "}
-                    <strong style={{ color: "#D4A843" }}>
-                      payment infrastructure
-                    </strong>{" "}
-                    (Stripe, PayPal, Shopify) for global commerce.
+                    UnifyOne brings together{" "}
+                    <strong style={{ color: "#D4A843" }}>GigIQ</strong> for
+                    earnings insights across every platform,{" "}
+                    <strong style={{ color: "#D4A843" }}>Tax Autopilot</strong>{" "}
+                    for IRS standard-mileage deductions and quarterly estimated
+                    taxes, and{" "}
+                    <strong style={{ color: "#D4A843" }}>Money Manager</strong>{" "}
+                    to keep income, expenses, and set-aside in one place. Kai,
+                    your assistant, and other AI tools roll out as they ship.
                   </p>
                   <p>
-                    Navigate to the sections below to explore detailed case
-                    studies, integration guides, and the complete work proof
-                    timeline.
+                    Navigate to the sections below to explore the earnings and
+                    mileage guides, the tax walkthrough, and the complete build
+                    proof timeline.
                   </p>
 
                   {/* Quick Links */}
@@ -253,7 +249,7 @@ export default function Documents() {
                         }}
                         className="hover:bg-opacity-20"
                       >
-                        📦 Operating Excellence Resources
+                        📦 Gig Worker Resources
                       </a>
                     </Link>
                     <Link href="/video-production">
@@ -410,46 +406,46 @@ export default function Documents() {
                   className="font-cinzel text-2xl font-bold mb-6"
                   style={{ color: "#D4A843" }}
                 >
-                  Case Studies
+                  Guides
                 </h2>
                 <p
                   className="font-crimson text-base mb-8"
                   style={{ color: "#C0C0C0", lineHeight: 1.8 }}
                 >
-                  Detailed technical deep-dives into major platform features,
-                  architectural decisions, and integrations.
+                  Practical walkthroughs for tracking your earnings, claiming
+                  mileage, and getting ahead of quarterly taxes.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                   {[
                     {
-                      icon: "🏛️",
-                      title: "Cathedral Framework",
-                      subtitle: "Design System Architecture",
-                      href: "/documents/case-studies#cathedral-framework",
+                      icon: "📊",
+                      title: "GigIQ Earnings Insights",
+                      subtitle: "See Your Real Take-Home",
+                      href: "/documents/case-studies#gigiq-earnings",
                     },
                     {
                       icon: "🤖",
-                      title: "Kai AI Integration",
-                      subtitle: "Context-Aware Copilot",
-                      href: "/documents/case-studies#kai-ai-integration",
+                      title: "Meet Kai",
+                      subtitle: "Your Assistant (Coming Soon)",
+                      href: "/documents/case-studies#kai-assistant",
                     },
                     {
-                      icon: "🏢",
-                      title: "Multi-Tenant Commerce",
-                      subtitle: "Isolation & Scale",
-                      href: "/documents/case-studies#multi-tenant-commerce",
+                      icon: "🚗",
+                      title: "IRS Mileage Tracking",
+                      subtitle: "Standard-Mileage Deductions",
+                      href: "/documents/case-studies#irs-mileage",
                     },
                     {
-                      icon: "💳",
-                      title: "Stripe → Meta CAPI Bridge",
-                      subtitle: "Transactions to Algorithm",
-                      href: "/documents/case-studies#stripe-capi-bridge",
+                      icon: "🧾",
+                      title: "Quarterly Estimated Taxes",
+                      subtitle: "No Surprises at Filing",
+                      href: "/documents/case-studies#quarterly-taxes",
                     },
                     {
-                      icon: "🎞️",
-                      title: "Scroll-Triggered Reveals",
-                      subtitle: "Performance-First Animation",
-                      href: "/documents/case-studies#scroll-reveals",
+                      icon: "💰",
+                      title: "Money Manager Setup",
+                      subtitle: "Income, Expenses & Set-Aside",
+                      href: "/documents/case-studies#money-manager",
                     },
                   ].map(item => (
                     <Link key={item.title} href={item.href}>
@@ -498,7 +494,7 @@ export default function Documents() {
                       fontWeight: 600,
                     }}
                   >
-                    View all case studies →
+                    View all guides →
                   </a>
                 </Link>
               </div>
@@ -510,51 +506,51 @@ export default function Documents() {
                   className="font-cinzel text-2xl font-bold mb-6"
                   style={{ color: "#D4A843" }}
                 >
-                  Integration Guides
+                  Tax & Mileage
                 </h2>
                 <p
                   className="font-crimson text-base mb-8"
                   style={{ color: "#C0C0C0", lineHeight: 1.8 }}
                 >
-                  Complete step-by-step integration guides for Kai, Claude MCP,
-                  n8n automation, and payment processors.
+                  Step-by-step help for IRS mileage, quarterly estimated taxes,
+                  and keeping your records ready for filing.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                   {[
                     {
-                      icon: "⚙️",
-                      title: "API Setup",
-                      subtitle: "Configure credentials & environment",
+                      icon: "🔗",
+                      title: "Connect Your Earnings",
+                      subtitle: "Import payouts from your gig apps",
                       href: "/documents/integrations#setup",
                     },
                     {
-                      icon: "🔌",
-                      title: "MCP Server (Live)",
-                      subtitle: "Claude Desktop integration",
-                      href: "/documents/integrations#mcp",
+                      icon: "🚗",
+                      title: "Log IRS Mileage",
+                      subtitle: "Standard-mileage deduction tracking",
+                      href: "/documents/integrations#mileage",
                     },
                     {
-                      icon: "🪝",
-                      title: "Webhooks",
-                      subtitle: "Task completion event handling",
-                      href: "/documents/integrations#webhook",
+                      icon: "🧾",
+                      title: "Quarterly Tax Estimates",
+                      subtitle: "Project what to set aside",
+                      href: "/documents/integrations#quarterly",
                     },
                     {
-                      icon: "🔄",
-                      title: "n8n Bridge",
-                      subtitle: "Automate via n8n workflows",
-                      href: "/documents/integrations#n8n",
+                      icon: "💰",
+                      title: "Money Manager",
+                      subtitle: "Income, expenses & set-aside",
+                      href: "/documents/integrations#money-manager",
                     },
                     {
-                      icon: "📋",
-                      title: "Task Patterns",
-                      subtitle: "Research, audits & provisioning",
-                      href: "/documents/integrations#tasks",
+                      icon: "📊",
+                      title: "GigIQ Insights",
+                      subtitle: "Compare pay across platforms",
+                      href: "/documents/integrations#gigiq",
                     },
                     {
                       icon: "✅",
-                      title: "Implementation Checklist",
-                      subtitle: "Track your integration progress",
+                      title: "Tax-Season Checklist",
+                      subtitle: "Get filing-ready in minutes",
                       href: "/documents/integrations#checklist",
                     },
                   ].map(item => (
@@ -604,7 +600,7 @@ export default function Documents() {
                       fontWeight: 600,
                     }}
                   >
-                    View integration guides →
+                    View tax & mileage guides →
                   </a>
                 </Link>
               </div>
@@ -616,15 +612,15 @@ export default function Documents() {
                   className="font-cinzel text-2xl font-bold mb-6"
                   style={{ color: "#D4A843" }}
                 >
-                  Work Proof
+                  Build Proof
                 </h2>
                 <p
                   className="font-crimson text-base mb-8"
                   style={{ color: "#C0C0C0", lineHeight: 1.8 }}
                 >
-                  Complete timeline of 25+ development phases, deliverables, and
-                  technical achievements spanning the full UnifyOne platform
-                  build.
+                  Complete timeline of 25+ build phases, deliverables, and
+                  shipped capabilities behind UnifyOne — the earnings and tax
+                  app for gig workers.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                   {[
@@ -661,14 +657,14 @@ export default function Documents() {
                 </div>
                 <div className="space-y-3 mb-8">
                   {[
-                    "Multi-tenant commerce platform (products, orders, customers)",
-                    "Stripe, PayPal & Shopify payment rails",
-                    "Kai AI integration with context-aware copilot",
-                    "Social commerce: friends, challenges, gamification",
-                    "Governance dashboard with audit logs & kill switches",
-                    "Theme store marketplace with Stripe fulfillment",
-                    "Affiliate hub, revenue streams, rewards keys",
-                    "Mobile automation scheduling with n8n bridge",
+                    "Earnings tracking across gig platforms (income, payouts, trips)",
+                    "Tax Autopilot: IRS standard-mileage deductions",
+                    "Quarterly estimated-tax projections",
+                    "GigIQ earnings insights and pay comparisons",
+                    "Money Manager: income, expenses & automatic set-aside",
+                    "Kai assistant and AI tools shipping as they're ready",
+                    "Free and Pro ($4.99) plans",
+                    "Secure account, data export, and filing-ready records",
                   ].map(item => (
                     <div
                       key={item}
@@ -690,7 +686,7 @@ export default function Documents() {
                       fontWeight: 600,
                     }}
                   >
-                    View work proof timeline →
+                    View build proof timeline →
                   </a>
                 </Link>
               </div>
