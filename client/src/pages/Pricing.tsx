@@ -2,20 +2,23 @@ import { useState } from "react";
 import { Link } from "wouter";
 import PageHead from "@/components/PageHead";
 import PublicLayout from "@/components/PublicLayout";
-import { TIERS } from "@/content/pricing";
 import { getSignupUrl } from "@/const";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { SITE_URL } from "@/lib/siteConfig";
-import { PLAN_CATALOG } from "@shared/pricing";
+import {
+  GIG_PLAN_CATALOG,
+  getGigAnnualSubtext,
+  getGigMonthlyLabel,
+} from "@shared/gigPricing";
 
 const CANONICAL = `${SITE_URL}/pricing`;
 const DESCRIPTION =
-  "Three plans for every stage — Starter (free forever), Pro ($19/mo), Scale ($99/mo). All share the same tenant-safe billing and checkout infrastructure.";
+  "Pricing for gig and 1099 workers — Free forever (shift tracker, mileage log, tax calculators) or Pro at $4.99/mo for unlimited history and a year-round tax dashboard.";
 
-// Per-tier Offers derived from the canonical plan catalog (shared/pricing.ts),
-// so structured-data prices stay in lockstep with the rendered pricing cards
-// and the checkout flow. Never hard-code prices here.
-const PLAN_OFFERS = PLAN_CATALOG.map(plan => ({
+// Per-tier Offers derived from the gig plan catalog (shared/gigPricing.ts),
+// so structured-data prices stay in lockstep with the rendered pricing cards.
+// Never hard-code prices here.
+const PLAN_OFFERS = GIG_PLAN_CATALOG.map(plan => ({
   "@type": "Offer",
   name: plan.name,
   description: plan.features.join(", "),
@@ -26,42 +29,38 @@ const PLAN_OFFERS = PLAN_CATALOG.map(plan => ({
   url: CANONICAL,
 }));
 
-// Lowest monthly price across all tiers (in dollars) for the AggregateOffer.
+// Lowest / highest monthly price across the gig tiers (in dollars).
 const LOW_PRICE = String(
-  Math.min(...PLAN_CATALOG.map(plan => plan.monthlyPriceCents)) / 100
+  Math.min(...GIG_PLAN_CATALOG.map(plan => plan.monthlyPriceCents)) / 100
 );
 const HIGH_PRICE = String(
-  Math.max(...PLAN_CATALOG.map(plan => plan.monthlyPriceCents)) / 100
+  Math.max(...GIG_PLAN_CATALOG.map(plan => plan.monthlyPriceCents)) / 100
 );
 
 const FAQ = [
   {
-    q: "Can I switch tiers later?",
-    a: "Yes — upgrades and downgrades are prorated. Changes take effect immediately and your existing tenants, products, and orders are preserved.",
+    q: "Is the Free plan really free forever?",
+    a: "Yes. Shift tracking, mileage logging at the IRS rate, the tax calculators (self-employment, quarterly estimates, mileage), and 25 AI requests a month are free forever — no credit card required.",
   },
   {
-    q: "What payment methods do you support?",
-    a: "Stripe and PayPal on every tier. Square and bank transfer are available on Pro and Scale. Webhooks are verified, idempotent, and fire into your automation layer.",
+    q: "What do I get when I upgrade to Pro?",
+    a: "Pro is $4.99/mo ($49/year — save ~18%). It includes everything in Free plus unlimited saved history, a year-round tax dashboard, priority support, and 250 AI requests per month.",
   },
   {
-    q: "Is there a free trial on paid tiers?",
-    a: "The Starter tier is free forever and uses the same infrastructure. When you're ready, upgrade in one click — no migration, no data loss.",
+    q: "What are the AI requests for?",
+    a: "AI requests power the Kai assistant and the AI tax and earnings tools as they ship. Free includes 25 a month, Pro includes 250. New AI tools are included on Pro when they launch — at no extra charge.",
   },
   {
-    q: "Do you offer refunds?",
-    a: "Yes — full refund within 14 days of any paid tier purchase, no questions asked.",
+    q: "Can I cancel anytime?",
+    a: "Yes. Cancellation takes effect at the end of your current billing period, and your shift history, mileage, and tax data are never deleted. You can stay on Free for as long as you like.",
   },
   {
-    q: "What is multi-tenant management on the Scale tier?",
-    a: "Scale lets you manage unlimited independent stores (tenants) from one dashboard — each with isolated data, branding, and billing. Ideal for agencies, franchises, and white-label resellers.",
+    q: "Do you support quarterly estimated taxes and mileage deductions?",
+    a: "Yes. The tax calculators handle self-employment tax, quarterly estimated payments, and IRS-rate mileage deductions on every plan, including Free. Pro adds a year-round dashboard so the numbers stay current all year.",
   },
   {
-    q: "How does Kai unified API pricing work?",
-    a: "Each tier includes a monthly Kai credit allocation that works across all supported models. You pay one unified overage rate per credit on your tier, instead of separate model-vendor bills.",
-  },
-  {
-    q: "Do different AI models have different prices?",
-    a: "No. Kai uses unified credit pricing across models, so your bill stays predictable even when you route prompts between Claude, GPT, Gemini, and other providers.",
+    q: "Which gig platforms does this work with?",
+    a: "Any 1099 work — rideshare, delivery, courier, freelance, and more. You log shifts and miles in one place no matter how many apps you drive for, so your earnings and tax picture stay unified.",
   },
 ];
 
@@ -72,8 +71,7 @@ const JSON_LD = [
     "@id": CANONICAL,
     url: CANONICAL,
     name: "Pricing | UnifyOne",
-    description:
-      "Three plans for every stage — Starter (free forever), Pro ($19/mo), Scale ($99/mo). Every tier runs on the same tenant-safe billing and checkout infrastructure.",
+    description: DESCRIPTION,
     isPartOf: { "@id": `${SITE_URL}/#website` },
     inLanguage: "en-US",
   },
@@ -81,12 +79,12 @@ const JSON_LD = [
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "UnifyOne",
-    applicationCategory: "BusinessApplication",
-    applicationSubCategory: "E-Commerce Platform",
+    applicationCategory: "FinanceApplication",
+    applicationSubCategory: "Gig Worker Earnings & Tax",
     operatingSystem: "Web",
     url: CANONICAL,
     description:
-      "UnifyOne is a multi-tenant commerce platform that unifies products, orders, payments, analytics, and AI automation in one tenant-safe stack.",
+      "UnifyOne helps gig and 1099 workers track earnings, log IRS-rate mileage, and stay ahead of quarterly estimated taxes in one place.",
     offers: {
       "@type": "AggregateOffer",
       priceCurrency: "USD",
@@ -96,15 +94,6 @@ const JSON_LD = [
       availability: "https://schema.org/InStock",
       url: CANONICAL,
       offers: PLAN_OFFERS,
-    },
-    // Aggregate rating mirrors the published figure on /seo/unifyone-reviews
-    // (4.9/5 across 47 verified operator reviews). Keep these numbers in sync.
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      bestRating: "5",
-      worstRating: "1",
-      reviewCount: "47",
     },
   },
   {
@@ -158,21 +147,22 @@ export default function Pricing() {
             className="font-cinzel text-4xl sm:text-6xl font-black mb-6"
             style={{ color: "#F0E8D0" }}
           >
-            Built like the rest of the cathedral.
+            Know what you earn. Owe nothing by surprise.
           </h1>
           <p
             className="font-crimson text-lg sm:text-xl mx-auto"
-            style={{ color: "#6A6A6A", fontStyle: "italic", maxWidth: 520 }}
+            style={{ color: "#6A6A6A", fontStyle: "italic", maxWidth: 560 }}
           >
-            Clear, structural, no surprises. One unified Kai cost across any
-            model. Start free, scale when your usage grows.
+            Built for gig and 1099 workers. Track every shift and mile, and stay
+            ahead of self-employment and quarterly taxes. Start free — upgrade
+            to Pro for $4.99/mo when you want the whole year handled.
           </p>
         </div>
       </section>
 
       {/* Tiers */}
       <section style={{ paddingBottom: "5rem" }}>
-        <div ref={tiersRef} className="max-w-7xl mx-auto px-6 sm:px-8">
+        <div ref={tiersRef} className="max-w-4xl mx-auto px-6 sm:px-8">
           <div className="flex justify-center mb-8">
             <div
               className="inline-flex items-center p-1"
@@ -212,24 +202,34 @@ export default function Pricing() {
                     color: billing === "annual" ? "#020202" : "#6EE7B7",
                   }}
                 >
-                  — Save 17%
+                  — Save ~18%
                 </span>
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
-            {TIERS.map((tier, i) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+            {GIG_PLAN_CATALOG.map((tier, i) => {
               const showAnnual =
-                billing === "annual" && Boolean(tier.annualPrice);
-              const displayedPrice = showAnnual ? tier.annualPrice : tier.price;
-              const displayedPeriod = showAnnual
-                ? tier.annualPeriod
-                : tier.period;
+                billing === "annual" && tier.yearlyPriceCents > 0;
+              const displayedPrice = getGigMonthlyLabel(
+                tier,
+                showAnnual ? "yearly" : "monthly"
+              );
+              const isFree = tier.monthlyPriceCents === 0;
+              const displayedPeriod = isFree
+                ? "forever"
+                : showAnnual
+                  ? "per month, billed annually"
+                  : "per month";
+              const annualSubtext = showAnnual
+                ? getGigAnnualSubtext(tier)
+                : null;
+              const isLast = i === GIG_PLAN_CATALOG.length - 1;
 
               return (
                 <div
-                  key={tier.id}
+                  key={tier.slug}
                   data-reveal
                   data-reveal-delay={String(i * 100)}
                   className="relative p-8 sm:p-10 transition-all duration-300"
@@ -238,24 +238,23 @@ export default function Pricing() {
                     border: tier.highlight
                       ? "1px solid rgba(212,168,67,0.4)"
                       : "1px solid #242424",
-                    borderRight:
-                      i < 2
-                        ? tier.highlight
-                          ? "1px solid rgba(212,168,67,0.4)"
-                          : "1px solid #242424"
-                        : undefined,
+                    borderRight: !isLast
+                      ? tier.highlight
+                        ? "1px solid rgba(212,168,67,0.4)"
+                        : "1px solid #242424"
+                      : undefined,
                     boxShadow: tier.highlight
                       ? "0 0 60px rgba(212,168,67,0.08), inset 0 1px 0 rgba(212,168,67,0.2)"
                       : "none",
                   }}
                 >
-                  {tier.highlight && (
+                  {tier.highlight && tier.badge && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                       <span
                         className="inscription px-3 py-1"
                         style={{ backgroundColor: "#D4A843", color: "#020202" }}
                       >
-                        Most Chosen
+                        {tier.badge}
                       </span>
                     </div>
                   )}
@@ -297,12 +296,12 @@ export default function Pricing() {
                     >
                       / {displayedPeriod}
                     </span>
-                    {showAnnual && tier.annualSubtext && (
+                    {annualSubtext && (
                       <div
                         className="font-crimson text-sm mt-2"
                         style={{ color: "#5A5A5A" }}
                       >
-                        {tier.annualSubtext}
+                        {annualSubtext}
                       </div>
                     )}
                   </div>
@@ -333,12 +332,9 @@ export default function Pricing() {
 
                   <a
                     href={
-                      tier.id === "starter"
-                        ? getSignupUrl(undefined, "/dashboard")
-                        : getSignupUrl(
-                            undefined,
-                            `/checkout/plan?plan=${tier.id}&period=${showAnnual ? "yearly" : "monthly"}`
-                          )
+                      isFree
+                        ? getSignupUrl(undefined, "/gig-command")
+                        : getSignupUrl(undefined, "/gig-worker-plans")
                     }
                     className={
                       tier.highlight
@@ -348,7 +344,7 @@ export default function Pricing() {
                   >
                     {tier.cta}
                   </a>
-                  {tier.id !== "starter" && (
+                  {!isFree && (
                     <p
                       className="font-crimson text-xs text-center mt-3"
                       style={{ color: "#4A4A4A" }}
@@ -389,13 +385,13 @@ export default function Pricing() {
                   className="font-cinzel text-xs font-bold"
                   style={{ color: "#F0E8D0", letterSpacing: "0.1em" }}
                 >
-                  14-DAY MONEY-BACK GUARANTEE
+                  FREE FOREVER
                 </p>
                 <p
                   className="font-crimson text-xs"
                   style={{ color: "#5A5A5A" }}
                 >
-                  Full refund on any paid tier. No questions asked.
+                  Track shifts, miles, and taxes free. No card required.
                 </p>
               </div>
             </div>
@@ -415,13 +411,13 @@ export default function Pricing() {
                   className="font-cinzel text-xs font-bold"
                   style={{ color: "#F0E8D0", letterSpacing: "0.1em" }}
                 >
-                  PAYMENTS VIA STRIPE &amp; PAYPAL
+                  IRS-RATE MILEAGE &amp; TAX TOOLS
                 </p>
                 <p
                   className="font-crimson text-xs"
                   style={{ color: "#5A5A5A" }}
                 >
-                  Secure checkout. Verified webhooks. Instant access.
+                  Self-employment, quarterly, and mileage — on every plan.
                 </p>
               </div>
             </div>
@@ -441,13 +437,13 @@ export default function Pricing() {
                   className="font-cinzel text-xs font-bold"
                   style={{ color: "#F0E8D0", letterSpacing: "0.1em" }}
                 >
-                  TENANT DATA ISOLATION
+                  YOUR DATA STAYS YOURS
                 </p>
                 <p
                   className="font-crimson text-xs"
                   style={{ color: "#5A5A5A" }}
                 >
-                  Your data never crosses tenant boundaries.
+                  Your earnings and tax history are never deleted.
                 </p>
               </div>
             </div>
@@ -474,7 +470,7 @@ export default function Pricing() {
             className="font-cinzel text-3xl font-black mb-12 text-center"
             style={{ color: "#F0E8D0" }}
           >
-            Questions before you commit
+            Questions before you start
           </h2>
           <div className="space-y-6">
             {FAQ.map((item, i) => (
@@ -510,13 +506,13 @@ export default function Pricing() {
             className="font-crimson text-base mb-6"
             style={{ color: "#6A6A6A" }}
           >
-            Still deciding? Read about{" "}
-            <Link href="/architecture">
+            Still deciding? Try the{" "}
+            <Link href="/tools">
               <span
                 className="cursor-pointer underline"
                 style={{ color: "#D4A843" }}
               >
-                the architecture
+                free tax &amp; mileage tools
               </span>
             </Link>{" "}
             or{" "}
