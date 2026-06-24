@@ -58,7 +58,7 @@ export default function StickyCTA() {
             START FREE — UPGRADE WHEN READY
           </p>
           <p className="font-crimson text-xs" style={{ color: "#5A5A5A" }}>
-            Pro from $16/mo billed annually
+            Pro from $4.99/mo — or $49/yr
           </p>
         </div>
         <button
