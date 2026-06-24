@@ -2544,13 +2544,13 @@ export const ROUTE_SEO: RouteSeo[] = [
     path: "/architecture",
     title: "Architecture | UnifyOne by 1Commerce",
     description:
-      "Explore UnifyOne's structural pillars — multi-tenant foundation, payment orchestration, automation mesh, social intelligence, and Kai AI.",
+      "How UnifyOne is built for gig and 1099 workers — GigIQ earnings intelligence, Tax Autopilot, Money Manager, and Kai, with more AI tools as they ship.",
   },
   {
     path: "/the-system",
     title: "The System | UnifyOne",
     description:
-      "How UnifyOne works: four sequential build phases, ten integrations, and six features that replace three separate SaaS tools.",
+      "How UnifyOne works for gig workers: GigIQ, Tax Autopilot, Money Manager, and Kai in one app, with more AI tools added as they ship. Free + Pro $4.99/mo.",
   },
   {
     path: "/pricing",
@@ -2578,37 +2578,37 @@ export const ROUTE_SEO: RouteSeo[] = [
     path: "/contact",
     title: "Contact | UnifyOne",
     description:
-      "Get in touch with the UnifyOne team at 1Commerce — questions on multi-tenant commerce, pricing, integrations, partnerships, and support.",
+      "Get in touch with the UnifyOne team at 1Commerce LLC — questions on gig earnings tracking, taxes, pricing, partnerships, and support.",
   },
   {
     path: "/tithes",
     title: "Tithes | UnifyOne",
     description:
-      "UnifyOne's Tithes program and transparent pricing — Starter free, Pro $19/mo, Scale $99/mo, all driven by one canonical catalog.",
+      "UnifyOne's Tithes program and transparent gig-worker pricing — Free forever, or Pro at $4.99/mo ($49/yr) for GigIQ, Tax Autopilot, Money Manager, and Kai.",
   },
   {
     path: "/documents",
     title: "Documentation | UnifyOne",
     description:
-      "UnifyOne documentation — guides, integrations, case studies, and the full build timeline for the multi-tenant commerce platform.",
+      "UnifyOne documentation — guides, integrations, case studies, and the full build timeline for the gig-worker earnings & tax app.",
   },
   {
     path: "/documents/case-studies",
     title: "Case Studies | UnifyOne",
     description:
-      "Detailed case studies of UnifyOne platform features: Cathedral Framework, Kai, multi-tenant architecture, Stripe CAPI bridge, and scroll reveals.",
+      "Detailed case studies of UnifyOne features for gig workers: GigIQ earnings intelligence, Tax Autopilot, Money Manager, and the Kai AI assistant.",
   },
   {
     path: "/documents/integrations",
     title: "Integration Guides | UnifyOne",
     description:
-      "Complete integration guides for UnifyOne — Kai, Claude, n8n, Stripe, PayPal, Square, and Shopify connections for operators.",
+      "Integration guides for UnifyOne — connect gig platforms and payout accounts, plus Kai, the Claude-powered AI assistant, to track earnings and taxes.",
   },
   {
     path: "/documents/work-proof",
     title: "Build Timeline & Work Proof | UnifyOne",
     description:
-      "Complete timeline of 36 development phases, deliverables, and technical achievements for the UnifyOne platform.",
+      "Complete timeline of 36 development phases, deliverables, and technical achievements behind UnifyOne's gig-worker earnings & tax app.",
   },
   {
     path: "/tools",
@@ -2620,7 +2620,7 @@ export const ROUTE_SEO: RouteSeo[] = [
     path: "/blog",
     title: "Blog | UnifyOne by 1Commerce",
     description:
-      "UnifyOne blog — multi-tenant commerce, gig-economy earnings, AI automation, and digital retail strategy for operators and e-commerce teams.",
+      "UnifyOne blog — gig-economy earnings, 1099 taxes, mileage deductions, and AI tools that help DoorDash, Uber, Lyft, and Instacart workers keep more pay.",
   },
   {
     path: "/blog/gig-worker-shift-intelligence",
@@ -3005,21 +3005,21 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/blog/gig-economy-commerce-platform",
-    title: "Gig Economy Commerce Platform | UnifyOne Blog",
+    title: "One App for Gig-Economy Earnings | UnifyOne Blog",
     description:
-      "Why gig-economy operators need a unified commerce platform — consolidating earnings, orders, and analytics across DoorDash, Uber, and more.",
+      "Why gig workers need one app for their money — consolidating earnings, mileage, and taxes across DoorDash, Uber, Lyft, Instacart, and more.",
   },
   {
     path: "/blog/multi-tenant-ecommerce-saas",
-    title: "Multi-Tenant Ecommerce SaaS | UnifyOne Blog",
+    title: "How UnifyOne Keeps Your Gig Data Secure | UnifyOne Blog",
     description:
-      "What multi-tenant ecommerce SaaS means, how tenant isolation and RBAC work, and how UnifyOne runs many stores from one secure backend.",
+      "How UnifyOne isolates each worker's earnings and tax data on a secure backend — the privacy and architecture behind your gig money app.",
   },
   {
     path: "/blog/digital-retail-guide",
-    title: "Digital Retail Guide | UnifyOne Blog",
+    title: "Selling on the Side? Track That Income | UnifyOne Blog",
     description:
-      "A practical digital retail guide for operators — unifying storefronts, marketplaces, and POS into one multi-tenant commerce system.",
+      "A practical guide for gig workers who also sell online — unifying marketplace payouts, expenses, and 1099 taxes alongside your gig earnings.",
   },
   {
     path: "/privacy",
@@ -3035,9 +3035,9 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/themes",
-    title: "Theme Store | UnifyOne — Commerce Themes & Storefront Designs",
+    title: "Themes | UnifyOne — Personalize Your Gig Dashboard",
     description:
-      "Browse free and paid themes for your UnifyOne storefront. Professionally designed for e-commerce and gig worker platforms — preview and install in minutes.",
+      "Browse free and paid themes to personalize your UnifyOne dashboard. Make your gig earnings, mileage, and tax view your own — preview and apply in minutes.",
   },
   {
     path: "/docs-chat",
@@ -3049,30 +3049,30 @@ export const ROUTE_SEO: RouteSeo[] = [
     path: "/resources",
     title: "Resources | UnifyOne",
     description:
-      "Operating excellence resources for gig operators and commerce teams — playbooks, templates, analytics guides, and video walkthroughs. Download free.",
+      "Free resources for gig and 1099 workers — earnings playbooks, mileage and tax templates, deduction guides, and video walkthroughs. Download free.",
   },
   {
     path: "/sovereign",
     title: "The Sovereign Stack | 1Commerce",
     description:
-      "The Sovereign Stack gives gig operators legal protection, financial independence, and resilience. Break free from platform lock-in. Waitlist open.",
+      "The Sovereign Stack gives gig workers legal protection, financial independence, and resilience. Break free from platform lock-in. Waitlist open.",
   },
   {
     path: "/design-system",
     title: "Design System | UnifyOne",
     description:
-      "The UnifyOne design system — Cathedral Framework tokens for color, typography, spacing, and radii, plus the full component library used in the product.",
+      "The UnifyOne design system — design tokens for color, typography, spacing, and radii, plus the full component library used across the gig-worker app.",
   },
   {
     path: "/login",
     title: "Sign In | UnifyOne",
     description:
-      "Sign in to your UnifyOne workspace — multi-tenant commerce, AI earnings insights, and all your connected stores in one place.",
+      "Sign in to UnifyOne — your gig earnings, mileage, taxes, and AI insights from every app in one place.",
   },
   {
     path: "/register",
     title: "Create Your Account | UnifyOne",
     description:
-      "Start free on UnifyOne — the multi-tenant commerce platform for gig operators and e-commerce teams. No credit card required.",
+      "Start free on UnifyOne — the earnings & tax app for gig and 1099 workers. Track pay, mileage, and quarterly taxes. No credit card required.",
   },
 ];
