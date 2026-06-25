@@ -345,7 +345,7 @@ export default function ToolsIndex() {
             />
             <Faq
               q="What is UnifyOne?"
-              a="UnifyOne is a multi-tenant e-commerce and gig-income management platform built for independent operators. It unifies sales channels, income streams, and operations in one workspace. These free tools are a standalone subset of its financial-management features."
+              a="UnifyOne is a gig-worker earnings & tax platform built for independent 1099 workers — rideshare and delivery drivers, freelancers, contractors, and resellers. It unifies income across gig apps and selling channels into one workspace, with tax estimates, mileage tracking, and money management. These free tools are a standalone subset of its financial-management features."
             />
           </div>
         </div>

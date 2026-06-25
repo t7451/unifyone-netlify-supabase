@@ -76,11 +76,11 @@ const PRIMARY_SHOWCASES: Showcase[] = [
       },
       {
         timecode: "0:15-0:24",
-        title: "Multi-tenant scale",
+        title: "Every gig in one place",
         visual:
-          "Multiple branded storefronts branch from the same platform core, each with isolated data and revenue flows.",
+          "Multiple gig apps branch from the same platform core, each feeding earnings and mileage into one income view.",
         narration:
-          "Each tenant gets its own commerce system without duplicating infrastructure.",
+          "Every gig you work rolls up into one set of numbers without juggling separate apps.",
       },
       {
         timecode: "0:25-0:30",
@@ -95,47 +95,47 @@ const PRIMARY_SHOWCASES: Showcase[] = [
 
 const ADDITIONAL_SHOWCASES: Showcase[] = [
   {
-    id: "multi-tenant-showcase",
-    title: "Multi-Tenant Commerce Demo",
+    id: "gig-earnings-showcase",
+    title: "Gig Earnings & Tax Demo",
     description:
-      "Visual walkthrough of multi-tenant isolation, tenant switching, and SaaS scalability features built into the UnifyOne platform.",
+      "Visual walkthrough of the earnings dashboard, automatic mileage tracking, and quarterly tax estimates built into the UnifyOne app.",
     duration: "45 seconds",
     format: "Product Demo",
-    tags: ["Multi-Tenant", "SaaS", "Commerce"],
-    category: "Platform Story",
-    thumbnail: "🏢",
+    tags: ["Earnings", "Mileage", "Taxes"],
+    category: "Product Story",
+    thumbnail: "🚗",
     storyboard: [
       {
         timecode: "0:00-0:07",
-        title: "Tenant map",
+        title: "Unified earnings",
         visual:
-          "A clean operations map shows three storefronts entering UnifyOne through separate tenant lanes.",
+          "Payouts from DoorDash, Uber, Lyft, and Instacart flow into a single UnifyOne earnings dashboard.",
         narration:
-          "Each brand can run independently while sharing the same commerce backbone.",
+          "Every gig app pays you differently — UnifyOne pulls it all into one income view.",
       },
       {
         timecode: "0:08-0:18",
-        title: "Data isolation",
+        title: "Mileage tracking",
         visual:
-          "Orders, customers, products, and analytics lock into tenant-specific vaults with distinct accent colors.",
+          "A drive auto-logs in the background, then converts into deductible miles at the current IRS rate.",
         narration:
-          "Tenant scoping keeps every customer, order, and report tied to the correct business.",
+          "Mileage is captured automatically and valued at the latest IRS standard rate.",
       },
       {
         timecode: "0:19-0:32",
-        title: "Operator dashboard",
+        title: "Tax Autopilot",
         visual:
-          "An operator switches from fulfillment to analytics to billing without leaving the dashboard shell.",
+          "A set-aside meter fills as earnings land, showing the dollars to reserve for quarterly taxes.",
         narration:
-          "Operators get one command surface for products, payments, team access, and reporting.",
+          "Tax Autopilot tells you exactly how much to set aside before the next quarterly due date.",
       },
       {
         timecode: "0:33-0:45",
-        title: "Scale moment",
+        title: "Money moment",
         visual:
-          "New tenant tiles activate as revenue counters rise and integration badges settle into place.",
+          "Net take-home, deductions, and tax savings settle into a clean month-end summary.",
         narration:
-          "The platform scales by adding tenants, not by rebuilding the business each time.",
+          "You see real take-home pay after expenses and taxes — no spreadsheets required.",
       },
     ],
   },
