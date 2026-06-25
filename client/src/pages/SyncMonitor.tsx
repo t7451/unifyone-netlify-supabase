@@ -1,19 +1,50 @@
 import { useEffect, useState } from "react";
 import {
-  Activity, AlertTriangle, CheckCircle2, Clock, RefreshCw, BarChart2, Database, ShoppingBag, TrendingUp
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  RefreshCw,
+  BarChart2,
+  Database,
+  ShoppingBag,
+  TrendingUp,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
 } from "recharts";
 
 const ENTITY_COLORS: Record<string, string> = {
@@ -25,7 +56,13 @@ const ENTITY_COLORS: Record<string, string> = {
   webhook: "#6B7280",
 };
 
-const STATUS_BADGE: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
+const STATUS_BADGE: Record<
+  string,
+  {
+    variant: "default" | "secondary" | "destructive" | "outline";
+    label: string;
+  }
+> = {
   success: { variant: "default", label: "Success" },
   failed: { variant: "destructive", label: "Failed" },
   skipped: { variant: "secondary", label: "Skipped" },
@@ -56,11 +93,14 @@ export default function SyncMonitor() {
   const AUDIT_LIMIT = 25;
 
   useEffect(() => {
-    document.title = "Sync Monitor — UnifyOne";
+    document.title = "Store Sync Monitor — UnifyOne";
   }, []);
 
-  const { data: stats, isLoading: statsLoading, refetch: refetchStats } =
-    trpc.syncMonitor.getSyncStats.useQuery({ hours: windowHours });
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    refetch: refetchStats,
+  } = trpc.syncMonitor.getSyncStats.useQuery({ hours: windowHours });
 
   const { data: latencyChart, isLoading: chartLoading } =
     trpc.syncMonitor.getLatencyChart.useQuery({ hours: windowHours });
@@ -70,8 +110,20 @@ export default function SyncMonitor() {
 
   const { data: auditLog, isLoading: auditLoading } =
     trpc.syncMonitor.getAuditLog.useQuery({
-      entity: entityFilter !== "all" ? (entityFilter as "product" | "order" | "customer" | "inventory" | "fulfillment" | "webhook") : undefined,
-      status: statusFilter !== "all" ? (statusFilter as "success" | "failed" | "skipped" | "retrying") : undefined,
+      entity:
+        entityFilter !== "all"
+          ? (entityFilter as
+              | "product"
+              | "order"
+              | "customer"
+              | "inventory"
+              | "fulfillment"
+              | "webhook")
+          : undefined,
+      status:
+        statusFilter !== "all"
+          ? (statusFilter as "success" | "failed" | "skipped" | "retrying")
+          : undefined,
       limit: AUDIT_LIMIT,
       offset: auditOffset,
     });
@@ -95,8 +147,14 @@ export default function SyncMonitor() {
       title: "Error Rate",
       value: `${stats?.errorRate ?? 0}%`,
       icon: AlertTriangle,
-      color: stats?.errorRate && stats.errorRate > 5 ? "text-red-500" : "text-yellow-500",
-      bg: stats?.errorRate && stats.errorRate > 5 ? "bg-red-500/10" : "bg-yellow-500/10",
+      color:
+        stats?.errorRate && stats.errorRate > 5
+          ? "text-red-500"
+          : "text-yellow-500",
+      bg:
+        stats?.errorRate && stats.errorRate > 5
+          ? "bg-red-500/10"
+          : "bg-yellow-500/10",
     },
     {
       title: "Avg Latency",
@@ -114,14 +172,18 @@ export default function SyncMonitor() {
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <BarChart2 className="w-6 h-6 text-[#00D9FF]" />
-            Sync Monitor
+            Store Sync Monitor
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Real-time Shopify integration health, latency, and audit log
+            Optional store add-on — if you sell on Shopify alongside your gig
+            work, track integration health, latency, and the sync audit log here
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Select value={String(windowHours)} onValueChange={(v) => setWindowHours(Number(v))}>
+          <Select
+            value={String(windowHours)}
+            onValueChange={v => setWindowHours(Number(v))}
+          >
             <SelectTrigger className="w-32 h-9">
               <SelectValue />
             </SelectTrigger>
@@ -147,21 +209,25 @@ export default function SyncMonitor() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpiCards.map((card) => (
+        {kpiCards.map(card => (
           <Card key={card.title} className="border-border/40">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
                   {card.title}
                 </span>
-                <div className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}>
+                <div
+                  className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}
+                >
                   <card.icon className={`w-4 h-4 ${card.color}`} />
                 </div>
               </div>
               {statsLoading ? (
                 <div className="h-7 w-20 bg-muted animate-pulse rounded" />
               ) : (
-                <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
+                <p className={`text-2xl font-bold ${card.color}`}>
+                  {card.value}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -177,7 +243,9 @@ export default function SyncMonitor() {
               <Clock className="w-4 h-4 text-[#00D9FF]" />
               Avg Latency Over Time
             </CardTitle>
-            <CardDescription className="text-xs">Milliseconds per sync event, grouped by hour</CardDescription>
+            <CardDescription className="text-xs">
+              Milliseconds per sync event, grouped by hour
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {chartLoading ? (
@@ -189,19 +257,40 @@ export default function SyncMonitor() {
             ) : (
               <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={latencyChart}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(255,255,255,0.05)"
+                  />
                   <XAxis
                     dataKey="hour"
                     tick={{ fontSize: 10, fill: "#6B7280" }}
-                    tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    tickFormatter={v =>
+                      new Date(v).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    }
                   />
-                  <YAxis tick={{ fontSize: 10, fill: "#6B7280" }} tickFormatter={(v) => `${v}ms`} />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: "#6B7280" }}
+                    tickFormatter={v => `${v}ms`}
+                  />
                   <Tooltip
-                    contentStyle={{ background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}
-                    labelFormatter={(v) => new Date(v).toLocaleString()}
+                    contentStyle={{
+                      background: "#1a1a2e",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: 8,
+                    }}
+                    labelFormatter={v => new Date(v).toLocaleString()}
                     formatter={(v: number) => [`${v}ms`, "Avg Latency"]}
                   />
-                  <Line type="monotone" dataKey="avgLatencyMs" stroke="#00D9FF" strokeWidth={2} dot={false} />
+                  <Line
+                    type="monotone"
+                    dataKey="avgLatencyMs"
+                    stroke="#00D9FF"
+                    strokeWidth={2}
+                    dot={false}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -215,7 +304,9 @@ export default function SyncMonitor() {
               <TrendingUp className="w-4 h-4 text-purple-500" />
               Event Volume
             </CardTitle>
-            <CardDescription className="text-xs">Events per hour with error overlay</CardDescription>
+            <CardDescription className="text-xs">
+              Events per hour with error overlay
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {chartLoading ? (
@@ -227,19 +318,41 @@ export default function SyncMonitor() {
             ) : (
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={latencyChart}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(255,255,255,0.05)"
+                  />
                   <XAxis
                     dataKey="hour"
                     tick={{ fontSize: 10, fill: "#6B7280" }}
-                    tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    tickFormatter={v =>
+                      new Date(v).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    }
                   />
                   <YAxis tick={{ fontSize: 10, fill: "#6B7280" }} />
                   <Tooltip
-                    contentStyle={{ background: "#1a1a2e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}
-                    labelFormatter={(v) => new Date(v).toLocaleString()}
+                    contentStyle={{
+                      background: "#1a1a2e",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: 8,
+                    }}
+                    labelFormatter={v => new Date(v).toLocaleString()}
                   />
-                  <Bar dataKey="eventCount" fill="#A855F7" radius={[2, 2, 0, 0]} name="Events" />
-                  <Bar dataKey="errorCount" fill="#EF4444" radius={[2, 2, 0, 0]} name="Errors" />
+                  <Bar
+                    dataKey="eventCount"
+                    fill="#A855F7"
+                    radius={[2, 2, 0, 0]}
+                    name="Events"
+                  />
+                  <Bar
+                    dataKey="errorCount"
+                    fill="#EF4444"
+                    radius={[2, 2, 0, 0]}
+                    name="Errors"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -254,24 +367,30 @@ export default function SyncMonitor() {
             <ShoppingBag className="w-4 h-4 text-[#00D9FF]" />
             Connected Store Health
           </CardTitle>
-          <CardDescription className="text-xs">Status and recent error counts for all active stores</CardDescription>
+          <CardDescription className="text-xs">
+            Optional — status and recent error counts for any stores you connect
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {healthLoading ? (
             <div className="space-y-2">
-              {[1, 2].map((i) => <div key={i} className="h-12 bg-muted animate-pulse rounded" />)}
+              {[1, 2].map(i => (
+                <div key={i} className="h-12 bg-muted animate-pulse rounded" />
+              ))}
             </div>
           ) : !storeHealth?.length ? (
             <div className="text-center py-8 text-muted-foreground">
               <Database className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm">No stores connected yet.</p>
+              <p className="text-sm">
+                No stores connected — this add-on is optional.
+              </p>
               <Button asChild variant="outline" size="sm" className="mt-3">
                 <a href="/shopify/install">Connect a Shopify Store</a>
               </Button>
             </div>
           ) : (
             <div className="space-y-2">
-              {storeHealth.map((store) => (
+              {storeHealth.map(store => (
                 <div
                   key={store.id}
                   className="flex items-center justify-between p-3 rounded-lg border border-border/40 bg-card/40"
@@ -281,16 +400,26 @@ export default function SyncMonitor() {
                       <ShoppingBag className="w-4 h-4 text-[#00D9FF]" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-foreground">{store.shopName || store.shopDomain}</p>
-                      <p className="text-xs text-muted-foreground">{store.shopDomain}</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {store.shopName || store.shopDomain}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {store.shopDomain}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4 text-xs">
                     <span className="text-muted-foreground hidden sm:block">
                       Last sync: {formatTime(store.lastSyncAt)}
                     </span>
-                    <span className={`font-medium ${HEALTH_COLORS[store.health]}`}>
-                      {store.health === "healthy" ? "✓ Healthy" : store.health === "warning" ? `⚠ ${store.recentErrors} errors` : `✗ ${store.recentErrors} errors`}
+                    <span
+                      className={`font-medium ${HEALTH_COLORS[store.health]}`}
+                    >
+                      {store.health === "healthy"
+                        ? "✓ Healthy"
+                        : store.health === "warning"
+                          ? `⚠ ${store.recentErrors} errors`
+                          : `✗ ${store.recentErrors} errors`}
                     </span>
                   </div>
                 </div>
@@ -314,7 +443,13 @@ export default function SyncMonitor() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Select value={entityFilter} onValueChange={(v) => { setEntityFilter(v); setAuditOffset(0); }}>
+              <Select
+                value={entityFilter}
+                onValueChange={v => {
+                  setEntityFilter(v);
+                  setAuditOffset(0);
+                }}
+              >
                 <SelectTrigger className="w-32 h-8 text-xs">
                   <SelectValue placeholder="Entity" />
                 </SelectTrigger>
@@ -328,7 +463,13 @@ export default function SyncMonitor() {
                   <SelectItem value="webhook">Webhooks</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setAuditOffset(0); }}>
+              <Select
+                value={statusFilter}
+                onValueChange={v => {
+                  setStatusFilter(v);
+                  setAuditOffset(0);
+                }}
+              >
                 <SelectTrigger className="w-28 h-8 text-xs">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -346,12 +487,16 @@ export default function SyncMonitor() {
         <CardContent className="p-0">
           {auditLoading ? (
             <div className="p-4 space-y-2">
-              {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-10 bg-muted animate-pulse rounded" />)}
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="h-10 bg-muted animate-pulse rounded" />
+              ))}
             </div>
           ) : !auditLog?.logs.length ? (
             <div className="text-center py-12 text-muted-foreground">
               <Activity className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm">No sync events found for the selected filters.</p>
+              <p className="text-sm">
+                No sync events found for the selected filters.
+              </p>
             </div>
           ) : (
             <>
@@ -368,14 +513,22 @@ export default function SyncMonitor() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {auditLog.logs.map((log) => {
-                      const statusInfo = STATUS_BADGE[log.status] ?? { variant: "secondary" as const, label: log.status };
+                    {auditLog.logs.map(log => {
+                      const statusInfo = STATUS_BADGE[log.status] ?? {
+                        variant: "secondary" as const,
+                        label: log.status,
+                      };
                       return (
-                        <TableRow key={log.id} className="border-border/40 hover:bg-card/60">
+                        <TableRow
+                          key={log.id}
+                          className="border-border/40 hover:bg-card/60"
+                        >
                           <TableCell className="text-xs font-mono text-foreground/80 max-w-[160px] truncate">
                             {log.event}
                             {log.entityId && (
-                              <span className="text-muted-foreground ml-1">#{log.entityId}</span>
+                              <span className="text-muted-foreground ml-1">
+                                #{log.entityId}
+                              </span>
                             )}
                           </TableCell>
                           <TableCell>
@@ -393,12 +546,17 @@ export default function SyncMonitor() {
                             {log.direction === "inbound" ? "← In" : "→ Out"}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={statusInfo.variant} className="text-xs">
+                            <Badge
+                              variant={statusInfo.variant}
+                              className="text-xs"
+                            >
                               {statusInfo.label}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {log.latencyMs != null ? formatMs(log.latencyMs) : "—"}
+                            {log.latencyMs != null
+                              ? formatMs(log.latencyMs)
+                              : "—"}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                             {new Date(log.createdAt).toLocaleString()}
@@ -412,14 +570,18 @@ export default function SyncMonitor() {
               {/* Pagination */}
               <div className="flex items-center justify-between px-4 py-3 border-t border-border/40">
                 <span className="text-xs text-muted-foreground">
-                  Showing {auditOffset + 1}–{Math.min(auditOffset + AUDIT_LIMIT, auditLog.total)} of {auditLog.total}
+                  Showing {auditOffset + 1}–
+                  {Math.min(auditOffset + AUDIT_LIMIT, auditLog.total)} of{" "}
+                  {auditLog.total}
                 </span>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     disabled={auditOffset === 0}
-                    onClick={() => setAuditOffset(Math.max(0, auditOffset - AUDIT_LIMIT))}
+                    onClick={() =>
+                      setAuditOffset(Math.max(0, auditOffset - AUDIT_LIMIT))
+                    }
                     className="h-7 text-xs"
                   >
                     Previous
