@@ -37,6 +37,18 @@ import {
   Sparkles,
   Star,
   X,
+  Package,
+  ShoppingCart,
+  Users,
+  Tag,
+  BarChart3,
+  TrendingUp,
+  Share2,
+  Target,
+  Workflow,
+  Palette,
+  Handshake,
+  RefreshCcw,
 } from "lucide-react";
 import { AIChatBox } from "@/components/AIChatBox";
 import type { Message } from "@/components/AIChatBox";
@@ -62,6 +74,25 @@ const menuItems = [
   { icon: Settings, label: "Settings", path: "/settings" },
   { icon: CreditCard, label: "Billing", path: "/billing" },
   { icon: UserPlus, label: "Team", path: "/team" },
+];
+
+// Optional secondary capability — commerce tools kept fully functional but
+// de-emphasized relative to the gig-first product above. Every path here is a
+// mounted DashboardRoute in App.tsx.
+const commerceMenuItems = [
+  { icon: Package, label: "Products", path: "/products" },
+  { icon: ShoppingCart, label: "Orders", path: "/orders" },
+  { icon: Users, label: "Customers", path: "/customers" },
+  { icon: Tag, label: "Discounts", path: "/discounts" },
+  { icon: BarChart3, label: "Analytics", path: "/analytics" },
+  { icon: TrendingUp, label: "Revenue", path: "/revenue-command" },
+  { icon: DollarSign, label: "Revenue Streams", path: "/revenue-streams" },
+  { icon: Share2, label: "Social", path: "/social" },
+  { icon: Target, label: "Leads", path: "/leads" },
+  { icon: Workflow, label: "Automations", path: "/automations" },
+  { icon: Palette, label: "Themes", path: "/my-themes" },
+  { icon: Handshake, label: "Affiliates", path: "/affiliates" },
+  { icon: RefreshCcw, label: "Sync Monitor", path: "/sync-monitor" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -148,7 +179,9 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => item.path === location);
+  const activeMenuItem =
+    menuItems.find(item => item.path === location) ??
+    commerceMenuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
   const tenantQuery = trpc.tenant.list.useQuery(undefined, { retry: false });
   const tenantName =
@@ -338,6 +371,69 @@ function DashboardLayoutContent({
                         style={{
                           color: isActive ? "#D4A843" : "#D2D2D2",
                           fontSize: "0.6rem",
+                          letterSpacing: "0.12em",
+                        }}
+                      >
+                        {item.label}
+                      </span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+
+            {/* Secondary, de-emphasized capability: commerce tools remain fully
+                functional but are clearly grouped below the gig-first product. */}
+            {!isCollapsed && (
+              <div
+                className="mx-2 mt-3 mb-1 px-2 pt-3"
+                style={{ borderTop: "1px solid rgba(212,168,67,0.1)" }}
+              >
+                <span
+                  className="font-cinzel block"
+                  style={{
+                    color: "#8A8A8A",
+                    fontSize: "0.5rem",
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Commerce (secondary)
+                </span>
+              </div>
+            )}
+            <SidebarMenu className="px-2 py-1 opacity-70">
+              {commerceMenuItems.map(item => {
+                const isActive = location === item.path;
+                return (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      isActive={isActive}
+                      onClick={() => setLocation(item.path)}
+                      tooltip={`${item.label} (secondary)`}
+                      className="h-8 transition-all font-normal rounded-none"
+                      style={
+                        isActive
+                          ? {
+                              backgroundColor: "rgba(212,168,67,0.06)",
+                              borderLeft: "2px solid #D4A843",
+                              borderBottom: "1px solid rgba(212,168,67,0.08)",
+                            }
+                          : {
+                              borderLeft: "2px solid transparent",
+                              borderBottom: "1px solid transparent",
+                            }
+                      }
+                    >
+                      <item.icon
+                        className="h-3 w-3"
+                        style={{ color: isActive ? "#D4A843" : "#9A9A9A" }}
+                      />
+                      <span
+                        className="font-cinzel"
+                        style={{
+                          color: isActive ? "#D4A843" : "#A8A8A8",
+                          fontSize: "0.55rem",
                           letterSpacing: "0.12em",
                         }}
                       >
