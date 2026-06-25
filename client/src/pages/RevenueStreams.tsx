@@ -153,7 +153,7 @@ function StreamDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Stream" : "Add Revenue Stream"}
+            {isEditing ? "Edit Stream" : "Add Income Stream"}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-2">
@@ -373,7 +373,7 @@ export default function RevenueStreams() {
               : undefined,
             notes: form.notes || undefined,
           });
-          toast.success("DealFlow revenue stream added");
+          toast.success("DealFlow income stream added");
         }
       } else {
         await createMutation.mutateAsync({
@@ -397,7 +397,7 @@ export default function RevenueStreams() {
             : undefined,
           notes: form.notes || undefined,
         });
-        toast.success("Revenue stream added");
+        toast.success("Income stream added");
       }
       refetch();
       setDialogOpen(false);
@@ -410,7 +410,7 @@ export default function RevenueStreams() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this revenue stream?")) return;
+    if (!confirm("Delete this income stream?")) return;
     try {
       await deleteMutation.mutateAsync({ id });
       toast.success("Stream removed");
@@ -458,11 +458,11 @@ export default function RevenueStreams() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <TrendingUp className="w-6 h-6 text-teal-400" />
-            Revenue Streams
+            Income Streams
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Track all income sources across affiliate, SaaS, consulting, and
-            more.
+            Track every income source that adds to your take-home — affiliate,
+            SaaS, consulting, and more.
           </p>
         </div>
         <Button
@@ -481,7 +481,7 @@ export default function RevenueStreams() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card className="border-teal-500/30 bg-teal-500/5">
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Monthly Revenue</p>
+            <p className="text-xs text-muted-foreground">Monthly Income</p>
             <p className="text-2xl font-bold text-teal-400 mt-1">
               $
               {(summary?.totalMonthly ?? 0).toLocaleString("en-US", {
@@ -525,7 +525,7 @@ export default function RevenueStreams() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-teal-400" />
-              Revenue by Type
+              Income by Type
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -564,7 +564,7 @@ export default function RevenueStreams() {
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground">
             <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-20" />
-            <p className="font-medium text-lg">No revenue streams yet</p>
+            <p className="font-medium text-lg">No income streams yet</p>
             <p className="text-sm mt-1 mb-4">
               Add your first income source to start tracking.
             </p>
