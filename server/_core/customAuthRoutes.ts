@@ -39,7 +39,12 @@ import {
   verifyPassword,
 } from "./customAuth";
 import { sdk } from "./sdk";
-import { authRateLimiter, passwordResetLimiter } from "./rateLimiter";
+import {
+  authRateLimiter,
+  passwordResetLimiter,
+  emailVerifyLimiter,
+  resendVerificationLimiter,
+} from "./rateLimiter";
 import { ENV, getAppUrl } from "./env";
 import { getDb, getTenantBySlug } from "../db";
 import { REFRESH_COOKIE_NAME } from "@shared/const";
@@ -1583,7 +1588,7 @@ export async function registerCustomAuthFetchRoutes(
 
     // ── Verify Email ───────────────────────────────────────────────────────
     if (path === "/api/auth/verify-email") {
-      const rateCheck = await passwordResetLimiter.check(clientIp);
+      const rateCheck = await emailVerifyLimiter.check(clientIp);
       if (!rateCheck.allowed) {
         return Response.json(
           {
@@ -1627,7 +1632,7 @@ export async function registerCustomAuthFetchRoutes(
 
     // ── Resend Verification Email ──────────────────────────────────────────
     if (path === "/api/auth/resend-verification") {
-      const rateCheck = await passwordResetLimiter.check(clientIp); // reuse same bucket
+      const rateCheck = await resendVerificationLimiter.check(clientIp);
       if (!rateCheck.allowed) {
         return Response.json(
           {
@@ -2424,7 +2429,7 @@ export function registerCustomAuthExpressRoutes(app: Express) {
     async (req: ExpressRequest, res: ExpressResponse) => {
       const clientIp = getExpressClientIp(req);
       try {
-        const rateCheck = await passwordResetLimiter.check(clientIp);
+        const rateCheck = await emailVerifyLimiter.check(clientIp);
         if (!rateCheck.allowed) {
           res
             .status(429)
@@ -2468,7 +2473,7 @@ export function registerCustomAuthExpressRoutes(app: Express) {
     async (req: ExpressRequest, res: ExpressResponse) => {
       const clientIp = getExpressClientIp(req);
       try {
-        const rateCheck = await passwordResetLimiter.check(clientIp);
+        const rateCheck = await resendVerificationLimiter.check(clientIp);
         if (!rateCheck.allowed) {
           res
             .status(429)

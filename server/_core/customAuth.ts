@@ -928,10 +928,18 @@ export async function verifyEmailToken(
   const user = result[0];
   if (!user) return { success: false, error: "Invalid or expired token" };
 
-  await db
-    .update(users)
-    .set({ emailVerified: true, emailVerificationToken: null })
-    .where(eq(users.openId, user.openId));
+  // Idempotent: a verification link is commonly hit more than once (mail-client
+  // link prefetch/scan, a preview-then-tap, or the SPA remounting). The token
+  // is the security boundary, so re-confirming an already-verified account is a
+  // no-op success rather than an error. We intentionally do NOT null the token
+  // here, so repeat hits keep resolving to the same user and succeed; the
+  // `emailVerified` flag is what gates access.
+  if (!user.emailVerified) {
+    await db
+      .update(users)
+      .set({ emailVerified: true })
+      .where(eq(users.openId, user.openId));
+  }
 
   return { success: true };
 }
