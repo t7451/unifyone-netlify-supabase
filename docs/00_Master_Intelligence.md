@@ -1,7 +1,7 @@
 # PNW Enterprises -- Master Intelligence
 
 **Established:** 2025
-**Mission:** Build commerce infrastructure that outlasts every platform trend through sequential, structural construction.
+**Mission:** Build gig-worker earnings & tax infrastructure that outlasts every platform trend through sequential, structural construction -- durable tools for the 76M+ US gig/1099 workers (DoorDash, Uber, Lyft, Instacart, Amazon Flex, Grubhub) that survive any single platform. Commerce infrastructure remains a secondary, supporting capability.
 **Governance Model:** Human-sovereign autonomy with executable governance constraints and kill-switch mechanisms.
 **Platform URL:** https://1commerce.online
 **Contact:** skdev@1commercesolutions.com
@@ -10,11 +10,11 @@
 
 ## Strategic Overview
 
-PNW Enterprises operates as a **multi-subsidiary, event-driven commerce ecosystem** designed to achieve "certified technology provider" status on Meta and Google through demonstrated integration volume and customer success. The organization is governed by the **Cathedral Principle**: sequential, phased construction prioritizing automated infrastructure before scaling traffic.
+PNW Enterprises operates as a **multi-subsidiary, event-driven gig-economy ecosystem** -- led by UnifyOne's gig-worker earnings & tax app, with commerce infrastructure as a secondary capability -- designed to achieve "certified technology provider" status on Meta and Google through demonstrated integration volume and customer success. The organization is governed by the **Cathedral Principle**: sequential, phased construction prioritizing automated infrastructure before scaling traffic.
 
 ### Core Thesis
 
-Modern commerce platforms fail because they prioritize feature velocity over structural integrity. PNW Enterprises inverts this: we build foundational systems first (payment orchestration, multi-tenant isolation, real-time analytics, AI automation), then scale traffic into proven infrastructure. This approach eliminates technical debt and creates defensible moats.
+Gig workers are underserved because the tools built for them prioritize feature velocity over structural integrity, and most never put the worker's earnings and taxes first. PNW Enterprises inverts this: we build foundational systems first (earnings tracking, IRS-mileage and quarterly estimated-tax automation, multi-tenant isolation, real-time analytics, AI automation), then scale into proven infrastructure. The same load-bearing systems power our secondary commerce capability. This approach eliminates technical debt and creates defensible moats.
 
 ### The Cathedral Framework
 
@@ -40,19 +40,20 @@ This framework governs technical decisions (schema design, API surface), busines
 
 ### Primary Entities
 
-| Entity | Role | Revenue Model | Status |
-|--------|------|---------------|--------|
-| **1Commerce LLC** | Core commerce platform (Shopify integrations, loyalty, gig worker tools) | SaaS subscriptions + transaction fees | Production |
-| **UnifyOne** | Multi-tenant commerce SaaS (Cathedral Framework, Manus AI, payment orchestration) | SaaS tiers ($99--$999/mo) | Production |
-| **PNW Solutions** | Cloud infrastructure & DevOps consulting | Retainers + hourly | Production |
-| **KSK Industrial** | Logistics & 3PL operations | Fulfillment fees + consulting | Production |
-| **KSK Operations** | Asset management & inventory optimization | SaaS + consulting | Production |
-| **P.A.K.C. Educational Foundation** | Nonprofit tech credentialing | Grants + donations | Production |
-| **P.A.K.C. Technology Services** | Infrastructure R&D & hosting | Internal cost allocation | Production |
+| Entity                              | Role                                                                                                                                                                                                           | Revenue Model                                                               | Status     |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------- |
+| **1Commerce LLC**                   | Operating entity for UnifyOne -- gig-worker earnings & tax tooling (GigIQ, Tax Autopilot, Money Manager, Kai), with secondary commerce capability (Shopify integrations, loyalty)                              | App subscriptions + transaction fees                                        | Production |
+| **UnifyOne**                        | Gig-worker earnings & tax app for 76M+ US gig/1099 workers (GigIQ, Tax Autopilot, Money Manager, Kai; Cathedral Framework); secondary multi-tenant commerce capability with Manus AI and payment orchestration | Public pricing: Free + Pro $4.99/mo ($49/yr); secondary commerce SaaS tiers | Production |
+| **PNW Solutions**                   | Cloud infrastructure & DevOps consulting                                                                                                                                                                       | Retainers + hourly                                                          | Production |
+| **KSK Industrial**                  | Logistics & 3PL operations                                                                                                                                                                                     | Fulfillment fees + consulting                                               | Production |
+| **KSK Operations**                  | Asset management & inventory optimization                                                                                                                                                                      | SaaS + consulting                                                           | Production |
+| **P.A.K.C. Educational Foundation** | Nonprofit tech credentialing                                                                                                                                                                                   | Grants + donations                                                          | Production |
+| **P.A.K.C. Technology Services**    | Infrastructure R&D & hosting                                                                                                                                                                                   | Internal cost allocation                                                    | Production |
 
 ### Internal Client Mesh
 
 Each subsidiary operates as an **internal proof-of-concept client** for the next layer:
+
 - **KSK Industrial** validates logistics automation -> feeds into **PNW Solutions** cloud infrastructure
 - **PNW Solutions** proves DevOps patterns -> feeds into **UnifyOne** platform reliability
 - **1Commerce** validates commerce workflows -> feeds into **UnifyOne** multi-tenant isolation
@@ -62,54 +63,54 @@ Each subsidiary operates as an **internal proof-of-concept client** for the next
 
 The UnifyOne platform comprises the following functional modules, each mapped to a tRPC router and React page:
 
-| Module | Router | Page | Purpose |
-|--------|--------|------|---------|
-| **Dashboard** | `analytics` | `Dashboard.tsx` | KPI overview, revenue trends, order summaries |
-| **Products** | `products` | `Products.tsx` | Product CRUD, inventory tracking, Shopify sync |
-| **Orders** | `orders` | `Orders.tsx` | Order lifecycle, fulfillment, multi-payment status |
-| **Customers** | (via orders/analytics) | `Customers.tsx` | CRM, customer profiles, purchase history |
-| **Gig Command** | `moneyManager` | `GigCommand.tsx` | GPS-aware shift ops, route optimization, platform shortcuts |
-| **Money Manager** | `moneyManager` | `MoneyManager.tsx` | Earnings tracker, mileage logs, tax deductions, financial rules |
-| **Manus AI** | `manusAI` | `ManusAIPage.tsx` | Context-aware AI copilot, per-page system prompts |
-| **Document Chat** | `documentChat` | `DocsChat.tsx` | RAG-powered document Q&A using embeddings |
-| **Governance** | `governance`, `claudeGovernance` | `GovernanceDashboard.tsx` | Rule management, escalation queue, audit logs |
-| **Automations** | `automation` | `Automations.tsx` | n8n workflows, Zapier hooks, Mailchimp sequences |
-| **Mobile Automation** | `mobileAutomation` | `MobileAutomation.tsx` | n8n schedules, deep link attribution, CAPI event logs |
-| **Social Media** | `social` | `Social.tsx` | Post scheduling, platform management, UTM tracking |
-| **Social Friends** | `socialFriends` | `Friends.tsx` | Social connections, challenges, achievement feed |
-| **Leads** | `leads` | `Leads.tsx` | CRM pipeline, lead qualification, outreach automation |
-| **Referrals** | `referral` | `Referrals.tsx` | Referral codes, credit tracking, conversion funnel |
-| **Rewards** | `rewards` | `Rewards.tsx` | Reward opportunities, credit claims, CAPI deduplication |
-| **Gamification** | `gamification` | `Achievements.tsx` | Points, levels, leaderboards, challenges |
-| **Affiliates** | `affiliates` | `Affiliates.tsx` | Affiliate program management, commission tracking |
-| **Revenue Streams** | `revenueStreams` | `RevenueStreams.tsx` | Multi-source revenue tracking (SaaS, affiliate, consulting) |
-| **Analytics** | `analytics` | `Analytics.tsx` | Event tracking, conversion funnels, tenant analytics |
-| **Integrations** | `integrations` | `Integrations.tsx` | Stripe, PayPal, Shopify, Square connection management |
-| **Shopify Stores** | `shopifyStores` | `ShopifyInstall.tsx` | OAuth-based Shopify app install, sync management |
-| **Sync Monitor** | `syncMonitor` | `SyncMonitor.tsx` | Shopify sync audit logs, API quota tracking, error monitoring |
-| **Theme Store** | `themes` | `ThemeStore.tsx` | Theme marketplace, reviews, paid/free downloads |
-| **Subscriptions** | `subscription` | `Billing.tsx` | Stripe subscription management, plan tiers |
-| **Team** | `team` | `Team.tsx` | Team invites, role management |
-| **Notifications** | `notifications` | `Notifications.tsx` | In-app notifications, announcements, event triggers |
-| **Email** | `email` | (system) | Drip campaigns, transactional email via Resend |
-| **Meta CAPI** | `meta` | (system) | Server-side conversion event relay to Meta |
-| **Sovereign** | `sovereign` | `Sovereign.tsx` | Sovereign Stack waitlist, self-hosted deployment pipeline |
-| **Settings** | `tenant` | `Settings.tsx` | Tenant configuration, branding, domain setup |
+| Module                | Router                           | Page                      | Purpose                                                         |
+| --------------------- | -------------------------------- | ------------------------- | --------------------------------------------------------------- |
+| **Dashboard**         | `analytics`                      | `Dashboard.tsx`           | KPI overview, revenue trends, order summaries                   |
+| **Products**          | `products`                       | `Products.tsx`            | Product CRUD, inventory tracking, Shopify sync                  |
+| **Orders**            | `orders`                         | `Orders.tsx`              | Order lifecycle, fulfillment, multi-payment status              |
+| **Customers**         | (via orders/analytics)           | `Customers.tsx`           | CRM, customer profiles, purchase history                        |
+| **Gig Command**       | `moneyManager`                   | `GigCommand.tsx`          | GPS-aware shift ops, route optimization, platform shortcuts     |
+| **Money Manager**     | `moneyManager`                   | `MoneyManager.tsx`        | Earnings tracker, mileage logs, tax deductions, financial rules |
+| **Manus AI**          | `manusAI`                        | `ManusAIPage.tsx`         | Context-aware AI copilot, per-page system prompts               |
+| **Document Chat**     | `documentChat`                   | `DocsChat.tsx`            | RAG-powered document Q&A using embeddings                       |
+| **Governance**        | `governance`, `claudeGovernance` | `GovernanceDashboard.tsx` | Rule management, escalation queue, audit logs                   |
+| **Automations**       | `automation`                     | `Automations.tsx`         | n8n workflows, Zapier hooks, Mailchimp sequences                |
+| **Mobile Automation** | `mobileAutomation`               | `MobileAutomation.tsx`    | n8n schedules, deep link attribution, CAPI event logs           |
+| **Social Media**      | `social`                         | `Social.tsx`              | Post scheduling, platform management, UTM tracking              |
+| **Social Friends**    | `socialFriends`                  | `Friends.tsx`             | Social connections, challenges, achievement feed                |
+| **Leads**             | `leads`                          | `Leads.tsx`               | CRM pipeline, lead qualification, outreach automation           |
+| **Referrals**         | `referral`                       | `Referrals.tsx`           | Referral codes, credit tracking, conversion funnel              |
+| **Rewards**           | `rewards`                        | `Rewards.tsx`             | Reward opportunities, credit claims, CAPI deduplication         |
+| **Gamification**      | `gamification`                   | `Achievements.tsx`        | Points, levels, leaderboards, challenges                        |
+| **Affiliates**        | `affiliates`                     | `Affiliates.tsx`          | Affiliate program management, commission tracking               |
+| **Revenue Streams**   | `revenueStreams`                 | `RevenueStreams.tsx`      | Multi-source revenue tracking (SaaS, affiliate, consulting)     |
+| **Analytics**         | `analytics`                      | `Analytics.tsx`           | Event tracking, conversion funnels, tenant analytics            |
+| **Integrations**      | `integrations`                   | `Integrations.tsx`        | Stripe, PayPal, Shopify, Square connection management           |
+| **Shopify Stores**    | `shopifyStores`                  | `ShopifyInstall.tsx`      | OAuth-based Shopify app install, sync management                |
+| **Sync Monitor**      | `syncMonitor`                    | `SyncMonitor.tsx`         | Shopify sync audit logs, API quota tracking, error monitoring   |
+| **Theme Store**       | `themes`                         | `ThemeStore.tsx`          | Theme marketplace, reviews, paid/free downloads                 |
+| **Subscriptions**     | `subscription`                   | `Billing.tsx`             | Stripe subscription management, plan tiers                      |
+| **Team**              | `team`                           | `Team.tsx`                | Team invites, role management                                   |
+| **Notifications**     | `notifications`                  | `Notifications.tsx`       | In-app notifications, announcements, event triggers             |
+| **Email**             | `email`                          | (system)                  | Drip campaigns, transactional email via Resend                  |
+| **Meta CAPI**         | `meta`                           | (system)                  | Server-side conversion event relay to Meta                      |
+| **Sovereign**         | `sovereign`                      | `Sovereign.tsx`           | Sovereign Stack waitlist, self-hosted deployment pipeline       |
+| **Settings**          | `tenant`                         | `Settings.tsx`            | Tenant configuration, branding, domain setup                    |
 
 ### Content & Marketing Pages
 
-| Page | File | Purpose |
-|------|------|---------|
-| **Home** | `Home.tsx` | Landing page, Cathedral Framework hero, CTA |
-| **Architecture** | `Architecture.tsx` | Technical system overview for prospects |
-| **Case Studies** | `CaseStudies.tsx` | Customer success stories |
-| **Work Proof** | `WorkProof.tsx` | 40+ phase development timeline |
-| **Resources** | `Resources.tsx` | Documentation hub |
-| **Integration Guides** | `IntegrationGuides.tsx` | Step-by-step integration walkthroughs |
-| **The System** | `TheSystem.tsx` | Platform philosophy and Cathedral Framework explanation |
-| **Blog** | `blog/` | SEO content (gig economy, multi-tenant, AI) |
-| **Ad Copy Hub** | `AdCopyHub.tsx` | AI-generated ad copy for Meta/Google campaigns |
-| **Video Production** | `VideoProduction.tsx` | Video content planning and production |
+| Page                   | File                    | Purpose                                                 |
+| ---------------------- | ----------------------- | ------------------------------------------------------- |
+| **Home**               | `Home.tsx`              | Landing page, Cathedral Framework hero, CTA             |
+| **Architecture**       | `Architecture.tsx`      | Technical system overview for prospects                 |
+| **Case Studies**       | `CaseStudies.tsx`       | Customer success stories                                |
+| **Work Proof**         | `WorkProof.tsx`         | 40+ phase development timeline                          |
+| **Resources**          | `Resources.tsx`         | Documentation hub                                       |
+| **Integration Guides** | `IntegrationGuides.tsx` | Step-by-step integration walkthroughs                   |
+| **The System**         | `TheSystem.tsx`         | Platform philosophy and Cathedral Framework explanation |
+| **Blog**               | `blog/`                 | SEO content (gig economy, multi-tenant, AI)             |
+| **Ad Copy Hub**        | `AdCopyHub.tsx`         | AI-generated ad copy for Meta/Google campaigns          |
+| **Video Production**   | `VideoProduction.tsx`   | Video content planning and production                   |
 
 ---
 
@@ -147,14 +148,14 @@ The UnifyOne platform comprises the following functional modules, each mapped to
 
 ## Key Constraints & Assumptions
 
-| Constraint | Rationale | Kill-Switch |
-|-----------|-----------|------------|
-| No manual intervention at scale | Humans are bottlenecks; systems must be self-healing | If >5% of operational tasks require human intervention, escalate to CEO |
-| All data is versioned & auditable | Governance requires full traceability | If any system lacks audit logs, it cannot go to production |
-| Governance rules are executable | Constraints must be code, not documents | If a rule cannot be enforced programmatically, it is not a rule |
-| Infrastructure before revenue | Prove reliability before scaling traffic | If any customer experiences <99.5% uptime, pause new customer acquisition |
-| Multi-tenant isolation is non-negotiable | Every query must be scoped to `tenantId` | If cross-tenant data leak is detected, system halts immediately |
-| Payment data never stored locally | PCI compliance via Stripe/PayPal tokenization | If raw card data is detected, purge and escalate to Compliance Officer |
+| Constraint                               | Rationale                                            | Kill-Switch                                                               |
+| ---------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------- |
+| No manual intervention at scale          | Humans are bottlenecks; systems must be self-healing | If >5% of operational tasks require human intervention, escalate to CEO   |
+| All data is versioned & auditable        | Governance requires full traceability                | If any system lacks audit logs, it cannot go to production                |
+| Governance rules are executable          | Constraints must be code, not documents              | If a rule cannot be enforced programmatically, it is not a rule           |
+| Infrastructure before revenue            | Prove reliability before scaling traffic             | If any customer experiences <99.5% uptime, pause new customer acquisition |
+| Multi-tenant isolation is non-negotiable | Every query must be scoped to `tenantId`             | If cross-tenant data leak is detected, system halts immediately           |
+| Payment data never stored locally        | PCI compliance via Stripe/PayPal tokenization        | If raw card data is detected, purge and escalate to Compliance Officer    |
 
 ---
 
@@ -201,11 +202,11 @@ The UnifyOne platform comprises the following functional modules, each mapped to
 
 The platform uses a three-tier authority model mapped to escalation triggers:
 
-| Level | Name | Scope | Examples |
-|-------|------|-------|---------|
-| **Operator** | Automated systems | Routine decisions within thresholds | Process payment <$10K, send drip email, update docs |
-| **Architect** | Technical Lead / Finance Lead | Decisions exceeding operational thresholds | Refund >$5K, pricing change >25%, bulk data deletion >1K records |
-| **Cathedral** | CEO | Strategic, high-impact, or irreversible decisions | Payment >$50K, data deletion of sensitive records, mass subscription changes |
+| Level         | Name                          | Scope                                             | Examples                                                                     |
+| ------------- | ----------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Operator**  | Automated systems             | Routine decisions within thresholds               | Process payment <$10K, send drip email, update docs                          |
+| **Architect** | Technical Lead / Finance Lead | Decisions exceeding operational thresholds        | Refund >$5K, pricing change >25%, bulk data deletion >1K records             |
+| **Cathedral** | CEO                           | Strategic, high-impact, or irreversible decisions | Payment >$50K, data deletion of sensitive records, mass subscription changes |
 
 All decisions are logged, versioned, and reversible.
 
@@ -213,7 +214,7 @@ All decisions are logged, versioned, and reversible.
 
 ## MCP (Model Context Protocol) Integration
 
-UnifyOne exposes a Model Context Protocol server at `/mcp` (via `netlify/functions/mcp-server.ts`), enabling external AI agents and tools to interact with the platform programmatically. This positions UnifyOne as an AI-native commerce platform where external copilots and automation tools can:
+UnifyOne exposes a Model Context Protocol server at `/mcp` (via `netlify/functions/mcp-server.ts`), enabling external AI agents and tools to interact with the platform programmatically. This positions UnifyOne as an AI-native gig-worker earnings & tax platform (with its secondary commerce capability) where external copilots and automation tools can:
 
 - Query tenant data
 - Trigger governance evaluations
