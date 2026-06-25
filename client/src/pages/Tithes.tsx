@@ -5,16 +5,16 @@ import PublicLayout from "@/components/PublicLayout";
 import { getSignupUrl } from "@/const";
 import { SITE_URL } from "@/lib/siteConfig";
 import {
-  PLAN_CATALOG,
-  PLAN_CATALOG_BY_SLUG,
-  formatUsdCents,
-  getPlanAnnualTotalLabel,
-  getPlanNumericLimitLabel,
-  getPlanOverageLabel,
-  getPlanTenantLimitLabel,
-} from "@shared/pricing";
+  GIG_PLAN_CATALOG,
+  GIG_PLAN_BY_SLUG,
+  getGigAnnualSubtext,
+  getGigMonthlyLabel,
+} from "@shared/gigPricing";
 
 const CANONICAL = `${SITE_URL}/tithes`;
+
+const DESCRIPTION =
+  "UnifyOne for gig & 1099 workers: Gig Starter (free forever) and Gig Pro ($4.99/mo · $49/yr). Track shifts and IRS-rate mileage, calculate self-employment and quarterly taxes, and keep the whole year handled.";
 
 const JSON_LD = [
   {
@@ -23,8 +23,7 @@ const JSON_LD = [
     "@id": CANONICAL,
     url: CANONICAL,
     name: "Tithes — Pricing | UnifyOne",
-    description:
-      "UnifyOne pricing: Starter (free forever), Pro ($19/mo), Scale ($99/mo). One canonical plan catalog now drives public pricing and checkout.",
+    description: DESCRIPTION,
     isPartOf: { "@id": `${SITE_URL}/#website` },
     inLanguage: "en-US",
   },
@@ -39,9 +38,9 @@ const JSON_LD = [
   {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "UnifyOne Pricing Plans",
+    name: "UnifyOne Gig Plans",
     url: CANONICAL,
-    itemListElement: PLAN_CATALOG.map((plan, index) => ({
+    itemListElement: GIG_PLAN_CATALOG.map((plan, index) => ({
       "@type": "ListItem",
       position: index + 1,
       item: {
@@ -60,142 +59,105 @@ const JSON_LD = [
 const CATHEDRAL_CTA_BG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-cta-v2-SHGs9wAatFAKqbC6k4GcCb.webp";
 
-const TIERS = PLAN_CATALOG.map(plan => ({
+const TIERS = GIG_PLAN_CATALOG.map(plan => ({
   id: plan.slug,
   name: plan.name,
-  price: {
-    monthly: formatUsdCents(plan.monthlyPriceCents),
-    yearly: formatUsdCents(plan.yearlyPriceCents),
-  },
+  isFree: plan.monthlyPriceCents === 0,
   period: plan.monthlyPriceCents === 0 ? "forever" : "per month",
-  description: plan.description,
+  description: plan.tagline,
   features: plan.features,
   cta: plan.cta,
   highlight: plan.highlight,
   badge: plan.badge,
 }));
 
-const STARTER = PLAN_CATALOG_BY_SLUG.starter;
-const PRO = PLAN_CATALOG_BY_SLUG.pro;
-const SCALE = PLAN_CATALOG_BY_SLUG.scale;
+const STARTER = GIG_PLAN_BY_SLUG["gig-starter"];
+const PRO = GIG_PLAN_BY_SLUG["gig-pro"];
 
 const COMPARISON = [
   {
-    feature: "Tenants",
-    starter: getPlanTenantLimitLabel(STARTER),
-    pro: getPlanTenantLimitLabel(PRO),
-    scale: getPlanTenantLimitLabel(SCALE),
+    feature: "Shift tracker (GigIQ)",
+    starter: "✓",
+    pro: "✓",
   },
   {
-    feature: "Products",
-    starter: getPlanNumericLimitLabel(STARTER.maxProducts),
-    pro: getPlanNumericLimitLabel(PRO.maxProducts),
-    scale: getPlanNumericLimitLabel(SCALE.maxProducts),
+    feature: "Mileage log (IRS rate)",
+    starter: "✓",
+    pro: "✓",
   },
   {
-    feature: "Orders / month",
-    starter: getPlanNumericLimitLabel(STARTER.maxOrders),
-    pro: getPlanNumericLimitLabel(PRO.maxOrders),
-    scale: getPlanNumericLimitLabel(SCALE.maxOrders),
+    feature: "Tax Autopilot (SE, quarterly, mileage)",
+    starter: "✓",
+    pro: "✓",
   },
   {
-    feature: "Team members",
-    starter: getPlanNumericLimitLabel(STARTER.maxUsers),
-    pro: getPlanNumericLimitLabel(PRO.maxUsers),
-    scale: getPlanNumericLimitLabel(SCALE.maxUsers),
+    feature: "Money Manager",
+    starter: "✓",
+    pro: "✓",
   },
   {
-    feature: "Kai credits / month",
-    starter: STARTER.kaiCreditsMonthly.toLocaleString("en-US"),
-    pro: PRO.kaiCreditsMonthly.toLocaleString("en-US"),
-    scale: SCALE.kaiCreditsMonthly.toLocaleString("en-US"),
+    feature: "Kai AI requests / month",
+    starter: STARTER.monthlyAIRequests.toLocaleString("en-US"),
+    pro: PRO.monthlyAIRequests.toLocaleString("en-US"),
   },
   {
-    feature: "Unified model pricing",
-    starter: getPlanOverageLabel(STARTER),
-    pro: getPlanOverageLabel(PRO),
-    scale: getPlanOverageLabel(SCALE),
+    feature: "Saved history",
+    starter: "Recent",
+    pro: "Unlimited",
   },
   {
-    feature: "Automation Layer",
+    feature: "Year-round tax dashboard",
     starter: "—",
-    pro: PRO.includesAutomationLayer ? "✓" : "—",
-    scale: SCALE.includesAutomationLayer ? "✓" : "—",
+    pro: "✓",
   },
   {
-    feature: "Affiliate Suite",
+    feature: "New AI tools when they ship",
     starter: "—",
-    pro: PRO.includesAffiliateSuite ? "✓" : "—",
-    scale: SCALE.includesAffiliateSuite ? "✓" : "—",
-  },
-  {
-    feature: "White-label",
-    starter: "—",
-    pro: PRO.includesWhiteLabel ? "✓" : "—",
-    scale: SCALE.includesWhiteLabel ? "✓" : "—",
-  },
-  {
-    feature: "Custom Domains",
-    starter: "—",
-    pro: PRO.includesCustomDomains ? "✓" : "—",
-    scale: SCALE.includesCustomDomains ? "✓" : "—",
-  },
-  {
-    feature: "SLA Guarantee",
-    starter: "—",
-    pro: PRO.includesSla ? "✓" : "—",
-    scale: SCALE.includesSla ? "✓" : "—",
-  },
-  {
-    feature: "API Access",
-    starter: STARTER.includesApiAccess ? "✓" : "—",
-    pro: PRO.includesApiAccess ? "✓" : "—",
-    scale: SCALE.includesApiAccess ? "✓" : "—",
+    pro: "✓",
   },
   {
     feature: "Support",
-    starter: STARTER.supportLabel,
-    pro: PRO.supportLabel,
-    scale: SCALE.supportLabel,
+    starter: "Community",
+    pro: "Priority",
   },
 ];
 
 const FAQ = [
   {
-    q: "Is there a free trial?",
-    a: "The Starter tier is free forever — no credit card required. You can build your tenant, add products, and process up to 1,000 orders per month at no cost. Upgrade to Pro when your volume or automation requirements exceed the Starter limits.",
+    q: "Is the Gig Starter plan really free forever?",
+    a: "Yes. Shift tracking, IRS-rate mileage logging, the tax calculators (self-employment, quarterly estimates, mileage), and 25 Kai AI requests a month are free forever — no credit card required.",
+  },
+  {
+    q: "What do I get when I upgrade to Gig Pro?",
+    a: "Gig Pro is $4.99/month ($49/year — save ~18%). It includes everything in Free plus unlimited saved history, a year-round tax dashboard, priority support, and 250 Kai AI requests per month.",
   },
   {
     q: "Can I switch plans at any time?",
-    a: "Yes. Upgrades take effect immediately. Downgrades take effect at the end of your current billing period. Your data is never deleted when you downgrade — you simply lose access to features above your new tier.",
+    a: "Yes. Upgrades take effect immediately. Downgrades take effect at the end of your current billing period. Your shift, mileage, and tax data is never deleted when you downgrade — you simply lose access to features above your new tier.",
   },
   {
     q: "What payment methods do you accept?",
-    a: "All subscription billing runs through Stripe Checkout. Your own storefronts can still use Stripe, PayPal, Square, and Shopify for customer payments.",
+    a: "Subscription billing for Gig Pro runs through Stripe Checkout. The Gig Starter plan never asks for a card.",
   },
   {
-    q: "Is Kai AI included in the Pro tier?",
-    a: "Yes. Pro includes 500 Kai unified API credits per month, and Scale includes 10,000. Credits work across supported models with one predictable overage rate for the tier.",
+    q: "What are the Kai AI requests for?",
+    a: "Kai requests power the Kai assistant and the AI tax and earnings tools as they ship. Free includes 25 a month, Pro includes 250. New AI tools are included on Pro when they launch — at no extra charge.",
   },
   {
-    q: "Can we call any model with one Kai cost?",
-    a: "Yes. Kai sits on UnifyAI's unified API layer, so your team can route across supported models while staying on one consolidated credit bill instead of managing separate vendor invoices.",
+    q: "Do you handle quarterly estimated taxes and mileage deductions?",
+    a: "Yes. Tax Autopilot handles self-employment tax, quarterly estimated payments, and IRS-rate mileage deductions on every plan, including Free. Gig Pro adds a year-round dashboard so the numbers stay current all year.",
   },
   {
-    q: "What does 'white-label ready' mean on Scale?",
-    a: "Scale tenants can remove UnifyOne branding, use custom domains, and present the platform as their own product to end customers. It is designed for agencies and resellers building on top of the UnifyOne infrastructure.",
-  },
-  {
-    q: "What is the SLA guarantee?",
-    a: "Scale subscribers receive a 99.9% uptime SLA with service credits for downtime exceeding the threshold. Starter and Pro target the same uptime but without contractual SLA obligations.",
+    q: "Which gig platforms does this work with?",
+    a: "Any 1099 work — rideshare, delivery, courier, freelance, and more. You log shifts and miles in one place no matter how many apps you drive for, so your earnings and tax picture stay unified.",
   },
   {
     q: "How does the yearly discount work?",
-    a: "Yearly billing gives you two months free — Pro drops from $19/month to $190/year, and Scale drops from $99/month to $990/year.",
+    a: "Yearly billing on Gig Pro is $49/year instead of $4.99/month — about two months free, a savings of roughly 18%.",
   },
   {
     q: "Can I cancel at any time?",
-    a: "Yes. Cancel from the billing page in your dashboard settings. Your subscription remains active until the end of the current billing period. No cancellation fees, no retention flows, no dark patterns.",
+    a: "Yes. Cancel from the billing page in your dashboard settings. Your subscription remains active until the end of the current billing period, and your data is never deleted. No cancellation fees, no retention flows, no dark patterns.",
   },
 ];
 
@@ -207,22 +169,19 @@ export default function Tithes() {
     <PublicLayout>
       <Helmet>
         <title>Tithes — Pricing | UnifyOne</title>
-        <meta
-          name="description"
-          content="UnifyOne pricing: Starter (free forever), Pro ($19/mo), Scale ($99/mo). One canonical catalog now drives public pricing and Stripe checkout."
-        />
+        <meta name="description" content={DESCRIPTION} />
         <link rel="canonical" href={CANONICAL} />
         <meta property="og:title" content="Tithes — Pricing | UnifyOne" />
         <meta
           property="og:description"
-          content="Starter, Pro, and Scale now share one canonical pricing model across the marketing site and checkout flow."
+          content="Gig Starter is free forever; Gig Pro is $4.99/mo for unlimited history and a year-round tax dashboard. Built for gig & 1099 workers."
         />
         <meta property="og:url" content={CANONICAL} />
         <meta property="og:type" content="website" />
         <meta name="twitter:title" content="Tithes — Pricing | UnifyOne" />
         <meta
           name="twitter:description"
-          content="Starter, Pro, and Scale on one shared pricing catalog for marketing, checkout, and Stripe billing."
+          content="Track shifts, mileage, and taxes free — upgrade to Gig Pro for $4.99/mo when you want the whole year handled."
         />
         {JSON_LD.map((schema, i) => (
           <script key={i} type="application/ld+json">
@@ -270,8 +229,8 @@ export default function Tithes() {
             className="font-crimson text-xl sm:text-2xl max-w-2xl mx-auto"
             style={{ color: "#9A9A9A", fontStyle: "italic", lineHeight: 1.6 }}
           >
-            Three tiers. One plan catalog. No public copy drifting away from the
-            billing system.
+            Two plans for gig &amp; 1099 workers. Start free and keep what you
+            earn — upgrade when you want the whole year handled.
           </p>
 
           {/* Billing toggle */}
@@ -330,103 +289,118 @@ export default function Tithes() {
         className="py-16"
         style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}
       >
-        <div className="max-w-7xl mx-auto px-6 sm:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
-            {TIERS.map((tier, i) => (
-              <div
-                key={i}
-                className="p-10 relative"
-                style={{
-                  borderTop: tier.highlight
-                    ? "2px solid #D4A843"
-                    : "1px solid rgba(212,168,67,0.08)",
-                  borderLeft:
-                    i > 0 ? "1px solid rgba(212,168,67,0.08)" : "none",
-                  backgroundColor: tier.highlight
-                    ? "rgba(212,168,67,0.04)"
-                    : "transparent",
-                }}
-              >
-                {tier.badge && (
-                  <div
-                    className="absolute top-0 right-8 -translate-y-1/2 px-3 py-1"
-                    style={{ backgroundColor: "#D4A843" }}
-                  >
-                    <span
-                      className="font-cinzel text-xs font-700 tracking-widest"
-                      style={{ color: "#020202", letterSpacing: "0.15em" }}
-                    >
-                      {tier.badge}
-                    </span>
-                  </div>
-                )}
-                <span className="inscription block mb-2">
-                  {tier.description}
-                </span>
-                <h2
-                  className="font-cinzel text-2xl font-black mb-4"
-                  style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
-                >
-                  {tier.name}
-                </h2>
-                <div className="flex items-baseline gap-2 mb-2">
-                  <span
-                    className="font-cinzel text-5xl font-black"
-                    style={{ color: tier.highlight ? "#D4A843" : "#F0E8D0" }}
-                  >
-                    {yearly ? tier.price.yearly : tier.price.monthly}
-                  </span>
-                  {tier.price.monthly !== "$0" && (
-                    <span
-                      className="font-crimson text-sm"
-                      style={{ color: "#3A3A3A" }}
-                    >
-                      {tier.period}
-                    </span>
-                  )}
-                </div>
-                {tier.price.monthly !== "$0" && yearly && (
-                  <p
-                    className="font-crimson text-sm mb-6"
-                    style={{ color: "#5A5A5A" }}
-                  >
-                    Billed annually ·{" "}
-                    {getPlanAnnualTotalLabel(PLAN_CATALOG_BY_SLUG[tier.id])}
-                  </p>
-                )}
+        <div className="max-w-4xl mx-auto px-6 sm:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+            {TIERS.map((tier, i) => {
+              const plan = GIG_PLAN_BY_SLUG[tier.id];
+              const showAnnual = yearly && !tier.isFree;
+              const displayedPrice = getGigMonthlyLabel(
+                plan,
+                showAnnual ? "yearly" : "monthly"
+              );
+              const annualSubtext = showAnnual
+                ? getGigAnnualSubtext(plan)
+                : null;
+
+              return (
                 <div
-                  className="h-px my-6"
-                  style={{ backgroundColor: "rgba(212,168,67,0.08)" }}
-                />
-                <div className="space-y-3 mb-8">
-                  {tier.features.map((feature, j) => (
-                    <div key={j} className="flex items-start gap-3">
-                      <div
-                        className="w-1 h-1 mt-2 shrink-0"
-                        style={{ backgroundColor: "#D4A843" }}
-                      />
+                  key={tier.id}
+                  className="p-10 relative"
+                  style={{
+                    borderTop: tier.highlight
+                      ? "2px solid #D4A843"
+                      : "1px solid rgba(212,168,67,0.08)",
+                    borderLeft:
+                      i > 0 ? "1px solid rgba(212,168,67,0.08)" : "none",
+                    backgroundColor: tier.highlight
+                      ? "rgba(212,168,67,0.04)"
+                      : "transparent",
+                  }}
+                >
+                  {tier.badge && (
+                    <div
+                      className="absolute top-0 right-8 -translate-y-1/2 px-3 py-1"
+                      style={{ backgroundColor: "#D4A843" }}
+                    >
                       <span
-                        className="font-crimson text-base"
-                        style={{ color: "#9A9A9A" }}
+                        className="font-cinzel text-xs font-700 tracking-widest"
+                        style={{ color: "#020202", letterSpacing: "0.15em" }}
                       >
-                        {feature}
+                        {tier.badge}
                       </span>
                     </div>
-                  ))}
+                  )}
+                  <span className="inscription block mb-2">
+                    {tier.description}
+                  </span>
+                  <h2
+                    className="font-cinzel text-2xl font-black mb-4"
+                    style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
+                  >
+                    {tier.name}
+                  </h2>
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <span
+                      className="font-cinzel text-5xl font-black"
+                      style={{ color: tier.highlight ? "#D4A843" : "#F0E8D0" }}
+                    >
+                      {displayedPrice}
+                    </span>
+                    {!tier.isFree && (
+                      <span
+                        className="font-crimson text-sm"
+                        style={{ color: "#3A3A3A" }}
+                      >
+                        {tier.period}
+                      </span>
+                    )}
+                  </div>
+                  {annualSubtext && (
+                    <p
+                      className="font-crimson text-sm mb-6"
+                      style={{ color: "#5A5A5A" }}
+                    >
+                      Billed annually · {annualSubtext}
+                    </p>
+                  )}
+                  <div
+                    className="h-px my-6"
+                    style={{ backgroundColor: "rgba(212,168,67,0.08)" }}
+                  />
+                  <div className="space-y-3 mb-8">
+                    {tier.features.map((feature, j) => (
+                      <div key={j} className="flex items-start gap-3">
+                        <div
+                          className="w-1 h-1 mt-2 shrink-0"
+                          style={{ backgroundColor: "#D4A843" }}
+                        />
+                        <span
+                          className="font-crimson text-base"
+                          style={{ color: "#9A9A9A" }}
+                        >
+                          {feature}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <a
+                    href={
+                      tier.isFree
+                        ? getSignupUrl(undefined, "/gig-command")
+                        : getSignupUrl(undefined, "/gig-worker-plans")
+                    }
+                    className={
+                      tier.highlight
+                        ? "btn-illuminate block text-center"
+                        : "btn-ghost-gold block text-center"
+                    }
+                    style={{ padding: "0.875rem 1.5rem" }}
+                  >
+                    {tier.cta}
+                  </a>
                 </div>
-                <a
-                  href={getSignupUrl(tier.id)}
-                  className={
-                    tier.highlight
-                      ? "btn-illuminate block text-center"
-                      : "btn-ghost-gold block text-center"
-                  }
-                  style={{ padding: "0.875rem 1.5rem" }}
-                >
-                  {tier.cta}
-                </a>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -440,7 +414,7 @@ export default function Tithes() {
           backgroundColor: "rgba(212,168,67,0.015)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 sm:px-8">
+        <div className="max-w-4xl mx-auto px-6 sm:px-8">
           <div className="text-center mb-16">
             <span className="inscription block mb-4">Feature Matrix</span>
             <h2
@@ -454,7 +428,7 @@ export default function Tithes() {
           <div className="overflow-x-auto">
             <table className="w-full" style={{ borderCollapse: "collapse" }}>
               <caption className="sr-only">
-                Feature comparison across the Starter, Pro, and Scale plans
+                Feature comparison across the Gig Starter and Gig Pro plans
               </caption>
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(212,168,67,0.15)" }}>
@@ -464,18 +438,18 @@ export default function Tithes() {
                     style={{
                       color: "#3A3A3A",
                       letterSpacing: "0.15em",
-                      width: "40%",
+                      width: "50%",
                     }}
                   >
                     FEATURE
                   </th>
-                  {["Starter", "Pro", "Scale"].map(name => (
+                  {["Gig Starter", "Gig Pro"].map(name => (
                     <th
                       key={name}
                       scope="col"
                       className="text-center py-4 px-4 font-cinzel text-xs tracking-widest"
                       style={{
-                        color: name === "Pro" ? "#D4A843" : "#5A5A5A",
+                        color: name === "Gig Pro" ? "#D4A843" : "#5A5A5A",
                         letterSpacing: "0.15em",
                       }}
                     >
@@ -497,7 +471,7 @@ export default function Tithes() {
                     >
                       {row.feature}
                     </th>
-                    {[row.starter, row.pro, row.scale].map((val, j) => (
+                    {[row.starter, row.pro].map((val, j) => (
                       <td
                         key={j}
                         className="text-center py-4 px-4 font-crimson text-sm"
@@ -615,7 +589,7 @@ export default function Tithes() {
         style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}
       >
         <div className="max-w-3xl mx-auto px-6 sm:px-8 text-center">
-          <span className="inscription block mb-4">Begin Construction</span>
+          <span className="inscription block mb-4">Begin Your Ledger</span>
           <h2
             id="tithes-cta-heading"
             className="font-cinzel text-3xl sm:text-4xl font-bold mb-6"
@@ -623,23 +597,23 @@ export default function Tithes() {
           >
             Start Free.
             <br />
-            Scale When Ready.
+            Upgrade When Ready.
           </h2>
           <p
             className="font-crimson text-xl mb-10"
             style={{ color: "#9A9A9A", fontStyle: "italic" }}
           >
-            The Starter tier is free forever. No credit card. No migration.
-            Upgrade when your automation, volume, or white-label needs demand
-            it.
+            Gig Starter is free forever. No credit card. Track every shift and
+            mile and stay ahead of your taxes — upgrade to Gig Pro when you want
+            the whole year handled.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href={getSignupUrl()} className="btn-illuminate">
-              Begin Construction — Free
+              Start Free
             </a>
-            <Link href="/architecture">
+            <Link href="/tools">
               <span className="btn-ghost-gold cursor-pointer">
-                View Architecture →
+                Try the Free Tax &amp; Mileage Tools →
               </span>
             </Link>
           </div>

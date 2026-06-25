@@ -15,12 +15,12 @@ import {
   Layers,
   ArrowRight,
   ArrowLeft,
-  Store,
+  Briefcase,
   CheckCircle,
-  Package,
   Loader2,
   Sparkles,
-  CreditCard,
+  MapPin,
+  Link2,
   Rocket,
   Users,
 } from "lucide-react";
@@ -28,18 +28,18 @@ import {
 const STEPS = [
   {
     id: 1,
-    label: "Create Store",
-    description: "Set your store name and URL.",
+    label: "Set Up Workspace",
+    description: "Name your workspace and claim your URL.",
   },
   {
     id: 2,
-    label: "Configure Store",
-    description: "Choose whether to start with sample products.",
+    label: "Configure Workspace",
+    description: "Choose whether to start with sample data.",
   },
   {
     id: 3,
-    label: "Launch Store",
-    description: "Review what to do next before heading to the dashboard.",
+    label: "Start Tracking",
+    description: "Review what to do next before heading to your dashboard.",
   },
 ];
 
@@ -137,7 +137,7 @@ export default function TenantSetup() {
 
   useEffect(() => {
     if (user?.name && !name) {
-      const autoName = `${user.name}'s Store`;
+      const autoName = `${user.name}'s Workspace`;
       setName(autoName);
       setSlug(slugify(autoName));
     }
@@ -167,7 +167,7 @@ export default function TenantSetup() {
       setDemoSeeded(true);
       void utils.products.list.invalidate();
       toast.success(
-        `Added ${data.productsCreated} demo products to your store.`
+        `Added ${data.productsCreated} sample records to your workspace.`
       );
     },
     onError: err => toast.error(`Demo seed failed: ${err.message}`),
@@ -195,7 +195,7 @@ export default function TenantSetup() {
       }
     } else if (seedDemo) {
       toast.error(
-        "We couldn't find your new store yet, but setup can continue."
+        "We couldn't find your new workspace yet, but setup can continue."
       );
     }
 
@@ -203,24 +203,25 @@ export default function TenantSetup() {
   };
 
   const handleFinish = () => {
-    toast.success("Welcome to UnifyOne! Your store is ready.");
+    toast.success("Welcome to UnifyOne! Your workspace is ready.");
     navigate("/dashboard");
   };
 
   const isStep2Pending = seedDemoMutation.isPending;
   const nextSteps = [
     {
-      href: "/products",
-      title: "Add your first product",
+      href: "/gig-command",
+      title: "Track your first shift",
       description:
-        "Build your catalog and publish something customers can buy.",
-      icon: Package,
+        "Log a shift and your miles to start building your earnings and tax picture.",
+      icon: MapPin,
     },
     {
       href: "/settings",
-      title: "Connect a payment method",
-      description: "Finish your setup so you can start accepting payments.",
-      icon: CreditCard,
+      title: "Connect your gig platforms",
+      description:
+        "Link the apps you drive for so your earnings and mileage stay in one place.",
+      icon: Link2,
     },
     {
       href: "/team",
@@ -254,7 +255,7 @@ export default function TenantSetup() {
           <p className="mt-1 text-sm text-gray-400">
             {step === 3
               ? "Your workspace is ready to launch."
-              : "Let's get your store set up."}
+              : "Let's get your workspace set up."}
           </p>
         </div>
 
@@ -269,15 +270,15 @@ export default function TenantSetup() {
                     htmlFor="name"
                     className="text-sm font-medium text-gray-300"
                   >
-                    Store Name
+                    Workspace Name
                   </Label>
                   <div className="relative">
-                    <Store className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <Input
                       id="name"
                       value={name}
                       onChange={e => handleNameChange(e.target.value)}
-                      placeholder="e.g. Jimbo's Iron & Thread"
+                      placeholder="e.g. Sam's Rideshare & Delivery"
                       className="h-11 border-white/10 bg-white/5 pl-10 text-white placeholder:text-gray-500 focus:border-[#00D9FF]/50"
                       required
                       autoFocus
@@ -289,9 +290,9 @@ export default function TenantSetup() {
                   {!showSlug ? (
                     <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5">
                       <p className="truncate text-sm text-gray-400">
-                        Your store URL:{" "}
+                        Your workspace URL:{" "}
                         <span className="text-gray-300">
-                          unifyone.app/{slug || "your-store"}
+                          unifyone.app/{slug || "your-workspace"}
                         </span>
                       </p>
                       <button
@@ -308,7 +309,7 @@ export default function TenantSetup() {
                         htmlFor="slug"
                         className="text-sm font-medium text-gray-300"
                       >
-                        Store URL Slug
+                        Workspace URL Slug
                       </Label>
                       <div className="flex items-center overflow-hidden rounded-lg border border-white/10 bg-white/5 transition-colors focus-within:border-[#00D9FF]/50">
                         <span className="whitespace-nowrap border-r border-white/10 bg-white/3 px-3 py-2.5 text-sm text-gray-500">
@@ -321,7 +322,7 @@ export default function TenantSetup() {
                             setSlug(e.target.value);
                             setSlugTouched(true);
                           }}
-                          placeholder="my-store"
+                          placeholder="my-workspace"
                           pattern="[a-z0-9-]+"
                           className="h-11 border-0 bg-transparent text-white placeholder:text-gray-500 focus-visible:ring-0"
                           required
@@ -329,16 +330,17 @@ export default function TenantSetup() {
                       </div>
                       <p className="text-xs text-gray-500">
                         Lowercase letters, numbers, and hyphens only. Choose
-                        carefully — your store URL can&apos;t be changed later.
+                        carefully — your workspace URL can&apos;t be changed
+                        later.
                       </p>
                     </>
                   )}
                 </div>
 
                 <p className="text-center text-xs text-gray-500">
-                  All stores start on the free{" "}
-                  <span className="text-[#00D9FF]">Starter</span> tier. You can
-                  upgrade anytime from{" "}
+                  Every workspace starts on the free{" "}
+                  <span className="text-[#00D9FF]">Gig Starter</span> plan. You
+                  can upgrade to Gig Pro anytime from{" "}
                   <Link
                     href="/billing"
                     className="text-[#00D9FF] hover:underline"
@@ -374,7 +376,7 @@ export default function TenantSetup() {
         {step === 2 && (
           <Card className="border-white/10 bg-white/5 text-white shadow-xl shadow-black/20">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Store Preferences</CardTitle>
+              <CardTitle className="text-lg">Workspace Preferences</CardTitle>
               <p className="text-sm text-gray-400">
                 Choose how you want to explore the platform on day one.
               </p>
@@ -403,14 +405,14 @@ export default function TenantSetup() {
                       htmlFor="seedDemo"
                       className="cursor-pointer text-sm font-medium text-white"
                     >
-                      Seed my store with 5 demo products to explore the platform
+                      Fill my workspace with sample data to explore the platform
                     </Label>
                     <p className="mt-1 text-xs text-gray-400">
-                      Add sample T-shirts, mugs, stickers, and other merch so
-                      you can see product workflows immediately.
+                      Add a handful of example records so you can see how shift,
+                      mileage, and earnings tracking works right away.
                     </p>
                   </div>
-                  <Package className="mt-0.5 h-5 w-5 shrink-0 text-gray-500" />
+                  <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-gray-500" />
                 </button>
 
                 <div className="flex gap-3 pt-1">
@@ -458,8 +460,8 @@ export default function TenantSetup() {
                   <span className="font-medium text-white">{name}</span> is
                   ready.
                   {demoSeeded
-                    ? " We also added demo products so you can explore right away."
-                    : " Your dashboard is live and waiting for your first move."}
+                    ? " We also added sample data so you can explore right away."
+                    : " Your dashboard is live and waiting for your first shift."}
                 </p>
               </div>
 
