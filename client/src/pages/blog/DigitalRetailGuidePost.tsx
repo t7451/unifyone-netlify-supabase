@@ -87,7 +87,7 @@ const JSON_LD = [
         name: "How does the mileage deduction work for gig workers?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Self-employed gig workers can deduct business miles using the IRS standard mileage rate, which is 72.5 cents per mile for 2026. UnifyOne applies that rate to your logged shifts and keeps a running year-to-date deduction figure, so your quarterly tax estimate stays accurate.",
+          text: "Self-employed gig workers can deduct business miles using the IRS standard mileage rate, which is 70 cents per mile for 2025. UnifyOne applies that rate to your logged shifts and keeps a running year-to-date deduction figure, so your quarterly tax estimate stays accurate.",
         },
       },
       {
@@ -532,7 +532,7 @@ export default function DigitalRetailGuidePost() {
                 },
                 {
                   q: "How does the mileage deduction work for gig workers?",
-                  a: "Self-employed gig workers can deduct business miles using the IRS standard mileage rate, which is 72.5 cents per mile for 2026. UnifyOne applies that rate to your logged shifts and keeps a running year-to-date deduction figure, so your quarterly tax estimate stays accurate.",
+                  a: "Self-employed gig workers can deduct business miles using the IRS standard mileage rate, which is 70 cents per mile for 2025. UnifyOne applies that rate to your logged shifts and keeps a running year-to-date deduction figure, so your quarterly tax estimate stays accurate.",
                 },
                 {
                   q: "How does UnifyOne help gig workers?",
