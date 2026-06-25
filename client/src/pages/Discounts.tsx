@@ -71,9 +71,12 @@ export default function DiscountsPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Discounts</h1>
+          <h1 className="text-2xl font-semibold text-white">
+            Storefront Discounts
+          </h1>
           <p className="text-gray-400 text-sm mt-1">
-            Manage promo codes for your store
+            Optional promo codes for gig workers who also run a store — not
+            needed to track your gig earnings or taxes.
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -209,7 +212,8 @@ export default function DiscountsPage() {
             </div>
           ) : !list.data?.length ? (
             <p className="text-sm text-gray-500 py-4">
-              No discounts yet. Create your first promo code above.
+              No store discounts yet. If you sell alongside your gig work,
+              create your first promo code above.
             </p>
           ) : (
             <div className="space-y-2">

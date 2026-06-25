@@ -581,9 +581,9 @@ export default function Products() {
 
   return (
     <DashboardPageShell
-      eyebrow="Catalog operations"
-      title="Products"
-      description="Control merchandising, inventory health, draft cleanup, and bulk catalog operations from one working surface."
+      eyebrow="Optional storefront tools"
+      title="Product Catalog"
+      description="An optional add-on for gig workers who also run a store on the side. Manage product listings, inventory, and bulk catalog edits here — none of this is required to track your gig earnings or taxes."
       actions={
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
@@ -943,7 +943,7 @@ export default function Products() {
             <p className="mt-2 max-w-md text-sm text-gray-400">
               {hasActiveFilters
                 ? "Try clearing your filters or searching for a different product name or SKU."
-                : "Build your catalog with pricing, inventory, and imagery so your team can start selling faster."}
+                : "Only running a store alongside your gig work? Add products with pricing, inventory, and imagery here. This catalog is optional and separate from your earnings tracking."}
             </p>
             {!hasActiveFilters && (
               <Button
