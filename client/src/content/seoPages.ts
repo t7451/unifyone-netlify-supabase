@@ -44,9 +44,9 @@ const CORE_KEYWORDS = [
   "OneCommerc",
   "OneCommerce",
   "PNW Enterprises",
-  "multi-tenant commerce platform",
-  "AI commerce platform",
-  "ecommerce SaaS",
+  "gig earnings and tax app",
+  "1099 tax app for gig workers",
+  "gig mileage and quarterly tax tracker",
 ];
 
 const brand = (extra: string[] = []): string[] =>
@@ -342,9 +342,9 @@ export const SEO_PAGES: SeoPage[] = [
     title: "UnifOne — You Mean UnifyOne by 1Commerce",
     h1: "Looking for UnifOne? It's UnifyOne.",
     tagline:
-      "UnifOne is the common misspelling of UnifyOne, the multi-tenant commerce platform built by 1Commerce LLC (PNW Enterprises).",
+      "UnifOne is the common misspelling of UnifyOne, the gig-worker earnings and tax app built by 1Commerce LLC (PNW Enterprises).",
     description:
-      "UnifOne is a common misspelling of UnifyOne — the AI-powered multi-tenant commerce platform by 1Commerce LLC. Start free or sign in to your tenant.",
+      "UnifOne is a common misspelling of UnifyOne — the earnings and tax app for gig workers by 1Commerce LLC. Track payouts, mileage & quarterly taxes. Free + Pro $4.99.",
     keywords: brand([
       "UnifOne",
       "Unif One",
@@ -355,7 +355,7 @@ export const SEO_PAGES: SeoPage[] = [
       {
         heading: "UnifOne vs UnifyOne",
         paragraphs: [
-          "UnifOne (without the 'y') is a common misspelling — the correct brand is UnifyOne. They refer to the same product: the multi-tenant commerce platform by 1Commerce LLC.",
+          "UnifOne (without the 'y') is a common misspelling — the correct brand is UnifyOne. They refer to the same product: the earnings and tax app for gig and 1099 workers by 1Commerce LLC, with GigIQ, Tax Autopilot, Money Manager, and Kai.",
           "If you landed here searching UnifOne, UnifyOne, Unif One, or Unify One — you are in the right place.",
         ],
       },
@@ -363,7 +363,7 @@ export const SEO_PAGES: SeoPage[] = [
     faq: [
       {
         q: "Is UnifOne a real product?",
-        a: "UnifOne is how users commonly misspell UnifyOne. The real product name is UnifyOne by 1Commerce.",
+        a: "UnifOne is how users commonly misspell UnifyOne. The real product name is UnifyOne by 1Commerce — a gig earnings and tax app, free to start with Pro at $4.99/month.",
       },
     ],
     related: ["unifyone", "onecommerc"],
@@ -371,12 +371,12 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "1-commerce",
-    title: "1-Commerce — UnifyOne Platform by 1Commerce LLC",
+    title: "1-Commerce — UnifyOne Gig Earnings & Tax App by 1Commerce LLC",
     h1: "1-Commerce: UnifyOne by 1Commerce LLC",
     tagline:
-      "1-Commerce (also written 1Commerce or OneCommerce) is the brand behind UnifyOne — the AI-powered multi-tenant commerce platform.",
+      "1-Commerce (also written 1Commerce or OneCommerce) is the brand behind UnifyOne — the gig-worker earnings and tax app.",
     description:
-      "1-Commerce / 1Commerce LLC is the company behind UnifyOne — the multi-tenant AI commerce platform. Also known as OneCommerce, OneCommerc, UnifOne.",
+      "1-Commerce / 1Commerce LLC is the company behind UnifyOne — the earnings and tax app for gig workers. Also known as OneCommerce, OneCommerc, UnifOne. Free + Pro $4.99.",
     keywords: brand(["1-commerce", "1 commerce", "1commerce"]),
     sections: [
       {
@@ -389,7 +389,7 @@ export const SEO_PAGES: SeoPage[] = [
       {
         heading: "What does 1-Commerce do?",
         paragraphs: [
-          "1-Commerce builds commerce infrastructure for gig operators, e-commerce teams, and multi-brand agencies. The UnifyOne platform consolidates what would otherwise be 5–10 separate SaaS tools into a single multi-tenant system.",
+          "1-Commerce builds UnifyOne, the earnings and tax app for gig and 1099 workers driving for DoorDash, Uber, Lyft, Instacart, Amazon Flex, and Grubhub. It brings four pillars together — GigIQ earnings intelligence, Tax Autopilot mileage and quarterly estimates, Money Manager, and the Kai assistant — for one flat price (Free, or Pro $4.99/month). UnifyOne also keeps a secondary commerce capability for workers running a side shop.",
         ],
       },
     ],
@@ -436,13 +436,13 @@ export const SEO_PAGES: SeoPage[] = [
     tagline:
       "1Commerce LLC (trading as PNW Enterprises) is the legal entity behind UnifyOne, UnifyOne Solutions, and the OneCommerce brand.",
     description:
-      "1Commerce LLC is the Washington-state company behind UnifyOne, the multi-tenant AI commerce platform. Trading as PNW Enterprises (OneCommerce, 1-commerce).",
+      "1Commerce LLC is the Washington-state company behind UnifyOne, the gig-worker earnings and tax app. Trading as PNW Enterprises (OneCommerce, 1-commerce).",
     keywords: brand(["1Commerce LLC", "1commerce LLC", "1 Commerce LLC"]),
     sections: [
       {
         heading: "About 1Commerce LLC",
         paragraphs: [
-          "1Commerce LLC is a Washington-registered LLC trading under PNW Enterprises. It builds UnifyOne — the multi-tenant commerce platform used by operators, agencies, and gig workers across the US.",
+          "1Commerce LLC is a Washington-registered LLC trading under PNW Enterprises. It builds UnifyOne — the earnings and tax app for gig and 1099 workers across the US, with GigIQ, Tax Autopilot, Money Manager, and Kai (Free, or Pro $4.99/month).",
           "The company was founded in 2025 and operates out of the Pacific Northwest. Contact: skdev@1commercesolutions.com.",
         ],
       },
@@ -458,25 +458,25 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "1commerce-solutions",
-    title: "1Commerce Solutions — UnifyOne Product Suite",
+    title: "1Commerce Solutions — UnifyOne Gig Earnings & Tax Suite",
     h1: "1Commerce Solutions",
     tagline:
-      "1Commerce Solutions is the umbrella brand for UnifyOne + Kai AI + Gig Command + Money Manager + Cathedral white-label.",
+      "1Commerce Solutions is the umbrella brand for UnifyOne — GigIQ, Tax Autopilot, Money Manager, and the Kai assistant for gig and 1099 workers.",
     description:
-      "1Commerce Solutions — the full UnifyOne product suite: platform, AI, gig tracker, money manager, white-label tier. Part of 1Commerce LLC.",
+      "1Commerce Solutions — the full UnifyOne suite for gig workers: GigIQ earnings intelligence, Tax Autopilot, Money Manager, and Kai. Part of 1Commerce LLC. Free + Pro $4.99.",
     keywords: brand(["1Commerce Solutions", "1-commerce solutions"]),
     sections: [
       {
         heading: "The 1Commerce Solutions suite",
         paragraphs: [
-          "1Commerce Solutions is everything we ship: UnifyOne (the platform), Kai (AI), Gig Command, Money Manager, and the Cathedral white-label tier.",
+          "1Commerce Solutions is everything we ship for gig and 1099 workers: UnifyOne and its four pillars — GigIQ earnings intelligence, Tax Autopilot mileage and quarterly estimates, Money Manager, and the Kai assistant. More AI tools follow as they ship. UnifyOne also keeps a secondary commerce capability for workers running a side shop.",
         ],
       },
     ],
     faq: [
       {
         q: "Is 1Commerce Solutions the same as UnifyOne?",
-        a: "UnifyOne is the platform. 1Commerce Solutions is the full product suite (platform + modules + services).",
+        a: "UnifyOne is the app. 1Commerce Solutions is the full product suite — GigIQ, Tax Autopilot, Money Manager, and Kai (Free, or Pro $4.99/month).",
       },
     ],
     related: ["unifyone-solutions", "1commerce-llc"],
@@ -510,22 +510,22 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "1commerce-pnw",
-    title: "1Commerce PNW — Pacific Northwest Commerce Infrastructure",
+    title: "1Commerce PNW — Pacific Northwest Gig Earnings & Tax App",
     h1: "1Commerce PNW",
     tagline:
-      "1Commerce is a PNW Enterprises company — born in the Pacific Northwest, serving operators across the US.",
+      "1Commerce is a PNW Enterprises company — born in the Pacific Northwest, serving gig and 1099 workers across the US.",
     description:
-      "1Commerce is a Pacific Northwest commerce infrastructure company (PNW Enterprises / 1Commerce LLC). Builders of UnifyOne, UnifOne, OneCommerc, OneCommerce.",
+      "1Commerce is a Pacific Northwest company (PNW Enterprises / 1Commerce LLC) behind UnifyOne, the gig earnings and tax app. Also UnifOne, OneCommerc, OneCommerce.",
     keywords: brand([
       "1commerce PNW",
-      "Pacific Northwest commerce",
-      "PNW commerce software",
+      "Pacific Northwest gig app",
+      "PNW gig tax software",
     ]),
     sections: [
       {
         heading: "Why the PNW?",
         paragraphs: [
-          "The Pacific Northwest has a long lineage of operator-grade infrastructure — Amazon, Microsoft, Starbucks, Costco. 1Commerce is part of that lineage: we build commerce tools the way PNW companies build — sequentially, structurally, and to last.",
+          "The Pacific Northwest has a long lineage of operator-grade infrastructure — Amazon, Microsoft, Starbucks, Costco. 1Commerce is part of that lineage: we build UnifyOne, the earnings and tax app for gig workers, the way PNW companies build — sequentially, structurally, and to last.",
         ],
       },
     ],
@@ -569,15 +569,15 @@ export const SEO_PAGES: SeoPage[] = [
     title: "OneCommerce — The Brand Behind UnifyOne by 1Commerce",
     h1: "OneCommerce",
     tagline:
-      "OneCommerce is another spelling of 1Commerce — the company that ships UnifyOne.",
+      "OneCommerce is another spelling of 1Commerce — the company that ships UnifyOne, the gig earnings and tax app.",
     description:
-      "OneCommerce (1Commerce) is the company behind UnifyOne, the multi-tenant AI commerce platform. Also known as 1-commerce, OneCommerc, UnifOne.",
+      "OneCommerce (1Commerce) is the company behind UnifyOne, the earnings and tax app for gig workers. Also known as 1-commerce, OneCommerc, UnifOne. Free + Pro $4.99.",
     keywords: brand(["onecommerce", "one commerce", "One Commerce"]),
     sections: [
       {
         heading: "OneCommerce = 1Commerce",
         paragraphs: [
-          "OneCommerce and 1Commerce are two spellings of the same brand — a Pacific Northwest commerce infrastructure company. The flagship product is UnifyOne.",
+          "OneCommerce and 1Commerce are two spellings of the same brand — a Pacific Northwest company behind UnifyOne, the earnings and tax app for gig and 1099 workers, with GigIQ, Tax Autopilot, Money Manager, and Kai.",
         ],
       },
     ],
@@ -592,25 +592,25 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "onecommerce-platform",
-    title: "OneCommerce Platform — UnifyOne Multi-Tenant SaaS",
+    title: "OneCommerce Platform — UnifyOne Gig Earnings & Tax App",
     h1: "The OneCommerce Platform",
     tagline:
-      "The OneCommerce platform is UnifyOne: multi-tenant, AI-powered, and built to replace five SaaS tools with one.",
+      "The OneCommerce platform is UnifyOne: the earnings and tax app that brings GigIQ, Tax Autopilot, Money Manager, and Kai into one place for gig workers.",
     description:
-      "OneCommerce platform — UnifyOne multi-tenant commerce by 1Commerce LLC. Stripe, PayPal, Shopify, Square, AI insights, and subscription billing.",
+      "OneCommerce platform — UnifyOne, the gig earnings and tax app by 1Commerce LLC. GigIQ, Tax Autopilot mileage & quarterly taxes, Money Manager, and Kai. Free + Pro $4.99.",
     keywords: brand(["OneCommerce platform", "1Commerce platform"]),
     sections: [
       {
         heading: "The OneCommerce (UnifyOne) platform",
         paragraphs: [
-          "If you searched 'OneCommerce platform,' '1commerce platform,' or 'UnifyOne platform' — they all describe the same product: a multi-tenant SaaS with integrated payments, AI, and analytics.",
+          "If you searched 'OneCommerce platform,' '1commerce platform,' or 'UnifyOne platform' — they all describe the same product: UnifyOne, the earnings and tax app for gig and 1099 workers that consolidates payouts, IRS mileage, and quarterly taxes with GigIQ, Tax Autopilot, Money Manager, and Kai. It also keeps a secondary commerce capability for workers running a side shop.",
         ],
       },
     ],
     faq: [
       {
         q: "Is there a OneCommerce free trial?",
-        a: "Yes — Starter is free forever and uses the same infrastructure as the paid plans.",
+        a: "Yes — the Gig Starter plan is free forever, with earnings tracking, mileage logging, and an estimated tax set-aside. Pro is $4.99/month.",
       },
     ],
     related: ["unifyone-platform", "onecommerce"],
@@ -618,25 +618,25 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "onecommerce-solutions",
-    title: "OneCommerce Solutions — UnifyOne Product Suite",
+    title: "OneCommerce Solutions — UnifyOne Gig Earnings & Tax Suite",
     h1: "OneCommerce Solutions",
     tagline:
-      "OneCommerce Solutions is the UnifyOne product suite from 1Commerce LLC — platform, AI, gig tracker, and money manager.",
+      "OneCommerce Solutions is the UnifyOne suite from 1Commerce LLC — GigIQ, Tax Autopilot, Money Manager, and Kai for gig and 1099 workers.",
     description:
-      "OneCommerce Solutions — the UnifyOne product suite. Multi-tenant commerce, Kai AI, Gig Command, Money Manager, and Cathedral white-label tier.",
+      "OneCommerce Solutions — the UnifyOne suite for gig workers: GigIQ earnings intelligence, Tax Autopilot, Money Manager, and the Kai assistant. Free + Pro $4.99.",
     keywords: brand(["OneCommerce solutions", "1Commerce Solutions"]),
     sections: [
       {
         heading: "OneCommerce Solutions = UnifyOne Solutions",
         paragraphs: [
-          "OneCommerce Solutions and UnifyOne Solutions describe the same product suite from 1Commerce LLC — the parent company behind UnifyOne.",
+          "OneCommerce Solutions and UnifyOne Solutions describe the same suite from 1Commerce LLC — the parent company behind UnifyOne, the earnings and tax app for gig and 1099 workers.",
         ],
       },
     ],
     faq: [
       {
         q: "What's included in OneCommerce Solutions?",
-        a: "UnifyOne platform, Kai AI, Gig Command, Money Manager, Affiliates, and governance tooling.",
+        a: "UnifyOne and its four pillars — GigIQ earnings intelligence, Tax Autopilot, Money Manager, and the Kai assistant — with more AI tools as they ship.",
       },
     ],
     related: ["unifyone-solutions", "onecommerce"],
@@ -649,13 +649,13 @@ export const SEO_PAGES: SeoPage[] = [
     tagline:
       "PNW Enterprises is the holding brand for 1Commerce LLC — makers of UnifyOne.",
     description:
-      "PNW Enterprises (1Commerce LLC) builds UnifyOne — the Pacific Northwest multi-tenant commerce platform. Also known as 1-commerce, OneCommerce, UnifOne.",
-    keywords: brand(["PNW Enterprises", "PNW commerce", "PNW SaaS"]),
+      "PNW Enterprises (1Commerce LLC) builds UnifyOne — the Pacific Northwest earnings and tax app for gig workers. Also known as 1-commerce, OneCommerce, UnifOne.",
+    keywords: brand(["PNW Enterprises", "PNW gig app", "PNW SaaS"]),
     sections: [
       {
         heading: "About PNW Enterprises",
         paragraphs: [
-          "PNW Enterprises is the holding and trading brand for 1Commerce LLC. It operates out of Washington state and ships the UnifyOne commerce platform plus adjacent products.",
+          "PNW Enterprises is the holding and trading brand for 1Commerce LLC. It operates out of Washington state and ships UnifyOne — the earnings and tax app for gig and 1099 workers, with GigIQ, Tax Autopilot, Money Manager, and Kai.",
         ],
       },
     ],
@@ -670,29 +670,30 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "pnw-1commerce",
-    title: "PNW 1Commerce — UnifyOne in the Pacific Northwest",
+    title:
+      "PNW 1Commerce — UnifyOne Gig Earnings & Tax App in the Pacific Northwest",
     h1: "PNW 1Commerce",
     tagline:
-      "PNW 1Commerce is the operator-grade commerce platform (UnifyOne) built in the Pacific Northwest.",
+      "PNW 1Commerce is UnifyOne — the gig-worker earnings and tax app built in the Pacific Northwest.",
     description:
-      "PNW 1Commerce — the Pacific Northwest home of UnifyOne, the multi-tenant AI commerce platform from 1Commerce LLC / PNW Enterprises.",
+      "PNW 1Commerce — the Pacific Northwest home of UnifyOne, the earnings and tax app for gig workers from 1Commerce LLC / PNW Enterprises. Free + Pro $4.99.",
     keywords: brand([
       "PNW 1commerce",
       "PNW 1-commerce",
-      "Pacific Northwest commerce",
+      "Pacific Northwest gig app",
     ]),
     sections: [
       {
-        heading: "Commerce infrastructure, PNW-style",
+        heading: "Built PNW-style",
         paragraphs: [
-          "PNW 1Commerce follows the same principles as the region's best infrastructure companies: ship what lasts, automate before scaling traffic, and never hard-code a kill switch out of existence.",
+          "PNW 1Commerce follows the same principles as the region's best infrastructure companies: ship what lasts, automate before scaling, and never hard-code a kill switch out of existence. The result is UnifyOne — the earnings and tax app for gig and 1099 workers, with GigIQ, Tax Autopilot, Money Manager, and Kai.",
         ],
       },
     ],
     faq: [
       {
         q: "Does 1Commerce only serve PNW customers?",
-        a: "No — customers are spread across the US. The company is simply headquartered in the PNW.",
+        a: "No — gig and 1099 workers using UnifyOne are spread across the US. The company is simply headquartered in the PNW.",
       },
     ],
     related: ["pnw-enterprises", "1commerce"],
