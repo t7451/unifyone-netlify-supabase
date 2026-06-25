@@ -92,7 +92,7 @@ function AffiliateDialog({
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {initial ? "Edit Program" : "Add Affiliate Program"}
+            {initial ? "Edit Side-Income Program" : "Add Affiliate Program"}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-3 py-2">
@@ -393,10 +393,12 @@ export default function Affiliates() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Link2 className="w-6 h-6 text-teal-400" />
-            Affiliate Hub
+            Affiliate Side Income
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Manage all affiliate programs, commissions, and payout tracking.
+            Optional add-on for gig workers with a side hustle — track any
+            affiliate programs, commissions, and payouts alongside your gig
+            earnings.
           </p>
         </div>
         <Button
@@ -506,7 +508,8 @@ export default function Affiliates() {
             <Link2 className="w-12 h-12 mx-auto mb-4 opacity-20" />
             <p className="font-medium text-lg">No affiliate programs yet</p>
             <p className="text-sm mt-1 mb-4">
-              Add your first program to start tracking commissions.
+              Run a side hustle too? Add your first program to track its
+              commissions next to your gig income — totally optional.
             </p>
             <Button
               onClick={() => {
