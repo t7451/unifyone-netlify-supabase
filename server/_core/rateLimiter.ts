@@ -31,7 +31,7 @@ export type RateLimitResult =
 
 let _redis: Redis | null = null;
 
-/** Key prefix used for both the Ratelimit instance and manual key deletion. */
+/** Root key prefix. Each limiter further namespaces under `${ROOT}:${name}`. */
 const RATE_LIMIT_PREFIX = "rl";
 
 function getRedis(): Redis | null {
@@ -47,10 +47,20 @@ function getRedis(): Redis | null {
 // ── Factory ───────────────────────────────────────────────────────────────────
 
 export function createRateLimiter(opts: {
+  /**
+   * Unique limiter name. Becomes part of the Redis key prefix
+   * (`rl:{name}:{identifier}:{window}`) so each limiter gets its OWN counter.
+   * Without this, every limiter sharing a window size would collide on a single
+   * `rl:{identifier}` counter in the Upstash path (the in-memory fallback is
+   * per-instance and was always isolated), causing e.g. sign-in attempts to
+   * burn the password-reset and email-verification budgets.
+   */
+  name: string;
   maxAttempts: number;
   windowMs: number;
 }) {
-  const { maxAttempts, windowMs } = opts;
+  const { name, maxAttempts, windowMs } = opts;
+  const prefix = `${RATE_LIMIT_PREFIX}:${name}`;
 
   // ── Upstash path ────────────────────────────────────────────────────────────
   const redis = getRedis();
@@ -60,7 +70,7 @@ export function createRateLimiter(opts: {
       redis,
       limiter: Ratelimit.slidingWindow(maxAttempts, `${windowSeconds} s`),
       analytics: false,
-      prefix: RATE_LIMIT_PREFIX,
+      prefix,
     });
 
     return {
@@ -71,9 +81,11 @@ export function createRateLimiter(opts: {
         return { allowed: false, retryAfterMs };
       },
       async reset(key: string): Promise<void> {
-        // Upstash Ratelimit stores the sliding-window ZSET at `{prefix}:{key}`.
-        // Deleting this key resets the counter for that identifier.
-        await redis.del(`${RATE_LIMIT_PREFIX}:${key}`);
+        // The sliding-window counter lives at `{prefix}:{key}:{window}` — a
+        // manual `redis.del("{prefix}:{key}")` would miss the window suffix and
+        // be a no-op. Route through the library's own reset, which scans and
+        // clears `{prefix}:{key}:*`.
+        await upstash.resetUsedTokens(key);
       },
     };
   }
@@ -128,12 +140,14 @@ export function createRateLimiter(opts: {
 
 /** Shared limiter for sign-in / sign-up: 10 attempts per 15 minutes per IP. */
 export const authRateLimiter = createRateLimiter({
+  name: "auth",
   maxAttempts: 10,
   windowMs: 15 * 60 * 1000,
 });
 
 /** Stricter limiter for password-reset requests: 3 per 15 minutes per IP. */
 export const passwordResetLimiter = createRateLimiter({
+  name: "pwreset",
   maxAttempts: 3,
   windowMs: 15 * 60 * 1000,
 });
@@ -150,18 +164,21 @@ export const passwordResetLimiter = createRateLimiter({
  * bucket with password reset.
  */
 export const emailVerifyLimiter = createRateLimiter({
+  name: "emailverify",
   maxAttempts: 30,
   windowMs: 15 * 60 * 1000,
 });
 
 /** Resend-verification email requests: 5 per 15 minutes per IP (anti-spam). */
 export const resendVerificationLimiter = createRateLimiter({
+  name: "resendverify",
   maxAttempts: 5,
   windowMs: 15 * 60 * 1000,
 });
 
 /** LLM-backed endpoints: 20 calls per 5 minutes per user/IP — cost guard. */
 export const llmRateLimiter = createRateLimiter({
+  name: "llm",
   maxAttempts: 20,
   windowMs: 5 * 60 * 1000,
 });
@@ -172,24 +189,28 @@ export const llmRateLimiter = createRateLimiter({
  * intent is anti-spam, not anti-bruteforce.
  */
 export const publicFormLimiter = createRateLimiter({
+  name: "publicform",
   maxAttempts: 30,
   windowMs: 5 * 60 * 1000,
 });
 
 /** Checkout/order creation: 50 writes per minute per caller IP. */
 export const orderCreateLimiter = createRateLimiter({
+  name: "ordercreate",
   maxAttempts: 50,
   windowMs: 60 * 1000,
 });
 
 /** Subscription plan changes: 10 per hour per caller IP. */
 export const subscriptionChangePlanLimiter = createRateLimiter({
+  name: "subplan",
   maxAttempts: 10,
   windowMs: 60 * 60 * 1000,
 });
 
 /** Authenticated image uploads: 20 per minute per caller IP. */
 export const imageUploadLimiter = createRateLimiter({
+  name: "imageupload",
   maxAttempts: 20,
   windowMs: 60 * 1000,
 });
@@ -199,6 +220,7 @@ export const imageUploadLimiter = createRateLimiter({
  * 60 calls per minute per user — generous for UI polling but caps abuse.
  */
 export const mcpRateLimiter = createRateLimiter({
+  name: "mcp",
   maxAttempts: 60,
   windowMs: 60 * 1000,
 });
