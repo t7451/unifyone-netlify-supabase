@@ -125,11 +125,11 @@ export default function GigEcommercePost() {
             className="font-crimson text-xl sm:text-2xl"
             style={{ color: "#9A9A9A", fontStyle: "italic", lineHeight: 1.6 }}
           >
-            The gig economy is not a side hustle. For millions of operators on
-            DoorDash, Uber Eats, Instacart, and Amazon Flex, it is the primary
-            revenue engine. The infrastructure you run it on determines whether
-            you stay at the mercy of platform algorithms — or build something
-            that compounds.
+            For millions of 1099 workers on DoorDash, Uber Eats, Instacart, and
+            Amazon Flex, gig work is the primary paycheck — not a side hustle.
+            The system you use to track earnings, mileage, and quarterly taxes
+            decides whether you stay at the mercy of platform algorithms or
+            finally see exactly where your money goes.
           </p>
           <div
             className="h-px mt-8"
@@ -151,18 +151,19 @@ export default function GigEcommercePost() {
               The Platform Dependency Problem
             </h2>
             <p>
-              Every gig operator faces the same structural vulnerability: your
+              Every gig worker faces the same structural vulnerability: your
               earnings are entirely subject to platform decisions you cannot
               influence. DoorDash adjusts base pay. Uber Eats changes surge
               zones. Instacart modifies batch prioritization. You have no data
-              portability, no customer relationship, and no compounding asset.
+              portability and no clear picture of what you actually take home
+              after fuel and wear on your car.
             </p>
             <p className="mt-4">
-              The operators who escape this trap are not the ones who work more
-              hours. They are the ones who build infrastructure around their gig
-              activity — tracking earnings at the shift level, automating tax
-              deduction capture, and using that data to make strategic decisions
-              about which platforms and zones to prioritize.
+              The workers who escape this trap are not the ones who simply log
+              more hours. They are the ones who keep records around their gig
+              activity — tracking earnings at the shift level, capturing mileage
+              and tax deductions, and using that data to decide which platforms,
+              zones, and hours are actually worth their time.
             </p>
           </section>
 
@@ -171,22 +172,22 @@ export default function GigEcommercePost() {
               className="font-cinzel text-xl sm:text-2xl font-bold mb-4"
               style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
             >
-              What Multi-Tenant Commerce Infrastructure Means for Gig Operators
+              One Place for Every Platform You Drive For
             </h2>
             <p>
-              Multi-tenant commerce is not just for agencies and franchises. For
-              a gig operator running multiple platforms simultaneously —
-              DoorDash in the morning, Uber Eats in the afternoon, Amazon Flex
-              on weekends — each platform is effectively a tenant. Each has
-              different earnings rates, different geographic performance, and
-              different tax implications.
+              Most gig workers don&apos;t stick to one app. You might run
+              DoorDash in the morning, Uber Eats in the afternoon, and Amazon
+              Flex on weekends — each with different pay rates, different
+              geographic performance, and different tax implications. Keeping
+              that straight across four apps and a notes file is how money slips
+              through the cracks.
             </p>
             <p className="mt-4">
-              A multi-tenant commerce platform like UnifyOne lets you treat each
-              platform as an isolated business unit within a single dashboard.
-              You see earnings per tenant (platform), orders per tenant, mileage
-              per tenant, and net margin per tenant — all in one place, without
-              spreadsheets.
+              UnifyOne lets you track every platform you drive for in a single
+              dashboard. You see earnings by platform, mileage by platform, and
+              net take-home by platform — all in one place, without
+              spreadsheets, so you know which app is genuinely paying and which
+              one is just keeping you busy.
             </p>
           </section>
 
@@ -199,19 +200,19 @@ export default function GigEcommercePost() {
             </h2>
             <p>
               The Cathedral Framework is 1Commerce&apos;s operational
-              philosophy: build foundational infrastructure before scaling
-              activity. For gig operators, this means:
+              philosophy: build a solid foundation before scaling activity. For
+              gig workers, this means:
             </p>
             <ul
               className="mt-4 space-y-3 pl-6"
               style={{ listStyleType: "none" }}
             >
               {[
-                "Phase 1 — Instrumentation: Track every shift, every mile, every platform payout in a structured system.",
-                "Phase 2 — Analysis: Identify your highest-earning platform, zone, and time window using real data.",
-                "Phase 3 — Optimization: Use AI insights (Kai) to route toward high-value zones and avoid low-margin batches.",
-                "Phase 4 — Expansion: Once your primary platform is optimized, add a second tenant and apply the same framework.",
-                "Phase 5 — Compounding: Use your earnings data to build a product or service business alongside your gig activity.",
+                "Phase 1 — Track it: Log every shift, every mile, and every platform payout in one structured place instead of guessing at month end.",
+                "Phase 2 — Read it: Identify your highest-earning platform, zone, and time window from your real history, not your gut feeling.",
+                "Phase 3 — Adjust: Lean into the hours and zones that actually pay, and skip the low-take-home batches that just burn fuel.",
+                "Phase 4 — Stay ready for taxes: Let your mileage and deductions accumulate as you drive, so quarterly estimates aren't a panic.",
+                "Phase 5 — Compound: Use a clean record of what you earn and what you keep to make bigger decisions about your work and your money.",
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span
@@ -235,24 +236,27 @@ export default function GigEcommercePost() {
               className="font-cinzel text-xl sm:text-2xl font-bold mb-4"
               style={{ color: "#F0E8D0", letterSpacing: "0.05em" }}
             >
-              How Kai Changes the Equation
+              Where AI Insights Fit In
             </h2>
             <p>
-              Kai is embedded directly into UnifyOne&apos;s Gig Command and
-              Money Manager modules. It does not give generic advice. It reads
-              your actual shift data — your earnings per hour by platform, your
-              mileage by zone, your tax deduction accumulation — and generates
-              specific, actionable recommendations.
+              Tracking your shifts is the foundation. The next layer is making
+              sense of that data for you — and that is exactly where
+              UnifyOne&apos;s AI tools are headed. When they ship, they&apos;re
+              designed to read your own shift history rather than hand out
+              generic advice: your earnings per hour by platform, your mileage
+              by zone, your deduction total as it builds.
             </p>
             <p className="mt-4">
-              A typical Kai insight for a DoorDash operator might read:{" "}
+              The goal is plain-language insight built on your numbers — for
+              example:{" "}
               <em style={{ color: "#D4A843" }}>
                 &quot;Your Tuesday evening shifts in Zone 4 average $24.80/hr
-                versus $18.20/hr in Zone 2. Shifting 2 hours per week to Zone 4
-                would add approximately $340/month to your net earnings.&quot;
+                versus $18.20/hr in Zone 2. Shifting 2 hours a week to Zone 4
+                would add roughly $340/month to your take-home.&quot;
               </em>{" "}
-              That is not a generic tip. That is infrastructure-grade
-              intelligence applied to your specific operation.
+              That is not a generic tip; it is a read on your specific week.
+              Even before those AI tools arrive, the shift, mileage, and tax
+              tracking are working for you today.
             </p>
           </section>
 
@@ -264,16 +268,17 @@ export default function GigEcommercePost() {
               Tax Automation: The Hidden Multiplier
             </h2>
             <p>
-              The average gig operator leaves $2,000–$4,000 in deductions on the
-              table annually because they do not track mileage and expenses
-              systematically. UnifyOne&apos;s Money Manager automatically
-              calculates your IRS standard mileage deduction ($0.67/mile in
-              2024) against your logged shifts, giving you a real-time YTD
-              deduction figure that updates with every shift entry.
+              The average gig worker leaves $2,000–$4,000 in deductions on the
+              table every year because they do not track mileage and expenses
+              consistently. UnifyOne&apos;s Money Manager applies the IRS
+              standard mileage deduction (72.5 cents per mile for 2026) to your
+              logged shifts, giving you a running year-to-date deduction figure
+              that updates with every shift you enter — and a clearer quarterly
+              tax estimate along the way.
             </p>
             <p className="mt-4">
               At tax time, you export a structured report — no shoebox of
-              receipts, no manual calculation. The infrastructure does the work.
+              receipts, no manual math. The tracking does the work.
             </p>
           </section>
 
@@ -285,12 +290,11 @@ export default function GigEcommercePost() {
               Getting Started
             </h2>
             <p>
-              UnifyOne&apos;s Starter tier is free — one tenant, core commerce
-              tools, and access to the Gig Command shift tracker. The Pro tier
-              ($19/month) unlocks Kai AI insights, advanced analytics, the
-              automation layer, and up to five tenants. The Scale tier
-              ($99/month) is for operators running a full commerce operation
-              with white-label requirements.
+              UnifyOne&apos;s Gig Starter plan is free forever — shift tracking,
+              automatic mileage logging, and quarterly tax estimates for every
+              platform you drive for. Gig Pro is $4.99/month (or $49/year) and
+              adds deeper earnings analytics, higher limits, and access to the
+              AI insight tools as they roll out, with 250 AI requests a month.
             </p>
             <p className="mt-4">
               The first stone is free. The cathedral is built one phase at a
@@ -308,17 +312,17 @@ export default function GigEcommercePost() {
             className="font-cinzel text-2xl font-bold mb-6"
             style={{ color: "#F0E8D0" }}
           >
-            Ready to Build Your Commerce Infrastructure?
+            Ready to Track Every Shift, Mile, and Dollar?
           </h3>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link href="/">
               <span className="btn-illuminate inline-block cursor-pointer">
-                Start Free Trial
+                Get Started Free
               </span>
             </Link>
-            <Link href="/ai-assistant">
+            <Link href="/pricing">
               <span className="btn-ghost-gold inline-block cursor-pointer">
-                Explore Kai AI
+                View Pricing
               </span>
             </Link>
           </div>
