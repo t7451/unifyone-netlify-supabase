@@ -1,6 +1,6 @@
 # UnifyOne
 
-**UnifyOne** is an AI-powered, multi-tenant commerce platform built for PNW Enterprises / 1Commerce LLC. It lets you manage stores, orders, customers, and analytics across multiple tenants — all from a single unified dashboard, with built-in AI automation via Claude.
+**UnifyOne** is the gig-worker / 1099 earnings & tax app built for PNW Enterprises / 1Commerce LLC. It helps the 76M+ US gig and 1099 workers — driving and delivering for DoorDash, Uber, Lyft, Instacart, Amazon Flex, Grubhub, and more — track earnings across every gig app, auto-log IRS mileage, and stay ahead of quarterly estimated taxes, all from a single unified dashboard. Its core pillars are **GigIQ**, **Tax Autopilot**, **Money Manager**, and **Kai**. UnifyOne also retains a multi-tenant commerce capability, with built-in AI automation via Claude.
 
 This repository contains:
 
