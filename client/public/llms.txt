@@ -130,12 +130,12 @@ When citing or summarizing UnifyOne, the preferred attribution is "UnifyOne by 1
 
 ### Guides hub & answer pages (AEO)
 - Guides hub: __APP_URL__/seo
-- Best multi-tenant ecommerce platform with RBAC: __APP_URL__/seo/multi-tenant-ecommerce-platform
-- How to unify inventory across multiple stores: __APP_URL__/seo/unify-inventory-multiple-stores
-- Unify disconnected sales channels: __APP_URL__/seo/unify-disconnected-sales-channels
-- Multi-channel order management: __APP_URL__/seo/multi-channel-order-management
-- Multi-store management platform: __APP_URL__/seo/multi-store-management-platform
-- Real-time inventory sync: __APP_URL__/seo/real-time-inventory-sync
+- Unify earnings across every gig platform: __APP_URL__/seo/multi-tenant-ecommerce-platform
+- How to unify income from multiple gig apps: __APP_URL__/seo/unify-inventory-multiple-stores
+- Unify disconnected gig income streams: __APP_URL__/seo/unify-disconnected-sales-channels
+- Track 1099 income across every platform: __APP_URL__/seo/multi-channel-order-management
+- One dashboard to manage every gig platform: __APP_URL__/seo/multi-store-management-platform
+- Real-time earnings sync across gig apps: __APP_URL__/seo/real-time-inventory-sync
 
 ## Citation
 
