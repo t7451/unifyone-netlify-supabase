@@ -531,27 +531,27 @@ export default function ThemeStore() {
           <div className="flex items-center justify-center gap-2 mb-4">
             <ShoppingBag className="w-6 h-6 text-[#00D9FF]" />
             <span className="text-sm font-semibold text-[#00D9FF] uppercase tracking-widest">
-              Theme Store
+              Optional Storefront Themes
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            {catalogEmpty ? "Premium templates" : "Launch faster with"}
+            {catalogEmpty ? "Storefront themes" : "Optional add-on:"}
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00D9FF] to-blue-400">
-              {catalogEmpty ? "coming soon" : "premium templates"}
+              {catalogEmpty ? "coming soon" : "storefront themes"}
             </span>
           </h1>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto mb-8">
             {catalogEmpty
-              ? "Our theme catalog is launching soon — professionally designed dashboard and workspace themes for gig and 1099 workers are on the way."
-              : "Browse professionally designed dashboard and workspace themes. Free and paid options for every kind of gig and 1099 worker."}
+              ? "This optional storefront-theme catalog is launching soon. It's a secondary add-on — your gig earnings, taxes, and Money Manager work without it."
+              : "An optional secondary add-on for members who also run a storefront. Browse ready-made storefront themes — your gig earnings and tax tools never need one."}
           </p>
 
           {/* Search bar */}
           <div className="relative max-w-xl mx-auto">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <Input
-              placeholder="Search themes by name, industry, or technology…"
+              placeholder="Search storefront themes by name, industry, or technology…"
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="pl-11 h-12 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-[#00D9FF]/40 text-sm"
@@ -561,13 +561,13 @@ export default function ThemeStore() {
           {/* Stats */}
           <div className="flex items-center justify-center gap-8 mt-8 text-sm text-slate-500">
             <span className="flex items-center gap-1.5">
-              <Package className="w-4 h-4" /> {themes.length} templates
+              <Package className="w-4 h-4" /> {themes.length} storefront themes
             </span>
             <span className="flex items-center gap-1.5">
               <Globe className="w-4 h-4" /> Multiple industries
             </span>
             <span className="flex items-center gap-1.5">
-              <Zap className="w-4 h-4" /> Free & paid options
+              <Zap className="w-4 h-4" /> Optional, free & paid
             </span>
           </div>
         </div>
@@ -677,12 +677,12 @@ export default function ThemeStore() {
           <div className="text-center py-20">
             <ShoppingBag className="w-12 h-12 text-slate-600 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-white mb-2">
-              No themes found
+              No storefront themes found
             </h3>
             <p className="text-slate-500 text-sm mb-6">
               {search
-                ? `No themes match "${search}". Try a different search term.`
-                : "No themes have been published yet. Check back soon!"}
+                ? `No storefront themes match "${search}". Try a different search term.`
+                : "No storefront themes have been published yet. Check back soon!"}
             </p>
             {search && (
               <Button
@@ -702,7 +702,7 @@ export default function ThemeStore() {
             <div className="flex items-center gap-2 mb-5">
               <Sparkles className="w-4 h-4 text-amber-400" />
               <h2 className="text-base font-semibold text-white">
-                Featured themes
+                Featured storefront themes
               </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -724,7 +724,7 @@ export default function ThemeStore() {
               <div className="flex items-center gap-2 mb-5">
                 <Tag className="w-4 h-4 text-slate-400" />
                 <h2 className="text-base font-semibold text-white">
-                  All themes
+                  All storefront themes
                 </h2>
                 <span className="text-xs text-slate-500">
                   ({regularThemes.length})

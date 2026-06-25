@@ -1,8 +1,14 @@
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Download, ExternalLink, Package, ArrowRight, Calendar } from "lucide-react";
-
+import {
+  ShoppingBag,
+  Download,
+  ExternalLink,
+  Package,
+  ArrowRight,
+  Calendar,
+} from "lucide-react";
 
 export default function MyThemes() {
   const [, navigate] = useLocation();
@@ -13,15 +19,20 @@ export default function MyThemes() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">My Themes</h1>
-          <p className="text-slate-400 text-sm mt-1">Your installed website templates</p>
+          <h1 className="text-2xl font-bold text-white">
+            My Storefront Themes
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">
+            Storefront themes you've installed — an optional add-on to your gig
+            tools
+          </p>
         </div>
         <Button
           onClick={() => navigate("/themes")}
           className="bg-gradient-to-r from-[#00D9FF] to-blue-500 hover:from-[#00C4E8] hover:to-blue-600 text-[#060D1F] font-semibold gap-2"
         >
           <ShoppingBag className="w-4 h-4" />
-          Browse Theme Store
+          Browse storefront themes
         </Button>
       </div>
 
@@ -29,7 +40,10 @@ export default function MyThemes() {
       {isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-[#0D1A3A] border border-white/8 rounded-xl overflow-hidden animate-pulse">
+            <div
+              key={i}
+              className="bg-[#0D1A3A] border border-white/8 rounded-xl overflow-hidden animate-pulse"
+            >
               <div className="aspect-[16/10] bg-white/5" />
               <div className="p-4 space-y-2">
                 <div className="h-4 bg-white/5 rounded w-3/4" />
@@ -44,15 +58,18 @@ export default function MyThemes() {
       {!isLoading && installs.length === 0 && (
         <div className="text-center py-20 bg-[#0D1A3A] border border-white/8 rounded-xl">
           <Package className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-white mb-2">No themes installed yet</h3>
+          <h3 className="text-lg font-semibold text-white mb-2">
+            No storefront themes installed yet
+          </h3>
           <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
-            Browse the Theme Store to find free and premium templates for your storefront.
+            Storefront themes are an optional add-on. Browse them if you also
+            run a storefront — your gig earnings and tax tools work without one.
           </p>
           <Button
             onClick={() => navigate("/themes")}
             className="bg-gradient-to-r from-[#00D9FF] to-blue-500 text-[#060D1F] font-semibold gap-2"
           >
-            Browse Theme Store <ArrowRight className="w-4 h-4" />
+            Browse storefront themes <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
       )}
@@ -63,17 +80,23 @@ export default function MyThemes() {
           {installs.map((install: any) => {
             const theme = install.theme;
             if (!theme) return null;
-            const thumbnail = theme.thumbnailUrl || `https://placehold.co/400x280/0D1A3A/00D9FF?text=${encodeURIComponent(theme.name)}`;
+            const thumbnail =
+              theme.thumbnailUrl ||
+              `https://placehold.co/400x280/0D1A3A/00D9FF?text=${encodeURIComponent(theme.name)}`;
 
             return (
-              <div key={install.id} className="bg-[#0D1A3A] border border-white/8 rounded-xl overflow-hidden hover:border-[#00D9FF]/30 transition-all">
+              <div
+                key={install.id}
+                className="bg-[#0D1A3A] border border-white/8 rounded-xl overflow-hidden hover:border-[#00D9FF]/30 transition-all"
+              >
                 <div className="relative aspect-[16/10] overflow-hidden bg-[#060D1F]">
                   <img
                     src={thumbnail}
                     alt={theme.name}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = `https://placehold.co/400x280/0D1A3A/00D9FF?text=${encodeURIComponent(theme.name)}`;
+                    onError={e => {
+                      (e.target as HTMLImageElement).src =
+                        `https://placehold.co/400x280/0D1A3A/00D9FF?text=${encodeURIComponent(theme.name)}`;
                     }}
                   />
                   <div className="absolute top-2 right-2">
@@ -91,15 +114,20 @@ export default function MyThemes() {
 
                 <div className="p-4 space-y-3">
                   <div>
-                    <h3 className="font-semibold text-white text-sm">{theme.name}</h3>
+                    <h3 className="font-semibold text-white text-sm">
+                      {theme.name}
+                    </h3>
                     {theme.description && (
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{theme.description}</p>
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                        {theme.description}
+                      </p>
                     )}
                   </div>
 
                   <div className="flex items-center gap-1.5 text-xs text-slate-600">
                     <Calendar className="w-3 h-3" />
-                    Installed {new Date(install.installedAt).toLocaleDateString()}
+                    Installed{" "}
+                    {new Date(install.installedAt).toLocaleDateString()}
                   </div>
 
                   <div className="flex items-center gap-2 pt-1">
