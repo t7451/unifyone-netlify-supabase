@@ -514,9 +514,9 @@ export default function Orders() {
 
   return (
     <DashboardPageShell
-      eyebrow="Order operations"
+      eyebrow="Optional commerce tools"
       title="Orders"
-      description="Prioritize fulfillment, payment exceptions, bulk cleanup, exports, and real-time order flow from the command queue."
+      description="An optional storefront add-on for sellers: track fulfillment, payment exceptions, bulk cleanup, exports, and real-time order flow. Not required to run GigIQ, Tax Autopilot, or Money Manager."
       actions={
         <>
           <Button
@@ -1019,7 +1019,7 @@ export default function Orders() {
               <p className="mt-2 max-w-md text-sm text-gray-400">
                 {hasActiveFilters
                   ? "Try adjusting your filters to find the order you're looking for."
-                  : "Orders will appear here as customers check out or when your team creates manual orders."}
+                  : "This optional storefront tool stays empty until customers check out or you add a manual order — it isn't needed for your gig earnings or tax tracking."}
               </p>
               {!hasActiveFilters && (
                 <Button
