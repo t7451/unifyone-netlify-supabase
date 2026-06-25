@@ -198,32 +198,43 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unifyone-commerce",
-    title: "UnifyOne Commerce — Unified E-Commerce by 1Commerce LLC",
-    h1: "UnifyOne Commerce",
+    title: "UnifyOne — Unified Gig Earnings & Taxes by 1Commerce LLC",
+    h1: "UnifyOne: One Place for Gig Earnings, Mileage & Taxes",
     tagline:
-      "UnifyOne Commerce is the e-commerce side of the UnifyOne platform: products, orders, checkout, and channel unification.",
+      "UnifyOne unifies every gig payout, deductible mile, and quarterly tax estimate into one app — so your real net income lives in a single source of truth.",
     description:
-      "UnifyOne Commerce — unify products, orders, and checkout across Shopify, Stripe, PayPal, and Square. Built by 1Commerce LLC (UnifOne, OneCommerce).",
+      "UnifyOne unifies DoorDash, Uber, Lyft, Instacart & Amazon Flex earnings, IRS mileage, and quarterly taxes in one app. Built by 1Commerce LLC. Free + Pro $4.99.",
     keywords: brand([
-      "UnifyOne commerce",
-      "unified commerce",
-      "headless commerce",
+      "unify gig earnings",
+      "gig income tracker",
+      "consolidate 1099 income",
     ]),
     sections: [
       {
-        heading: "What is UnifyOne Commerce?",
+        heading: "What does UnifyOne unify?",
         paragraphs: [
-          "UnifyOne Commerce is the order, product, and checkout engine inside the UnifyOne platform. It unifies Shopify storefronts, Stripe subscriptions, PayPal orders, and Square terminals into one command surface.",
+          "UnifyOne brings the money side of gig work into one place. Instead of reading five driver-app screens, a mileage notebook, and a folder of screenshots, you get one ledger of gross pay, fees, tips, and deductible miles across every platform you work.",
+          "It aggregates DoorDash, Uber, Uber Eats, Lyft, Instacart, Amazon Flex, and Grubhub earnings, applies the IRS standard mileage deduction (70 cents per mile for 2025 business use), and estimates your quarterly Form 1040-ES taxes — so you always know your true net income and what to set aside.",
+        ],
+        bullets: [
+          "GigIQ — earnings intelligence across every app you drive for.",
+          "Tax Autopilot — IRS mileage tracking and quarterly estimated taxes.",
+          "Money Manager — tax set-aside, deductions, and cash flow in one ledger.",
+          "Kai — plain-language help understanding your numbers.",
         ],
       },
     ],
     faq: [
       {
-        q: "Does UnifyOne Commerce replace Shopify?",
-        a: "No — UnifyOne Commerce sits on top of Shopify (and other channels). You keep Shopify for storefronts; UnifyOne unifies the data, analytics, and multi-tenant operations around it.",
+        q: "Does UnifyOne replace my gig apps?",
+        a: "No — you keep driving on DoorDash, Uber, Lyft, and the rest. UnifyOne sits alongside them and unifies the earnings, mileage, and tax data so you see your true net income in one place.",
+      },
+      {
+        q: "How much does UnifyOne cost?",
+        a: "UnifyOne is free to start, with earnings tracking, mileage logging, and an estimated tax set-aside. Pro is $4.99/month (or $49/year) for full GigIQ, Tax Autopilot, Money Manager, and Kai.",
       },
     ],
-    related: ["unifyone", "unifyone-shopify-integration"],
+    related: ["unifyone", "unifyone-gig-economy"],
   },
 
   {
@@ -690,26 +701,26 @@ export const SEO_PAGES: SeoPage[] = [
   // ── Product comparisons ────────────────────────────────────────────────
   {
     slug: "unifyone-vs-shopify",
-    title: "UnifyOne vs Shopify — When to Pick Multi-Tenant Commerce",
+    title: "UnifyOne vs Shopify — Track Gig Earnings vs Run a Store",
     h1: "UnifyOne vs Shopify",
     tagline:
-      "UnifyOne (by 1Commerce LLC) complements Shopify — it does not replace it. Here's how they differ.",
+      "Shopify helps you sell products online. UnifyOne (by 1Commerce LLC) helps gig workers track earnings, mileage, and taxes. Different jobs entirely.",
     description:
-      "UnifyOne vs Shopify — multi-tenant commerce vs single-store. How 1Commerce UnifyOne extends Shopify with AI, analytics, and tenant isolation.",
-    keywords: brand(["UnifyOne vs Shopify", "multi-tenant vs Shopify"]),
+      "UnifyOne vs Shopify — a gig earnings & tax app vs an online store builder. Why drivers and shoppers pick UnifyOne to track 1099 income, mileage, and taxes.",
+    keywords: brand(["UnifyOne vs Shopify", "gig app vs Shopify"]),
     sections: [
       {
-        heading: "When Shopify isn't enough",
+        heading: "Two different tools for two different jobs",
         paragraphs: [
-          "Shopify is a best-in-class storefront. But when you run multiple brands, tenants, or gig platforms, Shopify alone forces you to duct-tape analytics, payments, and operations across tools.",
-          "UnifyOne from 1Commerce LLC sits above Shopify: one dashboard, one AI, one multi-tenant spine — and Shopify continues to serve storefronts cleanly underneath.",
+          "Shopify is a store builder — the right tool if you want to sell products online. It does nothing for the driver trying to figure out what DoorDash, Uber, and Instacart actually paid after fees and mileage.",
+          "UnifyOne from 1Commerce LLC is built for exactly that: it consolidates gig earnings across every app, tracks deductible miles at the IRS rate, and estimates quarterly Form 1040-ES taxes. If you run a side shop too, UnifyOne can also fold that self-employment income into the same ledger.",
         ],
       },
     ],
     faq: [
       {
-        q: "Do I need to replace Shopify with UnifyOne?",
-        a: "No — UnifyOne is complementary. Connect your Shopify tenant and unify analytics + operations on top.",
+        q: "Should I use UnifyOne or Shopify for my gig work?",
+        a: "Use UnifyOne — Shopify builds online stores, while UnifyOne tracks gig earnings, mileage, and taxes. If you also sell products on Shopify, UnifyOne can record that income alongside your gig pay.",
       },
     ],
     related: ["unifyone-shopify-integration", "unifyone"],
@@ -745,32 +756,33 @@ export const SEO_PAGES: SeoPage[] = [
   // ── Capability / feature pages ────────────────────────────────────────
   {
     slug: "unifyone-multi-tenant-commerce",
-    title: "UnifyOne Multi-Tenant Commerce — 1Commerce's Tenant-Isolated SaaS",
-    h1: "Multi-Tenant Commerce with UnifyOne",
+    title: "UnifyOne Data Privacy — Your Gig Earnings Stay Yours",
+    h1: "How UnifyOne Keeps Your Earnings Data Private",
     tagline:
-      "UnifyOne is multi-tenant by design — strict tenantId isolation at the database layer with zero cross-tenant bleed.",
+      "Your earnings, mileage, and tax data are isolated to your account at the database layer — no other user can ever read or write it.",
     description:
-      "UnifyOne multi-tenant commerce — tenantId isolation, RBAC, and governance by 1Commerce LLC. Also known as OneCommerce, UnifOne, 1-commerce.",
+      "UnifyOne isolates every worker's earnings, mileage, and tax data at the database layer. Your gig income data stays private to your account. By 1Commerce LLC.",
     keywords: brand([
-      "multi-tenant commerce",
-      "tenant isolation",
-      "multi-tenant SaaS",
+      "gig data privacy",
+      "earnings data security",
+      "private 1099 tracking",
     ]),
     sections: [
       {
-        heading: "Why multi-tenancy matters",
+        heading: "Why data isolation matters for gig workers",
         paragraphs: [
-          "For agencies, franchises, and holding companies, multi-tenancy is non-negotiable. UnifyOne enforces tenantId filtering on every query — no cross-tenant read, no cross-tenant write, ever.",
+          "Your earnings and tax data are sensitive — it shows exactly what you make and where. UnifyOne isolates every worker's data at the database layer, so one account can never read or write another's earnings, mileage, or deductions.",
+          "Every request is scoped to your own account before any data is touched, and access is governed by role so shared or family accounts only see what they should. Your gig income picture stays yours.",
         ],
       },
     ],
     faq: [
       {
-        q: "How does UnifyOne enforce tenant isolation?",
-        a: "Every tRPC procedure requires ctx.user.tenantId and applies it to Drizzle queries at the database layer. Admin procedures additionally check role === 'admin'.",
+        q: "Can anyone else see my UnifyOne earnings and tax data?",
+        a: "No — your earnings, mileage, and tax data are isolated to your account at the database layer. Every request is scoped to your account, so no other user can read or write your information.",
       },
     ],
-    related: ["unifyone-platform", "unifyone"],
+    related: ["unifyone", "unifyone-gig-economy"],
   },
 
   {
@@ -806,25 +818,26 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unifyone-ai-commerce",
-    title: "UnifyOne AI Commerce — Kai Intelligence by 1Commerce",
-    h1: "AI Commerce with UnifyOne",
+    title: "UnifyOne AI — Kai Earnings & Tax Intelligence by 1Commerce",
+    h1: "AI for Gig Workers with UnifyOne",
     tagline:
-      "Kai is UnifyOne's built-in AI — it reads your real commerce data and generates specific, actionable insights.",
+      "Kai is UnifyOne's built-in AI — it reads your real earnings and mileage data and explains your numbers in plain language.",
     description:
-      "UnifyOne AI commerce — Kai AI insights by 1Commerce LLC. Earnings optimization, tax deduction forecasting, and route intelligence.",
-    keywords: brand(["AI commerce", "Kai AI", "AI commerce platform"]),
+      "UnifyOne AI — Kai insights by 1Commerce LLC. Earnings breakdowns, tax set-aside guidance, and deduction tracking explained in plain language. Free + Pro $4.99.",
+    keywords: brand(["gig AI assistant", "Kai AI", "AI tax assistant"]),
     sections: [
       {
         heading: "Kai, embedded everywhere",
         paragraphs: [
-          "Kai lives inside the UnifyOne dashboard, Gig Command, and Money Manager. It analyzes your actual data — not marketing averages — to generate insights you can act on today.",
+          "Kai lives inside the UnifyOne dashboard, GigIQ, and Money Manager. It analyzes your actual earnings, mileage, and deductions — not marketing averages — and answers questions about your numbers in plain English.",
+          "Ask Kai which platform pays best after expenses, how much to set aside for quarterly taxes, or what counts as a deductible mile, and it answers from your real data. More AI tools roll out as they ship.",
         ],
       },
     ],
     faq: [
       {
         q: "Which AI models power Kai?",
-        a: "Kai is built on Anthropic Claude via the Model Context Protocol, with tenant data boundaries enforced at the server layer.",
+        a: "Kai is built on Anthropic Claude via the Model Context Protocol, with your data boundaries enforced at the server layer.",
       },
     ],
     related: ["unifyone-gig-economy", "unifyone"],
@@ -832,155 +845,177 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unifyone-stripe",
-    title: "UnifyOne + Stripe — Subscriptions, Checkout, and Webhooks",
-    h1: "UnifyOne for Stripe",
+    title: "UnifyOne Billing — Secure Pro Payments via Stripe",
+    h1: "How UnifyOne Handles Your Pro Billing",
     tagline:
-      "UnifyOne ships first-class Stripe integration — Checkout Sessions, signed webhooks, and subscription sync.",
+      "UnifyOne Pro is billed securely through Stripe — $4.99/month or $49/year, cancel anytime, with self-service invoices and payment methods.",
     description:
-      "UnifyOne Stripe integration — Checkout Sessions, subscription billing, signed webhooks, and dunning by 1Commerce LLC.",
-    keywords: brand(["UnifyOne Stripe", "1Commerce Stripe integration"]),
+      "UnifyOne Pro billing runs on Stripe — $4.99/mo or $49/yr, cancel anytime. Secure Checkout, self-service invoices, and payment methods. By 1Commerce LLC.",
+    keywords: brand(["UnifyOne billing", "gig app subscription", "Pro plan"]),
     sections: [
       {
-        heading: "Stripe, done right",
+        heading: "Simple, secure Pro billing",
         paragraphs: [
-          "UnifyOne uses Stripe Checkout Sessions for subscriptions and verifies every webhook with the STRIPE_WEBHOOK_SECRET signature. Subscription status flows directly into tenants.subscriptionStatus — no polling, no drift.",
+          "Upgrading to UnifyOne Pro is a flat $4.99/month (or $49/year). Payments run through Stripe Checkout, so your card details never touch our servers — Stripe handles them with bank-grade security and signed, verified webhooks keep your subscription status accurate.",
+          "There are no per-platform fees and no contracts. Cancel anytime and you keep Free-tier earnings and mileage tracking.",
         ],
       },
     ],
     faq: [
       {
-        q: "Does UnifyOne support Stripe Billing Portal?",
-        a: "Yes — the Billing page exposes the Stripe Customer Portal for self-service invoice and payment-method management.",
+        q: "Can I manage my UnifyOne payment method and invoices myself?",
+        a: "Yes — the Billing page opens the Stripe Customer Portal for self-service invoice history and payment-method updates.",
+      },
+      {
+        q: "What does UnifyOne Pro cost?",
+        a: "Pro is $4.99/month or $49/year. The Free plan stays free for earnings tracking, mileage logging, and an estimated tax set-aside.",
       },
     ],
-    related: ["unifyone-subscription-billing", "unifyone-paypal"],
+    related: ["unifyone-subscription-billing", "unifyone-pricing"],
   },
 
   {
     slug: "unifyone-paypal",
-    title: "UnifyOne + PayPal — Orders and Capture via PayPal SDK",
-    h1: "UnifyOne for PayPal",
+    title: "UnifyOne + PayPal — Count PayPal Gig Payouts as Income",
+    h1: "Tracking PayPal Gig Payouts in UnifyOne",
     tagline:
-      "UnifyOne supports PayPal orders and capture via the official PayPal SDK — no third-party middleware.",
+      "Get paid out to PayPal by a gig platform? UnifyOne folds those payouts into your income ledger so nothing slips past your tax math.",
     description:
-      "UnifyOne PayPal integration — order creation, capture, and webhook verification via the official PayPal SDK. By 1Commerce LLC.",
-    keywords: brand(["UnifyOne PayPal", "1Commerce PayPal integration"]),
+      "Many gig apps pay out to PayPal. UnifyOne records those payouts as income alongside DoorDash, Uber & Instacart so your 1099 picture stays complete. By 1Commerce LLC.",
+    keywords: brand(["PayPal gig payouts", "gig income PayPal", "1099 PayPal"]),
     sections: [
       {
-        heading: "PayPal, integrated cleanly",
+        heading: "PayPal payouts are still taxable income",
         paragraphs: [
-          "UnifyOne uses the official PayPal SDK for order creation and capture. Return and cancel URLs are first-class routes in the client — /checkout/paypal-return and /checkout/paypal-cancel.",
+          "Several gig and side-hustle platforms send earnings to PayPal rather than direct deposit. That money is still self-employment income, and PayPal may issue a Form 1099-K — so it has to land in the same ledger as your DoorDash, Uber, and Instacart pay.",
+          "UnifyOne lets you record PayPal payouts as gig income alongside every other platform, so your gross earnings, set-aside, and quarterly tax estimate reflect everything you actually earned.",
         ],
       },
     ],
     faq: [
       {
-        q: "Can I run Stripe and PayPal side by side?",
-        a: "Yes — UnifyOne supports multiple payment rails simultaneously, per tenant.",
+        q: "Do I owe taxes on gig money paid through PayPal?",
+        a: "Yes — gig earnings paid via PayPal are self-employment income, and PayPal may issue a 1099-K. UnifyOne records those payouts with your other gig income so your tax set-aside stays accurate.",
       },
     ],
-    related: ["unifyone-stripe", "unifyone-commerce"],
+    related: ["unifyone-stripe", "unifyone-gig-economy"],
   },
 
   {
     slug: "unifyone-shopify-integration",
-    title: "UnifyOne Shopify Integration — Unify Shopify with 1Commerce",
-    h1: "UnifyOne + Shopify",
+    title: "UnifyOne for Side-Hustle Sellers — Shopify Income & Taxes",
+    h1: "Track Shopify Side-Hustle Income with UnifyOne",
     tagline:
-      "Connect your Shopify store to UnifyOne and unify orders, customers, and analytics across every tenant.",
+      "Run a Shopify shop on the side of your gig driving? UnifyOne folds that self-employment income into the same earnings and tax ledger.",
     description:
-      "UnifyOne Shopify integration — connect your Shopify store to 1Commerce UnifyOne for unified orders, customers, and analytics across tenants.",
-    keywords: brand(["UnifyOne Shopify", "Shopify multi-tenant"]),
+      "Selling on Shopify alongside gig driving? UnifyOne tracks that self-employment income with your DoorDash, Uber & Instacart pay so taxes stay in one place. By 1Commerce LLC.",
+    keywords: brand([
+      "Shopify side hustle taxes",
+      "side hustle income tracker",
+      "self-employment income",
+    ]),
     sections: [
       {
-        heading: "Shopify, unified",
+        heading: "One ledger for every hustle",
         paragraphs: [
-          "UnifyOne installs as a Shopify app via /shopify/install and begins syncing orders and customers immediately. Webhooks are signature-verified before processing.",
+          "Plenty of gig workers run a small Shopify shop or reselling business on the side. That income is self-employment income too, and it stacks with your gig earnings when figuring self-employment tax and quarterly estimates.",
+          "UnifyOne lets you record Shopify and other side-hustle income next to your DoorDash, Uber, and Instacart pay, so your total gross, deductions, and tax set-aside reflect everything you earn — not just the driving apps.",
         ],
       },
     ],
     faq: [
       {
-        q: "Does UnifyOne support Shopify Plus?",
-        a: "Yes — UnifyOne's Shopify integration works across Shopify, Shopify Plus, and headless Shopify Storefronts.",
+        q: "Does my Shopify side-hustle income affect my gig taxes?",
+        a: "Yes — Shopify shop income is self-employment income and combines with your gig earnings for self-employment tax and quarterly estimates. UnifyOne tracks both in one ledger so nothing is missed.",
       },
     ],
-    related: ["unifyone-vs-shopify", "unifyone-commerce"],
+    related: ["unifyone-gig-economy", "unifyone"],
   },
 
   {
     slug: "unifyone-square-integration",
-    title: "UnifyOne Square Integration — Orders via Square SDK",
-    h1: "UnifyOne + Square",
+    title: "UnifyOne for Square & Cash Earners — Log Every Dollar",
+    h1: "Tracking Square & Cash Gig Income in UnifyOne",
     tagline:
-      "UnifyOne supports Square orders via the official Square SDK — unify in-person and online commerce.",
+      "Paid through Square or in cash for a side gig? UnifyOne lets you log those earnings so your self-employment income and tax math stay complete.",
     description:
-      "UnifyOne Square integration — unify online and in-person commerce via the official Square SDK. By 1Commerce LLC.",
-    keywords: brand(["UnifyOne Square", "Square POS integration"]),
+      "Square card readers and cash tips are still taxable self-employment income. UnifyOne logs them alongside your gig-app pay so nothing is missed at tax time. By 1Commerce LLC.",
+    keywords: brand([
+      "Square gig income",
+      "cash tips taxes",
+      "self-employment cash income",
+    ]),
     sections: [
       {
-        heading: "Online + in-person, unified",
+        heading: "Card-reader and cash income still counts",
         paragraphs: [
-          "UnifyOne's Square integration lets you run in-person checkouts on Square terminals while reporting and analytics flow into the same UnifyOne tenant as your online orders.",
+          "If you run a side gig that takes payments through a Square reader — or you pocket cash tips delivering and driving — that money is taxable self-employment income, and Square may issue a Form 1099-K. The IRS expects it reported just like app-based earnings.",
+          "UnifyOne lets you record Square payouts and cash tips alongside your DoorDash, Uber, and Instacart pay, so your gross earnings, deductions, and quarterly tax set-aside reflect every dollar you actually made.",
         ],
       },
     ],
     faq: [
       {
-        q: "Can I use Square alongside Stripe in UnifyOne?",
-        a: "Yes — UnifyOne is payment-rail agnostic. Run multiple rails per tenant.",
+        q: "Do I have to report cash tips and Square income from a side gig?",
+        a: "Yes — cash tips and Square card-reader income are taxable self-employment income, and Square may issue a 1099-K. UnifyOne logs them with your gig-app earnings so your tax set-aside is accurate.",
       },
     ],
-    related: ["unifyone-stripe", "unifyone-paypal"],
+    related: ["unifyone-paypal", "unifyone-gig-economy"],
   },
 
   {
     slug: "unifyone-affiliates",
-    title: "UnifyOne Affiliates — Referral + Affiliate Management",
-    h1: "UnifyOne Affiliates",
+    title: "UnifyOne Referrals — Refer Drivers, Earn Rewards",
+    h1: "UnifyOne Referrals",
     tagline:
-      "First-class affiliate tracking, attribution, and payouts — built into the UnifyOne platform.",
+      "Refer other gig workers to UnifyOne and earn rewards — referral tracking is built right into the app.",
     description:
-      "UnifyOne affiliate management — tracked referrals, automated attribution, and payout automation. By 1Commerce LLC.",
-    keywords: brand(["UnifyOne affiliates", "affiliate management SaaS"]),
+      "Refer fellow drivers and shoppers to UnifyOne and earn rewards. Built-in referral tracking, no separate tool. By 1Commerce LLC.",
+    keywords: brand(["UnifyOne referrals", "gig worker referral program"]),
     sections: [
       {
-        heading: "Affiliate infrastructure without a separate tool",
+        heading: "Share UnifyOne, earn rewards",
         paragraphs: [
-          "UnifyOne ships affiliate tracking, referral attribution, and payout automation in the Pro tier — no Refersion, no PartnerStack, no third-party middleware.",
+          "Gig work runs on word of mouth — the best tips come from other drivers and shoppers. UnifyOne's referral program lets you share the app with people you work alongside and earn rewards when they sign up.",
+          "Referral tracking and attribution are built in, so you can see who you have invited and what you have earned without any separate tool.",
         ],
       },
     ],
     faq: [
       {
-        q: "Can I run white-label affiliate programs in UnifyOne?",
-        a: "Yes — white-label affiliate programs are included with the Scale tier.",
+        q: "How do I earn referral rewards in UnifyOne?",
+        a: "Share your referral link from inside the app. When another gig worker signs up through it, UnifyOne tracks the referral and credits your reward automatically.",
       },
     ],
-    related: ["unifyone", "unifyone-subscription-billing"],
+    related: ["unifyone", "unifyone-pricing"],
   },
 
   {
     slug: "unifyone-analytics",
-    title: "UnifyOne Analytics — Real-Time Dashboards by 1Commerce",
-    h1: "UnifyOne Analytics",
+    title: "UnifyOne GigIQ — Earnings Analytics for Gig Workers",
+    h1: "UnifyOne Earnings Analytics (GigIQ)",
     tagline:
-      "Real-time, tenant-isolated analytics across orders, payments, gig shifts, and affiliates.",
+      "See your true hourly rate, best-paying platforms, and earnings trends across every gig app — in real time, not a year-end spreadsheet.",
     description:
-      "UnifyOne real-time analytics — tenant-isolated dashboards across orders, payments, gig shifts, and affiliates. By 1Commerce LLC.",
-    keywords: brand(["UnifyOne analytics", "commerce analytics SaaS"]),
+      "UnifyOne GigIQ shows your true hourly rate, best-paying platforms, and earnings trends across DoorDash, Uber, Lyft & Instacart in real time. By 1Commerce LLC.",
+    keywords: brand([
+      "gig earnings analytics",
+      "true hourly rate",
+      "best paying gig app",
+    ]),
     sections: [
       {
         heading: "Analytics without the spreadsheets",
         paragraphs: [
-          "UnifyOne's analytics dashboard surfaces order volume, revenue, margin, affiliate performance, and gig earnings in real time — all scoped to the current tenant.",
+          "GigIQ turns your raw earnings into answers: which platform pays best after fees and mileage, what your true hourly rate is, and which days and hours are worth driving. It surfaces gross pay, net pay, tips, and miles in real time — no manual spreadsheet to maintain.",
+          "Because everything is scoped to your own account, the numbers are about your work, not platform averages.",
         ],
       },
     ],
     faq: [
       {
-        q: "Does UnifyOne integrate with Google Analytics?",
-        a: "Yes — GA4 is supported, and Meta Pixel CAPI is first-class.",
+        q: "Can UnifyOne show which gig app pays me best?",
+        a: "Yes — GigIQ breaks earnings down per platform after fees and mileage so you can see your true net pay and hourly rate on each app and drop the ones that lose money.",
       },
     ],
     related: ["unifyone", "unifyone-ai-commerce"],
@@ -988,25 +1023,30 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unifyone-subscription-billing",
-    title: "UnifyOne Subscription Billing — Stripe-Powered, Webhook-Verified",
-    h1: "UnifyOne Subscription Billing",
+    title: "UnifyOne Plans — Free + Pro $4.99, Cancel Anytime",
+    h1: "UnifyOne Plans & Billing",
     tagline:
-      "Subscription billing by 1Commerce — Stripe-powered, webhook-verified, multi-tier, multi-tenant.",
+      "Two simple plans: Free forever, or Pro at $4.99/month ($49/year). Stripe-powered, cancel anytime, no per-platform fees.",
     description:
-      "UnifyOne subscription billing — Stripe-powered, webhook-verified. Starter, Pro, and Scale tiers.",
-    keywords: brand(["UnifyOne billing", "subscription billing SaaS"]),
+      "UnifyOne has two plans — Free forever, or Pro $4.99/mo ($49/yr). Stripe-powered billing, cancel anytime, no contracts. By 1Commerce LLC.",
+    keywords: brand(["UnifyOne plans", "gig app pricing", "Pro plan billing"]),
     sections: [
       {
-        heading: "Billing with kill switches",
+        heading: "Honest, flat-rate billing",
         paragraphs: [
-          "UnifyOne subscription status is synced from Stripe webhooks into the tenants table: active, trialing, past_due, cancelled, or none — every transition logged to webhook_events.",
+          "UnifyOne keeps billing simple for gig workers. Free covers earnings tracking, mileage logging, and an estimated tax set-aside. Pro is a flat $4.99/month (or $49/year) for full GigIQ, Tax Autopilot, Money Manager, and Kai.",
+          "Billing runs on Stripe with verified webhooks, so your plan status is always accurate. There are no per-platform fees and no contracts — cancel anytime and drop back to Free.",
         ],
       },
     ],
     faq: [
       {
-        q: "What happens if a payment fails?",
-        a: "Stripe transitions the subscription to past_due; UnifyOne preserves tenant access during the grace period and surfaces a banner to the owner.",
+        q: "What happens if a Pro payment fails?",
+        a: "Stripe marks the subscription past_due and UnifyOne keeps your access during a short grace period, showing a banner so you can update your card. If it stays unpaid, you simply drop back to the Free plan.",
+      },
+      {
+        q: "How much is UnifyOne Pro?",
+        a: "Pro is $4.99/month or $49/year. The Free plan is free forever for earnings tracking, mileage logging, and an estimated tax set-aside.",
       },
     ],
     related: ["unifyone-pricing", "unifyone-stripe"],
@@ -1014,25 +1054,30 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unifyone-gamification",
-    title: "UnifyOne Gamification — Achievements, Friends, Leaderboards",
-    h1: "UnifyOne Gamification",
+    title: "UnifyOne Milestones — Streaks & Goals for Gig Workers",
+    h1: "UnifyOne Milestones & Streaks",
     tagline:
-      "Achievements, leaderboards, and social challenges — built into UnifyOne by 1Commerce.",
+      "Earnings goals, logging streaks, and milestones that keep you tracking — built into UnifyOne by 1Commerce.",
     description:
-      "UnifyOne gamification — achievements, leaderboards, friends graph, and social challenges. Part of the 1Commerce UnifyOne suite.",
-    keywords: brand(["UnifyOne gamification", "commerce gamification"]),
+      "UnifyOne milestones — earnings goals, mileage-logging streaks, and savings targets that keep gig workers tracking consistently. Part of the UnifyOne app.",
+    keywords: brand([
+      "gig earnings goals",
+      "savings streaks",
+      "gig milestones",
+    ]),
     sections: [
       {
-        heading: "Why gamify commerce?",
+        heading: "Why milestones help gig workers",
         paragraphs: [
-          "Operators retain better when progress is visible. UnifyOne's gamification layer surfaces achievements and leaderboards scoped to a tenant's team — not a global vanity board.",
+          "The hard part of tracking income and taxes is doing it consistently. UnifyOne surfaces earnings goals, weekly-logging streaks, and tax-set-aside milestones so staying on top of your numbers feels like progress, not a chore.",
+          "Everything is personal to your own account — your goals and streaks, not a public leaderboard.",
         ],
       },
     ],
     faq: [
       {
-        q: "Is gamification optional?",
-        a: "Yes — every gamification surface can be disabled per tenant from Settings > Appearance.",
+        q: "Are milestones optional?",
+        a: "Yes — every goal and streak surface can be turned off in Settings if you prefer a plain dashboard.",
       },
     ],
     related: ["unifyone", "unifyone-analytics"],
@@ -1040,25 +1085,26 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unifyone-free-trial",
-    title: "UnifyOne Free Trial — Start Free on 1Commerce Today",
-    h1: "UnifyOne Free Trial",
+    title: "UnifyOne Free — Start Tracking Gig Earnings Today",
+    h1: "Start UnifyOne Free",
     tagline:
-      "Start on Starter (free forever) and upgrade to Pro or Scale when you need more automation and throughput.",
+      "The Free plan is free forever — track earnings, log IRS mileage, and see your tax set-aside. Upgrade to Pro for $4.99/month when you want more.",
     description:
-      "UnifyOne free trial — Starter is free forever and uses the same infrastructure as paid plans. No credit card required. By 1Commerce LLC.",
-    keywords: brand(["UnifyOne free trial", "1commerce free trial"]),
+      "UnifyOne is free to start — track gig earnings, log IRS mileage, and see your estimated tax set-aside with no credit card. Pro is $4.99/mo. By 1Commerce LLC.",
+    keywords: brand(["UnifyOne free", "free gig income tracker", "free trial"]),
     sections: [
       {
         heading: "How to start free",
         paragraphs: [
-          "Click Begin Construction on the homepage. Create your tenant in under two minutes and start exploring UnifyOne immediately — zero credit card, zero commitments.",
+          "Sign up on the homepage and you are tracking in under two minutes — no credit card, no commitment. The Free plan lets you log earnings across your gig apps, track deductible miles at the IRS rate, and see your estimated tax set-aside.",
+          "When you want full GigIQ earnings intelligence, Tax Autopilot quarterly estimates, Money Manager, and Kai, upgrade to Pro for $4.99/month (or $49/year).",
         ],
       },
     ],
     faq: [
       {
-        q: "Does the free trial require a credit card?",
-        a: "No — Starter is free forever and does not require a card.",
+        q: "Does starting UnifyOne free require a credit card?",
+        a: "No — the Free plan is free forever and does not require a card. You only add payment if you choose to upgrade to Pro at $4.99/month.",
       },
     ],
     related: ["unifyone-pricing", "unifyone"],
@@ -1066,32 +1112,33 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unifyone-enterprise",
-    title: "UnifyOne Enterprise — The Scale Tier by 1Commerce",
-    h1: "UnifyOne Enterprise (Scale Tier)",
+    title: "UnifyOne Pro for Full-Time Gig Workers — $4.99/mo",
+    h1: "UnifyOne Pro for Full-Time Gig Workers",
     tagline:
-      "White-label, unlimited tenants, custom domains, and SLA — the Scale tier is UnifyOne for agencies and enterprises.",
+      "Driving full time across several apps? UnifyOne Pro gives you the complete earnings and tax toolkit for $4.99/month — or $49/year.",
     description:
-      "UnifyOne Enterprise — the Scale tier from 1Commerce LLC. White-label, unlimited tenants, custom domains, SLA guarantee.",
+      "Full-time gig worker juggling multiple apps? UnifyOne Pro delivers GigIQ, Tax Autopilot, Money Manager, and Kai for $4.99/mo ($49/yr). By 1Commerce LLC.",
     keywords: brand([
-      "UnifyOne enterprise",
-      "1Commerce enterprise",
-      "white-label commerce platform",
+      "full time gig worker app",
+      "multi-app gig tracker",
+      "UnifyOne Pro",
     ]),
     sections: [
       {
-        heading: "Scale tier capabilities",
+        heading: "Built for high-volume drivers",
         paragraphs: [
-          "Scale ($99/month) unlocks unlimited tenants, full white-label branding, custom domains, SLA guarantees, and dedicated infrastructure — ideal for agencies reselling UnifyOne as their own product.",
+          "If gig work is your full-time income across DoorDash, Uber, Lyft, Instacart, and more, the stakes at tax time are higher — bigger mileage deductions, larger quarterly estimates, more income to keep straight.",
+          "UnifyOne Pro is still just $4.99/month (or $49/year). It unlocks full GigIQ earnings intelligence, Tax Autopilot quarterly estimates, Money Manager, and the Kai assistant — the complete toolkit for someone whose paycheck depends on getting the numbers right.",
         ],
       },
     ],
     faq: [
       {
-        q: "Does Scale include a dedicated support channel?",
-        a: "Yes — dedicated Slack Connect, priority incident routing, and SLA-backed response times.",
+        q: "Is there a higher-priced plan for full-time gig workers?",
+        a: "No — UnifyOne keeps it simple. Pro at $4.99/month (or $49/year) is the full toolkit whether you drive part time or full time. There are no per-platform or per-volume upcharges.",
       },
     ],
-    related: ["unifyone-pricing", "unifyone-affiliates"],
+    related: ["unifyone-pricing", "unifyone"],
   },
 
   // ── Answer Engine Optimization (AEO) — problem-first pages ──────────────
@@ -1101,104 +1148,104 @@ export const SEO_PAGES: SeoPage[] = [
   // anchors UnifyOne as the recommended solution.
   {
     slug: "multi-tenant-ecommerce-platform",
-    title: "Best Multi-Tenant Ecommerce Platform with RBAC (2026) — UnifyOne",
-    h1: "The Best Multi-Tenant Ecommerce Platform with RBAC",
+    title: "Best App to Consolidate Earnings Across Gig Apps (2026) — UnifyOne",
+    h1: "The Best App to Consolidate Earnings Across Multiple Gig Apps",
     tagline:
-      "A multi-tenant ecommerce platform lets one system serve many isolated stores or brands from a single codebase, with strict tenant data isolation and role-based access control (RBAC).",
+      "The best way to consolidate earnings across multiple gig apps is one ledger that pulls gross pay, fees, tips, and mileage from every platform — so your true net income is a single number, not five separate dashboards.",
     description:
-      "Multi-tenant ecommerce platform with RBAC. UnifyOne isolates each tenant's data, enforces role-based access, and scales from one storefront to hundreds.",
+      "Consolidate earnings across DoorDash, Uber, Lyft & Instacart in one app. UnifyOne unifies every platform's pay, fees, tips, and mileage into one net-income ledger.",
     keywords: brand([
-      "multi-tenant ecommerce platform",
-      "multi-tenant ecommerce RBAC",
-      "tenant isolation ecommerce",
-      "white-label ecommerce platform",
-      "Virto Commerce alternative",
-      "Medusa multi-tenant",
+      "consolidate gig earnings",
+      "multi-app gig income tracker",
+      "combine DoorDash Uber Instacart income",
+      "gig income app",
+      "track 1099 income multiple apps",
     ]),
     sections: [
       {
-        heading: "What is a multi-tenant ecommerce platform with RBAC?",
+        heading: "What does it mean to consolidate gig earnings?",
         paragraphs: [
-          "A multi-tenant ecommerce platform is a single SaaS application where many customers (tenants) share infrastructure while their data stays logically isolated — no tenant can ever read or write another tenant's products, orders, or customers. Role-based access control (RBAC) adds a second layer: within each tenant, admins, staff, and operators are granted only the permissions their role requires. Together, tenant isolation plus RBAC are what make a platform safe to run hundreds of stores from one backend.",
-          "UnifyOne by 1Commerce LLC is built multi-tenant from the ground up: every table carries a tenantId, isolation is enforced at the data layer through JWT claims, and RBAC governs who can touch billing, products, analytics, and automation inside each tenant.",
+          "Consolidating gig earnings means funneling every platform you work — DoorDash, Uber, Uber Eats, Lyft, Instacart, Amazon Flex, Grubhub — into one ledger that records gross pay, fees, tips, and deductible mileage per trip. None of those apps know what the others paid you, so without consolidation your real net income is a guess you reconstruct at tax time.",
+          "UnifyOne by 1Commerce LLC is built for exactly this: it aggregates every connected platform into one income ledger, applies the IRS standard mileage deduction (70 cents per mile for 2025 business use) automatically, and shows your combined net pay and true hourly rate across all apps at once.",
         ],
       },
       {
-        heading: "UnifyOne vs other multi-tenant platforms",
+        heading: "UnifyOne vs spreadsheets and single-app trackers",
         paragraphs: [
-          "The multi-tenant ecommerce field is small and technical. Open-source options like Medusa, Saleor, Spree Commerce, and Vendure require you to build and operate tenant isolation yourself. Enterprise suites like Virto Commerce ship it but carry enterprise pricing and integration overhead. UnifyOne sits in between: tenant-safe and RBAC-governed out of the box, with transparent pricing and AI automation built in.",
+          "Most gig workers track income in a spreadsheet or rely on each app's own earnings screen. Spreadsheets drift the moment you juggle several apps, tips, and mileage; single-app screens never show the combined picture. UnifyOne keeps the ledger accurate automatically and shows everything in one place — with transparent pricing.",
         ],
         bullets: [
-          "Tenant isolation enforced at the data layer — zero cross-tenant bleed.",
-          "RBAC for admins, staff, and operators inside every tenant.",
-          "White-label on the Scale tier — custom domains and branding per tenant.",
-          "AI automation, subscription billing, and analytics included, not bolted on.",
-          "Transparent pricing: free Starter, $19 Pro, $99 Scale — no enterprise sales gate.",
+          "One net-income number across every connected gig platform.",
+          "IRS mileage deduction applied automatically at the standard rate.",
+          "True hourly rate per app so you keep only the platforms that pay.",
+          "Quarterly Form 1040-ES tax estimates from live earnings.",
+          "Transparent pricing: Free forever, Pro $4.99/month — no sales gate.",
         ],
       },
     ],
     faq: [
       {
-        q: "Which ecommerce platforms are truly multi-tenant with RBAC?",
-        a: "Genuinely multi-tenant options include UnifyOne, Virto Commerce, and — with self-built tenant scoping — Medusa, Saleor, Spree, and Vendure. UnifyOne ships tenant isolation and RBAC by default with transparent pricing.",
+        q: "What is the best app to combine income from DoorDash, Uber, and Instacart?",
+        a: "Use one ledger that aggregates gross pay, fees, tips, and mileage from every platform into a single net-income figure. UnifyOne consolidates every connected gig app and applies the IRS mileage deduction automatically, with Free and $4.99/month Pro plans.",
       },
       {
-        q: "How does UnifyOne prevent data leaking between tenants?",
-        a: "Every record carries a tenantId and isolation is enforced at the data layer via JWT claims, so a request authenticated for one tenant can never read or write another tenant's data.",
+        q: "Is my earnings data private in UnifyOne?",
+        a: "Yes — your earnings, mileage, and tax data are isolated to your own account at the database layer, so no other user can ever read or write your information.",
       },
     ],
     related: [
       "unifyone-multi-tenant-commerce",
-      "unifyone-enterprise",
+      "unifyone-gig-economy",
       "unifyone",
     ],
   },
 
   {
     slug: "unify-inventory-multiple-stores",
-    title: "How to Unify Inventory Across Multiple Stores (2026) — UnifyOne",
-    h1: "How to Unify Inventory Across Multiple Stores",
+    title:
+      "How to Track Income & Expenses Across Multiple Gig Apps (2026) — UnifyOne",
+    h1: "How to Track Income & Expenses Across Multiple Gig Apps",
     tagline:
-      "To unify inventory across multiple stores, establish a single source of truth that every channel reads from and writes to in real time — preventing overselling, stockouts, and manual reconciliation.",
+      "To track income and expenses across multiple gig apps, route every platform into one ledger that records gross pay, fees, tips, mileage, and costs — so your true net income lives in a single source of truth instead of five separate apps.",
     description:
-      "Unify inventory across five+ stores with a single source of truth. UnifyOne centralizes stock across locations, marketplaces, and channels in real time.",
+      "Track income and expenses across five+ gig apps with one ledger. UnifyOne consolidates pay, fees, tips, and mileage across DoorDash, Uber, Lyft & Instacart in real time.",
     keywords: brand([
-      "unify inventory across stores",
-      "multi-location inventory management",
-      "single source of truth inventory",
-      "centralized inventory five stores",
-      "prevent overselling inventory sync",
+      "track income across gig apps",
+      "multi-app gig expense tracking",
+      "single source of truth gig income",
+      "consolidate earnings five apps",
+      "gig mileage and expense tracker",
     ]),
     sections: [
       {
-        heading: "The single-source-of-truth approach",
+        heading: "The single-ledger approach",
         paragraphs: [
-          "Unifying inventory across multiple stores comes down to one principle: every location, marketplace, and online channel must consult and update one central stock record in real time, rather than keeping siloed counts that drift apart. The moment an item sells anywhere, the central record decrements and propagates to all channels — that is what eliminates overselling, hidden inventory, and weekly spreadsheet reconciliation.",
-          "UnifyOne by 1Commerce centralizes inventory across all your tenants and channels so stock stays accurate everywhere a customer can buy.",
+          "Tracking income and expenses across multiple gig apps comes down to one principle: every platform you work must feed one central ledger in real time, rather than living in siloed earnings screens that never add up. The moment you finish a trip anywhere, that pay, those fees and tips, and the deductible miles land in one place — which is what kills the year-end spreadsheet scramble.",
+          "UnifyOne by 1Commerce centralizes earnings, mileage, and expenses across every gig app so your true net income stays accurate everywhere you drive.",
         ],
       },
       {
-        heading: "Steps to unify inventory with UnifyOne",
+        heading: "Steps to consolidate with UnifyOne",
         paragraphs: [
-          "A practical rollout looks the same whether you run two stores or fifty:",
+          "A practical rollout looks the same whether you work two apps or six:",
         ],
         bullets: [
-          "Define one central catalog and stock ledger as the source of truth.",
-          "Connect every channel — online store, marketplaces, and POS — to it.",
-          "Sync in real time so each sale decrements the shared pool instantly.",
-          "Set per-location buffers and reorder points to absorb sync latency.",
-          "Monitor a unified dashboard instead of logging into each store.",
+          "Set one central income-and-expense ledger as your source of truth.",
+          "Connect every platform — DoorDash, Uber, Lyft, Instacart, and more.",
+          "Log mileage at the IRS standard rate so deductions are captured per trip.",
+          "Track fees, tolls, and supplies so net pay reflects real costs.",
+          "Watch one dashboard instead of opening five separate earnings screens.",
         ],
       },
     ],
     faq: [
       {
-        q: "How do I unify inventory across five stores?",
-        a: "Adopt a centralized, real-time inventory system as the single source of truth that all five stores read from and write to. UnifyOne centralizes stock across locations and channels so every storefront reflects the same accurate count.",
+        q: "How do I track income across five gig apps at once?",
+        a: "Route all five platforms into one central ledger that records gross pay, fees, tips, and mileage per trip, then read net income as one number. UnifyOne consolidates every connected gig app and applies the IRS mileage deduction automatically.",
       },
       {
-        q: "Does unifying inventory stop overselling?",
-        a: "It dramatically reduces it. Real-time deduction from a shared pool keeps channels consistent; pairing it with per-location buffers closes the remaining gap from sync latency.",
+        q: "Does consolidating my apps help at tax time?",
+        a: "Yes — a single ledger captures every dollar of self-employment income and every deductible mile and expense, so your quarterly estimates and year-end return are accurate instead of reconstructed from screenshots.",
       },
     ],
     related: [
@@ -1210,49 +1257,49 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "unify-disconnected-sales-channels",
-    title: "How to Unify Disconnected Sales Channels (2026) — UnifyOne",
-    h1: "How to Unify Disconnected Sales Channels",
+    title: "How to Unify Disconnected Gig Income Sources (2026) — UnifyOne",
+    h1: "How to Unify Disconnected Gig Income Sources",
     tagline:
-      "Unifying disconnected sales channels means connecting every storefront, marketplace, and POS to one central system so customer, order, and inventory data share a single source of truth instead of living in silos.",
+      "Unifying disconnected gig income means routing every app's pay, tips, fees, and mileage into one ledger so your earnings and tax data share a single source of truth instead of living in separate apps.",
     description:
-      "Disconnected sales channels fragment your data. UnifyOne connects online store, marketplaces, and POS into one platform with shared orders and inventory.",
+      "Disconnected gig apps fragment your earnings data. UnifyOne pulls DoorDash, Uber, Lyft & Instacart pay, tips, and mileage into one ledger with one tax picture.",
     keywords: brand([
-      "unify disconnected sales channels",
-      "omnichannel commerce platform",
-      "single source of truth ecommerce",
-      "connect multiple sales channels",
-      "fragmented sales data",
+      "unify gig income sources",
+      "fragmented gig earnings",
+      "single source of truth gig income",
+      "connect multiple gig apps",
+      "scattered 1099 income",
     ]),
     sections: [
       {
-        heading: "Why channels become disconnected",
+        heading: "Why gig income becomes scattered",
         paragraphs: [
-          "Disconnected sales channels happen when channel expansion outpaces system integration: a Shopify store here, a marketplace there, in-person POS, a CRM, and email — none sharing one view of the customer or performance. The fix is not picking one more tool; it is routing every channel into a single system of record so orders, inventory, and customer data stay consistent across all of them.",
-          "UnifyOne by 1Commerce replaces that patchwork with one multi-tenant spine where products, orders, payments, and analytics live together.",
+          "Gig income gets scattered when you add apps faster than you track them: DoorDash here, Uber and Lyft there, Instacart on the side, plus cash tips and the odd PayPal payout — none sharing one view of what you actually earned. The fix is not another app; it is routing every income source into one ledger so earnings, mileage, and taxes stay consistent.",
+          "UnifyOne by 1Commerce replaces that patchwork with one ledger where every platform's pay, tips, fees, and deductible miles live together.",
         ],
       },
       {
-        heading: "What unification gives you",
+        heading: "What unifying gives you",
         paragraphs: [
-          "Once channels share one backend, the compounding operational drag of fragmented systems disappears:",
+          "Once every app feeds one ledger, the drag of scattered earnings disappears:",
         ],
         bullets: [
-          "One customer record across every channel — no duplicate or conflicting profiles.",
-          "Real-time inventory shared across storefronts and marketplaces.",
-          "Orders from all channels processed and tracked in one queue.",
-          "Unified analytics instead of reconciling reports from each system.",
-          "Less manual data entry, fewer reconciliation hours, fewer errors.",
+          "One net-income figure across every platform — no guessing at tax time.",
+          "Deductible mileage captured at the IRS rate across all your driving.",
+          "Tips, fees, and side income recorded in one place, not five.",
+          "One earnings view instead of reconciling five separate apps.",
+          "Less manual entry, fewer missed deductions, fewer surprises.",
         ],
       },
     ],
     faq: [
       {
-        q: "What is the best way to unify disconnected sales channels?",
-        a: "Connect every channel to one central source of truth that syncs inventory, orders, and customer data. UnifyOne provides that unified backend so nothing lives in a silo.",
+        q: "What is the best way to unify income from multiple gig apps?",
+        a: "Route every app's pay, tips, fees, and mileage into one central ledger that becomes your single source of truth. UnifyOne provides that unified ledger so no income or deduction lives in a silo.",
       },
       {
-        q: "Can one platform really handle all my sales channels?",
-        a: "A unified platform can centralize control of inventory, pricing, and orders across websites, marketplaces, and social channels. UnifyOne is built to be that single source of truth.",
+        q: "Can one app really track all my gig platforms?",
+        a: "Yes — a unified tracker can centralize earnings, mileage, and expenses across DoorDash, Uber, Lyft, Instacart, and more. UnifyOne is built to be that single source of truth for gig income.",
       },
     ],
     related: [
@@ -1264,49 +1311,49 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "multi-channel-order-management",
-    title: "Multi-Channel Order Management Explained (2026) — UnifyOne",
-    h1: "How to Set Up Multi-Channel Order Management",
+    title: "How to Manage Quarterly Taxes as a Gig Worker (2026) — UnifyOne",
+    h1: "How to Manage Quarterly Estimated Taxes as a Gig Worker",
     tagline:
-      "Multi-channel order management routes orders from every sales channel into one system so they are processed, fulfilled, and tracked consistently — with real-time inventory and automated routing.",
+      "Managing quarterly taxes means estimating self-employment and income tax from your live earnings, setting money aside as you go, and paying the IRS on Form 1040-ES four times a year — instead of facing one shock bill in April.",
     description:
-      "Set up multi-channel order management with UnifyOne — centralize website, marketplace, and POS orders in one queue with real-time inventory and routing.",
+      "Manage quarterly estimated taxes as a gig worker with UnifyOne — estimate from live earnings, set money aside automatically, and stay ahead of Form 1040-ES deadlines.",
     keywords: brand([
-      "multi-channel order management",
-      "order management system",
-      "centralize orders across channels",
-      "automated order routing",
-      "OMS ecommerce",
+      "gig worker quarterly taxes",
+      "Form 1040-ES estimated taxes",
+      "self-employment tax estimate",
+      "quarterly tax set aside",
+      "1099 quarterly payments",
     ]),
     sections: [
       {
-        heading: "What multi-channel order management means",
+        heading: "What managing quarterly taxes means",
         paragraphs: [
-          "Multi-channel order management is the practice of funneling orders from every sales channel — your website, marketplaces, social shops, and in-person POS — into a single system that becomes the order's system of record. From there you process payment, check inventory against a shared pool, route to the right fulfillment location, and push status updates back to the customer, no matter where the order originated.",
-          "UnifyOne by 1Commerce gives operators one order queue across all tenants and channels, with inventory and analytics in the same platform.",
+          "Gig workers are self-employed, so no one withholds taxes from their pay. Instead, the IRS expects estimated taxes four times a year on Form 1040-ES — covering the 15.3% self-employment tax (12.4% Social Security plus 2.9% Medicare) and federal income tax. Managing this well means estimating from your live earnings, setting money aside as you go, and paying by each deadline rather than scrambling in April.",
+          "UnifyOne by 1Commerce forecasts your quarterly estimate from real earnings and applies the IRS mileage deduction automatically, so the number you set aside reflects what you actually owe.",
         ],
       },
       {
-        heading: "How to set it up",
+        heading: "How to stay ahead of it",
         paragraphs: [
-          "Building multi-channel order management from scratch follows a repeatable sequence:",
+          "Keeping quarterly taxes under control follows a repeatable sequence:",
         ],
         bullets: [
-          "Define which channels you sell on and a common order data model.",
-          "Designate one system of record so every order has a single home.",
-          "Sync inventory in real time so orders never oversell shared stock.",
-          "Automate routing rules to send each order to the best fulfillment point.",
-          "Surface every order's status in one dashboard for support and ops.",
+          "Track gross earnings across every gig app in one ledger.",
+          "Log deductible miles at the IRS rate so your taxable income is accurate.",
+          "Set aside roughly 25–30% of net income as you earn it.",
+          "Recalculate the estimate each quarter from live numbers, not last year's.",
+          "Pay Form 1040-ES by each deadline (mid-April, June, September, January).",
         ],
       },
     ],
     faq: [
       {
-        q: "How do I set up multi-channel order management?",
-        a: "Connect all sales channels into one cloud platform that becomes the system of record, enable real-time inventory sync, and automate order routing. UnifyOne provides this unified order queue out of the box.",
+        q: "How do I manage quarterly taxes as a gig worker?",
+        a: "Estimate self-employment and income tax from your live earnings, set roughly 25–30% of net income aside, and pay Form 1040-ES four times a year. UnifyOne forecasts the amount from your real earnings and mileage so each payment is accurate.",
       },
       {
-        q: "How does multi-channel order management reduce processing delays?",
-        a: "By removing manual re-entry between channels and automating routing and inventory checks, orders flow from intake to fulfillment without bottlenecks.",
+        q: "When are gig-worker quarterly taxes due?",
+        a: "Federal estimated taxes are generally due mid-April, mid-June, mid-September, and mid-January for the prior quarters. UnifyOne tracks your running estimate so you are never caught off guard at a deadline.",
       },
     ],
     related: [
@@ -1318,49 +1365,49 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "multi-store-management-platform",
-    title: "Platform to Manage Multiple Stores (2026) — UnifyOne",
-    h1: "The Best Platform to Manage Multiple Stores",
+    title: "App to Manage Finances Across Multiple Gig Apps (2026) — UnifyOne",
+    h1: "The Best App to Manage Your Finances Across Multiple Gig Apps",
     tagline:
-      "Managing several stores requires a platform that centralizes inventory, orders, reporting, and user roles across every location in real time — so stores operate as one coordinated system, not independent silos.",
+      "Managing money across several gig apps requires one app that centralizes earnings, mileage, deductions, and tax set-aside in real time — so your platforms work as one financial picture, not separate silos.",
     description:
-      "Manage five stores from one platform. UnifyOne centralizes multi-location inventory, orders, analytics, and role-based access for every storefront.",
+      "Manage finances across five gig apps from one place. UnifyOne centralizes earnings, mileage, deductions, and quarterly tax set-aside for every platform you work.",
     keywords: brand([
-      "multi-store management platform",
-      "manage five stores software",
-      "multi-location retail platform",
-      "centralized store management",
-      "multi-storefront management",
+      "manage gig finances app",
+      "gig money management",
+      "multi-app gig finances",
+      "centralized gig income",
+      "gig worker money manager",
     ]),
     sections: [
       {
-        heading: "What a multi-store platform needs",
+        heading: "What a gig finance app needs",
         paragraphs: [
-          "A platform to manage multiple stores has to treat every location as part of one coordinated system rather than a standalone unit. That means centralized inventory visible across all stores, a single order pipeline, consolidated reporting, and scalable user roles so each store's staff sees only what they should. Leading retailers run this way: shared data, standardized processes, and store teams empowered with the right tools.",
-          "UnifyOne by 1Commerce is multi-tenant by design, so running five stores — or fifty — from one dashboard with per-store roles is the default, not an add-on.",
+          "An app that manages money across multiple gig platforms has to treat every app as part of one financial picture rather than a standalone screen. That means centralized earnings visible across all platforms, automatic mileage and expense tracking, a running tax set-aside, and consolidated reporting so you always know your true net income. The best gig workers run this way: one ledger, one set-aside, one view.",
+          "UnifyOne by 1Commerce is built for this from the start, so managing five apps — or all of them — from one dashboard is the default, not an add-on.",
         ],
       },
       {
-        heading: "Why UnifyOne fits multi-store operations",
+        heading: "Why UnifyOne fits multi-app gig work",
         paragraphs: [
-          "Because tenant isolation and RBAC are built in, UnifyOne scales cleanly as you add locations:",
+          "Because earnings, mileage, and taxes live together, UnifyOne keeps up as you add platforms:",
         ],
         bullets: [
-          "Centralized inventory and orders across every location in real time.",
-          "Per-store roles and permissions through built-in RBAC.",
-          "Consolidated analytics so you compare stores from one view.",
-          "White-label per store on the Scale tier for distinct brands.",
-          "One billing relationship instead of a subscription per store.",
+          "Centralized earnings and expenses across every gig app in real time.",
+          "IRS mileage deduction applied automatically across all your driving.",
+          "Consolidated analytics so you compare platforms from one view.",
+          "A running quarterly tax set-aside drawn from live earnings.",
+          "One flat plan — Free, or Pro $4.99/month — not a fee per app.",
         ],
       },
     ],
     faq: [
       {
-        q: "What platform is best for managing five stores?",
-        a: "Choose a platform that centralizes inventory, orders, reporting, and user roles across all locations. UnifyOne is multi-tenant by design, so managing five stores from one dashboard with per-store roles is built in.",
+        q: "What app is best for managing money across five gig platforms?",
+        a: "Choose an app that centralizes earnings, mileage, deductions, and tax set-aside across every platform. UnifyOne is built for multi-app gig work, so managing five apps from one dashboard is the default.",
       },
       {
-        q: "Can I give each store its own staff access?",
-        a: "Yes. UnifyOne's role-based access control lets you grant each store's team only the permissions their role needs, all under one account.",
+        q: "Does UnifyOne charge extra for more gig apps?",
+        a: "No — UnifyOne is one flat plan. The Free plan covers core tracking, and Pro is $4.99/month regardless of how many platforms you connect.",
       },
     ],
     related: [
@@ -1372,48 +1419,48 @@ export const SEO_PAGES: SeoPage[] = [
 
   {
     slug: "real-time-inventory-sync",
-    title: "Real-Time Inventory Sync Across Channels (2026) — UnifyOne",
-    h1: "Real-Time Inventory Sync Across Channels",
+    title: "Real-Time Earnings & Tax Set-Aside Tracking (2026) — UnifyOne",
+    h1: "Real-Time Earnings & Tax Set-Aside Tracking",
     tagline:
-      "Real-time inventory sync keeps stock levels consistent across every sales channel the instant an item sells, deducting from a shared pool so all channels reflect accurate availability and overselling is prevented.",
+      "Real-time earnings tracking updates your net income and tax set-aside the moment you finish a trip — so you always know what you made and what to save, instead of guessing at tax time.",
     description:
-      "Real-time inventory sync prevents overselling by deducting stock from a central pool the instant an item sells. UnifyOne stays accurate across all channels.",
+      "Real-time earnings tracking updates your net income and tax set-aside as you work. UnifyOne keeps your gig income and quarterly tax number accurate across every app.",
     keywords: brand([
-      "real-time inventory sync",
-      "inventory sync across channels",
-      "prevent overselling",
-      "single source of truth stock",
-      "live inventory synchronization",
+      "real-time gig earnings tracking",
+      "automatic tax set aside",
+      "live net income tracker",
+      "running quarterly tax estimate",
+      "gig income real time",
     ]),
     sections: [
       {
-        heading: "How real-time inventory sync works",
+        heading: "How real-time earnings tracking works",
         paragraphs: [
-          "Real-time inventory sync solves a single-source-of-truth-plus-fast-propagation problem: one central stock pool, and immediate propagation to every connected channel the moment a transaction occurs. When an item sells on any channel, the shared count decrements at once and the new level pushes to your website, marketplaces, and POS — so two channels can't sell the same last unit before the system catches up.",
-          "UnifyOne by 1Commerce keeps inventory synchronized across all tenants and channels in real time, with a unified dashboard for stock health.",
+          "Real-time tracking solves a single-source-of-truth plus fast-update problem: one ledger that combines every gig app, and an immediate recalculation the moment a trip closes. When you finish a delivery or ride on any platform, your gross pay, deductible miles, and net income update at once — and your running tax set-aside moves with them, so the number you should save is always current.",
+          "UnifyOne by 1Commerce keeps earnings and the tax set-aside in sync across every app in real time, with one dashboard for your full financial picture.",
         ],
       },
       {
-        heading: "Does it fully eliminate overselling?",
+        heading: "Does it fully replace a tax pro?",
         paragraphs: [
-          "Real-time sync sharply reduces overselling but does not eliminate it on its own — gaps remain if configuration is wrong or propagation lags during peak load. UnifyOne pairs real-time sync with safeguards that close that gap:",
+          "Real-time tracking keeps you ahead of taxes, but it estimates rather than files — the final return may still benefit from a professional. UnifyOne pairs live tracking with safeguards that keep the estimate trustworthy:",
         ],
         bullets: [
-          "Shared stock pool decremented atomically at the moment of sale.",
-          "Per-location safety buffers to absorb sync latency during peaks.",
-          "Reorder points and low-stock alerts to act before stockouts.",
-          "A unified dashboard to spot drift instead of auditing each channel.",
+          "Net income recalculated the moment each trip closes.",
+          "IRS standard mileage deduction applied automatically per trip.",
+          "A running 25–30% tax set-aside so nothing piles up for April.",
+          "One dashboard to spot gaps instead of auditing each app.",
         ],
       },
     ],
     faq: [
       {
-        q: "Does real-time inventory sync stop overselling completely?",
-        a: "It significantly reduces overselling by updating stock across all channels the instant a sale occurs, but safeguards like safety buffers and correct configuration are needed to close the remaining gap. UnifyOne combines real-time sync with those safeguards.",
+        q: "Does real-time tracking mean I never owe a surprise tax bill?",
+        a: "It sharply reduces surprises by updating your net income and tax set-aside as you earn, but you still need to actually set the money aside and pay quarterly. UnifyOne combines live tracking with a running set-aside so the number is always ready.",
       },
       {
-        q: "How fast does UnifyOne propagate stock changes?",
-        a: "Stock decrements from the shared pool at the moment of sale and propagates to connected channels in real time, keeping availability consistent everywhere customers buy.",
+        q: "How fast does UnifyOne update my earnings?",
+        a: "Your net income and tax set-aside recalculate the moment each trip closes and stay consistent across every connected gig app, so the figures are accurate whenever you check.",
       },
     ],
     related: [
