@@ -63,7 +63,7 @@ const SHARE_TEMPLATES = [
     color: "text-sky-400",
     bg: "bg-sky-400/10 border-sky-400/30",
     template: (url: string, _name: string) =>
-      `Just discovered @UnifyOneHQ — the all-in-one commerce platform that connects Shopify, n8n, and Stripe in one dashboard. Try it free: ${url} #ecommerce #shopify #automation`,
+      `Just found @UnifyOneHQ — it tracks my earnings across every gig app (DoorDash, Uber, Lyft, Instacart), auto-logs my IRS mileage, and keeps me ahead of quarterly + 1099 taxes. Free to start, Pro is $4.99/mo: ${url} #gigwork #1099taxes #rideshare #selfemployed`,
   },
   {
     platform: "linkedin" as const,
@@ -71,7 +71,7 @@ const SHARE_TEMPLATES = [
     color: "text-blue-500",
     bg: "bg-blue-500/10 border-blue-500/30",
     template: (url: string, name: string) =>
-      `If you're running an e-commerce store, you need to check out UnifyOne Commerce Platform. It unifies your Shopify store, payment processing, inventory, and automation workflows into one place — without the agency price tag.\n\nI've been using it to manage ${name} and it's genuinely changed how I operate.\n\nFree trial: ${url}\n\n#ecommerce #shopify #saas #automation`,
+      `If you drive, deliver, or freelance, you need to see UnifyOne. It pulls together your earnings from every gig app (DoorDash, Uber, Lyft, Instacart, Amazon Flex), auto-tracks IRS mileage, and keeps you ahead of quarterly and 1099 taxes — no spreadsheets, no surprises at tax time.\n\nI've been using it for ${name} and it's genuinely changed how I manage my money.\n\nFree to start, Pro is $4.99/mo ($49/yr): ${url}\n\n#gigwork #1099taxes #selfemployed #rideshare`,
   },
   {
     platform: "instagram" as const,
@@ -79,7 +79,7 @@ const SHARE_TEMPLATES = [
     color: "text-pink-400",
     bg: "bg-pink-400/10 border-pink-400/30",
     template: (url: string, _name: string) =>
-      `Running an online store? This platform changed everything for me 🚀 One dashboard for all your commerce operations — Shopify, payments, inventory, automation. Link in bio: ${url} #ecommerce #shopify #entrepreneur #smallbusiness #automation`,
+      `Driving or delivering for a living? This app changed everything for me 🚀 One dashboard for all my gig earnings — DoorDash, Uber, Lyft, Instacart — plus auto IRS mileage tracking and quarterly + 1099 tax help. Free to start, Pro $4.99/mo. Link in bio: ${url} #gigwork #1099taxes #rideshare #selfemployed #sidehustle`,
   },
   {
     platform: "facebook" as const,
@@ -87,7 +87,7 @@ const SHARE_TEMPLATES = [
     color: "text-blue-400",
     bg: "bg-blue-400/10 border-blue-400/30",
     template: (url: string, name: string) =>
-      `Hey everyone! I wanted to share a tool I've been using for ${name} that's been a game-changer for managing my online store. UnifyOne connects all my commerce tools in one place — Shopify, Stripe, PayPal, and automation workflows. If you're running an e-commerce business, check it out: ${url}\n\n*Disclosure: I earn credits when you sign up through my link.*`,
+      `Hey everyone! I wanted to share a tool I've been using for ${name} that's been a game-changer for managing my gig income. UnifyOne tracks my earnings across every app — DoorDash, Uber, Lyft, Instacart, Amazon Flex — auto-logs my IRS mileage, and keeps me ahead of quarterly and 1099 taxes. If you drive, deliver, or freelance, check it out (free to start, Pro $4.99/mo): ${url}\n\n*Disclosure: I earn credits when you sign up through my link.*`,
   },
 ];
 
