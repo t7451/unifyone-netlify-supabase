@@ -61,7 +61,7 @@ export default function SeoIndex() {
         <meta name="description" content={DESCRIPTION} />
         <meta
           name="keywords"
-          content="UnifyOne, UnifOne, 1Commerce, 1-commerce, 1commerce, 1Commerce LLC, 1Commerce Solutions, OneCommerc, OneCommerce, UnifyOne Solutions, PNW Enterprises, multi-tenant commerce platform"
+          content="UnifyOne, UnifOne, 1Commerce, 1-commerce, 1commerce, 1Commerce LLC, 1Commerce Solutions, OneCommerc, OneCommerce, UnifyOne Solutions, PNW Enterprises, gig worker earnings and tax app"
         />
         <meta name="robots" content="index, follow, max-image-preview:large" />
         <link rel="canonical" href={CANONICAL} />
@@ -126,9 +126,9 @@ export default function SeoIndex() {
             style={{ color: "#9A9A9A", fontStyle: "italic", lineHeight: 1.6 }}
           >
             UnifyOne (also written UnifOne, OneCommerce, OneCommerc, 1-commerce,
-            or 1Commerce) is the AI-powered multi-tenant commerce platform by
-            1Commerce LLC / PNW Enterprises. Browse every guide below to find
-            exactly what you searched for.
+            or 1Commerce) is the AI-powered earnings & tax app for gig and 1099
+            workers by 1Commerce LLC / PNW Enterprises. Browse every guide below
+            to find exactly what you searched for.
           </p>
           <div
             className="h-px mt-8"

@@ -485,8 +485,8 @@ export default function ThemeStore() {
   return (
     <div className="min-h-screen bg-[#060D1F] text-white">
       <PageHead
-        title="Theme Store | UnifyOne — Commerce Themes & Storefront Designs"
-        description="Browse free and paid themes for your UnifyOne storefront. Professionally designed for e-commerce and gig worker platforms — preview and install in minutes."
+        title="Theme Store | UnifyOne — Dashboard & Workspace Themes"
+        description="Browse free and paid themes for your UnifyOne workspace. Professionally designed dashboard and earnings-tracker looks for gig and 1099 workers — preview and install in minutes."
         canonical={`${SITE_URL}/themes`}
         ogType="website"
         jsonLd={[
@@ -497,7 +497,7 @@ export default function ThemeStore() {
             url: `${SITE_URL}/themes`,
             name: "Theme Store | UnifyOne",
             description:
-              "Browse professionally designed website templates for your UnifyOne storefront.",
+              "Browse professionally designed dashboard and workspace themes for your UnifyOne earnings tracker.",
             isPartOf: { "@id": `${SITE_URL}/#website` },
             inLanguage: "en-US",
           },
@@ -543,8 +543,8 @@ export default function ThemeStore() {
           </h1>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto mb-8">
             {catalogEmpty
-              ? "Our theme catalog is launching soon — professionally designed storefront templates for every industry are on the way."
-              : "Browse professionally designed website templates. Free and paid options for every industry and use case."}
+              ? "Our theme catalog is launching soon — professionally designed dashboard and workspace themes for gig and 1099 workers are on the way."
+              : "Browse professionally designed dashboard and workspace themes. Free and paid options for every kind of gig and 1099 worker."}
           </p>
 
           {/* Search bar */}
