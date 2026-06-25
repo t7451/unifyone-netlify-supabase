@@ -271,7 +271,7 @@ export default function GigEcommercePost() {
               The average gig worker leaves $2,000–$4,000 in deductions on the
               table every year because they do not track mileage and expenses
               consistently. UnifyOne&apos;s Money Manager applies the IRS
-              standard mileage deduction (72.5 cents per mile for 2026) to your
+              standard mileage deduction (70 cents per mile for 2025) to your
               logged shifts, giving you a running year-to-date deduction figure
               that updates with every shift you enter — and a clearer quarterly
               tax estimate along the way.
