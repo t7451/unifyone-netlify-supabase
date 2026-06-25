@@ -8,42 +8,48 @@
 
 ## Executive Summary
 
-**PNW Enterprises** is building the infrastructure layer for autonomous commerce. We combine three high-growth markets into a single platform: **multi-tenant commerce** (Shopify alternative), **gig economy tools** (earnings optimization, mileage tracking, shift management), and an **AI copilot** (context-aware assistant embedded in every workflow). This convergence is unique -- no existing platform spans all three.
+**PNW Enterprises** builds **UnifyOne**, the earnings & tax app for the 76M+ US gig and 1099 workers who drive for DoorDash, Uber, Lyft, Instacart, Amazon Flex, and Grubhub. The front door is simple: help independent earners see their real take-home, automate IRS mileage and quarterly estimated taxes, and manage their money in one place. Underneath the gig product sits a full multi-tenant commerce engine -- the same infrastructure that lets a gig worker who also runs a side business manage earnings, taxes, and commerce in a single account. We span three high-growth markets -- **gig economy tools**, **multi-tenant commerce**, and an **AI copilot** -- and this convergence is unique: no existing platform spans all three.
 
 We have proven the Cathedral Principle works: sequential construction of foundational systems before scaling traffic. The result is a platform with zero technical debt, full governance automation, and a defensible integration moat.
 
 **What We Have Built:**
-- Full-stack commerce platform: React + tRPC + PostgreSQL (Neon) + Netlify
-- 25+ functional modules: Products, Orders, Payments (Stripe/PayPal/Square), Shopify sync, CRM, Social Media, Gamification, Theme Marketplace
+
+- Gig earnings & tax suite: GigIQ analytics, Tax Autopilot (IRS mileage + quarterly estimated taxes, Form 1040-ES), Money Manager, shift tracking, GPS routing, multi-platform earnings aggregation
+- Kai, our in-product AI surface, with more AI tools shipping over time
+- Multi-tenant commerce engine that underpins the platform: React + tRPC + PostgreSQL (Neon) + Netlify
+- 25+ functional modules spanning gig and commerce: Money Manager, Mileage Tracking, Products, Orders, Payments (Stripe/PayPal/Square), Shopify sync, CRM, Social Media, Gamification, Theme Marketplace
 - AI copilot (Manus AI) with per-page context awareness across 10+ surfaces
 - Claude-powered governance engine with 3-tier escalation (automated -> admin -> owner)
 - Meta Conversions API (CAPI) integration with server-side event deduplication
 - n8n + Zapier + Mailchimp automation hub
-- Gig economy suite: shift tracking, GPS routing, mileage deductions, multi-platform earnings
 - Theme marketplace with reviews, ratings, and paid/free distribution
 - MCP (Model Context Protocol) server for AI agent interoperability
 
-**Ask:** $500K seed round to accelerate customer acquisition, expand Shopify app store presence, and build the Sovereign Stack (self-hosted deployment).
+**Public pricing (gig product):** Free, plus Pro at $4.99/mo ($49/yr).
+
+**Ask:** $500K seed round to accelerate gig-worker acquisition, deepen Tax Autopilot, and build the Sovereign Stack (self-hosted deployment) for the commerce side.
 
 ---
 
 ## Pitch Narrative: The Three-Market Convergence
 
-### Market 1: Multi-Tenant Commerce ($12B TAM)
+### Market 1: Gig Economy Earnings & Taxes ($8B TAM)
 
-Shopify charges $29--$2,000/month and locks merchants into their ecosystem. BigCommerce is expensive and slow. UnifyOne offers true multi-tenant isolation at the database level (every query scoped by `tenantId`), with Shopify as an integration rather than a competitor. Merchants can sync products bidirectionally, use Shopify for checkout, and run their operations in UnifyOne.
+This is our front door. 76M+ Americans do gig or 1099 work, and 38% of the US workforce participates in gig work. These workers juggle 2--4 platforms (DoorDash, Uber, Lyft, Instacart, Amazon Flex, Grubhub), manually track mileage for tax deductions, owe quarterly estimated taxes they routinely under-plan for, and have no unified financial dashboard. UnifyOne's GigIQ, Tax Autopilot, and Money Manager solve this:
 
-**Key differentiator:** We are a commerce operating system, not just a storefront. Products, Orders, Customers, Analytics, Social Media, CRM, Team Management, and Governance -- all in one platform with a single subscription.
-
-### Market 2: Gig Economy Tools ($8B TAM)
-
-38% of the US workforce participates in gig work. These workers juggle 2--4 platforms (DoorDash, Uber, Instacart, Lyft), manually track mileage for tax deductions, and have no unified financial dashboard. UnifyOne's Gig Command and Money Manager modules solve this:
-
-- **Gig Command (`GigCommand.tsx`):** GPS-aware shift operations center with platform-specific shortcuts, zone recommendations, and per-hour earnings calculations
+- **GigIQ (`GigCommand.tsx`):** GPS-aware shift operations center with platform-specific shortcuts, zone recommendations, and per-hour earnings calculations
+- **Tax Autopilot:** IRS mileage capture and quarterly estimated tax planning (Form 1040-ES), turning raw earnings into a clean tax picture
 - **Money Manager (`MoneyManager.tsx`):** Cross-platform earnings aggregation, IRS mileage deduction calculator ($0.70/mile for 2025), financial rules engine (auto-save, budget caps, allocation rules)
 - **Mileage Tracking (`mileageLogs` table):** Automatic mileage logging with start/end addresses and IRS-compliant deduction calculations
+- **Kai:** in-product AI surface for gig workers, with more AI tools shipping over time
 
-**Key differentiator:** No gig economy tool also provides commerce infrastructure. A DoorDash driver who also sells merchandise can manage both revenue streams in one platform.
+**Key differentiator:** A gig-first earnings & tax app that is also backed by a full commerce engine. A DoorDash driver who also sells merchandise can manage both revenue streams in one account -- something no standalone gig tracker can offer.
+
+### Market 2: Multi-Tenant Commerce ($12B TAM)
+
+The commerce engine is the secondary market that powers the convergence. Shopify charges $29--$2,000/month and locks merchants into their ecosystem. BigCommerce is expensive and slow. UnifyOne offers true multi-tenant isolation at the database level (every query scoped by `tenantId`), with Shopify as an integration rather than a competitor. Merchants can sync products bidirectionally, use Shopify for checkout, and run their operations in UnifyOne.
+
+**Key differentiator:** Under the gig front door is a full commerce operating system, not just a storefront. Products, Orders, Customers, Analytics, Social Media, CRM, Team Management, and Governance -- all in one platform with a single subscription.
 
 ### Market 3: AI Copilot ($15B TAM)
 
@@ -54,7 +60,7 @@ Every SaaS product is adding AI, but most bolt it on as a chatbot. UnifyOne's Ma
 - **Governance-aware:** The `claudeGovernanceRouter` uses LLM reasoning to evaluate autonomous actions against governance rules, creating a compliance-aware AI layer
 - **Document RAG:** Upload business documents and query them via the Document Chat module with vector similarity search
 
-**Key differentiator:** AI that understands your commerce context, your gig earnings, and your governance constraints simultaneously.
+**Key differentiator:** AI that understands your gig earnings, your commerce context, and your governance constraints simultaneously.
 
 ---
 
@@ -92,24 +98,28 @@ UnifyOne exposes a Model Context Protocol server, making it natively accessible 
 
 ### Revenue Streams
 
-| Stream | Unit Economics | Projected |
-|--------|-----------------|-----------|
-| **UnifyOne SaaS** | $99--$999/mo per tenant | Primary revenue driver |
-| **Theme Marketplace** | 30% commission on paid themes | Growing marketplace revenue |
-| **Transaction Fees** | 1--2% via Stripe Connect (planned) | Volume-based revenue |
-| **1Commerce Integrations** | 2% transaction fee | Legacy revenue |
-| **PNW Solutions Consulting** | $150/hr, 40% utilization | Services revenue |
-| **Subsidiary Revenue** | 30% of subsidiary gross | Ecosystem revenue |
+| Stream                       | Unit Economics                     | Projected                   |
+| ---------------------------- | ---------------------------------- | --------------------------- |
+| **UnifyOne SaaS**            | $99--$999/mo per tenant            | Primary revenue driver      |
+| **Theme Marketplace**        | 30% commission on paid themes      | Growing marketplace revenue |
+| **Transaction Fees**         | 1--2% via Stripe Connect (planned) | Volume-based revenue        |
+| **1Commerce Integrations**   | 2% transaction fee                 | Legacy revenue              |
+| **PNW Solutions Consulting** | $150/hr, 40% utilization           | Services revenue            |
+| **Subsidiary Revenue**       | 30% of subsidiary gross            | Ecosystem revenue           |
 
-### SaaS Pricing Tiers
+### Pricing
 
-Plans are stored in the `plans` table with Stripe Price IDs for both monthly and yearly billing:
+The headline gig product is consumer-priced: **Free**, plus **Pro at $4.99/mo ($49/yr)**. This is the front-door funnel for the 76M+ gig/1099 audience.
 
-| Plan | Price | Max Products | Max Orders | Max Users | Features |
-|------|-------|-------------|------------|-----------|----------|
-| **Starter** | $99/mo | 100 | 1,000 | 5 | Core commerce, basic analytics |
-| **Pro** | $299/mo | 1,000 | 10,000 | 15 | + Manus AI, social media, automations |
-| **Enterprise** | $999/mo | Unlimited | Unlimited | Unlimited | + Governance, dedicated support, custom integrations |
+#### Commerce SaaS Pricing Tiers
+
+The commerce side carries its own per-tenant SaaS tiers. Plans are stored in the `plans` table with Stripe Price IDs for both monthly and yearly billing:
+
+| Plan           | Price   | Max Products | Max Orders | Max Users | Features                                             |
+| -------------- | ------- | ------------ | ---------- | --------- | ---------------------------------------------------- |
+| **Starter**    | $99/mo  | 100          | 1,000      | 5         | Core commerce, basic analytics                       |
+| **Pro**        | $299/mo | 1,000        | 10,000     | 15        | + Manus AI, social media, automations                |
+| **Enterprise** | $999/mo | Unlimited    | Unlimited  | Unlimited | + Governance, dedicated support, custom integrations |
 
 ### Unit Economics
 
@@ -125,10 +135,10 @@ Plans are stored in the `plans` table with Stripe Price IDs for both monthly and
 
 ### Phase 1: Product-Led Growth (Current)
 
-- **Target:** Gig workers + small e-commerce operators
-- **Channels:** Organic (SEO blog covering "gig economy commerce," "multi-tenant ecommerce," "ai for gig workers"), referral program (credit-based), direct outreach
-- **Product hooks:** Free tier for gig workers (Money Manager + Mileage Tracking), paid upgrade for commerce features
-- **Messaging:** "One platform for your gigs and your business"
+- **Target:** Gig/1099 workers first, then small e-commerce operators
+- **Channels:** Organic (SEO blog covering "gig taxes," "1099 mileage deduction," "quarterly estimated taxes for drivers," then "multi-tenant ecommerce"), referral program (credit-based), direct outreach
+- **Product hooks:** Free gig tier (GigIQ + Money Manager + Mileage Tracking + Tax Autopilot), Pro at $4.99/mo, with paid upgrade into commerce features for sellers
+- **Messaging:** "Know your real take-home and stay ahead of taxes -- then grow into your own business"
 
 ### Phase 2: Platform Growth
 
@@ -151,6 +161,7 @@ Plans are stored in the `plans` table with Stripe Price IDs for both monthly and
 ### Seed Round ($500K)
 
 **Use of Funds:**
+
 - 40% ($200K): Customer acquisition (paid ads, Shopify App Store, partnerships)
 - 30% ($150K): Engineering (Sovereign Stack, Theme Marketplace expansion, mobile app)
 - 20% ($100K): Operations (SOC 2 audit, compliance, hiring)
@@ -161,6 +172,7 @@ Plans are stored in the `plans` table with Stripe Price IDs for both monthly and
 ### Series A Target ($2--3M)
 
 **Milestones to Trigger:**
+
 - 500+ customers, $200K MRR
 - Autonomous AI handling 80% of operational decisions (measured via `auditLogs`)
 - SOC 2 Type II certification
@@ -173,29 +185,29 @@ Plans are stored in the `plans` table with Stripe Price IDs for both monthly and
 
 ### Key Assumptions
 
-| Assumption | Value | Basis |
-|-----------|-------|-------|
-| Organic CAC | $200 | Blog SEO + referral credits |
-| Monthly churn | 5% (Starter), 3% (Pro), 1% (Enterprise) | Industry benchmarks |
-| Upsell rate | 15% annually (Starter -> Pro) | Based on feature adoption |
-| Referral conversion | 10% of users refer 1+ customer | Credit-based incentive system |
-| Average revenue per user | $140/mo (blended) | Weighted by plan mix |
+| Assumption               | Value                                   | Basis                         |
+| ------------------------ | --------------------------------------- | ----------------------------- |
+| Organic CAC              | $200                                    | Blog SEO + referral credits   |
+| Monthly churn            | 5% (Starter), 3% (Pro), 1% (Enterprise) | Industry benchmarks           |
+| Upsell rate              | 15% annually (Starter -> Pro)           | Based on feature adoption     |
+| Referral conversion      | 10% of users refer 1+ customer          | Credit-based incentive system |
+| Average revenue per user | $140/mo (blended)                       | Weighted by plan mix          |
 
 ### Conservative Projections
 
-| Year | Customers | MRR | ARR | Burn Rate | Runway |
-|------|-----------|-----|-----|-----------|--------|
-| 2025 | 100 | $50K | $600K | $20K/mo | 25 months |
-| 2026 | 300 | $200K | $2.4M | $10K/mo | 36+ months |
-| 2027 | 1,000 | $500K | $6M | Breakeven | Sustainable |
+| Year | Customers | MRR   | ARR   | Burn Rate | Runway      |
+| ---- | --------- | ----- | ----- | --------- | ----------- |
+| 2025 | 100       | $50K  | $600K | $20K/mo   | 25 months   |
+| 2026 | 300       | $200K | $2.4M | $10K/mo   | 36+ months  |
+| 2027 | 1,000     | $500K | $6M   | Breakeven | Sustainable |
 
 ### Aggressive Projections
 
-| Year | Customers | MRR | ARR | Burn Rate | Runway |
-|------|-----------|-----|-----|-----------|--------|
-| 2025 | 200 | $100K | $1.2M | $10K/mo | 50 months |
-| 2026 | 800 | $500K | $6M | Breakeven | Sustainable |
-| 2027 | 2,000 | $1.2M | $14.4M | Profitable | Sustainable |
+| Year | Customers | MRR   | ARR    | Burn Rate  | Runway      |
+| ---- | --------- | ----- | ------ | ---------- | ----------- |
+| 2025 | 200       | $100K | $1.2M  | $10K/mo    | 50 months   |
+| 2026 | 800       | $500K | $6M    | Breakeven  | Sustainable |
+| 2027 | 2,000     | $1.2M | $14.4M | Profitable | Sustainable |
 
 ### Revenue Compounding Levers
 
@@ -211,13 +223,13 @@ Plans are stored in the `plans` table with Stripe Price IDs for both monthly and
 
 ### Direct Competitors
 
-| Competitor | Strength | Weakness | Our Advantage |
-|-----------|----------|----------|---------------|
-| **Shopify** | Brand, ecosystem | Monolithic, no multi-tenant, expensive | Multi-tenant isolation, AI copilot, 10x cheaper for SMBs |
-| **BigCommerce** | Enterprise features | Slow, expensive | Purpose-built governance, faster iteration |
-| **Wix** | Easy setup | No commerce depth | Full commerce stack + gig economy tools |
-| **Zapier/Make** | Workflow automation | No commerce context | Commerce-native automation with AI reasoning |
-| **Stride/Gridwise** | Gig tracking | No commerce features | Full commerce + gig in one platform |
+| Competitor          | Strength            | Weakness                               | Our Advantage                                            |
+| ------------------- | ------------------- | -------------------------------------- | -------------------------------------------------------- |
+| **Shopify**         | Brand, ecosystem    | Monolithic, no multi-tenant, expensive | Multi-tenant isolation, AI copilot, 10x cheaper for SMBs |
+| **BigCommerce**     | Enterprise features | Slow, expensive                        | Purpose-built governance, faster iteration               |
+| **Wix**             | Easy setup          | No commerce depth                      | Full commerce stack + gig economy tools                  |
+| **Zapier/Make**     | Workflow automation | No commerce context                    | Commerce-native automation with AI reasoning             |
+| **Stride/Gridwise** | Gig tracking        | No commerce features                   | Full commerce + gig in one platform                      |
 
 **Competitive Moat:** We are the only platform that combines multi-tenant isolation + AI copilot + governance-as-code + gig economy tools. This is a 12--18 month lead.
 
@@ -225,14 +237,14 @@ Plans are stored in the `plans` table with Stripe Price IDs for both monthly and
 
 ## Risk Mitigation
 
-| Risk | Probability | Impact | Mitigation |
-|------|-----------|--------|-----------|
-| Market adoption slow | Medium | High | Diversify customer segments (gig workers -> SMB -> enterprise) |
-| Stripe/Meta API changes | Low | Medium | Abstraction layer via tRPC routers; multiple payment processors |
-| Regulatory changes | Medium | High | Governance-as-code allows rapid policy updates via `governanceRules` |
-| AI provider dependency | Medium | Medium | LLM abstraction via `invokeLLM()` -- can switch providers (currently using Forge API gateway) |
-| Competitive pressure | High | Medium | Cathedral Framework execution + governance moat |
-| Shopify App Store rejection | Low | High | Build direct distribution channel (Sovereign Stack) as fallback |
+| Risk                        | Probability | Impact | Mitigation                                                                                    |
+| --------------------------- | ----------- | ------ | --------------------------------------------------------------------------------------------- |
+| Market adoption slow        | Medium      | High   | Diversify customer segments (gig workers -> SMB -> enterprise)                                |
+| Stripe/Meta API changes     | Low         | Medium | Abstraction layer via tRPC routers; multiple payment processors                               |
+| Regulatory changes          | Medium      | High   | Governance-as-code allows rapid policy updates via `governanceRules`                          |
+| AI provider dependency      | Medium      | Medium | LLM abstraction via `invokeLLM()` -- can switch providers (currently using Forge API gateway) |
+| Competitive pressure        | High        | Medium | Cathedral Framework execution + governance moat                                               |
+| Shopify App Store rejection | Low         | High   | Build direct distribution channel (Sovereign Stack) as fallback                               |
 
 ---
 
@@ -260,7 +272,7 @@ All board decisions are logged in the `auditLogs` table, versioned, and reversib
 ## Next Steps for Investors
 
 1. **Technical Due Diligence:** Review UnifyOne architecture, Drizzle schema (40+ tables), tRPC router structure (25+ routers), governance framework
-2. **Product Demo:** Live walkthrough of Dashboard, Gig Command, Money Manager, Manus AI, Governance Dashboard
+2. **Product Demo:** Live walkthrough of the gig front door (GigIQ, Tax Autopilot, Money Manager), then Dashboard, Manus AI, and the commerce + Governance surfaces
 3. **Customer References:** Speak with current customers about product-market fit
 4. **Market Validation:** Validate TAM assumptions with industry analysts (gig economy + commerce convergence)
 5. **Legal Review:** Review governance charter, compliance posture, IP ownership
