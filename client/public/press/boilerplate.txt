@@ -20,42 +20,40 @@ COPY VARIANTS (paste verbatim)
 
 TAGLINE (<= 60 characters, for logos / cards / nav):
 
-  Unify inventory, orders & payments across every store.
+  Track gig earnings, mileage & taxes in one app.
 
 
 SHORT DESCRIPTION (<= 160 characters, for directory meta / search snippets):
 
-  UnifyOne is an AI-powered multi-tenant commerce platform that unifies
-  inventory, orders, payments, and analytics across all your stores in one
-  dashboard.
+  UnifyOne is an AI-powered gig-worker earnings and tax app that tracks
+  income, auto-logs mileage, and forecasts quarterly taxes in one dashboard.
 
 
 MEDIUM DESCRIPTION (~80 words, for directory body / about sections):
 
-  UnifyOne by 1Commerce LLC is a multi-tenant commerce platform built for
-  operators who run multiple stores, brands, or sales channels. It centralizes
-  inventory, orders, payments, subscription billing, and analytics into a
-  single tenant-isolated system with role-based access control. Real-time
-  inventory sync prevents overselling across channels, automated order routing
-  speeds fulfillment, and built-in AI delivers earnings and operations
-  insights. Plans start free (Starter), with Pro at $19/mo and white-label
-  Scale at $99/mo.
+  UnifyOne by 1Commerce LLC is a gig-worker earnings and tax app built for
+  drivers, couriers, and freelancers working across DoorDash, Uber, Lyft,
+  Instacart, Amazon Flex, and Grubhub. It tracks income from every platform,
+  auto-logs deductible mileage, and forecasts quarterly taxes in one dashboard.
+  GigIQ surfaces the highest-paying hours and zones, Tax Autopilot sets aside
+  the right amount and preps estimates, the Money Manager organizes deductions,
+  and Kai answers earnings and tax questions — with more AI tools as they ship.
+  Plans start free, with Pro at $4.99/mo ($49/yr).
 
 
 ONE-LINER (full sentence, for press intros):
 
-  UnifyOne by 1Commerce LLC — an AI-powered multi-tenant commerce platform that
-  unifies products, orders, payments, inventory, and analytics for operators
-  running multiple stores or brands from a single dashboard.
+  UnifyOne by 1Commerce LLC — an AI-powered gig-worker earnings and tax app
+  that tracks income, auto-logs mileage, forecasts quarterly taxes, and finds
+  the best-paying work across every gig platform from one dashboard.
 
 
 -----------------------------------------------------------------------------
 CATEGORY TAGS (select on each directory)
 -----------------------------------------------------------------------------
 
-  Multi-Tenant Ecommerce · Omnichannel Retail · Inventory Management ·
-  Order Management (OMS) · Multi-Store Management · Ecommerce Integrations ·
-  SaaS Commerce Platform
+  Gig Economy · 1099 Taxes · Mileage Tracking · Personal Finance ·
+  Earnings Tracker · Self-Employment Taxes
 
 
 -----------------------------------------------------------------------------
