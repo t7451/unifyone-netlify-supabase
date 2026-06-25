@@ -1151,8 +1151,9 @@ export default function MobileAutomation() {
               Mobile Automation
             </h1>
             <p className="text-gray-400 text-sm mt-0.5">
-              n8n workflow scheduling, deep link attribution, and Meta CAPI
-              event monitoring
+              Optional advanced add-on — n8n workflow scheduling, deep link
+              attribution, and Meta CAPI event monitoring for users marketing a
+              side store or brand
             </p>
           </div>
           <div className="flex items-center gap-2">

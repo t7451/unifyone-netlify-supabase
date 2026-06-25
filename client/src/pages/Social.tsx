@@ -243,7 +243,8 @@ export default function Social() {
             Social Media Manager
           </h1>
           <p className="text-gray-400 text-sm mt-1">
-            Compose, schedule, and earn credits by promoting your store
+            Optional add-on for gig workers who also run a store or brand —
+            compose, schedule, and earn credits by promoting it on the side
           </p>
         </div>
       </div>
@@ -312,7 +313,8 @@ export default function Social() {
                 Composer
               </CardTitle>
               <CardDescription>
-                Generate platform-optimized content with Claude AI
+                Optional tool — generate platform-optimized content with Claude
+                AI when you want to market a side store or brand
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
