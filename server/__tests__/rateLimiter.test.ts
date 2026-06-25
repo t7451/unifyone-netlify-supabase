@@ -13,19 +13,31 @@ describe("createRateLimiter", () => {
   // ── Basic allow / deny ────────────────────────────────────────────────────
 
   it("allows the first request", async () => {
-    const limiter = createRateLimiter({ maxAttempts: 3, windowMs: 60_000 });
+    const limiter = createRateLimiter({
+      name: "test",
+      maxAttempts: 3,
+      windowMs: 60_000,
+    });
     expect((await limiter.check("1.2.3.4")).allowed).toBe(true);
   });
 
   it("allows up to maxAttempts within the window", async () => {
-    const limiter = createRateLimiter({ maxAttempts: 3, windowMs: 60_000 });
+    const limiter = createRateLimiter({
+      name: "test",
+      maxAttempts: 3,
+      windowMs: 60_000,
+    });
     expect((await limiter.check("1.2.3.4")).allowed).toBe(true);
     expect((await limiter.check("1.2.3.4")).allowed).toBe(true);
     expect((await limiter.check("1.2.3.4")).allowed).toBe(true);
   });
 
   it("blocks the (maxAttempts + 1)th request", async () => {
-    const limiter = createRateLimiter({ maxAttempts: 3, windowMs: 60_000 });
+    const limiter = createRateLimiter({
+      name: "test",
+      maxAttempts: 3,
+      windowMs: 60_000,
+    });
     await limiter.check("1.2.3.4");
     await limiter.check("1.2.3.4");
     await limiter.check("1.2.3.4");
@@ -34,7 +46,11 @@ describe("createRateLimiter", () => {
   });
 
   it("returns a positive retryAfterMs when blocked", async () => {
-    const limiter = createRateLimiter({ maxAttempts: 2, windowMs: 60_000 });
+    const limiter = createRateLimiter({
+      name: "test",
+      maxAttempts: 2,
+      windowMs: 60_000,
+    });
     await limiter.check("ip");
     await limiter.check("ip");
     const result = await limiter.check("ip");
@@ -46,7 +62,11 @@ describe("createRateLimiter", () => {
   // ── Sliding window behaviour ──────────────────────────────────────────────
 
   it("re-allows requests after the window has fully elapsed", async () => {
-    const limiter = createRateLimiter({ maxAttempts: 2, windowMs: 10_000 });
+    const limiter = createRateLimiter({
+      name: "test",
+      maxAttempts: 2,
+      windowMs: 10_000,
+    });
     vi.setSystemTime(0);
     await limiter.check("ip");
     await limiter.check("ip");
@@ -59,7 +79,11 @@ describe("createRateLimiter", () => {
   });
 
   it("partial window expiry: expired attempts slide out, fresh remain", async () => {
-    const limiter = createRateLimiter({ maxAttempts: 3, windowMs: 10_000 });
+    const limiter = createRateLimiter({
+      name: "test",
+      maxAttempts: 3,
+      windowMs: 10_000,
+    });
     vi.setSystemTime(0);
     await limiter.check("ip"); // t=0
     await limiter.check("ip"); // t=0
@@ -78,7 +102,11 @@ describe("createRateLimiter", () => {
   });
 
   it("retryAfterMs reflects the oldest timestamp in the window", async () => {
-    const limiter = createRateLimiter({ maxAttempts: 1, windowMs: 60_000 });
+    const limiter = createRateLimiter({
+      name: "test",
+      maxAttempts: 1,
+      windowMs: 60_000,
+    });
     vi.setSystemTime(1_000);
     await limiter.check("ip"); // hits limit
 
@@ -92,7 +120,11 @@ describe("createRateLimiter", () => {
   // ── Key isolation ─────────────────────────────────────────────────────────
 
   it("tracks separate counters for different keys", async () => {
-    const limiter = createRateLimiter({ maxAttempts: 1, windowMs: 60_000 });
+    const limiter = createRateLimiter({
+      name: "test",
+      maxAttempts: 1,
+      windowMs: 60_000,
+    });
     await limiter.check("ip-A"); // exhausts ip-A
     expect((await limiter.check("ip-B")).allowed).toBe(true); // ip-B is fresh
     expect((await limiter.check("ip-A")).allowed).toBe(false); // ip-A is blocked
@@ -101,7 +133,11 @@ describe("createRateLimiter", () => {
   // ── reset() ──────────────────────────────────────────────────────────────
 
   it("reset() allows an exhausted key immediately", async () => {
-    const limiter = createRateLimiter({ maxAttempts: 1, windowMs: 60_000 });
+    const limiter = createRateLimiter({
+      name: "test",
+      maxAttempts: 1,
+      windowMs: 60_000,
+    });
     await limiter.check("ip");
     expect((await limiter.check("ip")).allowed).toBe(false);
     await limiter.reset("ip");
@@ -109,13 +145,21 @@ describe("createRateLimiter", () => {
   });
 
   it("reset() on an unknown key is a no-op", async () => {
-    const limiter = createRateLimiter({ maxAttempts: 2, windowMs: 60_000 });
+    const limiter = createRateLimiter({
+      name: "test",
+      maxAttempts: 2,
+      windowMs: 60_000,
+    });
     await limiter.reset("ghost"); // should not throw
     expect((await limiter.check("ghost")).allowed).toBe(true);
   });
 
   it("reset() does not affect other keys", async () => {
-    const limiter = createRateLimiter({ maxAttempts: 1, windowMs: 60_000 });
+    const limiter = createRateLimiter({
+      name: "test",
+      maxAttempts: 1,
+      windowMs: 60_000,
+    });
     await limiter.check("ip-A");
     await limiter.check("ip-B");
     await limiter.reset("ip-A");
@@ -127,13 +171,21 @@ describe("createRateLimiter", () => {
   // ── Edge cases ────────────────────────────────────────────────────────────
 
   it("maxAttempts of 1 blocks the second call immediately", async () => {
-    const limiter = createRateLimiter({ maxAttempts: 1, windowMs: 5_000 });
+    const limiter = createRateLimiter({
+      name: "test",
+      maxAttempts: 1,
+      windowMs: 5_000,
+    });
     expect((await limiter.check("ip")).allowed).toBe(true);
     expect((await limiter.check("ip")).allowed).toBe(false);
   });
 
   it("blocked check call does not add a new timestamp (stays blocked)", async () => {
-    const limiter = createRateLimiter({ maxAttempts: 2, windowMs: 60_000 });
+    const limiter = createRateLimiter({
+      name: "test",
+      maxAttempts: 2,
+      windowMs: 60_000,
+    });
     vi.setSystemTime(0);
     await limiter.check("ip"); // t=0
     await limiter.check("ip"); // t=0 — at limit

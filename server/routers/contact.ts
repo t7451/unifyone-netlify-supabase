@@ -15,6 +15,7 @@ import { leads } from "../../drizzle/schema";
  */
 
 const contactLimiter = createRateLimiter({
+  name: "contact",
   maxAttempts: 5,
   windowMs: 60_000,
 });
