@@ -24,8 +24,7 @@ export default function TermsOfService() {
             Terms of Service
           </h1>
           <p className="text-muted-foreground text-sm">
-            UnifyOne Commerce Platform · 1Commerce LLC · Last updated: March
-            2026
+            UnifyOne · 1Commerce LLC · Last updated: March 2026
           </p>
         </div>
 
@@ -35,10 +34,10 @@ export default function TermsOfService() {
               1. Acceptance of Terms
             </h2>
             <p>
-              By accessing or using UnifyOne Commerce Platform ("Service"),
-              operated by 1Commerce LLC / PNW Enterprises ("Company," "we,"
-              "us"), you agree to be bound by these Terms of Service. If you do
-              not agree, do not use the Service.
+              By accessing or using UnifyOne ("Service"), operated by 1Commerce
+              LLC / PNW Enterprises ("Company," "we," "us"), you agree to be
+              bound by these Terms of Service. If you do not agree, do not use
+              the Service.
             </p>
           </section>
 
@@ -47,11 +46,11 @@ export default function TermsOfService() {
               2. Description of Service
             </h2>
             <p>
-              UnifyOne is a multi-tenant SaaS commerce platform that provides
-              tools for inventory management, order processing, customer
-              management, payment processing (via Stripe and PayPal), social
-              media management, and e-commerce integrations including Shopify
-              and n8n automation workflows.
+              UnifyOne is a gig-worker earnings and tax application that
+              provides tools for tracking income across gig platforms, IRS
+              mileage logging, quarterly and self-employment tax estimates,
+              payment processing (via Stripe and PayPal), and money management
+              for independent and 1099 workers.
             </p>
           </section>
 
