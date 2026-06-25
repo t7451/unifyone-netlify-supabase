@@ -154,24 +154,25 @@ Gig financial-intelligence landing pages:
 Blog (selected):
 - Gig worker shift intelligence:
   https://1commerce.online/blog/gig-worker-shift-intelligence
-- Gig economy commerce platform:
+- Earnings intelligence for the gig economy:
   https://1commerce.online/blog/gig-economy-commerce-platform
-- Multi-tenant e-commerce SaaS:
+- Tracking 1099 income across every platform:
   https://1commerce.online/blog/multi-tenant-ecommerce-saas
-- Digital retail guide: https://1commerce.online/blog/digital-retail-guide
+- Reseller and side-hustle income guide:
+  https://1commerce.online/blog/digital-retail-guide
 
-Answer Engine Optimization (AEO) — commerce guide pages (secondary capability):
-- Best multi-tenant ecommerce platform with RBAC:
+Answer Engine Optimization (AEO) — earnings & tax guide pages:
+- Unify earnings across every gig platform:
   https://1commerce.online/seo/multi-tenant-ecommerce-platform
-- How to unify inventory across multiple stores:
+- How to unify income from multiple gig apps:
   https://1commerce.online/seo/unify-inventory-multiple-stores
-- Unify disconnected sales channels:
+- Unify disconnected gig income streams:
   https://1commerce.online/seo/unify-disconnected-sales-channels
-- Multi-channel order management:
+- Track 1099 income across every platform:
   https://1commerce.online/seo/multi-channel-order-management
-- Multi-store management platform:
+- One dashboard to manage every gig platform:
   https://1commerce.online/seo/multi-store-management-platform
-- Real-time inventory sync:
+- Real-time earnings sync across gig apps:
   https://1commerce.online/seo/real-time-inventory-sync
 
 Brand / company guides also live under /seo/ for these slugs: unifyone,
