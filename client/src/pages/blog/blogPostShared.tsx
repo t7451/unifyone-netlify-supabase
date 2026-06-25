@@ -24,15 +24,13 @@ export const BLOG_POSTS = {
   gigEcommerce: {
     href: "/blog/gig-economy-commerce-platform",
     canonical: `${SITE_URL}/blog/gig-economy-commerce-platform`,
-    title:
-      "How Gig Economy Workers Can Build a Commerce Platform That Scales | 1Commerce",
-    headline:
-      "How Gig Economy Workers Can Build a Commerce Platform That Scales",
+    title: "How Gig Workers Can Turn Shift Data Into Higher Net Pay | UnifyOne",
+    headline: "How Gig Workers Can Turn Shift Data Into Higher Net Pay",
     description:
-      "A deep-dive into how gig operators on DoorDash, Uber Eats, Instacart, and Amazon Flex can leverage multi-tenant commerce infrastructure to maximize earnings, automate tax tracking, and build a scalable side business.",
+      "A deep-dive into how gig workers on DoorDash, Uber, Lyft, Instacart, and Amazon Flex can track earnings across every app, capture IRS mileage automatically, and stay ahead of quarterly self-employment taxes to keep more of what they earn.",
     shortDescription:
-      "Learn how gig operators can track earnings, automate tax data, and turn platform work into a compounding commerce asset.",
-    category: "Commerce Infrastructure",
+      "Learn how gig workers can track earnings across apps, automate mileage deductions, and turn shift data into higher net pay.",
+    category: "Gig Earnings",
     breadcrumbName: "Gig Economy Commerce",
     ogImage:
       "https://d2xsxph8kpxj0f.cloudfront.net/310519663400814556/VyofXqD3FvrztXonjtHUZp/cathedral-hero-v2-3tFDpV7FHQo4P2qJjERF7q.png",
@@ -45,14 +43,13 @@ export const BLOG_POSTS = {
     href: "/blog/multi-tenant-ecommerce-saas",
     canonical: `${SITE_URL}/blog/multi-tenant-ecommerce-saas`,
     title:
-      "Why Multi-Tenant SaaS Is the Right Architecture for Commerce Teams | 1Commerce",
-    headline:
-      "Why Multi-Tenant SaaS Is the Right Architecture for Commerce Teams",
+      "Why One Dashboard for Every Gig App Beats Juggling Spreadsheets | UnifyOne",
+    headline: "Why One Dashboard for Every Gig App Beats Juggling Spreadsheets",
     description:
-      "A technical and strategic breakdown of multi-tenant commerce architecture — why it outperforms single-tenant deployments for agencies, franchises, and holding companies managing multiple brands or client accounts.",
+      "A practical breakdown of why gig and 1099 workers running on DoorDash, Uber, Lyft, Instacart, and Amazon Flex should unify earnings, mileage, and tax data in one place instead of stitching together app screenshots and spreadsheets.",
     shortDescription:
-      "See why multi-tenant architecture beats single-tenant deployments for agencies, franchises, and multi-brand commerce teams.",
-    category: "Commerce Architecture",
+      "See why unifying earnings, mileage, and taxes in one dashboard beats juggling separate gig apps and spreadsheets.",
+    category: "Money Management",
     breadcrumbName: "Multi-Tenant Architecture",
     ogImage:
       "https://files.manuscdn.com/user_upload_by_module/session_file/310519663412766662/uBzlkALhOZxeuTyR.jpg",

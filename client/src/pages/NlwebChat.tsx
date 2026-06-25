@@ -14,16 +14,17 @@ import { Sparkles } from "lucide-react";
 const SYSTEM_PROMPT: Message = {
   role: "system",
   content:
-    "You are the 1Commerce assistant, a concise and helpful AI for an " +
-    "e-commerce SaaS platform. Answer questions about products, orders, " +
-    "and the platform. If unsure, say so.",
+    "You are the UnifyOne assistant, a concise and helpful AI for a " +
+    "gig-worker earnings and tax app. Answer questions about earnings " +
+    "across gig apps, IRS mileage deductions, quarterly and " +
+    "self-employment taxes, and money management. If unsure, say so.",
 };
 
 const SUGGESTED_PROMPTS = [
   "What is UnifyOne?",
-  "How do subscriptions work?",
-  "Show me how to connect Shopify.",
-  "Explain the multi-tenant model.",
+  "How do I track earnings across gig apps?",
+  "How does the IRS mileage deduction work?",
+  "Help me plan for quarterly estimated taxes.",
 ];
 
 /**
