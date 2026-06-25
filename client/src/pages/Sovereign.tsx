@@ -38,7 +38,7 @@ const SOV_LOGO_URL = `${SITE_URL}/favicon.ico`;
 const SOV_FAQS = [
   {
     q: "What is the Sovereign Stack?",
-    a: "The Sovereign Stack is a complete corporate and technical architecture built for resilience. It pairs a multi-layered legal structure — a family trust, a holding company, operating entities, and a non-profit — with infrastructure you own: a local-first dashboard, on-device AI, an off-grid LoRa mesh, the UnifyOne commerce platform, and an automated revenue engine. It is not a course or another SaaS subscription.",
+    a: "The Sovereign Stack is a complete corporate and technical architecture built for resilience. It pairs a multi-layered legal structure — a family trust, a holding company, operating entities, and a non-profit — with infrastructure you own: a local-first dashboard, on-device AI, an off-grid LoRa mesh, the UnifyOne earnings & tax app, and an automated revenue engine. It is not a course or another SaaS subscription.",
   },
   {
     q: "What is the Cathedral Principle?",
@@ -46,7 +46,7 @@ const SOV_FAQS = [
   },
   {
     q: "What do I get when you build my Sovereign Stack?",
-    a: "A white-glove, done-for-you implementation: a multi-entity corporate structure (Trust + Holding + Ops), a 501(c)(3) non-profit for grant access, the UnifyOne multi-tenant commerce platform, an automated revenue engine (n8n + Meta CAPI + Stripe), Shopify integration with quantum logistics routing, a local-first offline-capable dashboard, on-device air-gapped AI, an off-grid LoRa mesh network, a 90-day implementation roadmap, and ongoing architecture consultation.",
+    a: "A white-glove, done-for-you implementation: a multi-entity corporate structure (Trust + Holding + Ops), a 501(c)(3) non-profit for grant access, the UnifyOne gig earnings & tax app, an automated revenue engine (n8n + Meta CAPI + Stripe), Shopify integration with quantum logistics routing, a local-first offline-capable dashboard, on-device air-gapped AI, an off-grid LoRa mesh network, a 90-day implementation roadmap, and ongoing architecture consultation.",
   },
   {
     q: "How much does the Sovereign Stack cost?",
@@ -148,8 +148,8 @@ const SOVEREIGN_STACK = [
     desc: "Meshtastic nodes. Logistics that work without the internet.",
   },
   {
-    label: "UnifyOne Commerce",
-    desc: "Multi-tenant platform. One dashboard for every store.",
+    label: "UnifyOne Earnings & Tax",
+    desc: "One app for every gig. Income, taxes, and money in one place.",
   },
   {
     label: "Azure Quantum Logistics",
@@ -299,7 +299,7 @@ export default function Sovereign() {
               <li className="flex items-start gap-3">
                 <CheckCircle className="w-4 h-4 text-[#00D9FF] mt-0.5 shrink-0" />
                 <span className="text-sm text-gray-300">
-                  Explore UnifyOne — the commerce platform that powers the
+                  Explore UnifyOne — the gig earnings & tax app that powers the
                   stack:{" "}
                   <Link href="/" className="text-[#00D9FF] hover:underline">
                     1commerce.online
@@ -556,7 +556,7 @@ export default function Sovereign() {
               {[
                 "Multi-entity corporate structure (Trust + Holding + Ops)",
                 "501(c)(3) non-profit setup for grant access",
-                "UnifyOne multi-tenant commerce platform",
+                "UnifyOne gig earnings & tax app",
                 "Automated revenue engine (n8n + Meta CAPI + Stripe)",
                 "Shopify integration with quantum logistics routing",
                 "Local-first dashboard with offline capability",
