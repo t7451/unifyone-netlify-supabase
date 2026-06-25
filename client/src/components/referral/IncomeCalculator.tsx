@@ -20,7 +20,7 @@ interface Props {
   monthlyPlanPrice?: number;
 }
 
-export default function IncomeCalculator({ monthlyPlanPrice = 19 }: Props) {
+export default function IncomeCalculator({ monthlyPlanPrice = 4.99 }: Props) {
   const [signups, setSignups] = useState([10]);
   const [conversionRate, setConversionRate] = useState([20]);
 
@@ -93,7 +93,7 @@ export default function IncomeCalculator({ monthlyPlanPrice = 19 }: Props) {
             />
             <p className="text-xs text-muted-foreground">
               {conversions} of {signups[0]} signups upgrade to a paid plan (Pro
-              $19 / Scale $99)
+              $4.99/mo)
             </p>
           </div>
         </div>
@@ -165,7 +165,7 @@ export default function IncomeCalculator({ monthlyPlanPrice = 19 }: Props) {
                 </h5>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   At this referral volume, your credits cover 12+ months of
-                  UnifyOne Pro at $19/mo.
+                  UnifyOne Pro at $4.99/mo.
                 </p>
               </div>
             </div>
