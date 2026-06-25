@@ -872,8 +872,8 @@ export default function Automations() {
           Automations
         </h1>
         <p className="text-sm text-gray-400 mt-1">
-          Connect UnifyOne events to n8n, Zapier, and Mailchimp — no-code
-          automation at scale
+          Optional power-user add-on — connect UnifyOne events to n8n, Zapier,
+          and Mailchimp if you also run a store or brand alongside your gig work
         </p>
       </div>
 

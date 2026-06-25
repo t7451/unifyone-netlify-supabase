@@ -117,7 +117,8 @@ export default function Leads() {
             Leads Pipeline
           </h1>
           <p className="text-sm text-gray-400 mt-1">
-            CRM-grade lead management with automation tracking
+            Optional side-business tool — CRM-grade lead management with
+            automation tracking, for gig workers who also run a store or brand
           </p>
         </div>
         <Button
