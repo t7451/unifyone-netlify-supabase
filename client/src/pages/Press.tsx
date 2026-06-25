@@ -15,8 +15,7 @@ const TAGLINE_60 = "Track gig earnings, mileage & taxes in one app.";
 
 const SHORT_160 =
   "UnifyOne is an AI-powered gig-worker earnings and tax app that tracks " +
-  "income, auto-logs mileage, and forecasts quarterly taxes across every " +
-  "platform in one dashboard.";
+  "income, auto-logs mileage, and forecasts quarterly taxes in one dashboard.";
 
 const MEDIUM_80 =
   "UnifyOne by 1Commerce LLC is a gig-worker earnings and tax app built for " +
@@ -98,31 +97,31 @@ const ASSETS: { label: string; href: string; note: string }[] = [
   },
 ];
 
-// Owned guide pages from docs/AEO_SUBMISSION_KIT.md — link these from listings.
+// Owned guide pages — link these from listings.
 const GUIDE_LINKS: { label: string; href: string }[] = [
   {
-    label: "Multi-Tenant Ecommerce Platform",
-    href: "/seo/multi-tenant-ecommerce-platform",
+    label: "1099 Tax Management for Gig Workers",
+    href: "/1099-tax-management",
   },
   {
-    label: "Unify Inventory Across Multiple Stores",
-    href: "/seo/unify-inventory-multiple-stores",
+    label: "Gig Income Aggregator",
+    href: "/gig-income-aggregator",
   },
   {
-    label: "Unify Disconnected Sales Channels",
-    href: "/seo/unify-disconnected-sales-channels",
+    label: "Gig Earnings Optimizer",
+    href: "/gig-earnings-optimizer",
   },
   {
-    label: "Multi-Channel Order Management",
-    href: "/seo/multi-channel-order-management",
+    label: "Financial Intelligence for Gig Workers",
+    href: "/financial-intelligence-gig-workers",
   },
   {
-    label: "Multi-Store Management Platform",
-    href: "/seo/multi-store-management-platform",
+    label: "Gig Route Intelligence",
+    href: "/gig-route-intelligence",
   },
   {
-    label: "Real-Time Inventory Sync",
-    href: "/seo/real-time-inventory-sync",
+    label: "Gig Worker Taxes",
+    href: "/gig-taxes",
   },
 ];
 
