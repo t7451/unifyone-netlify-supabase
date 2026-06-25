@@ -478,9 +478,7 @@ export default function Checkout() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-white font-semibold">{description}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">
-                    UnifyOne Commerce Platform
-                  </p>
+                  <p className="text-gray-500 text-xs mt-0.5">UnifyOne</p>
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-2">
