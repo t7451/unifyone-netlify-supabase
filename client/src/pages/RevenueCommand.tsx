@@ -87,10 +87,10 @@ export default function RevenueCommand() {
     },
     {
       title: "Monetize",
-      body: "Track affiliate programs, SaaS plans, consulting retainers, and DealFlow payouts as one portfolio.",
+      body: "Track affiliate programs, SaaS plans, consulting retainers, and DealFlow payouts as one income portfolio.",
       icon: CircleDollarSign,
       href: "/revenue-streams",
-      label: "Open Streams",
+      label: "Open Income Streams",
     },
     {
       title: "Automate",
@@ -103,9 +103,9 @@ export default function RevenueCommand() {
 
   const launchTasks = [
     {
-      task: "Seed DealFlow as a tracked revenue stream",
+      task: "Seed DealFlow as a tracked income stream",
       href: "/revenue-streams?preset=dealflow",
-      owner: "Revenue Streams",
+      owner: "Income Streams",
       icon: BadgeDollarSign,
       external: false,
     },
@@ -162,18 +162,19 @@ export default function RevenueCommand() {
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <Badge className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-              Revenue Push
+              Earnings Push
             </Badge>
             <Badge variant="secondary">DealFlow + UnifyOne</Badge>
-            <Badge variant="outline">30-day command loop</Badge>
+            <Badge variant="outline">30-day earnings loop</Badge>
           </div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Rocket className="h-6 w-6 text-primary" /> Revenue Command
+            <Rocket className="h-6 w-6 text-primary" /> Earnings Command
           </h1>
           <p className="text-muted-foreground text-sm mt-2 max-w-3xl leading-6">
-            A single operating view for the revenue boost architecture: DealFlow
-            acquires intent, UnifyOne qualifies the operator, revenue modules
-            track the money, and automations keep the follow-up moving.
+            A single operating view for growing your side income: DealFlow
+            brings in referral and bonus opportunities, UnifyOne qualifies the
+            lead, your income streams track the money, and automations keep the
+            follow-up moving.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -193,7 +194,7 @@ export default function RevenueCommand() {
       {summaryError && (
         <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           <AlertTriangle className="h-4 w-4 shrink-0" />
-          Some revenue metrics failed to load. Showing the latest available
+          Some earnings metrics failed to load. Showing the latest available
           values.
         </div>
       )}
@@ -215,13 +216,13 @@ export default function RevenueCommand() {
           <Card className="border-emerald-500/20 bg-emerald-500/5">
             <CardContent className="p-4">
               <p className="text-xs text-muted-foreground">
-                Tracked Monthly Revenue
+                Tracked Monthly Earnings
               </p>
               <p className="text-2xl font-bold text-emerald-400 mt-1">
                 {money(monthlyRevenue)}
               </p>
               <p className="text-xs text-muted-foreground mt-2">
-                {mrrProgress}% of {money(MRR_TARGET)} MRR target
+                {mrrProgress}% of {money(MRR_TARGET)} monthly income target
               </p>
             </CardContent>
           </Card>
@@ -266,7 +267,7 @@ export default function RevenueCommand() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Route className="h-4 w-4" /> Revenue Architecture
+              <Route className="h-4 w-4" /> Earnings Architecture
             </CardTitle>
             <CardDescription>
               Keep each system in its lane and move prospects through the loop.
@@ -302,7 +303,8 @@ export default function RevenueCommand() {
               <Flame className="h-4 w-4 text-primary" /> This Week's Push
             </CardTitle>
             <CardDescription>
-              Small actions that turn the architecture into active revenue work.
+              Small actions that turn the architecture into active earnings
+              work.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -410,7 +412,7 @@ export default function RevenueCommand() {
           {[
             "Every DealFlow page needs a tracked offer, a next step, and a destination in UnifyOne.",
             "Every qualified lead gets a Pro or Scale path plus a setup-fee option.",
-            "Every active revenue source must live in Revenue Streams so MRR progress is visible daily.",
+            "Every active income source must live in Income Streams so monthly progress is visible daily.",
           ].map(rule => (
             <div
               key={rule}
@@ -425,7 +427,7 @@ export default function RevenueCommand() {
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Clock3 className="h-3.5 w-3.5" />
-        Review this page daily while the revenue push is active.
+        Review this page daily while the earnings push is active.
       </div>
     </div>
   );

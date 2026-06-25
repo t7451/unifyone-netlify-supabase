@@ -100,7 +100,7 @@ export default function Analytics() {
 
   const metrics = [
     {
-      label: "Total Revenue",
+      label: "Store Revenue",
       value: formatCurrency(Number(summary.data?.totalRevenue ?? 0)),
       icon: DollarSign,
       color: "#00D9FF",
@@ -142,9 +142,9 @@ export default function Analytics() {
 
   return (
     <DashboardPageShell
-      eyebrow="Intelligence center"
-      title="Analytics"
-      description="Track revenue quality, product winners, customer growth, and webhook reliability from one decision dashboard."
+      eyebrow="Storefront insights"
+      title="Store Analytics"
+      description="If you sell products on the side, track store revenue, best-selling items, customer growth, and webhook reliability from one place."
       actions={
         <Button
           variant="outline"
@@ -175,10 +175,10 @@ export default function Analytics() {
       stats={metrics.slice(0, 4).map(metric => ({
         label: metric.label,
         value: metric.value,
-        helper: "Current tenant scope",
+        helper: "Your store scope",
         icon: metric.icon,
         tone:
-          metric.label === "Total Revenue"
+          metric.label === "Store Revenue"
             ? "emerald"
             : metric.label === "Total Orders"
               ? "cyan"
@@ -215,7 +215,7 @@ export default function Analytics() {
         <Card className="border-border bg-card lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base text-white">
-              Revenue &amp; Orders (30 Days)
+              Store Revenue &amp; Orders (30 Days)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -287,8 +287,8 @@ export default function Analytics() {
               </ResponsiveContainer>
             ) : (
               <div className="flex h-[240px] items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.02] px-6 text-center text-sm text-gray-400">
-                No revenue data yet. Orders and revenue trends will appear here
-                once transactions start flowing in.
+                No store revenue yet. Orders and revenue trends will appear here
+                once your shop starts making sales.
               </div>
             )}
           </CardContent>
