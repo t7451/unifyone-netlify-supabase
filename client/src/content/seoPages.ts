@@ -545,7 +545,7 @@ export const SEO_PAGES: SeoPage[] = [
     tagline:
       "OneCommerc is a common misspelling of OneCommerce / 1Commerce — the brand behind UnifyOne.",
     description:
-      "OneCommerc is usually a misspelling of OneCommerce or 1Commerce — the company behind UnifyOne, the multi-tenant commerce platform from 1Commerce LLC.",
+      "OneCommerc is usually a misspelling of OneCommerce or 1Commerce — the company behind UnifyOne, the gig earnings & tax app for 1099 workers from 1Commerce LLC.",
     keywords: brand(["onecommerc", "one commerc", "one commerce misspelling"]),
     sections: [
       {
