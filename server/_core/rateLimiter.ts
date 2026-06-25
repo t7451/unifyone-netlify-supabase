@@ -138,6 +138,28 @@ export const passwordResetLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
 });
 
+/**
+ * Email-verification link clicks: 30 per 15 minutes per IP.
+ *
+ * Deliberately generous — the security boundary here is the high-entropy,
+ * single-purpose verification token in the URL, not the IP. Mail clients
+ * (Gmail, Outlook, corporate link scanners) routinely prefetch links, and the
+ * SPA can re-issue the request on remount, so a tight bucket trips "Too many
+ * attempts" before the human ever taps. This limiter exists only to cap
+ * egregious abuse, not to gate normal confirmation flows. Must NOT share a
+ * bucket with password reset.
+ */
+export const emailVerifyLimiter = createRateLimiter({
+  maxAttempts: 30,
+  windowMs: 15 * 60 * 1000,
+});
+
+/** Resend-verification email requests: 5 per 15 minutes per IP (anti-spam). */
+export const resendVerificationLimiter = createRateLimiter({
+  maxAttempts: 5,
+  windowMs: 15 * 60 * 1000,
+});
+
 /** LLM-backed endpoints: 20 calls per 5 minutes per user/IP — cost guard. */
 export const llmRateLimiter = createRateLimiter({
   maxAttempts: 20,
