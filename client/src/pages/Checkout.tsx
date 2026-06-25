@@ -339,11 +339,13 @@ export default function Checkout() {
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-white">Checkout</h1>
+            <h1 className="text-xl font-bold text-white">
+              Storefront Checkout
+            </h1>
             <p className="text-gray-500 text-xs">
               {planSlug
-                ? "Start your subscription"
-                : "Choose your payment method"}
+                ? "Optional storefront add-on — choose how to pay"
+                : "Optional storefront tool — choose your payment method"}
             </p>
           </div>
         </div>
@@ -364,7 +366,7 @@ export default function Checkout() {
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">
-                        Selected Plan
+                        Selected Add-On
                       </p>
                       <p className="text-white text-xl font-bold">
                         {canonicalPlan?.name ?? activePlan.name}
@@ -395,7 +397,8 @@ export default function Checkout() {
                 </>
               ) : (
                 <p className="text-gray-400 text-sm">
-                  Plan "{planSlug}" not found. Please go back and select a plan.
+                  Add-on "{planSlug}" not found. Please go back and choose a
+                  storefront add-on.
                 </p>
               )}
             </div>
@@ -478,7 +481,9 @@ export default function Checkout() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-white font-semibold">{description}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">UnifyOne</p>
+                  <p className="text-gray-500 text-xs mt-0.5">
+                    UnifyOne storefront add-on
+                  </p>
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-2">

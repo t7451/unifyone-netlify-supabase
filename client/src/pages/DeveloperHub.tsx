@@ -1,5 +1,7 @@
 /**
- * Developer Hub — central resource for platform builders and integrators.
+ * Developer Hub — optional, secondary tooling for builders who want to
+ * integrate or automate the storefront add-ons. Not part of the core
+ * gig-earnings experience.
  *
  * Tabs:
  *   Overview    — health check, stats, quick links
@@ -532,8 +534,8 @@ function ApiKeysTab() {
                 API Keys
               </CardTitle>
               <CardDescription className="text-gray-500 text-sm mt-1">
-                Use API keys to authenticate programmatic access to your
-                storefront data.
+                Optional: use API keys to authenticate programmatic access to
+                your storefront add-on data.
               </CardDescription>
             </div>
             <Button
@@ -987,9 +989,9 @@ function MCPToolsTab() {
   return (
     <div className="space-y-6">
       <p className="text-gray-400 text-sm">
-        The UnifyOne MCP (Model Context Protocol) server exposes your storefront
-        data to AI assistants like Claude. Connect it to any MCP-compatible
-        tool.
+        Optional: the UnifyOne MCP (Model Context Protocol) server exposes your
+        storefront add-on data to AI assistants like Claude. Connect it to any
+        MCP-compatible tool.
       </p>
       <MCPStatusWidget variant="settings" />
       <Card className="bg-card border-border">
@@ -1058,8 +1060,9 @@ function CodeTab() {
   return (
     <div className="space-y-4">
       <p className="text-gray-400 text-sm">
-        Ready-to-use snippets for common storefront integrations and
-        automations. Click a snippet to expand, then copy with the button.
+        Optional: ready-to-use snippets for common storefront add-on
+        integrations and automations. Click a snippet to expand, then copy with
+        the button.
       </p>
 
       {snippets.isLoading ? (
@@ -1252,12 +1255,13 @@ export default function DeveloperHub() {
               variant="outline"
               className="text-xs border-[#00D9FF]/30 text-[#00D9FF] ml-1"
             >
-              Platform Builder
+              Optional Tooling
             </Badge>
           </div>
           <p className="text-gray-400 text-sm">
-            Tools, APIs, and resources for building and automating storefronts
-            on UnifyOne.
+            Optional, secondary tools for builders who want to integrate or
+            automate the storefront add-ons. Not required to use GigIQ, Tax
+            Autopilot, or the rest of the gig-earnings app.
           </p>
         </div>
         <a
