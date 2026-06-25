@@ -204,9 +204,9 @@ export default function Customers() {
 
   return (
     <DashboardPageShell
-      eyebrow="Customer operations"
+      eyebrow="Optional commerce tools"
       title="Customers"
-      description="Keep a clean customer graph with profile enrichment, tags, order history, and lifetime value signals."
+      description="An optional storefront add-on for sellers: keep a clean customer graph with profile enrichment, tags, order history, and lifetime value signals. Not required to run GigIQ, Tax Autopilot, or Money Manager."
       actions={<AddCustomerDialog />}
       meta={
         <>
@@ -327,7 +327,9 @@ export default function Customers() {
                       No customers yet
                     </p>
                     <p className="text-gray-500 text-sm mt-1">
-                      Customers appear when orders are created
+                      This optional storefront tool fills in as orders are
+                      created — it isn't needed for your gig earnings or tax
+                      tracking
                     </p>
                   </td>
                 </tr>
