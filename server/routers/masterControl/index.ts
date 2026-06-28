@@ -1,24 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
-import {
-  auditLogs,
-  gigAIUsage,
-  gigWorkerSubscriptions,
-  orders,
-  paypalWebhookEvents,
-  plans,
-  squareWebhookEvents,
-  stripeWebhookEvents,
-  tenants,
-  users,
-  webhookEvents,
-  type InsertTenant,
-  type Tenant,
-  type User,
-} from "../../drizzle/schema";
-import { logAudit } from "../auditLogger";
+import { tenants, type InsertTenant, type User } from "../../../drizzle/schema";
+import { logAudit } from "../../auditLogger";
 import {
   createTenant,
   getAllTenants,
@@ -26,7 +11,7 @@ import {
   getPlans,
   getTenantById,
   getTenantBySlug,
-} from "../db";
+} from "../../db";
 import {
   AI_PROMPT_LIBRARY,
   MASTER_CONTROL_ACCOUNT_ID,
@@ -35,7 +20,6 @@ import {
   TENANT_TEMPLATES,
   asSettings,
   composeTemplateSettings,
-  computeTenantHealth,
   isMasterControlUser,
   mergeMasterControlSettings,
   slugifyTenantName,
@@ -43,9 +27,31 @@ import {
   upsertFeatureFlagSettings,
   type TemplateKey,
   type TenantSettings,
-} from "../lib/masterControl";
-import { mcpCallTool } from "../lib/mcpClient";
-import { protectedProcedure, router } from "../_core/trpc";
+} from "../../lib/masterControl";
+import { mcpCallTool } from "../../lib/mcpClient";
+import { protectedProcedure, router } from "../../_core/trpc";
+import {
+  fetchAllUsers,
+  fetchComplianceDatasets,
+  fetchObservabilityDatasets,
+  fetchSnapshotDatasets,
+  fetchTenantExportDatasets,
+  findActivePlan,
+  findUserIdByEmail,
+  findUserIdByOpenId,
+  findUserIdByUsername,
+  selectTenantsByIds,
+  updateOwnerAccess,
+  updateTenant,
+  updateTenantsByIds,
+  updateUsersCreditsByTenantIds,
+} from "./masterControl.repo";
+import {
+  buildBillingOversight,
+  buildSnapshot,
+  buildTenantDirectory,
+  getTenantSettings,
+} from "./masterControl.service";
 
 const tenantStatusSchema = z.enum([
   "active",
@@ -93,30 +99,6 @@ function requireDb<T>(db: T | null): T {
     });
   }
   return db;
-}
-
-async function safeRows<T>(query: Promise<T[]>): Promise<T[]> {
-  try {
-    return await query;
-  } catch {
-    return [];
-  }
-}
-
-function getTenantSettings(tenant: Pick<Tenant, "settings">): TenantSettings {
-  return asSettings(tenant.settings as TenantSettings | null | undefined);
-}
-
-function getPlanMrr(plan: { priceMonthly: string | null } | undefined): number {
-  if (!plan?.priceMonthly) return 0;
-  const parsed = Number(plan.priceMonthly);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function latestDate(...values: Array<Date | null | undefined>): Date | null {
-  const dates = values.filter((value): value is Date => value instanceof Date);
-  if (dates.length === 0) return null;
-  return new Date(Math.max(...dates.map(date => date.getTime())));
 }
 
 async function resolveUniqueSlug(base: string): Promise<string> {
@@ -185,23 +167,19 @@ export const masterControlRouter = router({
     requireMasterControl(ctx);
     const db = requireDb(await getDb());
 
-    const existingUsername = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.username, MASTER_CONTROL_USERNAME))
-      .limit(1);
+    const existingUsername = await findUserIdByUsername(
+      db,
+      MASTER_CONTROL_USERNAME
+    );
 
     const usernameAvailable =
       !existingUsername[0] || existingUsername[0].id === ctx.user.id;
 
-    await db
-      .update(users)
-      .set({
-        role: "admin",
-        ...(usernameAvailable ? { username: MASTER_CONTROL_USERNAME } : {}),
-        updatedAt: new Date(),
-      })
-      .where(eq(users.openId, MASTER_CONTROL_ACCOUNT_ID));
+    await updateOwnerAccess(db, MASTER_CONTROL_ACCOUNT_ID, {
+      role: "admin",
+      ...(usernameAvailable ? { username: MASTER_CONTROL_USERNAME } : {}),
+      updatedAt: new Date(),
+    });
 
     await auditMasterControl({
       ctx,
@@ -226,263 +204,41 @@ export const masterControlRouter = router({
     ]);
 
     const tenantIds = tenantRows.map(tenant => tenant.id);
-    const userRows = db
-      ? await safeRows(db.select().from(users))
-      : ([] as User[]);
+    const userRows = db ? await fetchAllUsers(db) : ([] as User[]);
     const tenantUsers = userRows.filter(user =>
       user.tenantId ? tenantIds.includes(user.tenantId) : false
     );
     const userIds = tenantUsers.map(user => user.id);
 
     const [aiUsageRows, webhookRows, orderRows, auditRows, gigSubRows] = db
-      ? await Promise.all([
-          userIds.length > 0
-            ? safeRows(
-                db
-                  .select()
-                  .from(gigAIUsage)
-                  .where(inArray(gigAIUsage.userId, userIds))
-              )
-            : [],
-          tenantIds.length > 0
-            ? safeRows(
-                db
-                  .select()
-                  .from(webhookEvents)
-                  .where(inArray(webhookEvents.tenantId, tenantIds))
-              )
-            : [],
-          tenantIds.length > 0
-            ? safeRows(
-                db
-                  .select()
-                  .from(orders)
-                  .where(inArray(orders.tenantId, tenantIds))
-              )
-            : [],
-          safeRows(
-            db
-              .select()
-              .from(auditLogs)
-              .orderBy(desc(auditLogs.createdAt))
-              .limit(50)
-          ),
-          userIds.length > 0
-            ? safeRows(
-                db
-                  .select()
-                  .from(gigWorkerSubscriptions)
-                  .where(inArray(gigWorkerSubscriptions.userId, userIds))
-              )
-            : [],
-        ])
+      ? await fetchSnapshotDatasets(db, tenantIds, userIds)
       : [[], [], [], [], []];
 
-    const planById = new Map(planRows.map(plan => [plan.id, plan]));
     const now = Date.now();
-    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
-
-    const tenantDirectory = tenantRows.map(tenant => {
-      const owner = userRows.find(user => user.id === tenant.ownerId);
-      const members = tenantUsers.filter(user => user.tenantId === tenant.id);
-      const memberIds = new Set(members.map(user => user.id));
-      const tenantAiUsage = aiUsageRows.filter(row =>
-        memberIds.has(row.userId)
-      );
-      const tenantWebhooks = webhookRows.filter(
-        row => row.tenantId === tenant.id
-      );
-      const tenantOrders = orderRows.filter(row => row.tenantId === tenant.id);
-      const activeUsers = members.filter(
-        user =>
-          user.lastSignedIn && user.lastSignedIn.getTime() >= thirtyDaysAgo
-      ).length;
-      const kaiCreditsUsed = tenantAiUsage.reduce(
-        (sum, row) => sum + row.requestsUsed,
-        0
-      );
-      const recentWebhookFailures = tenantWebhooks.filter(
-        row =>
-          row.status === "failed" && row.createdAt.getTime() >= thirtyDaysAgo
-      ).length;
-      const latestWebhook = latestDate(
-        ...tenantWebhooks.map(row => row.createdAt)
-      );
-      const latestOrder = latestDate(...tenantOrders.map(row => row.updatedAt));
-      const latestUser = latestDate(...members.map(row => row.lastSignedIn));
-      const health = computeTenantHealth({
-        tenant,
-        activeUsers,
-        kaiCreditsUsed,
-        recentWebhookFailures,
-      });
-      const plan = tenant.planId ? planById.get(tenant.planId) : undefined;
-      const settings = getTenantSettings(tenant);
-      const master = asSettings(settings.masterControl as TenantSettings);
-
-      return {
-        id: tenant.id,
-        name: tenant.name,
-        slug: tenant.slug,
-        domain: tenant.domain,
-        logoUrl: tenant.logoUrl,
-        status: tenant.status,
-        subscriptionStatus: tenant.subscriptionStatus,
-        ownerId: tenant.ownerId,
-        ownerName: owner?.name ?? null,
-        ownerOpenId: owner?.openId ?? null,
-        ownerEmail: owner?.email ?? null,
-        planId: tenant.planId,
-        planName: plan?.name ?? null,
-        planSlug: plan?.slug ?? null,
-        shopifyShopDomain: tenant.shopifyShopDomain,
-        shopifySyncEnabled: tenant.shopifySyncEnabled,
-        shopifyCheckoutUrl: tenant.shopifyCheckoutUrl,
-        squareLocationId: tenant.squareLocationId,
-        n8nWebhookUrl: tenant.n8nWebhookUrl,
-        mrr:
-          tenant.subscriptionStatus === "active" ||
-          tenant.subscriptionStatus === "trialing"
-            ? getPlanMrr(plan)
-            : 0,
-        activeUsers,
-        totalUsers: members.length,
-        lastActivity: latestDate(
-          tenant.updatedAt,
-          latestWebhook,
-          latestOrder,
-          latestUser
-        ),
-        shopifySyncStatus: {
-          connected: Boolean(tenant.shopifyShopDomain),
-          enabled: tenant.shopifySyncEnabled,
-          shopDomain: tenant.shopifyShopDomain,
-          latestWebhookAt: latestWebhook,
-          recentFailures: recentWebhookFailures,
-          color:
-            !tenant.shopifyShopDomain || !tenant.shopifySyncEnabled
-              ? "yellow"
-              : recentWebhookFailures > 0
-                ? "red"
-                : "green",
-        },
-        kaiCreditsUsed,
-        gigConnections: gigSubRows.filter(
-          sub => memberIds.has(sub.userId) && sub.status === "active"
-        ).length,
-        healthScore: health.score,
-        healthColor: health.color,
-        healthReasons: health.reasons,
-        featureFlags: settings.featureFlags ?? {},
-        modules: settings.modules ?? [],
-        aiGovernance: settings.aiGovernance ?? {},
-        pendingOwnershipTransfer: master.pendingOwnershipTransfer ?? null,
-        dataRetentionOverride: master.dataRetentionOverride ?? null,
-        createdAt: tenant.createdAt,
-        updatedAt: tenant.updatedAt,
-      };
-    });
-
-    const totalMrr = tenantDirectory.reduce(
-      (sum, tenant) => sum + tenant.mrr,
-      0
+    const tenantDirectory = buildTenantDirectory(
+      {
+        tenantRows,
+        planRows,
+        userRows,
+        tenantUsers,
+        aiUsageRows,
+        webhookRows,
+        orderRows,
+        auditRows,
+        gigSubRows,
+      },
+      now
     );
-    const failedPaymentQueue = tenantDirectory
-      .filter(tenant => tenant.subscriptionStatus === "past_due")
-      .map(tenant => ({
-        tenantId: tenant.id,
-        name: tenant.name,
-        ownerEmail: tenant.ownerEmail,
-        planName: tenant.planName,
-        mrrAtRisk: getPlanMrr(
-          tenant.planId ? planById.get(tenant.planId) : undefined
-        ),
-      }));
 
-    return {
-      tenants: tenantDirectory,
-      plans: planRows.map(plan => ({
-        id: plan.id,
-        name: plan.name,
-        slug: plan.slug,
-        priceMonthly: plan.priceMonthly,
-        priceYearly: plan.priceYearly,
-        isActive: plan.isActive,
-        features: plan.features ?? [],
-      })),
-      modules: PLATFORM_MODULES,
-      templates: Object.values(TENANT_TEMPLATES),
-      aiGovernance: {
-        routingRules: Object.values(TENANT_TEMPLATES).map(template => ({
-          template: template.key,
-          ...template.aiRouting,
-        })),
-        promptLibrary: AI_PROMPT_LIBRARY,
-        usageAnalytics: {
-          requestsUsed: tenantDirectory.reduce(
-            (sum, tenant) => sum + tenant.kaiCreditsUsed,
-            0
-          ),
-          tenantsAboveBurst: tenantDirectory.filter(
-            tenant => tenant.kaiCreditsUsed > 10_000
-          ).length,
-          placeholder:
-            "Detailed model/token costs require provider metering export.",
-        },
+    return buildSnapshot(
+      tenantDirectory,
+      {
+        planRows,
+        webhookRows,
+        auditRows,
       },
-      observability: {
-        platformMetrics: {
-          tenantCount: tenantDirectory.length,
-          activeTenantCount: tenantDirectory.filter(t => t.status === "active")
-            .length,
-          suspendedTenantCount: tenantDirectory.filter(
-            t => t.status === "suspended"
-          ).length,
-          totalMrr,
-          activeUsers: tenantDirectory.reduce(
-            (sum, tenant) => sum + tenant.activeUsers,
-            0
-          ),
-          webhookFailures30d: webhookRows.filter(
-            row =>
-              row.status === "failed" &&
-              row.createdAt.getTime() >= thirtyDaysAgo
-          ).length,
-        },
-        alerts: tenantDirectory
-          .filter(tenant => tenant.healthColor !== "green")
-          .map(tenant => ({
-            tenantId: tenant.id,
-            severity: tenant.healthColor === "red" ? "high" : "medium",
-            reasons: tenant.healthReasons,
-          })),
-        auditLogSummary: auditRows.map(row => ({
-          id: row.id,
-          action: row.action,
-          entityType: row.entityType,
-          entityId: row.entityId,
-          severity: row.decisionAuthority,
-          createdAt: row.createdAt,
-        })),
-      },
-      billing: {
-        totalMrr,
-        failedPaymentQueue,
-        revenueForecast: {
-          currentMrr: totalMrr,
-          annualRunRate: totalMrr * 12,
-          mrrAtRisk: failedPaymentQueue.reduce(
-            (sum, tenant) => sum + tenant.mrrAtRisk,
-            0
-          ),
-        },
-      },
-      securityControls: {
-        impersonationMode: "intent-only",
-        auditRequired: true,
-        ownerTransferRequiresStoredIntent: true,
-      },
-    };
+      now
+    );
   }),
 
   updateTenantControls: protectedProcedure
@@ -510,11 +266,7 @@ export const masterControlRouter = router({
       if (!tenant) throw new TRPCError({ code: "NOT_FOUND" });
 
       if (input.planId != null) {
-        const [plan] = await db
-          .select({ id: plans.id })
-          .from(plans)
-          .where(and(eq(plans.id, input.planId), eq(plans.isActive, true)))
-          .limit(1);
+        const [plan] = await findActivePlan(db, input.planId);
         if (!plan) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -540,10 +292,7 @@ export const masterControlRouter = router({
         if (input[key] !== undefined) updates[key] = input[key] as never;
       }
 
-      await db
-        .update(tenants)
-        .set(updates)
-        .where(eq(tenants.id, input.tenantId));
+      await updateTenant(db, input.tenantId, updates);
       await auditMasterControl({
         ctx,
         action: "master_control.update_tenant_controls",
@@ -599,22 +348,19 @@ export const masterControlRouter = router({
       }
 
       const status = input.action === "suspend" ? "suspended" : "active";
-      await db
-        .update(tenants)
-        .set({
-          status,
-          settings: mergeMasterControlSettings(tenant.settings, {
-            dataFreeze: status === "suspended",
-            lastLifecycleAction: {
-              action: input.action,
-              reason: input.reason,
-              at: new Date().toISOString(),
-              by: ctx.user.openId,
-            },
-          }),
-          updatedAt: new Date(),
-        })
-        .where(eq(tenants.id, input.tenantId));
+      await updateTenant(db, input.tenantId, {
+        status,
+        settings: mergeMasterControlSettings(tenant.settings, {
+          dataFreeze: status === "suspended",
+          lastLifecycleAction: {
+            action: input.action,
+            reason: input.reason,
+            at: new Date().toISOString(),
+            by: ctx.user.openId,
+          },
+        }),
+        updatedAt: new Date(),
+      });
       await auditMasterControl({
         ctx,
         action: `master_control.${input.action}`,
@@ -641,29 +387,7 @@ export const masterControlRouter = router({
       if (!tenant) throw new TRPCError({ code: "NOT_FOUND" });
 
       const [members, tenantOrders, tenantWebhooks, tenantAudit] =
-        await Promise.all([
-          safeRows(
-            db.select().from(users).where(eq(users.tenantId, input.tenantId))
-          ),
-          safeRows(
-            db.select().from(orders).where(eq(orders.tenantId, input.tenantId))
-          ),
-          safeRows(
-            db
-              .select()
-              .from(webhookEvents)
-              .where(eq(webhookEvents.tenantId, input.tenantId))
-          ),
-          input.includeAudit
-            ? safeRows(
-                db
-                  .select()
-                  .from(auditLogs)
-                  .where(eq(auditLogs.entityId, input.tenantId))
-                  .orderBy(desc(auditLogs.createdAt))
-              )
-            : [],
-        ]);
+        await fetchTenantExportDatasets(db, input.tenantId, input.includeAudit);
       const payload = {
         exportedAt: new Date().toISOString(),
         tenant,
@@ -778,11 +502,7 @@ export const masterControlRouter = router({
           return { success: true, tenant: existing, idempotent: true };
       }
       if (input.planId != null) {
-        const [plan] = await db
-          .select({ id: plans.id })
-          .from(plans)
-          .where(and(eq(plans.id, input.planId), eq(plans.isActive, true)))
-          .limit(1);
+        const [plan] = await findActivePlan(db, input.planId);
         if (!plan)
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -855,42 +575,30 @@ export const masterControlRouter = router({
       }
 
       if (input.operation === "massUpgradePlans") {
-        const [plan] = await db
-          .select({ id: plans.id })
-          .from(plans)
-          .where(and(eq(plans.id, input.planId), eq(plans.isActive, true)))
-          .limit(1);
+        const [plan] = await findActivePlan(db, input.planId);
         if (!plan)
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Plan is not active.",
           });
-        await db
-          .update(tenants)
-          .set({ planId: input.planId, updatedAt: new Date() })
-          .where(inArray(tenants.id, tenantIds));
+        await updateTenantsByIds(db, tenantIds, {
+          planId: input.planId,
+          updatedAt: new Date(),
+        });
       } else if (input.operation === "resetCredits") {
-        await db
-          .update(users)
-          .set({ creditBalance: input.creditBalance, updatedAt: new Date() })
-          .where(inArray(users.tenantId, tenantIds));
+        await updateUsersCreditsByTenantIds(db, tenantIds, input.creditBalance);
       } else {
-        const targets = await safeRows(
-          db.select().from(tenants).where(inArray(tenants.id, tenantIds))
-        );
+        const targets = await selectTenantsByIds(db, tenantIds);
         await Promise.all(
           targets.map(tenant =>
-            db
-              .update(tenants)
-              .set({
-                settings: upsertFeatureFlagSettings(
-                  tenant.settings,
-                  input.flags,
-                  input.scope
-                ),
-                updatedAt: new Date(),
-              })
-              .where(eq(tenants.id, tenant.id))
+            updateTenant(db, tenant.id, {
+              settings: upsertFeatureFlagSettings(
+                tenant.settings,
+                input.flags,
+                input.scope
+              ),
+              updatedAt: new Date(),
+            })
           )
         );
       }
@@ -936,15 +644,12 @@ export const masterControlRouter = router({
         createdAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       };
-      await db
-        .update(tenants)
-        .set({
-          settings: mergeMasterControlSettings(tenant.settings, {
-            pendingOwnershipTransfer: intent,
-          }),
-          updatedAt: new Date(),
-        })
-        .where(eq(tenants.id, input.tenantId));
+      await updateTenant(db, input.tenantId, {
+        settings: mergeMasterControlSettings(tenant.settings, {
+          pendingOwnershipTransfer: intent,
+        }),
+        updatedAt: new Date(),
+      });
       await auditMasterControl({
         ctx,
         action: "master_control.owner_transfer_intent",
@@ -992,19 +697,11 @@ export const masterControlRouter = router({
           ? pending.targetUserId
           : undefined;
       if (!newOwnerId && typeof pending.targetOpenId === "string") {
-        const [target] = await db
-          .select({ id: users.id })
-          .from(users)
-          .where(eq(users.openId, pending.targetOpenId))
-          .limit(1);
+        const [target] = await findUserIdByOpenId(db, pending.targetOpenId);
         newOwnerId = target?.id;
       }
       if (!newOwnerId && typeof pending.targetEmail === "string") {
-        const [target] = await db
-          .select({ id: users.id })
-          .from(users)
-          .where(eq(users.email, pending.targetEmail))
-          .limit(1);
+        const [target] = await findUserIdByEmail(db, pending.targetEmail);
         newOwnerId = target?.id;
       }
       if (!newOwnerId)
@@ -1014,14 +711,11 @@ export const masterControlRouter = router({
         });
       const nextMaster = { ...master };
       delete nextMaster.pendingOwnershipTransfer;
-      await db
-        .update(tenants)
-        .set({
-          ownerId: newOwnerId,
-          settings: { ...settings, masterControl: nextMaster },
-          updatedAt: new Date(),
-        })
-        .where(eq(tenants.id, input.tenantId));
+      await updateTenant(db, input.tenantId, {
+        ownerId: newOwnerId,
+        settings: { ...settings, masterControl: nextMaster },
+        updatedAt: new Date(),
+      });
       await auditMasterControl({
         ctx,
         action: "master_control.owner_transfer_confirm",
@@ -1185,19 +879,16 @@ export const masterControlRouter = router({
         grantedBy: ctx.user.openId,
         grantedAt: new Date().toISOString(),
       };
-      await db
-        .update(tenants)
-        .set({
-          settings: {
-            ...settings,
-            aiGovernance: {
-              ...aiGovernance,
-              temporaryCreditGrants: [...grants, grant],
-            },
+      await updateTenant(db, input.tenantId, {
+        settings: {
+          ...settings,
+          aiGovernance: {
+            ...aiGovernance,
+            temporaryCreditGrants: [...grants, grant],
           },
-          updatedAt: new Date(),
-        })
-        .where(eq(tenants.id, input.tenantId));
+        },
+        updatedAt: new Date(),
+      });
       await auditMasterControl({
         ctx,
         action: "master_control.grant_temporary_credits",
@@ -1212,43 +903,7 @@ export const masterControlRouter = router({
     requireMasterControl(ctx);
     const db = requireDb(await getDb());
     const [stripeEvents, paypalEvents, squareEvents, generalEvents, logs] =
-      await Promise.all([
-        safeRows(
-          db
-            .select()
-            .from(stripeWebhookEvents)
-            .orderBy(desc(stripeWebhookEvents.createdAt))
-            .limit(50)
-        ),
-        safeRows(
-          db
-            .select()
-            .from(paypalWebhookEvents)
-            .orderBy(desc(paypalWebhookEvents.createdAt))
-            .limit(50)
-        ),
-        safeRows(
-          db
-            .select()
-            .from(squareWebhookEvents)
-            .orderBy(desc(squareWebhookEvents.createdAt))
-            .limit(50)
-        ),
-        safeRows(
-          db
-            .select()
-            .from(webhookEvents)
-            .orderBy(desc(webhookEvents.createdAt))
-            .limit(50)
-        ),
-        safeRows(
-          db
-            .select()
-            .from(auditLogs)
-            .orderBy(desc(auditLogs.createdAt))
-            .limit(100)
-        ),
-      ]);
+      await fetchObservabilityDatasets(db);
     return {
       alerts: [
         ...generalEvents
@@ -1289,39 +944,7 @@ export const masterControlRouter = router({
       getAllTenants(),
       getPlans(),
     ]);
-    const planById = new Map(planRows.map(plan => [plan.id, plan]));
-    const rows = tenantRows.map(tenant => {
-      const plan = tenant.planId ? planById.get(tenant.planId) : undefined;
-      const mrr = getPlanMrr(plan);
-      return {
-        tenantId: tenant.id,
-        name: tenant.name,
-        status: tenant.status,
-        subscriptionStatus: tenant.subscriptionStatus,
-        planName: plan?.name ?? null,
-        mrr,
-        periodEnd: tenant.subscriptionCurrentPeriodEnd,
-      };
-    });
-    const failedPaymentQueue = rows.filter(
-      row => row.subscriptionStatus === "past_due"
-    );
-    const currentMrr = rows
-      .filter(
-        row =>
-          row.subscriptionStatus === "active" ||
-          row.subscriptionStatus === "trialing"
-      )
-      .reduce((sum, row) => sum + row.mrr, 0);
-    return {
-      rows,
-      failedPaymentQueue,
-      revenueForecast: {
-        currentMrr,
-        annualRunRate: currentMrr * 12,
-        mrrAtRisk: failedPaymentQueue.reduce((sum, row) => sum + row.mrr, 0),
-      },
-    };
+    return buildBillingOversight(tenantRows, planRows);
   }),
 
   complianceExport: protectedProcedure
@@ -1333,20 +956,10 @@ export const masterControlRouter = router({
         ? [await getTenantById(input.tenantId)].filter(Boolean)
         : await getAllTenants();
       const tenantIds = tenantRows.map(tenant => tenant!.id);
-      const [memberRows, auditRows] = await Promise.all([
-        tenantIds.length > 0
-          ? safeRows(
-              db.select().from(users).where(inArray(users.tenantId, tenantIds))
-            )
-          : [],
-        safeRows(
-          db
-            .select()
-            .from(auditLogs)
-            .orderBy(desc(auditLogs.createdAt))
-            .limit(500)
-        ),
-      ]);
+      const [memberRows, auditRows] = await fetchComplianceDatasets(
+        db,
+        tenantIds
+      );
       await auditMasterControl({
         ctx,
         action: "master_control.compliance_export",
@@ -1386,15 +999,12 @@ export const masterControlRouter = router({
         updatedBy: ctx.user.openId,
         updatedAt: new Date().toISOString(),
       };
-      await db
-        .update(tenants)
-        .set({
-          settings: mergeMasterControlSettings(tenant.settings, {
-            dataRetentionOverride: override,
-          }),
-          updatedAt: new Date(),
-        })
-        .where(eq(tenants.id, input.tenantId));
+      await updateTenant(db, input.tenantId, {
+        settings: mergeMasterControlSettings(tenant.settings, {
+          dataRetentionOverride: override,
+        }),
+        updatedAt: new Date(),
+      });
       await auditMasterControl({
         ctx,
         action: "master_control.data_retention_override",
