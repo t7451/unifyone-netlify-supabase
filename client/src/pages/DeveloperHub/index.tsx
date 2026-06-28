@@ -12,8 +12,6 @@
  *   Reference   — tRPC endpoint reference
  */
 
-import { useState } from "react";
-import { trpc } from "@/lib/trpc";
 import {
   Card,
   CardContent,
@@ -72,19 +70,28 @@ import {
 } from "lucide-react";
 import MCPStatusWidget from "@/components/MCPStatusWidget";
 import { cn } from "@/lib/utils";
+import {
+  EXPIRY_OPTIONS,
+  LANG_COLORS,
+  SCOPE_OPTIONS,
+  SOURCE_COLORS,
+  STATUS_COLORS,
+} from "./DeveloperHub.constants";
+import { timeAgo } from "./DeveloperHub.utils";
+import {
+  useApiKeysTab,
+  useCodeTab,
+  useCopy,
+  useOverviewTab,
+  useReferenceTab,
+  useWebhooksTab,
+} from "./useDeveloperHub";
+import type {
+  WebhookFilterSource,
+  WebhookFilterStatus,
+} from "./DeveloperHub.types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function useCopy() {
-  const [copied, setCopied] = useState<string | null>(null);
-  const copy = (text: string, id: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(id);
-      setTimeout(() => setCopied(null), 2000);
-    });
-  };
-  return { copied, copy };
-}
 
 function CopyButton({ text, id }: { text: string; id: string }) {
   const { copied, copy } = useCopy();
@@ -113,35 +120,11 @@ function StatusDot({ ok }: { ok: boolean }) {
   );
 }
 
-function timeAgo(dateStr: string | Date | null | undefined) {
-  if (!dateStr) return "Never";
-  const ms = Date.now() - new Date(dateStr).getTime();
-  if (ms < 60_000) return "just now";
-  if (ms < 3_600_000) return `${Math.floor(ms / 60_000)}m ago`;
-  if (ms < 86_400_000) return `${Math.floor(ms / 3_600_000)}h ago`;
-  return new Date(dateStr).toLocaleDateString();
-}
-
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
 function OverviewTab() {
-  const health = trpc.developer.health.useQuery(undefined, {
-    refetchInterval: 30_000,
-  });
-  const keys = trpc.developer.listApiKeys.useQuery();
-  const mcpHealth = trpc.mcp.health.useQuery(undefined, {
-    refetchInterval: 60_000,
-    retry: 1,
-  });
-  const mcpHealthData = mcpHealth.data as
-    | (Record<string, unknown> & { tools?: number })
-    | undefined;
-  const stats = trpc.developer.webhookStats.useQuery(undefined, {
-    refetchInterval: 60_000,
-  });
-
-  const checks = health.data?.checks ?? {};
-  const allOk = Object.values(checks).every(Boolean);
+  const { health, keys, mcpHealth, mcpHealthData, stats, checks, allOk } =
+    useOverviewTab();
 
   return (
     <div className="space-y-6">
@@ -378,58 +361,25 @@ function OverviewTab() {
 // ─── API Keys Tab ─────────────────────────────────────────────────────────────
 
 function ApiKeysTab() {
-  const utils = trpc.useUtils();
-  const keys = trpc.developer.listApiKeys.useQuery();
-
-  const [showCreate, setShowCreate] = useState(false);
-  const [newKeyName, setNewKeyName] = useState("");
-  const [newKeyScopes, setNewKeyScopes] = useState<string[]>(["read"]);
-  const [newKeyExpiry, setNewKeyExpiry] = useState<string>("never");
-  const [createdKey, setCreatedKey] = useState<string | null>(null);
-  const [revokeTarget, setRevokeTarget] = useState<{
-    id: number;
-    name: string;
-  } | null>(null);
-  const { copied, copy } = useCopy();
-
-  const generate = trpc.developer.generateApiKey.useMutation({
-    onSuccess: data => {
-      setCreatedKey(data.rawKey);
-      setShowCreate(false);
-      setNewKeyName("");
-      toast.success("API key created — save it now!");
-      utils.developer.listApiKeys.invalidate();
-    },
-    onError: e => toast.error(e.message),
-  });
-
-  const revoke = trpc.developer.revokeApiKey.useMutation({
-    onSuccess: () => {
-      toast.success("API key revoked");
-      utils.developer.listApiKeys.invalidate();
-    },
-    onError: e => toast.error(e.message),
-  });
-
-  const SCOPE_OPTIONS = [
-    "read",
-    "write",
-    "orders",
-    "products",
-    "analytics",
-    "admin",
-  ];
-  const EXPIRY_OPTIONS = [
-    { value: "never", label: "Never" },
-    { value: "30", label: "30 days" },
-    { value: "90", label: "90 days" },
-    { value: "365", label: "1 year" },
-  ];
-
-  const toggleScope = (s: string) =>
-    setNewKeyScopes(prev =>
-      prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]
-    );
+  const {
+    keys,
+    showCreate,
+    setShowCreate,
+    newKeyName,
+    setNewKeyName,
+    newKeyScopes,
+    newKeyExpiry,
+    setNewKeyExpiry,
+    createdKey,
+    setCreatedKey,
+    revokeTarget,
+    setRevokeTarget,
+    copied,
+    copy,
+    generate,
+    revoke,
+    toggleScope,
+  } = useApiKeysTab();
 
   return (
     <div className="space-y-6">
@@ -747,50 +697,21 @@ function ApiKeysTab() {
 
 // ─── Webhook Logs Tab ─────────────────────────────────────────────────────────
 
-const SOURCE_COLORS: Record<string, string> = {
-  stripe: "text-violet-400 bg-violet-400/10 border-violet-400/20",
-  shopify: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
-  n8n: "text-orange-400 bg-orange-400/10 border-orange-400/20",
-  internal: "text-blue-400 bg-blue-400/10 border-blue-400/20",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  pending: "text-amber-400",
-  processed: "text-emerald-400",
-  failed: "text-red-400",
-  skipped: "text-gray-400",
-};
-
 function WebhooksTab() {
-  const utils = trpc.useUtils();
-  const [limit, setLimit] = useState(50);
-  const [filterSource, setFilterSource] = useState<
-    "all" | "stripe" | "shopify" | "n8n" | "internal"
-  >("all");
-  const [filterStatus, setFilterStatus] = useState<
-    "all" | "pending" | "processed" | "failed" | "skipped"
-  >("all");
-  const [search, setSearch] = useState("");
-  const [expanded, setExpanded] = useState<number | null>(null);
-
-  const logs = trpc.developer.webhookLogs.useQuery(
-    {
-      limit,
-      source: filterSource !== "all" ? filterSource : undefined,
-      status: filterStatus !== "all" ? filterStatus : undefined,
-      search: search.trim() || undefined,
-    },
-    { refetchInterval: 10_000 }
-  );
-
-  const retry = trpc.developer.retryWebhook.useMutation({
-    onSuccess: () => {
-      toast.success("Queued for retry");
-      utils.developer.webhookLogs.invalidate();
-      utils.developer.webhookStats.invalidate();
-    },
-    onError: e => toast.error(e.message),
-  });
+  const {
+    limit,
+    setLimit,
+    filterSource,
+    setFilterSource,
+    filterStatus,
+    setFilterStatus,
+    search,
+    setSearch,
+    expanded,
+    setExpanded,
+    logs,
+    retry,
+  } = useWebhooksTab();
 
   return (
     <div className="space-y-4">
@@ -839,7 +760,7 @@ function WebhooksTab() {
             <Filter className="w-3.5 h-3.5 text-gray-500 shrink-0" />
             <Select
               value={filterSource}
-              onValueChange={v => setFilterSource(v as typeof filterSource)}
+              onValueChange={v => setFilterSource(v as WebhookFilterSource)}
             >
               <SelectTrigger className="bg-white/5 border-white/10 text-white w-32 h-7 text-xs focus:border-[#00D9FF]/50">
                 <SelectValue placeholder="Source" />
@@ -854,7 +775,7 @@ function WebhooksTab() {
             </Select>
             <Select
               value={filterStatus}
-              onValueChange={v => setFilterStatus(v as typeof filterStatus)}
+              onValueChange={v => setFilterStatus(v as WebhookFilterStatus)}
             >
               <SelectTrigger className="bg-white/5 border-white/10 text-white w-32 h-7 text-xs focus:border-[#00D9FF]/50">
                 <SelectValue placeholder="Status" />
@@ -1046,16 +967,8 @@ const result = await trpc.mcp.callTool.mutate({
 
 // ─── Code Snippets Tab ────────────────────────────────────────────────────────
 
-const LANG_COLORS: Record<string, string> = {
-  typescript: "text-blue-400",
-  tsx: "text-blue-400",
-  json: "text-amber-400",
-};
-
 function CodeTab() {
-  const snippets = trpc.developer.codeSnippets.useQuery();
-  const { copied, copy } = useCopy();
-  const [active, setActive] = useState<string | null>(null);
+  const { snippets, copied, copy, active, setActive } = useCodeTab();
 
   return (
     <div className="space-y-4">
@@ -1146,8 +1059,7 @@ function CodeTab() {
 // ─── API Reference Tab ────────────────────────────────────────────────────────
 
 function ReferenceTab() {
-  const ref = trpc.developer.endpointReference.useQuery();
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const { ref, expanded, setExpanded } = useReferenceTab();
 
   return (
     <div className="space-y-4">
