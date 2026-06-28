@@ -29,7 +29,15 @@ function walk(dir: string): string[] {
 }
 
 function appRoutes() {
-  const app = readFileSync(join(CLIENT_SRC, "App.tsx"), "utf8");
+  const app = ["App.tsx", "app/routes.tsx"]
+    .map(f => {
+      try {
+        return readFileSync(join(CLIENT_SRC, f), "utf8");
+      } catch {
+        return "";
+      }
+    })
+    .join("\n");
   return [...app.matchAll(/<Route\s+(?:[^>]*?\s)?path="([^"]+)"/g)].map(
     match => match[1]
   );

@@ -3,6 +3,12 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../../server/routers";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "@/lib/format";
+import {
+  BADGE_NEUTRAL,
+  BADGE_EMERALD,
+  BADGE_ROSE,
+} from "@/lib/constants/badges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -31,10 +37,6 @@ type TopViewedProduct = RouterOutputs["analytics"]["topViewedProducts"][number];
 type TopSearch = RouterOutputs["analytics"]["topSearches"][number];
 
 const WINDOWS = [7, 30, 90] as const;
-
-function formatNumber(value: number) {
-  return Number(value ?? 0).toLocaleString();
-}
 
 /** A single funnel stage rendered as a proportional horizontal bar. */
 function FunnelStage({
@@ -301,10 +303,7 @@ export function CustomerBehaviorPanel() {
                         </TableCell>
                         <TableCell className="text-right">
                           {noResults ? (
-                            <Badge
-                              variant="outline"
-                              className="border-rose-500/30 bg-rose-500/10 text-rose-300"
-                            >
+                            <Badge variant="outline" className={BADGE_ROSE}>
                               no results
                             </Badge>
                           ) : (
@@ -377,9 +376,8 @@ export function CustomerBehaviorPanel() {
                       <Badge
                         variant="outline"
                         className={cn(
-                          "border-white/10 bg-white/5 text-gray-300",
-                          row.viewToCartRate >= 20 &&
-                            "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                          BADGE_NEUTRAL,
+                          row.viewToCartRate >= 20 && BADGE_EMERALD
                         )}
                       >
                         {row.viewToCartRate}%

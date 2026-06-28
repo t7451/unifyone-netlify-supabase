@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import PageHead from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trackToolUsage } from "@/lib/userTracking";
+import { formatUsd0, formatUsd2 } from "@/lib/format";
 
 const CANONICAL = `${SITE_URL}/tools/tax-set-aside`;
 
@@ -217,21 +218,9 @@ export default function TaxSetAside() {
     }
   }
 
-  function fmt(n: number) {
-    return n.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    });
-  }
+  const fmt = formatUsd0;
 
-  function fmt2(n: number) {
-    return n.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    });
-  }
+  const fmt2 = formatUsd2;
 
   const paymentNum = parseFloat(payment.replace(/,/g, "")) || 0;
 

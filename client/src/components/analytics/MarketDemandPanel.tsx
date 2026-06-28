@@ -3,6 +3,8 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../../server/routers";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "@/lib/format";
+import { BADGE_NEUTRAL, BADGE_ROSE } from "@/lib/constants/badges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -23,10 +25,6 @@ type TogetherRow = RouterOutputs["analytics"]["viewedTogether"][number];
 type RankedQuery = { query: string; value: number };
 
 const WINDOWS = [7, 30, 90] as const;
-
-function formatNumber(value: number) {
-  return Number(value ?? 0).toLocaleString();
-}
 
 /**
  * Market intelligence panel: unmet demand (high-volume, zero-result searches on
@@ -120,9 +118,8 @@ export function MarketDemandPanel() {
                         <Badge
                           variant="outline"
                           className={cn(
-                            "border-white/10 bg-white/5 text-gray-300",
-                            Number(row.avgResults ?? 0) === 0 &&
-                              "border-rose-500/30 bg-rose-500/10 text-rose-300"
+                            BADGE_NEUTRAL,
+                            Number(row.avgResults ?? 0) === 0 && BADGE_ROSE
                           )}
                         >
                           {Number(row.avgResults ?? 0) === 0

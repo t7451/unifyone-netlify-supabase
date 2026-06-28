@@ -4,6 +4,7 @@ import PageHead from "@/components/PageHead";
 import ToolLayout from "@/components/ToolLayout";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trackToolUsage } from "@/lib/userTracking";
+import { formatUsd2 } from "@/lib/format";
 
 const CANONICAL = `${SITE_URL}/tools/reseller-break-even`;
 
@@ -222,13 +223,7 @@ export default function ResellerBreakEven() {
     }
   }
 
-  function fmtDollar(n: number) {
-    return n.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    });
-  }
+  const fmtDollar = formatUsd2;
 
   function fmtPct(n: number) {
     return n.toFixed(1) + "%";

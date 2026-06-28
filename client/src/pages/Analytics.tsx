@@ -1,4 +1,9 @@
-import { trpc } from "@/lib/trpc";
+import {
+  useAnalyticsSummaryQuery,
+  useRevenueByDayQuery,
+  useTopProductsQuery,
+  useWebhookEventsQuery,
+} from "@/lib/api/useAnalyticsData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -72,10 +77,10 @@ function formatTimestamp(value: Date | string | null | undefined) {
 }
 
 export default function Analytics() {
-  const summary = trpc.analytics.summary.useQuery();
-  const revenueByDay = trpc.analytics.revenueByDay.useQuery();
-  const topProducts = trpc.analytics.topProducts.useQuery({ limit: 5 });
-  const webhookLog = trpc.analytics.webhookEvents.useQuery({ limit: 10 });
+  const summary = useAnalyticsSummaryQuery();
+  const revenueByDay = useRevenueByDayQuery();
+  const topProducts = useTopProductsQuery();
+  const webhookLog = useWebhookEventsQuery();
 
   const chartData = (revenueByDay.data ?? []).map((point: RevenuePoint) => ({
     date: new Date(point.date).toLocaleDateString("en-US", {

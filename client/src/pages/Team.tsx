@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import {
+  useTeamMembersQuery,
+  useTeamInvitesQuery,
+  useInviteMemberMutation,
+  useRevokeInviteMutation,
+  useUpdateMemberRoleMutation,
+  useRemoveMemberMutation,
+} from "@/lib/api/useTeamData";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +66,6 @@ const INVITE_STATUS_COLORS: Record<string, string> = {
 
 export default function Team() {
   const { user } = useAuth();
-  const utils = trpc.useUtils();
   const isAdmin = user?.role === "admin";
 
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -69,41 +75,37 @@ export default function Team() {
   const [removingMemberId, setRemovingMemberId] = useState<number | null>(null);
   const [removingMemberName, setRemovingMemberName] = useState<string>("");
 
-  const members = trpc.team.listMembers.useQuery();
-  const invites = trpc.team.listInvites.useQuery();
+  const members = useTeamMembersQuery();
+  const invites = useTeamInvitesQuery();
 
-  const sendInvite = trpc.team.invite.useMutation({
+  const sendInvite = useInviteMemberMutation({
     onSuccess: data => {
       const link = `${window.location.origin}/join?token=${data.token}`;
       setInviteLink(link);
-      utils.team.listInvites.invalidate();
       toast.success("Invite link created. Share it with your teammate.");
     },
     onError: error =>
       toast.error(error.message || "Something went wrong. Please try again."),
   });
 
-  const revokeInvite = trpc.team.revokeInvite.useMutation({
+  const revokeInvite = useRevokeInviteMutation({
     onSuccess: () => {
-      utils.team.listInvites.invalidate();
       toast.success("Team invite revoked");
     },
     onError: error =>
       toast.error(error.message || "Something went wrong. Please try again."),
   });
 
-  const updateRole = trpc.team.updateMemberRole.useMutation({
-    onSuccess: (_data, variables) => {
-      utils.team.listMembers.invalidate();
+  const updateRole = useUpdateMemberRoleMutation({
+    onSuccess: variables => {
       toast.success(`Team member role updated to ${variables.role}`);
     },
     onError: error =>
       toast.error(error.message || "Something went wrong. Please try again."),
   });
 
-  const removeMember = trpc.team.removeMember.useMutation({
+  const removeMember = useRemoveMemberMutation({
     onSuccess: () => {
-      utils.team.listMembers.invalidate();
       setRemovingMemberId(null);
       toast.success("Team member removed");
     },

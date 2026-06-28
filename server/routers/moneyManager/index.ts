@@ -1,0 +1,269 @@
+/**
+ * server/routers/moneyManager/index.ts
+ *
+ * tRPC router for the Money Manager feature. Transport layer only:
+ * procedures, input schemas, and auth. Business logic lives in the
+ * shifts / mileageTax / rules / points service modules, and data access in
+ * moneyManager.repo.ts.
+ */
+
+import { z } from "zod";
+import { protectedProcedure, router } from "../../_core/trpc";
+import { shiftsService } from "./shifts.service";
+import { mileageTaxService } from "./mileageTax.service";
+import { rulesService } from "./rules.service";
+import { pointsService } from "./points.service";
+
+export const moneyManagerRouter = router({
+  // ── Gig Shifts ──────────────────────────────────────────────────────────────
+  startShift: protectedProcedure
+    .input(
+      z.object({
+        platform: z.string().min(1).max(100),
+        startLat: z.number().optional(),
+        startLng: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return shiftsService.startShift(ctx.user.id, input);
+    }),
+
+  endShift: protectedProcedure
+    .input(
+      z.object({
+        shiftId: z.number(),
+        grossEarnings: z.number().min(0),
+        tips: z.number().min(0).default(0),
+        bonuses: z.number().min(0).default(0),
+        totalMiles: z.number().min(0).default(0),
+        endLat: z.number().optional(),
+        endLng: z.number().optional(),
+        notes: z.string().max(1000).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return shiftsService.endShift(ctx, input);
+    }),
+
+  listShifts: protectedProcedure
+    .input(
+      z.object({
+        platform: z.string().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        limit: z.number().min(1).max(100).default(20),
+        offset: z.number().min(0).default(0),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return shiftsService.listShifts(ctx.user.id, input);
+    }),
+
+  getShiftStats: protectedProcedure
+    .input(
+      z.object({
+        period: z.enum(["week", "month", "year", "all"]).default("month"),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return shiftsService.getShiftStats(ctx.user.id, input);
+    }),
+
+  // ── Mileage Logs ────────────────────────────────────────────────────────────
+  logMileage: protectedProcedure
+    .input(
+      z.object({
+        miles: z.number().min(0.1),
+        purpose: z.string().default("business"),
+        date: z.string().optional(),
+        startAddress: z.string().max(500).optional(),
+        endAddress: z.string().max(500).optional(),
+        notes: z.string().max(1000).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return mileageTaxService.logMileage(ctx, input);
+    }),
+
+  getMileageSummary: protectedProcedure
+    .input(z.object({ year: z.number().default(new Date().getFullYear()) }))
+    .query(async ({ ctx, input }) => {
+      return mileageTaxService.getMileageSummary(ctx.user.id, input);
+    }),
+
+  // ── Financial Rules ──────────────────────────────────────────────────────────
+  listRules: protectedProcedure.query(async ({ ctx }) => {
+    return rulesService.listRules(ctx.user.id);
+  }),
+
+  createRule: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(200),
+        description: z.string().optional(),
+        type: z.enum([
+          "auto_save",
+          "budget_cap",
+          "alert",
+          "allocation",
+          "goal",
+        ]),
+        triggerType: z.enum([
+          "income_received",
+          "expense_over",
+          "balance_below",
+          "balance_above",
+          "scheduled",
+          "manual",
+        ]),
+        triggerValue: z.number().optional(),
+        actionType: z.enum(["transfer", "notify", "block", "tag", "save"]),
+        actionValue: z.number().optional(),
+        actionPercent: z.number().min(0).max(100).optional(),
+        category: z.string().optional(),
+        platform: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return rulesService.createRule(ctx.user.id, input);
+    }),
+
+  toggleRule: protectedProcedure
+    .input(z.object({ ruleId: z.number(), enabled: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      return rulesService.toggleRule(ctx.user.id, input);
+    }),
+
+  deleteRule: protectedProcedure
+    .input(z.object({ ruleId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return rulesService.deleteRule(ctx.user.id, input);
+    }),
+
+  // ── Subscription Entitlements ────────────────────────────────────────────────
+  getEntitlement: protectedProcedure.query(async ({ ctx }) => {
+    return rulesService.getEntitlement(ctx.user.id);
+  }),
+
+  // ── Points Balance ───────────────────────────────────────────────────────────
+  getPointsBalance: protectedProcedure.query(async ({ ctx }) => {
+    return pointsService.getPointsBalance(ctx.user.id);
+  }),
+
+  getPointsHistory: protectedProcedure
+    .input(
+      z.object({ limit: z.number().default(20), offset: z.number().default(0) })
+    )
+    .query(async ({ ctx, input }) => {
+      return pointsService.getPointsHistory(ctx.user.id, input);
+    }),
+
+  // ── Gig Command: GPS & Route ─────────────────────────────────────────────────
+  getActiveShift: protectedProcedure.query(async ({ ctx }) => {
+    return shiftsService.getActiveShift(ctx.user.id);
+  }),
+
+  updateShiftGPS: protectedProcedure
+    .input(
+      z.object({
+        shiftId: z.number(),
+        lat: z.number(),
+        lng: z.number(),
+        appendWaypoint: z.boolean().default(true),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return shiftsService.updateShiftGPS(ctx.user.id, input);
+    }),
+
+  getRouteIntelligence: protectedProcedure
+    .input(
+      z.object({
+        lat: z.number(),
+        lng: z.number(),
+        platform: z.string().default("any"),
+        radiusMiles: z.number().default(5),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return shiftsService.getRouteIntelligence(ctx.user.id, input);
+    }),
+  generateAIShortcuts: protectedProcedure
+    .input(z.object({ platform: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      return shiftsService.generateAIShortcuts(ctx.user.id, input);
+    }),
+
+  // ── GigIQ Intelligence Layer ──────────────────────────────────────────────
+  // These procedures power the shift intelligence + deduction dashboard.
+  // They read from existing gigShifts + mileageLogs data — no new tables needed.
+
+  /**
+   * Per-platform, per-hour, per-day breakdown.
+   * Returns the data Kai needs to give dollar-specific recommendations:
+   * "Your Thursday 5–9pm shifts average $31.20/hr vs $21.90/hr Monday mornings."
+   */
+  getShiftBreakdown: protectedProcedure
+    .input(
+      z.object({
+        period: z.enum(["week", "month", "year", "all"]).default("month"),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return shiftsService.getShiftBreakdown(ctx.user.id, input);
+    }),
+
+  /**
+   * YTD deduction widget — the "aha moment" stat.
+   * Returns current year mileage deduction, quarterly estimate,
+   * and whether the user should be prompted to upgrade.
+   */
+  getYTDDeduction: protectedProcedure.query(async ({ ctx }) => {
+    return mileageTaxService.getYTDDeduction(ctx.user.id);
+  }),
+
+  /**
+   * Comprehensive tax estimate: SE tax, federal income tax, quarterly payment due.
+   * Uses YTD gigShifts gross + mileageLogs deductions to project annual obligations.
+   */
+  getTaxEstimate: protectedProcedure
+    .input(
+      z
+        .object({ bracketRate: z.number().min(0).max(0.5).optional() })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      return mileageTaxService.getTaxEstimate(ctx.user.id, input);
+    }),
+
+  /**
+   * Kai-ready data context for gig-command and money-manager pages.
+   * Returns a compact JSON string the AI system prompt can inject directly.
+   */
+  getKaiContext: protectedProcedure
+    .input(
+      z.object({
+        context: z.enum(["gig-command", "money-manager", "dashboard"]),
+      })
+    )
+    .query(async ({ ctx }) => {
+      return shiftsService.getKaiContext(ctx.user.id);
+    }),
+
+  /**
+   * Earnings anomaly detection: flags platforms where the user's recent $/hr
+   * has deviated significantly from their baseline.
+   */
+  getAnomalies: protectedProcedure
+    .input(
+      z
+        .object({
+          lookbackDays: z.number().min(7).max(180).default(30),
+          recentSampleSize: z.number().min(2).max(10).default(3),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      return mileageTaxService.getAnomalies(ctx.user.id, input);
+    }),
+});
