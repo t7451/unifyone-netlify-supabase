@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import PageHead from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trackToolUsage } from "@/lib/userTracking";
+import { formatUsd0 } from "@/lib/format";
 
 const CANONICAL = `${SITE_URL}/tools/se-tax-calculator`;
 
@@ -169,13 +170,7 @@ export default function SETaxCalculator() {
     }
   }
 
-  function fmt(n: number) {
-    return n.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    });
-  }
+  const fmt = formatUsd0;
 
   function fmtPct(n: number) {
     return (n * 100).toFixed(1) + "%";

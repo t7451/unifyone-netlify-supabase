@@ -3,6 +3,12 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../../server/routers";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "@/lib/format";
+import {
+  BADGE_NEUTRAL,
+  BADGE_EMERALD,
+  BADGE_ROSE,
+} from "@/lib/constants/badges";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -22,10 +28,6 @@ type EngagementRow = RouterOutputs["analytics"]["productEngagement"][number];
 type Funnel = RouterOutputs["analytics"]["funnelDropoff"];
 
 const WINDOWS = [7, 30, 90] as const;
-
-function formatNumber(value: number) {
-  return Number(value ?? 0).toLocaleString();
-}
 
 function formatDwell(seconds: number) {
   const s = Math.max(0, Math.round(seconds));
@@ -138,8 +140,7 @@ export function EngagementPanel() {
                               variant="outline"
                               className={cn(
                                 "border-white/10 bg-white/5 text-gray-400",
-                                drop >= 50 &&
-                                  "border-rose-500/30 bg-rose-500/10 text-rose-300"
+                                drop >= 50 && BADGE_ROSE
                               )}
                             >
                               −{drop}%
@@ -213,9 +214,8 @@ export function EngagementPanel() {
                         <Badge
                           variant="outline"
                           className={cn(
-                            "border-white/10 bg-white/5 text-gray-300",
-                            row.avgScrollPct >= 60 &&
-                              "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                            BADGE_NEUTRAL,
+                            row.avgScrollPct >= 60 && BADGE_EMERALD
                           )}
                         >
                           {row.avgScrollPct}%

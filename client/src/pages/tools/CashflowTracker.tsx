@@ -4,6 +4,7 @@ import PageHead from "@/components/PageHead";
 import ToolLayout from "@/components/ToolLayout";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trackToolUsage } from "@/lib/userTracking";
+import { formatUsd0 } from "@/lib/format";
 
 const CANONICAL = `${SITE_URL}/tools/cashflow-tracker`;
 
@@ -287,13 +288,7 @@ export default function CashflowTracker() {
     }
   }
 
-  function fmt(n: number) {
-    return n.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    });
-  }
+  const fmt = formatUsd0;
 
   return (
     <>

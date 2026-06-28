@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import PageHead from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trackToolUsage } from "@/lib/userTracking";
+import { formatUsd0 } from "@/lib/format";
 
 const CANONICAL = `${SITE_URL}/tools/mileage-deduction-calculator`;
 
@@ -159,13 +160,7 @@ export default function MileageCalculator() {
     }
   }
 
-  function fmt(n: number) {
-    return n.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    });
-  }
+  const fmt = formatUsd0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
