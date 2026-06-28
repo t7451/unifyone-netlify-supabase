@@ -1,7 +1,5 @@
-import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { trpc } from "@/lib/trpc";
 import {
   Card,
   CardContent,
@@ -23,7 +21,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
 import {
   Radio,
   Clock,
@@ -47,44 +44,20 @@ import {
   BarChart3,
   RefreshCw,
 } from "lucide-react";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Schedule {
-  id: number;
-  name: string;
-  description?: string | null;
-  cronExpression: string;
-  webhookUrl?: string | null;
-  workflowId?: string | null;
-  enabled: boolean;
-  lastRunAt?: Date | null;
-  lastRunStatus?: string | null;
-  lastRunError?: string | null;
-  triggerCount?: number | null;
-  nextRunAt?: Date | null;
-}
-
-interface Attribution {
-  id: number;
-  source?: string | null;
-  medium?: string | null;
-  campaign?: string | null;
-  deepLinkPath?: string | null;
-  referralCode?: string | null;
-  converted: boolean;
-  convertedAt?: Date | null;
-  createdAt: Date;
-}
-
-interface CapiEvent {
-  id: number;
-  eventName: string;
-  eventId: string;
-  status: string;
-  sentAt: Date;
-  eventSourceUrl?: string | null;
-}
+import { AUDIENCE_LABELS, CRON_PRESETS } from "./MobileAutomation.constants";
+import { formatRelative } from "./MobileAutomation.utils";
+import type {
+  Attribution,
+  CapiEvent,
+  PushSchedule,
+  Schedule,
+} from "./MobileAutomation.types";
+import {
+  useAttributionTab,
+  useCapiLogTab,
+  usePushScheduleTab,
+  useSchedulerTab,
+} from "./useMobileAutomation";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -103,83 +76,21 @@ function statusBadge(status: string | null | undefined) {
   );
 }
 
-function formatRelative(date: Date | null | undefined): string {
-  if (!date) return "—";
-  const d = new Date(date);
-  const diff = Date.now() - d.getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
-
-const CRON_PRESETS = [
-  { label: "Every day at 9am", value: "0 9 * * *" },
-  { label: "Daily 10am", value: "0 10 * * *" },
-  { label: "Every hour", value: "0 * * * *" },
-  { label: "Every Monday 8am", value: "0 8 * * 1" },
-  { label: "Weekly Mon 9am", value: "0 9 * * 1" },
-  { label: "Every 15 minutes", value: "*/15 * * * *" },
-  { label: "Twice daily", value: "0 9,18 * * *" },
-  { label: "First of month", value: "0 0 1 * *" },
-];
-
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SchedulerTab() {
-  const utils = trpc.useUtils();
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    webhookUrl: "",
-    cronExpression: "0 9 * * *",
-  });
-
-  const { data: schedules = [], isLoading } =
-    trpc.mobileAutomation.listSchedules.useQuery();
-
-  const create = trpc.mobileAutomation.createSchedule.useMutation({
-    onSuccess: () => {
-      utils.mobileAutomation.listSchedules.invalidate();
-      setOpen(false);
-      setForm({
-        name: "",
-        description: "",
-        webhookUrl: "",
-        cronExpression: "0 9 * * *",
-      });
-      toast.success("Schedule created");
-    },
-    onError: e => toast.error(e.message),
-  });
-
-  const update = trpc.mobileAutomation.updateSchedule.useMutation({
-    onSuccess: () => {
-      utils.mobileAutomation.listSchedules.invalidate();
-      toast.success("Schedule updated");
-    },
-  });
-
-  const del = trpc.mobileAutomation.deleteSchedule.useMutation({
-    onSuccess: () => {
-      utils.mobileAutomation.listSchedules.invalidate();
-      toast.success("Schedule deleted");
-    },
-  });
-
-  const trigger = trpc.mobileAutomation.triggerSchedule.useMutation({
-    onSuccess: data => {
-      utils.mobileAutomation.listSchedules.invalidate();
-      if (data.success) {
-        toast.success("Workflow triggered successfully");
-      } else {
-        toast.error(data.error ?? "Trigger failed");
-      }
-    },
-  });
+  const {
+    open,
+    setOpen,
+    form,
+    setForm,
+    schedules,
+    isLoading,
+    create,
+    update,
+    del,
+    trigger,
+  } = useSchedulerTab();
 
   return (
     <div className="space-y-4">
@@ -381,13 +292,7 @@ function SchedulerTab() {
 }
 
 function AttributionTab() {
-  const { data: stats } = trpc.mobileAutomation.getAttributionStats.useQuery({
-    days: 30,
-  });
-  const { data: list } = trpc.mobileAutomation.listAttributions.useQuery({
-    limit: 20,
-    offset: 0,
-  });
+  const { stats, list } = useAttributionTab();
 
   const sourceColors: Record<string, string> = {
     unifyone_app: "text-violet-400",
@@ -535,11 +440,7 @@ function AttributionTab() {
 }
 
 function CapiLogTab() {
-  const { data: summary } = trpc.mobileAutomation.getCapiSummary.useQuery();
-  const { data: log } = trpc.mobileAutomation.listCapiEvents.useQuery({
-    limit: 25,
-    offset: 0,
-  });
+  const { summary, log } = useCapiLogTab();
 
   const eventColor: Record<string, string> = {
     PageView: "text-gray-400",
@@ -696,86 +597,20 @@ function CapiLogTab() {
   );
 }
 
-// ─── Push Schedule Types & Tab ───────────────────────────────────────────────
-
-interface PushSchedule {
-  id: number;
-  title: string;
-  body: string;
-  targetAudience: string;
-  scheduledAt?: Date | null;
-  cronExpression?: string | null;
-  recurring: boolean;
-  deepLinkPath?: string | null;
-  enabled: boolean;
-  sentCount: number;
-  lastSentAt?: Date | null;
-  status: string;
-}
-
-const AUDIENCE_LABELS: Record<string, string> = {
-  all: "All Users",
-  active_users: "Active Users",
-  inactive_users: "Inactive Users",
-  new_users: "New Users",
-  custom: "Custom Segment",
-};
-
 function PushScheduleTab() {
-  const utils = trpc.useUtils();
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    body: "",
-    targetAudience: "all" as const,
-    scheduledAt: "",
-    cronExpression: "",
-    recurring: false,
-    deepLinkPath: "",
-  });
-
-  const { data: schedules = [], isLoading } =
-    trpc.mobileAutomation.listPushSchedules.useQuery();
-
-  const create = trpc.mobileAutomation.createPushSchedule.useMutation({
-    onSuccess: () => {
-      utils.mobileAutomation.listPushSchedules.invalidate();
-      setOpen(false);
-      setForm({
-        title: "",
-        body: "",
-        targetAudience: "all",
-        scheduledAt: "",
-        cronExpression: "",
-        recurring: false,
-        deepLinkPath: "",
-      });
-      toast.success("Push notification scheduled");
-    },
-    onError: e => toast.error(e.message),
-  });
-
-  const update = trpc.mobileAutomation.updatePushSchedule.useMutation({
-    onSuccess: () => {
-      utils.mobileAutomation.listPushSchedules.invalidate();
-      toast.success("Push schedule updated");
-    },
-  });
-
-  const del = trpc.mobileAutomation.deletePushSchedule.useMutation({
-    onSuccess: () => {
-      utils.mobileAutomation.listPushSchedules.invalidate();
-      toast.success("Push schedule deleted");
-    },
-  });
-
-  const sendNow = trpc.mobileAutomation.sendPushNow.useMutation({
-    onSuccess: data => {
-      utils.mobileAutomation.listPushSchedules.invalidate();
-      toast.success(`Push sent! Total sends: ${data.sentCount}`);
-    },
-    onError: e => toast.error(e.message),
-  });
+  const {
+    open,
+    setOpen,
+    form,
+    setForm,
+    schedules,
+    isLoading,
+    create,
+    update,
+    del,
+    sendNow,
+    pushSummary,
+  } = usePushScheduleTab();
 
   function pushStatusBadge(status: string) {
     switch (status) {
@@ -811,22 +646,6 @@ function PushScheduleTab() {
         );
     }
   }
-
-  const pushSummary = useMemo(() => {
-    const typed = schedules as PushSchedule[];
-    return typed.reduce(
-      (acc, s) => ({
-        total: acc.total + 1,
-        totalSends: acc.totalSends + (s.sentCount ?? 0),
-        active:
-          acc.active +
-          (s.enabled && (s.status === "scheduled" || s.status === "recurring")
-            ? 1
-            : 0),
-      }),
-      { total: 0, totalSends: 0, active: 0 }
-    );
-  }, [schedules]);
 
   return (
     <div className="space-y-4">

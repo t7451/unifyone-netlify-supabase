@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
   AnnouncementBanner,
@@ -26,242 +24,48 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
 import {
   Bell,
   Megaphone,
   Webhook,
   Users,
-  ShoppingCart,
-  CreditCard,
-  UserPlus,
-  Share2,
-  Target,
   Save,
   Trash2,
   CheckCheck,
-  Info,
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle2,
   Zap,
   Mail,
   Slack,
-  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// ── Supported trigger events ──────────────────────────────────────────────────
-const TRIGGER_EVENTS = [
-  {
-    event: "order.created",
-    label: "Order Created",
-    icon: ShoppingCart,
-    color: "text-cyan-400",
-  },
-  {
-    event: "order.status_changed",
-    label: "Order Status Changed",
-    icon: ShoppingCart,
-    color: "text-blue-400",
-  },
-  {
-    event: "payment.received",
-    label: "Payment Received",
-    icon: CreditCard,
-    color: "text-emerald-400",
-  },
-  {
-    event: "lead.submitted",
-    label: "Lead Submitted",
-    icon: Target,
-    color: "text-orange-400",
-  },
-  {
-    event: "team.invite_accepted",
-    label: "Team Invite Accepted",
-    icon: UserPlus,
-    color: "text-indigo-400",
-  },
-  {
-    event: "social.post_published",
-    label: "Social Post Published",
-    icon: Share2,
-    color: "text-pink-400",
-  },
-];
-
-type NotificationType =
-  | "info"
-  | "success"
-  | "warning"
-  | "error"
-  | "order"
-  | "payment"
-  | "team"
-  | "social"
-  | "lead";
-
-type NotificationDisplayType = NotificationType | "system";
-
-type TriggerConfigState = {
-  inAppEnabled: boolean;
-  n8nEnabled: boolean;
-  n8nWebhookUrl: string;
-  zapierEnabled: boolean;
-  mailchimpEnabled: boolean;
-  slackEnabled: boolean;
-  slackWebhookUrl: string;
-  emailEnabled: boolean;
-  emailRecipients: string;
-};
-
-const NOTIFICATION_TYPE_OPTIONS: NotificationType[] = [
-  "info",
-  "success",
-  "warning",
-  "error",
-  "order",
-  "payment",
-  "team",
-  "social",
-  "lead",
-];
-
-// ── Notification type icon map ─────────────────────────────────────────────────
-const TYPE_ICONS: Record<
+import { toast } from "sonner";
+import {
+  DATE_GROUP_ORDER,
+  NOTIFICATION_TYPE_OPTIONS,
+  TRIGGER_EVENTS,
+  TYPE_ICONS,
+} from "./Notifications.constants";
+import { timeAgo } from "./Notifications.utils";
+import type {
   NotificationDisplayType,
-  { icon: LucideIcon; color: string; background: string }
-> = {
-  info: {
-    icon: Info,
-    color: "text-blue-300",
-    background: "bg-blue-500/10 ring-1 ring-blue-500/20",
-  },
-  success: {
-    icon: CheckCircle2,
-    color: "text-emerald-300",
-    background: "bg-emerald-500/10 ring-1 ring-emerald-500/20",
-  },
-  warning: {
-    icon: AlertTriangle,
-    color: "text-amber-300",
-    background: "bg-amber-500/10 ring-1 ring-amber-500/20",
-  },
-  error: {
-    icon: AlertCircle,
-    color: "text-red-300",
-    background: "bg-red-500/10 ring-1 ring-red-500/20",
-  },
-  order: {
-    icon: ShoppingCart,
-    color: "text-cyan-300",
-    background: "bg-cyan-500/10 ring-1 ring-cyan-500/20",
-  },
-  payment: {
-    icon: CreditCard,
-    color: "text-violet-300",
-    background: "bg-violet-500/10 ring-1 ring-violet-500/20",
-  },
-  team: {
-    icon: Users,
-    color: "text-indigo-300",
-    background: "bg-indigo-500/10 ring-1 ring-indigo-500/20",
-  },
-  social: {
-    icon: Share2,
-    color: "text-pink-300",
-    background: "bg-pink-500/10 ring-1 ring-pink-500/20",
-  },
-  lead: {
-    icon: Target,
-    color: "text-orange-300",
-    background: "bg-orange-500/10 ring-1 ring-orange-500/20",
-  },
-  system: {
-    icon: Bell,
-    color: "text-slate-300",
-    background: "bg-slate-500/10 ring-1 ring-slate-500/20",
-  },
-};
-
-function timeAgo(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  const diff = Date.now() - d.getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
-
-type DateGroup = "Today" | "Yesterday" | "This Week" | "Older";
-
-function getDateGroup(date: Date | string): DateGroup {
-  const d = typeof date === "string" ? new Date(date) : date;
-  const now = new Date();
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  );
-  const startOfYesterday = new Date(startOfToday);
-  startOfYesterday.setDate(startOfYesterday.getDate() - 1);
-  const startOfWeek = new Date(startOfToday);
-  const dayOfWeek = startOfWeek.getDay();
-  const daysSinceMonday = (dayOfWeek + 6) % 7;
-  startOfWeek.setDate(startOfWeek.getDate() - daysSinceMonday);
-
-  if (d >= startOfToday) return "Today";
-  if (d >= startOfYesterday) return "Yesterday";
-  if (d >= startOfWeek) return "This Week";
-  return "Older";
-}
-
-const DATE_GROUP_ORDER: DateGroup[] = [
-  "Today",
-  "Yesterday",
-  "This Week",
-  "Older",
-];
+  NotificationType,
+} from "./Notifications.types";
+import {
+  useAdminBroadcast,
+  useNotificationList,
+  useTriggerConfig,
+} from "./useNotifications";
 
 // ── NotificationList (Tier 1 full view) ──────────────────────────────────────
 function NotificationList() {
-  const utils = trpc.useUtils();
-  const { data: notifs = [], isLoading } = trpc.notifications.list.useQuery({
-    limit: 50,
-  });
-  const { data: unread } = trpc.notifications.unreadCount.useQuery();
-
-  const markRead = trpc.notifications.markRead.useMutation({
-    onSuccess: () => {
-      utils.notifications.list.invalidate();
-      utils.notifications.unreadCount.invalidate();
-    },
-  });
-  const markAllRead = trpc.notifications.markAllRead.useMutation({
-    onSuccess: () => {
-      utils.notifications.list.invalidate();
-      utils.notifications.unreadCount.invalidate();
-    },
-  });
-  const deleteNotif = trpc.notifications.delete.useMutation({
-    onSuccess: () => {
-      utils.notifications.list.invalidate();
-      utils.notifications.unreadCount.invalidate();
-    },
-  });
-
-  // Group notifications by date
-  const grouped = notifs.reduce<Record<DateGroup, typeof notifs>>(
-    (acc, n) => {
-      const group = getDateGroup(n.createdAt);
-      acc[group].push(n);
-      return acc;
-    },
-    { Today: [], Yesterday: [], "This Week": [], Older: [] }
-  );
+  const {
+    isLoading,
+    unread,
+    markRead,
+    markAllRead,
+    deleteNotif,
+    grouped,
+    notifs,
+  } = useNotificationList();
 
   return (
     <div className="space-y-4">
@@ -425,47 +229,15 @@ function NotificationList() {
 
 // ── AdminBroadcast (Tier 2) ───────────────────────────────────────────────────
 function AdminBroadcast() {
-  const { user } = useAuth();
-  const [form, setForm] = useState<{
-    userId: string;
-    type: NotificationType;
-    title: string;
-    body: string;
-    link: string;
-  }>({
-    userId: "",
-    type: "info",
-    title: "",
-    body: "",
-    link: "",
-  });
-  const [broadcastForm, setBroadcastForm] = useState<{
-    type: NotificationType;
-    title: string;
-    body: string;
-  }>({
-    type: "info",
-    title: "",
-    body: "",
-  });
-
-  const sendToUser = trpc.notifications.sendToUser.useMutation({
-    onSuccess: () => {
-      toast.success("Notification sent to user.");
-      setForm({ userId: "", type: "info", title: "", body: "", link: "" });
-    },
-    onError: e => toast.error(e.message),
-  });
-
-  const broadcast = trpc.notifications.broadcastToTenant.useMutation({
-    onSuccess: data => {
-      toast.success(`Broadcast sent to ${data.sent} user(s).`);
-      setBroadcastForm({ type: "info", title: "", body: "" });
-    },
-    onError: e => toast.error(e.message),
-  });
-
-  const tenantId = user?.tenantId;
+  const {
+    form,
+    setForm,
+    broadcastForm,
+    setBroadcastForm,
+    sendToUser,
+    broadcast,
+    tenantId,
+  } = useAdminBroadcast();
 
   return (
     <div className="space-y-6">
@@ -652,77 +424,16 @@ function AdminBroadcast() {
 
 // ── TriggerConfig (Tier 4) ────────────────────────────────────────────────────
 function TriggerConfig() {
-  const { user } = useAuth();
-  const tenantId = user?.tenantId;
-  const utils = trpc.useUtils();
-
-  const { data: triggers = [], isLoading } =
-    trpc.notifications.listTriggers.useQuery(
-      { tenantId: tenantId! },
-      { enabled: !!tenantId }
-    );
-
-  const upsert = trpc.notifications.upsertTrigger.useMutation({
-    onSuccess: () => {
-      toast.success("Trigger configuration saved.");
-      utils.notifications.listTriggers.invalidate();
-    },
-    onError: e => toast.error(e.message),
-  });
-
-  const deleteTrigger = trpc.notifications.deleteTrigger.useMutation({
-    onSuccess: () => utils.notifications.listTriggers.invalidate(),
-  });
-
-  // Local state for each event's config
-  const [configs, setConfigs] = useState<Record<string, TriggerConfigState>>(
-    () => {
-      const defaults: Record<string, TriggerConfigState> = {};
-      TRIGGER_EVENTS.forEach(e => {
-        defaults[e.event] = {
-          inAppEnabled: true,
-          n8nEnabled: false,
-          n8nWebhookUrl: "",
-          zapierEnabled: false,
-          mailchimpEnabled: false,
-          slackEnabled: false,
-          slackWebhookUrl: "",
-          emailEnabled: false,
-          emailRecipients: "",
-        };
-      });
-      return defaults;
-    }
-  );
-
-  // Sync from DB when triggers load
-  const [synced, setSynced] = useState(false);
-  if (!synced && triggers.length > 0) {
-    const updated = { ...configs };
-    triggers.forEach(t => {
-      updated[t.event] = {
-        inAppEnabled: t.inAppEnabled ?? true,
-        n8nEnabled: t.n8nEnabled,
-        n8nWebhookUrl: t.n8nWebhookUrl ?? "",
-        zapierEnabled: t.zapierEnabled,
-        mailchimpEnabled: t.mailchimpEnabled,
-        slackEnabled: t.slackEnabled,
-        slackWebhookUrl: t.slackWebhookUrl ?? "",
-        emailEnabled: t.emailEnabled,
-        emailRecipients: t.emailRecipients ?? "",
-      };
-    });
-    setConfigs(updated);
-    setSynced(true);
-  }
-
-  const handleSave = (event: string) => {
-    if (!tenantId) {
-      toast.error("No active tenant.");
-      return;
-    }
-    upsert.mutate({ tenantId, event, ...configs[event] });
-  };
+  const {
+    tenantId,
+    triggers,
+    isLoading,
+    upsert,
+    deleteTrigger,
+    configs,
+    setConfigs,
+    handleSave,
+  } = useTriggerConfig();
 
   if (!tenantId) {
     return (
