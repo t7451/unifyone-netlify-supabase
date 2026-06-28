@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { trpc } from "@/lib/trpc";
+import {
+  useCustomerListQuery,
+  useCustomerOrdersQuery,
+  useUpdateCustomerMutation,
+  useInvalidateCustomerList,
+} from "@/lib/api/useCustomersData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -95,29 +100,29 @@ export default function Customers() {
   const [addrZip, setAddrZip] = useState("");
   const [addrCountry, setAddrCountry] = useState("");
 
-  const utils = trpc.useUtils();
+  const customers = useCustomerListQuery({
+    search: search || undefined,
+    page,
+    limit,
+  });
 
-  const customers = trpc.customers.list.useQuery(
-    { search: search || undefined, page, limit },
-    { staleTime: 30_000 }
-  );
+  const customerOrders = useCustomerOrdersQuery({
+    email: selectedCustomer?.email ?? "",
+    enabled: !!selectedCustomer?.email && showProfile,
+  });
 
-  const customerOrders = trpc.orders.customerOrders.useQuery(
-    { email: selectedCustomer?.email ?? "" },
-    { enabled: !!selectedCustomer?.email && showProfile }
-  );
-
-  const updateCustomer = trpc.orders.updateCustomer.useMutation({
+  const updateCustomer = useUpdateCustomerMutation({
     onSuccess: () => {
       toast.success("Customer updated");
-      utils.customers.list.invalidate();
       setShowEdit(false);
     },
     onError: e => toast.error(e.message),
   });
 
+  const invalidateCustomerList = useInvalidateCustomerList();
+
   useRealtimeTable("customers", undefined, () => {
-    utils.customers.list.invalidate();
+    invalidateCustomerList();
   });
 
   const customerResponse = customers.data as

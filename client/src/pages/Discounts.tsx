@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
+import {
+  useDiscountListQuery,
+  useCreateDiscountMutation,
+  useToggleDiscountMutation,
+  useDeleteDiscountMutation,
+} from "@/lib/api/useDiscountsData";
 import {
   Card,
   CardContent,
@@ -25,8 +30,7 @@ import { Plus, Power, Trash2, Tag, Loader2, AlertTriangle } from "lucide-react";
 import { QueryErrorState } from "@/components/QueryErrorState";
 
 export default function DiscountsPage() {
-  const utils = trpc.useUtils();
-  const list = trpc.discounts.list.useQuery();
+  const list = useDiscountListQuery();
 
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState("");
@@ -35,10 +39,9 @@ export default function DiscountsPage() {
   const [value, setValue] = useState("10");
   const [usageLimit, setUsageLimit] = useState("0");
 
-  const create = trpc.discounts.create.useMutation({
+  const create = useCreateDiscountMutation({
     onSuccess: () => {
       toast.success("Discount created");
-      utils.discounts.list.invalidate();
       setOpen(false);
       setCode("");
       setDescription("");
@@ -49,20 +52,18 @@ export default function DiscountsPage() {
     onError: error => toast.error(error.message || "Something went wrong"),
   });
 
-  const toggle = trpc.discounts.toggleActive.useMutation({
-    onSuccess: (_data, variables) => {
+  const toggle = useToggleDiscountMutation({
+    onSuccess: variables => {
       toast.success(
         variables.isActive ? "Discount activated" : "Discount deactivated"
       );
-      utils.discounts.list.invalidate();
     },
     onError: error => toast.error(error.message || "Something went wrong"),
   });
 
-  const del = trpc.discounts.delete.useMutation({
+  const del = useDeleteDiscountMutation({
     onSuccess: () => {
       toast.success("Discount deleted");
-      utils.discounts.list.invalidate();
     },
     onError: error => toast.error(error.message || "Something went wrong"),
   });
