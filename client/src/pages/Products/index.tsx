@@ -1,8 +1,5 @@
-import { useEffect, useState } from "react";
-import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,8 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 import {
   Plus,
   Search,
@@ -38,546 +33,64 @@ import { QueryErrorState } from "@/components/QueryErrorState";
 import { DashboardPageShell } from "@/components/DashboardPageShell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { trackActivation } from "@/lib/userTracking";
-import { useDebounce } from "@/hooks/useDebounce";
-
-type ProductStatus = "active" | "draft" | "archived";
-
-interface ProductInventory {
-  quantity: number;
-  lowStockThreshold: number;
-}
-
-interface ProductListItem {
-  id: number;
-  name: string;
-  description: string | null;
-  sku: string | null;
-  price: number | string;
-  compareAtPrice: number | string | null;
-  status: ProductStatus;
-  categoryId?: number | null;
-  imageUrl?: string | null;
-  inventory?: ProductInventory | null;
-}
-
-interface CategoryOption {
-  id: number;
-  name: string;
-}
-
-interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-const STATUS_COLORS: Record<ProductStatus, string> = {
-  active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  draft: "bg-slate-500/20 text-slate-400 border-slate-500/30",
-  archived: "bg-red-500/20 text-red-400 border-red-500/30",
-};
-
-const EMPTY_FORM = {
-  name: "",
-  description: "",
-  price: "",
-  compareAtPrice: "",
-  sku: "",
-  barcode: "",
-  status: "draft" as ProductStatus,
-  initialStock: "0",
-  lowStockThreshold: "5",
-  weight: "",
-  categoryId: "none",
-  imageUrl: "",
-};
-
-type ProductForm = typeof EMPTY_FORM;
-
-const isValidImageUrl = (value: string) => {
-  if (!value.trim()) return false;
-
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-};
-
-function ProductFormFields({
-  form,
-  setForm,
-  errors,
-  onTouch,
-}: {
-  form: ProductForm;
-  setForm: (f: ProductForm) => void;
-  errors?: { name?: string; price?: string };
-  onTouch?: (field: string) => void;
-}) {
-  const categories = trpc.products.categories.useQuery();
-  const categoryList = (categories.data ?? []) as CategoryOption[];
-  const [imgBroken, setImgBroken] = useState(false);
-  const showImagePreview = isValidImageUrl(form.imageUrl) && !imgBroken;
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <Label className="text-gray-300 text-sm">Product Name *</Label>
-        <Input
-          value={form.name}
-          onChange={e => setForm({ ...form, name: e.target.value })}
-          onBlur={() => onTouch?.("name")}
-          placeholder="e.g. Premium Widget Pro"
-          className={`bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50 ${errors?.name ? "border-red-500/70" : ""}`}
-        />
-        {errors?.name && (
-          <p className="text-red-400 text-xs mt-1">{errors.name}</p>
-        )}
-      </div>
-      <div>
-        <Label className="text-gray-300 text-sm">Description</Label>
-        <Textarea
-          value={form.description}
-          onChange={e => setForm({ ...form, description: e.target.value })}
-          placeholder="Product description..."
-          rows={3}
-          className="bg-white/5 border-white/10 text-white mt-1 resize-none focus:border-[#00D9FF]/50"
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label className="text-gray-300 text-sm">Price *</Label>
-          <div className="relative mt-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-              $
-            </span>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              value={form.price}
-              onChange={e => setForm({ ...form, price: e.target.value })}
-              onBlur={() => onTouch?.("price")}
-              placeholder="0.00"
-              className={`bg-white/5 border-white/10 text-white pl-7 focus:border-[#00D9FF]/50 ${errors?.price ? "border-red-500/70" : ""}`}
-            />
-          </div>
-          {errors?.price && (
-            <p className="text-red-400 text-xs mt-1">{errors.price}</p>
-          )}
-        </div>
-        <div>
-          <Label className="text-gray-300 text-sm">Compare-at Price</Label>
-          <div className="relative mt-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-              $
-            </span>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              value={form.compareAtPrice}
-              onChange={e =>
-                setForm({ ...form, compareAtPrice: e.target.value })
-              }
-              placeholder="0.00"
-              className="bg-white/5 border-white/10 text-white pl-7 focus:border-[#00D9FF]/50"
-            />
-          </div>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label className="text-gray-300 text-sm">SKU</Label>
-          <Input
-            value={form.sku}
-            onChange={e => setForm({ ...form, sku: e.target.value })}
-            placeholder="SKU-001"
-            className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
-          />
-        </div>
-        <div>
-          <Label className="text-gray-300 text-sm">Barcode</Label>
-          <Input
-            value={form.barcode}
-            onChange={e => setForm({ ...form, barcode: e.target.value })}
-            placeholder="UPC / EAN"
-            className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
-          />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label className="text-gray-300 text-sm">Status</Label>
-          <Select
-            value={form.status}
-            onValueChange={value =>
-              setForm({ ...form, status: value as ProductStatus })
-            }
-          >
-            <SelectTrigger className="bg-white/5 border-white/10 text-white mt-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-[#0F172A] border-white/10">
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="archived">Archived</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="text-gray-300 text-sm">Category</Label>
-          <Select
-            value={form.categoryId}
-            onValueChange={v => setForm({ ...form, categoryId: v })}
-          >
-            <SelectTrigger className="bg-white/5 border-white/10 text-white mt-1">
-              <SelectValue placeholder="None" />
-            </SelectTrigger>
-            <SelectContent className="bg-[#0F172A] border-white/10">
-              <SelectItem value="none">None</SelectItem>
-              {categoryList.map(category => (
-                <SelectItem key={category.id} value={String(category.id)}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="border-t border-white/10 pt-4">
-        <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-3">
-          Inventory
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-gray-300 text-sm">Stock Quantity</Label>
-            <Input
-              type="number"
-              min="0"
-              value={form.initialStock}
-              onChange={e => setForm({ ...form, initialStock: e.target.value })}
-              className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
-            />
-          </div>
-          <div>
-            <Label className="text-gray-300 text-sm">Low Stock Alert</Label>
-            <Input
-              type="number"
-              min="0"
-              value={form.lowStockThreshold}
-              onChange={e =>
-                setForm({ ...form, lowStockThreshold: e.target.value })
-              }
-              className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <Label className="text-gray-300 text-sm">Weight (lbs)</Label>
-        <Input
-          type="number"
-          step="0.01"
-          min="0"
-          value={form.weight}
-          onChange={e => setForm({ ...form, weight: e.target.value })}
-          placeholder="0.00"
-          className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
-        />
-      </div>
-      <div>
-        <Label className="text-gray-300 text-sm">Image URL</Label>
-        <div className="mt-1 flex items-start gap-3">
-          <Input
-            value={form.imageUrl}
-            onChange={e => {
-              setForm({ ...form, imageUrl: e.target.value });
-              setImgBroken(false);
-            }}
-            placeholder="https://example.com/image.jpg"
-            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
-          />
-          {showImagePreview && (
-            <div className="h-12 w-12 overflow-hidden rounded-lg border border-white/10 bg-white/5 shrink-0">
-              <img
-                src={form.imageUrl}
-                alt="Product preview"
-                className="h-full w-full object-cover"
-                onError={() => setImgBroken(true)}
-              />
-            </div>
-          )}
-        </div>
-        {form.imageUrl && !showImagePreview && (
-          <p className="mt-2 text-xs text-gray-500">
-            Enter a valid image URL to preview the thumbnail.
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
+import { ProductFormFields } from "./ProductFormFields";
+import { STATUS_COLORS } from "./Products.constants";
+import { isValidImageUrl } from "./Products.utils";
+import { useProducts } from "./useProducts";
+import type { ProductStatus } from "./Products.types";
 
 export default function Products() {
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ProductStatus | "all">(
-    "all"
-  );
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(25);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editProduct, setEditProduct] = useState<ProductListItem | null>(null);
-  const [deleteProduct, setDeleteProduct] = useState<ProductListItem | null>(
-    null
-  );
-  const [form, setForm] = useState<ProductForm>({ ...EMPTY_FORM });
-  const [editForm, setEditForm] = useState<ProductForm>({ ...EMPTY_FORM });
-  const [createTouched, setCreateTouched] = useState<Record<string, boolean>>(
-    {}
-  );
-  const [editTouched, setEditTouched] = useState<Record<string, boolean>>({});
-  const [bulkAction, setBulkAction] = useState<
-    "active" | "draft" | "archive" | "delete" | null
-  >(null);
-  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
-  const utils = trpc.useUtils();
-  const debouncedSearch = useDebounce(search, 300);
-  const normalizedSearch = debouncedSearch.trim();
-  const hasActiveFilters =
-    normalizedSearch.length > 0 || statusFilter !== "all";
-
-  useEffect(() => {
-    setPage(1);
-  }, [normalizedSearch, statusFilter]);
-
-  const getErrors = (f: ProductForm, touched: Record<string, boolean>) => {
-    const nameTouched = touched.name ?? false;
-    const priceTouched = touched.price ?? false;
-    const priceNum = Number(f.price);
-    return {
-      name:
-        nameTouched && !f.name.trim() ? "Product name is required" : undefined,
-      price:
-        priceTouched && !f.price
-          ? "Price is required"
-          : priceTouched && priceNum <= 0
-            ? "Price must be greater than 0"
-            : undefined,
-    };
-  };
-
-  const products = trpc.products.list.useQuery({
-    search: normalizedSearch || undefined,
-    status: statusFilter === "all" ? undefined : statusFilter,
+  const {
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
     page,
+    setPage,
     limit,
-  });
-
-  const createMutation = trpc.products.create.useMutation({
-    onSuccess: () => {
-      // Funnel: creating a product is a core activation action for new tenants.
-      trackActivation("product_created");
-      toast.success("Product created successfully");
-      setCreateOpen(false);
-      setForm({ ...EMPTY_FORM });
-      setCreateTouched({});
-      utils.products.list.invalidate();
-    },
-    onError: error => toast.error(error.message || "Something went wrong"),
-  });
-
-  const updateMutation = trpc.products.update.useMutation({
-    onSuccess: () => {
-      toast.success("Product updated");
-      setEditProduct(null);
-      setEditTouched({});
-      utils.products.list.invalidate();
-    },
-    onError: error => toast.error(error.message || "Something went wrong"),
-  });
-
-  const deleteMutation = trpc.products.delete.useMutation({
-    onSuccess: () => {
-      toast.success("Product deleted");
-      setDeleteProduct(null);
-      utils.products.list.invalidate();
-    },
-    onError: error => toast.error(error.message || "Something went wrong"),
-  });
-
-  const bulkUpdateStatusMutation = trpc.products.bulkUpdateStatus.useMutation({
-    onSuccess: data => {
-      toast.success(`Updated ${data.updatedCount} product(s)`);
-      setSelectedIds([]);
-      setBulkAction(null);
-      utils.products.list.invalidate();
-    },
-    onError: error => {
-      setBulkAction(null);
-      toast.error(error.message || "Something went wrong");
-    },
-  });
-
-  const bulkArchiveMutation = trpc.products.bulkArchive.useMutation({
-    onSuccess: data => {
-      toast.success(`Archived ${data.updatedCount} product(s)`);
-      setSelectedIds([]);
-      setBulkAction(null);
-      utils.products.list.invalidate();
-    },
-    onError: error => {
-      setBulkAction(null);
-      toast.error(error.message || "Something went wrong");
-    },
-  });
-
-  const bulkDeleteMutation = trpc.products.bulkDelete.useMutation({
-    onSuccess: data => {
-      toast.success(`Deleted ${data.deletedCount} product(s)`);
-      setSelectedIds([]);
-      setBulkAction(null);
-      setBulkDeleteConfirmOpen(false);
-      utils.products.list.invalidate();
-    },
-    onError: error => {
-      setBulkAction(null);
-      toast.error(error.message || "Something went wrong");
-    },
-  });
-
-  const handleCreate = () => {
-    const allTouched = { name: true, price: true };
-    setCreateTouched(allTouched);
-    if (!form.name || !form.price || Number(form.price) <= 0)
-      return toast.error("Name and a valid price are required");
-
-    const parsedCategoryId =
-      form.categoryId && form.categoryId !== "none"
-        ? Number(form.categoryId)
-        : undefined;
-
-    createMutation.mutate({
-      name: form.name,
-      description: form.description || undefined,
-      price: Number(form.price),
-      compareAtPrice: form.compareAtPrice
-        ? Number(form.compareAtPrice)
-        : undefined,
-      sku: form.sku || undefined,
-      status: form.status,
-      initialStock: Number(form.initialStock),
-      lowStockThreshold: Number(form.lowStockThreshold),
-      categoryId: Number.isFinite(parsedCategoryId)
-        ? parsedCategoryId
-        : undefined,
-      imageUrl: form.imageUrl || undefined,
-    });
-  };
-
-  const handleEdit = (product: ProductListItem) => {
-    setEditProduct(product);
-    setEditTouched({});
-    setEditForm({
-      name: product.name ?? "",
-      description: product.description ?? "",
-      price: String(product.price ?? ""),
-      compareAtPrice: String(product.compareAtPrice ?? ""),
-      sku: product.sku ?? "",
-      barcode: "",
-      status: product.status ?? "draft",
-      initialStock: String(product.inventory?.quantity ?? 0),
-      lowStockThreshold: String(product.inventory?.lowStockThreshold ?? 5),
-      weight: "",
-      categoryId: String(product.categoryId ?? "none"),
-      imageUrl: product.imageUrl ?? "",
-    });
-  };
-
-  const handleUpdate = () => {
-    const allTouched = { name: true, price: true };
-    setEditTouched(allTouched);
-    if (!editProduct) return;
-    if (!editForm.name || !editForm.price || Number(editForm.price) <= 0)
-      return toast.error("Name and a valid price are required");
-
-    const parsedCategoryId =
-      editForm.categoryId && editForm.categoryId !== "none"
-        ? Number(editForm.categoryId)
-        : undefined;
-
-    updateMutation.mutate({
-      id: editProduct.id,
-      name: editForm.name,
-      description: editForm.description || undefined,
-      price: Number(editForm.price),
-      compareAtPrice: editForm.compareAtPrice
-        ? Number(editForm.compareAtPrice)
-        : undefined,
-      sku: editForm.sku || undefined,
-      status: editForm.status,
-      categoryId: Number.isFinite(parsedCategoryId)
-        ? parsedCategoryId
-        : undefined,
-      imageUrl: editForm.imageUrl || undefined,
-    });
-  };
-
-  const productResponse = products.data as
-    | PaginatedResponse<ProductListItem>
-    | undefined;
-  const productList = productResponse?.items ?? [];
-  const totalProducts = productResponse?.total ?? 0;
-  const totalPages = productResponse?.totalPages ?? 1;
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(1);
-    }
-  }, [page, totalPages]);
-
-  const lowStockCount = productList.filter(
-    product =>
-      product.inventory &&
-      product.inventory.quantity <= product.inventory.lowStockThreshold
-  ).length;
-  const activeProductCount = productList.filter(
-    product => product.status === "active"
-  ).length;
-  const draftProductCount = productList.filter(
-    product => product.status === "draft"
-  ).length;
-  const allVisibleSelected =
-    productList.length > 0 &&
-    productList.every(p => selectedIds.includes(p.id));
-  const isBulkPending =
-    bulkUpdateStatusMutation.isPending ||
-    bulkArchiveMutation.isPending ||
-    bulkDeleteMutation.isPending;
-
-  const toggleSelection = (id: number) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
-    );
-  };
-
-  const toggleSelectAllVisible = () => {
-    if (allVisibleSelected) {
-      setSelectedIds(prev =>
-        prev.filter(id => !productList.some(p => p.id === id))
-      );
-      return;
-    }
-    setSelectedIds(prev =>
-      Array.from(new Set([...prev, ...productList.map(p => p.id)]))
-    );
-  };
+    setLimit,
+    hasActiveFilters,
+    selectedIds,
+    bulkAction,
+    setBulkAction,
+    bulkDeleteConfirmOpen,
+    setBulkDeleteConfirmOpen,
+    allVisibleSelected,
+    isBulkPending,
+    toggleSelection,
+    toggleSelectAllVisible,
+    createOpen,
+    setCreateOpen,
+    editProduct,
+    setEditProduct,
+    deleteProduct,
+    setDeleteProduct,
+    form,
+    setForm,
+    editForm,
+    setEditForm,
+    createTouched,
+    setCreateTouched,
+    editTouched,
+    setEditTouched,
+    getErrors,
+    products,
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    bulkUpdateStatusMutation,
+    bulkArchiveMutation,
+    bulkDeleteMutation,
+    handleCreate,
+    handleEdit,
+    handleUpdate,
+    productList,
+    totalProducts,
+    totalPages,
+    lowStockCount,
+    activeProductCount,
+    draftProductCount,
+  } = useProducts();
 
   return (
     <DashboardPageShell
