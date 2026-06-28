@@ -3,6 +3,7 @@ import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../../server/routers";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -22,10 +23,6 @@ type Destination = RouterOutputs["analytics"]["outboundDestinations"][number];
 type GeoRow = RouterOutputs["analytics"]["geoBreakdown"][number];
 
 const WINDOWS = [7, 30, 90] as const;
-
-function formatNumber(value: number) {
-  return Number(value ?? 0).toLocaleString();
-}
 
 /** Turn raw source keys (ai:chatgpt, utm:newsletter, referral:google.com). */
 function formatSource(source: string): string {

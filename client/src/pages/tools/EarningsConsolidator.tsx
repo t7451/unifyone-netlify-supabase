@@ -4,6 +4,7 @@ import PageHead from "@/components/PageHead";
 import ToolLayout from "@/components/ToolLayout";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trackToolUsage } from "@/lib/userTracking";
+import { formatUsd2 } from "@/lib/format";
 
 const CANONICAL = `${SITE_URL}/tools/earnings-consolidator`;
 
@@ -238,13 +239,7 @@ export default function EarningsConsolidator() {
     }
   }
 
-  function fmt(n: number) {
-    return n.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    });
-  }
+  const fmt = formatUsd2;
 
   const inputClass =
     "h-9 rounded-md border bg-background px-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-primary/50";

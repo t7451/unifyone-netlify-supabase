@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import PageHead from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trackToolUsage } from "@/lib/userTracking";
+import { formatUsd0, formatUsd2 } from "@/lib/format";
 
 const CANONICAL = `${SITE_URL}/tools/gig-hourly-rate`;
 
@@ -225,21 +226,9 @@ export default function GigHourlyRate() {
     }
   }
 
-  function fmt(n: number) {
-    return n.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 2,
-    });
-  }
+  const fmt = formatUsd2;
 
-  function fmtInt(n: number) {
-    return n.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    });
-  }
+  const fmtInt = formatUsd0;
 
   const canCalculate = results.length > 0;
 
