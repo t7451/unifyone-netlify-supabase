@@ -1,23 +1,17 @@
 /**
- * server/routers/connectedAccounts.ts
+ * server/routers/connectedAccounts/index.ts
  *
- * tRPC router for managing a tenant's connected social accounts.
+ * Transport layer for managing a tenant's connected social accounts.
  * Admin-gated (connect/disconnect are sensitive). Tokens are never returned —
  * `list` yields redacted accounts only.
  *
- * The connect flow (start/callback) is added in the connect-flow PR; this
- * router currently exposes read + disconnect over the encrypted vault.
+ * Use-case logic lives in `connectedAccounts.service.ts`; data access in
+ * `connectedAccounts.repo.ts`.
  */
 import { z } from "zod";
-import { adminProcedure, router } from "../_core/trpc";
+import { adminProcedure, router } from "../../_core/trpc";
 import { TRPCError } from "@trpc/server";
-import {
-  disconnectAccount,
-  listConnectedAccounts,
-  storeConnection,
-} from "../lib/socialAccountStore";
-import { getProvider } from "../lib/socialProviders";
-import { registerBuiltinSocialProviders } from "../lib/providers";
+import * as service from "./connectedAccounts.service";
 
 function requireTenant(tenantId: number | null | undefined): number {
   if (!tenantId) {
@@ -30,7 +24,7 @@ export const connectedAccountsRouter = router({
   /** List the tenant's social accounts (redacted — no tokens). */
   list: adminProcedure.query(async ({ ctx }) => {
     const tenantId = requireTenant(ctx.user.tenantId);
-    return listConnectedAccounts(tenantId);
+    return service.list(tenantId);
   }),
 
   /** Disconnect an account: wipe its stored tokens and mark disconnected. */
@@ -38,7 +32,7 @@ export const connectedAccountsRouter = router({
     .input(z.object({ accountId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return disconnectAccount(tenantId, input.accountId);
+      return service.disconnect(tenantId, input.accountId);
     }),
 
   /**
@@ -57,32 +51,6 @@ export const connectedAccountsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      registerBuiltinSocialProviders();
-
-      const provider = getProvider(input.platform);
-      if (!provider?.connectWithCredentials) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Credential connect is not supported for ${input.platform}`,
-        });
-      }
-
-      let tokens;
-      try {
-        tokens = await provider.connectWithCredentials({
-          identifier: input.identifier,
-          secret: input.appPassword,
-          instanceUrl: input.instanceUrl,
-        });
-      } catch (e: unknown) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Could not connect to ${input.platform}: ${
-            e instanceof Error ? e.message : String(e)
-          }`,
-        });
-      }
-
-      return storeConnection(tenantId, input.platform, tokens);
+      return service.connect(tenantId, input);
     }),
 });
