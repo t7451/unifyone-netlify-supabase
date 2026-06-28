@@ -1,3 +1,12 @@
+/**
+ * UnifyOne — Cross-cutting constants (shared client + server)
+ *
+ * Framework-free values used on both sides of the wire: auth cookie names,
+ * token/cookie lifetimes, the HTTP client timeout, and the canonical
+ * auth/database error messages. Part of the shared kernel — see
+ * `docs/ARCHITECTURE.md`.
+ */
+
 export const COOKIE_NAME = "app_session_id";
 export const REFRESH_COOKIE_NAME = "app_refresh_id";
 export const ONE_YEAR_MS = 1000 * 60 * 60 * 24 * 365;
