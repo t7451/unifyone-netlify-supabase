@@ -1,3 +1,15 @@
+/**
+ * UnifyOne — Commerce plan catalog (shared client + server)
+ *
+ * The Starter/Pro/Scale subscription tiers shown on the marketing /pricing page
+ * and used server-side for plan limits and Stripe product naming, plus the
+ * label/formatting helpers that render them.
+ *
+ * NOTE: This is intentionally separate from `shared/gigPricing.ts` (the
+ * gig-worker plans). Do NOT merge the two catalogs. Part of the shared kernel —
+ * see `docs/ARCHITECTURE.md`.
+ */
+
 export type PlanSlug = "starter" | "pro" | "scale";
 export type BillingCycle = "monthly" | "yearly";
 
