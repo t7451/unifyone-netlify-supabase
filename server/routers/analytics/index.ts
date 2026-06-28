@@ -1,38 +1,12 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
-  getAcquisitionSources,
-  getAnalyticsSummary,
-  getBehaviorSummary,
-  getDashboardOverview,
-  getFunnelDropoff,
-  getGeoBreakdown,
-  getOutboundDestinations,
-  getProductEngagement,
-  getRevenueByDay,
-  getTopProducts,
-  getTopProductsSummary,
-  getSurveyResults,
-  getTopSearches,
-  getTopViewedProducts,
-  getUnmetDemand,
-  getViewedTogether,
-  getWebhookEvents,
-} from "../db";
-import { fetchRelatedQueries } from "../lib/googleTrends";
-import {
   protectedProcedure,
   rateLimitedProcedure,
   router,
-} from "../_core/trpc";
-import { llmRateLimiter } from "../_core/rateLimiter";
-import { invokeLLM } from "../_core/llm";
-import {
-  buildWhyPrompt,
-  extractSummaryText,
-  hasInsightData,
-  WHY_SYSTEM_PROMPT,
-} from "../lib/whySummary";
+} from "../../_core/trpc";
+import { llmRateLimiter } from "../../_core/rateLimiter";
+import { analyticsService } from "./analytics.service";
 
 const requireTenant = (tenantId: number | null | undefined) => {
   if (!tenantId)
@@ -50,48 +24,40 @@ export const analyticsRouter = router({
     .input(z.object({ days: daysInput.default(30) }).optional())
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      const summary = await getAnalyticsSummary(tenantId, input?.days ?? 30);
-      return (
-        summary ?? {
-          totalRevenue: 0,
-          orderCount: 0,
-          customerCount: 0,
-          productCount: 0,
-        }
-      );
+      return analyticsService.summary(tenantId, input?.days ?? 30);
     }),
 
   dashboardOverview: protectedProcedure.query(async ({ ctx }) => {
     const tenantId = requireTenant(ctx.user.tenantId);
-    return getDashboardOverview(tenantId);
+    return analyticsService.dashboardOverview(tenantId);
   }),
 
   revenueByDay: protectedProcedure
     .input(z.object({ days: daysInput.default(30) }).optional())
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getRevenueByDay(tenantId, input?.days ?? 30);
+      return analyticsService.revenueByDay(tenantId, input?.days ?? 30);
     }),
 
   topProducts: protectedProcedure
     .input(z.object({ limit: limitInput.default(5) }).optional())
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getTopProducts(tenantId, input?.limit ?? 5);
+      return analyticsService.topProducts(tenantId, input?.limit ?? 5);
     }),
 
   topProductsSummary: protectedProcedure
     .input(z.object({ limit: limitInput.default(5) }).optional())
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getTopProductsSummary(tenantId, input?.limit ?? 5);
+      return analyticsService.topProductsSummary(tenantId, input?.limit ?? 5);
     }),
 
   webhookEvents: protectedProcedure
     .input(z.object({ limit: limitInput.default(20) }).optional())
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getWebhookEvents(tenantId, input?.limit ?? 20);
+      return analyticsService.webhookEvents(tenantId, input?.limit ?? 20);
     }),
 
   // ── Customer behavior (first-party tracking) ──────────────────────────────
@@ -101,7 +67,7 @@ export const analyticsRouter = router({
     .input(z.object({ days: daysInput.default(30) }).optional())
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getBehaviorSummary(tenantId, input?.days ?? 30);
+      return analyticsService.behaviorSummary(tenantId, input?.days ?? 30);
     }),
 
   /** Products ranked by views (demand intent), with add-to-cart conversion. */
@@ -113,7 +79,7 @@ export const analyticsRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getTopViewedProducts(
+      return analyticsService.topViewedProducts(
         tenantId,
         input?.days ?? 30,
         input?.limit ?? 10
@@ -129,7 +95,11 @@ export const analyticsRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getTopSearches(tenantId, input?.days ?? 30, input?.limit ?? 20);
+      return analyticsService.topSearches(
+        tenantId,
+        input?.days ?? 30,
+        input?.limit ?? 20
+      );
     }),
 
   // ── WHERE: acquisition, exits, geo ────────────────────────────────────────
@@ -143,7 +113,7 @@ export const analyticsRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getAcquisitionSources(
+      return analyticsService.acquisitionSources(
         tenantId,
         input?.days ?? 30,
         input?.limit ?? 12
@@ -159,7 +129,7 @@ export const analyticsRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getOutboundDestinations(
+      return analyticsService.outboundDestinations(
         tenantId,
         input?.days ?? 30,
         input?.limit ?? 12
@@ -175,7 +145,11 @@ export const analyticsRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getGeoBreakdown(tenantId, input?.days ?? 30, input?.limit ?? 12);
+      return analyticsService.geoBreakdown(
+        tenantId,
+        input?.days ?? 30,
+        input?.limit ?? 12
+      );
     }),
 
   // ── WHAT (depth) + WHY (funnel) ───────────────────────────────────────────
@@ -189,7 +163,7 @@ export const analyticsRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getProductEngagement(
+      return analyticsService.productEngagement(
         tenantId,
         input?.days ?? 30,
         input?.limit ?? 10
@@ -201,7 +175,7 @@ export const analyticsRouter = router({
     .input(z.object({ days: daysInput.default(30) }).optional())
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getFunnelDropoff(tenantId, input?.days ?? 30);
+      return analyticsService.funnelDropoff(tenantId, input?.days ?? 30);
     }),
 
   // ── WHY: LLM synthesis ────────────────────────────────────────────────────
@@ -216,61 +190,7 @@ export const analyticsRouter = router({
     .input(z.object({ days: daysInput.default(30) }).optional())
     .mutation(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      const days = input?.days ?? 30;
-
-      const [behavior, funnel, topSearches, topViewed, surveys] =
-        await Promise.all([
-          getBehaviorSummary(tenantId, days),
-          getFunnelDropoff(tenantId, days),
-          getTopSearches(tenantId, days, 10),
-          getTopViewedProducts(tenantId, days, 8),
-          getSurveyResults(tenantId, days),
-        ]);
-
-      const data = {
-        days,
-        behavior,
-        funnel,
-        topSearches: topSearches.map(s => ({
-          query: s.query,
-          searches: Number(s.searches ?? 0),
-          avgResults: Number(s.avgResults ?? 0),
-        })),
-        topViewed: topViewed.map(p => ({
-          productName: p.productName,
-          views: Number(p.views ?? 0),
-          viewToCartRate: Number(p.viewToCartRate ?? 0),
-        })),
-        surveys: {
-          total: surveys.total,
-          topAnswers: surveys.topAnswers,
-        },
-      };
-
-      if (!hasInsightData(data)) {
-        return {
-          summary:
-            "Not enough behavioral data yet to draw conclusions. Once visitors accept cookies and start browsing, searching, and answering surveys, a grounded summary will appear here.",
-          generatedAt: new Date().toISOString(),
-          days,
-          model: null as string | null,
-        };
-      }
-
-      const result = await invokeLLM({
-        messages: [
-          { role: "system", content: WHY_SYSTEM_PROMPT },
-          { role: "user", content: buildWhyPrompt(data) },
-        ],
-        maxTokens: 700,
-      });
-
-      return {
-        summary: extractSummaryText(result),
-        generatedAt: new Date().toISOString(),
-        days,
-        model: result.model ?? null,
-      };
+      return analyticsService.whySummary(tenantId, input?.days ?? 30);
     }),
 
   // ── Phase 3: market intelligence ──────────────────────────────────────────
@@ -287,7 +207,11 @@ export const analyticsRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getUnmetDemand(tenantId, input?.days ?? 30, input?.limit ?? 20);
+      return analyticsService.unmetDemand(
+        tenantId,
+        input?.days ?? 30,
+        input?.limit ?? 20
+      );
     }),
 
   /** Products frequently viewed together by the same visitor (market basket). */
@@ -299,7 +223,11 @@ export const analyticsRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenant(ctx.user.tenantId);
-      return getViewedTogether(tenantId, input?.days ?? 30, input?.limit ?? 10);
+      return analyticsService.viewedTogether(
+        tenantId,
+        input?.days ?? 30,
+        input?.limit ?? 10
+      );
     }),
 
   /**
@@ -321,15 +249,6 @@ export const analyticsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       requireTenant(ctx.user.tenantId);
-      const data = await fetchRelatedQueries(input.term, input.geo ?? "");
-      if (!data) {
-        return { available: false as const, term: input.term };
-      }
-      return {
-        available: true as const,
-        term: input.term,
-        top: data.top.slice(0, 12),
-        rising: data.rising.slice(0, 12),
-      };
+      return analyticsService.trendingQueries(input.term, input.geo ?? "");
     }),
 });
