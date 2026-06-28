@@ -1,7 +1,3 @@
-import { useEffect, useMemo, useState } from "react";
-import { useLocation, useRoute } from "wouter";
-import { trpc } from "@/lib/trpc";
-import { useRealtimeOrders } from "@/lib/supabaseRealtime";
 import { RealtimeStatus } from "@/components/RealtimeStatus";
 import { PaginationControls } from "@/components/PaginationControls";
 import { QueryErrorState } from "@/components/QueryErrorState";
@@ -28,11 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { downloadCsv } from "@/lib/downloadCsv";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useIsMobile } from "@/hooks/useMobile";
 import {
   Search,
   ShoppingCart,
@@ -53,16 +45,17 @@ import {
   Trash2,
   AlertTriangle,
 } from "lucide-react";
-
-const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-  confirmed: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  processing: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-  shipped: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
-  delivered: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  cancelled: "bg-red-500/20 text-red-400 border-red-500/30",
-  refunded: "bg-gray-500/20 text-gray-400 border-gray-500/30",
-};
+import {
+  ORDER_STATUSES,
+  ORDER_FILTER_STATUSES,
+  PAYMENT_STATUSES,
+  PAYMENT_FILTER_STATUSES,
+  ORDER_TIMELINE,
+  STATUS_COLORS,
+  PAYMENT_COLORS,
+} from "./Orders.constants";
+import type { OrderStatus, OrderPaymentStatus } from "./Orders.types";
+import { useOrders } from "./useOrders";
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
   pending: <Clock className="w-3.5 h-3.5" />,
@@ -74,443 +67,83 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
   refunded: <RefreshCw className="w-3.5 h-3.5" />,
 };
 
-const PAYMENT_COLORS: Record<string, string> = {
-  pending: "bg-amber-500/20 text-amber-400",
-  paid: "bg-emerald-500/20 text-emerald-400",
-  failed: "bg-red-500/20 text-red-400",
-  refunded: "bg-gray-500/20 text-gray-400",
-  partial: "bg-blue-500/20 text-blue-400",
-};
-
-const ORDER_STATUSES = [
-  "pending",
-  "confirmed",
-  "processing",
-  "shipped",
-  "delivered",
-  "cancelled",
-  "refunded",
-] as const;
-const ORDER_FILTER_STATUSES = [
-  "pending",
-  "confirmed",
-  "processing",
-  "shipped",
-  "delivered",
-  "cancelled",
-] as const;
-const PAYMENT_STATUSES = [
-  "pending",
-  "paid",
-  "failed",
-  "refunded",
-  "partial",
-] as const;
-const PAYMENT_FILTER_STATUSES = [
-  "paid",
-  "pending",
-  "failed",
-  "refunded",
-] as const;
-const ORDER_TIMELINE = [
-  "pending",
-  "confirmed",
-  "processing",
-  "shipped",
-  "delivered",
-] as const;
-
-type OrderStatus = (typeof ORDER_STATUSES)[number];
-type OrderPaymentStatus = (typeof PAYMENT_STATUSES)[number];
-
-interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-interface OrderSummary {
-  id: number;
-  orderNumber: string;
-  customerName: string | null;
-  customerEmail: string | null;
-  total: number | string;
-  status: OrderStatus;
-  paymentStatus: OrderPaymentStatus;
-  createdAt: Date | string;
-  itemCount?: number | null;
-}
-
-interface OrderDetailItem {
-  productName: string;
-  productSku?: string | null;
-  quantity: number;
-  unitPrice: number | string;
-}
-
-interface OrderDetailData extends OrderSummary {
-  subtotal?: number | string | null;
-  taxAmount?: number | string | null;
-  shippingAmount?: number | string | null;
-  notes?: string | null;
-  items?: OrderDetailItem[];
-}
-
-interface OrderItem {
-  productName: string;
-  productSku?: string;
-  quantity: number;
-  unitPrice: number;
-}
-
-const emptyItem = (): OrderItem => ({
-  productName: "",
-  productSku: "",
-  quantity: 1,
-  unitPrice: 0,
-});
-
 export default function Orders() {
-  const [, navigate] = useLocation();
-  const [isOrderDetailRoute, orderDetailParams] = useRoute("/orders/:id");
-  const isMobile = useIsMobile();
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<
-    OrderPaymentStatus | "all"
-  >("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(25);
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<OrderSummary | null>(null);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [showDetail, setShowDetail] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
-  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
-  const utils = trpc.useUtils();
-  const debouncedSearch = useDebounce(search, 300);
-  const normalizedSearch = debouncedSearch.trim();
-  const tenantList = trpc.tenant.list.useQuery();
-  const tenantId = tenantList.data?.[0]?.id;
-
-  const hasActiveFilters =
-    normalizedSearch.length > 0 ||
-    statusFilter !== "all" ||
-    paymentStatusFilter !== "all" ||
-    Boolean(dateFrom) ||
-    Boolean(dateTo);
-  const activeFilterCount = [
-    normalizedSearch,
-    statusFilter !== "all" ? statusFilter : "",
-    paymentStatusFilter !== "all" ? paymentStatusFilter : "",
+  const {
+    navigate,
+    isOrderDetailRoute,
+    isMobile,
+    search,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    paymentStatusFilter,
+    setPaymentStatusFilter,
     dateFrom,
+    setDateFrom,
     dateTo,
-  ].filter(Boolean).length;
-  const queryInput = useMemo(
-    () => ({
-      search: normalizedSearch || undefined,
-      status: statusFilter === "all" ? undefined : statusFilter,
-      paymentStatus:
-        paymentStatusFilter === "all" ? undefined : paymentStatusFilter,
-      dateFrom: dateFrom || undefined,
-      dateTo: dateTo || undefined,
-      page,
-      limit,
-    }),
-    [
-      normalizedSearch,
-      statusFilter,
-      paymentStatusFilter,
-      dateFrom,
-      dateTo,
-      page,
-      limit,
-    ]
-  );
-
-  useEffect(() => {
-    setPage(1);
-  }, [normalizedSearch, statusFilter, paymentStatusFilter, dateFrom, dateTo]);
-
-  useEffect(() => {
-    setMobileFiltersOpen(false);
-  }, [isMobile]);
-
-  // Supabase Realtime: auto-refresh orders list on any change
-  useRealtimeOrders(tenantId, () => {
-    utils.orders.list.invalidate();
-  });
-
-  // Create form state
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [items, setItems] = useState<OrderItem[]>([emptyItem()]);
-  const [shippingAmount, setShippingAmount] = useState(0);
-  const [taxAmount, setTaxAmount] = useState(0);
-  const [notes, setNotes] = useState("");
-  const [itemsTouched, setItemsTouched] = useState<boolean[]>([]);
-  // Payment provider reference — required so every order is backed by a real
-  // provider object (Stripe ids are verified live against the Stripe API).
-  const [paymentProvider, setPaymentProvider] = useState<
-    | "stripe_payment_intent"
-    | "stripe_checkout_session"
-    | "paypal"
-    | "square"
-    | "shopify"
-  >("stripe_payment_intent");
-  const [paymentRefId, setPaymentRefId] = useState("");
-  const [squareOrderRefId, setSquareOrderRefId] = useState("");
-
-  const orders = trpc.orders.list.useQuery(queryInput);
-  const orderResponse = orders.data as
-    | PaginatedResponse<OrderSummary>
-    | undefined;
-  const orderList = orderResponse?.items ?? [];
-  const totalOrders = orderResponse?.total ?? 0;
-  const totalPages = orderResponse?.totalPages ?? 1;
-  const allVisibleSelected =
-    orderList.length > 0 &&
-    orderList.every(order => selectedIds.includes(order.id));
-  const someVisibleSelected =
-    orderList.some(order => selectedIds.includes(order.id)) &&
-    !allVisibleSelected;
-  const visibleRevenue = orderList.reduce(
-    (total, order) => total + Number(order.total ?? 0),
-    0
-  );
-  const paidVisibleCount = orderList.filter(
-    order => order.paymentStatus === "paid"
-  ).length;
-  const openFulfillmentCount = orderList.filter(
-    order =>
-      !["delivered", "cancelled", "refunded"].includes(String(order.status))
-  ).length;
-
-  const routeOrderId = isOrderDetailRoute ? Number(orderDetailParams?.id) : 0;
-  const selectedOrderId: number =
-    selectedOrder?.id ??
-    (Number.isInteger(routeOrderId) && routeOrderId > 0 ? routeOrderId : 0);
-  const detailDialogOpen = showDetail || selectedOrderId > 0;
-  const orderDetail = trpc.orders.get.useQuery(
-    { id: selectedOrderId },
-    { enabled: selectedOrderId > 0 && detailDialogOpen }
-  );
-  const orderData = orderDetail.data as OrderDetailData | undefined;
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(1);
-    }
-  }, [page, totalPages]);
-
-  const updateStatus = trpc.orders.updateStatus.useMutation({
-    onMutate: async ({ id, status, paymentStatus }) => {
-      // Cancel any in-flight refetch so it doesn't overwrite our optimistic update
-      await utils.orders.list.cancel(queryInput);
-      const previous = utils.orders.list.getData(queryInput);
-      // Optimistically apply the new status immediately
-      utils.orders.list.setData(queryInput, prev =>
-        prev
-          ? {
-              ...prev,
-              items: prev.items.map(order =>
-                order.id === id
-                  ? {
-                      ...order,
-                      status,
-                      paymentStatus: paymentStatus ?? order.paymentStatus,
-                    }
-                  : order
-              ),
-            }
-          : prev
-      );
-      return { previous, queryInput };
-    },
-    onError: (_err, _vars, ctx) => {
-      // Roll back on failure
-      if (ctx?.previous !== undefined) {
-        utils.orders.list.setData(ctx.queryInput, ctx.previous);
-      }
-      toast.error("Failed to update order status");
-    },
-    onSuccess: () => {
-      toast.success("Order status updated");
-      if (showDetail) utils.orders.get.invalidate({ id: selectedOrder?.id });
-    },
-    onSettled: (_data, _err, _vars, ctx) => {
-      // Always revalidate to stay in sync with the server
-      if (ctx) utils.orders.list.invalidate(ctx.queryInput);
-    },
-  });
-
-  const createOrder = trpc.orders.create.useMutation({
-    onSuccess: () => {
-      toast.success("Order created successfully");
-      utils.orders.list.invalidate();
-      setShowCreate(false);
-      resetCreateForm();
-    },
-    onError: error => toast.error(error.message || "Something went wrong"),
-  });
-
-  const bulkDeleteOrders = trpc.orders.bulkDelete.useMutation({
-    onSuccess: data => {
-      toast.success(`Deleted ${data.deletedCount} order(s)`);
-      setSelectedIds([]);
-      setBulkDeleteConfirmOpen(false);
-      utils.orders.list.invalidate();
-      if (selectedOrder && selectedIds.includes(selectedOrder.id)) {
-        setSelectedOrder(null);
-        setShowDetail(false);
-      }
-    },
-    onError: error => toast.error(error.message || "Something went wrong"),
-  });
-
-  const resetCreateForm = () => {
-    setCustomerEmail("");
-    setCustomerName("");
-    setItems([emptyItem()]);
-    setShippingAmount(0);
-    setTaxAmount(0);
-    setNotes("");
-    setItemsTouched([]);
-    setPaymentProvider("stripe_payment_intent");
-    setPaymentRefId("");
-    setSquareOrderRefId("");
-  };
-
-  const buildPaymentInput = () => {
-    const id = paymentRefId.trim();
-    if (!id) return null;
-    switch (paymentProvider) {
-      case "stripe_payment_intent":
-        return {
-          provider: "stripe_payment_intent" as const,
-          paymentIntentId: id,
-        };
-      case "stripe_checkout_session":
-        return { provider: "stripe_checkout_session" as const, sessionId: id };
-      case "paypal":
-        return { provider: "paypal" as const, orderId: id };
-      case "square":
-        return {
-          provider: "square" as const,
-          paymentId: id,
-          orderId: squareOrderRefId.trim() || undefined,
-        };
-      case "shopify":
-        return { provider: "shopify" as const, orderId: id };
-    }
-  };
-
-  const addItem = () => setItems(prev => [...prev, emptyItem()]);
-  const removeItem = (i: number) =>
-    setItems(prev => prev.filter((_, idx) => idx !== i));
-  const updateItem = (
-    i: number,
-    field: keyof OrderItem,
-    value: string | number
-  ) => {
-    setItems(prev =>
-      prev.map((item, idx) => (idx === i ? { ...item, [field]: value } : item))
-    );
-  };
-
-  const subtotal = items.reduce(
-    (sum, item) => sum + item.quantity * item.unitPrice,
-    0
-  );
-  const orderTotal = subtotal + shippingAmount + taxAmount;
-
-  const handleCreate = () => {
-    if (items.some(i => !i.productName || i.quantity < 1)) {
-      // Mark all items as touched so validation errors appear immediately
-      setItemsTouched(Array<boolean>(items.length).fill(true));
-      toast.error("All items need a name and quantity ≥ 1");
-      return;
-    }
-    const payment = buildPaymentInput();
-    if (!payment) {
-      toast.error(
-        "Paste a payment provider id (Stripe ids are verified live)."
-      );
-      return;
-    }
-    createOrder.mutate({
-      customerEmail: customerEmail || undefined,
-      customerName: customerName || undefined,
-      items: items.map(i => ({
-        productName: i.productName,
-        productSku: i.productSku || undefined,
-        quantity: i.quantity,
-        unitPrice: i.unitPrice,
-      })),
-      shippingAmount,
-      taxAmount,
-      notes: notes || undefined,
-      payment,
-    });
-  };
-
-  const toggleSelection = (id: number) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(value => value !== id) : [...prev, id]
-    );
-  };
-
-  const toggleSelectAllVisible = () => {
-    if (allVisibleSelected) {
-      setSelectedIds(prev =>
-        prev.filter(id => !orderList.some(order => order.id === id))
-      );
-      return;
-    }
-
-    setSelectedIds(prev =>
-      Array.from(new Set([...prev, ...orderList.map(order => order.id)]))
-    );
-  };
-
-  const openDetail = (order: OrderSummary) => {
-    setSelectedOrder(order);
-    setShowDetail(true);
-    navigate(`/orders/${order.id}`);
-  };
-
-  const exportToCSV = () => {
-    if (!orderList.length) {
-      toast.error("No orders to export");
-      return;
-    }
-
-    downloadCsv(
-      `orders-${new Date().toISOString().slice(0, 10)}.csv`,
-      [
-        "Order ID",
-        "Customer Name",
-        "Customer Email",
-        "Total",
-        "Status",
-        "Payment Status",
-        "Created Date",
-      ],
-      orderList.map(order => [
-        order.orderNumber || order.id,
-        order.customerName ?? "Guest",
-        order.customerEmail ?? "",
-        Number(order.total).toFixed(2),
-        order.status,
-        order.paymentStatus,
-        new Date(order.createdAt).toLocaleString(),
-      ])
-    );
-  };
+    setDateTo,
+    page,
+    setPage,
+    limit,
+    setLimit,
+    mobileFiltersOpen,
+    setMobileFiltersOpen,
+    hasActiveFilters,
+    activeFilterCount,
+    selectedOrder,
+    setSelectedOrder,
+    selectedIds,
+    setShowDetail,
+    showCreate,
+    setShowCreate,
+    bulkDeleteConfirmOpen,
+    setBulkDeleteConfirmOpen,
+    orders,
+    orderList,
+    totalOrders,
+    totalPages,
+    allVisibleSelected,
+    someVisibleSelected,
+    visibleRevenue,
+    paidVisibleCount,
+    openFulfillmentCount,
+    detailDialogOpen,
+    orderDetail,
+    orderData,
+    updateStatus,
+    createOrder,
+    bulkDeleteOrders,
+    customerEmail,
+    setCustomerEmail,
+    customerName,
+    setCustomerName,
+    items,
+    shippingAmount,
+    setShippingAmount,
+    taxAmount,
+    setTaxAmount,
+    notes,
+    setNotes,
+    itemsTouched,
+    setItemsTouched,
+    paymentProvider,
+    setPaymentProvider,
+    paymentRefId,
+    setPaymentRefId,
+    squareOrderRefId,
+    setSquareOrderRefId,
+    subtotal,
+    orderTotal,
+    resetCreateForm,
+    addItem,
+    removeItem,
+    updateItem,
+    handleCreate,
+    toggleSelection,
+    toggleSelectAllVisible,
+    openDetail,
+    exportToCSV,
+  } = useOrders();
 
   return (
     <DashboardPageShell
