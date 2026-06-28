@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { trpc } from "@/lib/trpc";
+import {
+  useIntegrationStatusQuery,
+  useShopifyConnectMutation,
+  useShopifySetCheckoutUrlMutation,
+  useN8nUpdateMutation,
+  useN8nTriggerMutation,
+} from "@/lib/api/useIntegrationsData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,9 +32,8 @@ export default function Integrations() {
   const [shopifyToken, setShopifyToken] = useState("");
   const [shopifyCheckoutUrlInput, setShopifyCheckoutUrlInput] = useState("");
   const [n8nUrl, setN8nUrl] = useState("");
-  const utils = trpc.useUtils();
 
-  const intStatus = trpc.integrations.status.useQuery();
+  const intStatus = useIntegrationStatusQuery();
 
   // Pre-fill Shopify checkout URL from server data
   useEffect(() => {
@@ -37,33 +42,29 @@ export default function Integrations() {
     }
   }, [intStatus.data?.shopifyCheckoutUrl, shopifyCheckoutUrlInput]);
 
-  const shopifyConnect = trpc.integrations.shopifyConnect.useMutation({
+  const shopifyConnect = useShopifyConnectMutation({
     onSuccess: () => {
       // Funnel: connecting a real integration is a strong activation signal.
       trackActivation("integration_connected:shopify");
       toast.success("Shopify connected");
       setShopifyDomain("");
       setShopifyToken("");
-      utils.integrations.status.invalidate();
     },
     onError: (e: any) => toast.error(e.message),
   });
-  const shopifySetCheckoutUrl =
-    trpc.integrations.shopifySetCheckoutUrl.useMutation({
-      onSuccess: () => {
-        toast.success("Shopify checkout URL saved");
-        utils.integrations.status.invalidate();
-      },
-      onError: (e: any) => toast.error(e.message),
-    });
-  const n8nUpdate = trpc.integrations.n8nUpdate.useMutation({
+  const shopifySetCheckoutUrl = useShopifySetCheckoutUrlMutation({
+    onSuccess: () => {
+      toast.success("Shopify checkout URL saved");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const n8nUpdate = useN8nUpdateMutation({
     onSuccess: () => {
       toast.success("n8n webhook saved");
-      utils.integrations.status.invalidate();
     },
     onError: (e: any) => toast.error(e.message),
   });
-  const n8nTrigger = trpc.integrations.n8nTrigger.useMutation({
+  const n8nTrigger = useN8nTriggerMutation({
     onSuccess: () => toast.success("n8n workflow triggered"),
     onError: (e: any) => toast.error(e.message),
   });
