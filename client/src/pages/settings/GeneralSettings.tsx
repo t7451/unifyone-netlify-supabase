@@ -22,7 +22,11 @@ import {
   ExternalLink,
   Copy,
   Check,
+  Car,
+  Store,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { PRODUCT_OPTIONS } from "@/lib/primaryProduct";
 import SettingsLayout from "./SettingsLayout";
 
 export default function GeneralSettings() {
@@ -36,14 +40,19 @@ export default function GeneralSettings() {
 
   const updateTenant = trpc.tenant.update.useMutation({
     onSuccess: () => {
-      toast.success("Store settings saved");
+      toast.success("Settings saved");
       setName("");
       setDomain("");
       setLogoUrl("");
       utils.tenant.list.invalidate();
+      // primaryProduct can change here — refresh auth.me so nav + landing update.
+      utils.auth.me.invalidate();
     },
     onError: (e: { message: string }) => toast.error(e.message),
   });
+
+  const isCommerce = tenant?.primaryProduct === "commerce";
+  const nameLabel = isCommerce ? "Store Name" : "Workspace Name";
 
   const handleSave = () => {
     if (!tenant) return;
@@ -99,24 +108,91 @@ export default function GeneralSettings() {
   return (
     <SettingsLayout>
       <div className="space-y-6">
+        {/* Primary Experience */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-white text-base flex items-center gap-2">
+              {isCommerce ? (
+                <Store className="w-4 h-4 text-[#00D9FF]" />
+              ) : (
+                <Car className="w-4 h-4 text-[#00D9FF]" />
+              )}
+              Primary Experience
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Sets your default landing page and which tools lead the sidebar
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {PRODUCT_OPTIONS.map(option => {
+                const isSelected =
+                  (tenant?.primaryProduct ?? "gig") === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    aria-pressed={isSelected}
+                    disabled={!tenant || updateTenant.isPending}
+                    onClick={() => {
+                      if (!tenant || isSelected) return;
+                      updateTenant.mutate({
+                        id: tenant.id,
+                        primaryProduct: option.id,
+                      });
+                    }}
+                    className={cn(
+                      "flex flex-col gap-2 rounded-xl border p-4 text-left transition-colors disabled:opacity-60",
+                      isSelected
+                        ? "border-[#00D9FF]/40 bg-[#00D9FF]/10"
+                        : "border-white/10 bg-white/5 hover:border-white/20"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex h-9 w-9 items-center justify-center rounded-full",
+                        isSelected
+                          ? "bg-[#00D9FF] text-[#0A1128]"
+                          : "bg-white/5 text-gray-400"
+                      )}
+                    >
+                      <option.icon className="h-5 w-5" />
+                    </div>
+                    <p className="text-sm font-semibold text-white">
+                      {option.label}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {option.description}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Store Identity */}
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-base flex items-center gap-2">
               <Building2 className="w-4 h-4 text-[#00D9FF]" />
-              Store Identity
+              {isCommerce ? "Store Identity" : "Workspace Identity"}
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Your store name and identifier used across the platform
+              Your {isCommerce ? "store" : "workspace"} name and identifier used
+              across the platform
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-gray-300 text-sm">Store Name</Label>
+              <Label className="text-gray-300 text-sm">{nameLabel}</Label>
               <Input
                 value={name || tenant?.name || ""}
                 onChange={e => setName(e.target.value)}
-                placeholder={tenant?.name ?? "Your store name"}
+                placeholder={
+                  tenant?.name ??
+                  (isCommerce ? "Your store name" : "Your workspace name")
+                }
                 className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
               />
             </div>

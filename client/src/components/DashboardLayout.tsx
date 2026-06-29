@@ -189,10 +189,12 @@ function DashboardLayoutContent({
   const primaryMenuItems = isCommerceFirst
     ? [...commerceMenuItems, ...accountMenuItems]
     : menuItems;
-  const secondaryMenuItems = isCommerceFirst ? gigMenuItems : commerceMenuItems;
-  const secondaryLabel = isCommerceFirst
-    ? "Gig tools (secondary)"
-    : "Commerce (secondary)";
+  // Commerce-first tenants get NO gig secondary nav: gig features are
+  // operator-gated (FORBIDDEN for commerce), so surfacing them would link
+  // straight into errors. Gig-first tenants keep commerce as secondary —
+  // commerce procedures stay open to every authenticated tenant.
+  const secondaryMenuItems = isCommerceFirst ? [] : commerceMenuItems;
+  const secondaryLabel = "Commerce (secondary)";
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -206,7 +208,7 @@ function DashboardLayoutContent({
   const tenantName =
     (tenantQuery.data && tenantQuery.data.length > 0
       ? tenantQuery.data[0].name
-      : null) ?? "My Store";
+      : null) ?? (isCommerceFirst ? "My Store" : "My Workspace");
 
   useEffect(() => {
     if (isCollapsed) {
@@ -402,8 +404,10 @@ function DashboardLayoutContent({
             </SidebarMenu>
 
             {/* Secondary, de-emphasized capability: commerce tools remain fully
-                functional but are clearly grouped below the gig-first product. */}
-            {!isCollapsed && (
+                functional but are clearly grouped below the gig-first product.
+                Hidden entirely when there is no secondary product to offer
+                (commerce-first tenants, whose gig tools are operator-gated). */}
+            {secondaryMenuItems.length > 0 && !isCollapsed && (
               <div
                 className="mx-2 mt-3 mb-1 px-2 pt-3"
                 style={{ borderTop: "1px solid rgba(212,168,67,0.1)" }}
@@ -421,48 +425,50 @@ function DashboardLayoutContent({
                 </span>
               </div>
             )}
-            <SidebarMenu className="px-2 py-1 opacity-70">
-              {secondaryMenuItems.map(item => {
-                const isActive = location === item.path;
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => setLocation(item.path)}
-                      tooltip={`${item.label} (secondary)`}
-                      className="h-8 transition-all font-normal rounded-none"
-                      style={
-                        isActive
-                          ? {
-                              backgroundColor: "rgba(212,168,67,0.06)",
-                              borderLeft: "2px solid #D4A843",
-                              borderBottom: "1px solid rgba(212,168,67,0.08)",
-                            }
-                          : {
-                              borderLeft: "2px solid transparent",
-                              borderBottom: "1px solid transparent",
-                            }
-                      }
-                    >
-                      <item.icon
-                        className="h-3 w-3"
-                        style={{ color: isActive ? "#D4A843" : "#9A9A9A" }}
-                      />
-                      <span
-                        className="font-cinzel"
-                        style={{
-                          color: isActive ? "#D4A843" : "#A8A8A8",
-                          fontSize: "0.55rem",
-                          letterSpacing: "0.12em",
-                        }}
+            {secondaryMenuItems.length > 0 && (
+              <SidebarMenu className="px-2 py-1 opacity-70">
+                {secondaryMenuItems.map(item => {
+                  const isActive = location === item.path;
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        onClick={() => setLocation(item.path)}
+                        tooltip={`${item.label} (secondary)`}
+                        className="h-8 transition-all font-normal rounded-none"
+                        style={
+                          isActive
+                            ? {
+                                backgroundColor: "rgba(212,168,67,0.06)",
+                                borderLeft: "2px solid #D4A843",
+                                borderBottom: "1px solid rgba(212,168,67,0.08)",
+                              }
+                            : {
+                                borderLeft: "2px solid transparent",
+                                borderBottom: "1px solid transparent",
+                              }
+                        }
                       >
-                        {item.label}
-                      </span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+                        <item.icon
+                          className="h-3 w-3"
+                          style={{ color: isActive ? "#D4A843" : "#9A9A9A" }}
+                        />
+                        <span
+                          className="font-cinzel"
+                          style={{
+                            color: isActive ? "#D4A843" : "#A8A8A8",
+                            fontSize: "0.55rem",
+                            letterSpacing: "0.12em",
+                          }}
+                        >
+                          {item.label}
+                        </span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            )}
           </SidebarContent>
 
           {!isCollapsed && (

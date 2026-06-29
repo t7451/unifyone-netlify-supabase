@@ -45,6 +45,18 @@ vi.mock("../_core/rateLimiter", () => ({
   },
 }));
 
+// The gated routers (dealflow) use operatorProcedure, whose middleware looks up
+// the tenant's primary product via the db layer. Pin it to "gig" so these
+// isolation tests stay DB-free and deterministic instead of relying on
+// getDb()'s fail-open behavior when DATABASE_URL is unset.
+vi.mock("../db", async importOriginal => {
+  const actual = await importOriginal<typeof import("../db")>();
+  return {
+    ...actual,
+    getTenantPrimaryProduct: vi.fn(async () => "gig" as const),
+  };
+});
+
 import { dealflowRouter } from "../routers/dealflow";
 import { pixelforgeRouter } from "../routers/pixelforge";
 import { terpforgeRouter } from "../routers/terpforge";

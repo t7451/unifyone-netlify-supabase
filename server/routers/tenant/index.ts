@@ -54,6 +54,7 @@ export const tenantRouter = router({
           .min(2)
           .max(100)
           .regex(/^[a-z0-9-]+$/),
+        primaryProduct: z.enum(["gig", "commerce"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -84,6 +85,7 @@ export const tenantRouter = router({
       z.object({
         id: z.number(),
         name: z.string().min(2).max(255).optional(),
+        primaryProduct: z.enum(["gig", "commerce"]).optional(),
         domain: z.string().optional(),
         logoUrl: z.string().optional(),
         shopifyShopDomain: z.string().optional(),

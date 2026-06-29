@@ -140,7 +140,7 @@ export async function checkSlugAvailable(input: { slug: string }) {
 
 export async function create(
   actor: Actor,
-  input: { name: string; slug: string }
+  input: { name: string; slug: string; primaryProduct?: "gig" | "commerce" }
 ) {
   // Check whether a tenant with this slug already exists so we can give
   // a precise error or resume an interrupted setup flow idempotently.
@@ -166,6 +166,8 @@ export async function create(
       name: input.name,
       slug: input.slug,
       ownerId: actor.id,
+      // Omitted → DB default ("gig"); explicit when the user picks at onboarding.
+      ...(input.primaryProduct ? { primaryProduct: input.primaryProduct } : {}),
     });
   } catch (err) {
     // PostgreSQL SQLSTATE 23505 = unique_violation.  Neon's error objects
@@ -407,6 +409,7 @@ export async function update(
   input: {
     id: number;
     name?: string;
+    primaryProduct?: "gig" | "commerce";
     domain?: string;
     logoUrl?: string;
     shopifyShopDomain?: string;

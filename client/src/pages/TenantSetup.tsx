@@ -24,6 +24,7 @@ import {
   Rocket,
   Users,
 } from "lucide-react";
+import { PRODUCT_OPTIONS, type PrimaryProduct } from "@/lib/primaryProduct";
 
 const STEPS = [
   {
@@ -128,6 +129,7 @@ export default function TenantSetup() {
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [showSlug, setShowSlug] = useState(false);
+  const [primaryProduct, setPrimaryProduct] = useState<PrimaryProduct>("gig");
   const [seedDemo, setSeedDemo] = useState(false);
   const [demoSeeded, setDemoSeeded] = useState(false);
   const [createdTenantId, setCreatedTenantId] = useState<number | null>(
@@ -181,7 +183,11 @@ export default function TenantSetup() {
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !slug.trim()) return;
-    createTenant.mutate({ name: name.trim(), slug: slug.trim() });
+    createTenant.mutate({
+      name: name.trim(),
+      slug: slug.trim(),
+      primaryProduct,
+    });
   };
 
   const handleStep2Submit = async (e: React.FormEvent) => {
@@ -202,9 +208,11 @@ export default function TenantSetup() {
     setStep(3);
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     toast.success("Welcome to UnifyOne! Your workspace is ready.");
-    navigate("/dashboard");
+    // Refresh auth.me so the new tenant's primaryProduct drives nav + landing.
+    await utils.auth.me.invalidate();
+    navigate(primaryProduct === "commerce" ? "/dashboard" : "/overview");
   };
 
   const isStep2Pending = seedDemoMutation.isPending;
@@ -335,6 +343,52 @@ export default function TenantSetup() {
                       </p>
                     </>
                   )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-300">
+                    What will you primarily use UnifyOne for?
+                  </Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {PRODUCT_OPTIONS.map(option => {
+                      const isSelected = primaryProduct === option.id;
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => setPrimaryProduct(option.id)}
+                          aria-pressed={isSelected}
+                          className={cn(
+                            "flex flex-col gap-2 rounded-xl border p-4 text-left transition-colors",
+                            isSelected
+                              ? "border-[#00D9FF]/40 bg-[#00D9FF]/10"
+                              : "border-white/10 bg-white/5 hover:border-white/20"
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "flex h-9 w-9 items-center justify-center rounded-full",
+                              isSelected
+                                ? "bg-[#00D9FF] text-[#0A1128]"
+                                : "bg-white/5 text-gray-400"
+                            )}
+                          >
+                            <option.icon className="h-5 w-5" />
+                          </div>
+                          <p className="text-sm font-semibold text-white">
+                            {option.label}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {option.description}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    This sets your primary experience — you can change it later
+                    in Settings.
+                  </p>
                 </div>
 
                 <p className="text-center text-xs text-gray-500">
