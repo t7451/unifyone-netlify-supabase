@@ -1,4 +1,8 @@
-import { NOT_ADMIN_ERR_MSG, UNAUTHED_ERR_MSG } from "@shared/const";
+import {
+  GIG_OPERATOR_FEATURES_DISABLED_ERR_MSG,
+  NOT_ADMIN_ERR_MSG,
+  UNAUTHED_ERR_MSG,
+} from "@shared/const";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { getTenantPrimaryProduct } from "../db";
@@ -207,7 +211,7 @@ const requireOperator = t.middleware(async opts => {
     if (primaryProduct === "commerce") {
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: "Gig-operator features are not enabled for this workspace.",
+        message: GIG_OPERATOR_FEATURES_DISABLED_ERR_MSG,
       });
     }
   }

@@ -25,9 +25,12 @@ export const gigWorkerRouter = router({
   }),
 
   /**
-   * Protected: get the current user's gig worker subscription and AI usage.
+   * Operator-only: get the current user's gig worker subscription and AI usage.
+   * Operator-gated (not just protected) because this auto-provisions a starter
+   * entitlement on first load — commerce-primary tenants must not create gig
+   * subscription rows just by reading gig data.
    */
-  getSubscription: protectedProcedure.query(async ({ ctx }) => {
+  getSubscription: operatorProcedure.query(async ({ ctx }) => {
     return gigWorkerService.getSubscription(ctx.user.id);
   }),
 
