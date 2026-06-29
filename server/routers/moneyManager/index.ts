@@ -8,7 +8,7 @@
  */
 
 import { z } from "zod";
-import { protectedProcedure, router } from "../../_core/trpc";
+import { operatorProcedure, router } from "../../_core/trpc";
 import { shiftsService } from "./shifts.service";
 import { mileageTaxService } from "./mileageTax.service";
 import { rulesService } from "./rules.service";
@@ -16,7 +16,7 @@ import { pointsService } from "./points.service";
 
 export const moneyManagerRouter = router({
   // ── Gig Shifts ──────────────────────────────────────────────────────────────
-  startShift: protectedProcedure
+  startShift: operatorProcedure
     .input(
       z.object({
         platform: z.string().min(1).max(100),
@@ -28,7 +28,7 @@ export const moneyManagerRouter = router({
       return shiftsService.startShift(ctx.user.id, input);
     }),
 
-  endShift: protectedProcedure
+  endShift: operatorProcedure
     .input(
       z.object({
         shiftId: z.number(),
@@ -45,7 +45,7 @@ export const moneyManagerRouter = router({
       return shiftsService.endShift(ctx, input);
     }),
 
-  listShifts: protectedProcedure
+  listShifts: operatorProcedure
     .input(
       z.object({
         platform: z.string().optional(),
@@ -59,7 +59,7 @@ export const moneyManagerRouter = router({
       return shiftsService.listShifts(ctx.user.id, input);
     }),
 
-  getShiftStats: protectedProcedure
+  getShiftStats: operatorProcedure
     .input(
       z.object({
         period: z.enum(["week", "month", "year", "all"]).default("month"),
@@ -70,7 +70,7 @@ export const moneyManagerRouter = router({
     }),
 
   // ── Mileage Logs ────────────────────────────────────────────────────────────
-  logMileage: protectedProcedure
+  logMileage: operatorProcedure
     .input(
       z.object({
         miles: z.number().min(0.1),
@@ -85,18 +85,18 @@ export const moneyManagerRouter = router({
       return mileageTaxService.logMileage(ctx, input);
     }),
 
-  getMileageSummary: protectedProcedure
+  getMileageSummary: operatorProcedure
     .input(z.object({ year: z.number().default(new Date().getFullYear()) }))
     .query(async ({ ctx, input }) => {
       return mileageTaxService.getMileageSummary(ctx.user.id, input);
     }),
 
   // ── Financial Rules ──────────────────────────────────────────────────────────
-  listRules: protectedProcedure.query(async ({ ctx }) => {
+  listRules: operatorProcedure.query(async ({ ctx }) => {
     return rulesService.listRules(ctx.user.id);
   }),
 
-  createRule: protectedProcedure
+  createRule: operatorProcedure
     .input(
       z.object({
         name: z.string().min(1).max(200),
@@ -128,29 +128,29 @@ export const moneyManagerRouter = router({
       return rulesService.createRule(ctx.user.id, input);
     }),
 
-  toggleRule: protectedProcedure
+  toggleRule: operatorProcedure
     .input(z.object({ ruleId: z.number(), enabled: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       return rulesService.toggleRule(ctx.user.id, input);
     }),
 
-  deleteRule: protectedProcedure
+  deleteRule: operatorProcedure
     .input(z.object({ ruleId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       return rulesService.deleteRule(ctx.user.id, input);
     }),
 
   // ── Subscription Entitlements ────────────────────────────────────────────────
-  getEntitlement: protectedProcedure.query(async ({ ctx }) => {
+  getEntitlement: operatorProcedure.query(async ({ ctx }) => {
     return rulesService.getEntitlement(ctx.user.id);
   }),
 
   // ── Points Balance ───────────────────────────────────────────────────────────
-  getPointsBalance: protectedProcedure.query(async ({ ctx }) => {
+  getPointsBalance: operatorProcedure.query(async ({ ctx }) => {
     return pointsService.getPointsBalance(ctx.user.id);
   }),
 
-  getPointsHistory: protectedProcedure
+  getPointsHistory: operatorProcedure
     .input(
       z.object({ limit: z.number().default(20), offset: z.number().default(0) })
     )
@@ -159,11 +159,11 @@ export const moneyManagerRouter = router({
     }),
 
   // ── Gig Command: GPS & Route ─────────────────────────────────────────────────
-  getActiveShift: protectedProcedure.query(async ({ ctx }) => {
+  getActiveShift: operatorProcedure.query(async ({ ctx }) => {
     return shiftsService.getActiveShift(ctx.user.id);
   }),
 
-  updateShiftGPS: protectedProcedure
+  updateShiftGPS: operatorProcedure
     .input(
       z.object({
         shiftId: z.number(),
@@ -176,7 +176,7 @@ export const moneyManagerRouter = router({
       return shiftsService.updateShiftGPS(ctx.user.id, input);
     }),
 
-  getRouteIntelligence: protectedProcedure
+  getRouteIntelligence: operatorProcedure
     .input(
       z.object({
         lat: z.number(),
@@ -188,7 +188,7 @@ export const moneyManagerRouter = router({
     .query(async ({ ctx, input }) => {
       return shiftsService.getRouteIntelligence(ctx.user.id, input);
     }),
-  generateAIShortcuts: protectedProcedure
+  generateAIShortcuts: operatorProcedure
     .input(z.object({ platform: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       return shiftsService.generateAIShortcuts(ctx.user.id, input);
@@ -203,7 +203,7 @@ export const moneyManagerRouter = router({
    * Returns the data Kai needs to give dollar-specific recommendations:
    * "Your Thursday 5–9pm shifts average $31.20/hr vs $21.90/hr Monday mornings."
    */
-  getShiftBreakdown: protectedProcedure
+  getShiftBreakdown: operatorProcedure
     .input(
       z.object({
         period: z.enum(["week", "month", "year", "all"]).default("month"),
@@ -218,7 +218,7 @@ export const moneyManagerRouter = router({
    * Returns current year mileage deduction, quarterly estimate,
    * and whether the user should be prompted to upgrade.
    */
-  getYTDDeduction: protectedProcedure.query(async ({ ctx }) => {
+  getYTDDeduction: operatorProcedure.query(async ({ ctx }) => {
     return mileageTaxService.getYTDDeduction(ctx.user.id);
   }),
 
@@ -226,7 +226,7 @@ export const moneyManagerRouter = router({
    * Comprehensive tax estimate: SE tax, federal income tax, quarterly payment due.
    * Uses YTD gigShifts gross + mileageLogs deductions to project annual obligations.
    */
-  getTaxEstimate: protectedProcedure
+  getTaxEstimate: operatorProcedure
     .input(
       z
         .object({ bracketRate: z.number().min(0).max(0.5).optional() })
@@ -240,7 +240,7 @@ export const moneyManagerRouter = router({
    * Kai-ready data context for gig-command and money-manager pages.
    * Returns a compact JSON string the AI system prompt can inject directly.
    */
-  getKaiContext: protectedProcedure
+  getKaiContext: operatorProcedure
     .input(
       z.object({
         context: z.enum(["gig-command", "money-manager", "dashboard"]),
@@ -254,7 +254,7 @@ export const moneyManagerRouter = router({
    * Earnings anomaly detection: flags platforms where the user's recent $/hr
    * has deviated significantly from their baseline.
    */
-  getAnomalies: protectedProcedure
+  getAnomalies: operatorProcedure
     .input(
       z
         .object({

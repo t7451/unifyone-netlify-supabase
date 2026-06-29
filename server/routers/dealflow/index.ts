@@ -12,11 +12,11 @@
  */
 
 import { z } from "zod";
-import { protectedProcedure, router } from "../../_core/trpc";
+import { operatorProcedure, router } from "../../_core/trpc";
 import { dealflowService, requireTenantId } from "./dealflow.service";
 
 export const dealflowRouter = router({
-  listDeals: protectedProcedure
+  listDeals: operatorProcedure
     .input(
       z.object({
         category: z.string().optional(),
@@ -30,14 +30,14 @@ export const dealflowRouter = router({
       return dealflowService.listDeals(tenantId, input);
     }),
 
-  getDeal: protectedProcedure
+  getDeal: operatorProcedure
     .input(z.object({ dealId: z.string().min(1) }))
     .query(async ({ ctx, input }) => {
       const tenantId = requireTenantId(ctx);
       return dealflowService.getDeal(tenantId, input.dealId);
     }),
 
-  searchDeals: protectedProcedure
+  searchDeals: operatorProcedure
     .input(
       z.object({
         query: z.string().min(1),
@@ -49,7 +49,7 @@ export const dealflowRouter = router({
       return dealflowService.searchDeals(tenantId, input);
     }),
 
-  getRecommendations: protectedProcedure
+  getRecommendations: operatorProcedure
     .input(
       z.object({
         userId: z.string().min(1),
@@ -61,7 +61,7 @@ export const dealflowRouter = router({
       return dealflowService.getRecommendations(tenantId, input);
     }),
 
-  manageWishlist: protectedProcedure
+  manageWishlist: operatorProcedure
     .input(
       z.object({
         userId: z.string().min(1),
@@ -74,7 +74,7 @@ export const dealflowRouter = router({
       return dealflowService.manageWishlist(tenantId, input);
     }),
 
-  trackConversion: protectedProcedure
+  trackConversion: operatorProcedure
     .input(
       z.object({
         dealId: z.string().min(1),
@@ -88,7 +88,7 @@ export const dealflowRouter = router({
       return dealflowService.trackConversion(tenantId, input);
     }),
 
-  generateContent: protectedProcedure
+  generateContent: operatorProcedure
     .input(
       z.object({
         dealId: z.string().min(1),
@@ -100,12 +100,12 @@ export const dealflowRouter = router({
       return dealflowService.generateContent(tenantId, input);
     }),
 
-  getFeatureFlags: protectedProcedure.query(async ({ ctx }) => {
+  getFeatureFlags: operatorProcedure.query(async ({ ctx }) => {
     const tenantId = requireTenantId(ctx);
     return dealflowService.getFeatureFlags(tenantId);
   }),
 
-  setFeatureFlag: protectedProcedure
+  setFeatureFlag: operatorProcedure
     .input(
       z.object({
         flagId: z.string().min(1),
