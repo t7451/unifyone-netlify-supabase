@@ -32,12 +32,19 @@ export async function getTenantPrimaryProduct(
 ): Promise<"gig" | "commerce"> {
   const db = await getDb();
   if (!db) return "gig";
-  const result = await db
-    .select({ primaryProduct: tenants.primaryProduct })
-    .from(tenants)
-    .where(eq(tenants.id, id))
-    .limit(1);
-  return result[0]?.primaryProduct ?? "gig";
+  try {
+    const result = await db
+      .select({ primaryProduct: tenants.primaryProduct })
+      .from(tenants)
+      .where(eq(tenants.id, id))
+      .limit(1);
+    return result[0]?.primaryProduct ?? "gig";
+  } catch {
+    // Fail open to the gig-operator default. This keeps auth.me / operator
+    // gating working even if the deploy lands before the primaryProduct
+    // migration (the column may not exist yet), so rollout ordering is safe.
+    return "gig";
+  }
 }
 
 export async function getTenantBySlug(slug: string) {
