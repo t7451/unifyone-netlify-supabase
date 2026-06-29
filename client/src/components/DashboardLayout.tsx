@@ -61,13 +61,16 @@ import { NotificationCenter } from "./NotificationCenter";
 import { Button } from "./ui/button";
 import { useSignupTracker } from "@/hooks/useSignupTracker";
 
-const menuItems = [
-  // Gig-worker earnings & taxes — the front door
+// Gig-operator earnings & taxes — the front door product.
+const gigMenuItems = [
   { icon: LayoutDashboard, label: "Overview", path: "/overview" },
   { icon: Navigation, label: "Gig Command", path: "/gig-command" },
   { icon: DollarSign, label: "Money Manager", path: "/money-manager" },
   { icon: Star, label: "Gig Worker Plans", path: "/gig-worker-plans" },
-  // Cross-product / account
+];
+
+// Cross-product / account items — always primary, regardless of product.
+const accountMenuItems = [
   { icon: Sparkles, label: "AI Assistant", path: "/ai-assistant" },
   { icon: Bell, label: "Notifications", path: "/notifications" },
   { icon: Zap, label: "Integrations", path: "/integrations" },
@@ -75,6 +78,11 @@ const menuItems = [
   { icon: CreditCard, label: "Billing", path: "/billing" },
   { icon: UserPlus, label: "Team", path: "/team" },
 ];
+
+// Combined list used for active-page title resolution and as the gig-first
+// default ordering. The actual primary/secondary render order is chosen
+// per-tenant from `primaryProduct` inside the component.
+const menuItems = [...gigMenuItems, ...accountMenuItems];
 
 // Optional secondary capability — commerce tools kept fully functional but
 // de-emphasized relative to the gig-first product above. Every path here is a
@@ -174,6 +182,17 @@ function DashboardLayoutContent({
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
+  // Drive nav emphasis from the workspace's primary product: gig-operators
+  // (default) see gig tools primary + commerce de-emphasized; commerce-first
+  // tenants get the inverse. Account items stay primary either way.
+  const isCommerceFirst = (user?.primaryProduct ?? "gig") === "commerce";
+  const primaryMenuItems = isCommerceFirst
+    ? [...commerceMenuItems, ...accountMenuItems]
+    : menuItems;
+  const secondaryMenuItems = isCommerceFirst ? gigMenuItems : commerceMenuItems;
+  const secondaryLabel = isCommerceFirst
+    ? "Gig tools (secondary)"
+    : "Commerce (secondary)";
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -337,7 +356,7 @@ function DashboardLayoutContent({
           )}
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
-              {menuItems.map(item => {
+              {primaryMenuItems.map(item => {
                 const isActive =
                   location === item.path ||
                   (item.path === "/settings" &&
@@ -398,12 +417,12 @@ function DashboardLayoutContent({
                     textTransform: "uppercase",
                   }}
                 >
-                  Commerce (secondary)
+                  {secondaryLabel}
                 </span>
               </div>
             )}
             <SidebarMenu className="px-2 py-1 opacity-70">
-              {commerceMenuItems.map(item => {
+              {secondaryMenuItems.map(item => {
                 const isActive = location === item.path;
                 return (
                   <SidebarMenuItem key={item.path}>

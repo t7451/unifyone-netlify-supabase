@@ -56,13 +56,25 @@ export const gigWorkerService = {
   /** Current user's gig worker subscription and AI usage. */
   async getSubscription(userId: number) {
     await seedGigWorkerPlans();
-    const [sub, allPlans] = await Promise.all([
-      getGigWorkerSubscription(userId),
-      getGigWorkerPlans(),
-    ]);
+    let sub = await getGigWorkerSubscription(userId);
+    const allPlans = await getGigWorkerPlans();
 
     // Default to starter plan if no subscription exists
     const starterPlan = allPlans.find(p => p.slug === "gig-starter") ?? null;
+
+    // Auto-provision a real starter entitlement the first time an operator's
+    // gig data loads, so every operator has a concrete subscription row
+    // (covers new and existing users) rather than an implicit default. This
+    // only creates a row when none exists — it never overwrites an existing
+    // (possibly paid) subscription.
+    if (!sub && starterPlan) {
+      await upsertGigWorkerSubscription({
+        userId,
+        planId: starterPlan.id,
+        status: "active",
+      });
+      sub = await getGigWorkerSubscription(userId);
+    }
 
     if (!sub) {
       const period = currentBillingPeriod();

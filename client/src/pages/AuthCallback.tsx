@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
 
 function LogoMark({ size = 48 }: { size?: number }) {
   return (
@@ -41,17 +42,23 @@ const STEPS = [
   "Loading your workspace...",
 ];
 
-function getReturnTo(): string {
+/**
+ * Returns an explicit, safe in-app `returnTo` path if one was provided, else
+ * null. When null, the caller routes by the workspace's primary product
+ * (gig-operator → /overview, commerce → /dashboard).
+ */
+function getExplicitReturnTo(): string | null {
   const params = new URLSearchParams(window.location.search);
   const returnTo = params.get("returnTo");
   if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
     return returnTo;
   }
-  return "/overview";
+  return null;
 }
 
 export default function AuthCallback() {
   const [, navigate] = useLocation();
+  const utils = trpc.useUtils();
   const [stepIdx, setStepIdx] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,7 +75,6 @@ export default function AuthCallback() {
     async function handleCallback() {
       try {
         const params = new URLSearchParams(window.location.search);
-        const returnTo = getReturnTo();
 
         // Check for error param from failed auth attempts
         const errorParam = params.get("error");
@@ -79,11 +85,27 @@ export default function AuthCallback() {
           return;
         }
 
-        // If no special params, redirect to returnTo (defaults to /overview)
-        // Email verification is handled by /verify-email route
-        // Password reset is handled by /reset-password route
+        // An explicit returnTo always wins (e.g. deep links, verify-email flow).
+        const explicit = getExplicitReturnTo();
+        if (explicit) {
+          if (!cancelled) navigate(explicit);
+          return;
+        }
+
+        // Otherwise route by the workspace's primary product: gig-operators
+        // land on the gig home (/overview), commerce-first tenants on the
+        // commerce dashboard (/dashboard). Falls back to the gig home.
+        let dest = "/overview";
+        try {
+          const me = await utils.auth.me.fetch();
+          if (me?.primaryProduct === "commerce") {
+            dest = "/dashboard";
+          }
+        } catch {
+          // Keep the gig-operator default on any lookup failure.
+        }
         if (!cancelled) {
-          navigate(returnTo);
+          navigate(dest);
         }
       } catch (err) {
         if (!cancelled) {
@@ -98,7 +120,7 @@ export default function AuthCallback() {
     return () => {
       cancelled = true;
     };
-  }, [navigate]);
+  }, [navigate, utils]);
 
   if (error) {
     return (

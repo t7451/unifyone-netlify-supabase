@@ -19,6 +19,10 @@ import { sql } from "drizzle-orm";
 
 // ── PostgreSQL Enums ─────────────────────────────────────────────────────────
 export const roleEnum = pgEnum("role", ["user", "admin"]);
+// Which product a tenant leads with. Gig-operator is the primary product;
+// commerce is the optional secondary toolset. Drives default routing, nav
+// emphasis, and operator-tier gating. Defaults to "gig".
+export const primaryProductEnum = pgEnum("primary_product", ["gig", "commerce"]);
 export const tenantStatusEnum = pgEnum("tenant_status", ["active", "suspended", "trial", "cancelled"]);
 export const subscriptionStatusEnum = pgEnum("subscription_status", ["active", "past_due", "cancelled", "trialing", "none"]);
 export const productStatusEnum = pgEnum("product_status", ["active", "draft", "archived"]);
@@ -190,6 +194,10 @@ export const tenants = pgTable("tenants", {
   ownerId: integer("ownerId").notNull(),
   planId: integer("planId"),
   status: tenantStatusEnum("status").default("trial").notNull(),
+  // Primary product for this tenant: "gig" (gig-operator earnings & tax — the
+  // default front door) or "commerce" (commerce-first). New tenants are
+  // gig-operators by default.
+  primaryProduct: primaryProductEnum("primaryProduct").default("gig").notNull(),
   stripeCustomerId: varchar("stripeCustomerId", { length: 100 }),
   stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 100 }),
   subscriptionStatus: subscriptionStatusEnum("subscriptionStatus").default("none").notNull(),

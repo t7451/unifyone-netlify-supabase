@@ -7,7 +7,12 @@
  */
 
 import { z } from "zod";
-import { protectedProcedure, publicProcedure, router } from "../../_core/trpc";
+import {
+  operatorProcedure,
+  protectedProcedure,
+  publicProcedure,
+  router,
+} from "../../_core/trpc";
 import { gigWorkerService } from "./gigWorker.service";
 
 export const gigWorkerRouter = router({
@@ -37,9 +42,9 @@ export const gigWorkerRouter = router({
     }),
 
   /**
-   * Protected: create a Stripe Checkout session for a gig worker plan.
+   * Operator-only: create a Stripe Checkout session for a gig worker plan.
    */
-  createCheckout: protectedProcedure
+  createCheckout: operatorProcedure
     .input(
       z.object({
         planSlug: z.string(),
@@ -59,10 +64,10 @@ export const gigWorkerRouter = router({
   }),
 
   /**
-   * Protected: record AI credit consumption for a gig worker action.
+   * Operator-only: record AI credit consumption for a gig worker action.
    * Called internally from gig-context AI calls.
    */
-  recordAIUsage: protectedProcedure
+  recordAIUsage: operatorProcedure
     .input(
       z.object({
         tokens: z.number().int().min(0),
@@ -74,10 +79,10 @@ export const gigWorkerRouter = router({
     }),
 
   /**
-   * Protected: cancel (at period end) the current gig worker subscription.
+   * Operator-only: cancel (at period end) the current gig worker subscription.
    * Calls the Stripe SDK directly — no HTTP round-trip to an origin-derived URL.
    */
-  cancelSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+  cancelSubscription: operatorProcedure.mutation(async ({ ctx }) => {
     return gigWorkerService.cancelSubscription(ctx.user.id);
   }),
 });
