@@ -17,5 +17,7 @@ export const REFRESH_TOKEN_LIFETIME_MS = 1000 * 60 * 60 * 24 * 30;
 export const AXIOS_TIMEOUT_MS = 30_000;
 export const UNAUTHED_ERR_MSG = "Please login (10001)";
 export const NOT_ADMIN_ERR_MSG = "You do not have required permission (10002)";
+export const GIG_OPERATOR_FEATURES_DISABLED_ERR_MSG =
+  "Gig-operator features are not enabled for this workspace.";
 export const NO_DATABASE_URL =
   "No database URL set. Provide NEON_DATABASE_URL, NETLIFY_DATABASE_URL, or DATABASE_URL (or install the Netlify Neon extension).";

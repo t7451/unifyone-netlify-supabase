@@ -21,6 +21,32 @@ export async function getTenantById(id: number) {
   return result[0];
 }
 
+/**
+ * Lightweight lookup of a tenant's primary product ("gig" | "commerce").
+ * Used by hot paths (auth.me, operatorProcedure) that only need this flag —
+ * avoids fetching the full tenant row. Returns "gig" (the default) when the
+ * tenant or DB is unavailable, so gig-operator behavior is the safe fallback.
+ */
+export async function getTenantPrimaryProduct(
+  id: number
+): Promise<"gig" | "commerce"> {
+  const db = await getDb();
+  if (!db) return "gig";
+  try {
+    const result = await db
+      .select({ primaryProduct: tenants.primaryProduct })
+      .from(tenants)
+      .where(eq(tenants.id, id))
+      .limit(1);
+    return result[0]?.primaryProduct ?? "gig";
+  } catch {
+    // Fail open to the gig-operator default. This keeps auth.me / operator
+    // gating working even if the deploy lands before the primaryProduct
+    // migration (the column may not exist yet), so rollout ordering is safe.
+    return "gig";
+  }
+}
+
 export async function getTenantBySlug(slug: string) {
   const db = await getDb();
   if (!db) return undefined;

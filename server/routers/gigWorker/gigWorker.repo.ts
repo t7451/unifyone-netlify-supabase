@@ -13,6 +13,7 @@ export {
   getGigWorkerPlanById,
   getGigWorkerSubscription,
   upsertGigWorkerSubscription,
+  insertGigWorkerSubscriptionIfAbsent,
   getGigAIUsage,
   incrementGigAIUsage,
   seedGigWorkerPlans,

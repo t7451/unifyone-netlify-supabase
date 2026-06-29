@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
+import { getTenantPrimaryProduct } from "./db";
 import { analyticsRouter } from "./routers/analytics";
 import { integrationsRouter } from "./routers/integrations";
 import { ordersRouter } from "./routers/orders";
@@ -62,9 +63,16 @@ export const appRouter = router({
   system: systemRouter,
 
   auth: router({
-    me: publicProcedure.query(opts => {
+    me: publicProcedure.query(async opts => {
       const u = opts.ctx.user;
       if (!u) return null;
+      // Resolve the workspace's primary product so the client can drive
+      // gig-vs-commerce routing/nav from data. New users without a tenant are
+      // gig-operators by default (gig is the primary product).
+      const primaryProduct =
+        u.tenantId != null
+          ? await getTenantPrimaryProduct(u.tenantId)
+          : ("gig" as const);
       return {
         id: u.id,
         openId: u.openId,
@@ -77,6 +85,11 @@ export const appRouter = router({
         emailVerified: u.emailVerified,
         passwordChangedAt: u.passwordChangedAt,
         hasPassword: !!u.passwordHash,
+        primaryProduct,
+        userType:
+          primaryProduct === "gig"
+            ? ("gig_operator" as const)
+            : ("merchant" as const),
       };
     }),
     logout: publicProcedure.mutation(({ ctx }) => {

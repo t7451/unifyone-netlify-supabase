@@ -1,6 +1,11 @@
-import { NOT_ADMIN_ERR_MSG, UNAUTHED_ERR_MSG } from "@shared/const";
+import {
+  GIG_OPERATOR_FEATURES_DISABLED_ERR_MSG,
+  NOT_ADMIN_ERR_MSG,
+  UNAUTHED_ERR_MSG,
+} from "@shared/const";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
+import { getTenantPrimaryProduct } from "../db";
 import type { TrpcContext } from "./context";
 
 const t = initTRPC.context<TrpcContext>().create({
@@ -184,3 +189,34 @@ export const adminProcedure = t.procedure.use(
     });
   })
 );
+
+/**
+ * operatorProcedure — gig-operator-gated procedure. Like protectedProcedure but
+ * additionally requires the caller's tenant to lead with the gig product.
+ * Users with no tenant yet are treated as operators (gig is the default
+ * product), so onboarding is never blocked; commerce-primary tenants are
+ * rejected with FORBIDDEN. Use this for gig-only subscription/billing logic so
+ * commerce-first workspaces can't drive gig entitlement state. Fails open to
+ * "gig" on lookup error (see getTenantPrimaryProduct).
+ */
+const requireOperator = t.middleware(async opts => {
+  const { ctx, next } = opts;
+
+  if (!ctx.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
+  }
+
+  if (ctx.user.tenantId != null) {
+    const primaryProduct = await getTenantPrimaryProduct(ctx.user.tenantId);
+    if (primaryProduct === "commerce") {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: GIG_OPERATOR_FEATURES_DISABLED_ERR_MSG,
+      });
+    }
+  }
+
+  return next({ ctx: { ...ctx, user: ctx.user } });
+});
+
+export const operatorProcedure = t.procedure.use(requireOperator);

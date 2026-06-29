@@ -16,6 +16,7 @@ import {
   getGigWorkerPlanById,
   getGigWorkerSubscription,
   upsertGigWorkerSubscription,
+  insertGigWorkerSubscriptionIfAbsent,
   getGigAIUsage,
   incrementGigAIUsage,
   seedGigWorkerPlans,
@@ -56,13 +57,27 @@ export const gigWorkerService = {
   /** Current user's gig worker subscription and AI usage. */
   async getSubscription(userId: number) {
     await seedGigWorkerPlans();
-    const [sub, allPlans] = await Promise.all([
-      getGigWorkerSubscription(userId),
-      getGigWorkerPlans(),
-    ]);
+    let sub = await getGigWorkerSubscription(userId);
+    const allPlans = await getGigWorkerPlans();
 
     // Default to starter plan if no subscription exists
     const starterPlan = allPlans.find(p => p.slug === "gig-starter") ?? null;
+
+    // Auto-provision a real starter entitlement the first time an operator's
+    // gig data loads, so every operator has a concrete subscription row
+    // (covers new and existing users) rather than an implicit default. This is
+    // insert-only (ON CONFLICT DO NOTHING): it only creates a row when none
+    // exists and never overwrites an existing (possibly paid) subscription,
+    // even under a concurrent checkout/webhook write. This path is reachable
+    // only via operatorProcedure, so commerce-primary tenants can't trigger it.
+    if (!sub && starterPlan) {
+      await insertGigWorkerSubscriptionIfAbsent({
+        userId,
+        planId: starterPlan.id,
+        status: "active",
+      });
+      sub = await getGigWorkerSubscription(userId);
+    }
 
     if (!sub) {
       const period = currentBillingPeriod();

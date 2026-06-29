@@ -32,6 +32,7 @@ vi.mock("./db", () => {
     getDb: vi.fn().mockResolvedValue(emptyDb),
     getTenantByOwnerId: vi.fn().mockResolvedValue(null),
     getTenantById: vi.fn().mockResolvedValue(null),
+    getTenantPrimaryProduct: vi.fn().mockResolvedValue("gig"),
     getTenantBySlug: vi.fn().mockResolvedValue(null),
     createTenant: vi.fn().mockResolvedValue({
       id: 1,

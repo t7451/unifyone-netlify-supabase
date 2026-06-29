@@ -77,6 +77,24 @@ export async function upsertGigWorkerSubscription(
     });
 }
 
+/**
+ * Insert a gig worker subscription only if the user has none yet.
+ * Insert-only (ON CONFLICT DO NOTHING): unlike upsertGigWorkerSubscription,
+ * this never overwrites an existing row, so a concurrent checkout/webhook that
+ * writes a paid subscription can't be clobbered back to the auto-provisioned
+ * starter entitlement. Use this for the auto-provision path.
+ */
+export async function insertGigWorkerSubscriptionIfAbsent(
+  data: InsertGigWorkerSubscription
+) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .insert(gigWorkerSubscriptions)
+    .values(data)
+    .onConflictDoNothing({ target: gigWorkerSubscriptions.userId });
+}
+
 // ── Gig AI Usage ──────────────────────────────────────────────────────────────
 /** Returns or initialises the usage row for the given user + billing period. */
 export async function getGigAIUsage(userId: number, billingPeriod: string) {
