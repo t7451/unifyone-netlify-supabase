@@ -105,7 +105,9 @@ export default function LandingPricing() {
                   undefined,
                   `/checkout/plan?plan=${tier.id}&period=${showAnnual ? "yearly" : "monthly"}`
                 )
-              : getSignupUrl(undefined, "/dashboard");
+              : // Free gig-starter signup: land the new operator on the gig-first
+                // home, not the commerce dashboard.
+                getSignupUrl(undefined, "/overview");
 
             return (
               <div
