@@ -24,7 +24,11 @@ import {
   Rocket,
   Users,
 } from "lucide-react";
-import { PRODUCT_OPTIONS, type PrimaryProduct } from "@/lib/primaryProduct";
+import {
+  PRODUCT_OPTIONS,
+  landingPathForProduct,
+  type PrimaryProduct,
+} from "@/lib/primaryProduct";
 
 const STEPS = [
   {
@@ -212,7 +216,7 @@ export default function TenantSetup() {
     toast.success("Welcome to UnifyOne! Your workspace is ready.");
     // Refresh auth.me so the new tenant's primaryProduct drives nav + landing.
     await utils.auth.me.invalidate();
-    navigate(primaryProduct === "commerce" ? "/dashboard" : "/overview");
+    navigate(landingPathForProduct(primaryProduct));
   };
 
   const isStep2Pending = seedDemoMutation.isPending;
