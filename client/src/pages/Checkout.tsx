@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { landingPathForProduct } from "@/lib/primaryProduct";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ export default function Checkout() {
   const [planSlug, setPlanSlug] = useState<PlanSlug | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const markOrderPaid = trpc.orders.updateStatus.useMutation();
+  const meQuery = trpc.auth.me.useQuery();
   const [paypalLoaded, setPaypalLoaded] = useState(false);
   const paypalContainerRef = useRef<HTMLDivElement>(null);
   const paypalButtonsRef = useRef<any>(null);
@@ -186,7 +188,9 @@ export default function Checkout() {
               .catch(() => {});
             navigate(`/orders?paid=${linkedOrderId}`);
           } else {
-            navigate("/dashboard?payment=success");
+            navigate(
+              `${landingPathForProduct(meQuery.data?.primaryProduct)}?payment=success`
+            );
           }
         } catch (err: any) {
           toast.error(`Capture failed: ${err.message}`);
