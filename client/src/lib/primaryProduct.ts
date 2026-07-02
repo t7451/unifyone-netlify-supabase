@@ -31,3 +31,15 @@ export const PRODUCT_OPTIONS: {
     icon: Store,
   },
 ];
+/**
+ * The post-auth landing path for a workspace's primary product. Gig-operators
+ * land on the gig home ("/overview"); commerce-first tenants on the commerce
+ * dashboard ("/dashboard"). Defaults to the gig-first home when the product is
+ * unknown (e.g. pre-auth or on a lookup failure), mirroring the operator-first
+ * default of the `tenants.primaryProduct` column.
+ */
+export function landingPathForProduct(
+  product?: string | null,
+): "/overview" | "/dashboard" {
+  return product === "commerce" ? "/dashboard" : "/overview";
+}
