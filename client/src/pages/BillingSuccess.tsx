@@ -12,6 +12,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { landingPathForProduct } from "@/lib/primaryProduct";
 import { Loader2, CheckCircle2 } from "lucide-react";
 
 const GOLD = "#D4A843";
@@ -27,6 +28,7 @@ const MAX_POLLS = 12; // 60s ceiling before we stop spinning
 
 export default function BillingSuccess() {
   const [polls, setPolls] = useState(0);
+  const me = trpc.auth.me.useQuery();
 
   const status = trpc.subscription.getStatus.useQuery(undefined, {
     refetchInterval: q =>
@@ -118,7 +120,7 @@ export default function BillingSuccess() {
             )}
             <div className="mt-8">
               <Link
-                href="/dashboard"
+                href={landingPathForProduct(me.data?.primaryProduct)}
                 className="btn-illuminate inline-block px-10"
               >
                 Open your dashboard
@@ -146,7 +148,7 @@ export default function BillingSuccess() {
               minutes. If they don't, contact us and we'll fix it same-day.
             </p>
             <Link
-              href="/dashboard"
+              href={landingPathForProduct(me.data?.primaryProduct)}
               className="btn-ghost-gold inline-block px-10"
             >
               Continue to dashboard
