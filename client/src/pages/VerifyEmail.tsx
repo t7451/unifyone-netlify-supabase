@@ -129,6 +129,9 @@ export default function VerifyEmail() {
               </p>
             </div>
             <Button
+              // Email verification happens before a tenant/product exists, so
+              // there is no primaryProduct to resolve yet — land on the
+              // operator-first default (/overview), matching the column default.
               onClick={() => navigate(landingPathForProduct())}
               className={cn(
                 "h-11 px-6 font-semibold text-sm transition-all",
@@ -136,7 +139,7 @@ export default function VerifyEmail() {
                 "text-[#060D1F] shadow-lg shadow-[#00D9FF]/20"
               )}
             >
-              Go to dashboard
+              Go to your workspace
             </Button>
           </>
         )}
