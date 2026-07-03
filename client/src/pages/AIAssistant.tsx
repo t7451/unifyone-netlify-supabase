@@ -128,6 +128,38 @@ export default function AIAssistant() {
     { enabled: !!user }
   );
 
+  // Stripe sends kai-credit purchases back here (?kaiCredits=success|cancelled,
+  // see kaiCredits.service.ts). Confirm the outcome, refresh the balance, and
+  // strip the params so a reload doesn't re-toast.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const outcome = params.get("kaiCredits");
+    if (!outcome) return;
+
+    if (outcome === "success") {
+      toast.success("Kai credits purchased", {
+        description:
+          "Your credits are on the way — the balance updates as soon as payment is confirmed.",
+      });
+      utils.kaiCredits.getBalance.invalidate();
+    } else if (outcome === "cancelled") {
+      toast.info("Credit purchase cancelled", {
+        description: "You weren't charged.",
+      });
+    }
+
+    params.delete("kaiCredits");
+    params.delete("purchaseId");
+    const query = params.toString();
+    window.history.replaceState(
+      window.history.state,
+      "",
+      window.location.pathname +
+        (query ? `?${query}` : "") +
+        window.location.hash
+    );
+  }, [utils]);
+
   useEffect(() => {
     const models = modelsData?.models ?? [];
     if (selectedModel || models.length === 0) return;

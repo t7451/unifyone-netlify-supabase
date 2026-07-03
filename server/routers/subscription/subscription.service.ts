@@ -259,7 +259,7 @@ export async function createCheckout(
           description,
           tenantId,
           userId: user.id,
-          redirectUrl: `${baseUrl}/dashboard?square=success&fallback=subscription`,
+          redirectUrl: `${baseUrl}/billing/success?square=success&fallback=subscription`,
         });
         return {
           url: result.checkoutUrl,
@@ -280,7 +280,7 @@ export async function createCheckout(
           tenantId,
           userId: user.id,
           userEmail: user.email,
-          returnUrl: `${baseUrl}/dashboard?paypal_return=1&fallback=subscription`,
+          returnUrl: `${baseUrl}/billing/success?paypal_return=1&fallback=subscription`,
           cancelUrl: `${baseUrl}/checkout?paypal_cancel=1`,
         });
         return {
