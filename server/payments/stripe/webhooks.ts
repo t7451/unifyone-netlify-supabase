@@ -578,7 +578,7 @@ export function registerStripeRoutes(app: Express) {
           customer_email: effectiveUserEmail,
           automatic_tax: { enabled: true },
           allow_promotion_codes: true,
-          return_url: `${origin}/dashboard?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
+          return_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
         });
         res.json({ clientSecret: session.client_secret });
       } catch (err: unknown) {
@@ -1375,7 +1375,7 @@ export async function registerStripeFetchRoutes(
         customer_email: userEmail,
         automatic_tax: { enabled: true },
         allow_promotion_codes: true,
-        return_url: `${origin}/dashboard?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
+        return_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       });
       return Response.json({ clientSecret: session.client_secret });
     } catch (err: unknown) {

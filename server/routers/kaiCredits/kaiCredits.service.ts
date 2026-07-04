@@ -168,8 +168,11 @@ export async function createKaiCreditCheckout(
         ],
         metadata,
         payment_intent_data: { metadata },
-        success_url: `${baseUrl}/dashboard?kaiCredits=success&purchaseId=${purchase.id}`,
-        cancel_url: `${baseUrl}/dashboard?kaiCredits=cancelled&purchaseId=${purchase.id}`,
+        // Return to the AI assistant (where the purchase started) — it is
+        // product-neutral and confirms the kaiCredits result; /dashboard is
+        // the commerce home and wrong for default gig operators.
+        success_url: `${baseUrl}/ai-assistant?kaiCredits=success&purchaseId=${purchase.id}`,
+        cancel_url: `${baseUrl}/ai-assistant?kaiCredits=cancelled&purchaseId=${purchase.id}`,
       },
       { idempotencyKey: `kai-credit-checkout-${purchase.id}` }
     );

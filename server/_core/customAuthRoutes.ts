@@ -262,19 +262,30 @@ function readGlobalAuth0OAuthSettings(): Auth0OAuthSettings {
   };
 }
 
+/**
+ * Default post-auth landing when no explicit returnTo was provided. The
+ * client's /auth/callback resolves the workspace's primaryProduct and routes
+ * gig-operators to /overview and commerce-first tenants to /dashboard, so
+ * the server never has to guess the product.
+ */
+const DEFAULT_RETURN_TO = "/auth/callback";
+
 function sanitizeReturnTo(returnTo: unknown): string {
-  if (typeof returnTo !== "string") return "/dashboard";
+  if (typeof returnTo !== "string") return DEFAULT_RETURN_TO;
   const trimmed = returnTo.trim();
   if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {
-    return "/dashboard";
+    return DEFAULT_RETURN_TO;
   }
   return trimmed;
 }
 
-function buildLoginRedirect(error: string, returnTo = "/dashboard"): string {
+function buildLoginRedirect(
+  error: string,
+  returnTo = DEFAULT_RETURN_TO
+): string {
   const redirectUrl = new URL("/login", getAppUrl());
   redirectUrl.searchParams.set("error", error);
-  if (returnTo && returnTo !== "/dashboard") {
+  if (returnTo && returnTo !== DEFAULT_RETURN_TO) {
     redirectUrl.searchParams.set("returnTo", returnTo);
   }
   return redirectUrl.toString();
@@ -685,7 +696,7 @@ async function completeGoogleOAuthCallback(params: {
   refreshToken?: string;
 }> {
   const verifiedState = verifyGoogleOAuthState(params.state);
-  const returnTo = verifiedState?.returnTo ?? "/dashboard";
+  const returnTo = verifiedState?.returnTo ?? DEFAULT_RETURN_TO;
 
   if (params.providerError) {
     return { redirectTo: buildLoginRedirect("google_oauth_denied", returnTo) };
@@ -919,7 +930,7 @@ async function completeAuth0OAuthCallback(params: {
   refreshToken?: string;
 }> {
   const verifiedState = verifyAuth0OAuthState(params.state);
-  const returnTo = verifiedState?.returnTo ?? "/dashboard";
+  const returnTo = verifiedState?.returnTo ?? DEFAULT_RETURN_TO;
 
   if (params.providerError) {
     return { redirectTo: buildLoginRedirect("auth0_oauth_denied", returnTo) };

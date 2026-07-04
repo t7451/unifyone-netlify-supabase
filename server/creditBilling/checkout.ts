@@ -136,8 +136,10 @@ export function createCreditCheckoutSession(
       bonus: String(pkg.bonus),
       user_id: openId,
     },
-    success_url: `${baseUrl}/dashboard/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/dashboard/billing?canceled=true`,
+    // /billing/success polls the credit balance and confirms the grant;
+    // the old /dashboard/billing path never existed as a client route.
+    success_url: `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${baseUrl}/billing?canceled=true`,
   });
 }
 
