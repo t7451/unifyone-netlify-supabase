@@ -29,6 +29,7 @@ import type { Request, Response, NextFunction } from "express";
  *  - Impact.com affiliate tracking pixel
  *  - Apollo.io website visitor tracker (script + identify API)
  *  - Cloudflare Workers (1commerce-nlweb chat worker)
+ *  - Cloudflare Turnstile (bot-mitigation widget on login/signup)
  *
  * 'unsafe-inline' is allowed for style-src only because React components
  * and Tailwind CSS use inline style attributes at runtime. Script nonces are
@@ -36,12 +37,12 @@ import type { Request, Response, NextFunction } from "express";
  */
 const PRODUCTION_CSP = [
   "default-src 'self'",
-  "script-src 'self' https://plausible.io https://connect.facebook.net https://js.stripe.com https://www.paypal.com https://www.paypalobjects.com https://assets.apollo.io",
+  "script-src 'self' https://plausible.io https://connect.facebook.net https://js.stripe.com https://www.paypal.com https://www.paypalobjects.com https://assets.apollo.io https://challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob: https: https://d.impactradius-event.com",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://checkout.stripe.com https://api.paypal.com https://www.facebook.com https://plausible.io https://api.anthropic.com https://*.apollo.io https://*.workers.dev",
-  "frame-src https://js.stripe.com https://hooks.stripe.com https://www.paypal.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://checkout.stripe.com https://api.paypal.com https://www.facebook.com https://plausible.io https://api.anthropic.com https://*.apollo.io https://*.workers.dev https://challenges.cloudflare.com",
+  "frame-src https://js.stripe.com https://hooks.stripe.com https://www.paypal.com https://challenges.cloudflare.com",
   "frame-ancestors 'none'",
   "worker-src 'self'",
   "manifest-src 'self'",
