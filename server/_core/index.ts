@@ -107,6 +107,10 @@ function validateEnv() {
     if (!process.env.AUTH0_CLIENT_ID && !process.env.VITE_AUTH0_CLIENT_ID) {
       recommended.push("AUTH0_CLIENT_ID or VITE_AUTH0_CLIENT_ID");
     }
+    // Bot mitigation on login/signup. Without it, Turnstile verification is
+    // skipped and the challenge widget doesn't render — degraded, not broken.
+    if (!process.env.TURNSTILE_SECRET_KEY)
+      recommended.push("TURNSTILE_SECRET_KEY");
 
     if (recommended.length > 0) {
       logger.warn(

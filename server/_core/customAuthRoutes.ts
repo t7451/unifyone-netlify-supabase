@@ -45,6 +45,7 @@ import {
   emailVerifyLimiter,
   resendVerificationLimiter,
 } from "./rateLimiter";
+import { verifyTurnstileToken } from "./turnstile";
 import { ENV, getAppUrl } from "./env";
 import { getDb, getTenantBySlug } from "../db";
 import { REFRESH_COOKIE_NAME } from "@shared/const";
@@ -1213,12 +1214,24 @@ export async function registerCustomAuthFetchRoutes(
       }
 
       const body = await req.json().catch(() => ({}));
-      const { email, password, name, username } = body as {
+      const { email, password, name, username, turnstileToken } = body as {
         email?: string;
         password?: string;
         name?: string;
         username?: string;
+        turnstileToken?: string;
       };
+
+      const turnstileResult = await verifyTurnstileToken(
+        turnstileToken,
+        clientIp
+      );
+      if (!turnstileResult.success) {
+        return Response.json(
+          { success: false, error: turnstileResult.error },
+          { status: 400, headers: corsHeaders }
+        );
+      }
 
       const result = await signUp(email || "", password || "", name, username, {
         ipAddress: clientIp,
@@ -1287,11 +1300,23 @@ export async function registerCustomAuthFetchRoutes(
       }
 
       const body = await req.json().catch(() => ({}));
-      const { email, identifier, password } = body as {
+      const { email, identifier, password, turnstileToken } = body as {
         email?: string;
         identifier?: string;
         password?: string;
+        turnstileToken?: string;
       };
+
+      const turnstileResult = await verifyTurnstileToken(
+        turnstileToken,
+        clientIp
+      );
+      if (!turnstileResult.success) {
+        return Response.json(
+          { success: false, error: turnstileResult.error },
+          { status: 400, headers: corsHeaders }
+        );
+      }
 
       const result = await signIn(identifier || email || "", password || "", {
         ipAddress: clientIp,
@@ -2124,12 +2149,25 @@ export function registerCustomAuthExpressRoutes(app: Express) {
           return;
         }
 
-        const { email, password, name, username } = (req.body ?? {}) as {
+        const { email, password, name, username, turnstileToken } = (req.body ??
+          {}) as {
           email?: string;
           password?: string;
           name?: string;
           username?: string;
+          turnstileToken?: string;
         };
+
+        const turnstileResult = await verifyTurnstileToken(
+          turnstileToken,
+          clientIp
+        );
+        if (!turnstileResult.success) {
+          res
+            .status(400)
+            .json({ success: false, error: turnstileResult.error });
+          return;
+        }
 
         const result = await signUp(
           email || "",
@@ -2209,11 +2247,24 @@ export function registerCustomAuthExpressRoutes(app: Express) {
           return;
         }
 
-        const { email, identifier, password } = (req.body ?? {}) as {
+        const { email, identifier, password, turnstileToken } = (req.body ??
+          {}) as {
           email?: string;
           identifier?: string;
           password?: string;
+          turnstileToken?: string;
         };
+
+        const turnstileResult = await verifyTurnstileToken(
+          turnstileToken,
+          clientIp
+        );
+        if (!turnstileResult.success) {
+          res
+            .status(400)
+            .json({ success: false, error: turnstileResult.error });
+          return;
+        }
 
         const result = await signIn(identifier || email || "", password || "", {
           ipAddress: clientIp,
