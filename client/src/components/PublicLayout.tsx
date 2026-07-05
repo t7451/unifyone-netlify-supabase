@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Instagram } from "lucide-react";
 import { getSignupUrl } from "@/const";
+import { landingPathForProduct } from "@/lib/primaryProduct";
 import { usePixelPageView } from "@/hooks/usePixelPageView";
 import { CdnImage } from "@/components/CdnImage";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -166,7 +167,10 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
             >
               <Instagram size={16} strokeWidth={1.5} />
             </a>
-            <Link href="/dashboard">
+            {/* Public shell has no auth context; default the "enter app" CTA to
+                the gig-first home. Once signed in, in-app routing resolves the
+                tenant's actual primaryProduct. */}
+            <Link href={landingPathForProduct()}>
               <span
                 className="hidden sm:block cursor-pointer transition-all duration-200"
                 style={{
@@ -489,7 +493,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                   { label: "Media Kit", href: "/press" },
                   { label: "Privacy Policy", href: "/privacy" },
                   { label: "Terms of Service", href: "/terms" },
-                  { label: "Enter Dashboard", href: "/dashboard" },
+                  { label: "Enter Workspace", href: landingPathForProduct() },
                 ].map(item => (
                   <Link key={item.href} href={item.href}>
                     <span

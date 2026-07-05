@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { landingPathForProduct } from "@/lib/primaryProduct";
 
 function LogoMark({ size = 40 }: { size?: number }) {
   return (
@@ -128,14 +129,17 @@ export default function VerifyEmail() {
               </p>
             </div>
             <Button
-              onClick={() => navigate("/dashboard")}
+              // Email verification happens before a tenant/product exists, so
+              // there is no primaryProduct to resolve yet — land on the
+              // operator-first default (/overview), matching the column default.
+              onClick={() => navigate(landingPathForProduct())}
               className={cn(
                 "h-11 px-6 font-semibold text-sm transition-all",
                 "bg-gradient-to-r from-[#00D9FF] to-blue-500 hover:from-[#00C4E8] hover:to-blue-600",
                 "text-[#060D1F] shadow-lg shadow-[#00D9FF]/20"
               )}
             >
-              Go to dashboard
+              Go to your workspace
             </Button>
           </>
         )}

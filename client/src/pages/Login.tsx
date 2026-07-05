@@ -33,6 +33,29 @@ const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
   | string
   | undefined;
 
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as
+  | string
+  | undefined;
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: HTMLElement,
+        options: {
+          sitekey: string;
+          theme?: "light" | "dark" | "auto";
+          callback: (token: string) => void;
+          "expired-callback"?: () => void;
+          "error-callback"?: () => void;
+        }
+      ) => string;
+      reset: (widgetId: string) => void;
+      remove: (widgetId: string) => void;
+    };
+  }
+}
+
 function getReturnTo(): string {
   if (typeof window === "undefined") return "/overview";
   const params = new URLSearchParams(window.location.search);
@@ -218,6 +241,10 @@ export default function Login({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [providerStatus, setProviderStatus] =
     useState<AuthProviderStatus | null>(null);
+  const [turnstileScriptLoaded, setTurnstileScriptLoaded] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileContainerRef = useRef<HTMLDivElement>(null);
+  const turnstileWidgetIdRef = useRef<string | null>(null);
 
   const returnTo = getReturnTo();
   const tenantSlug = getTenantSlug();
@@ -286,6 +313,65 @@ export default function Login({
     }
   }, []);
 
+  // Load the Cloudflare Turnstile script once, when a site key is configured.
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY) return;
+    if (window.turnstile) {
+      setTurnstileScriptLoaded(true);
+      return;
+    }
+    const existingScript = document.getElementById("turnstile-sdk");
+    if (existingScript) {
+      existingScript.addEventListener("load", () =>
+        setTurnstileScriptLoaded(true)
+      );
+      return;
+    }
+    const script = document.createElement("script");
+    script.id = "turnstile-sdk";
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setTurnstileScriptLoaded(true);
+    document.body.appendChild(script);
+  }, []);
+
+  // Render the widget once the script is ready and its container is mounted.
+  useEffect(() => {
+    if (
+      !TURNSTILE_SITE_KEY ||
+      !turnstileScriptLoaded ||
+      !turnstileContainerRef.current ||
+      !window.turnstile
+    )
+      return;
+
+    const widgetId = window.turnstile.render(turnstileContainerRef.current, {
+      sitekey: TURNSTILE_SITE_KEY,
+      theme: "dark",
+      callback: token => setTurnstileToken(token),
+      "expired-callback": () => setTurnstileToken(null),
+      "error-callback": () => setTurnstileToken(null),
+    });
+    turnstileWidgetIdRef.current = widgetId;
+
+    return () => {
+      if (turnstileWidgetIdRef.current && window.turnstile) {
+        window.turnstile.remove(turnstileWidgetIdRef.current);
+      }
+      turnstileWidgetIdRef.current = null;
+    };
+  }, [turnstileScriptLoaded]);
+
+  // Turnstile tokens are single-use — clear the captured token and request a
+  // fresh challenge after any failed sign-in/sign-up attempt.
+  const resetTurnstile = () => {
+    if (turnstileWidgetIdRef.current && window.turnstile) {
+      window.turnstile.reset(turnstileWidgetIdRef.current);
+    }
+    setTurnstileToken(null);
+  };
+
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
     setError(null);
@@ -322,6 +408,10 @@ export default function Login({
       setError("Please enter your email or username and password.");
       return;
     }
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError("Please complete the verification challenge.");
+      return;
+    }
 
     setIsSubmitting(true);
     setError(null);
@@ -332,7 +422,7 @@ export default function Login({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ identifier: email, password }),
+        body: JSON.stringify({ identifier: email, password, turnstileToken }),
       });
 
       const data = await res.json();
@@ -351,6 +441,7 @@ export default function Login({
           setError(data.error || "Invalid email or password.");
         }
         if (data.code) setErrorCode(data.code);
+        resetTurnstile();
         return;
       }
 
@@ -359,6 +450,7 @@ export default function Login({
       navigate(returnTo);
     } catch {
       setError("An unexpected error occurred. Please try again.");
+      resetTurnstile();
     } finally {
       setIsSubmitting(false);
     }
@@ -373,6 +465,10 @@ export default function Login({
       setError("Password must be at least 8 characters.");
       return;
     }
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError("Please complete the verification challenge.");
+      return;
+    }
 
     setIsSubmitting(true);
     setError(null);
@@ -382,7 +478,13 @@ export default function Login({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, username, name: username, password }),
+        body: JSON.stringify({
+          email,
+          username,
+          name: username,
+          password,
+          turnstileToken,
+        }),
       });
 
       const data = await res.json();
@@ -399,6 +501,7 @@ export default function Login({
         } else {
           setError(data.error || "Failed to create account.");
         }
+        resetTurnstile();
         return;
       }
 
@@ -441,6 +544,7 @@ export default function Login({
       navigate(returnTo);
     } catch {
       setError("An unexpected error occurred. Please try again.");
+      resetTurnstile();
     } finally {
       setIsSubmitting(false);
     }
@@ -757,9 +861,19 @@ export default function Login({
               </div>
             )}
 
+            {TURNSTILE_SITE_KEY && showPasswordField && (
+              <div
+                ref={turnstileContainerRef}
+                className="flex justify-center"
+              />
+            )}
+
             <Button
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={
+                isSubmitting ||
+                (showPasswordField && !!TURNSTILE_SITE_KEY && !turnstileToken)
+              }
               className={cn(
                 "w-full h-11 font-semibold text-sm transition-all",
                 "bg-gradient-to-r from-[#00D9FF] to-blue-500 hover:from-[#00C4E8] hover:to-blue-600",

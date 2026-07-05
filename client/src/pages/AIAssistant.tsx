@@ -128,6 +128,52 @@ export default function AIAssistant() {
     { enabled: !!user }
   );
 
+  // Stripe sends kai-credit purchases back here (?kaiCredits=success|cancelled,
+  // see kaiCredits.service.ts). Confirm the outcome, refresh the balance, and
+  // strip the params so a reload doesn't re-toast.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const outcome = params.get("kaiCredits");
+    if (!outcome) return;
+
+    let pollTimer: ReturnType<typeof setInterval> | undefined;
+    if (outcome === "success") {
+      toast.success("Kai credits purchased", {
+        description:
+          "Your credits are on the way — the balance updates as soon as payment is confirmed.",
+      });
+      // The Stripe webhook that grants the credits may lag the redirect, so
+      // re-check briefly (mirrors the /billing/success poll) instead of
+      // leaving a stale balance if the user starts chatting right away.
+      utils.kaiCredits.getBalance.invalidate();
+      let polls = 0;
+      pollTimer = setInterval(() => {
+        utils.kaiCredits.getBalance.invalidate();
+        polls += 1;
+        if (polls >= 6 && pollTimer) clearInterval(pollTimer);
+      }, 5_000);
+    } else if (outcome === "cancelled") {
+      toast.info("Credit purchase cancelled", {
+        description: "You weren't charged.",
+      });
+    }
+
+    params.delete("kaiCredits");
+    params.delete("purchaseId");
+    const query = params.toString();
+    window.history.replaceState(
+      window.history.state,
+      "",
+      window.location.pathname +
+        (query ? `?${query}` : "") +
+        window.location.hash
+    );
+
+    return () => {
+      if (pollTimer) clearInterval(pollTimer);
+    };
+  }, [utils]);
+
   useEffect(() => {
     const models = modelsData?.models ?? [];
     if (selectedModel || models.length === 0) return;
