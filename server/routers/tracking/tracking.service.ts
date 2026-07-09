@@ -1,6 +1,7 @@
 import type { TrpcContext } from "../../_core/context";
 import { extractGeo } from "../../lib/geo";
 import { resolveAnalyticsTenant } from "../../lib/analyticsTenant";
+import { getTenantPrimaryProduct } from "../../db/tenants";
 import { logger } from "../../_core/logger";
 import { storeBehaviorEvents, type BehaviorEventInput } from "./tracking.repo";
 
@@ -61,12 +62,20 @@ export async function ingestEvents(
     // no precise coordinates.
     const geo = extractGeo(ctx.req);
 
+    // Resolve the tenant's primary product ("gig" | "commerce") ONCE per
+    // request — derived server-side so gig vs commerce cohorts can be
+    // segmented and the dimension can't be spoofed by the client. Defaults
+    // to "gig" when the tenant/DB is unavailable (getTenantPrimaryProduct's
+    // own fallback).
+    const primaryProduct = await getTenantPrimaryProduct(tenantId);
+
     const base = {
       ...(input.anonymousId ? { anonymousId: input.anonymousId } : {}),
       ...(input.sessionId ? { sessionId: input.sessionId } : {}),
       ...(geo.country ? { country: geo.country } : {}),
       ...(geo.region ? { region: geo.region } : {}),
       ...(geo.city ? { city: geo.city } : {}),
+      primaryProduct,
     };
 
     const events: BehaviorEventInput[] = input.events.map(e => {
