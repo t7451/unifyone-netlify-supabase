@@ -16,10 +16,16 @@ const protectedRoutes = [
 test.describe("Auth flows", () => {
   test("login page renders", async ({ page }) => {
     await page.goto("/login");
-    // Should not be redirected away or show a 500
-    await expect(page).not.toHaveURL(/500/);
-    const body = page.locator("body");
-    await expect(body).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /welcome back/i })
+    ).toBeVisible();
+  });
+
+  test("signup intent renders on /register", async ({ page }) => {
+    await page.goto("/register");
+    await expect(
+      page.getByRole("heading", { name: /create your workspace/i })
+    ).toBeVisible();
   });
 
   test("login form elements are present", async ({ page }) => {
