@@ -558,7 +558,7 @@ function DashboardLayoutContent({
             </div>
           </div>
         )}
-        <main className="min-h-screen flex-1 bg-[radial-gradient(circle_at_top_right,rgba(0,217,255,0.08),transparent_32%),linear-gradient(180deg,rgba(15,23,42,0.18),transparent_340px)]">
+        <main className="min-h-screen flex-1 bg-[radial-gradient(circle_at_top_right,rgba(212,168,67,0.08),transparent_32%),linear-gradient(180deg,rgba(10,10,10,0.35),transparent_340px)]">
           {children}
         </main>
       </SidebarInset>
