@@ -42,6 +42,41 @@ import {
   fulfillKaiCreditCheckout,
 } from "./sync";
 
+/**
+ * Resolve the subscription id from an invoice across Stripe API versions.
+ *
+ * On the Basil line (2025-03-31+) — which the repo pins via
+ * STRIPE_API_VERSION="2026-02-25.clover" — the top-level `invoice.subscription`
+ * field was removed in favor of `invoice.parent.subscription_details.subscription`.
+ * Reading only the legacy field leaves renewal invoices with an undefined id, so
+ * `syncSubscription` / `grantSubscriptionCredits` silently never run and paying
+ * subscribers stop receiving their monthly credits. Read the new location first,
+ * fall back to the legacy field for older events, and normalize expanded objects
+ * to their id.
+ */
+export function resolveInvoiceSubscriptionId(
+  invoice: Stripe.Invoice
+): string | null {
+  const toId = (v: unknown): string | null =>
+    typeof v === "string"
+      ? v
+      : v && typeof v === "object" && "id" in v
+        ? String((v as { id: unknown }).id)
+        : null;
+
+  const parent = (
+    invoice as Stripe.Invoice & {
+      parent?: { subscription_details?: { subscription?: unknown } } | null;
+    }
+  ).parent;
+  const fromParent = toId(parent?.subscription_details?.subscription);
+  if (fromParent) return fromParent;
+
+  return toId(
+    (invoice as Stripe.Invoice & { subscription?: unknown }).subscription
+  );
+}
+
 /** Parse an im_ref cookie value out of a raw HTTP Cookie header. */
 function parseImRefFromCookieHeader(header: string): string | null {
   if (!header) return null;
@@ -366,9 +401,7 @@ export function registerStripeRoutes(app: Express) {
           case "invoice.paid": {
             const invoice = event.data.object as Stripe.Invoice;
             // Re-sync subscription to refresh period end and grant credits
-            const subId = (
-              invoice as Stripe.Invoice & { subscription?: string }
-            ).subscription;
+            const subId = resolveInvoiceSubscriptionId(invoice);
             if (subId) {
               const sub = await stripe.subscriptions.retrieve(subId);
               await syncSubscription(sub);
@@ -1114,8 +1147,7 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
       case "invoice.payment_succeeded":
       case "invoice.paid": {
         const invoice = event.data.object as Stripe.Invoice;
-        const subId = (invoice as Stripe.Invoice & { subscription?: string })
-          .subscription;
+        const subId = resolveInvoiceSubscriptionId(invoice);
         if (subId) {
           const sub = await stripe.subscriptions.retrieve(subId);
           await syncSubscription(sub);
