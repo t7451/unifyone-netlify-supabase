@@ -198,7 +198,7 @@ function ThemeFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="bg-[#0A1128] border-white/10 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-[#020202] border-white/10 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white">
             {editTheme
@@ -267,7 +267,7 @@ function ThemeFormDialog({
                 <SelectTrigger className="bg-white/5 border-white/10 text-slate-300">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0D1A3A] border-white/10">
+                <SelectContent className="bg-[#020202] border-white/10">
                   <SelectItem value="free">Free</SelectItem>
                   <SelectItem value="paid">Paid (one-time)</SelectItem>
                   <SelectItem value="subscription">Subscription</SelectItem>
@@ -346,7 +346,7 @@ function ThemeFormDialog({
                 <SelectTrigger className="bg-white/5 border-white/10 text-slate-300">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0D1A3A] border-white/10">
+                <SelectContent className="bg-[#020202] border-white/10">
                   <SelectItem value="starter">Starter</SelectItem>
                   <SelectItem value="standard">Standard</SelectItem>
                   <SelectItem value="advanced">Advanced</SelectItem>
@@ -411,7 +411,7 @@ function ThemeFormDialog({
                 <SelectTrigger className="bg-white/5 border-white/10 text-slate-300">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0D1A3A] border-white/10">
+                <SelectContent className="bg-[#020202] border-white/10">
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="pending_review">Pending Review</SelectItem>
                   <SelectItem value="published">Published</SelectItem>
@@ -428,7 +428,7 @@ function ThemeFormDialog({
                 <SelectTrigger className="bg-white/5 border-white/10 text-slate-300">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0D1A3A] border-white/10">
+                <SelectContent className="bg-[#020202] border-white/10">
                   <SelectItem value="no">Not featured</SelectItem>
                   <SelectItem value="yes">Featured ⭐</SelectItem>
                 </SelectContent>
@@ -448,7 +448,7 @@ function ThemeFormDialog({
           <Button
             onClick={handleSubmit}
             disabled={isPending || !form.name}
-            className="bg-gradient-to-r from-[#00D9FF] to-blue-500 text-[#060D1F] font-semibold"
+            className="bg-gradient-to-r from-[#D4A843] to-[#B8863B] text-[#020202] font-semibold"
           >
             {isPending
               ? "Saving…"
@@ -533,7 +533,7 @@ export default function AdminThemes() {
               setEditTheme(null);
               setShowForm(true);
             }}
-            className="bg-gradient-to-r from-[#00D9FF] to-blue-500 text-[#060D1F] font-semibold gap-2"
+            className="bg-gradient-to-r from-[#D4A843] to-[#B8863B] text-[#020202] font-semibold gap-2"
           >
             <Plus className="w-4 h-4" />
             Upload Storefront Theme
@@ -548,7 +548,7 @@ export default function AdminThemes() {
             label: "Total Storefront Themes",
             value: themes.length,
             icon: Package,
-            color: "text-[#00D9FF]",
+            color: "text-[#D4A843]",
           },
           {
             label: "Published",
@@ -571,7 +571,7 @@ export default function AdminThemes() {
         ].map(stat => (
           <div
             key={stat.label}
-            className="bg-[#0D1A3A] border border-white/8 rounded-xl p-4"
+            className="bg-[#020202] border border-white/8 rounded-xl p-4"
           >
             <div className="flex items-center gap-2 mb-1">
               <stat.icon className={cn("w-4 h-4", stat.color)} />
@@ -613,7 +613,7 @@ export default function AdminThemes() {
 
       {/* Themes table */}
       {reviewTab === "themes" && (
-        <div className="bg-[#0D1A3A] border border-white/8 rounded-xl overflow-hidden">
+        <div className="bg-[#020202] border border-white/8 rounded-xl overflow-hidden">
           {isLoading ? (
             <div className="p-8 text-center text-slate-500 text-sm">
               Loading themes…
@@ -686,7 +686,7 @@ export default function AdminThemes() {
                           Free
                         </span>
                       ) : (
-                        <span className="text-[#00D9FF] text-xs font-semibold">
+                        <span className="text-[#D4A843] text-xs font-semibold">
                           ${theme.price}
                         </span>
                       )}
@@ -747,7 +747,7 @@ export default function AdminThemes() {
       {reviewTab === "reviews" && (
         <div className="space-y-3">
           {pendingReviews.length === 0 ? (
-            <div className="bg-[#0D1A3A] border border-white/8 rounded-xl p-12 text-center">
+            <div className="bg-[#020202] border border-white/8 rounded-xl p-12 text-center">
               <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
               <p className="text-slate-400 text-sm">
                 No pending reviews. All caught up!
@@ -757,7 +757,7 @@ export default function AdminThemes() {
             pendingReviews.map((review: any) => (
               <div
                 key={review.id}
-                className="bg-[#0D1A3A] border border-white/8 rounded-xl p-4"
+                className="bg-[#020202] border border-white/8 rounded-xl p-4"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">

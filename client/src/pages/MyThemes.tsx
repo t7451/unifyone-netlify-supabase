@@ -29,7 +29,7 @@ export default function MyThemes() {
         </div>
         <Button
           onClick={() => navigate("/themes")}
-          className="bg-gradient-to-r from-[#00D9FF] to-blue-500 hover:from-[#00C4E8] hover:to-blue-600 text-[#060D1F] font-semibold gap-2"
+          className="bg-gradient-to-r from-[#D4A843] to-[#B8863B] hover:from-[#E8C25A] hover:to-[#B8863B] text-[#020202] font-semibold gap-2"
         >
           <ShoppingBag className="w-4 h-4" />
           Browse storefront themes
@@ -42,7 +42,7 @@ export default function MyThemes() {
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="bg-[#0D1A3A] border border-white/8 rounded-xl overflow-hidden animate-pulse"
+              className="bg-[#020202] border border-white/8 rounded-xl overflow-hidden animate-pulse"
             >
               <div className="aspect-[16/10] bg-white/5" />
               <div className="p-4 space-y-2">
@@ -56,7 +56,7 @@ export default function MyThemes() {
 
       {/* Empty state */}
       {!isLoading && installs.length === 0 && (
-        <div className="text-center py-20 bg-[#0D1A3A] border border-white/8 rounded-xl">
+        <div className="text-center py-20 bg-[#020202] border border-white/8 rounded-xl">
           <Package className="w-12 h-12 text-slate-600 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-white mb-2">
             No storefront themes installed yet
@@ -67,7 +67,7 @@ export default function MyThemes() {
           </p>
           <Button
             onClick={() => navigate("/themes")}
-            className="bg-gradient-to-r from-[#00D9FF] to-blue-500 text-[#060D1F] font-semibold gap-2"
+            className="bg-gradient-to-r from-[#D4A843] to-[#B8863B] text-[#020202] font-semibold gap-2"
           >
             Browse storefront themes <ArrowRight className="w-4 h-4" />
           </Button>
@@ -87,9 +87,9 @@ export default function MyThemes() {
             return (
               <div
                 key={install.id}
-                className="bg-[#0D1A3A] border border-white/8 rounded-xl overflow-hidden hover:border-[#00D9FF]/30 transition-all"
+                className="bg-[#020202] border border-white/8 rounded-xl overflow-hidden hover:border-[#D4A843]/30 transition-all"
               >
-                <div className="relative aspect-[16/10] overflow-hidden bg-[#060D1F]">
+                <div className="relative aspect-[16/10] overflow-hidden bg-[#020202]">
                   <img
                     src={thumbnail}
                     alt={theme.name}
@@ -101,7 +101,7 @@ export default function MyThemes() {
                   />
                   <div className="absolute top-2 right-2">
                     {Number(install.amountPaid) > 0 ? (
-                      <span className="text-xs font-semibold text-[#00D9FF] bg-[#00D9FF]/10 border border-[#00D9FF]/20 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-semibold text-[#D4A843] bg-[#D4A843]/10 border border-[#D4A843]/20 px-2 py-0.5 rounded-full">
                         ${install.amountPaid}
                       </span>
                     ) : (
@@ -134,7 +134,7 @@ export default function MyThemes() {
                     {theme.downloadUrl && (
                       <Button
                         size="sm"
-                        className="flex-1 h-8 bg-gradient-to-r from-[#00D9FF] to-blue-500 text-[#060D1F] font-semibold text-xs gap-1.5"
+                        className="flex-1 h-8 bg-gradient-to-r from-[#D4A843] to-[#B8863B] text-[#020202] font-semibold text-xs gap-1.5"
                         onClick={() => window.open(theme.downloadUrl, "_blank")}
                       >
                         <Download className="w-3.5 h-3.5" />

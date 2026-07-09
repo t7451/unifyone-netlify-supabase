@@ -163,7 +163,7 @@ export default function Orders() {
           </Button>
           <Button
             onClick={() => setShowCreate(true)}
-            className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+            className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
           >
             <Plus className="w-4 h-4 mr-2" /> New Order
           </Button>
@@ -178,7 +178,7 @@ export default function Orders() {
           {hasActiveFilters ? (
             <Badge
               variant="outline"
-              className="border-cyan-400/30 bg-cyan-400/10 text-cyan-200"
+              className="border-[#D4A843]/30 bg-[#D4A843]/10 text-[#E8C25A]"
             >
               {activeFilterCount} active filter
               {activeFilterCount === 1 ? "" : "s"}
@@ -199,7 +199,7 @@ export default function Orders() {
           value: paidVisibleCount.toLocaleString(),
           helper: "Paid orders in this view",
           icon: CreditCard,
-          tone: "cyan",
+          tone: "amber",
         },
         {
           label: "Fulfillment queue",
@@ -228,7 +228,7 @@ export default function Orders() {
             >
               Filters
               {activeFilterCount > 0 && (
-                <Badge className="bg-[#00D9FF]/15 text-[#00D9FF] hover:bg-[#00D9FF]/15">
+                <Badge className="bg-[#D4A843]/15 text-[#D4A843] hover:bg-[#D4A843]/15">
                   {activeFilterCount}
                 </Badge>
               )}
@@ -425,7 +425,7 @@ export default function Orders() {
                       }
                       onCheckedChange={() => toggleSelectAllVisible()}
                       aria-label="Select all visible orders"
-                      className="border-white/30 data-[state=checked]:border-[#00D9FF] data-[state=checked]:bg-[#00D9FF] data-[state=checked]:text-[#0A1128]"
+                      className="border-white/30 data-[state=checked]:border-[#D4A843] data-[state=checked]:bg-[#D4A843] data-[state=checked]:text-[#020202]"
                     />
                   </th>
                   {[
@@ -507,11 +507,11 @@ export default function Orders() {
                           checked={selectedIds.includes(order.id)}
                           onCheckedChange={() => toggleSelection(order.id)}
                           aria-label={`Select order ${order.orderNumber}`}
-                          className="border-white/30 data-[state=checked]:border-[#00D9FF] data-[state=checked]:bg-[#00D9FF] data-[state=checked]:text-[#0A1128]"
+                          className="border-white/30 data-[state=checked]:border-[#D4A843] data-[state=checked]:bg-[#D4A843] data-[state=checked]:text-[#020202]"
                         />
                       </td>
                       <td className="px-4 py-3 align-top">
-                        <span className="font-mono text-xs text-[#00D9FF]">
+                        <span className="font-mono text-xs text-[#D4A843]">
                           {order.orderNumber}
                         </span>
                       </td>
@@ -559,7 +559,7 @@ export default function Orders() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 w-7 p-0 text-gray-400 hover:text-[#00D9FF]"
+                            className="h-7 w-7 p-0 text-gray-400 hover:text-[#D4A843]"
                             aria-label={`View details for order ${order.orderNumber}`}
                             onClick={() => openDetail(order)}
                           >
@@ -644,7 +644,7 @@ export default function Orders() {
           <Card className="rounded-none border-0 bg-transparent shadow-none">
             <CardContent className="flex flex-col items-center px-6 py-16 text-center">
               <div className="mb-5 rounded-full border border-white/10 bg-white/5 p-4">
-                <ShoppingCart className="h-10 w-10 text-[#00D9FF]" />
+                <ShoppingCart className="h-10 w-10 text-[#D4A843]" />
               </div>
               <h2 className="text-xl font-semibold text-white">
                 {hasActiveFilters ? "No orders found" : "No orders yet"}
@@ -657,7 +657,7 @@ export default function Orders() {
               {!hasActiveFilters && (
                 <Button
                   size="sm"
-                  className="mt-6 bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90"
+                  className="mt-6 bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90"
                   onClick={() => setShowCreate(true)}
                 >
                   <Plus className="mr-1 h-3.5 w-3.5" /> Create your first order
@@ -681,14 +681,14 @@ export default function Orders() {
         <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
-              <Package className="w-5 h-5 text-[#00D9FF]" />
+              <Package className="w-5 h-5 text-[#D4A843]" />
               Order {selectedOrder?.orderNumber ?? orderData?.orderNumber ?? ""}
             </DialogTitle>
           </DialogHeader>
 
           {orderDetail.isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-[#00D9FF]" />
+              <Loader2 className="h-6 w-6 animate-spin text-[#D4A843]" />
             </div>
           ) : orderDetail.isError ? (
             <div className="flex justify-center py-8">
@@ -841,9 +841,9 @@ export default function Orders() {
                               className={cn(
                                 "flex h-full flex-col gap-3 rounded-xl border p-3 transition-colors",
                                 isCurrent
-                                  ? "border-[#00D9FF]/60 bg-[#00D9FF]/10"
+                                  ? "border-[#D4A843]/60 bg-[#D4A843]/10"
                                   : isComplete
-                                    ? "border-[#00D9FF]/30 bg-white/[0.04]"
+                                    ? "border-[#D4A843]/30 bg-white/[0.04]"
                                     : "border-white/10 bg-white/[0.02]"
                               )}
                             >
@@ -851,9 +851,9 @@ export default function Orders() {
                                 className={cn(
                                   "flex h-8 w-8 items-center justify-center rounded-full border",
                                   isCurrent
-                                    ? "border-[#00D9FF] bg-[#00D9FF] text-[#0A1128]"
+                                    ? "border-[#D4A843] bg-[#D4A843] text-[#020202]"
                                     : isComplete
-                                      ? "border-[#00D9FF]/40 bg-[#00D9FF]/15 text-[#00D9FF]"
+                                      ? "border-[#D4A843]/40 bg-[#D4A843]/15 text-[#D4A843]"
                                       : "border-white/10 bg-white/5 text-gray-500"
                                 )}
                               >
@@ -864,7 +864,7 @@ export default function Orders() {
                                   className={cn(
                                     "text-sm font-medium",
                                     isCurrent
-                                      ? "text-[#00D9FF]"
+                                      ? "text-[#D4A843]"
                                       : isComplete
                                         ? "text-white"
                                         : "text-gray-500"
@@ -873,7 +873,7 @@ export default function Orders() {
                                   {meta.label}
                                 </p>
                                 {isCurrent && (
-                                  <span className="mt-1 inline-flex rounded-full bg-[#00D9FF]/15 px-1.5 py-0.5 text-xs text-[#00D9FF]">
+                                  <span className="mt-1 inline-flex rounded-full bg-[#D4A843]/15 px-1.5 py-0.5 text-xs text-[#D4A843]">
                                     Current
                                   </span>
                                 )}
@@ -981,7 +981,7 @@ export default function Orders() {
                 <Separator className="bg-white/10" />
                 <div className="flex justify-between font-bold text-white">
                   <span>Total</span>
-                  <span className="text-[#00D9FF]">
+                  <span className="text-[#D4A843]">
                     ${Number(orderData.total).toFixed(2)}
                   </span>
                 </div>
@@ -1020,7 +1020,7 @@ export default function Orders() {
         <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
-              <Plus className="w-5 h-5 text-[#00D9FF]" /> Create Manual Order
+              <Plus className="w-5 h-5 text-[#D4A843]" /> Create Manual Order
             </DialogTitle>
           </DialogHeader>
 
@@ -1055,7 +1055,7 @@ export default function Orders() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="text-[#00D9FF] hover:text-[#00D9FF]/80 text-xs h-7"
+                  className="text-[#D4A843] hover:text-[#D4A843]/80 text-xs h-7"
                   onClick={addItem}
                 >
                   <Plus className="w-3 h-3 mr-1" /> Add Item
@@ -1185,7 +1185,7 @@ export default function Orders() {
             {/* Payment provider reference (required) */}
             <div className="space-y-2 p-4 rounded-lg bg-white/5 border border-white/10">
               <div className="flex items-center gap-2 text-white text-sm font-medium">
-                <CreditCard className="w-4 h-4 text-[#00D9FF]" />
+                <CreditCard className="w-4 h-4 text-[#D4A843]" />
                 Payment reference
               </div>
               <p className="text-xs text-gray-400">
@@ -1268,10 +1268,10 @@ export default function Orders() {
               <Separator className="bg-white/10" />
               <div className="flex justify-between text-white font-bold">
                 <span className="flex items-center gap-1">
-                  <DollarSign className="w-4 h-4 text-[#00D9FF]" />
+                  <DollarSign className="w-4 h-4 text-[#D4A843]" />
                   Total
                 </span>
-                <span className="text-[#00D9FF]">${orderTotal.toFixed(2)}</span>
+                <span className="text-[#D4A843]">${orderTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -1294,7 +1294,7 @@ export default function Orders() {
                 items.some(i => !i.productName) ||
                 !paymentRefId.trim()
               }
-              className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+              className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
             >
               {createOrder.isPending ? (
                 <>

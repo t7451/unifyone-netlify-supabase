@@ -1,16 +1,45 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ShoppingBag, ArrowRight, CheckCircle2, Shield, Zap, RefreshCw, ChevronLeft } from "lucide-react";
+import {
+  ShoppingBag,
+  ArrowRight,
+  CheckCircle2,
+  Shield,
+  Zap,
+  RefreshCw,
+  ChevronLeft,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 
 const SCOPES = [
-  { label: "Products & Inventory", desc: "Read and write products, variants, inventory levels", icon: "📦" },
-  { label: "Orders & Fulfillments", desc: "Sync orders, update fulfillment status, tracking numbers", icon: "🛒" },
-  { label: "Customers", desc: "Sync customer profiles and order history", icon: "👤" },
-  { label: "Webhooks", desc: "Receive real-time events from your Shopify store", icon: "⚡" },
+  {
+    label: "Products & Inventory",
+    desc: "Read and write products, variants, inventory levels",
+    icon: "📦",
+  },
+  {
+    label: "Orders & Fulfillments",
+    desc: "Sync orders, update fulfillment status, tracking numbers",
+    icon: "🛒",
+  },
+  {
+    label: "Customers",
+    desc: "Sync customer profiles and order history",
+    icon: "👤",
+  },
+  {
+    label: "Webhooks",
+    desc: "Receive real-time events from your Shopify store",
+    icon: "⚡",
+  },
 ];
 
 export default function ShopifyInstall() {
@@ -19,8 +48,14 @@ export default function ShopifyInstall() {
   const [loading, setLoading] = useState(false);
 
   const handleInstall = () => {
-    const raw = shopDomain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
-    const domain = raw.includes(".myshopify.com") ? raw : `${raw}.myshopify.com`;
+    const raw = shopDomain
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/\/$/, "");
+    const domain = raw.includes(".myshopify.com")
+      ? raw
+      : `${raw}.myshopify.com`;
 
     if (!raw || raw.length < 3) {
       setError("Enter your Shopify store name or domain.");
@@ -40,7 +75,10 @@ export default function ShopifyInstall() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b border-border/40 px-6 py-4 flex items-center gap-3">
-        <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
           <ChevronLeft className="w-4 h-4" />
           <span className="text-sm">Back to UnifyOne</span>
         </Link>
@@ -50,12 +88,15 @@ export default function ShopifyInstall() {
         <div className="w-full max-w-lg space-y-8">
           {/* Brand header */}
           <div className="text-center space-y-3">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#00D9FF]/10 border border-[#00D9FF]/20 mb-2">
-              <ShoppingBag className="w-8 h-8 text-[#00D9FF]" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#D4A843]/10 border border-[#D4A843]/20 mb-2">
+              <ShoppingBag className="w-8 h-8 text-[#D4A843]" />
             </div>
-            <h1 className="text-3xl font-bold text-foreground">Connect Your Shopify Store</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Connect Your Shopify Store
+            </h1>
             <p className="text-muted-foreground text-base leading-relaxed">
-              Link your Shopify store to UnifyOne to sync products, orders, customers, and inventory in real time.
+              Link your Shopify store to UnifyOne to sync products, orders,
+              customers, and inventory in real time.
             </p>
           </div>
 
@@ -64,7 +105,10 @@ export default function ShopifyInstall() {
             <CardHeader className="pb-4">
               <CardTitle className="text-lg">Enter Your Store Domain</CardTitle>
               <CardDescription>
-                Your store name from <span className="text-foreground font-medium">yourstore.myshopify.com</span>
+                Your store name from{" "}
+                <span className="text-foreground font-medium">
+                  yourstore.myshopify.com
+                </span>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -73,7 +117,7 @@ export default function ShopifyInstall() {
                   <Input
                     placeholder="your-store-name"
                     value={shopDomain}
-                    onChange={(e) => setShopDomain(e.target.value)}
+                    onChange={e => setShopDomain(e.target.value)}
                     onKeyDown={handleKeyDown}
                     className="pr-36 font-mono text-sm"
                     autoFocus
@@ -85,12 +129,14 @@ export default function ShopifyInstall() {
                 <Button
                   onClick={handleInstall}
                   disabled={loading || !shopDomain.trim()}
-                  className="bg-[#00D9FF] hover:bg-[#00B8D9] text-black font-semibold shrink-0"
+                  className="bg-[#D4A843] hover:bg-[#B8863B] text-black font-semibold shrink-0"
                 >
                   {loading ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
                   ) : (
-                    <>Connect <ArrowRight className="w-4 h-4 ml-1" /></>
+                    <>
+                      Connect <ArrowRight className="w-4 h-4 ml-1" />
+                    </>
                   )}
                 </Button>
               </div>
@@ -100,7 +146,8 @@ export default function ShopifyInstall() {
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                You'll be redirected to Shopify to authorize the connection. No credit card required.
+                You'll be redirected to Shopify to authorize the connection. No
+                credit card required.
               </p>
             </CardContent>
           </Card>
@@ -108,19 +155,25 @@ export default function ShopifyInstall() {
           {/* Permissions preview */}
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Shield className="w-4 h-4 text-[#00D9FF]" />
+              <Shield className="w-4 h-4 text-[#D4A843]" />
               <span>UnifyOne will request the following permissions:</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {SCOPES.map((scope) => (
+              {SCOPES.map(scope => (
                 <div
                   key={scope.label}
                   className="flex items-start gap-3 p-3 rounded-lg border border-border/40 bg-card/40"
                 >
-                  <span className="text-xl leading-none mt-0.5">{scope.icon}</span>
+                  <span className="text-xl leading-none mt-0.5">
+                    {scope.icon}
+                  </span>
                   <div>
-                    <p className="text-sm font-medium text-foreground">{scope.label}</p>
-                    <p className="text-xs text-muted-foreground leading-snug mt-0.5">{scope.desc}</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {scope.label}
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-snug mt-0.5">
+                      {scope.desc}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -138,7 +191,7 @@ export default function ShopifyInstall() {
               Encrypted token storage
             </span>
             <span className="flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-[#00D9FF]" />
+              <Zap className="w-3.5 h-3.5 text-[#D4A843]" />
               Real-time sync &lt; 30s latency
             </span>
           </div>
