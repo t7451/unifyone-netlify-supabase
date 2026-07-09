@@ -65,23 +65,36 @@ import { NotificationCenter } from "./NotificationCenter";
 import { Button } from "./ui/button";
 import { useSignupTracker } from "@/hooks/useSignupTracker";
 
-// Gig-operator earnings & taxes — the front door product. Every path here is
-// operator-gated on the server (FORBIDDEN for commerce-first tenants), so the
-// whole group is rendered only when the workspace is gig-first.
-const gigMenuItems = [
+type NavItem = { icon: typeof LayoutDashboard; label: string; path: string };
+type NavSection = {
+  key: string;
+  label: string;
+  items: NavItem[];
+  /** De-emphasized (smaller, dimmed) — used for the optional commerce group. */
+  muted?: boolean;
+};
+
+// Gig-operator core — the front door. Operator-gated on the server.
+const gigCoreItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Overview", path: "/overview" },
   { icon: Navigation, label: "Gig Command", path: "/gig-command" },
   { icon: DollarSign, label: "Money Manager", path: "/money-manager" },
-  { icon: TrendingUp, label: "Revenue Streams", path: "/revenue-streams" },
-  { icon: LineChart, label: "Revenue Command", path: "/revenue-command" },
-  { icon: Trophy, label: "Achievements", path: "/achievements" },
-  { icon: Gift, label: "Rewards", path: "/rewards" },
-  { icon: Users2, label: "Friends", path: "/friends" },
   { icon: Star, label: "Gig Worker Plans", path: "/gig-worker-plans" },
 ];
 
-// Cross-product / account items — always primary, regardless of product.
-const accountMenuItems = [
+// Gig-operator growth/engagement tools. Also operator-gated (Revenue Command /
+// Revenue Streams depend on the gated `revenueStreams` router), so this group
+// only ever renders for gig-first tenants.
+const gigGrowthItems: NavItem[] = [
+  { icon: LineChart, label: "Revenue Command", path: "/revenue-command" },
+  { icon: TrendingUp, label: "Revenue Streams", path: "/revenue-streams" },
+  { icon: Trophy, label: "Achievements", path: "/achievements" },
+  { icon: Gift, label: "Rewards", path: "/rewards" },
+  { icon: Users2, label: "Friends", path: "/friends" },
+];
+
+// Cross-product / account items — shown regardless of product.
+const accountMenuItems: NavItem[] = [
   { icon: Sparkles, label: "AI Assistant", path: "/ai-assistant" },
   { icon: Bell, label: "Notifications", path: "/notifications" },
   { icon: Zap, label: "Integrations", path: "/integrations" },
@@ -90,20 +103,11 @@ const accountMenuItems = [
   { icon: UserPlus, label: "Team", path: "/team" },
 ];
 
-// Combined list used for active-page title resolution and as the gig-first
-// default ordering. The actual primary/secondary render order is chosen
-// per-tenant from `primaryProduct` inside the component.
-const menuItems = [...gigMenuItems, ...accountMenuItems];
-
-// Optional secondary capability — commerce tools kept fully functional but
-// de-emphasized relative to the gig-first product above. Every path here is a
-// mounted DashboardRoute in App.tsx AND backed only by procedures that stay
-// open to every authenticated tenant (no operatorProcedure), so these are safe
-// to surface to commerce-first tenants. Operator-gated pages (Revenue Streams /
-// Revenue Command, which depend on the gated `revenueStreams` router) live in
-// `gigMenuItems` instead — surfacing them here would link commerce tenants
-// straight into a FORBIDDEN.
-const commerceMenuItems = [
+// Optional commerce capability. Every path is backed only by procedures that
+// stay open to every authenticated tenant (no operatorProcedure), so it's safe
+// to surface to commerce-first tenants. Operator-gated pages live in the gig
+// groups above, not here.
+const commerceMenuItems: NavItem[] = [
   { icon: Package, label: "Products", path: "/products" },
   { icon: ShoppingCart, label: "Orders", path: "/orders" },
   { icon: Users, label: "Customers", path: "/customers" },
@@ -116,6 +120,40 @@ const commerceMenuItems = [
   { icon: Handshake, label: "Affiliates", path: "/affiliates" },
   { icon: RefreshCcw, label: "Sync Monitor", path: "/sync-monitor" },
 ];
+
+// Flat list of every nav item, for active-page title resolution.
+const allNavItems: NavItem[] = [
+  ...gigCoreItems,
+  ...gigGrowthItems,
+  ...accountMenuItems,
+  ...commerceMenuItems,
+];
+
+/**
+ * Ordered, labeled nav sections for a workspace's primary product. Gig-first
+ * (the default) leads with the gig groups and keeps commerce as an optional,
+ * de-emphasized group; commerce-first tenants get commerce first and NO gig
+ * groups (those routes are operator-gated → FORBIDDEN for them).
+ */
+function navSectionsForProduct(isCommerceFirst: boolean): NavSection[] {
+  if (isCommerceFirst) {
+    return [
+      { key: "commerce", label: "Commerce", items: commerceMenuItems },
+      { key: "account", label: "Account", items: accountMenuItems },
+    ];
+  }
+  return [
+    { key: "gig", label: "Gig operations", items: gigCoreItems },
+    { key: "grow", label: "Earn more", items: gigGrowthItems },
+    { key: "account", label: "Account", items: accountMenuItems },
+    {
+      key: "commerce",
+      label: "Commerce · optional",
+      items: commerceMenuItems,
+      muted: true,
+    },
+  ];
+}
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 280;
@@ -200,23 +238,13 @@ function DashboardLayoutContent({
   // (default) see gig tools primary + commerce de-emphasized; commerce-first
   // tenants get the inverse. Account items stay primary either way.
   const isCommerceFirst = (user?.primaryProduct ?? "gig") === "commerce";
-  const primaryMenuItems = isCommerceFirst
-    ? [...commerceMenuItems, ...accountMenuItems]
-    : menuItems;
-  // Commerce-first tenants get NO gig secondary nav: gig features are
-  // operator-gated (FORBIDDEN for commerce), so surfacing them would link
-  // straight into errors. Gig-first tenants keep commerce as secondary —
-  // commerce procedures stay open to every authenticated tenant.
-  const secondaryMenuItems = isCommerceFirst ? [] : commerceMenuItems;
-  const secondaryLabel = "Commerce (secondary)";
+  const navSections = navSectionsForProduct(isCommerceFirst);
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem =
-    menuItems.find(item => item.path === location) ??
-    commerceMenuItems.find(item => item.path === location);
+  const activeMenuItem = allNavItems.find(item => item.path === location);
   const isMobile = useIsMobile();
   const tenantQuery = trpc.tenant.list.useQuery(undefined, { retry: false });
   const tenantName =
@@ -370,119 +398,103 @@ function DashboardLayoutContent({
               </Link>
             </div>
           )}
-          <SidebarContent className="gap-0">
-            <SidebarMenu className="px-2 py-1">
-              {primaryMenuItems.map(item => {
-                const isActive =
-                  location === item.path ||
-                  (item.path === "/settings" &&
-                    location.startsWith("/settings/"));
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => setLocation(item.path)}
-                      tooltip={item.label}
-                      className="h-9 transition-all font-normal rounded-none"
+          {/* Product-aware, labeled nav groups. Each section stacks in normal
+              flow inside the scrollable SidebarContent, so the list scrolls
+              cleanly and groups never overlap regardless of item count. */}
+          <SidebarContent className="gap-0 pb-2">
+            {navSections.map((section, sIdx) => {
+              const muted = section.muted ?? false;
+              return (
+                <div key={section.key}>
+                  {!isCollapsed && (
+                    <div
+                      className={
+                        sIdx === 0
+                          ? "mx-2 mb-1 mt-2 px-2"
+                          : "mx-2 mb-1 mt-3 px-2 pt-3"
+                      }
                       style={
-                        isActive
-                          ? {
-                              backgroundColor: "rgba(212,168,67,0.06)",
-                              borderLeft: "2px solid #D4A843",
-                              borderBottom: "1px solid rgba(212,168,67,0.08)",
-                            }
-                          : {
-                              borderLeft: "2px solid transparent",
-                              borderBottom: "1px solid transparent",
-                            }
+                        sIdx === 0
+                          ? undefined
+                          : { borderTop: "1px solid rgba(212,168,67,0.1)" }
                       }
                     >
-                      <item.icon
-                        className="h-3.5 w-3.5"
-                        style={{ color: isActive ? "#D4A843" : "#BCBCBC" }}
-                      />
                       <span
-                        className="font-cinzel"
+                        className="font-cinzel block"
                         style={{
-                          color: isActive ? "#D4A843" : "#D2D2D2",
-                          fontSize: "0.6rem",
-                          letterSpacing: "0.12em",
+                          color: muted ? "#8A8A8A" : "#9C7A32",
+                          fontSize: "0.5rem",
+                          letterSpacing: "0.18em",
+                          textTransform: "uppercase",
                         }}
                       >
-                        {item.label}
+                        {section.label}
                       </span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-
-            {/* Secondary, de-emphasized capability: commerce tools remain fully
-                functional but are clearly grouped below the gig-first product.
-                Hidden entirely when there is no secondary product to offer
-                (commerce-first tenants, whose gig tools are operator-gated). */}
-            {secondaryMenuItems.length > 0 && !isCollapsed && (
-              <div
-                className="mx-2 mt-3 mb-1 px-2 pt-3"
-                style={{ borderTop: "1px solid rgba(212,168,67,0.1)" }}
-              >
-                <span
-                  className="font-cinzel block"
-                  style={{
-                    color: "#8A8A8A",
-                    fontSize: "0.5rem",
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {secondaryLabel}
-                </span>
-              </div>
-            )}
-            {secondaryMenuItems.length > 0 && (
-              <SidebarMenu className="px-2 py-1 opacity-70">
-                {secondaryMenuItems.map(item => {
-                  const isActive = location === item.path;
-                  return (
-                    <SidebarMenuItem key={item.path}>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        onClick={() => setLocation(item.path)}
-                        tooltip={`${item.label} (secondary)`}
-                        className="h-8 transition-all font-normal rounded-none"
-                        style={
-                          isActive
-                            ? {
-                                backgroundColor: "rgba(212,168,67,0.06)",
-                                borderLeft: "2px solid #D4A843",
-                                borderBottom: "1px solid rgba(212,168,67,0.08)",
-                              }
-                            : {
-                                borderLeft: "2px solid transparent",
-                                borderBottom: "1px solid transparent",
-                              }
-                        }
-                      >
-                        <item.icon
-                          className="h-3 w-3"
-                          style={{ color: isActive ? "#D4A843" : "#9A9A9A" }}
-                        />
-                        <span
-                          className="font-cinzel"
-                          style={{
-                            color: isActive ? "#D4A843" : "#A8A8A8",
-                            fontSize: "0.55rem",
-                            letterSpacing: "0.12em",
-                          }}
-                        >
-                          {item.label}
-                        </span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            )}
+                    </div>
+                  )}
+                  <SidebarMenu
+                    className={muted ? "px-2 py-1 opacity-70" : "px-2 py-1"}
+                  >
+                    {section.items.map(item => {
+                      const isActive =
+                        location === item.path ||
+                        (item.path === "/settings" &&
+                          location.startsWith("/settings/"));
+                      return (
+                        <SidebarMenuItem key={item.path}>
+                          <SidebarMenuButton
+                            isActive={isActive}
+                            onClick={() => setLocation(item.path)}
+                            tooltip={
+                              muted ? `${item.label} (optional)` : item.label
+                            }
+                            className={`${muted ? "h-8" : "h-9"} rounded-none font-normal transition-all`}
+                            style={
+                              isActive
+                                ? {
+                                    backgroundColor: "rgba(212,168,67,0.06)",
+                                    borderLeft: "2px solid #D4A843",
+                                    borderBottom:
+                                      "1px solid rgba(212,168,67,0.08)",
+                                  }
+                                : {
+                                    borderLeft: "2px solid transparent",
+                                    borderBottom: "1px solid transparent",
+                                  }
+                            }
+                          >
+                            <item.icon
+                              className={muted ? "h-3 w-3" : "h-3.5 w-3.5"}
+                              style={{
+                                color: isActive
+                                  ? "#D4A843"
+                                  : muted
+                                    ? "#9A9A9A"
+                                    : "#BCBCBC",
+                              }}
+                            />
+                            <span
+                              className="font-cinzel"
+                              style={{
+                                color: isActive
+                                  ? "#D4A843"
+                                  : muted
+                                    ? "#A8A8A8"
+                                    : "#D2D2D2",
+                                fontSize: muted ? "0.55rem" : "0.6rem",
+                                letterSpacing: "0.12em",
+                              }}
+                            >
+                              {item.label}
+                            </span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </div>
+              );
+            })}
           </SidebarContent>
 
           {!isCollapsed && (
