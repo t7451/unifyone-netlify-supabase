@@ -63,6 +63,12 @@ export function useServerEvents() {
         utils.orders?.list?.invalidate?.();
       });
 
+      es.addEventListener("shift_update", () => {
+        utils.moneyManager.getShiftStats.invalidate();
+        utils.moneyManager.listShifts.invalidate();
+        utils.moneyManager.getYTDDeduction.invalidate();
+      });
+
       // heartbeat — no-op (just keeps the connection alive)
       es.addEventListener("heartbeat", () => {});
 

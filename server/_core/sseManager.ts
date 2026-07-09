@@ -12,6 +12,7 @@
  *   announcement    — new active announcement broadcast
  *   credit_balance  — Supabase credit_wallets updated
  *   order_status    — order status changed
+ *   shift_update    — gig shift completed (earnings/stats changed)
  *   heartbeat       — keep-alive every 30s
  */
 import type { Response } from "express";
@@ -21,6 +22,7 @@ export type SseEventType =
   | "announcement"
   | "credit_balance"
   | "order_status"
+  | "shift_update"
   | "heartbeat";
 
 export interface SseEvent<T = unknown> {
