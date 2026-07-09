@@ -48,7 +48,7 @@ import {
 } from "recharts";
 
 const ENTITY_COLORS: Record<string, string> = {
-  product: "#00D9FF",
+  product: "#2DD4BF",
   order: "#A855F7",
   customer: "#F59E0B",
   inventory: "#10B981",
@@ -133,8 +133,8 @@ export default function SyncMonitor() {
       title: "Total Events",
       value: stats?.total ?? 0,
       icon: Activity,
-      color: "text-[#00D9FF]",
-      bg: "bg-[#00D9FF]/10",
+      color: "text-[#D4A843]",
+      bg: "bg-[#D4A843]/10",
     },
     {
       title: "Success Rate",
@@ -171,7 +171,7 @@ export default function SyncMonitor() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <BarChart2 className="w-6 h-6 text-[#00D9FF]" />
+            <BarChart2 className="w-6 h-6 text-[#D4A843]" />
             Store Sync Monitor
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
@@ -240,7 +240,7 @@ export default function SyncMonitor() {
         <Card className="border-border/40">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#00D9FF]" />
+              <Clock className="w-4 h-4 text-[#D4A843]" />
               Avg Latency Over Time
             </CardTitle>
             <CardDescription className="text-xs">
@@ -287,7 +287,7 @@ export default function SyncMonitor() {
                   <Line
                     type="monotone"
                     dataKey="avgLatencyMs"
-                    stroke="#00D9FF"
+                    stroke="#D4A843"
                     strokeWidth={2}
                     dot={false}
                   />
@@ -364,7 +364,7 @@ export default function SyncMonitor() {
       <Card className="border-border/40">
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <ShoppingBag className="w-4 h-4 text-[#00D9FF]" />
+            <ShoppingBag className="w-4 h-4 text-[#D4A843]" />
             Connected Store Health
           </CardTitle>
           <CardDescription className="text-xs">
@@ -396,8 +396,8 @@ export default function SyncMonitor() {
                   className="flex items-center justify-between p-3 rounded-lg border border-border/40 bg-card/40"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#00D9FF]/10 flex items-center justify-center">
-                      <ShoppingBag className="w-4 h-4 text-[#00D9FF]" />
+                    <div className="w-8 h-8 rounded-lg bg-[#D4A843]/10 flex items-center justify-center">
+                      <ShoppingBag className="w-4 h-4 text-[#D4A843]" />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-foreground">

@@ -82,7 +82,7 @@ export default function DiscountsPage() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#00D9FF]/10 border border-[#00D9FF]/30 text-[#00D9FF] hover:bg-[#00D9FF]/20">
+            <Button className="bg-[#D4A843]/10 border border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/20">
               <Plus className="w-4 h-4 mr-2" />
               New Discount
             </Button>
@@ -169,7 +169,7 @@ export default function DiscountsPage() {
                   })
                 }
                 disabled={create.isPending || !code || !value}
-                className="bg-[#00D9FF]/10 border border-[#00D9FF]/30 text-[#00D9FF] hover:bg-[#00D9FF]/20"
+                className="bg-[#D4A843]/10 border border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/20"
               >
                 {create.isPending ? (
                   <>
@@ -188,7 +188,7 @@ export default function DiscountsPage() {
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-white text-base flex items-center gap-2">
-            <Tag className="w-4 h-4 text-[#00D9FF]" />
+            <Tag className="w-4 h-4 text-[#D4A843]" />
             Active codes
           </CardTitle>
           <CardDescription className="text-gray-400">

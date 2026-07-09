@@ -42,7 +42,7 @@ export function ProductFormFields({
           onChange={e => setForm({ ...form, name: e.target.value })}
           onBlur={() => onTouch?.("name")}
           placeholder="e.g. Premium Widget Pro"
-          className={`bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50 ${errors?.name ? "border-red-500/70" : ""}`}
+          className={`bg-white/5 border-white/10 text-white mt-1 focus:border-[#D4A843]/50 ${errors?.name ? "border-red-500/70" : ""}`}
         />
         {errors?.name && (
           <p className="text-red-400 text-xs mt-1">{errors.name}</p>
@@ -55,7 +55,7 @@ export function ProductFormFields({
           onChange={e => setForm({ ...form, description: e.target.value })}
           placeholder="Product description..."
           rows={3}
-          className="bg-white/5 border-white/10 text-white mt-1 resize-none focus:border-[#00D9FF]/50"
+          className="bg-white/5 border-white/10 text-white mt-1 resize-none focus:border-[#D4A843]/50"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -73,7 +73,7 @@ export function ProductFormFields({
               onChange={e => setForm({ ...form, price: e.target.value })}
               onBlur={() => onTouch?.("price")}
               placeholder="0.00"
-              className={`bg-white/5 border-white/10 text-white pl-7 focus:border-[#00D9FF]/50 ${errors?.price ? "border-red-500/70" : ""}`}
+              className={`bg-white/5 border-white/10 text-white pl-7 focus:border-[#D4A843]/50 ${errors?.price ? "border-red-500/70" : ""}`}
             />
           </div>
           {errors?.price && (
@@ -95,7 +95,7 @@ export function ProductFormFields({
                 setForm({ ...form, compareAtPrice: e.target.value })
               }
               placeholder="0.00"
-              className="bg-white/5 border-white/10 text-white pl-7 focus:border-[#00D9FF]/50"
+              className="bg-white/5 border-white/10 text-white pl-7 focus:border-[#D4A843]/50"
             />
           </div>
         </div>
@@ -107,7 +107,7 @@ export function ProductFormFields({
             value={form.sku}
             onChange={e => setForm({ ...form, sku: e.target.value })}
             placeholder="SKU-001"
-            className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
+            className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#D4A843]/50"
           />
         </div>
         <div>
@@ -116,7 +116,7 @@ export function ProductFormFields({
             value={form.barcode}
             onChange={e => setForm({ ...form, barcode: e.target.value })}
             placeholder="UPC / EAN"
-            className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
+            className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#D4A843]/50"
           />
         </div>
       </div>
@@ -171,7 +171,7 @@ export function ProductFormFields({
               min="0"
               value={form.initialStock}
               onChange={e => setForm({ ...form, initialStock: e.target.value })}
-              className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
+              className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#D4A843]/50"
             />
           </div>
           <div>
@@ -183,7 +183,7 @@ export function ProductFormFields({
               onChange={e =>
                 setForm({ ...form, lowStockThreshold: e.target.value })
               }
-              className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
+              className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#D4A843]/50"
             />
           </div>
         </div>
@@ -197,7 +197,7 @@ export function ProductFormFields({
           value={form.weight}
           onChange={e => setForm({ ...form, weight: e.target.value })}
           placeholder="0.00"
-          className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#00D9FF]/50"
+          className="bg-white/5 border-white/10 text-white mt-1 focus:border-[#D4A843]/50"
         />
       </div>
       <div>
@@ -210,7 +210,7 @@ export function ProductFormFields({
               setImgBroken(false);
             }}
             placeholder="https://example.com/image.jpg"
-            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
           />
           {showImagePreview && (
             <div className="h-12 w-12 overflow-hidden rounded-lg border border-white/10 bg-white/5 shrink-0">

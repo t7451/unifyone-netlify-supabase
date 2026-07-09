@@ -58,7 +58,7 @@ function PriceBadge({
     );
   }
   return (
-    <span className="text-xs font-semibold text-[#00D9FF] bg-[#00D9FF]/10 border border-[#00D9FF]/20 px-2 py-0.5 rounded-full">
+    <span className="text-xs font-semibold text-[#D4A843] bg-[#D4A843]/10 border border-[#D4A843]/20 px-2 py-0.5 rounded-full">
       ${price}
     </span>
   );
@@ -79,10 +79,10 @@ function ThemeCard({
   return (
     <div
       onClick={() => onSelect(theme)}
-      className="group cursor-pointer bg-[#0D1A3A] border border-white/8 rounded-xl overflow-hidden hover:border-[#00D9FF]/30 hover:shadow-lg hover:shadow-[#00D9FF]/5 transition-all duration-200"
+      className="group cursor-pointer bg-[#020202] border border-white/8 rounded-xl overflow-hidden hover:border-[#D4A843]/30 hover:shadow-lg hover:shadow-[#D4A843]/5 transition-all duration-200"
     >
       {/* Thumbnail */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-[#060D1F]">
+      <div className="relative aspect-[16/10] overflow-hidden bg-[#020202]">
         <img
           src={thumbnail}
           alt={theme.name}
@@ -104,14 +104,14 @@ function ThemeCard({
           <PriceBadge priceType={theme.priceType} price={theme.price} />
         </div>
         {/* Hover overlay */}
-        <div className="absolute inset-0 bg-[#060D1F]/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div className="absolute inset-0 bg-[#020202]/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <Button
             size="sm"
             onClick={e => {
               e.stopPropagation();
               onSelect(theme);
             }}
-            className="bg-[#00D9FF] text-[#060D1F] hover:bg-[#00C4E8] font-semibold gap-1.5"
+            className="bg-[#D4A843] text-[#020202] hover:bg-[#E8C25A] font-semibold gap-1.5"
           >
             View Details <ArrowRight className="w-3.5 h-3.5" />
           </Button>
@@ -121,7 +121,7 @@ function ThemeCard({
       {/* Info */}
       <div className="p-4 space-y-2">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-white text-sm leading-tight line-clamp-1 group-hover:text-[#00D9FF] transition-colors">
+          <h3 className="font-semibold text-white text-sm leading-tight line-clamp-1 group-hover:text-[#D4A843] transition-colors">
             {theme.name}
           </h3>
           <span
@@ -235,14 +235,14 @@ function ThemeDetailModal({
       onClick={onClose}
     >
       <div
-        className="bg-[#0A1128] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+        className="bg-[#020202] border border-white/10 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-white/8">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#00D9FF]/20 to-blue-600/20 border border-[#00D9FF]/20 flex items-center justify-center flex-shrink-0">
-              <Package className="w-7 h-7 text-[#00D9FF]" />
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#D4A843]/20 to-[#B8863B]/20 border border-[#D4A843]/20 flex items-center justify-center flex-shrink-0">
+              <Package className="w-7 h-7 text-[#D4A843]" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">{theme.name}</h2>
@@ -277,7 +277,7 @@ function ThemeDetailModal({
           {/* Main content */}
           <div className="lg:col-span-2 p-6 space-y-6 border-r border-white/8">
             {/* Screenshot */}
-            <div className="rounded-xl overflow-hidden border border-white/8 aspect-[16/10] bg-[#060D1F]">
+            <div className="rounded-xl overflow-hidden border border-white/8 aspect-[16/10] bg-[#020202]">
               <img
                 src={screenshots[0]}
                 alt={theme.name}
@@ -360,7 +360,7 @@ function ThemeDetailModal({
                   className={cn(
                     "w-full font-semibold gap-2",
                     theme.priceType === "free"
-                      ? "bg-gradient-to-r from-[#00D9FF] to-blue-500 hover:from-[#00C4E8] hover:to-blue-600 text-[#060D1F]"
+                      ? "bg-gradient-to-r from-[#D4A843] to-[#B8863B] hover:from-[#E8C25A] hover:to-[#B8863B] text-[#020202]"
                       : "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                   )}
                 >
@@ -483,7 +483,7 @@ export default function ThemeStore() {
     complexityFilter === "all";
 
   return (
-    <div className="min-h-screen bg-[#060D1F] text-white">
+    <div className="min-h-screen bg-[#020202] text-white">
       <PageHead
         title="Theme Store | UnifyOne — Dashboard & Workspace Themes"
         description="Browse free and paid themes for your UnifyOne workspace. Professionally designed dashboard and earnings-tracker looks for gig and 1099 workers — preview and install in minutes."
@@ -522,22 +522,22 @@ export default function ThemeStore() {
         ]}
       />
       {/* ── Hero banner ─────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#0A1128] via-[#0D1A3A] to-[#060D1F] border-b border-white/5">
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#020202] via-[#020202] to-[#020202] border-b border-white/5">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-1/4 w-[500px] h-[300px] bg-[#00D9FF]/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-1/4 w-[400px] h-[200px] bg-blue-600/5 rounded-full blur-3xl" />
+          <div className="absolute top-0 right-1/4 w-[500px] h-[300px] bg-[#D4A843]/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-1/4 w-[400px] h-[200px] bg-[#B8863B]/5 rounded-full blur-3xl" />
         </div>
         <div className="relative max-w-7xl mx-auto px-6 py-16 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <ShoppingBag className="w-6 h-6 text-[#00D9FF]" />
-            <span className="text-sm font-semibold text-[#00D9FF] uppercase tracking-widest">
+            <ShoppingBag className="w-6 h-6 text-[#D4A843]" />
+            <span className="text-sm font-semibold text-[#D4A843] uppercase tracking-widest">
               Optional Storefront Themes
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             {catalogEmpty ? "Storefront themes" : "Optional add-on:"}
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00D9FF] to-blue-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4A843] to-[#E8C25A]">
               {catalogEmpty ? "coming soon" : "storefront themes"}
             </span>
           </h1>
@@ -554,7 +554,7 @@ export default function ThemeStore() {
               placeholder="Search storefront themes by name, industry, or technology…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="pl-11 h-12 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-[#00D9FF]/40 text-sm"
+              className="pl-11 h-12 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-[#D4A843]/40 text-sm"
             />
           </div>
 
@@ -586,7 +586,7 @@ export default function ThemeStore() {
             <SelectTrigger className="w-32 h-9 bg-white/5 border-white/10 text-sm text-slate-300">
               <SelectValue placeholder="Price" />
             </SelectTrigger>
-            <SelectContent className="bg-[#0D1A3A] border-white/10">
+            <SelectContent className="bg-[#020202] border-white/10">
               <SelectItem value="all">All prices</SelectItem>
               <SelectItem value="free">Free</SelectItem>
               <SelectItem value="paid">Paid</SelectItem>
@@ -597,7 +597,7 @@ export default function ThemeStore() {
             <SelectTrigger className="w-36 h-9 bg-white/5 border-white/10 text-sm text-slate-300">
               <SelectValue placeholder="Complexity" />
             </SelectTrigger>
-            <SelectContent className="bg-[#0D1A3A] border-white/10">
+            <SelectContent className="bg-[#020202] border-white/10">
               <SelectItem value="all">All levels</SelectItem>
               <SelectItem value="starter">Starter</SelectItem>
               <SelectItem value="standard">Standard</SelectItem>
@@ -610,7 +610,7 @@ export default function ThemeStore() {
               <SelectTrigger className="w-40 h-9 bg-white/5 border-white/10 text-sm text-slate-300">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0D1A3A] border-white/10">
+              <SelectContent className="bg-[#020202] border-white/10">
                 <SelectItem value="newest">Newest</SelectItem>
                 <SelectItem value="popular">Most popular</SelectItem>
                 <SelectItem value="rating">Highest rated</SelectItem>
@@ -659,7 +659,7 @@ export default function ThemeStore() {
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-[#0D1A3A] border border-white/8 rounded-xl overflow-hidden animate-pulse"
+                className="bg-[#020202] border border-white/8 rounded-xl overflow-hidden animate-pulse"
               >
                 <div className="aspect-[16/10] bg-white/5" />
                 <div className="p-4 space-y-2">

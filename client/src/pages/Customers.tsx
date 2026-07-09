@@ -222,7 +222,7 @@ export default function Customers() {
           {search ? (
             <Badge
               variant="outline"
-              className="border-cyan-400/30 bg-cyan-400/10 text-cyan-200"
+              className="border-[#D4A843]/30 bg-[#D4A843]/10 text-[#E8C25A]"
             >
               Search active
             </Badge>
@@ -242,7 +242,7 @@ export default function Customers() {
           value: visibleOrders.toLocaleString(),
           helper: "Orders tied to visible customers",
           icon: ShoppingBag,
-          tone: "cyan",
+          tone: "amber",
         },
         {
           label: "Tagged profiles",
@@ -351,7 +351,7 @@ export default function Customers() {
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00D9FF]/20 to-[#6A1B9A]/20 border border-white/10 flex items-center justify-center text-xs font-bold text-[#00D9FF]">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A843]/20 to-[#6A1B9A]/20 border border-white/10 flex items-center justify-center text-xs font-bold text-[#D4A843]">
                           {(
                             c.firstName?.[0] ??
                             c.email?.[0] ??
@@ -372,7 +372,7 @@ export default function Customers() {
                     <td className="px-4 py-3">
                       <Badge
                         variant="outline"
-                        className="border-[#00D9FF]/30 text-[#00D9FF] text-xs"
+                        className="border-[#D4A843]/30 text-[#D4A843] text-xs"
                       >
                         {c.totalOrders ?? 0}
                       </Badge>
@@ -444,7 +444,7 @@ export default function Customers() {
         <DialogContent className="max-w-2xl bg-[#0F172A] border-white/10 text-white max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00D9FF]/20 to-[#6A1B9A]/20 border border-white/10 flex items-center justify-center text-sm font-bold text-[#00D9FF]">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#D4A843]/20 to-[#6A1B9A]/20 border border-white/10 flex items-center justify-center text-sm font-bold text-[#D4A843]">
                 {(
                   selectedCustomer?.firstName?.[0] ??
                   selectedCustomer?.email?.[0] ??
@@ -469,7 +469,7 @@ export default function Customers() {
                     icon: ShoppingBag,
                     label: "Total Orders",
                     value: selectedCustomer.totalOrders ?? 0,
-                    color: "#00D9FF",
+                    color: "#D4A843",
                   },
                   {
                     icon: DollarSign,
@@ -602,7 +602,7 @@ export default function Customers() {
                               o.status === "delivered"
                                 ? "text-emerald-400 border-emerald-500/30"
                                 : o.status === "shipped"
-                                  ? "text-cyan-400 border-cyan-500/30"
+                                  ? "text-[#2DD4BF] border-[#2DD4BF]/30"
                                   : o.status === "cancelled"
                                     ? "text-red-400 border-red-500/30"
                                     : "text-amber-400 border-amber-500/30"
@@ -635,7 +635,7 @@ export default function Customers() {
                 setShowProfile(false);
                 openEdit(selectedCustomer);
               }}
-              className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+              className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
             >
               <Edit2 className="w-4 h-4 mr-2" /> Edit Profile
             </Button>
@@ -770,7 +770,7 @@ export default function Customers() {
             <Button
               onClick={handleSave}
               disabled={updateCustomer.isPending}
-              className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+              className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
             >
               {updateCustomer.isPending && (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />

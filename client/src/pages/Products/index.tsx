@@ -100,7 +100,7 @@ export default function Products() {
       actions={
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold">
+            <Button className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold">
               <Plus className="w-4 h-4 mr-2" /> Add Product
             </Button>
           </DialogTrigger>
@@ -134,7 +134,7 @@ export default function Products() {
                   !form.price ||
                   Number(form.price) <= 0
                 }
-                className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold"
+                className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-bold"
               >
                 {createMutation.isPending ? (
                   <>
@@ -157,7 +157,7 @@ export default function Products() {
           {hasActiveFilters ? (
             <Badge
               variant="outline"
-              className="border-cyan-400/30 bg-cyan-400/10 text-cyan-200"
+              className="border-[#D4A843]/30 bg-[#D4A843]/10 text-[#E8C25A]"
             >
               Filtered view
             </Badge>
@@ -203,7 +203,7 @@ export default function Products() {
           value: selectedIds.length.toLocaleString(),
           helper: "Selected for operational action",
           icon: BarChart3,
-          tone: selectedIds.length > 0 ? "cyan" : "slate",
+          tone: selectedIds.length > 0 ? "amber" : "slate",
         },
       ]}
     >
@@ -448,7 +448,7 @@ export default function Products() {
         <Card className="border-dashed border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02]">
           <CardContent className="flex flex-col items-center px-6 py-16 text-center">
             <div className="mb-5 rounded-full border border-white/10 bg-white/5 p-4">
-              <Package className="h-10 w-10 text-[#00D9FF]" />
+              <Package className="h-10 w-10 text-[#D4A843]" />
             </div>
             <h2 className="text-xl font-semibold text-white">
               {hasActiveFilters ? "No matching products" : "No products yet"}
@@ -460,7 +460,7 @@ export default function Products() {
             </p>
             {!hasActiveFilters && (
               <Button
-                className="mt-6 bg-[#00D9FF] font-semibold text-[#0A1128] hover:bg-[#00D9FF]/90"
+                className="mt-6 bg-[#D4A843] font-semibold text-[#020202] hover:bg-[#D4A843]/90"
                 onClick={() => setCreateOpen(true)}
               >
                 <Plus className="mr-2 h-4 w-4" /> Add your first product
@@ -481,14 +481,14 @@ export default function Products() {
             return (
               <Card
                 key={product.id}
-                className="group border-border bg-card transition-all hover:border-[#00D9FF]/30 hover:shadow-lg hover:shadow-[#00D9FF]/5"
+                className="group border-border bg-card transition-all hover:border-[#D4A843]/30 hover:shadow-lg hover:shadow-[#D4A843]/5"
               >
                 <CardContent className="relative p-5">
                   <div className="absolute right-5 top-5 flex gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-8 w-8 border border-white/10 text-gray-400 hover:bg-[#00D9FF]/5 hover:text-white"
+                      className="h-8 w-8 border border-white/10 text-gray-400 hover:bg-[#D4A843]/5 hover:text-white"
                       aria-label={`Edit ${product.name}`}
                       onClick={() => handleEdit(product)}
                     >
@@ -509,7 +509,7 @@ export default function Products() {
                     <Checkbox
                       checked={selectedIds.includes(product.id)}
                       onCheckedChange={() => toggleSelection(product.id)}
-                      className="mt-1 border-white/30 data-[state=checked]:border-[#00D9FF] data-[state=checked]:bg-[#00D9FF] data-[state=checked]:text-[#0A1128]"
+                      className="mt-1 border-white/30 data-[state=checked]:border-[#D4A843] data-[state=checked]:bg-[#D4A843] data-[state=checked]:text-[#020202]"
                       aria-label={`Select ${product.name}`}
                     />
                     <div className="min-w-0 flex-1">
@@ -554,7 +554,7 @@ export default function Products() {
                   )}
 
                   <div className="mb-3 flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-[#00D9FF]">
+                    <span className="text-2xl font-bold text-[#D4A843]">
                       ${Number(product.price).toFixed(2)}
                     </span>
                     {hasDiscount && (
@@ -590,7 +590,7 @@ export default function Products() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="w-full border border-white/10 text-gray-300 transition-colors hover:border-[#00D9FF]/40 hover:bg-[#00D9FF]/5 hover:text-white"
+                    className="w-full border border-white/10 text-gray-300 transition-colors hover:border-[#D4A843]/40 hover:bg-[#D4A843]/5 hover:text-white"
                     onClick={() => handleEdit(product)}
                   >
                     <Edit className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
@@ -611,7 +611,7 @@ export default function Products() {
         <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white text-lg flex items-center gap-2">
-              <Edit className="w-4 h-4 text-[#00D9FF]" />
+              <Edit className="w-4 h-4 text-[#D4A843]" />
               Edit Product
             </DialogTitle>
           </DialogHeader>
@@ -639,7 +639,7 @@ export default function Products() {
                 !editForm.price ||
                 Number(editForm.price) <= 0
               }
-              className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold"
+              className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-bold"
             >
               {updateMutation.isPending ? (
                 <>
