@@ -46,6 +46,35 @@ const BUSINESS_CASE_STUDIES = [
 
 const CASE_STUDIES = [
   {
+    id: "multi-app-driver-earnings",
+    title: "Multi-App Driver: Every Paycheck in One Dashboard, Taxes on Time",
+    subtitle: "Know What You Earn. Keep What You Owe.",
+    metrics: [
+      { label: "Gig Platforms Unified", value: "4" },
+      { label: "IRS Miles Auto-Logged", value: "14,700" },
+      { label: "Quarterly Estimates Hit", value: "4 of 4" },
+    ],
+    description: `A driver splitting the week between Uber, Lyft, DoorDash, and Instacart had four payout schedules, four earnings screens, and no idea what any given hour actually netted after fuel. UnifyOne pulled all of it into one place:
+
+1. **One Earnings Dashboard** (Gig Command): Every shift across all four apps logged together. Start a shift and mileage logs automatically — no spreadsheets, no screenshots of payout screens.
+
+2. **Tax Autopilot**: Captured mileage from every logged shift at the current IRS standard rate and kept a real-time year-to-date deduction total — 14,700 miles the driver never had to write down. Quarterly estimated-tax alerts fired before each deadline with the Form 1040-ES figures ready to go.
+
+3. **GigIQ Shift Intelligence**: Read the driver's real earnings history — not industry benchmarks — to show which hours and zones paid the most after expenses. Weekend delivery blocks beat weekday rideshare by a wide margin, so the schedule changed and net pay per hour went up without adding hours.
+
+4. **Money Manager**: Budgeting and tax set-aside built on real after-expense income, so the money owed each quarter was already sitting there when the alert arrived. Kai answered the "can I deduct this?" questions along the way, on the driver's own numbers.
+
+Result: A full year of IRS mileage captured automatically, all four quarterly estimates filed on time, and a schedule built on real numbers instead of guesswork. Know what you earn. Keep what you owe.`,
+    achievements: [
+      "4 gig platforms consolidated into one earnings dashboard",
+      "14,700 IRS miles auto-logged at the standard mileage rate",
+      "Real-time year-to-date deduction total — no lost receipts",
+      "All 4 quarterly estimates filed on time with Form 1040-ES figures",
+      "GigIQ scheduling recommendations from real shift history",
+      "Money Manager tax set-aside funded from after-expense income",
+    ],
+  },
+  {
     id: "cathedral-framework",
     title: "Cathedral Framework: Design System Architecture",
     subtitle: "From Generic SaaS to Architectural Authority",
@@ -95,37 +124,6 @@ Result: AI that feels native to the platform, not bolted on. Every page can surf
       "AIInsightsCard reusable component (3 pages integrated)",
       "5-email drip sequence (welcome, platform overview, getting started, success stories, limited offer)",
       "Server-side LLM invocation with system context injection",
-    ],
-  },
-  {
-    id: "multi-tenant-commerce",
-    title: "Multi-Tenant Commerce Platform: Isolation & Scale",
-    subtitle: "SaaS Architecture That Doesn't Compromise Security",
-    metrics: [
-      { label: "Tenants Supported", value: "Unlimited" },
-      { label: "Isolation Layers", value: "4" },
-      { label: "Schema Tables", value: "19" },
-    ],
-    description: `Multi-tenancy is not just a database feature — it is an architectural decision that affects every layer of the platform. UnifyOne implements four isolation layers:
-
-1. **Database Layer**: Tenants table with unique slug. All data tables include tenant_id foreign key. Row-level security (RLS) policies enforce tenant isolation at the database level.
-
-2. **Authentication Layer**: Users belong to tenants. JWT tokens include tenant_id. Every tRPC procedure checks ctx.user.tenantId against requested resource.
-
-3. **API Layer**: All tRPC procedures are tenant-scoped. No procedure returns data from other tenants, even if a user somehow bypasses the frontend.
-
-4. **UI Layer**: DashboardLayout includes Tenant Switcher. Users can switch between tenants they own or have been invited to. Active tenant is stored in localStorage and passed to all tRPC calls.
-
-The schema includes 19 tables: tenants, users, products, orders, customers, subscriptions, webhooks, analytics, social_posts, referrals, leads, automations, and more. Each table is tenant-scoped.
-
-Result: A platform that can scale to thousands of tenants without compromising security or data isolation.`,
-    achievements: [
-      "4-layer isolation: database, auth, API, UI",
-      "19 schema tables with tenant_id foreign keys",
-      "Tenant Switcher in sidebar (multi-tenant support)",
-      "Row-level security (RLS) policies at database level",
-      "JWT tokens include tenant_id for server-side verification",
-      "tRPC procedures enforce tenant scoping on every call",
     ],
   },
   {
@@ -195,6 +193,38 @@ Result: Smooth, performant animations that enhance the "cathedral being construc
       "animate-rise keyframe (0.6s cubic-bezier)",
     ],
   },
+  {
+    id: "multi-tenant-commerce",
+    title: "Multi-Tenant Commerce Platform: Isolation & Scale",
+    subtitle:
+      "Optional Commerce Capability, Built Without Compromising Security",
+    metrics: [
+      { label: "Tenants Supported", value: "Unlimited" },
+      { label: "Isolation Layers", value: "4" },
+      { label: "Schema Tables", value: "19" },
+    ],
+    description: `Commerce is an optional, secondary capability of UnifyOne — the platform leads with gig earnings and taxes — but for the operators who turn it on, multi-tenancy is not just a database feature. It is an architectural decision that affects every layer of the platform. UnifyOne implements four isolation layers:
+
+1. **Database Layer**: Tenants table with unique slug. All data tables include tenant_id foreign key. Row-level security (RLS) policies enforce tenant isolation at the database level.
+
+2. **Authentication Layer**: Users belong to tenants. JWT tokens include tenant_id. Every tRPC procedure checks ctx.user.tenantId against requested resource.
+
+3. **API Layer**: All tRPC procedures are tenant-scoped. No procedure returns data from other tenants, even if a user somehow bypasses the frontend.
+
+4. **UI Layer**: DashboardLayout includes Tenant Switcher. Users can switch between tenants they own or have been invited to. Active tenant is stored in localStorage and passed to all tRPC calls.
+
+The schema includes 19 tables: tenants, users, products, orders, customers, subscriptions, webhooks, analytics, social_posts, referrals, leads, automations, and more. Each table is tenant-scoped.
+
+Result: A platform that can scale to thousands of tenants without compromising security or data isolation.`,
+    achievements: [
+      "4-layer isolation: database, auth, API, UI",
+      "19 schema tables with tenant_id foreign keys",
+      "Tenant Switcher in sidebar (multi-tenant support)",
+      "Row-level security (RLS) policies at database level",
+      "JWT tokens include tenant_id for server-side verification",
+      "tRPC procedures enforce tenant scoping on every call",
+    ],
+  },
 ];
 
 export default function CaseStudies() {
@@ -204,7 +234,7 @@ export default function CaseStudies() {
         <title>Case Studies | UnifyOne Documentation</title>
         <meta
           name="description"
-          content="Detailed case studies of UnifyOne platform features: Cathedral Framework, Kai, multi-tenant architecture, Stripe CAPI bridge, and scroll reveals."
+          content="How gig workers earn more with UnifyOne: a multi-app driver consolidates rideshare and delivery earnings, auto-tracks IRS mileage, and hits quarterly-tax estimates with GigIQ, Tax Autopilot, Money Manager, and Kai — plus the engineering behind the platform."
         />
         <link rel="canonical" href={`${SITE_URL}/documents/case-studies`} />
         <meta
@@ -213,7 +243,7 @@ export default function CaseStudies() {
         />
         <meta
           property="og:description"
-          content="Detailed case studies of major platform features and integrations."
+          content="Gig-worker case studies: consolidated earnings, automatic IRS mileage, and quarterly taxes on autopilot — plus the engineering behind the platform."
         />
         <meta
           property="og:url"
@@ -225,7 +255,7 @@ export default function CaseStudies() {
         />
         <meta
           name="twitter:description"
-          content="Detailed case studies of major platform features and integrations."
+          content="Gig-worker case studies: consolidated earnings, automatic IRS mileage, and quarterly taxes on autopilot — plus the engineering behind the platform."
         />
         <script type="application/ld+json">
           {JSON.stringify({
@@ -233,7 +263,7 @@ export default function CaseStudies() {
             "@type": "CollectionPage",
             name: "UnifyOne Case Studies",
             description:
-              "Detailed case studies of major platform features and integrations.",
+              "Gig-worker case studies — consolidated earnings, automatic IRS mileage, and quarterly taxes on autopilot — plus the engineering behind the platform.",
             url: `${SITE_URL}/documents/case-studies`,
             breadcrumb: {
               "@type": "BreadcrumbList",
