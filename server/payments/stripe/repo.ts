@@ -8,6 +8,7 @@
  * reads/writes, identical side-effect order.
  */
 import type Stripe from "stripe";
+import { sql } from "drizzle-orm";
 import { getDb } from "../../db";
 import { stripeWebhookEvents } from "../../../drizzle/schema";
 import { errMsg } from "../../_core/errors";
@@ -44,8 +45,12 @@ export async function recordWebhookEvent(
       })
       .onConflictDoUpdate({
         target: stripeWebhookEvents.eventId,
+        // Never downgrade a row that already reached "processed". Stripe retries
+        // the same event id; an unconditional upsert to "received" would reset a
+        // processed row, letting the downstream dedup check re-process it and
+        // double-apply credits/automation. Once processed, it stays processed.
         set: {
-          status,
+          status: sql`CASE WHEN ${stripeWebhookEvents.status} = 'processed' THEN 'processed' ELSE ${status} END`,
           errorMessage: errorMessage ?? null,
           updatedAt: new Date(),
         },
