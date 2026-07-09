@@ -8,15 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import {
-  ShoppingBag,
   BarChart3,
-  Zap,
+  Bell,
+  Car,
+  Layers,
   Shield,
   ArrowRight,
   Loader2,
-  Globe,
-  CreditCard,
-  Users,
+  Sparkles,
+  Wallet,
   Mail,
   AtSign,
 } from "lucide-react";
@@ -28,6 +28,7 @@ import {
   trackLogin,
 } from "@/lib/userTracking";
 import { trpc } from "@/lib/trpc";
+import { GIG_PLAN_CATALOG } from "@shared/gigPricing";
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
   | string
@@ -62,7 +63,7 @@ function getReturnTo(): string {
   const returnTo = params.get("returnTo") ?? params.get("next");
   const plan = params.get("plan");
   if (returnTo && returnTo.startsWith("/")) return returnTo;
-  if (plan && ["starter", "pro", "scale"].includes(plan)) {
+  if (plan && GIG_PLAN_CATALOG.some(p => p.slug === plan)) {
     return `/checkout?plan=${plan}`;
   }
   return "/overview";
@@ -76,14 +77,17 @@ function getTenantSlug(): string {
 
 const FEATURES = [
   {
-    icon: ShoppingBag,
-    text: "Multi-tenant product catalog & order management",
+    icon: BarChart3,
+    text: "GigIQ — earnings clarity for every shift and payout",
   },
-  { icon: BarChart3, text: "Real-time analytics across every channel" },
-  { icon: Zap, text: "Automated workflows via n8n, Zapier & Mailchimp" },
-  { icon: CreditCard, text: "Stripe & PayPal payments, built in" },
-  { icon: Users, text: "Team management with role-based access" },
-  { icon: Globe, text: "Theme Store — launch branded storefronts instantly" },
+  { icon: Car, text: "Tax Autopilot with IRS-rate mileage tracking" },
+  { icon: Wallet, text: "Money Manager — income, expenses & set-aside" },
+  { icon: Layers, text: "Every gig app's earnings, consolidated in one place" },
+  { icon: Bell, text: "Quarterly estimated-tax alerts before each deadline" },
+  {
+    icon: Sparkles,
+    text: "Kai — your AI copilot for earnings & tax questions",
+  },
 ];
 
 function LogoMark({ size = 40 }: { size?: number }) {
@@ -699,15 +703,16 @@ export default function Login({
         <div className="relative z-10 space-y-6">
           <div>
             <h1 className="text-3xl font-bold text-white leading-tight mb-3">
-              Your entire commerce
+              Know what you earn.
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00D9FF] to-blue-400">
-                ecosystem, unified.
+                Keep what you owe.
               </span>
             </h1>
             <p className="text-slate-400 text-sm leading-relaxed">
-              One platform to manage products, orders, payments, teams, and
-              automations across every channel and integration.
+              Earnings clarity and tax confidence for gig and 1099 workers —
+              track every shift, mile, and dollar across all your apps, with
+              quarterly taxes handled.
             </p>
           </div>
 
