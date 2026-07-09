@@ -198,7 +198,9 @@ export default function GeneralSettings() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-gray-300 text-sm">Store Slug</Label>
+              <Label className="text-gray-300 text-sm">
+                {isCommerce ? "Store Slug" : "Workspace Slug"}
+              </Label>
               <div className="flex gap-2">
                 <Input
                   value={tenant?.slug ?? ""}
@@ -249,7 +251,8 @@ export default function GeneralSettings() {
               Domain & Branding
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Custom domain and visual identity for your store
+              Custom domain and visual identity for your{" "}
+              {isCommerce ? "store" : "workspace"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -311,7 +314,7 @@ export default function GeneralSettings() {
                     return safeSrc ? (
                       <img
                         src={safeSrc}
-                        alt="Store logo"
+                        alt={isCommerce ? "Store logo" : "Workspace logo"}
                         className="h-10 w-10 object-contain rounded"
                         onError={e => {
                           (e.target as HTMLImageElement).style.display = "none";
