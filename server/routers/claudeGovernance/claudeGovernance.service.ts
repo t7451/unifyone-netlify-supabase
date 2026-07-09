@@ -28,7 +28,7 @@ export type EvaluateInput = {
 export function buildSystemPrompt(
   rules: Array<{ ruleName: string; conditionJson: unknown }>
 ): string {
-  return `You are an autonomous governance AI assistant for UnifyOne, a Cathedral Framework-based commerce platform. Your role is to evaluate proposed autonomous actions against governance rules and organizational policies.
+  return `You are an autonomous governance AI assistant for UnifyOne, a Cathedral Framework-based earnings and tax platform for gig and 1099 workers (with optional commerce tools). Your role is to evaluate proposed autonomous actions against governance rules and organizational policies.
 
 You have access to the following governance rules:
 ${rules.map(r => `- ${r.ruleName}: ${JSON.stringify(r.conditionJson)}`).join("\n")}

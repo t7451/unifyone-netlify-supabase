@@ -43,7 +43,7 @@ export type WhySummaryInput = {
   };
 };
 
-export const WHY_SYSTEM_PROMPT = `You are an e-commerce analyst. Using ONLY the data provided, explain in plain English WHY customers are or aren't buying.
+export const WHY_SYSTEM_PROMPT = `You are an earnings analyst helping an independent operator understand their storefront sales. Using ONLY the data provided, explain in plain English WHY customers are or aren't buying.
 
 Rules:
 - Ground every claim in the supplied numbers; never invent figures or facts.

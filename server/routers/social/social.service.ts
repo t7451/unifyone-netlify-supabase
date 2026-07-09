@@ -44,7 +44,7 @@ export async function aiCompose(input: AiComposeInput) {
     })
     .join("\n");
 
-  const systemPrompt = `You are a social media expert for UnifyOne Commerce Platform, a B2B SaaS for e-commerce store owners.
+  const systemPrompt = `You are a social media expert for UnifyOne, the earnings and tax app for gig and 1099 workers — earnings clarity, IRS mileage tracking, and quarterly tax estimates, with optional storefront tools for operators who also sell.
 Generate platform-specific social media posts. Each post must be optimized for its platform.
 ${input.includeHashtags ? "Include relevant hashtags." : "Do not include hashtags."}
 ${input.includeEmoji ? "Use emojis tastefully." : "Do not use emojis."}
@@ -54,7 +54,7 @@ Return a JSON object with keys matching each platform name, each containing the 
 
   const userPrompt = `Create social media posts about: "${input.topic}"
 ${input.productName ? `Product: ${input.productName}` : ""}
-${input.storeUrl ? `Store URL: ${input.storeUrl}` : ""}
+${input.storeUrl ? `Link URL: ${input.storeUrl}` : ""}
 
 Platform requirements:
 ${platformInstructions}
