@@ -12,6 +12,7 @@ import type { SQL } from "drizzle-orm";
 import { eq, gte, lte } from "drizzle-orm";
 import { getAppUrl } from "../../_core/env";
 import { invokeLLM } from "../../_core/llm";
+import { broadcastToUser } from "../../_core/sseManager";
 import { checkAndResolveFriendChallengesForUser } from "../../challengeCompletion";
 import * as repo from "./moneyManager.repo";
 import { gigShifts } from "../../../drizzle/schema";
@@ -113,6 +114,15 @@ export const shiftsService = {
       `Completed ${existing.platform} shift — $${input.grossEarnings.toFixed(2)} earned`,
       String(input.shiftId)
     );
+
+    // Push a real-time shift_update so the operator's earnings/stats refresh
+    // instantly without a manual refetch.
+    broadcastToUser(ctx.user.id, "shift_update", {
+      shiftId: input.shiftId,
+      status: "completed",
+      grossEarnings: input.grossEarnings,
+      durationMinutes,
+    });
 
     // Auto-detect friend challenge completion after shift progress updates.
     await checkAndResolveFriendChallengesForUser(ctx.user.id);
