@@ -9,6 +9,7 @@ import {
   Rocket,
 } from "lucide-react";
 
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,9 +23,10 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  FEATURE_CATEGORIES,
   FEATURE_COUNT,
-  ONBOARDING_GOALS,
+  onboardingGoalsForProduct,
+  orderedCategoriesForProduct,
+  resolveFeaturePath,
   type FeatureCategory,
 } from "@/lib/featureCatalog";
 import { cn } from "@/lib/utils";
@@ -46,7 +48,39 @@ const toneClasses: Record<FeatureCategory["tone"], string> = {
   slate: "border-slate-400/25 bg-slate-400/10 text-slate-200",
 };
 
-const launchSequence = [
+const gigLaunchSequence = [
+  {
+    title: "Foundation",
+    description: "Confirm Settings, Team, Notifications, and Integrations.",
+  },
+  {
+    title: "Earning Visibility",
+    description:
+      "Open Gig Command, start a tracked shift, and review Money Manager.",
+  },
+  {
+    title: "Tax Readiness",
+    description:
+      "Log mileage, review deductions, and prepare quarterly-tax estimates.",
+  },
+  {
+    title: "Multi-App Income",
+    description:
+      "Consolidate earnings across every gig app and compare Gig Worker Plans.",
+  },
+  {
+    title: "Automation Layer",
+    description:
+      "Turn on Automations, Kai, mobile workflows, and builder workspaces.",
+  },
+  {
+    title: "Optional Commerce",
+    description:
+      "Add Products, test Checkout, and connect payment rails if you also sell.",
+  },
+];
+
+const commerceLaunchSequence = [
   {
     title: "Foundation",
     description: "Confirm Settings, Team, Authorization Hub, and Integrations.",
@@ -85,36 +119,49 @@ export function FeatureOnboardingWizard({
   onComplete,
   onNavigate,
 }: FeatureOnboardingWizardProps) {
+  const { user } = useAuth();
+  const primaryProduct = user?.primaryProduct;
+  // Product-aware ordering: gig operators (the default) walk Gig Operations
+  // first with commerce demoted; commerce tenants keep the commerce-led walk.
+  const categories = useMemo(
+    () => orderedCategoriesForProduct(primaryProduct),
+    [primaryProduct]
+  );
+  const goals = useMemo(
+    () => onboardingGoalsForProduct(primaryProduct),
+    [primaryProduct]
+  );
+  const launchSequence =
+    primaryProduct === "commerce" ? commerceLaunchSequence : gigLaunchSequence;
+
   const [activeStep, setActiveStep] = useState(0);
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([
-    ONBOARDING_GOALS[0],
-    ONBOARDING_GOALS[1],
-    ONBOARDING_GOALS[3],
-  ]);
+  const [selectedGoals, setSelectedGoals] = useState<string[]>(() =>
+    goals.slice(0, 3)
+  );
 
   const steps = useMemo(
     () => [
       "Operating path",
-      ...FEATURE_CATEGORIES.map(item => item.title),
+      ...categories.map(item => item.title),
       "Launch plan",
     ],
-    []
+    [categories]
   );
   const finalStep = steps.length - 1;
   const progress = Math.round(((activeStep + 1) / steps.length) * 100);
   const activeCategory =
     activeStep > 0 && activeStep < finalStep
-      ? FEATURE_CATEGORIES[activeStep - 1]
+      ? categories[activeStep - 1]
       : null;
 
   useEffect(() => {
     if (open) {
       const categoryIndex = initialCategoryId
-        ? FEATURE_CATEGORIES.findIndex(item => item.id === initialCategoryId)
+        ? categories.findIndex(item => item.id === initialCategoryId)
         : -1;
       setActiveStep(categoryIndex >= 0 ? categoryIndex + 1 : 0);
     }
-  }, [initialCategoryId, open]);
+  }, [categories, initialCategoryId, open]);
 
   const toggleGoal = (goal: string) => {
     setSelectedGoals(current =>
@@ -125,7 +172,9 @@ export function FeatureOnboardingWizard({
   };
 
   const goToFeature = (path: string) => {
-    onNavigate(path);
+    // The home tile stores a sentinel path; resolve the real landing for this
+    // tenant's primary product before navigating.
+    onNavigate(resolveFeaturePath(path, primaryProduct));
   };
 
   return (
@@ -181,7 +230,7 @@ export function FeatureOnboardingWizard({
                     </div>
                   </div>
                   <div className="mt-5 grid gap-2 sm:grid-cols-2">
-                    {ONBOARDING_GOALS.map(goal => {
+                    {goals.map(goal => {
                       const selected = selectedGoals.includes(goal);
 
                       return (
@@ -216,24 +265,21 @@ export function FeatureOnboardingWizard({
                         What this walkthrough covers
                       </h3>
                       <p className="mt-1 text-sm text-slate-400">
-                        Six operating areas across commerce, growth, AI,
-                        finance, governance, and developer tooling.
+                        {categories.length} operating areas across gig work,
+                        commerce, growth, AI, finance, governance, and developer
+                        tooling.
                       </p>
                     </div>
                   </div>
                   <div className="mt-5 space-y-3">
-                    {FEATURE_CATEGORIES.map(category => {
+                    {categories.map((category, index) => {
                       const Icon = category.icon;
 
                       return (
                         <button
                           key={category.id}
                           type="button"
-                          onClick={() =>
-                            setActiveStep(
-                              FEATURE_CATEGORIES.indexOf(category) + 1
-                            )
-                          }
+                          onClick={() => setActiveStep(index + 1)}
                           className="flex w-full items-center gap-3 rounded-lg border border-white/10 bg-black/10 p-3 text-left transition-colors hover:border-cyan-300/25 hover:bg-cyan-300/5"
                         >
                           <div
@@ -365,7 +411,7 @@ export function FeatureOnboardingWizard({
                       </h3>
                       <p className="mt-2 text-sm leading-6 text-slate-300">
                         Start with the modules that prove the workspace can
-                        sell, then layer growth, automation, finance, and
+                        earn, then layer growth, automation, finance, and
                         governance.
                       </p>
                     </div>
