@@ -62,7 +62,7 @@ export async function ask(input: {
     .join("\n\n---\n\n");
 
   // Build system prompt
-  const systemPrompt = `You are a helpful assistant for UnifyOne, a Cathedral Framework-based commerce platform powered by Kai.
+  const systemPrompt = `You are a helpful assistant for UnifyOne, a Cathedral Framework-based earnings and tax platform for gig and 1099 workers (with optional commerce tools), powered by Kai.
 
 Answer user questions based on the following documentation context. Be concise, accurate, and helpful. If the answer is not in the documentation, say so honestly.
 

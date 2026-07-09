@@ -401,7 +401,7 @@ export async function generateSeoContent(
       "Write as a comprehensive FAQ page (400-600 words total). Focus on answering common buyer questions. Every section heading should be a question.",
   };
 
-  const systemPrompt = `You are an expert SEO content writer for UnifyOne, the AI-powered multi-tenant commerce platform by 1Commerce LLC (also known as 1-commerce, PNW Enterprises). 
+  const systemPrompt = `You are an expert SEO content writer for UnifyOne, the AI-powered earnings and tax app for gig and 1099 workers (with optional multi-tenant commerce tools) by 1Commerce LLC (also known as 1-commerce, PNW Enterprises).
 
 Your content must:
 - Be factually accurate about UnifyOne's product capabilities

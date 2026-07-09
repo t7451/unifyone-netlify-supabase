@@ -199,7 +199,7 @@ export async function create(
     }
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message: "Failed to create store. Please try again.",
+      message: "Failed to create workspace. Please try again.",
       cause: err,
     });
   }
@@ -208,7 +208,7 @@ export async function create(
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message:
-        "Store was created but could not be retrieved. Please refresh and try again.",
+        "Workspace was created but could not be retrieved. Please refresh and try again.",
     });
   }
   await updateUserTenant(actor.id, newTenant.id, {
