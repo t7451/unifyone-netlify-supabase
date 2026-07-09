@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, router } from "../../_core/trpc";
+import { operatorProcedure, router } from "../../_core/trpc";
 import * as service from "./revenueStreams.service";
 
 const streamTypeEnum = z.enum([
@@ -13,11 +13,11 @@ const streamTypeEnum = z.enum([
 const streamStatusEnum = z.enum(["active", "pending", "inactive", "broken"]);
 
 export const revenueStreamsRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
+  list: operatorProcedure.query(async ({ ctx }) => {
     return service.listStreams(ctx.user.id);
   }),
 
-  create: protectedProcedure
+  create: operatorProcedure
     .input(
       z.object({
         name: z.string().min(1).max(200),
@@ -35,7 +35,7 @@ export const revenueStreamsRouter = router({
       return service.createStream(ctx.user.id, input);
     }),
 
-  update: protectedProcedure
+  update: operatorProcedure
     .input(
       z.object({
         id: z.number(),
@@ -54,13 +54,13 @@ export const revenueStreamsRouter = router({
       return service.updateStreamRecord(ctx.user.id, input);
     }),
 
-  delete: protectedProcedure
+  delete: operatorProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       return service.deleteStreamRecord(ctx.user.id, input.id);
     }),
 
-  getSummary: protectedProcedure.query(async ({ ctx }) => {
+  getSummary: operatorProcedure.query(async ({ ctx }) => {
     return service.getStreamSummary(ctx.user.id);
   }),
 });

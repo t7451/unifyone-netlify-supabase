@@ -35,6 +35,9 @@ vi.mock("./db", () => {
 
   return {
     getDb: vi.fn().mockResolvedValue(db),
+    // revenueStreams is operator-gated; pin the tenant's primary product to
+    // "gig" so the gate passes in these DB-free tests.
+    getTenantPrimaryProduct: vi.fn().mockResolvedValue("gig"),
     getTenantByOwnerId: vi.fn().mockResolvedValue(null),
     getTenantById: vi.fn().mockResolvedValue(null),
     createTenant: vi.fn().mockResolvedValue(null),
@@ -49,7 +52,14 @@ vi.mock("./db", () => {
     createOrder: vi.fn().mockResolvedValue(null),
     updateOrderStatus: vi.fn().mockResolvedValue(undefined),
     getCustomers: vi.fn().mockResolvedValue([]),
-    getAnalyticsSummary: vi.fn().mockResolvedValue({ totalRevenue: "0", orderCount: 0, customerCount: 0, productCount: 0 }),
+    getAnalyticsSummary: vi
+      .fn()
+      .mockResolvedValue({
+        totalRevenue: "0",
+        orderCount: 0,
+        customerCount: 0,
+        productCount: 0,
+      }),
     getRevenueByDay: vi.fn().mockResolvedValue([]),
     getTopProducts: vi.fn().mockResolvedValue([]),
     getWebhookEvents: vi.fn().mockResolvedValue([]),
@@ -180,8 +190,22 @@ describe("revenueStreams router — getSummary", () => {
   it("returns summary with totalMonthly and byType breakdown", async () => {
     _dbState.selectResult = [
       { ...mockStream, monthlyValue: "250.00", status: "active" },
-      { ...mockStream, id: 2, name: "Consulting", type: "consulting", monthlyValue: "1500.00", status: "active" },
-      { ...mockStream, id: 3, name: "Broken Stream", type: "affiliate", monthlyValue: "50.00", status: "broken" },
+      {
+        ...mockStream,
+        id: 2,
+        name: "Consulting",
+        type: "consulting",
+        monthlyValue: "1500.00",
+        status: "active",
+      },
+      {
+        ...mockStream,
+        id: 3,
+        name: "Broken Stream",
+        type: "affiliate",
+        monthlyValue: "50.00",
+        status: "broken",
+      },
     ];
     const ctx = makeCtx();
     const caller = appRouter.createCaller(ctx);
