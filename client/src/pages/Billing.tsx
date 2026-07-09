@@ -1,3 +1,4 @@
+import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { ChangePlanCard } from "@/components/ChangePlanCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -225,6 +226,9 @@ function UsageBar({
 export default function Billing() {
   const [portalLoading, setPortalLoading] = useState(false);
 
+  const { user } = useAuth();
+  // Gig is the default experience; commerce is the optional storefront add-on.
+  const isCommerce = (user?.primaryProduct ?? "gig") === "commerce";
   const { data: subStatus, isLoading: subLoading } =
     trpc.subscription.getStatus.useQuery();
   const { data: usage, isLoading: usageLoading } =
@@ -514,8 +518,9 @@ export default function Billing() {
                     remaining
                   </p>
                   <p className="text-sm text-slate-300">
-                    Upgrade now to keep your storefront live and retain access
-                    to paid billing features.
+                    {isCommerce
+                      ? "Upgrade now to keep your storefront live and retain access to paid billing features."
+                      : "Upgrade now to keep your earnings & tax tools live and retain access to paid billing features."}
                   </p>
                 </div>
               </div>

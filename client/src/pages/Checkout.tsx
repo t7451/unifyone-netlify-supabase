@@ -337,7 +337,13 @@ export default function Checkout() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => navigate(planSlug ? "/" : "/dashboard")}
+            onClick={() =>
+              navigate(
+                planSlug
+                  ? "/"
+                  : landingPathForProduct(meQuery.data?.primaryProduct)
+              )
+            }
             className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
