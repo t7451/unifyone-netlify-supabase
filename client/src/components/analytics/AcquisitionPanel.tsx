@@ -99,7 +99,7 @@ export function AcquisitionPanel() {
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base text-white">
-              <Compass className="h-4 w-4 text-[#00D9FF]" />
+              <Compass className="h-4 w-4 text-[#D4A843]" />
               Traffic sources
             </CardTitle>
           </CardHeader>

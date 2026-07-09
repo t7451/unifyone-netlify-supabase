@@ -114,7 +114,7 @@ export function SurveyInsightsPanel() {
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base text-white">
-              <Quote className="h-4 w-4 text-[#00D9FF]" />
+              <Quote className="h-4 w-4 text-[#D4A843]" />
               Recent responses
               {data && data.total > 0 ? (
                 <Badge

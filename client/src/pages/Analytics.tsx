@@ -108,7 +108,7 @@ export default function Analytics() {
       label: "Store Revenue",
       value: formatCurrency(Number(summary.data?.totalRevenue ?? 0)),
       icon: DollarSign,
-      color: "#00D9FF",
+      color: "#2DD4BF",
     },
     {
       label: "Total Orders",
@@ -231,8 +231,8 @@ export default function Analytics() {
                 <ComposedChart data={chartData}>
                   <defs>
                     <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#00D9FF" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#00D9FF" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#2DD4BF" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#2DD4BF" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
@@ -274,7 +274,7 @@ export default function Analytics() {
                     yAxisId="revenue"
                     type="monotone"
                     dataKey="revenue"
-                    stroke="#00D9FF"
+                    stroke="#2DD4BF"
                     strokeWidth={2}
                     fill="url(#revGrad)"
                     name="Revenue ($)"

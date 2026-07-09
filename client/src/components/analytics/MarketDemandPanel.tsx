@@ -141,7 +141,7 @@ export function MarketDemandPanel() {
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base text-white">
-              <Telescope className="h-4 w-4 text-[#00D9FF]" />
+              <Telescope className="h-4 w-4 text-[#D4A843]" />
               Explore market trends
             </CardTitle>
           </CardHeader>
@@ -154,13 +154,13 @@ export function MarketDemandPanel() {
                   if (e.key === "Enter") explore();
                 }}
                 placeholder="e.g. a product or category"
-                className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-[#00D9FF]/50 focus:outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-[#D4A843]/50 focus:outline-none"
               />
               <Button
                 size="sm"
                 onClick={explore}
                 disabled={trends.isPending || !term.trim()}
-                className="bg-[#00D9FF] font-semibold text-black hover:bg-[#00B8D9]"
+                className="bg-[#D4A843] font-semibold text-black hover:bg-[#B8863B]"
               >
                 {trends.isPending ? "…" : "Explore"}
               </Button>
