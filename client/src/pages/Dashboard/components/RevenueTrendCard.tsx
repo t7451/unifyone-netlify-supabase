@@ -60,7 +60,7 @@ export function RevenueTrendCard({
               className={cn(
                 "h-8 px-3",
                 chartRange === value &&
-                  "bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90"
+                  "bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90"
               )}
               onClick={() => setChartRange(value)}
             >
@@ -96,8 +96,8 @@ export function RevenueTrendCard({
                   x2="0"
                   y2="1"
                 >
-                  <stop offset="5%" stopColor="#00D9FF" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#00D9FF" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#D4A843" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#D4A843" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -120,7 +120,7 @@ export function RevenueTrendCard({
                 tickFormatter={value => formatCompactCurrency(Number(value))}
               />
               <Tooltip
-                cursor={{ stroke: "#00D9FF", strokeDasharray: "4 4" }}
+                cursor={{ stroke: "#D4A843", strokeDasharray: "4 4" }}
                 contentStyle={{
                   backgroundColor: "#0F172A",
                   border: "1px solid rgba(148, 163, 184, 0.18)",
@@ -135,12 +135,12 @@ export function RevenueTrendCard({
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="#00D9FF"
+                stroke="#D4A843"
                 strokeWidth={2}
                 fill="url(#dashboardRevenue)"
                 activeDot={{
                   r: 5,
-                  fill: "#00D9FF",
+                  fill: "#D4A843",
                   stroke: "#0F172A",
                   strokeWidth: 2,
                 }}

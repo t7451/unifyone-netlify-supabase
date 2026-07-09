@@ -61,7 +61,7 @@ export function TopProductsCard({
               key={`${product.productId ?? product.productName}-${index}`}
               className="flex items-start gap-3 rounded-xl border border-border/60 bg-background/30 p-3"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#00D9FF]/10 text-sm font-semibold text-[#00D9FF]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#D4A843]/10 text-sm font-semibold text-[#D4A843]">
                 {index + 1}
               </div>
               <div className="min-w-0 flex-1">

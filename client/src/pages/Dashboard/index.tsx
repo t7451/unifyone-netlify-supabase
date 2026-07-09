@@ -82,7 +82,7 @@ export default function Dashboard() {
           </Button>
           <Button
             onClick={() => navigate("/orders")}
-            className="bg-[#00D9FF] font-semibold text-[#0A1128] hover:bg-[#00D9FF]/90"
+            className="bg-[#D4A843] font-semibold text-[#020202] hover:bg-[#D4A843]/90"
           >
             Work order queue <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
