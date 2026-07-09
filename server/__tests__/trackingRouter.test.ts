@@ -23,6 +23,15 @@ vi.mock("../db", () => ({
   trackBehaviorEvents: trackBehaviorEventsMock,
 }));
 
+const { getTenantPrimaryProductMock } = vi.hoisted(() => ({
+  getTenantPrimaryProductMock: vi.fn(async (_tenantId: number) => "gig"),
+}));
+
+// primaryProduct is server-derived (spoof-proof) at the ingest choke point.
+vi.mock("../db/tenants", () => ({
+  getTenantPrimaryProduct: getTenantPrimaryProductMock,
+}));
+
 vi.mock("../_core/rateLimiter", () => ({
   publicFormLimiter: {
     check: vi.fn(async () => ({ allowed: true, retryAfterMs: 0 })),
@@ -49,6 +58,8 @@ beforeEach(() => {
   trackBehaviorEventsMock.mockImplementation(
     async (_t, events) => events.length
   );
+  getTenantPrimaryProductMock.mockClear();
+  getTenantPrimaryProductMock.mockResolvedValue("gig");
 });
 
 describe("tracking.ingest", () => {
@@ -230,5 +241,47 @@ describe("tracking.ingest", () => {
       region: "CA",
       city: "San Francisco",
     });
+  });
+
+  it("stamps the tenant's server-derived primaryProduct into every event's properties", async () => {
+    getTenantPrimaryProductMock.mockResolvedValue("commerce");
+    const caller = trackingRouter.createCaller(
+      makeCtx({ id: 3, tenantId: 42 })
+    );
+
+    await caller.ingest({
+      // A client trying to spoof the dimension via props must be overridden
+      // server-side — the reserved field always wins.
+      events: [
+        { type: "page_view", path: "/a", props: { primaryProduct: "gig" } },
+        { type: "page_view", path: "/b" },
+      ],
+    });
+
+    // Resolved ONCE per request, not per event (avoids N queries).
+    expect(getTenantPrimaryProductMock).toHaveBeenCalledTimes(1);
+    expect(getTenantPrimaryProductMock).toHaveBeenCalledWith(42);
+
+    const [, events] = trackBehaviorEventsMock.mock.calls[0] as [
+      number,
+      Array<Record<string, unknown>>,
+    ];
+    expect(events).toHaveLength(2);
+    expect(events[0].properties).toMatchObject({ primaryProduct: "commerce" });
+    expect(events[1].properties).toMatchObject({ primaryProduct: "commerce" });
+  });
+
+  it("falls back to the gig-first default for primaryProduct", async () => {
+    // getTenantPrimaryProduct returns "gig" when the tenant/DB is unavailable.
+    getTenantPrimaryProductMock.mockResolvedValue("gig");
+    const caller = trackingRouter.createCaller(makeCtx({ id: 4, tenantId: 8 }));
+
+    await caller.ingest({ events: [{ type: "page_view", path: "/" }] });
+
+    const [, events] = trackBehaviorEventsMock.mock.calls[0] as [
+      number,
+      Array<Record<string, unknown>>,
+    ];
+    expect(events[0].properties).toMatchObject({ primaryProduct: "gig" });
   });
 });
