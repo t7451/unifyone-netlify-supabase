@@ -113,9 +113,9 @@ export default function GeneralSettings() {
           <CardHeader>
             <CardTitle className="text-white text-base flex items-center gap-2">
               {isCommerce ? (
-                <Store className="w-4 h-4 text-[#00D9FF]" />
+                <Store className="w-4 h-4 text-[#D4A843]" />
               ) : (
-                <Car className="w-4 h-4 text-[#00D9FF]" />
+                <Car className="w-4 h-4 text-[#D4A843]" />
               )}
               Primary Experience
             </CardTitle>
@@ -144,7 +144,7 @@ export default function GeneralSettings() {
                     className={cn(
                       "flex flex-col gap-2 rounded-xl border p-4 text-left transition-colors disabled:opacity-60",
                       isSelected
-                        ? "border-[#00D9FF]/40 bg-[#00D9FF]/10"
+                        ? "border-[#D4A843]/40 bg-[#D4A843]/10"
                         : "border-white/10 bg-white/5 hover:border-white/20"
                     )}
                   >
@@ -152,7 +152,7 @@ export default function GeneralSettings() {
                       className={cn(
                         "flex h-9 w-9 items-center justify-center rounded-full",
                         isSelected
-                          ? "bg-[#00D9FF] text-[#0A1128]"
+                          ? "bg-[#D4A843] text-[#020202]"
                           : "bg-white/5 text-gray-400"
                       )}
                     >
@@ -175,7 +175,7 @@ export default function GeneralSettings() {
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-base flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-[#00D9FF]" />
+              <Building2 className="w-4 h-4 text-[#D4A843]" />
               {isCommerce ? "Store Identity" : "Workspace Identity"}
             </CardTitle>
             <CardDescription className="text-gray-400">
@@ -193,7 +193,7 @@ export default function GeneralSettings() {
                   tenant?.name ??
                   (isCommerce ? "Your store name" : "Your workspace name")
                 }
-                className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+                className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
               />
             </div>
 
@@ -247,7 +247,7 @@ export default function GeneralSettings() {
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-base flex items-center gap-2">
-              <Globe className="w-4 h-4 text-[#00D9FF]" />
+              <Globe className="w-4 h-4 text-[#D4A843]" />
               Domain & Branding
             </CardTitle>
             <CardDescription className="text-gray-400">
@@ -263,7 +263,7 @@ export default function GeneralSettings() {
                   value={domain || tenant?.domain || ""}
                   onChange={e => setDomain(e.target.value)}
                   placeholder="shop.yourdomain.com"
-                  className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+                  className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
                 />
                 {tenant?.domain && (
                   <Button
@@ -292,7 +292,7 @@ export default function GeneralSettings() {
                 value={logoUrl || tenant?.logoUrl || ""}
                 onChange={e => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
-                className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+                className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
               />
               {(logoUrl || tenant?.logoUrl) && (
                 <div className="mt-2 p-3 rounded-lg bg-white/5 border border-white/10 inline-flex items-center gap-3">
@@ -333,7 +333,7 @@ export default function GeneralSettings() {
           <Button
             onClick={handleSave}
             disabled={updateTenant.isPending || (!name && !domain && !logoUrl)}
-            className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+            className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
           >
             {updateTenant.isPending ? (
               <>

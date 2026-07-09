@@ -60,7 +60,7 @@ export default function ApiKeySettings() {
         <Card className="bg-white/5 border-white/10">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <KeyRound className="w-4 h-4 text-[#00D9FF]" />
+              <KeyRound className="w-4 h-4 text-[#D4A843]" />
               AI API keys
             </CardTitle>
             <CardDescription>
@@ -155,7 +155,7 @@ export default function ApiKeySettings() {
                   href="https://openrouter.ai/keys"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-0.5 text-[#00D9FF] hover:underline"
+                  className="inline-flex items-center gap-0.5 text-[#D4A843] hover:underline"
                 >
                   openrouter.ai/keys
                   <ExternalLink className="h-3 w-3" />
