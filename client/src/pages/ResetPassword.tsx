@@ -32,8 +32,8 @@ function LogoMark({ size = 40 }: { size?: number }) {
           y2="40"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#00D9FF" />
-          <stop offset="1" stopColor="#0066FF" />
+          <stop stopColor="#D4A843" />
+          <stop offset="1" stopColor="#B8863B" />
         </linearGradient>
       </defs>
     </svg>
@@ -58,7 +58,7 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-[#060D1F] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#020202] flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center space-y-6">
           <LogoMark size={48} />
           <div className="flex items-center justify-center">
@@ -76,8 +76,8 @@ export default function ResetPassword() {
             onClick={() => navigate("/login")}
             className={cn(
               "h-11 px-6 font-semibold text-sm transition-all",
-              "bg-gradient-to-r from-[#00D9FF] to-blue-500 hover:from-[#00C4E8] hover:to-blue-600",
-              "text-[#060D1F] shadow-lg shadow-[#00D9FF]/20"
+              "bg-gradient-to-r from-[#D4A843] to-[#B8863B] hover:from-[#E8C25A] hover:to-[#B8863B]",
+              "text-[#020202] shadow-lg shadow-[#D4A843]/20"
             )}
           >
             Request new link
@@ -89,11 +89,11 @@ export default function ResetPassword() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#060D1F] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#020202] flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center space-y-6">
           <LogoMark size={48} />
           <div className="flex items-center justify-center">
-            <CheckCircle className="w-12 h-12 text-[#00D9FF]" />
+            <CheckCircle className="w-12 h-12 text-[#D4A843]" />
           </div>
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-white">Password updated!</h2>
@@ -105,8 +105,8 @@ export default function ResetPassword() {
             onClick={() => navigate("/login")}
             className={cn(
               "h-11 px-6 font-semibold text-sm transition-all",
-              "bg-gradient-to-r from-[#00D9FF] to-blue-500 hover:from-[#00C4E8] hover:to-blue-600",
-              "text-[#060D1F] shadow-lg shadow-[#00D9FF]/20"
+              "bg-gradient-to-r from-[#D4A843] to-[#B8863B] hover:from-[#E8C25A] hover:to-[#B8863B]",
+              "text-[#020202] shadow-lg shadow-[#D4A843]/20"
             )}
           >
             Sign in
@@ -160,7 +160,7 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-[#060D1F] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#020202] flex items-center justify-center p-6">
       <div className="w-full max-w-[400px] space-y-6">
         <div className="flex flex-col items-center gap-3 mb-2">
           <LogoMark size={44} />
@@ -193,7 +193,7 @@ export default function ResetPassword() {
               onKeyDown={handleKeyDown}
               className={cn(
                 "bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-11 transition-all",
-                "focus:border-[#00D9FF]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#00D9FF]/20"
+                "focus:border-[#D4A843]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#D4A843]/20"
               )}
               autoComplete="new-password"
               autoFocus
@@ -210,7 +210,7 @@ export default function ResetPassword() {
               onKeyDown={handleKeyDown}
               className={cn(
                 "bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-11 transition-all",
-                "focus:border-[#00D9FF]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#00D9FF]/20"
+                "focus:border-[#D4A843]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#D4A843]/20"
               )}
               autoComplete="new-password"
             />
@@ -221,8 +221,8 @@ export default function ResetPassword() {
             disabled={isSubmitting}
             className={cn(
               "w-full h-11 font-semibold text-sm transition-all",
-              "bg-gradient-to-r from-[#00D9FF] to-blue-500 hover:from-[#00C4E8] hover:to-blue-600",
-              "text-[#060D1F] shadow-lg shadow-[#00D9FF]/20",
+              "bg-gradient-to-r from-[#D4A843] to-[#B8863B] hover:from-[#E8C25A] hover:to-[#B8863B]",
+              "text-[#020202] shadow-lg shadow-[#D4A843]/20",
               isSubmitting && "opacity-80 cursor-not-allowed"
             )}
           >
@@ -238,7 +238,7 @@ export default function ResetPassword() {
         </div>
 
         <div className="flex items-start gap-2 p-3 rounded-lg bg-white/3 border border-white/5">
-          <Shield className="w-4 h-4 text-[#00D9FF] mt-0.5 flex-shrink-0" />
+          <Shield className="w-4 h-4 text-[#D4A843] mt-0.5 flex-shrink-0" />
           <p className="text-xs text-slate-500 leading-relaxed">
             Your password is securely hashed with scrypt. UnifyOne never stores
             your password in plain text.

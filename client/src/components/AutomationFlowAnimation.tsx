@@ -18,7 +18,7 @@ const FLOW_STEPS: FlowStep[] = [
   { id: "n8n", icon: Workflow, label: "n8n Triggered", sublabel: "Automation fires", color: "#EA4B71", delay: 800 },
   { id: "stripe", icon: CreditCard, label: "Stripe Charged", sublabel: "Payment captured", color: "#635BFF", delay: 1600 },
   { id: "email", icon: Mail, label: "Email Sent", sublabel: "Mailchimp receipt", color: "#FFD700", delay: 2400 },
-  { id: "notify", icon: Bell, label: "Owner Notified", sublabel: "Instant alert", color: "#00D9FF", delay: 3200 },
+  { id: "notify", icon: Bell, label: "Owner Notified", sublabel: "Instant alert", color: "#2DD4BF", delay: 3200 },
   { id: "analytics", icon: BarChart3, label: "Analytics Updated", sublabel: "Real-time metrics", color: "#10B981", delay: 4000 },
 ];
 
@@ -154,7 +154,7 @@ export default function AutomationFlowAnimation() {
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-gray-500">Pipeline Progress</span>
-                <span className="text-xs text-[#00D9FF]">
+                <span className="text-xs text-[#D4A843]">
                   {completedSteps.size}/{FLOW_STEPS.length} steps
                 </span>
               </div>
@@ -163,7 +163,7 @@ export default function AutomationFlowAnimation() {
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${(completedSteps.size / FLOW_STEPS.length) * 100}%`,
-                    background: "linear-gradient(90deg, #00D9FF, #635BFF, #10B981)",
+                    background: "linear-gradient(90deg, #D4A843, #635BFF, #10B981)",
                   }}
                 />
               </div>

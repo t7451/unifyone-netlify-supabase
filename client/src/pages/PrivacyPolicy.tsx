@@ -121,7 +121,7 @@ export default function PrivacyPolicy() {
               account and associated data at any time by contacting us at{" "}
               <a
                 href="mailto:skdev@1commercesolutions.com"
-                className="text-[#00D9FF] hover:underline"
+                className="text-[#D4A843] hover:underline"
               >
                 skdev@1commercesolutions.com
               </a>
@@ -163,7 +163,7 @@ export default function PrivacyPolicy() {
               To exercise these rights, contact us at{" "}
               <a
                 href="mailto:skdev@1commercesolutions.com"
-                className="text-[#00D9FF] hover:underline"
+                className="text-[#D4A843] hover:underline"
               >
                 skdev@1commercesolutions.com
               </a>
@@ -215,7 +215,7 @@ export default function PrivacyPolicy() {
                 Email:{" "}
                 <a
                   href="mailto:skdev@1commercesolutions.com"
-                  className="text-[#00D9FF] hover:underline"
+                  className="text-[#D4A843] hover:underline"
                 >
                   skdev@1commercesolutions.com
                 </a>

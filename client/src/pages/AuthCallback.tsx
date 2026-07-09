@@ -29,8 +29,8 @@ function LogoMark({ size = 48 }: { size?: number }) {
           y2="40"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#00D9FF" />
-          <stop offset="1" stopColor="#0066FF" />
+          <stop stopColor="#D4A843" />
+          <stop offset="1" stopColor="#B8863B" />
         </linearGradient>
       </defs>
     </svg>
@@ -125,7 +125,7 @@ export default function AuthCallback() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#060D1F] flex flex-col items-center justify-center gap-6">
+      <div className="min-h-screen bg-[#020202] flex flex-col items-center justify-center gap-6">
         <LogoMark size={56} />
         <div className="text-center space-y-2">
           <h2 className="text-xl font-bold text-white">Sign-in failed</h2>
@@ -133,7 +133,7 @@ export default function AuthCallback() {
         </div>
         <button
           onClick={() => navigate("/login")}
-          className="text-sm text-[#00D9FF] hover:text-[#00C4E8] font-medium transition-colors"
+          className="text-sm text-[#D4A843] hover:text-[#E8C25A] font-medium transition-colors"
         >
           Back to sign in
         </button>
@@ -142,23 +142,23 @@ export default function AuthCallback() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060D1F] flex flex-col items-center justify-center gap-8">
+    <div className="min-h-screen bg-[#020202] flex flex-col items-center justify-center gap-8">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#00D9FF]/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#D4A843]/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative flex flex-col items-center gap-6">
         <div className="relative">
           <LogoMark size={56} />
           <div
-            className="absolute inset-0 -m-2 rounded-[14px] border-2 border-transparent border-t-[#00D9FF] animate-spin"
+            className="absolute inset-0 -m-2 rounded-[14px] border-2 border-transparent border-t-[#D4A843] animate-spin"
             style={{ borderRadius: "16px" }}
           />
         </div>
 
         <div className="text-center space-y-1">
           <h2 className="text-xl font-bold text-white">UnifyOne</h2>
-          <p className="text-sm text-[#00D9FF] animate-pulse min-h-[20px]">
+          <p className="text-sm text-[#D4A843] animate-pulse min-h-[20px]">
             {STEPS[stepIdx]}
           </p>
         </div>
@@ -169,7 +169,7 @@ export default function AuthCallback() {
           <div
             key={i}
             className={`h-1.5 rounded-full transition-all duration-500 ${
-              i <= stepIdx ? "w-6 bg-[#00D9FF]" : "w-1.5 bg-white/20"
+              i <= stepIdx ? "w-6 bg-[#D4A843]" : "w-1.5 bg-white/20"
             }`}
           />
         ))}

@@ -26,7 +26,7 @@ const toneClasses: Record<
   NonNullable<DashboardPageShellStat["tone"]>,
   string
 > = {
-  cyan: "border-cyan-400/25 bg-cyan-400/10 text-cyan-200",
+  cyan: "border-[#D4A843]/25 bg-[#D4A843]/10 text-[#E8C25A]",
   emerald: "border-emerald-400/25 bg-emerald-400/10 text-emerald-200",
   amber: "border-amber-400/25 bg-amber-400/10 text-amber-200",
   violet: "border-violet-400/25 bg-violet-400/10 text-violet-200",
@@ -46,19 +46,19 @@ export function DashboardPageShell({
 }: DashboardPageShellProps) {
   return (
     <div className={cn("space-y-6 p-4 sm:p-6", className)}>
-      <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#07111f] p-5 shadow-2xl shadow-cyan-950/20 sm:p-6 lg:p-7">
+      <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#020202] p-5 shadow-2xl shadow-[#020202]/20 sm:p-6 lg:p-7">
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,217,255,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(106,27,154,0.18),transparent_38%)]"
+          className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(212,168,67,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(106,27,154,0.18),transparent_38%)]"
         />
         <div
           aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent"
+          className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#E8C25A]/50 to-transparent"
         />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-100">
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.9)]" />
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#D4A843]/20 bg-[#D4A843]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-[#E8C25A]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#D4A843] shadow-[0_0_14px_rgba(212,168,67,0.9)]" />
               {eyebrow}
             </div>
             <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
