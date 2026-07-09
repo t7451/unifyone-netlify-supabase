@@ -99,27 +99,26 @@ function LogoMark({ size = 40 }: { size?: number }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <rect width="40" height="40" rx="10" fill="url(#lg)" />
-      <path
-        d="M10 14 L20 26 L30 14"
-        stroke="white"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+      {/* Cathedral cross medallion — gold on near-black */}
+      <rect
+        x="0.75"
+        y="0.75"
+        width="38.5"
+        height="38.5"
+        rx="6"
+        fill="#020202"
+        stroke="#D4A843"
+        strokeWidth="1.5"
       />
-      <defs>
-        <linearGradient
-          id="lg"
-          x1="0"
-          y1="0"
-          x2="40"
-          y2="40"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#00D9FF" />
-          <stop offset="1" stopColor="#0066FF" />
-        </linearGradient>
-      </defs>
+      <line x1="20" y1="9" x2="20" y2="31" stroke="#D4A843" strokeWidth="2.5" />
+      <line
+        x1="11"
+        y1="17"
+        x2="29"
+        y2="17"
+        stroke="#D4A843"
+        strokeWidth="2.5"
+      />
     </svg>
   );
 }
@@ -644,15 +643,22 @@ export default function Login({
   // Success message (magic link sent, confirmation sent, etc.)
   if (successMessage) {
     return (
-      <div className="min-h-screen bg-[#060D1F] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#020202] flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center space-y-6">
           <LogoMark size={48} />
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-white">Check your email</h2>
-            <p className="text-slate-400 text-sm">{successMessage}</p>
+            <h2
+              className="font-cinzel text-2xl font-black"
+              style={{ color: "#F0E8D0" }}
+            >
+              Check your email
+            </h2>
+            <p className="font-crimson text-sm" style={{ color: "#9A9A9A" }}>
+              {successMessage}
+            </p>
           </div>
           <div className="flex items-start gap-2 p-3 rounded-lg bg-white/3 border border-white/5">
-            <Mail className="w-4 h-4 text-[#00D9FF] mt-0.5 flex-shrink-0" />
+            <Mail className="w-4 h-4 text-[#D4A843] mt-0.5 flex-shrink-0" />
             <p className="text-xs text-slate-500 leading-relaxed text-left">
               The link will expire in 1 hour. If you don't see the email, check
               your spam folder.
@@ -682,34 +688,46 @@ export default function Login({
   const isGoogleAvailable = providerStatus?.google.enabled === true;
   const hasOAuthProvider = isGoogleAvailable;
   return (
-    <div className="min-h-screen bg-[#060D1F] flex">
+    <div className="min-h-screen bg-[#020202] flex">
       {/* Left panel: branding + features */}
-      <div className="hidden lg:flex flex-col justify-between w-[520px] flex-shrink-0 bg-gradient-to-br from-[#0A1128] via-[#0D1A3A] to-[#060D1F] border-r border-white/5 p-12 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-[#00D9FF]/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-blue-600/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none" />
+      <div className="hidden lg:flex flex-col justify-between w-[520px] flex-shrink-0 bg-gradient-to-br from-[#0A0A0A] via-[#050505] to-[#020202] border-r border-white/5 p-12 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-[#D4A843]/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-[#8A6B22]/8 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none" />
 
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
             <LogoMark size={36} />
-            <span className="text-2xl font-bold text-white tracking-tight">
-              UnifyOne
+            <span
+              className="font-cinzel text-2xl font-bold"
+              style={{ color: "#D4A843", letterSpacing: "0.18em" }}
+            >
+              UNIFYONE
             </span>
           </div>
-          <p className="text-sm text-slate-500 ml-[48px]">
+          <p
+            className="font-crimson text-sm ml-[48px]"
+            style={{ color: "#6A6A6A" }}
+          >
             by 1Commerce Solutions
           </p>
         </div>
 
         <div className="relative z-10 space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-white leading-tight mb-3">
+            <h1
+              className="font-cinzel text-3xl font-black leading-tight mb-3"
+              style={{ color: "#F0E8D0" }}
+            >
               Know what you earn.
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00D9FF] to-blue-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F0D080] to-[#D4A843]">
                 Keep what you owe.
               </span>
             </h1>
-            <p className="text-slate-400 text-sm leading-relaxed">
+            <p
+              className="font-crimson text-base leading-relaxed"
+              style={{ color: "#9A9A9A" }}
+            >
               Earnings clarity and tax confidence for gig and 1099 workers —
               track every shift, mile, and dollar across all your apps, with
               quarterly taxes handled.
@@ -719,8 +737,8 @@ export default function Login({
           <div className="space-y-3">
             {FEATURES.map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-[#00D9FF]/10 border border-[#00D9FF]/20 flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-3.5 h-3.5 text-[#00D9FF]" />
+                <div className="w-7 h-7 rounded-lg bg-[#D4A843]/10 border border-[#D4A843]/20 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-3.5 h-3.5 text-[#D4A843]" />
                 </div>
                 <span className="text-sm text-slate-300">{text}</span>
               </div>
@@ -750,15 +768,23 @@ export default function Login({
       <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12">
         <div className="flex lg:hidden items-center gap-3 mb-10">
           <LogoMark size={32} />
-          <span className="text-xl font-bold text-white">UnifyOne</span>
+          <span
+            className="font-cinzel text-xl font-bold"
+            style={{ color: "#D4A843", letterSpacing: "0.16em" }}
+          >
+            UNIFYONE
+          </span>
         </div>
 
         <div className="w-full max-w-[400px] space-y-6">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-1">
+            <h2
+              className="font-cinzel text-2xl font-black mb-1"
+              style={{ color: "#F0E8D0" }}
+            >
               {intent === "signup" ? "Create your workspace" : "Welcome back"}
             </h2>
-            <p className="text-slate-400 text-sm">
+            <p className="font-crimson text-sm" style={{ color: "#9A9A9A" }}>
               {intent === "signup"
                 ? "Start free. No credit card required."
                 : "Sign in to your UnifyOne workspace"}
@@ -773,7 +799,7 @@ export default function Login({
                 <button
                   onClick={handleResendVerification}
                   disabled={isResendingVerification}
-                  className="text-[#00D9FF] hover:text-[#00C4E8] transition-colors text-xs underline underline-offset-2 disabled:opacity-50"
+                  className="text-[#D4A843] hover:text-[#E8C25A] transition-colors text-xs underline underline-offset-2 disabled:opacity-50"
                 >
                   {isResendingVerification
                     ? "Sending..."
@@ -801,7 +827,7 @@ export default function Login({
                 onKeyDown={handleKeyDown}
                 className={cn(
                   "bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-11 transition-all",
-                  "focus:border-[#00D9FF]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#00D9FF]/20"
+                  "focus:border-[#D4A843]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#D4A843]/20"
                 )}
                 autoComplete="email"
                 autoFocus
@@ -821,7 +847,7 @@ export default function Login({
                     onKeyDown={handleKeyDown}
                     className={cn(
                       "bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-11 pl-9 transition-all",
-                      "focus:border-[#00D9FF]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#00D9FF]/20"
+                      "focus:border-[#D4A843]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#D4A843]/20"
                     )}
                     autoComplete="username"
                   />
@@ -839,7 +865,7 @@ export default function Login({
                   {isSignInMode && (
                     <button
                       onClick={() => switchMode("forgot-password")}
-                      className="text-xs text-[#00D9FF] hover:text-[#00C4E8] transition-colors"
+                      className="text-xs text-[#D4A843] hover:text-[#E8C25A] transition-colors"
                     >
                       Forgot password?
                     </button>
@@ -857,7 +883,7 @@ export default function Login({
                   onKeyDown={handleKeyDown}
                   className={cn(
                     "bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-11 transition-all",
-                    "focus:border-[#00D9FF]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#00D9FF]/20"
+                    "focus:border-[#D4A843]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#D4A843]/20"
                   )}
                   autoComplete={
                     mode === "sign-up" ? "new-password" : "current-password"
@@ -881,8 +907,8 @@ export default function Login({
               }
               className={cn(
                 "w-full h-11 font-semibold text-sm transition-all",
-                "bg-gradient-to-r from-[#00D9FF] to-blue-500 hover:from-[#00C4E8] hover:to-blue-600",
-                "text-[#060D1F] shadow-lg shadow-[#00D9FF]/20",
+                "bg-gradient-to-r from-[#E8C25A] to-[#C4952F] hover:from-[#F0D080] hover:to-[#D4A843]",
+                "text-[#020202] shadow-lg shadow-[#D4A843]/20",
                 isSubmitting && "opacity-80 cursor-not-allowed"
               )}
             >
@@ -955,7 +981,7 @@ export default function Login({
                         setError(null);
                       }}
                       disabled={isSubmitting}
-                      className="text-[#00D9FF] hover:text-[#00C4E8] font-medium transition-colors"
+                      className="text-[#D4A843] hover:text-[#E8C25A] font-medium transition-colors"
                     >
                       Sign in
                     </button>
@@ -969,7 +995,7 @@ export default function Login({
                         setError(null);
                       }}
                       disabled={isSubmitting}
-                      className="text-[#00D9FF] hover:text-[#00C4E8] font-medium transition-colors"
+                      className="text-[#D4A843] hover:text-[#E8C25A] font-medium transition-colors"
                     >
                       Create an account
                     </button>
@@ -981,7 +1007,7 @@ export default function Login({
 
           {/* Security note */}
           <div className="flex items-start gap-2 p-3 rounded-lg bg-white/3 border border-white/5">
-            <Shield className="w-4 h-4 text-[#00D9FF] mt-0.5 flex-shrink-0" />
+            <Shield className="w-4 h-4 text-[#D4A843] mt-0.5 flex-shrink-0" />
             <p className="text-xs text-slate-500 leading-relaxed">
               Your password is securely hashed with scrypt. UnifyOne never
               stores your password in plain text.
