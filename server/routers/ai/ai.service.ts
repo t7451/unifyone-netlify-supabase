@@ -32,6 +32,7 @@ import {
   CONTEXT_SUGGESTIONS,
   KAI_BASE_DIRECTIVES,
   KAI_CHAT_MAX_TOKENS,
+  KAI_IN_SCOPE_GUIDANCE,
   recoverKaiGenericRefusal,
 } from "./ai.prompts";
 import {
@@ -160,7 +161,7 @@ export async function chat(ctx: ChatCtx, input: ChatInput) {
     const systemPrompt = [
       baseSystemPrompt,
       KAI_BASE_DIRECTIVES,
-      "For in-scope commerce/workflow questions, do not give generic refusals. If data is missing, state what is missing and provide best-effort actionable guidance.",
+      KAI_IN_SCOPE_GUIDANCE,
       input.dataContext ? `\nUser-provided context:\n${input.dataContext}` : "",
       mcpContext,
     ]
