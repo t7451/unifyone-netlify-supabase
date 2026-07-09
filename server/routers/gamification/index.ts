@@ -1,39 +1,39 @@
 import { z } from "zod";
-import { adminProcedure, protectedProcedure, router } from "../../_core/trpc";
+import { adminProcedure, operatorProcedure, router } from "../../_core/trpc";
 import * as service from "./gamification.service";
 
 export const gamificationRouter = router({
   // ── Achievements ─────────────────────────────────────────────────────────────
-  getAchievements: protectedProcedure.query(async ({ ctx }) => {
+  getAchievements: operatorProcedure.query(async ({ ctx }) => {
     return service.getAchievements(ctx.user.id);
   }),
 
   // ── Challenges ───────────────────────────────────────────────────────────────
-  getActiveChallenges: protectedProcedure.query(async ({ ctx }) => {
+  getActiveChallenges: operatorProcedure.query(async ({ ctx }) => {
     return service.getActiveChallenges(ctx.user.id);
   }),
 
-  joinChallenge: protectedProcedure
+  joinChallenge: operatorProcedure
     .input(z.object({ challengeId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       return service.joinChallenge(ctx.user.id, input.challengeId);
     }),
 
   // ── Leaderboard ──────────────────────────────────────────────────────────────
-  getLeaderboard: protectedProcedure
+  getLeaderboard: operatorProcedure
     .input(z.object({ limit: z.number().min(5).max(50).default(10) }))
     .query(async ({ ctx }) => {
       return service.getLeaderboard(ctx.user.id);
     }),
 
   // ── Points Summary ───────────────────────────────────────────────────────────
-  getPointsSummary: protectedProcedure.query(async ({ ctx }) => {
+  getPointsSummary: operatorProcedure.query(async ({ ctx }) => {
     return service.getPointsSummary(ctx.user.id);
   }),
 
   // ── Update Challenge Progress ────────────────────────────────────────────────
   /** Increment a user's progress on a challenge they've joined. Auto-resolves friend challenges. */
-  updateProgress: protectedProcedure
+  updateProgress: operatorProcedure
     .input(
       z.object({
         challengeId: z.number(),

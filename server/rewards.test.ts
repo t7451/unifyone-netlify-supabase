@@ -40,6 +40,9 @@ vi.mock("./db", () => {
 
   return {
     getDb: vi.fn().mockResolvedValue(db),
+    // rewards user-facing procedures are operator-gated; pin the tenant's
+    // primary product to "gig" so the gate passes in these DB-free tests.
+    getTenantPrimaryProduct: vi.fn().mockResolvedValue("gig"),
     getTenantByOwnerId: vi.fn().mockResolvedValue(null),
     getTenantById: vi.fn().mockResolvedValue(null),
     createTenant: vi.fn().mockResolvedValue(null),
@@ -54,7 +57,14 @@ vi.mock("./db", () => {
     createOrder: vi.fn().mockResolvedValue(null),
     updateOrderStatus: vi.fn().mockResolvedValue(undefined),
     getCustomers: vi.fn().mockResolvedValue([]),
-    getAnalyticsSummary: vi.fn().mockResolvedValue({ totalRevenue: "0", orderCount: 0, customerCount: 0, productCount: 0 }),
+    getAnalyticsSummary: vi
+      .fn()
+      .mockResolvedValue({
+        totalRevenue: "0",
+        orderCount: 0,
+        customerCount: 0,
+        productCount: 0,
+      }),
     getRevenueByDay: vi.fn().mockResolvedValue([]),
     getTopProducts: vi.fn().mockResolvedValue([]),
     getWebhookEvents: vi.fn().mockResolvedValue([]),
@@ -145,7 +155,10 @@ describe("rewards router — opportunities", () => {
   it("admin can toggle an opportunity active state", async () => {
     const ctx = makeCtx();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.rewards.adminToggleOpportunity({ id: 1, active: false });
+    const result = await caller.rewards.adminToggleOpportunity({
+      id: 1,
+      active: false,
+    });
     expect(result.success).toBe(true);
   });
 });

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import {
-  protectedProcedure,
+  operatorProcedure,
   publicRateLimitedProcedure,
   router,
 } from "../../_core/trpc";
@@ -9,11 +9,11 @@ import * as service from "./mobileAutomation.service";
 
 export const mobileAutomationRouter = router({
   // ── n8n Schedules ─────────────────────────────────────────────────────────────
-  listSchedules: protectedProcedure.query(async ({ ctx }) =>
+  listSchedules: operatorProcedure.query(async ({ ctx }) =>
     service.listSchedules(ctx.user.tenantId!)
   ),
 
-  createSchedule: protectedProcedure
+  createSchedule: operatorProcedure
     .input(
       z.object({
         name: z.string().min(1).max(255),
@@ -28,7 +28,7 @@ export const mobileAutomationRouter = router({
       service.createSchedule(ctx.user.tenantId!, input)
     ),
 
-  updateSchedule: protectedProcedure
+  updateSchedule: operatorProcedure
     .input(
       z.object({
         id: z.number(),
@@ -44,13 +44,13 @@ export const mobileAutomationRouter = router({
       service.updateSchedule(ctx.user.tenantId!, input)
     ),
 
-  deleteSchedule: protectedProcedure
+  deleteSchedule: operatorProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) =>
       service.deleteSchedule(ctx.user.tenantId!, input.id)
     ),
 
-  triggerSchedule: protectedProcedure
+  triggerSchedule: operatorProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) =>
       service.triggerSchedule(ctx.user.tenantId!, input.id)
@@ -86,11 +86,11 @@ export const mobileAutomationRouter = router({
       return service.trackDeepLink(input, { ipAddress, userAgent });
     }),
 
-  markDeepLinkConverted: protectedProcedure
+  markDeepLinkConverted: operatorProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => service.markDeepLinkConverted(input.id)),
 
-  getAttributionStats: protectedProcedure
+  getAttributionStats: operatorProcedure
     .input(
       z.object({
         days: z.number().min(1).max(365).default(30),
@@ -98,7 +98,7 @@ export const mobileAutomationRouter = router({
     )
     .query(async ({ input }) => service.getAttributionStats(input.days)),
 
-  listAttributions: protectedProcedure
+  listAttributions: operatorProcedure
     .input(
       z.object({
         limit: z.number().min(1).max(100).default(20),
@@ -110,7 +110,7 @@ export const mobileAutomationRouter = router({
     ),
 
   // ── CAPI Event Log ────────────────────────────────────────────────────────────
-  listCapiEvents: protectedProcedure
+  listCapiEvents: operatorProcedure
     .input(
       z.object({
         limit: z.number().min(1).max(100).default(20),
@@ -121,16 +121,16 @@ export const mobileAutomationRouter = router({
       service.listCapiEvents(ctx.user.id, input.limit, input.offset)
     ),
 
-  getCapiSummary: protectedProcedure.query(async ({ ctx }) =>
+  getCapiSummary: operatorProcedure.query(async ({ ctx }) =>
     service.getCapiSummary(ctx.user.id)
   ),
 
   // ── Mobile Push Schedules ──────────────────────────────────────────────────────
-  listPushSchedules: protectedProcedure.query(async ({ ctx }) =>
+  listPushSchedules: operatorProcedure.query(async ({ ctx }) =>
     service.listPushSchedules(ctx.user.tenantId!)
   ),
 
-  createPushSchedule: protectedProcedure
+  createPushSchedule: operatorProcedure
     .input(
       z.object({
         title: z.string().min(1).max(255),
@@ -155,7 +155,7 @@ export const mobileAutomationRouter = router({
       service.createPushSchedule(ctx.user.tenantId!, input)
     ),
 
-  updatePushSchedule: protectedProcedure
+  updatePushSchedule: operatorProcedure
     .input(
       z.object({
         id: z.number(),
@@ -181,13 +181,13 @@ export const mobileAutomationRouter = router({
       service.updatePushSchedule(ctx.user.tenantId!, input)
     ),
 
-  deletePushSchedule: protectedProcedure
+  deletePushSchedule: operatorProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) =>
       service.deletePushSchedule(ctx.user.tenantId!, input.id)
     ),
 
-  sendPushNow: protectedProcedure
+  sendPushNow: operatorProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) =>
       service.sendPushNow(ctx.user.tenantId!, input.id)

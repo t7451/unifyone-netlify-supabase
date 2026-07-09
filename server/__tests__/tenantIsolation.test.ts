@@ -75,6 +75,9 @@ const mockDb = {
 
 vi.mock("../db", () => ({
   getDb: vi.fn(() => Promise.resolve(mockDb)),
+  // rewardsRouter's user-facing procedures are operator-gated; pin the tenant
+  // primary-product lookup to "gig" so these tests stay DB-free.
+  getTenantPrimaryProduct: vi.fn(() => Promise.resolve("gig" as const)),
 }));
 
 vi.mock("@neondatabase/serverless", () => ({ neon: vi.fn(() => ({})) }));
