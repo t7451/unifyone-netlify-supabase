@@ -40,9 +40,13 @@ import {
   Package,
   ShoppingCart,
   Users,
+  Users2,
   Tag,
   BarChart3,
   TrendingUp,
+  LineChart,
+  Trophy,
+  Gift,
   Share2,
   Target,
   Workflow,
@@ -61,11 +65,18 @@ import { NotificationCenter } from "./NotificationCenter";
 import { Button } from "./ui/button";
 import { useSignupTracker } from "@/hooks/useSignupTracker";
 
-// Gig-operator earnings & taxes — the front door product.
+// Gig-operator earnings & taxes — the front door product. Every path here is
+// operator-gated on the server (FORBIDDEN for commerce-first tenants), so the
+// whole group is rendered only when the workspace is gig-first.
 const gigMenuItems = [
   { icon: LayoutDashboard, label: "Overview", path: "/overview" },
   { icon: Navigation, label: "Gig Command", path: "/gig-command" },
   { icon: DollarSign, label: "Money Manager", path: "/money-manager" },
+  { icon: TrendingUp, label: "Revenue Streams", path: "/revenue-streams" },
+  { icon: LineChart, label: "Revenue Command", path: "/revenue-command" },
+  { icon: Trophy, label: "Achievements", path: "/achievements" },
+  { icon: Gift, label: "Rewards", path: "/rewards" },
+  { icon: Users2, label: "Friends", path: "/friends" },
   { icon: Star, label: "Gig Worker Plans", path: "/gig-worker-plans" },
 ];
 
@@ -86,15 +97,18 @@ const menuItems = [...gigMenuItems, ...accountMenuItems];
 
 // Optional secondary capability — commerce tools kept fully functional but
 // de-emphasized relative to the gig-first product above. Every path here is a
-// mounted DashboardRoute in App.tsx.
+// mounted DashboardRoute in App.tsx AND backed only by procedures that stay
+// open to every authenticated tenant (no operatorProcedure), so these are safe
+// to surface to commerce-first tenants. Operator-gated pages (Revenue Streams /
+// Revenue Command, which depend on the gated `revenueStreams` router) live in
+// `gigMenuItems` instead — surfacing them here would link commerce tenants
+// straight into a FORBIDDEN.
 const commerceMenuItems = [
   { icon: Package, label: "Products", path: "/products" },
   { icon: ShoppingCart, label: "Orders", path: "/orders" },
   { icon: Users, label: "Customers", path: "/customers" },
   { icon: Tag, label: "Discounts", path: "/discounts" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
-  { icon: TrendingUp, label: "Revenue", path: "/revenue-command" },
-  { icon: DollarSign, label: "Revenue Streams", path: "/revenue-streams" },
   { icon: Share2, label: "Social", path: "/social" },
   { icon: Target, label: "Leads", path: "/leads" },
   { icon: Workflow, label: "Automations", path: "/automations" },
