@@ -457,6 +457,9 @@ export const masterControlRouter = router({
         planId: source.planId,
         status: "trial",
         subscriptionStatus: "none",
+        // Preserve the source tenant's product line — otherwise a commerce
+        // tenant's clone would fall back to the "gig" column default.
+        primaryProduct: source.primaryProduct,
         shopifySyncEnabled: false,
         settings: mergeMasterControlSettings(source.settings, {
           clonedFromTenantId: source.id,
@@ -518,6 +521,10 @@ export const masterControlRouter = router({
         planId: input.planId ?? null,
         status: "trial",
         subscriptionStatus: "none",
+        // Templates declare their product line explicitly so commerce
+        // templates don't silently inherit the DB default ("gig"), which
+        // would let them pass operator-gated (gig-only) procedures.
+        primaryProduct: TENANT_TEMPLATES[input.template].primaryProduct,
         settings: mergeMasterControlSettings(
           composeTemplateSettings(input.template, input.settings),
           {
