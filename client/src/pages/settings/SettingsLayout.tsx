@@ -13,6 +13,7 @@ import {
   KeyRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
   Select,
@@ -22,12 +23,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const settingsNav = [
+const buildSettingsNav = (isCommerce: boolean) => [
   {
     label: "General",
     path: "/settings",
     icon: Building2,
-    description: "Store name, domain, and branding",
+    description: isCommerce
+      ? "Store name, domain, and branding"
+      : "Workspace name, domain, and branding",
   },
   {
     label: "Account",
@@ -86,6 +89,9 @@ export default function SettingsLayout({
 }) {
   const [location, setLocation] = useLocation();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+  const isCommerce = (user?.primaryProduct ?? "gig") === "commerce";
+  const settingsNav = buildSettingsNav(isCommerce);
 
   const currentNav =
     settingsNav.find(n => n.path === location) ?? settingsNav[0];
@@ -99,7 +105,8 @@ export default function SettingsLayout({
           Settings
         </h1>
         <p className="text-gray-400 text-sm mt-1">
-          Manage your store, account, and preferences
+          Manage your {isCommerce ? "store" : "workspace"}, account, and
+          preferences
         </p>
       </div>
 
