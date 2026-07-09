@@ -167,7 +167,17 @@ export const gigWorkerService = {
    * was only ever a client-read, so nothing actually restricted a paid feature.
    * Returns the resolved access record on success so callers can reuse it.
    */
-  async requireFeature(userId: number, feature: string) {
+  async requireFeature(userId: number, feature: keyof typeof FEATURE_TIERS) {
+    // Fail closed: an unrecognized feature key must never fall through to the
+    // `?? "starter"` default in checkFeatureAccess and silently grant a paid
+    // gate. The parameter type guards call sites; this runtime check defends
+    // against a bad cast reaching the gate.
+    if (!Object.prototype.hasOwnProperty.call(FEATURE_TIERS, feature)) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: `Unknown feature gate "${String(feature)}".`,
+      });
+    }
     const access = await this.checkFeatureAccess(userId, feature);
     if (!access.hasAccess) {
       const planName =

@@ -318,6 +318,18 @@ export const shiftsService = {
     const db = await repo.getDb();
     if (!db) return null;
 
+    // Route intelligence is the paid "Route Optimizer" (Pro) feature listed in
+    // FEATURE_TIERS and sold on the plans page. Gate it server-side so a Starter
+    // operator can't hit this endpoint to spend unbounded paid LLM calls with no
+    // credit decrement. Free callers get null (the client renders an upgrade
+    // state) rather than an error, and no LLM call is made.
+    const { gigWorkerService } = await import("../gigWorker/gigWorker.service");
+    const access = await gigWorkerService.checkFeatureAccess(
+      userId,
+      "route_optimizer"
+    );
+    if (!access.hasAccess) return null;
+
     // Pull user's last 30 shifts for context
     const recentShifts = await repo.getRecentCompletedShifts(db, userId, 30);
 
@@ -421,16 +433,6 @@ Provide a JSON response with:
   },
 
   async generateAIShortcuts(userId: number, input: { platform?: string }) {
-    // Meter this LLM call against the user's monthly AI credit quota. Starter
-    // gets 25/mo, Pro 250 — previously these AI endpoints never recorded usage,
-    // so the sold free-tier limit was unenforceable. recordAIUsage throws
-    // FORBIDDEN when the quota is exhausted, before we spend an LLM call.
-    const { gigWorkerService } = await import("../gigWorker/gigWorker.service");
-    await gigWorkerService.recordAIUsage(userId, {
-      tokens: 0,
-      context: "ai_shortcuts",
-    });
-
     const db = await repo.getDb();
     if (!db) return [];
 
@@ -464,6 +466,18 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
 - category: "earnings" | "efficiency" | "tax" | "timing" | "safety"
 - impact: "high" | "medium" | "low"
 - emoji: single relevant emoji`;
+
+    // Meter this against the user's monthly AI credit quota immediately before
+    // the LLM call — Starter gets 25/mo, Pro 250. Placed after the DB/data
+    // fetches so a short-circuit (no DB) never burns a credit, and outside the
+    // try/catch so a quota-exhausted FORBIDDEN propagates instead of being
+    // swallowed into an empty result. These AI endpoints previously recorded no
+    // usage at all, so the sold free-tier limit was unenforceable.
+    const { gigWorkerService } = await import("../gigWorker/gigWorker.service");
+    await gigWorkerService.recordAIUsage(userId, {
+      tokens: 0,
+      context: "ai_shortcuts",
+    });
 
     try {
       const response = await invokeLLM({

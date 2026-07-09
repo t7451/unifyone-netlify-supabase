@@ -96,9 +96,12 @@ describe("taxExportService.buildTaxReport", () => {
 
     // net = 125 gross − (50mi × $0.70 = $35) = $90
     expect(report.summary.netEarningsDollars).toBe(90);
-    // SE tax is positive on positive net; federal income tax is 0 far below the
-    // standard deduction — the export should reflect SE-only liability.
-    expect(report.tax.seTaxDollars).toBeGreaterThan(0);
+    // Exact SE tax on $90 net: 15.3% × (90 × 0.9235) = $12.72. Asserting the
+    // precise value catches a regression that taxed gross instead of net, or
+    // broke the mileage-deduction wiring. Federal income tax is $0 far below the
+    // standard deduction, so the export reflects SE-only liability.
+    // (Year 2025 is a completed year here, so the estimate is not annualized.)
+    expect(report.tax.seTaxDollars).toBe(12.72);
     expect(report.tax.fedIncomeTaxDollars).toBe(0);
     expect(report.tax.totalEstimatedTaxDollars).toBeCloseTo(
       report.tax.seTaxDollars + report.tax.fedIncomeTaxDollars,
@@ -109,17 +112,13 @@ describe("taxExportService.buildTaxReport", () => {
     expect(report.shifts[0].platform).toBe("DoorDash");
   });
 
-  it("returns a zeroed but valid report when the DB is unavailable", async () => {
+  it("throws (not a silent zero report) when the DB is unavailable", async () => {
     mockRepo.getDb.mockResolvedValue(null as never);
 
-    const report = await taxExportService.buildTaxReport(1, { year: 2025 });
-
-    expect(report.summary.shiftCount).toBe(0);
-    expect(report.summary.netEarningsDollars).toBe(0);
-    expect(report.tax.totalEstimatedTaxDollars).toBe(0);
-    expect(report.shifts).toEqual([]);
-    expect(report.mileageLogs).toEqual([]);
-    // Still surfaces a real next-quarter due date so the document is complete.
-    expect(report.tax.nextQuarterlyDueDate).toBeTruthy();
+    // A DB outage must fail loudly — a zeroed report is indistinguishable from a
+    // real no-activity year and could be handed to a CPA as fact.
+    await expect(
+      taxExportService.buildTaxReport(1, { year: 2025 })
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
   });
 });

@@ -400,14 +400,16 @@ export default function GigHome() {
                   Open quarterly tax estimator
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
-                  <p className="text-xs text-slate-400">
-                    Download your full shift &amp; mileage tax record.
-                  </p>
-                  <TaxExportButton />
-                </div>
               </>
             )}
+            {/* Export stays available even if the YTD estimate above fails —
+                it reads from the same shifts/mileage, gated server-side. */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
+              <p className="text-xs text-slate-400">
+                Download your full shift &amp; mileage tax record.
+              </p>
+              <TaxExportButton />
+            </div>
           </CardContent>
         </Card>
       </div>

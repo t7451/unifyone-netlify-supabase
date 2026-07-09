@@ -55,8 +55,11 @@ export function TaxExportButton({
     }
   }
 
-  // While the gate resolves, render nothing rather than flashing a wrong state.
-  if (access.isLoading) return null;
+  // While the gate resolves — or if the access query errors — render nothing
+  // rather than flashing the paywall. On error `access.data` is undefined, which
+  // would otherwise read as "no access" and wrongly show the upgrade CTA to a
+  // user who may be Pro. The server gate still protects the export either way.
+  if (access.isLoading || access.isError) return null;
 
   if (!access.data?.hasAccess) {
     return (

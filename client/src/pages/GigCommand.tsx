@@ -143,6 +143,13 @@ export default function GigCommand() {
     offset: 0,
   });
   const recentShifts = shiftsData?.shifts ?? [];
+  // Route intelligence is the Pro "Route Optimizer" feature — resolve access so
+  // we can skip the query entirely for Starter (no wasted request / LLM spend)
+  // and show an upgrade state instead of a misleading error.
+  const routeAccess = trpc.gigWorker.checkFeatureAccess.useQuery({
+    feature: "route_optimizer",
+  });
+  const routeLocked = routeAccess.data?.hasAccess === false;
   const {
     data: routeIntelligence,
     refetch: refetchIntelligence,
@@ -154,7 +161,10 @@ export default function GigCommand() {
       lng: intelligencePos?.lng ?? -122.3321,
       platform,
     },
-    { enabled: !!intelligencePos, staleTime: 5 * 60 * 1000 }
+    {
+      enabled: !!intelligencePos && routeAccess.data?.hasAccess === true,
+      staleTime: 5 * 60 * 1000,
+    }
   );
 
   // tRPC mutations
@@ -802,7 +812,22 @@ export default function GigCommand() {
                 </div>
               </CardHeader>
               <CardContent>
-                {!intelligencePos ? (
+                {routeLocked ? (
+                  <div className="flex flex-col items-center gap-3 py-6 text-center">
+                    <Sparkles className="h-8 w-8 text-violet-400" />
+                    <p className="text-sm text-muted-foreground">
+                      Route intelligence — hot zones, timing &amp; earnings tips
+                      — is a Pro feature.
+                    </p>
+                    <Button
+                      asChild
+                      size="sm"
+                      className="bg-violet-600 hover:bg-violet-700 text-white"
+                    >
+                      <Link href="/gig-worker-plans">Upgrade to Pro</Link>
+                    </Button>
+                  </div>
+                ) : !intelligencePos ? (
                   <div className="text-center py-6 text-muted-foreground text-sm">
                     <MapPin className="h-8 w-8 mx-auto mb-2 opacity-30" />
                     <p>

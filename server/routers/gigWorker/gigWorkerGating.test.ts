@@ -39,6 +39,16 @@ describe("gigWorkerService.requireFeature", () => {
     expect(result).toBe(access);
   });
 
+  it("fails closed with FORBIDDEN for an unknown feature key", async () => {
+    // Guard runs before checkFeatureAccess, so no mock is needed — an unknown
+    // key must never fall through to the starter default and grant access.
+    const spy = vi.spyOn(gigWorkerService, "checkFeatureAccess");
+    await expect(
+      gigWorkerService.requireFeature(1, "not_a_real_feature" as never)
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
   it("throws a TRPCError instance (not a plain error)", async () => {
     vi.spyOn(gigWorkerService, "checkFeatureAccess").mockResolvedValue({
       hasAccess: false,

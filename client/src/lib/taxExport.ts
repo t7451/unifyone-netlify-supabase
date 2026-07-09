@@ -28,7 +28,14 @@ function fmtDate(iso: string): string {
 }
 
 function escapeCsvCell(value: string | number): string {
-  const normalized = String(value ?? "").replace(/\r?\n|\r/g, " ");
+  let normalized = String(value ?? "").replace(/\r?\n|\r/g, " ");
+  // CSV formula-injection guard: a cell that begins with = + - @ (or a control
+  // char) is executed as a formula by Excel/Sheets. User-authored fields
+  // (platform, purpose, addresses) reach this file, so neutralize them by
+  // prefixing a single quote before the normal quoting rules.
+  if (/^[=+\-@\t\r]/.test(normalized)) {
+    normalized = `'${normalized}`;
+  }
   return /[",\n]/.test(normalized)
     ? `"${normalized.replace(/"/g, '""')}"`
     : normalized;
@@ -71,7 +78,7 @@ export function downloadTaxCsv(report: TaxReport): void {
   row(["Net earnings", report.summary.netEarningsDollars]);
   row([]);
 
-  row(["Estimated tax on recorded net earnings"]);
+  row(["Estimated annual tax (Form 1040-ES basis)"]);
   row(["Self-employment tax", report.tax.seTaxDollars]);
   row(["Federal income tax (est.)", report.tax.fedIncomeTaxDollars]);
   row(["Total estimated tax", report.tax.totalEstimatedTaxDollars]);
@@ -176,7 +183,7 @@ export function downloadTaxPdf(report: TaxReport): void {
 
   autoTable(doc, {
     startY: y,
-    head: [["Estimated tax on recorded net earnings", ""]],
+    head: [["Estimated annual tax (Form 1040-ES basis)", ""]],
     body: [
       ["Self-employment tax", fmtUsd(report.tax.seTaxDollars)],
       ["Federal income tax (est.)", fmtUsd(report.tax.fedIncomeTaxDollars)],
@@ -195,19 +202,35 @@ export function downloadTaxPdf(report: TaxReport): void {
   if (report.shifts.length > 0) {
     autoTable(doc, {
       startY: y,
-      head: [["Date", "Platform", "Hrs", "Gross", "Tips", "Miles", "$/hr"]],
+      // Mirror the CSV shift ledger's columns so a CPA cross-referencing the PDF
+      // against the CSV sees the same per-shift bonuses and totals.
+      head: [
+        [
+          "Date",
+          "Platform",
+          "Hrs",
+          "Gross",
+          "Tips",
+          "Bonus",
+          "Total",
+          "Miles",
+          "$/hr",
+        ],
+      ],
       body: report.shifts.map(s => [
         fmtDate(s.date),
         s.platform,
         s.durationHours.toFixed(1),
         fmtUsd(s.grossDollars),
         fmtUsd(s.tipsDollars),
+        fmtUsd(s.bonusesDollars),
+        fmtUsd(s.totalDollars),
         s.miles.toFixed(1),
         fmtUsd(s.perHourDollars),
       ]),
       theme: "grid",
       headStyles: { fillColor: [30, 30, 30] },
-      styles: { fontSize: 8 },
+      styles: { fontSize: 7 },
     });
     y = (doc.lastAutoTable?.finalY ?? y) + 6;
   }
