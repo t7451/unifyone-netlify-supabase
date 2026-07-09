@@ -1,3 +1,4 @@
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
@@ -100,6 +101,9 @@ function UsageMeter({
 export function SubscriptionWidget() {
   const [, navigate] = useLocation();
   const { data, isLoading } = trpc.subscription.getStatus.useQuery();
+  const { user } = useAuth();
+  // Gig is the default experience; Products/Orders meters are commerce-only.
+  const isCommerce = (user?.primaryProduct ?? "gig") === "commerce";
 
   if (isLoading) {
     return (
@@ -207,18 +211,22 @@ export function SubscriptionWidget() {
             <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
               Usage
             </p>
-            <UsageMeter
-              icon={Package}
-              label="Products"
-              used={usage.products}
-              max={usage.maxProducts}
-            />
-            <UsageMeter
-              icon={ShoppingCart}
-              label="Orders"
-              used={usage.orders}
-              max={usage.maxOrders}
-            />
+            {isCommerce && (
+              <>
+                <UsageMeter
+                  icon={Package}
+                  label="Products"
+                  used={usage.products}
+                  max={usage.maxProducts}
+                />
+                <UsageMeter
+                  icon={ShoppingCart}
+                  label="Orders"
+                  used={usage.orders}
+                  max={usage.maxOrders}
+                />
+              </>
+            )}
             <UsageMeter
               icon={Users}
               label="Team Members"
