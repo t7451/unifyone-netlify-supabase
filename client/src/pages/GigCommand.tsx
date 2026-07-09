@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
+import { TaxExportButton } from "@/components/TaxExportButton";
 import { MapView } from "@/components/Map";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -395,6 +396,11 @@ export default function GigCommand() {
             </Button>
           </div>
         )}
+
+        {/* Tax export (Pro) — download the full shift + mileage + tax record */}
+        <div className="flex items-center justify-end">
+          <TaxExportButton />
+        </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Left column: Shift Control + Stats */}

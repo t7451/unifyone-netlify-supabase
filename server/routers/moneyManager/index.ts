@@ -13,6 +13,8 @@ import { shiftsService } from "./shifts.service";
 import { mileageTaxService } from "./mileageTax.service";
 import { rulesService } from "./rules.service";
 import { pointsService } from "./points.service";
+import { taxExportService } from "./taxExport.service";
+import { gigWorkerService } from "../gigWorker/gigWorker.service";
 
 export const moneyManagerRouter = router({
   // ── Gig Shifts ──────────────────────────────────────────────────────────────
@@ -248,6 +250,32 @@ export const moneyManagerRouter = router({
     )
     .query(async ({ ctx }) => {
       return shiftsService.getKaiContext(ctx.user.id);
+    }),
+
+  /**
+   * Tax Export (Pro) — assemble the year's shifts + mileage + tax estimate into
+   * a structured report the client downloads as CSV/PDF. Gated server-side via
+   * `requireFeature("tax_export")`: a Starter operator gets a FORBIDDEN with an
+   * upgrade message, so the paywall is enforced at the source, not just hidden
+   * in the UI.
+   */
+  exportTaxReport: operatorProcedure
+    .input(
+      z
+        .object({
+          year: z
+            .number()
+            .int()
+            .min(2020)
+            .max(2100)
+            .default(new Date().getFullYear()),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      await gigWorkerService.requireFeature(ctx.user.id, "tax_export");
+      const year = input?.year ?? new Date().getFullYear();
+      return taxExportService.buildTaxReport(ctx.user.id, { year });
     }),
 
   /**

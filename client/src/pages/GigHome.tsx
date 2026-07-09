@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardPageShell } from "@/components/DashboardPageShell";
+import { TaxExportButton } from "@/components/TaxExportButton";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 
@@ -399,6 +400,12 @@ export default function GigHome() {
                   Open quarterly tax estimator
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
+                  <p className="text-xs text-slate-400">
+                    Download your full shift &amp; mileage tax record.
+                  </p>
+                  <TaxExportButton />
+                </div>
               </>
             )}
           </CardContent>

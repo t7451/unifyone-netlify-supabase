@@ -421,6 +421,16 @@ Provide a JSON response with:
   },
 
   async generateAIShortcuts(userId: number, input: { platform?: string }) {
+    // Meter this LLM call against the user's monthly AI credit quota. Starter
+    // gets 25/mo, Pro 250 — previously these AI endpoints never recorded usage,
+    // so the sold free-tier limit was unenforceable. recordAIUsage throws
+    // FORBIDDEN when the quota is exhausted, before we spend an LLM call.
+    const { gigWorkerService } = await import("../gigWorker/gigWorker.service");
+    await gigWorkerService.recordAIUsage(userId, {
+      tokens: 0,
+      context: "ai_shortcuts",
+    });
+
     const db = await repo.getDb();
     if (!db) return [];
 
