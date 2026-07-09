@@ -12,12 +12,23 @@ test.describe("Home page", () => {
     await expect(heading).toBeVisible();
   });
 
-  test("Start Free Trial CTA button is visible", async ({ page }) => {
+  test("Start Free — No Card CTA is visible", async ({ page }) => {
     await page.goto("/");
+    // Hero CTA (gig-operator positioning). The same CTA also appears in the
+    // final CTA section, so pick the first (hero) instance.
     const cta = page
-      .getByRole("link", { name: /Start Free Trial|Get Started/i })
+      .getByRole("link", { name: /Start Free — No Card/i })
       .first();
     await expect(cta).toBeVisible();
+    await expect(cta).toHaveAttribute("href", /\/register/);
+  });
+
+  test("free calculators secondary CTA links to /tools", async ({ page }) => {
+    await page.goto("/");
+    const secondary = page
+      .getByRole("link", { name: /Try the free calculators/i })
+      .first();
+    await expect(secondary).toBeVisible();
   });
 
   test("pricing section exists on the page", async ({ page }) => {
