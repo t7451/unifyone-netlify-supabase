@@ -75,7 +75,7 @@ export function AddCustomerDialog({ onCreated }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-[#00D9FF]/10 border border-[#00D9FF]/30 text-[#00D9FF] hover:bg-[#00D9FF]/20">
+        <Button className="bg-[#D4A843]/10 border border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/20">
           <UserPlus className="w-4 h-4 mr-2" />
           Add Customer
         </Button>
@@ -154,7 +154,7 @@ export function AddCustomerDialog({ onCreated }: Props) {
           <Button
             onClick={handleSubmit}
             disabled={create.isPending || !email}
-            className="bg-[#00D9FF]/10 border border-[#00D9FF]/30 text-[#00D9FF] hover:bg-[#00D9FF]/20"
+            className="bg-[#D4A843]/10 border border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/20"
           >
             {create.isPending ? (
               <>

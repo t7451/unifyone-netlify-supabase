@@ -85,7 +85,7 @@ export default function TermsOfService() {
               case-by-case basis — contact{" "}
               <a
                 href="mailto:skdev@1commercesolutions.com"
-                className="text-[#00D9FF] hover:underline"
+                className="text-[#D4A843] hover:underline"
               >
                 skdev@1commercesolutions.com
               </a>
@@ -215,7 +215,7 @@ export default function TermsOfService() {
                 Email:{" "}
                 <a
                   href="mailto:skdev@1commercesolutions.com"
-                  className="text-[#00D9FF] hover:underline"
+                  className="text-[#D4A843] hover:underline"
                 >
                   skdev@1commercesolutions.com
                 </a>

@@ -84,7 +84,7 @@ export function ChangePlanCard() {
     <Card className="bg-card border-border">
       <CardHeader>
         <CardTitle className="text-white text-base flex items-center gap-2">
-          <Star className="w-4 h-4 text-[#00D9FF]" />
+          <Star className="w-4 h-4 text-[#D4A843]" />
           Change Plan
         </CardTitle>
         <CardDescription className="text-gray-400">
@@ -97,7 +97,7 @@ export function ChangePlanCard() {
             onClick={() => setCycle("monthly")}
             className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
               cycle === "monthly"
-                ? "bg-[#00D9FF]/20 text-[#00D9FF]"
+                ? "bg-[#D4A843]/20 text-[#D4A843]"
                 : "text-gray-400 hover:text-white"
             }`}
           >
@@ -107,7 +107,7 @@ export function ChangePlanCard() {
             onClick={() => setCycle("yearly")}
             className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
               cycle === "yearly"
-                ? "bg-[#00D9FF]/20 text-[#00D9FF]"
+                ? "bg-[#D4A843]/20 text-[#D4A843]"
                 : "text-gray-400 hover:text-white"
             }`}
           >
@@ -133,7 +133,7 @@ export function ChangePlanCard() {
                 <div
                   key={p.id}
                   className={`flex items-center justify-between p-3 rounded-lg bg-white/5 border ${
-                    isCurrent ? "border-[#00D9FF]/40" : "border-white/10"
+                    isCurrent ? "border-[#D4A843]/40" : "border-white/10"
                   }`}
                 >
                   <div className="flex-1">
@@ -142,7 +142,7 @@ export function ChangePlanCard() {
                       {isCurrent && (
                         <Badge
                           variant="outline"
-                          className="border-[#00D9FF]/30 text-[#00D9FF] text-xs"
+                          className="border-[#D4A843]/30 text-[#D4A843] text-xs"
                         >
                           <CheckCircle2 className="w-3 h-3 mr-1" />
                           Current
