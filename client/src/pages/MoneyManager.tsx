@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TaxExportButton } from "@/components/TaxExportButton";
 import {
   Select,
   SelectContent,
@@ -554,6 +555,12 @@ export default function MoneyManager() {
 
         {/* Mileage Tab */}
         <TabsContent value="mileage" className="space-y-4 mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card/50 px-4 py-3">
+            <p className="text-sm text-muted-foreground">
+              Export your shifts, mileage &amp; estimated tax for your CPA.
+            </p>
+            <TaxExportButton />
+          </div>
           <Card className="border-border">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">

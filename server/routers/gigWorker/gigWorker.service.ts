@@ -159,6 +159,37 @@ export const gigWorkerService = {
     return { hasAccess, userTier, requiredTier, upgradePlan };
   },
 
+  /**
+   * Enforce that the current user's plan unlocks `feature`, throwing a
+   * FORBIDDEN error (with the required tier + cheapest upgrade plan in the
+   * message) when it does not. This is the server-side gate that paid
+   * gig features call before doing any work — the previous `checkFeatureAccess`
+   * was only ever a client-read, so nothing actually restricted a paid feature.
+   * Returns the resolved access record on success so callers can reuse it.
+   */
+  async requireFeature(userId: number, feature: keyof typeof FEATURE_TIERS) {
+    // Fail closed: an unrecognized feature key must never fall through to the
+    // `?? "starter"` default in checkFeatureAccess and silently grant a paid
+    // gate. The parameter type guards call sites; this runtime check defends
+    // against a bad cast reaching the gate.
+    if (!Object.prototype.hasOwnProperty.call(FEATURE_TIERS, feature)) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: `Unknown feature gate "${String(feature)}".`,
+      });
+    }
+    const access = await this.checkFeatureAccess(userId, feature);
+    if (!access.hasAccess) {
+      const planName =
+        access.upgradePlan?.name ?? `${access.requiredTier} plan`;
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: `This feature requires the ${planName}. Upgrade to unlock it.`,
+      });
+    }
+    return access;
+  },
+
   /** Create a Stripe Checkout session for a gig worker plan. */
   async createCheckout(
     ctx: {
