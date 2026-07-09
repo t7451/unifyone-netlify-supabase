@@ -71,7 +71,7 @@ function buildJsonLd(page: SeoPage, canonical: string) {
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      mainEntity: page.faq.map((item) => ({
+      mainEntity: page.faq.map(item => ({
         "@type": "Question",
         name: item.q,
         acceptedAnswer: { "@type": "Answer", text: item.a },
@@ -90,7 +90,7 @@ export default function SeoLanding() {
   const canonical = `${SITE_URL}/seo/${page.slug}`;
   const jsonLd = buildJsonLd(page, canonical);
   const related = (page.related ?? [])
-    .map((s) => getSeoPage(s))
+    .map(s => getSeoPage(s))
     .filter((p): p is SeoPage => Boolean(p));
 
   return (
@@ -287,7 +287,7 @@ export default function SeoLanding() {
           className="mt-16 pt-12"
           style={{ borderTop: "1px solid rgba(212,168,67,0.15)" }}
         >
-          <span className="inscription block mb-4">Begin Construction</span>
+          <span className="inscription block mb-4">Get started</span>
           <h3
             className="font-cinzel text-2xl font-bold mb-6"
             style={{ color: "#F0E8D0" }}
@@ -316,7 +316,7 @@ export default function SeoLanding() {
           >
             <span className="inscription block mb-6">Related Guides</span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {related.map((r) => (
+              {related.map(r => (
                 <Link key={r.slug} href={`/seo/${r.slug}`}>
                   <div className="stone-card p-6 cursor-pointer group">
                     <span
@@ -345,7 +345,7 @@ export default function SeoLanding() {
         >
           <span className="inscription block mb-6">All UnifyOne Guides</span>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-            {SEO_PAGES.map((p) => (
+            {SEO_PAGES.map(p => (
               <li key={p.slug}>
                 <Link href={`/seo/${p.slug}`}>
                   <span

@@ -557,7 +557,7 @@ export default function TheSystem() {
         style={{ borderTop: "1px solid rgba(212,168,67,0.06)" }}
       >
         <div className="max-w-3xl mx-auto px-6 sm:px-8 text-center">
-          <span className="inscription block mb-4">Begin Construction</span>
+          <span className="inscription block mb-4">Get started</span>
           <h2
             className="font-cinzel text-3xl sm:text-4xl font-bold mb-6"
             style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
