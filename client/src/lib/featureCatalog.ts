@@ -1,4 +1,6 @@
 import type { LucideIcon } from "lucide-react";
+
+import { landingPathForProduct } from "@/lib/primaryProduct";
 import {
   Activity,
   BarChart3,
@@ -64,7 +66,65 @@ export type FeatureCategory = {
   features: FeatureModule[];
 };
 
+/**
+ * Sentinel path for the home/dashboard tile. The real landing differs per
+ * tenant ("/overview" for gig operators, "/dashboard" for commerce-first
+ * tenants), so consumers must resolve it through resolveFeaturePath() rather
+ * than navigating to it verbatim.
+ */
+export const HOME_TILE_PATH = "/dashboard";
+
 export const FEATURE_CATEGORIES: FeatureCategory[] = [
+  {
+    id: "gig-operations",
+    title: "Gig Operations",
+    summary:
+      "Run gig work end to end: shifts, earnings, mileage, taxes, and multi-app income in one operating view.",
+    icon: Navigation,
+    tone: "cyan",
+    features: [
+      {
+        label: "Gig Command",
+        path: "/gig-command",
+        description:
+          "Manage gig-style work streams, operator tasks, and command routing.",
+        outcome:
+          "Turn flexible work into visible assignments and measurable execution.",
+        firstAction: "Review active gig commands and worker readiness.",
+        icon: Navigation,
+      },
+      {
+        label: "Money Manager",
+        path: "/money-manager",
+        description:
+          "Track money movement, financial posture, and operating finance views.",
+        outcome:
+          "See the full money picture across every income stream, not just one app.",
+        firstAction:
+          "Review balances, categories, and the next financial action.",
+        icon: DollarSign,
+      },
+      {
+        label: "Gig Worker Plans",
+        path: "/gig-worker-plans",
+        description:
+          "Review plan structures, gig worker packages, and monetization paths.",
+        outcome: "Package work and services into clear tiers.",
+        firstAction:
+          "Compare plans and pick the first package to operationalize.",
+        icon: Star,
+      },
+      {
+        label: "Mobile Automation",
+        path: "/mobile-automation",
+        description:
+          "Coordinate phone-first workflows, mobile worker actions, and on-the-go execution.",
+        outcome: "Bring field or mobile work into the same operating loop.",
+        firstAction: "Review mobile-ready actions and worker handoffs.",
+        icon: Smartphone,
+      },
+    ],
+  },
   {
     id: "command-center",
     title: "Command Center",
@@ -75,13 +135,15 @@ export const FEATURE_CATEGORIES: FeatureCategory[] = [
     features: [
       {
         label: "Dashboard",
-        path: "/dashboard",
+        // Sentinel home path — consumers resolve the real landing per tenant
+        // via resolveFeaturePath()/landingPathForProduct().
+        path: HOME_TILE_PATH,
         description:
-          "The daily operating view for revenue, orders, customers, products, and system health.",
+          "Your home base: the daily operating view for what needs attention across the workspace.",
         outcome:
           "Know what needs attention before you open any individual module.",
         firstAction:
-          "Review KPIs, recent orders, and the module health badges.",
+          "Review your key numbers, recent activity, and module health badges.",
         icon: LayoutDashboard,
       },
       {
@@ -385,7 +447,7 @@ export const FEATURE_CATEGORIES: FeatureCategory[] = [
     id: "automation-ai",
     title: "Automation And AI",
     summary:
-      "Use Kai, workflows, mobile automation, agents, knowledge tools, and builder workspaces.",
+      "Use Kai, workflows, agents, knowledge tools, and builder workspaces.",
     icon: Sparkles,
     tone: "rose",
     features: [
@@ -409,35 +471,6 @@ export const FEATURE_CATEGORIES: FeatureCategory[] = [
           "Ask natural-language questions while staying inside the operating system.",
         firstAction: "Ask Kai what to fix first in your current workspace.",
         icon: Sparkles,
-      },
-      {
-        label: "Mobile Automation",
-        path: "/mobile-automation",
-        description:
-          "Coordinate phone-first workflows, mobile worker actions, and on-the-go execution.",
-        outcome: "Bring field or mobile work into the same operating loop.",
-        firstAction: "Review mobile-ready actions and worker handoffs.",
-        icon: Smartphone,
-      },
-      {
-        label: "Gig Command",
-        path: "/gig-command",
-        description:
-          "Manage gig-style work streams, operator tasks, and command routing.",
-        outcome:
-          "Turn flexible work into visible assignments and measurable execution.",
-        firstAction: "Review active gig commands and worker readiness.",
-        icon: Navigation,
-      },
-      {
-        label: "Gig Worker Plans",
-        path: "/gig-worker-plans",
-        description:
-          "Review plan structures, gig worker packages, and monetization paths.",
-        outcome: "Package work and services into clear tiers.",
-        firstAction:
-          "Compare plans and pick the first package to operationalize.",
-        icon: Star,
       },
       {
         label: "DealFlow",
@@ -504,21 +537,10 @@ export const FEATURE_CATEGORIES: FeatureCategory[] = [
     id: "finance-governance-dev",
     title: "Finance, Governance, And Developer Ops",
     summary:
-      "Control money, platform governance, developer tooling, documentation, proof, and media workflows.",
+      "Control contribution flows, platform governance, developer tooling, documentation, proof, and media workflows.",
     icon: ShieldCheck,
     tone: "slate",
     features: [
-      {
-        label: "Money Manager",
-        path: "/money-manager",
-        description:
-          "Track money movement, financial posture, and operating finance views.",
-        outcome:
-          "See the money system around the commerce system, not only orders.",
-        firstAction:
-          "Review balances, categories, and the next financial action.",
-        icon: DollarSign,
-      },
       {
         label: "Governance Dashboard",
         path: "/master-control",
@@ -605,7 +627,78 @@ export const FEATURE_MODULES = FEATURE_CATEGORIES.flatMap(
 
 export const FEATURE_COUNT = FEATURE_MODULES.length;
 
-export const ONBOARDING_GOALS = [
+/**
+ * Category ordering per primary product. Gig operators see gig tooling first
+ * with commerce demoted to an optional secondary product; commerce-first
+ * tenants keep the original commerce-led order with gig tooling last.
+ */
+const CATEGORY_ORDER_BY_PRODUCT: Record<"gig" | "commerce", string[]> = {
+  gig: [
+    "gig-operations",
+    "command-center",
+    "automation-ai",
+    "growth-revenue",
+    "commerce-core",
+    "payments-channels",
+    "finance-governance-dev",
+  ],
+  commerce: [
+    "command-center",
+    "commerce-core",
+    "payments-channels",
+    "growth-revenue",
+    "automation-ai",
+    "finance-governance-dev",
+    "gig-operations",
+  ],
+};
+
+/**
+ * The feature categories ordered for a workspace's primary product. Defaults
+ * to the gig-first order when the product is unknown, mirroring the
+ * operator-first default of `tenants.primaryProduct`. Categories missing from
+ * the order list (e.g. added later) are appended in catalog order so nothing
+ * silently disappears.
+ */
+export function orderedCategoriesForProduct(
+  product?: string | null
+): FeatureCategory[] {
+  const order =
+    product === "commerce"
+      ? CATEGORY_ORDER_BY_PRODUCT.commerce
+      : CATEGORY_ORDER_BY_PRODUCT.gig;
+  const byId = new Map(
+    FEATURE_CATEGORIES.map(category => [category.id, category])
+  );
+  const ordered = order.flatMap(id => {
+    const category = byId.get(id);
+    return category ? [category] : [];
+  });
+  const seen = new Set(ordered.map(category => category.id));
+  return [
+    ...ordered,
+    ...FEATURE_CATEGORIES.filter(category => !seen.has(category.id)),
+  ];
+}
+
+/**
+ * Resolve a feature tile path for navigation. The home tile stores the
+ * HOME_TILE_PATH sentinel; every other tile path is already concrete.
+ */
+export function resolveFeaturePath(
+  path: string,
+  product?: string | null
+): string {
+  return path === HOME_TILE_PATH ? landingPathForProduct(product) : path;
+}
+
+export const GIG_ONBOARDING_GOALS = [
+  "Track earnings per shift",
+  "Log mileage & stay quarterly-tax ready",
+  "Consolidate multi-app income",
+] as const;
+
+export const COMMERCE_ONBOARDING_GOALS = [
   "Sell products",
   "Connect payments",
   "Grow demand",
@@ -613,3 +706,22 @@ export const ONBOARDING_GOALS = [
   "Govern access",
   "Build with AI",
 ] as const;
+
+/** Full goal list, gig-first (the platform default). */
+export const ONBOARDING_GOALS = [
+  ...GIG_ONBOARDING_GOALS,
+  ...COMMERCE_ONBOARDING_GOALS,
+] as const;
+
+/**
+ * Onboarding goals ordered for a workspace's primary product: gig goals lead
+ * for gig operators (and when the product is unknown), commerce goals lead
+ * for commerce-first tenants.
+ */
+export function onboardingGoalsForProduct(
+  product?: string | null
+): readonly string[] {
+  return product === "commerce"
+    ? [...COMMERCE_ONBOARDING_GOALS, ...GIG_ONBOARDING_GOALS]
+    : ONBOARDING_GOALS;
+}

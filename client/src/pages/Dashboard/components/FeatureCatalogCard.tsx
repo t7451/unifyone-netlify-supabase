@@ -1,9 +1,14 @@
 import { ArrowRight } from "lucide-react";
+import { useMemo } from "react";
 
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FEATURE_CATEGORIES, FEATURE_COUNT } from "@/lib/featureCatalog";
+import {
+  FEATURE_COUNT,
+  orderedCategoriesForProduct,
+} from "@/lib/featureCatalog";
 import { cn } from "@/lib/utils";
 
 import { categoryToneClasses } from "../Dashboard.constants";
@@ -18,6 +23,15 @@ export function FeatureCatalogCard({
   onboardingStatus,
   openOnboarding,
 }: FeatureCatalogCardProps) {
+  const { user } = useAuth();
+  const primaryProduct = user?.primaryProduct;
+  // Gig operators see Gig Operations first with commerce demoted; commerce
+  // tenants keep the commerce-led order.
+  const categories = useMemo(
+    () => orderedCategoriesForProduct(primaryProduct),
+    [primaryProduct]
+  );
+
   return (
     <Card className="border-border bg-card">
       <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -26,9 +40,9 @@ export function FeatureCatalogCard({
             What you can run in UnifyOne
           </CardTitle>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-            The platform is organized into {FEATURE_CATEGORIES.length} operating
-            areas and {FEATURE_COUNT} guided modules. Use this map to pick a
-            lane, then open the wizard for module-by-module next actions.
+            The platform is organized into {categories.length} operating areas
+            and {FEATURE_COUNT} guided modules. Use this map to pick a lane,
+            then open the wizard for module-by-module next actions.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:items-end">
@@ -57,7 +71,7 @@ export function FeatureCatalogCard({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
-          {FEATURE_CATEGORIES.map(category => {
+          {categories.map(category => {
             const Icon = category.icon;
 
             return (
