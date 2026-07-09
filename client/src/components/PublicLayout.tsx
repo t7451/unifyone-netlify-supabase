@@ -273,7 +273,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
                 className="btn-illuminate block text-center"
                 style={{ padding: "0.75rem 1.5rem", fontSize: "0.7rem" }}
               >
-                Begin Construction
+                Start Free — No Card
               </a>
             </div>
           </div>
@@ -605,7 +605,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
           className="btn-illuminate block text-center w-full"
           style={{ padding: "0.875rem", fontSize: "0.7rem" }}
         >
-          Begin Construction — Free
+          Start Free — No Card
         </a>
       </div>
     </div>
