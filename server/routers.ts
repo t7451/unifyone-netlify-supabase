@@ -86,10 +86,6 @@ export const appRouter = router({
         passwordChangedAt: u.passwordChangedAt,
         hasPassword: !!u.passwordHash,
         primaryProduct,
-        userType:
-          primaryProduct === "gig"
-            ? ("gig_operator" as const)
-            : ("merchant" as const),
       };
     }),
     logout: publicProcedure.mutation(({ ctx }) => {
