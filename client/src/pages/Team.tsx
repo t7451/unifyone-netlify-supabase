@@ -150,7 +150,7 @@ export default function Team() {
               setInviteLink(null);
               setInviteEmail("");
             }}
-            className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+            className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
           >
             <UserPlus className="w-4 h-4 mr-2" /> Invite Member
           </Button>
@@ -232,7 +232,7 @@ export default function Team() {
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00D9FF]/30 to-purple-500/30 flex items-center justify-center text-white text-xs font-bold">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A843]/30 to-purple-500/30 flex items-center justify-center text-white text-xs font-bold">
                         {(m.name ?? m.email ?? "?")[0].toUpperCase()}
                       </div>
                       <div>
@@ -240,7 +240,7 @@ export default function Team() {
                           {m.name ?? "—"}
                         </p>
                         {m.id === user?.id && (
-                          <span className="text-[#00D9FF] text-xs">You</span>
+                          <span className="text-[#D4A843] text-xs">You</span>
                         )}
                       </div>
                     </div>
@@ -419,7 +419,7 @@ export default function Team() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-7 px-2 text-xs text-[#00D9FF] hover:text-[#00D9FF]/80 gap-1"
+                        className="h-7 px-2 text-xs text-[#D4A843] hover:text-[#D4A843]/80 gap-1"
                         onClick={() => {
                           const link = `${window.location.origin}/join?token=${inv.token}`;
                           navigator.clipboard.writeText(link);
@@ -497,7 +497,7 @@ export default function Team() {
         <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-[#00D9FF]" />
+              <UserPlus className="w-5 h-5 text-[#D4A843]" />
               Invite Team Member
             </DialogTitle>
           </DialogHeader>
@@ -570,7 +570,7 @@ export default function Team() {
                   Cancel
                 </Button>
                 <Button
-                  className="flex-1 bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+                  className="flex-1 bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
                   onClick={handleSendInvite}
                   disabled={!inviteEmail.trim() || sendInvite.isPending}
                 >
@@ -597,20 +597,20 @@ export default function Team() {
                 </p>
               </div>
               <div className="bg-white/5 rounded-lg p-3 flex items-center gap-2">
-                <code className="text-[#00D9FF] text-xs flex-1 truncate">
+                <code className="text-[#D4A843] text-xs flex-1 truncate">
                   {inviteLink}
                 </code>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="shrink-0 h-7 w-7 p-0 text-gray-400 hover:text-[#00D9FF]"
+                  className="shrink-0 h-7 w-7 p-0 text-gray-400 hover:text-[#D4A843]"
                   onClick={copyInviteLink}
                 >
                   <Copy className="w-3.5 h-3.5" />
                 </Button>
               </div>
               <Button
-                className="w-full bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+                className="w-full bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
                 onClick={copyInviteLink}
               >
                 <Copy className="w-4 h-4 mr-2" /> Copy Invite Link

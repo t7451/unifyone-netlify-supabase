@@ -327,7 +327,7 @@ export default function Checkout() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A1128] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#020202] flex items-center justify-center p-6">
       {/* Background glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-[#635BFF]/5 rounded-full blur-3xl" />
@@ -364,7 +364,7 @@ export default function Checkout() {
         {planSlug && (
           <div className="space-y-4">
             {/* Plan summary card */}
-            <div className="glass rounded-2xl p-5 border border-[#00D9FF]/20">
+            <div className="glass rounded-2xl p-5 border border-[#D4A843]/20">
               {plansQuery.isLoading ? (
                 <div className="space-y-3">
                   <Skeleton className="h-5 w-32 bg-white/10" />
@@ -383,7 +383,7 @@ export default function Checkout() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[#00D9FF] text-2xl font-bold">
+                      <p className="text-[#D4A843] text-2xl font-bold">
                         {canonicalPlan
                           ? formatUsdCents(canonicalPlan.monthlyPriceCents)
                           : `$${Number(activePlan.priceMonthly ?? 0).toFixed(0)}`}
@@ -524,7 +524,7 @@ export default function Checkout() {
                       !rail.available
                         ? "border-white/5 bg-white/2 opacity-50 cursor-not-allowed"
                         : isSelected
-                          ? "border-[#00D9FF]/50 bg-[#00D9FF]/5 shadow-lg shadow-[#00D9FF]/5"
+                          ? "border-[#D4A843]/50 bg-[#D4A843]/5 shadow-lg shadow-[#D4A843]/5"
                           : "border-white/10 bg-white/3 hover:border-white/20 hover:bg-white/5 cursor-pointer"
                     }`}
                   >
@@ -575,12 +575,12 @@ export default function Checkout() {
                       <div
                         className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
                           isSelected && rail.available
-                            ? "border-[#00D9FF] bg-[#00D9FF]"
+                            ? "border-[#D4A843] bg-[#D4A843]"
                             : "border-white/20"
                         }`}
                       >
                         {isSelected && rail.available && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-[#0A1128]" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#020202]" />
                         )}
                       </div>
                     </div>

@@ -79,7 +79,7 @@ export default function Integrations() {
       </div>
       <Button
         onClick={() => navigate("/checkout")}
-        className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-bold"
+        className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-bold"
       >
         <CreditCard className="w-4 h-4 mr-2" />
         Test Checkout
