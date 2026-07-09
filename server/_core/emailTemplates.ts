@@ -13,9 +13,9 @@ import { getAppUrl } from "./env";
 
 function buildEmailTemplates(baseUrl: string) {
   return {
-  welcome: {
-    subject: "Welcome to UnifyOne — Built to Endure",
-    html: `
+    welcome: {
+      subject: "Welcome to UnifyOne — Know What You Earn",
+      html: `
       <!DOCTYPE html>
       <html>
         <head>
@@ -35,23 +35,23 @@ function buildEmailTemplates(baseUrl: string) {
         <body>
           <div class="container">
             <div class="header">
-              <h1>UNIFYONEONE</h1>
-              <p style="margin: 8px 0; font-size: 12px; letter-spacing: 0.1em; color: #9A9A9A;">CATHEDRAL FRAMEWORK</p>
+              <h1>UNIFYONE</h1>
+              <p style="margin: 8px 0; font-size: 12px; letter-spacing: 0.1em; color: #9A9A9A;">KNOW WHAT YOU EARN. KEEP WHAT YOU OWE.</p>
             </div>
             <div class="content">
               <p>Welcome to UnifyOne.</p>
-              <p>You've joined a community of commerce builders who believe in infrastructure that endures. We've engineered a multi-tenant platform that replaces three separate SaaS tools with one cohesive system — built sequentially, structured like a cathedral, and powered by Kai.</p>
+              <p>Gig work scatters your money across a half-dozen apps. UnifyOne pulls it back into one clear picture — what you earned, the miles you can deduct, and what to set aside for quarterly taxes — with Kai, your earnings copilot, watching the numbers alongside you.</p>
               <p>Over the next two weeks, we'll show you:</p>
               <ul>
-                <li>How the Six Pillars architecture eliminates operational drag</li>
-                <li>Why sequential construction beats feature bloat</li>
-                <li>How Kai becomes your commerce co-pilot</li>
+                <li>How GigIQ turns scattered payouts into your real hourly take</li>
+                <li>How Tax Autopilot tracks IRS mileage and projects your quarterly 1040-ES estimates</li>
+                <li>How Kai becomes your earnings copilot at tax time and every shift in between</li>
                 <li>Exclusive pricing for early adopters</li>
               </ul>
-              <p>Start here: explore the <a href="${baseUrl}/architecture" style="color: #D4A843; text-decoration: none;">Cathedral Framework</a> and see how commerce infrastructure should be built.</p>
+              <p>Start here: open your <a href="${baseUrl}/overview" style="color: #D4A843; text-decoration: none;">earnings overview</a> and see where your money actually stands. Running a storefront too? The optional commerce add-on is waiting when you need it.</p>
             </div>
             <div class="cta">
-              <a href="${baseUrl}/begin">BEGIN CONSTRUCTION</a>
+              <a href="${baseUrl}/overview">SEE YOUR EARNINGS</a>
             </div>
             <div class="footer">
               <p>© 2025 PNW Enterprises. Built to endure.</p>
@@ -61,11 +61,11 @@ function buildEmailTemplates(baseUrl: string) {
         </body>
       </html>
     `,
-  },
+    },
 
-  platformOverview: {
-    subject: "The Six Pillars: How UnifyOne Works",
-    html: `
+    platformOverview: {
+      subject: "The Six Pillars: How UnifyOne Works",
+      html: `
       <!DOCTYPE html>
       <html>
         <head>
@@ -88,36 +88,36 @@ function buildEmailTemplates(baseUrl: string) {
               <h1>THE SIX PILLARS</h1>
             </div>
             <div class="content">
-              <p>UnifyOne is built on six structural pillars, each engineered to eliminate redundancy and operational drag:</p>
-              
+              <p>UnifyOne is built on six structural pillars, each engineered to give you earnings clarity and tax confidence:</p>
+
               <div class="pillar">
-                <div class="pillar-title">1. MULTI-TENANT FOUNDATION</div>
-                <p>One codebase. Infinite tenants. Complete isolation. Your customers run on the same infrastructure that powers enterprise commerce.</p>
+                <div class="pillar-title">1. GIGIQ</div>
+                <p>Shift and earnings intelligence across every platform you work. See your real hourly take — what you made, where, and when — not just the app's headline number.</p>
               </div>
 
               <div class="pillar">
-                <div class="pillar-title">2. COMMERCE INFRASTRUCTURE</div>
-                <p>Products, orders, inventory, customers — all modeled for scale. No more spreadsheets. No more manual syncs.</p>
+                <div class="pillar-title">2. TAX AUTOPILOT</div>
+                <p>Deductible IRS mileage tracked automatically. Quarterly estimated taxes (Form 1040-ES) projected for you — recorded, auditable, and reversible.</p>
               </div>
 
               <div class="pillar">
-                <div class="pillar-title">3. PAYMENT ORCHESTRATION</div>
-                <p>Stripe, PayPal, and custom gateways unified under one API. One checkout. Multiple payment methods.</p>
+                <div class="pillar-title">3. MONEY MANAGER</div>
+                <p>One clear monthly money picture. Earnings in, expenses out, tax set-asides accounted for — no spreadsheets, no guesswork.</p>
               </div>
 
               <div class="pillar">
-                <div class="pillar-title">4. AUTOMATION MESH</div>
-                <p>n8n workflows, Zapier integrations, and custom webhooks wired directly into your commerce engine.</p>
+                <div class="pillar-title">4. KAI AI</div>
+                <p>Your earnings copilot. Ask what you made last week, what you owe next quarter, or which shifts actually paid — and get answers grounded in your own numbers.</p>
               </div>
 
               <div class="pillar">
-                <div class="pillar-title">5. SOCIAL INTELLIGENCE</div>
-                <p>Meta Pixel, Google Analytics, and custom event tracking. Every conversion feeds your ad algorithm.</p>
+                <div class="pillar-title">5. YOUR DATA, EXPORTABLE</div>
+                <p>Every mileage log, earnings entry, and tax estimate is versioned and auditable. Pull your full dataset any time — for a CPA, or to move on without friction.</p>
               </div>
 
               <div class="pillar">
-                <div class="pillar-title">6. KAI AI</div>
-                <p>Your commerce co-pilot. Context-aware suggestions, automated insights, and intelligent automation.</p>
+                <div class="pillar-title">6. COMMERCE (OPTIONAL ADD-ON)</div>
+                <p>Selling on the side? An optional storefront add-on with products, orders, and payments — there when you need it, invisible when you don't.</p>
               </div>
             </div>
             <div class="cta">
@@ -130,11 +130,11 @@ function buildEmailTemplates(baseUrl: string) {
         </body>
       </html>
     `,
-  },
+    },
 
-  gettingStarted: {
-    subject: "Getting Started: Your First 30 Minutes",
-    html: `
+    gettingStarted: {
+      subject: "Getting Started: Your First 30 Minutes",
+      html: `
       <!DOCTYPE html>
       <html>
         <head>
@@ -157,30 +157,30 @@ function buildEmailTemplates(baseUrl: string) {
               <h1>FIRST 30 MINUTES</h1>
             </div>
             <div class="content">
-              <p>Ready to build? Here's your roadmap:</p>
-              
+              <p>Ready to see your real numbers? Here's your roadmap:</p>
+
               <div class="step">
-                <div class="step-num">STEP 1: CREATE YOUR TENANT (5 MIN)</div>
-                <p>Set up your commerce namespace. Choose your domain, configure your brand, and claim your space.</p>
+                <div class="step-num">STEP 1: LOG YOUR FIRST SHIFT (5 MIN)</div>
+                <p>Add a shift from DoorDash, Uber, Instacart — any platform you work. GigIQ starts building your real hourly picture immediately.</p>
               </div>
 
               <div class="step">
-                <div class="step-num">STEP 2: ADD YOUR FIRST PRODUCT (10 MIN)</div>
-                <p>Create a test product. Upload an image. Set a price. See the system in action.</p>
+                <div class="step-num">STEP 2: TRACK MILEAGE AUTOMATICALLY (5 MIN)</div>
+                <p>Turn on mileage tracking. Every deductible mile is logged at the IRS rate — recorded, versioned, and ready for tax time.</p>
               </div>
 
               <div class="step">
-                <div class="step-num">STEP 3: CONNECT YOUR PAYMENT GATEWAY (10 MIN)</div>
-                <p>Wire Stripe or PayPal. Test a transaction. Verify the webhook. You're live.</p>
+                <div class="step-num">STEP 3: SEE YOUR QUARTERLY TAX ESTIMATE (10 MIN)</div>
+                <p>Tax Autopilot projects your Form 1040-ES estimate from your actual earnings and miles. Know what to set aside — no CPA, no spreadsheet.</p>
               </div>
 
               <div class="step">
-                <div class="step-num">STEP 4: INVITE YOUR TEAM (5 MIN)</div>
-                <p>Add collaborators. Assign roles. Start building together.</p>
+                <div class="step-num">STEP 4 (OPTIONAL): SET UP YOUR STOREFRONT (10 MIN)</div>
+                <p>Selling on the side? Turn on the optional commerce add-on: add a product, connect Stripe or PayPal, and you're live.</p>
               </div>
             </div>
             <div class="cta">
-              <a href="${baseUrl}/begin">START NOW</a>
+              <a href="${baseUrl}/overview">START NOW</a>
             </div>
             <div class="footer">
               <p>© 2025 PNW Enterprises. Built to endure.</p>
@@ -189,11 +189,11 @@ function buildEmailTemplates(baseUrl: string) {
         </body>
       </html>
     `,
-  },
+    },
 
-  successStories: {
-    subject: "How Others Are Using UnifyOne",
-    html: `
+    successStories: {
+      subject: "How Others Are Using UnifyOne",
+      html: `
       <!DOCTYPE html>
       <html>
         <head>
@@ -216,21 +216,21 @@ function buildEmailTemplates(baseUrl: string) {
               <h1>SUCCESS STORIES</h1>
             </div>
             <div class="content">
-              <p>See how commerce builders are using UnifyOne to scale without headcount:</p>
-              
+              <p>See how gig operators are using UnifyOne to know what they earn and keep what they owe:</p>
+
               <div class="story">
-                <div class="story-title">MULTI-TENANT SAAS PROVIDER</div>
-                <p>"We replaced three separate tools with UnifyOne. Our customers now have one dashboard. Our support load dropped 40%. We're shipping faster."</p>
+                <div class="story-title">MULTI-APP DRIVER</div>
+                <p>"I run DoorDash, Uber, and Instacart. GigIQ showed my real hourly take was $7 lower on one app after miles — so I shifted those hours. Same weeks, more take-home."</p>
               </div>
 
               <div class="story">
-                <div class="story-title">E-COMMERCE AGENCY</div>
-                <p>"UnifyOne's white-label capabilities let us offer a branded platform to our clients. We're now a technology provider, not just a service agency."</p>
+                <div class="story-title">FULL-TIME FREELANCER</div>
+                <p>"Tax Autopilot logged 9,400 deductible miles last year — a deduction I used to lose to a messy notebook. My quarterly 1040-ES estimates were ready on time, and for the first time there was no surprise bill in April."</p>
               </div>
 
               <div class="story">
-                <div class="story-title">DIRECT-TO-CONSUMER BRAND</div>
-                <p>"Kai suggested a pricing optimization that increased our AOV by 18%. The platform pays for itself in the first month."</p>
+                <div class="story-title">SIDE-HUSTLE STOREFRONT</div>
+                <p>"I deliver by day and sell prints online. The optional commerce add-on runs my little store — products, orders, Stripe — right next to my earnings and tax picture. One login, no extra SaaS bill."</p>
               </div>
             </div>
             <div class="cta">
@@ -243,11 +243,11 @@ function buildEmailTemplates(baseUrl: string) {
         </body>
       </html>
     `,
-  },
+    },
 
-  limitedOffer: {
-    subject: "Limited: Early Adopter Pricing (Expires in 7 Days)",
-    html: `
+    limitedOffer: {
+      subject: "Limited: Early Adopter Pricing (Expires in 7 Days)",
+      html: `
       <!DOCTYPE html>
       <html>
         <head>
@@ -282,7 +282,7 @@ function buildEmailTemplates(baseUrl: string) {
               </div>
 
               <p>This is the Cathedral Principle in action: we build for the long term, and we reward those who believe in the vision early.</p>
-              <p>No catch. No hidden fees. Just honest pricing for builders who are in it for the endurance.</p>
+              <p>No catch. No hidden fees. Just honest pricing for gig operators who are in it for the long haul.</p>
             </div>
             <div class="cta">
               <a href="${baseUrl}/tithes">CLAIM YOUR PRICING</a>
@@ -294,7 +294,7 @@ function buildEmailTemplates(baseUrl: string) {
         </body>
       </html>
     `,
-  },
+    },
   };
 }
 

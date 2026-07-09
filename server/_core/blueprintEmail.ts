@@ -50,12 +50,12 @@ function html(downloadUrl: string | null): string {
         <p style="margin:8px 0 0;font-size:12px;letter-spacing:0.12em;color:#9A9A9A;">UNIFYONE ARCHITECTURE GUIDE</p>
       </div>
       <p style="font-size:16px;">Thanks for grabbing the blueprint.</p>
-      <p style="font-size:16px;">Inside the PDF you'll find the full architecture behind UnifyOne — the same system we use to run 8 revenue streams from a single multi-tenant platform:</p>
+      <p style="font-size:16px;">Inside the PDF you'll find the full architecture behind UnifyOne — the system built to give gig and 1099 workers earnings clarity and tax confidence:</p>
       <ul style="font-size:15px;padding-left:20px;">
-        <li>Multi-tenant data model &amp; isolation guarantees</li>
+        <li>Gig income intelligence layer (GigIQ, Tax Autopilot, Money Manager)</li>
+        <li>AI routing via Vercel AI Gateway &amp; Kai, your earnings copilot</li>
         <li>Sequential construction (the Six Pillars)</li>
-        <li>AI routing via Vercel AI Gateway &amp; the Kai co-pilot</li>
-        <li>Gig income intelligence layer</li>
+        <li>Multi-tenant data model &amp; isolation guarantees (optional commerce add-on)</li>
         <li>Webhook-first integrations (Stripe, Shopify, PayPal, Square)</li>
       </ul>
       <div style="text-align:center;margin:36px 0;">${cta}</div>
@@ -77,12 +77,13 @@ function text(downloadUrl: string | null): string {
     "Thanks for grabbing the Cathedral Blueprint.",
     "",
     "Inside the PDF you'll find the full architecture behind UnifyOne — the",
-    "system we use to run 8 revenue streams from a single multi-tenant platform:",
+    "system built to give gig and 1099 workers earnings clarity and tax",
+    "confidence:",
     "",
-    "  • Multi-tenant data model & isolation",
+    "  • Gig income intelligence layer (GigIQ, Tax Autopilot, Money Manager)",
+    "  • AI routing via Vercel AI Gateway & Kai, your earnings copilot",
     "  • Sequential construction (the Six Pillars)",
-    "  • AI routing via Vercel AI Gateway & Kai",
-    "  • Gig income intelligence layer",
+    "  • Multi-tenant data model & isolation (optional commerce add-on)",
     "  • Webhook-first integrations (Stripe, Shopify, PayPal, Square)",
     "",
     link,
