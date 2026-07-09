@@ -89,7 +89,7 @@ export default function NotificationSettings() {
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-base flex items-center gap-2">
-              <Bell className="w-4 h-4 text-[#00D9FF]" />
+              <Bell className="w-4 h-4 text-[#D4A843]" />
               Notification Channels
             </CardTitle>
             <CardDescription className="text-gray-400">
@@ -130,7 +130,7 @@ export default function NotificationSettings() {
           </CardHeader>
           <CardContent className="space-y-1">
             <ToggleRow
-              icon={<ShoppingCart className="w-4 h-4 text-[#00D9FF]" />}
+              icon={<ShoppingCart className="w-4 h-4 text-[#D4A843]" />}
               label="Order Updates"
               description="New orders, status changes, and fulfillment alerts"
               checked={p?.orderUpdates ?? true}

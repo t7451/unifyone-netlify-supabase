@@ -135,7 +135,7 @@ export default function SecuritySettings() {
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-base flex items-center gap-2">
-              <Key className="w-4 h-4 text-[#00D9FF]" />
+              <Key className="w-4 h-4 text-[#D4A843]" />
               Password
             </CardTitle>
             <CardDescription className="text-gray-400">
@@ -174,7 +174,7 @@ export default function SecuritySettings() {
             {hasPassword ? (
               <div className="space-y-3 p-4 rounded-lg bg-white/5 border border-white/10">
                 <div className="flex items-center gap-2 mb-2">
-                  <Lock className="w-4 h-4 text-[#00D9FF]" />
+                  <Lock className="w-4 h-4 text-[#D4A843]" />
                   <p className="text-white text-sm font-medium">
                     Change Password
                   </p>
@@ -223,7 +223,7 @@ export default function SecuritySettings() {
                     !newPw ||
                     !confirmPw
                   }
-                  className="bg-[#00D9FF]/10 border border-[#00D9FF]/30 text-[#00D9FF] hover:bg-[#00D9FF]/20"
+                  className="bg-[#D4A843]/10 border border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/20"
                 >
                   {changePassword.isPending ? (
                     <>
@@ -258,7 +258,7 @@ export default function SecuritySettings() {
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-base flex items-center gap-2">
-              <Mail className="w-4 h-4 text-[#00D9FF]" />
+              <Mail className="w-4 h-4 text-[#D4A843]" />
               Email Address
             </CardTitle>
             <CardDescription className="text-gray-400">
@@ -302,7 +302,7 @@ export default function SecuritySettings() {
                 <Button
                   onClick={handleChangeEmail}
                   disabled={changeEmail.isPending || !newEmail || !emailPw}
-                  className="bg-[#00D9FF]/10 border border-[#00D9FF]/30 text-[#00D9FF] hover:bg-[#00D9FF]/20"
+                  className="bg-[#D4A843]/10 border border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/20"
                 >
                   {changeEmail.isPending ? (
                     <>
@@ -343,8 +343,8 @@ export default function SecuritySettings() {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#00D9FF]/10 flex items-center justify-center">
-                  <Monitor className="w-4 h-4 text-[#00D9FF]" />
+                <div className="w-8 h-8 rounded-lg bg-[#D4A843]/10 flex items-center justify-center">
+                  <Monitor className="w-4 h-4 text-[#D4A843]" />
                 </div>
                 <div>
                   <p className="text-white text-sm font-medium capitalize">

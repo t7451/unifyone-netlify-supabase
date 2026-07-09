@@ -76,7 +76,7 @@ export default function AccountSettings() {
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-base flex items-center gap-2">
-              <User className="w-4 h-4 text-[#00D9FF]" />
+              <User className="w-4 h-4 text-[#D4A843]" />
               Profile
             </CardTitle>
             <CardDescription className="text-gray-400">
@@ -86,7 +86,7 @@ export default function AccountSettings() {
           <CardContent className="space-y-5">
             {/* Avatar + basic info */}
             <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#00D9FF] to-[#0284C7] flex items-center justify-center text-[#0A1128] font-bold text-xl shrink-0">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#D4A843] to-[#B8863B] flex items-center justify-center text-[#020202] font-bold text-xl shrink-0">
                 {user?.name?.[0]?.toUpperCase() ?? "U"}
               </div>
               <div className="flex-1 min-w-0">
@@ -99,7 +99,7 @@ export default function AccountSettings() {
                 <div className="flex items-center gap-2 mt-1">
                   <Badge
                     variant="outline"
-                    className="border-[#00D9FF]/30 text-[#00D9FF] text-xs capitalize"
+                    className="border-[#D4A843]/30 text-[#D4A843] text-xs capitalize"
                   >
                     {user?.role ?? "user"}
                   </Badge>
@@ -124,7 +124,7 @@ export default function AccountSettings() {
                 value={name || user?.name || ""}
                 onChange={e => setName(e.target.value)}
                 placeholder="Your display name"
-                className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+                className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
               />
             </div>
 
@@ -138,7 +138,7 @@ export default function AccountSettings() {
                 }
                 onChange={e => setUsername(e.target.value)}
                 placeholder="yourname"
-                className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+                className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
               />
               <p className="text-xs text-gray-500">
                 You can sign in with this username or your email address.
@@ -167,7 +167,7 @@ export default function AccountSettings() {
                 disabled={
                   updateProfile.isPending || (!name.trim() && !username.trim())
                 }
-                className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+                className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
               >
                 {updateProfile.isPending ? (
                   <>
@@ -248,7 +248,7 @@ export default function AccountSettings() {
                 className={
                   user?.role === "admin"
                     ? "border-amber-500/30 text-amber-400 text-xs"
-                    : "border-[#00D9FF]/30 text-[#00D9FF] text-xs"
+                    : "border-[#D4A843]/30 text-[#D4A843] text-xs"
                 }
               >
                 {user?.role ?? "user"}

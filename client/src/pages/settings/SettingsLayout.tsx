@@ -101,7 +101,7 @@ export default function SettingsLayout({
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Settings2 className="w-6 h-6 text-[#00D9FF]" />
+          <Settings2 className="w-6 h-6 text-[#D4A843]" />
           Settings
         </h1>
         <p className="text-gray-400 text-sm mt-1">
@@ -117,7 +117,7 @@ export default function SettingsLayout({
             <SelectTrigger className="bg-white/5 border-white/10 text-white">
               <SelectValue>
                 <span className="flex items-center gap-2">
-                  <currentNav.icon className="w-4 h-4 text-[#00D9FF]" />
+                  <currentNav.icon className="w-4 h-4 text-[#D4A843]" />
                   {currentNav.label}
                 </span>
               </SelectValue>
@@ -149,14 +149,14 @@ export default function SettingsLayout({
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all group",
                     isActive
-                      ? "bg-[#00D9FF]/10 border border-[#00D9FF]/20"
+                      ? "bg-[#D4A843]/10 border border-[#D4A843]/20"
                       : "hover:bg-white/5 border border-transparent"
                   )}
                 >
                   <nav.icon
                     className={cn(
                       "w-4 h-4 shrink-0",
-                      isActive ? "text-[#00D9FF]" : "text-gray-500"
+                      isActive ? "text-[#D4A843]" : "text-gray-500"
                     )}
                   />
                   <div className="flex-1 min-w-0">
@@ -173,7 +173,7 @@ export default function SettingsLayout({
                     </p>
                   </div>
                   {isActive && (
-                    <ChevronRight className="w-3 h-3 text-[#00D9FF] shrink-0" />
+                    <ChevronRight className="w-3 h-3 text-[#D4A843] shrink-0" />
                   )}
                 </button>
               );

@@ -27,7 +27,7 @@ const THEMES = [
     label: "Dark",
     icon: Moon,
     description: "Dark background, easy on the eyes",
-    colors: ["#0A1128", "#1A1A2E", "#00D9FF"],
+    colors: ["#020202", "#1A1A2E", "#D4A843"],
   },
   {
     value: "light" as const,
@@ -129,7 +129,7 @@ export default function AppearanceSettings() {
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-white text-base flex items-center gap-2">
-              <Palette className="w-4 h-4 text-[#00D9FF]" />
+              <Palette className="w-4 h-4 text-[#D4A843]" />
               Theme
             </CardTitle>
             <CardDescription className="text-gray-400">
@@ -149,7 +149,7 @@ export default function AppearanceSettings() {
                     className={cn(
                       "p-4 rounded-xl border text-left transition-all",
                       isActive
-                        ? "border-[#00D9FF]/50 bg-[#00D9FF]/5"
+                        ? "border-[#D4A843]/50 bg-[#D4A843]/5"
                         : "border-white/10 bg-white/3 hover:border-white/20"
                     )}
                   >
@@ -157,13 +157,13 @@ export default function AppearanceSettings() {
                       <div
                         className={cn(
                           "w-8 h-8 rounded-lg flex items-center justify-center",
-                          isActive ? "bg-[#00D9FF]/10" : "bg-white/5"
+                          isActive ? "bg-[#D4A843]/10" : "bg-white/5"
                         )}
                       >
                         <Icon
                           className={cn(
                             "w-4 h-4",
-                            isActive ? "text-[#00D9FF]" : "text-gray-400"
+                            isActive ? "text-[#D4A843]" : "text-gray-400"
                           )}
                         />
                       </div>
@@ -222,7 +222,7 @@ export default function AppearanceSettings() {
                 onValueChange={v => updatePrefs.mutate({ language: v })}
                 disabled={updatePrefs.isPending}
               >
-                <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50 w-full sm:w-64">
+                <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50 w-full sm:w-64">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -249,7 +249,7 @@ export default function AppearanceSettings() {
                 onValueChange={v => updatePrefs.mutate({ timezone: v })}
                 disabled={updatePrefs.isPending}
               >
-                <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50 w-full sm:w-80">
+                <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50 w-full sm:w-80">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

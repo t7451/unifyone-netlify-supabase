@@ -154,7 +154,7 @@ function GoogleOAuthCard() {
     <Card className="bg-card border-border">
       <CardHeader>
         <CardTitle className="text-white text-base flex items-center gap-2">
-          <KeyRound className="w-4 h-4 text-[#00D9FF]" />
+          <KeyRound className="w-4 h-4 text-[#D4A843]" />
           Google OAuth
         </CardTitle>
         <CardDescription className="text-gray-400">
@@ -169,7 +169,7 @@ function GoogleOAuthCard() {
             value={String(enabled)}
             onValueChange={value => setEnabled(value === "true")}
           >
-            <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50">
+            <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -185,7 +185,7 @@ function GoogleOAuthCard() {
             value={clientId}
             onChange={e => setClientId(e.target.value)}
             placeholder="Google OAuth client ID"
-            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
           />
         </div>
 
@@ -200,7 +200,7 @@ function GoogleOAuthCard() {
                 ? "Saved — enter a new value to replace it"
                 : "Google OAuth client secret"
             }
-            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
           />
           {resolvedGoogle?.hasClientSecret && (
             <p className="text-xs text-gray-500">
@@ -216,7 +216,7 @@ function GoogleOAuthCard() {
             value={redirectUri}
             onChange={e => setRedirectUri(e.target.value)}
             placeholder="https://your-app.com/api/auth/google/callback"
-            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
           />
           <p className="text-xs text-gray-500">
             This should match the callback configured in your Google app.
@@ -230,7 +230,7 @@ function GoogleOAuthCard() {
             onChange={e => setScopes(e.target.value)}
             rows={3}
             placeholder="openid email profile"
-            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50 resize-none"
+            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50 resize-none"
           />
         </div>
 
@@ -256,7 +256,7 @@ function GoogleOAuthCard() {
           <Button
             onClick={handleSave}
             disabled={saveOAuth.isPending || isLoading}
-            className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+            className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
           >
             {saveOAuth.isPending ? (
               <>
@@ -320,7 +320,7 @@ function OwnerAlertComposer() {
     <Card className="bg-card border-border">
       <CardHeader className="pb-3">
         <CardTitle className="text-white text-base flex items-center gap-2">
-          <Bell className="w-4 h-4 text-[#00D9FF]" />
+          <Bell className="w-4 h-4 text-[#D4A843]" />
           Owner Alert Composer
         </CardTitle>
         <CardDescription className="text-gray-400 text-sm">
@@ -332,7 +332,7 @@ function OwnerAlertComposer() {
           <div className="space-y-1.5">
             <Label className="text-gray-300 text-sm">Recipient</Label>
             <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50">
+              <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50">
                 <SelectValue
                   placeholder={
                     membersLoading ? "Loading team..." : "Select a user"
@@ -356,7 +356,7 @@ function OwnerAlertComposer() {
           <div className="space-y-1.5">
             <Label className="text-gray-300 text-sm">Alert Type</Label>
             <Select value={alertType} onValueChange={setAlertType}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50">
+              <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -382,7 +382,7 @@ function OwnerAlertComposer() {
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="e.g. Action required on order #1042"
-            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
           />
         </div>
 
@@ -395,7 +395,7 @@ function OwnerAlertComposer() {
             onChange={e => setBody(e.target.value)}
             placeholder="Additional context or instructions..."
             rows={3}
-            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50 resize-none"
+            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50 resize-none"
           />
         </div>
 
@@ -405,7 +405,7 @@ function OwnerAlertComposer() {
             value={link}
             onChange={e => setLink(e.target.value)}
             placeholder="/orders/1042 or https://..."
-            className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
           />
         </div>
 
@@ -442,7 +442,7 @@ function OwnerAlertComposer() {
           <Button
             onClick={handleSend}
             disabled={sendToUser.isPending || !selectedUserId || !title.trim()}
-            className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold shrink-0"
+            className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold shrink-0"
           >
             {sendToUser.isPending ? (
               <>
@@ -478,7 +478,7 @@ function DemoDataCard() {
     <Card className="bg-card border-border">
       <CardHeader className="pb-3">
         <CardTitle className="text-white text-base flex items-center gap-2">
-          <FlaskConical className="w-4 h-4 text-[#00D9FF]" />
+          <FlaskConical className="w-4 h-4 text-[#D4A843]" />
           Demo Data
         </CardTitle>
       </CardHeader>
@@ -497,7 +497,7 @@ function DemoDataCard() {
           <Button
             onClick={() => seedMutation.mutate()}
             disabled={seedMutation.isPending}
-            className="bg-[#00D9FF]/10 border border-[#00D9FF]/30 text-[#00D9FF] hover:bg-[#00D9FF]/20 shrink-0"
+            className="bg-[#D4A843]/10 border border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/20 shrink-0"
           >
             {seedMutation.isPending ? (
               <>
