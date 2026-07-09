@@ -120,7 +120,7 @@ export function CustomerBehaviorPanel() {
       label: "Unique visitors",
       value: s ? formatNumber(s.uniqueVisitors) : "—",
       icon: Users,
-      color: "#00D9FF",
+      color: "#D4A843",
     },
     {
       label: "Page views",
@@ -223,7 +223,7 @@ export function CustomerBehaviorPanel() {
                   label="Product views"
                   value={s.productViews}
                   pct={pct(s.productViews)}
-                  color="#00D9FF"
+                  color="#D4A843"
                 />
                 <FunnelStage
                   icon={ShoppingCart}

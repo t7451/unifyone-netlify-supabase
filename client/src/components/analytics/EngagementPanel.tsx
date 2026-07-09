@@ -44,7 +44,7 @@ const FUNNEL_STAGES: Array<{
   >;
   color: string;
 }> = [
-  { key: "viewed", label: "Viewed a product", color: "#00D9FF" },
+  { key: "viewed", label: "Viewed a product", color: "#D4A843" },
   {
     key: "carted",
     label: "Added to cart",
@@ -114,7 +114,7 @@ export function EngagementPanel() {
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base text-white">
-              <Filter className="h-4 w-4 text-[#00D9FF]" />
+              <Filter className="h-4 w-4 text-[#D4A843]" />
               Where visitors drop off
             </CardTitle>
           </CardHeader>
