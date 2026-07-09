@@ -52,7 +52,7 @@ export function FeatureCatalogCard({
               "w-fit border-white/10 bg-white/5",
               onboardingStatus === "completed"
                 ? "text-emerald-300"
-                : "text-cyan-200"
+                : "text-[#E8C25A]"
             )}
           >
             {onboardingStatus === "completed"
@@ -62,7 +62,7 @@ export function FeatureCatalogCard({
           <Button
             type="button"
             size="sm"
-            className="bg-[#00D9FF] font-semibold text-[#0A1128] hover:bg-[#00D9FF]/90"
+            className="bg-[#D4A843] font-semibold text-[#020202] hover:bg-[#D4A843]/90"
             onClick={() => openOnboarding()}
           >
             Start full walkthrough <ArrowRight className="ml-2 h-4 w-4" />
@@ -79,7 +79,7 @@ export function FeatureCatalogCard({
                 key={category.id}
                 type="button"
                 onClick={() => openOnboarding(category.id)}
-                className="rounded-xl border border-border/70 bg-background/35 p-4 text-left transition-colors hover:border-[#00D9FF]/40 hover:bg-[#00D9FF]/5"
+                className="rounded-xl border border-border/70 bg-background/35 p-4 text-left transition-colors hover:border-[#D4A843]/40 hover:bg-[#D4A843]/5"
               >
                 <div className="flex items-start gap-3">
                   <div
@@ -114,7 +114,7 @@ export function FeatureCatalogCard({
                     </span>
                   ))}
                   {category.features.length > 4 ? (
-                    <span className="rounded-full border border-[#00D9FF]/20 bg-[#00D9FF]/10 px-2.5 py-1 text-xs text-[#00D9FF]">
+                    <span className="rounded-full border border-[#D4A843]/20 bg-[#D4A843]/10 px-2.5 py-1 text-xs text-[#D4A843]">
                       +{category.features.length - 4} more
                     </span>
                   ) : null}

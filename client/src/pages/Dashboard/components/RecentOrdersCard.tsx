@@ -43,7 +43,7 @@ export function RecentOrdersCard({
         </div>
         <Button
           variant="ghost"
-          className="px-0 text-[#00D9FF] hover:text-[#00D9FF]/80"
+          className="px-0 text-[#D4A843] hover:text-[#D4A843]/80"
           onClick={() => navigate("/orders")}
         >
           View all orders <ArrowRight className="ml-1 h-4 w-4" />
@@ -88,11 +88,11 @@ export function RecentOrdersCard({
                 key={order.id}
                 type="button"
                 onClick={() => navigate("/orders")}
-                className="flex w-full flex-col gap-3 rounded-xl border border-border/60 bg-background/30 p-4 text-left transition-colors hover:border-[#00D9FF]/40 hover:bg-[#00D9FF]/5 sm:flex-row sm:items-center"
+                className="flex w-full flex-col gap-3 rounded-xl border border-border/60 bg-background/30 p-4 text-left transition-colors hover:border-[#D4A843]/40 hover:bg-[#D4A843]/5 sm:flex-row sm:items-center"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-sm font-medium text-[#00D9FF]">
+                    <span className="font-mono text-sm font-medium text-[#D4A843]">
                       {formatOrderId(order)}
                     </span>
                     <Badge
