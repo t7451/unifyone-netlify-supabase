@@ -90,9 +90,9 @@ function ChallengeModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0D1B3E] border border-[#00D9FF]/20 text-white max-w-lg">
+      <DialogContent className="bg-[#0D1B3E] border border-[#D4A843]/20 text-white max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-[#00D9FF]">
+          <DialogTitle className="flex items-center gap-2 text-[#D4A843]">
             <Swords className="w-5 h-5" />
             Challenge {friendName}
           </DialogTitle>
@@ -119,7 +119,7 @@ function ChallengeModal({
                   onClick={() => setSelectedChallengeId(c.id)}
                   className={`w-full text-left p-3 rounded-lg border transition-all ${
                     selectedChallengeId === c.id
-                      ? "border-[#00D9FF] bg-[#00D9FF]/10"
+                      ? "border-[#D4A843] bg-[#D4A843]/10"
                       : "border-white/10 bg-white/5 hover:border-white/20"
                   }`}
                 >
@@ -127,7 +127,7 @@ function ChallengeModal({
                     <span className="font-medium text-sm">{c.name}</span>
                     <Badge
                       variant="outline"
-                      className="text-[#00D9FF] border-[#00D9FF]/40 text-xs"
+                      className="text-[#D4A843] border-[#D4A843]/40 text-xs"
                     >
                       +{c.pointsReward} pts
                     </Badge>
@@ -177,7 +177,7 @@ function ChallengeModal({
               });
             }}
             disabled={!selectedChallengeId || challengeFriend.isPending}
-            className="bg-[#00D9FF] text-black hover:bg-[#00D9FF]/90"
+            className="bg-[#D4A843] text-black hover:bg-[#D4A843]/90"
           >
             <Swords className="w-4 h-4 mr-2" />
             {challengeFriend.isPending ? "Sending…" : "Send Challenge"}
@@ -229,8 +229,8 @@ function FriendsTab() {
         >
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
-              <Avatar className="h-12 w-12 border border-[#00D9FF]/30">
-                <AvatarFallback className="bg-[#00D9FF]/10 text-[#00D9FF] font-bold">
+              <Avatar className="h-12 w-12 border border-[#D4A843]/30">
+                <AvatarFallback className="bg-[#D4A843]/10 text-[#D4A843] font-bold">
                   {(f.name ?? "?").charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -240,7 +240,7 @@ function FriendsTab() {
                 </p>
                 <p className="text-xs text-gray-400 truncate">{f.email}</p>
                 <div className="flex items-center gap-3 mt-1">
-                  <span className="text-xs text-[#00D9FF]">Lv {f.level}</span>
+                  <span className="text-xs text-[#D4A843]">Lv {f.level}</span>
                   <span className="text-xs text-gray-500">
                     {f.totalPoints.toLocaleString()} pts
                   </span>
@@ -380,7 +380,7 @@ function SearchTab() {
                       size="sm"
                       onClick={() => sendRequest.mutate({ addresseeId: u.id })}
                       disabled={sendRequest.isPending}
-                      className="bg-[#00D9FF]/10 text-[#00D9FF] border border-[#00D9FF]/30 hover:bg-[#00D9FF]/20 text-xs"
+                      className="bg-[#D4A843]/10 text-[#D4A843] border border-[#D4A843]/30 hover:bg-[#D4A843]/20 text-xs"
                     >
                       <UserPlus className="w-3 h-3 mr-1" />
                       Add Friend
@@ -444,12 +444,12 @@ function RequestsTab() {
             {incoming.map(r => (
               <Card
                 key={r.friendshipId}
-                className="bg-[#0D1B3E]/60 border border-[#00D9FF]/20"
+                className="bg-[#0D1B3E]/60 border border-[#D4A843]/20"
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border border-[#00D9FF]/20">
-                      <AvatarFallback className="bg-[#00D9FF]/10 text-[#00D9FF] text-sm">
+                    <Avatar className="h-10 w-10 border border-[#D4A843]/20">
+                      <AvatarFallback className="bg-[#D4A843]/10 text-[#D4A843] text-sm">
                         {(r.name ?? "?").charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -701,7 +701,7 @@ function ChallengesTab() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-[#00D9FF]">
+                    <span className="text-xs text-[#D4A843]">
                       +{r.pointsReward} pts
                     </span>
                     {r.resolvedAt && (
@@ -752,7 +752,7 @@ function ChallengesTab() {
                         From:{" "}
                         <span className="text-white">{fc.otherUserName}</span>
                       </span>
-                      <span className="text-xs text-[#00D9FF]">
+                      <span className="text-xs text-[#D4A843]">
                         +{fc.pointsReward} pts
                       </span>
                       <span className="text-xs text-gray-600">
@@ -832,7 +832,7 @@ function ChallengesTab() {
                     <span className="text-xs text-gray-500">
                       To: <span className="text-white">{fc.otherUserName}</span>
                     </span>
-                    <span className="text-xs text-[#00D9FF]">
+                    <span className="text-xs text-[#D4A843]">
                       +{fc.pointsReward} pts
                     </span>
                     <span className="text-xs text-gray-600">
@@ -866,7 +866,7 @@ export default function Friends() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Users className="w-7 h-7 text-[#00D9FF]" />
+            <Users className="w-7 h-7 text-[#D4A843]" />
             Friends & Social
           </h1>
           <p className="text-gray-400 text-sm mt-1">
@@ -876,7 +876,7 @@ export default function Friends() {
         </div>
         <div className="flex items-center gap-2">
           {pendingCount > 0 && (
-            <Badge className="bg-[#00D9FF]/20 text-[#00D9FF] border-[#00D9FF]/40">
+            <Badge className="bg-[#D4A843]/20 text-[#D4A843] border-[#D4A843]/40">
               {pendingCount} request{pendingCount > 1 ? "s" : ""}
             </Badge>
           )}
@@ -893,26 +893,26 @@ export default function Friends() {
         <TabsList className="bg-white/5 border border-white/10 w-full grid grid-cols-4">
           <TabsTrigger
             value="friends"
-            className="data-[state=active]:bg-[#00D9FF]/10 data-[state=active]:text-[#00D9FF] text-gray-400 text-xs sm:text-sm"
+            className="data-[state=active]:bg-[#D4A843]/10 data-[state=active]:text-[#D4A843] text-gray-400 text-xs sm:text-sm"
           >
             <Users className="w-3.5 h-3.5 sm:mr-1.5" />
             <span className="hidden sm:inline">Friends</span>
           </TabsTrigger>
           <TabsTrigger
             value="search"
-            className="data-[state=active]:bg-[#00D9FF]/10 data-[state=active]:text-[#00D9FF] text-gray-400 text-xs sm:text-sm"
+            className="data-[state=active]:bg-[#D4A843]/10 data-[state=active]:text-[#D4A843] text-gray-400 text-xs sm:text-sm"
           >
             <Search className="w-3.5 h-3.5 sm:mr-1.5" />
             <span className="hidden sm:inline">Search</span>
           </TabsTrigger>
           <TabsTrigger
             value="requests"
-            className="relative data-[state=active]:bg-[#00D9FF]/10 data-[state=active]:text-[#00D9FF] text-gray-400 text-xs sm:text-sm"
+            className="relative data-[state=active]:bg-[#D4A843]/10 data-[state=active]:text-[#D4A843] text-gray-400 text-xs sm:text-sm"
           >
             <Bell className="w-3.5 h-3.5 sm:mr-1.5" />
             <span className="hidden sm:inline">Requests</span>
             {pendingCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#00D9FF] text-black text-[10px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#D4A843] text-black text-[10px] font-bold rounded-full flex items-center justify-center">
                 {pendingCount}
               </span>
             )}

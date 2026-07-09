@@ -70,7 +70,7 @@ function StepProgressBar({ step }: { step: number }) {
       <CardHeader className="gap-4 pb-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-[#00D9FF]">
+            <p className="text-sm font-medium text-[#D4A843]">
               Step {step} of {STEPS.length}: {currentStep.label}
             </p>
             <p className="mt-1 text-sm text-gray-400">
@@ -83,7 +83,7 @@ function StepProgressBar({ step }: { step: number }) {
         </div>
         <Progress
           value={progressValue}
-          className="h-2 bg-white/10 [&_[data-slot=progress-indicator]]:bg-[#00D9FF]"
+          className="h-2 bg-white/10 [&_[data-slot=progress-indicator]]:bg-[#D4A843]"
         />
       </CardHeader>
       <CardContent>
@@ -97,7 +97,7 @@ function StepProgressBar({ step }: { step: number }) {
                 key={item.id}
                 className={cn(
                   "rounded-xl border px-3 py-3 text-left transition-colors",
-                  isActive && "border-[#00D9FF]/40 bg-[#00D9FF]/10",
+                  isActive && "border-[#D4A843]/40 bg-[#D4A843]/10",
                   isCompleted && "border-emerald-500/30 bg-emerald-500/10",
                   !isActive && !isCompleted && "border-white/10 bg-white/5"
                 )}
@@ -105,7 +105,7 @@ function StepProgressBar({ step }: { step: number }) {
                 <div
                   className={cn(
                     "mb-3 flex h-8 w-8 items-center justify-center rounded-full border text-sm font-semibold",
-                    isActive && "border-[#00D9FF] bg-[#00D9FF] text-[#0A1128]",
+                    isActive && "border-[#D4A843] bg-[#D4A843] text-[#020202]",
                     isCompleted &&
                       "border-emerald-500 bg-emerald-500 text-white",
                     !isActive && !isCompleted && "border-white/15 text-gray-400"
@@ -246,10 +246,10 @@ export default function TenantSetup() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-6"
-      style={{ backgroundColor: "#0A1128" }}
+      style={{ backgroundColor: "#020202" }}
     >
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[400px] w-[600px] rounded-full bg-[#00D9FF]/5 blur-3xl" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[400px] w-[600px] rounded-full bg-[#D4A843]/5 blur-3xl" />
         <div className="absolute bottom-1/4 left-1/3 h-[300px] w-[300px] rounded-full bg-[#6A1B9A]/8 blur-3xl" />
       </div>
 
@@ -260,8 +260,8 @@ export default function TenantSetup() {
         )}
       >
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#00D9FF] to-[#0284C7] shadow-lg shadow-[#00D9FF]/20">
-            <Layers className="h-7 w-7 text-[#0A1128]" />
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#D4A843] to-[#0284C7] shadow-lg shadow-[#D4A843]/20">
+            <Layers className="h-7 w-7 text-[#020202]" />
           </div>
           <h1 className="text-2xl font-bold text-white">Welcome to UnifyOne</h1>
           <p className="mt-1 text-sm text-gray-400">
@@ -291,7 +291,7 @@ export default function TenantSetup() {
                       value={name}
                       onChange={e => handleNameChange(e.target.value)}
                       placeholder="e.g. Sam's Rideshare & Delivery"
-                      className="h-11 border-white/10 bg-white/5 pl-10 text-white placeholder:text-gray-500 focus:border-[#00D9FF]/50"
+                      className="h-11 border-white/10 bg-white/5 pl-10 text-white placeholder:text-gray-500 focus:border-[#D4A843]/50"
                       required
                       autoFocus
                     />
@@ -310,7 +310,7 @@ export default function TenantSetup() {
                       <button
                         type="button"
                         onClick={() => setShowSlug(true)}
-                        className="whitespace-nowrap text-xs font-medium text-[#00D9FF] hover:underline"
+                        className="whitespace-nowrap text-xs font-medium text-[#D4A843] hover:underline"
                       >
                         Customize
                       </button>
@@ -323,7 +323,7 @@ export default function TenantSetup() {
                       >
                         Workspace URL Slug
                       </Label>
-                      <div className="flex items-center overflow-hidden rounded-lg border border-white/10 bg-white/5 transition-colors focus-within:border-[#00D9FF]/50">
+                      <div className="flex items-center overflow-hidden rounded-lg border border-white/10 bg-white/5 transition-colors focus-within:border-[#D4A843]/50">
                         <span className="whitespace-nowrap border-r border-white/10 bg-white/3 px-3 py-2.5 text-sm text-gray-500">
                           unifyone.app/
                         </span>
@@ -365,7 +365,7 @@ export default function TenantSetup() {
                           className={cn(
                             "flex flex-col gap-2 rounded-xl border p-4 text-left transition-colors",
                             isSelected
-                              ? "border-[#00D9FF]/40 bg-[#00D9FF]/10"
+                              ? "border-[#D4A843]/40 bg-[#D4A843]/10"
                               : "border-white/10 bg-white/5 hover:border-white/20"
                           )}
                         >
@@ -373,7 +373,7 @@ export default function TenantSetup() {
                             className={cn(
                               "flex h-9 w-9 items-center justify-center rounded-full",
                               isSelected
-                                ? "bg-[#00D9FF] text-[#0A1128]"
+                                ? "bg-[#D4A843] text-[#020202]"
                                 : "bg-white/5 text-gray-400"
                             )}
                           >
@@ -397,11 +397,11 @@ export default function TenantSetup() {
 
                 <p className="text-center text-xs text-gray-500">
                   Every workspace starts on the free{" "}
-                  <span className="text-[#00D9FF]">Gig Starter</span> plan. You
+                  <span className="text-[#D4A843]">Gig Starter</span> plan. You
                   can upgrade to Gig Pro anytime from{" "}
                   <Link
                     href="/billing"
-                    className="text-[#00D9FF] hover:underline"
+                    className="text-[#D4A843] hover:underline"
                   >
                     Billing
                   </Link>
@@ -413,7 +413,7 @@ export default function TenantSetup() {
                   disabled={
                     !name.trim() || !slug.trim() || createTenant.isPending
                   }
-                  className="mt-2 h-11 w-full bg-[#00D9FF] font-bold text-[#0A1128] hover:bg-[#00D9FF]/90"
+                  className="mt-2 h-11 w-full bg-[#D4A843] font-bold text-[#020202] hover:bg-[#D4A843]/90"
                 >
                   {createTenant.isPending ? (
                     <>
@@ -446,7 +446,7 @@ export default function TenantSetup() {
                   className={cn(
                     "flex w-full items-start gap-4 rounded-xl border p-4 text-left transition-colors",
                     seedDemo
-                      ? "border-[#00D9FF]/30 bg-[#00D9FF]/5"
+                      ? "border-[#D4A843]/30 bg-[#D4A843]/5"
                       : "border-white/10 bg-white/5 hover:border-white/20"
                   )}
                   onClick={() => setSeedDemo(value => !value)}
@@ -455,7 +455,7 @@ export default function TenantSetup() {
                     id="seedDemo"
                     checked={seedDemo}
                     onCheckedChange={checked => setSeedDemo(checked === true)}
-                    className="mt-0.5 border-white/30 data-[state=checked]:border-[#00D9FF] data-[state=checked]:bg-[#00D9FF]"
+                    className="mt-0.5 border-white/30 data-[state=checked]:border-[#D4A843] data-[state=checked]:bg-[#D4A843]"
                     onClick={e => e.stopPropagation()}
                   />
                   <div className="flex-1">
@@ -485,7 +485,7 @@ export default function TenantSetup() {
                   <Button
                     type="submit"
                     disabled={isStep2Pending}
-                    className="h-11 flex-1 bg-[#00D9FF] font-bold text-[#0A1128] hover:bg-[#00D9FF]/90"
+                    className="h-11 flex-1 bg-[#D4A843] font-bold text-[#020202] hover:bg-[#D4A843]/90"
                   >
                     {isStep2Pending ? (
                       <>
@@ -524,16 +524,16 @@ export default function TenantSetup() {
               </div>
 
               <div>
-                <div className="mb-4 flex items-center gap-2 text-sm font-medium text-[#00D9FF]">
+                <div className="mb-4 flex items-center gap-2 text-sm font-medium text-[#D4A843]">
                   <Rocket className="h-4 w-4" />
                   What&apos;s Next
                 </div>
                 <div className="grid gap-4 md:grid-cols-3">
                   {nextSteps.map(item => (
                     <Link key={item.title} href={item.href} className="block">
-                      <Card className="h-full border-white/10 bg-white/5 text-white transition-colors hover:border-[#00D9FF]/30 hover:bg-white/10">
+                      <Card className="h-full border-white/10 bg-white/5 text-white transition-colors hover:border-[#D4A843]/30 hover:bg-white/10">
                         <CardContent className="flex h-full flex-col gap-3 p-5">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#00D9FF]/10 text-[#00D9FF]">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#D4A843]/10 text-[#D4A843]">
                             <item.icon className="h-5 w-5" />
                           </div>
                           <div>
@@ -553,7 +553,7 @@ export default function TenantSetup() {
 
               <Button
                 onClick={handleFinish}
-                className="h-11 w-full bg-[#00D9FF] font-bold text-[#0A1128] shadow-lg shadow-[#00D9FF]/20 hover:bg-[#00D9FF]/90"
+                className="h-11 w-full bg-[#D4A843] font-bold text-[#020202] shadow-lg shadow-[#D4A843]/20 hover:bg-[#D4A843]/90"
               >
                 Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

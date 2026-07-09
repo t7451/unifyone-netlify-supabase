@@ -133,7 +133,7 @@ function OverviewTab() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base text-white flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#00D9FF]" />
+              <Activity className="w-4 h-4 text-[#D4A843]" />
               Platform Status
             </CardTitle>
             <Badge
@@ -188,7 +188,7 @@ function OverviewTab() {
             label: "Active API Keys",
             value: keys.isLoading ? "…" : String(keys.data?.length ?? 0),
             icon: Key,
-            color: "text-[#00D9FF]",
+            color: "text-[#D4A843]",
           },
           {
             label: "Tenant Status",
@@ -234,7 +234,7 @@ function OverviewTab() {
         <Card className="bg-card border-border">
           <CardHeader className="pb-3">
             <CardTitle className="text-base text-white flex items-center gap-2">
-              <Globe className="w-4 h-4 text-[#00D9FF]" />
+              <Globe className="w-4 h-4 text-[#D4A843]" />
               Tenant Info
             </CardTitle>
           </CardHeader>
@@ -259,7 +259,7 @@ function OverviewTab() {
       <Card className="bg-card border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-base text-white flex items-center gap-2">
-            <Webhook className="w-4 h-4 text-[#00D9FF]" />
+            <Webhook className="w-4 h-4 text-[#D4A843]" />
             Webhook Event Summary
           </CardTitle>
         </CardHeader>
@@ -314,7 +314,7 @@ function OverviewTab() {
       <Card className="bg-card border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-base text-white flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-[#00D9FF]" />
+            <BookOpen className="w-4 h-4 text-[#D4A843]" />
             Developer Resources
           </CardTitle>
         </CardHeader>
@@ -343,7 +343,7 @@ function OverviewTab() {
                   href={link.href}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-colors group"
                 >
-                  <Icon className="w-4 h-4 text-gray-500 group-hover:text-[#00D9FF] transition-colors" />
+                  <Icon className="w-4 h-4 text-gray-500 group-hover:text-[#D4A843] transition-colors" />
                   <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
                     {link.label}
                   </span>
@@ -385,10 +385,10 @@ function ApiKeysTab() {
     <div className="space-y-6">
       {/* Revealed key dialog */}
       <Dialog open={!!createdKey} onOpenChange={() => setCreatedKey(null)}>
-        <DialogContent className="bg-[#0A1128] border-white/10">
+        <DialogContent className="bg-[#020202] border-white/10">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
-              <Key className="w-4 h-4 text-[#00D9FF]" />
+              <Key className="w-4 h-4 text-[#D4A843]" />
               Your New API Key
             </DialogTitle>
             <DialogDescription className="text-amber-400">
@@ -417,7 +417,7 @@ function ApiKeysTab() {
                 copy(createdKey!, "revealed");
                 toast.success("Copied!");
               }}
-              className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90"
+              className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90"
             >
               <Copy className="w-4 h-4 mr-2" />
               Copy & Close
@@ -428,7 +428,7 @@ function ApiKeysTab() {
 
       {/* Revoke confirm dialog */}
       <Dialog open={!!revokeTarget} onOpenChange={() => setRevokeTarget(null)}>
-        <DialogContent className="bg-[#0A1128] border-white/10">
+        <DialogContent className="bg-[#020202] border-white/10">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Trash2 className="w-4 h-4 text-red-400" />
@@ -480,7 +480,7 @@ function ApiKeysTab() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-base text-white flex items-center gap-2">
-                <Key className="w-4 h-4 text-[#00D9FF]" />
+                <Key className="w-4 h-4 text-[#D4A843]" />
                 API Keys
               </CardTitle>
               <CardDescription className="text-gray-500 text-sm mt-1">
@@ -491,7 +491,7 @@ function ApiKeysTab() {
             <Button
               size="sm"
               onClick={() => setShowCreate(!showCreate)}
-              className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+              className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
             >
               <Plus className="w-4 h-4 mr-1.5" />
               New Key
@@ -509,13 +509,13 @@ function ApiKeysTab() {
                     value={newKeyName}
                     onChange={e => setNewKeyName(e.target.value)}
                     placeholder="e.g. Production Storefront"
-                    className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+                    className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-gray-300 text-sm">Expiration</Label>
                   <Select value={newKeyExpiry} onValueChange={setNewKeyExpiry}>
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50">
+                    <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -539,7 +539,7 @@ function ApiKeysTab() {
                       className={cn(
                         "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
                         newKeyScopes.includes(s)
-                          ? "bg-[#00D9FF]/10 border-[#00D9FF]/30 text-[#00D9FF]"
+                          ? "bg-[#D4A843]/10 border-[#D4A843]/30 text-[#D4A843]"
                           : "bg-white/5 border-white/10 text-gray-400 hover:text-white"
                       )}
                     >
@@ -571,7 +571,7 @@ function ApiKeysTab() {
                           : undefined,
                     })
                   }
-                  className="bg-[#00D9FF] text-[#0A1128] hover:bg-[#00D9FF]/90 font-semibold"
+                  className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
                 >
                   {generate.isPending ? (
                     <>
@@ -611,7 +611,7 @@ function ApiKeysTab() {
                   className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <Key className="w-4 h-4 text-[#00D9FF] shrink-0" />
+                    <Key className="w-4 h-4 text-[#D4A843] shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm text-white font-medium truncate">
                         {k.name}
@@ -720,7 +720,7 @@ function WebhooksTab() {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
               <CardTitle className="text-base text-white flex items-center gap-2">
-                <Webhook className="w-4 h-4 text-[#00D9FF]" />
+                <Webhook className="w-4 h-4 text-[#D4A843]" />
                 Webhook Event Log
               </CardTitle>
               <CardDescription className="text-gray-500 text-sm mt-1">
@@ -733,7 +733,7 @@ function WebhooksTab() {
                 value={String(limit)}
                 onValueChange={v => setLimit(parseInt(v))}
               >
-                <SelectTrigger className="bg-white/5 border-white/10 text-white w-28 h-8 text-xs focus:border-[#00D9FF]/50">
+                <SelectTrigger className="bg-white/5 border-white/10 text-white w-28 h-8 text-xs focus:border-[#D4A843]/50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -762,7 +762,7 @@ function WebhooksTab() {
               value={filterSource}
               onValueChange={v => setFilterSource(v as WebhookFilterSource)}
             >
-              <SelectTrigger className="bg-white/5 border-white/10 text-white w-32 h-7 text-xs focus:border-[#00D9FF]/50">
+              <SelectTrigger className="bg-white/5 border-white/10 text-white w-32 h-7 text-xs focus:border-[#D4A843]/50">
                 <SelectValue placeholder="Source" />
               </SelectTrigger>
               <SelectContent>
@@ -777,7 +777,7 @@ function WebhooksTab() {
               value={filterStatus}
               onValueChange={v => setFilterStatus(v as WebhookFilterStatus)}
             >
-              <SelectTrigger className="bg-white/5 border-white/10 text-white w-32 h-7 text-xs focus:border-[#00D9FF]/50">
+              <SelectTrigger className="bg-white/5 border-white/10 text-white w-32 h-7 text-xs focus:border-[#D4A843]/50">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -794,7 +794,7 @@ function WebhooksTab() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search event type…"
-                className="pl-6 h-7 text-xs bg-white/5 border-white/10 text-white focus:border-[#00D9FF]/50"
+                className="pl-6 h-7 text-xs bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
               />
             </div>
             {(filterSource !== "all" || filterStatus !== "all" || search) && (
@@ -918,7 +918,7 @@ function MCPToolsTab() {
       <Card className="bg-card border-border">
         <CardHeader className="pb-3">
           <CardTitle className="text-base text-white flex items-center gap-2">
-            <Terminal className="w-4 h-4 text-[#00D9FF]" />
+            <Terminal className="w-4 h-4 text-[#D4A843]" />
             Using MCP Tools Programmatically
           </CardTitle>
         </CardHeader>
@@ -954,7 +954,7 @@ const result = await trpc.mcp.callTool.mutate({
           </div>
           <a
             href="/ai-assistant"
-            className="flex items-center gap-2 text-sm text-[#00D9FF] hover:text-[#00D9FF]/80 transition-colors"
+            className="flex items-center gap-2 text-sm text-[#D4A843] hover:text-[#D4A843]/80 transition-colors"
           >
             <Zap className="w-4 h-4" />
             Open AI Assistant to chat with your data →
@@ -996,7 +996,7 @@ function CodeTab() {
                   setActive(active === snippet.id ? null : snippet.id)
                 }
               >
-                <Code2 className="w-4 h-4 text-[#00D9FF] shrink-0" />
+                <Code2 className="w-4 h-4 text-[#D4A843] shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-white font-medium">
                     {snippet.title}
@@ -1070,11 +1070,11 @@ function ReferenceTab() {
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-[#00D9FF]/5 border border-[#00D9FF]/15">
-            <Terminal className="w-4 h-4 text-[#00D9FF] shrink-0" />
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-[#D4A843]/5 border border-[#D4A843]/15">
+            <Terminal className="w-4 h-4 text-[#D4A843] shrink-0" />
             <div>
               <p className="text-xs text-gray-400">Base URL</p>
-              <code className="text-sm text-[#00D9FF] font-mono">
+              <code className="text-sm text-[#D4A843] font-mono">
                 {ref.data?.baseUrl}
               </code>
             </div>
@@ -1093,7 +1093,7 @@ function ReferenceTab() {
                     setExpanded(expanded === ns.name ? null : ns.name)
                   }
                 >
-                  <Code2 className="w-4 h-4 text-[#00D9FF] shrink-0" />
+                  <Code2 className="w-4 h-4 text-[#D4A843] shrink-0" />
                   <div className="flex-1">
                     <p className="text-sm text-white font-mono font-medium">
                       {ns.name}
@@ -1161,11 +1161,11 @@ export default function DeveloperHub() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Code2 className="w-5 h-5 text-[#00D9FF]" />
+            <Code2 className="w-5 h-5 text-[#D4A843]" />
             <h1 className="text-2xl font-bold text-white">Developer Hub</h1>
             <Badge
               variant="outline"
-              className="text-xs border-[#00D9FF]/30 text-[#00D9FF] ml-1"
+              className="text-xs border-[#D4A843]/30 text-[#D4A843] ml-1"
             >
               Optional Tooling
             </Badge>
@@ -1202,7 +1202,7 @@ export default function DeveloperHub() {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="flex items-center gap-1.5 text-xs data-[state=active]:bg-[#00D9FF]/10 data-[state=active]:text-[#00D9FF]"
+                className="flex items-center gap-1.5 text-xs data-[state=active]:bg-[#D4A843]/10 data-[state=active]:text-[#D4A843]"
               >
                 <Icon className="w-3.5 h-3.5" />
                 {tab.label}

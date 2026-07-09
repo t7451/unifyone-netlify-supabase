@@ -42,7 +42,7 @@ const QUICK_LINKS: QuickLink[] = [
       "Start a GPS-tracked shift, see live route intelligence, and log earnings as you drive.",
     href: "/gig-command",
     icon: Navigation,
-    iconClassName: "bg-cyan-500/15 text-cyan-300",
+    iconClassName: "bg-[#D4A843]/15 text-[#E8C25A]",
     cta: "Open command center",
   },
   {
@@ -183,7 +183,7 @@ export default function GigHome() {
           </Button>
           <Button
             onClick={() => navigate("/gig-command")}
-            className="bg-[#00D9FF] font-semibold text-[#0A1128] hover:bg-[#00D9FF]/90"
+            className="bg-[#D4A843] font-semibold text-[#020202] hover:bg-[#D4A843]/90"
           >
             {activeShift.data ? "Open active shift" : "Start a shift"}
             <ArrowRight className="ml-2 h-4 w-4" />
@@ -265,7 +265,7 @@ export default function GigHome() {
             </div>
             <Button
               variant="ghost"
-              className="px-0 text-[#00D9FF] hover:text-[#00D9FF]/80"
+              className="px-0 text-[#D4A843] hover:text-[#D4A843]/80"
               onClick={() => navigate("/gig-command")}
             >
               Go to Gig Command <ArrowRight className="ml-1 h-4 w-4" />
@@ -299,7 +299,7 @@ export default function GigHome() {
                 />
                 <SnapshotStat
                   icon={TrendingUp}
-                  iconClassName="text-cyan-300"
+                  iconClassName="text-[#E8C25A]"
                   label="Per hour"
                   value={formatCurrencyCents(week.avgPerHour)}
                 />
@@ -318,7 +318,7 @@ export default function GigHome() {
               </div>
             ) : (
               <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed border-border bg-background/30 p-6">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#00D9FF]/10 text-[#00D9FF]">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#D4A843]/10 text-[#D4A843]">
                   <Navigation className="h-5 w-5" />
                 </div>
                 <div>
@@ -330,7 +330,7 @@ export default function GigHome() {
                 </div>
                 <Button
                   onClick={() => navigate("/gig-command")}
-                  className="bg-[#00D9FF] font-semibold text-[#0A1128] hover:bg-[#00D9FF]/90"
+                  className="bg-[#D4A843] font-semibold text-[#020202] hover:bg-[#D4A843]/90"
                 >
                   Track your first shift <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -419,7 +419,7 @@ export default function GigHome() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="group rounded-xl border border-border bg-background/40 p-4 text-left transition-colors hover:border-[#00D9FF]/40 hover:bg-[#00D9FF]/5"
+                className="group rounded-xl border border-border bg-background/40 p-4 text-left transition-colors hover:border-[#D4A843]/40 hover:bg-[#D4A843]/5"
               >
                 <div
                   className={cn(
@@ -433,7 +433,7 @@ export default function GigHome() {
                 <p className="mt-2 text-sm text-slate-400">
                   {link.description}
                 </p>
-                <div className="mt-4 flex items-center text-sm font-medium text-[#00D9FF]">
+                <div className="mt-4 flex items-center text-sm font-medium text-[#D4A843]">
                   {link.cta}
                   <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </div>

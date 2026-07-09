@@ -68,7 +68,7 @@ export default function ClipsToolkitSuccess() {
         {isVerifying ? (
           <>
             <div className="flex justify-center">
-              <Loader2 className="h-10 w-10 animate-spin text-[#00D9FF]" />
+              <Loader2 className="h-10 w-10 animate-spin text-[#D4A843]" />
             </div>
             <div className="space-y-2">
               <h1 className="text-2xl font-bold">Verifying your purchase…</h1>
@@ -126,7 +126,7 @@ export default function ClipsToolkitSuccess() {
                 <p className="font-medium">{downloadInfo.filename}</p>
                 <Button
                   asChild
-                  className="w-full bg-[#00D9FF] font-semibold text-black hover:bg-[#00B8D9]"
+                  className="w-full bg-[#D4A843] font-semibold text-black hover:bg-[#00B8D9]"
                 >
                   <a
                     href={downloadInfo.downloadUrl}
