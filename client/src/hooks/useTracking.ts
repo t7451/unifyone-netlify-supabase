@@ -72,6 +72,7 @@ export function useTracking(): void {
     identifyUser(userId, {
       email: user.email ?? undefined,
       name: user.name ?? undefined,
+      primaryProduct: user.primaryProduct,
     });
   }, [user, loading]);
 }

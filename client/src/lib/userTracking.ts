@@ -62,7 +62,12 @@ export function trackPageView(url?: string): void {
 
 export function identifyUser(
   userId: string,
-  traits?: { email?: string; name?: string; tenantId?: string }
+  traits?: {
+    email?: string;
+    name?: string;
+    tenantId?: string;
+    primaryProduct?: string;
+  }
 ): void {
   // Umami supports a first-party identify call
   window.umami?.identify(userId, traits);
