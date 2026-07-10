@@ -46,7 +46,10 @@ jobs:
     name: Robots/sitemap sync
     runs-on: ubuntu-latest
     steps:
+      # Read-only gate — no git credentials needed after checkout.
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:

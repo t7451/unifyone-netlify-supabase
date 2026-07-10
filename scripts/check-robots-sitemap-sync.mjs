@@ -82,7 +82,10 @@ function parseSitemapDisallow(text) {
   }
   const block = text.slice(start, end);
   const prefixes = new Set();
-  for (const m of block.matchAll(/"([^"]+)"/g)) prefixes.add(normalize(m[1]));
+  // Line-anchored: only capture one-per-line quoted array entries, so a future
+  // inline comment containing a quoted string can't inject a spurious prefix.
+  for (const m of block.matchAll(/^\s*"([^"]+)",?\s*$/gm))
+    prefixes.add(normalize(m[1]));
   return prefixes;
 }
 
