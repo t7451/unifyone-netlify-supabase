@@ -1,5 +1,8 @@
 import { type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
+import ToolEmailCapture from "@/components/ToolEmailCapture";
+import PartnerOffers from "@/components/PartnerOffers";
+import AdSlot from "@/components/AdSlot";
 
 interface ToolLayoutProps {
   /** Short name shown in the sticky nav bar. */
@@ -79,6 +82,16 @@ export default function ToolLayout({
           </ol>
         </nav>
         {children}
+
+        {/* Display ad -- no-op until an ad network is enabled via env. */}
+        <AdSlot slotId="tool-below-result" label="Advertisement" />
+
+        {/* Contextual, disclosed partner offers matched to this tool. */}
+        <PartnerOffers toolSlug={currentSlug} />
+
+        {/* Lead capture -- turn high-intent tool traffic into an owned email
+            list. Tagged per-tool so leads can be segmented downstream. */}
+        <ToolEmailCapture source={`tool:${currentSlug || "unknown"}`} />
 
         {/* Related tools — internal links so each calculator is a hub, not a dead end. */}
         <section className="mt-16 border-t pt-8">

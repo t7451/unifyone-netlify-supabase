@@ -162,6 +162,7 @@ const Press = lazy(() => import("../pages/Press"));
 const Contact = lazy(() => import("../pages/Contact"));
 const SeoIndex = lazy(() => import("../pages/SeoIndex"));
 const SeoLanding = lazy(() => import("../pages/SeoLanding"));
+const BestMileageApps = lazy(() => import("../pages/BestMileageApps"));
 const NotFound = lazy(() => import("../pages/NotFound"));
 const ClipsToolkit = lazy(() => import("../pages/ClipsToolkit"));
 const ClipsToolkitSuccess = lazy(() => import("../pages/ClipsToolkitSuccess"));
@@ -1867,6 +1868,10 @@ export function AppRoutes() {
           )}
         />
         <Route path="/seo" component={() => <SeoIndex />} />
+        <Route
+          path="/best-mileage-tracking-apps"
+          component={() => <BestMileageApps />}
+        />
         <Route path="/seo/:slug" component={() => <SeoLanding />} />
         <Route
           path="/checkout/plan"
