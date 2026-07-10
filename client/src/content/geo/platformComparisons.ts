@@ -214,9 +214,9 @@ export const PLATFORM_COMPARISONS: PlatformComparison[] = [
     platformA: "Uber",
     platformB: "Lyft",
     eyebrow: "Gig Platform Comparison",
-    title: "Uber vs Lyft: Which Is Better for Drivers?",
+    title: "Uber vs Lyft (2026): Which Pays More?",
     metaDescription:
-      "Uber vs Lyft for drivers, compared on how pay works, fees, 1099-K vs 1099-NEC, mileage, scheduling, and payout speed — plus how to compute your own net pay.",
+      "Uber vs Lyft for drivers in 2026: how pay works, fees, 1099-K vs 1099-NEC, mileage, and payout speed compared — plus find your real hourly rate free.",
     h1: "Uber vs Lyft: Which Is Better for Drivers?",
     intro:
       "Uber and Lyft are the two largest US rideshare platforms, and both pay drivers as independent contractors. The apps are structurally similar — upfront fares, surge-style bonuses, and weekly or instant payouts — so which one nets you more comes down to your local market, the hours you drive, and your vehicle costs. Rather than quote per-hour figures that vary city to city, this guide compares them on the factors that drive net pay and shows you how to measure your own real hourly rate on each.",
@@ -356,9 +356,9 @@ export const PLATFORM_COMPARISONS: PlatformComparison[] = [
     platformA: "Amazon Flex",
     platformB: "Spark",
     eyebrow: "Gig Platform Comparison",
-    title: "Amazon Flex vs Spark: Which Delivery Gig Is Better?",
+    title: "Amazon Flex vs Spark (2026): Which Pays More?",
     metaDescription:
-      "Amazon Flex vs Walmart Spark compared on how pay works (blocks vs offers), fees, 1099 forms, mileage, scheduling, and payouts — plus how to find your net pay.",
+      "Amazon Flex vs Walmart Spark for 2026: blocks vs offers, fees, 1099s, mileage, and scheduling compared for drivers — plus a free take-home pay calculator.",
     h1: "Amazon Flex vs Spark: Which Delivery Gig Is Better?",
     intro:
       "Amazon Flex and the Walmart Spark Driver program are both independent-contractor delivery gigs, but they're structured differently: Amazon Flex pays for reserved delivery blocks of a set length, while Spark pays per accepted delivery offer. That changes how your time and mileage look. Instead of quoting earnings that shift by market and week, this guide compares the two structurally and shows you how to measure your own net hourly rate on each.",
@@ -427,9 +427,9 @@ export const PLATFORM_COMPARISONS: PlatformComparison[] = [
     platformA: "Instacart",
     platformB: "Shipt",
     eyebrow: "Gig Platform Comparison",
-    title: "Instacart vs Shipt: Which Is Better for Shoppers?",
+    title: "Instacart vs Shipt (2026): Which Pays More?",
     metaDescription:
-      "Instacart vs Shipt compared on how pay works, fees, 1099 forms, mileage, scheduling, and payout speed — plus how to compute your own net pay as a shopper.",
+      "Instacart vs Shipt for 2026: how pay works, fees, 1099s, mileage, scheduling, and payout speed compared for shoppers — plus a free net-pay calculator.",
     h1: "Instacart vs Shipt: Which Is Better for Shoppers?",
     intro:
       "Instacart and Shipt are the two largest grocery-shopping gig apps, and both pay shoppers as independent contractors to shop a cart and deliver it. The work is similar — you shop in-store, then drive the order to the customer — so which one nets you more comes down to your market, the hours you work, and your vehicle costs. Rather than quote per-hour figures that vary city to city, this guide compares them on the factors that drive net pay and shows you how to measure your own real hourly rate on each.",
@@ -640,9 +640,9 @@ export const PLATFORM_COMPARISONS: PlatformComparison[] = [
     platformA: "DoorDash",
     platformB: "Spark Driver",
     eyebrow: "Gig Platform Comparison",
-    title: "DoorDash vs Spark: Which Delivery Gig Is Better?",
+    title: "DoorDash vs Spark (2026): Which Pays More?",
     metaDescription:
-      "DoorDash vs Walmart Spark compared on pay structure, order types, fees, 1099 forms, mileage, scheduling, and payouts — plus how to compute your net pay.",
+      "DoorDash vs Walmart Spark for 2026: how pay, order types, fees, 1099s, and mileage really compare for drivers — plus calculate your own take-home free.",
     h1: "DoorDash vs Spark: Which Delivery Gig Is Better?",
     intro:
       "DoorDash and the Walmart Spark Driver program are both per-offer delivery apps that pay you as an independent contractor, but the order mix differs: DoorDash spans restaurants, convenience, and retail, while Spark delivers Walmart and Sam's Club orders (sometimes including shopping the order). The better fit depends on your local merchant density and how you like to work. Here's the structural comparison plus how to compute your own net pay.",
@@ -711,9 +711,9 @@ export const PLATFORM_COMPARISONS: PlatformComparison[] = [
     platformA: "Amazon Flex",
     platformB: "DoorDash",
     eyebrow: "Gig Platform Comparison",
-    title: "Amazon Flex vs DoorDash: Which Is Better for Drivers?",
+    title: "Amazon Flex vs DoorDash (2026): Which Pays More?",
     metaDescription:
-      "Amazon Flex vs DoorDash compared on block vs per-offer pay, requirements, 1099 forms, mileage, scheduling, and payouts — plus how to compute your net pay.",
+      "Amazon Flex vs DoorDash for 2026: block vs per-offer pay, requirements, 1099s, mileage, and payouts compared — plus calculate your own net hourly rate free.",
     h1: "Amazon Flex vs DoorDash: Which Is Better for Drivers?",
     intro:
       "Amazon Flex and DoorDash are both independent-contractor gigs, but they work very differently: Amazon Flex pays a set amount for a reserved delivery block of packages, while DoorDash pays per food-delivery offer with tips. One rewards predictability, the other flexibility. The better fit depends on whether you prefer scheduled, tip-free block pay or on-demand offers with tips — here's the structural comparison and how to measure your own net pay.",
@@ -852,9 +852,9 @@ export const PLATFORM_COMPARISONS: PlatformComparison[] = [
     platformA: "Gopuff",
     platformB: "DoorDash",
     eyebrow: "Gig Platform Comparison",
-    title: "Gopuff vs DoorDash: Which Delivery Gig Is Better?",
+    title: "Gopuff vs DoorDash (2026): Which Pays More?",
     metaDescription:
-      "Gopuff vs DoorDash compared on how offers/blocks work, what you carry, scheduling, 1099-NEC forms, mileage, and payouts — plus how to compute your net pay.",
+      "Gopuff vs DoorDash for 2026: how blocks vs per-offer pay, what you carry, scheduling, 1099s, and mileage compare — plus find your real hourly rate free.",
     h1: "Gopuff vs DoorDash: Which Delivery Gig Is Better?",
     intro:
       "Gopuff and DoorDash are both independent-contractor delivery gigs, but the model differs: Gopuff delivers its own convenience and grocery stock out of local micro-fulfillment centers, while DoorDash delivers orders from third-party restaurants and stores. That changes what you carry, where you start each trip, and how you schedule. Instead of quoting earnings that shift by market and week, this guide compares the two structurally and shows you how to measure your own net hourly rate on each.",

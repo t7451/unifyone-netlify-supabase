@@ -1016,7 +1016,7 @@ export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/",
     externalLinks: [IRS.mileage, IRS.estimated, IRS.selfEmployedCenter],
-    title: "UnifyOne — Track Gig Earnings & Set Aside Taxes | Free + Pro $4.99",
+    title: "UnifyOne by 1Commerce — Gig Earnings & Tax Tracker for 1099 Workers",
     description:
       "Track gig earnings from DoorDash, Uber, Lyft, Instacart, Amazon Flex & Grubhub. Log IRS mileage and set aside quarterly taxes. Free + Pro $4.99/mo.",
     body: [
@@ -1260,9 +1260,9 @@ export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/doordash-vs-spark",
     externalLinks: DOORDASH_VS_SPARK_LINKS,
-    title: "DoorDash vs Spark: Which Delivery Gig Is Better? | UnifyOne",
+    title: "DoorDash vs Spark (2026): Which Pays More? | UnifyOne",
     description:
-      "DoorDash vs Walmart Spark compared on order types, pay structure, 1099 forms, mileage, and payouts — plus how to compute your own net pay.",
+      "DoorDash vs Walmart Spark for 2026: how pay, order types, fees, 1099s, and mileage really compare for drivers — plus calculate your own take-home free.",
     body: [
       "DoorDash and the Walmart Spark Driver program are both per-offer delivery apps that pay you as an independent contractor, but the order mix differs: DoorDash spans restaurants, convenience, and retail, while Spark delivers Walmart and Sam's Club orders (some offers include shopping the order).",
       "Both show pay before you accept and pass through 100% of tips. DoorDash's broad merchant base often means steadier volume; Spark availability is tied to nearby Walmart store zones and slot competition.",
@@ -1273,9 +1273,9 @@ export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/amazon-flex-vs-doordash",
     externalLinks: AMAZON_FLEX_VS_DOORDASH_LINKS,
-    title: "Amazon Flex vs DoorDash: Which Is Better for Drivers? | UnifyOne",
+    title: "Amazon Flex vs DoorDash (2026): Which Pays More? | UnifyOne",
     description:
-      "Amazon Flex vs DoorDash compared on block vs per-offer pay, requirements, 1099 forms, mileage, and scheduling — plus how to compute your own net pay.",
+      "Amazon Flex vs DoorDash for 2026: block vs per-offer pay, requirements, 1099s, mileage, and payouts compared — plus calculate your own net hourly rate free.",
     body: [
       "Amazon Flex and DoorDash are both independent-contractor gigs that work very differently: Amazon Flex pays a set amount for a reserved block of package deliveries (tips uncommon), while DoorDash pays per food-delivery offer with tips and lets you log on any time.",
       "Amazon Flex usually requires 21+ and a mid-size or larger vehicle, and you commit to a whole block; DoorDash is often 18+ with a lower vehicle bar and no block commitment. One rewards predictability, the other flexibility.",
@@ -1299,9 +1299,9 @@ export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/gopuff-vs-doordash",
     externalLinks: GOPUFF_VS_DOORDASH_LINKS,
-    title: "Gopuff vs DoorDash: Which Delivery Gig Is Better? | UnifyOne",
+    title: "Gopuff vs DoorDash (2026): Which Pays More? | UnifyOne",
     description:
-      "Gopuff vs DoorDash compared on how offers/blocks work, what you carry, scheduling, 1099-NEC forms, mileage, and payouts — plus how to compute your net pay.",
+      "Gopuff vs DoorDash for 2026: how blocks vs per-offer pay, what you carry, scheduling, 1099s, and mileage compare — plus find your real hourly rate free.",
     body: [
       "Gopuff and DoorDash are both independent-contractor delivery gigs, but the model differs: Gopuff delivers its own convenience and grocery stock from local micro-fulfillment centers, while DoorDash delivers orders from third-party restaurants and stores.",
       "That changes the work: on Gopuff you start each trip at the facility with the order already packed and tend to work scheduled blocks; on DoorDash you drive to the merchant first, sometimes wait, and can log on largely on-demand per offer with tips shown upfront.",
@@ -2438,9 +2438,9 @@ export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/uber-vs-lyft-driver",
     externalLinks: UBER_VS_LYFT_LINKS,
-    title: "Uber vs Lyft: Which Is Better for Drivers? | UnifyOne",
+    title: "Uber vs Lyft (2026): Which Pays More? | UnifyOne",
     description:
-      "Uber vs Lyft for drivers, compared on how pay works, fees, 1099-K vs 1099-NEC, mileage, scheduling, and payout speed — plus how to compute your own net pay.",
+      "Uber vs Lyft for drivers in 2026: how pay works, fees, 1099-K vs 1099-NEC, mileage, and payout speed compared — plus find your real hourly rate free.",
     body: [
       "Uber and Lyft are the two largest US rideshare platforms, and both pay drivers as independent contractors. The apps are structurally similar — upfront fares, surge-style bonuses, and weekly or instant payouts — so which one nets you more comes down to your local market, the hours you drive, and your vehicle costs rather than the brand.",
       "On both, you see an upfront estimated fare and trip details before accepting and keep 100% of tips, and both raise pay during high demand (Uber surge and promotions; Lyft Personal Power Zones and bonuses). Each takes a service fee out of every fare, which is a deductible business expense itemized on your Uber Tax Summary or Lyft Annual Summary.",
@@ -2464,9 +2464,9 @@ export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/amazon-flex-vs-spark",
     externalLinks: AMAZON_FLEX_VS_SPARK_LINKS,
-    title: "Amazon Flex vs Spark: Which Delivery Gig Is Better? | UnifyOne",
+    title: "Amazon Flex vs Spark (2026): Which Pays More? | UnifyOne",
     description:
-      "Amazon Flex vs Walmart Spark compared on how pay works (blocks vs offers), fees, 1099 forms, mileage, scheduling, and payouts — plus how to find your net pay.",
+      "Amazon Flex vs Walmart Spark for 2026: blocks vs offers, fees, 1099s, mileage, and scheduling compared for drivers — plus a free take-home pay calculator.",
     body: [
       "Amazon Flex and the Walmart Spark Driver program are both independent-contractor delivery gigs, but they're structured differently: Amazon Flex pays for reserved delivery blocks of a set length, while Spark pays per accepted delivery offer. That changes what your time and mileage look like, so which one is better depends on your market and how you value your time — not on a single pay figure.",
       "Amazon Flex shows an estimated total for a block before you reserve it, with tips added afterward on eligible deliveries; Spark shows an estimate plus tips on each offer before you accept. Neither deducts a separate platform commission from your driver pay, and both default to direct deposit, with instant cash-out availability that varies. Because a Flex block is a fixed time commitment, compare the two on net pay per active hour rather than per stop.",
@@ -2477,9 +2477,9 @@ export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/instacart-vs-shipt",
     externalLinks: INSTACART_VS_SHIPT_LINKS,
-    title: "Instacart vs Shipt: Which Is Better for Shoppers? | UnifyOne",
+    title: "Instacart vs Shipt (2026): Which Pays More? | UnifyOne",
     description:
-      "Instacart vs Shipt compared on how pay works, fees, 1099 forms, mileage, scheduling, and payout speed — plus how to compute your own net pay as a shopper.",
+      "Instacart vs Shipt for 2026: how pay works, fees, 1099s, mileage, scheduling, and payout speed compared for shoppers — plus a free net-pay calculator.",
     body: [
       "Instacart and Shipt are the two largest grocery-shopping gig apps, and both pay shoppers as independent contractors to shop a cart and deliver it. The work is similar — you shop in-store, then drive the order to the customer — so which one nets you more comes down to your market, the hours you work, and your vehicle costs rather than the brand.",
       "Instacart pays per batch, an estimated amount based on factors like item count and distance plus tips; Shipt pays per order with an estimate that factors in the order's effort, plus tips. Because both bundle shopping time into the job, compare them on net pay per active hour rather than per order. Neither deducts customer fees from your shopper pay, and both default to weekly deposits with faster cash-out options for a possible fee.",
