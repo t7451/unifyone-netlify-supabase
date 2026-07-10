@@ -10,7 +10,10 @@ const websiteId = import.meta.env.VITE_ANALYTICS_WEBSITE_ID;
 if (endpoint && websiteId) {
   const script = document.createElement("script");
   script.defer = true;
-  script.src = `${endpoint}/umami`;
+  // Umami serves its tracker at /script.js (both Umami Cloud and self-hosted).
+  // Set VITE_ANALYTICS_ENDPOINT to the instance origin, e.g.
+  // https://cloud.umami.is for Umami Cloud.
+  script.src = `${endpoint}/script.js`;
   script.dataset.websiteId = websiteId;
   document.head.appendChild(script);
 }
