@@ -12,6 +12,11 @@
 import { eq, and, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { financialRules, notifications } from "../../drizzle/schema";
+import {
+  creditEnvelope,
+  ENVELOPE_CATEGORIES,
+  type EnvelopeCategory,
+} from "../routers/moneyManager/envelopes.service";
 
 export type RuleEvent =
   | {
@@ -19,6 +24,8 @@ export type RuleEvent =
       amountCents: number;
       platform?: string;
       category?: string;
+      /** Originating record (e.g. shiftId) — keys exactly-once envelope credits. */
+      referenceId?: string;
     }
   | {
       type: "expense_over";
@@ -156,8 +163,6 @@ async function executeAction(
     case "save":
     case "transfer": {
       message = `Auto-${rule.actionType}: $${dollars} from ${event.type === "income_received" ? "income" : "balance"}`;
-      // Future: integrate with a savings_transfers table when schema is added.
-      // For now we just log + notify.
       if (db) {
         try {
           await db.insert(notifications).values({
@@ -169,6 +174,41 @@ async function executeAction(
           });
         } catch {
           /* no-op */
+        }
+
+        // Actually move the money into a virtual set-aside envelope so
+        // "keep what you owe" becomes a real, tracked balance. The rule's own
+        // category routes the credit when it names a real envelope bucket
+        // (tax/savings/emergency/goal); anything else falls back to "savings".
+        // Keyed per (rule, shift) for exactly-once crediting. Non-blocking: a
+        // ledger failure must not break rule evaluation.
+        if (actionAmountCents > 0) {
+          try {
+            const referenceId =
+              event.type === "income_received" ? event.referenceId : undefined;
+            const category = ENVELOPE_CATEGORIES.includes(
+              rule.category as EnvelopeCategory
+            )
+              ? (rule.category as EnvelopeCategory)
+              : "savings";
+            // Only key the credit when we have a stable reference (the shift).
+            // A literal "...:undefined" key would collapse every keyless firing
+            // of this rule into one credit — e.g. a recurring scheduled save
+            // rule would credit only the first time, ever.
+            const idempotencyKey = referenceId
+              ? `envelope-credit:${rule.id}:${referenceId}`
+              : undefined;
+            await creditEnvelope(db, userId, {
+              category,
+              amountCents: actionAmountCents,
+              action: rule.actionType,
+              ruleId: rule.id,
+              referenceId,
+              idempotencyKey,
+            });
+          } catch {
+            /* non-blocking — ledger credit is best-effort */
+          }
         }
       }
       break;

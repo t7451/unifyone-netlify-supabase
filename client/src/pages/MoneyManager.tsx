@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   DollarSign,
@@ -44,7 +45,22 @@ import {
   FileText,
   Upload,
   Lock,
+  PiggyBank,
+  Target,
 } from "lucide-react";
+
+const ENVELOPE_CATEGORIES = [
+  { value: "tax", label: "Tax" },
+  { value: "savings", label: "Savings" },
+  { value: "emergency", label: "Emergency" },
+  { value: "goal", label: "Goal" },
+] as const;
+
+const fmtCents = (cents: number) =>
+  `$${(cents / 100).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 const GIG_PLATFORMS = [
   "DoorDash",
@@ -114,8 +130,14 @@ export default function MoneyManager() {
     actionValue: "",
     actionPercent: "",
   });
+  const [envelopeForm, setEnvelopeForm] = useState({
+    name: "",
+    category: "savings" as "tax" | "savings" | "emergency" | "goal",
+    target: "",
+  });
   const [showEndShift, setShowEndShift] = useState(false);
   const [showAddRule, setShowAddRule] = useState(false);
+  const [showAddEnvelope, setShowAddEnvelope] = useState(false);
 
   const utils = trpc.useUtils();
   const [importPlatform, setImportPlatform] = useState("DoorDash");
@@ -135,6 +157,11 @@ export default function MoneyManager() {
   });
   const rules = trpc.moneyManager.listRules.useQuery();
   const points = trpc.moneyManager.getPointsBalance.useQuery();
+  const envelopes = trpc.moneyManager.listEnvelopes.useQuery();
+  const taxEnvelope = trpc.moneyManager.getEnvelopeBalance.useQuery({
+    category: "tax",
+  });
+  const taxEstimate = trpc.moneyManager.getTaxEstimate.useQuery();
 
   const startShift = trpc.moneyManager.startShift.useMutation({
     onSuccess: data => {
@@ -270,6 +297,17 @@ export default function MoneyManager() {
     };
     reader.readAsText(file);
   }
+
+  const createEnvelope = trpc.moneyManager.createEnvelope.useMutation({
+    onSuccess: () => {
+      setShowAddEnvelope(false);
+      setEnvelopeForm({ name: "", category: "savings", target: "" });
+      envelopes.refetch();
+      taxEnvelope.refetch();
+      toast.success("Envelope created! Your set-aside is ready 💰");
+    },
+    onError: e => toast.error(e.message || "Failed to create envelope"),
+  });
 
   if (!user) return null;
 
@@ -618,10 +656,11 @@ export default function MoneyManager() {
       </Card>
 
       <Tabs defaultValue="mileage">
-        <TabsList className="grid grid-cols-3 w-full max-w-sm">
+        <TabsList className="grid grid-cols-2 w-full max-w-lg sm:grid-cols-4">
           <TabsTrigger value="mileage">Mileage & Tax</TabsTrigger>
           <TabsTrigger value="import">Import</TabsTrigger>
           <TabsTrigger value="rules">Financial Rules</TabsTrigger>
+          <TabsTrigger value="envelopes">Envelopes</TabsTrigger>
         </TabsList>
 
         {/* Mileage Tab */}
@@ -1227,6 +1266,214 @@ export default function MoneyManager() {
               </CardContent>
             </Card>
           ))}
+        </TabsContent>
+
+        {/* Envelopes / Set-Aside Tab */}
+        <TabsContent value="envelopes" className="space-y-4 mt-4">
+          {/* Tax set-aside progress — balance vs quarterly estimate */}
+          {(() => {
+            const setAsideCents = taxEnvelope.data?.balanceCents ?? 0;
+            const targetCents =
+              taxEstimate.data?.quarterly?.quarterlyPaymentCents ?? 0;
+            const pct =
+              targetCents > 0
+                ? Math.min(100, Math.round((setAsideCents / targetCents) * 100))
+                : 0;
+            return (
+              <Card className="border-primary/40 bg-primary/5">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <PiggyBank className="h-4 w-4 text-primary" />
+                    Tax Set-Aside
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {taxEnvelope.isLoading || taxEstimate.isLoading ? (
+                    <Skeleton className="h-8 w-full" />
+                  ) : (
+                    <>
+                      <p className="text-sm text-foreground">
+                        <span className="font-semibold text-green-400">
+                          {fmtCents(setAsideCents)}
+                        </span>{" "}
+                        set aside of{" "}
+                        <span className="font-semibold">
+                          {fmtCents(targetCents)}
+                        </span>{" "}
+                        estimated quarterly tax
+                      </p>
+                      <Progress value={pct} className="h-2" />
+                      <p className="text-xs text-muted-foreground">
+                        {targetCents === 0
+                          ? "Log some shifts to see your estimated quarterly tax."
+                          : setAsideCents >= targetCents
+                            ? "You're fully covered for this quarter 🎉"
+                            : `${pct}% of the way there — keep what you owe.`}
+                      </p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })()}
+
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {envelopes.data?.length ?? 0} envelope
+              {(envelopes.data?.length ?? 0) === 1 ? "" : "s"}
+            </p>
+            <Dialog open={showAddEnvelope} onOpenChange={setShowAddEnvelope}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  New Envelope
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create Envelope</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3 pt-2">
+                  <div>
+                    <Label>Envelope Name</Label>
+                    <Input
+                      placeholder="e.g. Quarterly Taxes"
+                      value={envelopeForm.name}
+                      onChange={e =>
+                        setEnvelopeForm(f => ({ ...f, name: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Category</Label>
+                      <Select
+                        value={envelopeForm.category}
+                        onValueChange={v =>
+                          setEnvelopeForm(f => ({
+                            ...f,
+                            category: v as typeof envelopeForm.category,
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ENVELOPE_CATEGORIES.map(c => (
+                            <SelectItem key={c.value} value={c.value}>
+                              {c.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Target ($, optional)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={envelopeForm.target}
+                        onChange={e =>
+                          setEnvelopeForm(f => ({
+                            ...f,
+                            target: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    className="w-full"
+                    disabled={createEnvelope.isPending || !envelopeForm.name}
+                    onClick={() =>
+                      createEnvelope.mutate({
+                        name: envelopeForm.name,
+                        category: envelopeForm.category,
+                        targetCents: envelopeForm.target
+                          ? Math.round(Number(envelopeForm.target) * 100)
+                          : undefined,
+                      })
+                    }
+                  >
+                    {createEnvelope.isPending
+                      ? "Creating..."
+                      : "Create Envelope"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {envelopes.isLoading && (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-20 w-full" />
+              ))}
+            </div>
+          )}
+
+          {envelopes.isError && (
+            <div className="text-center py-12 text-muted-foreground">
+              <PiggyBank className="h-10 w-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Could not load envelopes.</p>
+              <p className="text-xs mt-1">Please try again later.</p>
+            </div>
+          )}
+
+          {!envelopes.isLoading &&
+            !envelopes.isError &&
+            envelopes.data?.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <PiggyBank className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">No envelopes yet.</p>
+                <p className="text-xs mt-1">
+                  Create one, or add an auto-save rule and it fills
+                  automatically as you earn.
+                </p>
+              </div>
+            )}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {envelopes.data?.map(env => {
+              const pct =
+                env.targetCents && env.targetCents > 0
+                  ? Math.min(
+                      100,
+                      Math.round((env.balanceCents / env.targetCents) * 100)
+                    )
+                  : null;
+              return (
+                <Card key={env.id} className="border-border">
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-medium text-sm text-foreground truncate">
+                          {env.name}
+                        </div>
+                        <Badge variant="outline" className="text-xs mt-1">
+                          {env.category}
+                        </Badge>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-lg font-bold text-green-400">
+                          {fmtCents(env.balanceCents)}
+                        </div>
+                        {env.targetCents ? (
+                          <div className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
+                            <Target className="h-3 w-3" />
+                            {fmtCents(env.targetCents)}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                    {pct !== null && <Progress value={pct} className="h-2" />}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         </TabsContent>
       </Tabs>
     </div>

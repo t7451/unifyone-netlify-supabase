@@ -165,6 +165,7 @@ export const shiftsService = {
             type: "income_received",
             amountCents: totalEarningsCents,
             platform: existing.platform,
+            referenceId: String(input.shiftId),
           },
         });
       }

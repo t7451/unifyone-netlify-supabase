@@ -15,6 +15,7 @@ import { rulesService } from "./rules.service";
 import { pointsService } from "./points.service";
 import { taxExportService } from "./taxExport.service";
 import { earningsImportService } from "./earningsImport.service";
+import { envelopesService } from "./envelopes.service";
 import { gigWorkerService } from "../gigWorker/gigWorker.service";
 
 // Zod shape of one normalized earnings row (mirrors NormalizedImportRow). The
@@ -357,5 +358,41 @@ export const moneyManagerRouter = router({
     .input(z.object({ batchId: z.number().int() }))
     .mutation(async ({ ctx, input }) => {
       return earningsImportService.deleteBatch(ctx.user.id, input.batchId);
+    }),
+
+  // ── Envelopes / Set-Aside ──────────────────────────────────────────────────
+  // Virtual set-aside buckets credited by the rule engine when save/allocation
+  // rules fire. A FREE core feature — no FEATURE_TIERS gate.
+  listEnvelopes: operatorProcedure.query(async ({ ctx }) => {
+    return envelopesService.listEnvelopes(ctx.user.id);
+  }),
+
+  getEnvelopeBalance: operatorProcedure
+    .input(
+      z.object({
+        envelopeId: z.number().optional(),
+        category: z.enum(["tax", "savings", "emergency", "goal"]).optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return envelopesService.getEnvelopeBalance(ctx.user.id, input);
+    }),
+
+  createEnvelope: operatorProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(200),
+        category: z.enum(["tax", "savings", "emergency", "goal"]),
+        targetCents: z.number().int().min(0).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return envelopesService.createEnvelope(ctx.user.id, input);
+    }),
+
+  getEnvelopeHistory: operatorProcedure
+    .input(z.object({ envelopeId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      return envelopesService.getEnvelopeHistory(ctx.user.id, input);
     }),
 });
