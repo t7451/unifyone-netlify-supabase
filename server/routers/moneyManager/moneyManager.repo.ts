@@ -18,6 +18,8 @@ import {
   pointsTransactions,
   importedEarnings,
   earningsImportBatches,
+  savingsEnvelopes,
+  envelopeTransactions,
 } from "../../../drizzle/schema";
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
@@ -447,4 +449,115 @@ export function deleteImportedEarningsForBatch(
         eq(importedEarnings.userId, userId)
       )
     );
+}
+
+// ── Set-Aside / Envelope Ledger ───────────────────────────────────────────────
+export function getEnvelopeRow(db: Db, envelopeId: number, userId: number) {
+  return db
+    .select()
+    .from(savingsEnvelopes)
+    .where(
+      and(
+        eq(savingsEnvelopes.id, envelopeId),
+        eq(savingsEnvelopes.userId, userId)
+      )
+    )
+    .limit(1);
+}
+
+export function getEnvelopeByCategory(
+  db: Db,
+  userId: number,
+  category: "tax" | "savings" | "emergency" | "goal"
+) {
+  return db
+    .select()
+    .from(savingsEnvelopes)
+    .where(
+      and(
+        eq(savingsEnvelopes.userId, userId),
+        eq(savingsEnvelopes.category, category)
+      )
+    )
+    .orderBy(desc(savingsEnvelopes.createdAt))
+    .limit(1);
+}
+
+export function insertEnvelope(
+  db: Db,
+  values: typeof savingsEnvelopes.$inferInsert
+) {
+  return db
+    .insert(savingsEnvelopes)
+    .values(values)
+    .returning({ id: savingsEnvelopes.id });
+}
+
+export function updateEnvelopeBalance(
+  db: Db,
+  envelopeId: number,
+  userId: number,
+  amountCents: number
+) {
+  return db
+    .update(savingsEnvelopes)
+    .set({
+      balanceCents: sql`${savingsEnvelopes.balanceCents} + ${amountCents}`,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(savingsEnvelopes.id, envelopeId),
+        eq(savingsEnvelopes.userId, userId)
+      )
+    );
+}
+
+export function listEnvelopes(db: Db, userId: number) {
+  return db
+    .select()
+    .from(savingsEnvelopes)
+    .where(eq(savingsEnvelopes.userId, userId))
+    .orderBy(desc(savingsEnvelopes.createdAt));
+}
+
+export function insertEnvelopeTransaction(
+  db: Db,
+  values: typeof envelopeTransactions.$inferInsert
+) {
+  return db.insert(envelopeTransactions).values(values);
+}
+
+export function getEnvelopeTransactionByIdempotencyKey(
+  db: Db,
+  userId: number,
+  idempotencyKey: string
+) {
+  return db
+    .select()
+    .from(envelopeTransactions)
+    .where(
+      and(
+        eq(envelopeTransactions.userId, userId),
+        eq(envelopeTransactions.idempotencyKey, idempotencyKey)
+      )
+    )
+    .limit(1);
+}
+
+export function listEnvelopeTransactions(
+  db: Db,
+  envelopeId: number,
+  userId: number
+) {
+  return db
+    .select()
+    .from(envelopeTransactions)
+    .where(
+      and(
+        eq(envelopeTransactions.envelopeId, envelopeId),
+        eq(envelopeTransactions.userId, userId)
+      )
+    )
+    .orderBy(desc(envelopeTransactions.createdAt));
 }

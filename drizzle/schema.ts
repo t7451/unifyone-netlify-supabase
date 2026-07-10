@@ -1185,6 +1185,65 @@ export const pointsTransactions = pgTable("points_transactions", {
 });
 export type PointsTransaction = typeof pointsTransactions.$inferSelect;
 
+// ─── Set-Aside / Envelope Ledger ──────────────────────────────────────────────
+// Virtual (tracked) balances so auto-save / allocation rules actually credit a
+// "set aside" bucket — making "keep what you owe" a real number without Plaid.
+export const envelopeCategoryEnum = pgEnum("envelope_category", [
+  "tax",
+  "savings",
+  "emergency",
+  "goal",
+]);
+
+export const savingsEnvelopes = pgTable(
+  "savings_envelopes",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("userId").notNull(),
+    name: varchar("name", { length: 200 }).notNull(),
+    category: envelopeCategoryEnum("category").notNull(),
+    balanceCents: integer("balanceCents").default(0).notNull(),
+    targetCents: integer("targetCents"),
+    enabled: boolean("enabled").default(true).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  },
+  table => ({
+    userNameIdx: uniqueIndex("savings_envelopes_user_name_idx").on(
+      table.userId,
+      table.name
+    ),
+  })
+);
+export type SavingsEnvelope = typeof savingsEnvelopes.$inferSelect;
+export type InsertSavingsEnvelope = typeof savingsEnvelopes.$inferInsert;
+
+export const envelopeTransactions = pgTable(
+  "envelope_transactions",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("userId").notNull(),
+    envelopeId: integer("envelopeId").notNull(),
+    amountCents: integer("amountCents").notNull(), // signed: positive = credit
+    action: varchar("action", { length: 100 }).notNull(),
+    ruleId: integer("ruleId"),
+    referenceId: varchar("referenceId", { length: 100 }),
+    balanceAfter: integer("balanceAfter").notNull(),
+    // Nullable-unique idempotency key (Kai-ledger pattern) — exactly-once
+    // crediting per (rule, shift).
+    idempotencyKey: varchar("idempotencyKey", { length: 200 }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({
+    idempotencyKeyIdx: uniqueIndex(
+      "envelope_transactions_idempotency_key_idx"
+    ).on(table.idempotencyKey),
+  })
+);
+export type EnvelopeTransaction = typeof envelopeTransactions.$inferSelect;
+export type InsertEnvelopeTransaction =
+  typeof envelopeTransactions.$inferInsert;
+
 // ─── Gamification: Achievements ───────────────────────────────────────────────
 export const achievements = pgTable("achievements", {
   id: serial("id").primaryKey(),
