@@ -233,19 +233,38 @@ export const shiftsService = {
       startDate = new Date(now.getFullYear(), 0, 1);
     else startDate = new Date(0);
 
-    const shifts = await repo.getCompletedShiftsSince(db, userId, startDate);
+    const [shifts, imported] = await Promise.all([
+      repo.getCompletedShiftsSince(db, userId, startDate),
+      repo.getImportedEarningsSince(db, userId, startDate),
+    ]);
 
-    const totalEarnings = shifts.reduce(
+    const shiftEarnings = shifts.reduce(
       (s, r) =>
         s + Number(r.grossEarnings) + Number(r.tips) + Number(r.bonuses),
       0
     );
-    const totalMiles = shifts.reduce((s, r) => s + Number(r.totalMiles), 0);
+    const shiftMiles = shifts.reduce((s, r) => s + Number(r.totalMiles), 0);
     const totalMinutes = shifts.reduce(
       (s, r) => s + (r.durationMinutes ?? 0),
       0
     );
     const totalHours = totalMinutes / 60;
+
+    // Blend imported earnings/miles into the money totals only. Imports have no
+    // reliable per-row duration, so they are deliberately excluded from hours
+    // and avgPerHour — mixing zero-duration rows in would deflate $/hr.
+    const importedEarningsTotal = imported.reduce(
+      (s, r) =>
+        s + Number(r.grossEarnings) + Number(r.tips) + Number(r.bonuses),
+      0
+    );
+    const importedMiles = imported.reduce(
+      (s, r) => s + Number(r.totalMiles ?? 0),
+      0
+    );
+
+    const totalEarnings = shiftEarnings + importedEarningsTotal;
+    const totalMiles = shiftMiles + importedMiles;
     const taxDeduction = (totalMiles * IRS_RATE_CENTS) / 100;
 
     return {
@@ -253,9 +272,11 @@ export const shiftsService = {
       totalMiles: Math.round(totalMiles * 10) / 10,
       totalShifts: shifts.length,
       totalHours: Math.round(totalHours * 10) / 10,
+      // avgPerHour stays shift-only: hours come from shifts alone, so dividing
+      // the blended earnings by them would overstate $/hr. Use shift earnings.
       avgPerHour:
         totalHours > 0
-          ? Math.round((totalEarnings / totalHours) * 100) / 100
+          ? Math.round((shiftEarnings / totalHours) * 100) / 100
           : 0,
       taxDeduction: Math.round(taxDeduction * 100) / 100,
     };
@@ -570,13 +591,12 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
       startDate = new Date(now.getFullYear(), 0, 1);
     else startDate = new Date(0);
 
-    const shifts = await repo.getCompletedShiftsSinceOrdered(
-      db,
-      userId,
-      startDate
-    );
+    const [shifts, imported] = await Promise.all([
+      repo.getCompletedShiftsSinceOrdered(db, userId, startDate),
+      repo.getImportedEarningsSince(db, userId, startDate),
+    ]);
 
-    if (shifts.length === 0) {
+    if (shifts.length === 0 && imported.length === 0) {
       return {
         byPlatform: [],
         byHour: [],
@@ -585,15 +605,29 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
       };
     }
 
-    // Per-platform aggregation
+    // Per-platform aggregation. `earnings`/`hours`/`shifts` are shift-only and
+    // drive avgPerHour; `importedEarnings` and `miles` also absorb imports for
+    // the displayed money/miles totals (see the import blend below).
     const platformMap: Record<
       string,
-      { earnings: number; hours: number; shifts: number; miles: number }
+      {
+        earnings: number;
+        hours: number;
+        shifts: number;
+        miles: number;
+        importedEarnings: number;
+      }
     > = {};
     for (const s of shifts) {
       const p = s.platform;
       if (!platformMap[p])
-        platformMap[p] = { earnings: 0, hours: 0, shifts: 0, miles: 0 };
+        platformMap[p] = {
+          earnings: 0,
+          hours: 0,
+          shifts: 0,
+          miles: 0,
+          importedEarnings: 0,
+        };
       const totalEarned =
         Number(s.grossEarnings) + Number(s.tips) + Number(s.bonuses);
       const hours = (s.durationMinutes ?? 0) / 60;
@@ -602,11 +636,33 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
       platformMap[p].shifts += 1;
       platformMap[p].miles += Number(s.totalMiles);
     }
+    // Blend imported earnings/miles into each platform's DISPLAYED earnings +
+    // miles totals only. Imported earnings go into a separate `importedEarnings`
+    // bucket (never `earnings`) and add no hours/shifts, so avgPerHour stays
+    // shift-only and byHour / byDayOfWeek (which iterate `shifts`) never see
+    // them — imports carry no reliable per-row duration.
+    for (const r of imported) {
+      const p = r.platform;
+      if (!platformMap[p])
+        platformMap[p] = {
+          earnings: 0,
+          hours: 0,
+          shifts: 0,
+          miles: 0,
+          importedEarnings: 0,
+        };
+      platformMap[p].importedEarnings +=
+        Number(r.grossEarnings) + Number(r.tips) + Number(r.bonuses);
+      platformMap[p].miles += Number(r.totalMiles ?? 0);
+    }
     const byPlatform = Object.entries(platformMap)
       .map(([platform, v]) => ({
         platform,
-        totalEarnings: Math.round(v.earnings * 100) / 100,
+        totalEarnings:
+          Math.round((v.earnings + v.importedEarnings) * 100) / 100,
         totalHours: Math.round(v.hours * 10) / 10,
+        // Shift-only: imported earnings have no duration, so excluding them
+        // keeps $/hr honest.
         avgPerHour:
           v.hours > 0 ? Math.round((v.earnings / v.hours) * 100) / 100 : 0,
         totalShifts: v.shifts,
@@ -698,6 +754,13 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfYear = new Date(now.getFullYear(), 0, 1);
     const IRS_RATE = 0.7;
+
+    // TODO(earnings-import): blend importedEarnings into the month/year earnings
+    // and ytdMiles here too. Left out for now because this context builds off a
+    // limited recent-shifts fetch (getRecentCompletedShifts, cap 50) rather than
+    // a since-date query, so folding imports in needs its own getImportedEarnings
+    // Since read — deferred to keep this low-risk. getShiftStats / getShiftBreakdown
+    // (the surfaced totals) already include imports.
 
     // Core stats
     const allShifts = await repo.getRecentCompletedShifts(db, userId, 50);

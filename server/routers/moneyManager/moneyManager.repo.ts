@@ -16,6 +16,8 @@ import {
   subscriptionEntitlements,
   userPoints,
   pointsTransactions,
+  importedEarnings,
+  earningsImportBatches,
 } from "../../../drizzle/schema";
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
@@ -369,4 +371,80 @@ export function getActiveEntitlement(db: Db, userId: number) {
     )
     .orderBy(desc(subscriptionEntitlements.createdAt))
     .limit(1);
+}
+
+// ── Earnings Import ───────────────────────────────────────────────────────────
+// Multi-platform earnings imported from CSV / 1099 exports. Batches are the
+// per-file audit/undo unit; imported rows reference a batch. Every query is
+// scoped by userId — imports carry no tenant column and belong to one operator.
+export function insertImportBatch(
+  db: Db,
+  values: typeof earningsImportBatches.$inferInsert
+) {
+  return db
+    .insert(earningsImportBatches)
+    .values(values)
+    .returning({ id: earningsImportBatches.id });
+}
+
+export function insertImportedEarnings(
+  db: Db,
+  rows: Array<typeof importedEarnings.$inferInsert>
+) {
+  return db
+    .insert(importedEarnings)
+    .values(rows)
+    .returning({ id: importedEarnings.id });
+}
+
+export function getImportBatches(db: Db, userId: number) {
+  return db
+    .select()
+    .from(earningsImportBatches)
+    .where(eq(earningsImportBatches.userId, userId))
+    .orderBy(desc(earningsImportBatches.createdAt));
+}
+
+export function getImportedEarningsSince(
+  db: Db,
+  userId: number,
+  startDate: Date
+) {
+  return db
+    .select()
+    .from(importedEarnings)
+    .where(
+      and(
+        eq(importedEarnings.userId, userId),
+        gte(importedEarnings.earnedDate, startDate)
+      )
+    );
+}
+
+// Scoped by both batchId AND userId so an operator can only delete their own
+// batch — the userId guard defends against a forged batchId from another user.
+export function deleteImportBatch(db: Db, batchId: number, userId: number) {
+  return db
+    .delete(earningsImportBatches)
+    .where(
+      and(
+        eq(earningsImportBatches.id, batchId),
+        eq(earningsImportBatches.userId, userId)
+      )
+    );
+}
+
+export function deleteImportedEarningsForBatch(
+  db: Db,
+  batchId: number,
+  userId: number
+) {
+  return db
+    .delete(importedEarnings)
+    .where(
+      and(
+        eq(importedEarnings.importBatchId, batchId),
+        eq(importedEarnings.userId, userId)
+      )
+    );
 }

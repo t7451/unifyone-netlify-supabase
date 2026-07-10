@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import AIInsightsCard from "@/components/AIInsightsCard";
 
 import { trpc } from "@/lib/trpc";
@@ -41,6 +42,8 @@ import {
   Trash2,
   BarChart3,
   FileText,
+  Upload,
+  Lock,
 } from "lucide-react";
 
 const GIG_PLATFORMS = [
@@ -113,6 +116,14 @@ export default function MoneyManager() {
   });
   const [showEndShift, setShowEndShift] = useState(false);
   const [showAddRule, setShowAddRule] = useState(false);
+
+  const utils = trpc.useUtils();
+  const [importPlatform, setImportPlatform] = useState("DoorDash");
+  const [importFileName, setImportFileName] = useState<string | null>(null);
+  const [importPreview, setImportPreview] = useState<Awaited<
+    ReturnType<typeof utils.moneyManager.previewEarningsImport.fetch>
+  > | null>(null);
+  const [parsingImport, setParsingImport] = useState(false);
 
   const stats = trpc.moneyManager.getShiftStats.useQuery({ period });
   const shifts = trpc.moneyManager.listShifts.useQuery({
@@ -200,6 +211,65 @@ export default function MoneyManager() {
     },
     onError: e => toast.error(e.message),
   });
+
+  // ── Earnings Import ─────────────────────────────────────────────────────────
+  const importAccess = trpc.gigWorker.checkFeatureAccess.useQuery({
+    feature: "earnings_import",
+  });
+  const importBatches = trpc.moneyManager.listImportBatches.useQuery();
+
+  const commitImport = trpc.moneyManager.commitEarningsImport.useMutation({
+    onSuccess: data => {
+      toast.success(`Imported ${data.inserted} earnings row(s) 📥`);
+      setImportPreview(null);
+      setImportFileName(null);
+      importBatches.refetch();
+      stats.refetch();
+      // Blended platform breakdown lives behind another query — invalidate it so
+      // the GigIQ view reflects the new imported earnings on next read.
+      utils.moneyManager.getShiftBreakdown.invalidate();
+    },
+    onError: e => toast.error(e.message),
+  });
+
+  const deleteImportBatch = trpc.moneyManager.deleteImportBatch.useMutation({
+    onSuccess: () => {
+      toast.success("Import removed");
+      importBatches.refetch();
+      stats.refetch();
+      utils.moneyManager.getShiftBreakdown.invalidate();
+    },
+    onError: e => toast.error(e.message),
+  });
+
+  function handleImportFile(file: File | undefined) {
+    if (!file) return;
+    setImportFileName(file.name);
+    setParsingImport(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const text = String(reader.result ?? "");
+        const preview = await utils.moneyManager.previewEarningsImport.fetch({
+          csvText: text,
+          platform: importPlatform,
+        });
+        setImportPreview(preview);
+        if (preview.rows.length === 0) {
+          toast.error("No valid earnings rows found in that file");
+        }
+      } catch {
+        toast.error("Could not read that CSV file");
+      } finally {
+        setParsingImport(false);
+      }
+    };
+    reader.onerror = () => {
+      setParsingImport(false);
+      toast.error("Could not read that file");
+    };
+    reader.readAsText(file);
+  }
 
   if (!user) return null;
 
@@ -548,8 +618,9 @@ export default function MoneyManager() {
       </Card>
 
       <Tabs defaultValue="mileage">
-        <TabsList className="grid grid-cols-2 w-full max-w-sm">
+        <TabsList className="grid grid-cols-3 w-full max-w-sm">
           <TabsTrigger value="mileage">Mileage & Tax</TabsTrigger>
+          <TabsTrigger value="import">Import</TabsTrigger>
           <TabsTrigger value="rules">Financial Rules</TabsTrigger>
         </TabsList>
 
@@ -681,6 +752,230 @@ export default function MoneyManager() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Import Tab — multi-platform earnings consolidation */}
+        <TabsContent value="import" className="space-y-4 mt-4">
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Upload className="h-4 w-4 text-primary" />
+                Import Earnings (CSV)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Upload a CSV export from DoorDash, Uber, Lyft, Instacart, or any
+                gig platform. We map the columns, preview the rows, then blend
+                them into your consolidated earnings and miles.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label>Platform</Label>
+                  <Select
+                    value={importPlatform}
+                    onValueChange={setImportPlatform}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select platform" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GIG_PLATFORMS.map(p => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>CSV File</Label>
+                  <Input
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={e =>
+                      handleImportFile(e.target.files?.[0] ?? undefined)
+                    }
+                  />
+                </div>
+              </div>
+              {parsingImport && (
+                <p className="text-xs text-muted-foreground">Parsing file…</p>
+              )}
+
+              {importPreview && (
+                <div className="space-y-3 pt-1">
+                  {/* Totals + skipped summary */}
+                  <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card/50 px-3 py-2 text-xs">
+                    <span className="font-medium text-foreground">
+                      {importPreview.totals.rowCount} row(s)
+                    </span>
+                    <span className="text-green-400 font-medium">
+                      ${importPreview.totals.totalDollars.toFixed(2)} total
+                    </span>
+                    <span className="text-muted-foreground">
+                      {importPreview.totals.miles.toFixed(1)} mi
+                    </span>
+                    {importPreview.skipped.length > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {importPreview.skipped.length} skipped
+                      </Badge>
+                    )}
+                    {importFileName && (
+                      <span className="text-muted-foreground truncate">
+                        {importFileName}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Normalized rows table */}
+                  {importPreview.rows.length > 0 && (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b text-left text-muted-foreground text-xs">
+                            <th className="pb-2 font-medium">Date</th>
+                            <th className="pb-2 font-medium">Platform</th>
+                            <th className="pb-2 font-medium text-right">
+                              Gross
+                            </th>
+                            <th className="pb-2 font-medium text-right">
+                              Tips
+                            </th>
+                            <th className="pb-2 font-medium text-right">
+                              Bonus
+                            </th>
+                            <th className="pb-2 font-medium text-right">
+                              Miles
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {importPreview.rows.slice(0, 100).map((r, i) => (
+                            <tr key={`${r.earnedDate}-${i}`}>
+                              <td className="py-2 whitespace-nowrap">
+                                {new Date(r.earnedDate).toLocaleDateString()}
+                              </td>
+                              <td className="py-2">{r.platform}</td>
+                              <td className="py-2 text-right tabular-nums">
+                                ${r.grossDollars.toFixed(2)}
+                              </td>
+                              <td className="py-2 text-right tabular-nums">
+                                ${r.tipsDollars.toFixed(2)}
+                              </td>
+                              <td className="py-2 text-right tabular-nums">
+                                ${r.bonusDollars.toFixed(2)}
+                              </td>
+                              <td className="py-2 text-right tabular-nums text-muted-foreground">
+                                {r.miles == null ? "—" : r.miles.toFixed(1)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {importPreview.rows.length > 100 && (
+                        <p className="pt-2 text-xs text-muted-foreground">
+                          Showing first 100 of {importPreview.rows.length} rows
+                          — all will be saved.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Save action — gated behind the Pro feature */}
+                  {importAccess.data && !importAccess.data.hasAccess ? (
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full border-violet-500/40 text-violet-200 hover:bg-violet-500/10"
+                    >
+                      <Link href="/gig-worker-plans">
+                        <Lock className="mr-1.5 h-3.5 w-3.5" />
+                        Unlock earnings import — Pro
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full gap-2"
+                      disabled={
+                        commitImport.isPending ||
+                        importPreview.rows.length === 0
+                      }
+                      onClick={() =>
+                        commitImport.mutate({
+                          platform: importPlatform,
+                          fileName: importFileName ?? undefined,
+                          rows: importPreview.rows,
+                        })
+                      }
+                    >
+                      <Upload className="h-4 w-4" />
+                      {commitImport.isPending
+                        ? "Saving…"
+                        : `Save import (${importPreview.rows.length} rows)`}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Past import batches */}
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                Past Imports
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {importBatches.isLoading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <Skeleton key={i} className="h-10 w-full" />
+                  ))}
+                </div>
+              ) : importBatches.data && importBatches.data.length > 0 ? (
+                <div className="space-y-2">
+                  {importBatches.data.map(batch => (
+                    <div
+                      key={batch.id}
+                      className="flex items-center justify-between py-2 border-b border-border last:border-0"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Badge variant="secondary" className="text-xs">
+                          {batch.platform}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground truncate">
+                          {batch.fileName ?? "import"} · {batch.rowCount} rows
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(batch.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        disabled={deleteImportBatch.isPending}
+                        onClick={() =>
+                          deleteImportBatch.mutate({ batchId: batch.id })
+                        }
+                        aria-label="Undo import"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-xs text-muted-foreground py-6">
+                  No imports yet. Upload a platform CSV above to consolidate
+                  your earnings.
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Financial Rules Tab */}
