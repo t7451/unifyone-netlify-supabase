@@ -14,7 +14,20 @@ import { mileageTaxService } from "./mileageTax.service";
 import { rulesService } from "./rules.service";
 import { pointsService } from "./points.service";
 import { taxExportService } from "./taxExport.service";
+import { earningsImportService } from "./earningsImport.service";
 import { gigWorkerService } from "../gigWorker/gigWorker.service";
+
+// Zod shape of one normalized earnings row (mirrors NormalizedImportRow). The
+// client sends back the rows it previewed; this re-validates them server-side.
+const normalizedImportRowSchema = z.object({
+  earnedDate: z.string().min(1),
+  platform: z.string().min(1).max(100),
+  grossDollars: z.number().finite(),
+  tipsDollars: z.number().finite(),
+  bonusDollars: z.number().finite(),
+  miles: z.number().finite().nullable(),
+  rawRow: z.record(z.string(), z.string()),
+});
 
 export const moneyManagerRouter = router({
   // ── Gig Shifts ──────────────────────────────────────────────────────────────
@@ -293,5 +306,56 @@ export const moneyManagerRouter = router({
     )
     .query(async ({ ctx, input }) => {
       return mileageTaxService.getAnomalies(ctx.user.id, input);
+    }),
+
+  // ── Earnings Import ──────────────────────────────────────────────────────────
+  // Multi-platform earnings consolidation: import CSV / 1099 earnings from gig
+  // platforms and blend them into the consolidated income picture. CSV arrives
+  // as a text string (the client reads the file via FileReader) — no file upload.
+
+  /**
+   * Preview a CSV import: parse + normalize + validate against the platform's
+   * header aliases. Read-only — no DB write, so it is safe to call on every file
+   * pick. Returns normalized rows, skipped rows (with reasons), and totals.
+   */
+  previewEarningsImport: operatorProcedure
+    .input(
+      z.object({
+        csvText: z.string().max(512_000),
+        platform: z.string().min(1).max(100),
+      })
+    )
+    .query(async ({ input }) => {
+      return earningsImportService.previewImport(input.csvText, input.platform);
+    }),
+
+  /**
+   * Commit a previewed import. Gated server-side via requireFeature: a Starter
+   * operator gets FORBIDDEN with an upgrade message, so the paywall is enforced
+   * at the source, not just hidden in the UI.
+   */
+  commitEarningsImport: operatorProcedure
+    .input(
+      z.object({
+        platform: z.string().min(1).max(100),
+        fileName: z.string().max(300).optional(),
+        rows: z.array(normalizedImportRowSchema).max(50_000),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await gigWorkerService.requireFeature(ctx.user.id, "earnings_import");
+      return earningsImportService.commitImport(ctx.user.id, input);
+    }),
+
+  /** List the operator's past import batches (newest first). */
+  listImportBatches: operatorProcedure.query(async ({ ctx }) => {
+    return earningsImportService.listBatches(ctx.user.id);
+  }),
+
+  /** Undo an import: delete a batch and all of its rows (userId-scoped). */
+  deleteImportBatch: operatorProcedure
+    .input(z.object({ batchId: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      return earningsImportService.deleteBatch(ctx.user.id, input.batchId);
     }),
 });

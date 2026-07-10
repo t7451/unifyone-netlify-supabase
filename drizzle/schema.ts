@@ -1085,6 +1085,51 @@ export const mileageLogs = pgTable("mileage_logs", {
 export type MileageLog = typeof mileageLogs.$inferSelect;
 export type InsertMileageLog = typeof mileageLogs.$inferInsert;
 
+// ─── Earnings Import (multi-platform CSV / 1099 consolidation) ────────────────
+// Where a row came from: a bulk CSV export or a 1099 statement.
+export const earningsImportSourceEnum = pgEnum("earnings_import_source", [
+  "csv",
+  "1099",
+]);
+
+// One committed import file: the audit/undo unit. Imported rows reference it so
+// a whole batch can be listed and deleted together.
+export const earningsImportBatches = pgTable("earnings_import_batches", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  platform: varchar("platform", { length: 100 }).notNull(),
+  fileName: varchar("fileName", { length: 300 }),
+  rowCount: integer("rowCount").default(0).notNull(),
+  status: varchar("status", { length: 50 }).default("committed").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EarningsImportBatch = typeof earningsImportBatches.$inferSelect;
+export type InsertEarningsImportBatch =
+  typeof earningsImportBatches.$inferInsert;
+
+// Normalized earnings rows parsed from a gig platform's CSV / 1099 export. These
+// blend into earnings & miles totals only (no reliable per-row duration).
+export const importedEarnings = pgTable("imported_earnings", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  platform: varchar("platform", { length: 100 }).notNull(),
+  earnedDate: timestamp("earnedDate").notNull(),
+  grossEarnings: decimal("grossEarnings", { precision: 10, scale: 2 })
+    .default("0.00")
+    .notNull(),
+  tips: decimal("tips", { precision: 10, scale: 2 }).default("0.00").notNull(),
+  bonuses: decimal("bonuses", { precision: 10, scale: 2 })
+    .default("0.00")
+    .notNull(),
+  totalMiles: decimal("totalMiles", { precision: 8, scale: 2 }),
+  source: earningsImportSourceEnum("source").notNull(),
+  importBatchId: integer("importBatchId").notNull(),
+  rawRow: jsonb("rawRow"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ImportedEarning = typeof importedEarnings.$inferSelect;
+export type InsertImportedEarning = typeof importedEarnings.$inferInsert;
+
 // ─── Financial Rules (Money Management Rules Engine) ─────────────────────────
 export const financialRules = pgTable("financial_rules", {
   id: serial("id").primaryKey(),

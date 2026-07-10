@@ -37,6 +37,7 @@ export const FEATURE_TIERS: Record<string, string> = {
   basic_ai: "starter",
   route_optimizer: "pro",
   tax_export: "pro",
+  earnings_import: "pro",
   unlimited_rules: "pro",
   advanced_analytics: "pro",
   earnings_forecast: "elite",
