@@ -36,7 +36,7 @@ export default function Home() {
   return (
     <PublicLayout>
       <Helmet>
-        <title>UnifyOne — Gig Earnings & Tax Tracker for 1099 Workers</title>
+        <title>UnifyOne by 1Commerce — Gig Earnings & Tax Tracker for 1099 Workers</title>
         <meta
           name="description"
           content="Know exactly what every shift earns you. UnifyOne tracks earnings across DoorDash, Uber, Instacart and more, auto-logs IRS mileage, and keeps you ahead of quarterly taxes. Free to start."
@@ -44,7 +44,7 @@ export default function Home() {
         <link rel="canonical" href={CANONICAL} />
         <meta
           property="og:title"
-          content="UnifyOne — Gig Earnings & Tax Tracker for 1099 Workers"
+          content="UnifyOne by 1Commerce — Gig Earnings & Tax Tracker for 1099 Workers"
         />
         <meta
           property="og:description"
