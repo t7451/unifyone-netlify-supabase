@@ -3,6 +3,7 @@ import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 import {
   getPlatformComparison,
+  getRelatedComparisons,
   type PlatformComparison as Comparison,
 } from "@/content/geo/platformComparisons";
 
@@ -90,6 +91,7 @@ export default function PlatformComparison({ slug }: { slug: string }) {
 
   const canonical = `${SITE_URL}/${comparison.slug}`;
   const { platformA, platformB } = comparison;
+  const related = getRelatedComparisons(comparison.slug);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -302,6 +304,24 @@ export default function PlatformComparison({ slug }: { slug: string }) {
             ))}
           </ul>
         </section>
+
+        {related.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-lg font-semibold mb-4">Related comparisons</h2>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {related.map(c => (
+                <li key={c.slug}>
+                  <Link
+                    href={`/${c.slug}`}
+                    className="block rounded-lg border bg-card px-4 py-3 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
+                  >
+                    {c.platformA} vs {c.platformB}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="rounded-xl border bg-muted/30 p-6 text-center mb-8">
           <h2 className="text-lg font-semibold mb-2">
