@@ -23,7 +23,8 @@
     "seo:ping": "node scripts/ping-sitemaps.mjs",
     "seo:validate-jsonld": "node scripts/validate-jsonld.mjs",
     "seo:check-sitemap": "node scripts/check-sitemap-routes.mjs",
-    "seo:gates": "node scripts/validate-jsonld.mjs && node scripts/check-sitemap-routes.mjs",
+    "seo:check-robots-sync": "node scripts/check-robots-sitemap-sync.mjs",
+    "seo:gates": "node scripts/check-robots-sitemap-sync.mjs && node scripts/validate-jsonld.mjs && node scripts/check-sitemap-routes.mjs",
     "seo:citation-audit": "tsx scripts/ai-citation-audit.ts",
     "seo:mau": "psql $DATABASE_URL -f scripts/mau-exact.sql"
   },

@@ -16,6 +16,7 @@ on:
       - "vite-plugin-sitemap.ts"
       - "scripts/validate-jsonld.mjs"
       - "scripts/check-sitemap-routes.mjs"
+      - "scripts/check-robots-sitemap-sync.mjs"
       - ".lighthouserc.json"
       - ".github/workflows/seo-gates.yml"
   pull_request:
@@ -29,6 +30,7 @@ on:
       - "vite-plugin-sitemap.ts"
       - "scripts/validate-jsonld.mjs"
       - "scripts/check-sitemap-routes.mjs"
+      - "scripts/check-robots-sitemap-sync.mjs"
       - ".lighthouserc.json"
       - ".github/workflows/seo-gates.yml"
 
@@ -36,6 +38,26 @@ permissions:
   contents: read
 
 jobs:
+  # ── Gate 0: robots.txt ↔ sitemap filter sync ──────────────────────────────
+  # No build required — parses source files directly. Fails fast if a
+  # robots.txt Disallow prefix is not mirrored in SITEMAP_DISALLOW_PREFIXES,
+  # which would let the sitemap advertise a URL blocked by robots.txt.
+  robots-sitemap-sync:
+    name: Robots/sitemap sync
+    runs-on: ubuntu-latest
+    steps:
+      # Read-only gate — no git credentials needed after checkout.
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check robots.txt ↔ sitemap disallow sync
+        run: node scripts/check-robots-sitemap-sync.mjs
+
   # ── Gate 1: JSON-LD source validation ─────────────────────────────────────
   # No build required — validates TypeScript source directly.
   # Fails fast if a tool page is missing @context, @type, or FAQS content.
