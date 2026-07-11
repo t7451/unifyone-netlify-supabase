@@ -1,0 +1,35 @@
+# Dependabot configuration
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Scope: enable scheduled version updates for GitHub Actions used across
+# .github/workflows/**. This is the maintenance mechanism for pinning actions:
+# once an action is pinned to an immutable commit SHA, Dependabot bumps the SHA
+# (and its adjacent version comment) as new releases ship, so pins stay current
+# instead of going stale. Without this, actions only receive Dependabot
+# *security* updates, never routine version bumps.
+#
+# npm/pnpm version updates are intentionally NOT enabled here to keep this
+# change focused; they can be added as a follow-up `package-ecosystem: "npm"`
+# entry (the root pnpm-lock.yaml covers the whole workspace).
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    # "/" makes Dependabot scan every workflow under .github/workflows/**.
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    # Batch routine minor/patch action bumps into a single PR to cut noise;
+    # major bumps still open individually so they get a deliberate review.
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
