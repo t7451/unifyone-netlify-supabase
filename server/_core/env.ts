@@ -90,6 +90,16 @@ export const ENV = {
   // Built Media clipping platform URL (ksksrbiz-arch/built-media).
   builtMediaUrl: process.env.BUILT_MEDIA_URL ?? "",
   builtMediaApiKey: process.env.BUILT_MEDIA_API_KEY ?? "",
+  // ── RoutePulse (hyperlocal route intelligence) ──
+  // OSRM routing engine — public demo server by default, swap for a
+  // self-hosted instance in production (see docs).
+  osrmUrl: process.env.OSRM_URL ?? "https://router.project-osrm.org",
+  // Road511 unified 511 API (57 US/CA jurisdictions).
+  road511ApiKey: process.env.R511_API_KEY ?? "",
+  // ODOT TripCheck API (Oregon-native incidents/cameras/road conditions).
+  tripcheckApiKey: process.env.TRIPCHECK_KEY ?? "",
+  // Gemini (Google AI Studio) — news-to-constraint extraction + route scoring.
+  geminiApiKey: process.env.GEMINI_API_KEY ?? "",
 };
 
 /**
