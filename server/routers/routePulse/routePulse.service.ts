@@ -8,8 +8,9 @@
  *   2. Fetch base route(s) from OSRM (with alternatives).
  *   3. For each route, query active incidents within a buffer of the path
  *      via the `incidents_near_route` PostGIS RPC (Supabase).
- *   4. If any route has incidents, ask Gemini to pick the best one and
- *      explain why in one sentence.
+ *   4. If any route has incidents, ask the LLM router (free-tier OpenRouter
+ *      models via server/lib/kaiModels, with automatic fallback across
+ *      providers) to pick the best one and explain why in one sentence.
  *   5. Cache and return.
  *
  * Incident data itself is populated by the scheduled ingestion function
@@ -19,6 +20,8 @@
 import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "../../_core/supabaseAdmin";
 import { ENV } from "../../_core/env";
+import { invokeLLM } from "../../_core/llm";
+import { resolveKaiModel } from "../../lib/kaiModels";
 
 const CACHE_TTL_MS = 2 * 60 * 1000;
 
@@ -134,11 +137,6 @@ async function getIncidentsNearRoute(
 async function scoreRoutesWithAI(
   routes: ScoredRoute[]
 ): Promise<{ chosenIndex: number; explanation: string }> {
-  if (!ENV.geminiApiKey) {
-    // No AI key configured — fall back to fastest route, generic note.
-    return { chosenIndex: 0, explanation: "Fastest available route." };
-  }
-
   const prompt = `You are comparing driving routes. Pick the best one considering active incidents.
 Routes: ${JSON.stringify(
     routes.map(r => ({
@@ -156,16 +154,19 @@ Routes: ${JSON.stringify(
 Respond ONLY with JSON: { "chosen_index": 0, "explanation": "one sentence, cite the specific incident if relevant" }`;
 
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${ENV.geminiApiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-      }
-    );
-    const data = await res.json();
-    const text = data.candidates[0].content.parts[0].text
+    // Free-tier model, routed through OpenRouter (invokeLLMWithFallback
+    // falls back to Groq / Vercel AI Gateway if OpenRouter is ever unset)
+    // — never charges Kai credits, never touches Gemini.
+    const model = resolveKaiModel("hermes-3-405b");
+    const result = await invokeLLM({
+      messages: [{ role: "user", content: prompt }],
+      model: model.gatewayModel,
+      modelChain: model.fallbackModels,
+      maxTokens: 300,
+    });
+
+    const text = (result.choices[0]?.message.content ?? "")
+      .toString()
       .replace(/```json|```/g, "")
       .trim();
     const parsed = JSON.parse(text);
@@ -173,8 +174,9 @@ Respond ONLY with JSON: { "chosen_index": 0, "explanation": "one sentence, cite 
       chosenIndex: parsed.chosen_index ?? 0,
       explanation: parsed.explanation ?? "Best available route.",
     };
-  } catch {
+  } catch (err) {
     // AI scoring is an enhancement, never a hard dependency.
+    console.warn("[routePulse] AI scoring failed, falling back:", err);
     return { chosenIndex: 0, explanation: "Fastest available route." };
   }
 }

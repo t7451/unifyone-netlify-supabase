@@ -98,8 +98,9 @@ export const ENV = {
   road511ApiKey: process.env.R511_API_KEY ?? "",
   // ODOT TripCheck API (Oregon-native incidents/cameras/road conditions).
   tripcheckApiKey: process.env.TRIPCHECK_KEY ?? "",
-  // Gemini (Google AI Studio) — news-to-constraint extraction + route scoring.
-  geminiApiKey: process.env.GEMINI_API_KEY ?? "",
+  // Route-scoring AI runs through the existing Kai model router
+  // (server/lib/kaiModels + server/_core/llm) — OpenRouter free-tier
+  // models with Groq/Vercel AI Gateway fallback. No dedicated key needed.
 };
 
 /**
