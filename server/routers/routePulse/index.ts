@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  publicProcedure,
-  publicRateLimitedProcedure,
-  router,
-} from "../../_core/trpc";
+import { publicRateLimitedProcedure, router } from "../../_core/trpc";
 import { publicFormLimiter } from "../../_core/rateLimiter";
 import * as service from "./routePulse.service";
 
@@ -26,8 +22,12 @@ export const routePulseRouter = router({
       return service.getRoute(input.origin, input.destination);
     }),
 
-  // Public: list currently-active incidents (for a map overlay).
-  listIncidents: publicProcedure.query(async () => {
+  // Public: list currently-active incidents (for a map overlay). Rate-limited
+  // so the full active-incident table can't be scraped every request.
+  listIncidents: publicRateLimitedProcedure(
+    publicFormLimiter,
+    "routepulse:listIncidents"
+  ).query(async () => {
     return service.listActiveIncidents();
   }),
 });

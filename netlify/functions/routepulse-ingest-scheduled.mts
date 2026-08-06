@@ -47,6 +47,30 @@ function mapSeverity(s?: string): "minor" | "moderate" | "major" | "critical" {
   return "moderate";
 }
 
+/**
+ * Marks incidents as cleared if they were not present in the latest poll,
+ * scoped to a single source. Scoping matters: if e.g. Road511 fails or its
+ * key is unset this cycle, we must NOT sweep road511-sourced incidents using
+ * only this cycle's (empty) ODOT set — that would false-clear everything
+ * Road511 previously reported. Only call this for a source that actually
+ * completed a successful poll this cycle. Guarded by min_age_minutes
+ * (server-side, in the RPC) so a single missed poll can't false-clear
+ * something still active either.
+ */
+async function markClearedIncidents(
+  supabase: ReturnType<typeof createClient>,
+  source: string,
+  activeIds: string[]
+) {
+  const { error } = await supabase.rpc("mark_incidents_cleared", {
+    p_source: source,
+    active_ids: activeIds,
+    min_age_minutes: 10,
+  });
+  if (error)
+    console.error(`[routepulse-ingest] Clearance error (${source}):`, error.message);
+}
+
 export default async (req: Request) => {
   const { next_run } = await req.json().catch(() => ({ next_run: "unknown" }));
   console.log(`[routepulse-ingest] Poll start. Next: ${next_run}`);
@@ -106,6 +130,13 @@ export default async (req: Request) => {
             .upsert(rows, { onConflict: "source,external_id" });
           if (error) console.error("[routepulse-ingest] ODOT upsert error:", error.message);
         }
+        // Sweep only after a confirmed-successful poll (res.ok, this branch)
+        // so a fetch failure never wipes out previously-ingested incidents.
+        await markClearedIncidents(
+          supabase,
+          "odot_tripcheck",
+          rows.map((r) => r.external_id)
+        );
         results.odot = rows.length;
       }
     } catch (err) {
@@ -119,6 +150,8 @@ export default async (req: Request) => {
   // ── Road511 (multi-state normalized) ──
   if (r511Key) {
     let total = 0;
+    let allRegionsOk = true;
+    const road511ActiveIds: string[] = [];
     for (const region of REGIONS) {
       try {
         const url = `https://api.road511.com/v1/incidents?bbox=${region.bbox}&active=true`;
@@ -127,6 +160,7 @@ export default async (req: Request) => {
         });
         if (!res.ok) {
           console.error(`[routepulse-ingest] Road511 ${region.name} failed: ${res.status}`);
+          allRegionsOk = false;
           continue;
         }
         const data = await res.json();
@@ -158,10 +192,22 @@ export default async (req: Request) => {
             .upsert(rows, { onConflict: "source,external_id" });
           if (error) console.error(`[routepulse-ingest] Road511 ${region.name} upsert error:`, error.message);
         }
+        road511ActiveIds.push(...rows.map((r: { external_id: string }) => r.external_id));
         total += rows.length;
       } catch (err) {
         console.error(`[routepulse-ingest] Road511 ${region.name} fetch failed:`, err);
+        allRegionsOk = false;
       }
+    }
+    // Only sweep if every region was polled successfully this cycle — a
+    // partial failure (one region down) must not clear that region's
+    // still-active incidents just because they're missing from this round.
+    if (allRegionsOk) {
+      await markClearedIncidents(supabase, "road511", road511ActiveIds);
+    } else {
+      console.warn(
+        "[routepulse-ingest] Skipping road511 clearance sweep — not all regions polled successfully."
+      );
     }
     results.road511 = total;
   } else {
