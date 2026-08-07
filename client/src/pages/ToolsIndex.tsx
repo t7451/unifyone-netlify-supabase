@@ -151,6 +151,22 @@ const TOOLS_REGISTRY: ToolMeta[] = [
     ],
     live: true,
   },
+  {
+    slug: "route-pulse",
+    title: "RoutePulse — AI Route & Incident Checker",
+    tagline:
+      "Check a route for live incidents before mainstream traffic apps catch up",
+    description:
+      "Enter an origin and destination to get an AI-scored route with live incident data factored in, plus a plain-language explanation of what to watch for.",
+    audience: "Rideshare and delivery drivers planning a route",
+    keywords: [
+      "route intelligence",
+      "traffic incident checker",
+      "gig driver route planner",
+      "AI route explanation",
+    ],
+    live: true,
+  },
 ];
 
 const CANONICAL = `${SITE_URL}/tools`;
