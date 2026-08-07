@@ -101,6 +101,7 @@ const CashflowTracker = lazy(() => import("../pages/tools/CashflowTracker"));
 const SETaxCalculator = lazy(() => import("../pages/tools/SETaxCalculator"));
 const GigHourlyRate = lazy(() => import("../pages/tools/GigHourlyRate"));
 const TaxSetAside = lazy(() => import("../pages/tools/TaxSetAside"));
+const RoutePulse = lazy(() => import("../pages/RoutePulse"));
 const GigIncomeAggregator = lazy(
   () => import("../pages/geo/GigIncomeAggregator")
 );
@@ -643,6 +644,7 @@ export function AppRoutes() {
           path="/tools/earnings-consolidator"
           component={() => <EarningsConsolidator />}
         />
+        <Route path="/tools/route-pulse" component={() => <RoutePulse />} />
         <Route
           path="/tools/reseller-break-even"
           component={() => <ResellerBreakEven />}

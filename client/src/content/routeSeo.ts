@@ -1016,7 +1016,8 @@ export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/",
     externalLinks: [IRS.mileage, IRS.estimated, IRS.selfEmployedCenter],
-    title: "UnifyOne by 1Commerce — Gig Earnings & Tax Tracker for 1099 Workers",
+    title:
+      "UnifyOne by 1Commerce — Gig Earnings & Tax Tracker for 1099 Workers",
     description:
       "Track gig earnings from DoorDash, Uber, Lyft, Instacart, Amazon Flex & Grubhub. Log IRS mileage and set aside quarterly taxes. Free + Pro $4.99/mo.",
     body: [
@@ -2749,6 +2750,11 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Gig Earnings Optimizer — Maximize Net Pay Across DoorDash, Uber, Instacart | UnifyOne",
     description:
       "Find which gig apps and shifts generate the highest net pay after expenses. UnifyOne compares real net earnings per hour across all platforms.",
+    body: [
+      "Gross gig pay isn't take-home pay. The Gig Earnings Optimizer compares real net earnings per hour across DoorDash, Uber Eats, Instacart, and other apps — after fuel, vehicle wear, and the IRS mileage deduction — so you can see which platform actually pays more in your zone.",
+      "Deadhead miles — the unpaid distance driven between orders or back from a drop-off — quietly erode per-order pay. Modeling net dollars per hour instead of gross fares surfaces the platforms and shift windows where those empty miles cost you the least.",
+      "Because pay, incentives, and demand shift week to week, the best-paying app changes over time. Re-checking net pay by platform regularly — and remembering that bonuses and promotions count as taxable income — helps route your hours to the highest real return.",
+    ],
   },
   {
     path: "/financial-intelligence-gig-workers",
@@ -2756,6 +2762,11 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Financial Intelligence for Gig Workers — AI-Powered Earnings Analytics | UnifyOne",
     description:
       "AI-powered financial intelligence for gig workers: real-time earnings analysis, tax forecasting, and net income visibility across all platforms.",
+    body: [
+      "Financial intelligence for gig workers means turning raw payout data into real-time net income: what you actually keep across every platform after fuel, the mileage deduction, and fees, rather than the gross totals each app reports.",
+      "UnifyOne surfaces a live quarterly tax forecast (self-employment tax plus income tax), a side-by-side platform earnings comparison, your effective expense ratio, and alerts when your earnings pattern shifts — so tax season and slow weeks hold no surprises.",
+      "Kai, UnifyOne's AI assistant, helps translate irregular gig income into a workable budget and keeps business expenses categorized as you go, so deductions and set-aside amounts stay accurate without manual bookkeeping.",
+    ],
   },
   {
     path: "/gig-route-intelligence",
