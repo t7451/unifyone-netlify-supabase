@@ -1,5 +1,14 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "wouter";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Polyline,
+  useMap,
+} from "react-leaflet";
+import L, { type LatLngExpression, type LatLngBoundsExpression } from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { trpc } from "@/lib/trpc";
 import PageHead from "@/components/PageHead";
 import ToolLayout from "@/components/ToolLayout";
@@ -21,10 +30,10 @@ import {
 /**
  * RoutePulse — hyperlocal route intelligence.
  *
- * MVP scope (per PLAN): plain input -> AI-scored route + explanation +
- * active incident list. No turn-by-turn, no map yet -- validate the core
- * thesis (does the AI catch incidents Google Maps hasn't surfaced?)
- * before investing in a map layer.
+ * Address in, AI-scored route + explanation + active incident list out,
+ * rendered on a free OpenStreetMap/Leaflet map (no API key, no billing).
+ * Geocoding (address -> coordinates) runs server-side via Nominatim
+ * (OSM's free geocoder) as part of the getRoute call.
  */
 
 const CANONICAL = `${SITE_URL}/tools/route-pulse`;
@@ -60,10 +69,10 @@ const jsonLd = [
       },
       {
         "@type": "Question",
-        name: "Do I need an account to use RoutePulse?",
+        name: "Do I need an account or an API key to use RoutePulse?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "No. RoutePulse works with no account required — enter an origin and destination and get a scored route immediately.",
+          text: "No. RoutePulse works with no account and no API key — it runs on OpenStreetMap data and free-tier AI models. Enter an origin and destination address and get a scored route immediately.",
         },
       },
       {
@@ -92,16 +101,6 @@ const jsonLd = [
   },
 ];
 
-type Coords = { lat: string; lng: string };
-
-function parseCoords(c: Coords): { lat: number; lng: number } | null {
-  const lat = parseFloat(c.lat);
-  const lng = parseFloat(c.lng);
-  if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
-  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
-  return { lat, lng };
-}
-
 const SEVERITY_BADGE: Record<string, string> = {
   minor:
     "bg-yellow-500/15 text-yellow-700 border-yellow-500/30 dark:text-yellow-400",
@@ -111,40 +110,82 @@ const SEVERITY_BADGE: Record<string, string> = {
   critical: "bg-red-600/20 text-red-800 border-red-600/40 dark:text-red-400",
 };
 
+// Custom pin icons (avoid Leaflet's default marker image path, which breaks
+// under bundlers) — simple colored divs, no extra image assets to manage.
+function pinIcon(color: string) {
+  return L.divIcon({
+    className: "",
+    html: `<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.3)"></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
+}
+const ORIGIN_ICON = pinIcon("#3b82f6");
+const DEST_ICON = pinIcon("#ef4444");
+
+/** Recenters/fits the map whenever the bounds it's given change. */
+function FitBounds({ bounds }: { bounds: LatLngBoundsExpression | null }) {
+  const map = useMap();
+  useMemo(() => {
+    if (bounds) map.fitBounds(bounds, { padding: [32, 32] });
+  }, [bounds, map]);
+  return null;
+}
+
 export default function RoutePulse() {
-  const [origin, setOrigin] = useState<Coords>({ lat: "", lng: "" });
-  const [destination, setDestination] = useState<Coords>({ lat: "", lng: "" });
+  const [origin, setOrigin] = useState("");
+  const [destination, setDestination] = useState("");
   const [submitted, setSubmitted] = useState<{
-    origin: { lat: number; lng: number };
-    destination: { lat: number; lng: number };
+    origin: string;
+    destination: string;
   } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   const routeQuery = trpc.routePulse.getRoute.useQuery(submitted!, {
     enabled: !!submitted,
+    retry: false,
   });
   const incidentsQuery = trpc.routePulse.listIncidents.useQuery();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const o = parseCoords(origin);
-    const d = parseCoords(destination);
-    if (!o || !d) {
+    if (origin.trim().length < 3 || destination.trim().length < 3) {
       setFormError(
-        "Enter valid coordinates for both origin and destination (latitude -90 to 90, longitude -180 to 180)."
+        "Enter a more complete origin and destination address (e.g. street, city, state)."
       );
       return;
     }
     setFormError(null);
-    setSubmitted({ origin: o, destination: d });
+    setSubmitted({ origin: origin.trim(), destination: destination.trim() });
     trackToolUsage("route-pulse", "start");
   };
+
+  const routeLine: LatLngExpression[] | null = useMemo(() => {
+    const geometry = routeQuery.data?.route.geometry as
+      | { coordinates: [number, number][] }
+      | undefined;
+    if (!geometry?.coordinates?.length) return null;
+    return geometry.coordinates.map(
+      ([lng, lat]) => [lat, lng] as LatLngExpression
+    );
+  }, [routeQuery.data]);
+
+  const mapBounds: LatLngBoundsExpression | null = useMemo(() => {
+    if (!routeQuery.data) return null;
+    const { origin: o, destination: d } = routeQuery.data;
+    const points: LatLngExpression[] = [
+      [o.lat, o.lng],
+      [d.lat, d.lng],
+      ...(routeLine ?? []),
+    ];
+    return L.latLngBounds(points);
+  }, [routeQuery.data, routeLine]);
 
   return (
     <>
       <PageHead
         title="RoutePulse — Free AI Route & Incident Checker | UnifyOne"
-        description="Free tool for gig drivers: check a route for live incidents and get an AI explanation of what to watch for before you drive. No account required."
+        description="Free tool for gig drivers: check a route for live incidents and get an AI explanation of what to watch for before you drive. No account required, built on OpenStreetMap."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />
@@ -161,10 +202,10 @@ export default function RoutePulse() {
           <p className="text-lg text-muted-foreground">
             Routes that read the news so you don't have to.{" "}
             <strong className="text-foreground">
-              Enter an origin and destination
+              Enter an origin and destination address
             </strong>{" "}
-            and get an AI-scored route with live incidents factored in — before
-            they hit mainstream traffic apps.
+            and get an AI-scored route on a live map, with incidents factored in
+            before they hit mainstream traffic apps.
           </p>
         </header>
 
@@ -174,49 +215,25 @@ export default function RoutePulse() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5 text-sm font-medium">
-                  <MapPin className="w-3.5 h-3.5" /> Origin
+                  <MapPin className="w-3.5 h-3.5" /> Origin address
                 </Label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Latitude"
-                    inputMode="decimal"
-                    value={origin.lat}
-                    onChange={e =>
-                      setOrigin({ ...origin, lat: e.target.value })
-                    }
-                  />
-                  <Input
-                    placeholder="Longitude"
-                    inputMode="decimal"
-                    value={origin.lng}
-                    onChange={e =>
-                      setOrigin({ ...origin, lng: e.target.value })
-                    }
-                  />
-                </div>
+                <Input
+                  placeholder="123 SW Broadway, Portland, OR"
+                  value={origin}
+                  onChange={e => setOrigin(e.target.value)}
+                  autoComplete="off"
+                />
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5 text-sm font-medium">
-                  <MapPin className="w-3.5 h-3.5" /> Destination
+                  <MapPin className="w-3.5 h-3.5" /> Destination address
                 </Label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Latitude"
-                    inputMode="decimal"
-                    value={destination.lat}
-                    onChange={e =>
-                      setDestination({ ...destination, lat: e.target.value })
-                    }
-                  />
-                  <Input
-                    placeholder="Longitude"
-                    inputMode="decimal"
-                    value={destination.lng}
-                    onChange={e =>
-                      setDestination({ ...destination, lng: e.target.value })
-                    }
-                  />
-                </div>
+                <Input
+                  placeholder="800 SE 10th Ave, Portland, OR"
+                  value={destination}
+                  onChange={e => setDestination(e.target.value)}
+                  autoComplete="off"
+                />
               </div>
             </div>
 
@@ -234,6 +251,50 @@ export default function RoutePulse() {
           </form>
         </Card>
 
+        {/* Map */}
+        {submitted && routeQuery.data && (
+          <Card className="p-0 mb-8 overflow-hidden">
+            <div className="h-[360px] sm:h-[440px] w-full">
+              <MapContainer
+                center={[
+                  routeQuery.data.origin.lat,
+                  routeQuery.data.origin.lng,
+                ]}
+                zoom={12}
+                scrollWheelZoom={false}
+                style={{ height: "100%", width: "100%" }}
+              >
+                {/* OpenStreetMap tiles — free, no API key. Attribution required. */}
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <FitBounds bounds={mapBounds} />
+                <Marker
+                  position={[
+                    routeQuery.data.origin.lat,
+                    routeQuery.data.origin.lng,
+                  ]}
+                  icon={ORIGIN_ICON}
+                />
+                <Marker
+                  position={[
+                    routeQuery.data.destination.lat,
+                    routeQuery.data.destination.lng,
+                  ]}
+                  icon={DEST_ICON}
+                />
+                {routeLine && (
+                  <Polyline
+                    positions={routeLine}
+                    pathOptions={{ color: "#3b82f6", weight: 4, opacity: 0.85 }}
+                  />
+                )}
+              </MapContainer>
+            </div>
+          </Card>
+        )}
+
         {/* Result card */}
         {submitted && routeQuery.data && (
           <Card className="p-6 sm:p-8 mb-8 space-y-4">
@@ -248,7 +309,17 @@ export default function RoutePulse() {
                 </Badge>
               )}
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <div className="text-xs text-muted-foreground space-y-0.5">
+              <p>
+                <span className="font-medium text-foreground">From:</span>{" "}
+                {routeQuery.data.origin.displayName}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">To:</span>{" "}
+                {routeQuery.data.destination.displayName}
+              </p>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed pt-2 border-t">
               {routeQuery.data.explanation}
             </p>
 
@@ -285,8 +356,9 @@ export default function RoutePulse() {
         {routeQuery.isError && (
           <Card className="p-6 mb-8 border-destructive/30 bg-destructive/5">
             <p className="text-sm text-destructive">
-              Couldn't find a route between those points. Double-check the
-              coordinates and try again.
+              {routeQuery.error?.message?.includes("Couldn't find")
+                ? routeQuery.error.message
+                : "Couldn't find a route between those addresses. Double-check them and try again."}
             </p>
           </Card>
         )}
@@ -331,13 +403,14 @@ export default function RoutePulse() {
           <p>
             A closed lane or a fresh crash can add 15+ minutes to a delivery or
             rideshare trip before mainstream traffic apps catch up. RoutePulse
-            checks live incident feeds along your route and uses AI to explain
-            what's actually happening — not just a red line on a map.
+            checks live incident feeds along your route and uses free-tier AI to
+            explain what's actually happening — not just a red line on a map.
           </p>
           <p>
-            This is an early, intentionally simple version: enter coordinates,
-            get a scored route and an explanation. A full map view and
-            turn-by-turn are on the roadmap once the core idea proves out.
+            Built entirely on free, open infrastructure: addresses are resolved
+            with OpenStreetMap's Nominatim geocoder, routing runs on OSRM, and
+            the map itself is OpenStreetMap tiles — no Google Maps billing, no
+            API key required.
           </p>
         </section>
 
@@ -353,8 +426,8 @@ export default function RoutePulse() {
                 a: "RoutePulse layers an AI explanation on top of live incident data along your route, calling out closures, crashes, and hazards that may not have propagated to mainstream traffic apps yet.",
               },
               {
-                q: "Do I need an account to use RoutePulse?",
-                a: "No. It works with no account required — enter an origin and destination and get a scored route immediately.",
+                q: "Do I need an account or API key to use RoutePulse?",
+                a: "No. It's built on free, open infrastructure — OpenStreetMap for geocoding and the map, OSRM for routing, and free-tier AI models for the explanation. Enter an origin and destination and get a scored route immediately.",
               },
               {
                 q: "What area does RoutePulse cover?",

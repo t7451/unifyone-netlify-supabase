@@ -28,6 +28,130 @@ const CACHE_TTL_MS = 2 * 60 * 1000;
 
 export type LatLng = { lat: number; lng: number };
 
+export type GeocodedPoint = LatLng & {
+  /** Human-readable place name as resolved by the geocoder, for display. */
+  displayName: string;
+};
+
+export class GeocodingError extends TRPCError {
+  constructor(message: string) {
+    super({ code: "NOT_FOUND", message });
+  }
+}
+
+// In-memory geocode cache — avoids re-hitting Nominatim for repeat addresses
+// within the same warm serverless instance. Ephemeral by design (dies on
+// cold start); Nominatim's usage policy discourages heavy caching in a
+// shared/durable store without their sign-off, so this stays best-effort.
+const GEOCODE_CACHE_TTL_MS = 30 * 60 * 1000;
+const GEOCODE_CACHE_MAX_ENTRIES = 500;
+const geocodeCache = new Map<
+  string,
+  { value: GeocodedPoint; expiresAt: number }
+>();
+
+function geocodeCacheKey(address: string): string {
+  return address.trim().toLowerCase();
+}
+
+function readGeocodeCache(address: string): GeocodedPoint | null {
+  const entry = geocodeCache.get(geocodeCacheKey(address));
+  if (!entry) return null;
+  if (entry.expiresAt < Date.now()) {
+    geocodeCache.delete(geocodeCacheKey(address));
+    return null;
+  }
+  return entry.value;
+}
+
+function writeGeocodeCache(address: string, value: GeocodedPoint) {
+  if (geocodeCache.size >= GEOCODE_CACHE_MAX_ENTRIES) {
+    // Evict the oldest entry (Map preserves insertion order) rather than
+    // letting this grow unbounded across a long-lived warm instance.
+    const oldestKey = geocodeCache.keys().next().value;
+    if (oldestKey !== undefined) geocodeCache.delete(oldestKey);
+  }
+  geocodeCache.set(geocodeCacheKey(address), {
+    value,
+    expiresAt: Date.now() + GEOCODE_CACHE_TTL_MS,
+  });
+}
+
+/** Test-only: clears the in-memory geocode cache between test cases. */
+export function _resetGeocodeCacheForTests() {
+  geocodeCache.clear();
+}
+
+/**
+ * Resolves a free-text address to coordinates via Nominatim (OpenStreetMap's
+ * free geocoder — no API key). Bias results toward the US since incident
+ * coverage is Oregon/SW Washington today; callers doing national/global
+ * routing later can drop or parameterize this.
+ */
+export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
+  const trimmed = address.trim();
+  if (trimmed.length < 3) {
+    throw new GeocodingError("Enter a more complete address.");
+  }
+
+  const cached = readGeocodeCache(trimmed);
+  if (cached) return cached;
+
+  const url =
+    `${ENV.nominatimUrl}/search?format=jsonv2&limit=1&countrycodes=us` +
+    `&q=${encodeURIComponent(trimmed)}`;
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: {
+        // Required by Nominatim's usage policy — identifies the app and a
+        // contact point so OSM can reach us if something needs attention.
+        "User-Agent": ENV.nominatimUserAgent,
+        Accept: "application/json",
+      },
+    });
+  } catch (err) {
+    console.warn("[routePulse] Nominatim unreachable:", err);
+    throw new TRPCError({
+      code: "BAD_GATEWAY",
+      message: "Address lookup is temporarily unavailable. Try again shortly.",
+    });
+  }
+
+  if (!res.ok) {
+    throw new TRPCError({
+      code: "BAD_GATEWAY",
+      message: "Address lookup is temporarily unavailable. Try again shortly.",
+    });
+  }
+
+  const results = (await res.json()) as Array<{
+    lat: string;
+    lon: string;
+    display_name: string;
+  }>;
+
+  const top = results[0];
+  if (!top) {
+    throw new GeocodingError(
+      `Couldn't find "${trimmed}". Try adding a city and state.`
+    );
+  }
+
+  const lat = parseFloat(top.lat);
+  const lng = parseFloat(top.lon);
+  if (Number.isNaN(lat) || Number.isNaN(lng)) {
+    throw new GeocodingError(
+      `Couldn't find "${trimmed}". Try adding a city and state.`
+    );
+  }
+
+  const point: GeocodedPoint = { lat, lng, displayName: top.display_name };
+  writeGeocodeCache(trimmed, point);
+  return point;
+}
+
 export type RouteIncident = {
   id: string;
   incident_type: string;
@@ -48,6 +172,8 @@ export type RouteResult = {
   route: ScoredRoute;
   explanation: string;
   alternatives: ScoredRoute[];
+  origin: GeocodedPoint;
+  destination: GeocodedPoint;
   generated_at: string;
   cached: boolean;
 };
@@ -281,9 +407,17 @@ Respond ONLY with JSON: { "chosen_index": 0, "explanation": "one sentence, cite 
 }
 
 export async function getRoute(
-  origin: LatLng,
-  destination: LatLng
+  originAddress: string,
+  destinationAddress: string
 ): Promise<RouteResult> {
+  // Geocode first — the cache key and every downstream step depends on
+  // resolved coordinates, and a bad address should fail fast with a clear
+  // message rather than an OSRM "no route" error.
+  const [origin, destination] = await Promise.all([
+    geocodeAddress(originAddress),
+    geocodeAddress(destinationAddress),
+  ]);
+
   const key = cacheKey(origin, destination);
 
   const cached = await readCache(key);
@@ -314,6 +448,8 @@ export async function getRoute(
     route: scoredRoutes[chosenIndex] ?? scoredRoutes[0],
     explanation,
     alternatives: scoredRoutes,
+    origin,
+    destination,
     generated_at: new Date().toISOString(),
     cached: false,
   };

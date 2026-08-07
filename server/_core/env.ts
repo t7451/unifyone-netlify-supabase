@@ -62,7 +62,8 @@ export const ENV = {
   squareLocationId: process.env.SQUARE_LOCATION_ID ?? "",
   squareWebhookSignatureKey: process.env.SQUARE_WEBHOOK_SIGNATURE_KEY ?? "",
   squareEnvironment: (process.env.SQUARE_ENVIRONMENT ?? "production") as
-    "sandbox" | "production",
+    | "sandbox"
+    | "production",
   // Supabase backs the credit-metering + Stripe billing layer and optional
   // Realtime — it is NOT the primary database (that's Neon via DATABASE_URL)
   // and NOT the primary auth provider. See docs/DATABASE_ARCHITECTURE.md.
@@ -100,6 +101,14 @@ export const ENV = {
   // TomTom Routing API — fallback used only if OSRM is unreachable/down.
   // Free tier: 2,500 requests/day. https://developer.tomtom.com
   tomtomApiKey: process.env.TOMTOM_API_KEY ?? "",
+  // Nominatim (OpenStreetMap) geocoding — free, no API key. Usage policy
+  // requires a descriptive User-Agent identifying the app + contact URL.
+  // https://operations.osmfoundation.org/policies/nominatim/
+  nominatimUrl:
+    process.env.NOMINATIM_URL ?? "https://nominatim.openstreetmap.org",
+  nominatimUserAgent:
+    process.env.NOMINATIM_USER_AGENT ??
+    "UnifyOne-RoutePulse/1.0 (+https://1commerce.online/tools/route-pulse)",
   // Route-scoring AI runs through the existing Kai model router
   // (server/lib/kaiModels + server/_core/llm) — OpenRouter free-tier
   // models with Groq/Vercel AI Gateway fallback. No dedicated key needed.

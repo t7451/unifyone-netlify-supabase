@@ -3,19 +3,28 @@ import { publicRateLimitedProcedure, router } from "../../_core/trpc";
 import { publicFormLimiter } from "../../_core/rateLimiter";
 import * as service from "./routePulse.service";
 
-const latLng = z.object({
-  lat: z.number().min(-90).max(90),
-  lng: z.number().min(-180).max(180),
-});
+const address = z
+  .string()
+  .trim()
+  .min(3, "Enter a more complete address.")
+  .max(300);
 
 export const routePulseRouter = router({
-  // Public: request a route. Rate-limited since it fans out to OSRM +
-  // Supabase + (conditionally) Gemini per call.
+  // Public: geocode a free-text address (OpenStreetMap/Nominatim, no key).
+  // Used for live map preview as the user types/submits an address.
+  geocode: publicRateLimitedProcedure(publicFormLimiter, "routepulse:geocode")
+    .input(z.object({ address }))
+    .query(async ({ input }) => {
+      return service.geocodeAddress(input.address);
+    }),
+
+  // Public: request a route by address. Rate-limited since it fans out to
+  // Nominatim + OSRM + Supabase + (conditionally) the AI router per call.
   getRoute: publicRateLimitedProcedure(publicFormLimiter, "routepulse:getRoute")
     .input(
       z.object({
-        origin: latLng,
-        destination: latLng,
+        origin: address,
+        destination: address,
       })
     )
     .query(async ({ input }) => {
