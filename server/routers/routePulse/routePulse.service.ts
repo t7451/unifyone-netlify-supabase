@@ -5,7 +5,8 @@
  *
  * Data flow per request:
  *   1. Check routes_cache (Supabase) for a fresh (<2min) identical request.
- *   2. Fetch base route(s) from OSRM (with alternatives).
+ *   2. Fetch base route(s) from OSRM (with alternatives), falling back to
+ *      TomTom if OSRM is unreachable and TOMTOM_API_KEY is configured.
  *   3. For each route, query active incidents within a buffer of the path
  *      via the `incidents_near_route` PostGIS RPC (Supabase).
  *   4. If any route has incidents, ask the LLM router (free-tier OpenRouter
@@ -79,7 +80,16 @@ async function writeCache(key: string, result: RouteResult) {
     .upsert({ cache_key: key, result, created_at: new Date().toISOString() });
 }
 
-async function fetchBaseRoutes(origin: LatLng, destination: LatLng) {
+type BaseRoute = {
+  distance: number;
+  duration: number;
+  geometry: { type: "LineString"; coordinates: [number, number][] };
+};
+
+async function fetchOSRM(
+  origin: LatLng,
+  destination: LatLng
+): Promise<BaseRoute[]> {
   const url =
     `${ENV.osrmUrl}/route/v1/driving/` +
     `${origin.lng},${origin.lat};${destination.lng},${destination.lat}` +
@@ -87,23 +97,88 @@ async function fetchBaseRoutes(origin: LatLng, destination: LatLng) {
 
   const res = await fetch(url);
   if (!res.ok) {
-    throw new TRPCError({
-      code: "BAD_GATEWAY",
-      message: `Routing engine error (${res.status})`,
-    });
+    throw new Error(`OSRM error (${res.status})`);
   }
   const data = await res.json();
   if (data.code !== "Ok" || !data.routes?.length) {
+    // A clean "no route" answer from a healthy OSRM — not an outage, so
+    // don't fall back to TomTom for this, just surface it as NOT_FOUND.
     throw new TRPCError({
       code: "NOT_FOUND",
       message: "No route found between those points",
     });
   }
-  return data.routes as Array<{
-    distance: number;
-    duration: number;
-    geometry: { type: "LineString"; coordinates: [number, number][] };
-  }>;
+  return data.routes;
+}
+
+async function fetchTomTomFallback(
+  origin: LatLng,
+  destination: LatLng
+): Promise<BaseRoute[]> {
+  const apiKey = ENV.tomtomApiKey;
+  if (!apiKey) {
+    throw new TRPCError({
+      code: "BAD_GATEWAY",
+      message: "Routing engine unavailable",
+    });
+  }
+
+  const url =
+    `https://api.tomtom.com/routing/1/calculateRoute/` +
+    `${origin.lat},${origin.lng}:${destination.lat},${destination.lng}/json` +
+    `?key=${apiKey}&maxAlternatives=2&traffic=true`;
+
+  const res = await fetch(url);
+  if (!res.ok || !res.headers.get("content-type")?.includes("json")) {
+    // Fallback itself is down too — nothing left to try.
+    throw new TRPCError({
+      code: "BAD_GATEWAY",
+      message: "Routing engine unavailable",
+    });
+  }
+  const data = await res.json();
+  const routes = data.routes as
+    | Array<{
+        summary: { lengthInMeters: number; travelTimeInSeconds: number };
+        legs: Array<{
+          points: Array<{ latitude: number; longitude: number }>;
+        }>;
+      }>
+    | undefined;
+
+  if (!routes?.length) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "No route found between those points",
+    });
+  }
+
+  // TomTom returns lat/lng per point, split across legs — flatten to a
+  // single [lng, lat] coordinate list to match OSRM's GeoJSON shape, which
+  // is what incidents_near_route(), the cache, and the client all expect.
+  return routes.map(r => ({
+    distance: r.summary.lengthInMeters,
+    duration: r.summary.travelTimeInSeconds,
+    geometry: {
+      type: "LineString" as const,
+      coordinates: r.legs.flatMap(leg =>
+        leg.points.map(p => [p.longitude, p.latitude] as [number, number])
+      ),
+    },
+  }));
+}
+
+async function fetchBaseRoutes(
+  origin: LatLng,
+  destination: LatLng
+): Promise<BaseRoute[]> {
+  try {
+    return await fetchOSRM(origin, destination);
+  } catch (err) {
+    if (err instanceof TRPCError) throw err; // clean NOT_FOUND, don't retry
+    console.warn("[routePulse] OSRM unreachable, trying TomTom fallback:", err);
+    return await fetchTomTomFallback(origin, destination);
+  }
 }
 
 async function getIncidentsNearRoute(
@@ -134,6 +209,15 @@ async function getIncidentsNearRoute(
   }));
 }
 
+// Incident descriptions/road names come from third-party feeds (ODOT,
+// Road511) verbatim — treat them as untrusted input before they go into an
+// LLM prompt. Strips characters that could break out of the JSON we're
+// embedding them in or read as instructions, and caps length.
+function sanitizeForPrompt(text: string | null): string {
+  if (!text) return "";
+  return text.replace(/[{}]/g, "").replace(/["\\]/g, "").slice(0, 200);
+}
+
 async function scoreRoutesWithAI(
   routes: ScoredRoute[]
 ): Promise<{ chosenIndex: number; explanation: string }> {
@@ -145,8 +229,8 @@ Routes: ${JSON.stringify(
       incidents: r.incidents.map(i => ({
         type: i.incident_type,
         severity: i.severity,
-        description: i.description,
-        road_name: i.road_name,
+        description: sanitizeForPrompt(i.description),
+        road_name: sanitizeForPrompt(i.road_name),
       })),
     }))
   )}
@@ -170,9 +254,24 @@ Respond ONLY with JSON: { "chosen_index": 0, "explanation": "one sentence, cite 
       .replace(/```json|```/g, "")
       .trim();
     const parsed = JSON.parse(text);
+
+    // The model's output feeds directly into which route we serve and what
+    // we tell the user — validate shape and bounds before trusting it.
+    if (
+      typeof parsed.chosen_index !== "number" ||
+      !Number.isInteger(parsed.chosen_index) ||
+      parsed.chosen_index < 0 ||
+      parsed.chosen_index >= routes.length ||
+      typeof parsed.explanation !== "string" ||
+      parsed.explanation.length === 0 ||
+      parsed.explanation.length > 500
+    ) {
+      throw new Error("AI response failed schema validation");
+    }
+
     return {
-      chosenIndex: parsed.chosen_index ?? 0,
-      explanation: parsed.explanation ?? "Best available route.",
+      chosenIndex: parsed.chosen_index,
+      explanation: parsed.explanation,
     };
   } catch (err) {
     // AI scoring is an enhancement, never a hard dependency.

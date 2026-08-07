@@ -8,9 +8,7 @@
 -- Tables/RPCs are accessed by server/routers/routePulse/routePulse.service.ts
 -- and netlify/functions/routepulse-ingest-scheduled.mts via the raw Supabase
 -- client (not drizzle-typed) — column names below match those call sites
--- exactly. traffic_cameras has no writer yet (camera ingestion is a tracked
--- follow-up); the table is included now so that follow-up doesn't need
--- another schema migration.
+-- exactly.
 --
 -- Run this after 0050_set_aside_envelopes.sql.
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -57,7 +55,7 @@ CREATE TABLE IF NOT EXISTS "routes_cache" (
 CREATE INDEX IF NOT EXISTS "routes_cache_key_created_idx"
   ON "routes_cache" ("cache_key", "created_at");
 
--- ── traffic_cameras (schema only — ingestion not wired yet) ────────────────
+-- ── traffic_cameras ──────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS "traffic_cameras" (
   "id"              text PRIMARY KEY,
   "location"        geography(point, 4326) NOT NULL,

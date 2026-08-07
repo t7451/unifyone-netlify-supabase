@@ -3,8 +3,9 @@
  *
  * Scheduled Function — polls Road511 (multi-state) and ODOT TripCheck
  * (Oregon-native) every 2 minutes and upserts active incidents into the
- * `traffic_incidents` Supabase table. RoutePulse's route-scoring endpoint
- * (server/routers/routePulse) reads from this table via the
+ * `traffic_incidents` Supabase table. Also polls ODOT's camera list every
+ * ~5 minutes into `traffic_cameras`. RoutePulse's route-scoring endpoint
+ * (server/routers/routePulse) reads from traffic_incidents via the
  * `incidents_near_route` PostGIS RPC.
  *
  * Schedule: every 2 minutes
@@ -212,6 +213,51 @@ export default async (req: Request) => {
     results.road511 = total;
   } else {
     results.road511 = "no_key";
+  }
+
+  // ── ODOT TripCheck cameras ──
+  // Runs every ~5 minutes (this function itself polls every 2) rather than
+  // every cycle — camera list/images change far less often than incidents,
+  // and it's a separate rate-limited endpoint on the same ODOT key.
+  if (tripcheckKey && new Date().getMinutes() % 5 === 0) {
+    try {
+      const res = await fetch(
+        "https://apiportal.odot.state.or.us/api/tripcheck/v1/cameras",
+        { headers: { "Ocp-Apim-Subscription-Key": tripcheckKey } }
+      );
+      if (!res.ok) {
+        results.cameras = `error_${res.status}`;
+      } else {
+        const cameras = await res.json();
+        const rows = (cameras as any[])
+          .filter((cam) => cam.latitude && cam.longitude)
+          .map((cam) => ({
+            id: `odot_${cam.id}`,
+            location: `POINT(${cam.longitude} ${cam.latitude})`,
+            road_name: cam.roadwayName ?? null,
+            direction: cam.direction ?? null,
+            image_url: cam.imageUrl ?? null,
+            thumbnail_url: cam.thumbnailUrl ?? null,
+            description: cam.locationDescription ?? null,
+            last_updated: cam.lastUpdated ?? null,
+          }));
+
+        if (rows.length) {
+          const { error } = await supabase
+            .from("traffic_cameras")
+            .upsert(rows, { onConflict: "id" });
+          if (error) console.error("[routepulse-ingest] Camera upsert error:", error.message);
+        }
+        results.cameras = rows.length;
+      }
+    } catch (err) {
+      console.error("[routepulse-ingest] Camera fetch failed:", err);
+      results.cameras = "fetch_failed";
+    }
+  } else if (!tripcheckKey) {
+    results.cameras = "no_key";
+  } else {
+    results.cameras = "skipped_this_cycle";
   }
 
   console.log("[routepulse-ingest] Done:", results);

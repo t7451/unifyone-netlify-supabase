@@ -62,8 +62,7 @@ export const ENV = {
   squareLocationId: process.env.SQUARE_LOCATION_ID ?? "",
   squareWebhookSignatureKey: process.env.SQUARE_WEBHOOK_SIGNATURE_KEY ?? "",
   squareEnvironment: (process.env.SQUARE_ENVIRONMENT ?? "production") as
-    | "sandbox"
-    | "production",
+    "sandbox" | "production",
   // Supabase backs the credit-metering + Stripe billing layer and optional
   // Realtime — it is NOT the primary database (that's Neon via DATABASE_URL)
   // and NOT the primary auth provider. See docs/DATABASE_ARCHITECTURE.md.
@@ -98,6 +97,9 @@ export const ENV = {
   road511ApiKey: process.env.R511_API_KEY ?? "",
   // ODOT TripCheck API (Oregon-native incidents/cameras/road conditions).
   tripcheckApiKey: process.env.TRIPCHECK_KEY ?? "",
+  // TomTom Routing API — fallback used only if OSRM is unreachable/down.
+  // Free tier: 2,500 requests/day. https://developer.tomtom.com
+  tomtomApiKey: process.env.TOMTOM_API_KEY ?? "",
   // Route-scoring AI runs through the existing Kai model router
   // (server/lib/kaiModels + server/_core/llm) — OpenRouter free-tier
   // models with Groq/Vercel AI Gateway fallback. No dedicated key needed.
