@@ -5,6 +5,7 @@ import {
   TileLayer,
   Marker,
   Polyline,
+  Popup,
   useMap,
 } from "react-leaflet";
 import L, { type LatLngExpression, type LatLngBoundsExpression } from "leaflet";
@@ -122,6 +123,18 @@ function pinIcon(color: string) {
 }
 const ORIGIN_ICON = pinIcon("#3b82f6");
 const DEST_ICON = pinIcon("#ef4444");
+const INCIDENT_ICON_COLOR: Record<string, string> = {
+  minor: "#eab308",
+  moderate: "#f97316",
+  major: "#dc2626",
+  critical: "#991b1b",
+};
+const INCIDENT_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
+  Object.entries(INCIDENT_ICON_COLOR).map(([severity, color]) => [
+    severity,
+    pinIcon(color),
+  ])
+);
 
 /** Recenters/fits the map whenever the bounds it's given change. */
 function FitBounds({ bounds }: { bounds: LatLngBoundsExpression | null }) {
@@ -172,11 +185,14 @@ export default function RoutePulse() {
 
   const mapBounds: LatLngBoundsExpression | null = useMemo(() => {
     if (!routeQuery.data) return null;
-    const { origin: o, destination: d } = routeQuery.data;
+    const { origin: o, destination: d, route } = routeQuery.data;
     const points: LatLngExpression[] = [
       [o.lat, o.lng],
       [d.lat, d.lng],
       ...(routeLine ?? []),
+      ...route.incidents
+        .filter(i => Number.isFinite(i.lat) && Number.isFinite(i.lng))
+        .map((i): LatLngExpression => [i.lat, i.lng]),
     ];
     return L.latLngBounds(points);
   }, [routeQuery.data, routeLine]);
@@ -290,6 +306,27 @@ export default function RoutePulse() {
                     pathOptions={{ color: "#3b82f6", weight: 4, opacity: 0.85 }}
                   />
                 )}
+                {routeQuery.data.route.incidents
+                  .filter(inc => Number.isFinite(inc.lat) && Number.isFinite(inc.lng))
+                  .map(inc => (
+                    <Marker
+                      key={inc.id}
+                      position={[inc.lat, inc.lng]}
+                      icon={INCIDENT_ICONS[inc.severity] ?? INCIDENT_ICONS.minor}
+                    >
+                      <Popup>
+                        <div className="text-sm space-y-0.5">
+                          {inc.road_name && (
+                            <p className="font-medium">{inc.road_name}</p>
+                          )}
+                          <p>{inc.description ?? inc.incident_type}</p>
+                          <p className="text-xs uppercase text-muted-foreground">
+                            {inc.severity}
+                          </p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
               </MapContainer>
             </div>
           </Card>
