@@ -9,10 +9,16 @@
  *      TomTom if OSRM is unreachable and TOMTOM_API_KEY is configured.
  *   3. For each route, query active incidents within a buffer of the path
  *      via the `incidents_near_route` PostGIS RPC (Supabase).
- *   4. If any route has incidents, ask the LLM router (free-tier OpenRouter
+ *   4. Score every route deterministically (0-100 risk score + estimated
+ *      delay minutes from incident severities) so the response is useful
+ *      even when the LLM is unavailable, and so the AI prompt reasons over
+ *      quantified tradeoffs rather than raw incident lists.
+ *   5. If any route has incidents, ask the LLM router (free-tier OpenRouter
  *      models via server/lib/kaiModels, with automatic fallback across
- *      providers) to pick the best one and explain why in one sentence.
- *   5. Cache and return.
+ *      providers) to pick the best one and explain why in driver-actionable
+ *      language. If the AI fails validation or is unreachable, fall back to
+ *      a deterministic pick: lowest (duration + estimated incident delay).
+ *   6. Cache and return.
  *
  * Incident data itself is populated by the scheduled ingestion function
  * (netlify/functions/routepulse-ingest-scheduled.mts), which polls Road511
@@ -262,12 +268,64 @@ export type RouteIncident = {
   lng: number;
 };
 
+// Deterministic risk model — the backbone of the "beats Google" claim.
+// Google shows a red line after traffic has already slowed; we quantify
+// *why* a route is risky before the driver commits, per route option.
+const SEVERITY_RISK_WEIGHT: Record<RouteIncident["severity"], number> = {
+  minor: 3,
+  moderate: 8,
+  major: 20,
+  critical: 40,
+};
+const SEVERITY_DELAY_MIN: Record<RouteIncident["severity"], number> = {
+  minor: 2,
+  moderate: 5,
+  major: 10,
+  critical: 15,
+};
+// Pile-ups happen (a storm can stack 8+ incidents on one corridor) — cap so
+// one bad corridor reads as "very risky", not "literally impossible".
+const MAX_RISK_SCORE = 100;
+const MAX_DELAY_MIN = 45;
+
+export type RouteRisk = {
+  /** 0-100 severity-weighted risk score. 0 = no known incidents. */
+  riskScore: number;
+  /** Estimated extra minutes the active incidents add to this trip. */
+  delayEstimateMin: number;
+};
+
+/**
+ * Deterministic, explainable per-route risk scoring. Exported so the client
+ * (and tests) can reason about exactly how a score was produced — the same
+ * numbers feed the AI prompt, the comparison UI, and the leave-by buffer,
+ * so they must be boring, stable, and unit-testable.
+ */
+export function computeRouteRisk(incidents: RouteIncident[]): RouteRisk {
+  let riskScore = 0;
+  let delayEstimateMin = 0;
+  for (const inc of incidents) {
+    riskScore += SEVERITY_RISK_WEIGHT[inc.severity] ?? SEVERITY_RISK_WEIGHT.minor;
+    delayEstimateMin +=
+      SEVERITY_DELAY_MIN[inc.severity] ?? SEVERITY_DELAY_MIN.minor;
+  }
+  return {
+    riskScore: Math.min(MAX_RISK_SCORE, riskScore),
+    delayEstimateMin: Math.min(MAX_DELAY_MIN, delayEstimateMin),
+  };
+}
+
 export type ScoredRoute = {
   distance: number;
   duration: number;
   geometry: unknown;
   incidents: RouteIncident[];
+  riskScore: number;
+  delayEstimateMin: number;
 };
+
+/** "none" = the AI did not pick this route (deterministic fallback was used). */
+export type AiConfidence = "high" | "medium" | "low" | "none";
 
 export type RouteResult = {
   route: ScoredRoute;
@@ -277,6 +335,7 @@ export type RouteResult = {
   destination: GeocodedPoint;
   generated_at: string;
   cached: boolean;
+  confidence: AiConfidence;
 };
 
 function cacheKey(origin: LatLng, destination: LatLng) {
@@ -447,15 +506,52 @@ function sanitizeForPrompt(text: string | null): string {
   return text.replace(/[{}]/g, "").replace(/["\\]/g, "").slice(0, 200);
 }
 
-async function scoreRoutesWithAI(
-  routes: ScoredRoute[]
-): Promise<{ chosenIndex: number; explanation: string }> {
-  const prompt = `You are comparing driving routes. Pick the best one considering active incidents.
+type AiPick = {
+  chosenIndex: number;
+  explanation: string;
+  confidence: AiConfidence;
+};
+
+/**
+ * Deterministic route pick used when the AI is unavailable or fails
+ * validation: minimize (base duration + estimated incident delay). This is
+ * the same quantity a thoughtful driver optimizes, so even our "degraded"
+ * path is smarter than a raw fastest-time sort.
+ */
+function deterministicPick(routes: ScoredRoute[]): AiPick {
+  let best = 0;
+  let bestCost = Infinity;
+  routes.forEach((r, i) => {
+    const cost = r.duration + r.delayEstimateMin * 60;
+    if (cost < bestCost) {
+      bestCost = cost;
+      best = i;
+    }
+  });
+  const delay = routes[best]?.delayEstimateMin ?? 0;
+  return {
+    chosenIndex: best,
+    explanation:
+      delay > 0
+        ? `Fastest route after adjusting for current incidents (est. +${delay} min delay).`
+        : "Fastest available route.",
+    confidence: "none",
+  };
+}
+
+async function scoreRoutesWithAI(routes: ScoredRoute[]): Promise<AiPick> {
+  // The prompt leads with the deterministic scores so the model reasons
+  // over quantified tradeoffs (risk_score, est_delay_min) instead of
+  // re-deriving severity math from raw text — better picks, fewer tokens.
+  const prompt = `You are a route intelligence engine for gig drivers. Pick the best driving route, weighing both base duration and the active incidents on each route — a severe incident usually costs more time than a small distance or duration saving. Prefer the route with the lowest combined duration + est_delay_min unless there is a clear reason otherwise.
+
 Routes: ${JSON.stringify(
     routes.map(r => ({
       distance_m: r.distance,
       duration_s: r.duration,
-      incidents: r.incidents.map(i => ({
+      risk_score: r.riskScore,
+      est_delay_min: r.delayEstimateMin,
+      incidents: r.incidents.slice(0, 5).map(i => ({
         type: i.incident_type,
         severity: i.severity,
         description: sanitizeForPrompt(i.description),
@@ -464,13 +560,16 @@ Routes: ${JSON.stringify(
     }))
   )}
 
-Respond ONLY with JSON: { "chosen_index": 0, "explanation": "one sentence, cite the specific incident if relevant" }`;
+Respond ONLY with JSON: { "chosen_index": 0, "explanation": "1-2 short sentences for the driver: name the specific road or incident and quantify the delay when relevant", "confidence": "high|medium|low" }`;
 
   try {
-    // Free-tier model, routed through OpenRouter (invokeLLMWithFallback
-    // falls back to Groq / Vercel AI Gateway if OpenRouter is ever unset)
-    // — never charges Kai credits, never touches Gemini.
-    const model = resolveKaiModel("hermes-3-405b");
+    // Free-tier model, routed through OpenRouter (invokeLLM falls back
+    // across the model chain automatically if one :free endpoint is
+    // rate-limited) — never charges Kai credits, never touches Gemini.
+    // gpt-oss-120b is the strongest free reasoning model in the catalog,
+    // which matters here because route choice is a tradeoff judgement,
+    // not a formatting task.
+    const model = resolveKaiModel("gpt-oss-120b");
     const result = await invokeLLM({
       messages: [{ role: "user", content: prompt }],
       model: model.gatewayModel,
@@ -498,14 +597,26 @@ Respond ONLY with JSON: { "chosen_index": 0, "explanation": "one sentence, cite 
       throw new Error("AI response failed schema validation");
     }
 
+    // Confidence is advisory (UI label only) — accept the known values,
+    // default to "medium" when the model omits or free-styles it, rather
+    // than throwing away an otherwise valid pick.
+    const confidence: AiConfidence =
+      parsed.confidence === "high" ||
+      parsed.confidence === "medium" ||
+      parsed.confidence === "low"
+        ? parsed.confidence
+        : "medium";
+
     return {
       chosenIndex: parsed.chosen_index,
       explanation: parsed.explanation,
+      confidence,
     };
   } catch (err) {
-    // AI scoring is an enhancement, never a hard dependency.
+    // AI scoring is an enhancement, never a hard dependency — and the
+    // deterministic fallback is itself delay-aware, not just route[0].
     console.warn("[routePulse] AI scoring failed, falling back:", err);
-    return { chosenIndex: 0, explanation: "Fastest available route." };
+    return deterministicPick(routes);
   }
 }
 
@@ -529,22 +640,30 @@ export async function getRoute(
   const baseRoutes = await fetchBaseRoutes(origin, destination);
 
   const scoredRoutes: ScoredRoute[] = await Promise.all(
-    baseRoutes.map(async r => ({
-      distance: r.distance,
-      duration: r.duration,
-      geometry: r.geometry,
-      incidents: await getIncidentsNearRoute(r.geometry),
-    }))
+    baseRoutes.map(async r => {
+      const incidents = await getIncidentsNearRoute(r.geometry);
+      const { riskScore, delayEstimateMin } = computeRouteRisk(incidents);
+      return {
+        distance: r.distance,
+        duration: r.duration,
+        geometry: r.geometry,
+        incidents,
+        riskScore,
+        delayEstimateMin,
+      };
+    })
   );
 
   const hasIncidents = scoredRoutes.some(r => r.incidents.length > 0);
 
   let chosenIndex = 0;
   let explanation = "Fastest route, no active incidents.";
+  let confidence: AiConfidence = "none";
   if (hasIncidents) {
     const ai = await scoreRoutesWithAI(scoredRoutes);
     chosenIndex = ai.chosenIndex;
     explanation = ai.explanation;
+    confidence = ai.confidence;
   }
 
   const result: RouteResult = {
@@ -555,6 +674,7 @@ export async function getRoute(
     destination,
     generated_at: new Date().toISOString(),
     cached: false,
+    confidence,
   };
 
   await writeCache(key, result);

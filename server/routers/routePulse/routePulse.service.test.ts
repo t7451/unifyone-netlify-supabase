@@ -2,8 +2,10 @@
  * routePulse.service — stress and edge-case coverage.
  *
  * Exercises Nominatim address geocoding, the OSRM->TomTom fallback chain,
- * the AI-scoring validation/degradation path, cache hit/miss behavior, and
- * prompt-injection resistance, all without hitting real network services.
+ * deterministic risk scoring, the AI-scoring validation/degradation path
+ * (including the delay-aware deterministic fallback), cache hit/miss
+ * behavior, and prompt-injection resistance, all without hitting real
+ * network services.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { TRPCError } from "@trpc/server";
@@ -149,6 +151,57 @@ function mockSupabaseWithIncidents(incidentRows: unknown[] | null) {
   (getSupabaseAdmin as any).mockReturnValue({ rpc, from });
   return { rpc, from };
 }
+
+describe("routePulse.service — computeRouteRisk (deterministic scoring)", () => {
+  const inc = (
+    severity: "minor" | "moderate" | "major" | "critical"
+  ): Parameters<typeof service.computeRouteRisk>[0][number] => ({
+    id: Math.random().toString(36).slice(2),
+    incident_type: "crash",
+    severity,
+    description: null,
+    road_name: null,
+    source: "test",
+    lat: 45.5,
+    lng: -122.6,
+  });
+
+  it("returns zero score and zero delay for an incident-free route", () => {
+    expect(service.computeRouteRisk([])).toEqual({
+      riskScore: 0,
+      delayEstimateMin: 0,
+    });
+  });
+
+  it("weights severities progressively (critical > major > moderate > minor)", () => {
+    const minor = service.computeRouteRisk([inc("minor")]);
+    const moderate = service.computeRouteRisk([inc("moderate")]);
+    const major = service.computeRouteRisk([inc("major")]);
+    const critical = service.computeRouteRisk([inc("critical")]);
+
+    expect(critical.riskScore).toBeGreaterThan(major.riskScore);
+    expect(major.riskScore).toBeGreaterThan(moderate.riskScore);
+    expect(moderate.riskScore).toBeGreaterThan(minor.riskScore);
+    expect(critical.delayEstimateMin).toBeGreaterThan(major.delayEstimateMin);
+  });
+
+  it("accumulates across multiple incidents", () => {
+    const { riskScore, delayEstimateMin } = service.computeRouteRisk([
+      inc("major"),
+      inc("moderate"),
+      inc("minor"),
+    ]);
+    expect(riskScore).toBe(20 + 8 + 3);
+    expect(delayEstimateMin).toBe(10 + 5 + 2);
+  });
+
+  it("caps the risk score at 100 and delay at 45 under incident pile-ups", () => {
+    const pileUp = Array.from({ length: 10 }, () => inc("critical"));
+    const { riskScore, delayEstimateMin } = service.computeRouteRisk(pileUp);
+    expect(riskScore).toBe(100);
+    expect(delayEstimateMin).toBe(45);
+  });
+});
 
 describe("routePulse.service — geocoding (Nominatim/OSM)", () => {
   beforeEach(() => {
@@ -438,6 +491,9 @@ describe("routePulse.service — getRoute (address-based)", () => {
     expect(result.destination.lat).toBeCloseTo(DEST_COORDS.lat);
     expect(result.cached).toBe(false);
     expect(result.explanation).toMatch(/no active incidents/i);
+    expect(result.confidence).toBe("none");
+    expect(result.route.riskScore).toBe(0);
+    expect(result.route.delayEstimateMin).toBe(0);
     expect(invokeLLM).not.toHaveBeenCalled();
   });
 
@@ -490,6 +546,7 @@ describe("routePulse.service — getRoute (address-based)", () => {
             content: JSON.stringify({
               chosen_index: 1,
               explanation: "Route 2 avoids the I-84 crash.",
+              confidence: "high",
             }),
           },
         },
@@ -500,6 +557,120 @@ describe("routePulse.service — getRoute (address-based)", () => {
 
     expect(result.route.distance).toBe(5500);
     expect(result.explanation).toBe("Route 2 avoids the I-84 crash.");
+    expect(result.confidence).toBe("high");
+  });
+
+  it("attaches deterministic riskScore and delayEstimateMin to every returned route", async () => {
+    mockSupabaseWithIncidents([
+      {
+        id: "inc-1",
+        incident_type: "closure",
+        severity: "critical",
+        description: "Bridge closed",
+        road_name: "I-5",
+        source: "ODOT",
+      },
+    ]);
+    installFetchMock({});
+    (invokeLLM as any).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              chosen_index: 0,
+              explanation: "I-5 closure adds about 15 minutes.",
+              confidence: "high",
+            }),
+          },
+        },
+      ],
+    });
+
+    const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
+
+    expect(result.route.riskScore).toBe(40);
+    expect(result.route.delayEstimateMin).toBe(15);
+    expect(result.alternatives[0]!.riskScore).toBe(40);
+  });
+
+  it("defaults missing or free-styled AI confidence to 'medium' instead of rejecting the pick", async () => {
+    mockSupabaseWithIncidents([
+      {
+        id: "inc-1",
+        incident_type: "crash",
+        severity: "minor",
+        description: "fender bender on shoulder",
+        road_name: "OR-217",
+        source: "Road511",
+      },
+    ]);
+    installFetchMock({});
+    (invokeLLM as any).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              chosen_index: 0,
+              explanation: "Minor shoulder crash, minimal impact.",
+              confidence: "very-sure",
+            }),
+          },
+        },
+      ],
+    });
+
+    const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
+    expect(result.confidence).toBe("medium");
+    expect(result.explanation).toBe("Minor shoulder crash, minimal impact.");
+  });
+
+  it("deterministic fallback picks the lower-delay route (not just route[0]) when the AI is unavailable", async () => {
+    // Route 0 is faster on paper (300s) but has a critical closure
+    // (+15 min est.); route 1 is slower (600s) but clean. The fallback
+    // must prefer route 1: 300+900 > 600.
+    const closureRow = {
+      id: "inc-critical",
+      incident_type: "closure",
+      severity: "critical",
+      description: "Bridge closed",
+      road_name: "I-5",
+      source: "ODOT",
+      lat: 45.51,
+      lng: -122.67,
+    };
+    const rpc = vi
+      .fn()
+      // First incidents_near_route call (route 0) sees the closure…
+      .mockResolvedValueOnce({ data: [closureRow], error: null })
+      // …every later call (route 1) is clean.
+      .mockResolvedValue({ data: [], error: null });
+    const from = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    });
+    (getSupabaseAdmin as any).mockReturnValue({ rpc, from });
+    installFetchMock({
+      osrm: () => ({
+        ok: true,
+        body: {
+          code: "Ok",
+          routes: [
+            makeRoute({ distance: 3000, duration: 300 }),
+            makeRoute({ distance: 4000, duration: 600 }),
+          ],
+        },
+      }),
+    });
+    (invokeLLM as any).mockRejectedValueOnce(new Error("all providers down"));
+
+    const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
+
+    expect(result.route.duration).toBe(600);
+    expect(result.confidence).toBe("none");
+    expect(result.explanation).toBe("Fastest available route.");
   });
 
   it.each([
@@ -511,7 +682,7 @@ describe("routePulse.service — getRoute (address-based)", () => {
     { chosen_index: 0, explanation: "x".repeat(501) },
     { chosen_index: 0 },
   ])(
-    "falls back to the safe default when the AI response fails schema validation: %o",
+    "falls back to the deterministic pick when the AI response fails schema validation: %o",
     async malformed => {
       mockSupabaseWithIncidents([
         {
@@ -530,12 +701,15 @@ describe("routePulse.service — getRoute (address-based)", () => {
 
       const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
 
-      expect(result.explanation).toBe("Fastest available route.");
+      expect(result.explanation).toBe(
+        "Fastest route after adjusting for current incidents (est. +2 min delay)."
+      );
+      expect(result.confidence).toBe("none");
       expect(result.route).toBe(result.alternatives[0]);
     }
   );
 
-  it("falls back to the safe default when the AI returns unparseable content", async () => {
+  it("falls back to the deterministic pick when the AI returns unparseable content", async () => {
     mockSupabaseWithIncidents([
       {
         id: "inc-1",
@@ -552,10 +726,13 @@ describe("routePulse.service — getRoute (address-based)", () => {
     });
 
     const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
-    expect(result.explanation).toBe("Fastest available route.");
+    expect(result.explanation).toBe(
+      "Fastest route after adjusting for current incidents (est. +2 min delay)."
+    );
+    expect(result.confidence).toBe("none");
   });
 
-  it("falls back to the safe default when invokeLLM itself throws (provider outage)", async () => {
+  it("falls back to the deterministic pick when invokeLLM itself throws (provider outage)", async () => {
     mockSupabaseWithIncidents([
       {
         id: "inc-1",
@@ -570,7 +747,10 @@ describe("routePulse.service — getRoute (address-based)", () => {
     (invokeLLM as any).mockRejectedValueOnce(new Error("all providers down"));
 
     const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
-    expect(result.explanation).toBe("Fastest available route.");
+    expect(result.explanation).toBe(
+      "Fastest route after adjusting for current incidents (est. +15 min delay)."
+    );
+    expect(result.confidence).toBe("none");
   });
 
   it("strips prompt-injection characters and truncates length before sending incident text to the LLM", async () => {
