@@ -52,4 +52,13 @@ export const routePulseRouter = router({
   ).query(async () => {
     return service.listActiveIncidents();
   }),
+
+  // Public: list traffic cameras (for the map camera layer). Same
+  // rate-limiting rationale as listIncidents.
+  listCameras: publicRateLimitedProcedure(
+    publicFormLimiter,
+    "routepulse:listCameras"
+  ).query(async () => {
+    return service.listCameras();
+  }),
 });
