@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { flushSync } from "react-dom";
 import { Link } from "wouter";
 import {
   MapContainer,
@@ -16,10 +15,9 @@ import { trpc } from "@/lib/trpc";
 import PageHead from "@/components/PageHead";
 import ToolLayout from "@/components/ToolLayout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { AddressInput } from "@/components/AddressInput";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trackToolUsage } from "@/lib/userTracking";
 import {
@@ -27,7 +25,6 @@ import {
   Navigation,
   Loader2,
   ArrowRight,
-  MapPin,
   LocateFixed,
   Maximize,
   Minimize,
@@ -471,59 +468,24 @@ export default function RoutePulse() {
                 instead of a form stacked above the map. */}
             <Card className="absolute z-[400] top-4 left-4 right-4 sm:right-auto sm:w-[380px] p-4 sm:p-5 bg-background/90 backdrop-blur-md shadow-xl border">
               <form onSubmit={handleSubmit} className="space-y-3">
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-1.5 text-xs font-medium">
-                    <MapPin className="w-3.5 h-3.5 text-blue-500" /> Origin
-                  </Label>
-                  <Input
-                    placeholder="123 SW Broadway, Portland, OR"
-                    value={origin}
-                    onChange={e => {
-                      // Chrome will still fire its address-autofill dropdown on
-                      // fields it heuristically recognizes as address inputs,
-                      // *despite* autoComplete="off". When the user picks a
-                      // suggestion mid-edit, Chrome can dispatch the input event
-                      // faster than React's batched state update reconciles the
-                      // DOM, leaving old and new text spliced together (e.g.
-                      // "...Portland7979 S"). flushSync forces the state (and
-                      // therefore the controlled value written back to the DOM)
-                      // to commit synchronously on every keystroke/autofill
-                      // event, so the field can never render out of sync with
-                      // what was actually typed or selected.
-                      const value = e.target.value;
-                      flushSync(() => setOrigin(value));
-                    }}
-                    name="routepulse-origin-query"
-                    autoComplete="off"
-                    data-lpignore="true"
-                    data-1p-ignore=""
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck={false}
-                    className="bg-background"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-1.5 text-xs font-medium">
-                    <MapPin className="w-3.5 h-3.5 text-red-500" /> Destination
-                  </Label>
-                  <Input
-                    placeholder="800 SE 10th Ave, Portland, OR"
-                    value={destination}
-                    onChange={e => {
-                      const value = e.target.value;
-                      flushSync(() => setDestination(value));
-                    }}
-                    name="routepulse-destination-query"
-                    autoComplete="off"
-                    data-lpignore="true"
-                    data-1p-ignore=""
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck={false}
-                    className="bg-background"
-                  />
-                </div>
+                <AddressInput
+                  id="routepulse-origin"
+                  label="Origin"
+                  placeholder="123 SW Broadway, Portland, OR"
+                  value={origin}
+                  onChange={setOrigin}
+                  pinColor="blue"
+                  name="routepulse-origin-query"
+                />
+                <AddressInput
+                  id="routepulse-destination"
+                  label="Destination"
+                  placeholder="800 SE 10th Ave, Portland, OR"
+                  value={destination}
+                  onChange={setDestination}
+                  pinColor="red"
+                  name="routepulse-destination-query"
+                />
 
                 {formError && (
                   <p className="text-xs text-destructive">{formError}</p>
