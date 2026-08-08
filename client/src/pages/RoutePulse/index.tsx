@@ -531,6 +531,17 @@ export default function RoutePulse() {
   const [mobileStepsOpen, setMobileStepsOpen] = useState(false);
   // Ticker so the "updated Xs ago" live indicator stays honest.
   const [nowTick, setNowTick] = useState(0);
+  // v10: location onboarding prompt. Shown once per browser (persisted) so
+  // first-time drivers get a clear, tappable CTA to enable location instead
+  // of having to notice the small floating locate button. Suppressed once
+  // we already have a fix, once the user dismisses it, or once we know
+  // permission was already denied (nagging a "denied" user is just noise).
+  const [locationPromptDismissed, setLocationPromptDismissed] = useState(
+    () => localStorage.getItem("routepulse:location-prompt-dismissed") === "1"
+  );
+  const [geoPermission, setGeoPermission] = useState<
+    "granted" | "denied" | "prompt" | "unknown"
+  >("unknown");
 
   // Read permalink params on mount so shared routes load immediately.
   useEffect(() => {
@@ -747,6 +758,57 @@ export default function RoutePulse() {
     );
     watchIdRef.current = id;
     setFollow(true);
+  };
+
+  // v10: check geolocation permission state (where the browser supports the
+  // Permissions API — Safari doesn't, and that's fine, it just falls back to
+  // showing the prompt banner and asking normally on tap). If permission was
+  // already granted in an earlier visit, locate silently on load — no need
+  // to make a returning driver tap the button again every time. If denied,
+  // suppress the prompt banner entirely rather than nagging.
+  useEffect(() => {
+    const nav = navigator as Navigator & {
+      permissions?: {
+        query: (opts: {
+          name: "geolocation";
+        }) => Promise<{
+          state: "granted" | "denied" | "prompt";
+          onchange: (() => void) | null;
+        }>;
+      };
+    };
+    if (!nav.permissions?.query) return;
+    let cancelled = false;
+    nav.permissions
+      .query({ name: "geolocation" })
+      .then(status => {
+        if (cancelled) return;
+        setGeoPermission(status.state);
+        if (status.state === "granted") handleLocateMe();
+        status.onchange = () => setGeoPermission(status.state);
+      })
+      .catch(() => {
+        // Permissions API present but query unsupported/blocked — treat as
+        // unknown and fall back to the tap-to-enable banner.
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
+  }, []);
+
+  const dismissLocationPrompt = () => {
+    setLocationPromptDismissed(true);
+    try {
+      localStorage.setItem("routepulse:location-prompt-dismissed", "1");
+    } catch {
+      // Storage disabled — the banner just reappears next visit, harmless.
+    }
+  };
+
+  const handleEnableLocation = () => {
+    dismissLocationPrompt();
+    handleLocateMe();
   };
 
   // v7: one-tap "route from where I am now" — reverse-geocodes the live
@@ -1516,6 +1578,44 @@ export default function RoutePulse() {
                   </div>
                 </div>
               )}
+              {/* v10: location onboarding CTA — one tap triggers the native
+                  permission prompt via handleLocateMe(). Only shown before
+                  a first route search, before we have a fix, and while the
+                  driver hasn't dismissed it or already denied permission. */}
+              {!hasRoute &&
+                !userLocation &&
+                !locationPromptDismissed &&
+                geoPermission !== "denied" && (
+                  <div className="mb-3 flex items-start gap-2.5 rounded-md border border-blue-500/20 bg-blue-500/5 px-3 py-2.5">
+                    <LocateFixed className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium">
+                        Enable location for one-tap routes
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Find your position automatically and set it as your
+                        origin instantly.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleEnableLocation}
+                        className="mt-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        Enable location
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={dismissLocationPrompt}
+                      title="Dismiss"
+                      aria-label="Dismiss location prompt"
+                      className="shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
               <form onSubmit={handleSubmit} className="space-y-3">
                 <AddressInput
                   id="routepulse-origin"
