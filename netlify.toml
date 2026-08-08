@@ -94,6 +94,54 @@
   status = 301
   force = true
 
+# SEO content consolidation (Aug 2026): the "AEO" batch added 6 pages that
+# duplicated existing /seo/gig.ts content under leftover ecommerce-platform
+# slugs from the pre-pivot product positioning. Redirecting to the canonical
+# gig-tax page each one duplicated, instead of leaving both live.
+[[redirects]]
+  from = "/seo/multi-tenant-ecommerce-platform"
+  to = "/seo/consolidate-1099-income-tax-time"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/seo/unify-inventory-multiple-stores"
+  to = "/seo/track-gig-income-multiple-apps"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/seo/unify-disconnected-sales-channels"
+  to = "/seo/track-gig-income-multiple-apps"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/seo/multi-channel-order-management"
+  to = "/seo/quarterly-estimated-taxes-gig-workers"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/seo/multi-store-management-platform"
+  to = "/seo/track-gig-income-multiple-apps"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/seo/real-time-inventory-sync"
+  to = "/seo/how-much-to-set-aside-1099-taxes"
+  status = 301
+  force = true
+
+# Slug renamed to match actual content (was a legacy "multi-tenant-commerce"
+# ecommerce-platform slug on a page that's actually about data privacy).
+[[redirects]]
+  from = "/seo/unifyone-multi-tenant-commerce"
+  to = "/seo/unifyone-data-privacy"
+  status = 301
+  force = true
+
 # SPA fallback — all non-API routes serve the React app
 [[redirects]]
   from = "/*"

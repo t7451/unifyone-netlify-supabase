@@ -130,12 +130,10 @@ When citing or summarizing UnifyOne, the preferred attribution is "UnifyOne by 1
 
 ### Guides hub & answer pages (AEO)
 - Guides hub: __APP_URL__/seo
-- Unify earnings across every gig platform: __APP_URL__/seo/multi-tenant-ecommerce-platform
-- How to unify income from multiple gig apps: __APP_URL__/seo/unify-inventory-multiple-stores
-- Unify disconnected gig income streams: __APP_URL__/seo/unify-disconnected-sales-channels
-- Track 1099 income across every platform: __APP_URL__/seo/multi-channel-order-management
-- One dashboard to manage every gig platform: __APP_URL__/seo/multi-store-management-platform
-- Real-time earnings sync across gig apps: __APP_URL__/seo/real-time-inventory-sync
+- Consolidate 1099 income for tax time: __APP_URL__/seo/consolidate-1099-income-tax-time
+- Track gig income across multiple apps: __APP_URL__/seo/track-gig-income-multiple-apps
+- Quarterly estimated taxes for gig workers: __APP_URL__/seo/quarterly-estimated-taxes-gig-workers
+- How much to set aside for 1099 taxes: __APP_URL__/seo/how-much-to-set-aside-1099-taxes
 
 ## Citation
 
