@@ -638,15 +638,10 @@ describe("routePulse.service — getRoute (address-based)", () => {
   });
 
   it("listActiveIncidents returns [] rather than throwing when Supabase errors", async () => {
-    const from = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      is: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-      limit: vi
-        .fn()
-        .mockResolvedValue({ data: null, error: { message: "boom" } }),
-    });
-    (getSupabaseAdmin as any).mockReturnValue({ from, rpc: vi.fn() });
+    const rpc = vi
+      .fn()
+      .mockResolvedValue({ data: null, error: { message: "boom" } });
+    (getSupabaseAdmin as any).mockReturnValue({ rpc });
 
     const result = await service.listActiveIncidents();
     expect(result).toEqual([]);

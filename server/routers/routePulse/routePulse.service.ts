@@ -159,6 +159,8 @@ export type RouteIncident = {
   description: string | null;
   road_name: string | null;
   source: string;
+  lat: number;
+  lng: number;
 };
 
 export type ScoredRoute = {
@@ -332,6 +334,8 @@ async function getIncidentsNearRoute(
     description: (row.description as string | null) ?? null,
     road_name: (row.road_name as string | null) ?? null,
     source: row.source as string,
+    lat: row.lat as number,
+    lng: row.lng as number,
   }));
 }
 
@@ -462,18 +466,30 @@ export async function listActiveIncidents() {
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
-  const { data, error } = await supabase
-    .from("traffic_incidents")
-    .select(
-      "id, source, road_name, direction, incident_type, severity, description, location_description, started_at, estimated_end_at, source_url"
-    )
-    .is("cleared_at", null)
-    .order("started_at", { ascending: false })
-    .limit(200);
+  // RPC (not a plain table select) — PostgREST doesn't expose ST_X/ST_Y on a
+  // raw select, so lat/lng extraction happens server-side in Postgres, same
+  // pattern as incidents_near_route.
+  const { data, error } = await supabase.rpc("list_active_incidents", {
+    limit_n: 200,
+  });
 
   if (error || !data) return [];
   // Note: unfiltered by area today. For larger coverage regions, add a
   // bbox param backed by a PostGIS RPC (same pattern as incidents_near_route)
   // rather than filtering client-side.
-  return data;
+  return data as Array<{
+    id: string;
+    source: string;
+    road_name: string | null;
+    direction: string | null;
+    incident_type: string;
+    severity: RouteIncident["severity"];
+    description: string | null;
+    location_description: string | null;
+    started_at: string | null;
+    estimated_end_at: string | null;
+    source_url: string | null;
+    lat: number;
+    lng: number;
+  }>;
 }
