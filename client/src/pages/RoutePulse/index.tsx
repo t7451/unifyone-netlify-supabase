@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import {
   MapContainer,
@@ -6,6 +6,7 @@ import {
   Marker,
   Polyline,
   Popup,
+  ZoomControl,
   useMap,
 } from "react-leaflet";
 import L, { type LatLngExpression, type LatLngBoundsExpression } from "leaflet";
@@ -26,15 +27,25 @@ import {
   Loader2,
   ArrowRight,
   MapPin,
+  LocateFixed,
+  Maximize,
+  Minimize,
+  Layers,
 } from "lucide-react";
 
 /**
  * RoutePulse — hyperlocal route intelligence.
  *
  * Address in, AI-scored route + explanation + active incident list out,
- * rendered on a free OpenStreetMap/Leaflet map (no API key, no billing).
+ * rendered on a full-bleed, always-live map (no API key, no billing).
  * Geocoding (address -> coordinates) runs server-side via Nominatim
  * (OSM's free geocoder) as part of the getRoute call.
+ *
+ * The map is deliberately built to feel like "Google Maps but better" for
+ * this use case: it's alive with active incidents before you even search,
+ * has a floating glass search card instead of a form-then-map flow, and
+ * gives you a locate-me + fullscreen + light/dark basemap toggle — using
+ * only free CARTO/OSM tiles, still zero API key and zero billing.
  */
 
 const CANONICAL = `${SITE_URL}/tools/route-pulse`;
@@ -65,7 +76,7 @@ const jsonLd = [
         name: "What does RoutePulse do differently from Google Maps or Waze?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "RoutePulse layers an AI explanation on top of live incident data along your route, calling out road closures, crashes, and hazards that may not have propagated to mainstream traffic apps yet.",
+          text: "RoutePulse layers an AI explanation on top of live incident data along your route, calling out road closures, crashes, and hazards that may not have propagated to mainstream traffic apps yet — and the map shows those incidents live, before you even search a route.",
         },
       },
       {
@@ -111,18 +122,45 @@ const SEVERITY_BADGE: Record<string, string> = {
   critical: "bg-red-600/20 text-red-800 border-red-600/40 dark:text-red-400",
 };
 
+// Default view before any search: Portland, OR — the center of current
+// (OR / SW WA) incident coverage.
+const DEFAULT_CENTER: LatLngExpression = [45.5152, -122.6784];
+const DEFAULT_ZOOM = 10;
+
+// Free CARTO basemaps — no API key, just attribution. Meaningfully cleaner
+// than raw OpenStreetMap default tiles (less visual noise, better label
+// hierarchy), with a dark variant for a genuine Google-Maps-style toggle.
+const BASEMAPS = {
+  light: {
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  },
+  dark: {
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  },
+} as const;
+
 // Custom pin icons (avoid Leaflet's default marker image path, which breaks
 // under bundlers) — simple colored divs, no extra image assets to manage.
-function pinIcon(color: string) {
+function pinIcon(color: string, size = 16) {
   return L.divIcon({
     className: "",
-    html: `<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.3)"></div>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.3)"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
   });
 }
 const ORIGIN_ICON = pinIcon("#3b82f6");
 const DEST_ICON = pinIcon("#ef4444");
+const USER_LOCATION_ICON = L.divIcon({
+  className: "",
+  html: `<div class="animate-pulse" style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 0 0 4px rgba(37,99,235,0.25)"></div>`,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+});
 const INCIDENT_ICON_COLOR: Record<string, string> = {
   minor: "#eab308",
   moderate: "#f97316",
@@ -132,15 +170,15 @@ const INCIDENT_ICON_COLOR: Record<string, string> = {
 const INCIDENT_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
   Object.entries(INCIDENT_ICON_COLOR).map(([severity, color]) => [
     severity,
-    pinIcon(color),
+    pinIcon(color, 14),
   ])
 );
 
 /** Recenters/fits the map whenever the bounds it's given change. */
 function FitBounds({ bounds }: { bounds: LatLngBoundsExpression | null }) {
   const map = useMap();
-  useMemo(() => {
-    if (bounds) map.fitBounds(bounds, { padding: [32, 32] });
+  useEffect(() => {
+    if (bounds) map.fitBounds(bounds, { padding: [48, 48], maxZoom: 15 });
   }, [bounds, map]);
   return null;
 }
@@ -153,6 +191,16 @@ export default function RoutePulse() {
     destination: string;
   } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [basemap, setBasemap] = useState<keyof typeof BASEMAPS>("light");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [userLocation, setUserLocation] = useState<LatLngExpression | null>(
+    null
+  );
+  const [locating, setLocating] = useState(false);
+  const [locateError, setLocateError] = useState<string | null>(null);
+
+  const mapRef = useRef<L.Map | null>(null);
+  const mapWrapperRef = useRef<HTMLDivElement | null>(null);
 
   const routeQuery = trpc.routePulse.getRoute.useQuery(submitted!, {
     enabled: !!submitted,
@@ -173,29 +221,95 @@ export default function RoutePulse() {
     trackToolUsage("route-pulse", "start");
   };
 
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) {
+      setLocateError("Location isn't available in this browser.");
+      return;
+    }
+    setLocating(true);
+    setLocateError(null);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const point: LatLngExpression = [
+          pos.coords.latitude,
+          pos.coords.longitude,
+        ];
+        setUserLocation(point);
+        mapRef.current?.flyTo(point, 14, { duration: 0.75 });
+        setLocating(false);
+      },
+      () => {
+        setLocateError("Couldn't get your location — check permissions.");
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  };
+
+  const handleToggleFullscreen = () => {
+    const el = mapWrapperRef.current;
+    if (!el) return;
+    if (!document.fullscreenElement) {
+      el.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  };
+
+  useEffect(() => {
+    const onChange = () => {
+      const active = document.fullscreenElement === mapWrapperRef.current;
+      setIsFullscreen(active);
+      // Container size changed (fullscreen <-> normal) — Leaflet needs a
+      // nudge to recompute its internal size, or tiles render into a
+      // stale viewport.
+      setTimeout(() => mapRef.current?.invalidateSize(), 50);
+    };
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
   const routeLine: LatLngExpression[] | null = useMemo(() => {
     const geometry = routeQuery.data?.route.geometry as
-      | { coordinates: [number, number][] }
-      | undefined;
+      { coordinates: [number, number][] } | undefined;
     if (!geometry?.coordinates?.length) return null;
     return geometry.coordinates.map(
       ([lng, lat]) => [lat, lng] as LatLngExpression
     );
   }, [routeQuery.data]);
 
+  // Active incidents with valid coordinates — used both as the always-on
+  // map layer (before any route search) and the list card below the map.
+  const activeIncidents = useMemo(
+    () =>
+      (incidentsQuery.data ?? []).filter(
+        (i: any) => Number.isFinite(i.lat) && Number.isFinite(i.lng)
+      ),
+    [incidentsQuery.data]
+  );
+
   const mapBounds: LatLngBoundsExpression | null = useMemo(() => {
-    if (!routeQuery.data) return null;
-    const { origin: o, destination: d, route } = routeQuery.data;
-    const points: LatLngExpression[] = [
-      [o.lat, o.lng],
-      [d.lat, d.lng],
-      ...(routeLine ?? []),
-      ...route.incidents
-        .filter(i => Number.isFinite(i.lat) && Number.isFinite(i.lng))
-        .map((i): LatLngExpression => [i.lat, i.lng]),
-    ];
-    return L.latLngBounds(points);
-  }, [routeQuery.data, routeLine]);
+    if (routeQuery.data) {
+      const { origin: o, destination: d, route } = routeQuery.data;
+      const points: LatLngExpression[] = [
+        [o.lat, o.lng],
+        [d.lat, d.lng],
+        ...(routeLine ?? []),
+        ...route.incidents
+          .filter(i => Number.isFinite(i.lat) && Number.isFinite(i.lng))
+          .map((i): LatLngExpression => [i.lat, i.lng]),
+      ];
+      return L.latLngBounds(points);
+    }
+    if (activeIncidents.length > 1) {
+      return L.latLngBounds(
+        activeIncidents.map((i: any): LatLngExpression => [i.lat, i.lng])
+      );
+    }
+    return null;
+  }, [routeQuery.data, routeLine, activeIncidents]);
+
+  const hasRoute = !!(submitted && routeQuery.data);
 
   return (
     <>
@@ -207,7 +321,7 @@ export default function RoutePulse() {
       />
 
       <ToolLayout toolName="RoutePulse" breadcrumb="RoutePulse">
-        <header className="mb-10">
+        <header className="mb-8">
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
             Free Tool · Route Intelligence
           </p>
@@ -225,122 +339,236 @@ export default function RoutePulse() {
           </p>
         </header>
 
-        {/* Input card */}
-        <Card className="p-6 sm:p-8 mb-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1.5 text-sm font-medium">
-                  <MapPin className="w-3.5 h-3.5" /> Origin address
-                </Label>
-                <Input
-                  placeholder="123 SW Broadway, Portland, OR"
-                  value={origin}
-                  onChange={e => setOrigin(e.target.value)}
-                  autoComplete="off"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1.5 text-sm font-medium">
-                  <MapPin className="w-3.5 h-3.5" /> Destination address
-                </Label>
-                <Input
-                  placeholder="800 SE 10th Ave, Portland, OR"
-                  value={destination}
-                  onChange={e => setDestination(e.target.value)}
-                  autoComplete="off"
-                />
-              </div>
-            </div>
+        {/* Full-bleed immersive map — breaks out of the tool's content
+            column on purpose so it reads as the hero of the page, not a
+            small embed. Always live with active incidents, even before a
+            route is searched. */}
+        <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen mb-8">
+          <div
+            ref={mapWrapperRef}
+            className="relative h-[70vh] max-h-[640px] min-h-[420px] w-full bg-muted"
+          >
+            <MapContainer
+              ref={mapRef}
+              center={DEFAULT_CENTER}
+              zoom={DEFAULT_ZOOM}
+              zoomControl={false}
+              scrollWheelZoom
+              style={{ height: "100%", width: "100%" }}
+            >
+              <TileLayer
+                key={basemap}
+                attribution={BASEMAPS[basemap].attribution}
+                url={BASEMAPS[basemap].url}
+              />
+              <ZoomControl position="bottomright" />
+              <FitBounds bounds={mapBounds} />
 
-            {formError && (
-              <p className="text-sm text-destructive">{formError}</p>
+              {userLocation && (
+                <Marker position={userLocation} icon={USER_LOCATION_ICON} />
+              )}
+
+              {hasRoute ? (
+                <>
+                  <Marker
+                    position={[
+                      routeQuery.data!.origin.lat,
+                      routeQuery.data!.origin.lng,
+                    ]}
+                    icon={ORIGIN_ICON}
+                  />
+                  <Marker
+                    position={[
+                      routeQuery.data!.destination.lat,
+                      routeQuery.data!.destination.lng,
+                    ]}
+                    icon={DEST_ICON}
+                  />
+                  {routeLine && (
+                    <Polyline
+                      positions={routeLine}
+                      pathOptions={{
+                        color: "#3b82f6",
+                        weight: 5,
+                        opacity: 0.9,
+                      }}
+                    />
+                  )}
+                  {routeQuery
+                    .data!.route.incidents.filter(
+                      inc =>
+                        Number.isFinite(inc.lat) && Number.isFinite(inc.lng)
+                    )
+                    .map(inc => (
+                      <Marker
+                        key={inc.id}
+                        position={[inc.lat, inc.lng]}
+                        icon={
+                          INCIDENT_ICONS[inc.severity] ?? INCIDENT_ICONS.minor
+                        }
+                      >
+                        <Popup>
+                          <div className="text-sm space-y-0.5">
+                            {inc.road_name && (
+                              <p className="font-medium">{inc.road_name}</p>
+                            )}
+                            <p>{inc.description ?? inc.incident_type}</p>
+                            <p className="text-xs uppercase text-muted-foreground">
+                              {inc.severity}
+                            </p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                </>
+              ) : (
+                // No route searched yet — show every active incident so the
+                // map is never just an empty base layer.
+                activeIncidents.map((inc: any) => (
+                  <Marker
+                    key={inc.id}
+                    position={[inc.lat, inc.lng]}
+                    icon={INCIDENT_ICONS[inc.severity] ?? INCIDENT_ICONS.minor}
+                  >
+                    <Popup>
+                      <div className="text-sm space-y-0.5">
+                        {inc.road_name && (
+                          <p className="font-medium">{inc.road_name}</p>
+                        )}
+                        <p>{inc.description ?? inc.incident_type}</p>
+                        <p className="text-xs uppercase text-muted-foreground">
+                          {inc.severity}
+                        </p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))
+              )}
+            </MapContainer>
+
+            {/* Loading veil while a route is being scored */}
+            {routeQuery.isFetching && (
+              <div className="absolute inset-0 z-[500] flex items-center justify-center bg-background/50 backdrop-blur-[1px] pointer-events-none">
+                <div className="flex items-center gap-2 rounded-full bg-background/90 border shadow-lg px-4 py-2 text-sm font-medium">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Scoring your route…
+                </div>
+              </div>
             )}
 
-            <Button type="submit" className="gap-2 w-full sm:w-auto">
-              {routeQuery.isFetching && (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              )}
-              Find route
-              {!routeQuery.isFetching && <ArrowRight className="w-4 h-4" />}
-            </Button>
-          </form>
-        </Card>
-
-        {/* Map */}
-        {submitted && routeQuery.data && (
-          <Card className="p-0 mb-8 overflow-hidden">
-            <div className="h-[360px] sm:h-[440px] w-full">
-              <MapContainer
-                center={[
-                  routeQuery.data.origin.lat,
-                  routeQuery.data.origin.lng,
-                ]}
-                zoom={12}
-                scrollWheelZoom={false}
-                style={{ height: "100%", width: "100%" }}
-              >
-                {/* OpenStreetMap tiles — free, no API key. Attribution required. */}
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <FitBounds bounds={mapBounds} />
-                <Marker
-                  position={[
-                    routeQuery.data.origin.lat,
-                    routeQuery.data.origin.lng,
-                  ]}
-                  icon={ORIGIN_ICON}
-                />
-                <Marker
-                  position={[
-                    routeQuery.data.destination.lat,
-                    routeQuery.data.destination.lng,
-                  ]}
-                  icon={DEST_ICON}
-                />
-                {routeLine && (
-                  <Polyline
-                    positions={routeLine}
-                    pathOptions={{ color: "#3b82f6", weight: 4, opacity: 0.85 }}
+            {/* Floating glass search card — Google-Maps-style search-over-map
+                instead of a form stacked above the map. */}
+            <Card className="absolute z-[400] top-4 left-4 right-4 sm:right-auto sm:w-[380px] p-4 sm:p-5 bg-background/90 backdrop-blur-md shadow-xl border">
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5 text-xs font-medium">
+                    <MapPin className="w-3.5 h-3.5 text-blue-500" /> Origin
+                  </Label>
+                  <Input
+                    placeholder="123 SW Broadway, Portland, OR"
+                    value={origin}
+                    onChange={e => setOrigin(e.target.value)}
+                    autoComplete="off"
+                    className="bg-background"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5 text-xs font-medium">
+                    <MapPin className="w-3.5 h-3.5 text-red-500" /> Destination
+                  </Label>
+                  <Input
+                    placeholder="800 SE 10th Ave, Portland, OR"
+                    value={destination}
+                    onChange={e => setDestination(e.target.value)}
+                    autoComplete="off"
+                    className="bg-background"
+                  />
+                </div>
+
+                {formError && (
+                  <p className="text-xs text-destructive">{formError}</p>
                 )}
-                {routeQuery.data.route.incidents
-                  .filter(inc => Number.isFinite(inc.lat) && Number.isFinite(inc.lng))
-                  .map(inc => (
-                    <Marker
-                      key={inc.id}
-                      position={[inc.lat, inc.lng]}
-                      icon={INCIDENT_ICONS[inc.severity] ?? INCIDENT_ICONS.minor}
-                    >
-                      <Popup>
-                        <div className="text-sm space-y-0.5">
-                          {inc.road_name && (
-                            <p className="font-medium">{inc.road_name}</p>
-                          )}
-                          <p>{inc.description ?? inc.incident_type}</p>
-                          <p className="text-xs uppercase text-muted-foreground">
-                            {inc.severity}
-                          </p>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  ))}
-              </MapContainer>
+
+                <Button type="submit" size="sm" className="gap-2 w-full">
+                  {routeQuery.isFetching && (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  )}
+                  Find route
+                  {!routeQuery.isFetching && <ArrowRight className="w-4 h-4" />}
+                </Button>
+              </form>
+            </Card>
+
+            {/* Floating controls — locate me, basemap toggle, fullscreen */}
+            <div className="absolute z-[400] top-4 right-4 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleLocateMe}
+                title="Find my location"
+                className="w-9 h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
+              >
+                {locating ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <LocateFixed className="w-4 h-4" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setBasemap(m => (m === "light" ? "dark" : "light"))
+                }
+                title="Toggle map style"
+                className="w-9 h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
+              >
+                <Layers className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handleToggleFullscreen}
+                title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                className="w-9 h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
+              >
+                {isFullscreen ? (
+                  <Minimize className="w-4 h-4" />
+                ) : (
+                  <Maximize className="w-4 h-4" />
+                )}
+              </button>
             </div>
-          </Card>
-        )}
+
+            {locateError && (
+              <div className="absolute z-[400] top-[calc(4rem+7rem)] right-4 max-w-[220px] rounded-md bg-background/95 border shadow-lg px-3 py-2 text-xs text-destructive sm:top-32">
+                {locateError}
+              </div>
+            )}
+
+            {/* Floating legend */}
+            <div className="hidden sm:flex absolute z-[400] bottom-4 left-4 items-center gap-3 rounded-md bg-background/90 backdrop-blur-md border shadow-lg px-3 py-2 text-xs">
+              {Object.entries(INCIDENT_ICON_COLOR).map(([severity, color]) => (
+                <span key={severity} className="flex items-center gap-1.5">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full border border-white shadow"
+                    style={{ background: color }}
+                  />
+                  <span className="capitalize text-muted-foreground">
+                    {severity}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* Result card */}
-        {submitted && routeQuery.data && (
+        {hasRoute && (
           <Card className="p-6 sm:p-8 mb-8 space-y-4">
             <div className="flex items-baseline justify-between flex-wrap gap-2">
               <p className="text-2xl font-semibold">
-                {(routeQuery.data.route.distance / 1609.34).toFixed(1)} mi ·{" "}
-                {Math.round(routeQuery.data.route.duration / 60)} min
+                {(routeQuery.data!.route.distance / 1609.34).toFixed(1)} mi ·{" "}
+                {Math.round(routeQuery.data!.route.duration / 60)} min
               </p>
-              {routeQuery.data.cached && (
+              {routeQuery.data!.cached && (
                 <Badge variant="outline" className="text-muted-foreground">
                   cached
                 </Badge>
@@ -349,23 +577,23 @@ export default function RoutePulse() {
             <div className="text-xs text-muted-foreground space-y-0.5">
               <p>
                 <span className="font-medium text-foreground">From:</span>{" "}
-                {routeQuery.data.origin.displayName}
+                {routeQuery.data!.origin.displayName}
               </p>
               <p>
                 <span className="font-medium text-foreground">To:</span>{" "}
-                {routeQuery.data.destination.displayName}
+                {routeQuery.data!.destination.displayName}
               </p>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed pt-2 border-t">
-              {routeQuery.data.explanation}
+              {routeQuery.data!.explanation}
             </p>
 
-            {routeQuery.data.route.incidents.length > 0 && (
+            {routeQuery.data!.route.incidents.length > 0 && (
               <div className="space-y-2.5 pt-4 border-t">
                 <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">
                   Incidents on this route
                 </p>
-                {routeQuery.data.route.incidents.map(inc => (
+                {routeQuery.data!.route.incidents.map(inc => (
                   <div
                     key={inc.id}
                     className="flex items-start gap-2.5 text-sm"
@@ -400,7 +628,8 @@ export default function RoutePulse() {
           </Card>
         )}
 
-        {/* Active incidents feed */}
+        {/* Active incidents feed (list form, for accessibility / no-JS-map
+            fallback — the map above already shows these live). */}
         <Card className="p-6 sm:p-8 mb-10">
           <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-4">
             Active incidents (Oregon / SW Washington)
@@ -446,8 +675,8 @@ export default function RoutePulse() {
           <p>
             Built entirely on free, open infrastructure: addresses are resolved
             with OpenStreetMap's Nominatim geocoder, routing runs on OSRM, and
-            the map itself is OpenStreetMap tiles — no Google Maps billing, no
-            API key required.
+            the map itself uses free CARTO/OpenStreetMap tiles — no Google Maps
+            billing, no API key required.
           </p>
         </section>
 
@@ -460,11 +689,11 @@ export default function RoutePulse() {
             {[
               {
                 q: "What does RoutePulse do differently from Google Maps or Waze?",
-                a: "RoutePulse layers an AI explanation on top of live incident data along your route, calling out closures, crashes, and hazards that may not have propagated to mainstream traffic apps yet.",
+                a: "RoutePulse layers an AI explanation on top of live incident data along your route, calling out closures, crashes, and hazards that may not have propagated to mainstream traffic apps yet — and the map is live with those incidents before you even search.",
               },
               {
                 q: "Do I need an account or API key to use RoutePulse?",
-                a: "No. It's built on free, open infrastructure — OpenStreetMap for geocoding and the map, OSRM for routing, and free-tier AI models for the explanation. Enter an origin and destination and get a scored route immediately.",
+                a: "No. It's built on free, open infrastructure — OpenStreetMap for geocoding, CARTO/OpenStreetMap for the map, OSRM for routing, and free-tier AI models for the explanation. Enter an origin and destination and get a scored route immediately.",
               },
               {
                 q: "What area does RoutePulse cover?",
