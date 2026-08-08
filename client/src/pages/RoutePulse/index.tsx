@@ -38,6 +38,11 @@ import {
   ShieldAlert,
   ShieldCheck,
   Shield,
+  Clock,
+  RefreshCw,
+  Star,
+  Copy,
+  Route as RouteIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRecentRoutes } from "@/hooks/useRecentRoutes";
@@ -55,6 +60,14 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  * has a floating glass search card instead of a form-then-map flow, and
  * gives you a locate-me + fullscreen + light/dark basemap toggle — using
  * only free CARTO/OSM tiles, still zero API key and zero billing.
+ *
+ * v4 driver tools (all client-side, still zero API key):
+ *   - Arrive-by leave-time planner with a per-incident risk buffer
+ *   - Tappable route comparison (distance / time / incidents per option)
+ *   - Voice address entry (Web Speech API) inside AddressInput
+ *   - Live incident auto-refresh with an "updated Xs ago" pulse
+ *   - One-tap plain-text trip summary for SMS/dispatch
+ *   - Starred saved routes (localStorage, cross-tab synced)
  */
 
 const CANONICAL = `${SITE_URL}/tools/route-pulse`;
@@ -104,6 +117,14 @@ const jsonLd = [
           text: "RoutePulse currently tracks incidents in Oregon and SW Washington, with more regions planned as coverage expands.",
         },
       },
+      {
+        "@type": "Question",
+        name: "Can RoutePulse tell me when to leave?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes. Set an arrive-by time and RoutePulse computes a leave-by time from the live route duration plus a risk buffer sized by the severity of incidents currently on your route — so a crash on your path adds real minutes, not just a red pin.",
+        },
+      },
     ],
   },
   {
@@ -151,6 +172,19 @@ const BASEMAPS = {
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },
 } as const;
+
+// Minutes of buffer each incident severity adds to the leave-by estimate.
+// Deliberately conservative — a closure or crash on your path costs real
+// time, and gig drivers would rather be 3 minutes early than 10 late.
+const RISK_BUFFER_MIN: Record<string, number> = {
+  minor: 2,
+  moderate: 5,
+  major: 10,
+  critical: 15,
+};
+
+const fmtTime = (d: Date) =>
+  d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
 // Custom pin icons (avoid Leaflet's default marker image path, which breaks
 // under bundlers) — simple colored divs, no extra image assets to manage.
@@ -246,6 +280,11 @@ export default function RoutePulse() {
   );
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState<string | null>(null);
+  // v4: arrive-by planner + alternative-route preview on the map.
+  const [arriveBy, setArriveBy] = useState("");
+  const [previewIdx, setPreviewIdx] = useState<number | null>(null);
+  // Ticker so the "updated Xs ago" live indicator stays honest.
+  const [nowTick, setNowTick] = useState(0);
 
   // Read permalink params on mount so shared routes load immediately.
   useEffect(() => {
@@ -285,6 +324,18 @@ export default function RoutePulse() {
     window.history.replaceState({}, "", newUrl);
   }, [submitted]);
 
+  // A new search resets the alternative-route preview back to the
+  // AI-recommended route.
+  useEffect(() => {
+    setPreviewIdx(null);
+  }, [submitted]);
+
+  // 10s ticker for the "updated Xs ago" freshness label.
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick(t => t + 1), 10_000);
+    return () => window.clearInterval(id);
+  }, []);
+
   const mapRef = useRef<L.Map | null>(null);
   const mapWrapperRef = useRef<HTMLDivElement | null>(null);
 
@@ -302,8 +353,14 @@ export default function RoutePulse() {
     !submitted ||
     submitted.origin !== origin.trim() ||
     submitted.destination !== destination.trim();
-  const incidentsQuery = trpc.routePulse.listIncidents.useQuery();
-  const { recent, addRoute, clearRoutes } = useRecentRoutes();
+  // Incidents auto-refresh every 60s — the map layer and the feed below it
+  // stay live without a reload, which matters when the page sits open on a
+  // phone mounted in a car.
+  const incidentsQuery = trpc.routePulse.listIncidents.useQuery(undefined, {
+    refetchInterval: 60_000,
+  });
+  const { recent, starred, addRoute, clearRoutes, starRoute, unstarRoute } =
+    useRecentRoutes();
 
   const handleSwap = () => {
     setOrigin(destination);
@@ -391,6 +448,39 @@ export default function RoutePulse() {
     );
   }, [routeQuery.data]);
 
+  // Every scored route (the server returns the full set, including the one
+  // it picked) so the comparison cards and the dashed alternates layer can
+  // both reason about distance / duration / incidents per option.
+  const allRoutes = useMemo(
+    () => routeQuery.data?.alternatives ?? [],
+    [routeQuery.data]
+  );
+
+  // The AI-chosen route inside `alternatives` — matched on the distance /
+  // duration pair, which is unique per OSRM route in practice.
+  const chosenIdx = useMemo(() => {
+    if (!routeQuery.data) return -1;
+    const { route } = routeQuery.data;
+    return allRoutes.findIndex(
+      a => a.distance === route.distance && a.duration === route.duration
+    );
+  }, [routeQuery.data, allRoutes]);
+
+  // Which route is drawn solid on the map right now — the previewed
+  // alternative if the driver tapped one, otherwise the recommended route.
+  const displayedIdx = previewIdx ?? (chosenIdx >= 0 ? chosenIdx : null);
+
+  const displayedLine: LatLngExpression[] | null = useMemo(() => {
+    if (displayedIdx === null || previewIdx === null) return routeLine;
+    const geometry = allRoutes[displayedIdx]?.geometry as
+      | { coordinates: [number, number][] }
+      | undefined;
+    if (!geometry?.coordinates?.length) return routeLine;
+    return geometry.coordinates.map(
+      ([lng, lat]) => [lat, lng] as LatLngExpression
+    );
+  }, [displayedIdx, previewIdx, allRoutes, routeLine]);
+
   // Active incidents with valid coordinates — used both as the always-on
   // map layer (before any route search) and the list card below the map.
   const activeIncidents = useMemo(
@@ -438,7 +528,84 @@ export default function RoutePulse() {
     return { label: "Low Risk", level: "low" as const };
   }, [routeQuery.data]);
 
+  // Arrive-by planner: leave-by = arrival time minus drive time minus a
+  // per-incident risk buffer. The buffer is the differentiator — Google
+  // adjusts for traffic; we adjust for the specific crash/closure on your
+  // path and say so in plain English.
+  const leaveByInfo = useMemo(() => {
+    if (!routeQuery.data || !arriveBy) return null;
+    const [h, m] = arriveBy.split(":").map(Number);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+    const arrive = new Date();
+    arrive.setHours(h, m, 0, 0);
+    // If the arrival time already passed today, the driver almost
+    // certainly means tomorrow (e.g. planning tonight for a morning shift).
+    if (arrive.getTime() < Date.now()) {
+      arrive.setDate(arrive.getDate() + 1);
+    }
+    const bufferMin = routeQuery.data.route.incidents.reduce(
+      (sum, i) => sum + (RISK_BUFFER_MIN[i.severity] ?? 2),
+      0
+    );
+    const driveMin = routeQuery.data.route.duration / 60;
+    const leave = new Date(arrive.getTime() - (driveMin + bufferMin) * 60_000);
+    return { leave, bufferMin };
+  }, [routeQuery.data, arriveBy]);
+
+  const currentIsStarred =
+    !!submitted &&
+    starred.some(
+      s => s.origin === submitted.origin && s.destination === submitted.destination
+    );
+
+  const handleToggleStar = () => {
+    if (!submitted) return;
+    if (currentIsStarred) {
+      unstarRoute(submitted.origin, submitted.destination);
+      toast.success("Removed from saved routes");
+    } else {
+      starRoute(submitted.origin, submitted.destination);
+      toast.success("Route saved — find it above the search box");
+    }
+  };
+
+  // Plain-text trip summary for SMS / dispatch apps — one tap, no account.
+  const handleCopySummary = async () => {
+    if (!routeQuery.data) return;
+    const d = routeQuery.data;
+    const miles = (d.route.distance / 1609.34).toFixed(1);
+    const mins = Math.round(d.route.duration / 60);
+    const lines = [
+      `RoutePulse: ${d.origin.displayName.split(",")[0]} → ${d.destination.displayName.split(",")[0]}`,
+      `${miles} mi · ~${mins} min · ${d.route.incidents.length} incident${d.route.incidents.length === 1 ? "" : "s"}${riskScore ? ` (${riskScore.label})` : ""}`,
+    ];
+    if (leaveByInfo) {
+      lines.push(
+        `Leave by ${fmtTime(leaveByInfo.leave)}${leaveByInfo.bufferMin > 0 ? ` (incl. +${leaveByInfo.bufferMin} min incident buffer)` : ""}`
+      );
+    }
+    for (const inc of d.route.incidents.slice(0, 3)) {
+      lines.push(
+        `⚠ ${inc.road_name ? `${inc.road_name}: ` : ""}${inc.description ?? inc.incident_type}`
+      );
+    }
+    lines.push(window.location.href);
+    try {
+      await navigator.clipboard.writeText(lines.join("\n"));
+      toast.success("Trip summary copied — paste it anywhere");
+    } catch {
+      toast.error("Couldn't copy summary — try the Share button instead");
+    }
+  };
+
   const hasRoute = !!(submitted && routeQuery.data);
+
+  // "Updated Xs ago" for the live indicator. nowTick is referenced so the
+  // 10s interval re-renders this label even when no query has refetched.
+  const updatedAgoSec =
+    nowTick >= 0 && incidentsQuery.dataUpdatedAt
+      ? Math.max(0, Math.round((Date.now() - incidentsQuery.dataUpdatedAt) / 1000))
+      : null;
 
   return (
     <>
@@ -534,9 +701,9 @@ export default function RoutePulse() {
                     ]}
                     icon={DEST_ICON}
                   />
-                  {routeLine && (
+                  {displayedLine && (
                     <Polyline
-                      positions={routeLine}
+                      positions={displayedLine}
                       pathOptions={{
                         color: "#3b82f6",
                         weight: 5,
@@ -544,8 +711,11 @@ export default function RoutePulse() {
                       }}
                     />
                   )}
-                  {/* Alternative routes — lighter, dashed lines */}
-                  {routeQuery.data!.alternatives.map((alt, idx) => {
+                  {/* Alternative routes — lighter, dashed lines. The route
+                      currently displayed solid is skipped so the chosen
+                      route isn't double-drawn. */}
+                  {allRoutes.map((alt, idx) => {
+                      if (idx === displayedIdx) return null;
                       const coords = (alt.geometry as {
                         coordinates: [number, number][];
                       })?.coordinates;
@@ -630,6 +800,50 @@ export default function RoutePulse() {
             {/* Floating glass search card — Google-Maps-style search-over-map
                 instead of a form stacked above the map. */}
             <Card className="absolute z-[400] top-4 left-4 right-4 sm:right-auto sm:w-[380px] p-4 sm:p-5 bg-background/90 backdrop-blur-md shadow-xl border">
+              {/* Saved routes — driver-pinned favorites, always on top */}
+              {!hasRoute && starred.length > 0 && (
+                <div className="mb-3 pb-3 border-b border-border/50">
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1 mb-1.5">
+                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    Saved
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {starred.map((r, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center rounded-full bg-yellow-500/10 border border-yellow-500/20 max-w-full"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOrigin(r.origin);
+                            setDestination(r.destination);
+                            setSubmitted({
+                              origin: r.origin,
+                              destination: r.destination,
+                            });
+                          }}
+                          className="text-[11px] pl-2 py-1 hover:text-foreground transition-colors truncate"
+                          title={`${r.origin} → ${r.destination}`}
+                        >
+                          {r.origin.slice(0, 18)}
+                          {r.origin.length > 18 ? "…" : ""} →{" "}
+                          {r.destination.slice(0, 18)}
+                          {r.destination.length > 18 ? "…" : ""}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => unstarRoute(r.origin, r.destination)}
+                          className="px-1.5 py-1 text-muted-foreground hover:text-destructive transition-colors"
+                          title="Remove saved route"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* Recent routes — one-tap re-check, no typing on mobile */}
               {!hasRoute && recent.length > 0 && (
                 <div className="mb-3 pb-3 border-b border-border/50">
@@ -819,15 +1033,43 @@ export default function RoutePulse() {
                   cached
                 </Badge>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-1.5 text-muted-foreground hover:text-foreground"
-                onClick={handleShareRoute}
-              >
-                <Share2 className="w-4 h-4" />
-                Share
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-muted-foreground hover:text-foreground"
+                  onClick={handleToggleStar}
+                  title={
+                    currentIsStarred
+                      ? "Remove from saved routes"
+                      : "Save this route"
+                  }
+                >
+                  <Star
+                    className={`w-4 h-4 ${currentIsStarred ? "fill-yellow-400 text-yellow-400" : ""}`}
+                  />
+                  {currentIsStarred ? "Saved" : "Save"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-muted-foreground hover:text-foreground"
+                  onClick={handleCopySummary}
+                  title="Copy a plain-text trip summary (great for SMS)"
+                >
+                  <Copy className="w-4 h-4" />
+                  Summary
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-muted-foreground hover:text-foreground"
+                  onClick={handleShareRoute}
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </Button>
+              </div>
             </div>
             <div className="text-xs text-muted-foreground space-y-0.5">
               <p>
@@ -842,6 +1084,105 @@ export default function RoutePulse() {
             <p className="text-sm text-muted-foreground leading-relaxed pt-2 border-t">
               {routeQuery.data!.explanation}
             </p>
+
+            {/* Arrive-by planner — leave-time with an incident-sized buffer */}
+            <div className="flex items-center gap-2 flex-wrap pt-4 border-t">
+              <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+              <label
+                htmlFor="routepulse-arrive-by"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                Arrive by
+              </label>
+              <input
+                id="routepulse-arrive-by"
+                type="time"
+                value={arriveBy}
+                onChange={e => setArriveBy(e.target.value)}
+                className="rounded-md border bg-background px-2 py-1 text-sm"
+              />
+              {leaveByInfo && (
+                <span className="text-sm font-semibold">
+                  Leave by {fmtTime(leaveByInfo.leave)}
+                  {leaveByInfo.bufferMin > 0 && (
+                    <span className="text-xs font-normal text-muted-foreground">
+                      {" "}
+                      (+{leaveByInfo.bufferMin} min buffer for{" "}
+                      {routeQuery.data!.route.incidents.length} incident
+                      {routeQuery.data!.route.incidents.length === 1 ? "" : "s"})
+                    </span>
+                  )}
+                </span>
+              )}
+              {!leaveByInfo && (
+                <span className="text-xs text-muted-foreground">
+                  and we'll tell you when to leave — buffer included
+                </span>
+              )}
+            </div>
+
+            {/* Route comparison — every scored option, tappable to preview
+                its geometry on the map. */}
+            {allRoutes.length > 1 && (
+              <div className="pt-4 border-t space-y-2">
+                <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide flex items-center gap-1.5">
+                  <RouteIcon className="w-3.5 h-3.5" />
+                  Compare routes
+                </p>
+                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                  {allRoutes.map((alt, i) => {
+                    const isChosen = i === chosenIdx;
+                    const isDisplayed = i === displayedIdx;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setPreviewIdx(isChosen ? null : i)}
+                        className={`shrink-0 min-w-[132px] rounded-lg border px-3 py-2 text-left transition-colors ${
+                          isDisplayed
+                            ? "border-blue-500/50 bg-blue-500/10"
+                            : "hover:bg-muted"
+                        }`}
+                      >
+                        <span className="flex items-center gap-1.5 text-xs font-medium">
+                          Route {i + 1}
+                          {isChosen && (
+                            <Badge
+                              variant="outline"
+                              className="text-[9px] px-1 py-0 border-primary/40 text-primary"
+                            >
+                              Recommended
+                            </Badge>
+                          )}
+                        </span>
+                        <span className="block text-xs text-muted-foreground mt-0.5">
+                          {(alt.distance / 1609.34).toFixed(1)} mi ·{" "}
+                          {Math.round(alt.duration / 60)} min
+                        </span>
+                        <span
+                          className={`block text-[11px] mt-0.5 ${
+                            alt.incidents.length > 0
+                              ? "text-amber-600 dark:text-amber-400"
+                              : "text-emerald-600 dark:text-emerald-400"
+                          }`}
+                        >
+                          {alt.incidents.length === 0
+                            ? "No incidents"
+                            : `${alt.incidents.length} incident${alt.incidents.length === 1 ? "" : "s"}`}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {previewIdx !== null && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Previewing Route {previewIdx + 1} on the map — tap
+                    Recommended to switch back. Stats above are still for the
+                    recommended route.
+                  </p>
+                )}
+              </div>
+            )}
 
             {routeQuery.data!.route.incidents.length > 0 && (
               <div className="space-y-2.5 pt-4 border-t">
@@ -886,9 +1227,32 @@ export default function RoutePulse() {
         {/* Active incidents feed (list form, for accessibility / no-JS-map
             fallback — the map above already shows these live). */}
         <Card className="p-6 sm:p-8 mb-10">
-          <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide mb-4">
-            Active incidents (Oregon / SW Washington)
-          </p>
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">
+              Active incidents (Oregon / SW Washington)
+            </p>
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground shrink-0">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span>
+                Live
+                {updatedAgoSec !== null &&
+                  ` · updated ${updatedAgoSec < 5 ? "just now" : `${updatedAgoSec}s ago`}`}
+              </span>
+              <button
+                type="button"
+                onClick={() => incidentsQuery.refetch()}
+                title="Refresh incidents now"
+                className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
+              >
+                <RefreshCw
+                  className={`w-3 h-3 ${incidentsQuery.isRefetching ? "animate-spin" : ""}`}
+                />
+              </button>
+            </div>
+          </div>
           {incidentsQuery.data?.length ? (
             <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
               {incidentsQuery.data.map(inc => (
@@ -928,6 +1292,13 @@ export default function RoutePulse() {
             explain what's actually happening — not just a red line on a map.
           </p>
           <p>
+            Set an arrive-by time and RoutePulse tells you when to leave,
+            padding the estimate by the severity of incidents actually on your
+            path. Compare every route option side by side, speak your addresses
+            instead of typing, and copy a plain-text trip summary for dispatch
+            — all without an account.
+          </p>
+          <p>
             Built entirely on free, open infrastructure: addresses are resolved
             with OpenStreetMap's Nominatim geocoder, routing runs on OSRM, and
             the map itself uses free CARTO/OpenStreetMap tiles — no Google Maps
@@ -949,6 +1320,10 @@ export default function RoutePulse() {
               {
                 q: "Do I need an account or API key to use RoutePulse?",
                 a: "No. It's built on free, open infrastructure — OpenStreetMap for geocoding, CARTO/OpenStreetMap for the map, OSRM for routing, and free-tier AI models for the explanation. Enter an origin and destination and get a scored route immediately.",
+              },
+              {
+                q: "Can RoutePulse tell me when to leave?",
+                a: "Yes. Set an arrive-by time on any scored route and you'll get a leave-by time that includes a buffer sized by the severity of incidents currently on your route — a crash or closure adds real minutes, not just a warning pin.",
               },
               {
                 q: "What area does RoutePulse cover?",
