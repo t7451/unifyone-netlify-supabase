@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link, useRoute } from "wouter";
 import { Helmet } from "react-helmet-async";
 import { SITE_URL } from "@/lib/siteConfig";
-import { getSeoPage, SEO_PAGES, type SeoPage } from "@/content/seoPages";
+import { getSeoPage, type SeoPage } from "@/content/seoPages";
 import NotFound from "./NotFound";
 
 const OG_IMAGE = "/og-image.png";
@@ -337,28 +337,6 @@ export default function SeoLanding() {
             </div>
           </div>
         )}
-
-        {/* Full index for internal linking */}
-        <div
-          className="mt-16 pt-12"
-          style={{ borderTop: "1px solid rgba(212,168,67,0.08)" }}
-        >
-          <span className="inscription block mb-6">All UnifyOne Guides</span>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-            {SEO_PAGES.map(p => (
-              <li key={p.slug}>
-                <Link href={`/seo/${p.slug}`}>
-                  <span
-                    className="cursor-pointer hover:text-amber-400 transition-colors"
-                    style={{ color: "#9A9A9A" }}
-                  >
-                    {p.h1}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
       </article>
     </div>
   );

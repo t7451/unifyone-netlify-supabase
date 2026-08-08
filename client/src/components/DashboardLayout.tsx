@@ -53,6 +53,7 @@ import {
   Palette,
   Handshake,
   RefreshCcw,
+  Route,
 } from "lucide-react";
 import { AIChatBox } from "@/components/AIChatBox";
 import type { Message } from "@/components/AIChatBox";
@@ -78,6 +79,7 @@ type NavSection = {
 const gigCoreItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Overview", path: "/overview" },
   { icon: Navigation, label: "Gig Command", path: "/gig-command" },
+  { icon: Route, label: "RoutePulse", path: "/tools/route-pulse" },
   { icon: DollarSign, label: "Money Manager", path: "/money-manager" },
   { icon: Star, label: "Gig Worker Plans", path: "/gig-worker-plans" },
 ];

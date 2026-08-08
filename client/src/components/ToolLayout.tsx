@@ -25,6 +25,7 @@ const ALL_TOOLS = [
   { slug: "se-tax-calculator", label: "Self-Employment Tax Calculator" },
   { slug: "gig-hourly-rate", label: "Real Hourly Rate Calculator" },
   { slug: "tax-set-aside", label: "Tax Set-Aside Calculator" },
+  { slug: "route-pulse", label: "RoutePulse" },
 ];
 
 /** Shared structural wrapper for all /tools/<slug> pages. */

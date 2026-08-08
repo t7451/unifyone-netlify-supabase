@@ -401,6 +401,10 @@ export const PLATFORM_COMPARISONS: PlatformComparison[] = [
     ],
     faqs: [
       {
+        q: "Spark vs Amazon Flex: which is better?",
+        a: "It depends on how you like to work. Amazon Flex pays by pre-scheduled delivery blocks, while Walmart Spark pays per accepted offer, so Flex rewards grabbing blocks and Spark rewards staying online for offers. Both are 1099 independent-contractor gigs with deductible mileage. Block and offer availability varies by market, so work a few comparable shifts on each and compare your net pay per hour after mileage.",
+      },
+      {
         q: "Is Amazon Flex or Spark better for delivery drivers?",
         a: COMPARE_YOUR_OWN_PAY_ANSWER,
       },
@@ -685,6 +689,10 @@ export const PLATFORM_COMPARISONS: PlatformComparison[] = [
     ],
     faqs: [
       {
+        q: "Is Spark or DoorDash better for drivers?",
+        a: "Neither is universally better — it depends on your market. Both pay per accepted offer as an independent contractor, both issue a 1099, and both let you deduct mileage. Walmart Spark ties you to Walmart store orders while DoorDash spans many restaurants and shops, so offer volume differs by area. The only reliable answer is to run comparable shifts on each, subtract your miles and expenses, and compare your real net hourly rate.",
+      },
+      {
         q: "Which pays more, DoorDash or Spark?",
         a: COMPARE_YOUR_OWN_PAY_ANSWER,
       },
@@ -897,6 +905,10 @@ export const PLATFORM_COMPARISONS: PlatformComparison[] = [
     ],
     faqs: [
       {
+        q: "Does Gopuff or DoorDash pay more?",
+        a: "There is no fixed answer — it varies by market and how you work. Gopuff leans on scheduled delivery blocks from its own micro-fulfillment centers, while DoorDash pays per accepted offer across many merchants, so earnings depend on block availability versus offer volume in your area. Both are 1099 gigs with deductible mileage. Run comparable hours on each and divide net earnings by hours to see which pays you more.",
+      },
+      {
         q: "Is Gopuff or DoorDash better for delivery drivers?",
         a: COMPARE_YOUR_OWN_PAY_ANSWER,
       },
@@ -1056,4 +1068,45 @@ export function getPlatformComparison(
   slug: string
 ): PlatformComparison | undefined {
   return PLATFORM_COMPARISONS.find(c => c.slug === slug);
+}
+
+/**
+ * Normalize a platform display name to a comparison token so siblings that
+ * refer to the same platform slightly differently (e.g. "Spark" vs
+ * "Spark Driver") are treated as the same platform.
+ */
+function platformToken(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s+driver$/, "")
+    .trim();
+}
+
+/**
+ * Related comparisons sharing at least one platform with the given one, ranked
+ * by number of shared platforms. Powers the in-cluster internal-link block on
+ * each comparison page so link equity flows between sibling comparisons
+ * (e.g. all the DoorDash / Spark / Amazon Flex pages reinforce each other)
+ * instead of every comparison being an internal-linking dead end.
+ */
+export function getRelatedComparisons(
+  slug: string,
+  limit = 4
+): PlatformComparison[] {
+  const current = PLATFORM_COMPARISONS.find(c => c.slug === slug);
+  if (!current) return [];
+  const currentTokens = new Set(
+    [current.platformA, current.platformB].map(platformToken)
+  );
+  return PLATFORM_COMPARISONS.filter(c => c.slug !== slug)
+    .map(c => ({
+      c,
+      overlap: [c.platformA, c.platformB]
+        .map(platformToken)
+        .filter(t => currentTokens.has(t)).length,
+    }))
+    .filter(x => x.overlap > 0)
+    .sort((a, b) => b.overlap - a.overlap)
+    .slice(0, limit)
+    .map(x => x.c);
 }
