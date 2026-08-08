@@ -54,6 +54,8 @@ import {
   Undo2,
   RotateCw,
   List,
+  ChevronUp,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRecentRoutes } from "@/hooks/useRecentRoutes";
@@ -117,6 +119,17 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *     amber / red) — a free, keyless stand-in for Google's traffic line
  *   - Heading cone on the live location dot (device heading when the
  *     browser provides it, otherwise computed from successive fixes)
+ *
+ * v9 (mobile optimization suite):
+ *   - Search card auto-collapses into a one-line chip once a route is on
+ *     the map (tap to edit) — the map is the product on a phone
+ *   - Mobile bottom bar with distance / time / risk + a turn-by-turn
+ *     bottom sheet, so drivers never scroll off the map to read steps
+ *   - Floating controls move to the thumb zone (bottom-right), bigger
+ *     touch targets, safe-area aware; Leaflet +/- zoom hidden on touch
+ *     (pinch is the norm); 70dvh map height tracks mobile browser chrome
+ *   - 16px inputs on mobile (no iOS focus auto-zoom), bigger suggestion
+ *     tap targets (AddressInput)
  */
 
 const CANONICAL = `${SITE_URL}/tools/route-pulse`;
@@ -511,6 +524,11 @@ export default function RoutePulse() {
   const [previewIdx, setPreviewIdx] = useState<number | null>(null);
   // v8: turn-by-turn list collapsed by default (long routes = long lists).
   const [showSteps, setShowSteps] = useState(false);
+  // v9: mobile chrome state. searchCollapsed = the floating search card
+  // folds into a one-line chip once a route is displayed; mobileStepsOpen
+  // = the turn-by-turn bottom sheet (phones only) is up.
+  const [searchCollapsed, setSearchCollapsed] = useState(false);
+  const [mobileStepsOpen, setMobileStepsOpen] = useState(false);
   // Ticker so the "updated Xs ago" live indicator stays honest.
   const [nowTick, setNowTick] = useState(0);
 
@@ -557,6 +575,7 @@ export default function RoutePulse() {
   useEffect(() => {
     setPreviewIdx(null);
     setShowSteps(false);
+    setMobileStepsOpen(false);
     userPannedRef.current = false;
   }, [submitted]);
 
@@ -1045,6 +1064,13 @@ export default function RoutePulse() {
     hasRouteRef.current = hasRoute;
   }, [hasRoute]);
 
+  // v9: once a route is on the map, fold the search card into a chip so
+  // the map (and the route on it) gets the screen back. Editing the
+  // fields re-expands it; a fresh search re-collapses.
+  useEffect(() => {
+    if (hasRoute) setSearchCollapsed(true);
+  }, [hasRoute]);
+
   // Shared camera marker + popup for both the pre-search live layer and the
   // on-route layer. Camera stills 404 / go stale often, so broken images
   // hide themselves rather than showing a broken-image tile.
@@ -1077,6 +1103,41 @@ export default function RoutePulse() {
         </div>
       </Popup>
     </Marker>
+  );
+
+  // v9: one steps list, two homes — the desktop result-card panel and the
+  // mobile bottom sheet. Tapping a step flies the map to the maneuver (and
+  // closes the sheet if we're on a phone).
+  const stepsList = (
+    <ol className="divide-y divide-border/60">
+      {displayedManeuvers.map((m, i) => (
+        <li key={i}>
+          <button
+            type="button"
+            onClick={() => {
+              setMobileStepsOpen(false);
+              if (m.location[0] !== 0 || m.location[1] !== 0) {
+                mapRef.current?.flyTo([m.location[1], m.location[0]], 16, {
+                  duration: 0.6,
+                });
+              }
+            }}
+            title="Show this maneuver on the map"
+            className="flex w-full items-center gap-3 py-2.5 sm:py-2 px-1 text-left hover:bg-muted/60 rounded transition-colors"
+          >
+            <span className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
+              <ManeuverGlyph type={m.type} modifier={m.modifier} />
+            </span>
+            <span className="flex-1 text-sm">{m.instruction}</span>
+            <span className="text-xs text-muted-foreground shrink-0">
+              {m.distanceM >= 160
+                ? `${(m.distanceM / 1609.34).toFixed(1)} mi`
+                : `${Math.max(50, Math.round(m.distanceM / 0.3048 / 10) * 10)} ft`}
+            </span>
+          </button>
+        </li>
+      ))}
+    </ol>
   );
 
   return (
@@ -1122,7 +1183,7 @@ export default function RoutePulse() {
         <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen mb-8">
           <div
             ref={mapWrapperRef}
-            className="relative h-[70vh] max-h-[640px] min-h-[420px] w-full bg-muted"
+            className="relative h-[70dvh] max-h-[640px] min-h-[420px] w-full bg-muted"
           >
             <MapContainer
               ref={mapRef}
@@ -1333,8 +1394,43 @@ export default function RoutePulse() {
             )}
 
             {/* Floating glass search card — Google-Maps-style search-over-map
-                instead of a form stacked above the map. */}
-            <Card className="absolute z-[400] top-4 left-4 right-4 sm:right-auto sm:w-[380px] p-4 sm:p-5 bg-background/90 backdrop-blur-md shadow-xl border">
+                instead of a form stacked above the map. v9: once a route is
+                displayed it folds into a one-line chip (tap to edit) so the
+                map gets the screen back; on phones it also caps at 62dvh
+                with internal scroll so it can never cover the whole map. */}
+            <Card
+              className={`absolute z-[400] top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-auto sm:w-[380px] bg-background/90 backdrop-blur-md shadow-xl border ${
+                searchCollapsed && hasRoute
+                  ? "p-2.5 sm:p-3"
+                  : "p-4 sm:p-5 max-h-[62dvh] overflow-y-auto sm:max-h-none sm:overflow-visible"
+              }`}
+            >
+              {searchCollapsed && hasRoute ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchCollapsed(false)}
+                  title="Edit this search"
+                  className="flex w-full items-center gap-2 text-left"
+                >
+                  <RouteIcon className="w-4 h-4 shrink-0 text-primary" />
+                  <span className="flex-1 truncate text-sm">
+                    {origin} <span className="text-muted-foreground">→</span>{" "}
+                    {destination}
+                  </span>
+                  <Pencil className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                </button>
+              ) : (
+                <>
+                  {hasRoute && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchCollapsed(true)}
+                      title="Collapse search"
+                      className="absolute top-2 right-2 w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                  )}
               {/* Saved routes — driver-pinned favorites, always on top */}
               {!hasRoute && starred.length > 0 && (
                 <div className="mb-3 pb-3 border-b border-border/50">
@@ -1477,10 +1573,14 @@ export default function RoutePulse() {
                   {!routeQuery.isFetching && <ArrowRight className="w-4 h-4" />}
                 </Button>
               </form>
+                </>
+              )}
             </Card>
 
-            {/* Floating controls — locate me, basemap toggle, fullscreen */}
-            <div className="absolute z-[400] top-4 right-4 flex flex-col gap-2">
+            {/* Floating controls — locate me, basemap toggle, fullscreen.
+                v9: on phones these live in the bottom-right thumb zone with
+                bigger touch targets; on desktop they stay top-right. */}
+            <div className="absolute z-[400] bottom-28 right-3 sm:bottom-auto sm:top-4 sm:right-4 flex flex-col gap-2 pb-safe">
               <button
                 type="button"
                 onClick={handleLocateMe}
@@ -1493,7 +1593,7 @@ export default function RoutePulse() {
                         : "Click to re-center on you"
                       : "Find my location"
                 }
-                className={`w-9 h-9 rounded-md backdrop-blur-md border shadow-lg flex items-center justify-center transition-colors ${
+                className={`w-11 h-11 sm:w-9 sm:h-9 rounded-md backdrop-blur-md border shadow-lg flex items-center justify-center transition-colors ${
                   tracking && follow
                     ? "bg-blue-500/90 text-white border-blue-400"
                     : "bg-background/90 hover:bg-background"
@@ -1511,7 +1611,7 @@ export default function RoutePulse() {
                   setBasemap(m => (m === "light" ? "dark" : "light"))
                 }
                 title="Toggle map style"
-                className="w-9 h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
+                className="w-11 h-11 sm:w-9 sm:h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
               >
                 <Layers className="w-4 h-4" />
               </button>
@@ -1519,7 +1619,7 @@ export default function RoutePulse() {
                 type="button"
                 onClick={handleToggleFullscreen}
                 title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                className="w-9 h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
+                className="w-11 h-11 sm:w-9 sm:h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
               >
                 {isFullscreen ? (
                   <Minimize className="w-4 h-4" />
@@ -1530,7 +1630,7 @@ export default function RoutePulse() {
             </div>
 
             {locateError && (
-              <div className="absolute z-[400] top-[calc(4rem+7rem)] right-4 max-w-[220px] rounded-md bg-background/95 border shadow-lg px-3 py-2 text-xs text-destructive sm:top-32">
+              <div className="absolute z-[400] bottom-[13.5rem] right-3 max-w-[220px] rounded-md bg-background/95 border shadow-lg px-3 py-2 text-xs text-destructive sm:bottom-auto sm:top-32 sm:right-4">
                 {locateError}
               </div>
             )}
@@ -1580,6 +1680,69 @@ export default function RoutePulse() {
                 </>
               )}
             </div>
+
+            {/* v9 mobile bottom bar — the vital stats and the steps sheet
+                live on the map on phones, so drivers never scroll off it.
+                sm and up keep the result card below the map instead. */}
+            {hasRoute && (
+              <div className="sm:hidden absolute z-[400] bottom-3 left-3 right-3 flex items-center gap-2 rounded-xl bg-background/90 backdrop-blur-md border shadow-lg px-3 py-2.5">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold leading-tight">
+                    {(routeQuery.data!.route.distance / 1609.34).toFixed(1)}{" "}
+                    mi · {Math.round(routeQuery.data!.route.duration / 60)}{" "}
+                    min
+                  </p>
+                  <p className="text-[11px] text-muted-foreground leading-tight truncate">
+                    {riskInfo?.label ?? ""}
+                    {routeQuery.data!.route.incidents.length > 0 &&
+                      ` · ${routeQuery.data!.route.incidents.length} incident${routeQuery.data!.route.incidents.length === 1 ? "" : "s"}`}
+                    {routeQuery.data!.route.incidents.length === 0 &&
+                      " · no incidents"}
+                  </p>
+                </div>
+                {displayedManeuvers.length > 0 && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 shrink-0"
+                    onClick={() => setMobileStepsOpen(true)}
+                  >
+                    <List className="w-4 h-4" />
+                    Steps
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* v9 mobile turn-by-turn bottom sheet */}
+            {mobileStepsOpen && hasRoute && (
+              <div className="sm:hidden absolute inset-0 z-[450] flex flex-col justify-end">
+                <button
+                  type="button"
+                  aria-label="Close turn-by-turn"
+                  className="flex-1 bg-black/30"
+                  onClick={() => setMobileStepsOpen(false)}
+                />
+                <div className="rounded-t-2xl bg-background border-t shadow-2xl max-h-[65%] flex flex-col pb-safe">
+                  <div className="flex items-center justify-between px-4 py-3 border-b">
+                    <p className="text-sm font-semibold flex items-center gap-1.5">
+                      <List className="w-4 h-4" />
+                      Turn-by-turn · {displayedManeuvers.length} steps
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setMobileStepsOpen(false)}
+                      title="Close"
+                      className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="overflow-y-auto px-2 py-1">{stepsList}</div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1759,36 +1922,9 @@ export default function RoutePulse() {
                   </span>
                 </button>
                 {showSteps && (
-                  <ol className="mt-2 max-h-64 overflow-y-auto divide-y divide-border/60 pr-1">
-                    {displayedManeuvers.map((m, i) => (
-                      <li key={i}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (m.location[0] !== 0 || m.location[1] !== 0) {
-                              mapRef.current?.flyTo(
-                                [m.location[1], m.location[0]],
-                                16,
-                                { duration: 0.6 }
-                              );
-                            }
-                          }}
-                          title="Show this maneuver on the map"
-                          className="flex w-full items-center gap-3 py-2 px-1 text-left hover:bg-muted/60 rounded transition-colors"
-                        >
-                          <span className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
-                            <ManeuverGlyph type={m.type} modifier={m.modifier} />
-                          </span>
-                          <span className="flex-1 text-sm">{m.instruction}</span>
-                          <span className="text-xs text-muted-foreground shrink-0">
-                            {m.distanceM >= 160
-                              ? `${(m.distanceM / 1609.34).toFixed(1)} mi`
-                              : `${Math.max(50, Math.round(m.distanceM / 0.3048 / 10) * 10)} ft`}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ol>
+                  <div className="mt-2 max-h-64 overflow-y-auto pr-1">
+                    {stepsList}
+                  </div>
                 )}
               </div>
             )}
