@@ -1,0 +1,10 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "routepulse-cam-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+workers_dev = true
+
+# Secrets are never committed. After deploying, set:
+#   npx wrangler secret put TRIPCHECK_KEY
+# (ODOT TripCheck API subscription key — optional; the worker proxies
+# without it, but key-gated camera stills will then fail upstream.)
