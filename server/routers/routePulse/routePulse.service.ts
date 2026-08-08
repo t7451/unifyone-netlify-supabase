@@ -82,21 +82,9 @@ export function _resetGeocodeCacheForTests() {
   geocodeCache.clear();
 }
 
-/**
- * Resolves a free-text address to coordinates via Nominatim (OpenStreetMap's
- * free geocoder — no API key). Bias results toward the US since incident
- * coverage is Oregon/SW Washington today; callers doing national/global
- * routing later can drop or parameterize this.
- */
-export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
-  const trimmed = address.trim();
-  if (trimmed.length < 3) {
-    throw new GeocodingError("Enter a more complete address.");
-  }
-
-  const cached = readGeocodeCache(trimmed);
-  if (cached) return cached;
-
+async function geocodeViaNominatim(
+  trimmed: string
+): Promise<GeocodedPoint | null> {
   const url =
     `${ENV.nominatimUrl}/search?format=jsonv2&limit=1&countrycodes=us` +
     `&q=${encodeURIComponent(trimmed)}`;
@@ -133,21 +121,88 @@ export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
   }>;
 
   const top = results[0];
-  if (!top) {
-    throw new GeocodingError(
-      `Couldn't find "${trimmed}". Try adding a city and state.`
-    );
-  }
+  if (!top) return null;
 
   const lat = parseFloat(top.lat);
   const lng = parseFloat(top.lon);
-  if (Number.isNaN(lat) || Number.isNaN(lng)) {
+  if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+
+  return { lat, lng, displayName: top.display_name };
+}
+
+/**
+ * Fallback geocoder for real US addresses Nominatim's plain-text matcher
+ * chokes on — most commonly renamed/accented official street names (e.g.
+ * Portland's "SE César E. Chávez Blvd", formerly 39th Ave) where a user's
+ * plain-ASCII or slightly-off typed version doesn't fuzzy-match OSM's name
+ * tokenization, even though it's an unambiguous, correct USPS address.
+ * The Census Bureau's geocoder is free, keyless, and built directly on
+ * TIGER/Line address ranges, so it's materially more tolerant of exactly
+ * this kind of variation. Never throws — a miss here just means "no match
+ * from either geocoder," which the caller turns into the NOT_FOUND message.
+ */
+async function geocodeViaCensus(
+  trimmed: string
+): Promise<GeocodedPoint | null> {
+  const url =
+    `${ENV.censusGeocoderUrl}?benchmark=Public_AR_Current&format=json` +
+    `&address=${encodeURIComponent(trimmed)}`;
+
+  try {
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) return null;
+
+    const body = (await res.json()) as {
+      result?: {
+        addressMatches?: Array<{
+          coordinates: { x: number; y: number };
+          matchedAddress: string;
+        }>;
+      };
+    };
+
+    const top = body.result?.addressMatches?.[0];
+    if (!top) return null;
+
+    const lat = top.coordinates.y;
+    const lng = top.coordinates.x;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+    return { lat, lng, displayName: top.matchedAddress };
+  } catch (err) {
+    // Best-effort fallback — a Census outage should degrade to the normal
+    // "couldn't find that address" message, not a hard 502.
+    console.warn("[routePulse] Census geocoder fallback failed:", err);
+    return null;
+  }
+}
+
+/**
+ * Resolves a free-text address to coordinates. Tries Nominatim
+ * (OpenStreetMap's free geocoder) first, then falls back to the US Census
+ * Bureau's free geocoder for real addresses Nominatim can't fuzzy-match
+ * (see geocodeViaCensus). Bias toward the US since incident coverage is
+ * Oregon/SW Washington today; callers doing national/global routing later
+ * can drop or parameterize this.
+ */
+export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
+  const trimmed = address.trim();
+  if (trimmed.length < 3) {
+    throw new GeocodingError("Enter a more complete address.");
+  }
+
+  const cached = readGeocodeCache(trimmed);
+  if (cached) return cached;
+
+  const point =
+    (await geocodeViaNominatim(trimmed)) ?? (await geocodeViaCensus(trimmed));
+
+  if (!point) {
     throw new GeocodingError(
       `Couldn't find "${trimmed}". Try adding a city and state.`
     );
   }
 
-  const point: GeocodedPoint = { lat, lng, displayName: top.display_name };
   writeGeocodeCache(trimmed, point);
   return point;
 }

@@ -62,8 +62,7 @@ export const ENV = {
   squareLocationId: process.env.SQUARE_LOCATION_ID ?? "",
   squareWebhookSignatureKey: process.env.SQUARE_WEBHOOK_SIGNATURE_KEY ?? "",
   squareEnvironment: (process.env.SQUARE_ENVIRONMENT ?? "production") as
-    | "sandbox"
-    | "production",
+    "sandbox" | "production",
   // Supabase backs the credit-metering + Stripe billing layer and optional
   // Realtime — it is NOT the primary database (that's Neon via DATABASE_URL)
   // and NOT the primary auth provider. See docs/DATABASE_ARCHITECTURE.md.
@@ -109,6 +108,14 @@ export const ENV = {
   nominatimUserAgent:
     process.env.NOMINATIM_USER_AGENT ??
     "UnifyOne-RoutePulse/1.0 (+https://1commerce.online/tools/route-pulse)",
+  // US Census Bureau Geocoder — free, no API key, no rate-limit policy like
+  // Nominatim's. Used as a fallback when Nominatim can't fuzzy-match a real
+  // US address (e.g. renamed streets, accented official names like
+  // Portland's "César E. Chávez Blvd" vs. a plain-ASCII user-typed variant).
+  // https://geocoding.geo.census.gov/geocoder/Geocoding_Services.html
+  censusGeocoderUrl:
+    process.env.CENSUS_GEOCODER_URL ??
+    "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress",
   // Route-scoring AI runs through the existing Kai model router
   // (server/lib/kaiModels + server/_core/llm) — OpenRouter free-tier
   // models with Groq/Vercel AI Gateway fallback. No dedicated key needed.
