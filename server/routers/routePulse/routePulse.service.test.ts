@@ -26,6 +26,8 @@ vi.mock("../../_core/env", () => ({
     tomtomApiKey: "",
     nominatimUrl: "https://nominatim.openstreetmap.org",
     nominatimUserAgent: "UnifyOne-RoutePulse/1.0 (+https://example.com)",
+    censusGeocoderUrl:
+      "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress",
   },
 }));
 
@@ -74,8 +76,21 @@ function makeRoute(
  * order/count of geocode vs. routing calls (origin+destination geocode fire
  * concurrently via Promise.all).
  */
+function censusResult(lat: number, lng: number, matchedAddress: string) {
+  return {
+    result: {
+      addressMatches: [{ coordinates: { x: lng, y: lat }, matchedAddress }],
+    },
+  };
+}
+
+function censusNoMatch() {
+  return { result: { addressMatches: [] } };
+}
+
 function installFetchMock(opts: {
   geocode?: (address: string) => unknown | null; // null => geocoding "not found"
+  census?: (address: string) => unknown | null; // null => no Census match either
   osrm?: () => { ok: boolean; body?: unknown } | "network-error";
   tomtom?: () => { ok: boolean; body?: unknown } | "network-error";
 }) {
@@ -83,6 +98,7 @@ function installFetchMock(opts: {
     opts.geocode ??
     (() =>
       nominatimResult(ORIGIN_COORDS.lat, ORIGIN_COORDS.lng, "Test Address"));
+  const censusFn = opts.census ?? (() => censusNoMatch());
 
   global.fetch = vi.fn(async (url: string) => {
     const u = String(url);
@@ -93,6 +109,13 @@ function installFetchMock(opts: {
       const result = geocodeFn(addressMatch);
       if (result === null) return jsonResponse([]);
       return jsonResponse(result);
+    }
+    if (u.includes("geocoding.geo.census.gov")) {
+      const addressMatch = decodeURIComponent(
+        u.match(/[?&]address=([^&]+)/)?.[1] ?? ""
+      );
+      const result = censusFn(addressMatch);
+      return jsonResponse(result === null ? censusNoMatch() : result);
     }
     if (u.includes("router.project-osrm.org")) {
       if (!opts.osrm)
@@ -180,10 +203,59 @@ describe("routePulse.service — geocoding (Nominatim/OSM)", () => {
     }
   );
 
-  it("throws a clear NOT_FOUND when Nominatim returns no results", async () => {
-    installFetchMock({ geocode: () => [] });
+  it("throws a clear NOT_FOUND when both Nominatim and Census find nothing", async () => {
+    installFetchMock({ geocode: () => [], census: () => censusNoMatch() });
     await expect(
       service.geocodeAddress("asdkjaslkdjaslkdj nonexistent place")
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("falls back to the Census geocoder when Nominatim can't match a real address", async () => {
+    // Regression test: Nominatim's plain-text matcher can miss real,
+    // unambiguous US addresses on renamed/accented official street names
+    // (e.g. Portland's SE César E. Chávez Blvd) even though Google and the
+    // Census Bureau's TIGER/Line-backed geocoder resolve them fine.
+    installFetchMock({
+      geocode: () => [],
+      census: () =>
+        censusResult(
+          45.4989,
+          -122.6382,
+          "4715 SE CESAR E CHAVEZ BLVD, PORTLAND, OR, 97202"
+        ),
+    });
+
+    const point = await service.geocodeAddress(
+      "4715 SE Cesar Estrada Chavez Blvd, Portland, OR 97202"
+    );
+
+    expect(point.lat).toBeCloseTo(45.4989);
+    expect(point.lng).toBeCloseTo(-122.6382);
+    expect(point.displayName).toContain("CESAR E CHAVEZ");
+  });
+
+  it("never calls Census when Nominatim already found a match", async () => {
+    installFetchMock({});
+    await service.geocodeAddress(ORIGIN_ADDR);
+    const calledCensus = (global.fetch as any).mock.calls.some((c: any[]) =>
+      String(c[0]).includes("geocoding.geo.census.gov")
+    );
+    expect(calledCensus).toBe(false);
+  });
+
+  it("treats a Census outage as a plain NOT_FOUND, not a 502", async () => {
+    installFetchMock({ geocode: () => [] });
+    (global.fetch as any).mockImplementation(async (url: string) => {
+      const u = String(url);
+      if (u.includes("geocoding.geo.census.gov")) {
+        throw new Error("ECONNREFUSED");
+      }
+      if (u.includes("nominatim")) return jsonResponse([]);
+      throw new Error(`Unexpected fetch URL in test: ${u}`);
+    });
+
+    await expect(
+      service.geocodeAddress("some real address that census can't reach")
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
