@@ -314,6 +314,89 @@ describe("routePulse.service — geocoding (Nominatim/OSM)", () => {
   });
 });
 
+describe("routePulse.service — suggestions (typeahead)", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns display names from Nominatim for a valid query", async () => {
+    global.fetch = vi.fn().mockResolvedValue(
+      jsonResponse([
+        { display_name: "123 SW Broadway, Portland, OR, USA" },
+        { display_name: "123 SW Broadway, Denver, CO, USA" },
+      ])
+    );
+
+    const result = await service.suggestAddresses("123 SW Broadway");
+
+    expect(result.suggestions).toHaveLength(2);
+    expect(result.suggestions[0]).toContain("Portland");
+  });
+
+  it("returns empty suggestions for queries under 4 characters", async () => {
+    global.fetch = vi.fn();
+
+    const result = await service.suggestAddresses("123");
+
+    expect(result.suggestions).toEqual([]);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("returns empty suggestions for whitespace-only input", async () => {
+    global.fetch = vi.fn();
+
+    const result = await service.suggestAddresses("   ");
+
+    expect(result.suggestions).toEqual([]);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("sends the correct User-Agent header on suggestion calls", async () => {
+    global.fetch = vi.fn().mockResolvedValue(jsonResponse([]));
+
+    await service.suggestAddresses("Broadway, Portland");
+
+    const call = (global.fetch as any).mock.calls[0];
+    expect(call[1].headers["User-Agent"]).toContain("RoutePulse");
+  });
+
+  it("degrades to empty suggestions when Nominatim is unreachable", async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error("ECONNREFUSED"));
+
+    const result = await service.suggestAddresses("Broadway, Portland");
+
+    expect(result.suggestions).toEqual([]);
+  });
+
+  it("degrades to empty suggestions when Nominatim returns non-OK", async () => {
+    global.fetch = vi.fn().mockResolvedValue(jsonResponse({ error: "blocked" }, false));
+
+    const result = await service.suggestAddresses("Broadway, Portland");
+
+    expect(result.suggestions).toEqual([]);
+  });
+
+  it("filters out malformed display names from the response", async () => {
+    global.fetch = vi.fn().mockResolvedValue(
+      jsonResponse([
+        { display_name: "Valid Address, Portland, OR" },
+        { display_name: "" },
+        { display_name: null },
+        { display_name: "Another Valid, Portland, OR" },
+      ])
+    );
+
+    const result = await service.suggestAddresses("Portland");
+
+    expect(result.suggestions).toHaveLength(2);
+    expect(result.suggestions[0]).toBe("Valid Address, Portland, OR");
+    expect(result.suggestions[1]).toBe("Another Valid, Portland, OR");
+  });
+});
+
 describe("routePulse.service — getRoute (address-based)", () => {
   beforeEach(() => {
     vi.restoreAllMocks();

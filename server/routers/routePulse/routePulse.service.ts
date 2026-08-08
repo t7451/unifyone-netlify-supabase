@@ -207,6 +207,50 @@ export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
   return point;
 }
 
+/**
+ * Lightweight address suggestion lookup for typeahead UI. Calls Nominatim
+ * with a higher result limit and returns display names only — no coordinate
+ * resolution, no Census fallback. Designed to be called on every keystroke
+ * (with client-side debounce) so it must stay fast and never throw.
+ *
+ * Nominatim's usage policy asks for no more than 1 req/sec; the client
+ * debounces at 400ms and only fires after 4+ characters to stay well under
+ * that threshold in practice.
+ */
+export async function suggestAddresses(
+  query: string
+): Promise<{ suggestions: string[] }> {
+  const trimmed = query.trim();
+  if (trimmed.length < 4) return { suggestions: [] };
+
+  const url =
+    `${ENV.nominatimUrl}/search?format=jsonv2&limit=5&countrycodes=us` +
+    `&q=${encodeURIComponent(trimmed)}`;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": ENV.nominatimUserAgent,
+        Accept: "application/json",
+      },
+    });
+    if (!res.ok) return { suggestions: [] };
+
+    const results = (await res.json()) as Array<{
+      display_name: string;
+    }>;
+
+    return {
+      suggestions: results
+        .map(r => r.display_name)
+        .filter((s): s is string => typeof s === "string" && s.length > 0),
+    };
+  } catch (err) {
+    console.warn("[routePulse] Nominatim suggestion failed:", err);
+    return { suggestions: [] };
+  }
+}
+
 export type RouteIncident = {
   id: string;
   incident_type: string;

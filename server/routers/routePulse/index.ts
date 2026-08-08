@@ -18,6 +18,19 @@ export const routePulseRouter = router({
       return service.geocodeAddress(input.address);
     }),
 
+  // Public: lightweight address suggestion lookup for typeahead UI.
+  // Rate-limited independently with a smaller burst budget since it's fired
+  // on every keystroke (with client debounce).
+  suggest: publicRateLimitedProcedure(publicFormLimiter, "routepulse:suggest")
+    .input(
+      z.object({
+        query: z.string().trim().min(2).max(300),
+      })
+    )
+    .query(async ({ input }) => {
+      return service.suggestAddresses(input.query);
+    }),
+
   // Public: request a route by address. Rate-limited since it fans out to
   // Nominatim + OSRM + Supabase + (conditionally) the AI router per call.
   getRoute: publicRateLimitedProcedure(publicFormLimiter, "routepulse:getRoute")
