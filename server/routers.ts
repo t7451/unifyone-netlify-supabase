@@ -13,6 +13,7 @@ import { teamRouter } from "./routers/team";
 import { socialRouter } from "./routers/social";
 import { referralRouter } from "./routers/referral";
 import { leadsRouter } from "./routers/leads";
+import { routePulseRouter } from "./routers/routePulse";
 import { automationRouter } from "./routers/automation";
 import { notificationsRouter } from "./routers/notifications";
 import { themesRouter } from "./routers/themes";
@@ -110,6 +111,7 @@ export const appRouter = router({
   social: socialRouter,
   referral: referralRouter,
   leads: leadsRouter,
+  routePulse: routePulseRouter,
   automation: automationRouter,
   notifications: notificationsRouter,
   themes: themesRouter,

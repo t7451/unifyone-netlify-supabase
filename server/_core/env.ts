@@ -62,8 +62,7 @@ export const ENV = {
   squareLocationId: process.env.SQUARE_LOCATION_ID ?? "",
   squareWebhookSignatureKey: process.env.SQUARE_WEBHOOK_SIGNATURE_KEY ?? "",
   squareEnvironment: (process.env.SQUARE_ENVIRONMENT ?? "production") as
-    | "sandbox"
-    | "production",
+    "sandbox" | "production",
   // Supabase backs the credit-metering + Stripe billing layer and optional
   // Realtime — it is NOT the primary database (that's Neon via DATABASE_URL)
   // and NOT the primary auth provider. See docs/DATABASE_ARCHITECTURE.md.
@@ -90,6 +89,36 @@ export const ENV = {
   // Built Media clipping platform URL (ksksrbiz-arch/built-media).
   builtMediaUrl: process.env.BUILT_MEDIA_URL ?? "",
   builtMediaApiKey: process.env.BUILT_MEDIA_API_KEY ?? "",
+  // ── RoutePulse (hyperlocal route intelligence) ──
+  // OSRM routing engine — public demo server by default, swap for a
+  // self-hosted instance in production (see docs).
+  osrmUrl: process.env.OSRM_URL ?? "https://router.project-osrm.org",
+  // Road511 unified 511 API (57 US/CA jurisdictions).
+  road511ApiKey: process.env.R511_API_KEY ?? "",
+  // ODOT TripCheck API (Oregon-native incidents/cameras/road conditions).
+  tripcheckApiKey: process.env.TRIPCHECK_KEY ?? "",
+  // TomTom Routing API — fallback used only if OSRM is unreachable/down.
+  // Free tier: 2,500 requests/day. https://developer.tomtom.com
+  tomtomApiKey: process.env.TOMTOM_API_KEY ?? "",
+  // Nominatim (OpenStreetMap) geocoding — free, no API key. Usage policy
+  // requires a descriptive User-Agent identifying the app + contact URL.
+  // https://operations.osmfoundation.org/policies/nominatim/
+  nominatimUrl:
+    process.env.NOMINATIM_URL ?? "https://nominatim.openstreetmap.org",
+  nominatimUserAgent:
+    process.env.NOMINATIM_USER_AGENT ??
+    "UnifyOne-RoutePulse/1.0 (+https://1commerce.online/tools/route-pulse)",
+  // US Census Bureau Geocoder — free, no API key, no rate-limit policy like
+  // Nominatim's. Used as a fallback when Nominatim can't fuzzy-match a real
+  // US address (e.g. renamed streets, accented official names like
+  // Portland's "César E. Chávez Blvd" vs. a plain-ASCII user-typed variant).
+  // https://geocoding.geo.census.gov/geocoder/Geocoding_Services.html
+  censusGeocoderUrl:
+    process.env.CENSUS_GEOCODER_URL ??
+    "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress",
+  // Route-scoring AI runs through the existing Kai model router
+  // (server/lib/kaiModels + server/_core/llm) — OpenRouter free-tier
+  // models with Groq/Vercel AI Gateway fallback. No dedicated key needed.
 };
 
 /**

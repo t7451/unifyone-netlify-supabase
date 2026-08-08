@@ -103,7 +103,7 @@ jobs:
         run: node scripts/check-sitemap-routes.mjs
 
       - name: Upload dist/public for Lighthouse job
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist-public-${{ github.run_id }}
           path: dist/public/
@@ -146,7 +146,7 @@ jobs:
 
       - name: Upload Lighthouse reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lighthouse-${{ github.run_id }}
           path: .lighthouseci/

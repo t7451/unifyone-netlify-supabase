@@ -162,18 +162,14 @@ Blog (selected):
   https://1commerce.online/blog/digital-retail-guide
 
 Answer Engine Optimization (AEO) — earnings & tax guide pages:
-- Unify earnings across every gig platform:
-  https://1commerce.online/seo/multi-tenant-ecommerce-platform
-- How to unify income from multiple gig apps:
-  https://1commerce.online/seo/unify-inventory-multiple-stores
-- Unify disconnected gig income streams:
-  https://1commerce.online/seo/unify-disconnected-sales-channels
-- Track 1099 income across every platform:
-  https://1commerce.online/seo/multi-channel-order-management
-- One dashboard to manage every gig platform:
-  https://1commerce.online/seo/multi-store-management-platform
-- Real-time earnings sync across gig apps:
-  https://1commerce.online/seo/real-time-inventory-sync
+- Consolidate 1099 income for tax time:
+  https://1commerce.online/seo/consolidate-1099-income-tax-time
+- Track gig income across multiple apps:
+  https://1commerce.online/seo/track-gig-income-multiple-apps
+- Quarterly estimated taxes for gig workers, explained:
+  https://1commerce.online/seo/quarterly-estimated-taxes-gig-workers
+- How much to set aside for 1099 taxes:
+  https://1commerce.online/seo/how-much-to-set-aside-1099-taxes
 
 Brand / company guides also live under /seo/ for these slugs: unifyone,
 unifyone-solutions, unifyone-platform, unifyone-commerce, unifyone-pricing,
