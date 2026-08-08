@@ -99,7 +99,17 @@ export const ENV = {
   tripcheckApiKey: process.env.TRIPCHECK_KEY ?? "",
   // TomTom Routing API — fallback used only if OSRM is unreachable/down.
   // Free tier: 2,500 requests/day. https://developer.tomtom.com
+  // v10: the same key also powers TomTom Traffic (Incident Details + Flow
+  // Segment Data) which grounds the AI route pick with live measured
+  // speeds and incidents alongside the agency feeds.
   tomtomApiKey: process.env.TOMTOM_API_KEY ?? "",
+  // OpenWebNinja Waze API — live crowdsourced alerts (accidents, hazards,
+  // jams, police) used as AI grounding data. RapidAPI key by default;
+  // set OPENWEBNINJA_WAZE_URL to a native OpenWebNinja endpoint if using
+  // an ak_... key instead of going through the RapidAPI gateway.
+  openwebninjaApiKey: process.env.OPENWEBNINJA_API_KEY ?? "",
+  openwebninjaWazeUrl:
+    process.env.OPENWEBNINJA_WAZE_URL ?? "https://waze.p.rapidapi.com",
   // Nominatim (OpenStreetMap) geocoding — free, no API key. Usage policy
   // requires a descriptive User-Agent identifying the app + contact URL.
   // https://operations.osmfoundation.org/policies/nominatim/
