@@ -43,6 +43,7 @@ import {
   Star,
   Copy,
   Route as RouteIcon,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRecentRoutes } from "@/hooks/useRecentRoutes";
@@ -68,6 +69,14 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *   - Live incident auto-refresh with an "updated Xs ago" pulse
  *   - One-tap plain-text trip summary for SMS/dispatch
  *   - Starred saved routes (localStorage, cross-tab synced)
+ *
+ * v5 (AI layer v2, server-driven):
+ *   - 0-100 risk meter per route, computed server-side (deterministic,
+ *     severity-weighted) with a local fallback for pre-v5 cached responses
+ *   - Estimated delay minutes per route option in the comparison strip
+ *   - Leave-by buffer now uses the server's delay estimate, not a
+ *     client-side lookup table
+ *   - AI confidence chip on the explanation (high/medium/low)
  */
 
 const CANONICAL = `${SITE_URL}/tools/route-pulse`;
@@ -174,13 +183,23 @@ const BASEMAPS = {
 } as const;
 
 // Minutes of buffer each incident severity adds to the leave-by estimate.
-// Deliberately conservative — a closure or crash on your path costs real
-// time, and gig drivers would rather be 3 minutes early than 10 late.
+// Fallback only — v5+ responses carry a server-computed delayEstimateMin
+// (same numbers, computed in routePulse.service.ts) which takes precedence.
 const RISK_BUFFER_MIN: Record<string, number> = {
   minor: 2,
   moderate: 5,
   major: 10,
   critical: 15,
+};
+
+// Mirrors SEVERITY_RISK_WEIGHT in server/routers/routePulse/
+// routePulse.service.ts — used only to score pre-v5 cached responses
+// (2-min TTL) that predate server-computed riskScore.
+const LOCAL_RISK_WEIGHT: Record<string, number> = {
+  minor: 3,
+  moderate: 8,
+  major: 20,
+  critical: 40,
 };
 
 const fmtTime = (d: Date) =>
@@ -512,26 +531,54 @@ export default function RoutePulse() {
     return null;
   }, [routeQuery.data, routeLine, activeIncidents]);
 
-  // Risk score: a genuine differentiator from Google Maps — we have
-  // proactive incident data (ODOT/Road511) that mainstream apps don't
-  // surface with a plain-English score.
-  const riskScore = useMemo(() => {
+  // Risk: prefer the server's deterministic 0-100 score (v5+). Pre-v5
+  // cached responses (2-min TTL) lack it — fall back to the same weights
+  // computed locally so the meter never disappears mid-rollout.
+  const riskInfo = useMemo(() => {
     if (!routeQuery.data) return null;
-    const incidents = routeQuery.data.route.incidents;
-    if (incidents.length === 0) return { label: "Low Risk", level: "low" as const };
-    const hasCritical = incidents.some(i => i.severity === "critical");
-    const hasMajor = incidents.some(i => i.severity === "major");
-    const hasModerate = incidents.some(i => i.severity === "moderate");
-    if (hasCritical) return { label: "Critical Risk", level: "critical" as const };
-    if (hasMajor) return { label: "High Risk", level: "high" as const };
-    if (hasModerate) return { label: "Moderate Risk", level: "moderate" as const };
-    return { label: "Low Risk", level: "low" as const };
+    const route = routeQuery.data.route;
+    const localScore = Math.min(
+      100,
+      route.incidents.reduce(
+        (sum, i) => sum + (LOCAL_RISK_WEIGHT[i.severity] ?? 3),
+        0
+      )
+    );
+    const score = (route.riskScore as number | undefined) ?? localScore;
+    const level =
+      score >= 40
+        ? ("critical" as const)
+        : score >= 20
+          ? ("high" as const)
+          : score >= 8
+            ? ("moderate" as const)
+            : ("low" as const);
+    const label =
+      level === "critical"
+        ? "Critical Risk"
+        : level === "high"
+          ? "High Risk"
+          : level === "moderate"
+            ? "Moderate Risk"
+            : "Low Risk";
+    return { score, level, label };
   }, [routeQuery.data]);
 
-  // Arrive-by planner: leave-by = arrival time minus drive time minus a
-  // per-incident risk buffer. The buffer is the differentiator — Google
-  // adjusts for traffic; we adjust for the specific crash/closure on your
-  // path and say so in plain English.
+  // Server-reported AI confidence on the route pick (v5+). "none" (or a
+  // missing field on pre-v5 cached responses) means the deterministic
+  // fallback picked the route — we don't badge those.
+  const aiConfidence =
+    ((routeQuery.data?.confidence as string | undefined) ?? "none") as
+      | "high"
+      | "medium"
+      | "low"
+      | "none";
+
+  // Arrive-by planner: leave-by = arrival time minus drive time minus the
+  // server's estimated incident delay (falls back to the local severity
+  // table for pre-v5 cached responses). The buffer is the differentiator —
+  // Google adjusts for traffic; we adjust for the specific crash/closure
+  // on your path and say so in plain English.
   const leaveByInfo = useMemo(() => {
     if (!routeQuery.data || !arriveBy) return null;
     const [h, m] = arriveBy.split(":").map(Number);
@@ -543,10 +590,13 @@ export default function RoutePulse() {
     if (arrive.getTime() < Date.now()) {
       arrive.setDate(arrive.getDate() + 1);
     }
-    const bufferMin = routeQuery.data.route.incidents.reduce(
+    const localBuffer = routeQuery.data.route.incidents.reduce(
       (sum, i) => sum + (RISK_BUFFER_MIN[i.severity] ?? 2),
       0
     );
+    const bufferMin =
+      (routeQuery.data.route.delayEstimateMin as number | undefined) ??
+      localBuffer;
     const driveMin = routeQuery.data.route.duration / 60;
     const leave = new Date(arrive.getTime() - (driveMin + bufferMin) * 60_000);
     return { leave, bufferMin };
@@ -577,7 +627,7 @@ export default function RoutePulse() {
     const mins = Math.round(d.route.duration / 60);
     const lines = [
       `RoutePulse: ${d.origin.displayName.split(",")[0]} → ${d.destination.displayName.split(",")[0]}`,
-      `${miles} mi · ~${mins} min · ${d.route.incidents.length} incident${d.route.incidents.length === 1 ? "" : "s"}${riskScore ? ` (${riskScore.label})` : ""}`,
+      `${miles} mi · ~${mins} min · ${d.route.incidents.length} incident${d.route.incidents.length === 1 ? "" : "s"}${riskInfo ? ` (${riskInfo.label}, ${riskInfo.score}/100)` : ""}`,
     ];
     if (leaveByInfo) {
       lines.push(
@@ -1005,27 +1055,27 @@ export default function RoutePulse() {
                 {(routeQuery.data!.route.distance / 1609.34).toFixed(1)} mi ·{" "}
                 {Math.round(routeQuery.data!.route.duration / 60)} min
               </p>
-              {riskScore && (
+              {riskInfo && (
                 <Badge
                   variant="outline"
                   className={
-                    riskScore.level === "low"
+                    riskInfo.level === "low"
                       ? "border-emerald-500/30 text-emerald-600 bg-emerald-500/10"
-                      : riskScore.level === "moderate"
+                      : riskInfo.level === "moderate"
                         ? "border-amber-500/30 text-amber-600 bg-amber-500/10"
-                        : riskScore.level === "high"
+                        : riskInfo.level === "high"
                           ? "border-orange-500/30 text-orange-600 bg-orange-500/10"
                           : "border-red-500/30 text-red-600 bg-red-500/10"
                   }
                 >
-                  {riskScore.level === "low" ? (
+                  {riskInfo.level === "low" ? (
                     <ShieldCheck className="w-3 h-3 mr-1" />
-                  ) : riskScore.level === "critical" ? (
+                  ) : riskInfo.level === "critical" ? (
                     <ShieldAlert className="w-3 h-3 mr-1" />
                   ) : (
                     <Shield className="w-3 h-3 mr-1" />
                   )}
-                  {riskScore.label}
+                  {riskInfo.label}
                 </Badge>
               )}
               {routeQuery.data!.cached && (
@@ -1071,6 +1121,32 @@ export default function RoutePulse() {
                 </Button>
               </div>
             </div>
+
+            {/* 0-100 risk meter — a number a driver can compare across
+                routes, not just a color. Google shows a red line; we show
+                *how much* risk, and why. */}
+            {riskInfo && (
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      riskInfo.level === "low"
+                        ? "bg-emerald-500"
+                        : riskInfo.level === "moderate"
+                          ? "bg-amber-500"
+                          : riskInfo.level === "high"
+                            ? "bg-orange-500"
+                            : "bg-red-600"
+                    }`}
+                    style={{ width: `${Math.max(riskInfo.score, 2)}%` }}
+                  />
+                </div>
+                <span className="text-xs font-medium text-muted-foreground shrink-0">
+                  Risk {riskInfo.score}/100
+                </span>
+              </div>
+            )}
+
             <div className="text-xs text-muted-foreground space-y-0.5">
               <p>
                 <span className="font-medium text-foreground">From:</span>{" "}
@@ -1081,9 +1157,17 @@ export default function RoutePulse() {
                 {routeQuery.data!.destination.displayName}
               </p>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed pt-2 border-t">
-              {routeQuery.data!.explanation}
-            </p>
+            <div className="pt-2 border-t space-y-1.5">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {routeQuery.data!.explanation}
+              </p>
+              {aiConfidence !== "none" && (
+                <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Sparkles className="w-3 h-3" />
+                  AI route pick · {aiConfidence} confidence
+                </p>
+              )}
+            </div>
 
             {/* Arrive-by planner — leave-time with an incident-sized buffer */}
             <div className="flex items-center gap-2 flex-wrap pt-4 border-t">
@@ -1133,6 +1217,8 @@ export default function RoutePulse() {
                   {allRoutes.map((alt, i) => {
                     const isChosen = i === chosenIdx;
                     const isDisplayed = i === displayedIdx;
+                    const delayMin =
+                      (alt.delayEstimateMin as number | undefined) ?? 0;
                     return (
                       <button
                         key={i}
@@ -1169,6 +1255,7 @@ export default function RoutePulse() {
                           {alt.incidents.length === 0
                             ? "No incidents"
                             : `${alt.incidents.length} incident${alt.incidents.length === 1 ? "" : "s"}`}
+                          {delayMin > 0 && ` · est. +${delayMin} min`}
                         </span>
                       </button>
                     );
@@ -1288,15 +1375,17 @@ export default function RoutePulse() {
           <p>
             A closed lane or a fresh crash can add 15+ minutes to a delivery or
             rideshare trip before mainstream traffic apps catch up. RoutePulse
-            checks live incident feeds along your route and uses free-tier AI to
-            explain what's actually happening — not just a red line on a map.
+            checks live incident feeds along your route, scores every option
+            0-100 by incident severity, and uses AI to explain what's actually
+            happening — not just a red line on a map.
           </p>
           <p>
             Set an arrive-by time and RoutePulse tells you when to leave,
-            padding the estimate by the severity of incidents actually on your
-            path. Compare every route option side by side, speak your addresses
-            instead of typing, and copy a plain-text trip summary for dispatch
-            — all without an account.
+            padding the estimate by the delay your route's incidents are
+            expected to cost. Compare every route option side by side with
+            estimated delay minutes, speak your addresses instead of typing,
+            and copy a plain-text trip summary for dispatch — all without an
+            account.
           </p>
           <p>
             Built entirely on free, open infrastructure: addresses are resolved
