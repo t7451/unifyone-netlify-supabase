@@ -6,6 +6,8 @@ import {
   Marker,
   Polyline,
   Popup,
+  Circle,
+  ScaleControl,
   ZoomControl,
   useMap,
   useMapEvents,
@@ -86,6 +88,17 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *     the multi-agency aggregation is visible at a glance
  *   - Optional Cloudflare camera proxy (VITE_ROUTEPULSE_CAM_PROXY) so
  *     TripCheck stills load without exposing the subscription key
+ *
+ * v7 (realtime location + smoothness):
+ *   - Live location tracking: one click starts watchPosition with an
+ *     accuracy ring; the blue dot follows you in follow-me mode, any map
+ *     drag detaches follow (Google Maps behavior), click again to
+ *     re-center, click once more to stop
+ *   - "Use current location as origin" — one-tap reverse-geocoded origin
+ *     for the most common gig-driver flow (route from where I am now)
+ *   - Scale bar, fly-to-bounds animations, finer zoom snapping
+ *   - Auto-fit no longer yanks the map: once you've panned manually, the
+ *     60s incident refresh leaves your viewport alone until the next search
  */
 
 const CANONICAL = `${SITE_URL}/tools/route-pulse`;
@@ -281,6 +294,27 @@ function sourceLabel(source: string | null | undefined): string | null {
   return SOURCE_LABEL[source] ?? null;
 }
 
+/** Shared Nominatim reverse-geocoder — map clicks and the "use current
+ *  location" button both resolve coordinates to an address through this. */
+async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+      {
+        headers: {
+          "User-Agent": "UnifyOne-RoutePulse/1.0 (+https://1commerce.online)",
+          Accept: "application/json",
+        },
+      }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { display_name?: string };
+    return data.display_name ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Handles map clicks for reverse-geocoding origin/destination.
  * Clicking the map when an input is empty sets that point via reverse geocode.
@@ -296,36 +330,49 @@ function MapClickHandler({
     click: async e => {
       if (disabled) return;
       const { lat, lng } = e.latlng;
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
-          {
-            headers: {
-              "User-Agent": "UnifyOne-RoutePulse/1.0 (+https://1commerce.online)",
-              Accept: "application/json",
-            },
-          }
-        );
-        if (!res.ok) return;
-        const data = (await res.json()) as { display_name?: string };
-        if (data.display_name) {
-          onSetAddress(data.display_name);
-          toast.success("Location set from map click");
-        }
-      } catch {
-        // silent — map click is a convenience, not a hard dependency
+      const addr = await reverseGeocode(lat, lng);
+      if (addr) {
+        onSetAddress(addr);
+        toast.success("Location set from map click");
       }
     },
   });
   return null;
 }
 
-/** Recenters/fits the map whenever the bounds it's given change. */
-function FitBounds({ bounds }: { bounds: LatLngBoundsExpression | null }) {
+/**
+ * Any user-initiated drag: detaches follow-me mode (Google Maps behavior —
+ * tracking continues, the locate button then offers one-tap re-center) and
+ * suspends auto-fit so the periodic incident refresh can't yank the map
+ * away from wherever the user is looking.
+ */
+function MapInteractionHandler({ onDrag }: { onDrag: () => void }) {
+  useMapEvents({
+    dragstart: () => onDrag(),
+  });
+  return null;
+}
+
+/** Flies to the given bounds whenever they change — unless the user has
+ *  taken manual control of the viewport (skipAutoFit), in which case the
+ *  map stays put until the next search resets the flag. */
+function FitBounds({
+  bounds,
+  skipAutoFit,
+}: {
+  bounds: LatLngBoundsExpression | null;
+  skipAutoFit: React.MutableRefObject<boolean>;
+}) {
   const map = useMap();
   useEffect(() => {
-    if (bounds) map.fitBounds(bounds, { padding: [48, 48], maxZoom: 15 });
-  }, [bounds, map]);
+    if (bounds && !skipAutoFit.current) {
+      map.flyToBounds(bounds, {
+        padding: [48, 48],
+        maxZoom: 15,
+        duration: 0.8,
+      });
+    }
+  }, [bounds, map, skipAutoFit]);
   return null;
 }
 
@@ -344,6 +391,11 @@ export default function RoutePulse() {
   );
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState<string | null>(null);
+  // v7: live tracking state. tracking = watchPosition active; follow = map
+  // re-centers on each fix (detaches on user drag); accuracy in meters.
+  const [tracking, setTracking] = useState(false);
+  const [follow, setFollow] = useState(false);
+  const [accuracy, setAccuracy] = useState<number | null>(null);
   // v4: arrive-by planner + alternative-route preview on the map.
   const [arriveBy, setArriveBy] = useState("");
   const [previewIdx, setPreviewIdx] = useState<number | null>(null);
@@ -389,9 +441,10 @@ export default function RoutePulse() {
   }, [submitted]);
 
   // A new search resets the alternative-route preview back to the
-  // AI-recommended route.
+  // AI-recommended route — and re-arms auto-fit for the new bounds.
   useEffect(() => {
     setPreviewIdx(null);
+    userPannedRef.current = false;
   }, [submitted]);
 
   // 10s ticker for the "updated Xs ago" freshness label.
@@ -402,6 +455,14 @@ export default function RoutePulse() {
 
   const mapRef = useRef<L.Map | null>(null);
   const mapWrapperRef = useRef<HTMLDivElement | null>(null);
+  // v7 refs: the geolocation watch handle, mirrors of state needed inside
+  // the watch callback (which closes over stale values otherwise), and the
+  // "user took manual control of the viewport" flag.
+  const watchIdRef = useRef<number | null>(null);
+  const gotFixRef = useRef(false);
+  const followRef = useRef(false);
+  const hasRouteRef = useRef(false);
+  const userPannedRef = useRef(false);
 
   const routeQuery = trpc.routePulse.getRoute.useQuery(submitted!, {
     enabled: !!submitted,
@@ -460,29 +521,93 @@ export default function RoutePulse() {
     trackToolUsage("route-pulse", "start");
   };
 
+  // v7: stops the watch and clears all location state.
+  const stopTracking = () => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    gotFixRef.current = false;
+    setTracking(false);
+    setFollow(false);
+    setUserLocation(null);
+    setAccuracy(null);
+    setLocating(false);
+  };
+
+  // v7: three-state locate button, Google Maps style:
+  //   off            -> start live tracking + follow
+  //   tracking+follow -> stop entirely
+  //   tracking (user dragged away) -> re-center and resume follow
   const handleLocateMe = () => {
     if (!navigator.geolocation) {
       setLocateError("Location isn't available in this browser.");
       return;
     }
+    if (tracking) {
+      if (follow) {
+        stopTracking();
+      } else {
+        setFollow(true);
+        if (userLocation) {
+          mapRef.current?.flyTo(userLocation, 15, { duration: 0.6 });
+        }
+      }
+      return;
+    }
     setLocating(true);
     setLocateError(null);
-    navigator.geolocation.getCurrentPosition(
+    const id = navigator.geolocation.watchPosition(
       pos => {
         const point: LatLngExpression = [
           pos.coords.latitude,
           pos.coords.longitude,
         ];
+        gotFixRef.current = true;
         setUserLocation(point);
-        mapRef.current?.flyTo(point, 14, { duration: 0.75 });
+        setAccuracy(
+          Number.isFinite(pos.coords.accuracy) ? pos.coords.accuracy : null
+        );
+        setTracking(true);
         setLocating(false);
+        // Follow mode keeps the map on the user — but never yanks the view
+        // away from a displayed route.
+        if (followRef.current && !hasRouteRef.current) {
+          mapRef.current?.panTo(point, { animate: true });
+        }
       },
-      () => {
-        setLocateError("Couldn't get your location — check permissions.");
-        setLocating(false);
+      err => {
+        // Transient errors after a successful fix (GPS tunnel dropouts)
+        // are ignored — the last-known dot stays. Only fail hard if we
+        // never got a fix at all.
+        if (gotFixRef.current) return;
+        stopTracking();
+        setLocateError(
+          err.code === err.PERMISSION_DENIED
+            ? "Location permission denied — enable it in your browser settings."
+            : "Couldn't get your location — check permissions."
+        );
       },
-      { enableHighAccuracy: true, timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 5_000 }
     );
+    watchIdRef.current = id;
+    setFollow(true);
+  };
+
+  // v7: one-tap "route from where I am now" — reverse-geocodes the live
+  // fix into the origin field (falls back to raw coordinates, which
+  // Nominatim also resolves).
+  const handleUseCurrentAsOrigin = async () => {
+    if (!userLocation) return;
+    const [lat, lng] = userLocation as [number, number];
+    const addr = await reverseGeocode(lat, lng);
+    if (addr) {
+      setOrigin(addr);
+      toast.success("Origin set to your current location");
+    } else {
+      setOrigin(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+      toast.success("Origin set to your current coordinates");
+    }
   };
 
   const handleToggleFullscreen = () => {
@@ -506,6 +631,15 @@ export default function RoutePulse() {
     };
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  // v7: release the GPS watch when the page unmounts (battery + privacy).
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
   }, []);
 
   const routeLine: LatLngExpression[] | null = useMemo(() => {
@@ -726,6 +860,14 @@ export default function RoutePulse() {
       ? Math.max(0, Math.round((Date.now() - incidentsQuery.dataUpdatedAt) / 1000))
       : null;
 
+  // v7: keep the follow/hasRoute refs honest for the watch callback.
+  useEffect(() => {
+    followRef.current = follow;
+  }, [follow]);
+  useEffect(() => {
+    hasRouteRef.current = hasRoute;
+  }, [hasRoute]);
+
   // Shared camera marker + popup for both the pre-search live layer and the
   // on-route layer. Camera stills 404 / go stale often, so broken images
   // hide themselves rather than showing a broken-image tile.
@@ -811,6 +953,9 @@ export default function RoutePulse() {
               zoom={DEFAULT_ZOOM}
               zoomControl={false}
               scrollWheelZoom
+              zoomSnap={0.5}
+              zoomDelta={0.5}
+              wheelPxPerZoomLevel={100}
               style={{ height: "100%", width: "100%" }}
             >
               <TileLayer
@@ -819,7 +964,14 @@ export default function RoutePulse() {
                 url={BASEMAPS[basemap].url}
               />
               <ZoomControl position="bottomright" />
-              <FitBounds bounds={mapBounds} />
+              <ScaleControl position="bottomright" metric={false} imperial />
+              <FitBounds bounds={mapBounds} skipAutoFit={userPannedRef} />
+              <MapInteractionHandler
+                onDrag={() => {
+                  setFollow(false);
+                  userPannedRef.current = true;
+                }}
+              />
               <MapClickHandler
                 onSetAddress={addr => {
                   if (!origin.trim()) {
@@ -835,7 +987,22 @@ export default function RoutePulse() {
               />
 
               {userLocation && (
-                <Marker position={userLocation} icon={USER_LOCATION_ICON} />
+                <>
+                  {accuracy !== null && accuracy < 500 && (
+                    <Circle
+                      center={userLocation}
+                      radius={accuracy}
+                      pathOptions={{
+                        color: "#2563eb",
+                        weight: 1,
+                        opacity: 0.5,
+                        fillColor: "#2563eb",
+                        fillOpacity: 0.08,
+                      }}
+                    />
+                  )}
+                  <Marker position={userLocation} icon={USER_LOCATION_ICON} />
+                </>
               )}
 
               {hasRoute ? (
@@ -1053,6 +1220,20 @@ export default function RoutePulse() {
                   pinColor="blue"
                   name="routepulse-origin-query"
                 />
+
+                {/* v7: one-tap "route from where I am" once we have a fix */}
+                {userLocation && (
+                  <button
+                    type="button"
+                    onClick={handleUseCurrentAsOrigin}
+                    className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline py-0.5"
+                    title="Reverse-geocode your live position into the origin field"
+                  >
+                    <LocateFixed className="w-3.5 h-3.5" />
+                    Use current location as origin
+                  </button>
+                )}
+
                 <AddressInput
                   id="routepulse-destination"
                   label="Destination"
@@ -1093,8 +1274,20 @@ export default function RoutePulse() {
               <button
                 type="button"
                 onClick={handleLocateMe}
-                title="Find my location"
-                className="w-9 h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
+                title={
+                  locating
+                    ? "Locating…"
+                    : tracking
+                      ? follow
+                        ? "Following you — click to stop"
+                        : "Click to re-center on you"
+                      : "Find my location"
+                }
+                className={`w-9 h-9 rounded-md backdrop-blur-md border shadow-lg flex items-center justify-center transition-colors ${
+                  tracking && follow
+                    ? "bg-blue-500/90 text-white border-blue-400"
+                    : "bg-background/90 hover:bg-background"
+                }`}
               >
                 {locating ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
