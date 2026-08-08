@@ -8,6 +8,7 @@ import {
   Popup,
   ZoomControl,
   useMap,
+  useMapEvents,
 } from "react-leaflet";
 import L, { type LatLngExpression, type LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -29,7 +30,10 @@ import {
   Maximize,
   Minimize,
   Layers,
+  Share2,
+  MapPin,
 } from "lucide-react";
+import { toast } from "sonner";
 
 /**
  * RoutePulse — hyperlocal route intelligence.
@@ -172,6 +176,45 @@ const INCIDENT_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
   ])
 );
 
+/**
+ * Handles map clicks for reverse-geocoding origin/destination.
+ * Clicking the map when an input is empty sets that point via reverse geocode.
+ */
+function MapClickHandler({
+  onSetAddress,
+  disabled,
+}: {
+  onSetAddress: (address: string) => void;
+  disabled?: boolean;
+}) {
+  useMapEvents({
+    click: async e => {
+      if (disabled) return;
+      const { lat, lng } = e.latlng;
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+          {
+            headers: {
+              "User-Agent": "UnifyOne-RoutePulse/1.0 (+https://1commerce.online)",
+              Accept: "application/json",
+            },
+          }
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as { display_name?: string };
+        if (data.display_name) {
+          onSetAddress(data.display_name);
+          toast.success("Location set from map click");
+        }
+      } catch {
+        // silent — map click is a convenience, not a hard dependency
+      }
+    },
+  });
+  return null;
+}
+
 /** Recenters/fits the map whenever the bounds it's given change. */
 function FitBounds({ bounds }: { bounds: LatLngBoundsExpression | null }) {
   const map = useMap();
@@ -197,6 +240,44 @@ export default function RoutePulse() {
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState<string | null>(null);
 
+  // Read permalink params on mount so shared routes load immediately.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlOrigin = params.get("origin");
+    const urlDestination = params.get("destination");
+    if (urlOrigin) setOrigin(urlOrigin);
+    if (urlDestination) setDestination(urlDestination);
+    // Auto-submit if both are present and valid.
+    if (urlOrigin && urlDestination) {
+      if (urlOrigin.trim().length >= 3 && urlDestination.trim().length >= 3) {
+        setSubmitted({
+          origin: urlOrigin.trim(),
+          destination: urlDestination.trim(),
+        });
+      }
+    }
+  }, []);
+
+  // Update URL when a route is submitted so the link is shareable.
+  useEffect(() => {
+    if (!submitted) {
+      // Clear params when there's no active route.
+      if (window.location.search) {
+        window.history.replaceState(
+          {},
+          "",
+          window.location.pathname
+        );
+      }
+      return;
+    }
+    const params = new URLSearchParams();
+    params.set("origin", submitted.origin);
+    params.set("destination", submitted.destination);
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, "", newUrl);
+  }, [submitted]);
+
   const mapRef = useRef<L.Map | null>(null);
   const mapWrapperRef = useRef<HTMLDivElement | null>(null);
 
@@ -215,6 +296,16 @@ export default function RoutePulse() {
     submitted.origin !== origin.trim() ||
     submitted.destination !== destination.trim();
   const incidentsQuery = trpc.routePulse.listIncidents.useQuery();
+
+  const handleShareRoute = async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Route link copied to clipboard");
+    } catch {
+      toast.error("Couldn't copy link — copy the URL manually");
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -371,6 +462,19 @@ export default function RoutePulse() {
               />
               <ZoomControl position="bottomright" />
               <FitBounds bounds={mapBounds} />
+              <MapClickHandler
+                onSetAddress={addr => {
+                  if (!origin.trim()) {
+                    setOrigin(addr);
+                  } else if (!destination.trim()) {
+                    setDestination(addr);
+                  } else {
+                    // Both filled — set destination and let user decide
+                    setDestination(addr);
+                  }
+                }}
+                disabled={routeQuery.isFetching}
+              />
 
               {userLocation && (
                 <Marker position={userLocation} icon={USER_LOCATION_ICON} />
@@ -402,6 +506,27 @@ export default function RoutePulse() {
                       }}
                     />
                   )}
+                  {/* Alternative routes — lighter, dashed lines */}
+                  {routeQuery.data!.alternatives.map((alt, idx) => {
+                      const coords = (alt.geometry as {
+                        coordinates: [number, number][];
+                      })?.coordinates;
+                      if (!coords?.length) return null;
+                      return (
+                        <Polyline
+                          key={`alt-${idx}`}
+                          positions={coords.map(
+                            ([lng, lat]) => [lat, lng] as LatLngExpression
+                          )}
+                          pathOptions={{
+                            color: "#94a3b8",
+                            weight: 3,
+                            opacity: 0.6,
+                            dashArray: "6, 8",
+                          }}
+                        />
+                      );
+                    })}
                   {routeQuery
                     .data!.route.incidents.filter(
                       inc =>
@@ -545,6 +670,12 @@ export default function RoutePulse() {
               </div>
             )}
 
+            {/* Floating hint */}
+            <div className="hidden sm:flex absolute z-[400] bottom-12 left-4 items-center gap-1.5 rounded-md bg-background/80 backdrop-blur-sm border shadow px-2 py-1 text-[10px] text-muted-foreground">
+              <MapPin className="w-3 h-3" />
+              Click map to set location
+            </div>
+
             {/* Floating legend */}
             <div className="hidden sm:flex absolute z-[400] bottom-4 left-4 items-center gap-3 rounded-md bg-background/90 backdrop-blur-md border shadow-lg px-3 py-2 text-xs">
               {Object.entries(INCIDENT_ICON_COLOR).map(([severity, color]) => (
@@ -575,6 +706,15 @@ export default function RoutePulse() {
                   cached
                 </Badge>
               )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-muted-foreground hover:text-foreground"
+                onClick={handleShareRoute}
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </Button>
             </div>
             <div className="text-xs text-muted-foreground space-y-0.5">
               <p>
