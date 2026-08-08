@@ -77,6 +77,15 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *   - Leave-by buffer now uses the server's delay estimate, not a
  *     client-side lookup table
  *   - AI confidence chip on the explanation (high/medium/low)
+ *
+ * v6 (data streams + camera layer):
+ *   - Live camera pins: every known ODOT traffic camera before a search,
+ *     cameras along the recommended route after it, with live snapshots in
+ *     the popups
+ *   - Source chips (ODOT / 511 / NWS / WSDOT / News) on incident rows so
+ *     the multi-agency aggregation is visible at a glance
+ *   - Optional Cloudflare camera proxy (VITE_ROUTEPULSE_CAM_PROXY) so
+ *     TripCheck stills load without exposing the subscription key
  */
 
 const CANONICAL = `${SITE_URL}/tools/route-pulse`;
@@ -236,6 +245,42 @@ const INCIDENT_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
   ])
 );
 
+// v6: traffic camera layer.
+// Optional Cloudflare camera proxy (workers/routepulse-cam-proxy) — when
+// set, camera stills load through it so the ODOT TripCheck subscription key
+// stays server-side. When unset we load the stills directly (works for the
+// camera hosts that don't require the key header).
+const CAM_PROXY: string =
+  (import.meta.env.VITE_ROUTEPULSE_CAM_PROXY as string | undefined) ?? "";
+
+function camImg(url: string | null | undefined): string | null {
+  if (!url) return null;
+  return CAM_PROXY ? `${CAM_PROXY}/img?u=${encodeURIComponent(url)}` : url;
+}
+
+const CAMERA_ICON = L.divIcon({
+  className: "",
+  html: `<div style="width:18px;height:18px;border-radius:50%;background:#7c3aed;border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;line-height:1">📷</div>`,
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});
+
+// Human labels for the incident feed sources (migration 0053 widened the
+// source set to include NWS + WSDOT).
+const SOURCE_LABEL: Record<string, string> = {
+  odot_tripcheck: "ODOT",
+  road511: "511",
+  nws: "NWS",
+  wsdot: "WSDOT",
+  news_ai: "News",
+  user_report: "Report",
+};
+
+function sourceLabel(source: string | null | undefined): string | null {
+  if (!source) return null;
+  return SOURCE_LABEL[source] ?? null;
+}
+
 /**
  * Handles map clicks for reverse-geocoding origin/destination.
  * Clicking the map when an input is empty sets that point via reverse geocode.
@@ -378,6 +423,11 @@ export default function RoutePulse() {
   const incidentsQuery = trpc.routePulse.listIncidents.useQuery(undefined, {
     refetchInterval: 60_000,
   });
+  // v6: traffic cameras for the always-on map layer, refreshed on roughly
+  // the same cadence the ingester polls ODOT's camera list.
+  const camerasQuery = trpc.routePulse.listCameras.useQuery(undefined, {
+    refetchInterval: 120_000,
+  });
   const { recent, starred, addRoute, clearRoutes, starRoute, unstarRoute } =
     useRecentRoutes();
 
@@ -508,6 +558,25 @@ export default function RoutePulse() {
         (i: any) => Number.isFinite(i.lat) && Number.isFinite(i.lng)
       ),
     [incidentsQuery.data]
+  );
+
+  // v6: cameras along the recommended route (the server attaches them to
+  // getRoute; pre-v6 cached responses lack the field — degrade to none).
+  const routeCameras = useMemo(
+    () =>
+      ((routeQuery.data?.cameras as any[] | undefined) ?? []).filter(
+        c => Number.isFinite(c?.lat) && Number.isFinite(c?.lng)
+      ),
+    [routeQuery.data]
+  );
+
+  // All known cameras for the pre-search live layer.
+  const activeCameras = useMemo(
+    () =>
+      ((camerasQuery.data as any[] | undefined) ?? []).filter(
+        c => Number.isFinite(c?.lat) && Number.isFinite(c?.lng)
+      ),
+    [camerasQuery.data]
   );
 
   const mapBounds: LatLngBoundsExpression | null = useMemo(() => {
@@ -656,6 +725,40 @@ export default function RoutePulse() {
     nowTick >= 0 && incidentsQuery.dataUpdatedAt
       ? Math.max(0, Math.round((Date.now() - incidentsQuery.dataUpdatedAt) / 1000))
       : null;
+
+  // Shared camera marker + popup for both the pre-search live layer and the
+  // on-route layer. Camera stills 404 / go stale often, so broken images
+  // hide themselves rather than showing a broken-image tile.
+  const cameraMarker = (cam: any) => (
+    <Marker
+      key={`cam-${cam.id}`}
+      position={[cam.lat, cam.lng]}
+      icon={CAMERA_ICON}
+    >
+      <Popup>
+        <div className="text-sm space-y-1.5 max-w-[240px]">
+          {cam.description && (
+            <p className="font-medium leading-snug">{cam.description}</p>
+          )}
+          {camImg(cam.image_url ?? cam.thumbnail_url) && (
+            <img
+              src={camImg(cam.image_url ?? cam.thumbnail_url)!}
+              alt={cam.description ?? "Traffic camera snapshot"}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              className="rounded-md w-full h-auto"
+              onError={e => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          )}
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            ODOT TripCheck · live snapshot
+          </p>
+        </div>
+      </Popup>
+    </Marker>
+  );
 
   return (
     <>
@@ -811,29 +914,34 @@ export default function RoutePulse() {
                         </Popup>
                       </Marker>
                     ))}
+                  {/* Traffic cameras along the recommended route (v6) */}
+                  {routeCameras.map(cameraMarker)}
                 </>
               ) : (
-                // No route searched yet — show every active incident so the
-                // map is never just an empty base layer.
-                activeIncidents.map((inc: any) => (
-                  <Marker
-                    key={inc.id}
-                    position={[inc.lat, inc.lng]}
-                    icon={INCIDENT_ICONS[inc.severity] ?? INCIDENT_ICONS.minor}
-                  >
-                    <Popup>
-                      <div className="text-sm space-y-0.5">
-                        {inc.road_name && (
-                          <p className="font-medium">{inc.road_name}</p>
-                        )}
-                        <p>{inc.description ?? inc.incident_type}</p>
-                        <p className="text-xs uppercase text-muted-foreground">
-                          {inc.severity}
-                        </p>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))
+                // No route searched yet — show every active incident and
+                // traffic camera so the map is never just an empty base layer.
+                <>
+                  {activeIncidents.map((inc: any) => (
+                    <Marker
+                      key={inc.id}
+                      position={[inc.lat, inc.lng]}
+                      icon={INCIDENT_ICONS[inc.severity] ?? INCIDENT_ICONS.minor}
+                    >
+                      <Popup>
+                        <div className="text-sm space-y-0.5">
+                          {inc.road_name && (
+                            <p className="font-medium">{inc.road_name}</p>
+                          )}
+                          <p>{inc.description ?? inc.incident_type}</p>
+                          <p className="text-xs uppercase text-muted-foreground">
+                            {inc.severity}
+                          </p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                  {activeCameras.map(cameraMarker)}
+                </>
               )}
             </MapContainer>
 
@@ -1043,6 +1151,13 @@ export default function RoutePulse() {
                   </span>
                 </span>
               ))}
+              <span className="flex items-center gap-1.5">
+                <span
+                  className="w-2.5 h-2.5 rounded-full border border-white shadow"
+                  style={{ background: "#7c3aed" }}
+                />
+                <span className="text-muted-foreground">📷 camera</span>
+              </span>
             </div>
           </div>
         </div>
@@ -1288,6 +1403,11 @@ export default function RoutePulse() {
                       )}
                       {inc.description ?? inc.incident_type}
                     </span>
+                    {sourceLabel(inc.source) && (
+                      <span className="shrink-0 self-start rounded border border-border px-1 py-px text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+                        {sourceLabel(inc.source)}
+                      </span>
+                    )}
                     <Badge
                       variant="outline"
                       className={`shrink-0 ${SEVERITY_BADGE[inc.severity] ?? ""}`}
@@ -1353,6 +1473,11 @@ export default function RoutePulse() {
                     {(inc.description as string) ??
                       (inc.incident_type as string)}
                   </span>
+                  {sourceLabel(inc.source as string) && (
+                    <span className="shrink-0 self-start rounded border border-border px-1 py-px text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {sourceLabel(inc.source as string)}
+                    </span>
+                  )}
                   <Badge
                     variant="outline"
                     className={`shrink-0 ${SEVERITY_BADGE[inc.severity as string] ?? ""}`}
@@ -1377,7 +1502,10 @@ export default function RoutePulse() {
             rideshare trip before mainstream traffic apps catch up. RoutePulse
             checks live incident feeds along your route, scores every option
             0-100 by incident severity, and uses AI to explain what's actually
-            happening — not just a red line on a map.
+            happening — not just a red line on a map. Those feeds now span ODOT
+            TripCheck, 511, National Weather Service weather alerts, and WSDOT
+            highway alerts — and traffic-camera pins show real snapshots of the
+            road along your route, not just dots.
           </p>
           <p>
             Set an arrive-by time and RoutePulse tells you when to leave,
