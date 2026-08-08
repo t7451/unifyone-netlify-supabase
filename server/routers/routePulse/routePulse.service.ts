@@ -26,12 +26,29 @@
  * (netlify/functions/routepulse-ingest-scheduled.mts), which polls Road511
  * + ODOT TripCheck + NWS weather alerts + WSDOT highway alerts every 2
  * minutes, and ODOT's camera list every ~5 minutes.
+ *
+ * v10: live third-party grounding (externalGrounding.ts). On each uncached
+ * request the scoring loop also merges TomTom Traffic incidents + Waze
+ * crowdsourced alerts for the route bbox (deduped against the agency
+ * feeds), and samples TomTom live traffic flow along each route so the
+ * risk score, delay estimate, and AI prompt reason over *measured* current
+ * speeds — congestion that hasn't generated an incident report yet — not
+ * just reported incidents. Keys unset = clean no-ops.
  */
 import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "../../_core/supabaseAdmin";
 import { ENV } from "../../_core/env";
 import { invokeLLM } from "../../_core/llm";
 import { resolveKaiModel } from "../../lib/kaiModels";
+import {
+  bboxForGeometries,
+  dedupeIncidents,
+  fetchTomTomFlow,
+  fetchTomTomTrafficIncidents,
+  fetchWazeAlerts,
+  isNearRoute,
+  type FlowGrounding,
+} from "./externalGrounding";
 
 const CACHE_TTL_MS = 2 * 60 * 1000;
 
@@ -357,6 +374,12 @@ export type ScoredRoute = {
    * (e.g. the TomTom fallback path) — the client hides the panel then.
    */
   maneuvers: RouteManeuver[];
+  /**
+   * v10: TomTom live-flow grounding for this route (null when
+   * TOMTOM_API_KEY is unset or every sample failed). avgRatio is
+   * current/free-flow speed — 1 means free-flowing, below ~0.7 is heavy.
+   */
+  flow?: FlowGrounding | null;
 };
 
 /** "none" = the AI did not pick this route (deterministic fallback was used). */
@@ -384,6 +407,16 @@ export type RouteResult = {
   cached: boolean;
   confidence: AiConfidence;
   cameras: RouteCamera[];
+  /**
+   * v10: how much live third-party grounding fed this result (null when no
+   * external keys are configured). Powers the "grounded with live TomTom +
+   * Waze data" UI chip and makes quota burn observable.
+   */
+  grounding?: {
+    tomtomIncidents: number;
+    wazeAlerts: number;
+    flowSamples: number;
+  } | null;
 };
 
 function cacheKey(origin: LatLng, destination: LatLng) {
@@ -781,15 +814,26 @@ async function scoreRoutesWithAI(routes: ScoredRoute[]): Promise<AiPick> {
   // re-deriving severity math from raw text — better picks, fewer tokens.
   const prompt = `You are a route intelligence engine for gig drivers. Pick the best driving route, weighing both base duration and the active incidents on each route — a severe incident usually costs more time than a small distance or duration saving. Prefer the route with the lowest combined duration + est_delay_min unless there is a clear reason otherwise.
 
+Incidents combine DOT/511/NWS/WSDOT agency feeds with live TomTom Traffic and Waze crowdsourced alerts (source field tells you which). live_flow is TomTom's measured speed as a percentage of free-flow, sampled along the route right now: 100 = free-flowing, below 70 = heavy congestion, road_closed_segments > 0 means TomTom flags the road itself as closed. Treat live_flow as ground truth for current conditions — it catches slowdowns that haven't generated an incident report yet.
+
 Routes: ${JSON.stringify(
     routes.map(r => ({
       distance_m: r.distance,
       duration_s: r.duration,
       risk_score: r.riskScore,
       est_delay_min: r.delayEstimateMin,
+      live_flow:
+        r.flow && r.flow.samples > 0
+          ? {
+              pct_of_freeflow: Math.round(r.flow.avgRatio * 100),
+              worst_pct: Math.round(r.flow.worstRatio * 100),
+              road_closed_segments: r.flow.roadClosedCount,
+            }
+          : null,
       incidents: r.incidents.slice(0, 5).map(i => ({
         type: i.incident_type,
         severity: i.severity,
+        source: i.source,
         description: sanitizeForPrompt(i.description),
         road_name: sanitizeForPrompt(i.road_name),
       })),
@@ -875,10 +919,55 @@ export async function getRoute(
 
   const baseRoutes = await fetchBaseRoutes(origin, destination);
 
+  // v10: one bbox covering every route option → a single TomTom + Waze
+  // call set per uncached query, so upstream quotas stay flat no matter
+  // how many alternatives the router returns. Keys unset = clean no-ops.
+  const combinedBbox = bboxForGeometries(baseRoutes.map(r => r.geometry));
+  const [tomtomIncidents, wazeAlerts] = combinedBbox
+    ? await Promise.all([
+        fetchTomTomTrafficIncidents(combinedBbox),
+        fetchWazeAlerts(combinedBbox),
+      ])
+    : [[], []];
+
   const scoredRoutes: ScoredRoute[] = await Promise.all(
     baseRoutes.map(async r => {
-      const incidents = await getIncidentsNearRoute(r.geometry);
-      const { riskScore, delayEstimateMin } = computeRouteRisk(incidents);
+      const dbIncidents = await getIncidentsNearRoute(r.geometry);
+      // Merge live TomTom/Waze incidents near this path, skipping any that
+      // duplicate an agency-feed incident we already store (within ~250m)
+      // so a crash reported by both ODOT and Waze doesn't double-count.
+      const liveNearby = [...tomtomIncidents, ...wazeAlerts].filter(i =>
+        isNearRoute(i.lat, i.lng, r.geometry.coordinates, 500)
+      );
+      const incidents = [
+        ...dbIncidents,
+        ...dedupeIncidents(dbIncidents, liveNearby),
+      ];
+      // TomTom live flow: measured current-vs-free-flow speeds sampled
+      // along the route. Catches congestion that hasn't generated an
+      // incident report yet — the difference between "an incident exists"
+      // and "traffic is actually moving slowly right now".
+      const flow = await fetchTomTomFlow(r.geometry.coordinates);
+      let { riskScore, delayEstimateMin } = computeRouteRisk(incidents);
+      if (
+        flow &&
+        flow.samples >= 2 &&
+        flow.avgRatio > 0.05 &&
+        flow.avgRatio < 0.95
+      ) {
+        const flowDelayMin = Math.min(
+          25,
+          Math.round((r.duration * (1 / flow.avgRatio - 1)) / 60)
+        );
+        delayEstimateMin = Math.min(MAX_DELAY_MIN, delayEstimateMin + flowDelayMin);
+      }
+      if (flow && flow.roadClosedCount > 0) {
+        // TomTom flags the segment itself as closed — stronger than any
+        // inferred severity.
+        riskScore = Math.min(MAX_RISK_SCORE, riskScore + 30);
+      } else if (flow && flow.samples >= 2 && flow.worstRatio < 0.5) {
+        riskScore = Math.min(MAX_RISK_SCORE, riskScore + 10);
+      }
       return {
         distance: r.distance,
         duration: r.duration,
@@ -887,16 +976,25 @@ export async function getRoute(
         riskScore,
         delayEstimateMin,
         maneuvers: r.maneuvers,
+        flow,
       };
     })
   );
 
-  const hasIncidents = scoredRoutes.some(r => r.incidents.length > 0);
+  // The AI earns its call when there's something to weigh: any incident,
+  // a TomTom-flagged closure, or measured congestion below 90% of
+  // free-flow. A totally clear corridor doesn't need a model.
+  const needsAi = scoredRoutes.some(
+    r =>
+      r.incidents.length > 0 ||
+      (r.flow?.roadClosedCount ?? 0) > 0 ||
+      ((r.flow?.samples ?? 0) >= 2 && (r.flow?.avgRatio ?? 1) < 0.9)
+  );
 
   let chosenIndex = 0;
   let explanation = "Fastest route, no active incidents.";
   let confidence: AiConfidence = "none";
-  if (hasIncidents) {
+  if (needsAi) {
     const ai = await scoreRoutesWithAI(scoredRoutes);
     chosenIndex = ai.chosenIndex;
     explanation = ai.explanation;
@@ -912,6 +1010,22 @@ export async function getRoute(
       )
     : [];
 
+  // v10: observability + the UI's "grounded with live data" chip. Only
+  // set when at least one external source actually contributed — a null
+  // means every key was unset or every upstream call came back empty.
+  const flowSamples = scoredRoutes.reduce(
+    (n, r) => n + (r.flow?.samples ?? 0),
+    0
+  );
+  const grounding =
+    tomtomIncidents.length + wazeAlerts.length + flowSamples > 0
+      ? {
+          tomtomIncidents: tomtomIncidents.length,
+          wazeAlerts: wazeAlerts.length,
+          flowSamples,
+        }
+      : null;
+
   const result: RouteResult = {
     route: scoredRoutes[chosenIndex] ?? scoredRoutes[0],
     explanation,
@@ -922,6 +1036,7 @@ export async function getRoute(
     cached: false,
     confidence,
     cameras,
+    grounding,
   };
 
   await writeCache(key, result);
