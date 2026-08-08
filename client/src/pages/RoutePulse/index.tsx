@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { Link } from "wouter";
 import {
   MapContainer,
@@ -206,6 +207,16 @@ export default function RoutePulse() {
     enabled: !!submitted,
     retry: false,
   });
+  // routeQuery.isError stays true for the *previous* submitted pair until a
+  // new query key runs — react-query has no way to know the user has since
+  // edited the fields and hasn't resubmitted yet, so without this the error
+  // banner from a failed geocode reads as if the corrected address also
+  // failed. Only surface the banner while the visible fields still match
+  // what was actually submitted.
+  const resultsAreStale =
+    !submitted ||
+    submitted.origin !== origin.trim() ||
+    submitted.destination !== destination.trim();
   const incidentsQuery = trpc.routePulse.listIncidents.useQuery();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -467,8 +478,28 @@ export default function RoutePulse() {
                   <Input
                     placeholder="123 SW Broadway, Portland, OR"
                     value={origin}
-                    onChange={e => setOrigin(e.target.value)}
+                    onChange={e => {
+                      // Chrome will still fire its address-autofill dropdown on
+                      // fields it heuristically recognizes as address inputs,
+                      // *despite* autoComplete="off". When the user picks a
+                      // suggestion mid-edit, Chrome can dispatch the input event
+                      // faster than React's batched state update reconciles the
+                      // DOM, leaving old and new text spliced together (e.g.
+                      // "...Portland7979 S"). flushSync forces the state (and
+                      // therefore the controlled value written back to the DOM)
+                      // to commit synchronously on every keystroke/autofill
+                      // event, so the field can never render out of sync with
+                      // what was actually typed or selected.
+                      const value = e.target.value;
+                      flushSync(() => setOrigin(value));
+                    }}
+                    name="routepulse-origin-query"
                     autoComplete="off"
+                    data-lpignore="true"
+                    data-1p-ignore=""
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
                     className="bg-background"
                   />
                 </div>
@@ -479,8 +510,17 @@ export default function RoutePulse() {
                   <Input
                     placeholder="800 SE 10th Ave, Portland, OR"
                     value={destination}
-                    onChange={e => setDestination(e.target.value)}
+                    onChange={e => {
+                      const value = e.target.value;
+                      flushSync(() => setDestination(value));
+                    }}
+                    name="routepulse-destination-query"
                     autoComplete="off"
+                    data-lpignore="true"
+                    data-1p-ignore=""
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
                     className="bg-background"
                   />
                 </div>
@@ -618,7 +658,7 @@ export default function RoutePulse() {
           </Card>
         )}
 
-        {routeQuery.isError && (
+        {routeQuery.isError && !resultsAreStale && (
           <Card className="p-6 mb-8 border-destructive/30 bg-destructive/5">
             <p className="text-sm text-destructive">
               {routeQuery.error?.message?.includes("Couldn't find")
