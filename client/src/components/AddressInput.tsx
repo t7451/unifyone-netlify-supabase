@@ -219,7 +219,9 @@ export function AddressInput({
           autoCapitalize="off"
           spellCheck={false}
           enterKeyHint="search"
-          className={`bg-background ${voiceSupported ? "pr-9" : ""}`}
+          // text-base (16px) on mobile stops iOS Safari from auto-zooming
+          // the page on focus; sm and up keeps the compact desktop size.
+          className={`bg-background text-base sm:text-sm ${voiceSupported ? "pr-9" : ""}`}
         />
         {voiceSupported && (
           <button
@@ -272,7 +274,8 @@ export function AddressInput({
                 e.preventDefault();
                 selectSuggestion(s);
               }}
-              className={`px-3 py-2 cursor-pointer truncate ${
+              // Larger tap target on mobile (44px-ish rows), compact on desktop
+              className={`px-3 py-3 sm:py-2 cursor-pointer truncate ${
                 i === highlighted
                   ? "bg-accent text-accent-foreground"
                   : "hover:bg-muted"
