@@ -4,10 +4,10 @@
  * Scheduled Function — polls Road511 (multi-state), ODOT TripCheck
  * (Oregon-native), NWS weather alerts (keyless), and WSDOT highway alerts
  * (SW Washington) every 2 minutes and upserts active incidents into the
- * `traffic_incidents` Supabase table. Also polls ODOT's camera list every
- * ~5 minutes into `traffic_cameras`. RoutePulse's route-scoring endpoint
- * (server/routers/routePulse) reads from traffic_incidents via the
- * `incidents_near_route` PostGIS RPC.
+ * `traffic_incidents` Supabase table. Also polls ODOT's camera inventory
+ * every ~5 minutes into `traffic_cameras`. RoutePulse's route-scoring
+ * endpoint (server/routers/routePulse) reads from traffic_incidents via
+ * the `incidents_near_route` PostGIS RPC.
  *
  * Schedule: every 2 minutes
  *
@@ -18,6 +18,12 @@
  *   WSDOT_API_KEY     — WSDOT Traffic API AccessCode (free registration)
  *
  * NWS needs no key — api.weather.gov only asks for a descriptive User-Agent.
+ *
+ * ODOT gateway note: the live TripCheck API is served from
+ * api.odot.state.or.us/tripcheck — apiportal.odot.state.or.us is only the
+ * developer portal/docs site and returns a 404 HTML page for API paths.
+ * Bounds passed to ODOT endpoints must be fully contained within Oregon,
+ * or the API rejects the whole request with a validation error.
  *
  * Supabase schema required: see migrations `routepulse_init`,
  * `routepulse_incident_geo`, `routepulse_more_streams` — traffic_incidents
@@ -32,6 +38,11 @@ const REGIONS = [
   { name: "oregon", bbox: "-124.5,41.9,-116.4,46.3" },
   { name: "washington_sw", bbox: "-124.8,45.5,-122.0,49.0" },
 ];
+
+// ODOT's API validates that bounds are fully inside Oregon — the wider
+// REGIONS bbox gets rejected outright, so ODOT calls use this contained
+// box instead (covers the entire state, nothing outside it).
+const ODOT_BOUNDS = "-124.6,42.0,-116.5,46.2";
 
 // NWS alert areas — same coverage as REGIONS. WA alerts are filtered to the
 // SW Washington bbox so Seattle-area weather doesn't pollute the Portland
@@ -77,6 +88,36 @@ function mapIncidentType(t?: string): string {
     "special event": "event",
   };
   return m[(t ?? "").toLowerCase()] ?? "other";
+}
+
+// ODOT event-type-id codes (TTIP schema). CN is by far the most common.
+function mapOdotEventType(t?: string): string {
+  const m: Record<string, string> = {
+    AC: "accident",
+    CN: "construction",
+    CL: "closure",
+    HZ: "hazard",
+    EV: "event",
+    WC: "weather",
+  };
+  return m[(t ?? "").toUpperCase()] ?? "other";
+}
+
+// ODOT reports impact as free-ish text ("No to Minimum Delay", etc.).
+function mapOdotImpact(
+  d?: string
+): "minor" | "moderate" | "major" | "critical" {
+  const v = (d ?? "").toLowerCase();
+  if (v.includes("clos")) return "critical"; // road/lane closure
+  if (v.includes("major") || v.includes("significant")) return "major";
+  if (v.includes("moderate")) return "moderate";
+  if (
+    v.includes("minimum") ||
+    v.includes("no delay") ||
+    v.includes("informational")
+  )
+    return "minor";
+  return "moderate";
 }
 
 function mapSeverity(s?: string): "minor" | "moderate" | "major" | "critical" {
@@ -271,33 +312,45 @@ export default async (req: Request) => {
   const results: Record<string, number | string> = {};
 
   // ── ODOT TripCheck (Oregon-native, richer narratives) ──
+  // Live gateway: api.odot.state.or.us/tripcheck (verified against the
+  // TTIP schema: root key `incidents`, per-incident `incident-id`,
+  // `is-active`, `impact-desc`, `location.start-location.start-lat/long`).
   if (tripcheckKey) {
     try {
       const res = await fetch(
-        "https://apiportal.odot.state.or.us/api/tripcheck/v1/incidents",
+        `https://api.odot.state.or.us/tripcheck/Incidents?Bounds=${ODOT_BOUNDS}`,
         { headers: { "Ocp-Apim-Subscription-Key": tripcheckKey } }
       );
       if (!res.ok) {
         results.odot = `error_${res.status}`;
       } else {
-        const incidents = await res.json();
+        const data = await res.json();
+        const incidents = (data as any).incidents ?? [];
         const rows = (incidents as any[])
-          .filter((inc) => inc.latitude && inc.longitude)
-          .map((inc) => ({
-            source: "odot_tripcheck",
-            external_id: `odot_${inc.id}`,
-            location: `POINT(${inc.longitude} ${inc.latitude})`,
-            location_description: inc.locationDescription ?? null,
-            road_name: inc.roadwayName ?? null,
-            direction: inc.direction ?? null,
-            incident_type: mapIncidentType(inc.eventCategory),
-            severity: mapSeverity(inc.severity),
-            description: inc.headline ?? inc.description ?? null,
-            started_at: inc.createTime ?? null,
-            estimated_end_at: inc.estimatedClearTime ?? null,
-            raw_data: inc,
-            source_url: inc.url ?? null,
-          }));
+          .filter(
+            (inc) =>
+              inc["is-active"] === "true" &&
+              Number.isFinite(inc.location?.["start-location"]?.["start-lat"]) &&
+              Number.isFinite(inc.location?.["start-location"]?.["start-long"])
+          )
+          .map((inc) => {
+            const start = inc.location["start-location"];
+            return {
+              source: "odot_tripcheck",
+              external_id: `odot_${inc["incident-id"]}`,
+              location: `POINT(${start["start-long"]} ${start["start-lat"]})`,
+              location_description: start["location-desc"] ?? null,
+              road_name: inc.location?.["route-id"] ?? null,
+              direction: inc.location?.direction || null,
+              incident_type: mapOdotEventType(inc["event-type-id"]),
+              severity: mapOdotImpact(inc["impact-desc"]),
+              description: inc.headline ?? null,
+              started_at: inc["create-time"] ?? null,
+              estimated_end_at: null,
+              raw_data: inc,
+              source_url: inc["info-url"] || null,
+            };
+          });
 
         if (rows.length) {
           const { error } = await supabase
@@ -488,27 +541,38 @@ export default async (req: Request) => {
   // Runs every ~5 minutes (this function itself polls every 2) rather than
   // every cycle — camera list/images change far less often than incidents,
   // and it's a separate rate-limited endpoint on the same ODOT key.
+  // TTIP schema: root key `CCTVInventoryRequest`, per-camera `device-id`,
+  // `latitude`/`longitude`, `route-id`, `cctv-url` (http — upgraded below).
   if (tripcheckKey && new Date().getMinutes() % 5 === 0) {
     try {
       const res = await fetch(
-        "https://apiportal.odot.state.or.us/api/tripcheck/v1/cameras",
+        `https://api.odot.state.or.us/tripcheck/Cctv/Inventory?Bounds=${ODOT_BOUNDS}`,
         { headers: { "Ocp-Apim-Subscription-Key": tripcheckKey } }
       );
       if (!res.ok) {
         results.cameras = `error_${res.status}`;
       } else {
-        const cameras = await res.json();
+        const data = await res.json();
+        const cameras = (data as any).CCTVInventoryRequest ?? [];
         const rows = (cameras as any[])
-          .filter((cam) => cam.latitude && cam.longitude)
+          .filter(
+            (cam) =>
+              Number.isFinite(cam.latitude) && Number.isFinite(cam.longitude)
+          )
           .map((cam) => ({
-            id: `odot_${cam.id}`,
+            id: `odot_${cam["device-id"]}`,
             location: `POINT(${cam.longitude} ${cam.latitude})`,
-            road_name: cam.roadwayName ?? null,
-            direction: cam.direction ?? null,
-            image_url: cam.imageUrl ?? null,
-            thumbnail_url: cam.thumbnailUrl ?? null,
-            description: cam.locationDescription ?? null,
-            last_updated: cam.lastUpdated ?? null,
+            road_name: cam["route-id"] ?? null,
+            direction: null,
+            // Stills come back as http://www.tripcheck.com/... — upgrade to
+            // https (the host serves TLS fine; verified 200 image/jpeg).
+            image_url:
+              typeof cam["cctv-url"] === "string"
+                ? cam["cctv-url"].replace(/^http:\/\//i, "https://")
+                : null,
+            thumbnail_url: null,
+            description: cam["device-name"] ?? cam["cctv-other"] ?? null,
+            last_updated: cam["last-update-time"] ?? null,
           }));
 
         if (rows.length) {
