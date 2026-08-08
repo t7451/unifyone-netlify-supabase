@@ -32,8 +32,15 @@ import {
   Layers,
   Share2,
   MapPin,
+  ArrowLeftRight,
+  History,
+  X,
+  ShieldAlert,
+  ShieldCheck,
+  Shield,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useRecentRoutes } from "@/hooks/useRecentRoutes";
 
 /**
  * RoutePulse — hyperlocal route intelligence.
@@ -296,6 +303,12 @@ export default function RoutePulse() {
     submitted.origin !== origin.trim() ||
     submitted.destination !== destination.trim();
   const incidentsQuery = trpc.routePulse.listIncidents.useQuery();
+  const { recent, addRoute, clearRoutes } = useRecentRoutes();
+
+  const handleSwap = () => {
+    setOrigin(destination);
+    setDestination(origin);
+  };
 
   const handleShareRoute = async () => {
     const url = window.location.href;
@@ -317,6 +330,7 @@ export default function RoutePulse() {
     }
     setFormError(null);
     setSubmitted({ origin: origin.trim(), destination: destination.trim() });
+    addRoute(origin.trim(), destination.trim());
     trackToolUsage("route-pulse", "start");
   };
 
@@ -408,13 +422,37 @@ export default function RoutePulse() {
     return null;
   }, [routeQuery.data, routeLine, activeIncidents]);
 
+  // Risk score: a genuine differentiator from Google Maps — we have
+  // proactive incident data (ODOT/Road511) that mainstream apps don't
+  // surface with a plain-English score.
+  const riskScore = useMemo(() => {
+    if (!routeQuery.data) return null;
+    const incidents = routeQuery.data.route.incidents;
+    if (incidents.length === 0) return { label: "Low Risk", level: "low" as const };
+    const hasCritical = incidents.some(i => i.severity === "critical");
+    const hasMajor = incidents.some(i => i.severity === "major");
+    const hasModerate = incidents.some(i => i.severity === "moderate");
+    if (hasCritical) return { label: "Critical Risk", level: "critical" as const };
+    if (hasMajor) return { label: "High Risk", level: "high" as const };
+    if (hasModerate) return { label: "Moderate Risk", level: "moderate" as const };
+    return { label: "Low Risk", level: "low" as const };
+  }, [routeQuery.data]);
+
   const hasRoute = !!(submitted && routeQuery.data);
 
   return (
     <>
       <PageHead
-        title="RoutePulse — Free AI Route & Incident Checker | UnifyOne"
-        description="Free tool for gig drivers: check a route for live incidents and get an AI explanation of what to watch for before you drive. No account required, built on OpenStreetMap."
+        title={
+          hasRoute
+            ? `${routeQuery.data!.origin.displayName.split(",")[0]} → ${routeQuery.data!.destination.displayName.split(",")[0]} | RoutePulse`
+            : "RoutePulse — Free AI Route & Incident Checker | UnifyOne"
+        }
+        description={
+          hasRoute
+            ? `Route from ${routeQuery.data!.origin.displayName} to ${routeQuery.data!.destination.displayName}: ${routeQuery.data!.route.incidents.length} incident${routeQuery.data!.route.incidents.length === 1 ? "" : "s"} reported. ${routeQuery.data!.explanation}`
+            : "Free tool for gig drivers: check a route for live incidents and get an AI explanation of what to watch for before you drive. No account required, built on OpenStreetMap."
+        }
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />
@@ -592,6 +630,47 @@ export default function RoutePulse() {
             {/* Floating glass search card — Google-Maps-style search-over-map
                 instead of a form stacked above the map. */}
             <Card className="absolute z-[400] top-4 left-4 right-4 sm:right-auto sm:w-[380px] p-4 sm:p-5 bg-background/90 backdrop-blur-md shadow-xl border">
+              {/* Recent routes — one-tap re-check, no typing on mobile */}
+              {!hasRoute && recent.length > 0 && (
+                <div className="mb-3 pb-3 border-b border-border/50">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1">
+                      <History className="w-3 h-3" />
+                      Recent
+                    </span>
+                    <button
+                      type="button"
+                      onClick={clearRoutes}
+                      className="text-[10px] text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {recent.map((r, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          setOrigin(r.origin);
+                          setDestination(r.destination);
+                          setSubmitted({
+                            origin: r.origin,
+                            destination: r.destination,
+                          });
+                        }}
+                        className="text-[11px] px-2 py-1 rounded-full bg-muted hover:bg-accent transition-colors truncate max-w-full"
+                        title={`${r.origin} → ${r.destination}`}
+                      >
+                        {r.origin.slice(0, 18)}
+                        {r.origin.length > 18 ? "…" : ""} →{" "}
+                        {r.destination.slice(0, 18)}
+                        {r.destination.length > 18 ? "…" : ""}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-3">
                 <AddressInput
                   id="routepulse-origin"
@@ -611,6 +690,17 @@ export default function RoutePulse() {
                   pinColor="red"
                   name="routepulse-destination-query"
                 />
+
+                {/* Swap button — mobile-optimized touch target */}
+                <button
+                  type="button"
+                  onClick={handleSwap}
+                  className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+                  title="Swap origin and destination"
+                >
+                  <ArrowLeftRight className="w-3.5 h-3.5" />
+                  Swap origin & destination
+                </button>
 
                 {formError && (
                   <p className="text-xs text-destructive">{formError}</p>
@@ -701,6 +791,29 @@ export default function RoutePulse() {
                 {(routeQuery.data!.route.distance / 1609.34).toFixed(1)} mi ·{" "}
                 {Math.round(routeQuery.data!.route.duration / 60)} min
               </p>
+              {riskScore && (
+                <Badge
+                  variant="outline"
+                  className={
+                    riskScore.level === "low"
+                      ? "border-emerald-500/30 text-emerald-600 bg-emerald-500/10"
+                      : riskScore.level === "moderate"
+                        ? "border-amber-500/30 text-amber-600 bg-amber-500/10"
+                        : riskScore.level === "high"
+                          ? "border-orange-500/30 text-orange-600 bg-orange-500/10"
+                          : "border-red-500/30 text-red-600 bg-red-500/10"
+                  }
+                >
+                  {riskScore.level === "low" ? (
+                    <ShieldCheck className="w-3 h-3 mr-1" />
+                  ) : riskScore.level === "critical" ? (
+                    <ShieldAlert className="w-3 h-3 mr-1" />
+                  ) : (
+                    <Shield className="w-3 h-3 mr-1" />
+                  )}
+                  {riskScore.label}
+                </Badge>
+              )}
               {routeQuery.data!.cached && (
                 <Badge variant="outline" className="text-muted-foreground">
                   cached

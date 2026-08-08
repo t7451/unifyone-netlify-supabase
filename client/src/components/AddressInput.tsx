@@ -115,6 +115,12 @@ export function AddressInput({
         }}
         onFocus={() => {
           if (suggestions.length > 0) setOpen(true);
+          // On mobile, scroll the input into view so the dropdown isn't
+          // hidden behind the virtual keyboard.
+          containerRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
         }}
         onBlur={() => {
           // Delay closing so a mousedown on a suggestion row can fire first.
@@ -130,13 +136,14 @@ export function AddressInput({
         autoCorrect="off"
         autoCapitalize="off"
         spellCheck={false}
+        enterKeyHint="search"
         className="bg-background"
       />
 
       {hasSuggestions && (
         <ul
           role="listbox"
-          className="absolute z-50 left-0 right-0 top-full mt-1 max-h-52 overflow-auto rounded-md border bg-background shadow-lg text-sm"
+          className="absolute z-50 left-0 right-0 top-full mt-1 max-h-36 sm:max-h-52 overflow-auto rounded-md border bg-background shadow-lg text-sm"
           onMouseEnter={() => {
             ignoreBlurRef.current = true;
           }}
