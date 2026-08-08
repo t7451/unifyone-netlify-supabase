@@ -3,9 +3,9 @@
  *
  * Exercises Nominatim address geocoding, the OSRM->TomTom fallback chain,
  * deterministic risk scoring, the AI-scoring validation/degradation path
- * (including the delay-aware deterministic fallback), cache hit/miss
- * behavior, and prompt-injection resistance, all without hitting real
- * network services.
+ * (including the delay-aware deterministic fallback), camera-layer
+ * attachment and degradation, cache hit/miss behavior, and
+ * prompt-injection resistance, all without hitting real network services.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { TRPCError } from "@trpc/server";
@@ -970,6 +970,113 @@ describe("routePulse.service — getRoute (address-based)", () => {
       expect(r.route.distance).toBe(1000);
       expect(r.cached).toBe(false);
     }
+  });
+
+  it("returns cameras near the chosen route", async () => {
+    const camRow = {
+      id: "cam-1",
+      road_name: "I-5",
+      direction: "NB",
+      image_url: "https://example.com/cam1.jpg",
+      thumbnail_url: null,
+      description: "I-5 at Broadway",
+      last_updated: "2026-08-08T12:00:00Z",
+      lat: 45.51,
+      lng: -122.67,
+    };
+    const rpc = vi
+      .fn()
+      .mockImplementation(async (name: string) =>
+        name === "cameras_near_route"
+          ? { data: [camRow], error: null }
+          : { data: [], error: null }
+      );
+    const from = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    });
+    (getSupabaseAdmin as any).mockReturnValue({ rpc, from });
+    installFetchMock({});
+
+    const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
+
+    expect(result.cameras).toHaveLength(1);
+    expect(result.cameras[0]!.id).toBe("cam-1");
+    expect(result.cameras[0]!.lat).toBeCloseTo(45.51);
+    expect(result.cameras[0]!.road_name).toBe("I-5");
+  });
+
+  it("degrades to an empty camera list (not a throw) when the cameras RPC errors", async () => {
+    // Databases without migration 0053 don't have cameras_near_route at
+    // all — the route must still come back, just without a camera layer.
+    const rpc = vi
+      .fn()
+      .mockImplementation(async (name: string) =>
+        name === "cameras_near_route"
+          ? { data: null, error: { message: "function does not exist" } }
+          : { data: [], error: null }
+      );
+    const from = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    });
+    (getSupabaseAdmin as any).mockReturnValue({ rpc, from });
+    installFetchMock({});
+
+    const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
+
+    expect(result.cameras).toEqual([]);
+    expect(result.route.distance).toBe(5000);
+  });
+
+  it("listCameras returns [] rather than throwing when the RPC errors", async () => {
+    const rpc = vi
+      .fn()
+      .mockResolvedValue({ data: null, error: { message: "boom" } });
+    (getSupabaseAdmin as any).mockReturnValue({ rpc });
+
+    const result = await service.listCameras();
+    expect(result).toEqual([]);
+  });
+
+  it("listCameras filters out rows without finite coordinates", async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: "cam-good",
+          road_name: "US-26",
+          direction: null,
+          image_url: null,
+          thumbnail_url: null,
+          description: null,
+          last_updated: null,
+          lat: 45.5,
+          lng: -122.7,
+        },
+        {
+          id: "cam-bad",
+          road_name: null,
+          direction: null,
+          image_url: null,
+          thumbnail_url: null,
+          description: null,
+          last_updated: null,
+          lat: null,
+          lng: null,
+        },
+      ],
+      error: null,
+    });
+    (getSupabaseAdmin as any).mockReturnValue({ rpc });
+
+    const result = await service.listCameras();
+    expect(result.map(c => c.id)).toEqual(["cam-good"]);
   });
 
   it("listActiveIncidents returns [] rather than throwing when Supabase errors", async () => {

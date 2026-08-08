@@ -18,11 +18,14 @@
  *      providers) to pick the best one and explain why in driver-actionable
  *      language. If the AI fails validation or is unreachable, fall back to
  *      a deterministic pick: lowest (duration + estimated incident delay).
- *   6. Cache and return.
+ *   6. Attach traffic cameras near the chosen route (cameras_near_route
+ *      RPC) so the driver can eyeball actual road conditions.
+ *   7. Cache and return.
  *
  * Incident data itself is populated by the scheduled ingestion function
  * (netlify/functions/routepulse-ingest-scheduled.mts), which polls Road511
- * + ODOT TripCheck every 2 minutes.
+ * + ODOT TripCheck + NWS weather alerts + WSDOT highway alerts every 2
+ * minutes, and ODOT's camera list every ~5 minutes.
  */
 import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "../../_core/supabaseAdmin";
@@ -327,6 +330,18 @@ export type ScoredRoute = {
 /** "none" = the AI did not pick this route (deterministic fallback was used). */
 export type AiConfidence = "high" | "medium" | "low" | "none";
 
+export type RouteCamera = {
+  id: string;
+  road_name: string | null;
+  direction: string | null;
+  image_url: string | null;
+  thumbnail_url: string | null;
+  description: string | null;
+  last_updated: string | null;
+  lat: number;
+  lng: number;
+};
+
 export type RouteResult = {
   route: ScoredRoute;
   explanation: string;
@@ -336,6 +351,7 @@ export type RouteResult = {
   generated_at: string;
   cached: boolean;
   confidence: AiConfidence;
+  cameras: RouteCamera[];
 };
 
 function cacheKey(origin: LatLng, destination: LatLng) {
@@ -467,6 +483,13 @@ async function fetchBaseRoutes(
   }
 }
 
+function geometryToWkt(geometry: { coordinates: [number, number][] }): string {
+  // OSRM caps geometry precision fine; PostGIS just needs valid WKT.
+  return `LINESTRING(${geometry.coordinates
+    .map(([lng, lat]) => `${lng} ${lat}`)
+    .join(",")})`;
+}
+
 async function getIncidentsNearRoute(
   geometry: { coordinates: [number, number][] },
   bufferMeters = 500
@@ -474,13 +497,8 @@ async function getIncidentsNearRoute(
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
-  // OSRM caps geometry precision fine; PostGIS just needs valid WKT.
-  const lineWkt = `LINESTRING(${geometry.coordinates
-    .map(([lng, lat]) => `${lng} ${lat}`)
-    .join(",")})`;
-
   const { data, error } = await supabase.rpc("incidents_near_route", {
-    route_wkt: lineWkt,
+    route_wkt: geometryToWkt(geometry),
     buffer_meters: bufferMeters,
   });
 
@@ -497,10 +515,66 @@ async function getIncidentsNearRoute(
   }));
 }
 
+/**
+ * Traffic cameras near a route. Cameras are sparser than incidents, so the
+ * default buffer is wider (1500m vs 500m) — a cam half a mile off the route
+ * still shows the conditions you're driving into.
+ */
+async function getCamerasNearRoute(
+  geometry: { coordinates: [number, number][] },
+  bufferMeters = 1500
+): Promise<RouteCamera[]> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase.rpc("cameras_near_route", {
+    route_wkt: geometryToWkt(geometry),
+    buffer_meters: bufferMeters,
+  });
+
+  if (error || !data) return [];
+  return (data as Array<Record<string, unknown>>)
+    .map(row => ({
+      id: row.id as string,
+      road_name: (row.road_name as string | null) ?? null,
+      direction: (row.direction as string | null) ?? null,
+      image_url: (row.image_url as string | null) ?? null,
+      thumbnail_url: (row.thumbnail_url as string | null) ?? null,
+      description: (row.description as string | null) ?? null,
+      last_updated: (row.last_updated as string | null) ?? null,
+      lat: row.lat as number,
+      lng: row.lng as number,
+    }))
+    .filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lng));
+}
+
+/** All known traffic cameras (for the always-on map layer, pre-search). */
+export async function listCameras(): Promise<RouteCamera[]> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase.rpc("list_cameras", { limit_n: 300 });
+
+  if (error || !data) return [];
+  return (data as Array<Record<string, unknown>>)
+    .map(row => ({
+      id: row.id as string,
+      road_name: (row.road_name as string | null) ?? null,
+      direction: (row.direction as string | null) ?? null,
+      image_url: (row.image_url as string | null) ?? null,
+      thumbnail_url: (row.thumbnail_url as string | null) ?? null,
+      description: (row.description as string | null) ?? null,
+      last_updated: (row.last_updated as string | null) ?? null,
+      lat: row.lat as number,
+      lng: row.lng as number,
+    }))
+    .filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lng));
+}
+
 // Incident descriptions/road names come from third-party feeds (ODOT,
-// Road511) verbatim — treat them as untrusted input before they go into an
-// LLM prompt. Strips characters that could break out of the JSON we're
-// embedding them in or read as instructions, and caps length.
+// Road511, NWS, WSDOT) verbatim — treat them as untrusted input before they
+// go into an LLM prompt. Strips characters that could break out of the JSON
+// we're embedding them in or read as instructions, and caps length.
 function sanitizeForPrompt(text: string | null): string {
   if (!text) return "";
   return text.replace(/[{}]/g, "").replace(/["\\]/g, "").slice(0, 200);
@@ -666,6 +740,15 @@ export async function getRoute(
     confidence = ai.confidence;
   }
 
+  // Cameras near the chosen route — one extra RPC after the pick so the
+  // driver can eyeball actual road conditions along what we're recommending.
+  const chosen = scoredRoutes[chosenIndex] ?? scoredRoutes[0];
+  const cameras = chosen?.geometry
+    ? await getCamerasNearRoute(
+        chosen.geometry as { coordinates: [number, number][] }
+      )
+    : [];
+
   const result: RouteResult = {
     route: scoredRoutes[chosenIndex] ?? scoredRoutes[0],
     explanation,
@@ -675,6 +758,7 @@ export async function getRoute(
     generated_at: new Date().toISOString(),
     cached: false,
     confidence,
+    cameras,
   };
 
   await writeCache(key, result);
