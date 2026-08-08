@@ -1428,7 +1428,7 @@ export const ROUTE_SEO: RouteSeo[] = [
     description:
       "Tennessee gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
     body: [
-      "Tennessee has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make. The former Hall tax on investment income has been fully repealed.",
+      "Tennessee has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make. The former Hall tax on investment income has been fully repealed. Tennessee does run a separate local Business Tax for businesses above a gross-receipts threshold — most solo gig drivers fall under it, but check with your county clerk if your gig earnings are your primary income.",
       "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
       "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
       "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
@@ -1442,7 +1442,7 @@ export const ROUTE_SEO: RouteSeo[] = [
     description:
       "Nevada gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
     body: [
-      "Nevada has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make.",
+      "Nevada has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make. Nevada's Modified Business Tax and Commerce Tax target employers and larger businesses, not individual 1099 gig workers, so most solo drivers won't owe either.",
       "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
       "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
       "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
@@ -1736,7 +1736,7 @@ export const ROUTE_SEO: RouteSeo[] = [
     description:
       "Alaska gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
     body: [
-      "Alaska has no personal state income tax — and no statewide sales tax — so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make.",
+      "Alaska has no personal state income tax — and no statewide sales tax — so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make. One Alaska-specific wrinkle: your annual Permanent Fund Dividend counts as taxable federal income, so add it to your gig earnings when estimating what you owe.",
       "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
       "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
       "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
@@ -1764,7 +1764,7 @@ export const ROUTE_SEO: RouteSeo[] = [
     description:
       "South Dakota gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
     body: [
-      "South Dakota has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make.",
+      "South Dakota has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make. South Dakota also has no corporate income tax, so there's no separate state business filing to worry about even if you formalize your gig work as an LLC.",
       "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
       "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
       "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
@@ -1778,7 +1778,7 @@ export const ROUTE_SEO: RouteSeo[] = [
     description:
       "Wyoming gig worker taxes: no state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
     body: [
-      "Wyoming has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make.",
+      "Wyoming has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make. Wyoming also has no corporate income tax, which is part of why it's a common state for gig workers to form a single-member LLC if they want to formalize their driving or delivery work.",
       "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
       "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
       "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
@@ -2236,7 +2236,7 @@ export const ROUTE_SEO: RouteSeo[] = [
     description:
       "Texas gig worker taxes: there's no Texas state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
     body: [
-      "Texas has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make.",
+      "Texas has no personal state income tax, so you won't file a state income-tax return on your gig earnings and there are no state estimated payments to make. Texas does have a state franchise tax, but it only kicks in well above what a typical solo gig driver earns, so it isn't something most gig workers need to file for.",
       "Your gig income is not tax-free, though. The federal rules are the same in every state: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
       "Track business mileage and deduct it at the IRS standard mileage rate — usually the largest deduction — along with the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not you get a 1099.",
       "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
@@ -2250,7 +2250,7 @@ export const ROUTE_SEO: RouteSeo[] = [
     description:
       "Florida gig worker taxes: no Florida state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
     body: [
-      "Florida has no personal state income tax, so there's no state income-tax return on your gig earnings and no state estimated payments to make.",
+      "Florida has no personal state income tax, so there's no state income-tax return on your gig earnings and no state estimated payments to make. Unlike some other no-income-tax states, Florida also has no separate state-level business or franchise filing that solo gig workers need to register for.",
       "Federal taxes still apply the same as everywhere else: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
       "Deduct business mileage at the IRS standard mileage rate — typically your biggest deduction — plus the business-use share of your phone, supplies, tolls, and parking. You must report all income whether or not a platform sends a 1099.",
       "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",
@@ -2292,7 +2292,7 @@ export const ROUTE_SEO: RouteSeo[] = [
     description:
       "Washington gig worker taxes: no personal state income tax, but you still owe federal income tax plus the 15.3% self-employment tax. Not tax advice.",
     body: [
-      "Washington has no personal state income tax, so you won't file a state income-tax return on your ordinary gig earnings and there are no state income-tax estimates to make.",
+      "Washington has no personal state income tax, so you won't file a state income-tax return on your ordinary gig earnings and there are no state income-tax estimates to make. Washington does run a Business & Occupation (B&O) tax that can apply to self-employed gig income above certain thresholds, and WA Cares long-term care contributions generally apply to employees rather than 1099 contractors — worth a quick check with the Department of Revenue if gig work is your main income.",
       "Federal taxes still apply in full: federal income tax on your net profit plus the 15.3% federal self-employment tax (12.4% Social Security + 2.9% Medicare), with nothing withheld from your payouts.",
       "Deduct business mileage at the IRS standard mileage rate — typically your largest deduction — plus the business-use share of your phone, supplies, tolls, and parking. Report all income whether or not a platform sends a 1099.",
       "If you expect to owe $1,000 or more in federal tax, the IRS generally expects quarterly estimated payments around April 15, June 15, September 15, and January 15. This is educational information, not tax advice.",

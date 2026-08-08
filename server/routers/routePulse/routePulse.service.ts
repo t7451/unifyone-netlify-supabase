@@ -82,21 +82,9 @@ export function _resetGeocodeCacheForTests() {
   geocodeCache.clear();
 }
 
-/**
- * Resolves a free-text address to coordinates via Nominatim (OpenStreetMap's
- * free geocoder — no API key). Bias results toward the US since incident
- * coverage is Oregon/SW Washington today; callers doing national/global
- * routing later can drop or parameterize this.
- */
-export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
-  const trimmed = address.trim();
-  if (trimmed.length < 3) {
-    throw new GeocodingError("Enter a more complete address.");
-  }
-
-  const cached = readGeocodeCache(trimmed);
-  if (cached) return cached;
-
+async function geocodeViaNominatim(
+  trimmed: string
+): Promise<GeocodedPoint | null> {
   const url =
     `${ENV.nominatimUrl}/search?format=jsonv2&limit=1&countrycodes=us` +
     `&q=${encodeURIComponent(trimmed)}`;
@@ -133,23 +121,134 @@ export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
   }>;
 
   const top = results[0];
-  if (!top) {
-    throw new GeocodingError(
-      `Couldn't find "${trimmed}". Try adding a city and state.`
-    );
-  }
+  if (!top) return null;
 
   const lat = parseFloat(top.lat);
   const lng = parseFloat(top.lon);
-  if (Number.isNaN(lat) || Number.isNaN(lng)) {
+  if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+
+  return { lat, lng, displayName: top.display_name };
+}
+
+/**
+ * Fallback geocoder for real US addresses Nominatim's plain-text matcher
+ * chokes on — most commonly renamed/accented official street names (e.g.
+ * Portland's "SE César E. Chávez Blvd", formerly 39th Ave) where a user's
+ * plain-ASCII or slightly-off typed version doesn't fuzzy-match OSM's name
+ * tokenization, even though it's an unambiguous, correct USPS address.
+ * The Census Bureau's geocoder is free, keyless, and built directly on
+ * TIGER/Line address ranges, so it's materially more tolerant of exactly
+ * this kind of variation. Never throws — a miss here just means "no match
+ * from either geocoder," which the caller turns into the NOT_FOUND message.
+ */
+async function geocodeViaCensus(
+  trimmed: string
+): Promise<GeocodedPoint | null> {
+  const url =
+    `${ENV.censusGeocoderUrl}?benchmark=Public_AR_Current&format=json` +
+    `&address=${encodeURIComponent(trimmed)}`;
+
+  try {
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) return null;
+
+    const body = (await res.json()) as {
+      result?: {
+        addressMatches?: Array<{
+          coordinates: { x: number; y: number };
+          matchedAddress: string;
+        }>;
+      };
+    };
+
+    const top = body.result?.addressMatches?.[0];
+    if (!top) return null;
+
+    const lat = top.coordinates.y;
+    const lng = top.coordinates.x;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+    return { lat, lng, displayName: top.matchedAddress };
+  } catch (err) {
+    // Best-effort fallback — a Census outage should degrade to the normal
+    // "couldn't find that address" message, not a hard 502.
+    console.warn("[routePulse] Census geocoder fallback failed:", err);
+    return null;
+  }
+}
+
+/**
+ * Resolves a free-text address to coordinates. Tries Nominatim
+ * (OpenStreetMap's free geocoder) first, then falls back to the US Census
+ * Bureau's free geocoder for real addresses Nominatim can't fuzzy-match
+ * (see geocodeViaCensus). Bias toward the US since incident coverage is
+ * Oregon/SW Washington today; callers doing national/global routing later
+ * can drop or parameterize this.
+ */
+export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
+  const trimmed = address.trim();
+  if (trimmed.length < 3) {
+    throw new GeocodingError("Enter a more complete address.");
+  }
+
+  const cached = readGeocodeCache(trimmed);
+  if (cached) return cached;
+
+  const point =
+    (await geocodeViaNominatim(trimmed)) ?? (await geocodeViaCensus(trimmed));
+
+  if (!point) {
     throw new GeocodingError(
       `Couldn't find "${trimmed}". Try adding a city and state.`
     );
   }
 
-  const point: GeocodedPoint = { lat, lng, displayName: top.display_name };
   writeGeocodeCache(trimmed, point);
   return point;
+}
+
+/**
+ * Lightweight address suggestion lookup for typeahead UI. Calls Nominatim
+ * with a higher result limit and returns display names only — no coordinate
+ * resolution, no Census fallback. Designed to be called on every keystroke
+ * (with client-side debounce) so it must stay fast and never throw.
+ *
+ * Nominatim's usage policy asks for no more than 1 req/sec; the client
+ * debounces at 400ms and only fires after 4+ characters to stay well under
+ * that threshold in practice.
+ */
+export async function suggestAddresses(
+  query: string
+): Promise<{ suggestions: string[] }> {
+  const trimmed = query.trim();
+  if (trimmed.length < 4) return { suggestions: [] };
+
+  const url =
+    `${ENV.nominatimUrl}/search?format=jsonv2&limit=5&countrycodes=us` +
+    `&q=${encodeURIComponent(trimmed)}`;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": ENV.nominatimUserAgent,
+        Accept: "application/json",
+      },
+    });
+    if (!res.ok) return { suggestions: [] };
+
+    const results = (await res.json()) as Array<{
+      display_name: string;
+    }>;
+
+    return {
+      suggestions: results
+        .map(r => r.display_name)
+        .filter((s): s is string => typeof s === "string" && s.length > 0),
+    };
+  } catch (err) {
+    console.warn("[routePulse] Nominatim suggestion failed:", err);
+    return { suggestions: [] };
+  }
 }
 
 export type RouteIncident = {
@@ -159,6 +258,8 @@ export type RouteIncident = {
   description: string | null;
   road_name: string | null;
   source: string;
+  lat: number;
+  lng: number;
 };
 
 export type ScoredRoute = {
@@ -332,6 +433,8 @@ async function getIncidentsNearRoute(
     description: (row.description as string | null) ?? null,
     road_name: (row.road_name as string | null) ?? null,
     source: row.source as string,
+    lat: row.lat as number,
+    lng: row.lng as number,
   }));
 }
 
@@ -462,18 +565,30 @@ export async function listActiveIncidents() {
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
-  const { data, error } = await supabase
-    .from("traffic_incidents")
-    .select(
-      "id, source, road_name, direction, incident_type, severity, description, location_description, started_at, estimated_end_at, source_url"
-    )
-    .is("cleared_at", null)
-    .order("started_at", { ascending: false })
-    .limit(200);
+  // RPC (not a plain table select) — PostgREST doesn't expose ST_X/ST_Y on a
+  // raw select, so lat/lng extraction happens server-side in Postgres, same
+  // pattern as incidents_near_route.
+  const { data, error } = await supabase.rpc("list_active_incidents", {
+    limit_n: 200,
+  });
 
   if (error || !data) return [];
   // Note: unfiltered by area today. For larger coverage regions, add a
   // bbox param backed by a PostGIS RPC (same pattern as incidents_near_route)
   // rather than filtering client-side.
-  return data;
+  return data as Array<{
+    id: string;
+    source: string;
+    road_name: string | null;
+    direction: string | null;
+    incident_type: string;
+    severity: RouteIncident["severity"];
+    description: string | null;
+    location_description: string | null;
+    started_at: string | null;
+    estimated_end_at: string | null;
+    source_url: string | null;
+    lat: number;
+    lng: number;
+  }>;
 }

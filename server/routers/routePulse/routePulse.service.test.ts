@@ -26,6 +26,8 @@ vi.mock("../../_core/env", () => ({
     tomtomApiKey: "",
     nominatimUrl: "https://nominatim.openstreetmap.org",
     nominatimUserAgent: "UnifyOne-RoutePulse/1.0 (+https://example.com)",
+    censusGeocoderUrl:
+      "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress",
   },
 }));
 
@@ -74,8 +76,21 @@ function makeRoute(
  * order/count of geocode vs. routing calls (origin+destination geocode fire
  * concurrently via Promise.all).
  */
+function censusResult(lat: number, lng: number, matchedAddress: string) {
+  return {
+    result: {
+      addressMatches: [{ coordinates: { x: lng, y: lat }, matchedAddress }],
+    },
+  };
+}
+
+function censusNoMatch() {
+  return { result: { addressMatches: [] } };
+}
+
 function installFetchMock(opts: {
   geocode?: (address: string) => unknown | null; // null => geocoding "not found"
+  census?: (address: string) => unknown | null; // null => no Census match either
   osrm?: () => { ok: boolean; body?: unknown } | "network-error";
   tomtom?: () => { ok: boolean; body?: unknown } | "network-error";
 }) {
@@ -83,6 +98,7 @@ function installFetchMock(opts: {
     opts.geocode ??
     (() =>
       nominatimResult(ORIGIN_COORDS.lat, ORIGIN_COORDS.lng, "Test Address"));
+  const censusFn = opts.census ?? (() => censusNoMatch());
 
   global.fetch = vi.fn(async (url: string) => {
     const u = String(url);
@@ -93,6 +109,13 @@ function installFetchMock(opts: {
       const result = geocodeFn(addressMatch);
       if (result === null) return jsonResponse([]);
       return jsonResponse(result);
+    }
+    if (u.includes("geocoding.geo.census.gov")) {
+      const addressMatch = decodeURIComponent(
+        u.match(/[?&]address=([^&]+)/)?.[1] ?? ""
+      );
+      const result = censusFn(addressMatch);
+      return jsonResponse(result === null ? censusNoMatch() : result);
     }
     if (u.includes("router.project-osrm.org")) {
       if (!opts.osrm)
@@ -180,10 +203,59 @@ describe("routePulse.service — geocoding (Nominatim/OSM)", () => {
     }
   );
 
-  it("throws a clear NOT_FOUND when Nominatim returns no results", async () => {
-    installFetchMock({ geocode: () => [] });
+  it("throws a clear NOT_FOUND when both Nominatim and Census find nothing", async () => {
+    installFetchMock({ geocode: () => [], census: () => censusNoMatch() });
     await expect(
       service.geocodeAddress("asdkjaslkdjaslkdj nonexistent place")
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("falls back to the Census geocoder when Nominatim can't match a real address", async () => {
+    // Regression test: Nominatim's plain-text matcher can miss real,
+    // unambiguous US addresses on renamed/accented official street names
+    // (e.g. Portland's SE César E. Chávez Blvd) even though Google and the
+    // Census Bureau's TIGER/Line-backed geocoder resolve them fine.
+    installFetchMock({
+      geocode: () => [],
+      census: () =>
+        censusResult(
+          45.4989,
+          -122.6382,
+          "4715 SE CESAR E CHAVEZ BLVD, PORTLAND, OR, 97202"
+        ),
+    });
+
+    const point = await service.geocodeAddress(
+      "4715 SE Cesar Estrada Chavez Blvd, Portland, OR 97202"
+    );
+
+    expect(point.lat).toBeCloseTo(45.4989);
+    expect(point.lng).toBeCloseTo(-122.6382);
+    expect(point.displayName).toContain("CESAR E CHAVEZ");
+  });
+
+  it("never calls Census when Nominatim already found a match", async () => {
+    installFetchMock({});
+    await service.geocodeAddress(ORIGIN_ADDR);
+    const calledCensus = (global.fetch as any).mock.calls.some((c: any[]) =>
+      String(c[0]).includes("geocoding.geo.census.gov")
+    );
+    expect(calledCensus).toBe(false);
+  });
+
+  it("treats a Census outage as a plain NOT_FOUND, not a 502", async () => {
+    installFetchMock({ geocode: () => [] });
+    (global.fetch as any).mockImplementation(async (url: string) => {
+      const u = String(url);
+      if (u.includes("geocoding.geo.census.gov")) {
+        throw new Error("ECONNREFUSED");
+      }
+      if (u.includes("nominatim")) return jsonResponse([]);
+      throw new Error(`Unexpected fetch URL in test: ${u}`);
+    });
+
+    await expect(
+      service.geocodeAddress("some real address that census can't reach")
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
@@ -239,6 +311,89 @@ describe("routePulse.service — geocoding (Nominatim/OSM)", () => {
       expect(r.lat).toBe(45);
       expect(r.lng).toBe(-122);
     }
+  });
+});
+
+describe("routePulse.service — suggestions (typeahead)", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns display names from Nominatim for a valid query", async () => {
+    global.fetch = vi.fn().mockResolvedValue(
+      jsonResponse([
+        { display_name: "123 SW Broadway, Portland, OR, USA" },
+        { display_name: "123 SW Broadway, Denver, CO, USA" },
+      ])
+    );
+
+    const result = await service.suggestAddresses("123 SW Broadway");
+
+    expect(result.suggestions).toHaveLength(2);
+    expect(result.suggestions[0]).toContain("Portland");
+  });
+
+  it("returns empty suggestions for queries under 4 characters", async () => {
+    global.fetch = vi.fn();
+
+    const result = await service.suggestAddresses("123");
+
+    expect(result.suggestions).toEqual([]);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("returns empty suggestions for whitespace-only input", async () => {
+    global.fetch = vi.fn();
+
+    const result = await service.suggestAddresses("   ");
+
+    expect(result.suggestions).toEqual([]);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("sends the correct User-Agent header on suggestion calls", async () => {
+    global.fetch = vi.fn().mockResolvedValue(jsonResponse([]));
+
+    await service.suggestAddresses("Broadway, Portland");
+
+    const call = (global.fetch as any).mock.calls[0];
+    expect(call[1].headers["User-Agent"]).toContain("RoutePulse");
+  });
+
+  it("degrades to empty suggestions when Nominatim is unreachable", async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error("ECONNREFUSED"));
+
+    const result = await service.suggestAddresses("Broadway, Portland");
+
+    expect(result.suggestions).toEqual([]);
+  });
+
+  it("degrades to empty suggestions when Nominatim returns non-OK", async () => {
+    global.fetch = vi.fn().mockResolvedValue(jsonResponse({ error: "blocked" }, false));
+
+    const result = await service.suggestAddresses("Broadway, Portland");
+
+    expect(result.suggestions).toEqual([]);
+  });
+
+  it("filters out malformed display names from the response", async () => {
+    global.fetch = vi.fn().mockResolvedValue(
+      jsonResponse([
+        { display_name: "Valid Address, Portland, OR" },
+        { display_name: "" },
+        { display_name: null },
+        { display_name: "Another Valid, Portland, OR" },
+      ])
+    );
+
+    const result = await service.suggestAddresses("Portland");
+
+    expect(result.suggestions).toHaveLength(2);
+    expect(result.suggestions[0]).toBe("Valid Address, Portland, OR");
+    expect(result.suggestions[1]).toBe("Another Valid, Portland, OR");
   });
 });
 
@@ -638,15 +793,10 @@ describe("routePulse.service — getRoute (address-based)", () => {
   });
 
   it("listActiveIncidents returns [] rather than throwing when Supabase errors", async () => {
-    const from = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      is: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-      limit: vi
-        .fn()
-        .mockResolvedValue({ data: null, error: { message: "boom" } }),
-    });
-    (getSupabaseAdmin as any).mockReturnValue({ from, rpc: vi.fn() });
+    const rpc = vi
+      .fn()
+      .mockResolvedValue({ data: null, error: { message: "boom" } });
+    (getSupabaseAdmin as any).mockReturnValue({ rpc });
 
     const result = await service.listActiveIncidents();
     expect(result).toEqual([]);
