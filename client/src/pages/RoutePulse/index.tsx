@@ -61,6 +61,7 @@ import {
   Square,
   Timer,
   WifiOff,
+  Lightbulb,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRecentRoutes } from "@/hooks/useRecentRoutes";
@@ -152,6 +153,15 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *     localStorage; if a lookup fails (dead zone), the last result's key
  *     stats stay visible instead of just an error
  *   - "/" keyboard shortcut focuses the origin field on desktop
+ *
+ * v12 (route-choice quality):
+ *   - AI "avoid" verdicts on each non-recommended route in the comparison
+ *     strip — not just what we picked, but why the others lose
+ *   - Wait-or-go advisor: when the chosen route's severe incidents have an
+ *     estimated clear time inside 90 minutes, a chip suggests waiting
+ *     ("crash on I-5 clears by 3:20 PM, saves ~15 min")
+ *   - Rush-hour weighting note on the risk meter when scores were computed
+ *     under weekday peak conditions
  */
 
 const CANONICAL = `${SITE_URL}/tools/route-pulse`;
@@ -1175,6 +1185,23 @@ export default function RoutePulse() {
       | "low"
       | "none";
 
+  // v12: per-route AI verdicts (aligned by route index; null for chosen),
+  // wait-or-go advice, and the time context the server scored under.
+  const routeVerdicts =
+    (routeQuery.data?.verdicts as (string | null)[] | undefined) ?? null;
+  const waitAdvice =
+    (routeQuery.data?.waitAdvice as
+      | {
+          clearByIso: string;
+          waitMin: number;
+          delayAvoidedMin: number;
+          roadName: string | null;
+        }
+      | null
+      | undefined) ?? null;
+  const timeContext =
+    (routeQuery.data?.timeContext as string | undefined) ?? "offpeak";
+
   // Arrive-by planner: leave-by = arrival time minus drive time minus the
   // server's estimated incident delay (falls back to the local severity
   // table for pre-v5 cached responses). The buffer is the differentiator —
@@ -2160,6 +2187,13 @@ export default function RoutePulse() {
                 </div>
                 <span className="text-xs font-medium text-muted-foreground shrink-0">
                   Risk {riskInfo.score}/100
+                  {/* v12: scores computed under weekday peak conditions get
+                      congestion weighted 25% heavier server-side — say so. */}
+                  {timeContext === "peak" && (
+                    <span className="block text-[10px] font-normal text-amber-600 dark:text-amber-400">
+                      rush-hour weighting
+                    </span>
+                  )}
                 </span>
               </div>
             )}
@@ -2257,6 +2291,19 @@ export default function RoutePulse() {
                   and we'll tell you when to leave — buffer included
                 </span>
               )}
+              {/* v12: wait-or-go — the chosen route's severe incidents have
+                  a known clear time inside 90 minutes, so waiting actually
+                  beats leaving now. */}
+              {waitAdvice && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 text-[11px] text-blue-700 dark:text-blue-300">
+                  <Lightbulb className="w-3 h-3 shrink-0" />
+                  Wait ~{waitAdvice.waitMin} min —{" "}
+                  {waitAdvice.roadName ? `${waitAdvice.roadName} ` : ""}
+                  est. clear by{" "}
+                  {fmtTime(new Date(waitAdvice.clearByIso))}, saving ~
+                  {waitAdvice.delayAvoidedMin} min
+                </span>
+              )}
             </div>
 
             {/* v8: turn-by-turn steps for the displayed route — tap a step
@@ -2336,6 +2383,13 @@ export default function RoutePulse() {
                             : `${alt.incidents.length} incident${alt.incidents.length === 1 ? "" : "s"}`}
                           {delayMin > 0 && ` · est. +${delayMin} min`}
                         </span>
+                        {/* v12: the AI's reason this route loses — the
+                            "why not" behind the recommendation. */}
+                        {!isChosen && routeVerdicts?.[i] && (
+                          <span className="block text-[10px] text-muted-foreground mt-1 italic leading-snug">
+                            {routeVerdicts[i]}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
