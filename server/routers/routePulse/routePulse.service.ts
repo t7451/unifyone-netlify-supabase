@@ -26,6 +26,38 @@
  * (netlify/functions/routepulse-ingest-scheduled.mts), which polls Road511
  * + ODOT TripCheck + NWS weather alerts + WSDOT highway alerts every 2
  * minutes, and ODOT's camera list every ~5 minutes.
+ *
+ * ---------------------------------------------------------------------
+ * NOTES FOR KIMI (2026-08-09 audit/hardening pass — Claude)
+ * ---------------------------------------------------------------------
+ * 1. TOMTOM_API_KEY is now live in Netlify — fetchTomTomFallback() is
+ *    fully wired and will actually fire the moment OSRM is unreachable.
+ *    Nothing left to do there unless you want it exercised more (e.g. as
+ *    a primary alternative-routes source, not just a failover).
+ * 2. OPENWEBNINJA_API_KEY is live in Netlify too, but unused — no
+ *    integration exists yet. See the note next to ENV.openWebNinjaApiKey
+ *    in server/_core/env.ts for where to plug it in.
+ * 3. IMPORTANT — mark_incidents_cleared() was missing entirely from the
+ *    live Supabase project when I checked (2026-08-09). The scheduled
+ *    ingestion function has been calling it every 2min cycle and
+ *    silently failing (the catch block only logs, doesn't throw), so
+ *    incidents were never being auto-cleared — 336 were stuck "active"
+ *    in production, one since 2021. I restored the function directly on
+ *    the live DB (matches drizzle/0051_routepulse_init.sql, plus a
+ *    `SET search_path` hardening the original didn't have), but there is
+ *    NO migration file for this in drizzle/ — if you ever reset/reseed
+ *    this database from migrations alone, that function won't exist and
+ *    this will silently break again. Please add a proper
+ *    drizzle/00XX_restore_mark_incidents_cleared.sql so it's captured in
+ *    version control, not just live on the DB.
+ * 4. All four external fetch() calls in this file (Nominatim geocode,
+ *    Nominatim suggest, Census fallback, OSRM, TomTom) now go through
+ *    fetchWithTimeout() below with a 5s AbortController. If you add a
+ *    fifth upstream call anywhere in RoutePulse, route it through the
+ *    same helper rather than a bare fetch() — otherwise a stalled
+ *    upstream hangs the whole request instead of failing into whatever
+ *    fallback comes next.
+ * ---------------------------------------------------------------------
  */
 import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "../../_core/supabaseAdmin";

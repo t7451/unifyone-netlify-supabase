@@ -1220,6 +1220,22 @@ export default function RoutePulse() {
       />
 
       <ToolLayout toolName="RoutePulse" breadcrumb="RoutePulse">
+        {/* sr-only live region — announces route results/errors to screen
+            reader users, who otherwise get no signal that a search finished
+            (the visual result cards below aren't announced on their own).
+            NOTE for Kimi: if you add new terminal states to routeQuery
+            (e.g. a new error branch), extend the text below rather than
+            leaving screen reader users only the visual card. */}
+        <div className="sr-only" role="status" aria-live="polite">
+          {routeQuery.isFetching
+            ? "Finding route…"
+            : hasRoute
+              ? `Route found: ${Math.round((routeQuery.data!.route.duration ?? 0) / 60)} minutes, ${routeQuery.data!.route.incidents.length} incident${routeQuery.data!.route.incidents.length === 1 ? "" : "s"} on the way.`
+              : routeQuery.isError
+                ? "Couldn't find a route. See the error message below the search form."
+                : ""}
+        </div>
+
         <header className="mb-8">
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
             Free Tool · Route Intelligence
@@ -1488,6 +1504,7 @@ export default function RoutePulse() {
                       type="button"
                       onClick={() => setSearchCollapsed(true)}
                       title="Collapse search"
+                      aria-label="Collapse search"
                       className="absolute top-2 right-2 w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
                     >
                       <ChevronUp className="w-4 h-4" />
@@ -1529,6 +1546,7 @@ export default function RoutePulse() {
                           onClick={() => unstarRoute(r.origin, r.destination)}
                           className="px-1.5 py-1 text-muted-foreground hover:text-destructive transition-colors"
                           title="Remove saved route"
+                          aria-label={`Remove saved route ${r.origin} to ${r.destination}`}
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -1693,6 +1711,15 @@ export default function RoutePulse() {
                         : "Click to re-center on you"
                       : "Find my location"
                 }
+                aria-label={
+                  locating
+                    ? "Locating…"
+                    : tracking
+                      ? follow
+                        ? "Following you — click to stop"
+                        : "Click to re-center on you"
+                      : "Find my location"
+                }
                 className={`w-11 h-11 sm:w-9 sm:h-9 rounded-md backdrop-blur-md border shadow-lg flex items-center justify-center transition-colors ${
                   tracking && follow
                     ? "bg-blue-500/90 text-white border-blue-400"
@@ -1711,6 +1738,7 @@ export default function RoutePulse() {
                   setBasemap(m => (m === "light" ? "dark" : "light"))
                 }
                 title="Toggle map style"
+                aria-label="Toggle map style"
                 className="w-11 h-11 sm:w-9 sm:h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
               >
                 <Layers className="w-4 h-4" />
@@ -1719,6 +1747,7 @@ export default function RoutePulse() {
                 type="button"
                 onClick={handleToggleFullscreen}
                 title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
                 className="w-11 h-11 sm:w-9 sm:h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
               >
                 {isFullscreen ? (
@@ -2131,11 +2160,43 @@ export default function RoutePulse() {
         )}
 
         {routeQuery.isError && !resultsAreStale && (
-          <Card className="p-6 mb-8 border-destructive/30 bg-destructive/5">
+          <Card
+            className="p-6 mb-8 border-destructive/30 bg-destructive/5"
+            role="alert"
+            aria-live="assertive"
+          >
             <p className="text-sm text-destructive">
-              {routeQuery.error?.message?.includes("Couldn't find")
-                ? routeQuery.error.message
-                : "Couldn't find a route between those addresses. Double-check them and try again."}
+              {/* NOTE for Kimi: branch on error.data.code (tRPC's standard
+                  error shape — see server/_core/trpc.ts errorFormatter),
+                  not string-matching on .message. NOT_FOUND covers both bad
+                  addresses and "no route between these points"; BAD_GATEWAY
+                  means an upstream (Nominatim/OSRM/TomTom) is down or timed
+                  out, not a bad address — don't tell the driver to "double
+                  check" an address when the real issue is our side. If you
+                  add more service.ts error paths, prefer throwing a
+                  TRPCError with a specific code over a generic message so
+                  this switch stays accurate instead of falling through to
+                  the vague default. */}
+              {(() => {
+                const code = (
+                  routeQuery.error as unknown as {
+                    data?: { code?: string };
+                  }
+                )?.data?.code;
+                if (code === "TOO_MANY_REQUESTS") {
+                  return routeQuery.error!.message;
+                }
+                if (code === "BAD_GATEWAY") {
+                  return "Routing is temporarily unavailable — try again in a moment.";
+                }
+                if (
+                  code === "NOT_FOUND" &&
+                  routeQuery.error?.message
+                ) {
+                  return routeQuery.error.message;
+                }
+                return "Couldn't find a route between those addresses. Double-check them and try again.";
+              })()}
             </p>
           </Card>
         )}
@@ -2161,6 +2222,7 @@ export default function RoutePulse() {
                 type="button"
                 onClick={() => incidentsQuery.refetch()}
                 title="Refresh incidents now"
+                aria-label="Refresh incidents now"
                 className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
               >
                 <RefreshCw

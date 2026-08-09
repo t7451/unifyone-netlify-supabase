@@ -100,6 +100,17 @@ export const ENV = {
   // TomTom Routing API — fallback used only if OSRM is unreachable/down.
   // Free tier: 2,500 requests/day. https://developer.tomtom.com
   tomtomApiKey: process.env.TOMTOM_API_KEY ?? "",
+  // NOTE for Kimi: OPENWEBNINJA_API_KEY is live in Netlify (set 2026-08-09)
+  // but nothing in this codebase reads it yet — no integration exists.
+  // Wire it up here the same way tomtomApiKey is wired above, then add the
+  // actual fetch call in routePulse.service.ts near fetchTomTomFallback /
+  // fetchBaseRoutes (that's the natural home for another routing/traffic
+  // data source). Whatever it ends up doing, please route it through
+  // fetchWithTimeout() (top of routePulse.service.ts) rather than a bare
+  // fetch() — that's what fixed the hang-until-platform-timeout issue on
+  // the other three upstreams, and a fourth unguarded fetch would
+  // reintroduce the same failure mode for whatever calls this one.
+  openWebNinjaApiKey: process.env.OPENWEBNINJA_API_KEY ?? "",
   // Nominatim (OpenStreetMap) geocoding — free, no API key. Usage policy
   // requires a descriptive User-Agent identifying the app + contact URL.
   // https://operations.osmfoundation.org/policies/nominatim/
