@@ -188,7 +188,15 @@ export async function fetchTomTomTrafficIncidents(
       signal: withTimeout(),
     });
     if (!res.ok) {
-      console.warn(`[routePulse] TomTom incidents HTTP ${res.status}`);
+      // Include response body — 401/403 (bad key or wrong product scope on
+      // the TomTom dashboard) and 400 (malformed bbox) look identical as
+      // just "HTTP 4xx" without it, and both silently degrade to an empty
+      // result indistinguishable from "no incidents in this bbox right
+      // now." This is the only place that failure reason surfaces.
+      const bodyText = await res.text().catch(() => "");
+      console.warn(
+        `[routePulse] TomTom incidents HTTP ${res.status}: ${bodyText.slice(0, 300)}`
+      );
       return [];
     }
     const body = (await res.json()) as {
@@ -314,7 +322,14 @@ export async function fetchWazeAlerts(bbox: Bbox): Promise<RouteIncident[]> {
   try {
     const res = await fetch(url, { headers, signal: withTimeout() });
     if (!res.ok) {
-      console.warn(`[routePulse] Waze alerts HTTP ${res.status}`);
+      // See the matching comment in fetchTomTomTrafficIncidents above —
+      // this is the only place a 401 (wrong URL/key-type mismatch between
+      // RapidAPI-gateway auth and a native OpenWebNinja ak_... key, or vice
+      // versa) is distinguishable from "no alerts in this bbox."
+      const bodyText = await res.text().catch(() => "");
+      console.warn(
+        `[routePulse] Waze alerts HTTP ${res.status} (url=${url}, auth=${isRapidApi ? "rapidapi" : "native"}): ${bodyText.slice(0, 300)}`
+      );
       return [];
     }
     const body = (await res.json()) as {
@@ -450,7 +465,17 @@ export async function fetchTomTomFlow(
           headers: { Accept: "application/json" },
           signal: withTimeout(),
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+          // Log once, not per-sample — same TomTom key/scope issue would
+          // otherwise spam 5x per request with identical info.
+          if (i === Array.from(idxs)[0]) {
+            const bodyText = await res.text().catch(() => "");
+            console.warn(
+              `[routePulse] TomTom flow HTTP ${res.status}: ${bodyText.slice(0, 300)}`
+            );
+          }
+          return null;
+        }
         const body = (await res.json()) as {
           flowSegmentData?: {
             currentSpeed?: number;
