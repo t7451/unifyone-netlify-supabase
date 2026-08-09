@@ -56,6 +56,14 @@ import {
   List,
   ChevronUp,
   Pencil,
+  Radio,
+  Play,
+  Square,
+  Timer,
+  WifiOff,
+  Lightbulb,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRecentRoutes } from "@/hooks/useRecentRoutes";
@@ -130,6 +138,43 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *     (pinch is the norm); 70dvh map height tracks mobile browser chrome
  *   - 16px inputs on mobile (no iOS focus auto-zoom), bigger suggestion
  *     tap targets (AddressInput)
+ *
+ * v10b (AI grounding UI — TomTom Traffic + Waze, server shipped in v10):
+ *   - TomTom/Waze source labels on incident rows
+ *   - "Grounded with live TomTom + Waze data" chip when live third-party
+ *     grounding fed the route pick
+ *
+ * v11 (trip mode + resilience):
+ *   - Trip mode: "Start trip" turns the live location feed into
+ *     navigation-lite — a top banner shows the next maneuver with live
+ *     distance-to-turn and auto-advances as you drive (Google Maps
+ *     guidance behavior without the SDK)
+ *   - Live leave-by countdown chip ("Leave in 12 min") that ticks with
+ *     the 10s clock and flags when it's time to go
+ *   - Offline fallback: the last successful route result is kept in
+ *     localStorage; if a lookup fails (dead zone), the last result's key
+ *     stats stay visible instead of just an error
+ *   - "/" keyboard shortcut focuses the origin field on desktop
+ *
+ * v12 (route-choice quality):
+ *   - AI "avoid" verdicts on each non-recommended route in the comparison
+ *     strip — not just what we picked, but why the others lose
+ *   - Wait-or-go advisor: when the chosen route's severe incidents have an
+ *     estimated clear time inside 90 minutes, a chip suggests waiting
+ *     ("crash on I-5 clears by 3:20 PM, saves ~15 min")
+ *   - Rush-hour weighting note on the risk meter when scores were computed
+ *     under weekday peak conditions
+ *
+ * v13 (trip-mode awareness + departure outlook):
+ *   - Voice prompts in trip mode: the next maneuver is spoken aloud when
+ *     it becomes active (Web Speech API, mute toggle persisted)
+ *   - Live speed + ETA in the trip banner, computed from your actual GPS
+ *     speed (falls back to route average when stationary)
+ *   - Proximity alerts: one-time warning when you come within ~500m of an
+ *     incident on your route during trip mode
+ *   - Departure outlook strip: projected delay leaving now vs +15/+30/+60
+ *     min, best horizon highlighted (server-computed from incident clear
+ *     estimates)
  */
 
 const CANONICAL = `${SITE_URL}/tools/route-pulse`;
@@ -318,6 +363,8 @@ const SOURCE_LABEL: Record<string, string> = {
   wsdot: "WSDOT",
   news_ai: "News",
   user_report: "Report",
+  tomtom: "TomTom",
+  waze: "Waze",
 };
 
 function sourceLabel(source: string | null | undefined): string | null {
@@ -542,6 +589,36 @@ export default function RoutePulse() {
   const [geoPermission, setGeoPermission] = useState<
     "granted" | "denied" | "prompt" | "unknown"
   >("unknown");
+  // v11: trip mode. tripActive = the guidance banner is live; nextStepIdx =
+  // which maneuver we're driving toward (auto-advances as fixes come in).
+  const [tripActive, setTripActive] = useState(false);
+  const [nextStepIdx, setNextStepIdx] = useState(0);
+  // v11: last successful route result, kept so a failed lookup (dead zone)
+  // can still show the driver their most recent trip's key stats.
+  const [lastResult, setLastResult] = useState<{
+    originName: string;
+    destinationName: string;
+    distanceM: number;
+    durationS: number;
+    explanation: string;
+    savedAt: number;
+  } | null>(() => {
+    try {
+      const raw = localStorage.getItem("routepulse:last-result");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  // v13: trip-mode awareness. voiceMuted persists across sessions (some
+  // drivers never want voice); speedMps is the live GPS speed for the ETA;
+  // alertedRef remembers which on-route incidents already fired their
+  // one-time proximity warning this trip.
+  const [voiceMuted, setVoiceMuted] = useState(
+    () => localStorage.getItem("routepulse:voice-muted") === "1"
+  );
+  const [speedMps, setSpeedMps] = useState<number | null>(null);
+  const alertedRef = useRef<Set<string>>(new Set());
 
   // Read permalink params on mount so shared routes load immediately.
   useEffect(() => {
@@ -678,6 +755,7 @@ export default function RoutePulse() {
     setUserLocation(null);
     setAccuracy(null);
     setHeading(null);
+    setSpeedMps(null);
     lastFixRef.current = null;
     setLocating(false);
   };
@@ -734,6 +812,15 @@ export default function RoutePulse() {
         }
         setHeading(hdg);
         lastFixRef.current = fix;
+        // v13: live speed for the trip-banner ETA. Negative/unavailable
+        // (desktop browsers) reads as null and falls back to route average.
+        setSpeedMps(
+          pos.coords.speed !== null &&
+            Number.isFinite(pos.coords.speed) &&
+            pos.coords.speed >= 0
+            ? pos.coords.speed
+            : null
+        );
         setTracking(true);
         setLocating(false);
         // Follow mode keeps the map on the user — but never yanks the view
@@ -914,6 +1001,188 @@ export default function RoutePulse() {
     [displayedRoute]
   );
 
+  // v11: trip mode — auto-advance to the next maneuver as live fixes come
+  // in. Fires on every userLocation change (the watch already runs); when
+  // we're within ~45m of the upcoming maneuver's point we consider it done
+  // and move to the next one. Ends itself at the final maneuver.
+  useEffect(() => {
+    if (!tripActive || !userLocation || displayedManeuvers.length === 0)
+      return;
+    const [lat, lng] = userLocation as [number, number];
+    const step = displayedManeuvers[nextStepIdx];
+    if (!step) {
+      setTripActive(false);
+      return;
+    }
+    const distM = haversineM(
+      { lat, lng },
+      { lat: step.location[1], lng: step.location[0] }
+    );
+    if (distM < 45) {
+      if (nextStepIdx >= displayedManeuvers.length - 1) {
+        setTripActive(false);
+        toast.success("You've arrived");
+      } else {
+        setNextStepIdx(i => i + 1);
+      }
+    }
+  }, [userLocation, tripActive, nextStepIdx, displayedManeuvers]);
+
+  // A new route resets trip mode — steps from the old route would steer
+  // the driver wrong otherwise.
+  useEffect(() => {
+    setTripActive(false);
+    setNextStepIdx(0);
+  }, [submitted]);
+
+  const startTrip = () => {
+    if (!tracking) {
+      toast.error("Enable location first — trip mode follows your position");
+      return;
+    }
+    setNextStepIdx(0);
+    setTripActive(true);
+    toast.success("Trip started — follow the banner");
+  };
+
+  const nextStep: ManeuverStep | null =
+    tripActive && displayedManeuvers.length > 0
+      ? (displayedManeuvers[Math.min(nextStepIdx, displayedManeuvers.length - 1)] ?? null)
+      : null;
+
+  const nextStepDistM =
+    tripActive && nextStep && userLocation
+      ? haversineM(
+          {
+            lat: (userLocation as [number, number])[0],
+            lng: (userLocation as [number, number])[1],
+          },
+          { lat: nextStep.location[1], lng: nextStep.location[0] }
+        )
+      : null;
+
+  // v11: persist the last successful route result for the offline fallback.
+  useEffect(() => {
+    const d = routeQuery.data;
+    if (!d) return;
+    const snapshot = {
+      originName: d.origin.displayName,
+      destinationName: d.destination.displayName,
+      distanceM: d.route.distance,
+      durationS: d.route.duration,
+      explanation: d.explanation,
+      savedAt: Date.now(),
+    };
+    setLastResult(snapshot);
+    try {
+      localStorage.setItem("routepulse:last-result", JSON.stringify(snapshot));
+    } catch {
+      // Storage full/disabled — the offline card just won't appear.
+    }
+  }, [routeQuery.data]);
+
+  // v11: "/" focuses the origin field (desktop power users), matching the
+  // shortcut convention in Google Maps / GitHub / most search UIs.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+      e.preventDefault();
+      setSearchCollapsed(false);
+      document.getElementById("routepulse-origin")?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // v13: voice prompts — speak each maneuver when it becomes the active
+  // one. Web Speech API is free and built into every modern browser; the
+  // mute toggle persists. Cancel any queued speech when trip mode ends or
+  // the page unmounts so a stale "turn left" doesn't play after arrival.
+  useEffect(() => {
+    if (!tripActive || voiceMuted || !nextStep) return;
+    if (typeof window.speechSynthesis === "undefined") return;
+    const utter = new SpeechSynthesisUtterance(
+      nextStepDistM !== null && nextStepDistM >= 30
+        ? `In ${
+            nextStepDistM >= 160
+              ? `${(nextStepDistM / 1609.34).toFixed(1)} miles`
+              : `${Math.max(50, Math.round(nextStepDistM / 0.3048 / 10) * 10)} feet`
+          }, ${nextStep.instruction}`
+        : nextStep.instruction
+    );
+    utter.rate = 1.05;
+    window.speechSynthesis.speak(utter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- speak on step change only
+  }, [nextStepIdx, tripActive]);
+
+  useEffect(() => {
+    if (!tripActive && typeof window.speechSynthesis !== "undefined") {
+      window.speechSynthesis.cancel();
+    }
+  }, [tripActive]);
+
+  const toggleVoiceMuted = () => {
+    setVoiceMuted(m => {
+      const next = !m;
+      try {
+        localStorage.setItem("routepulse:voice-muted", next ? "1" : "0");
+      } catch {
+        // Storage disabled — mute just won't persist.
+      }
+      if (next && typeof window.speechSynthesis !== "undefined") {
+        window.speechSynthesis.cancel();
+      }
+      return next;
+    });
+  };
+
+  // v13: proximity incident alerts during trip mode — one toast per
+  // incident when you come within ~500m of it. Uses a ref set so a GPS
+  // jitter across the threshold doesn't re-fire.
+  useEffect(() => {
+    if (!tripActive || !userLocation || !displayedRoute) return;
+    const [lat, lng] = userLocation as [number, number];
+    for (const inc of displayedRoute.incidents) {
+      if (alertedRef.current.has(inc.id)) continue;
+      if (!Number.isFinite(inc.lat) || !Number.isFinite(inc.lng)) continue;
+      const dist = haversineM({ lat, lng }, { lat: inc.lat, lng: inc.lng });
+      if (dist <= 500) {
+        alertedRef.current.add(inc.id);
+        toast.warning(
+          `Ahead: ${inc.road_name ? `${inc.road_name} — ` : ""}${inc.description ?? inc.incident_type}`,
+          { duration: 6000 }
+        );
+      }
+    }
+  }, [userLocation, tripActive, displayedRoute]);
+
+  // Reset proximity memory on a new route or a new trip.
+  useEffect(() => {
+    alertedRef.current.clear();
+  }, [submitted, tripActive]);
+
+  // v13: trip ETA — remaining maneuver distance divided by live speed
+  // (route average as fallback while stationary or on desktops that don't
+  // report GPS speed).
+  const tripEta = useMemo(() => {
+    if (!tripActive || displayedManeuvers.length === 0) return null;
+    const remainingM = displayedManeuvers
+      .slice(nextStepIdx)
+      .reduce((sum, m) => sum + (m.distanceM || 0), 0);
+    const routeAvg =
+      displayedRoute && displayedRoute.duration > 0
+        ? displayedRoute.distance / displayedRoute.duration
+        : 8.9; // ~20 mph sanity floor
+    const speed = speedMps !== null && speedMps > 1.5 ? speedMps : routeAvg;
+    const etaSec = remainingM / speed;
+    return {
+      minutesLeft: Math.max(1, Math.round(etaSec / 60)),
+      arriveAt: new Date(Date.now() + etaSec * 1000),
+    };
+  }, [tripActive, displayedManeuvers, nextStepIdx, displayedRoute, speedMps]);
+
   // Congestion-colored per-step segments. Each step's implied speed is
   // compared to the route average; only drawn when the step geometry
   // actually covers the route (2+ drawable steps), otherwise the plain
@@ -1034,6 +1303,34 @@ export default function RoutePulse() {
       | "medium"
       | "low"
       | "none";
+
+  // v12: per-route AI verdicts (aligned by route index; null for chosen),
+  // wait-or-go advice, and the time context the server scored under.
+  const routeVerdicts =
+    (routeQuery.data?.verdicts as (string | null)[] | undefined) ?? null;
+  const waitAdvice =
+    (routeQuery.data?.waitAdvice as
+      | {
+          clearByIso: string;
+          waitMin: number;
+          delayAvoidedMin: number;
+          roadName: string | null;
+        }
+      | null
+      | undefined) ?? null;
+  const timeContext =
+    (routeQuery.data?.timeContext as string | undefined) ?? "offpeak";
+  // v13: departure-horizon outlook (leave now vs +15/+30/+60).
+  const departureOutlook =
+    (routeQuery.data?.departureOutlook as
+      | {
+          horizonsMin: number[];
+          delayMin: number[];
+          bestHorizonMin: number;
+          savesMin: number;
+        }
+      | null
+      | undefined) ?? null;
 
   // Arrive-by planner: leave-by = arrival time minus drive time minus the
   // server's estimated incident delay (falls back to the local severity
@@ -1471,6 +1768,63 @@ export default function RoutePulse() {
               </div>
             )}
 
+            {/* v11 trip mode banner — navigation-lite guidance driven by
+                the live location feed. Shows the next maneuver with live
+                distance-to-turn; auto-advances as fixes arrive. */}
+            {tripActive && nextStep && (
+              <div className="absolute z-[450] top-3 left-1/2 -translate-x-1/2 w-[min(92vw,420px)] rounded-xl bg-background/95 backdrop-blur-md border shadow-xl px-4 py-3 flex items-center gap-3">
+                <span className="w-9 h-9 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <ManeuverGlyph
+                    type={nextStep.type}
+                    modifier={nextStep.modifier}
+                  />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold leading-tight truncate">
+                    {nextStep.instruction}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    {nextStepDistM !== null &&
+                      (nextStepDistM >= 160
+                        ? `in ${(nextStepDistM / 1609.34).toFixed(1)} mi`
+                        : `in ${Math.max(50, Math.round(nextStepDistM / 0.3048 / 10) * 10)} ft`)}
+                    {" · "}step {nextStepIdx + 1} of {displayedManeuvers.length}
+                    {/* v13: live speed + ETA from actual GPS speed */}
+                    {speedMps !== null && speedMps > 1.5 && (
+                      <>{" · "}{Math.round(speedMps * 2.23694)} mph</>
+                    )}
+                    {tripEta && (
+                      <>
+                        {" · "}ETA {fmtTime(tripEta.arriveAt)} (
+                        {tripEta.minutesLeft} min)
+                      </>
+                    )}
+                  </p>
+                </div>
+                {/* v13: voice prompt mute toggle */}
+                <button
+                  type="button"
+                  onClick={toggleVoiceMuted}
+                  title={voiceMuted ? "Unmute voice prompts" : "Mute voice prompts"}
+                  className="shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  {voiceMuted ? (
+                    <VolumeX className="w-3.5 h-3.5" />
+                  ) : (
+                    <Volume2 className="w-3.5 h-3.5" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTripActive(false)}
+                  title="End trip"
+                  className="shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  <Square className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
             {/* Floating glass search card — Google-Maps-style search-over-map
                 instead of a form stacked above the map. v9: once a route is
                 displayed it folds into a one-line chip (tap to edit) so the
@@ -1841,6 +2195,29 @@ export default function RoutePulse() {
                     Steps
                   </Button>
                 )}
+                {/* v11: trip mode toggle — guidance banner driven by live
+                    location. Needs tracking on and steps available. */}
+                {displayedManeuvers.length > 0 && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={tripActive ? "default" : "outline"}
+                    className="gap-1.5 shrink-0"
+                    onClick={() => (tripActive ? setTripActive(false) : startTrip())}
+                    title={
+                      tracking
+                        ? "Start guided trip mode"
+                        : "Enable location first, then start trip mode"
+                    }
+                  >
+                    {tripActive ? (
+                      <Square className="w-4 h-4" />
+                    ) : (
+                      <Play className="w-4 h-4" />
+                    )}
+                    {tripActive ? "End" : "Go"}
+                  </Button>
+                )}
               </div>
             )}
 
@@ -1912,6 +2289,27 @@ export default function RoutePulse() {
                 </Badge>
               )}
               <div className="flex items-center gap-1">
+                {/* v11: trip mode toggle (desktop) */}
+                {displayedManeuvers.length > 0 && (
+                  <Button
+                    variant={tripActive ? "default" : "ghost"}
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => (tripActive ? setTripActive(false) : startTrip())}
+                    title={
+                      tracking
+                        ? "Start guided trip mode"
+                        : "Enable location first, then start trip mode"
+                    }
+                  >
+                    {tripActive ? (
+                      <Square className="w-4 h-4" />
+                    ) : (
+                      <Play className="w-4 h-4" />
+                    )}
+                    {tripActive ? "End trip" : "Start trip"}
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1971,6 +2369,13 @@ export default function RoutePulse() {
                 </div>
                 <span className="text-xs font-medium text-muted-foreground shrink-0">
                   Risk {riskInfo.score}/100
+                  {/* v12: scores computed under weekday peak conditions get
+                      congestion weighted 25% heavier server-side — say so. */}
+                  {timeContext === "peak" && (
+                    <span className="block text-[10px] font-normal text-amber-600 dark:text-amber-400">
+                      rush-hour weighting
+                    </span>
+                  )}
                 </span>
               </div>
             )}
@@ -1993,6 +2398,18 @@ export default function RoutePulse() {
                 <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                   <Sparkles className="w-3 h-3" />
                   AI route pick · {aiConfidence} confidence
+                </p>
+              )}
+              {/* v10b: visible when live TomTom/Waze grounding fed this
+                  result — the receipts behind the "better than Google"
+                  claim. */}
+              {(routeQuery.data!.grounding as
+                | { tomtomIncidents: number; wazeAlerts: number; flowSamples: number }
+                | null
+                | undefined) && (
+                <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Radio className="w-3 h-3" />
+                  Grounded with live TomTom + Waze data
                 </p>
               )}
             </div>
@@ -2026,12 +2443,81 @@ export default function RoutePulse() {
                   )}
                 </span>
               )}
+              {/* v11: live countdown to the computed leave-by time. nowTick
+                  re-renders every 10s so this stays honest without its own
+                  timer. */}
+              {leaveByInfo &&
+                (() => {
+                  const leaveInMin = Math.round(
+                    (leaveByInfo.leave.getTime() - Date.now()) / 60_000
+                  );
+                  return (
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                        leaveInMin <= 0
+                          ? "bg-red-500/15 text-red-600 dark:text-red-400"
+                          : leaveInMin <= 10
+                            ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                            : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                      }`}
+                    >
+                      <Timer className="w-3 h-3" />
+                      {leaveInMin <= 0
+                        ? "Time to leave now"
+                        : `Leave in ${leaveInMin} min`}
+                    </span>
+                  );
+                })()}
               {!leaveByInfo && (
                 <span className="text-xs text-muted-foreground">
                   and we'll tell you when to leave — buffer included
                 </span>
               )}
+              {/* v12: wait-or-go — the chosen route's severe incidents have
+                  a known clear time inside 90 minutes, so waiting actually
+                  beats leaving now. */}
+              {waitAdvice && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 text-[11px] text-blue-700 dark:text-blue-300">
+                  <Lightbulb className="w-3 h-3 shrink-0" />
+                  Wait ~{waitAdvice.waitMin} min —{" "}
+                  {waitAdvice.roadName ? `${waitAdvice.roadName} ` : ""}
+                  est. clear by{" "}
+                  {fmtTime(new Date(waitAdvice.clearByIso))}, saving ~
+                  {waitAdvice.delayAvoidedMin} min
+                </span>
+              )}
             </div>
+
+            {/* v13: departure outlook — projected incident delay at each
+                leave-time horizon, cheapest one highlighted. */}
+            {departureOutlook && (
+              <div className="flex items-center gap-2 flex-wrap pt-3 border-t">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Delay if you leave:
+                </span>
+                {departureOutlook.horizonsMin.map((h, i) => {
+                  const isBest = h === departureOutlook.bestHorizonMin;
+                  return (
+                    <span
+                      key={h}
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-medium border ${
+                        isBest
+                          ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
+                          : "bg-muted/60 border-border text-muted-foreground"
+                      }`}
+                    >
+                      {h === 0 ? "now" : `+${h} min`} ·{" "}
+                      {departureOutlook.delayMin[i] ?? 0} min
+                      {isBest && " ✓"}
+                    </span>
+                  );
+                })}
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400">
+                  leaving in {departureOutlook.bestHorizonMin} min saves ~
+                  {departureOutlook.savesMin} min
+                </span>
+              </div>
+            )}
 
             {/* v8: turn-by-turn steps for the displayed route — tap a step
                 to fly the map to where that maneuver happens. */}
@@ -2110,6 +2596,13 @@ export default function RoutePulse() {
                             : `${alt.incidents.length} incident${alt.incidents.length === 1 ? "" : "s"}`}
                           {delayMin > 0 && ` · est. +${delayMin} min`}
                         </span>
+                        {/* v12: the AI's reason this route loses — the
+                            "why not" behind the recommendation. */}
+                        {!isChosen && routeVerdicts?.[i] && (
+                          <span className="block text-[10px] text-muted-foreground mt-1 italic leading-snug">
+                            {routeVerdicts[i]}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -2198,6 +2691,34 @@ export default function RoutePulse() {
                 return "Couldn't find a route between those addresses. Double-check them and try again.";
               })()}
             </p>
+            {/* v11: dead-zone resilience — if we can't reach the server but
+                have a previous result on this device, keep the driver
+                moving with their last trip's key stats. */}
+            {lastResult && (
+              <div className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2.5">
+                <p className="text-xs font-medium flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                  <WifiOff className="w-3.5 h-3.5" />
+                  Offline — showing your last checked route
+                </p>
+                <p className="text-sm mt-1">
+                  {lastResult.originName.split(",")[0]} →{" "}
+                  {lastResult.destinationName.split(",")[0]} ·{" "}
+                  {(lastResult.distanceM / 1609.34).toFixed(1)} mi · ~
+                  {Math.round(lastResult.durationS / 60)} min
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {lastResult.explanation}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Saved{" "}
+                  {Math.max(
+                    1,
+                    Math.round((Date.now() - lastResult.savedAt) / 60_000)
+                  )}{" "}
+                  min ago — conditions may have changed.
+                </p>
+              </div>
+            )}
           </Card>
         )}
 
@@ -2276,7 +2797,9 @@ export default function RoutePulse() {
             happening — not just a red line on a map. Those feeds now span ODOT
             TripCheck, 511, National Weather Service weather alerts, and WSDOT
             highway alerts — and traffic-camera pins show real snapshots of the
-            road along your route, not just dots.
+            road along your route, not just dots. Every pick is grounded with
+            live TomTom Traffic flow speeds and Waze driver reports, so the AI
+            reasons over measured current conditions, not just reported ones.
           </p>
           <p>
             Set an arrive-by time and RoutePulse tells you when to leave,
