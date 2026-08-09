@@ -98,13 +98,22 @@ export function securityHeaders(
   // Only send origin on cross-origin requests, full referrer for same-origin
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
 
-  // Disable browser features this app doesn't use
+  // Disable browser features this app doesn't use.
+  // NOTE FOR KIMI: geolocation is intentionally NOT in this deny-list —
+  // RoutePulse (client/src/pages/RoutePulse/index.tsx) and GigCommand
+  // (client/src/pages/GigCommand.tsx) both call getCurrentPosition /
+  // watchPosition. A blanket `geolocation=()` here overrides the
+  // browser's own permission prompt entirely — the user never even sees
+  // it, the call just fails silently — on both mobile and desktop,
+  // regardless of any per-user browser permission grant. If a future
+  // page needs to explicitly NOT use geolocation, scope it at the
+  // component/iframe level, not here.
   res.setHeader(
     "Permissions-Policy",
     [
       "accelerometer=()",
       "camera=()",
-      "geolocation=()",
+      "geolocation=(self)",
       "gyroscope=()",
       "magnetometer=()",
       "microphone=()",
