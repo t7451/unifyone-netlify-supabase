@@ -56,6 +56,11 @@ import {
   List,
   ChevronUp,
   Pencil,
+  Radio,
+  Play,
+  Square,
+  Timer,
+  WifiOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRecentRoutes } from "@/hooks/useRecentRoutes";
@@ -130,6 +135,23 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *     (pinch is the norm); 70dvh map height tracks mobile browser chrome
  *   - 16px inputs on mobile (no iOS focus auto-zoom), bigger suggestion
  *     tap targets (AddressInput)
+ *
+ * v10b (AI grounding UI — TomTom Traffic + Waze, server shipped in v10):
+ *   - TomTom/Waze source labels on incident rows
+ *   - "Grounded with live TomTom + Waze data" chip when live third-party
+ *     grounding fed the route pick
+ *
+ * v11 (trip mode + resilience):
+ *   - Trip mode: "Start trip" turns the live location feed into
+ *     navigation-lite — a top banner shows the next maneuver with live
+ *     distance-to-turn and auto-advances as you drive (Google Maps
+ *     guidance behavior without the SDK)
+ *   - Live leave-by countdown chip ("Leave in 12 min") that ticks with
+ *     the 10s clock and flags when it's time to go
+ *   - Offline fallback: the last successful route result is kept in
+ *     localStorage; if a lookup fails (dead zone), the last result's key
+ *     stats stay visible instead of just an error
+ *   - "/" keyboard shortcut focuses the origin field on desktop
  */
 
 const CANONICAL = `${SITE_URL}/tools/route-pulse`;
@@ -318,6 +340,8 @@ const SOURCE_LABEL: Record<string, string> = {
   wsdot: "WSDOT",
   news_ai: "News",
   user_report: "Report",
+  tomtom: "TomTom",
+  waze: "Waze",
 };
 
 function sourceLabel(source: string | null | undefined): string | null {
@@ -542,6 +566,27 @@ export default function RoutePulse() {
   const [geoPermission, setGeoPermission] = useState<
     "granted" | "denied" | "prompt" | "unknown"
   >("unknown");
+  // v11: trip mode. tripActive = the guidance banner is live; nextStepIdx =
+  // which maneuver we're driving toward (auto-advances as fixes come in).
+  const [tripActive, setTripActive] = useState(false);
+  const [nextStepIdx, setNextStepIdx] = useState(0);
+  // v11: last successful route result, kept so a failed lookup (dead zone)
+  // can still show the driver their most recent trip's key stats.
+  const [lastResult, setLastResult] = useState<{
+    originName: string;
+    destinationName: string;
+    distanceM: number;
+    durationS: number;
+    explanation: string;
+    savedAt: number;
+  } | null>(() => {
+    try {
+      const raw = localStorage.getItem("routepulse:last-result");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
 
   // Read permalink params on mount so shared routes load immediately.
   useEffect(() => {
@@ -913,6 +958,101 @@ export default function RoutePulse() {
         ?.maneuvers ?? []) as ManeuverStep[],
     [displayedRoute]
   );
+
+  // v11: trip mode — auto-advance to the next maneuver as live fixes come
+  // in. Fires on every userLocation change (the watch already runs); when
+  // we're within ~45m of the upcoming maneuver's point we consider it done
+  // and move to the next one. Ends itself at the final maneuver.
+  useEffect(() => {
+    if (!tripActive || !userLocation || displayedManeuvers.length === 0)
+      return;
+    const [lat, lng] = userLocation as [number, number];
+    const step = displayedManeuvers[nextStepIdx];
+    if (!step) {
+      setTripActive(false);
+      return;
+    }
+    const distM = haversineM(
+      { lat, lng },
+      { lat: step.location[1], lng: step.location[0] }
+    );
+    if (distM < 45) {
+      if (nextStepIdx >= displayedManeuvers.length - 1) {
+        setTripActive(false);
+        toast.success("You've arrived");
+      } else {
+        setNextStepIdx(i => i + 1);
+      }
+    }
+  }, [userLocation, tripActive, nextStepIdx, displayedManeuvers]);
+
+  // A new route resets trip mode — steps from the old route would steer
+  // the driver wrong otherwise.
+  useEffect(() => {
+    setTripActive(false);
+    setNextStepIdx(0);
+  }, [submitted]);
+
+  const startTrip = () => {
+    if (!tracking) {
+      toast.error("Enable location first — trip mode follows your position");
+      return;
+    }
+    setNextStepIdx(0);
+    setTripActive(true);
+    toast.success("Trip started — follow the banner");
+  };
+
+  const nextStep: ManeuverStep | null =
+    tripActive && displayedManeuvers.length > 0
+      ? (displayedManeuvers[Math.min(nextStepIdx, displayedManeuvers.length - 1)] ?? null)
+      : null;
+
+  const nextStepDistM =
+    tripActive && nextStep && userLocation
+      ? haversineM(
+          {
+            lat: (userLocation as [number, number])[0],
+            lng: (userLocation as [number, number])[1],
+          },
+          { lat: nextStep.location[1], lng: nextStep.location[0] }
+        )
+      : null;
+
+  // v11: persist the last successful route result for the offline fallback.
+  useEffect(() => {
+    const d = routeQuery.data;
+    if (!d) return;
+    const snapshot = {
+      originName: d.origin.displayName,
+      destinationName: d.destination.displayName,
+      distanceM: d.route.distance,
+      durationS: d.route.duration,
+      explanation: d.explanation,
+      savedAt: Date.now(),
+    };
+    setLastResult(snapshot);
+    try {
+      localStorage.setItem("routepulse:last-result", JSON.stringify(snapshot));
+    } catch {
+      // Storage full/disabled — the offline card just won't appear.
+    }
+  }, [routeQuery.data]);
+
+  // v11: "/" focuses the origin field (desktop power users), matching the
+  // shortcut convention in Google Maps / GitHub / most search UIs.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+      e.preventDefault();
+      setSearchCollapsed(false);
+      document.getElementById("routepulse-origin")?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   // Congestion-colored per-step segments. Each step's implied speed is
   // compared to the route average; only drawn when the step geometry
@@ -1455,6 +1595,40 @@ export default function RoutePulse() {
               </div>
             )}
 
+            {/* v11 trip mode banner — navigation-lite guidance driven by
+                the live location feed. Shows the next maneuver with live
+                distance-to-turn; auto-advances as fixes arrive. */}
+            {tripActive && nextStep && (
+              <div className="absolute z-[450] top-3 left-1/2 -translate-x-1/2 w-[min(92vw,420px)] rounded-xl bg-background/95 backdrop-blur-md border shadow-xl px-4 py-3 flex items-center gap-3">
+                <span className="w-9 h-9 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <ManeuverGlyph
+                    type={nextStep.type}
+                    modifier={nextStep.modifier}
+                  />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold leading-tight truncate">
+                    {nextStep.instruction}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    {nextStepDistM !== null &&
+                      (nextStepDistM >= 160
+                        ? `in ${(nextStepDistM / 1609.34).toFixed(1)} mi`
+                        : `in ${Math.max(50, Math.round(nextStepDistM / 0.3048 / 10) * 10)} ft`)}
+                    {" · "}step {nextStepIdx + 1} of {displayedManeuvers.length}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTripActive(false)}
+                  title="End trip"
+                  className="shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  <Square className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
             {/* Floating glass search card — Google-Maps-style search-over-map
                 instead of a form stacked above the map. v9: once a route is
                 displayed it folds into a one-line chip (tap to edit) so the
@@ -1812,6 +1986,29 @@ export default function RoutePulse() {
                     Steps
                   </Button>
                 )}
+                {/* v11: trip mode toggle — guidance banner driven by live
+                    location. Needs tracking on and steps available. */}
+                {displayedManeuvers.length > 0 && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={tripActive ? "default" : "outline"}
+                    className="gap-1.5 shrink-0"
+                    onClick={() => (tripActive ? setTripActive(false) : startTrip())}
+                    title={
+                      tracking
+                        ? "Start guided trip mode"
+                        : "Enable location first, then start trip mode"
+                    }
+                  >
+                    {tripActive ? (
+                      <Square className="w-4 h-4" />
+                    ) : (
+                      <Play className="w-4 h-4" />
+                    )}
+                    {tripActive ? "End" : "Go"}
+                  </Button>
+                )}
               </div>
             )}
 
@@ -1883,6 +2080,27 @@ export default function RoutePulse() {
                 </Badge>
               )}
               <div className="flex items-center gap-1">
+                {/* v11: trip mode toggle (desktop) */}
+                {displayedManeuvers.length > 0 && (
+                  <Button
+                    variant={tripActive ? "default" : "ghost"}
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => (tripActive ? setTripActive(false) : startTrip())}
+                    title={
+                      tracking
+                        ? "Start guided trip mode"
+                        : "Enable location first, then start trip mode"
+                    }
+                  >
+                    {tripActive ? (
+                      <Square className="w-4 h-4" />
+                    ) : (
+                      <Play className="w-4 h-4" />
+                    )}
+                    {tripActive ? "End trip" : "Start trip"}
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1966,6 +2184,18 @@ export default function RoutePulse() {
                   AI route pick · {aiConfidence} confidence
                 </p>
               )}
+              {/* v10b: visible when live TomTom/Waze grounding fed this
+                  result — the receipts behind the "better than Google"
+                  claim. */}
+              {(routeQuery.data!.grounding as
+                | { tomtomIncidents: number; wazeAlerts: number; flowSamples: number }
+                | null
+                | undefined) && (
+                <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Radio className="w-3 h-3" />
+                  Grounded with live TomTom + Waze data
+                </p>
+              )}
             </div>
 
             {/* Arrive-by planner — leave-time with an incident-sized buffer */}
@@ -1997,6 +2227,31 @@ export default function RoutePulse() {
                   )}
                 </span>
               )}
+              {/* v11: live countdown to the computed leave-by time. nowTick
+                  re-renders every 10s so this stays honest without its own
+                  timer. */}
+              {leaveByInfo &&
+                (() => {
+                  const leaveInMin = Math.round(
+                    (leaveByInfo.leave.getTime() - Date.now()) / 60_000
+                  );
+                  return (
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                        leaveInMin <= 0
+                          ? "bg-red-500/15 text-red-600 dark:text-red-400"
+                          : leaveInMin <= 10
+                            ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                            : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                      }`}
+                    >
+                      <Timer className="w-3 h-3" />
+                      {leaveInMin <= 0
+                        ? "Time to leave now"
+                        : `Leave in ${leaveInMin} min`}
+                    </span>
+                  );
+                })()}
               {!leaveByInfo && (
                 <span className="text-xs text-muted-foreground">
                   and we'll tell you when to leave — buffer included
@@ -2137,6 +2392,34 @@ export default function RoutePulse() {
                 ? routeQuery.error.message
                 : "Couldn't find a route between those addresses. Double-check them and try again."}
             </p>
+            {/* v11: dead-zone resilience — if we can't reach the server but
+                have a previous result on this device, keep the driver
+                moving with their last trip's key stats. */}
+            {lastResult && (
+              <div className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2.5">
+                <p className="text-xs font-medium flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                  <WifiOff className="w-3.5 h-3.5" />
+                  Offline — showing your last checked route
+                </p>
+                <p className="text-sm mt-1">
+                  {lastResult.originName.split(",")[0]} →{" "}
+                  {lastResult.destinationName.split(",")[0]} ·{" "}
+                  {(lastResult.distanceM / 1609.34).toFixed(1)} mi · ~
+                  {Math.round(lastResult.durationS / 60)} min
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {lastResult.explanation}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Saved{" "}
+                  {Math.max(
+                    1,
+                    Math.round((Date.now() - lastResult.savedAt) / 60_000)
+                  )}{" "}
+                  min ago — conditions may have changed.
+                </p>
+              </div>
+            )}
           </Card>
         )}
 
@@ -2214,7 +2497,9 @@ export default function RoutePulse() {
             happening — not just a red line on a map. Those feeds now span ODOT
             TripCheck, 511, National Weather Service weather alerts, and WSDOT
             highway alerts — and traffic-camera pins show real snapshots of the
-            road along your route, not just dots.
+            road along your route, not just dots. Every pick is grounded with
+            live TomTom Traffic flow speeds and Waze driver reports, so the AI
+            reasons over measured current conditions, not just reported ones.
           </p>
           <p>
             Set an arrive-by time and RoutePulse tells you when to leave,
