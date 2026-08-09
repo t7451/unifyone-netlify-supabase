@@ -285,8 +285,21 @@ export async function fetchTomTomTrafficIncidents(
 }
 
 // ── OpenWebNinja Waze API (alerts + jams) ──────────────────────────────────
-// RapidAPI gateway: https://rapidapi.com/letscrape-6bRBa3QguO5/api/waze
-// GET /alerts-and-jams?bottom_left=lat,lng&top_right=lat,lng
+// Native: https://api.openwebninja.com/waze/alerts-and-jams (x-api-key)
+// RapidAPI gateway (legacy/alt): https://waze.p.rapidapi.com/alerts-and-jams
+//   (X-RapidAPI-Key / X-RapidAPI-Host)
+// Both take ?bottom_left=lat,lng&top_right=lat,lng.
+//
+// NOTE FOR KIMI: the response shape below (flat `{ alerts, jams }`, plain
+// `latitude`/`longitude` on alerts, `line_coordinates: [{lat, lon}]` on
+// jams, `speed_kmh` / `delay_seconds` / `length_meters` field names) was
+// confirmed 2026-08-09 against OpenWebNinja's live API — NOT the
+// `{status, data: {alerts, jams}}` / `location: {x, y}` wrapper you may
+// see referenced in older RapidAPI docs or examples. If you're
+// troubleshooting "zero Waze results" again, check the actual JSON body
+// (now logged in full on non-2xx responses) before assuming the URL is
+// the only thing wrong — a shape mismatch here fails silently (empty
+// array, no thrown error), same as a bad URL/key does.
 
 const WAZE_ALERT_TYPE: Record<string, { type: string; severity: RouteIncident["severity"] }> = {
   ACCIDENT: { type: "Accident", severity: "major" },
@@ -325,49 +338,48 @@ export async function fetchWazeAlerts(bbox: Bbox): Promise<RouteIncident[]> {
       // See the matching comment in fetchTomTomTrafficIncidents above —
       // this is the only place a 401 (wrong URL/key-type mismatch between
       // RapidAPI-gateway auth and a native OpenWebNinja ak_... key, or vice
-      // versa) is distinguishable from "no alerts in this bbox."
+      // versa) is distinguishable from "no alerts in this bbox." Full body
+      // (not just the first 300 chars) is logged here specifically because
+      // a *shape* mismatch (see body parsing below) won't hit this branch
+      // at all — it'll 200 with an empty result — so this is also where
+      // you'd catch an API version/contract change going forward.
       const bodyText = await res.text().catch(() => "");
       console.warn(
-        `[routePulse] Waze alerts HTTP ${res.status} (url=${url}, auth=${isRapidApi ? "rapidapi" : "native"}): ${bodyText.slice(0, 300)}`
+        `[routePulse] Waze alerts HTTP ${res.status} (url=${url}, auth=${isRapidApi ? "rapidapi" : "native"}): ${bodyText.slice(0, 500)}`
       );
       return [];
     }
+    // Real OpenWebNinja shape (confirmed against live docs, not the
+    // {status, data:{...}} wrapper this used to assume): flat top-level
+    // alerts/jams, plain latitude/longitude on alerts, line_coordinates
+    // (lat/lon, not x/y) on jams, speed_kmh/delay_seconds/length_meters.
     const body = (await res.json()) as {
-      status?: string;
-      data?: {
-        alerts?: Array<{
-          type?: string;
-          subtype?: string;
-          street?: string;
-          city?: string;
-          location?: { x?: number; y?: number };
-          latitude?: number;
-          longitude?: number;
-        }>;
-        jams?: Array<{
-          street?: string;
-          city?: string;
-          speed?: number;
-          speedKMH?: number;
-          delay?: number;
-          length?: number;
-          severity?: number;
-          line?: Array<{ x?: number; y?: number }>;
-        }>;
-      };
+      alerts?: Array<{
+        type?: string;
+        subtype?: string;
+        street?: string;
+        city?: string;
+        latitude?: number;
+        longitude?: number;
+      }>;
+      jams?: Array<{
+        street?: string;
+        city?: string;
+        speed_kmh?: number;
+        delay_seconds?: number;
+        length_meters?: number;
+        severity?: number;
+        line_coordinates?: Array<{ lat?: number; lon?: number }>;
+      }>;
     };
-    if (body.status && body.status !== "OK") {
-      console.warn(`[routePulse] Waze alerts status=${body.status}`);
-      return [];
-    }
 
     const out: RouteIncident[] = [];
 
-    const alerts = body.data?.alerts ?? [];
+    const alerts = body.alerts ?? [];
     for (let idx = 0; idx < alerts.length; idx++) {
       const a = alerts[idx]!;
-      const lng = a.location?.x ?? a.longitude;
-      const lat = a.location?.y ?? a.latitude;
+      const lat = a.latitude;
+      const lng = a.longitude;
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
       const cat = WAZE_ALERT_TYPE[a.type ?? ""] ?? {
         type: "Waze driver report",
@@ -388,24 +400,30 @@ export async function fetchWazeAlerts(bbox: Bbox): Promise<RouteIncident[]> {
       });
     }
 
-    const jams = body.data?.jams ?? [];
+    const jams = body.jams ?? [];
     for (let idx = 0; idx < jams.length; idx++) {
       const j = jams[idx]!;
-      const first = j.line?.[0];
-      const lat = first?.y;
-      const lng = first?.x;
+      const first = j.line_coordinates?.[0];
+      const lat = first?.lat;
+      const lng = first?.lon;
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-      const delaySec = typeof j.delay === "number" ? j.delay : 0;
+      const delaySec = typeof j.delay_seconds === "number" ? j.delay_seconds : 0;
       const severity: RouteIncident["severity"] =
         delaySec >= 600 ? "major" : delaySec >= 180 ? "moderate" : "minor";
-      const kmh = typeof j.speedKMH === "number" ? Math.round(j.speedKMH) : null;
+      const kmh =
+        typeof j.speed_kmh === "number" ? Math.round(j.speed_kmh) : null;
       const delayMin = delaySec > 0 ? Math.round(delaySec / 60) : null;
+      const lengthMi =
+        typeof j.length_meters === "number" && j.length_meters > 0
+          ? (j.length_meters / 1609.34).toFixed(1)
+          : null;
       out.push({
         id: `waze-j-${idx}-${lat!.toFixed(4)},${lng!.toFixed(4)}`,
         incident_type: "Traffic jam",
         severity,
         description:
           `Heavy traffic${kmh !== null ? ` (~${kmh} km/h)` : ""}` +
+          `${lengthMi !== null ? ` over ${lengthMi} mi` : ""}` +
           `${delayMin !== null && delayMin > 0 ? `, ~${delayMin} min delay` : ""}`,
         road_name: j.street || null,
         source: "waze",

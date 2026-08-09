@@ -108,8 +108,15 @@ export const ENV = {
   // set OPENWEBNINJA_WAZE_URL to a native OpenWebNinja endpoint if using
   // an ak_... key instead of going through the RapidAPI gateway.
   openwebninjaApiKey: process.env.OPENWEBNINJA_API_KEY ?? "",
+  // Confirmed 2026-08-09 against OpenWebNinja's live docs: native host is
+  // api.openwebninja.com, auth via `x-api-key`, endpoint is
+  // /waze/alerts-and-jams (params: bottom_left / top_right, same as
+  // RapidAPI). If OPENWEBNINJA_WAZE_URL is unset in Netlify, this native
+  // default now matches an ak_... key out of the box. Only override with
+  // the RapidAPI gateway URL (https://waze.p.rapidapi.com) if the key in
+  // OPENWEBNINJA_API_KEY is a RapidAPI key instead of a native ak_... key.
   openwebninjaWazeUrl:
-    process.env.OPENWEBNINJA_WAZE_URL ?? "https://waze.p.rapidapi.com",
+    process.env.OPENWEBNINJA_WAZE_URL ?? "https://api.openwebninja.com/waze",
   // Nominatim (OpenStreetMap) geocoding — free, no API key. Usage policy
   // requires a descriptive User-Agent identifying the app + contact URL.
   // https://operations.osmfoundation.org/policies/nominatim/
