@@ -194,6 +194,19 @@ export const publicFormLimiter = createRateLimiter({
   windowMs: 5 * 60 * 1000,
 });
 
+/**
+ * Typeahead/autocomplete endpoints: fires on every debounced keystroke, so
+ * the 30/5min form budget is too tight for someone correcting a typo across
+ * two address fields. Read-only, cheap upstream call (Nominatim), so a
+ * looser ceiling is fine — the debounce + 4-char minimum already caps real
+ * traffic well under this.
+ */
+export const typeaheadLimiter = createRateLimiter({
+  name: "typeahead",
+  maxAttempts: 60,
+  windowMs: 5 * 60 * 1000,
+});
+
 /** Checkout/order creation: 50 writes per minute per caller IP. */
 export const orderCreateLimiter = createRateLimiter({
   name: "ordercreate",

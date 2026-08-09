@@ -52,6 +52,28 @@ import {
 
 const CACHE_TTL_MS = 2 * 60 * 1000;
 
+/**
+ * fetch() with a hard timeout via AbortController. Without this, a slow
+ * upstream (Nominatim under load is the realistic one) hangs the request
+ * until the platform's own function timeout kills it, instead of failing
+ * fast into the next fallback (Census geocoder, or OSRM -> TomTom). Default
+ * of 5s is generous for these APIs in normal operation but short enough
+ * that a stalled upstream doesn't eat the whole request budget.
+ */
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit = {},
+  timeoutMs = 5000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export type LatLng = { lat: number; lng: number };
 
 export type GeocodedPoint = LatLng & {
@@ -117,7 +139,7 @@ async function geocodeViaNominatim(
 
   let res: Response;
   try {
-    res = await fetch(url, {
+    res = await fetchWithTimeout(url, {
       headers: {
         // Required by Nominatim's usage policy — identifies the app and a
         // contact point so OSM can reach us if something needs attention.
@@ -175,7 +197,9 @@ async function geocodeViaCensus(
     `&address=${encodeURIComponent(trimmed)}`;
 
   try {
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    const res = await fetchWithTimeout(url, {
+      headers: { Accept: "application/json" },
+    });
     if (!res.ok) return null;
 
     const body = (await res.json()) as {
@@ -254,7 +278,7 @@ export async function suggestAddresses(
     `&q=${encodeURIComponent(trimmed)}`;
 
   try {
-    const res = await fetch(url, {
+    const res = await fetchWithTimeout(url, {
       headers: {
         "User-Agent": ENV.nominatimUserAgent,
         Accept: "application/json",
@@ -584,7 +608,7 @@ async function fetchOSRM(
     `${origin.lng},${origin.lat};${destination.lng},${destination.lat}` +
     `?alternatives=true&geometries=geojson&overview=full&steps=true`;
 
-  const res = await fetch(url);
+  const res = await fetchWithTimeout(url);
   if (!res.ok) {
     throw new Error(`OSRM error (${res.status})`);
   }
@@ -622,7 +646,16 @@ async function fetchTomTomFallback(
     `${origin.lat},${origin.lng}:${destination.lat},${destination.lng}/json` +
     `?key=${apiKey}&maxAlternatives=2&traffic=true`;
 
-  const res = await fetch(url);
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(url);
+  } catch (err) {
+    console.warn("[routePulse] TomTom fallback unreachable/timed out:", err);
+    throw new TRPCError({
+      code: "BAD_GATEWAY",
+      message: "Routing engine unavailable",
+    });
+  }
   if (!res.ok || !res.headers.get("content-type")?.includes("json")) {
     // Fallback itself is down too — nothing left to try.
     throw new TRPCError({

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { publicRateLimitedProcedure, router } from "../../_core/trpc";
-import { publicFormLimiter } from "../../_core/rateLimiter";
+import { publicFormLimiter, typeaheadLimiter } from "../../_core/rateLimiter";
 import * as service from "./routePulse.service";
 
 const address = z
@@ -19,9 +19,9 @@ export const routePulseRouter = router({
     }),
 
   // Public: lightweight address suggestion lookup for typeahead UI.
-  // Rate-limited independently with a smaller burst budget since it's fired
-  // on every keystroke (with client debounce).
-  suggest: publicRateLimitedProcedure(publicFormLimiter, "routepulse:suggest")
+  // Rate-limited independently with a looser budget than the form limiter
+  // since it's fired on every debounced keystroke, not once per submit.
+  suggest: publicRateLimitedProcedure(typeaheadLimiter, "routepulse:suggest")
     .input(
       z.object({
         query: z.string().trim().min(2).max(300),
