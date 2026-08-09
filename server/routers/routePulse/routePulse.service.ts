@@ -41,6 +41,11 @@
  * advisor reads estimated_end_at for the chosen route's severe incidents
  * so we can say "wait 25 min, the crash clears by 3:20" — a call
  * mainstream apps don't make.
+ *
+ * v13: departure-horizon outlook. getDepartureOutlook() projects the
+ * chosen route's incident delay at leave-now / +15 / +30 / +60 minutes
+ * from incident end estimates, and returns the cheapest horizon when it
+ * beats leaving now by 3+ minutes.
  */
 import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "../../_core/supabaseAdmin";
@@ -494,6 +499,18 @@ export type RouteResult = {
   } | null;
   /** v12: the time-of-day context the risk scores were computed under. */
   timeContext?: TimeContext;
+  /**
+   * v13: departure-horizon outlook. Projected incident delay for the
+   * chosen route if you leave now vs in 15/30/60 minutes, derived from
+   * incident estimated_end_at values. Only set when a later horizon beats
+   * leaving now by at least 3 minutes.
+   */
+  departureOutlook?: {
+    horizonsMin: number[];
+    delayMin: number[];
+    bestHorizonMin: number;
+    savesMin: number;
+  } | null;
 };
 
 function cacheKey(origin: LatLng, destination: LatLng) {
@@ -1137,6 +1154,12 @@ export async function getRoute(
   // only DB incidents participate.
   const waitAdvice = chosen ? await getWaitAdvice(chosen.incidents) : null;
 
+  // v13: departure-horizon outlook for the chosen route — "leave now vs
+  // in 15/30/60", projected from the same incident end estimates.
+  const departureOutlook = chosen
+    ? await getDepartureOutlook(chosen.incidents)
+    : null;
+
   // v10: observability + the UI's "grounded with live data" chip. Only
   // set when at least one external source actually contributed — a null
   // means every key was unset or every upstream call came back empty.
@@ -1167,6 +1190,7 @@ export async function getRoute(
     verdicts,
     waitAdvice,
     timeContext,
+    departureOutlook,
   };
 
   await writeCache(key, result);
@@ -1238,6 +1262,82 @@ async function getWaitAdvice(
     waitMin: Math.ceil((clearByMs - now) / 60_000),
     delayAvoidedMin,
     roadName: latest.road_name,
+  };
+}
+
+/**
+ * v13: best-departure-horizon outlook for the chosen route. For each
+ * horizon (now / +15 / +30 / +60 min) we project the incident delay you'd
+ * still face leaving then: agency-feed incidents with an estimated end
+ * before the horizon count as cleared; incidents without an end time count
+ * at every horizon (unknown = assume still there); live TomTom/Waze
+ * reports only count for leaving now (their lifetime is minutes, but we
+ * have no end estimate, so we don't project around them).
+ *
+ * Returned only when some later horizon beats leaving now by >= 3 minutes —
+ * "leave in 30, save 12 min" is advice; "leave in 30, save 1 min" is noise.
+ */
+async function getDepartureOutlook(
+  incidents: RouteIncident[]
+): Promise<RouteResult["departureOutlook"]> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+  if (incidents.length === 0) return null;
+
+  const HORIZONS_MIN = [0, 15, 30, 60];
+  const now = Date.now();
+
+  // One indexed select for end times of the agency-feed incidents.
+  const dbIds = incidents
+    .filter(i => !i.id.startsWith("tomtom-") && !i.id.startsWith("waze-"))
+    .map(i => i.id);
+  const endById = new Map<string, number>();
+  if (dbIds.length > 0) {
+    const { data, error } = await supabase
+      .from("traffic_incidents")
+      .select("id, estimated_end_at")
+      .in("id", dbIds);
+    if (!error && data) {
+      for (const row of data as Array<{
+        id: string;
+        estimated_end_at: string | null;
+      }>) {
+        if (!row.estimated_end_at) continue;
+        const t = new Date(row.estimated_end_at).getTime();
+        if (Number.isFinite(t)) endById.set(row.id, t);
+      }
+    }
+  }
+
+  const delayAt = (horizonMin: number): number => {
+    const departAt = now + horizonMin * 60_000;
+    let total = 0;
+    for (const inc of incidents) {
+      const base = SEVERITY_DELAY_MIN[inc.severity] ?? SEVERITY_DELAY_MIN.minor;
+      const isLive = inc.id.startsWith("tomtom-") || inc.id.startsWith("waze-");
+      if (isLive) {
+        if (horizonMin === 0) total += base;
+        continue;
+      }
+      const end = endById.get(inc.id);
+      if (end === undefined || end > departAt) total += base;
+    }
+    return Math.round(total);
+  };
+
+  const delayMin = HORIZONS_MIN.map(delayAt);
+  let bestIdx = 0;
+  for (let i = 1; i < delayMin.length; i++) {
+    if (delayMin[i]! < delayMin[bestIdx]!) bestIdx = i;
+  }
+  const savesMin = delayMin[0]! - delayMin[bestIdx]!;
+  if (bestIdx === 0 || savesMin < 3) return null;
+
+  return {
+    horizonsMin: HORIZONS_MIN,
+    delayMin,
+    bestHorizonMin: HORIZONS_MIN[bestIdx]!,
+    savesMin,
   };
 }
 
