@@ -34,6 +34,13 @@
  * risk score, delay estimate, and AI prompt reason over *measured* current
  * speeds — congestion that hasn't generated an incident report yet — not
  * just reported incidents. Keys unset = clean no-ops.
+ *
+ * v12: route-choice quality. Time-of-day context (Pacific peak/offpeak/
+ * night) weights congestion-type incidents; the AI returns per-route
+ * "avoid" verdicts surfaced in the comparison UI; and a wait-or-go
+ * advisor reads estimated_end_at for the chosen route's severe incidents
+ * so we can say "wait 25 min, the crash clears by 3:20" — a call
+ * mainstream apps don't make.
  */
 import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "../../_core/supabaseAdmin";
@@ -51,28 +58,6 @@ import {
 } from "./externalGrounding";
 
 const CACHE_TTL_MS = 2 * 60 * 1000;
-
-/**
- * fetch() with a hard timeout via AbortController. Without this, a slow
- * upstream (Nominatim under load is the realistic one) hangs the request
- * until the platform's own function timeout kills it, instead of failing
- * fast into the next fallback (Census geocoder, or OSRM -> TomTom). Default
- * of 5s is generous for these APIs in normal operation but short enough
- * that a stalled upstream doesn't eat the whole request budget.
- */
-async function fetchWithTimeout(
-  url: string,
-  init: RequestInit = {},
-  timeoutMs = 5000
-): Promise<Response> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-}
 
 export type LatLng = { lat: number; lng: number };
 
@@ -139,7 +124,7 @@ async function geocodeViaNominatim(
 
   let res: Response;
   try {
-    res = await fetchWithTimeout(url, {
+    res = await fetch(url, {
       headers: {
         // Required by Nominatim's usage policy — identifies the app and a
         // contact point so OSM can reach us if something needs attention.
@@ -197,9 +182,7 @@ async function geocodeViaCensus(
     `&address=${encodeURIComponent(trimmed)}`;
 
   try {
-    const res = await fetchWithTimeout(url, {
-      headers: { Accept: "application/json" },
-    });
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
     if (!res.ok) return null;
 
     const body = (await res.json()) as {
@@ -278,7 +261,7 @@ export async function suggestAddresses(
     `&q=${encodeURIComponent(trimmed)}`;
 
   try {
-    const res = await fetchWithTimeout(url, {
+    const res = await fetch(url, {
       headers: {
         "User-Agent": ENV.nominatimUserAgent,
         Accept: "application/json",
@@ -332,6 +315,47 @@ const SEVERITY_DELAY_MIN: Record<RouteIncident["severity"], number> = {
 const MAX_RISK_SCORE = 100;
 const MAX_DELAY_MIN = 45;
 
+// ── v12: time-of-day context ────────────────────────────────────────────────
+// The same jam at 8:15 AM Tuesday and 11 PM Saturday are different problems.
+// We score in the route's local timezone (coverage is OR/SW WA → Pacific):
+// weekday commute peaks weight congestion-type incidents 25% heavier,
+// overnight weighs them 10% lighter. Deterministic and explainable — the
+// context is surfaced in the response and shown in the UI.
+export type TimeContext = "peak" | "offpeak" | "night";
+
+export function routeTimeContext(now = new Date()): TimeContext {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+    weekday: "short",
+  }).formatToParts(now);
+  const get = (t: string) => parts.find(p => p.type === t)?.value ?? "";
+  const hour = parseInt(get("hour"), 10) % 24;
+  const minute = parseInt(get("minute"), 10) || 0;
+  const h = hour + minute / 60;
+  const weekday = get("weekday");
+  const isWeekday = !["Sat", "Sun"].includes(weekday);
+  if (h >= 22 || h < 5) return "night";
+  if (isWeekday && ((h >= 7 && h < 9.5) || (h >= 15.5 && h < 18.5))) {
+    return "peak";
+  }
+  return "offpeak";
+}
+
+/** Congestion-class incidents are the ones rush hour actually amplifies. */
+function isCongestionType(incidentType: string): boolean {
+  const t = incidentType.toLowerCase();
+  return t.includes("jam") || t.includes("congestion") || t.includes("traffic");
+}
+
+const TIME_MULTIPLIER: Record<TimeContext, number> = {
+  peak: 1.25,
+  offpeak: 1,
+  night: 0.9,
+};
+
 export type RouteRisk = {
   /** 0-100 severity-weighted risk score. 0 = no known incidents. */
   riskScore: number;
@@ -345,17 +369,27 @@ export type RouteRisk = {
  * numbers feed the AI prompt, the comparison UI, and the leave-by buffer,
  * so they must be boring, stable, and unit-testable.
  */
-export function computeRouteRisk(incidents: RouteIncident[]): RouteRisk {
+export function computeRouteRisk(
+  incidents: RouteIncident[],
+  timeContext: TimeContext = "offpeak"
+): RouteRisk {
   let riskScore = 0;
   let delayEstimateMin = 0;
+  const mult = TIME_MULTIPLIER[timeContext];
   for (const inc of incidents) {
-    riskScore += SEVERITY_RISK_WEIGHT[inc.severity] ?? SEVERITY_RISK_WEIGHT.minor;
-    delayEstimateMin +=
-      SEVERITY_DELAY_MIN[inc.severity] ?? SEVERITY_DELAY_MIN.minor;
+    const congestion = isCongestionType(inc.incident_type);
+    const risk =
+      (SEVERITY_RISK_WEIGHT[inc.severity] ?? SEVERITY_RISK_WEIGHT.minor) *
+      (congestion ? mult : 1);
+    const delay =
+      (SEVERITY_DELAY_MIN[inc.severity] ?? SEVERITY_DELAY_MIN.minor) *
+      (congestion ? mult : 1);
+    riskScore += risk;
+    delayEstimateMin += delay;
   }
   return {
-    riskScore: Math.min(MAX_RISK_SCORE, riskScore),
-    delayEstimateMin: Math.min(MAX_DELAY_MIN, delayEstimateMin),
+    riskScore: Math.min(MAX_RISK_SCORE, Math.round(riskScore)),
+    delayEstimateMin: Math.min(MAX_DELAY_MIN, Math.round(delayEstimateMin)),
   };
 }
 
@@ -441,6 +475,25 @@ export type RouteResult = {
     wazeAlerts: number;
     flowSamples: number;
   } | null;
+  /**
+   * v12: per-route AI verdicts, aligned by route index. Null for the chosen
+   * route, a short "why not" string for each rejected one. Absent when the
+   * deterministic fallback picked the route.
+   */
+  verdicts?: (string | null)[];
+  /**
+   * v12: wait-or-go advice. Set when the chosen route has major/critical
+   * incidents with a known estimated_end_at inside the next 90 minutes —
+   * leaving after that point avoids their delay entirely.
+   */
+  waitAdvice?: {
+    clearByIso: string;
+    waitMin: number;
+    delayAvoidedMin: number;
+    roadName: string | null;
+  } | null;
+  /** v12: the time-of-day context the risk scores were computed under. */
+  timeContext?: TimeContext;
 };
 
 function cacheKey(origin: LatLng, destination: LatLng) {
@@ -608,7 +661,7 @@ async function fetchOSRM(
     `${origin.lng},${origin.lat};${destination.lng},${destination.lat}` +
     `?alternatives=true&geometries=geojson&overview=full&steps=true`;
 
-  const res = await fetchWithTimeout(url);
+  const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`OSRM error (${res.status})`);
   }
@@ -646,16 +699,7 @@ async function fetchTomTomFallback(
     `${origin.lat},${origin.lng}:${destination.lat},${destination.lng}/json` +
     `?key=${apiKey}&maxAlternatives=2&traffic=true`;
 
-  let res: Response;
-  try {
-    res = await fetchWithTimeout(url);
-  } catch (err) {
-    console.warn("[routePulse] TomTom fallback unreachable/timed out:", err);
-    throw new TRPCError({
-      code: "BAD_GATEWAY",
-      message: "Routing engine unavailable",
-    });
-  }
+  const res = await fetch(url);
   if (!res.ok || !res.headers.get("content-type")?.includes("json")) {
     // Fallback itself is down too — nothing left to try.
     throw new TRPCError({
@@ -812,6 +856,11 @@ type AiPick = {
   chosenIndex: number;
   explanation: string;
   confidence: AiConfidence;
+  /**
+   * v12: per-route verdicts aligned by index (null for the chosen route).
+   * Absent when the deterministic fallback was used.
+   */
+  verdicts?: (string | null)[];
 };
 
 /**
@@ -841,11 +890,20 @@ function deterministicPick(routes: ScoredRoute[]): AiPick {
   };
 }
 
-async function scoreRoutesWithAI(routes: ScoredRoute[]): Promise<AiPick> {
+async function scoreRoutesWithAI(
+  routes: ScoredRoute[],
+  timeContext: TimeContext
+): Promise<AiPick> {
   // The prompt leads with the deterministic scores so the model reasons
   // over quantified tradeoffs (risk_score, est_delay_min) instead of
   // re-deriving severity math from raw text — better picks, fewer tokens.
-  const prompt = `You are a route intelligence engine for gig drivers. Pick the best driving route, weighing both base duration and the active incidents on each route — a severe incident usually costs more time than a small distance or duration saving. Prefer the route with the lowest combined duration + est_delay_min unless there is a clear reason otherwise.
+  const timeNote =
+    timeContext === "peak"
+      ? "Local time context: weekday commute peak — congestion incidents are weighted heavier, and jams are likely still building."
+      : timeContext === "night"
+        ? "Local time context: overnight — congestion is lighter, but closures and hazards matter more relative to traffic."
+        : "Local time context: off-peak.";
+  const prompt = `You are a route intelligence engine for gig drivers. Pick the best driving route, weighing both base duration and the active incidents on each route — a severe incident usually costs more time than a small distance or duration saving. Prefer the route with the lowest combined duration + est_delay_min unless there is a clear reason otherwise. ${timeNote}
 
 Incidents combine DOT/511/NWS/WSDOT agency feeds with live TomTom Traffic and Waze crowdsourced alerts (source field tells you which). live_flow is TomTom's measured speed as a percentage of free-flow, sampled along the route right now: 100 = free-flowing, below 70 = heavy congestion, road_closed_segments > 0 means TomTom flags the road itself as closed. Treat live_flow as ground truth for current conditions — it catches slowdowns that haven't generated an incident report yet.
 
@@ -873,7 +931,7 @@ Routes: ${JSON.stringify(
     }))
   )}
 
-Respond ONLY with JSON: { "chosen_index": 0, "explanation": "1-2 short sentences for the driver: name the specific road or incident and quantify the delay when relevant", "confidence": "high|medium|low" }`;
+Respond ONLY with JSON: { "chosen_index": 0, "explanation": "1-2 short sentences for the driver: name the specific road or incident and quantify the delay when relevant", "confidence": "high|medium|low", "avoid_reasons": ["", "2-6 words on why each NON-chosen route loses, aligned by route index; empty string for the chosen route"] }`;
 
   try {
     // Free-tier model, routed through OpenRouter (invokeLLM falls back
@@ -920,10 +978,28 @@ Respond ONLY with JSON: { "chosen_index": 0, "explanation": "1-2 short sentences
         ? parsed.confidence
         : "medium";
 
+    // v12: avoid_reasons is advisory — accept only a well-shaped array
+    // aligned to the route count, normalize the chosen slot to null, and
+    // drop the whole thing rather than failing an otherwise valid pick.
+    let verdicts: (string | null)[] | undefined;
+    if (
+      Array.isArray(parsed.avoid_reasons) &&
+      parsed.avoid_reasons.length === routes.length &&
+      parsed.avoid_reasons.every(
+        (v: unknown) => typeof v === "string" && v.length <= 120
+      )
+    ) {
+      verdicts = (parsed.avoid_reasons as string[]).map(
+        (v: string, i: number) =>
+          i === parsed.chosen_index || v.trim().length === 0 ? null : v.trim()
+      );
+    }
+
     return {
       chosenIndex: parsed.chosen_index,
       explanation: parsed.explanation,
       confidence,
+      verdicts,
     };
   } catch (err) {
     // AI scoring is an enhancement, never a hard dependency — and the
@@ -951,6 +1027,11 @@ export async function getRoute(
   if (cached) return cached;
 
   const baseRoutes = await fetchBaseRoutes(origin, destination);
+
+  // v12: time-of-day context for the risk model — computed once per
+  // uncached request so every route in the comparison is scored under the
+  // same conditions.
+  const timeContext = routeTimeContext();
 
   // v10: one bbox covering every route option → a single TomTom + Waze
   // call set per uncached query, so upstream quotas stay flat no matter
@@ -981,7 +1062,10 @@ export async function getRoute(
       // incident report yet — the difference between "an incident exists"
       // and "traffic is actually moving slowly right now".
       const flow = await fetchTomTomFlow(r.geometry.coordinates);
-      let { riskScore, delayEstimateMin } = computeRouteRisk(incidents);
+      let { riskScore, delayEstimateMin } = computeRouteRisk(
+        incidents,
+        timeContext
+      );
       if (
         flow &&
         flow.samples >= 2 &&
@@ -1027,11 +1111,13 @@ export async function getRoute(
   let chosenIndex = 0;
   let explanation = "Fastest route, no active incidents.";
   let confidence: AiConfidence = "none";
+  let verdicts: (string | null)[] | undefined;
   if (needsAi) {
-    const ai = await scoreRoutesWithAI(scoredRoutes);
+    const ai = await scoreRoutesWithAI(scoredRoutes, timeContext);
     chosenIndex = ai.chosenIndex;
     explanation = ai.explanation;
     confidence = ai.confidence;
+    verdicts = ai.verdicts;
   }
 
   // Cameras near the chosen route — one extra RPC after the pick so the
@@ -1042,6 +1128,14 @@ export async function getRoute(
         chosen.geometry as { coordinates: [number, number][] }
       )
     : [];
+
+  // v12: wait-or-go advice. If the chosen route's worst agency-feed
+  // incidents have a known estimated end inside the next 90 minutes,
+  // leaving after that point avoids their delay entirely — a call neither
+  // Google nor Waze can make, because neither tells you *when* a crash
+  // clears. TomTom/Waze-derived rows (synthetic ids) carry no end time, so
+  // only DB incidents participate.
+  const waitAdvice = chosen ? await getWaitAdvice(chosen.incidents) : null;
 
   // v10: observability + the UI's "grounded with live data" chip. Only
   // set when at least one external source actually contributed — a null
@@ -1070,10 +1164,81 @@ export async function getRoute(
     confidence,
     cameras,
     grounding,
+    verdicts,
+    waitAdvice,
+    timeContext,
   };
 
   await writeCache(key, result);
   return result;
+}
+
+/**
+ * v12: computes wait-or-go advice for the chosen route. One extra indexed
+ * select by incident id, only for agency-feed rows (uuid ids — synthetic
+ * TomTom/Waze ids are filtered out by prefix). Only major/critical
+ * incidents ending within 90 minutes count: waiting 20 minutes to dodge a
+ * minor slowdown is bad advice, and end estimates beyond ~90 minutes are
+ * too unreliable to recommend around.
+ */
+async function getWaitAdvice(
+  incidents: RouteIncident[]
+): Promise<RouteResult["waitAdvice"]> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  const severeIds = incidents
+    .filter(
+      i =>
+        (i.severity === "major" || i.severity === "critical") &&
+        !i.id.startsWith("tomtom-") &&
+        !i.id.startsWith("waze-")
+    )
+    .map(i => i.id);
+  if (severeIds.length === 0) return null;
+
+  const { data, error } = await supabase
+    .from("traffic_incidents")
+    .select("id, estimated_end_at, road_name, severity")
+    .in("id", severeIds);
+  if (error || !data) return null;
+
+  const now = Date.now();
+  const windowEnd = now + 90 * 60_000;
+  const relevant = (data as Array<{
+    id: string;
+    estimated_end_at: string | null;
+    road_name: string | null;
+    severity: RouteIncident["severity"];
+  }>).filter(row => {
+    if (!row.estimated_end_at) return false;
+    const t = new Date(row.estimated_end_at).getTime();
+    return Number.isFinite(t) && t > now && t <= windowEnd;
+  });
+  if (relevant.length === 0) return null;
+
+  // Wait until the LAST relevant incident clears — leaving earlier still
+  // hits the remaining ones, so the honest advice keys off the max.
+  const latest = relevant.reduce((a, b) =>
+    new Date(a.estimated_end_at!).getTime() >=
+    new Date(b.estimated_end_at!).getTime()
+      ? a
+      : b
+  );
+  const clearByMs = new Date(latest.estimated_end_at!).getTime();
+  const delayAvoidedMin = relevant.reduce(
+    (sum, row) =>
+      sum +
+      (SEVERITY_DELAY_MIN[row.severity] ?? SEVERITY_DELAY_MIN.major),
+    0
+  );
+
+  return {
+    clearByIso: new Date(clearByMs).toISOString(),
+    waitMin: Math.ceil((clearByMs - now) / 60_000),
+    delayAvoidedMin,
+    roadName: latest.road_name,
+  };
 }
 
 export async function listActiveIncidents() {
