@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import {
   MapContainer,
@@ -373,6 +374,52 @@ function sourceLabel(source: string | null | undefined): string | null {
 }
 
 // ---------------------------------------------------------------------------
+// v14: mobile bottom-sheet intelligence summary
+// ---------------------------------------------------------------------------
+
+const SEVERITY_ORDER = ["critical", "major", "moderate", "minor"] as const;
+
+/**
+ * NOTE FOR KIMI: this is the single source of truth for the one-line
+ * "glanceable" summary shown at the top of the mobile bottom sheet (v14)
+ * AND anywhere else on mobile that needs a plain-English gist of a route's
+ * risk instead of a table. Keep this pure (no hooks, no DOM) so it stays
+ * trivially testable — it's called from a useMemo in the component, not
+ * itself a hook. If you add a new incident field that should influence the
+ * sentence (e.g. an ETA-to-clear time from a future TomTom/Waze field),
+ * extend the params object rather than reaching for component state here.
+ */
+function getMobileSummary(params: {
+  incidents: Array<{
+    severity: "minor" | "moderate" | "major" | "critical";
+    road_name?: string | null;
+  }>;
+  leaveNowDelayMin?: number | null;
+}): string {
+  const { incidents, leaveNowDelayMin } = params;
+  const delay =
+    typeof leaveNowDelayMin === "number" && leaveNowDelayMin > 0
+      ? leaveNowDelayMin
+      : null;
+
+  if (incidents.length === 0) {
+    return delay
+      ? `Route is clear, but expect about ${delay} min of general slowdown.`
+      : "Route is clear — no active incidents.";
+  }
+
+  const worst = incidents.reduce((w, i) =>
+    SEVERITY_ORDER.indexOf(i.severity) < SEVERITY_ORDER.indexOf(w.severity)
+      ? i
+      : w
+  );
+  const near = worst.road_name ? ` near ${worst.road_name}` : "";
+  const delayText = delay ? `, ~${delay} min delay expected` : "";
+  const noun = incidents.length === 1 ? "incident" : "incidents";
+  return `${incidents.length} ${noun} detected${near}${delayText}.`;
+}
+
+// ---------------------------------------------------------------------------
 // v8: turn-by-turn + congestion-colored route + heading cone
 // ---------------------------------------------------------------------------
 
@@ -464,7 +511,10 @@ function headingConeIcon(deg: number) {
 
 /** Shared Nominatim reverse-geocoder — map clicks and the "use current
  *  location" button both resolve coordinates to an address through this. */
-async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+async function reverseGeocode(
+  lat: number,
+  lng: number
+): Promise<string | null> {
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
@@ -572,10 +622,13 @@ export default function RoutePulse() {
   // v8: turn-by-turn list collapsed by default (long routes = long lists).
   const [showSteps, setShowSteps] = useState(false);
   // v9: mobile chrome state. searchCollapsed = the floating search card
-  // folds into a one-line chip once a route is displayed; mobileStepsOpen
-  // = the turn-by-turn bottom sheet (phones only) is up.
+  // folds into a one-line chip once a route is displayed.
   const [searchCollapsed, setSearchCollapsed] = useState(false);
-  const [mobileStepsOpen, setMobileStepsOpen] = useState(false);
+  // v14: replaces the old open/closed steps-only sheet with a persistent
+  // peek/expanded bottom sheet (glanceable summary + cards always visible
+  // at "peek"; turn-by-turn revealed on expand). See the sheet render block
+  // below for the drag/tap interaction — NOTE FOR KIMI is there too.
+  const [sheetExpanded, setSheetExpanded] = useState(false);
   // Ticker so the "updated Xs ago" live indicator stays honest.
   const [nowTick, setNowTick] = useState(0);
   // v10: location onboarding prompt. Shown once per browser (persisted) so
@@ -643,11 +696,7 @@ export default function RoutePulse() {
     if (!submitted) {
       // Clear params when there's no active route.
       if (window.location.search) {
-        window.history.replaceState(
-          {},
-          "",
-          window.location.pathname
-        );
+        window.history.replaceState({}, "", window.location.pathname);
       }
       return;
     }
@@ -663,7 +712,7 @@ export default function RoutePulse() {
   useEffect(() => {
     setPreviewIdx(null);
     setShowSteps(false);
-    setMobileStepsOpen(false);
+    setSheetExpanded(false);
     userPannedRef.current = false;
   }, [submitted]);
 
@@ -856,9 +905,7 @@ export default function RoutePulse() {
   useEffect(() => {
     const nav = navigator as Navigator & {
       permissions?: {
-        query: (opts: {
-          name: "geolocation";
-        }) => Promise<{
+        query: (opts: { name: "geolocation" }) => Promise<{
           state: "granted" | "denied" | "prompt";
           onchange: (() => void) | null;
         }>;
@@ -980,8 +1027,7 @@ export default function RoutePulse() {
   const displayedLine: LatLngExpression[] | null = useMemo(() => {
     if (displayedIdx === null || previewIdx === null) return routeLine;
     const geometry = allRoutes[displayedIdx]?.geometry as
-      | { coordinates: [number, number][] }
-      | undefined;
+      { coordinates: [number, number][] } | undefined;
     if (!geometry?.coordinates?.length) return routeLine;
     return geometry.coordinates.map(
       ([lng, lat]) => [lat, lng] as LatLngExpression
@@ -992,7 +1038,9 @@ export default function RoutePulse() {
   // or previewed) — its OSRM steps drive both the congestion-colored
   // segments and the turn-by-turn list.
   const displayedRoute =
-    displayedIdx !== null ? allRoutes[displayedIdx] : (routeQuery.data?.route ?? null);
+    displayedIdx !== null
+      ? allRoutes[displayedIdx]
+      : (routeQuery.data?.route ?? null);
 
   const displayedManeuvers = useMemo(
     () =>
@@ -1006,8 +1054,7 @@ export default function RoutePulse() {
   // we're within ~45m of the upcoming maneuver's point we consider it done
   // and move to the next one. Ends itself at the final maneuver.
   useEffect(() => {
-    if (!tripActive || !userLocation || displayedManeuvers.length === 0)
-      return;
+    if (!tripActive || !userLocation || displayedManeuvers.length === 0) return;
     const [lat, lng] = userLocation as [number, number];
     const step = displayedManeuvers[nextStepIdx];
     if (!step) {
@@ -1047,7 +1094,9 @@ export default function RoutePulse() {
 
   const nextStep: ManeuverStep | null =
     tripActive && displayedManeuvers.length > 0
-      ? (displayedManeuvers[Math.min(nextStepIdx, displayedManeuvers.length - 1)] ?? null)
+      ? (displayedManeuvers[
+          Math.min(nextStepIdx, displayedManeuvers.length - 1)
+        ] ?? null)
       : null;
 
   const nextStepDistM =
@@ -1297,12 +1346,8 @@ export default function RoutePulse() {
   // Server-reported AI confidence on the route pick (v5+). "none" (or a
   // missing field on pre-v5 cached responses) means the deterministic
   // fallback picked the route — we don't badge those.
-  const aiConfidence =
-    ((routeQuery.data?.confidence as string | undefined) ?? "none") as
-      | "high"
-      | "medium"
-      | "low"
-      | "none";
+  const aiConfidence = ((routeQuery.data?.confidence as string | undefined) ??
+    "none") as "high" | "medium" | "low" | "none";
 
   // v12: per-route AI verdicts (aligned by route index; null for chosen),
   // wait-or-go advice, and the time context the server scored under.
@@ -1331,6 +1376,20 @@ export default function RoutePulse() {
         }
       | null
       | undefined) ?? null;
+
+  // v14: one-sentence mobile summary — recomputed whenever the incident
+  // list or the leave-now delay estimate changes. Uses departureOutlook's
+  // "now" horizon (index 0) as the delay figure since that's already the
+  // server's best estimate for leaving immediately; falls back to no
+  // delay figure (just incident count/severity) if departureOutlook isn't
+  // present (pre-v13 cached responses).
+  const mobileSummary = useMemo(() => {
+    if (!routeQuery.data) return "";
+    return getMobileSummary({
+      incidents: routeQuery.data.route.incidents,
+      leaveNowDelayMin: departureOutlook?.delayMin?.[0] ?? null,
+    });
+  }, [routeQuery.data, departureOutlook]);
 
   // Arrive-by planner: leave-by = arrival time minus drive time minus the
   // server's estimated incident delay (falls back to the local severity
@@ -1363,7 +1422,8 @@ export default function RoutePulse() {
   const currentIsStarred =
     !!submitted &&
     starred.some(
-      s => s.origin === submitted.origin && s.destination === submitted.destination
+      s =>
+        s.origin === submitted.origin && s.destination === submitted.destination
     );
 
   const handleToggleStar = () => {
@@ -1412,7 +1472,10 @@ export default function RoutePulse() {
   // 10s interval re-renders this label even when no query has refetched.
   const updatedAgoSec =
     nowTick >= 0 && incidentsQuery.dataUpdatedAt
-      ? Math.max(0, Math.round((Date.now() - incidentsQuery.dataUpdatedAt) / 1000))
+      ? Math.max(
+          0,
+          Math.round((Date.now() - incidentsQuery.dataUpdatedAt) / 1000)
+        )
       : null;
 
   // v7: keep the follow/hasRoute refs honest for the watch callback.
@@ -1474,7 +1537,7 @@ export default function RoutePulse() {
           <button
             type="button"
             onClick={() => {
-              setMobileStepsOpen(false);
+              setSheetExpanded(false);
               if (m.location[0] !== 0 || m.location[1] !== 0) {
                 mapRef.current?.flyTo([m.location[1], m.location[0]], 16, {
                   duration: 0.6,
@@ -1681,26 +1744,28 @@ export default function RoutePulse() {
                       currently displayed solid is skipped so the chosen
                       route isn't double-drawn. */}
                   {allRoutes.map((alt, idx) => {
-                      if (idx === displayedIdx) return null;
-                      const coords = (alt.geometry as {
+                    if (idx === displayedIdx) return null;
+                    const coords = (
+                      alt.geometry as {
                         coordinates: [number, number][];
-                      })?.coordinates;
-                      if (!coords?.length) return null;
-                      return (
-                        <Polyline
-                          key={`alt-${idx}`}
-                          positions={coords.map(
-                            ([lng, lat]) => [lat, lng] as LatLngExpression
-                          )}
-                          pathOptions={{
-                            color: "#94a3b8",
-                            weight: 3,
-                            opacity: 0.6,
-                            dashArray: "6, 8",
-                          }}
-                        />
-                      );
-                    })}
+                      }
+                    )?.coordinates;
+                    if (!coords?.length) return null;
+                    return (
+                      <Polyline
+                        key={`alt-${idx}`}
+                        positions={coords.map(
+                          ([lng, lat]) => [lat, lng] as LatLngExpression
+                        )}
+                        pathOptions={{
+                          color: "#94a3b8",
+                          weight: 3,
+                          opacity: 0.6,
+                          dashArray: "6, 8",
+                        }}
+                      />
+                    );
+                  })}
                   {routeQuery
                     .data!.route.incidents.filter(
                       inc =>
@@ -1738,7 +1803,9 @@ export default function RoutePulse() {
                     <Marker
                       key={inc.id}
                       position={[inc.lat, inc.lng]}
-                      icon={INCIDENT_ICONS[inc.severity] ?? INCIDENT_ICONS.minor}
+                      icon={
+                        INCIDENT_ICONS[inc.severity] ?? INCIDENT_ICONS.minor
+                      }
                     >
                       <Popup>
                         <div className="text-sm space-y-0.5">
@@ -1791,7 +1858,10 @@ export default function RoutePulse() {
                     {" · "}step {nextStepIdx + 1} of {displayedManeuvers.length}
                     {/* v13: live speed + ETA from actual GPS speed */}
                     {speedMps !== null && speedMps > 1.5 && (
-                      <>{" · "}{Math.round(speedMps * 2.23694)} mph</>
+                      <>
+                        {" · "}
+                        {Math.round(speedMps * 2.23694)} mph
+                      </>
                     )}
                     {tripEta && (
                       <>
@@ -1805,7 +1875,9 @@ export default function RoutePulse() {
                 <button
                   type="button"
                   onClick={toggleVoiceMuted}
-                  title={voiceMuted ? "Unmute voice prompts" : "Mute voice prompts"}
+                  title={
+                    voiceMuted ? "Unmute voice prompts" : "Mute voice prompts"
+                  }
                   className="shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
                 >
                   {voiceMuted ? (
@@ -1864,187 +1936,191 @@ export default function RoutePulse() {
                       <ChevronUp className="w-4 h-4" />
                     </button>
                   )}
-              {/* Saved routes — driver-pinned favorites, always on top */}
-              {!hasRoute && starred.length > 0 && (
-                <div className="mb-3 pb-3 border-b border-border/50">
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1 mb-1.5">
-                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                    Saved
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {starred.map((r, i) => (
-                      <span
-                        key={i}
-                        className="inline-flex items-center rounded-full bg-yellow-500/10 border border-yellow-500/20 max-w-full"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOrigin(r.origin);
-                            setDestination(r.destination);
-                            setSubmitted({
-                              origin: r.origin,
-                              destination: r.destination,
-                            });
-                          }}
-                          className="text-[11px] pl-2 py-1 hover:text-foreground transition-colors truncate"
-                          title={`${r.origin} → ${r.destination}`}
-                        >
-                          {r.origin.slice(0, 18)}
-                          {r.origin.length > 18 ? "…" : ""} →{" "}
-                          {r.destination.slice(0, 18)}
-                          {r.destination.length > 18 ? "…" : ""}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => unstarRoute(r.origin, r.destination)}
-                          className="px-1.5 py-1 text-muted-foreground hover:text-destructive transition-colors"
-                          title="Remove saved route"
-                          aria-label={`Remove saved route ${r.origin} to ${r.destination}`}
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
+                  {/* Saved routes — driver-pinned favorites, always on top */}
+                  {!hasRoute && starred.length > 0 && (
+                    <div className="mb-3 pb-3 border-b border-border/50">
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1 mb-1.5">
+                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        Saved
                       </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {/* Recent routes — one-tap re-check, no typing on mobile */}
-              {!hasRoute && recent.length > 0 && (
-                <div className="mb-3 pb-3 border-b border-border/50">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1">
-                      <History className="w-3 h-3" />
-                      Recent
-                    </span>
-                    <button
-                      type="button"
-                      onClick={clearRoutes}
-                      className="text-[10px] text-muted-foreground hover:text-destructive transition-colors"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {recent.map((r, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => {
-                          setOrigin(r.origin);
-                          setDestination(r.destination);
-                          setSubmitted({
-                            origin: r.origin,
-                            destination: r.destination,
-                          });
-                        }}
-                        className="text-[11px] px-2 py-1 rounded-full bg-muted hover:bg-accent transition-colors truncate max-w-full"
-                        title={`${r.origin} → ${r.destination}`}
-                      >
-                        {r.origin.slice(0, 18)}
-                        {r.origin.length > 18 ? "…" : ""} →{" "}
-                        {r.destination.slice(0, 18)}
-                        {r.destination.length > 18 ? "…" : ""}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {/* v10: location onboarding CTA — one tap triggers the native
+                      <div className="flex flex-wrap gap-1.5">
+                        {starred.map((r, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center rounded-full bg-yellow-500/10 border border-yellow-500/20 max-w-full"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOrigin(r.origin);
+                                setDestination(r.destination);
+                                setSubmitted({
+                                  origin: r.origin,
+                                  destination: r.destination,
+                                });
+                              }}
+                              className="text-[11px] pl-2 py-1 hover:text-foreground transition-colors truncate"
+                              title={`${r.origin} → ${r.destination}`}
+                            >
+                              {r.origin.slice(0, 18)}
+                              {r.origin.length > 18 ? "…" : ""} →{" "}
+                              {r.destination.slice(0, 18)}
+                              {r.destination.length > 18 ? "…" : ""}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                unstarRoute(r.origin, r.destination)
+                              }
+                              className="px-1.5 py-1 text-muted-foreground hover:text-destructive transition-colors"
+                              title="Remove saved route"
+                              aria-label={`Remove saved route ${r.origin} to ${r.destination}`}
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Recent routes — one-tap re-check, no typing on mobile */}
+                  {!hasRoute && recent.length > 0 && (
+                    <div className="mb-3 pb-3 border-b border-border/50">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1">
+                          <History className="w-3 h-3" />
+                          Recent
+                        </span>
+                        <button
+                          type="button"
+                          onClick={clearRoutes}
+                          className="text-[10px] text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {recent.map((r, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => {
+                              setOrigin(r.origin);
+                              setDestination(r.destination);
+                              setSubmitted({
+                                origin: r.origin,
+                                destination: r.destination,
+                              });
+                            }}
+                            className="text-[11px] px-2 py-1 rounded-full bg-muted hover:bg-accent transition-colors truncate max-w-full"
+                            title={`${r.origin} → ${r.destination}`}
+                          >
+                            {r.origin.slice(0, 18)}
+                            {r.origin.length > 18 ? "…" : ""} →{" "}
+                            {r.destination.slice(0, 18)}
+                            {r.destination.length > 18 ? "…" : ""}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* v10: location onboarding CTA — one tap triggers the native
                   permission prompt via handleLocateMe(). Only shown before
                   a first route search, before we have a fix, and while the
                   driver hasn't dismissed it or already denied permission. */}
-              {!hasRoute &&
-                !userLocation &&
-                !locationPromptDismissed &&
-                geoPermission !== "denied" && (
-                  <div className="mb-3 flex items-start gap-2.5 rounded-md border border-blue-500/20 bg-blue-500/5 px-3 py-2.5">
-                    <LocateFixed className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium">
-                        Enable location for one-tap routes
-                      </p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Find your position automatically and set it as your
-                        origin instantly.
-                      </p>
+                  {!hasRoute &&
+                    !userLocation &&
+                    !locationPromptDismissed &&
+                    geoPermission !== "denied" && (
+                      <div className="mb-3 flex items-start gap-2.5 rounded-md border border-blue-500/20 bg-blue-500/5 px-3 py-2.5">
+                        <LocateFixed className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium">
+                            Enable location for one-tap routes
+                          </p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            Find your position automatically and set it as your
+                            origin instantly.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={handleEnableLocation}
+                            className="mt-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                          >
+                            Enable location
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={dismissLocationPrompt}
+                          title="Dismiss"
+                          aria-label="Dismiss location prompt"
+                          className="shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                  <form onSubmit={handleSubmit} className="space-y-3">
+                    <AddressInput
+                      id="routepulse-origin"
+                      label="Origin"
+                      placeholder="123 SW Broadway, Portland, OR"
+                      value={origin}
+                      onChange={setOrigin}
+                      pinColor="blue"
+                      name="routepulse-origin-query"
+                    />
+
+                    {/* v7: one-tap "route from where I am" once we have a fix */}
+                    {userLocation && (
                       <button
                         type="button"
-                        onClick={handleEnableLocation}
-                        className="mt-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                        onClick={handleUseCurrentAsOrigin}
+                        className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline py-0.5"
+                        title="Reverse-geocode your live position into the origin field"
                       >
-                        Enable location
+                        <LocateFixed className="w-3.5 h-3.5" />
+                        Use current location as origin
                       </button>
-                    </div>
+                    )}
+
+                    <AddressInput
+                      id="routepulse-destination"
+                      label="Destination"
+                      placeholder="800 SE 10th Ave, Portland, OR"
+                      value={destination}
+                      onChange={setDestination}
+                      pinColor="red"
+                      name="routepulse-destination-query"
+                    />
+
+                    {/* Swap button — mobile-optimized touch target */}
                     <button
                       type="button"
-                      onClick={dismissLocationPrompt}
-                      title="Dismiss"
-                      aria-label="Dismiss location prompt"
-                      className="shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                      onClick={handleSwap}
+                      className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+                      title="Swap origin and destination"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <ArrowLeftRight className="w-3.5 h-3.5" />
+                      Swap origin & destination
                     </button>
-                  </div>
-                )}
 
-              <form onSubmit={handleSubmit} className="space-y-3">
-                <AddressInput
-                  id="routepulse-origin"
-                  label="Origin"
-                  placeholder="123 SW Broadway, Portland, OR"
-                  value={origin}
-                  onChange={setOrigin}
-                  pinColor="blue"
-                  name="routepulse-origin-query"
-                />
+                    {formError && (
+                      <p className="text-xs text-destructive">{formError}</p>
+                    )}
 
-                {/* v7: one-tap "route from where I am" once we have a fix */}
-                {userLocation && (
-                  <button
-                    type="button"
-                    onClick={handleUseCurrentAsOrigin}
-                    className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline py-0.5"
-                    title="Reverse-geocode your live position into the origin field"
-                  >
-                    <LocateFixed className="w-3.5 h-3.5" />
-                    Use current location as origin
-                  </button>
-                )}
-
-                <AddressInput
-                  id="routepulse-destination"
-                  label="Destination"
-                  placeholder="800 SE 10th Ave, Portland, OR"
-                  value={destination}
-                  onChange={setDestination}
-                  pinColor="red"
-                  name="routepulse-destination-query"
-                />
-
-                {/* Swap button — mobile-optimized touch target */}
-                <button
-                  type="button"
-                  onClick={handleSwap}
-                  className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
-                  title="Swap origin and destination"
-                >
-                  <ArrowLeftRight className="w-3.5 h-3.5" />
-                  Swap origin & destination
-                </button>
-
-                {formError && (
-                  <p className="text-xs text-destructive">{formError}</p>
-                )}
-
-                <Button type="submit" size="sm" className="gap-2 w-full">
-                  {routeQuery.isFetching && (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  )}
-                  Find route
-                  {!routeQuery.isFetching && <ArrowRight className="w-4 h-4" />}
-                </Button>
-              </form>
+                    <Button type="submit" size="sm" className="gap-2 w-full">
+                      {routeQuery.isFetching && (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      )}
+                      Find route
+                      {!routeQuery.isFetching && (
+                        <ArrowRight className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </form>
                 </>
               )}
             </Card>
@@ -2101,7 +2177,9 @@ export default function RoutePulse() {
                 type="button"
                 onClick={handleToggleFullscreen}
                 title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                aria-label={
+                  isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
+                }
                 className="w-11 h-11 sm:w-9 sm:h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
               >
                 {isFullscreen ? (
@@ -2164,90 +2242,188 @@ export default function RoutePulse() {
               )}
             </div>
 
-            {/* v9 mobile bottom bar — the vital stats and the steps sheet
-                live on the map on phones, so drivers never scroll off it.
-                sm and up keep the result card below the map instead. */}
+            {/* v14: persistent mobile intelligence bottom sheet.
+                Replaces the old two-piece "thin bar + separate full-screen
+                steps modal" (v9) with one sheet that's always up on phones:
+                "peek" (~34vh) shows the one-line AI summary + horizontal
+                glanceable incident cards without covering the map; drag
+                the handle up (or tap it / the summary row) to expand to
+                ~70vh and reveal turn-by-turn.
+                NOTE FOR KIMI: drag is intentionally only on the small
+                handle bar, not the whole sheet — dragging the sheet body
+                itself would fight the horizontal scroll on the incident
+                card row and the map's own touch handling underneath.
+                sm and up keep the existing result card below the map
+                instead (untouched — see the Card block further down). */}
             {hasRoute && (
-              <div className="sm:hidden absolute z-[400] bottom-3 left-3 right-3 flex items-center gap-2 rounded-xl bg-background/90 backdrop-blur-md border shadow-lg px-3 py-2.5">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold leading-tight">
-                    {(routeQuery.data!.route.distance / 1609.34).toFixed(1)}{" "}
-                    mi · {Math.round(routeQuery.data!.route.duration / 60)}{" "}
-                    min
-                  </p>
-                  <p className="text-[11px] text-muted-foreground leading-tight truncate">
-                    {riskInfo?.label ?? ""}
-                    {routeQuery.data!.route.incidents.length > 0 &&
-                      ` · ${routeQuery.data!.route.incidents.length} incident${routeQuery.data!.route.incidents.length === 1 ? "" : "s"}`}
-                    {routeQuery.data!.route.incidents.length === 0 &&
-                      " · no incidents"}
-                  </p>
-                </div>
-                {displayedManeuvers.length > 0 && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="gap-1.5 shrink-0"
-                    onClick={() => setMobileStepsOpen(true)}
-                  >
-                    <List className="w-4 h-4" />
-                    Steps
-                  </Button>
-                )}
-                {/* v11: trip mode toggle — guidance banner driven by live
-                    location. Needs tracking on and steps available. */}
-                {displayedManeuvers.length > 0 && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={tripActive ? "default" : "outline"}
-                    className="gap-1.5 shrink-0"
-                    onClick={() => (tripActive ? setTripActive(false) : startTrip())}
-                    title={
-                      tracking
-                        ? "Start guided trip mode"
-                        : "Enable location first, then start trip mode"
-                    }
-                  >
-                    {tripActive ? (
-                      <Square className="w-4 h-4" />
-                    ) : (
-                      <Play className="w-4 h-4" />
-                    )}
-                    {tripActive ? "End" : "Go"}
-                  </Button>
-                )}
-              </div>
-            )}
+              <motion.div
+                className="sm:hidden absolute inset-x-0 bottom-0 z-[450] rounded-t-2xl bg-background/95 backdrop-blur-md border-t shadow-2xl flex flex-col overflow-hidden pb-safe"
+                initial={false}
+                animate={{ height: sheetExpanded ? "70vh" : "34vh" }}
+                transition={{ type: "spring", stiffness: 340, damping: 32 }}
+              >
+                {/* Drag handle — swipe up/down or tap to expand/collapse. */}
+                <motion.div
+                  className="flex justify-center pt-2 pb-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+                  drag="y"
+                  dragConstraints={{ top: 0, bottom: 0 }}
+                  dragElastic={0.35}
+                  dragSnapToOrigin
+                  onDragEnd={(_e, info) => {
+                    if (info.offset.y < -18) setSheetExpanded(true);
+                    else if (info.offset.y > 18) setSheetExpanded(false);
+                  }}
+                  onClick={() => setSheetExpanded(v => !v)}
+                  role="button"
+                  aria-label={
+                    sheetExpanded
+                      ? "Collapse route sheet"
+                      : "Expand route sheet"
+                  }
+                  aria-expanded={sheetExpanded}
+                >
+                  <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
+                </motion.div>
 
-            {/* v9 mobile turn-by-turn bottom sheet */}
-            {mobileStepsOpen && hasRoute && (
-              <div className="sm:hidden absolute inset-0 z-[450] flex flex-col justify-end">
+                {/* Always-visible glanceable header — vitals + one-sentence
+                    AI summary (getMobileSummary), tap to expand too. */}
                 <button
                   type="button"
-                  aria-label="Close turn-by-turn"
-                  className="flex-1 bg-black/30"
-                  onClick={() => setMobileStepsOpen(false)}
-                />
-                <div className="rounded-t-2xl bg-background border-t shadow-2xl max-h-[65%] flex flex-col pb-safe">
-                  <div className="flex items-center justify-between px-4 py-3 border-b">
-                    <p className="text-sm font-semibold flex items-center gap-1.5">
-                      <List className="w-4 h-4" />
-                      Turn-by-turn · {displayedManeuvers.length} steps
+                  className="w-full text-left px-4 pb-2 shrink-0"
+                  onClick={() => setSheetExpanded(v => !v)}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold leading-tight">
+                      {(routeQuery.data!.route.distance / 1609.34).toFixed(1)}{" "}
+                      mi · {Math.round(routeQuery.data!.route.duration / 60)}{" "}
+                      min
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => setMobileStepsOpen(false)}
-                      title="Close"
-                      className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                    {riskInfo && (
+                      <Badge
+                        variant="outline"
+                        className={`shrink-0 text-[10px] px-1.5 py-0 ${
+                          riskInfo.level === "low"
+                            ? "border-emerald-500/30 text-emerald-600 bg-emerald-500/10"
+                            : riskInfo.level === "moderate"
+                              ? "border-amber-500/30 text-amber-600 bg-amber-500/10"
+                              : riskInfo.level === "high"
+                                ? "border-orange-500/30 text-orange-600 bg-orange-500/10"
+                                : "border-red-500/30 text-red-600 bg-red-500/10"
+                        }`}
+                      >
+                        {riskInfo.label}
+                      </Badge>
+                    )}
                   </div>
-                  <div className="overflow-y-auto px-2 py-1">{stepsList}</div>
+                  <p className="text-[13px] text-muted-foreground leading-snug mt-0.5">
+                    {mobileSummary}
+                  </p>
+                </button>
+
+                {/* Glanceable, horizontal-scroll incident cards — visible
+                    at peek height too, so the "3 hazards, 2 min delay"
+                    gist never requires expanding the sheet. */}
+                {routeQuery.data!.route.incidents.length > 0 && (
+                  <div
+                    className="flex gap-2 overflow-x-auto px-4 pb-3 shrink-0 [-webkit-overflow-scrolling:touch]"
+                    role="list"
+                    aria-label="Incidents on this route"
+                  >
+                    {routeQuery.data!.route.incidents.slice(0, 10).map(inc => (
+                      <div
+                        key={inc.id}
+                        role="listitem"
+                        className="shrink-0 w-[168px] rounded-lg border bg-card px-3 py-2"
+                      >
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                          <span
+                            className={`text-[10px] font-semibold uppercase tracking-wide rounded border px-1 py-px ${SEVERITY_BADGE[inc.severity] ?? ""}`}
+                          >
+                            {inc.severity}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium leading-snug line-clamp-2">
+                          {inc.road_name && (
+                            <span className="font-semibold">
+                              {inc.road_name}:{" "}
+                            </span>
+                          )}
+                          {inc.description ?? inc.incident_type}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Action row — Steps / trip mode, always reachable
+                    without expanding (44px touch targets per spec). */}
+                <div className="flex items-center gap-2 px-4 pb-3 shrink-0">
+                  {displayedManeuvers.length > 0 && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 shrink-0 h-11 sm:h-9"
+                      onClick={() => setSheetExpanded(true)}
+                    >
+                      <List className="w-4 h-4" />
+                      Steps
+                    </Button>
+                  )}
+                  {displayedManeuvers.length > 0 && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={tripActive ? "default" : "outline"}
+                      className="gap-1.5 shrink-0 h-11 sm:h-9"
+                      onClick={() =>
+                        tripActive ? setTripActive(false) : startTrip()
+                      }
+                      title={
+                        tracking
+                          ? "Start guided trip mode"
+                          : "Enable location first, then start trip mode"
+                      }
+                    >
+                      {tripActive ? (
+                        <Square className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                      {tripActive ? "End" : "Go"}
+                    </Button>
+                  )}
                 </div>
-              </div>
+
+                {/* Expanded-only content: full turn-by-turn list. Rendered
+                    only when expanded (not just visually hidden) so the
+                    peek state stays cheap to paint on every incident
+                    refresh. */}
+                <AnimatePresence>
+                  {sheetExpanded && (
+                    <motion.div
+                      key="expanded-steps"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex-1 overflow-y-auto px-2 py-1 border-t"
+                    >
+                      <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide px-2 py-2 flex items-center gap-1.5">
+                        <List className="w-3.5 h-3.5" />
+                        Turn-by-turn · {displayedManeuvers.length} steps
+                      </p>
+                      {displayedManeuvers.length > 0 ? (
+                        stepsList
+                      ) : (
+                        <p className="text-sm text-muted-foreground px-4 py-6 text-center">
+                          No turn-by-turn available for this route.
+                        </p>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             )}
           </div>
         </div>
@@ -2295,7 +2471,9 @@ export default function RoutePulse() {
                     variant={tripActive ? "default" : "ghost"}
                     size="sm"
                     className="gap-1.5"
-                    onClick={() => (tripActive ? setTripActive(false) : startTrip())}
+                    onClick={() =>
+                      tripActive ? setTripActive(false) : startTrip()
+                    }
                     title={
                       tracking
                         ? "Start guided trip mode"
@@ -2404,7 +2582,11 @@ export default function RoutePulse() {
                   result — the receipts behind the "better than Google"
                   claim. */}
               {(routeQuery.data!.grounding as
-                | { tomtomIncidents: number; wazeAlerts: number; flowSamples: number }
+                | {
+                    tomtomIncidents: number;
+                    wazeAlerts: number;
+                    flowSamples: number;
+                  }
                 | null
                 | undefined) && (
                 <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -2438,7 +2620,8 @@ export default function RoutePulse() {
                       {" "}
                       (+{leaveByInfo.bufferMin} min buffer for{" "}
                       {routeQuery.data!.route.incidents.length} incident
-                      {routeQuery.data!.route.incidents.length === 1 ? "" : "s"})
+                      {routeQuery.data!.route.incidents.length === 1 ? "" : "s"}
+                      )
                     </span>
                   )}
                 </span>
@@ -2481,9 +2664,8 @@ export default function RoutePulse() {
                   <Lightbulb className="w-3 h-3 shrink-0" />
                   Wait ~{waitAdvice.waitMin} min —{" "}
                   {waitAdvice.roadName ? `${waitAdvice.roadName} ` : ""}
-                  est. clear by{" "}
-                  {fmtTime(new Date(waitAdvice.clearByIso))}, saving ~
-                  {waitAdvice.delayAvoidedMin} min
+                  est. clear by {fmtTime(new Date(waitAdvice.clearByIso))},
+                  saving ~{waitAdvice.delayAvoidedMin} min
                 </span>
               )}
             </div>
@@ -2682,10 +2864,7 @@ export default function RoutePulse() {
                 if (code === "BAD_GATEWAY") {
                   return "Routing is temporarily unavailable — try again in a moment.";
                 }
-                if (
-                  code === "NOT_FOUND" &&
-                  routeQuery.error?.message
-                ) {
+                if (code === "NOT_FOUND" && routeQuery.error?.message) {
                   return routeQuery.error.message;
                 }
                 return "Couldn't find a route between those addresses. Double-check them and try again.";
@@ -2806,9 +2985,9 @@ export default function RoutePulse() {
             padding the estimate by the delay your route's incidents are
             expected to cost. Compare every route option side by side with
             estimated delay minutes, follow the route step by step with
-            turn-by-turn directions, see which stretches are running slow,
-            speak your addresses instead of typing, and copy a plain-text
-            trip summary for dispatch — all without an account.
+            turn-by-turn directions, see which stretches are running slow, speak
+            your addresses instead of typing, and copy a plain-text trip summary
+            for dispatch — all without an account.
           </p>
           <p>
             Built entirely on free, open infrastructure: addresses are resolved
