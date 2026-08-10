@@ -926,6 +926,58 @@ section > .absolute.inset-0 > img {
   }
 }
 
+/* v17: Leaflet's popup/attribution/cluster chrome ships hardcoded
+   light-mode colors (white popup box, dark text, white attribution
+   background) with no awareness of this app's .dark theme — on a site
+   whose default theme is dark, every incident/camera popup and the
+   bottom-corner attribution strip was rendering as a jarring white box
+   regardless of the map's own light/dark tile toggle. These overrides
+   make Leaflet's chrome follow the same .dark class as everything else,
+   rounded/shadowed to match the app's card styling instead of Leaflet's
+   default square corners. */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.35);
+}
+.leaflet-popup-content-wrapper {
+  border-radius: var(--radius-lg);
+}
+.leaflet-popup-close-button {
+  color: var(--muted-foreground) !important;
+}
+.leaflet-popup-close-button:hover {
+  color: var(--foreground) !important;
+}
+.leaflet-container a.leaflet-popup-close-button {
+  top: 6px;
+  right: 6px;
+}
+.leaflet-control-attribution {
+  background: color-mix(in srgb, var(--background) 85%, transparent) !important;
+  color: var(--muted-foreground) !important;
+  border-radius: var(--radius-sm);
+}
+.leaflet-control-attribution a {
+  color: var(--muted-foreground) !important;
+}
+.leaflet-control-zoom a {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+}
+.leaflet-control-zoom a:hover {
+  background: var(--muted) !important;
+}
+/* Cluster bubbles carry their own inline colors (severity-aware — see
+   incidentClusterIcon in RoutePulse/index.tsx) so nothing to theme here,
+   but the library's default spiderfy leg-lines are barely visible on a
+   dark tile layer — brighten them a touch. */
+.leaflet-cluster-spider-leg {
+  stroke: color-mix(in srgb, var(--foreground) 60%, transparent) !important;
+}
+
 /* iOS safe-area helper for floating map chrome on notched devices. */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);

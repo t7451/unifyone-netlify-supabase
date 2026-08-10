@@ -1,3 +1,4 @@
+/// <reference types="leaflet.markercluster" />
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
@@ -15,6 +16,13 @@ import {
 } from "react-leaflet";
 import L, { type LatLngExpression, type LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
+// v17: marker clustering for the pre-search "every active incident/camera"
+// layer — see NOTE FOR KIMI near MapClusterGroup below for why this was
+// needed (unclustered map with statewide feeds gets unusable fast).
+import MarkerClusterGroup from "react-leaflet-cluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import { useTheme } from "@/contexts/ThemeContext";
 import { trpc } from "@/lib/trpc";
 import PageHead from "@/components/PageHead";
 import ToolLayout from "@/components/ToolLayout";
@@ -328,11 +336,38 @@ const INCIDENT_ICON_COLOR: Record<string, string> = {
   major: "#dc2626",
   critical: "#991b1b",
 };
+// v17: severity used to only change color, all four pins were the same
+// 14px dot — on a busy map a critical closure looked exactly as loud as a
+// minor hazard. Real map apps (Google/Waze included) size-code severity
+// too; critical also gets a soft pulsing ring so it's findable at a
+// glance even in a cluttered view, matching the same pulse language
+// already used for the live user-location dot elsewhere on this map.
+const INCIDENT_ICON_SIZE: Record<string, number> = {
+  minor: 12,
+  moderate: 15,
+  major: 18,
+  critical: 20,
+};
 const INCIDENT_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
-  Object.entries(INCIDENT_ICON_COLOR).map(([severity, color]) => [
-    severity,
-    pinIcon(color, 14),
-  ])
+  Object.entries(INCIDENT_ICON_COLOR).map(([severity, color]) => {
+    const size = INCIDENT_ICON_SIZE[severity] ?? 14;
+    if (severity === "critical") {
+      const ringSize = size + 12;
+      return [
+        severity,
+        L.divIcon({
+          className: "",
+          html: `<div style="position:relative;width:${ringSize}px;height:${ringSize}px;display:flex;align-items:center;justify-content:center">
+            <div class="animate-ping" style="position:absolute;width:${size}px;height:${size}px;border-radius:50%;background:${color};opacity:0.45"></div>
+            <div style="position:relative;width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.35)"></div>
+          </div>`,
+          iconSize: [ringSize, ringSize],
+          iconAnchor: [ringSize / 2, ringSize / 2],
+        }),
+      ];
+    }
+    return [severity, pinIcon(color, size)];
+  })
 );
 
 // v6: traffic camera layer.
@@ -354,6 +389,47 @@ const CAMERA_ICON = L.divIcon({
   iconSize: [18, 18],
   iconAnchor: [9, 9],
 });
+
+// v17: cluster bubble icons for the pre-search "every active incident/
+// camera" layers (see MarkerClusterGroup usage below). Incident clusters
+// take the color of the worst severity inside them, so a cluster hiding a
+// critical incident still reads as urgent at a glance instead of looking
+// like an ordinary gray blob.
+const SEVERITY_RANK: Record<string, number> = {
+  critical: 3,
+  major: 2,
+  moderate: 1,
+  minor: 0,
+};
+function clusterBubble(count: number, color: string, size: number) {
+  return L.divIcon({
+    className: "",
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:${size > 40 ? 13 : 11}px;font-family:inherit">${count}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
+}
+function incidentClusterIcon(cluster: L.MarkerCluster) {
+  const count = cluster.getChildCount();
+  let worst = "minor";
+  for (const m of cluster.getAllChildMarkers()) {
+    // markers were built with pinIcon()/INCIDENT_ICONS above, which don't
+    // carry severity as marker data — options.icon identity is the
+    // cheapest way back to it without threading extra state through
+    // react-leaflet's Marker props.
+    const icon = (m as L.Marker).options.icon;
+    const entry = Object.entries(INCIDENT_ICONS).find(([, i]) => i === icon);
+    const sev = entry?.[0] ?? "minor";
+    if ((SEVERITY_RANK[sev] ?? 0) > (SEVERITY_RANK[worst] ?? 0)) worst = sev;
+  }
+  const size = count >= 25 ? 44 : count >= 10 ? 38 : 32;
+  return clusterBubble(count, INCIDENT_ICON_COLOR[worst] ?? "#eab308", size);
+}
+function cameraClusterIcon(cluster: L.MarkerCluster) {
+  const count = cluster.getChildCount();
+  const size = count >= 25 ? 40 : count >= 10 ? 34 : 28;
+  return clusterBubble(count, "#7c3aed", size);
+}
 
 // Human labels for the incident feed sources (migration 0053 widened the
 // source set to include NWS + WSDOT).
@@ -623,7 +699,14 @@ export default function RoutePulse() {
     destination: string;
   } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [basemap, setBasemap] = useState<keyof typeof BASEMAPS>("light");
+  // v17: was hardcoded to "light" regardless of the app's own theme — a
+  // real inconsistency on a site whose default theme is dark (see
+  // ThemeProvider defaultTheme="dark" in app/providers.tsx). Now the map
+  // opens matching whatever theme the rest of the app is already in;
+  // the floating toggle still overrides it independently per-map after
+  // that, same as before.
+  const { theme: appTheme } = useTheme();
+  const [basemap, setBasemap] = useState<keyof typeof BASEMAPS>(appTheme);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [userLocation, setUserLocation] = useState<LatLngExpression | null>(
     null
@@ -1887,30 +1970,63 @@ export default function RoutePulse() {
                 </>
               ) : (
                 // No route searched yet — show every active incident and
-                // traffic camera so the map is never just an empty base layer.
+                // traffic camera so the map is never just an empty base
+                // layer.
+                //
+                // NOTE FOR KIMI (v17): this used to render every incident
+                // and camera as an individual unclustered Marker. Fine at
+                // the handful-of-incidents scale this was built and tested
+                // at, but the incident feed spans ODOT TripCheck + 511 +
+                // NWS + WSDOT statewide — a busy weather day easily puts
+                // 50-200+ pins in view at once, at which point the map
+                // becomes an unreadable pile of overlapping dots rather
+                // than useful signal. Wrapped both layers in
+                // MarkerClusterGroup (react-leaflet-cluster) so nearby
+                // markers collapse into a count bubble until zoomed in
+                // enough to separate them — standard behavior for any
+                // real-world incident map at this density. Route-scoped
+                // incidents/cameras (the `hasRoute` branch above) are NOT
+                // clustered on purpose — that set is already small
+                // (bounded to what's actually near one route) and
+                // clustering it would hide exactly the incidents a driver
+                // is trying to see.
                 <>
-                  {activeIncidents.map((inc: any) => (
-                    <Marker
-                      key={inc.id}
-                      position={[inc.lat, inc.lng]}
-                      icon={
-                        INCIDENT_ICONS[inc.severity] ?? INCIDENT_ICONS.minor
-                      }
-                    >
-                      <Popup>
-                        <div className="text-sm space-y-0.5">
-                          {inc.road_name && (
-                            <p className="font-medium">{inc.road_name}</p>
-                          )}
-                          <p>{inc.description ?? inc.incident_type}</p>
-                          <p className="text-xs uppercase text-muted-foreground">
-                            {inc.severity}
-                          </p>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  ))}
-                  {activeCameras.map(cameraMarker)}
+                  <MarkerClusterGroup
+                    chunkedLoading
+                    maxClusterRadius={60}
+                    spiderfyOnMaxZoom
+                    iconCreateFunction={incidentClusterIcon}
+                  >
+                    {activeIncidents.map((inc: any) => (
+                      <Marker
+                        key={inc.id}
+                        position={[inc.lat, inc.lng]}
+                        icon={
+                          INCIDENT_ICONS[inc.severity] ?? INCIDENT_ICONS.minor
+                        }
+                      >
+                        <Popup>
+                          <div className="text-sm space-y-0.5">
+                            {inc.road_name && (
+                              <p className="font-medium">{inc.road_name}</p>
+                            )}
+                            <p>{inc.description ?? inc.incident_type}</p>
+                            <p className="text-xs uppercase text-muted-foreground">
+                              {inc.severity}
+                            </p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                  </MarkerClusterGroup>
+                  <MarkerClusterGroup
+                    chunkedLoading
+                    maxClusterRadius={50}
+                    spiderfyOnMaxZoom
+                    iconCreateFunction={cameraClusterIcon}
+                  >
+                    {activeCameras.map(cameraMarker)}
+                  </MarkerClusterGroup>
                 </>
               )}
             </MapContainer>
