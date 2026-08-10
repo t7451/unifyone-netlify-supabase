@@ -77,6 +77,7 @@ import { getSupabaseAdmin } from "../../_core/supabaseAdmin";
 import { ENV } from "../../_core/env";
 import { invokeLLM } from "../../_core/llm";
 import { resolveKaiModel } from "../../lib/kaiModels";
+import { getClearRouteBrief } from "./aiBriefWorker";
 import {
   bboxForGeometries,
   dedupeIncidents,
@@ -616,9 +617,13 @@ function maneuverInstruction(
     case "off ramp":
       return `Take the exit${road}`;
     case "fork":
-      return mod ? `Keep ${mod} at the fork${road}` : `Keep straight at the fork${road}`;
+      return mod
+        ? `Keep ${mod} at the fork${road}`
+        : `Keep straight at the fork${road}`;
     case "end of road":
-      return mod ? `At the end of the road, turn ${mod}${road}` : `At the end of the road, turn${road}`;
+      return mod
+        ? `At the end of the road, turn ${mod}${road}`
+        : `At the end of the road, turn${road}`;
     case "roundabout":
     case "rotary":
       return roadName
@@ -1118,7 +1123,10 @@ export async function getRoute(
           25,
           Math.round((r.duration * (1 / flow.avgRatio - 1)) / 60)
         );
-        delayEstimateMin = Math.min(MAX_DELAY_MIN, delayEstimateMin + flowDelayMin);
+        delayEstimateMin = Math.min(
+          MAX_DELAY_MIN,
+          delayEstimateMin + flowDelayMin
+        );
       }
       if (flow && flow.roadClosedCount > 0) {
         // TomTom flags the segment itself as closed — stronger than any
@@ -1160,6 +1168,26 @@ export async function getRoute(
     explanation = ai.explanation;
     confidence = ai.confidence;
     verdicts = ai.verdicts;
+  } else {
+    // v15: clear route, so this doesn't earn the paid model — but if the
+    // free-tier Workers AI brief worker is configured, ask it for a
+    // route-specific one-liner instead of the static string. Best-effort:
+    // any failure (unset, unreachable, timeout) keeps the static fallback
+    // exactly as it was before this existed.
+    const fastest = scoredRoutes[chosenIndex] ?? scoredRoutes[0];
+    if (fastest) {
+      const roadNames = Array.from(
+        new Set(
+          fastest.maneuvers.map(m => m.roadName).filter((n): n is string => !!n)
+        )
+      ).slice(0, 6);
+      const brief = await getClearRouteBrief({
+        distanceMi: fastest.distance / 1609.34,
+        durationMin: fastest.duration / 60,
+        roadNames,
+      });
+      if (brief) explanation = brief;
+    }
   }
 
   // Cameras near the chosen route — one extra RPC after the pick so the
@@ -1254,12 +1282,14 @@ async function getWaitAdvice(
 
   const now = Date.now();
   const windowEnd = now + 90 * 60_000;
-  const relevant = (data as Array<{
-    id: string;
-    estimated_end_at: string | null;
-    road_name: string | null;
-    severity: RouteIncident["severity"];
-  }>).filter(row => {
+  const relevant = (
+    data as Array<{
+      id: string;
+      estimated_end_at: string | null;
+      road_name: string | null;
+      severity: RouteIncident["severity"];
+    }>
+  ).filter(row => {
     if (!row.estimated_end_at) return false;
     const t = new Date(row.estimated_end_at).getTime();
     return Number.isFinite(t) && t > now && t <= windowEnd;
@@ -1277,8 +1307,7 @@ async function getWaitAdvice(
   const clearByMs = new Date(latest.estimated_end_at!).getTime();
   const delayAvoidedMin = relevant.reduce(
     (sum, row) =>
-      sum +
-      (SEVERITY_DELAY_MIN[row.severity] ?? SEVERITY_DELAY_MIN.major),
+      sum + (SEVERITY_DELAY_MIN[row.severity] ?? SEVERITY_DELAY_MIN.major),
     0
   );
 

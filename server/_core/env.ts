@@ -62,7 +62,8 @@ export const ENV = {
   squareLocationId: process.env.SQUARE_LOCATION_ID ?? "",
   squareWebhookSignatureKey: process.env.SQUARE_WEBHOOK_SIGNATURE_KEY ?? "",
   squareEnvironment: (process.env.SQUARE_ENVIRONMENT ?? "production") as
-    "sandbox" | "production",
+    | "sandbox"
+    | "production",
   // Supabase backs the credit-metering + Stripe billing layer and optional
   // Realtime — it is NOT the primary database (that's Neon via DATABASE_URL)
   // and NOT the primary auth provider. See docs/DATABASE_ARCHITECTURE.md.
@@ -103,6 +104,12 @@ export const ENV = {
   // Segment Data) which grounds the AI route pick with live measured
   // speeds and incidents alongside the agency feeds.
   tomtomApiKey: process.env.TOMTOM_API_KEY ?? "",
+  // v15: optional Cloudflare Worker (Workers AI free tier) that drafts the
+  // one-line summary for *clear* routes only — see
+  // workers/routepulse-ai-brief. Both unset is fine: the service falls
+  // back to a static string exactly as before this existed.
+  routepulseAiBriefUrl: process.env.ROUTEPULSE_AI_BRIEF_URL ?? "",
+  routepulseAiBriefSecret: process.env.ROUTEPULSE_AI_BRIEF_SECRET ?? "",
   // OpenWebNinja Waze API — live crowdsourced alerts (accidents, hazards,
   // jams, police) used as AI grounding data. RapidAPI key by default;
   // set OPENWEBNINJA_WAZE_URL to a native OpenWebNinja endpoint if using

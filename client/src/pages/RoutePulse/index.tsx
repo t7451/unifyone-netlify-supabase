@@ -995,7 +995,8 @@ export default function RoutePulse() {
 
   const routeLine: LatLngExpression[] | null = useMemo(() => {
     const geometry = routeQuery.data?.route.geometry as
-      { coordinates: [number, number][] } | undefined;
+      | { coordinates: [number, number][] }
+      | undefined;
     if (!geometry?.coordinates?.length) return null;
     return geometry.coordinates.map(
       ([lng, lat]) => [lat, lng] as LatLngExpression
@@ -1027,7 +1028,8 @@ export default function RoutePulse() {
   const displayedLine: LatLngExpression[] | null = useMemo(() => {
     if (displayedIdx === null || previewIdx === null) return routeLine;
     const geometry = allRoutes[displayedIdx]?.geometry as
-      { coordinates: [number, number][] } | undefined;
+      | { coordinates: [number, number][] }
+      | undefined;
     if (!geometry?.coordinates?.length) return routeLine;
     return geometry.coordinates.map(
       ([lng, lat]) => [lat, lng] as LatLngExpression
@@ -1232,10 +1234,50 @@ export default function RoutePulse() {
     };
   }, [tripActive, displayedManeuvers, nextStepIdx, displayedRoute, speedMps]);
 
+  // v15: TomTom flow samples for the displayed route, when the backend
+  // measured any (see FlowGrounding.points in externalGrounding.ts). Each
+  // point is a real currentSpeed/freeFlowSpeed reading at a spot along the
+  // route — a much stronger signal than the maneuver-duration heuristic
+  // below, but coarse (only ~5 points per route) so it's used to *color*
+  // the fine-grained heuristic segments, not replace their geometry.
+  const flowPoints = useMemo(() => {
+    const flow = (
+      displayedRoute as
+        | {
+            flow?: {
+              points?: {
+                lat: number;
+                lng: number;
+                ratio: number | null;
+                closed: boolean;
+              }[];
+            } | null;
+          }
+        | null
+        | undefined
+    )?.flow;
+    return (flow?.points ?? []).filter(p => p.ratio !== null || p.closed);
+  }, [displayedRoute]);
+
+  const ratioToColor = (ratio: number) =>
+    ratio < 0.45
+      ? CONGESTION_CRAWL
+      : ratio < 0.75
+        ? CONGESTION_SLOW
+        : ROUTE_BLUE;
+
+  // Rough degrees-squared threshold for "this flow sample actually
+  // describes this stretch of road" — about 800m at mid latitudes.
+  // Beyond that, a nearest sample is more likely a different road nearby
+  // than this one, so we fall back to the heuristic instead of mislabeling.
+  const FLOW_SNAP_DEG2 = 0.00006;
+
   // Congestion-colored per-step segments. Each step's implied speed is
   // compared to the route average; only drawn when the step geometry
   // actually covers the route (2+ drawable steps), otherwise the plain
-  // single-color line is used.
+  // single-color line is used. When a TomTom flow sample lands close to a
+  // step's midpoint, its measured ratio overrides the duration heuristic
+  // for that step's color — real data wins when we have it.
   const segmentLines = useMemo(() => {
     if (!displayedRoute || displayedManeuvers.length === 0) return [];
     const avg = displayedRoute.distance / Math.max(1, displayedRoute.duration);
@@ -1243,13 +1285,28 @@ export default function RoutePulse() {
     for (const m of displayedManeuvers) {
       if (!m.coordinates || m.coordinates.length < 2) continue;
       const speed = m.durationS > 0 ? m.distanceM / m.durationS : avg;
-      const ratio = avg > 0 ? speed / avg : 1;
-      const color =
-        ratio < 0.45
-          ? CONGESTION_CRAWL
-          : ratio < 0.75
-            ? CONGESTION_SLOW
-            : ROUTE_BLUE;
+      const heuristicRatio = avg > 0 ? speed / avg : 1;
+
+      let color = ratioToColor(heuristicRatio);
+      if (flowPoints.length > 0) {
+        const mid = m.coordinates[Math.floor(m.coordinates.length / 2)]!;
+        const [midLng, midLat] = mid;
+        let nearest: (typeof flowPoints)[number] | null = null;
+        let nearestD2 = Infinity;
+        for (const p of flowPoints) {
+          const d2 = (p.lat - midLat) ** 2 + (p.lng - midLng) ** 2;
+          if (d2 < nearestD2) {
+            nearestD2 = d2;
+            nearest = p;
+          }
+        }
+        if (nearest && nearestD2 <= FLOW_SNAP_DEG2) {
+          color = nearest.closed
+            ? CONGESTION_CRAWL
+            : ratioToColor(nearest.ratio ?? heuristicRatio);
+        }
+      }
+
       segs.push({
         positions: m.coordinates.map(
           ([lng, lat]) => [lat, lng] as LatLngExpression
@@ -1258,7 +1315,7 @@ export default function RoutePulse() {
       });
     }
     return segs.length >= 2 ? segs : [];
-  }, [displayedRoute, displayedManeuvers]);
+  }, [displayedRoute, displayedManeuvers, flowPoints]);
 
   // Active incidents with valid coordinates — used both as the always-on
   // map layer (before any route search) and the list card below the map.
@@ -1639,8 +1696,20 @@ export default function RoutePulse() {
                 attribution={BASEMAPS[basemap].attribution}
                 url={BASEMAPS[basemap].url}
               />
-              <ZoomControl position="bottomright" />
-              <ScaleControl position="bottomright" metric={false} imperial />
+              {/* NOTE FOR KIMI: these were both "bottomright", which put
+                  Leaflet's native control container (z-index 1000 by
+                  default) directly on top of the v14 mobile bottom sheet
+                  (z-[450], anchored bottom of this same map wrapper) — the
+                  "2000 ft" scale box floating oddly over the sheet on
+                  mobile was this collision, not a sheet bug. Moved both to
+                  topright, which is empty on every viewport size and is
+                  the standard placement mobile map apps use to stay clear
+                  of a bottom sheet/nav bar. Don't move these back to a
+                  bottom* position without also either raising the sheet's
+                  z-index above Leaflet's control container or hiding the
+                  controls on mobile. */}
+              <ZoomControl position="topright" />
+              <ScaleControl position="topright" metric={false} imperial />
               <FitBounds bounds={mapBounds} skipAutoFit={userPannedRef} />
               <MapInteractionHandler
                 onDrag={() => {
@@ -2431,7 +2500,18 @@ export default function RoutePulse() {
         {/* Result card */}
         {hasRoute && (
           <Card className="p-6 sm:p-8 mb-8 space-y-4">
-            <div className="flex items-baseline justify-between flex-wrap gap-2">
+            {/* NOTE FOR KIMI: this distance/duration + risk badge line is a
+                byte-for-byte duplicate of the v14 mobile sheet's peek
+                header (search getMobileSummary / mobileSummary above) — on
+                phones the sheet already sits right on top of the map, so
+                this card repeated the exact same "3.5 mi · 10 min · Low
+                Risk" line again immediately below it, which is the
+                "duplicate summary" clutter reported on mobile. Hidden below
+                sm; still shown on desktop, which has no persistent sheet
+                and needs this header. If you add new info to this line,
+                add it to the sheet's peek header too so they don't drift
+                apart again. */}
+            <div className="hidden sm:flex items-baseline justify-between flex-wrap gap-2">
               <p className="text-2xl font-semibold">
                 {(routeQuery.data!.route.distance / 1609.34).toFixed(1)} mi ·{" "}
                 {Math.round(routeQuery.data!.route.duration / 60)} min
@@ -2902,11 +2982,21 @@ export default function RoutePulse() {
         )}
 
         {/* Active incidents feed (list form, for accessibility / no-JS-map
-            fallback — the map above already shows these live). */}
+            fallback — the map above already shows these live).
+            NOTE FOR KIMI: this is the *regional* feed (all incidents in the
+            metro area), not filtered to the current route — it's a
+            different data source than route.incidents used everywhere
+            above (mobileSummary, the sheet, "Incidents on this route").
+            Users read "Route is clear" up top and then see this list full
+            of incidents right below it and think the two contradict each
+            other; they don't, they're answering different questions. Label
+            says so explicitly now — don't quietly rename this back to
+            "Active incidents" without the qualifier. */}
         <Card className="p-6 sm:p-8 mb-10">
           <div className="flex items-center justify-between gap-2 mb-4">
             <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">
-              Active incidents (Oregon / SW Washington)
+              Nearby incidents, Oregon / SW Washington (not filtered to your
+              route)
             </p>
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground shrink-0">
               <span className="relative flex h-2 w-2">

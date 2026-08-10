@@ -142,7 +142,10 @@ function withTimeout(): AbortSignal {
 // ── TomTom Traffic Incident Details ────────────────────────────────────────
 // https://developer.tomtom.com/traffic-api/documentation/traffic-incidents
 
-const TOMTOM_ICON_CATEGORY: Record<number, { type: string; severity: RouteIncident["severity"] }> = {
+const TOMTOM_ICON_CATEGORY: Record<
+  number,
+  { type: string; severity: RouteIncident["severity"] }
+> = {
   0: { type: "Traffic incident", severity: "minor" },
   1: { type: "Accident", severity: "major" },
   2: { type: "Fog", severity: "moderate" },
@@ -243,10 +246,16 @@ export async function fetchTomTomTrafficIncidents(
       }
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
 
-      const cat = TOMTOM_ICON_CATEGORY[p.iconCategory ?? 0] ?? TOMTOM_ICON_CATEGORY[0]!;
+      const cat =
+        TOMTOM_ICON_CATEGORY[p.iconCategory ?? 0] ?? TOMTOM_ICON_CATEGORY[0]!;
       const magSev = MAGNITUDE_SEVERITY[p.magnitudeOfDelay ?? 0];
       // Take the worse of category-implied vs delay-implied severity.
-      const order: RouteIncident["severity"][] = ["minor", "moderate", "major", "critical"];
+      const order: RouteIncident["severity"][] = [
+        "minor",
+        "moderate",
+        "major",
+        "critical",
+      ];
       const severity =
         magSev && order.indexOf(magSev) > order.indexOf(cat.severity)
           ? magSev
@@ -301,7 +310,10 @@ export async function fetchTomTomTrafficIncidents(
 // the only thing wrong — a shape mismatch here fails silently (empty
 // array, no thrown error), same as a bad URL/key does.
 
-const WAZE_ALERT_TYPE: Record<string, { type: string; severity: RouteIncident["severity"] }> = {
+const WAZE_ALERT_TYPE: Record<
+  string,
+  { type: string; severity: RouteIncident["severity"] }
+> = {
   ACCIDENT: { type: "Accident", severity: "major" },
   ROAD_CLOSED: { type: "Road closure", severity: "critical" },
   ROAD_CLOSED_EVENT: { type: "Road closure", severity: "critical" },
@@ -407,7 +419,8 @@ export async function fetchWazeAlerts(bbox: Bbox): Promise<RouteIncident[]> {
       const lat = first?.lat;
       const lng = first?.lon;
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-      const delaySec = typeof j.delay_seconds === "number" ? j.delay_seconds : 0;
+      const delaySec =
+        typeof j.delay_seconds === "number" ? j.delay_seconds : 0;
       const severity: RouteIncident["severity"] =
         delaySec >= 600 ? "major" : delaySec >= 180 ? "moderate" : "minor";
       const kmh =
@@ -443,6 +456,17 @@ export async function fetchWazeAlerts(bbox: Bbox): Promise<RouteIncident[]> {
 // Measured current vs free-flow speed for the road segment nearest a point.
 // https://developer.tomtom.com/traffic-api/documentation/traffic-flow
 
+/** A single sampled point along the route, for map coloring. */
+export type FlowPoint = {
+  lat: number;
+  lng: number;
+  /** current/free-flow ratio, clamped [0, 1.2]. Null if TomTom had no data here. */
+  ratio: number | null;
+  currentMph: number | null;
+  freeflowMph: number | null;
+  closed: boolean;
+};
+
 export type FlowGrounding = {
   /** Points that returned usable flow data. */
   samples: number;
@@ -454,6 +478,16 @@ export type FlowGrounding = {
   roadClosedCount: number;
   avgCurrentMph: number;
   avgFreeflowMph: number;
+  /**
+   * v15: every sampled point along the route with its own ratio, in route
+   * order (sorted by original coordinate index). Lets the client draw
+   * TomTom-measured congestion coloring instead of the maneuver-duration
+   * heuristic, when TomTom actually has data for this stretch. Points
+   * TomTom had nothing for are still included with ratio: null so the
+   * client can choose to fall back to the heuristic for that gap only,
+   * not the whole route.
+   */
+  points: FlowPoint[];
 };
 
 export async function fetchTomTomFlow(
@@ -468,13 +502,20 @@ export async function fetchTomTomFlow(
   const idxs = new Set<number>();
   for (let i = 0; i < SAMPLE_COUNT; i++) {
     idxs.add(
-      Math.min(coords.length - 1, Math.round((i * (coords.length - 1)) / (SAMPLE_COUNT - 1)))
+      Math.min(
+        coords.length - 1,
+        Math.round((i * (coords.length - 1)) / (SAMPLE_COUNT - 1))
+      )
     );
   }
 
+  // Sorted so `points` comes back in route order regardless of Set/Promise
+  // ordering — the client zips these against route geometry positionally.
+  const sortedIdxs = Array.from(idxs).sort((a, b) => a - b);
+
   try {
     const results = await Promise.all(
-      Array.from(idxs).map(async i => {
+      sortedIdxs.map(async (i, resultPos) => {
         const [lng, lat] = coords[i]!;
         const url =
           `https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json` +
@@ -486,13 +527,13 @@ export async function fetchTomTomFlow(
         if (!res.ok) {
           // Log once, not per-sample — same TomTom key/scope issue would
           // otherwise spam 5x per request with identical info.
-          if (i === Array.from(idxs)[0]) {
+          if (resultPos === 0) {
             const bodyText = await res.text().catch(() => "");
             console.warn(
               `[routePulse] TomTom flow HTTP ${res.status}: ${bodyText.slice(0, 300)}`
             );
           }
-          return null;
+          return { lat, lng, current: null, freeflow: null, closed: false };
         }
         const body = (await res.json()) as {
           flowSegmentData?: {
@@ -502,10 +543,14 @@ export async function fetchTomTomFlow(
           };
         };
         const f = body.flowSegmentData;
-        if (!f) return null;
+        if (!f)
+          return { lat, lng, current: null, freeflow: null, closed: false };
         return {
+          lat,
+          lng,
           current: typeof f.currentSpeed === "number" ? f.currentSpeed : null,
-          freeflow: typeof f.freeFlowSpeed === "number" ? f.freeFlowSpeed : null,
+          freeflow:
+            typeof f.freeFlowSpeed === "number" ? f.freeFlowSpeed : null,
           closed: f.roadClosure === true,
         };
       })
@@ -517,16 +562,29 @@ export async function fetchTomTomFlow(
     let roadClosedCount = 0;
     let currentSum = 0;
     let freeflowSum = 0;
+    const points: FlowPoint[] = [];
     for (const r of results) {
-      if (!r) continue;
       if (r.closed) roadClosedCount++;
-      if (r.current === null || r.freeflow === null || r.freeflow <= 0) continue;
-      samples++;
-      const ratio = Math.max(0, Math.min(1.2, r.current / r.freeflow));
-      ratioSum += ratio;
-      if (ratio < worstRatio) worstRatio = ratio;
-      currentSum += r.current;
-      freeflowSum += r.freeflow;
+      const hasSpeeds =
+        r.current !== null && r.freeflow !== null && r.freeflow > 0;
+      const ratio = hasSpeeds
+        ? Math.max(0, Math.min(1.2, r.current! / r.freeflow!))
+        : null;
+      if (hasSpeeds) {
+        samples++;
+        ratioSum += ratio!;
+        if (ratio! < worstRatio) worstRatio = ratio!;
+        currentSum += r.current!;
+        freeflowSum += r.freeflow!;
+      }
+      points.push({
+        lat: r.lat,
+        lng: r.lng,
+        ratio,
+        currentMph: r.current !== null ? Math.round(r.current) : null,
+        freeflowMph: r.freeflow !== null ? Math.round(r.freeflow) : null,
+        closed: r.closed,
+      });
     }
     if (samples === 0 && roadClosedCount === 0) return null;
     return {
@@ -536,6 +594,7 @@ export async function fetchTomTomFlow(
       roadClosedCount,
       avgCurrentMph: samples > 0 ? Math.round(currentSum / samples) : 0,
       avgFreeflowMph: samples > 0 ? Math.round(freeflowSum / samples) : 0,
+      points,
     };
   } catch (err) {
     console.warn("[routePulse] TomTom flow fetch failed:", err);

@@ -1,0 +1,15 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "routepulse-ai-brief"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+workers_dev = true
+
+# Workers AI binding — free tier (daily neuron allowance, no credit card).
+# https://developers.cloudflare.com/workers-ai/platform/pricing/
+[ai]
+binding = "AI"
+
+# Shared secret so only our own Netlify functions can call this worker.
+# After deploying:
+#   npx wrangler secret put BRIEF_SHARED_SECRET
+# Then set the same value as ROUTEPULSE_AI_BRIEF_SECRET in Netlify env.
