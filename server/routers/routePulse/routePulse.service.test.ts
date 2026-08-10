@@ -145,6 +145,14 @@ function mockSupabaseWithIncidents(incidentRows: unknown[] | null) {
     is: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
+    // Terminal in both real call sites (getDepartureOutlook /
+    // getWaitOrGoAdvice — both destructure {data, error} straight off
+    // .in(), not chained further), so it resolves rather than
+    // mockReturnThis() like the other filter methods above. Reuses the
+    // same incidentRows the test configured mockSupabaseWithIncidents
+    // with, since both real callers query the same traffic_incidents
+    // table the rest of this mock represents.
+    in: vi.fn().mockResolvedValue({ data: incidentRows, error: null }),
     maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
   });
@@ -376,12 +384,14 @@ describe("routePulse.service — suggestions (typeahead)", () => {
   });
 
   it("returns display names from Nominatim for a valid query", async () => {
-    global.fetch = vi.fn().mockResolvedValue(
-      jsonResponse([
-        { display_name: "123 SW Broadway, Portland, OR, USA" },
-        { display_name: "123 SW Broadway, Denver, CO, USA" },
-      ])
-    );
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        jsonResponse([
+          { display_name: "123 SW Broadway, Portland, OR, USA" },
+          { display_name: "123 SW Broadway, Denver, CO, USA" },
+        ])
+      );
 
     const result = await service.suggestAddresses("123 SW Broadway");
 
@@ -425,7 +435,9 @@ describe("routePulse.service — suggestions (typeahead)", () => {
   });
 
   it("degrades to empty suggestions when Nominatim returns non-OK", async () => {
-    global.fetch = vi.fn().mockResolvedValue(jsonResponse({ error: "blocked" }, false));
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ error: "blocked" }, false));
 
     const result = await service.suggestAddresses("Broadway, Portland");
 
@@ -433,14 +445,16 @@ describe("routePulse.service — suggestions (typeahead)", () => {
   });
 
   it("filters out malformed display names from the response", async () => {
-    global.fetch = vi.fn().mockResolvedValue(
-      jsonResponse([
-        { display_name: "Valid Address, Portland, OR" },
-        { display_name: "" },
-        { display_name: null },
-        { display_name: "Another Valid, Portland, OR" },
-      ])
-    );
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        jsonResponse([
+          { display_name: "Valid Address, Portland, OR" },
+          { display_name: "" },
+          { display_name: null },
+          { display_name: "Another Valid, Portland, OR" },
+        ])
+      );
 
     const result = await service.suggestAddresses("Portland");
 
