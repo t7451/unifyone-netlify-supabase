@@ -46,19 +46,43 @@ export const routePulseRouter = router({
 
   // Public: list currently-active incidents (for a map overlay). Rate-limited
   // so the full active-incident table can't be scraped every request.
+  // v17: optional bbox — when passed, geofences to that viewport instead of
+  // returning the full statewide feed.
   listIncidents: publicRateLimitedProcedure(
     publicFormLimiter,
     "routepulse:listIncidents"
-  ).query(async () => {
-    return service.listActiveIncidents();
-  }),
+  )
+    .input(
+      z
+        .object({
+          minLat: z.number(),
+          minLng: z.number(),
+          maxLat: z.number(),
+          maxLng: z.number(),
+        })
+        .optional()
+    )
+    .query(async ({ input }) => {
+      return service.listActiveIncidents(input);
+    }),
 
   // Public: list traffic cameras (for the map camera layer). Same
   // rate-limiting rationale as listIncidents.
   listCameras: publicRateLimitedProcedure(
     publicFormLimiter,
     "routepulse:listCameras"
-  ).query(async () => {
-    return service.listCameras();
-  }),
+  )
+    .input(
+      z
+        .object({
+          minLat: z.number(),
+          minLng: z.number(),
+          maxLat: z.number(),
+          maxLng: z.number(),
+        })
+        .optional()
+    )
+    .query(async ({ input }) => {
+      return service.listCameras(input);
+    }),
 });

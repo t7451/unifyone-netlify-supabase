@@ -85,6 +85,7 @@ import {
   fetchTomTomTrafficIncidents,
   fetchWazeAlerts,
   isNearRoute,
+  type Bbox,
   type FlowGrounding,
 } from "./externalGrounding";
 
@@ -890,12 +891,25 @@ async function getCamerasNearRoute(
     .filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lng));
 }
 
-/** All known traffic cameras (for the always-on map layer, pre-search). */
-export async function listCameras(): Promise<RouteCamera[]> {
+/**
+ * v17: bbox param (optional, backwards-compatible) — geofenced query
+ * backed by list_cameras_in_bbox (drizzle/0055_routepulse_bbox_queries.sql)
+ * instead of always pulling the whole state. See the matching note on
+ * listActiveIncidents below for the full rationale; same story here.
+ */
+export async function listCameras(bbox?: Bbox): Promise<RouteCamera[]> {
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
-  const { data, error } = await supabase.rpc("list_cameras", { limit_n: 300 });
+  const { data, error } = bbox
+    ? await supabase.rpc("list_cameras_in_bbox", {
+        min_lat: bbox.minLat,
+        min_lng: bbox.minLng,
+        max_lat: bbox.maxLat,
+        max_lng: bbox.maxLng,
+        limit_n: 300,
+      })
+    : await supabase.rpc("list_cameras", { limit_n: 300 });
 
   if (error || !data) return [];
   return (data as Array<Record<string, unknown>>)
@@ -1442,21 +1456,37 @@ async function getDepartureOutlook(
   };
 }
 
-export async function listActiveIncidents() {
+/**
+ * v17: bbox param (optional, backwards-compatible — omit for the full
+ * statewide feed same as before). Backed by list_active_incidents_in_bbox
+ * (drizzle/0055_routepulse_bbox_queries.sql), which closes the gap this
+ * function used to flag directly in its own comment: previously always
+ * unfiltered by area, so the always-on map layer pulled the entire
+ * state's active incidents regardless of where the map was actually
+ * pointed. The client now passes the current map viewport bounds (see
+ * MapViewportTracker in client/src/pages/RoutePulse/index.tsx) so this
+ * only returns what's actually near the driver, and re-queries as they
+ * pan/zoom/drive instead of holding one fixed statewide snapshot for the
+ * whole session.
+ */
+export async function listActiveIncidents(bbox?: Bbox) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
   // RPC (not a plain table select) — PostgREST doesn't expose ST_X/ST_Y on a
   // raw select, so lat/lng extraction happens server-side in Postgres, same
   // pattern as incidents_near_route.
-  const { data, error } = await supabase.rpc("list_active_incidents", {
-    limit_n: 200,
-  });
+  const { data, error } = bbox
+    ? await supabase.rpc("list_active_incidents_in_bbox", {
+        min_lat: bbox.minLat,
+        min_lng: bbox.minLng,
+        max_lat: bbox.maxLat,
+        max_lng: bbox.maxLng,
+        limit_n: 200,
+      })
+    : await supabase.rpc("list_active_incidents", { limit_n: 200 });
 
   if (error || !data) return [];
-  // Note: unfiltered by area today. For larger coverage regions, add a
-  // bbox param backed by a PostGIS RPC (same pattern as incidents_near_route)
-  // rather than filtering client-side.
   return data as Array<{
     id: string;
     source: string;

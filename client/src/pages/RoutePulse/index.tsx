@@ -668,6 +668,63 @@ function MapInteractionHandler({ onDrag }: { onDrag: () => void }) {
   return null;
 }
 
+type ViewportBbox = {
+  minLat: number;
+  minLng: number;
+  maxLat: number;
+  maxLng: number;
+};
+
+/**
+ * v17: reports the current map viewport bounds (padded) so the always-on
+ * incident/camera layer can be geofenced instead of pulling the whole
+ * state — see server/routers/routePulse/index.ts's listIncidents/
+ * listCameras bbox param. Debounced 500ms on moveend so a fast pan/zoom
+ * sequence doesn't fire a query per frame, and padded 25% on every side
+ * so incidents just outside the visible edge are already loaded before
+ * they'd otherwise pop in in mid-pan.
+ */
+function MapViewportTracker({
+  onChange,
+}: {
+  onChange: (bbox: ViewportBbox) => void;
+}) {
+  const map = useMap();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const report = () => {
+    const b = map.getBounds().pad(0.25);
+    onChange({
+      minLat: b.getSouth(),
+      minLng: b.getWest(),
+      maxLat: b.getNorth(),
+      maxLng: b.getEast(),
+    });
+  };
+
+  useEffect(() => {
+    // Initial viewport on mount — don't wait for the first pan/zoom.
+    report();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map]);
+
+  useMapEvents({
+    moveend: () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(report, 500);
+    },
+  });
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    []
+  );
+
+  return null;
+}
+
 /** Flies to the given bounds whenever they change — unless the user has
  *  taken manual control of the viewport (skipAutoFit), in which case the
  *  map stays put until the next search resets the flag. */
@@ -856,12 +913,20 @@ export default function RoutePulse() {
   // Incidents auto-refresh every 60s — the map layer and the feed below it
   // stay live without a reload, which matters when the page sits open on a
   // phone mounted in a car.
-  const incidentsQuery = trpc.routePulse.listIncidents.useQuery(undefined, {
+  // v17: geofenced viewport bounds for the always-on incident/camera
+  // layer (see MapViewportTracker) — undefined until the map has mounted
+  // and reported its first bounds, in which case the query still runs
+  // with no bbox (full statewide feed) so there's never a blank map
+  // waiting on a viewport that hasn't been measured yet.
+  const [viewportBbox, setViewportBbox] = useState<ViewportBbox | undefined>(
+    undefined
+  );
+  const incidentsQuery = trpc.routePulse.listIncidents.useQuery(viewportBbox, {
     refetchInterval: 60_000,
   });
   // v6: traffic cameras for the always-on map layer, refreshed on roughly
   // the same cadence the ingester polls ODOT's camera list.
-  const camerasQuery = trpc.routePulse.listCameras.useQuery(undefined, {
+  const camerasQuery = trpc.routePulse.listCameras.useQuery(viewportBbox, {
     refetchInterval: 120_000,
   });
   const { recent, starred, addRoute, clearRoutes, starRoute, unstarRoute } =
@@ -1815,6 +1880,7 @@ export default function RoutePulse() {
               <ZoomControl position="topright" />
               <ScaleControl position="topright" metric={false} imperial />
               <FitBounds bounds={mapBounds} skipAutoFit={userPannedRef} />
+              <MapViewportTracker onChange={setViewportBbox} />
               <MapInteractionHandler
                 onDrag={() => {
                   setFollow(false);
