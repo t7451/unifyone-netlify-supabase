@@ -293,38 +293,55 @@ export async function fetchTomTomTrafficIncidents(
   }
 }
 
-// ── OpenWebNinja Waze API (alerts + jams) ──────────────────────────────────
-// Native: https://api.openwebninja.com/waze/alerts-and-jams (x-api-key)
-// RapidAPI gateway (legacy/alt): https://waze.p.rapidapi.com/alerts-and-jams
-//   (X-RapidAPI-Key / X-RapidAPI-Host)
-// Both take ?bottom_left=lat,lng&top_right=lat,lng.
+// ── OpenWebNinja Google Maps Traffic Alerts API ─────────────────────────────────
+// https://www.openwebninja.com/api/google-maps-traffic-alerts
 //
-// NOTE FOR KIMI: the response shape below (flat `{ alerts, jams }`, plain
-// `latitude`/`longitude` on alerts, `line_coordinates: [{lat, lon}]` on
-// jams, `speed_kmh` / `delay_seconds` / `length_meters` field names) was
-// confirmed 2026-08-09 against OpenWebNinja's live API — NOT the
-// `{status, data: {alerts, jams}}` / `location: {x, y}` wrapper you may
-// see referenced in older RapidAPI docs or examples. If you're
-// troubleshooting "zero Waze results" again, check the actual JSON body
-// (now logged in full on non-2xx responses) before assuming the URL is
-// the only thing wrong — a shape mismatch here fails silently (empty
-// array, no thrown error), same as a bad URL/key does.
+// NOTE FOR KIMI (2026-08-10): everything below this comment used to call
+// OpenWebNinja's *Waze* API (`/waze/alerts-and-jams`, an {alerts, jams}
+// shape with speed_kmh/delay_seconds/line_coordinates). That endpoint was
+// never actually reachable with this account's key — checking the
+// OpenWebNinja dashboard directly showed the subscribed products are
+// "Real-Time News Search" and "Google Maps Traffic Alerts", with zero
+// requests ever logged against either, and no Waze product listed at all.
+// The commit that "fixed" the Waze response-shape parsing (9527c48) was a
+// real bug fix on paper but was chasing an endpoint this key was never
+// entitled to call in the first place, so it never actually produced a
+// nonzero call either — the 0/50 and 0/100 usage in the dashboard predates
+// and postdates that fix identically.
+//
+// This function now calls the product the key is actually subscribed to:
+// Google Maps Traffic Alerts, confirmed shape `{ count, alerts: [{ type,
+// latitude, longitude }] }` — no jams array, no street/subtype/speed
+// fields at all. This is a materially smaller feed than Waze would have
+// been (just type + coordinates, no jam severity or delay estimate), so
+// jam-style incidents synthesize a moderate default severity instead of
+// deriving one from a delay figure that this API doesn't provide.
+//
+// If you want the *actual* Waze product later (richer jam/delay data,
+// separate pricing/quota — see https://www.openwebninja.com/api/waze),
+// that's a distinct subscription on the OpenWebNinja account, not just a
+// URL change here.
+//
+// The endpoint path (`/google-maps-traffic-alerts/traffic-alerts`) follows
+// OpenWebNinja's documented `<product-slug>/<action>` convention seen
+// across their other products (e.g. `/google-ai-mode/ai-mode`,
+// `/web-unblocker/request`) — confirmed against their published code
+// samples for sibling products, but NOT hand-verified against a live call
+// from this sandbox (network egress here can't reach api.openwebninja.com
+// to test). If this still logs 0 calls after deploy, check the exact path
+// in the API Playground (https://app.openwebninja.com/api/google-maps-traffic-alerts)
+// before assuming anything else is wrong — same lesson as the Waze saga
+// above, verify against what the dashboard shows actually happened, not
+// what the code assumes should happen.
 
-const WAZE_ALERT_TYPE: Record<
+const GMAPS_TRAFFIC_TYPE: Record<
   string,
   { type: string; severity: RouteIncident["severity"] }
 > = {
-  ACCIDENT: { type: "Accident", severity: "major" },
-  ROAD_CLOSED: { type: "Road closure", severity: "critical" },
-  ROAD_CLOSED_EVENT: { type: "Road closure", severity: "critical" },
-  ROAD_CLOSED_CONSTRUCTION: { type: "Road closure", severity: "critical" },
-  JAM: { type: "Traffic jam", severity: "moderate" },
-  POLICE: { type: "Police reported", severity: "minor" },
-  HAZARD: { type: "Hazard", severity: "moderate" },
-  HAZARD_ON_ROAD: { type: "Hazard on road", severity: "moderate" },
-  HAZARD_ON_SHOULDER: { type: "Hazard on shoulder", severity: "minor" },
-  HAZARD_WEATHER: { type: "Weather hazard", severity: "moderate" },
-  ROAD_CONSTRUCTION: { type: "Road construction", severity: "moderate" },
+  accident: { type: "Accident", severity: "major" },
+  construction: { type: "Road construction", severity: "moderate" },
+  road_closed: { type: "Road closure", severity: "critical" },
+  incident: { type: "Traffic incident", severity: "moderate" },
 };
 
 export async function fetchWazeAlerts(bbox: Bbox): Promise<RouteIncident[]> {
@@ -335,111 +352,52 @@ export async function fetchWazeAlerts(bbox: Bbox): Promise<RouteIncident[]> {
   const host = new URL(base).hostname;
   const isRapidApi = host.endsWith("rapidapi.com");
   const url =
-    `${base}/alerts-and-jams` +
+    `${base}/traffic-alerts` +
     `?bottom_left=${bbox.minLat},${bbox.minLng}` +
     `&top_right=${bbox.maxLat},${bbox.maxLng}`;
 
   const headers: Record<string, string> = isRapidApi
     ? { "X-RapidAPI-Key": key, "X-RapidAPI-Host": host }
-    : // Native OpenWebNinja endpoint (ak_... keys authenticate with x-api-key).
-      { "x-api-key": key };
+    : { "x-api-key": key };
 
   try {
     const res = await fetch(url, { headers, signal: withTimeout() });
     if (!res.ok) {
-      // See the matching comment in fetchTomTomTrafficIncidents above —
-      // this is the only place a 401 (wrong URL/key-type mismatch between
-      // RapidAPI-gateway auth and a native OpenWebNinja ak_... key, or vice
-      // versa) is distinguishable from "no alerts in this bbox." Full body
-      // (not just the first 300 chars) is logged here specifically because
-      // a *shape* mismatch (see body parsing below) won't hit this branch
-      // at all — it'll 200 with an empty result — so this is also where
-      // you'd catch an API version/contract change going forward.
       const bodyText = await res.text().catch(() => "");
       console.warn(
-        `[routePulse] Waze alerts HTTP ${res.status} (url=${url}, auth=${isRapidApi ? "rapidapi" : "native"}): ${bodyText.slice(0, 500)}`
+        `[routePulse] Google Maps Traffic Alerts HTTP ${res.status} (url=${url}, auth=${isRapidApi ? "rapidapi" : "native"}): ${bodyText.slice(0, 500)}`
       );
       return [];
     }
-    // Real OpenWebNinja shape (confirmed against live docs, not the
-    // {status, data:{...}} wrapper this used to assume): flat top-level
-    // alerts/jams, plain latitude/longitude on alerts, line_coordinates
-    // (lat/lon, not x/y) on jams, speed_kmh/delay_seconds/length_meters.
     const body = (await res.json()) as {
+      count?: number;
       alerts?: Array<{
         type?: string;
-        subtype?: string;
-        street?: string;
-        city?: string;
         latitude?: number;
         longitude?: number;
-      }>;
-      jams?: Array<{
-        street?: string;
-        city?: string;
-        speed_kmh?: number;
-        delay_seconds?: number;
-        length_meters?: number;
-        severity?: number;
-        line_coordinates?: Array<{ lat?: number; lon?: number }>;
       }>;
     };
 
     const out: RouteIncident[] = [];
-
     const alerts = body.alerts ?? [];
     for (let idx = 0; idx < alerts.length; idx++) {
       const a = alerts[idx]!;
       const lat = a.latitude;
       const lng = a.longitude;
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-      const cat = WAZE_ALERT_TYPE[a.type ?? ""] ?? {
-        type: "Waze driver report",
+      const cat = GMAPS_TRAFFIC_TYPE[a.type ?? ""] ?? {
+        type: "Traffic incident",
         severity: "minor" as const,
       };
-      const subtype = a.subtype
-        ? a.subtype.replace(/_/g, " ").toLowerCase()
-        : null;
       out.push({
-        id: `waze-a-${idx}-${lat!.toFixed(4)},${lng!.toFixed(4)}`,
+        id: `gmta-${idx}-${lat!.toFixed(4)},${lng!.toFixed(4)}`,
         incident_type: cat.type,
         severity: cat.severity,
-        description: subtype ? `${cat.type} — ${subtype}` : cat.type,
-        road_name: a.street || null,
-        source: "waze",
-        lat: lat!,
-        lng: lng!,
-      });
-    }
-
-    const jams = body.jams ?? [];
-    for (let idx = 0; idx < jams.length; idx++) {
-      const j = jams[idx]!;
-      const first = j.line_coordinates?.[0];
-      const lat = first?.lat;
-      const lng = first?.lon;
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-      const delaySec =
-        typeof j.delay_seconds === "number" ? j.delay_seconds : 0;
-      const severity: RouteIncident["severity"] =
-        delaySec >= 600 ? "major" : delaySec >= 180 ? "moderate" : "minor";
-      const kmh =
-        typeof j.speed_kmh === "number" ? Math.round(j.speed_kmh) : null;
-      const delayMin = delaySec > 0 ? Math.round(delaySec / 60) : null;
-      const lengthMi =
-        typeof j.length_meters === "number" && j.length_meters > 0
-          ? (j.length_meters / 1609.34).toFixed(1)
-          : null;
-      out.push({
-        id: `waze-j-${idx}-${lat!.toFixed(4)},${lng!.toFixed(4)}`,
-        incident_type: "Traffic jam",
-        severity,
-        description:
-          `Heavy traffic${kmh !== null ? ` (~${kmh} km/h)` : ""}` +
-          `${lengthMi !== null ? ` over ${lengthMi} mi` : ""}` +
-          `${delayMin !== null && delayMin > 0 ? `, ~${delayMin} min delay` : ""}`,
-        road_name: j.street || null,
-        source: "waze",
+        description: cat.type,
+        // Google Maps Traffic Alerts doesn't return a street/road name —
+        // only type + coordinates. Leave null rather than guessing.
+        road_name: null,
+        source: "gmaps_traffic",
         lat: lat!,
         lng: lng!,
       });
@@ -447,7 +405,7 @@ export async function fetchWazeAlerts(bbox: Bbox): Promise<RouteIncident[]> {
 
     return out;
   } catch (err) {
-    console.warn("[routePulse] Waze alerts fetch failed:", err);
+    console.warn("[routePulse] Google Maps Traffic Alerts fetch failed:", err);
     return [];
   }
 }

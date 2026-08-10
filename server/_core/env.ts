@@ -110,20 +110,24 @@ export const ENV = {
   // back to a static string exactly as before this existed.
   routepulseAiBriefUrl: process.env.ROUTEPULSE_AI_BRIEF_URL ?? "",
   routepulseAiBriefSecret: process.env.ROUTEPULSE_AI_BRIEF_SECRET ?? "",
-  // OpenWebNinja Waze API — live crowdsourced alerts (accidents, hazards,
-  // jams, police) used as AI grounding data. RapidAPI key by default;
-  // set OPENWEBNINJA_WAZE_URL to a native OpenWebNinja endpoint if using
-  // an ak_... key instead of going through the RapidAPI gateway.
+  // OpenWebNinja live traffic alerts — used as AI grounding data. v16
+  // NOTE: env var/getter names still say "waze" for backwards
+  // compatibility with the OPENWEBNINJA_WAZE_URL Netlify var already set,
+  // but this account is subscribed to OpenWebNinja's Google Maps Traffic
+  // Alerts product, NOT Waze (confirmed against the account dashboard
+  // 2026-08-10 — zero calls ever landed against a Waze product because
+  // there isn't one on this key). See the NOTE FOR KIMI in
+  // externalGrounding.ts's fetchWazeAlerts() for the full story before
+  // touching this again.
   openwebninjaApiKey: process.env.OPENWEBNINJA_API_KEY ?? "",
-  // Confirmed 2026-08-09 against OpenWebNinja's live docs: native host is
-  // api.openwebninja.com, auth via `x-api-key`, endpoint is
-  // /waze/alerts-and-jams (params: bottom_left / top_right, same as
-  // RapidAPI). If OPENWEBNINJA_WAZE_URL is unset in Netlify, this native
-  // default now matches an ak_... key out of the box. Only override with
-  // the RapidAPI gateway URL (https://waze.p.rapidapi.com) if the key in
-  // OPENWEBNINJA_API_KEY is a RapidAPI key instead of a native ak_... key.
+  // Default now points at the Google Maps Traffic Alerts product
+  // (/google-maps-traffic-alerts base), matching what this key is
+  // actually entitled to call. Override OPENWEBNINJA_WAZE_URL only if
+  // switching to a genuinely different OpenWebNinja product/subscription
+  // (e.g. the actual Waze API, or a RapidAPI gateway URL).
   openwebninjaWazeUrl:
-    process.env.OPENWEBNINJA_WAZE_URL ?? "https://api.openwebninja.com/waze",
+    process.env.OPENWEBNINJA_WAZE_URL ??
+    "https://api.openwebninja.com/google-maps-traffic-alerts",
   // Nominatim (OpenStreetMap) geocoding — free, no API key. Usage policy
   // requires a descriptive User-Agent identifying the app + contact URL.
   // https://operations.osmfoundation.org/policies/nominatim/

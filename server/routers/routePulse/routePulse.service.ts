@@ -454,10 +454,33 @@ export type RouteManeuver = {
 export type ScoredRoute = {
   distance: number;
   duration: number;
+  /**
+   * v16: live-traffic-corrected duration in seconds — `duration` scaled by
+   * TomTom's measured current/free-flow ratio when we have reliable
+   * samples (2+), clamped to a sane range so a couple of noisy points
+   * can't produce a wild multiplier. This is the actual fix for "are we
+   * better than Google Maps": Google's headline ETA is already live-
+   * traffic-corrected, and ours previously wasn't — `duration` alone is
+   * OSRM's static graph time (project-osrm.org's public demo server has
+   * no live traffic layer at all), with incident delay only tacked on as
+   * a capped badge next to it. Falls back to `duration` when flow
+   * sampling didn't return enough usable points. This is what route
+   * ranking (deterministicPick, the AI prompt) and the client headline
+   * ETA should read — not raw `duration`.
+   */
+  liveDurationS: number;
   geometry: unknown;
   incidents: RouteIncident[];
   riskScore: number;
   delayEstimateMin: number;
+  /**
+   * v16: the incident-report portion of delayEstimateMin only (excludes
+   * the flow-based portion already folded into liveDurationS). Ranking
+   * uses this plus liveDurationS as its cost — using the combined
+   * delayEstimateMin on top of liveDurationS would double-count the flow
+   * delay that's already inside liveDurationS.
+   */
+  incidentDelayMin: number;
   /**
    * Turn-by-turn steps. Empty when the routing engine can't provide them
    * (e.g. the TomTom fallback path) — the client hides the panel then.
@@ -912,27 +935,36 @@ type AiPick = {
 
 /**
  * Deterministic route pick used when the AI is unavailable or fails
- * validation: minimize (base duration + estimated incident delay). This is
- * the same quantity a thoughtful driver optimizes, so even our "degraded"
- * path is smarter than a raw fastest-time sort.
+ * validation: minimize (live-traffic-corrected duration + incident-report
+ * delay not already reflected in that correction). This is the same
+ * quantity a thoughtful driver optimizes, so even our "degraded" path is
+ * smarter than a raw fastest-time sort — and smarter than ranking on a
+ * static graph duration the way a plain routing API would.
  */
 function deterministicPick(routes: ScoredRoute[]): AiPick {
   let best = 0;
   let bestCost = Infinity;
   routes.forEach((r, i) => {
-    const cost = r.duration + r.delayEstimateMin * 60;
+    const cost = r.liveDurationS + r.incidentDelayMin * 60;
     if (cost < bestCost) {
       bestCost = cost;
       best = i;
     }
   });
-  const delay = routes[best]?.delayEstimateMin ?? 0;
+  const chosen = routes[best];
+  const flowDelay = chosen
+    ? Math.round((chosen.liveDurationS - chosen.duration) / 60)
+    : 0;
+  const delay = chosen?.delayEstimateMin ?? 0;
+  const explanation =
+    flowDelay >= 3
+      ? `Fastest route accounting for current traffic (measured ~${flowDelay} min slower than usual right now${chosen && chosen.incidentDelayMin > 0 ? `, plus ${chosen.incidentDelayMin} min for active incidents` : ""}).`
+      : delay > 0
+        ? `Fastest route after adjusting for current incidents (est. +${delay} min delay).`
+        : "Fastest available route.";
   return {
     chosenIndex: best,
-    explanation:
-      delay > 0
-        ? `Fastest route after adjusting for current incidents (est. +${delay} min delay).`
-        : "Fastest available route.",
+    explanation,
     confidence: "none",
   };
 }
@@ -950,16 +982,17 @@ async function scoreRoutesWithAI(
       : timeContext === "night"
         ? "Local time context: overnight — congestion is lighter, but closures and hazards matter more relative to traffic."
         : "Local time context: off-peak.";
-  const prompt = `You are a route intelligence engine for gig drivers. Pick the best driving route, weighing both base duration and the active incidents on each route — a severe incident usually costs more time than a small distance or duration saving. Prefer the route with the lowest combined duration + est_delay_min unless there is a clear reason otherwise. ${timeNote}
+  const prompt = `You are a route intelligence engine for gig drivers. Pick the best driving route, weighing live-traffic-corrected duration, incident delay, and risk — a severe incident or heavy measured congestion usually costs more time than a small distance saving. Prefer the route with the lowest combined (live_duration_s + incident_delay_min) unless there is a clear reason otherwise. ${timeNote}
 
-Incidents combine DOT/511/NWS/WSDOT agency feeds with live TomTom Traffic and Waze crowdsourced alerts (source field tells you which). live_flow is TomTom's measured speed as a percentage of free-flow, sampled along the route right now: 100 = free-flowing, below 70 = heavy congestion, road_closed_segments > 0 means TomTom flags the road itself as closed. Treat live_flow as ground truth for current conditions — it catches slowdowns that haven't generated an incident report yet.
+Incidents combine DOT/511/NWS/WSDOT agency feeds with live TomTom Traffic and Waze crowdsourced alerts (source field tells you which). live_flow is TomTom's measured speed as a percentage of free-flow, sampled along the route right now: 100 = free-flowing, below 70 = heavy congestion, road_closed_segments > 0 means TomTom flags the road itself as closed. live_duration_s already has this live-flow correction baked in (it is NOT the same as base duration_s — it's what the trip will actually take right now, not the static routing-graph estimate). Treat live_flow/live_duration_s as ground truth for current conditions — it catches slowdowns that haven't generated an incident report yet.
 
 Routes: ${JSON.stringify(
     routes.map(r => ({
       distance_m: r.distance,
       duration_s: r.duration,
+      live_duration_s: r.liveDurationS,
       risk_score: r.riskScore,
-      est_delay_min: r.delayEstimateMin,
+      incident_delay_min: r.incidentDelayMin,
       live_flow:
         r.flow && r.flow.samples > 0
           ? {
@@ -1109,25 +1142,37 @@ export async function getRoute(
       // incident report yet — the difference between "an incident exists"
       // and "traffic is actually moving slowly right now".
       const flow = await fetchTomTomFlow(r.geometry.coordinates);
-      let { riskScore, delayEstimateMin } = computeRouteRisk(
-        incidents,
-        timeContext
-      );
-      if (
-        flow &&
-        flow.samples >= 2 &&
-        flow.avgRatio > 0.05 &&
-        flow.avgRatio < 0.95
-      ) {
-        const flowDelayMin = Math.min(
-          25,
-          Math.round((r.duration * (1 / flow.avgRatio - 1)) / 60)
-        );
-        delayEstimateMin = Math.min(
-          MAX_DELAY_MIN,
-          delayEstimateMin + flowDelayMin
-        );
+      const {
+        riskScore: incidentRiskScore,
+        delayEstimateMin: incidentDelayMin,
+      } = computeRouteRisk(incidents, timeContext);
+      let riskScore = incidentRiskScore;
+
+      // v16: this is the actual live-traffic correction — scale the whole
+      // route duration by TomTom's measured ratio, the same lever a
+      // traffic-aware map uses, instead of only adding a capped delay
+      // badge on top of a static graph time. Ratio clamped to [0.3, 1.15]:
+      // floor stops a couple of crawl-speed samples from implying a 5x
+      // trip time off 5 data points, ceiling allows for light-traffic
+      // routes running slightly faster than TomTom's reference speed
+      // without letting a bad sample shorten the estimate below the
+      // static baseline.
+      let liveDurationS = r.duration;
+      if (flow && flow.samples >= 2 && flow.avgRatio > 0) {
+        const clampedRatio = Math.max(0.3, Math.min(1.15, flow.avgRatio));
+        liveDurationS = r.duration / clampedRatio;
       }
+      const flowDelayMin = Math.max(
+        0,
+        Math.round((liveDurationS - r.duration) / 60)
+      );
+      // Badge total: flow-measured delay (uncapped beyond the ratio clamp
+      // above — a genuine 2x-duration jam should say so) plus incident-
+      // reported delay (still capped inside computeRouteRisk at
+      // MAX_DELAY_MIN — that ceiling is about "how much a handful of
+      // point reports can plausibly explain", which is a different
+      // question from "how slow is the whole corridor measured to be").
+      const delayEstimateMin = flowDelayMin + incidentDelayMin;
       if (flow && flow.roadClosedCount > 0) {
         // TomTom flags the segment itself as closed — stronger than any
         // inferred severity.
@@ -1138,10 +1183,12 @@ export async function getRoute(
       return {
         distance: r.distance,
         duration: r.duration,
+        liveDurationS: Math.round(liveDurationS),
         geometry: r.geometry,
         incidents,
         riskScore,
         delayEstimateMin,
+        incidentDelayMin,
         maneuvers: r.maneuvers,
         flow,
       };
@@ -1183,7 +1230,7 @@ export async function getRoute(
       ).slice(0, 6);
       const brief = await getClearRouteBrief({
         distanceMi: fastest.distance / 1609.34,
-        durationMin: fastest.duration / 60,
+        durationMin: fastest.liveDurationS / 60,
         roadNames,
       });
       if (brief) explanation = brief;

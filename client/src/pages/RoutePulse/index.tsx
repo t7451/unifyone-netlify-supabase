@@ -365,7 +365,13 @@ const SOURCE_LABEL: Record<string, string> = {
   news_ai: "News",
   user_report: "Report",
   tomtom: "TomTom",
-  waze: "Waze",
+  // v16: was "waze" — corrected to match what's actually being called
+  // (OpenWebNinja's Google Maps Traffic Alerts product, not Waze; see the
+  // NOTE FOR KIMI in server/routers/routePulse/externalGrounding.ts).
+  // Keeping the old "waze" key mapped too in case a cached/offline
+  // snapshot from before this fix still has it.
+  gmaps_traffic: "Google Maps",
+  waze: "Google Maps",
 };
 
 function sourceLabel(source: string | null | undefined): string | null {
@@ -463,6 +469,21 @@ function ManeuverGlyph({
 // route average. Blue = moving at/above average (the route's normal color,
 // so ordinary segments don't change meaning), amber = slowed, red = crawl.
 const CONGESTION_SLOW = "#f59e0b";
+
+// v16: prefer the server's live-traffic-corrected duration (liveDurationS)
+// for every driver-facing time display — that's the actual "are we better
+// than Google Maps" number, since it's `duration` scaled by TomTom's
+// measured current/free-flow ratio, not the static OSRM graph estimate.
+// Falls back to raw `duration` for any cached/offline snapshot from
+// before this field existed.
+function displayDurationS(route: {
+  duration: number;
+  liveDurationS?: number;
+}): number {
+  return typeof route.liveDurationS === "number"
+    ? route.liveDurationS
+    : route.duration;
+}
 const CONGESTION_CRAWL = "#dc2626";
 const ROUTE_BLUE = "#3b82f6";
 
@@ -1469,9 +1490,9 @@ export default function RoutePulse() {
       0
     );
     const bufferMin =
-      (routeQuery.data.route.delayEstimateMin as number | undefined) ??
+      (routeQuery.data.route.incidentDelayMin as number | undefined) ??
       localBuffer;
-    const driveMin = routeQuery.data.route.duration / 60;
+    const driveMin = displayDurationS(routeQuery.data.route) / 60;
     const leave = new Date(arrive.getTime() - (driveMin + bufferMin) * 60_000);
     return { leave, bufferMin };
   }, [routeQuery.data, arriveBy]);
@@ -1499,7 +1520,7 @@ export default function RoutePulse() {
     if (!routeQuery.data) return;
     const d = routeQuery.data;
     const miles = (d.route.distance / 1609.34).toFixed(1);
-    const mins = Math.round(d.route.duration / 60);
+    const mins = Math.round(displayDurationS(d.route) / 60);
     const lines = [
       `RoutePulse: ${d.origin.displayName.split(",")[0]} → ${d.destination.displayName.split(",")[0]}`,
       `${miles} mi · ~${mins} min · ${d.route.incidents.length} incident${d.route.incidents.length === 1 ? "" : "s"}${riskInfo ? ` (${riskInfo.label}, ${riskInfo.score}/100)` : ""}`,
@@ -1647,7 +1668,7 @@ export default function RoutePulse() {
           {routeQuery.isFetching
             ? "Finding route…"
             : hasRoute
-              ? `Route found: ${Math.round((routeQuery.data!.route.duration ?? 0) / 60)} minutes, ${routeQuery.data!.route.incidents.length} incident${routeQuery.data!.route.incidents.length === 1 ? "" : "s"} on the way.`
+              ? `Route found: ${Math.round(displayDurationS(routeQuery.data!.route) / 60)} minutes, ${routeQuery.data!.route.incidents.length} incident${routeQuery.data!.route.incidents.length === 1 ? "" : "s"} on the way.`
               : routeQuery.isError
                 ? "Couldn't find a route. See the error message below the search form."
                 : ""}
@@ -2364,7 +2385,10 @@ export default function RoutePulse() {
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-semibold leading-tight">
                       {(routeQuery.data!.route.distance / 1609.34).toFixed(1)}{" "}
-                      mi · {Math.round(routeQuery.data!.route.duration / 60)}{" "}
+                      mi ·{" "}
+                      {Math.round(
+                        displayDurationS(routeQuery.data!.route) / 60
+                      )}{" "}
                       min
                     </p>
                     {riskInfo && (
@@ -2514,7 +2538,7 @@ export default function RoutePulse() {
             <div className="hidden sm:flex items-baseline justify-between flex-wrap gap-2">
               <p className="text-2xl font-semibold">
                 {(routeQuery.data!.route.distance / 1609.34).toFixed(1)} mi ·{" "}
-                {Math.round(routeQuery.data!.route.duration / 60)} min
+                {Math.round(displayDurationS(routeQuery.data!.route) / 60)} min
               </p>
               {riskInfo && (
                 <Badge
@@ -2658,9 +2682,15 @@ export default function RoutePulse() {
                   AI route pick · {aiConfidence} confidence
                 </p>
               )}
-              {/* v10b: visible when live TomTom/Waze grounding fed this
-                  result — the receipts behind the "better than Google"
-                  claim. */}
+              {/* v10b: visible when live TomTom/live-alerts grounding fed
+                  this result — the receipts behind the "better than
+                  Google" claim. v16: label corrected from "Waze" to
+                  "Google Maps" — see SOURCE_LABEL note above; the
+                  grounding.wazeAlerts field name is unchanged server-side
+                  (it's a count of alerts from whichever provider fed the
+                  fetchWazeAlerts() call, currently Google Maps Traffic
+                  Alerts) but this label must say what's actually powering
+                  it. */}
               {(routeQuery.data!.grounding as
                 | {
                     tomtomIncidents: number;
@@ -2671,7 +2701,7 @@ export default function RoutePulse() {
                 | undefined) && (
                 <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                   <Radio className="w-3 h-3" />
-                  Grounded with live TomTom + Waze data
+                  Grounded with live TomTom + Google Maps data
                 </p>
               )}
             </div>
@@ -2819,7 +2849,7 @@ export default function RoutePulse() {
                     const isChosen = i === chosenIdx;
                     const isDisplayed = i === displayedIdx;
                     const delayMin =
-                      (alt.delayEstimateMin as number | undefined) ?? 0;
+                      (alt.incidentDelayMin as number | undefined) ?? 0;
                     return (
                       <button
                         key={i}
@@ -2844,7 +2874,7 @@ export default function RoutePulse() {
                         </span>
                         <span className="block text-xs text-muted-foreground mt-0.5">
                           {(alt.distance / 1609.34).toFixed(1)} mi ·{" "}
-                          {Math.round(alt.duration / 60)} min
+                          {Math.round(displayDurationS(alt) / 60)} min
                         </span>
                         <span
                           className={`block text-[11px] mt-0.5 ${
@@ -3067,8 +3097,9 @@ export default function RoutePulse() {
             TripCheck, 511, National Weather Service weather alerts, and WSDOT
             highway alerts — and traffic-camera pins show real snapshots of the
             road along your route, not just dots. Every pick is grounded with
-            live TomTom Traffic flow speeds and Waze driver reports, so the AI
-            reasons over measured current conditions, not just reported ones.
+            live TomTom Traffic flow speeds and Google Maps traffic alerts, so
+            the AI reasons over measured current conditions, not just reported
+            ones.
           </p>
           <p>
             Set an arrive-by time and RoutePulse tells you when to leave,
