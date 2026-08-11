@@ -15,6 +15,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { flushSync } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAddressSuggestions } from "@/hooks/useAddressSuggestions";
@@ -182,7 +183,13 @@ export function AddressInput({
         />{" "}
         {label}
       </Label>
-      <div className="relative">
+      {/* v18: focus-within glow — was relying only on the browser's
+          default input focus ring, which is easy to miss glancing at the
+          field while driving-adjacent (parked, red light). The gold glow
+          matches this site's illuminated-manuscript accent (--gold-
+          illuminate) instead of introducing a new color, and gives a much
+          more visible "you're typing here" signal. */}
+      <div className="relative rounded-md transition-shadow duration-200 focus-within:shadow-[0_0_0_3px_var(--gold-trace)]">
         <Input
           id={id}
           placeholder={placeholder}
@@ -254,38 +261,44 @@ export function AddressInput({
         </p>
       )}
 
-      {hasSuggestions && (
-        <ul
-          role="listbox"
-          className="absolute z-50 left-0 right-0 top-full mt-1 max-h-36 sm:max-h-52 overflow-auto rounded-md border bg-background shadow-lg text-sm"
-          onMouseEnter={() => {
-            ignoreBlurRef.current = true;
-          }}
-          onMouseLeave={() => {
-            ignoreBlurRef.current = false;
-          }}
-        >
-          {suggestions.map((s, i) => (
-            <li
-              key={s + i}
-              role="option"
-              aria-selected={i === highlighted}
-              onMouseDown={e => {
-                e.preventDefault();
-                selectSuggestion(s);
-              }}
-              // Larger tap target on mobile (44px-ish rows), compact on desktop
-              className={`px-3 py-3 sm:py-2 cursor-pointer truncate ${
-                i === highlighted
-                  ? "bg-accent text-accent-foreground"
-                  : "hover:bg-muted"
-              }`}
-            >
-              {s}
-            </li>
-          ))}
-        </ul>
-      )}
+      <AnimatePresence>
+        {hasSuggestions && (
+          <motion.ul
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.12 }}
+            role="listbox"
+            className="absolute z-50 left-0 right-0 top-full mt-1 max-h-36 sm:max-h-52 overflow-auto rounded-md border bg-background shadow-lg text-sm"
+            onMouseEnter={() => {
+              ignoreBlurRef.current = true;
+            }}
+            onMouseLeave={() => {
+              ignoreBlurRef.current = false;
+            }}
+          >
+            {suggestions.map((s, i) => (
+              <li
+                key={s + i}
+                role="option"
+                aria-selected={i === highlighted}
+                onMouseDown={e => {
+                  e.preventDefault();
+                  selectSuggestion(s);
+                }}
+                // Larger tap target on mobile (44px-ish rows), compact on desktop
+                className={`px-3 py-3 sm:py-2 cursor-pointer truncate transition-colors ${
+                  i === highlighted
+                    ? "bg-accent text-accent-foreground"
+                    : "hover:bg-muted"
+                }`}
+              >
+                {s}
+              </li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
 
       {isLoading && open && (
         <div

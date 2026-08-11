@@ -957,9 +957,15 @@ export default function RoutePulse() {
   const { recent, starred, addRoute, clearRoutes, starRoute, unstarRoute } =
     useRecentRoutes();
 
+  // v18: purely a rotation-animation trigger for the swap button icon —
+  // see handleSwap below. Count instead of a boolean so each tap adds
+  // another half-turn rather than snapping back, which reads as "still
+  // spinning" instead of "reset".
+  const [swapCount, setSwapCount] = useState(0);
   const handleSwap = () => {
     setOrigin(destination);
     setDestination(origin);
+    setSwapCount(c => c + 1);
   };
 
   const handleShareRoute = async () => {
@@ -1903,10 +1909,25 @@ export default function RoutePulse() {
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
             Free Tool · Route Intelligence
           </p>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4 flex items-center gap-3">
-            <Navigation className="w-8 h-8 shrink-0" />
+          <h1
+            style={{ fontFamily: '"Cinzel", serif' }}
+            className="text-3xl sm:text-4xl font-semibold tracking-tight mb-4 flex items-center gap-3"
+          >
+            <Navigation className="w-8 h-8 shrink-0 text-primary" />
             RoutePulse
           </h1>
+          {/* Illuminated rule — the same gold-on-stone language used
+              elsewhere on the site (see --gold-illuminate in index.css),
+              previously absent here so RoutePulse's header read as a
+              generic bolded h1 rather than matching the rest of the
+              site's identity. */}
+          <div
+            className="h-px w-24 mb-4"
+            style={{
+              background:
+                "linear-gradient(90deg, var(--gold-illuminate), transparent)",
+            }}
+          />
           <p className="text-lg text-muted-foreground">
             Routes that read the news so you don't have to.{" "}
             <strong className="text-foreground">
@@ -2394,7 +2415,7 @@ export default function RoutePulse() {
                           <button
                             type="button"
                             onClick={handleEnableLocation}
-                            className="mt-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                            className="mt-1.5 text-xs font-medium text-primary hover:underline"
                           >
                             Enable location
                           </button>
@@ -2427,7 +2448,7 @@ export default function RoutePulse() {
                       <button
                         type="button"
                         onClick={handleUseCurrentAsOrigin}
-                        className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline py-0.5"
+                        className="flex items-center gap-1.5 text-xs text-primary hover:underline py-0.5"
                         title="Reverse-geocode your live position into the origin field"
                       >
                         <LocateFixed className="w-3.5 h-3.5" />
@@ -2452,7 +2473,13 @@ export default function RoutePulse() {
                       className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
                       title="Swap origin and destination"
                     >
-                      <ArrowLeftRight className="w-3.5 h-3.5" />
+                      <motion.span
+                        animate={{ rotate: swapCount * 180 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="inline-flex"
+                      >
+                        <ArrowLeftRight className="w-3.5 h-3.5" />
+                      </motion.span>
                       Swap origin & destination
                     </button>
 
@@ -2788,10 +2815,19 @@ export default function RoutePulse() {
           </div>
         </div>
 
-        {/* Result card */}
+        {/* Result card — v18: fades/slides in on arrival instead of
+            snapping into existence, and re-triggers per search (key'd on
+            the submitted origin/destination) so picking a new route feels
+            like a fresh result landing, not a silent content swap. */}
         {hasRoute && (
-          <Card className="p-6 sm:p-8 mb-8 space-y-4">
-            {/* NOTE FOR KIMI: this distance/duration + risk badge line is a
+          <motion.div
+            key={`${submitted?.origin}|${submitted?.destination}`}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            <Card className="p-6 sm:p-8 mb-8 space-y-4">
+              {/* NOTE FOR KIMI: this distance/duration + risk badge line is a
                 byte-for-byte duplicate of the v14 mobile sheet's peek
                 header (search getMobileSummary / mobileSummary above) — on
                 phones the sheet already sits right on top of the map, so
@@ -2802,154 +2838,155 @@ export default function RoutePulse() {
                 and needs this header. If you add new info to this line,
                 add it to the sheet's peek header too so they don't drift
                 apart again. */}
-            <div className="hidden sm:flex items-baseline justify-between flex-wrap gap-2">
-              <p className="text-2xl font-semibold">
-                {(routeQuery.data!.route.distance / 1609.34).toFixed(1)} mi ·{" "}
-                {Math.round(displayDurationS(routeQuery.data!.route) / 60)} min
-              </p>
-              {riskInfo && (
-                <Badge
-                  variant="outline"
-                  className={
-                    riskInfo.level === "low"
-                      ? "border-emerald-500/30 text-emerald-600 bg-emerald-500/10"
-                      : riskInfo.level === "moderate"
-                        ? "border-amber-500/30 text-amber-600 bg-amber-500/10"
-                        : riskInfo.level === "high"
-                          ? "border-orange-500/30 text-orange-600 bg-orange-500/10"
-                          : "border-red-500/30 text-red-600 bg-red-500/10"
-                  }
-                >
-                  {riskInfo.level === "low" ? (
-                    <ShieldCheck className="w-3 h-3 mr-1" />
-                  ) : riskInfo.level === "critical" ? (
-                    <ShieldAlert className="w-3 h-3 mr-1" />
-                  ) : (
-                    <Shield className="w-3 h-3 mr-1" />
-                  )}
-                  {riskInfo.label}
-                </Badge>
-              )}
-              {routeQuery.data!.cached && (
-                <Badge variant="outline" className="text-muted-foreground">
-                  cached
-                </Badge>
-              )}
-              <div className="flex items-center gap-1">
-                {/* v11: trip mode toggle (desktop) */}
-                {displayedManeuvers.length > 0 && (
-                  <Button
-                    variant={tripActive ? "default" : "ghost"}
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={() =>
-                      tripActive ? setTripActive(false) : startTrip()
-                    }
-                    title={
-                      tracking
-                        ? "Start guided trip mode"
-                        : "Enable location first, then start trip mode"
+              <div className="hidden sm:flex items-baseline justify-between flex-wrap gap-2">
+                <p className="text-2xl font-semibold">
+                  {(routeQuery.data!.route.distance / 1609.34).toFixed(1)} mi ·{" "}
+                  {Math.round(displayDurationS(routeQuery.data!.route) / 60)}{" "}
+                  min
+                </p>
+                {riskInfo && (
+                  <Badge
+                    variant="outline"
+                    className={
+                      riskInfo.level === "low"
+                        ? "border-emerald-500/30 text-emerald-600 bg-emerald-500/10"
+                        : riskInfo.level === "moderate"
+                          ? "border-amber-500/30 text-amber-600 bg-amber-500/10"
+                          : riskInfo.level === "high"
+                            ? "border-orange-500/30 text-orange-600 bg-orange-500/10"
+                            : "border-red-500/30 text-red-600 bg-red-500/10"
                     }
                   >
-                    {tripActive ? (
-                      <Square className="w-4 h-4" />
+                    {riskInfo.level === "low" ? (
+                      <ShieldCheck className="w-3 h-3 mr-1" />
+                    ) : riskInfo.level === "critical" ? (
+                      <ShieldAlert className="w-3 h-3 mr-1" />
                     ) : (
-                      <Play className="w-4 h-4" />
+                      <Shield className="w-3 h-3 mr-1" />
                     )}
-                    {tripActive ? "End trip" : "Start trip"}
-                  </Button>
+                    {riskInfo.label}
+                  </Badge>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1.5 text-muted-foreground hover:text-foreground"
-                  onClick={handleToggleStar}
-                  title={
-                    currentIsStarred
-                      ? "Remove from saved routes"
-                      : "Save this route"
-                  }
-                >
-                  <Star
-                    className={`w-4 h-4 ${currentIsStarred ? "fill-yellow-400 text-yellow-400" : ""}`}
-                  />
-                  {currentIsStarred ? "Saved" : "Save"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1.5 text-muted-foreground hover:text-foreground"
-                  onClick={handleCopySummary}
-                  title="Copy a plain-text trip summary (great for SMS)"
-                >
-                  <Copy className="w-4 h-4" />
-                  Summary
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1.5 text-muted-foreground hover:text-foreground"
-                  onClick={handleShareRoute}
-                >
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </Button>
+                {routeQuery.data!.cached && (
+                  <Badge variant="outline" className="text-muted-foreground">
+                    cached
+                  </Badge>
+                )}
+                <div className="flex items-center gap-1">
+                  {/* v11: trip mode toggle (desktop) */}
+                  {displayedManeuvers.length > 0 && (
+                    <Button
+                      variant={tripActive ? "default" : "ghost"}
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() =>
+                        tripActive ? setTripActive(false) : startTrip()
+                      }
+                      title={
+                        tracking
+                          ? "Start guided trip mode"
+                          : "Enable location first, then start trip mode"
+                      }
+                    >
+                      {tripActive ? (
+                        <Square className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                      {tripActive ? "End trip" : "Start trip"}
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-muted-foreground hover:text-foreground"
+                    onClick={handleToggleStar}
+                    title={
+                      currentIsStarred
+                        ? "Remove from saved routes"
+                        : "Save this route"
+                    }
+                  >
+                    <Star
+                      className={`w-4 h-4 ${currentIsStarred ? "fill-yellow-400 text-yellow-400" : ""}`}
+                    />
+                    {currentIsStarred ? "Saved" : "Save"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-muted-foreground hover:text-foreground"
+                    onClick={handleCopySummary}
+                    title="Copy a plain-text trip summary (great for SMS)"
+                  >
+                    <Copy className="w-4 h-4" />
+                    Summary
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-muted-foreground hover:text-foreground"
+                    onClick={handleShareRoute}
+                  >
+                    <Share2 className="w-4 h-4" />
+                    Share
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            {/* 0-100 risk meter — a number a driver can compare across
+              {/* 0-100 risk meter — a number a driver can compare across
                 routes, not just a color. Google shows a red line; we show
                 *how much* risk, and why. */}
-            {riskInfo && (
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${
-                      riskInfo.level === "low"
-                        ? "bg-emerald-500"
-                        : riskInfo.level === "moderate"
-                          ? "bg-amber-500"
-                          : riskInfo.level === "high"
-                            ? "bg-orange-500"
-                            : "bg-red-600"
-                    }`}
-                    style={{ width: `${Math.max(riskInfo.score, 2)}%` }}
-                  />
-                </div>
-                <span className="text-xs font-medium text-muted-foreground shrink-0">
-                  Risk {riskInfo.score}/100
-                  {/* v12: scores computed under weekday peak conditions get
+              {riskInfo && (
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        riskInfo.level === "low"
+                          ? "bg-emerald-500"
+                          : riskInfo.level === "moderate"
+                            ? "bg-amber-500"
+                            : riskInfo.level === "high"
+                              ? "bg-orange-500"
+                              : "bg-red-600"
+                      }`}
+                      style={{ width: `${Math.max(riskInfo.score, 2)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium text-muted-foreground shrink-0">
+                    Risk {riskInfo.score}/100
+                    {/* v12: scores computed under weekday peak conditions get
                       congestion weighted 25% heavier server-side — say so. */}
-                  {timeContext === "peak" && (
-                    <span className="block text-[10px] font-normal text-amber-600 dark:text-amber-400">
-                      rush-hour weighting
-                    </span>
-                  )}
-                </span>
-              </div>
-            )}
-
-            <div className="text-xs text-muted-foreground space-y-0.5">
-              <p>
-                <span className="font-medium text-foreground">From:</span>{" "}
-                {routeQuery.data!.origin.displayName}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">To:</span>{" "}
-                {routeQuery.data!.destination.displayName}
-              </p>
-            </div>
-            <div className="pt-2 border-t space-y-1.5">
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {routeQuery.data!.explanation}
-              </p>
-              {aiConfidence !== "none" && (
-                <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Sparkles className="w-3 h-3" />
-                  AI route pick · {aiConfidence} confidence
-                </p>
+                    {timeContext === "peak" && (
+                      <span className="block text-[10px] font-normal text-amber-600 dark:text-amber-400">
+                        rush-hour weighting
+                      </span>
+                    )}
+                  </span>
+                </div>
               )}
-              {/* v10b: visible when live TomTom/live-alerts grounding fed
+
+              <div className="text-xs text-muted-foreground space-y-0.5">
+                <p>
+                  <span className="font-medium text-foreground">From:</span>{" "}
+                  {routeQuery.data!.origin.displayName}
+                </p>
+                <p>
+                  <span className="font-medium text-foreground">To:</span>{" "}
+                  {routeQuery.data!.destination.displayName}
+                </p>
+              </div>
+              <div className="pt-2 border-t space-y-1.5">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {routeQuery.data!.explanation}
+                </p>
+                {aiConfidence !== "none" && (
+                  <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <Sparkles className="w-3 h-3" />
+                    AI route pick · {aiConfidence} confidence
+                  </p>
+                )}
+                {/* v10b: visible when live TomTom/live-alerts grounding fed
                   this result — the receipts behind the "better than
                   Google" claim. v16: label corrected from "Waze" to
                   "Google Maps" — see SOURCE_LABEL note above; the
@@ -2958,257 +2995,261 @@ export default function RoutePulse() {
                   fetchWazeAlerts() call, currently Google Maps Traffic
                   Alerts) but this label must say what's actually powering
                   it. */}
-              {(routeQuery.data!.grounding as
-                | {
-                    tomtomIncidents: number;
-                    wazeAlerts: number;
-                    flowSamples: number;
-                  }
-                | null
-                | undefined) && (
-                <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Radio className="w-3 h-3" />
-                  Grounded with live TomTom + Google Maps data
-                </p>
-              )}
-            </div>
-
-            {/* Arrive-by planner — leave-time with an incident-sized buffer */}
-            <div className="flex items-center gap-2 flex-wrap pt-4 border-t">
-              <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
-              <label
-                htmlFor="routepulse-arrive-by"
-                className="text-xs font-medium text-muted-foreground"
-              >
-                Arrive by
-              </label>
-              <input
-                id="routepulse-arrive-by"
-                type="time"
-                value={arriveBy}
-                onChange={e => setArriveBy(e.target.value)}
-                className="rounded-md border bg-background px-2 py-1 text-sm"
-              />
-              {leaveByInfo && (
-                <span className="text-sm font-semibold">
-                  Leave by {fmtTime(leaveByInfo.leave)}
-                  {leaveByInfo.bufferMin > 0 && (
-                    <span className="text-xs font-normal text-muted-foreground">
-                      {" "}
-                      (+{leaveByInfo.bufferMin} min buffer for{" "}
-                      {routeQuery.data!.route.incidents.length} incident
-                      {routeQuery.data!.route.incidents.length === 1 ? "" : "s"}
-                      )
-                    </span>
-                  )}
-                </span>
-              )}
-              {/* v11: live countdown to the computed leave-by time. nowTick
-                  re-renders every 10s so this stays honest without its own
-                  timer. */}
-              {leaveByInfo &&
-                (() => {
-                  const leaveInMin = Math.round(
-                    (leaveByInfo.leave.getTime() - Date.now()) / 60_000
-                  );
-                  return (
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                        leaveInMin <= 0
-                          ? "bg-red-500/15 text-red-600 dark:text-red-400"
-                          : leaveInMin <= 10
-                            ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                            : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                      }`}
-                    >
-                      <Timer className="w-3 h-3" />
-                      {leaveInMin <= 0
-                        ? "Time to leave now"
-                        : `Leave in ${leaveInMin} min`}
-                    </span>
-                  );
-                })()}
-              {!leaveByInfo && (
-                <span className="text-xs text-muted-foreground">
-                  and we'll tell you when to leave — buffer included
-                </span>
-              )}
-              {/* v12: wait-or-go — the chosen route's severe incidents have
-                  a known clear time inside 90 minutes, so waiting actually
-                  beats leaving now. */}
-              {waitAdvice && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 text-[11px] text-blue-700 dark:text-blue-300">
-                  <Lightbulb className="w-3 h-3 shrink-0" />
-                  Wait ~{waitAdvice.waitMin} min —{" "}
-                  {waitAdvice.roadName ? `${waitAdvice.roadName} ` : ""}
-                  est. clear by {fmtTime(new Date(waitAdvice.clearByIso))},
-                  saving ~{waitAdvice.delayAvoidedMin} min
-                </span>
-              )}
-            </div>
-
-            {/* v13: departure outlook — projected incident delay at each
-                leave-time horizon, cheapest one highlighted. */}
-            {departureOutlook && (
-              <div className="flex items-center gap-2 flex-wrap pt-3 border-t">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Delay if you leave:
-                </span>
-                {departureOutlook.horizonsMin.map((h, i) => {
-                  const isBest = h === departureOutlook.bestHorizonMin;
-                  return (
-                    <span
-                      key={h}
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-medium border ${
-                        isBest
-                          ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
-                          : "bg-muted/60 border-border text-muted-foreground"
-                      }`}
-                    >
-                      {h === 0 ? "now" : `+${h} min`} ·{" "}
-                      {departureOutlook.delayMin[i] ?? 0} min
-                      {isBest && " ✓"}
-                    </span>
-                  );
-                })}
-                <span className="text-[11px] text-emerald-600 dark:text-emerald-400">
-                  leaving in {departureOutlook.bestHorizonMin} min saves ~
-                  {departureOutlook.savesMin} min
-                </span>
-              </div>
-            )}
-
-            {/* v8: turn-by-turn steps for the displayed route — tap a step
-                to fly the map to where that maneuver happens. */}
-            {displayedManeuvers.length > 0 && (
-              <div className="pt-4 border-t">
-                <button
-                  type="button"
-                  onClick={() => setShowSteps(s => !s)}
-                  className="flex w-full items-center justify-between text-xs font-semibold uppercase text-muted-foreground tracking-wide"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <List className="w-3.5 h-3.5" />
-                    Turn-by-turn · {displayedManeuvers.length} steps
-                  </span>
-                  <span className="normal-case font-normal">
-                    {showSteps ? "Hide" : "Show"}
-                  </span>
-                </button>
-                {showSteps && (
-                  <div className="mt-2 max-h-64 overflow-y-auto pr-1">
-                    {stepsList}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Route comparison — every scored option, tappable to preview
-                its geometry on the map. */}
-            {allRoutes.length > 1 && (
-              <div className="pt-4 border-t space-y-2">
-                <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide flex items-center gap-1.5">
-                  <RouteIcon className="w-3.5 h-3.5" />
-                  Compare routes
-                </p>
-                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-                  {allRoutes.map((alt, i) => {
-                    const isChosen = i === chosenIdx;
-                    const isDisplayed = i === displayedIdx;
-                    const delayMin =
-                      (alt.incidentDelayMin as number | undefined) ?? 0;
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setPreviewIdx(isChosen ? null : i)}
-                        className={`shrink-0 min-w-[132px] rounded-lg border px-3 py-2 text-left transition-colors ${
-                          isDisplayed
-                            ? "border-blue-500/50 bg-blue-500/10"
-                            : "hover:bg-muted"
-                        }`}
-                      >
-                        <span className="flex items-center gap-1.5 text-xs font-medium">
-                          Route {i + 1}
-                          {isChosen && (
-                            <Badge
-                              variant="outline"
-                              className="text-[9px] px-1 py-0 border-primary/40 text-primary"
-                            >
-                              Recommended
-                            </Badge>
-                          )}
-                        </span>
-                        <span className="block text-xs text-muted-foreground mt-0.5">
-                          {(alt.distance / 1609.34).toFixed(1)} mi ·{" "}
-                          {Math.round(displayDurationS(alt) / 60)} min
-                        </span>
-                        <span
-                          className={`block text-[11px] mt-0.5 ${
-                            alt.incidents.length > 0
-                              ? "text-amber-600 dark:text-amber-400"
-                              : "text-emerald-600 dark:text-emerald-400"
-                          }`}
-                        >
-                          {alt.incidents.length === 0
-                            ? "No incidents"
-                            : `${alt.incidents.length} incident${alt.incidents.length === 1 ? "" : "s"}`}
-                          {delayMin > 0 && ` · est. +${delayMin} min`}
-                        </span>
-                        {/* v12: the AI's reason this route loses — the
-                            "why not" behind the recommendation. */}
-                        {!isChosen && routeVerdicts?.[i] && (
-                          <span className="block text-[10px] text-muted-foreground mt-1 italic leading-snug">
-                            {routeVerdicts[i]}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-                {previewIdx !== null && (
-                  <p className="text-[11px] text-muted-foreground">
-                    Previewing Route {previewIdx + 1} on the map — tap
-                    Recommended to switch back. Stats above are still for the
-                    recommended route.
+                {(routeQuery.data!.grounding as
+                  | {
+                      tomtomIncidents: number;
+                      wazeAlerts: number;
+                      flowSamples: number;
+                    }
+                  | null
+                  | undefined) && (
+                  <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <Radio className="w-3 h-3" />
+                    Grounded with live TomTom + Google Maps data
                   </p>
                 )}
               </div>
-            )}
 
-            {routeQuery.data!.route.incidents.length > 0 && (
-              <div className="space-y-2.5 pt-4 border-t">
-                <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">
-                  Incidents on this route
-                </p>
-                {routeQuery.data!.route.incidents.map(inc => (
-                  <div
-                    key={inc.id}
-                    className="flex items-start gap-2.5 text-sm"
-                  >
-                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
-                    <span className="flex-1">
-                      {inc.road_name && (
-                        <span className="font-medium">{inc.road_name}: </span>
-                      )}
-                      {inc.description ?? inc.incident_type}
-                    </span>
-                    {sourceLabel(inc.source) && (
-                      <span className="shrink-0 self-start rounded border border-border px-1 py-px text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
-                        {sourceLabel(inc.source)}
+              {/* Arrive-by planner — leave-time with an incident-sized buffer */}
+              <div className="flex items-center gap-2 flex-wrap pt-4 border-t">
+                <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+                <label
+                  htmlFor="routepulse-arrive-by"
+                  className="text-xs font-medium text-muted-foreground"
+                >
+                  Arrive by
+                </label>
+                <input
+                  id="routepulse-arrive-by"
+                  type="time"
+                  value={arriveBy}
+                  onChange={e => setArriveBy(e.target.value)}
+                  className="rounded-md border bg-background px-2 py-1 text-sm"
+                />
+                {leaveByInfo && (
+                  <span className="text-sm font-semibold">
+                    Leave by {fmtTime(leaveByInfo.leave)}
+                    {leaveByInfo.bufferMin > 0 && (
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {" "}
+                        (+{leaveByInfo.bufferMin} min buffer for{" "}
+                        {routeQuery.data!.route.incidents.length} incident
+                        {routeQuery.data!.route.incidents.length === 1
+                          ? ""
+                          : "s"}
+                        )
                       </span>
                     )}
-                    <Badge
-                      variant="outline"
-                      className={`shrink-0 ${SEVERITY_BADGE[inc.severity] ?? ""}`}
-                    >
-                      {inc.severity}
-                    </Badge>
-                  </div>
-                ))}
+                  </span>
+                )}
+                {/* v11: live countdown to the computed leave-by time. nowTick
+                  re-renders every 10s so this stays honest without its own
+                  timer. */}
+                {leaveByInfo &&
+                  (() => {
+                    const leaveInMin = Math.round(
+                      (leaveByInfo.leave.getTime() - Date.now()) / 60_000
+                    );
+                    return (
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          leaveInMin <= 0
+                            ? "bg-red-500/15 text-red-600 dark:text-red-400"
+                            : leaveInMin <= 10
+                              ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                              : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                        }`}
+                      >
+                        <Timer className="w-3 h-3" />
+                        {leaveInMin <= 0
+                          ? "Time to leave now"
+                          : `Leave in ${leaveInMin} min`}
+                      </span>
+                    );
+                  })()}
+                {!leaveByInfo && (
+                  <span className="text-xs text-muted-foreground">
+                    and we'll tell you when to leave — buffer included
+                  </span>
+                )}
+                {/* v12: wait-or-go — the chosen route's severe incidents have
+                  a known clear time inside 90 minutes, so waiting actually
+                  beats leaving now. */}
+                {waitAdvice && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 text-[11px] text-blue-700 dark:text-blue-300">
+                    <Lightbulb className="w-3 h-3 shrink-0" />
+                    Wait ~{waitAdvice.waitMin} min —{" "}
+                    {waitAdvice.roadName ? `${waitAdvice.roadName} ` : ""}
+                    est. clear by {fmtTime(new Date(waitAdvice.clearByIso))},
+                    saving ~{waitAdvice.delayAvoidedMin} min
+                  </span>
+                )}
               </div>
-            )}
-          </Card>
+
+              {/* v13: departure outlook — projected incident delay at each
+                leave-time horizon, cheapest one highlighted. */}
+              {departureOutlook && (
+                <div className="flex items-center gap-2 flex-wrap pt-3 border-t">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Delay if you leave:
+                  </span>
+                  {departureOutlook.horizonsMin.map((h, i) => {
+                    const isBest = h === departureOutlook.bestHorizonMin;
+                    return (
+                      <span
+                        key={h}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-medium border ${
+                          isBest
+                            ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
+                            : "bg-muted/60 border-border text-muted-foreground"
+                        }`}
+                      >
+                        {h === 0 ? "now" : `+${h} min`} ·{" "}
+                        {departureOutlook.delayMin[i] ?? 0} min
+                        {isBest && " ✓"}
+                      </span>
+                    );
+                  })}
+                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400">
+                    leaving in {departureOutlook.bestHorizonMin} min saves ~
+                    {departureOutlook.savesMin} min
+                  </span>
+                </div>
+              )}
+
+              {/* v8: turn-by-turn steps for the displayed route — tap a step
+                to fly the map to where that maneuver happens. */}
+              {displayedManeuvers.length > 0 && (
+                <div className="pt-4 border-t">
+                  <button
+                    type="button"
+                    onClick={() => setShowSteps(s => !s)}
+                    className="flex w-full items-center justify-between text-xs font-semibold uppercase text-muted-foreground tracking-wide"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <List className="w-3.5 h-3.5" />
+                      Turn-by-turn · {displayedManeuvers.length} steps
+                    </span>
+                    <span className="normal-case font-normal">
+                      {showSteps ? "Hide" : "Show"}
+                    </span>
+                  </button>
+                  {showSteps && (
+                    <div className="mt-2 max-h-64 overflow-y-auto pr-1">
+                      {stepsList}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Route comparison — every scored option, tappable to preview
+                its geometry on the map. */}
+              {allRoutes.length > 1 && (
+                <div className="pt-4 border-t space-y-2">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide flex items-center gap-1.5">
+                    <RouteIcon className="w-3.5 h-3.5" />
+                    Compare routes
+                  </p>
+                  <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                    {allRoutes.map((alt, i) => {
+                      const isChosen = i === chosenIdx;
+                      const isDisplayed = i === displayedIdx;
+                      const delayMin =
+                        (alt.incidentDelayMin as number | undefined) ?? 0;
+                      return (
+                        <motion.button
+                          key={i}
+                          type="button"
+                          whileTap={{ scale: 0.96 }}
+                          onClick={() => setPreviewIdx(isChosen ? null : i)}
+                          className={`shrink-0 min-w-[132px] rounded-lg border px-3 py-2 text-left transition-colors ${
+                            isDisplayed
+                              ? "border-primary/50 bg-primary/10"
+                              : "hover:bg-muted"
+                          }`}
+                        >
+                          <span className="flex items-center gap-1.5 text-xs font-medium">
+                            Route {i + 1}
+                            {isChosen && (
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] px-1 py-0 border-primary/40 text-primary"
+                              >
+                                Recommended
+                              </Badge>
+                            )}
+                          </span>
+                          <span className="block text-xs text-muted-foreground mt-0.5">
+                            {(alt.distance / 1609.34).toFixed(1)} mi ·{" "}
+                            {Math.round(displayDurationS(alt) / 60)} min
+                          </span>
+                          <span
+                            className={`block text-[11px] mt-0.5 ${
+                              alt.incidents.length > 0
+                                ? "text-amber-600 dark:text-amber-400"
+                                : "text-emerald-600 dark:text-emerald-400"
+                            }`}
+                          >
+                            {alt.incidents.length === 0
+                              ? "No incidents"
+                              : `${alt.incidents.length} incident${alt.incidents.length === 1 ? "" : "s"}`}
+                            {delayMin > 0 && ` · est. +${delayMin} min`}
+                          </span>
+                          {/* v12: the AI's reason this route loses — the
+                            "why not" behind the recommendation. */}
+                          {!isChosen && routeVerdicts?.[i] && (
+                            <span className="block text-[10px] text-muted-foreground mt-1 italic leading-snug">
+                              {routeVerdicts[i]}
+                            </span>
+                          )}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                  {previewIdx !== null && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Previewing Route {previewIdx + 1} on the map — tap
+                      Recommended to switch back. Stats above are still for the
+                      recommended route.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {routeQuery.data!.route.incidents.length > 0 && (
+                <div className="space-y-2.5 pt-4 border-t">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">
+                    Incidents on this route
+                  </p>
+                  {routeQuery.data!.route.incidents.map(inc => (
+                    <div
+                      key={inc.id}
+                      className="flex items-start gap-2.5 text-sm"
+                    >
+                      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+                      <span className="flex-1">
+                        {inc.road_name && (
+                          <span className="font-medium">{inc.road_name}: </span>
+                        )}
+                        {inc.description ?? inc.incident_type}
+                      </span>
+                      {sourceLabel(inc.source) && (
+                        <span className="shrink-0 self-start rounded border border-border px-1 py-px text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+                          {sourceLabel(inc.source)}
+                        </span>
+                      )}
+                      <Badge
+                        variant="outline"
+                        className={`shrink-0 ${SEVERITY_BADGE[inc.severity] ?? ""}`}
+                      >
+                        {inc.severity}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </motion.div>
         )}
 
         {routeQuery.isError && !resultsAreStale && (
