@@ -2487,13 +2487,17 @@ export default function RoutePulse() {
                       <p className="text-xs text-destructive">{formError}</p>
                     )}
 
-                    <Button type="submit" size="sm" className="gap-2 w-full">
+                    <Button
+                      type="submit"
+                      size="sm"
+                      className="gap-2 w-full group"
+                    >
                       {routeQuery.isFetching && (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       )}
                       Find route
                       {!routeQuery.isFetching && (
-                        <ArrowRight className="w-4 h-4" />
+                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                       )}
                     </Button>
                   </form>
@@ -3253,13 +3257,20 @@ export default function RoutePulse() {
         )}
 
         {routeQuery.isError && !resultsAreStale && (
-          <Card
-            className="p-6 mb-8 border-destructive/30 bg-destructive/5"
-            role="alert"
-            aria-live="assertive"
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
           >
-            <p className="text-sm text-destructive">
-              {/* NOTE for Kimi: branch on error.data.code (tRPC's standard
+            <Card
+              className="p-6 mb-8 border-destructive/30 bg-destructive/5"
+              role="alert"
+              aria-live="assertive"
+            >
+              <p className="text-sm text-destructive flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>
+                  {/* NOTE for Kimi: branch on error.data.code (tRPC's standard
                   error shape — see server/_core/trpc.ts errorFormatter),
                   not string-matching on .message. NOT_FOUND covers both bad
                   addresses and "no route between these points"; BAD_GATEWAY
@@ -3270,53 +3281,55 @@ export default function RoutePulse() {
                   TRPCError with a specific code over a generic message so
                   this switch stays accurate instead of falling through to
                   the vague default. */}
-              {(() => {
-                const code = (
-                  routeQuery.error as unknown as {
-                    data?: { code?: string };
-                  }
-                )?.data?.code;
-                if (code === "TOO_MANY_REQUESTS") {
-                  return routeQuery.error!.message;
-                }
-                if (code === "BAD_GATEWAY") {
-                  return "Routing is temporarily unavailable — try again in a moment.";
-                }
-                if (code === "NOT_FOUND" && routeQuery.error?.message) {
-                  return routeQuery.error.message;
-                }
-                return "Couldn't find a route between those addresses. Double-check them and try again.";
-              })()}
-            </p>
-            {/* v11: dead-zone resilience — if we can't reach the server but
+                  {(() => {
+                    const code = (
+                      routeQuery.error as unknown as {
+                        data?: { code?: string };
+                      }
+                    )?.data?.code;
+                    if (code === "TOO_MANY_REQUESTS") {
+                      return routeQuery.error!.message;
+                    }
+                    if (code === "BAD_GATEWAY") {
+                      return "Routing is temporarily unavailable — try again in a moment.";
+                    }
+                    if (code === "NOT_FOUND" && routeQuery.error?.message) {
+                      return routeQuery.error.message;
+                    }
+                    return "Couldn't find a route between those addresses. Double-check them and try again.";
+                  })()}
+                </span>
+              </p>
+              {/* v11: dead-zone resilience — if we can't reach the server but
                 have a previous result on this device, keep the driver
                 moving with their last trip's key stats. */}
-            {lastResult && (
-              <div className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2.5">
-                <p className="text-xs font-medium flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
-                  <WifiOff className="w-3.5 h-3.5" />
-                  Offline — showing your last checked route
-                </p>
-                <p className="text-sm mt-1">
-                  {lastResult.originName.split(",")[0]} →{" "}
-                  {lastResult.destinationName.split(",")[0]} ·{" "}
-                  {(lastResult.distanceM / 1609.34).toFixed(1)} mi · ~
-                  {Math.round(lastResult.durationS / 60)} min
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {lastResult.explanation}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  Saved{" "}
-                  {Math.max(
-                    1,
-                    Math.round((Date.now() - lastResult.savedAt) / 60_000)
-                  )}{" "}
-                  min ago — conditions may have changed.
-                </p>
-              </div>
-            )}
-          </Card>
+              {lastResult && (
+                <div className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2.5">
+                  <p className="text-xs font-medium flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                    <WifiOff className="w-3.5 h-3.5" />
+                    Offline — showing your last checked route
+                  </p>
+                  <p className="text-sm mt-1">
+                    {lastResult.originName.split(",")[0]} →{" "}
+                    {lastResult.destinationName.split(",")[0]} ·{" "}
+                    {(lastResult.distanceM / 1609.34).toFixed(1)} mi · ~
+                    {Math.round(lastResult.durationS / 60)} min
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {lastResult.explanation}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Saved{" "}
+                    {Math.max(
+                      1,
+                      Math.round((Date.now() - lastResult.savedAt) / 60_000)
+                    )}{" "}
+                    min ago — conditions may have changed.
+                  </p>
+                </div>
+              )}
+            </Card>
+          </motion.div>
         )}
 
         {/* Active incidents feed (list form, for accessibility / no-JS-map
