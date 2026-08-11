@@ -834,6 +834,31 @@ export default function RoutePulse() {
   const [speedMps, setSpeedMps] = useState<number | null>(null);
   const alertedRef = useRef<Set<string>>(new Set());
 
+  // v17: real browser connectivity — deliberately distinct from the
+  // existing error-triggered "Offline — showing your last checked route"
+  // card above (routeQuery.isError && lastResult). That card only appears
+  // *after* a route request has already failed, which on a fresh page
+  // load or mid-trip in a dead zone can lag well behind when the
+  // connection actually dropped (incidents/cameras only refetch every
+  // 60-120s, so a dropped connection might not surface as a query error
+  // for up to two minutes). This tracks navigator.onLine directly via the
+  // browser's own online/offline events, so "you're disconnected, what
+  // you're seeing may not be current" shows up the moment it's true, not
+  // whenever the next stale fetch happens to fail.
+  const [isOnline, setIsOnline] = useState(
+    () => typeof navigator === "undefined" || navigator.onLine
+  );
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+
   // Read permalink params on mount so shared routes load immediately.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1358,6 +1383,32 @@ export default function RoutePulse() {
     });
   };
 
+  // v17: haptic feedback on high-priority incidents — deferred back in the
+  // v14 session ("Haptic feedback on high-priority incidents"). Only fires
+  // for major/critical severity — a minor hazard buzzing your pocket
+  // every time would train drivers to ignore the vibration entirely by
+  // the second trip. Feature-detected (navigator.vibrate is iOS Safari's
+  // permanent no-op — it silently does nothing there — and unsupported on
+  // desktop entirely), so this never throws or needs its own toggle; it's
+  // just silent where it isn't supported.
+  const hapticBuzz = (
+    severity: "minor" | "moderate" | "major" | "critical"
+  ) => {
+    if (typeof navigator === "undefined" || !("vibrate" in navigator)) return;
+    try {
+      // Critical gets a distinct double-pulse so it doesn't feel like the
+      // same buzz as "moderate congestion ahead" — matches the same
+      // escalation already used visually (bigger pin + pulsing ring, see
+      // INCIDENT_ICON_SIZE/critical pulse ring above).
+      const pattern = severity === "critical" ? [120, 80, 120] : [90];
+      navigator.vibrate(pattern);
+    } catch {
+      // Some browsers throw if vibrate is called outside a user gesture
+      // context rather than just returning false — either way, a missed
+      // buzz is not worth surfacing to the driver.
+    }
+  };
+
   // v13: proximity incident alerts during trip mode — one toast per
   // incident when you come within ~500m of it. Uses a ref set so a GPS
   // jitter across the threshold doesn't re-fire.
@@ -1370,6 +1421,9 @@ export default function RoutePulse() {
       const dist = haversineM({ lat, lng }, { lat: inc.lat, lng: inc.lng });
       if (dist <= 500) {
         alertedRef.current.add(inc.id);
+        if (inc.severity === "major" || inc.severity === "critical") {
+          hapticBuzz(inc.severity);
+        }
         toast.warning(
           `Ahead: ${inc.road_name ? `${inc.road_name} — ` : ""}${inc.description ?? inc.incident_type}`,
           { duration: 6000 }
@@ -1821,6 +1875,29 @@ export default function RoutePulse() {
                 ? "Couldn't find a route. See the error message below the search form."
                 : ""}
         </div>
+
+        {/* v17: live connectivity banner — see the isOnline effect above
+            for why this is deliberately separate from the existing
+            error-triggered "Offline — showing your last checked route"
+            card further down (that one only appears after a route
+            request has already failed; this one reflects the browser's
+            actual online/offline state the moment it changes). Shown at
+            the top of the page, not just inside the mobile sheet, since a
+            driver checking a route before setting off deserves the same
+            "heads up, this might not be current" signal as one already
+            mid-trip. */}
+        {!isOnline && (
+          <div
+            role="status"
+            className="mb-4 flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            <WifiOff className="w-4 h-4 shrink-0" />
+            <span>
+              No connection — anything shown right now is cached and may not
+              reflect current conditions.
+            </span>
+          </div>
+        )}
 
         <header className="mb-8">
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
@@ -2565,13 +2642,21 @@ export default function RoutePulse() {
                   onClick={() => setSheetExpanded(v => !v)}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold leading-tight">
+                    <p className="text-sm font-semibold leading-tight flex items-center gap-1.5">
                       {(routeQuery.data!.route.distance / 1609.34).toFixed(1)}{" "}
                       mi ·{" "}
                       {Math.round(
                         displayDurationS(routeQuery.data!.route) / 60
                       )}{" "}
                       min
+                      {/* v17: same connectivity signal as the top-of-page
+                          banner, condensed to an icon — this is the spot
+                          a driver's eyes are actually on mid-trip, so it
+                          needs to be visible here too, not just above the
+                          fold on a screen they've scrolled past. */}
+                      {!isOnline && (
+                        <WifiOff className="w-3.5 h-3.5 text-destructive shrink-0" />
+                      )}
                     </p>
                     {riskInfo && (
                       <Badge
