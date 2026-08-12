@@ -209,6 +209,65 @@ describe("routePulse.service — computeRouteRisk (deterministic scoring)", () =
     expect(riskScore).toBe(100);
     expect(delayEstimateMin).toBe(45);
   });
+
+  // v18: distance-to-route and report-age weighting.
+  it("weights an incident farther from the route line lower than one on it", () => {
+    const onRoute = service.computeRouteRisk([
+      { ...inc("major"), distanceM: 0 },
+    ]);
+    const offRoute = service.computeRouteRisk([
+      { ...inc("major"), distanceM: 500 },
+    ]);
+    expect(offRoute.riskScore).toBeLessThan(onRoute.riskScore);
+    // Floor is 0.5 at the buffer edge (500m default), never zero — a
+    // nearby-but-not-on-route incident still matters some.
+    expect(offRoute.riskScore).toBeGreaterThan(0);
+  });
+
+  it("does not discount incidents with no distance data (grounding sources)", () => {
+    const withDistance = service.computeRouteRisk([
+      { ...inc("major"), distanceM: undefined },
+    ]);
+    const noDistanceInfo = service.computeRouteRisk([inc("major")]);
+    expect(withDistance.riskScore).toBe(noDistanceInfo.riskScore);
+  });
+
+  it("decays a stale, non-persistent incident's weight toward the floor", () => {
+    const fresh = service.computeRouteRisk([
+      { ...inc("major"), startedAt: new Date().toISOString() },
+    ]);
+    const fiveHoursOld = service.computeRouteRisk([
+      {
+        ...inc("major"),
+        startedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      },
+    ]);
+    expect(fiveHoursOld.riskScore).toBeLessThan(fresh.riskScore);
+    // Floor is 0.25 of full weight (20 for major), never all the way to 0.
+    expect(fiveHoursOld.riskScore).toBeGreaterThanOrEqual(5);
+  });
+
+  it("does not decay persistent incident types (closures/construction) by age", () => {
+    const staleClosure = service.computeRouteRisk([
+      {
+        ...inc("major"),
+        incident_type: "Road closure",
+        startedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      },
+    ]);
+    const freshClosure = service.computeRouteRisk([
+      { ...inc("major"), incident_type: "Road closure" },
+    ]);
+    expect(staleClosure.riskScore).toBe(freshClosure.riskScore);
+  });
+
+  it("does not decay incidents with no startedAt (unknown age, not penalized)", () => {
+    const noAgeInfo = service.computeRouteRisk([inc("major")]);
+    const knownFresh = service.computeRouteRisk([
+      { ...inc("major"), startedAt: new Date().toISOString() },
+    ]);
+    expect(noAgeInfo.riskScore).toBe(knownFresh.riskScore);
+  });
 });
 
 describe("routePulse.service — geocoding (Nominatim/OSM)", () => {

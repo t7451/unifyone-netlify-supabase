@@ -325,6 +325,28 @@ export type RouteIncident = {
   source: string;
   lat: number;
   lng: number;
+  /**
+   * v18: meters from the incident to the route line itself, only
+   * populated for incidents from getIncidentsNearRoute (the
+   * distance_m column added in drizzle/0056) — undefined for incidents
+   * from live grounding sources (TomTom/Google Maps Traffic Alerts),
+   * which don't compute this. Used by computeRouteRisk to weight
+   * incidents right on the route higher than ones near the edge of the
+   * search buffer (a crash on a parallel frontage road 480m away isn't
+   * as relevant as one straddling your actual lane, even though both
+   * pass the same "within 500m" filter).
+   */
+  distanceM?: number;
+  /**
+   * v18: when this incident started (falls back to when it was ingested,
+   * if the source feed doesn't report a distinct start time — see the
+   * COALESCE in incidents_near_route). Used by computeRouteRisk to decay
+   * the weight of old, still-uncleared reports — agency/crowd feeds lag
+   * on marking things cleared, sometimes by a lot (this migration's own
+   * validation query turned up a "moderate" incident from over a year
+   * ago still showing as active).
+   */
+  startedAt?: string | null;
 };
 
 // Deterministic risk model — the backbone of the "beats Google" claim.
@@ -382,6 +404,70 @@ function isCongestionType(incidentType: string): boolean {
   return t.includes("jam") || t.includes("congestion") || t.includes("traffic");
 }
 
+/**
+ * Planned/structural incidents (closures, construction, road works) are
+ * expected to still be accurate hours later — a "road closed" report from
+ * 3 hours ago is probably still closed. Everything else (accidents,
+ * hazards, generic alerts) is a point-in-time report that increasingly
+ * likely no longer reflects reality the older it gets, since agency and
+ * crowdsourced feeds both lag on clearing entries. Used by
+ * incidentTimeDecay below to decide which incidents even get decayed.
+ */
+function isPersistentType(incidentType: string): boolean {
+  const t = incidentType.toLowerCase();
+  return (
+    t.includes("closure") ||
+    t.includes("closed") ||
+    t.includes("construction") ||
+    t.includes("road works") ||
+    t.includes("roadwork")
+  );
+}
+
+/**
+ * v18: how much an incident's age should discount its risk weight.
+ * Full weight for the first 45 minutes (a report is a report), then a
+ * linear taper down to a 0.25 floor by the 4-hour mark — never all the
+ * way to zero, since even a stale report means *something* was
+ * happening there and totally ignoring it would be its own failure mode.
+ * Persistent incident types (closures/construction) and incidents with
+ * no timestamp at all (undefined `startedAt` — grounding sources that
+ * don't supply one) are never decayed; there's nothing here to suggest
+ * they're stale.
+ */
+function incidentTimeDecay(inc: RouteIncident): number {
+  if (!inc.startedAt || isPersistentType(inc.incident_type)) return 1;
+  const ageMin = (Date.now() - new Date(inc.startedAt).getTime()) / 60_000;
+  if (!Number.isFinite(ageMin) || ageMin < 0) return 1;
+  const FULL_WEIGHT_MIN = 45;
+  const FLOOR_AT_MIN = 240;
+  const FLOOR = 0.25;
+  if (ageMin <= FULL_WEIGHT_MIN) return 1;
+  if (ageMin >= FLOOR_AT_MIN) return FLOOR;
+  const t = (ageMin - FULL_WEIGHT_MIN) / (FLOOR_AT_MIN - FULL_WEIGHT_MIN);
+  return 1 - t * (1 - FLOOR);
+}
+
+/**
+ * v18: how much an incident's distance from the route line should
+ * discount its risk weight. 1.0 for an incident right on the route,
+ * tapering linearly to a 0.5 floor at the edge of the search buffer
+ * (typically 500m — see getIncidentsNearRoute's bufferMeters) — a crash
+ * on a parallel frontage road 480m away still matters (drivers merge,
+ * gawk, back up adjacent roads) but shouldn't weigh the same as one
+ * straddling the lane you're actually in. Incidents with no distance
+ * data (undefined `distanceM` — live grounding sources that don't
+ * compute it) are never discounted.
+ */
+function incidentDistanceWeight(
+  inc: RouteIncident,
+  bufferMeters = 500
+): number {
+  if (inc.distanceM === undefined) return 1;
+  const clamped = Math.max(0, Math.min(bufferMeters, inc.distanceM));
+  return 1 - 0.5 * (clamped / bufferMeters);
+}
+
 const TIME_MULTIPLIER: Record<TimeContext, number> = {
   peak: 1.25,
   offpeak: 1,
@@ -410,12 +496,21 @@ export function computeRouteRisk(
   const mult = TIME_MULTIPLIER[timeContext];
   for (const inc of incidents) {
     const congestion = isCongestionType(inc.incident_type);
+    // v18: distance-to-route and report-age both discount how much an
+    // incident counts, on top of the existing severity/time-of-day
+    // weighting — see incidentDistanceWeight/incidentTimeDecay above for
+    // the full rationale. Multiplicative, not additive, so an incident
+    // that's both far off-route AND stale gets compounded down rather
+    // than either factor alone capping the discount.
+    const relevance = incidentDistanceWeight(inc) * incidentTimeDecay(inc);
     const risk =
       (SEVERITY_RISK_WEIGHT[inc.severity] ?? SEVERITY_RISK_WEIGHT.minor) *
-      (congestion ? mult : 1);
+      (congestion ? mult : 1) *
+      relevance;
     const delay =
       (SEVERITY_DELAY_MIN[inc.severity] ?? SEVERITY_DELAY_MIN.minor) *
-      (congestion ? mult : 1);
+      (congestion ? mult : 1) *
+      relevance;
     riskScore += risk;
     delayEstimateMin += delay;
   }
@@ -855,6 +950,8 @@ async function getIncidentsNearRoute(
     source: row.source as string,
     lat: row.lat as number,
     lng: row.lng as number,
+    distanceM: typeof row.distance_m === "number" ? row.distance_m : undefined,
+    startedAt: (row.started_at as string | null) ?? null,
   }));
 }
 
@@ -998,7 +1095,7 @@ async function scoreRoutesWithAI(
         : "Local time context: off-peak.";
   const prompt = `You are a route intelligence engine for gig drivers. Pick the best driving route, weighing live-traffic-corrected duration, incident delay, and risk — a severe incident or heavy measured congestion usually costs more time than a small distance saving. Prefer the route with the lowest combined (live_duration_s + incident_delay_min) unless there is a clear reason otherwise. ${timeNote}
 
-Incidents combine DOT/511/NWS/WSDOT agency feeds with live TomTom Traffic and Waze crowdsourced alerts (source field tells you which). live_flow is TomTom's measured speed as a percentage of free-flow, sampled along the route right now: 100 = free-flowing, below 70 = heavy congestion, road_closed_segments > 0 means TomTom flags the road itself as closed. live_duration_s already has this live-flow correction baked in (it is NOT the same as base duration_s — it's what the trip will actually take right now, not the static routing-graph estimate). Treat live_flow/live_duration_s as ground truth for current conditions — it catches slowdowns that haven't generated an incident report yet.
+Incidents combine DOT/511/NWS/WSDOT agency feeds with live TomTom Traffic and Google Maps crowdsourced alerts (source field tells you which). Each incident may include distance_m (how far off the route line it is — already factored into risk_score, but useful context) and age_min (minutes since it was first reported — also already factored in, except for closures/construction which don't decay). A report over 2-3 hours old with no closure/construction type may already be cleared in reality even though it's still in the feed; you can note that in your explanation when it's the deciding factor, but don't need to re-derive risk from these fields yourself. live_flow is TomTom's measured speed as a percentage of free-flow, sampled along the route right now: 100 = free-flowing, below 70 = heavy congestion, road_closed_segments > 0 means TomTom flags the road itself as closed. live_duration_s already has this live-flow correction baked in (it is NOT the same as base duration_s — it's what the trip will actually take right now, not the static routing-graph estimate). Treat live_flow/live_duration_s as ground truth for current conditions — it catches slowdowns that haven't generated an incident report yet.
 
 Routes: ${JSON.stringify(
     routes.map(r => ({
@@ -1021,6 +1118,23 @@ Routes: ${JSON.stringify(
         source: i.source,
         description: sanitizeForPrompt(i.description),
         road_name: sanitizeForPrompt(i.road_name),
+        // v18: same distance/age signal now feeding computeRouteRisk's
+        // weighting (see incidentDistanceWeight/incidentTimeDecay) —
+        // surfaced here too so the AI's explanation text can reflect it
+        // directly ("a 3-hour-old report may already be cleared") rather
+        // than only seeing its downstream effect on risk_score. Omitted
+        // when unknown (grounding sources that don't compute distance,
+        // or feeds with no timestamp) rather than sent as a misleading 0.
+        distance_m:
+          i.distanceM !== undefined ? Math.round(i.distanceM) : undefined,
+        age_min: i.startedAt
+          ? Math.max(
+              0,
+              Math.round(
+                (Date.now() - new Date(i.startedAt).getTime()) / 60_000
+              )
+            )
+          : undefined,
       })),
     }))
   )}
