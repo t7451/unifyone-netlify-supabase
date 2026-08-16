@@ -71,6 +71,11 @@
  *   - Smart stop ordering (nearest-neighbor + 2-opt) when optimizeStops
  *   - stopPlan returned so the UI shows the optimized sequence
  *
+ * v24: Portland metro local-driver knowledge.
+ *   - Chronic corridors, train traps, High Crash arterials, westside/Sunset,
+ *     Vancouver spillover, and active construction events (Rose Quarter Sep 2026)
+ *   - Folds into stress/bottleneck scoring + AI prompts + explanations
+ *
  * ---------------------------------------------------------------------
  * NOTES FOR KIMI (2026-08-09 audit/hardening pass — Claude, merged post-v13)
  * ---------------------------------------------------------------------
@@ -105,6 +110,13 @@ import {
   invokeLLM,
 } from "../../_core/llm";
 import { polishResponse } from "../../lib/aiResponseFramework";
+import {
+  matchLocalKnowledge,
+  localKnowledgePenalties,
+  formatLocalKnowledgeForPrompt,
+  localKnowledgeSummary,
+  isPortlandMetro,
+} from "./portlandLocalKnowledge";
 import { getClearRouteBrief } from "./aiBriefWorker";
 import {
   bboxForGeometries,
@@ -698,6 +710,8 @@ export type ScoredRoute = {
   bottleneckScore?: number;
   /** Raw historical incident count feeding bottleneckScore. */
   historicalIncidentCount?: number;
+  /** v24: local-driver knowledge corridor/event ids that fired. */
+  localKnowledgeIds?: string[];
   /**
    * Turn-by-turn steps. Empty when the routing engine can't provide them
    * (e.g. the TomTom fallback path) — the client hides the panel then.
@@ -819,6 +833,8 @@ export type RouteResult = {
    * Higher = safer/calmer/clearer. Inverse of combined risk/stress/bottleneck.
    */
   driverHealthScore?: number;
+  /** v24: local-driver tips that applied to the chosen route. */
+  localDriverNotes?: string[];
 };
 
 function cacheKey(
@@ -1545,8 +1561,36 @@ function deterministicPick(
     if (chosen.pathStyle === "surface" && pure.pathStyle !== "surface") {
       parts.push("uses surface streets instead of the freeway");
     }
+    const localHits = matchLocalKnowledge(
+      {
+        geometry: pure.geometry,
+        maneuvers: pure.maneuvers,
+        incidents: pure.incidents,
+      },
+      "peak"
+    );
+    const avoidedLocal = localHits.filter(
+      h => !(chosen.localKnowledgeIds ?? []).includes(h.id)
+    );
+    if (avoidedLocal.length > 0) {
+      parts.push(`avoids known local pain (${avoidedLocal[0]!.id})`);
+    }
     const why = parts.length > 0 ? parts.join(", ") : "avoids heavier congestion / incidents";
     explanation = `Chose a calmer option (+${Math.max(0, timeDelta)} min vs pure fastest) because it ${why}. Preference: ${preference}.`;
+    const chosenLocalSummary = localKnowledgeSummary(
+      matchLocalKnowledge(
+        {
+          geometry: chosen.geometry,
+          maneuvers: chosen.maneuvers,
+          incidents: chosen.incidents,
+        },
+        "peak"
+      )
+    );
+    if (chosenLocalSummary && preference !== "fastest") {
+      explanation = `${explanation} Local note: ${chosenLocalSummary.slice(0, 180)}`;
+      if (explanation.length > 480) explanation = explanation.slice(0, 477) + "...";
+    }
   } else if (flowDelay >= 3) {
     explanation = `Best route under ${preference} preference accounting for current traffic (measured ~${flowDelay} min slower than usual${chosen.incidentDelayMin > 0 ? `, plus ${chosen.incidentDelayMin} min for incidents` : ""}).`;
   } else if (delay > 0) {
@@ -1579,8 +1623,27 @@ async function scoreRoutesWithAI(
         : preference === "fuel"
           ? "Driver preference: FUEL / ENERGY — prefer lower energyScore even if a bit slower."
           : "Driver preference: BALANCED (default for delivery) — time still matters most, but accept a modest time penalty when stress or energy drops substantially.";
-  const prompt = `You are a route intelligence engine for delivery and gig drivers. Pick the best driving route under the stated preference. Weigh live-traffic-corrected duration, incident delay, stressScore, and energyScore. Under balanced/quiet/fuel modes you SHOULD prefer a slightly longer route when it clearly reduces stress or energy. ${timeNote} ${prefNote}
 
+  // v24: aggregate local-driver hits across candidates for the AI brief.
+  const allLocalHits = routes.flatMap(r =>
+    matchLocalKnowledge(
+      { geometry: r.geometry, maneuvers: r.maneuvers, incidents: r.incidents },
+      timeContext
+    )
+  );
+  const uniqueLocal = new Map(allLocalHits.map(h => [h.id, h]));
+  const localBlock = formatLocalKnowledgeForPrompt(
+    Array.from(uniqueLocal.values()).sort(
+      (a, b) =>
+        b.stressPenalty +
+        b.bottleneckPenalty -
+        (a.stressPenalty + a.bottleneckPenalty)
+    )
+  );
+
+  const prompt = `You are a route intelligence engine for delivery and gig drivers in the Portland metro (and surrounding areas). Pick the best driving route under the stated preference. Weigh live-traffic-corrected duration, incident delay, stressScore, energyScore, bottleneckScore, and local-driver knowledge. Under balanced/quiet/fuel modes you SHOULD prefer a slightly longer route when it clearly reduces stress, chronic bottleneck exposure, or known local pain. ${timeNote} ${prefNote}
+
+${localBlock ? localBlock + "\n\n" : ""}
 Incidents combine DOT/511/NWS/WSDOT agency feeds with live TomTom Traffic and Google Maps crowdsourced alerts (source field tells you which). Each incident may include distance_m (how far off the route line it is — already factored into risk_score, but useful context) and age_min (minutes since it was first reported — also already factored in, except for closures/construction which don't decay). A report over 2-3 hours old with no closure/construction type may already be cleared in reality even though it's still in the feed; you can note that in your explanation when it's the deciding factor, but don't need to re-derive risk from these fields yourself. live_flow is TomTom's measured speed as a percentage of free-flow, sampled along the route right now: 100 = free-flowing, below 70 = heavy congestion, road_closed_segments > 0 means TomTom flags the road itself as closed. live_duration_s already has this live-flow correction baked in (it is NOT the same as base duration_s — it's what the trip will actually take right now, not the static routing-graph estimate). Treat live_flow/live_duration_s as ground truth for current conditions — it catches slowdowns that haven't generated an incident report yet.
 
 Routes: ${JSON.stringify(
@@ -1595,6 +1658,7 @@ Routes: ${JSON.stringify(
       path_style: r.pathStyle ?? "standard",
       bottleneck_score: r.bottleneckScore ?? 0,
       historical_incidents_21d: r.historicalIncidentCount ?? 0,
+      local_knowledge_ids: r.localKnowledgeIds ?? [],
       incident_delay_min: r.incidentDelayMin,
       preference_cost: Math.round(preferenceCost(r, preference) * 10) / 10,
       live_flow:
@@ -1849,6 +1913,22 @@ export async function getRoute(
         Math.round(stressScore + bottleneckScore * 0.25)
       );
 
+      // v24: Portland local-driver prior (chronic corridors + active events).
+      const localHits = matchLocalKnowledge(
+        {
+          geometry: r.geometry,
+          maneuvers: r.maneuvers,
+          incidents,
+        },
+        timeContext
+      );
+      const localPen = localKnowledgePenalties(localHits);
+      stressScore = Math.min(100, Math.round(stressScore + localPen.stress * 0.55));
+      bottleneckScore = Math.min(
+        100,
+        Math.round(bottleneckScore + localPen.bottleneck * 0.5)
+      );
+
       return {
         distance: r.distance,
         duration: r.duration,
@@ -1864,6 +1944,7 @@ export async function getRoute(
         pathStyle: r.pathStyle,
         bottleneckScore,
         historicalIncidentCount: historical.incidentCount,
+        localKnowledgeIds: localHits.map(h => h.id),
         maneuvers: r.maneuvers,
         flow,
       };
@@ -2042,6 +2123,33 @@ export async function getRoute(
   };
 
   const driverHealthScore = computeDriverHealthScore(chosenRoute);
+  const chosenLocalHits = matchLocalKnowledge(
+    {
+      geometry: chosenRoute.geometry,
+      maneuvers: chosenRoute.maneuvers,
+      incidents: chosenRoute.incidents,
+    },
+    timeContext
+  );
+  const localDriverNotes =
+    chosenLocalHits.length > 0
+      ? chosenLocalHits.slice(0, 4).map(h => h.tip)
+      : undefined;
+
+  // Boost data confidence when local knowledge + history both fired.
+  if (localDriverNotes && dataConfidence) {
+    dataConfidence.score = Math.min(100, dataConfidence.score + 8);
+    dataConfidence.reasons = [
+      ...dataConfidence.reasons,
+      "Portland local-driver knowledge",
+    ];
+    dataConfidence.label =
+      dataConfidence.score >= 75
+        ? "high"
+        : dataConfidence.score >= 50
+          ? "medium"
+          : "low";
+  }
 
   const result: RouteResult = {
     route: chosenRoute,
@@ -2064,6 +2172,7 @@ export async function getRoute(
     stops: stops.length ? stops : undefined,
     stopPlan,
     driverHealthScore,
+    localDriverNotes,
   };
 
   await writeCache(key, result);

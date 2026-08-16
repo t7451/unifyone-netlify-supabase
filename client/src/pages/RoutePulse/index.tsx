@@ -152,6 +152,9 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *   - Driver health score (0-100) on result card
  *   - Smart stop reordering with stop plan summary
  *
+ * v24 (Portland local knowledge):
+ *   - Local driver notes card from metro corridor/event priors
+ *
  * v9 (mobile optimization suite):
  *   - Search card auto-collapses into a one-line chip once a route is on
  *     the map (tap to edit) — the map is the product on a phone
@@ -3232,6 +3235,26 @@ export default function RoutePulse() {
                       </li>
                     ))}
                   </ol>
+                </div>
+              )}
+
+              {/* v24: local-driver notes — what a daily PDX driver would say */}
+              {(routeQuery.data as { localDriverNotes?: string[] })?.localDriverNotes &&
+                (routeQuery.data as { localDriverNotes: string[] }).localDriverNotes
+                  .length > 0 && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3.5 py-3 space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-amber-700 dark:text-amber-400">
+                    Local driver notes
+                  </p>
+                  <ul className="text-xs text-muted-foreground space-y-1.5">
+                    {(
+                      routeQuery.data as { localDriverNotes: string[] }
+                    ).localDriverNotes.slice(0, 3).map((note, i) => (
+                      <li key={i} className="leading-relaxed">
+                        {note}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
 
