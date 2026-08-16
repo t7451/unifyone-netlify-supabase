@@ -47,6 +47,13 @@
  * from incident end estimates, and returns the cheapest horizon when it
  * beats leaving now by 3+ minutes.
  *
+ * v19: multi-objective routing for delivery drivers. Ranking is no longer
+ * pure time. Each route now carries stressScore + energyScore + complexity
+ * (maneuver count). Preference modes (fastest | balanced | quiet | fuel)
+ * change the relative weights so RoutePulse will deliberately choose a
+ * slightly longer backroad / lower-congestion alternative when it reduces
+ * stress or energy enough. This is the core differentiator vs Google Maps.
+ *
  * ---------------------------------------------------------------------
  * NOTES FOR KIMI (2026-08-09 audit/hardening pass — Claude, merged post-v13)
  * ---------------------------------------------------------------------
@@ -520,6 +527,76 @@ export function computeRouteRisk(
   };
 }
 
+// ── v19: multi-objective scores + preference modes ──────────────────────────
+export type RoutePreference = "fastest" | "balanced" | "quiet" | "fuel";
+
+export const ROUTE_PREFERENCE_WEIGHTS: Record<
+  RoutePreference,
+  { time: number; stress: number; energy: number }
+> = {
+  fastest: { time: 1.0, stress: 0.12, energy: 0.08 },
+  balanced: { time: 0.68, stress: 0.22, energy: 0.15 },
+  quiet: { time: 0.48, stress: 0.38, energy: 0.18 },
+  fuel: { time: 0.52, stress: 0.15, energy: 0.38 },
+};
+
+export type RouteScores = RouteRisk & {
+  stressScore: number;
+  energyScore: number;
+  maneuverCount: number;
+};
+
+export function computeRouteScores(
+  incidents: RouteIncident[],
+  liveDurationS: number,
+  distanceM: number,
+  maneuvers: { length: number },
+  flow: FlowGrounding | null | undefined,
+  timeContext: TimeContext = "offpeak"
+): RouteScores {
+  const base = computeRouteRisk(incidents, timeContext);
+  const maneuverCount = maneuvers?.length ?? 0;
+  const congestion =
+    flow && flow.samples >= 2
+      ? Math.max(0, Math.min(1, 1 - flow.avgRatio))
+      : 0;
+  const worstCongestion =
+    flow && flow.samples >= 2
+      ? Math.max(0, Math.min(1, 1 - flow.worstRatio))
+      : congestion;
+  const complexityPenalty = Math.min(35, maneuverCount * 1.4);
+  const congestionPenalty = Math.round(worstCongestion * 40 + congestion * 15);
+  const stressScore = Math.min(
+    100,
+    Math.round(base.riskScore * 0.7 + congestionPenalty + complexityPenalty * 0.45)
+  );
+  const distanceMi = distanceM / 1609.34;
+  const distanceBand = Math.min(40, distanceMi * 1.6);
+  const energyScore = Math.min(
+    100,
+    Math.round(distanceBand * (1 + congestion * 1.3) + complexityPenalty * 0.35)
+  );
+  return { ...base, stressScore, energyScore, maneuverCount };
+}
+
+export function preferenceCost(
+  route: {
+    liveDurationS: number;
+    incidentDelayMin: number;
+    stressScore: number;
+    energyScore: number;
+  },
+  preference: RoutePreference
+): number {
+  const w = ROUTE_PREFERENCE_WEIGHTS[preference];
+  const timeMin = route.liveDurationS / 60 + route.incidentDelayMin;
+  return (
+    w.time * timeMin +
+    w.stress * (route.stressScore * 0.18) +
+    w.energy * (route.energyScore * 0.15)
+  );
+}
+
 /**
  * One driving step from the routing engine (OSRM `steps=true`), reduced to
  * exactly what the turn-by-turn UI and the congestion-colored map need.
@@ -577,6 +654,10 @@ export type ScoredRoute = {
    * delay that's already inside liveDurationS.
    */
   incidentDelayMin: number;
+  /** v19: multi-objective scores for preference-weighted ranking. */
+  stressScore: number;
+  energyScore: number;
+  maneuverCount: number;
   /**
    * Turn-by-turn steps. Empty when the routing engine can't provide them
    * (e.g. the TomTom fallback path) — the client hides the panel then.
@@ -656,10 +737,16 @@ export type RouteResult = {
     bestHorizonMin: number;
     savesMin: number;
   } | null;
+  /** v19: the preference mode used for this ranking. */
+  preference?: RoutePreference;
 };
 
-function cacheKey(origin: LatLng, destination: LatLng) {
-  return `${origin.lat.toFixed(5)},${origin.lng.toFixed(5)}_${destination.lat.toFixed(5)},${destination.lng.toFixed(5)}`;
+function cacheKey(
+  origin: LatLng,
+  destination: LatLng,
+  preference: RoutePreference = "balanced"
+) {
+  return `${origin.lat.toFixed(5)},${origin.lng.toFixed(5)}_${destination.lat.toFixed(5)},${destination.lng.toFixed(5)}_${preference}`;
 }
 
 async function readCache(key: string): Promise<RouteResult | null> {
@@ -682,6 +769,14 @@ async function readCache(key: string): Promise<RouteResult | null> {
   const withManeuvers = (r: ScoredRoute): ScoredRoute => ({
     ...r,
     maneuvers: Array.isArray(r.maneuvers) ? r.maneuvers : [],
+    stressScore: typeof r.stressScore === "number" ? r.stressScore : r.riskScore ?? 0,
+    energyScore: typeof r.energyScore === "number" ? r.energyScore : 0,
+    maneuverCount:
+      typeof r.maneuverCount === "number"
+        ? r.maneuverCount
+        : Array.isArray(r.maneuvers)
+          ? r.maneuvers.length
+          : 0,
   });
   return {
     ...result,
@@ -1052,48 +1147,83 @@ type AiPick = {
  * smarter than a raw fastest-time sort — and smarter than ranking on a
  * static graph duration the way a plain routing API would.
  */
-function deterministicPick(routes: ScoredRoute[]): AiPick {
+function deterministicPick(
+  routes: ScoredRoute[],
+  preference: RoutePreference = "balanced"
+): AiPick {
   let best = 0;
   let bestCost = Infinity;
   routes.forEach((r, i) => {
-    const cost = r.liveDurationS + r.incidentDelayMin * 60;
+    const cost = preferenceCost(r, preference);
     if (cost < bestCost) {
       bestCost = cost;
       best = i;
     }
   });
   const chosen = routes[best];
-  const flowDelay = chosen
-    ? Math.round((chosen.liveDurationS - chosen.duration) / 60)
-    : 0;
-  const delay = chosen?.delayEstimateMin ?? 0;
-  const explanation =
-    flowDelay >= 3
-      ? `Fastest route accounting for current traffic (measured ~${flowDelay} min slower than usual right now${chosen && chosen.incidentDelayMin > 0 ? `, plus ${chosen.incidentDelayMin} min for active incidents` : ""}).`
-      : delay > 0
-        ? `Fastest route after adjusting for current incidents (est. +${delay} min delay).`
-        : "Fastest available route.";
-  return {
-    chosenIndex: best,
-    explanation,
-    confidence: "none",
-  };
+  if (!chosen) {
+    return { chosenIndex: 0, explanation: "Best available route.", confidence: "none" };
+  }
+  let pureTimeBest = 0;
+  let pureTimeCost = Infinity;
+  routes.forEach((r, i) => {
+    const c = r.liveDurationS + r.incidentDelayMin * 60;
+    if (c < pureTimeCost) {
+      pureTimeCost = c;
+      pureTimeBest = i;
+    }
+  });
+  const flowDelay = Math.round((chosen.liveDurationS - chosen.duration) / 60);
+  const delay = chosen.delayEstimateMin;
+  const timeMin = Math.round(chosen.liveDurationS / 60);
+  let explanation: string;
+  if (preference !== "fastest" && best !== pureTimeBest) {
+    const pure = routes[pureTimeBest]!;
+    const pureMin = Math.round(pure.liveDurationS / 60);
+    const stressDelta = pure.stressScore - chosen.stressScore;
+    const energyDelta = pure.energyScore - chosen.energyScore;
+    const timeDelta = timeMin - pureMin;
+    const parts: string[] = [];
+    if (stressDelta >= 8) parts.push(`cuts stress by ~${stressDelta} pts`);
+    if (energyDelta >= 8) parts.push(`lower energy/effort (~${energyDelta} pts)`);
+    if (chosen.maneuverCount + 3 < pure.maneuverCount) {
+      parts.push(`fewer turns (${chosen.maneuverCount} vs ${pure.maneuverCount})`);
+    }
+    const why = parts.length > 0 ? parts.join(", ") : "avoids heavier congestion / incidents";
+    explanation = `Chose a calmer option (+${Math.max(0, timeDelta)} min vs pure fastest) because it ${why}. Preference: ${preference}.`;
+  } else if (flowDelay >= 3) {
+    explanation = `Best route under ${preference} preference accounting for current traffic (measured ~${flowDelay} min slower than usual${chosen.incidentDelayMin > 0 ? `, plus ${chosen.incidentDelayMin} min for incidents` : ""}).`;
+  } else if (delay > 0) {
+    explanation = `Best route under ${preference} preference after adjusting for current incidents (est. +${delay} min delay).`;
+  } else {
+    explanation =
+      preference === "fastest"
+        ? "Fastest available route."
+        : `Best available route for ${preference} preference (~${timeMin} min).`;
+  }
+  return { chosenIndex: best, explanation, confidence: "none" };
 }
 
 async function scoreRoutesWithAI(
   routes: ScoredRoute[],
-  timeContext: TimeContext
+  timeContext: TimeContext,
+  preference: RoutePreference = "balanced"
 ): Promise<AiPick> {
-  // The prompt leads with the deterministic scores so the model reasons
-  // over quantified tradeoffs (risk_score, est_delay_min) instead of
-  // re-deriving severity math from raw text — better picks, fewer tokens.
   const timeNote =
     timeContext === "peak"
       ? "Local time context: weekday commute peak — congestion incidents are weighted heavier, and jams are likely still building."
       : timeContext === "night"
         ? "Local time context: overnight — congestion is lighter, but closures and hazards matter more relative to traffic."
         : "Local time context: off-peak.";
-  const prompt = `You are a route intelligence engine for gig drivers. Pick the best driving route, weighing live-traffic-corrected duration, incident delay, and risk — a severe incident or heavy measured congestion usually costs more time than a small distance saving. Prefer the route with the lowest combined (live_duration_s + incident_delay_min) unless there is a clear reason otherwise. ${timeNote}
+  const prefNote =
+    preference === "fastest"
+      ? "Driver preference: FASTEST — prioritize pure time almost exclusively."
+      : preference === "quiet"
+        ? "Driver preference: QUIET / LOW-STRESS — strongly prefer routes with lower stressScore even if 5-12% slower."
+        : preference === "fuel"
+          ? "Driver preference: FUEL / ENERGY — prefer lower energyScore even if a bit slower."
+          : "Driver preference: BALANCED (default for delivery) — time still matters most, but accept a modest time penalty when stress or energy drops substantially.";
+  const prompt = `You are a route intelligence engine for delivery and gig drivers. Pick the best driving route under the stated preference. Weigh live-traffic-corrected duration, incident delay, stressScore, and energyScore. Under balanced/quiet/fuel modes you SHOULD prefer a slightly longer route when it clearly reduces stress or energy. ${timeNote} ${prefNote}
 
 Incidents combine DOT/511/NWS/WSDOT agency feeds with live TomTom Traffic and Google Maps crowdsourced alerts (source field tells you which). Each incident may include distance_m (how far off the route line it is — already factored into risk_score, but useful context) and age_min (minutes since it was first reported — also already factored in, except for closures/construction which don't decay). A report over 2-3 hours old with no closure/construction type may already be cleared in reality even though it's still in the feed; you can note that in your explanation when it's the deciding factor, but don't need to re-derive risk from these fields yourself. live_flow is TomTom's measured speed as a percentage of free-flow, sampled along the route right now: 100 = free-flowing, below 70 = heavy congestion, road_closed_segments > 0 means TomTom flags the road itself as closed. live_duration_s already has this live-flow correction baked in (it is NOT the same as base duration_s — it's what the trip will actually take right now, not the static routing-graph estimate). Treat live_flow/live_duration_s as ground truth for current conditions — it catches slowdowns that haven't generated an incident report yet.
 
@@ -1103,7 +1233,11 @@ Routes: ${JSON.stringify(
       duration_s: r.duration,
       live_duration_s: r.liveDurationS,
       risk_score: r.riskScore,
+      stress_score: r.stressScore,
+      energy_score: r.energyScore,
+      maneuver_count: r.maneuverCount,
       incident_delay_min: r.incidentDelayMin,
+      preference_cost: Math.round(preferenceCost(r, preference) * 10) / 10,
       live_flow:
         r.flow && r.flow.samples > 0
           ? {
@@ -1139,7 +1273,7 @@ Routes: ${JSON.stringify(
     }))
   )}
 
-Respond ONLY with JSON: { "chosen_index": 0, "explanation": "1-2 short sentences for the driver: name the specific road or incident and quantify the delay when relevant", "confidence": "high|medium|low", "avoid_reasons": ["", "2-6 words on why each NON-chosen route loses, aligned by route index; empty string for the chosen route"] }`;
+Respond ONLY with JSON: { "chosen_index": 0, "explanation": "1-2 short sentences for the driver: name the specific trade-off (time vs stress/energy/incidents) and quantify when relevant. If you chose a non-fastest route, say why the calmer/leaner option wins under the preference.", "confidence": "high|medium|low", "avoid_reasons": ["", "2-8 words on why each NON-chosen route loses, aligned by route index; empty string for the chosen route"] }`;
 
   try {
     // Free-tier model, routed through OpenRouter (invokeLLM falls back
@@ -1213,13 +1347,14 @@ Respond ONLY with JSON: { "chosen_index": 0, "explanation": "1-2 short sentences
     // AI scoring is an enhancement, never a hard dependency — and the
     // deterministic fallback is itself delay-aware, not just route[0].
     console.warn("[routePulse] AI scoring failed, falling back:", err);
-    return deterministicPick(routes);
+    return deterministicPick(routes, preference);
   }
 }
 
 export async function getRoute(
   originAddress: string,
-  destinationAddress: string
+  destinationAddress: string,
+  preference: RoutePreference = "balanced"
 ): Promise<RouteResult> {
   // Geocode first — the cache key and every downstream step depends on
   // resolved coordinates, and a bad address should fail fast with a clear
@@ -1229,7 +1364,7 @@ export async function getRoute(
     geocodeAddress(destinationAddress),
   ]);
 
-  const key = cacheKey(origin, destination);
+  const key = cacheKey(origin, destination, preference);
 
   const cached = await readCache(key);
   if (cached) return cached;
@@ -1270,21 +1405,6 @@ export async function getRoute(
       // incident report yet — the difference between "an incident exists"
       // and "traffic is actually moving slowly right now".
       const flow = await fetchTomTomFlow(r.geometry.coordinates);
-      const {
-        riskScore: incidentRiskScore,
-        delayEstimateMin: incidentDelayMin,
-      } = computeRouteRisk(incidents, timeContext);
-      let riskScore = incidentRiskScore;
-
-      // v16: this is the actual live-traffic correction — scale the whole
-      // route duration by TomTom's measured ratio, the same lever a
-      // traffic-aware map uses, instead of only adding a capped delay
-      // badge on top of a static graph time. Ratio clamped to [0.3, 1.15]:
-      // floor stops a couple of crawl-speed samples from implying a 5x
-      // trip time off 5 data points, ceiling allows for light-traffic
-      // routes running slightly faster than TomTom's reference speed
-      // without letting a bad sample shorten the estimate below the
-      // static baseline.
       let liveDurationS = r.duration;
       if (flow && flow.samples >= 2 && flow.avgRatio > 0) {
         const clampedRatio = Math.max(0.3, Math.min(1.15, flow.avgRatio));
@@ -1294,20 +1414,26 @@ export async function getRoute(
         0,
         Math.round((liveDurationS - r.duration) / 60)
       );
-      // Badge total: flow-measured delay (uncapped beyond the ratio clamp
-      // above — a genuine 2x-duration jam should say so) plus incident-
-      // reported delay (still capped inside computeRouteRisk at
-      // MAX_DELAY_MIN — that ceiling is about "how much a handful of
-      // point reports can plausibly explain", which is a different
-      // question from "how slow is the whole corridor measured to be").
+
+      // v19: full multi-objective scores
+      const scores = computeRouteScores(
+        incidents,
+        Math.round(liveDurationS),
+        r.distance,
+        r.maneuvers,
+        flow,
+        timeContext
+      );
+      let riskScore = scores.riskScore;
+      const incidentDelayMin = scores.delayEstimateMin;
       const delayEstimateMin = flowDelayMin + incidentDelayMin;
+
       if (flow && flow.roadClosedCount > 0) {
-        // TomTom flags the segment itself as closed — stronger than any
-        // inferred severity.
         riskScore = Math.min(MAX_RISK_SCORE, riskScore + 30);
       } else if (flow && flow.samples >= 2 && flow.worstRatio < 0.5) {
         riskScore = Math.min(MAX_RISK_SCORE, riskScore + 10);
       }
+
       return {
         distance: r.distance,
         duration: r.duration,
@@ -1317,33 +1443,40 @@ export async function getRoute(
         riskScore,
         delayEstimateMin,
         incidentDelayMin,
+        stressScore: scores.stressScore,
+        energyScore: scores.energyScore,
+        maneuverCount: scores.maneuverCount,
         maneuvers: r.maneuvers,
         flow,
       };
     })
   );
 
-  // The AI earns its call when there's something to weigh: any incident,
-  // a TomTom-flagged closure, or measured congestion below 90% of
-  // free-flow. A totally clear corridor doesn't need a model.
-  const needsAi = scoredRoutes.some(
-    r =>
-      r.incidents.length > 0 ||
-      (r.flow?.roadClosedCount ?? 0) > 0 ||
-      ((r.flow?.samples ?? 0) >= 2 && (r.flow?.avgRatio ?? 1) < 0.9)
-  );
+  // AI earns its call for incidents/congestion, or any non-fastest preference
+  // so it can explain deliberate trade-offs.
+  const needsAi =
+    preference !== "fastest" ||
+    scoredRoutes.some(
+      r =>
+        r.incidents.length > 0 ||
+        (r.flow?.roadClosedCount ?? 0) > 0 ||
+        ((r.flow?.samples ?? 0) >= 2 && (r.flow?.avgRatio ?? 1) < 0.9)
+    );
 
   let chosenIndex = 0;
-  let explanation = "Fastest route, no active incidents.";
+  let explanation = "Best available route.";
   let confidence: AiConfidence = "none";
   let verdicts: (string | null)[] | undefined;
   if (needsAi) {
-    const ai = await scoreRoutesWithAI(scoredRoutes, timeContext);
+    const ai = await scoreRoutesWithAI(scoredRoutes, timeContext, preference);
     chosenIndex = ai.chosenIndex;
     explanation = ai.explanation;
     confidence = ai.confidence;
     verdicts = ai.verdicts;
   } else {
+    const pick = deterministicPick(scoredRoutes, preference);
+    chosenIndex = pick.chosenIndex;
+    explanation = pick.explanation;
     // v15: clear route, so this doesn't earn the paid model — but if the
     // free-tier Workers AI brief worker is configured, ask it for a
     // route-specific one-liner instead of the static string. Best-effort:
@@ -1413,6 +1546,7 @@ export async function getRoute(
     generated_at: new Date().toISOString(),
     cached: false,
     confidence,
+    preference,
     cameras,
     grounding,
     verdicts,

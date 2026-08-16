@@ -33,15 +33,25 @@ export const routePulseRouter = router({
 
   // Public: request a route by address. Rate-limited since it fans out to
   // Nominatim + OSRM + Supabase + (conditionally) the AI router per call.
+  // v19: optional preference mode changes multi-objective ranking weights
+  // (fastest | balanced | quiet | fuel). Default balanced for delivery.
   getRoute: publicRateLimitedProcedure(publicFormLimiter, "routepulse:getRoute")
     .input(
       z.object({
         origin: address,
         destination: address,
+        preference: z
+          .enum(["fastest", "balanced", "quiet", "fuel"])
+          .optional()
+          .default("balanced"),
       })
     )
     .query(async ({ input }) => {
-      return service.getRoute(input.origin, input.destination);
+      return service.getRoute(
+        input.origin,
+        input.destination,
+        input.preference
+      );
     }),
 
   // Public: list currently-active incidents (for a map overlay). Rate-limited

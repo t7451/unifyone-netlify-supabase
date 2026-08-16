@@ -137,6 +137,13 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *   - Heading cone on the live location dot (device heading when the
  *     browser provides it, otherwise computed from successive fixes)
  *
+ * v20 (mobile usage overhaul):
+ *   - Map grows taller on small screens; near full-viewport during trip mode
+ *   - Trip banner uses larger type + 44px mute/end targets; safe-area aware
+ *   - Starting a trip auto-collapses the search card and focuses the map
+ *   - Mobile sheet: larger Start trip CTA, less chrome while navigating
+ *   - Preference control and primary buttons meet 44px touch minimum
+ *
  * v9 (mobile optimization suite):
  *   - Search card auto-collapses into a one-line chip once a route is on
  *     the map (tap to edit) — the map is the product on a phone
@@ -751,9 +758,23 @@ function FitBounds({
 export default function RoutePulse() {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
+  // v19: multi-objective preference — drives ranking weights on the server.
+  type RoutePreference = "fastest" | "balanced" | "quiet" | "fuel";
+  const [preference, setPreference] = useState<RoutePreference>(() => {
+    try {
+      const v = localStorage.getItem("routepulse:preference");
+      if (v === "fastest" || v === "balanced" || v === "quiet" || v === "fuel") {
+        return v;
+      }
+    } catch {
+      /* ignore */
+    }
+    return "balanced";
+  });
   const [submitted, setSubmitted] = useState<{
     origin: string;
     destination: string;
+    preference: RoutePreference;
   } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   // v17: was hardcoded to "light" regardless of the app's own theme — a
@@ -872,6 +893,7 @@ export default function RoutePulse() {
         setSubmitted({
           origin: urlOrigin.trim(),
           destination: urlDestination.trim(),
+          preference,
         });
       }
     }
@@ -892,6 +914,17 @@ export default function RoutePulse() {
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState({}, "", newUrl);
   }, [submitted]);
+
+  // v19: changing preference re-runs ranking for the same addresses.
+  useEffect(() => {
+    if (!submitted) return;
+    if (submitted.preference === preference) return;
+    setSubmitted({
+      origin: submitted.origin,
+      destination: submitted.destination,
+      preference,
+    });
+  }, [preference]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A new search resets the alternative-route preview back to the
   // AI-recommended route — and re-arms auto-fit for the new bounds.
@@ -987,7 +1020,11 @@ export default function RoutePulse() {
       return;
     }
     setFormError(null);
-    setSubmitted({ origin: origin.trim(), destination: destination.trim() });
+    setSubmitted({
+      origin: origin.trim(),
+      destination: destination.trim(),
+      preference,
+    });
     addRoute(origin.trim(), destination.trim());
     trackToolUsage("route-pulse", "start");
   };
@@ -1291,6 +1328,10 @@ export default function RoutePulse() {
     }
     setNextStepIdx(0);
     setTripActive(true);
+    // v20: trip mode is map-first — collapse search chrome and sheet peek
+    // so the guidance banner + road are the only things competing for attention.
+    setSearchCollapsed(true);
+    setSheetExpanded(false);
     toast.success("Trip started — follow the banner");
   };
 
@@ -1929,12 +1970,12 @@ export default function RoutePulse() {
             }}
           />
           <p className="text-lg text-muted-foreground">
-            Routes that read the news so you don't have to.{" "}
+            Routes that factor traffic, accidents, roadwork, and bottlenecks —
+            then pick the option that saves time, energy, and stress.{" "}
             <strong className="text-foreground">
-              Enter an origin and destination address
+              Choose Balanced, Quiet, Fuel, or Fastest
             </strong>{" "}
-            and get an AI-scored route on a live map, with incidents factored in
-            before they hit mainstream traffic apps.
+            and take the backroads when they win.
           </p>
         </header>
 
@@ -1945,7 +1986,11 @@ export default function RoutePulse() {
         <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen mb-8">
           <div
             ref={mapWrapperRef}
-            className="relative h-[70dvh] max-h-[640px] min-h-[420px] w-full bg-muted"
+            className={
+              tripActive
+                ? "relative h-[88dvh] max-h-none min-h-[480px] w-full bg-muted"
+                : "relative h-[70dvh] max-h-[720px] min-h-[420px] sm:min-h-[480px] w-full bg-muted"
+            }
           >
             <MapContainer
               ref={mapRef}
@@ -2209,24 +2254,26 @@ export default function RoutePulse() {
                 the live location feed. Shows the next maneuver with live
                 distance-to-turn; auto-advances as fixes arrive. */}
             {tripActive && nextStep && (
-              <div className="absolute z-[450] top-3 left-1/2 -translate-x-1/2 w-[min(92vw,420px)] rounded-xl bg-background/95 backdrop-blur-md border shadow-xl px-4 py-3 flex items-center gap-3">
-                <span className="w-9 h-9 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <div
+                className="absolute z-[450] top-2 sm:top-3 left-1/2 -translate-x-1/2 w-[min(96vw,440px)] rounded-2xl bg-background/95 backdrop-blur-md border shadow-xl px-3.5 py-3.5 flex items-center gap-3"
+                style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
+              >
+                <span className="w-12 h-12 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                   <ManeuverGlyph
                     type={nextStep.type}
                     modifier={nextStep.modifier}
                   />
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold leading-tight truncate">
+                  <p className="text-base sm:text-sm font-semibold leading-snug line-clamp-2">
                     {nextStep.instruction}
                   </p>
-                  <p className="text-[11px] text-muted-foreground leading-tight">
+                  <p className="text-xs text-muted-foreground leading-tight mt-0.5">
                     {nextStepDistM !== null &&
                       (nextStepDistM >= 160
                         ? `in ${(nextStepDistM / 1609.34).toFixed(1)} mi`
                         : `in ${Math.max(50, Math.round(nextStepDistM / 0.3048 / 10) * 10)} ft`)}
-                    {" · "}step {nextStepIdx + 1} of {displayedManeuvers.length}
-                    {/* v13: live speed + ETA from actual GPS speed */}
+                    {" · "}step {nextStepIdx + 1}/{displayedManeuvers.length}
                     {speedMps !== null && speedMps > 1.5 && (
                       <>
                         {" · "}
@@ -2235,34 +2282,32 @@ export default function RoutePulse() {
                     )}
                     {tripEta && (
                       <>
-                        {" · "}ETA {fmtTime(tripEta.arriveAt)} (
-                        {tripEta.minutesLeft} min)
+                        {" · "}ETA {fmtTime(tripEta.arriveAt)}
                       </>
                     )}
                   </p>
                 </div>
-                {/* v13: voice prompt mute toggle */}
                 <button
                   type="button"
                   onClick={toggleVoiceMuted}
                   title={
                     voiceMuted ? "Unmute voice prompts" : "Mute voice prompts"
                   }
-                  className="shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                  className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-muted active:bg-muted transition-colors"
                 >
                   {voiceMuted ? (
-                    <VolumeX className="w-3.5 h-3.5" />
+                    <VolumeX className="w-5 h-5" />
                   ) : (
-                    <Volume2 className="w-3.5 h-3.5" />
+                    <Volume2 className="w-5 h-5" />
                   )}
                 </button>
                 <button
                   type="button"
                   onClick={() => setTripActive(false)}
                   title="End trip"
-                  className="shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                  className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-muted active:bg-muted transition-colors"
                 >
-                  <Square className="w-3.5 h-3.5" />
+                  <Square className="w-5 h-5" />
                 </button>
               </div>
             )}
@@ -2271,7 +2316,10 @@ export default function RoutePulse() {
                 instead of a form stacked above the map. v9: once a route is
                 displayed it folds into a one-line chip (tap to edit) so the
                 map gets the screen back; on phones it also caps at 62dvh
-                with internal scroll so it can never cover the whole map. */}
+                with internal scroll so it can never cover the whole map.
+                v20: fully hidden during trip mode so guidance + road own the
+                screen. */}
+            {!tripActive && (
             <Card
               className={`absolute z-[400] top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-auto sm:w-[380px] bg-background/90 backdrop-blur-md shadow-xl border ${
                 searchCollapsed && hasRoute
@@ -2327,6 +2375,7 @@ export default function RoutePulse() {
                                 setSubmitted({
                                   origin: r.origin,
                                   destination: r.destination,
+                                  preference,
                                 });
                               }}
                               className="text-[11px] pl-2 py-1 hover:text-foreground transition-colors truncate"
@@ -2380,6 +2429,7 @@ export default function RoutePulse() {
                               setSubmitted({
                                 origin: r.origin,
                                 destination: r.destination,
+                                  preference,
                               });
                             }}
                             className="text-[11px] px-2 py-1 rounded-full bg-muted hover:bg-accent transition-colors truncate max-w-full"
@@ -2487,10 +2537,59 @@ export default function RoutePulse() {
                       <p className="text-xs text-destructive">{formError}</p>
                     )}
 
+                    {/* v19: routing preference — changes multi-objective ranking */}
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                        Route style
+                      </p>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {(
+                          [
+                            ["balanced", "Balanced"],
+                            ["quiet", "Quiet"],
+                            ["fuel", "Fuel"],
+                            ["fastest", "Fastest"],
+                          ] as const
+                        ).map(([value, label]) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => {
+                              setPreference(value);
+                              try {
+                                localStorage.setItem(
+                                  "routepulse:preference",
+                                  value
+                                );
+                              } catch {
+                                /* ignore */
+                              }
+                            }}
+                            className={`rounded-lg px-1.5 py-2.5 text-[11px] font-medium border transition-colors min-h-[44px] ${
+                              preference === value
+                                ? "border-primary bg-primary/15 text-primary"
+                                : "border-border bg-muted/40 text-muted-foreground hover:bg-muted"
+                            }`}
+                            title={
+                              value === "balanced"
+                                ? "Time first, but take calmer roads when the time cost is small"
+                                : value === "quiet"
+                                  ? "Prefer lower stress / fewer surprises even if a bit slower"
+                                  : value === "fuel"
+                                    ? "Prefer lower energy / less stop-go congestion"
+                                    : "Pure fastest time"
+                            }
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <Button
                       type="submit"
                       size="sm"
-                      className="gap-2 w-full group"
+                      className="gap-2 w-full group min-h-[44px]"
                     >
                       {routeQuery.isFetching && (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -2504,6 +2603,8 @@ export default function RoutePulse() {
                 </>
               )}
             </Card>
+            )}
+
 
             {/* Floating controls — locate me, basemap toggle, fullscreen.
                 v9: on phones these live in the bottom-right thumb zone with
@@ -2639,7 +2740,13 @@ export default function RoutePulse() {
               <motion.div
                 className="sm:hidden absolute inset-x-0 bottom-0 z-[450] rounded-t-2xl bg-background/95 backdrop-blur-md border-t shadow-2xl flex flex-col overflow-hidden pb-safe"
                 initial={false}
-                animate={{ height: sheetExpanded ? "70vh" : "34vh" }}
+                animate={{
+                  height: sheetExpanded
+                    ? "72vh"
+                    : tripActive
+                      ? "22vh"
+                      : "34vh",
+                }}
                 transition={{ type: "spring", stiffness: 340, damping: 32 }}
               >
                 {/* Drag handle — swipe up/down or tap to expand/collapse. */}
@@ -2766,8 +2873,8 @@ export default function RoutePulse() {
                     <Button
                       type="button"
                       size="sm"
-                      variant={tripActive ? "default" : "outline"}
-                      className="gap-1.5 shrink-0 h-11 sm:h-9"
+                      variant={tripActive ? "destructive" : "default"}
+                      className="gap-1.5 shrink-0 h-12 sm:h-9 min-w-[7.5rem] font-semibold shadow-sm"
                       onClick={() =>
                         tripActive ? setTripActive(false) : startTrip()
                       }
@@ -3198,6 +3305,19 @@ export default function RoutePulse() {
                               ? "No incidents"
                               : `${alt.incidents.length} incident${alt.incidents.length === 1 ? "" : "s"}`}
                             {delayMin > 0 && ` · est. +${delayMin} min`}
+                          </span>
+                          <span className="block text-[10px] text-muted-foreground mt-0.5">
+                            Stress{" "}
+                            {typeof (alt as { stressScore?: number }).stressScore ===
+                            "number"
+                              ? (alt as { stressScore: number }).stressScore
+                              : "—"}
+                            {" · "}
+                            Energy{" "}
+                            {typeof (alt as { energyScore?: number }).energyScore ===
+                            "number"
+                              ? (alt as { energyScore: number }).energyScore
+                              : "—"}
                           </span>
                           {/* v12: the AI's reason this route loses — the
                             "why not" behind the recommendation. */}
