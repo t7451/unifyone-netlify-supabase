@@ -11,7 +11,11 @@ import { TRPCError } from "@trpc/server";
 import type { SQL } from "drizzle-orm";
 import { eq, gte, lte } from "drizzle-orm";
 import { getAppUrl } from "../../_core/env";
-import { invokeLLM } from "../../_core/llm";
+import {
+  FREE_TIER_FALLBACK_CHAIN,
+  GROQ_FALLBACK_MODEL,
+  invokeLLM,
+} from "../../_core/llm";
 import { broadcastToUser } from "../../_core/sseManager";
 import { checkAndResolveFriendChallengesForUser } from "../../challengeCompletion";
 import * as repo from "./moneyManager.repo";
@@ -394,6 +398,8 @@ Provide a JSON response with:
 
     try {
       const response = await invokeLLM({
+    model: `groq/${GROQ_FALLBACK_MODEL}`,
+    modelChain: [...FREE_TIER_FALLBACK_CHAIN],
         messages: [
           {
             role: "system",
@@ -503,6 +509,8 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
 
     try {
       const response = await invokeLLM({
+    model: `groq/${GROQ_FALLBACK_MODEL}`,
+    modelChain: [...FREE_TIER_FALLBACK_CHAIN],
         messages: [
           {
             role: "system",

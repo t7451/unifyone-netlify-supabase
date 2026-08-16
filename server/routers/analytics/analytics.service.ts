@@ -1,4 +1,8 @@
-import { invokeLLM } from "../../_core/llm";
+import {
+  FREE_TIER_FALLBACK_CHAIN,
+  GROQ_FALLBACK_MODEL,
+  invokeLLM,
+} from "../../_core/llm";
 import { fetchRelatedQueries } from "../../lib/googleTrends";
 import {
   buildWhyPrompt,
@@ -126,6 +130,8 @@ export const analyticsService = {
         { role: "system", content: WHY_SYSTEM_PROMPT },
         { role: "user", content: buildWhyPrompt(data) },
       ],
+      model: `groq/${GROQ_FALLBACK_MODEL}`,
+      modelChain: [...FREE_TIER_FALLBACK_CHAIN],
       maxTokens: 700,
     });
 

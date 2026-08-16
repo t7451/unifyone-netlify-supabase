@@ -11,6 +11,8 @@
  */
 
 import {
+  FREE_TIER_FALLBACK_CHAIN,
+  GROQ_FALLBACK_MODEL,
   invokeLLM,
   type Message,
   type Tool,
@@ -253,8 +255,8 @@ export async function runKaiAgent(
     const response: InvokeResult = await invokeLLM({
       messages,
       ...(tools.length > 0 ? { tools, toolChoice: "auto" } : {}),
-      model: input.model,
-      modelChain: input.modelChain,
+      model: input.model ?? `groq/${GROQ_FALLBACK_MODEL}`,
+      modelChain: input.modelChain ?? [...FREE_TIER_FALLBACK_CHAIN],
       maxTokens: input.maxTokens,
       providerApiKey: input.providerApiKey,
       meter: {

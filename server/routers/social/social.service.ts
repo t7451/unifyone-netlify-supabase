@@ -1,5 +1,9 @@
 import { TRPCError } from "@trpc/server";
-import { invokeLLM } from "../../_core/llm";
+import {
+  FREE_TIER_FALLBACK_CHAIN,
+  GROQ_FALLBACK_MODEL,
+  invokeLLM,
+} from "../../_core/llm";
 import { publishStoredPost } from "../../lib/socialScheduler";
 import * as repo from "./social.repo";
 
@@ -62,6 +66,8 @@ ${platformInstructions}
 Return JSON with keys: ${input.platforms.join(", ")}`;
 
   const response = await invokeLLM({
+    model: `groq/${GROQ_FALLBACK_MODEL}`,
+    modelChain: [...FREE_TIER_FALLBACK_CHAIN],
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },

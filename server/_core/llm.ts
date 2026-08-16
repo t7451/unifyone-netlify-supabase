@@ -346,6 +346,22 @@ export const FREE_TIER_FALLBACK_CHAIN = [
   "openrouter/openai/gpt-oss-20b:free",
 ] as const;
 
+/**
+ * Build a model chain that tries free Groq + Gemini first, then any
+ * preferred/catalog models. Used by Kai chat (free tier) and high-volume
+ * platform tools so we burn free quota before metered paths.
+ */
+export function freeFirstChain(...preferred: Array<string | undefined | null>): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const m of [...FREE_TIER_FALLBACK_CHAIN, ...preferred]) {
+    if (!m || seen.has(m)) continue;
+    seen.add(m);
+    out.push(m);
+  }
+  return out;
+}
+
 // The allowlist uses the concrete fallback model; "groq/<model>" is reserved
 // for explicit Groq model routing without exposing arbitrary providers.
 const isGroqModel = (model: string) =>

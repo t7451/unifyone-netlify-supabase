@@ -10,7 +10,11 @@
  *  - server/routers/seo.ts triggerGeneration (manual admin invocation)
  */
 
-import { invokeLLM } from "./_core/llm";
+import {
+  FREE_TIER_FALLBACK_CHAIN,
+  GROQ_FALLBACK_MODEL,
+  invokeLLM,
+} from "./_core/llm";
 import { getDb } from "./db";
 import { seoContentJobs } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
@@ -423,6 +427,8 @@ Content Type: ${type}
 Return structured JSON content following the schema exactly.`;
 
   const result = await invokeLLM({
+    model: `groq/${GROQ_FALLBACK_MODEL}`,
+    modelChain: [...FREE_TIER_FALLBACK_CHAIN],
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },

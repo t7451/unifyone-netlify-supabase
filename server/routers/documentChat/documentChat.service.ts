@@ -6,7 +6,11 @@
  * grounded system prompt, and calls Claude.
  */
 
-import { invokeLLM } from "../../_core/llm";
+import {
+  FREE_TIER_FALLBACK_CHAIN,
+  GROQ_FALLBACK_MODEL,
+  invokeLLM,
+} from "../../_core/llm";
 import {
   getAllChunks,
   getQueryEmbedding,
@@ -81,6 +85,8 @@ ${context}`;
   // Call Claude
   const response = await invokeLLM({
     messages: [{ role: "system", content: systemPrompt }, ...messages],
+    model: `groq/${GROQ_FALLBACK_MODEL}`,
+    modelChain: [...FREE_TIER_FALLBACK_CHAIN],
   });
 
   const assistantMessage =

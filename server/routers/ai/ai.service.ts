@@ -12,7 +12,11 @@ import { TRPCError } from "@trpc/server";
 import { randomUUID } from "node:crypto";
 import type { TrpcContext } from "../../_core/context";
 import { getDb } from "../../db";
-import { invokeLLM } from "../../_core/llm";
+import {
+  freeFirstChain,
+  GROQ_FALLBACK_MODEL,
+  invokeLLM,
+} from "../../_core/llm";
 import { mcpClient } from "../../lib/mcpClient";
 import {
   buildKaiChatMeterMetadata,
@@ -92,6 +96,19 @@ export async function chat(ctx: ChatCtx, input: ChatInput) {
     const byokKey = await getUserProviderKey(Number(user.id), "openrouter");
     // Free-tier models are available to everyone, always, at zero credits.
     const isUnmetered = isFreeKaiModel(selectedModel) || Boolean(byokKey);
+    // Free / unmetered (no BYOK): burn Groq → Gemini free quota first.
+    // Premium selections keep their catalog chain.
+    const llmModel =
+      isFreeKaiModel(selectedModel) && !byokKey
+        ? `groq/${GROQ_FALLBACK_MODEL}`
+        : selectedModel.gatewayModel;
+    const llmModelChain =
+      isFreeKaiModel(selectedModel) && !byokKey
+        ? freeFirstChain(
+            selectedModel.gatewayModel,
+            ...selectedModel.fallbackModels
+          )
+        : selectedModel.fallbackModels;
     const creditAllowance = isUnmetered
       ? {
           allowed: true as const,
@@ -228,8 +245,8 @@ export async function chat(ctx: ChatCtx, input: ChatInput) {
             tenantId: ctx.tenantId,
           },
           maxIterations: 4,
-          model: selectedModel.gatewayModel,
-          modelChain: selectedModel.fallbackModels,
+          model: llmModel,
+          modelChain: llmModelChain,
           // Keep replies snappy: large free-tier models are slow, and
           // Netlify function + browser timeouts bound the whole exchange.
           maxTokens: KAI_CHAT_MAX_TOKENS,
@@ -286,8 +303,8 @@ export async function chat(ctx: ChatCtx, input: ChatInput) {
       } else {
         const response = await invokeLLM({
           messages: llmMessages,
-          model: selectedModel.gatewayModel,
-          modelChain: selectedModel.fallbackModels,
+          model: llmModel,
+          modelChain: llmModelChain,
           maxTokens: KAI_CHAT_MAX_TOKENS,
           providerApiKey: byokKey ?? undefined,
           meter: {

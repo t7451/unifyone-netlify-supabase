@@ -1,4 +1,8 @@
-import { invokeLLM } from "../../_core/llm";
+import {
+  FREE_TIER_FALLBACK_CHAIN,
+  GROQ_FALLBACK_MODEL,
+  invokeLLM,
+} from "../../_core/llm";
 
 export type ClaudeDecision = {
   allowed: boolean;
@@ -88,6 +92,8 @@ export async function evaluateWithClaude(
 
   try {
     const response = await invokeLLM({
+    model: `groq/${GROQ_FALLBACK_MODEL}`,
+    modelChain: [...FREE_TIER_FALLBACK_CHAIN],
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -147,6 +153,8 @@ export async function requestAlternativeAnalysis(
   question: string
 ) {
   const response = await invokeLLM({
+    model: `groq/${GROQ_FALLBACK_MODEL}`,
+    modelChain: [...FREE_TIER_FALLBACK_CHAIN],
     messages: [
       {
         role: "system",
