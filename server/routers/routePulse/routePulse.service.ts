@@ -1116,6 +1116,36 @@ async function fetchOSRM(
     : new Error("OSRM unreachable");
 }
 
+
+/**
+ * M28: TomTom Routing with traffic=true for a live ETA (not only as OSRM fallback).
+ * One call per OD — alternatives still use OSRM geometry + flow samples.
+ */
+async function fetchTomTomLiveDuration(
+  origin: LatLng,
+  destination: LatLng
+): Promise<number | null> {
+  const apiKey = ENV.tomtomApiKey;
+  if (!apiKey) return null;
+  try {
+    const url =
+      `https://api.tomtom.com/routing/1/calculateRoute/` +
+      `${origin.lat},${origin.lng}:${destination.lat},${destination.lng}/json` +
+      `?key=${apiKey}&traffic=true&travelMode=car&routeType=fastest`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8_000) });
+    if (!res.ok) return null;
+    const body = (await res.json()) as {
+      routes?: Array<{
+        summary?: { travelTimeInSeconds?: number; trafficDelayInSeconds?: number };
+      }>;
+    };
+    const sec = body.routes?.[0]?.summary?.travelTimeInSeconds;
+    return typeof sec === "number" && sec > 0 ? sec : null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchTomTomFallback(
   origin: LatLng,
   destination: LatLng
@@ -1888,12 +1918,13 @@ export async function getRoute(
   // call set per uncached query, so upstream quotas stay flat no matter
   // how many alternatives the router returns. Keys unset = clean no-ops.
   const combinedBbox = bboxForGeometries(baseRoutes.map(r => r.geometry));
-  const [tomtomIncidents, wazeAlerts] = combinedBbox
+  const [tomtomIncidents, wazeAlerts, tomtomLiveDurationS] = combinedBbox
     ? await Promise.all([
         fetchTomTomTrafficIncidents(combinedBbox),
         fetchWazeAlerts(combinedBbox),
+        fetchTomTomLiveDuration(origin, destination),
       ])
-    : [[], []];
+    : [[], [], null];
 
   const scoredRoutes: ScoredRoute[] = await Promise.all(
     baseRoutes.map(async r => {
@@ -1920,6 +1951,22 @@ export async function getRoute(
       if (flow && flow.samples >= 2 && flow.avgRatio > 0) {
         const clampedRatio = Math.max(0.3, Math.min(1.15, flow.avgRatio));
         liveDurationS = r.duration / clampedRatio;
+      }
+      // Prefer TomTom traffic-aware ETA when present — anchors all alts to
+      // a measured network delay, then scale by relative OSRM length.
+      if (
+        typeof tomtomLiveDurationS === "number" &&
+        tomtomLiveDurationS > 0 &&
+        baseRoutes[0]
+      ) {
+        const primaryOsrm = baseRoutes[0]!.duration || r.duration;
+        const scale = primaryOsrm > 0 ? r.duration / primaryOsrm : 1;
+        const tomtomScaled = tomtomLiveDurationS * scale;
+        // Blend 60% TomTom traffic ETA + 40% flow-adjusted OSRM when both exist
+        liveDurationS =
+          flow && flow.samples >= 2
+            ? tomtomScaled * 0.6 + liveDurationS * 0.4
+            : tomtomScaled;
       }
       const flowDelayMin = Math.max(
         0,

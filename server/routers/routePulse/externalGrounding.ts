@@ -178,7 +178,7 @@ export async function fetchTomTomTrafficIncidents(
   if (!key) return [];
 
   const fields = encodeURIComponent(
-    "{incidents{type,geometry{type,coordinates},properties{iconCategory,magnitudeOfDelay,from,to,length,delay,roadNumbers,events{description}}}}"
+    "{incidents{type,geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,from,to,length,delay,roadNumbers,events{description,code},startTime,endTime,tmc{countryCode,tableNumber,direction,points}}}}"
   );
   const url =
     `https://api.tomtom.com/traffic/services/5/incidentDetails?key=${key}` +
@@ -454,9 +454,9 @@ export async function fetchTomTomFlow(
   const key = ENV.tomtomApiKey;
   if (!key || coords.length === 0) return null;
 
-  // Up to 5 evenly spaced sample points along the route — enough to catch
-  // the slow stretch without burning quota on dense geometry.
-  const SAMPLE_COUNT = 5;
+  // Dense enough to catch mid-corridor jams; still bounded for freemium quota.
+  // ~14 samples × alternatives stays well under TomTom's 2.5k/day at modest traffic.
+  const SAMPLE_COUNT = Math.min(14, Math.max(6, Math.ceil(coords.length / 40)));
   const idxs = new Set<number>();
   for (let i = 0; i < SAMPLE_COUNT; i++) {
     idxs.add(

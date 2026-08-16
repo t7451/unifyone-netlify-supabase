@@ -2559,7 +2559,7 @@ export default function RoutePulse() {
                       </Marker>
                     ))}
                   {/* Traffic cameras along the recommended route (v6) */}
-                  {routeCameras.map(cameraMarker)}
+                  {camerasOn && routeCameras.map(cameraMarker)}
                 </>
               ) : (
                 // No route searched yet — show every active incident and
@@ -3146,21 +3146,19 @@ export default function RoutePulse() {
               >
                 <Layers className="w-4 h-4" />
               </button>
-              {!hasRoute && (
-                <button
-                  type="button"
-                  onClick={() => setCamerasOn(v => !v)}
-                  title={camerasOn ? "Hide traffic cameras" : "Show traffic cameras"}
-                  aria-label={camerasOn ? "Hide traffic cameras" : "Show traffic cameras"}
-                  className={`w-11 h-11 sm:w-9 sm:h-9 rounded-md backdrop-blur-md border shadow-lg flex items-center justify-center transition-colors ${
-                    camerasOn
-                      ? "bg-primary/90 text-primary-foreground border-primary"
-                      : "bg-background/90 hover:bg-background"
-                  }`}
-                >
-                  <Radio className="w-4 h-4" />
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setCamerasOn(v => !v)}
+                title={camerasOn ? "Hide traffic cameras" : "Show traffic cameras"}
+                aria-label={camerasOn ? "Hide traffic cameras" : "Show traffic cameras"}
+                className={`w-11 h-11 sm:w-9 sm:h-9 rounded-md backdrop-blur-md border shadow-lg flex items-center justify-center transition-colors ${
+                  camerasOn
+                    ? "bg-primary/90 text-primary-foreground border-primary"
+                    : "bg-background/90 hover:bg-background"
+                }`}
+              >
+                <Radio className="w-4 h-4" />
+              </button>
               <button
                 type="button"
                 onClick={handleToggleFullscreen}
@@ -3780,9 +3778,79 @@ export default function RoutePulse() {
                   <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                     <Radio className="w-3 h-3" />
                     Grounded with live TomTom + Google Maps data
+                    {typeof (
+                      routeQuery.data!.grounding as { flowSamples?: number }
+                    ).flowSamples === "number" &&
+                      (routeQuery.data!.grounding as { flowSamples: number })
+                        .flowSamples > 0 && (
+                        <span>
+                          {" "}
+                          ·{" "}
+                          {
+                            (
+                              routeQuery.data!.grounding as {
+                                flowSamples: number;
+                              }
+                            ).flowSamples
+                          }{" "}
+                          speed samples
+                        </span>
+                      )}
                   </p>
                 )}
               </div>
+
+              {/* Live TomTom traffic readout — makes flow data obvious */}
+              {(() => {
+                const flow = (
+                  routeQuery.data!.route as {
+                    flow?: {
+                      samples: number;
+                      avgRatio: number;
+                      worstRatio: number;
+                      roadClosedCount?: number;
+                      points?: Array<{
+                        currentMph: number | null;
+                        freeflowMph: number | null;
+                      }>;
+                    } | null;
+                  }
+                ).flow;
+                if (!flow || flow.samples < 1) return null;
+                const pct = Math.round(flow.avgRatio * 100);
+                const worst = Math.round(flow.worstRatio * 100);
+                const mphs = (flow.points ?? [])
+                  .map(p => p.currentMph)
+                  .filter((v): v is number => typeof v === "number");
+                const avgMph =
+                  mphs.length > 0
+                    ? Math.round(mphs.reduce((a, b) => a + b, 0) / mphs.length)
+                    : null;
+                const tone =
+                  pct < 55
+                    ? "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300"
+                    : pct < 75
+                      ? "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200"
+                      : "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200";
+                return (
+                  <div
+                    className={`rounded-lg border px-3 py-2.5 text-sm ${tone}`}
+                  >
+                    <p className="font-medium">
+                      Live traffic · {pct}% of free-flow
+                      {avgMph != null ? ` · ~${avgMph} mph avg` : ""}
+                    </p>
+                    <p className="text-xs opacity-90 mt-0.5">
+                      Slowest sample {worst}% of free-flow
+                      {flow.roadClosedCount
+                        ? ` · ${flow.roadClosedCount} closed segment(s)`
+                        : ""}
+                      {" · "}
+                      {flow.samples} TomTom probes along this route
+                    </p>
+                  </div>
+                );
+              })()}
 
               {/* Arrive-by planner — leave-time with an incident-sized buffer */}
               <div className="flex items-center gap-2 flex-wrap pt-4 border-t">
