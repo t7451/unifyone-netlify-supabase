@@ -145,7 +145,7 @@
     "add": "^2.0.6",
     "autoprefixer": "^10.4.20",
     "drizzle-kit": "^0.18.1",
-    "esbuild": "^0.28.1",
+    "esbuild": "^0.28.2",
     "eslint": "^9.0.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.0",
@@ -165,57 +165,6 @@
     "vitest": "^4.1.0"
   },
   "packageManager": "pnpm@10.27.0",
-  "pnpm": {
-    "patchedDependencies": {
-      "wouter@3.7.1": "patches/wouter@3.7.1.patch"
-    },
-    "overrides": {
-      "tailwindcss>nanoid": "3.3.7",
-      "fast-xml-parser": ">=5.7.0",
-      "rollup": ">=4.59.0",
-      "tar": ">=7.5.19",
-      "lodash": ">=4.18.1",
-      "lodash-es": ">=4.18.0",
-      "path-to-regexp": ">=6.3.0",
-      "express@4.21.2>path-to-regexp": "0.1.13",
-      "dompurify": ">=3.4.0",
-      "qs": ">=6.15.2",
-      "js-cookie": ">=3.0.7",
-      "tmp": ">=0.2.6",
-      "uuid@11": ">=11.1.1 <12",
-      "ip-address": ">=10.3.1",
-      "@smithy/config-resolver": ">=4.4.0",
-      "svix>uuid": ">=11.1.1 <12",
-      "postcss": ">=8.5.18",
-      "follow-redirects": ">=1.16.0",
-      "hono": ">=4.12.25",
-      "uuid@13": ">=14.0.0",
-      "uuid@12": ">=14.0.0",
-      "esbuild@<0.25.0": ">=0.25.0",
-      "miniflare>undici": ">=6.27.0 <7",
-      "miniflare>ws": ">=8.20.1",
-      "js-yaml": ">=4.3.1 <5",
-      "brace-expansion@1": ">=1.1.16 <2",
-      "brace-expansion@2": ">=2.1.2 <3",
-      "brace-expansion@5": ">=5.0.9 <6",
-      "fast-uri": ">=3.1.5 <4",
-      "svgo": ">=4.0.2",
-      "form-data": ">=4.0.6",
-      "axios": ">=1.18.0",
-      "@astrojs/react>vite": ">=6.4.3 <7",
-      "sharp": ">=0.35.0"
-    },
-    "onlyBuiltDependencies": [
-      "@clerk/shared",
-      "@parcel/watcher",
-      "@tailwindcss/oxide",
-      "cpu-features",
-      "es5-ext",
-      "esbuild",
-      "sharp",
-      "ssh2"
-    ]
-  },
   "lint-staged": {
     "*.{ts,tsx}": [
       "eslint --fix --max-warnings=20"
