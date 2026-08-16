@@ -1,11 +1,9 @@
 -- ── Migration 0057: RoutePulse historical bottleneck density ──────────────────
 --
--- Powers the premium "chronic bottleneck" signal: how often incidents show up
--- along a candidate corridor over the last N days (active + cleared).
---
--- NOTE: live traffic_incidents may not have created_at (schema drift from the
--- original 0051 file). Use started_at / cleared_at only — those are present on
--- the production table and used throughout ingest + RPCs.
+-- Live traffic_incidents columns (production):
+--   reported_at, started_at, estimated_end_at, cleared_at
+--   (no created_at — do not reference it)
+-- Timestamp preference: started_at → reported_at → cleared_at
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION incident_density_near_route(
@@ -38,9 +36,10 @@ AS $$
          OR ti.incident_type ILIKE '%traffic%'
          OR ti.incident_type ILIKE '%slow%'
     )::bigint AS congestion_count,
-    MAX(COALESCE(ti.started_at, ti.cleared_at)) AS latest_at
+    MAX(COALESCE(ti.started_at, ti.reported_at, ti.cleared_at)) AS latest_at
   FROM traffic_incidents ti, route
-  WHERE COALESCE(ti.started_at, ti.cleared_at) >= (now() - make_interval(days => days_back))
+  WHERE COALESCE(ti.started_at, ti.reported_at, ti.cleared_at)
+        >= (now() - make_interval(days => days_back))
     AND ST_DWithin(ti.location, route.g, buffer_meters);
 $$;
 
