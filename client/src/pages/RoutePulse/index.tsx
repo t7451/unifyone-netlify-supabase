@@ -174,6 +174,13 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *   - Screen Wake Lock while trip mode is active
  *   - Stop list reorder controls
  *
+ * v27 (M1 complete):
+ *   - OG title includes ETA · distance when a route is active
+ *   - Alternatives: max 3 one-liners (time · distance · one difference)
+ *   - Lettered stop markers A/B/C on the map
+ *   - Mobile sheet peek: time + actions only; steps/incidents on expand
+ *   - Traffic cameras on demand (toggle), not on first paint
+ *
  * v9 (mobile optimization suite):
  *   - Search card auto-collapses into a one-line chip once a route is on
  *     the map (tap to edit) — the map is the product on a phone
@@ -361,6 +368,15 @@ function pinIcon(color: string, size = 16) {
 }
 const ORIGIN_ICON = pinIcon("#3b82f6");
 const DEST_ICON = pinIcon("#ef4444");
+/** A/B/C stop markers for multi-stop plans (M1). */
+function letterPinIcon(letter: string, color = "#8b5cf6") {
+  return L.divIcon({
+    className: "",
+    html: `<div style="width:22px;height:22px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font:700 11px/1 system-ui,sans-serif;color:white">${letter}</div>`,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
+  });
+}
 const USER_LOCATION_ICON = L.divIcon({
   className: "",
   html: `<div class="animate-pulse" style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 0 0 4px rgba(37,99,235,0.25)"></div>`,
@@ -785,6 +801,57 @@ function FitBounds({
   return null;
 }
 
+/** M1: single plain-language difference vs the recommended route. */
+function routeOneLineDifference(
+  alt: {
+    distance: number;
+    duration: number;
+    incidents: unknown[];
+    pathStyle?: string;
+    delayEstimateMin?: number;
+  },
+  chosen: {
+    distance: number;
+    duration: number;
+    incidents: unknown[];
+    pathStyle?: string;
+    delayEstimateMin?: number;
+  } | null,
+  verdict: string | undefined,
+  isChosen: boolean
+): string {
+  if (isChosen) return "Recommended";
+  if (verdict) {
+    const clean = verdict.replace(/\s+/g, " ").trim();
+    return clean.length > 56 ? clean.slice(0, 53) + "…" : clean;
+  }
+  if (!chosen) return "Alternative";
+  if (alt.pathStyle === "surface" && chosen.pathStyle !== "surface") {
+    return "Surface streets · avoids freeways";
+  }
+  if (alt.pathStyle !== "surface" && chosen.pathStyle === "surface") {
+    return "Main roads · more freeway";
+  }
+  const altMin = Math.round(
+    (typeof alt.duration === "number" ? alt.duration : 0) / 60
+  );
+  const chMin = Math.round(
+    (typeof chosen.duration === "number" ? chosen.duration : 0) / 60
+  );
+  const dMin = altMin - chMin;
+  if (dMin >= 3) return `+${dMin} min vs recommended`;
+  if (dMin <= -3) return `${Math.abs(dMin)} min faster`;
+  const aInc = alt.incidents?.length ?? 0;
+  const cInc = chosen.incidents?.length ?? 0;
+  if (aInc < cInc) return "Fewer incidents on path";
+  if (aInc > cInc) return "More incidents on path";
+  const aMi = alt.distance / 1609.34;
+  const cMi = chosen.distance / 1609.34;
+  if (aMi + 0.4 < cMi) return "Shorter distance";
+  if (aMi > cMi + 0.4) return "Longer distance";
+  return "Similar time · different path";
+}
+
 export default function RoutePulse() {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
@@ -846,6 +913,8 @@ export default function RoutePulse() {
   /** v25: secondary intel (health, local notes, value, confidence) stays
    *  collapsed by default — map + ETA first, details on demand. */
   const [detailsOpen, setDetailsOpen] = useState(false);
+  /** M1: viewport cameras only when the driver asks — keeps first paint light. */
+  const [camerasOn, setCamerasOn] = useState(false);
   /** Multi-stop editor hidden until the driver asks for it. */
   const [stopsOpen, setStopsOpen] = useState(false);
   // Ticker so the "updated Xs ago" live indicator stays honest.
@@ -1075,6 +1144,7 @@ export default function RoutePulse() {
   // the same cadence the ingester polls ODOT's camera list.
   const camerasQuery = trpc.routePulse.listCameras.useQuery(viewportBbox, {
     refetchInterval: 120_000,
+    enabled: camerasOn && !!viewportBbox,
   });
   const { recent, starred, addRoute, clearRoutes, starRoute, unstarRoute } =
     useRecentRoutes();
@@ -2019,15 +2089,24 @@ export default function RoutePulse() {
       <PageHead
         title={
           hasRoute
-            ? `${routeQuery.data!.origin.displayName.split(",")[0]} → ${routeQuery.data!.destination.displayName.split(",")[0]} | RoutePulse`
+            ? `${Math.round(displayDurationS(routeQuery.data!.route) / 60)} min · ${(routeQuery.data!.route.distance / 1609.34).toFixed(1)} mi · ${routeQuery.data!.origin.displayName.split(",")[0]} → ${routeQuery.data!.destination.displayName.split(",")[0]} | RoutePulse`
             : "RoutePulse — Free AI Route & Incident Checker | UnifyOne"
         }
         description={
           hasRoute
-            ? `Route from ${routeQuery.data!.origin.displayName} to ${routeQuery.data!.destination.displayName}: ${routeQuery.data!.route.incidents.length} incident${routeQuery.data!.route.incidents.length === 1 ? "" : "s"} reported. ${routeQuery.data!.explanation}`
+            ? `${Math.round(displayDurationS(routeQuery.data!.route) / 60)} min drive (${(routeQuery.data!.route.distance / 1609.34).toFixed(1)} mi). ${routeQuery.data!.route.incidents.length} incident${routeQuery.data!.route.incidents.length === 1 ? "" : "s"} on path. ${routeQuery.data!.explanation}`.slice(0, 160)
             : "Free tool for gig drivers: check a route for live incidents and get an AI explanation of what to watch for before you drive. No account required, built on OpenStreetMap."
         }
-        canonical={CANONICAL}
+        canonical={
+          submitted
+            ? `${CANONICAL}?${buildShareSearchParams({
+                origin: submitted.origin,
+                destination: submitted.destination,
+                preference: submitted.preference,
+                stops: submitted.stops,
+              })}`
+            : CANONICAL
+        }
         jsonLd={jsonLd}
       />
 
@@ -2212,6 +2291,29 @@ export default function RoutePulse() {
                     ]}
                     icon={DEST_ICON}
                   />
+                  {/* M1: lettered stop markers A, B, C… */}
+                  {(
+                    (
+                      routeQuery.data as {
+                        stopPlan?: {
+                          stops: Array<{ lat: number; lng: number }>;
+                        };
+                        stops?: Array<{ lat: number; lng: number }>;
+                      }
+                    ).stopPlan?.stops ??
+                    (routeQuery.data as { stops?: Array<{ lat: number; lng: number }> })
+                      .stops ??
+                    []
+                  ).map((s, i) => (
+                    <Marker
+                      key={`stop-${i}`}
+                      position={[s.lat, s.lng]}
+                      icon={letterPinIcon(
+                        String.fromCharCode(65 + (i % 26)),
+                        "#8b5cf6"
+                      )}
+                    />
+                  ))}
                   {displayedLine &&
                     (segmentLines.length > 0 ? (
                       <>
@@ -2353,14 +2455,16 @@ export default function RoutePulse() {
                       </Marker>
                     ))}
                   </MarkerClusterGroup>
-                  <MarkerClusterGroup
-                    chunkedLoading
-                    maxClusterRadius={50}
-                    spiderfyOnMaxZoom
-                    iconCreateFunction={cameraClusterIcon}
-                  >
-                    {activeCameras.map(cameraMarker)}
-                  </MarkerClusterGroup>
+                  {camerasOn && (
+                    <MarkerClusterGroup
+                      chunkedLoading
+                      maxClusterRadius={50}
+                      spiderfyOnMaxZoom
+                      iconCreateFunction={cameraClusterIcon}
+                    >
+                      {activeCameras.map(cameraMarker)}
+                    </MarkerClusterGroup>
+                  )}
                 </>
               )}
             </MapContainer>
@@ -2885,6 +2989,21 @@ export default function RoutePulse() {
               >
                 <Layers className="w-4 h-4" />
               </button>
+              {!hasRoute && (
+                <button
+                  type="button"
+                  onClick={() => setCamerasOn(v => !v)}
+                  title={camerasOn ? "Hide traffic cameras" : "Show traffic cameras"}
+                  aria-label={camerasOn ? "Hide traffic cameras" : "Show traffic cameras"}
+                  className={`w-11 h-11 sm:w-9 sm:h-9 rounded-md backdrop-blur-md border shadow-lg flex items-center justify-center transition-colors ${
+                    camerasOn
+                      ? "bg-primary/90 text-primary-foreground border-primary"
+                      : "bg-background/90 hover:bg-background"
+                  }`}
+                >
+                  <Radio className="w-4 h-4" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleToggleFullscreen}
@@ -2975,8 +3094,8 @@ export default function RoutePulse() {
                   height: sheetExpanded
                     ? "72vh"
                     : tripActive
-                      ? "22vh"
-                      : "34vh",
+                      ? "20vh"
+                      : "26vh",
                 }}
                 transition={{ type: "spring", stiffness: 340, damping: 32 }}
               >
@@ -3049,10 +3168,8 @@ export default function RoutePulse() {
                   </p>
                 </button>
 
-                {/* Glanceable, horizontal-scroll incident cards — visible
-                    at peek height too, so the "3 hazards, 2 min delay"
-                    gist never requires expanding the sheet. */}
-                {routeQuery.data!.route.incidents.length > 0 && (
+                {/* M1: incidents only when expanded — peek stays time + actions */}
+                {sheetExpanded && routeQuery.data!.route.incidents.length > 0 && (
                   <div
                     className="flex gap-2 overflow-x-auto px-4 pb-3 shrink-0 [-webkit-overflow-scrolling:touch]"
                     role="list"
@@ -3642,94 +3759,65 @@ export default function RoutePulse() {
                 </div>
               )}
 
-              {/* Route comparison — every scored option, tappable to preview
-                its geometry on the map. */}
+              {/* M1: max 3 alternatives — one line each */}
               {allRoutes.length > 1 && (
-                <div className="pt-4 border-t space-y-2">
+                <div className="pt-4 border-t space-y-1.5">
                   <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide flex items-center gap-1.5">
                     <RouteIcon className="w-3.5 h-3.5" />
-                    Compare routes
+                    Routes
                   </p>
-                  <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-                    {allRoutes.map((alt, i) => {
+                  <div className="space-y-1">
+                    {allRoutes.slice(0, 3).map((alt, i) => {
                       const isChosen = i === chosenIdx;
                       const isDisplayed = i === displayedIdx;
-                      const delayMin =
-                        (alt.incidentDelayMin as number | undefined) ?? 0;
+                      const chosenRoute =
+                        chosenIdx >= 0 ? allRoutes[chosenIdx]! : null;
+                      const diff = routeOneLineDifference(
+                        alt as {
+                          distance: number;
+                          duration: number;
+                          incidents: unknown[];
+                          pathStyle?: string;
+                        },
+                        chosenRoute
+                          ? (chosenRoute as {
+                              distance: number;
+                              duration: number;
+                              incidents: unknown[];
+                              pathStyle?: string;
+                            })
+                          : null,
+                        routeVerdicts?.[i],
+                        isChosen
+                      );
                       return (
-                        <motion.button
+                        <button
                           key={i}
                           type="button"
-                          whileTap={{ scale: 0.96 }}
                           onClick={() => setPreviewIdx(isChosen ? null : i)}
-                          className={`shrink-0 min-w-[132px] rounded-lg border px-3 py-2 text-left transition-colors ${
+                          className={`w-full flex items-baseline justify-between gap-3 rounded-lg border px-3 py-2 text-left transition-colors min-h-[44px] ${
                             isDisplayed
                               ? "border-primary/50 bg-primary/10"
-                              : "hover:bg-muted"
+                              : "hover:bg-muted/60"
                           }`}
                         >
-                          <span className="flex items-center gap-1.5 text-xs font-medium">
-                            Route {i + 1}
-                            {isChosen && (
-                              <Badge
-                                variant="outline"
-                                className="text-[9px] px-1 py-0 border-primary/40 text-primary"
-                              >
-                                Recommended
-                              </Badge>
-                            )}
-                          </span>
-                          <span className="block text-xs text-muted-foreground mt-0.5">
-                            {(alt.distance / 1609.34).toFixed(1)} mi ·{" "}
+                          <span className="text-sm font-medium tabular-nums shrink-0">
                             {Math.round(displayDurationS(alt) / 60)} min
-                          </span>
-                          <span
-                            className={`block text-[11px] mt-0.5 ${
-                              alt.incidents.length > 0
-                                ? "text-amber-600 dark:text-amber-400"
-                                : "text-emerald-600 dark:text-emerald-400"
-                            }`}
-                          >
-                            {alt.incidents.length === 0
-                              ? "No incidents"
-                              : `${alt.incidents.length} incident${alt.incidents.length === 1 ? "" : "s"}`}
-                            {delayMin > 0 && ` · est. +${delayMin} min`}
-                          </span>
-                          <span className="block text-[10px] text-muted-foreground mt-0.5">
-                            Stress{" "}
-                            {typeof (alt as { stressScore?: number }).stressScore ===
-                            "number"
-                              ? (alt as { stressScore: number }).stressScore
-                              : "—"}
-                            {" · "}
-                            Energy{" "}
-                            {typeof (alt as { energyScore?: number }).energyScore ===
-                            "number"
-                              ? (alt as { energyScore: number }).energyScore
-                              : "—"}
-                            {(alt as { pathStyle?: string }).pathStyle ===
-                              "surface" && " · Surface streets"}
-                            {(alt as { pathStyle?: string }).pathStyle ===
-                              "standard" && " · Main roads"}
-                            {(alt as { pathStyle?: string }).pathStyle === "surface" &&
-                              ` · Surface streets`}
-                          </span>
-                          {/* v12: the AI's reason this route loses — the
-                            "why not" behind the recommendation. */}
-                          {!isChosen && routeVerdicts?.[i] && (
-                            <span className="block text-[10px] text-muted-foreground mt-1 italic leading-snug">
-                              {routeVerdicts[i]}
+                            <span className="text-muted-foreground font-normal">
+                              {" "}
+                              · {(alt.distance / 1609.34).toFixed(1)} mi
                             </span>
-                          )}
-                        </motion.button>
+                          </span>
+                          <span className="text-xs text-muted-foreground truncate text-right">
+                            {diff}
+                          </span>
+                        </button>
                       );
                     })}
                   </div>
                   {previewIdx !== null && (
                     <p className="text-[11px] text-muted-foreground">
-                      Previewing Route {previewIdx + 1} on the map — tap
-                      Recommended to switch back. Stats above are still for the
-                      recommended route.
+                      Preview on map — tap recommended to switch back.
                     </p>
                   )}
                 </div>
