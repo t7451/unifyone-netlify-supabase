@@ -26,7 +26,7 @@ Status: **Phase 0 live** (shell SW + registration). Phase 1–3 planned.
 - **Stale HTML**: navigations stay network-first so deploys are visible immediately.
 - **Auth / API**: never cache `/api/*` responses in the SW (privacy + correctness).
 
-## Phase 1 — Offline-lite RoutePulse (next build)
+## Phase 1 — Offline-lite RoutePulse (**shipped v28**)
 
 1. On successful `getRoute`, client writes to IndexedDB:
    - route summary, maneuvers, geometry, generated_at, share URL.

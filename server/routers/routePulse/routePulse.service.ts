@@ -1066,39 +1066,54 @@ async function fetchOSRM(
   // alternatives only when no intermediate stops — OSRM alternatives with
   // many waypoints are expensive and often empty.
   const alternatives = via.length === 0 ? "true" : "false";
-  const url =
-    `${ENV.osrmUrl}/route/v1/driving/` +
-    coords +
-    `?alternatives=${alternatives}&geometries=geojson&overview=full&steps=true${exclude}`;
-
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`OSRM error (${res.status})`);
-  }
-  const data = await res.json();
-  if (data.code !== "Ok" || !data.routes?.length) {
-    // A clean "no route" answer from a healthy OSRM — not an outage, so
-    // don't fall back to TomTom for this, just surface it as NOT_FOUND.
-    // Surface-streets requests may legitimately fail for some OD pairs;
-    // callers treat that as an empty set rather than a hard error when
-    // excludeMotorway is set.
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: opts.excludeMotorway
-        ? "No surface-streets route found between those points"
-        : "No route found between those points",
-    });
-  }
   const pathStyle: "standard" | "surface" = opts.excludeMotorway
     ? "surface"
     : "standard";
-  return (data.routes as OsrmRoute[]).map(r => ({
-    distance: r.distance,
-    duration: r.duration,
-    geometry: r.geometry,
-    maneuvers: extractManeuvers(r),
-    pathStyle,
-  }));
+  const query =
+    `?alternatives=${alternatives}&geometries=geojson&overview=full&steps=true${exclude}`;
+  const bases = [ENV.osrmUrl, ENV.osrmFallbackUrl].filter(
+    (u, i, arr) => typeof u === "string" && u.length > 0 && arr.indexOf(u) === i
+  );
+
+  let lastErr: unknown = null;
+  for (const base of bases) {
+    const url = `${base.replace(/\/+$/, "")}/route/v1/driving/${coords}${query}`;
+    try {
+      const res = await fetch(url);
+      // Rate limit / upstream outage → try next base
+      if (res.status === 429 || res.status >= 500) {
+        lastErr = new Error(`OSRM error (${res.status}) at ${base}`);
+        continue;
+      }
+      if (!res.ok) {
+        throw new Error(`OSRM error (${res.status})`);
+      }
+      const data = await res.json();
+      if (data.code !== "Ok" || !data.routes?.length) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: opts.excludeMotorway
+            ? "No surface-streets route found between those points"
+            : "No route found between those points",
+        });
+      }
+      return (data.routes as OsrmRoute[]).map(r => ({
+        distance: r.distance,
+        duration: r.duration,
+        geometry: r.geometry,
+        maneuvers: extractManeuvers(r),
+        pathStyle,
+      }));
+    } catch (err) {
+      if (err instanceof TRPCError) throw err;
+      lastErr = err;
+      // network failure → try fallback base
+      continue;
+    }
+  }
+  throw lastErr instanceof Error
+    ? lastErr
+    : new Error("OSRM unreachable");
 }
 
 async function fetchTomTomFallback(

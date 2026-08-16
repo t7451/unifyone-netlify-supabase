@@ -25,6 +25,16 @@ import {
   appleMapsDirectionsUrl,
   buildShareSearchParams,
 } from "./mapHandoff";
+import {
+  saveLastRoute,
+  loadLastRoute,
+  saveActiveTrip,
+  clearActiveTrip,
+  distanceToPolylineM,
+  OFF_ROUTE_THRESHOLD_M,
+  type OfflineRouteSnapshot,
+} from "./routeOfflineStore";
+import { warmTripTiles, clearTripTiles } from "./tileCache";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -180,6 +190,12 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *   - Lettered stop markers A/B/C on the map
  *   - Mobile sheet peek: time + actions only; steps/incidents on expand
  *   - Traffic cameras on demand (toggle), not on first paint
+ *
+ * v28 (M2 + M3):
+ *   - IndexedDB last-route + active-trip offline snapshots
+ *   - Off-route detection → explicit Recalculate (no silent OSRM loop)
+ *   - Trip-start tile warm (quota-capped Cache API)
+ *   - Dual OSRM_URL + OSRM_FALLBACK_URL; PDX golden routes; TriMet landmarks
  *
  * v9 (mobile optimization suite):
  *   - Search card auto-collapses into a one-line chip once a route is on
@@ -915,6 +931,9 @@ export default function RoutePulse() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   /** M1: viewport cameras only when the driver asks — keeps first paint light. */
   const [camerasOn, setCamerasOn] = useState(false);
+  const [offRoute, setOffRoute] = useState(false);
+  const [offlineSnapshot, setOfflineSnapshot] = useState<OfflineRouteSnapshot | null>(null);
+  const offRouteStrikesRef = useRef(0);
   /** Multi-stop editor hidden until the driver asks for it. */
   const [stopsOpen, setStopsOpen] = useState(false);
   // Ticker so the "updated Xs ago" live indicator stays honest.
@@ -984,6 +1003,13 @@ export default function RoutePulse() {
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
     };
+  }, []);
+
+  // M2: hydrate offline snapshot for dead-zone UI
+  useEffect(() => {
+    void loadLastRoute().then(s => {
+      if (s) setOfflineSnapshot(s);
+    });
   }, []);
 
   // Read permalink params on mount so shared routes load immediately.
@@ -1146,6 +1172,14 @@ export default function RoutePulse() {
     refetchInterval: 120_000,
     enabled: camerasOn && !!viewportBbox,
   });
+  const transitQuery = trpc.routePulse.listTransitLandmarks.useQuery(
+    {
+      lat: routeQuery.data?.origin.lat ?? 45.52,
+      lng: routeQuery.data?.origin.lng ?? -122.67,
+      radiusKm: 12,
+    },
+    { enabled: !!routeQuery.data?.origin, staleTime: 60 * 60 * 1000 }
+  );
   const { recent, starred, addRoute, clearRoutes, starRoute, unstarRoute } =
     useRecentRoutes();
 
@@ -1514,7 +1548,36 @@ export default function RoutePulse() {
   useEffect(() => {
     setTripActive(false);
     setNextStepIdx(0);
+    setOffRoute(false);
+    offRouteStrikesRef.current = 0;
   }, [submitted]);
+
+  // M2: off-route detection — require 2 consecutive strikes before prompting.
+  useEffect(() => {
+    if (!tripActive || !userLocation || !routeLine?.length) {
+      return;
+    }
+    const [lat, lng] = userLocation as [number, number];
+    const line = routeLine.map(p => {
+      const arr = p as [number, number];
+      return [arr[0], arr[1]] as [number, number];
+    });
+    const dist = distanceToPolylineM(lat, lng, line);
+    if (dist > OFF_ROUTE_THRESHOLD_M) {
+      offRouteStrikesRef.current += 1;
+      if (offRouteStrikesRef.current >= 2) setOffRoute(true);
+    } else {
+      offRouteStrikesRef.current = 0;
+      setOffRoute(false);
+    }
+  }, [userLocation, tripActive, routeLine]);
+
+  // Clear trip tile pack when trip ends
+  useEffect(() => {
+    if (!tripActive) {
+      void clearActiveTrip();
+    }
+  }, [tripActive]);
 
   const startTrip = () => {
     if (!tracking) {
@@ -1523,11 +1586,46 @@ export default function RoutePulse() {
     }
     setNextStepIdx(0);
     setTripActive(true);
-    // v20: trip mode is map-first — collapse search chrome and sheet peek
-    // so the guidance banner + road are the only things competing for attention.
+    setOffRoute(false);
+    offRouteStrikesRef.current = 0;
     setSearchCollapsed(true);
     setSheetExpanded(false);
     toast.success("Trip started — follow the banner");
+    // M2: persist trip payload + warm a small tile pack for the route bbox
+    if (offlineSnapshot) void saveActiveTrip(offlineSnapshot);
+    const geom = routeQuery.data?.route.geometry as
+      | { coordinates: [number, number][] }
+      | undefined;
+    if (geom?.coordinates?.length) {
+      let minLat = 90,
+        maxLat = -90,
+        minLng = 180,
+        maxLng = -180;
+      for (const [lng, lat] of geom.coordinates) {
+        minLat = Math.min(minLat, lat);
+        maxLat = Math.max(maxLat, lat);
+        minLng = Math.min(minLng, lng);
+        maxLng = Math.max(maxLng, lng);
+      }
+      void warmTripTiles({ minLat, minLng, maxLat, maxLng, zoom: 13 });
+    }
+  };
+
+  /** M2: re-route from current GPS without silent auto-loop. */
+  const handleRecalculateFromHere = () => {
+    if (!userLocation || !submitted) return;
+    const [lat, lng] = userLocation as [number, number];
+    const originStr = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    setOrigin(originStr);
+    setOffRoute(false);
+    offRouteStrikesRef.current = 0;
+    setSubmitted({
+      origin: originStr,
+      destination: submitted.destination,
+      preference: submitted.preference,
+      stops: submitted.stops ?? [],
+    });
+    toast.message("Recalculating from your position…");
   };
 
   const nextStep: ManeuverStep | null =
@@ -1548,7 +1646,7 @@ export default function RoutePulse() {
         )
       : null;
 
-  // v11: persist the last successful route result for the offline fallback.
+  // v11 + M2: persist last successful route (localStorage + IndexedDB).
   useEffect(() => {
     const d = routeQuery.data;
     if (!d) return;
@@ -1566,7 +1664,28 @@ export default function RoutePulse() {
     } catch {
       // Storage full/disabled — the offline card just won't appear.
     }
-  }, [routeQuery.data]);
+    const maneuvers = (d.route.maneuvers ?? []).map(m => ({
+      instruction: m.instruction,
+      distanceM: m.distanceM,
+      location: m.location as [number, number] | undefined,
+    }));
+    const offline: OfflineRouteSnapshot = {
+      savedAt: Date.now(),
+      originLabel: d.origin.displayName,
+      destinationLabel: d.destination.displayName,
+      preference: submitted?.preference,
+      stops: submitted?.stops,
+      miles: d.route.distance / 1609.34,
+      minutes: Math.round(displayDurationS(d.route) / 60),
+      incidentCount: d.route.incidents.length,
+      explanation: d.explanation,
+      geometry: d.route.geometry as OfflineRouteSnapshot["geometry"],
+      maneuvers,
+      sharePath: window.location.pathname + window.location.search,
+    };
+    setOfflineSnapshot(offline);
+    void saveLastRoute(offline);
+  }, [routeQuery.data, submitted]);
 
   // v11: "/" focuses the origin field (desktop power users), matching the
   // shortcut convention in Google Maps / GitHub / most search UIs.
@@ -2144,9 +2263,29 @@ export default function RoutePulse() {
           >
             <WifiOff className="w-4 h-4 shrink-0" />
             <span>
-              No connection — anything shown right now is cached and may not
-              reflect current conditions.
+              No connection — showing your last saved route when available
+              {offlineSnapshot
+                ? ` (${offlineSnapshot.minutes} min · ${offlineSnapshot.miles.toFixed(1)} mi).`
+                : "."}
             </span>
+          </div>
+        )}
+        {tripActive && offRoute && (
+          <div
+            role="status"
+            className="mb-4 flex flex-wrap items-center gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm"
+          >
+            <span className="flex-1 text-amber-900 dark:text-amber-100">
+              You appear to be off the planned route.
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              className="shrink-0"
+              onClick={handleRecalculateFromHere}
+            >
+              Recalculate from here
+            </Button>
           </div>
         )}
 
@@ -2313,6 +2452,24 @@ export default function RoutePulse() {
                         "#8b5cf6"
                       )}
                     />
+                  ))}
+                  {(transitQuery.data ?? []).slice(0, 24).map(lm => (
+                    <Marker
+                      key={lm.id}
+                      position={[lm.lat, lm.lng]}
+                      icon={letterPinIcon(
+                        lm.kind === "max" ? "M" : lm.kind === "streetcar" ? "S" : "T",
+                        "#0d9488"
+                      )}
+                      title={lm.name}
+                    >
+                      <Popup>
+                        <span className="text-xs font-medium">{lm.name}</span>
+                        <span className="block text-[10px] text-muted-foreground">
+                          TriMet {lm.kind.replace("_", " ")}
+                        </span>
+                      </Popup>
+                    </Marker>
                   ))}
                   {displayedLine &&
                     (segmentLines.length > 0 ? (

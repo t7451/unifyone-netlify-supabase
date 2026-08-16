@@ -2,6 +2,7 @@ import { z } from "zod";
 import { publicRateLimitedProcedure, router } from "../../_core/trpc";
 import { publicFormLimiter, typeaheadLimiter } from "../../_core/rateLimiter";
 import * as service from "./routePulse.service";
+import { landmarksNear } from "./trimetContext";
 
 const address = z
   .string()
@@ -86,5 +87,21 @@ export const routePulseRouter = router({
     )
     .query(async ({ input }) => {
       return service.listCameras(input);
+    }),
+
+  /** M3: TriMet landmarks near a point (map context, not routing). */
+  listTransitLandmarks: publicRateLimitedProcedure(
+    publicFormLimiter,
+    "routepulse:landmarks"
+  )
+    .input(
+      z.object({
+        lat: z.number(),
+        lng: z.number(),
+        radiusKm: z.number().min(1).max(30).optional().default(10),
+      })
+    )
+    .query(async ({ input }) => {
+      return landmarksNear(input.lat, input.lng, input.radiusKm);
     }),
 });

@@ -36,6 +36,7 @@ vi.mock("../../lib/kaiModels", () => ({
 vi.mock("../../_core/env", () => ({
   ENV: {
     osrmUrl: "https://router.project-osrm.org",
+    osrmFallbackUrl: "",
     tomtomApiKey: "",
     nominatimUrl: "https://nominatim.openstreetmap.org",
     nominatimUserAgent: "UnifyOne-RoutePulse/1.0 (+https://example.com)",

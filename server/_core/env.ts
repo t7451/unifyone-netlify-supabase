@@ -99,9 +99,12 @@ export const ENV = {
   builtMediaUrl: process.env.BUILT_MEDIA_URL ?? "",
   builtMediaApiKey: process.env.BUILT_MEDIA_API_KEY ?? "",
   // ── RoutePulse (hyperlocal route intelligence) ──
-  // OSRM routing engine — public demo server by default, swap for a
-  // self-hosted instance in production (see docs).
+  // OSRM routing engine — set OSRM_URL to a self-hosted OR/WA extract for
+  // production (M3). Public demo is the default and the rate-limit fallback.
   osrmUrl: process.env.OSRM_URL ?? "https://router.project-osrm.org",
+  // Optional second endpoint when primary returns 429/5xx (e.g. self-hosted
+  // primary + public demo fallback, or the reverse).
+  osrmFallbackUrl: process.env.OSRM_FALLBACK_URL ?? "",
   // Road511 unified 511 API (57 US/CA jurisdictions).
   road511ApiKey: process.env.R511_API_KEY ?? "",
   // ODOT TripCheck API (Oregon-native incidents/cameras/road conditions).
