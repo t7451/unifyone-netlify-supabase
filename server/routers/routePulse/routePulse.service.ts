@@ -54,6 +54,12 @@
  * slightly longer backroad / lower-congestion alternative when it reduces
  * stress or energy enough. This is the core differentiator vs Google Maps.
  *
+ * v21: preference-aware candidate generation. For balanced/quiet/fuel we
+ * also request an OSRM surface-streets option (exclude=motorway) and merge
+ * it into the candidate set so ranking can actually pick a backroad when
+ * the weights say it wins — not just re-rank the same freeway alternatives
+ * Google would show.
+ *
  * ---------------------------------------------------------------------
  * NOTES FOR KIMI (2026-08-09 audit/hardening pass — Claude, merged post-v13)
  * ---------------------------------------------------------------------
@@ -662,6 +668,12 @@ export type ScoredRoute = {
   energyScore: number;
   maneuverCount: number;
   /**
+   * v21: how this candidate was generated.
+   * - standard: default OSRM driving graph (may include motorways)
+   * - surface: OSRM with exclude=motorway (backroads / surface streets)
+   */
+  pathStyle?: "standard" | "surface";
+  /**
    * Turn-by-turn steps. Empty when the routing engine can't provide them
    * (e.g. the TomTom fallback path) — the client hides the panel then.
    */
@@ -802,6 +814,7 @@ type BaseRoute = {
   duration: number;
   geometry: { type: "LineString"; coordinates: [number, number][] };
   maneuvers: RouteManeuver[];
+  pathStyle: "standard" | "surface";
 };
 
 /** OSRM maneuver type+modifier → driver instruction. Deterministic and
@@ -918,12 +931,14 @@ function extractManeuvers(route: OsrmRoute): RouteManeuver[] {
 
 async function fetchOSRM(
   origin: LatLng,
-  destination: LatLng
+  destination: LatLng,
+  opts: { excludeMotorway?: boolean } = {}
 ): Promise<BaseRoute[]> {
+  const exclude = opts.excludeMotorway ? "&exclude=motorway" : "";
   const url =
     `${ENV.osrmUrl}/route/v1/driving/` +
     `${origin.lng},${origin.lat};${destination.lng},${destination.lat}` +
-    `?alternatives=true&geometries=geojson&overview=full&steps=true`;
+    `?alternatives=true&geometries=geojson&overview=full&steps=true${exclude}`;
 
   const res = await fetch(url);
   if (!res.ok) {
@@ -933,16 +948,25 @@ async function fetchOSRM(
   if (data.code !== "Ok" || !data.routes?.length) {
     // A clean "no route" answer from a healthy OSRM — not an outage, so
     // don't fall back to TomTom for this, just surface it as NOT_FOUND.
+    // Surface-streets requests may legitimately fail for some OD pairs;
+    // callers treat that as an empty set rather than a hard error when
+    // excludeMotorway is set.
     throw new TRPCError({
       code: "NOT_FOUND",
-      message: "No route found between those points",
+      message: opts.excludeMotorway
+        ? "No surface-streets route found between those points"
+        : "No route found between those points",
     });
   }
+  const pathStyle: "standard" | "surface" = opts.excludeMotorway
+    ? "surface"
+    : "standard";
   return (data.routes as OsrmRoute[]).map(r => ({
     distance: r.distance,
     duration: r.duration,
     geometry: r.geometry,
     maneuvers: extractManeuvers(r),
+    pathStyle,
   }));
 }
 
@@ -1003,17 +1027,81 @@ async function fetchTomTomFallback(
       ),
     },
     maneuvers: [],
+    pathStyle: "standard" as const,
   }));
 }
 
+/** Rough geometry fingerprint so we can merge standard + surface candidates
+ *  without keeping near-duplicates that waste scoring quota. */
+function routeFingerprint(r: BaseRoute): string {
+  const coords = r.geometry.coordinates;
+  if (coords.length === 0) return `${r.distance}|${r.duration}`;
+  const mid = coords[Math.floor(coords.length / 2)]!;
+  return [
+    Math.round(r.distance / 50),
+    Math.round(r.duration / 15),
+    mid[0].toFixed(3),
+    mid[1].toFixed(3),
+  ].join("|");
+}
+
+function mergeRouteCandidates(sets: BaseRoute[][]): BaseRoute[] {
+  const seen = new Set<string>();
+  const out: BaseRoute[] = [];
+  for (const set of sets) {
+    for (const r of set) {
+      const fp = routeFingerprint(r);
+      if (seen.has(fp)) continue;
+      seen.add(fp);
+      out.push(r);
+    }
+  }
+  return out;
+}
+
+/**
+ * v21: preference-aware candidate generation.
+ * - fastest: standard OSRM alternatives only
+ * - balanced/quiet/fuel: also request exclude=motorway surface routes so
+ *   ranking can actually select a backroad when weights favor it
+ */
 async function fetchBaseRoutes(
   origin: LatLng,
-  destination: LatLng
+  destination: LatLng,
+  preference: RoutePreference = "balanced"
 ): Promise<BaseRoute[]> {
+  const wantSurface = preference !== "fastest";
+
   try {
-    return await fetchOSRM(origin, destination);
+    const standardPromise = fetchOSRM(origin, destination);
+    const surfacePromise = wantSurface
+      ? fetchOSRM(origin, destination, { excludeMotorway: true }).catch(
+          err => {
+            // Surface path is an enhancement — never fail the whole request
+            // because motorway-free routing is unavailable for this OD pair.
+            console.warn(
+              "[routePulse] surface-streets OSRM option unavailable:",
+              err instanceof Error ? err.message : err
+            );
+            return [] as BaseRoute[];
+          }
+        )
+      : Promise.resolve([] as BaseRoute[]);
+
+    const [standard, surface] = await Promise.all([
+      standardPromise,
+      surfacePromise,
+    ]);
+    const merged = mergeRouteCandidates([standard, surface]);
+    if (merged.length === 0) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "No route found between those points",
+      });
+    }
+    return merged;
   } catch (err) {
-    if (err instanceof TRPCError) throw err; // clean NOT_FOUND, don't retry
+    if (err instanceof TRPCError) throw err;
     console.warn("[routePulse] OSRM unreachable, trying TomTom fallback:", err);
     return await fetchTomTomFallback(origin, destination);
   }
@@ -1192,6 +1280,9 @@ function deterministicPick(
     if (chosen.maneuverCount + 3 < pure.maneuverCount) {
       parts.push(`fewer turns (${chosen.maneuverCount} vs ${pure.maneuverCount})`);
     }
+    if (chosen.pathStyle === "surface" && pure.pathStyle !== "surface") {
+      parts.push("uses surface streets instead of the freeway");
+    }
     const why = parts.length > 0 ? parts.join(", ") : "avoids heavier congestion / incidents";
     explanation = `Chose a calmer option (+${Math.max(0, timeDelta)} min vs pure fastest) because it ${why}. Preference: ${preference}.`;
   } else if (flowDelay >= 3) {
@@ -1239,6 +1330,7 @@ Routes: ${JSON.stringify(
       stress_score: r.stressScore,
       energy_score: r.energyScore,
       maneuver_count: r.maneuverCount,
+      path_style: r.pathStyle ?? "standard",
       incident_delay_min: r.incidentDelayMin,
       preference_cost: Math.round(preferenceCost(r, preference) * 10) / 10,
       live_flow:
@@ -1368,7 +1460,7 @@ export async function getRoute(
   const cached = await readCache(key);
   if (cached) return cached;
 
-  const baseRoutes = await fetchBaseRoutes(origin, destination);
+  const baseRoutes = await fetchBaseRoutes(origin, destination, preference);
 
   // v12: time-of-day context for the risk model — computed once per
   // uncached request so every route in the comparison is scored under the
@@ -1424,6 +1516,8 @@ export async function getRoute(
         timeContext
       );
       let riskScore = scores.riskScore;
+      let stressScore = scores.stressScore;
+      let energyScore = scores.energyScore;
       const incidentDelayMin = scores.delayEstimateMin;
       const delayEstimateMin = flowDelayMin + incidentDelayMin;
 
@@ -1431,6 +1525,14 @@ export async function getRoute(
         riskScore = Math.min(MAX_RISK_SCORE, riskScore + 30);
       } else if (flow && flow.samples >= 2 && flow.worstRatio < 0.5) {
         riskScore = Math.min(MAX_RISK_SCORE, riskScore + 10);
+      }
+
+      // v21: surface-streets candidates get a structural stress discount —
+      // fewer highway merges/weaving, even before live incidents are known.
+      // Quiet/fuel preferences lean on this via preferenceCost weights.
+      if (r.pathStyle === "surface") {
+        stressScore = Math.max(0, stressScore - 8);
+        energyScore = Math.max(0, Math.round(energyScore * 0.92));
       }
 
       return {
@@ -1442,9 +1544,10 @@ export async function getRoute(
         riskScore,
         delayEstimateMin,
         incidentDelayMin,
-        stressScore: scores.stressScore,
-        energyScore: scores.energyScore,
+        stressScore,
+        energyScore,
         maneuverCount: scores.maneuverCount,
+        pathStyle: r.pathStyle,
         maneuvers: r.maneuvers,
         flow,
       };

@@ -144,6 +144,10 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *   - Mobile sheet: larger Start trip CTA, less chrome while navigating
  *   - Preference control and primary buttons meet 44px touch minimum
  *
+ * v21 (surface-streets candidates):
+ *   - Balanced/Quiet/Fuel also request OSRM exclude=motorway options
+ *   - Comparison cards label Surface vs Freeway-style paths
+ *
  * v9 (mobile optimization suite):
  *   - Search card auto-collapses into a one-line chip once a route is on
  *     the map (tap to edit) — the map is the product on a phone
@@ -3318,6 +3322,10 @@ export default function RoutePulse() {
                             "number"
                               ? (alt as { energyScore: number }).energyScore
                               : "—"}
+                            {(alt as { pathStyle?: string }).pathStyle ===
+                              "surface" && " · Surface streets"}
+                            {(alt as { pathStyle?: string }).pathStyle ===
+                              "standard" && " · Main roads"}
                           </span>
                           {/* v12: the AI's reason this route loses — the
                             "why not" behind the recommendation. */}

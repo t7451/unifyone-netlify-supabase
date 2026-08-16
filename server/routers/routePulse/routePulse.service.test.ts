@@ -1177,3 +1177,65 @@ describe("routePulse.service — getRoute (address-based)", () => {
     expect(address.safeParse("123 Main St, Portland, OR").success).toBe(true);
   });
 });
+
+describe("routePulse.service — multi-objective preference scoring (v19/v21)", () => {
+  const base = {
+    liveDurationS: 1200, // 20 min
+    incidentDelayMin: 0,
+    stressScore: 40,
+    energyScore: 30,
+  };
+
+  it("preferenceCost ranks pure time first under fastest", () => {
+    const calm = { ...base, liveDurationS: 1320, stressScore: 10, energyScore: 12 };
+    const hot = { ...base, liveDurationS: 1200, stressScore: 70, energyScore: 55 };
+    const calmCost = service.preferenceCost(calm, "fastest");
+    const hotCost = service.preferenceCost(hot, "fastest");
+    // Under fastest, the 2-minute savings should still win over stress
+    expect(hotCost).toBeLessThan(calmCost);
+  });
+
+  it("preferenceCost can prefer a calmer route under quiet", () => {
+    const calm = { ...base, liveDurationS: 1320, stressScore: 10, energyScore: 12 };
+    const hot = { ...base, liveDurationS: 1200, stressScore: 70, energyScore: 55 };
+    const calmCost = service.preferenceCost(calm, "quiet");
+    const hotCost = service.preferenceCost(hot, "quiet");
+    expect(calmCost).toBeLessThan(hotCost);
+  });
+
+  it("computeRouteScores returns stress and energy in 0-100", () => {
+    const scores = service.computeRouteScores(
+      [
+        {
+          id: "1",
+          incident_type: "Accident",
+          severity: "major",
+          description: "crash",
+          road_name: "I-5",
+          source: "odot_tripcheck",
+          lat: 45.5,
+          lng: -122.6,
+        },
+      ],
+      1500,
+      12000,
+      { length: 12 },
+      {
+        samples: 3,
+        avgRatio: 0.55,
+        worstRatio: 0.4,
+        roadClosedCount: 0,
+        avgCurrentMph: 25,
+        avgFreeflowMph: 45,
+        points: [],
+      },
+      "peak"
+    );
+    expect(scores.riskScore).toBeGreaterThan(0);
+    expect(scores.stressScore).toBeGreaterThanOrEqual(0);
+    expect(scores.stressScore).toBeLessThanOrEqual(100);
+    expect(scores.energyScore).toBeGreaterThanOrEqual(0);
+    expect(scores.energyScore).toBeLessThanOrEqual(100);
+    expect(scores.maneuverCount).toBe(12);
+  });
+});
