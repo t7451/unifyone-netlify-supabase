@@ -39,7 +39,7 @@ jobs:
   mission:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -62,7 +62,7 @@ jobs:
         agent: [dev, ux-ui, quality, mcp]
     name: ${{ matrix.agent }}-agent
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
           name: mission-briefing
@@ -88,7 +88,7 @@ jobs:
     needs: agents
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
           pattern: agent-*-report
