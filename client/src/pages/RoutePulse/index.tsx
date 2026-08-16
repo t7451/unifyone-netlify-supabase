@@ -932,6 +932,8 @@ export default function RoutePulse() {
   /** M1: viewport cameras only when the driver asks — keeps first paint light. */
   const [camerasOn, setCamerasOn] = useState(false);
   const [offRoute, setOffRoute] = useState(false);
+  /** Nearby metro feed — collapsed once a route is on screen (M1 polish). */
+  const [nearbyOpen, setNearbyOpen] = useState(true);
   const [offlineSnapshot, setOfflineSnapshot] = useState<OfflineRouteSnapshot | null>(null);
   const offRouteStrikesRef = useRef(0);
   /** Multi-stop editor hidden until the driver asks for it. */
@@ -2133,6 +2135,9 @@ export default function RoutePulse() {
   useEffect(() => {
     if (hasRoute) setSearchCollapsed(true);
   }, [hasRoute]);
+  useEffect(() => {
+    if (hasRoute) setNearbyOpen(false);
+  }, [hasRoute]);
 
   // Shared camera marker + popup for both the pre-search live layer and the
   // on-route layer. Camera stills 404 / go stale often, so broken images
@@ -2453,7 +2458,17 @@ export default function RoutePulse() {
                       )}
                     />
                   ))}
-                  {(transitQuery.data ?? []).slice(0, 24).map(lm => (
+                  {(transitQuery.data ?? [])
+                    .filter(lm => {
+                      if (!routeLine?.length) return true;
+                      const line = routeLine.map(p => {
+                        const a = p as [number, number];
+                        return [a[0], a[1]] as [number, number];
+                      });
+                      return distanceToPolylineM(lm.lat, lm.lng, line) < 2500;
+                    })
+                    .slice(0, 12)
+                    .map(lm => (
                     <Marker
                       key={lm.id}
                       position={[lm.lat, lm.lng]}
@@ -4173,10 +4188,16 @@ export default function RoutePulse() {
             "Active incidents" without the qualifier. */}
         <Card className="p-6 sm:p-8 mb-10">
           <div className="flex items-center justify-between gap-2 mb-4">
-            <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">
-              Nearby incidents, Oregon / SW Washington (not filtered to your
-              route)
-            </p>
+            <button
+              type="button"
+              onClick={() => setNearbyOpen(o => !o)}
+              className="text-left text-xs font-semibold uppercase text-muted-foreground tracking-wide hover:text-foreground transition-colors"
+            >
+              Nearby incidents (metro, not route-filtered)
+              <span className="ml-2 font-normal normal-case tracking-normal">
+                {nearbyOpen ? "Hide" : "Show"}
+              </span>
+            </button>
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground shrink-0">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
@@ -4200,7 +4221,7 @@ export default function RoutePulse() {
               </button>
             </div>
           </div>
-          {incidentsQuery.data?.length ? (
+          {nearbyOpen && incidentsQuery.data?.length ? (
             <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
               {incidentsQuery.data.map(inc => (
                 <div
@@ -4227,11 +4248,11 @@ export default function RoutePulse() {
                 </div>
               ))}
             </div>
-          ) : (
+          ) : nearbyOpen ? (
             <p className="text-sm text-muted-foreground">
               No active incidents reported right now.
             </p>
-          )}
+          ) : null}
         </Card>
 
         {/* Context */}
