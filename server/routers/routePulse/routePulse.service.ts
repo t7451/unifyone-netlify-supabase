@@ -4,7 +4,8 @@
  * RoutePulse — hyperlocal route intelligence layer.
  *
  * Data flow per request:
- *   1. Check routes_cache (Supabase) for a fresh (<2min) identical request.
+ *   1. Check Netlify Blobs app-cache (edge-fast) then routes_cache (Supabase)
+ *      for a fresh (<2min) identical request.
  *   2. Fetch base route(s) from OSRM (with alternatives), falling back to
  *      TomTom if OSRM is unreachable and TOMTOM_API_KEY is configured.
  *   3. For each route, query active incidents within a buffer of the path
@@ -117,6 +118,7 @@ import {
   localKnowledgeSummary,
   isPortlandMetro,
 } from "./portlandLocalKnowledge";
+import { blobKvGet, blobKvSet, BlobKvNS } from "../../lib/blobKv";
 import { getClearRouteBrief } from "./aiBriefWorker";
 import {
   bboxForGeometries,
@@ -145,9 +147,8 @@ export class GeocodingError extends TRPCError {
 }
 
 // In-memory geocode cache — avoids re-hitting Nominatim for repeat addresses
-// within the same warm serverless instance. Ephemeral by design (dies on
-// cold start); Nominatim's usage policy discourages heavy caching in a
-// shared/durable store without their sign-off, so this stays best-effort.
+// within the same warm serverless instance. Netlify Blobs (rp-geocode) extends
+// this across cold starts without a durable DB table.
 const GEOCODE_CACHE_TTL_MS = 30 * 60 * 1000;
 const GEOCODE_CACHE_MAX_ENTRIES = 500;
 const geocodeCache = new Map<
@@ -171,8 +172,6 @@ function readGeocodeCache(address: string): GeocodedPoint | null {
 
 function writeGeocodeCache(address: string, value: GeocodedPoint) {
   if (geocodeCache.size >= GEOCODE_CACHE_MAX_ENTRIES) {
-    // Evict the oldest entry (Map preserves insertion order) rather than
-    // letting this grow unbounded across a long-lived warm instance.
     const oldestKey = geocodeCache.keys().next().value;
     if (oldestKey !== undefined) geocodeCache.delete(oldestKey);
   }
@@ -180,6 +179,12 @@ function writeGeocodeCache(address: string, value: GeocodedPoint) {
     value,
     expiresAt: Date.now() + GEOCODE_CACHE_TTL_MS,
   });
+  void blobKvSet(
+    BlobKvNS.routePulseGeocode,
+    geocodeCacheKey(address),
+    value,
+    GEOCODE_CACHE_TTL_MS
+  );
 }
 
 /** Test-only: clears the in-memory geocode cache between test cases. */
@@ -198,8 +203,6 @@ async function geocodeViaNominatim(
   try {
     res = await fetch(url, {
       headers: {
-        // Required by Nominatim's usage policy — identifies the app and a
-        // contact point so OSM can reach us if something needs attention.
         "User-Agent": ENV.nominatimUserAgent,
         Accept: "application/json",
       },
@@ -275,8 +278,6 @@ async function geocodeViaCensus(
 
     return { lat, lng, displayName: top.matchedAddress };
   } catch (err) {
-    // Best-effort fallback — a Census outage should degrade to the normal
-    // "couldn't find that address" message, not a hard 502.
     console.warn("[routePulse] Census geocoder fallback failed:", err);
     return null;
   }
@@ -299,6 +300,23 @@ export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
   const cached = readGeocodeCache(trimmed);
   if (cached) return cached;
 
+  const fromBlob = await blobKvGet<GeocodedPoint>(
+    BlobKvNS.routePulseGeocode,
+    geocodeCacheKey(trimmed)
+  );
+  if (fromBlob?.lat != null && fromBlob?.lng != null) {
+    // Refresh in-memory only (already in blobs)
+    if (geocodeCache.size >= GEOCODE_CACHE_MAX_ENTRIES) {
+      const oldestKey = geocodeCache.keys().next().value;
+      if (oldestKey !== undefined) geocodeCache.delete(oldestKey);
+    }
+    geocodeCache.set(geocodeCacheKey(trimmed), {
+      value: fromBlob,
+      expiresAt: Date.now() + GEOCODE_CACHE_TTL_MS,
+    });
+    return fromBlob;
+  }
+
   const point =
     (await geocodeViaNominatim(trimmed)) ?? (await geocodeViaCensus(trimmed));
 
@@ -311,6 +329,7 @@ export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
   writeGeocodeCache(trimmed, point);
   return point;
 }
+
 
 /**
  * Lightweight address suggestion lookup for typeahead UI. Calls Nominatim
@@ -845,23 +864,7 @@ function cacheKey(
   return `${origin.lat.toFixed(5)},${origin.lng.toFixed(5)}_${destination.lat.toFixed(5)},${destination.lng.toFixed(5)}_${preference}`;
 }
 
-async function readCache(key: string): Promise<RouteResult | null> {
-  const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
-
-  const sinceIso = new Date(Date.now() - CACHE_TTL_MS).toISOString();
-  const { data, error } = await supabase
-    .from("routes_cache")
-    .select("result, created_at")
-    .eq("cache_key", key)
-    .gt("created_at", sinceIso)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  const result = data.result as RouteResult;
-  // Cache entries written before maneuvers existed (or by the TomTom
-  // fallback) may lack the field — normalize so the client always sees an
-  // array and the turn-by-turn panel simply hides when it's empty.
+function normalizeCachedResult(result: RouteResult): RouteResult {
   const withManeuvers = (r: ScoredRoute): ScoredRoute => ({
     ...r,
     maneuvers: Array.isArray(r.maneuvers) ? r.maneuvers : [],
@@ -888,12 +891,44 @@ async function readCache(key: string): Promise<RouteResult | null> {
   };
 }
 
+async function readCache(key: string): Promise<RouteResult | null> {
+  // 1) Netlify Blobs — edge-fast shared cache across function instances.
+  const fromBlob = await blobKvGet<RouteResult>(BlobKvNS.routePulseRoutes, key);
+  if (fromBlob?.route) {
+    return normalizeCachedResult(fromBlob);
+  }
+
+  // 2) Supabase durable fallback (survives blob store resets / local dev).
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  const sinceIso = new Date(Date.now() - CACHE_TTL_MS).toISOString();
+  const { data, error } = await supabase
+    .from("routes_cache")
+    .select("result, created_at")
+    .eq("cache_key", key)
+    .gt("created_at", sinceIso)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  const result = data.result as RouteResult;
+  // Warm blob cache from durable hit so the next request is edge-fast.
+  void blobKvSet(BlobKvNS.routePulseRoutes, key, result, CACHE_TTL_MS);
+  return normalizeCachedResult(result);
+}
+
 async function writeCache(key: string, result: RouteResult) {
+  // Edge-fast path first — don't block the response on Supabase if blobs work.
+  void blobKvSet(BlobKvNS.routePulseRoutes, key, result, CACHE_TTL_MS);
   const supabase = getSupabaseAdmin();
   if (!supabase) return;
-  await supabase
-    .from("routes_cache")
-    .upsert({ cache_key: key, result, created_at: new Date().toISOString() });
+  try {
+    await supabase
+      .from("routes_cache")
+      .upsert({ cache_key: key, result, created_at: new Date().toISOString() });
+  } catch (err) {
+    console.warn("[routePulse] routes_cache write failed:", err);
+  }
 }
 
 type BaseRoute = {

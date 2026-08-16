@@ -8,6 +8,11 @@
  *    filename changes when the content changes, so this can never go stale).
  *  - /api/* is never intercepted.
  *
+ * Phase roadmap: docs/PWA_OFFLINE_PLAN.md
+ *  - Phase 0 (current): shell + hashed assets only; never /api/*
+ *  - Phase 1: page-owned IndexedDB for last RoutePulse result (not SW API cache)
+ *  - Phase 2: optional tile cache for active trip bbox only
+ *
  * `__SW_BUILD__` is replaced with a unique build timestamp at deploy time
  * (see vite.config.ts closeBundle), so every deploy changes this file's bytes
  * and the browser detects an update → skipWaiting → the page auto-refreshes.

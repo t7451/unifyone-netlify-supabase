@@ -204,6 +204,11 @@
 # ----------------------------------------------------------------------------
 # Netlify-native integrations
 # ----------------------------------------------------------------------------
+# Netlify Blobs is enabled automatically
+# Stores in use:
+#   - uploads (server/storage.ts) — public assets via /blobs/*
+#   - app-cache (server/lib/blobKv.ts) — TTL JSON for RoutePulse routes/geocode
+#   - deploy-state (deploy notifier)
 # Netlify Blobs is enabled automatically — no toml config required. Server
 # code uses it via server/storage.ts (STORAGE_BACKEND=auto by default).
 #
