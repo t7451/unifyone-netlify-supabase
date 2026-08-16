@@ -1250,3 +1250,21 @@ describe("routePulse.service — multi-objective preference scoring (v19/v21)", 
     expect(scores.maneuverCount).toBe(12);
   });
 });
+
+describe("routePulse.service — historical bottleneck (v22)", () => {
+  it("bottleneckScoreFromDensity scales with severity mix", () => {
+    const quiet = service.bottleneckScoreFromDensity({
+      incidentCount: 1,
+      majorOrWorse: 0,
+      congestionCount: 0,
+    });
+    const messy = service.bottleneckScoreFromDensity({
+      incidentCount: 12,
+      majorOrWorse: 5,
+      congestionCount: 4,
+    });
+    expect(quiet).toBeGreaterThan(0);
+    expect(messy).toBeGreaterThan(quiet);
+    expect(messy).toBeLessThanOrEqual(100);
+  });
+});

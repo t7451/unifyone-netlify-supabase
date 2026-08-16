@@ -60,6 +60,12 @@
  * the weights say it wins — not just re-rank the same freeway alternatives
  * Google would show.
  *
+ * v22: premium / chargeable layer.
+ *   - Historical bottleneck density (21d incident history along corridor)
+ *   - valueInsight: explicit time/stress/energy delta vs pure-fastest
+ *   - dataConfidence: how well-grounded the pick is (sells trust)
+ *   - Ordered multi-stop support (delivery waypoints via OSRM)
+ *
  * ---------------------------------------------------------------------
  * NOTES FOR KIMI (2026-08-09 audit/hardening pass — Claude, merged post-v13)
  * ---------------------------------------------------------------------
@@ -595,15 +601,21 @@ export function preferenceCost(
     incidentDelayMin: number;
     stressScore: number;
     energyScore: number;
+    bottleneckScore?: number;
   },
   preference: RoutePreference
 ): number {
   const w = ROUTE_PREFERENCE_WEIGHTS[preference];
   const timeMin = route.liveDurationS / 60 + route.incidentDelayMin;
+  const bottleneck = route.bottleneckScore ?? 0;
+  // Historical bottlenecks count as stress — quiet/fuel feel them hardest.
+  const bottleneckWeight =
+    preference === "quiet" ? 0.22 : preference === "fuel" ? 0.12 : preference === "balanced" ? 0.1 : 0.04;
   return (
     w.time * timeMin +
     w.stress * (route.stressScore * 0.18) +
-    w.energy * (route.energyScore * 0.15)
+    w.energy * (route.energyScore * 0.15) +
+    bottleneckWeight * (bottleneck * 0.16)
   );
 }
 
@@ -674,6 +686,13 @@ export type ScoredRoute = {
    * - surface: OSRM with exclude=motorway (backroads / surface streets)
    */
   pathStyle?: "standard" | "surface";
+  /**
+   * v22: 0-100 historical bottleneck score from 21-day incident density
+   * along this corridor (higher = chronically messier).
+   */
+  bottleneckScore?: number;
+  /** Raw historical incident count feeding bottleneckScore. */
+  historicalIncidentCount?: number;
   /**
    * Turn-by-turn steps. Empty when the routing engine can't provide them
    * (e.g. the TomTom fallback path) — the client hides the panel then.
@@ -755,6 +774,31 @@ export type RouteResult = {
   } | null;
   /** v19: the preference mode used for this ranking. */
   preference?: RoutePreference;
+  /**
+   * v22: premium value card — why this pick beats pure-fastest Google-style
+   * routing. Null when the chosen route *is* the pure-time winner.
+   */
+  valueInsight?: {
+    vsFastestTimeDeltaMin: number;
+    stressDelta: number;
+    energyDelta: number;
+    bottleneckDelta: number;
+    chosenPathStyle: "standard" | "surface" | null;
+    fastestPathStyle: "standard" | "surface" | null;
+    headline: string;
+    detail: string;
+  } | null;
+  /**
+   * v22: 0-100 confidence that live data + history actually informed the pick.
+   * Low means thin grounding (closer to a plain map); high means chargeable signal.
+   */
+  dataConfidence?: {
+    score: number;
+    label: "low" | "medium" | "high";
+    reasons: string[];
+  };
+  /** v22: geocoded intermediate stops when multi-stop was requested. */
+  stops?: GeocodedPoint[];
 };
 
 function cacheKey(
@@ -793,6 +837,12 @@ async function readCache(key: string): Promise<RouteResult | null> {
         : Array.isArray(r.maneuvers)
           ? r.maneuvers.length
           : 0,
+    bottleneckScore:
+      typeof r.bottleneckScore === "number" ? r.bottleneckScore : 0,
+    historicalIncidentCount:
+      typeof r.historicalIncidentCount === "number"
+        ? r.historicalIncidentCount
+        : 0,
   });
   return {
     ...result,
@@ -933,13 +983,22 @@ function extractManeuvers(route: OsrmRoute): RouteManeuver[] {
 async function fetchOSRM(
   origin: LatLng,
   destination: LatLng,
-  opts: { excludeMotorway?: boolean } = {}
+  opts: { excludeMotorway?: boolean; via?: LatLng[] } = {}
 ): Promise<BaseRoute[]> {
   const exclude = opts.excludeMotorway ? "&exclude=motorway" : "";
+  const via = opts.via ?? [];
+  const coords = [
+    `${origin.lng},${origin.lat}`,
+    ...via.map(v => `${v.lng},${v.lat}`),
+    `${destination.lng},${destination.lat}`,
+  ].join(";");
+  // alternatives only when no intermediate stops — OSRM alternatives with
+  // many waypoints are expensive and often empty.
+  const alternatives = via.length === 0 ? "true" : "false";
   const url =
     `${ENV.osrmUrl}/route/v1/driving/` +
-    `${origin.lng},${origin.lat};${destination.lng},${destination.lat}` +
-    `?alternatives=true&geometries=geojson&overview=full&steps=true${exclude}`;
+    coords +
+    `?alternatives=${alternatives}&geometries=geojson&overview=full&steps=true${exclude}`;
 
   const res = await fetch(url);
   if (!res.ok) {
@@ -1069,14 +1128,15 @@ function mergeRouteCandidates(sets: BaseRoute[][]): BaseRoute[] {
 async function fetchBaseRoutes(
   origin: LatLng,
   destination: LatLng,
-  preference: RoutePreference = "balanced"
+  preference: RoutePreference = "balanced",
+  via: LatLng[] = []
 ): Promise<BaseRoute[]> {
   const wantSurface = preference !== "fastest";
 
   try {
-    const standardPromise = fetchOSRM(origin, destination);
+    const standardPromise = fetchOSRM(origin, destination, { via });
     const surfacePromise = wantSurface
-      ? fetchOSRM(origin, destination, { excludeMotorway: true }).catch(
+      ? fetchOSRM(origin, destination, { excludeMotorway: true, via }).catch(
           err => {
             // Surface path is an enhancement — never fail the whole request
             // because motorway-free routing is unavailable for this OD pair.
@@ -1140,6 +1200,72 @@ async function getIncidentsNearRoute(
     distanceM: typeof row.distance_m === "number" ? row.distance_m : undefined,
     startedAt: (row.started_at as string | null) ?? null,
   }));
+}
+
+/**
+ * v22: historical bottleneck density along a corridor (active + cleared
+ * incidents over the last `daysBack` days). Soft-degrades to zeros when the
+ * RPC is missing or Supabase is unset — ranking still works on live data alone.
+ */
+export type HistoricalBottleneck = {
+  incidentCount: number;
+  majorOrWorse: number;
+  congestionCount: number;
+  /** 0-100 composite — higher means chronically messier corridor. */
+  score: number;
+};
+
+export function bottleneckScoreFromDensity(d: {
+  incidentCount: number;
+  majorOrWorse: number;
+  congestionCount: number;
+}): number {
+  // Diminishing returns so a single bad week doesn't max the score.
+  const raw =
+    d.incidentCount * 4 + d.majorOrWorse * 8 + d.congestionCount * 5;
+  return Math.min(100, Math.round(raw));
+}
+
+async function getHistoricalBottleneck(
+  geometry: { coordinates: [number, number][] },
+  bufferMeters = 400,
+  daysBack = 21
+): Promise<HistoricalBottleneck> {
+  const empty: HistoricalBottleneck = {
+    incidentCount: 0,
+    majorOrWorse: 0,
+    congestionCount: 0,
+    score: 0,
+  };
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return empty;
+
+  try {
+    const { data, error } = await supabase.rpc("incident_density_near_route", {
+      route_wkt: geometryToWkt(geometry),
+      buffer_meters: bufferMeters,
+      days_back: daysBack,
+    });
+    if (error || !data) return empty;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) return empty;
+    const incidentCount = Number(row.incident_count ?? 0) || 0;
+    const majorOrWorse = Number(row.major_or_worse ?? 0) || 0;
+    const congestionCount = Number(row.congestion_count ?? 0) || 0;
+    return {
+      incidentCount,
+      majorOrWorse,
+      congestionCount,
+      score: bottleneckScoreFromDensity({
+        incidentCount,
+        majorOrWorse,
+        congestionCount,
+      }),
+    };
+  } catch (err) {
+    console.warn("[routePulse] historical bottleneck lookup failed:", err);
+    return empty;
+  }
 }
 
 /**
@@ -1332,6 +1458,8 @@ Routes: ${JSON.stringify(
       energy_score: r.energyScore,
       maneuver_count: r.maneuverCount,
       path_style: r.pathStyle ?? "standard",
+      bottleneck_score: r.bottleneckScore ?? 0,
+      historical_incidents_21d: r.historicalIncidentCount ?? 0,
       incident_delay_min: r.incidentDelayMin,
       preference_cost: Math.round(preferenceCost(r, preference) * 10) / 10,
       live_flow:
@@ -1446,22 +1574,34 @@ Respond ONLY with JSON: { "chosen_index": 0, "explanation": "1-2 short sentences
 export async function getRoute(
   originAddress: string,
   destinationAddress: string,
-  preference: RoutePreference = "balanced"
+  preference: RoutePreference = "balanced",
+  stopAddresses: string[] = []
 ): Promise<RouteResult> {
   // Geocode first — the cache key and every downstream step depends on
   // resolved coordinates, and a bad address should fail fast with a clear
   // message rather than an OSRM "no route" error.
-  const [origin, destination] = await Promise.all([
+  const stopList = stopAddresses.map(s => s.trim()).filter(s => s.length >= 3).slice(0, 8);
+  const [origin, destination, ...stops] = await Promise.all([
     geocodeAddress(originAddress),
     geocodeAddress(destinationAddress),
+    ...stopList.map(a => geocodeAddress(a)),
   ]);
 
-  const key = cacheKey(origin, destination, preference);
+  const key =
+    cacheKey(origin, destination, preference) +
+    (stops.length
+      ? `_via:${stops.map(s => `${s.lat.toFixed(4)},${s.lng.toFixed(4)}`).join("|")}`
+      : "");
 
   const cached = await readCache(key);
   if (cached) return cached;
 
-  const baseRoutes = await fetchBaseRoutes(origin, destination, preference);
+  const baseRoutes = await fetchBaseRoutes(
+    origin,
+    destination,
+    preference,
+    stops
+  );
 
   // v12: time-of-day context for the risk model — computed once per
   // uncached request so every route in the comparison is scored under the
@@ -1496,7 +1636,10 @@ export async function getRoute(
       // along the route. Catches congestion that hasn't generated an
       // incident report yet — the difference between "an incident exists"
       // and "traffic is actually moving slowly right now".
-      const flow = await fetchTomTomFlow(r.geometry.coordinates);
+      const [flow, historical] = await Promise.all([
+        fetchTomTomFlow(r.geometry.coordinates),
+        getHistoricalBottleneck(r.geometry),
+      ]);
       let liveDurationS = r.duration;
       if (flow && flow.samples >= 2 && flow.avgRatio > 0) {
         const clampedRatio = Math.max(0.3, Math.min(1.15, flow.avgRatio));
@@ -1521,6 +1664,7 @@ export async function getRoute(
       let energyScore = scores.energyScore;
       const incidentDelayMin = scores.delayEstimateMin;
       const delayEstimateMin = flowDelayMin + incidentDelayMin;
+      let bottleneckScore = historical.score;
 
       if (flow && flow.roadClosedCount > 0) {
         riskScore = Math.min(MAX_RISK_SCORE, riskScore + 30);
@@ -1534,7 +1678,14 @@ export async function getRoute(
       if (r.pathStyle === "surface") {
         stressScore = Math.max(0, stressScore - 8);
         energyScore = Math.max(0, Math.round(energyScore * 0.92));
+        bottleneckScore = Math.max(0, bottleneckScore - 5);
       }
+
+      // Fold chronic bottleneck into stress so live+history stay aligned.
+      stressScore = Math.min(
+        100,
+        Math.round(stressScore + bottleneckScore * 0.25)
+      );
 
       return {
         distance: r.distance,
@@ -1549,6 +1700,8 @@ export async function getRoute(
         energyScore,
         maneuverCount: scores.maneuverCount,
         pathStyle: r.pathStyle,
+        bottleneckScore,
+        historicalIncidentCount: historical.incidentCount,
         maneuvers: r.maneuvers,
         flow,
       };
@@ -1640,8 +1793,94 @@ export async function getRoute(
         }
       : null;
 
+  const chosenRoute = scoredRoutes[chosenIndex] ?? scoredRoutes[0]!;
+
+  // Pure-time winner for the value card (what Google-style routing would pick).
+  let pureTimeBest = 0;
+  let pureTimeCost = Infinity;
+  scoredRoutes.forEach((r, i) => {
+    const c = r.liveDurationS + r.incidentDelayMin * 60;
+    if (c < pureTimeCost) {
+      pureTimeCost = c;
+      pureTimeBest = i;
+    }
+  });
+  const pureFastest = scoredRoutes[pureTimeBest] ?? chosenRoute;
+  const timeDeltaMin = Math.round(
+    (chosenRoute.liveDurationS - pureFastest.liveDurationS) / 60
+  );
+  const stressDelta = pureFastest.stressScore - chosenRoute.stressScore;
+  const energyDelta = pureFastest.energyScore - chosenRoute.energyScore;
+  const bottleneckDelta =
+    (pureFastest.bottleneckScore ?? 0) - (chosenRoute.bottleneckScore ?? 0);
+
+  let valueInsight: RouteResult["valueInsight"] = null;
+  if (chosenIndex !== pureTimeBest) {
+    const parts: string[] = [];
+    if (stressDelta >= 6) parts.push(`~${stressDelta} pts less stress`);
+    if (energyDelta >= 6) parts.push(`~${energyDelta} pts less energy/effort`);
+    if (bottleneckDelta >= 6)
+      parts.push(`historically clearer corridor (−${bottleneckDelta} bottleneck)`);
+    if (chosenRoute.pathStyle === "surface")
+      parts.push("surface streets instead of the freeway");
+    const detail =
+      parts.length > 0
+        ? parts.join(" · ")
+        : "better overall fit for your route style";
+    const headline =
+      timeDeltaMin <= 0
+        ? "Smarter than pure-fastest — and not slower"
+        : timeDeltaMin <= 5
+          ? `Worth +${timeDeltaMin} min vs pure-fastest`
+          : `Calmer pick (+${timeDeltaMin} min vs pure-fastest)`;
+    valueInsight = {
+      vsFastestTimeDeltaMin: timeDeltaMin,
+      stressDelta,
+      energyDelta,
+      bottleneckDelta,
+      chosenPathStyle: chosenRoute.pathStyle ?? null,
+      fastestPathStyle: pureFastest.pathStyle ?? null,
+      headline,
+      detail,
+    };
+  }
+
+  // Data confidence — how chargeable / grounded this recommendation is.
+  const reasons: string[] = [];
+  let confScore = 35;
+  if ((grounding?.flowSamples ?? 0) >= 2) {
+    confScore += 20;
+    reasons.push("live traffic flow samples");
+  }
+  if ((grounding?.tomtomIncidents ?? 0) + (grounding?.wazeAlerts ?? 0) > 0) {
+    confScore += 15;
+    reasons.push("live third-party incidents");
+  }
+  if (chosenRoute.incidents.length > 0) {
+    confScore += 10;
+    reasons.push("agency incident feeds on path");
+  }
+  if ((chosenRoute.historicalIncidentCount ?? 0) > 0) {
+    confScore += 15;
+    reasons.push("21-day corridor history");
+  }
+  if (scoredRoutes.length >= 2) {
+    confScore += 10;
+    reasons.push("multiple candidates compared");
+  }
+  if (chosenRoute.pathStyle === "surface" || preference !== "fastest") {
+    confScore += 5;
+    reasons.push("preference-aware ranking");
+  }
+  confScore = Math.min(100, confScore);
+  const dataConfidence: RouteResult["dataConfidence"] = {
+    score: confScore,
+    label: confScore >= 75 ? "high" : confScore >= 50 ? "medium" : "low",
+    reasons,
+  };
+
   const result: RouteResult = {
-    route: scoredRoutes[chosenIndex] ?? scoredRoutes[0],
+    route: chosenRoute,
     explanation,
     alternatives: scoredRoutes,
     origin,
@@ -1656,6 +1895,9 @@ export async function getRoute(
     waitAdvice,
     timeContext,
     departureOutlook,
+    valueInsight,
+    dataConfidence,
+    stops: stops.length ? stops : undefined,
   };
 
   await writeCache(key, result);

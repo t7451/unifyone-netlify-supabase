@@ -775,10 +775,12 @@ export default function RoutePulse() {
     }
     return "balanced";
   });
+  const [stops, setStops] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState<{
     origin: string;
     destination: string;
     preference: RoutePreference;
+    stops: string[];
   } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   // v17: was hardcoded to "light" regardless of the app's own theme — a
@@ -898,6 +900,7 @@ export default function RoutePulse() {
           origin: urlOrigin.trim(),
           destination: urlDestination.trim(),
           preference,
+          stops: [],
         });
       }
     }
@@ -927,6 +930,7 @@ export default function RoutePulse() {
       origin: submitted.origin,
       destination: submitted.destination,
       preference,
+      stops: submitted.stops ?? [],
     });
   }, [preference]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1028,6 +1032,7 @@ export default function RoutePulse() {
       origin: origin.trim(),
       destination: destination.trim(),
       preference,
+      stops: stops.map(s => s.trim()).filter(s => s.length >= 3),
     });
     addRoute(origin.trim(), destination.trim());
     trackToolUsage("route-pulse", "start");
@@ -2380,6 +2385,7 @@ export default function RoutePulse() {
                                   origin: r.origin,
                                   destination: r.destination,
                                   preference,
+                                  stops: [],
                                 });
                               }}
                               className="text-[11px] pl-2 py-1 hover:text-foreground transition-colors truncate"
@@ -2433,7 +2439,8 @@ export default function RoutePulse() {
                               setSubmitted({
                                 origin: r.origin,
                                 destination: r.destination,
-                                  preference,
+                                preference,
+                                stops: [],
                               });
                             }}
                             className="text-[11px] px-2 py-1 rounded-full bg-muted hover:bg-accent transition-colors truncate max-w-full"
@@ -2540,6 +2547,53 @@ export default function RoutePulse() {
                     {formError && (
                       <p className="text-xs text-destructive">{formError}</p>
                     )}
+
+                    {/* v22: delivery multi-stop waypoints */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                          Stops (optional)
+                        </p>
+                        {stops.length < 8 && (
+                          <button
+                            type="button"
+                            className="text-[11px] text-primary font-medium min-h-[32px] px-1"
+                            onClick={() => setStops(s => [...s, ""])}
+                          >
+                            + Add stop
+                          </button>
+                        )}
+                      </div>
+                      {stops.map((stop, i) => (
+                        <div key={i} className="flex gap-1.5 items-start">
+                          <div className="flex-1 min-w-0">
+                            <AddressInput
+                              id={`routepulse-stop-${i}`}
+                              name={`stop-${i}`}
+                              label={`Stop ${i + 1}`}
+                              pinColor="blue"
+                              value={stop}
+                              onChange={v =>
+                                setStops(prev =>
+                                  prev.map((s, j) => (j === i ? v : s))
+                                )
+                              }
+                              placeholder={`Stop ${i + 1} address`}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            className="text-muted-foreground text-xs px-2 min-w-[44px] min-h-[44px] mt-6"
+                            onClick={() =>
+                              setStops(prev => prev.filter((_, j) => j !== i))
+                            }
+                            title="Remove stop"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
 
                     {/* v19: routing preference — changes multi-objective ranking */}
                     <div className="space-y-1.5">
@@ -3091,6 +3145,46 @@ export default function RoutePulse() {
                   {routeQuery.data!.destination.displayName}
                 </p>
               </div>
+              {/* v22: premium value card — the reason someone would pay */}
+              {(routeQuery.data as { valueInsight?: {
+                headline: string;
+                detail: string;
+                vsFastestTimeDeltaMin: number;
+                stressDelta: number;
+                energyDelta: number;
+                bottleneckDelta: number;
+              } | null })?.valueInsight && (
+                <div className="rounded-xl border border-primary/25 bg-primary/5 px-3.5 py-3 space-y-1">
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-primary">
+                    Why this beats pure-fastest
+                  </p>
+                  <p className="text-sm font-semibold leading-snug">
+                    {(routeQuery.data as { valueInsight: { headline: string } }).valueInsight.headline}
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {(routeQuery.data as { valueInsight: { detail: string } }).valueInsight.detail}
+                  </p>
+                </div>
+              )}
+
+              {(routeQuery.data as { dataConfidence?: {
+                score: number;
+                label: string;
+                reasons: string[];
+              } })?.dataConfidence && (
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                  <span className="font-medium text-foreground">
+                    Data confidence:{" "}
+                    {(routeQuery.data as { dataConfidence: { label: string; score: number } }).dataConfidence.label}
+                    {" "}
+                    ({(routeQuery.data as { dataConfidence: { score: number } }).dataConfidence.score}/100)
+                  </span>
+                  <span className="text-muted-foreground/80">
+                    {(routeQuery.data as { dataConfidence: { reasons: string[] } }).dataConfidence.reasons.slice(0, 3).join(" · ")}
+                  </span>
+                </div>
+              )}
+
               <div className="pt-2 border-t space-y-1.5">
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {routeQuery.data!.explanation}
@@ -3326,6 +3420,11 @@ export default function RoutePulse() {
                               "surface" && " · Surface streets"}
                             {(alt as { pathStyle?: string }).pathStyle ===
                               "standard" && " · Main roads"}
+                            {typeof (alt as { bottleneckScore?: number }).bottleneckScore ===
+                              "number" &&
+                              (alt as { bottleneckScore: number }).bottleneckScore >
+                                0 &&
+                              ` · Hist. bottleneck ${(alt as { bottleneckScore: number }).bottleneckScore}`}
                           </span>
                           {/* v12: the AI's reason this route loses — the
                             "why not" behind the recommendation. */}
@@ -3580,7 +3679,7 @@ export default function RoutePulse() {
               },
               {
                 q: "Do I need an account or API key to use RoutePulse?",
-                a: "No. It's built on free, open infrastructure — OpenStreetMap for geocoding, CARTO/OpenStreetMap for the map, OSRM for routing, and free-tier AI models for the explanation. Enter an origin and destination and get a scored route immediately.",
+                a: "The core checker is free to try. Premium signal — multi-objective ranking, surface-street options, 21-day bottleneck history, and delivery multi-stop — is what makes RoutePulse worth paying for versus a plain map ETA.",
               },
               {
                 q: "Can RoutePulse tell me when to leave?",
