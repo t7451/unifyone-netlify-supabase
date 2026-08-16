@@ -155,6 +155,11 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  * v24 (Portland local knowledge):
  *   - Local driver notes card from metro corridor/event priors
  *
+ * v25 (map-first clarity):
+ *   - Secondary intel collapsed under "Route details" by default
+ *   - Stops hidden until requested; one-line explanation above the fold
+ *   - Less dashboard, more map product
+ *
  * v9 (mobile optimization suite):
  *   - Search card auto-collapses into a one-line chip once a route is on
  *     the map (tap to edit) — the map is the product on a phone
@@ -824,6 +829,11 @@ export default function RoutePulse() {
   // at "peek"; turn-by-turn revealed on expand). See the sheet render block
   // below for the drag/tap interaction — NOTE FOR KIMI is there too.
   const [sheetExpanded, setSheetExpanded] = useState(false);
+  /** v25: secondary intel (health, local notes, value, confidence) stays
+   *  collapsed by default — map + ETA first, details on demand. */
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  /** Multi-stop editor hidden until the driver asks for it. */
+  const [stopsOpen, setStopsOpen] = useState(false);
   // Ticker so the "updated Xs ago" live indicator stays honest.
   const [nowTick, setNowTick] = useState(0);
   // v10: location onboarding prompt. Shown once per browser (persisted) so
@@ -1035,6 +1045,7 @@ export default function RoutePulse() {
       return;
     }
     setFormError(null);
+    setDetailsOpen(false);
     setSubmitted({
       origin: origin.trim(),
       destination: destination.trim(),
@@ -2555,57 +2566,74 @@ export default function RoutePulse() {
                       <p className="text-xs text-destructive">{formError}</p>
                     )}
 
-                    {/* v22: delivery multi-stop waypoints */}
+                    {/* v25: stops stay out of the way until requested */}
                     <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-                          Stops (optional)
-                        </p>
-                        {stops.length < 8 && (
-                          <button
-                            type="button"
-                            className="text-[11px] text-primary font-medium min-h-[32px] px-1"
-                            onClick={() => setStops(s => [...s, ""])}
-                          >
-                            + Add stop
-                          </button>
-                        )}
-                      </div>
-                      {stops.map((stop, i) => (
-                        <div key={i} className="flex gap-1.5 items-start">
-                          <div className="flex-1 min-w-0">
-                            <AddressInput
-                              id={`routepulse-stop-${i}`}
-                              name={`stop-${i}`}
-                              label={`Stop ${i + 1}`}
-                              pinColor="blue"
-                              value={stop}
-                              onChange={v =>
-                                setStops(prev =>
-                                  prev.map((s, j) => (j === i ? v : s))
-                                )
-                              }
-                              placeholder={`Stop ${i + 1} address`}
-                            />
+                      {!stopsOpen && stops.length === 0 ? (
+                        <button
+                          type="button"
+                          className="text-xs text-muted-foreground hover:text-primary min-h-[36px]"
+                          onClick={() => {
+                            setStopsOpen(true);
+                            setStops([""]);
+                          }}
+                        >
+                          + Add stops (optional)
+                        </button>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                              Stops
+                            </p>
+                            {stops.length < 8 && (
+                              <button
+                                type="button"
+                                className="text-[11px] text-primary font-medium min-h-[32px] px-1"
+                                onClick={() => setStops(s => [...s, ""])}
+                              >
+                                + Add another
+                              </button>
+                            )}
                           </div>
-                          <button
-                            type="button"
-                            className="text-muted-foreground text-xs px-2 min-w-[44px] min-h-[44px] mt-6"
-                            onClick={() =>
-                              setStops(prev => prev.filter((_, j) => j !== i))
-                            }
-                            title="Remove stop"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
+                          {stops.map((stop, i) => (
+                            <div key={i} className="flex gap-1.5 items-start">
+                              <div className="flex-1 min-w-0">
+                                <AddressInput
+                                  id={`routepulse-stop-${i}`}
+                                  name={`stop-${i}`}
+                                  label={`Stop ${i + 1}`}
+                                  pinColor="blue"
+                                  value={stop}
+                                  onChange={v =>
+                                    setStops(prev =>
+                                      prev.map((s, j) => (j === i ? v : s))
+                                    )
+                                  }
+                                  placeholder={`Stop ${i + 1} address`}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                className="text-muted-foreground text-xs px-2 min-w-[44px] min-h-[44px] mt-6"
+                                onClick={() => {
+                                  const next = stops.filter((_, j) => j !== i);
+                                  setStops(next);
+                                  if (next.length === 0) setStopsOpen(false);
+                                }}
+                                title="Remove stop"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </>
+                      )}
                     </div>
 
                     {/* v19: routing preference — changes multi-objective ranking */}
                     <div className="space-y-1.5">
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-                        Route style
+                        Style
                       </p>
                       <div className="grid grid-cols-4 gap-1.5">
                         {(
@@ -3142,166 +3170,136 @@ export default function RoutePulse() {
                 </div>
               )}
 
-              <div className="text-xs text-muted-foreground space-y-0.5">
-                <p>
-                  <span className="font-medium text-foreground">From:</span>{" "}
-                  {routeQuery.data!.origin.displayName}
-                </p>
-                <p>
-                  <span className="font-medium text-foreground">To:</span>{" "}
-                  {routeQuery.data!.destination.displayName}
-                </p>
-              </div>
-              {/* v23: driver health score — glanceable go/no-go */}
-              {typeof (routeQuery.data as { driverHealthScore?: number }).driverHealthScore ===
-                "number" && (
-                <div className="flex items-center gap-3 rounded-xl border bg-muted/40 px-3.5 py-3">
-                  <div
-                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums ${
-                      (routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 75
-                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                        : (routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 50
-                          ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                          : "bg-red-500/15 text-red-700 dark:text-red-400"
-                    }`}
-                  >
-                    {(routeQuery.data as { driverHealthScore: number }).driverHealthScore}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
-                      Driver health
-                    </p>
-                    <p className="text-sm font-medium leading-snug">
-                      {(routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 75
-                        ? "Clear run — low combined pain"
-                        : (routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 50
-                          ? "Manageable — watch live conditions"
-                          : "Rough corridor — consider another style"}
-                    </p>
-                  </div>
-                </div>
-              )}
+              <p className="text-[11px] text-muted-foreground truncate">
+                {routeQuery.data!.origin.displayName}
+                <span className="mx-1.5 opacity-50">→</span>
+                {routeQuery.data!.destination.displayName}
+              </p>
+              {/* v25: map-first result hierarchy
+                  1) one-line reason  2) collapsed details  3) light chips */}
+              <p className="text-sm text-foreground leading-snug line-clamp-2">
+                {routeQuery.data!.explanation}
+              </p>
 
-              {/* v23: optimized stop plan for multi-stop delivery */}
-              {(routeQuery.data as { stopPlan?: {
-                optimized: boolean;
-                estimatedMilesSaved: number | null;
-                stops: Array<{ displayName: string; originalIndex: number }>;
-              } })?.stopPlan &&
-                (routeQuery.data as { stopPlan: { stops: unknown[] } }).stopPlan.stops.length >
-                  0 && (
-                <div className="rounded-xl border px-3.5 py-3 space-y-1.5">
-                  <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
-                    Stop plan
-                    {(routeQuery.data as { stopPlan: { optimized: boolean } }).stopPlan
-                      .optimized && (
-                      <span className="ml-1.5 text-primary normal-case tracking-normal font-medium">
-                        · optimized
-                        {typeof (
-                          routeQuery.data as {
-                            stopPlan: { estimatedMilesSaved: number | null };
-                          }
-                        ).stopPlan.estimatedMilesSaved === "number" &&
-                          (
-                            routeQuery.data as {
-                              stopPlan: { estimatedMilesSaved: number };
-                            }
-                          ).stopPlan.estimatedMilesSaved > 0 &&
-                          ` · ~${
-                            (
-                              routeQuery.data as {
-                                stopPlan: { estimatedMilesSaved: number };
-                              }
-                            ).stopPlan.estimatedMilesSaved
-                          } mi saved`}
+              <div className="rounded-xl border bg-muted/20 overflow-hidden">
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 text-left min-h-[44px] hover:bg-muted/40 transition-colors"
+                  onClick={() => setDetailsOpen(v => !v)}
+                  aria-expanded={detailsOpen}
+                >
+                  <span className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">Route details</span>
+                    {typeof (routeQuery.data as { driverHealthScore?: number }).driverHealthScore ===
+                      "number" && (
+                      <span className="ml-1.5">
+                        · Health{" "}
+                        {(routeQuery.data as { driverHealthScore: number }).driverHealthScore}
                       </span>
                     )}
-                  </p>
-                  <ol className="text-xs space-y-0.5 list-decimal list-inside text-muted-foreground">
-                    {(
-                      routeQuery.data as {
-                        stopPlan: {
-                          stops: Array<{ displayName: string; originalIndex: number }>;
-                        };
-                      }
-                    ).stopPlan.stops.map((s, i) => (
-                      <li key={i} className="truncate">
-                        <span className="text-foreground">{s.displayName}</span>
-                        {s.originalIndex !== i && (
-                          <span className="text-[10px] ml-1 opacity-70">
-                            (was #{s.originalIndex + 1})
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-
-              {/* v24: local-driver notes — what a daily PDX driver would say */}
-              {(routeQuery.data as { localDriverNotes?: string[] })?.localDriverNotes &&
-                (routeQuery.data as { localDriverNotes: string[] }).localDriverNotes
-                  .length > 0 && (
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3.5 py-3 space-y-1.5">
-                  <p className="text-[10px] uppercase tracking-wide font-semibold text-amber-700 dark:text-amber-400">
-                    Local driver notes
-                  </p>
-                  <ul className="text-xs text-muted-foreground space-y-1.5">
-                    {(
-                      routeQuery.data as { localDriverNotes: string[] }
-                    ).localDriverNotes.slice(0, 3).map((note, i) => (
-                      <li key={i} className="leading-relaxed">
-                        {note}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* v22: premium value card — the reason someone would pay */}
-              {(routeQuery.data as { valueInsight?: {
-                headline: string;
-                detail: string;
-                vsFastestTimeDeltaMin: number;
-                stressDelta: number;
-                energyDelta: number;
-                bottleneckDelta: number;
-              } | null })?.valueInsight && (
-                <div className="rounded-xl border border-primary/25 bg-primary/5 px-3.5 py-3 space-y-1">
-                  <p className="text-[10px] uppercase tracking-wide font-semibold text-primary">
-                    Why this beats pure-fastest
-                  </p>
-                  <p className="text-sm font-semibold leading-snug">
-                    {(routeQuery.data as { valueInsight: { headline: string } }).valueInsight.headline}
-                  </p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {(routeQuery.data as { valueInsight: { detail: string } }).valueInsight.detail}
-                  </p>
-                </div>
-              )}
-
-              {(routeQuery.data as { dataConfidence?: {
-                score: number;
-                label: string;
-                reasons: string[];
-              } })?.dataConfidence && (
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-                  <span className="font-medium text-foreground">
-                    Data confidence:{" "}
-                    {(routeQuery.data as { dataConfidence: { label: string; score: number } }).dataConfidence.label}
-                    {" "}
-                    ({(routeQuery.data as { dataConfidence: { score: number } }).dataConfidence.score}/100)
+                    {routeQuery.data!.route.incidents.length > 0 && (
+                      <span className="ml-1.5">
+                        · {routeQuery.data!.route.incidents.length} on path
+                      </span>
+                    )}
                   </span>
-                  <span className="text-muted-foreground/80">
-                    {(routeQuery.data as { dataConfidence: { reasons: string[] } }).dataConfidence.reasons.slice(0, 3).join(" · ")}
+                  <span className="text-[11px] text-muted-foreground shrink-0">
+                    {detailsOpen ? "Hide" : "Show"}
                   </span>
-                </div>
-              )}
+                </button>
+                {detailsOpen && (
+                  <div className="px-3.5 pb-3.5 space-y-3 border-t border-border/50 pt-3">
+                    {typeof (routeQuery.data as { driverHealthScore?: number }).driverHealthScore ===
+                      "number" && (
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums ${
+                            (routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 75
+                              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                              : (routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 50
+                                ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                                : "bg-red-500/15 text-red-700 dark:text-red-400"
+                          }`}
+                        >
+                          {(routeQuery.data as { driverHealthScore: number }).driverHealthScore}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                            Driver health
+                          </p>
+                          <p className="text-sm leading-snug">
+                            {(routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 75
+                              ? "Clear run"
+                              : (routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 50
+                                ? "Manageable — watch conditions"
+                                : "Rough corridor"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {(routeQuery.data as { valueInsight?: { headline: string; detail: string } | null })
+                      ?.valueInsight && (
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium">
+                          {(routeQuery.data as { valueInsight: { headline: string } }).valueInsight.headline}
+                        </p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {(routeQuery.data as { valueInsight: { detail: string } }).valueInsight.detail}
+                        </p>
+                      </div>
+                    )}
+                    {(routeQuery.data as { localDriverNotes?: string[] })?.localDriverNotes &&
+                      (routeQuery.data as { localDriverNotes: string[] }).localDriverNotes.length > 0 && (
+                        <ul className="text-xs text-muted-foreground space-y-1.5">
+                          {(routeQuery.data as { localDriverNotes: string[] }).localDriverNotes
+                            .slice(0, 3)
+                            .map((note, i) => (
+                              <li key={i} className="leading-relaxed">
+                                {note}
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    {(routeQuery.data as { stopPlan?: { optimized: boolean; stops: Array<{ displayName: string }> } })
+                      ?.stopPlan &&
+                      (routeQuery.data as { stopPlan: { stops: unknown[] } }).stopPlan.stops.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                            Stop order
+                            {(routeQuery.data as { stopPlan: { optimized: boolean } }).stopPlan.optimized && (
+                              <span className="ml-1.5 text-primary normal-case tracking-normal font-medium">
+                                optimized
+                              </span>
+                            )}
+                          </p>
+                          <ol className="text-xs space-y-0.5 list-decimal list-inside text-muted-foreground">
+                            {(
+                              routeQuery.data as {
+                                stopPlan: { stops: Array<{ displayName: string }> };
+                              }
+                            ).stopPlan.stops.map((s, i) => (
+                              <li key={i} className="truncate">
+                                <span className="text-foreground">{s.displayName}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+                    {(routeQuery.data as { dataConfidence?: { score: number; label: string } })
+                      ?.dataConfidence && (
+                      <p className="text-[11px] text-muted-foreground">
+                        Data confidence:{" "}
+                        <span className="text-foreground font-medium">
+                          {(routeQuery.data as { dataConfidence: { label: string; score: number } }).dataConfidence.label}{" "}
+                          ({(routeQuery.data as { dataConfidence: { score: number } }).dataConfidence.score}/100)
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
 
-              <div className="pt-2 border-t space-y-1.5">
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {routeQuery.data!.explanation}
-                </p>
+              <div className="space-y-1.5">
                 {aiConfidence !== "none" && (
                   <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                     <Sparkles className="w-3 h-3" />
