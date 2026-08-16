@@ -20,6 +20,11 @@ import "leaflet/dist/leaflet.css";
 // layer — see NOTE FOR KIMI near MapClusterGroup below for why this was
 // needed (unclustered map with statewide feeds gets unusable fast).
 import MarkerClusterGroup from "react-leaflet-cluster";
+import {
+  googleMapsDirectionsUrl,
+  appleMapsDirectionsUrl,
+  buildShareSearchParams,
+} from "./mapHandoff";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -42,6 +47,9 @@ import {
   Minimize,
   Layers,
   Share2,
+  ExternalLink,
+  ChevronUp,
+  ChevronDown,
   MapPin,
   ArrowLeftRight,
   History,
@@ -63,7 +71,6 @@ import {
   Undo2,
   RotateCw,
   List,
-  ChevronUp,
   Pencil,
   Radio,
   Play,
@@ -159,6 +166,13 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *   - Secondary intel collapsed under "Route details" by default
  *   - Stops hidden until requested; one-line explanation above the fold
  *   - Less dashboard, more map product
+ *
+ * v26 (usefulness baseline — roadmap M0/M1):
+ *   - Share URL includes preference + stops; restore on load
+ *   - Open in Google Maps / Apple Maps handoff
+ *   - Clearer geolocation denial/timeout messaging
+ *   - Screen Wake Lock while trip mode is active
+ *   - Stop list reorder controls
  *
  * v9 (mobile optimization suite):
  *   - Search card auto-collapses into a one-line chip once a route is on
@@ -908,34 +922,54 @@ export default function RoutePulse() {
     const params = new URLSearchParams(window.location.search);
     const urlOrigin = params.get("origin");
     const urlDestination = params.get("destination");
+    const urlPref = params.get("pref");
+    const urlStops = params.get("stops");
+    const stopList = urlStops
+      ? urlStops.split("|").map(s => s.trim()).filter(s => s.length >= 3).slice(0, 8)
+      : [];
     if (urlOrigin) setOrigin(urlOrigin);
     if (urlDestination) setDestination(urlDestination);
+    if (stopList.length) {
+      setStops(stopList);
+      setStopsOpen(true);
+    }
+    const pref =
+      urlPref === "fastest" ||
+      urlPref === "quiet" ||
+      urlPref === "fuel" ||
+      urlPref === "balanced"
+        ? urlPref
+        : preference;
+    if (urlPref) setPreference(pref as typeof preference);
     // Auto-submit if both are present and valid.
     if (urlOrigin && urlDestination) {
       if (urlOrigin.trim().length >= 3 && urlDestination.trim().length >= 3) {
         setSubmitted({
           origin: urlOrigin.trim(),
           destination: urlDestination.trim(),
-          preference,
-          stops: [],
+          preference: pref as typeof preference,
+          stops: stopList,
         });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update URL when a route is submitted so the link is shareable.
   useEffect(() => {
     if (!submitted) {
-      // Clear params when there's no active route.
       if (window.location.search) {
         window.history.replaceState({}, "", window.location.pathname);
       }
       return;
     }
-    const params = new URLSearchParams();
-    params.set("origin", submitted.origin);
-    params.set("destination", submitted.destination);
-    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    const qs = buildShareSearchParams({
+      origin: submitted.origin,
+      destination: submitted.destination,
+      preference: submitted.preference,
+      stops: submitted.stops,
+    });
+    const newUrl = `${window.location.pathname}?${qs}`;
     window.history.replaceState({}, "", newUrl);
   }, [submitted]);
 
@@ -965,6 +999,36 @@ export default function RoutePulse() {
     const id = window.setInterval(() => setNowTick(t => t + 1), 10_000);
     return () => window.clearInterval(id);
   }, []);
+
+  // v26: keep the screen on during trip mode (supported browsers only).
+  useEffect(() => {
+    if (!tripActive) return;
+    let lock: WakeLockSentinel | null = null;
+    let cancelled = false;
+    const request = async () => {
+      try {
+        if (!("wakeLock" in navigator)) return;
+        lock = await navigator.wakeLock.request("screen");
+        lock.addEventListener("release", () => {
+          /* released by browser — optional re-acquire on visibility */
+        });
+      } catch {
+        // Not allowed (battery saver, permissions) — silent.
+      }
+    };
+    void request();
+    const onVis = () => {
+      if (document.visibilityState === "visible" && tripActive && !cancelled) {
+        void request();
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVis);
+      void lock?.release();
+    };
+  }, [tripActive]);
 
   const mapRef = useRef<L.Map | null>(null);
   const mapWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -1026,7 +1090,39 @@ export default function RoutePulse() {
     setSwapCount(c => c + 1);
   };
 
-  const handleShareRoute = async () => {
+  const handleOpenGoogleMaps = () => {
+    const d = routeQuery.data;
+    if (!d) return;
+    const stops =
+      (d as { stops?: Array<{ lat: number; lng: number }> }).stops?.map(s => ({
+        lat: s.lat,
+        lng: s.lng,
+      })) ?? [];
+    const url = googleMapsDirectionsUrl(
+      { lat: d.origin.lat, lng: d.origin.lng },
+      { lat: d.destination.lat, lng: d.destination.lng },
+      stops
+    );
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleOpenAppleMaps = () => {
+    const d = routeQuery.data;
+    if (!d) return;
+    const stops =
+      (d as { stops?: Array<{ lat: number; lng: number }> }).stops?.map(s => ({
+        lat: s.lat,
+        lng: s.lng,
+      })) ?? [];
+    const url = appleMapsDirectionsUrl(
+      { lat: d.origin.lat, lng: d.origin.lng },
+      { lat: d.destination.lat, lng: d.destination.lng },
+      stops
+    );
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+    const handleShareRoute = async () => {
     const url = window.location.href;
     try {
       await navigator.clipboard.writeText(url);
@@ -1150,8 +1246,10 @@ export default function RoutePulse() {
         stopTracking();
         setLocateError(
           err.code === err.PERMISSION_DENIED
-            ? "Location permission denied — enable it in your browser settings."
-            : "Couldn't get your location — check permissions."
+            ? "Location blocked — allow location for this site, or tap the map to set origin."
+            : err.code === err.TIMEOUT
+              ? "Location timed out — try outdoors, or tap the map to set origin."
+              : "Couldn't get GPS — tap the map to set origin, or type an address."
         );
       },
       { enableHighAccuracy: true, timeout: 10_000, maximumAge: 5_000 }
@@ -2612,18 +2710,58 @@ export default function RoutePulse() {
                                   placeholder={`Stop ${i + 1} address`}
                                 />
                               </div>
-                              <button
-                                type="button"
-                                className="text-muted-foreground text-xs px-2 min-w-[44px] min-h-[44px] mt-6"
-                                onClick={() => {
-                                  const next = stops.filter((_, j) => j !== i);
-                                  setStops(next);
-                                  if (next.length === 0) setStopsOpen(false);
-                                }}
-                                title="Remove stop"
-                              >
-                                ✕
-                              </button>
+                              <div className="flex flex-col gap-0.5 mt-6">
+                                <button
+                                  type="button"
+                                  className="text-muted-foreground min-w-[36px] min-h-[36px] flex items-center justify-center disabled:opacity-30"
+                                  disabled={i === 0}
+                                  onClick={() =>
+                                    setStops(prev => {
+                                      if (i === 0) return prev;
+                                      const next = [...prev];
+                                      const tmp = next[i - 1]!;
+                                      next[i - 1] = next[i]!;
+                                      next[i] = tmp;
+                                      return next;
+                                    })
+                                  }
+                                  title="Move up"
+                                  aria-label="Move stop up"
+                                >
+                                  <ChevronUp className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="text-muted-foreground min-w-[36px] min-h-[36px] flex items-center justify-center disabled:opacity-30"
+                                  disabled={i >= stops.length - 1}
+                                  onClick={() =>
+                                    setStops(prev => {
+                                      if (i >= prev.length - 1) return prev;
+                                      const next = [...prev];
+                                      const tmp = next[i + 1]!;
+                                      next[i + 1] = next[i]!;
+                                      next[i] = tmp;
+                                      return next;
+                                    })
+                                  }
+                                  title="Move down"
+                                  aria-label="Move stop down"
+                                >
+                                  <ChevronDown className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="text-muted-foreground text-xs min-w-[36px] min-h-[36px]"
+                                  onClick={() => {
+                                    const next = stops.filter((_, j) => j !== i);
+                                    setStops(next);
+                                    if (next.length === 0) setStopsOpen(false);
+                                  }}
+                                  title="Remove stop"
+                                >
+                                  ✕
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </>
@@ -2985,6 +3123,28 @@ export default function RoutePulse() {
                       {tripActive ? "End" : "Go"}
                     </Button>
                   )}
+                  {!tripActive && hasRoute && (
+                    <div className="flex gap-1 shrink-0">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-12 sm:h-9 px-2.5 text-xs"
+                        onClick={handleOpenGoogleMaps}
+                      >
+                        Google
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-12 sm:h-9 px-2.5 text-xs"
+                        onClick={handleOpenAppleMaps}
+                      >
+                        Apple
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Expanded-only content: full turn-by-turn list. Rendered
@@ -3134,6 +3294,26 @@ export default function RoutePulse() {
                   >
                     <Share2 className="w-4 h-4" />
                     Share
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-muted-foreground hover:text-foreground"
+                    onClick={handleOpenGoogleMaps}
+                    title="Open this route in Google Maps for turn-by-turn"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Google
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-muted-foreground hover:text-foreground"
+                    onClick={handleOpenAppleMaps}
+                    title="Open this route in Apple Maps for turn-by-turn"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Apple
                   </Button>
                 </div>
               </div>
@@ -3531,11 +3711,8 @@ export default function RoutePulse() {
                               "surface" && " · Surface streets"}
                             {(alt as { pathStyle?: string }).pathStyle ===
                               "standard" && " · Main roads"}
-                            {typeof (alt as { bottleneckScore?: number }).bottleneckScore ===
-                              "number" &&
-                              (alt as { bottleneckScore: number }).bottleneckScore >
-                                0 &&
-                              ` · Hist. bottleneck ${(alt as { bottleneckScore: number }).bottleneckScore}`}
+                            {(alt as { pathStyle?: string }).pathStyle === "surface" &&
+                              ` · Surface streets`}
                           </span>
                           {/* v12: the AI's reason this route loses — the
                             "why not" behind the recommendation. */}
