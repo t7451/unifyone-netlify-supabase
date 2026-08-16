@@ -65,6 +65,8 @@ const FREE_GATEWAY = {
 // Free models fall back across other free models only, so a rate-limited
 // :free endpoint can never silently roll a user onto a metered model.
 const FREE_FALLBACK_MODELS = [
+  `groq/${GROQ_FALLBACK_MODEL}`,
+  "gemini/gemini-2.0-flash",
   FREE_GATEWAY.hermes,
   FREE_GATEWAY.gptOss120b,
   FREE_GATEWAY.qwen3Next,
@@ -73,6 +75,8 @@ const FREE_FALLBACK_MODELS = [
 ];
 
 const DEFAULT_FALLBACK_MODELS = [
+  `groq/${GROQ_FALLBACK_MODEL}`,
+  "gemini/gemini-2.0-flash",
   "gemini-2.5-flash",
   "claude-3-5-haiku",
   "gpt-4o-mini",

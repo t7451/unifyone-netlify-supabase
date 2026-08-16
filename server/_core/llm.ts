@@ -291,6 +291,15 @@ const resolveGroqApiUrl = () =>
     "openai/v1/chat/completions"
   );
 
+// Google AI Studio OpenAI-compatible endpoint (free tier with GEMINI_API_KEY).
+// https://ai.google.dev/gemini-api/docs/openai
+const resolveGeminiApiUrl = () =>
+  resolveProviderUrl(
+    ENV.geminiApiUrl,
+    "https://generativelanguage.googleapis.com",
+    "v1beta/openai/chat/completions"
+  );
+
 const resolveVercelAiGatewayApiUrl = () =>
   resolveProviderUrl(
     ENV.vercelAiGatewayApiUrl,
@@ -324,23 +333,44 @@ const toOpenRouterModel = (model: string) => {
 };
 
 export const GROQ_FALLBACK_MODEL = "llama-3.3-70b-versatile";
+export const GEMINI_FALLBACK_MODEL = "gemini-2.0-flash";
 export const VERCEL_AI_GATEWAY_FALLBACK_MODEL = "openai/gpt-5.5";
 
+// Explicit free-tier chains used by high-volume tools (RoutePulse, briefs)
+// so we burn Groq + Gemini free quota before paid OpenRouter/Forge paths.
+export const FREE_TIER_FALLBACK_CHAIN = [
+  `groq/${GROQ_FALLBACK_MODEL}`,
+  `gemini/${GEMINI_FALLBACK_MODEL}`,
+  "openrouter/google/gemini-2.0-flash-exp:free",
+  "openrouter/nousresearch/hermes-3-llama-3.1-405b:free",
+  "openrouter/openai/gpt-oss-20b:free",
+] as const;
+
 // The allowlist uses the concrete fallback model; "groq/<model>" is reserved
-// for future explicit Groq model routing without exposing arbitrary providers.
+// for explicit Groq model routing without exposing arbitrary providers.
 const isGroqModel = (model: string) =>
   model === GROQ_FALLBACK_MODEL || model.startsWith("groq/");
 
+const isGeminiNativeModel = (model: string) =>
+  model === GEMINI_FALLBACK_MODEL ||
+  model.startsWith("gemini/") ||
+  // Bare Gemini ids when native key is configured — prefer direct Google
+  // free tier over routing them through OpenRouter/Forge.
+  (/^gemini-[\w.-]+$/i.test(model) && (ENV.geminiApiKey ?? "").length > 0);
+
 const isVercelAiGatewayModel = (model: string) => {
-  if (isGroqModel(model)) return false;
+  if (isGroqModel(model) || isGeminiNativeModel(model)) return false;
   return /^[a-z0-9_-]+\/[a-z0-9._:-]+$/i.test(model);
 };
 
-const toProviderModel = (model: string) =>
-  model.startsWith("groq/") ? model.slice("groq/".length) : model;
+const toProviderModel = (model: string) => {
+  if (model.startsWith("groq/")) return model.slice("groq/".length);
+  if (model.startsWith("gemini/")) return model.slice("gemini/".length);
+  return model;
+};
 
 const assertApiKey = (
-  provider: "forge" | "groq" | "vercelAiGateway" | "openRouter"
+  provider: "forge" | "groq" | "gemini" | "vercelAiGateway" | "openRouter"
 ) => {
   if (provider === "openRouter") {
     if (!ENV.openRouterApiKey) {
@@ -364,6 +394,15 @@ const assertApiKey = (
     if (!ENV.groqApiKey) {
       throw new Error(
         "GROQ_API_KEY is not configured. Set this environment variable to enable Groq AI fallback."
+      );
+    }
+    return;
+  }
+
+  if (provider === "gemini") {
+    if (!ENV.geminiApiKey) {
+      throw new Error(
+        "GEMINI_API_KEY is not configured. Set this environment variable (Google AI Studio) to enable native Gemini free-tier routing."
       );
     }
     return;
@@ -423,6 +462,9 @@ const normalizeResponseFormat = ({
 
 export const DEFAULT_MODEL = "gemini-2.5-flash";
 export const DEFAULT_FALLBACK_CHAIN = [
+  // Free-first: burn Groq + Gemini free quota before paid paths.
+  `groq/${GROQ_FALLBACK_MODEL}`,
+  `gemini/${GEMINI_FALLBACK_MODEL}`,
   DEFAULT_MODEL,
   "claude-3-5-haiku",
   "gpt-4o-mini",
@@ -546,23 +588,28 @@ async function invokeOnce(
   model: string,
   params: InvokeParams
 ): Promise<InvokeResult> {
-  // OpenRouter, when configured, takes over ALL LLM traffic so every Kai /
-  // UnifyAI feature works off a single key and model. A user-supplied BYOK
-  // key forces OpenRouter routing even when the platform key is unset.
+  // Explicit free-tier providers (groq/*, gemini/*) bypass the OpenRouter
+  // takeover so high-volume tools can burn free Groq + Gemini quota first.
+  // A user-supplied BYOK key still forces OpenRouter. Bare models without a
+  // free-provider prefix continue to prefer OpenRouter when configured.
   const byokKey = params.providerApiKey?.trim() || undefined;
-  const provider =
-    byokKey || isOpenRouterEnabled()
+  const provider: "forge" | "groq" | "gemini" | "vercelAiGateway" | "openRouter" =
+    byokKey
       ? "openRouter"
-      : isGroqModel(model)
+      : isGroqModel(model) && (ENV.groqApiKey ?? "").length > 0
         ? "groq"
-        : isVercelAiGatewayModel(model)
-          ? "vercelAiGateway"
-          : "forge";
+        : isGeminiNativeModel(model) && (ENV.geminiApiKey ?? "").length > 0
+          ? "gemini"
+          : isOpenRouterEnabled()
+            ? "openRouter"
+            : isVercelAiGatewayModel(model)
+              ? "vercelAiGateway"
+              : "forge";
   if (!byokKey) assertApiKey(provider);
   const providerModel =
     provider === "openRouter"
       ? toOpenRouterModel(model)
-      : provider === "groq"
+      : provider === "groq" || provider === "gemini"
         ? toProviderModel(model)
         : model;
 
@@ -623,9 +670,11 @@ async function invokeOnce(
       ? resolveOpenRouterApiUrl()
       : provider === "groq"
         ? resolveGroqApiUrl()
-        : provider === "vercelAiGateway"
-          ? resolveVercelAiGatewayApiUrl()
-          : resolveApiUrl(),
+        : provider === "gemini"
+          ? resolveGeminiApiUrl()
+          : provider === "vercelAiGateway"
+            ? resolveVercelAiGatewayApiUrl()
+            : resolveApiUrl(),
     {
       method: "POST",
       headers: {
@@ -635,9 +684,11 @@ async function invokeOnce(
             ? (byokKey ?? ENV.openRouterApiKey)
             : provider === "groq"
               ? ENV.groqApiKey
-              : provider === "vercelAiGateway"
-                ? ENV.vercelOidcToken
-                : ENV.forgeApiKey
+              : provider === "gemini"
+                ? ENV.geminiApiKey
+                : provider === "vercelAiGateway"
+                  ? ENV.vercelOidcToken
+                  : ENV.forgeApiKey
         }`,
         // Optional OpenRouter attribution headers (https://openrouter.ai/docs).
         ...(provider === "openRouter"

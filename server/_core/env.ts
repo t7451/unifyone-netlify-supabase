@@ -58,6 +58,14 @@ export const ENV = {
   vercelOidcToken: process.env.VERCEL_OIDC_TOKEN ?? "",
   groqApiUrl: process.env.GROQ_API_URL ?? "",
   groqApiKey: process.env.GROQ_API_KEY ?? "",
+  // Google AI Studio / Gemini free tier (https://aistudio.google.com/apikey).
+  // Used for native Gemini routing (gemini/* models) without OpenRouter.
+  // Accepts GEMINI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY.
+  geminiApiKey:
+    process.env.GEMINI_API_KEY ??
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY ??
+    "",
+  geminiApiUrl: process.env.GEMINI_API_URL ?? "",
   squareAccessToken: process.env.SQUARE_ACCESS_TOKEN ?? "",
   squareLocationId: process.env.SQUARE_LOCATION_ID ?? "",
   squareWebhookSignatureKey: process.env.SQUARE_WEBHOOK_SIGNATURE_KEY ?? "",

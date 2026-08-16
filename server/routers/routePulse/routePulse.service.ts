@@ -82,8 +82,11 @@
 import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "../../_core/supabaseAdmin";
 import { ENV } from "../../_core/env";
-import { invokeLLM } from "../../_core/llm";
-import { resolveKaiModel } from "../../lib/kaiModels";
+import {
+  FREE_TIER_FALLBACK_CHAIN,
+  GROQ_FALLBACK_MODEL,
+  invokeLLM,
+} from "../../_core/llm";
 import { getClearRouteBrief } from "./aiBriefWorker";
 import {
   bboxForGeometries,
@@ -1276,17 +1279,13 @@ Routes: ${JSON.stringify(
 Respond ONLY with JSON: { "chosen_index": 0, "explanation": "1-2 short sentences for the driver: name the specific trade-off (time vs stress/energy/incidents) and quantify when relevant. If you chose a non-fastest route, say why the calmer/leaner option wins under the preference.", "confidence": "high|medium|low", "avoid_reasons": ["", "2-8 words on why each NON-chosen route loses, aligned by route index; empty string for the chosen route"] }`;
 
   try {
-    // Free-tier model, routed through OpenRouter (invokeLLM falls back
-    // across the model chain automatically if one :free endpoint is
-    // rate-limited) — never charges Kai credits, never touches Gemini.
-    // gpt-oss-120b is the strongest free reasoning model in the catalog,
-    // which matters here because route choice is a tradeoff judgement,
-    // not a formatting task.
-    const model = resolveKaiModel("gpt-oss-120b");
+    // Free-first chain: Groq → native Gemini → OpenRouter :free models.
+    // High-volume RoutePulse scoring should burn free quota before any
+    // metered path. Keys unset for a provider just skip that hop.
     const result = await invokeLLM({
       messages: [{ role: "user", content: prompt }],
-      model: model.gatewayModel,
-      modelChain: model.fallbackModels,
+      model: `groq/${GROQ_FALLBACK_MODEL}`,
+      modelChain: [...FREE_TIER_FALLBACK_CHAIN],
       maxTokens: 300,
     });
 
