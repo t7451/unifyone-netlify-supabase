@@ -15,6 +15,17 @@ vi.mock("../../_core/supabaseAdmin", () => ({
 }));
 vi.mock("../../_core/llm", () => ({
   invokeLLM: vi.fn(),
+  GROQ_FALLBACK_MODEL: "llama-3.3-70b-versatile",
+  FREE_TIER_FALLBACK_CHAIN: [
+    "groq/llama-3.3-70b-versatile",
+    "gemini/gemini-2.0-flash",
+  ],
+  freeFirstChain: (...preferred: Array<string | undefined | null>) =>
+    [
+      "groq/llama-3.3-70b-versatile",
+      "gemini/gemini-2.0-flash",
+      ...preferred.filter(Boolean),
+    ] as string[],
 }));
 vi.mock("../../lib/kaiModels", () => ({
   resolveKaiModel: vi.fn(() => ({
