@@ -172,5 +172,10 @@
     "*.{ts,tsx,js,jsx,json,css,md}": [
       "prettier --write --ignore-unknown"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": ">=8.5.18"
+    }
   }
 }
