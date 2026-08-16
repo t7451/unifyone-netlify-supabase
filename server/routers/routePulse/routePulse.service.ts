@@ -93,6 +93,7 @@ import {
   GROQ_FALLBACK_MODEL,
   invokeLLM,
 } from "../../_core/llm";
+import { polishResponse } from "../../lib/aiResponseFramework";
 import { getClearRouteBrief } from "./aiBriefWorker";
 import {
   bboxForGeometries,
@@ -1430,7 +1431,7 @@ Respond ONLY with JSON: { "chosen_index": 0, "explanation": "1-2 short sentences
 
     return {
       chosenIndex: parsed.chosen_index,
-      explanation: parsed.explanation,
+      explanation: polishResponse(parsed.explanation),
       confidence,
       verdicts,
     };

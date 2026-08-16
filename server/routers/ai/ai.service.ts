@@ -17,6 +17,12 @@ import {
   GROQ_FALLBACK_MODEL,
   invokeLLM,
 } from "../../_core/llm";
+import {
+  improveResponse,
+  resolveQualityMode,
+  withQualityContract,
+  type QualityMode,
+} from "../../lib/aiResponseFramework";
 import { mcpClient } from "../../lib/mcpClient";
 import {
   buildKaiChatMeterMetadata,
@@ -80,6 +86,8 @@ type ChatInput = {
   conversationId?: number;
   model?: Parameters<typeof resolveKaiModel>[0];
   dataContext?: string;
+  /** Response quality mode — fast | standard | high. */
+  quality?: QualityMode;
 };
 
 /** Send a message and get an AI response — persists to conversation history. */
@@ -175,15 +183,23 @@ export async function chat(ctx: ChatCtx, input: ChatInput) {
       }
     }
 
-    const systemPrompt = [
-      baseSystemPrompt,
-      KAI_BASE_DIRECTIVES,
-      KAI_IN_SCOPE_GUIDANCE,
-      input.dataContext ? `\nUser-provided context:\n${input.dataContext}` : "",
-      mcpContext,
-    ]
-      .filter(Boolean)
-      .join("\n");
+    const qualityMode = resolveQualityMode(input.quality, {
+      premiumModel: !isFreeKaiModel(selectedModel),
+    });
+
+    const systemPrompt = withQualityContract(
+      [
+        baseSystemPrompt,
+        KAI_BASE_DIRECTIVES,
+        KAI_IN_SCOPE_GUIDANCE,
+        input.dataContext
+          ? `\nUser-provided context:\n${input.dataContext}`
+          : "",
+        mcpContext,
+      ]
+        .filter(Boolean)
+        .join("\n")
+    );
 
     // Load or create conversation
     let conversationId = input.conversationId;
@@ -349,6 +365,39 @@ export async function chat(ctx: ChatCtx, input: ChatInput) {
         "I encountered a temporary issue processing your request. Please try again in a moment.";
     }
 
+    // High-end response framework: polish + optional critique/refine.
+    // Skipped on hard LLM failures. Free-tier refine uses Groq/Gemini chain.
+    let qualityMeta: {
+      score: number;
+      improved: boolean;
+      mode: QualityMode;
+      issues: string[];
+    } | null = null;
+    if (
+      llmSucceeded &&
+      assistantContent &&
+      !assistantContent.startsWith("I encountered a temporary issue")
+    ) {
+      try {
+        const improved = await improveResponse({
+          draft: assistantContent,
+          userMessage: input.message,
+          mode: qualityMode,
+          contextLabel: input.context,
+          expectNumbers: Boolean(mcpContext),
+        });
+        assistantContent = improved.content;
+        qualityMeta = {
+          score: improved.quality.score,
+          improved: improved.improved,
+          mode: improved.mode,
+          issues: improved.quality.issues,
+        };
+      } catch (err) {
+        console.warn("[Kai] response quality pass failed:", err);
+      }
+    }
+
     if (llmSucceeded && !isUnmetered) {
       const creditsToDebit = Math.max(
         chargedCredits || 0,
@@ -452,6 +501,7 @@ export async function chat(ctx: ChatCtx, input: ChatInput) {
 
     return {
       reply: assistantContent,
+      quality: qualityMeta,
       conversationId,
       messageCount: updatedMessages.length,
       metadata: {

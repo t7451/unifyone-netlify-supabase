@@ -19,6 +19,7 @@ import {
   type ToolCall,
   type InvokeResult,
 } from "../_core/llm";
+import { polishResponse } from "./aiResponseFramework";
 import { mcpListTools, mcpCallTool, type McpTool } from "./mcpClient";
 import {
   executeNativeTool,
@@ -332,6 +333,10 @@ export async function runKaiAgent(
   if (!finalContent) {
     finalContent =
       "I gathered tool results but could not finalize a response. Please try rephrasing.";
+  } else {
+    // Zero-cost polish: strip filler openers before the quality framework
+    // in ai.service runs its scored refine pass.
+    finalContent = polishResponse(finalContent);
   }
 
   return {

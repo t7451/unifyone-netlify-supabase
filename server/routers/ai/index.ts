@@ -42,6 +42,8 @@ export const aiRouter = router({
         model: z.enum(KAI_MODEL_IDS).optional(),
         /** Optional data context injected into the system prompt (e.g. current shift stats) */
         dataContext: z.string().optional(),
+        /** Response quality: fast | standard | high (default standard; premium models → high) */
+        quality: z.enum(["fast", "standard", "high"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => service.chat(ctx, input)),
