@@ -2722,10 +2722,10 @@ export default function RoutePulse() {
                 screen. */}
             {!tripActive && (
             <Card
-              className={`absolute z-[400] top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-auto sm:w-[380px] bg-background/90 backdrop-blur-md shadow-xl border ${
+              className={`absolute z-[400] top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-auto sm:w-[300px] lg:w-[320px] bg-background/90 backdrop-blur-md shadow-xl border ${
                 searchCollapsed && hasRoute
                   ? "p-2.5 sm:p-3"
-                  : "p-4 sm:p-5 max-h-[62dvh] overflow-y-auto sm:max-h-none sm:overflow-visible"
+                  : "p-3 sm:p-3.5 max-h-[62dvh] overflow-y-auto sm:max-h-[min(70vh,640px)] sm:overflow-y-auto"
               }`}
             >
               {searchCollapsed && hasRoute ? (

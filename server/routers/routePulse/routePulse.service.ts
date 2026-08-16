@@ -291,6 +291,81 @@ async function geocodeViaCensus(
  * Oregon/SW Washington today; callers doing national/global routing later
  * can drop or parameterize this.
  */
+
+/** Match raw GPS pasted as "45.46742, -122.60254" or similar. */
+function parseLatLngLiteral(input: string): LatLng | null {
+  const m = input
+    .trim()
+    .match(
+      /^(-?\d{1,2}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)$/
+    );
+  if (!m) return null;
+  const lat = parseFloat(m[1]!);
+  const lng = parseFloat(m[2]!);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  return { lat, lng };
+}
+
+async function reverseGeocodeNominatim(
+  lat: number,
+  lng: number
+): Promise<string | null> {
+  const url =
+    `${ENV.nominatimUrl}/reverse?format=jsonv2&lat=${lat}&lon=${lng}` +
+    `&zoom=18&addressdetails=0`;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": ENV.nominatimUserAgent,
+        Accept: "application/json",
+      },
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { display_name?: string };
+    return body.display_name ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function reverseGeocodeTomTom(
+  lat: number,
+  lng: number
+): Promise<string | null> {
+  const key = ENV.tomtomApiKey;
+  if (!key) return null;
+  try {
+    const url =
+      `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lng}.json` +
+      `?key=${key}&radius=100`;
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(6_000),
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as {
+      addresses?: Array<{ address?: { freeformAddress?: string } }>;
+    };
+    return body.addresses?.[0]?.address?.freeformAddress ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Readable label for a GPS point — TomTom first, Nominatim fallback.
+ */
+export async function reverseGeocodeLabel(
+  lat: number,
+  lng: number
+): Promise<string> {
+  const label =
+    (await reverseGeocodeTomTom(lat, lng)) ??
+    (await reverseGeocodeNominatim(lat, lng));
+  return label ?? `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+}
+
 export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
   const trimmed = address.trim();
   if (trimmed.length < 3) {
@@ -315,6 +390,19 @@ export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
       expiresAt: Date.now() + GEOCODE_CACHE_TTL_MS,
     });
     return fromBlob;
+  }
+
+  // Raw GPS coordinates → reverse-geocode to a human place name.
+  const coords = parseLatLngLiteral(trimmed);
+  if (coords) {
+    const displayName = await reverseGeocodeLabel(coords.lat, coords.lng);
+    const point: GeocodedPoint = {
+      lat: coords.lat,
+      lng: coords.lng,
+      displayName,
+    };
+    writeGeocodeCache(trimmed, point);
+    return point;
   }
 
   const point =
@@ -1265,11 +1353,22 @@ async function fetchBaseRoutes(
         )
       : Promise.resolve([] as BaseRoute[]);
 
-    const [standard, surface] = await Promise.all([
+    const tomtomPromise = fetchTomTomRoutes(origin, destination, {
+      via,
+      computeBestOrder: via.length >= 1,
+      maxAlternatives: via.length === 0 ? 2 : 0,
+    }).catch(() => null);
+
+    const [standard, surface, tomtom] = await Promise.all([
       standardPromise,
       surfacePromise,
+      tomtomPromise,
     ]);
-    const merged = mergeRouteCandidates([standard, surface]);
+    const merged = mergeRouteCandidates([
+      standard,
+      surface,
+      tomtom ?? [],
+    ]);
     if (merged.length === 0) {
       throw new TRPCError({
         code: "NOT_FOUND",
@@ -1280,6 +1379,12 @@ async function fetchBaseRoutes(
   } catch (err) {
     if (err instanceof TRPCError) throw err;
     console.warn("[routePulse] OSRM unreachable, trying TomTom fallback:", err);
+    const tt = await fetchTomTomRoutes(origin, destination, {
+      via,
+      computeBestOrder: via.length >= 1,
+      maxAlternatives: 2,
+    });
+    if (tt?.length) return tt;
     return await fetchTomTomFallback(origin, destination);
   }
 }
@@ -1369,6 +1474,184 @@ function pathLengthM(points: LatLng[]): number {
  * Nearest-neighbor from origin, then 2-opt improvement, fixed destination.
  * n ≤ 8 so full local search is cheap.
  */
+
+/**
+ * TomTom Waypoint Optimization API — road-network order for delivery stops.
+ * Falls back to null so callers can use local NN+2-opt.
+ * https://developer.tomtom.com/routing/documentation/waypoint-optimization
+ */
+export async function optimizeStopsTomTom(
+  origin: LatLng,
+  destination: LatLng,
+  stops: LatLng[]
+): Promise<number[] | null> {
+  const key = ENV.tomtomApiKey;
+  if (!key || stops.length < 2 || stops.length > 12) return null;
+  try {
+    const waypoints = [
+      { point: { latitude: origin.lat, longitude: origin.lng } },
+      ...stops.map(s => ({
+        point: { latitude: s.lat, longitude: s.lng },
+      })),
+      { point: { latitude: destination.lat, longitude: destination.lng } },
+    ];
+    const url = `https://api.tomtom.com/routing/waypointoptimization/1?key=${key}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        waypoints,
+        options: {
+          travelMode: "car",
+          vehicleMaxSpeed: 120,
+          // Keep origin first and destination last when the API supports it
+          // via reconstructed order mapping below.
+        },
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) {
+      const bodyText = await res.text().catch(() => "");
+      console.warn(
+        `[routePulse] TomTom waypoint opt HTTP ${res.status}: ${bodyText.slice(0, 200)}`
+      );
+      return null;
+    }
+    const body = (await res.json()) as { optimizedOrder?: number[] };
+    const order = body.optimizedOrder;
+    if (!Array.isArray(order) || order.length !== waypoints.length) return null;
+    // optimizedOrder indexes into the full list (origin + stops + dest).
+    // Extract only intermediate stop indices, remapped to 0..stops.length-1.
+    const stopOrder: number[] = [];
+    for (const idx of order) {
+      if (idx === 0 || idx === waypoints.length - 1) continue; // origin/dest
+      const stopIdx = idx - 1;
+      if (stopIdx >= 0 && stopIdx < stops.length) stopOrder.push(stopIdx);
+    }
+    if (stopOrder.length !== stops.length) return null;
+    return stopOrder;
+  } catch (err) {
+    console.warn("[routePulse] TomTom waypoint opt failed:", err);
+    return null;
+  }
+}
+
+/**
+ * Full TomTom Routing API with traffic, vehicle settings, optional via points,
+ * and computeBestOrder for multi-stop. Returns BaseRoute[] or null.
+ */
+async function fetchTomTomRoutes(
+  origin: LatLng,
+  destination: LatLng,
+  opts: {
+    via?: LatLng[];
+    computeBestOrder?: boolean;
+    maxAlternatives?: number;
+  } = {}
+): Promise<BaseRoute[] | null> {
+  const apiKey = ENV.tomtomApiKey;
+  if (!apiKey) return null;
+  const via = opts.via ?? [];
+  const parts = [
+    `${origin.lat},${origin.lng}`,
+    ...via.map(v => `${v.lat},${v.lng}`),
+    `${destination.lat},${destination.lng}`,
+  ];
+  const maxAlt =
+    via.length === 0 && !opts.computeBestOrder
+      ? Math.min(2, opts.maxAlternatives ?? 2)
+      : 0;
+  const url =
+    `https://api.tomtom.com/routing/1/calculateRoute/${parts.join(":")}/json` +
+    `?key=${apiKey}` +
+    `&traffic=true` +
+    `&travelMode=car` +
+    `&routeType=fastest` +
+    `&vehicleMaxSpeed=120` +
+    `&computeTravelTimeFor=all` +
+    `&sectionType=traffic` +
+    (opts.computeBestOrder && via.length >= 1
+      ? `&computeBestOrder=true`
+      : "") +
+    (maxAlt > 0 ? `&maxAlternatives=${maxAlt}` : "") +
+    `&instructionsType=text` +
+    `&language=en-US`;
+
+  try {
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(12_000),
+    });
+    if (!res.ok) {
+      const bodyText = await res.text().catch(() => "");
+      console.warn(
+        `[routePulse] TomTom routing HTTP ${res.status}: ${bodyText.slice(0, 200)}`
+      );
+      return null;
+    }
+    const body = (await res.json()) as {
+      routes?: Array<{
+        summary?: {
+          lengthInMeters?: number;
+          travelTimeInSeconds?: number;
+          trafficDelayInSeconds?: number;
+        };
+        legs?: Array<{
+          points?: Array<{ latitude: number; longitude: number }>;
+        }>;
+        guidance?: {
+          instructions?: Array<{
+            message?: string;
+            routeOffsetInMeters?: number;
+            point?: { latitude: number; longitude: number };
+          }>;
+        };
+        optimizedWaypoints?: Array<{
+          providedIndex?: number;
+          optimizedIndex?: number;
+        }>;
+      }>;
+    };
+    const routes = body.routes ?? [];
+    if (!routes.length) return null;
+    return routes.map(r => {
+      const coords: [number, number][] = [];
+      for (const leg of r.legs ?? []) {
+        for (const p of leg.points ?? []) {
+          coords.push([p.longitude, p.latitude]);
+        }
+      }
+      const maneuvers: RouteManeuver[] = (r.guidance?.instructions ?? [])
+        .filter(i => i.message)
+        .map(i => ({
+          instruction: i.message!,
+          type: "turn",
+          modifier: null,
+          roadName: null,
+          distanceM: i.routeOffsetInMeters ?? 0,
+          location: i.point
+            ? ([i.point.longitude, i.point.latitude] as [number, number])
+            : ([coords[0]?.[0] ?? 0, coords[0]?.[1] ?? 0] as [number, number]),
+          durationS: 0,
+          coordinates: [] as [number, number][],
+        }));
+      return {
+        distance: r.summary?.lengthInMeters ?? 0,
+        duration: r.summary?.travelTimeInSeconds ?? 0,
+        geometry: { type: "LineString" as const, coordinates: coords },
+        maneuvers,
+        pathStyle: "standard" as const,
+      };
+    });
+  } catch (err) {
+    console.warn("[routePulse] TomTom routing failed:", err);
+    return null;
+  }
+}
+
 export function optimizeStopOrder(
   origin: LatLng,
   destination: LatLng,
@@ -1872,11 +2155,13 @@ export async function getRoute(
   let stops = rawStops;
   let stopPlan: RouteResult["stopPlan"] = undefined;
   if (rawStops.length >= 2 && optimizeStops) {
-    const { order, milesSaved } = optimizeStopOrder(
+    const ttOrder = await optimizeStopsTomTom(origin, destination, rawStops);
+    const { order: localOrder, milesSaved } = optimizeStopOrder(
       origin,
       destination,
       rawStops
     );
+    const order = ttOrder ?? localOrder;
     stops = order.map(i => rawStops[i]!);
     const orderChanged = order.some((v, i) => v !== i);
     stopPlan = {
