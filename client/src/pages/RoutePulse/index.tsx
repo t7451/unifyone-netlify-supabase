@@ -148,6 +148,10 @@ import { useRecentRoutes } from "@/hooks/useRecentRoutes";
  *   - Balanced/Quiet/Fuel also request OSRM exclude=motorway options
  *   - Comparison cards label Surface vs Freeway-style paths
  *
+ * v23 (delivery-ops):
+ *   - Driver health score (0-100) on result card
+ *   - Smart stop reordering with stop plan summary
+ *
  * v9 (mobile optimization suite):
  *   - Search card auto-collapses into a one-line chip once a route is on
  *     the map (tap to edit) — the map is the product on a phone
@@ -3145,6 +3149,92 @@ export default function RoutePulse() {
                   {routeQuery.data!.destination.displayName}
                 </p>
               </div>
+              {/* v23: driver health score — glanceable go/no-go */}
+              {typeof (routeQuery.data as { driverHealthScore?: number }).driverHealthScore ===
+                "number" && (
+                <div className="flex items-center gap-3 rounded-xl border bg-muted/40 px-3.5 py-3">
+                  <div
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums ${
+                      (routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 75
+                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                        : (routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 50
+                          ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                          : "bg-red-500/15 text-red-700 dark:text-red-400"
+                    }`}
+                  >
+                    {(routeQuery.data as { driverHealthScore: number }).driverHealthScore}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                      Driver health
+                    </p>
+                    <p className="text-sm font-medium leading-snug">
+                      {(routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 75
+                        ? "Clear run — low combined pain"
+                        : (routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 50
+                          ? "Manageable — watch live conditions"
+                          : "Rough corridor — consider another style"}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* v23: optimized stop plan for multi-stop delivery */}
+              {(routeQuery.data as { stopPlan?: {
+                optimized: boolean;
+                estimatedMilesSaved: number | null;
+                stops: Array<{ displayName: string; originalIndex: number }>;
+              } })?.stopPlan &&
+                (routeQuery.data as { stopPlan: { stops: unknown[] } }).stopPlan.stops.length >
+                  0 && (
+                <div className="rounded-xl border px-3.5 py-3 space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                    Stop plan
+                    {(routeQuery.data as { stopPlan: { optimized: boolean } }).stopPlan
+                      .optimized && (
+                      <span className="ml-1.5 text-primary normal-case tracking-normal font-medium">
+                        · optimized
+                        {typeof (
+                          routeQuery.data as {
+                            stopPlan: { estimatedMilesSaved: number | null };
+                          }
+                        ).stopPlan.estimatedMilesSaved === "number" &&
+                          (
+                            routeQuery.data as {
+                              stopPlan: { estimatedMilesSaved: number };
+                            }
+                          ).stopPlan.estimatedMilesSaved > 0 &&
+                          ` · ~${
+                            (
+                              routeQuery.data as {
+                                stopPlan: { estimatedMilesSaved: number };
+                              }
+                            ).stopPlan.estimatedMilesSaved
+                          } mi saved`}
+                      </span>
+                    )}
+                  </p>
+                  <ol className="text-xs space-y-0.5 list-decimal list-inside text-muted-foreground">
+                    {(
+                      routeQuery.data as {
+                        stopPlan: {
+                          stops: Array<{ displayName: string; originalIndex: number }>;
+                        };
+                      }
+                    ).stopPlan.stops.map((s, i) => (
+                      <li key={i} className="truncate">
+                        <span className="text-foreground">{s.displayName}</span>
+                        {s.originalIndex !== i && (
+                          <span className="text-[10px] ml-1 opacity-70">
+                            (was #{s.originalIndex + 1})
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
               {/* v22: premium value card — the reason someone would pay */}
               {(routeQuery.data as { valueInsight?: {
                 headline: string;

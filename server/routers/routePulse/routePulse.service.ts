@@ -66,6 +66,11 @@
  *   - dataConfidence: how well-grounded the pick is (sells trust)
  *   - Ordered multi-stop support (delivery waypoints via OSRM)
  *
+ * v23: delivery-ops polish for paid tier.
+ *   - driverHealthScore: single 0-100 glanceable route health
+ *   - Smart stop ordering (nearest-neighbor + 2-opt) when optimizeStops
+ *   - stopPlan returned so the UI shows the optimized sequence
+ *
  * ---------------------------------------------------------------------
  * NOTES FOR KIMI (2026-08-09 audit/hardening pass — Claude, merged post-v13)
  * ---------------------------------------------------------------------
@@ -799,6 +804,21 @@ export type RouteResult = {
   };
   /** v22: geocoded intermediate stops when multi-stop was requested. */
   stops?: GeocodedPoint[];
+  /**
+   * v23: optimized stop sequence (when optimizeStops ran).
+   * originalIndex maps back to the order the user typed stops.
+   */
+  stopPlan?: {
+    optimized: boolean;
+    stops: Array<GeocodedPoint & { originalIndex: number }>;
+    /** Approximate miles saved vs the user-typed order (null if not computed). */
+    estimatedMilesSaved: number | null;
+  };
+  /**
+   * v23: single glanceable 0-100 driver health for the chosen route.
+   * Higher = safer/calmer/clearer. Inverse of combined risk/stress/bottleneck.
+   */
+  driverHealthScore?: number;
 };
 
 function cacheKey(
@@ -1226,6 +1246,121 @@ export function bottleneckScoreFromDensity(d: {
   return Math.min(100, Math.round(raw));
 }
 
+/** Great-circle distance in meters — used only for stop-order heuristics. */
+export function haversineM(a: LatLng, b: LatLng): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+function pathLengthM(points: LatLng[]): number {
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    total += haversineM(points[i - 1]!, points[i]!);
+  }
+  return total;
+}
+
+/**
+ * v23: order intermediate stops for a shorter delivery loop.
+ * Nearest-neighbor from origin, then 2-opt improvement, fixed destination.
+ * n ≤ 8 so full local search is cheap.
+ */
+export function optimizeStopOrder(
+  origin: LatLng,
+  destination: LatLng,
+  stops: LatLng[]
+): { order: number[]; milesSaved: number } {
+  if (stops.length <= 1) {
+    return { order: stops.map((_, i) => i), milesSaved: 0 };
+  }
+
+  const n = stops.length;
+  // Nearest neighbor from origin
+  const remaining = new Set(Array.from({ length: n }, (_, i) => i));
+  const order: number[] = [];
+  let current: LatLng = origin;
+  while (remaining.size > 0) {
+    let best = -1;
+    let bestD = Infinity;
+    for (const i of remaining) {
+      const d = haversineM(current, stops[i]!);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    order.push(best);
+    remaining.delete(best);
+    current = stops[best]!;
+  }
+
+  const fullPath = (ord: number[]) => [
+    origin,
+    ...ord.map(i => stops[i]!),
+    destination,
+  ];
+  let bestOrder = order;
+  let bestLen = pathLengthM(fullPath(bestOrder));
+  const baseline = pathLengthM(fullPath(stops.map((_, i) => i)));
+
+  // 2-opt
+  let improved = true;
+  while (improved) {
+    improved = false;
+    for (let i = 0; i < bestOrder.length - 1; i++) {
+      for (let k = i + 1; k < bestOrder.length; k++) {
+        const candidate = [
+          ...bestOrder.slice(0, i),
+          ...bestOrder.slice(i, k + 1).reverse(),
+          ...bestOrder.slice(k + 1),
+        ];
+        const len = pathLengthM(fullPath(candidate));
+        if (len + 1 < bestLen) {
+          bestLen = len;
+          bestOrder = candidate;
+          improved = true;
+        }
+      }
+    }
+  }
+
+  const milesSaved = Math.max(0, (baseline - bestLen) / 1609.34);
+  return {
+    order: bestOrder,
+    milesSaved: Math.round(milesSaved * 10) / 10,
+  };
+}
+
+/**
+ * v23: single glanceable health for drivers — inverse of risk/stress/bottleneck/flow pain.
+ */
+export function computeDriverHealthScore(route: {
+  riskScore: number;
+  stressScore: number;
+  energyScore: number;
+  bottleneckScore?: number;
+  flow?: { samples: number; avgRatio: number; roadClosedCount: number } | null;
+}): number {
+  const bottleneck = route.bottleneckScore ?? 0;
+  let pain =
+    route.riskScore * 0.35 +
+    route.stressScore * 0.3 +
+    route.energyScore * 0.15 +
+    bottleneck * 0.2;
+  if (route.flow && route.flow.roadClosedCount > 0) pain += 20;
+  else if (route.flow && route.flow.samples >= 2 && route.flow.avgRatio < 0.55)
+    pain += 12;
+  return Math.max(0, Math.min(100, Math.round(100 - pain)));
+}
+
 async function getHistoricalBottleneck(
   geometry: { coordinates: [number, number][] },
   bufferMeters = 400,
@@ -1575,23 +1710,50 @@ export async function getRoute(
   originAddress: string,
   destinationAddress: string,
   preference: RoutePreference = "balanced",
-  stopAddresses: string[] = []
+  stopAddresses: string[] = [],
+  optimizeStops = true
 ): Promise<RouteResult> {
   // Geocode first — the cache key and every downstream step depends on
   // resolved coordinates, and a bad address should fail fast with a clear
   // message rather than an OSRM "no route" error.
   const stopList = stopAddresses.map(s => s.trim()).filter(s => s.length >= 3).slice(0, 8);
-  const [origin, destination, ...stops] = await Promise.all([
+  const [origin, destination, ...rawStops] = await Promise.all([
     geocodeAddress(originAddress),
     geocodeAddress(destinationAddress),
     ...stopList.map(a => geocodeAddress(a)),
   ]);
 
+  // v23: smart stop order for delivery — reorder before OSRM so the route
+  // itself follows the efficient sequence, not just the typed order.
+  let stops = rawStops;
+  let stopPlan: RouteResult["stopPlan"] = undefined;
+  if (rawStops.length >= 2 && optimizeStops) {
+    const { order, milesSaved } = optimizeStopOrder(
+      origin,
+      destination,
+      rawStops
+    );
+    stops = order.map(i => rawStops[i]!);
+    const orderChanged = order.some((v, i) => v !== i);
+    stopPlan = {
+      optimized: orderChanged,
+      stops: order.map(i => ({ ...rawStops[i]!, originalIndex: i })),
+      estimatedMilesSaved: orderChanged ? milesSaved : 0,
+    };
+  } else if (rawStops.length > 0) {
+    stopPlan = {
+      optimized: false,
+      stops: rawStops.map((s, i) => ({ ...s, originalIndex: i })),
+      estimatedMilesSaved: null,
+    };
+  }
+
   const key =
     cacheKey(origin, destination, preference) +
     (stops.length
       ? `_via:${stops.map(s => `${s.lat.toFixed(4)},${s.lng.toFixed(4)}`).join("|")}`
-      : "");
+      : "") +
+    (optimizeStops && rawStops.length >= 2 ? "_opt" : "");
 
   const cached = await readCache(key);
   if (cached) return cached;
@@ -1879,6 +2041,8 @@ export async function getRoute(
     reasons,
   };
 
+  const driverHealthScore = computeDriverHealthScore(chosenRoute);
+
   const result: RouteResult = {
     route: chosenRoute,
     explanation,
@@ -1898,6 +2062,8 @@ export async function getRoute(
     valueInsight,
     dataConfidence,
     stops: stops.length ? stops : undefined,
+    stopPlan,
+    driverHealthScore,
   };
 
   await writeCache(key, result);

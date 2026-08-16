@@ -36,8 +36,10 @@ export const routePulseRouter = router({
           .enum(["fastest", "balanced", "quiet", "fuel"])
           .optional()
           .default("balanced"),
-        /** Ordered intermediate stops (max 8) — delivery waypoints. */
+        /** Intermediate stops (max 8) — delivery waypoints. */
         stops: z.array(address).max(8).optional().default([]),
+        /** Reorder stops for a shorter path (default true when 2+ stops). */
+        optimizeStops: z.boolean().optional().default(true),
       })
     )
     .query(async ({ input }) => {
@@ -45,7 +47,8 @@ export const routePulseRouter = router({
         input.origin,
         input.destination,
         input.preference,
-        input.stops
+        input.stops,
+        input.optimizeStops
       );
     }),
 

@@ -1268,3 +1268,38 @@ describe("routePulse.service — historical bottleneck (v22)", () => {
     expect(messy).toBeLessThanOrEqual(100);
   });
 });
+
+describe("routePulse.service — delivery stop order + health (v23)", () => {
+  it("optimizeStopOrder shortens a crossed delivery loop", () => {
+    const origin = { lat: 45.52, lng: -122.68 };
+    const destination = { lat: 45.51, lng: -122.65 };
+    // Intentionally crossed order: far stop first, near stop second
+    const stops = [
+      { lat: 45.505, lng: -122.652 }, // farther along toward dest
+      { lat: 45.518, lng: -122.675 }, // near origin
+    ];
+    const result = service.optimizeStopOrder(origin, destination, stops);
+    expect(result.order).toEqual([1, 0]);
+    expect(result.milesSaved).toBeGreaterThan(0);
+  });
+
+  it("computeDriverHealthScore drops with high stress and bottleneck", () => {
+    const clear = service.computeDriverHealthScore({
+      riskScore: 5,
+      stressScore: 10,
+      energyScore: 12,
+      bottleneckScore: 0,
+      flow: null,
+    });
+    const rough = service.computeDriverHealthScore({
+      riskScore: 60,
+      stressScore: 70,
+      energyScore: 50,
+      bottleneckScore: 40,
+      flow: { samples: 4, avgRatio: 0.4, roadClosedCount: 1 },
+    });
+    expect(clear).toBeGreaterThan(rough);
+    expect(clear).toBeGreaterThan(70);
+    expect(rough).toBeLessThan(40);
+  });
+});
