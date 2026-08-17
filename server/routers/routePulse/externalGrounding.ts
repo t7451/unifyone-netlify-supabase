@@ -456,7 +456,7 @@ export async function fetchTomTomFlow(
 
   // Dense enough to catch mid-corridor jams; still bounded for freemium quota.
   // ~14 samples × alternatives stays well under TomTom's 2.5k/day at modest traffic.
-  const SAMPLE_COUNT = Math.min(14, Math.max(6, Math.ceil(coords.length / 40)));
+  const SAMPLE_COUNT = Math.min(16, Math.max(8, Math.ceil(coords.length / 40)));
   const idxs = new Set<number>();
   for (let i = 0; i < SAMPLE_COUNT; i++) {
     idxs.add(

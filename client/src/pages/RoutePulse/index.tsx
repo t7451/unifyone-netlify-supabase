@@ -9,6 +9,7 @@ import {
   Polyline,
   Popup,
   Circle,
+  CircleMarker,
   ScaleControl,
   ZoomControl,
   useMap,
@@ -631,6 +632,14 @@ function displayDurationS(route: {
 }
 const CONGESTION_CRAWL = "#dc2626";
 const ROUTE_BLUE = "#3b82f6";
+
+/** Prefer "SE Lambert St" over the full Nominatim blob. */
+function shortPlaceName(name: string | null | undefined, max = 42): string {
+  if (!name) return "";
+  const first = name.split(",")[0]?.trim() || name;
+  return first.length > max ? first.slice(0, max - 1) + "…" : first;
+}
+
 
 /** Great-circle distance in meters between two lat/lng fixes. */
 function haversineM(
@@ -1836,6 +1845,8 @@ export default function RoutePulse() {
                 lng: number;
                 ratio: number | null;
                 closed: boolean;
+                currentMph?: number | null;
+                freeflowMph?: number | null;
               }[];
             } | null;
           }
@@ -2505,19 +2516,66 @@ export default function RoutePulse() {
                             positions={seg.positions}
                             pathOptions={{
                               color: seg.color,
-                              weight: 5,
+                              weight: 6,
                               opacity: 0.95,
+                              lineCap: "round",
+                              lineJoin: "round",
                             }}
                           />
                         ))}
+                        {/* TomTom flow probes — small speed dots along the route */}
+                        {flowPoints.map((p, i) => {
+                          const ratio = p.ratio ?? (p.closed ? 0 : 1);
+                          const fill =
+                            p.closed || ratio < 0.45
+                              ? "#ef4444"
+                              : ratio < 0.75
+                                ? "#f59e0b"
+                                : "#22c55e";
+                          return (
+                            <CircleMarker
+                              key={`flow-${i}`}
+                              center={[p.lat, p.lng]}
+                              radius={5}
+                              pathOptions={{
+                                color: "#0f172a",
+                                weight: 1,
+                                fillColor: fill,
+                                fillOpacity: 0.95,
+                              }}
+                            >
+                              <Popup>
+                                <span className="text-xs font-medium">
+                                  Live traffic probe
+                                </span>
+                                <span className="block text-[11px] text-muted-foreground">
+                                  {p.closed
+                                    ? "Road closed (TomTom)"
+                                    : `${Math.round(ratio * 100)}% of free-flow`}
+                                  {!p.closed &&
+                                    p.currentMph != null &&
+                                    p.freeflowMph != null && (
+                                      <>
+                                        <br />
+                                        {p.currentMph} mph now ·{" "}
+                                        {p.freeflowMph} mph free-flow
+                                      </>
+                                    )}
+                                </span>
+                              </Popup>
+                            </CircleMarker>
+                          );
+                        })}
                       </>
                     ) : (
                       <Polyline
                         positions={displayedLine}
                         pathOptions={{
                           color: "#3b82f6",
-                          weight: 5,
-                          opacity: 0.9,
+                          weight: 6,
+                          opacity: 0.92,
+                          lineCap: "round",
+                          lineJoin: "round",
                         }}
                       />
                     ))}
@@ -2737,8 +2795,13 @@ export default function RoutePulse() {
                 >
                   <RouteIcon className="w-4 h-4 shrink-0 text-primary" />
                   <span className="flex-1 truncate text-sm">
-                    {origin} <span className="text-muted-foreground">→</span>{" "}
-                    {destination}
+                    {shortPlaceName(
+                      routeQuery.data?.origin?.displayName || origin
+                    )}{" "}
+                    <span className="text-muted-foreground">→</span>{" "}
+                    {shortPlaceName(
+                      routeQuery.data?.destination?.displayName || destination
+                    )}
                   </span>
                   <Pencil className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
                 </button>
@@ -3116,6 +3179,39 @@ export default function RoutePulse() {
             {/* Floating controls — locate me, basemap toggle, fullscreen.
                 v9: on phones these live in the bottom-right thumb zone with
                 bigger touch targets; on desktop they stay top-right. */}
+            {/* Routing progress — keeps the map interactive but shows status */}
+            {routeQuery.isFetching && (
+              <div className="absolute z-[450] top-3 left-1/2 -translate-x-1/2 sm:left-auto sm:right-[4.5rem] sm:translate-x-0 pointer-events-none">
+                <div className="inline-flex items-center gap-2 rounded-full border bg-background/95 backdrop-blur-md px-3 py-1.5 text-xs font-medium shadow-lg">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                  Scoring live traffic…
+                </div>
+              </div>
+            )}
+
+            {/* Congestion legend when TomTom flow is on the map */}
+            {hasRoute && flowPoints.length > 0 && (
+              <div className="absolute z-[400] bottom-28 left-3 sm:bottom-4 sm:left-[340px] pointer-events-none">
+                <div className="rounded-md border bg-background/90 backdrop-blur-md px-2.5 py-1.5 text-[10px] shadow-md flex items-center gap-2">
+                  <span className="font-semibold text-muted-foreground uppercase tracking-wide">
+                    Live
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    ok
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    slow
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                    crawl
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="absolute z-[400] bottom-28 right-3 sm:bottom-auto sm:top-4 sm:right-4 flex flex-col gap-2 pb-safe">
               <button
                 type="button"
@@ -3637,10 +3733,10 @@ export default function RoutePulse() {
                 </div>
               )}
 
-              <p className="text-[11px] text-muted-foreground truncate">
-                {routeQuery.data!.origin.displayName}
+              <p className="text-[11px] text-muted-foreground truncate" title={`${routeQuery.data!.origin.displayName} → ${routeQuery.data!.destination.displayName}`}>
+                {shortPlaceName(routeQuery.data!.origin.displayName, 36)}
                 <span className="mx-1.5 opacity-50">→</span>
-                {routeQuery.data!.destination.displayName}
+                {shortPlaceName(routeQuery.data!.destination.displayName, 36)}
               </p>
               {/* v25: map-first result hierarchy
                   1) one-line reason  2) collapsed details  3) light chips */}
@@ -4047,6 +4143,29 @@ export default function RoutePulse() {
                               {" "}
                               · {(alt.distance / 1609.34).toFixed(1)} mi
                             </span>
+                            {typeof (alt as { flow?: { avgRatio?: number; samples?: number } }).flow
+                              ?.avgRatio === "number" &&
+                              ((alt as { flow: { samples?: number } }).flow
+                                .samples ?? 0) >= 2 && (
+                                <span
+                                  className={`ml-1.5 text-[10px] font-semibold ${
+                                    (alt as { flow: { avgRatio: number } }).flow
+                                      .avgRatio < 0.55
+                                      ? "text-red-600 dark:text-red-400"
+                                      : (alt as { flow: { avgRatio: number } })
+                                            .flow.avgRatio < 0.75
+                                        ? "text-amber-600 dark:text-amber-400"
+                                        : "text-emerald-600 dark:text-emerald-400"
+                                  }`}
+                                >
+                                  ·{" "}
+                                  {Math.round(
+                                    (alt as { flow: { avgRatio: number } }).flow
+                                      .avgRatio * 100
+                                  )}
+                                  % flow
+                                </span>
+                              )}
                           </span>
                           <span className="text-xs text-muted-foreground truncate text-right">
                             {diff}
