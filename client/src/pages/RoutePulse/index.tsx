@@ -1063,6 +1063,8 @@ export default function RoutePulse() {
   const [nearbyOpen, setNearbyOpen] = useState(true);
   const [offlineSnapshot, setOfflineSnapshot] = useState<OfflineRouteSnapshot | null>(null);
   const offRouteStrikesRef = useRef(0);
+  /** When true, next submitted change is a GPS recalculate — keep trip mode. */
+  const recalcPreserveTripRef = useRef(false);
   /** Multi-stop editor hidden until the driver asks for it. */
   const [stopsOpen, setStopsOpen] = useState(false);
   // Ticker so the "updated Xs ago" live indicator stays honest.
@@ -1723,8 +1725,16 @@ export default function RoutePulse() {
   }, [userLocation, tripActive, nextStepIdx, displayedManeuvers]);
 
   // A new route resets trip mode — steps from the old route would steer
-  // the driver wrong otherwise.
+  // the driver wrong otherwise. Exception: recalculate-from-here must keep
+  // trip guidance alive or the fat Recalculate button becomes a dead end.
   useEffect(() => {
+    if (recalcPreserveTripRef.current) {
+      recalcPreserveTripRef.current = false;
+      setNextStepIdx(0);
+      setOffRoute(false);
+      offRouteStrikesRef.current = 0;
+      return;
+    }
     setTripActive(false);
     setNextStepIdx(0);
     setOffRoute(false);
@@ -1742,13 +1752,9 @@ export default function RoutePulse() {
       return [arr[0], arr[1]] as [number, number];
     });
     const dist = distanceToPolylineM(lat, lng, line);
-    if (dist > OFF_ROUTE_THRESHOLD_M) {
-      offRouteStrikesRef.current += 1;
-      if (offRouteStrikesRef.current >= 2) setOffRoute(true);
-    } else {
-      offRouteStrikesRef.current = 0;
-      setOffRoute(false);
-    }
+    const next = nextOffRouteStrikes(offRouteStrikesRef.current, dist);
+    offRouteStrikesRef.current = next.strikes;
+    setOffRoute(next.offRoute);
   }, [userLocation, tripActive, routeLine]);
 
   // Clear trip tile pack when trip ends
@@ -1792,17 +1798,39 @@ export default function RoutePulse() {
 
   /** M2: re-route from current GPS without silent auto-loop. */
   const handleRecalculateFromHere = () => {
-    if (!userLocation || !submitted) return;
+    if (!submitted) {
+      toast.error("No active route to recalculate");
+      return;
+    }
+    if (!userLocation) {
+      toast.error("Waiting for GPS — try again in a moment");
+      return;
+    }
     const [lat, lng] = userLocation as [number, number];
-    const originStr = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    setOrigin(originStr);
-    setOffRoute(false);
-    offRouteStrikesRef.current = 0;
-    setSubmitted({
-      origin: originStr,
+    const built = buildRecalcPayload({
+      userLat: lat,
+      userLng: lng,
       destination: submitted.destination,
       preference: submitted.preference,
       stops: submitted.stops ?? [],
+    });
+    if (!built.ok) {
+      const msg =
+        built.reason === "no_gps" || built.reason === "invalid_gps"
+          ? "GPS fix looks invalid — wait for a better signal"
+          : "Destination missing — set a destination first";
+      toast.error(msg);
+      return;
+    }
+    setOrigin(built.payload.origin);
+    setOffRoute(false);
+    offRouteStrikesRef.current = 0;
+    recalcPreserveTripRef.current = true;
+    setSubmitted({
+      origin: built.payload.origin,
+      destination: built.payload.destination,
+      preference: built.payload.preference as typeof submitted.preference,
+      stops: built.payload.stops,
     });
     toast.message("Recalculating from your position…");
   };
