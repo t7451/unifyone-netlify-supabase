@@ -633,6 +633,22 @@ function displayDurationS(route: {
 const CONGESTION_CRAWL = "#dc2626";
 const ROUTE_BLUE = "#3b82f6";
 
+/** Drop intermediate points on long polylines — major mobile paint win. */
+function slimLatLngLine(
+  coords: LatLngExpression[],
+  maxPoints = 120
+): LatLngExpression[] {
+  if (coords.length <= maxPoints) return coords;
+  const step = Math.ceil(coords.length / maxPoints);
+  const out: LatLngExpression[] = [];
+  for (let i = 0; i < coords.length; i += step) out.push(coords[i]!);
+  const last = coords[coords.length - 1]!;
+  if (out[out.length - 1] !== last) out.push(last);
+  return out;
+}
+
+
+
 /** Prefer "SE Lambert St" over the full Nominatim blob. */
 function shortPlaceName(name: string | null | undefined, max = 42): string {
   if (!name) return "";
@@ -1180,16 +1196,24 @@ export default function RoutePulse() {
   // v6: traffic cameras for the always-on map layer, refreshed on roughly
   // the same cadence the ingester polls ODOT's camera list.
   const camerasQuery = trpc.routePulse.listCameras.useQuery(viewportBbox, {
-    refetchInterval: 120_000,
-    enabled: camerasOn && !!viewportBbox,
+    refetchInterval: 180_000,
+    enabled: camerasOn && !!viewportBbox && !hasActiveRoute,
+    refetchOnWindowFocus: false,
+    staleTime: 90_000,
   });
   const transitQuery = trpc.routePulse.listTransitLandmarks.useQuery(
     {
       lat: routeQuery.data?.origin.lat ?? 45.52,
       lng: routeQuery.data?.origin.lng ?? -122.67,
-      radiusKm: 12,
+      radiusKm: 8,
     },
-    { enabled: !!routeQuery.data?.origin, staleTime: 60 * 60 * 1000 }
+    {
+      enabled:
+        !!routeQuery.data?.origin &&
+        typeof window !== "undefined" &&
+        window.matchMedia("(min-width: 640px)").matches,
+      staleTime: 60 * 60 * 1000,
+    }
   );
   const { recent, starred, addRoute, clearRoutes, starRoute, unstarRoute } =
     useRecentRoutes();
@@ -1350,7 +1374,7 @@ export default function RoutePulse() {
         // Follow mode keeps the map on the user — but never yanks the view
         // away from a displayed route.
         if (followRef.current && !hasRouteRef.current) {
-          mapRef.current?.panTo(point, { animate: true });
+          mapRef.current?.panTo(point, { animate: false });
         }
       },
       err => {
@@ -1367,7 +1391,7 @@ export default function RoutePulse() {
               : "Couldn't get GPS — tap the map to set origin, or type an address."
         );
       },
-      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 5_000 }
+      { enableHighAccuracy: false, timeout: 12_000, maximumAge: 10_000 }
     );
     watchIdRef.current = id;
     setFollow(true);
@@ -1475,9 +1499,10 @@ export default function RoutePulse() {
       | { coordinates: [number, number][] }
       | undefined;
     if (!geometry?.coordinates?.length) return null;
-    return geometry.coordinates.map(
+    const full = geometry.coordinates.map(
       ([lng, lat]) => [lat, lng] as LatLngExpression
     );
+    return slimLatLngLine(full, 120);
   }, [routeQuery.data]);
 
   // Every scored route (the server returns the full set, including the one
@@ -1508,9 +1533,10 @@ export default function RoutePulse() {
       | { coordinates: [number, number][] }
       | undefined;
     if (!geometry?.coordinates?.length) return routeLine;
-    return geometry.coordinates.map(
+    const full = geometry.coordinates.map(
       ([lng, lat]) => [lat, lng] as LatLngExpression
     );
+    return slimLatLngLine(full, 120);
   }, [displayedIdx, previewIdx, allRoutes, routeLine]);
 
   // v8: the route object behind whatever is drawn solid right now (chosen
@@ -1853,7 +1879,15 @@ export default function RoutePulse() {
         | null
         | undefined
     )?.flow;
-    return (flow?.points ?? []).filter(p => p.ratio !== null || p.closed);
+    const pts = (flow?.points ?? []).filter(p => p.ratio !== null || p.closed);
+    // Mobile: fewer CircleMarkers = less lag (color still on segment lines).
+    const isMobile =
+      typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches;
+    if (isMobile && pts.length > 6) {
+      const step = Math.ceil(pts.length / 6);
+      return pts.filter((_, i) => i % step === 0);
+    }
+    return pts;
   }, [displayedRoute]);
 
   const ratioToColor = (ratio: number) =>
@@ -1877,6 +1911,13 @@ export default function RoutePulse() {
   // for that step's color — real data wins when we have it.
   const segmentLines = useMemo(() => {
     if (!displayedRoute || displayedManeuvers.length === 0) return [];
+    // Per-step polylines are expensive on phones; solid route + probes is enough.
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 640px)").matches
+    ) {
+      return [];
+    }
     const avg = displayedRoute.distance / Math.max(1, displayedRoute.duration);
     const segs: { positions: LatLngExpression[]; color: string }[] = [];
     for (const m of displayedManeuvers) {
@@ -2316,7 +2357,7 @@ export default function RoutePulse() {
           </div>
         )}
 
-        <header className={`mb-4 sm:mb-8 ${hasRoute ? "hidden sm:block" : ""}`}>
+        <header className="mb-3 sm:mb-8 hidden sm:block">
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
             Free Tool · Route Intelligence
           </p>
@@ -2373,12 +2414,18 @@ export default function RoutePulse() {
               zoomSnap={0.5}
               zoomDelta={0.5}
               wheelPxPerZoomLevel={100}
-              style={{ height: "100%", width: "100%" }}
+              preferCanvas
+              fadeAnimation={false}
+              markerZoomAnimation={false}
+              style={{ height: "100%", width: "100%", touchAction: "manipulation" }}
             >
               <TileLayer
                 key={basemap}
                 attribution={BASEMAPS[basemap].attribution}
                 url={BASEMAPS[basemap].url}
+                updateWhenZooming={false}
+                updateWhenIdle
+                keepBuffer={2}
               />
               {/* NOTE FOR KIMI: these were both "bottomright", which put
                   Leaflet's native control container (z-index 1000 by
@@ -2589,6 +2636,7 @@ export default function RoutePulse() {
                           opacity: 0.92,
                           lineCap: "round",
                           lineJoin: "round",
+                          interactive: false,
                         }}
                       />
                     ))}
@@ -2603,17 +2651,23 @@ export default function RoutePulse() {
                       }
                     )?.coordinates;
                     if (!coords?.length) return null;
+                    const step = coords.length > 80 ? Math.ceil(coords.length / 80) : 1;
+                    const slim =
+                      step > 1
+                        ? coords.filter((_, i) => i % step === 0 || i === coords.length - 1)
+                        : coords;
                     return (
                       <Polyline
                         key={`alt-${idx}`}
-                        positions={coords.map(
+                        positions={slim.map(
                           ([lng, lat]) => [lat, lng] as LatLngExpression
                         )}
                         pathOptions={{
                           color: "#94a3b8",
                           weight: 3,
-                          opacity: 0.6,
+                          opacity: 0.55,
                           dashArray: "6, 8",
+                          interactive: false,
                         }}
                       />
                     );
@@ -3377,7 +3431,7 @@ export default function RoutePulse() {
                       ? "16dvh"
                       : "20dvh",
                 }}
-                transition={{ type: "spring", stiffness: 340, damping: 32 }}
+                transition={{ type: "tween", duration: 0.22, ease: "easeOut" }}
               >
                 {/* Drag handle — swipe up/down or tap to expand/collapse. */}
                 <motion.div
