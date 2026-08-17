@@ -2627,10 +2627,11 @@ export default function RoutePulse() {
             </span>
           </div>
         )}
+        {/* Desktop / page-level off-route notice — map overlay handles phones. */}
         {tripActive && offRoute && (
           <div
             role="status"
-            className="mb-4 flex flex-wrap items-center gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm"
+            className="mb-4 hidden sm:flex flex-wrap items-center gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm"
           >
             <span className="flex-1 text-amber-900 dark:text-amber-100">
               You appear to be off the planned route.
@@ -2825,6 +2826,24 @@ export default function RoutePulse() {
                 >
                   <Square className="w-5 h-5" />
                 </button>
+              </div>
+            )}
+
+            {/* Fat Recalculate — Waze-style explicit action, no silent re-route.
+                Sits under the next-turn banner so thumbs reach it while driving. */}
+            {tripActive && offRoute && (
+              <div className="absolute z-[460] left-3 right-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[min(96vw,440px)] bottom-[max(1.25rem,env(safe-area-inset-bottom))] sm:bottom-6">
+                <button
+                  type="button"
+                  onClick={handleRecalculateFromHere}
+                  className="w-full min-h-[52px] rounded-2xl bg-amber-500 text-amber-950 font-semibold text-base shadow-xl border border-amber-400/80 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform touch-manipulation px-4"
+                >
+                  <Navigation className="w-5 h-5 shrink-0" />
+                  Recalculate from here
+                </button>
+                <p className="text-center text-[11px] text-muted-foreground mt-1.5 drop-shadow-sm">
+                  You left the planned path — tap to route from GPS
+                </p>
               </div>
             )}
 
@@ -3446,7 +3465,7 @@ export default function RoutePulse() {
                 card row and the map's own touch handling underneath.
                 sm and up keep the existing result card below the map
                 instead (untouched — see the Card block further down). */}
-            {hasRoute && (
+            {hasRoute && !tripActive && (
               <div
                 className="sm:hidden absolute inset-x-0 bottom-0 z-[450] rounded-t-2xl bg-background/98 border-t border-border/80 shadow-[0_-8px_30px_rgba(0,0,0,0.35)] flex flex-col overflow-hidden"
                 style={{
