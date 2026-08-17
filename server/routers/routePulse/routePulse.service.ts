@@ -2533,7 +2533,72 @@ export async function getRoute(
     "_vtt1";
 
   const cached = await readCache(key);
-  if (cached) return cached;
+  if (cached) {
+    // v10 pattern: never skip live Traffic API just because geometry is cached.
+    // Cache was swallowing all TomTom calls after the first hit → MyTomTom flatlined.
+    if (ENV.tomtomApiKey) {
+      try {
+        const geom = cached.route.geometry as {
+          coordinates: [number, number][];
+        };
+        const bbox = bboxForGeometries([geom]);
+        const [freshIncidents, freshFlow] = await Promise.all([
+          bbox ? fetchTomTomTrafficIncidents(bbox) : Promise.resolve([]),
+          fetchTomTomFlow(geom.coordinates),
+        ]);
+        console.info(
+          `[routePulse] TomTom traffic on cache-hit: incidents=${freshIncidents.length} flowSamples=${freshFlow?.samples ?? 0}`
+        );
+        if (freshIncidents.length || freshFlow) {
+          const near = freshIncidents.filter(i =>
+            isNearRoute(i.lat, i.lng, geom.coordinates, 500)
+          );
+          const existing = cached.route.incidents ?? [];
+          const mergedIncidents = [
+            ...existing,
+            ...dedupeIncidents(existing, near),
+          ];
+          let liveDurationS = cached.route.liveDurationS ?? cached.route.duration;
+          if (freshFlow && freshFlow.samples >= 2 && freshFlow.avgRatio > 0) {
+            const clamped = Math.max(0.3, Math.min(1.15, freshFlow.avgRatio));
+            liveDurationS = Math.round(cached.route.duration / clamped);
+          }
+          return {
+            ...cached,
+            route: {
+              ...cached.route,
+              incidents: mergedIncidents,
+              liveDurationS,
+              flow: freshFlow ?? cached.route.flow,
+            },
+            grounding: {
+              ...(cached.grounding ?? {}),
+              sources: Array.from(
+                new Set([
+                  ...((cached.grounding as { sources?: string[] })?.sources ??
+                    []),
+                  ...(freshIncidents.length ? ["tomtom-incidents"] : []),
+                  ...(freshFlow ? ["tomtom-flow"] : []),
+                ])
+              ),
+              tomtomApis: Array.from(
+                new Set([
+                  ...((cached.grounding as { tomtomApis?: string[] })
+                    ?.tomtomApis ?? []),
+                  ...(freshIncidents.length ? (["incidents"] as const) : []),
+                  ...(freshFlow ? (["flow"] as const) : []),
+                ])
+              ),
+            },
+            cached: true,
+          };
+        }
+      } catch (err) {
+        console.warn("[routePulse] TomTom cache-hit refresh failed:", err);
+      }
+    }
+    return cached;
+  }
 
   const baseRoutes = await fetchBaseRoutes(
     origin,
@@ -2558,6 +2623,9 @@ export async function getRoute(
         fetchTomTomLiveDuration(origin, destination),
       ])
     : [[], [], null];
+  console.info(
+    `[routePulse] TomTom live path: incidents=${tomtomIncidents.length} liveEta=${tomtomLiveDurationS ?? "n/a"} key=${ENV.tomtomApiKey ? "yes" : "NO"}`
+  );
 
   const scoredRoutes: ScoredRoute[] = await Promise.all(
     baseRoutes.map(async r => {
