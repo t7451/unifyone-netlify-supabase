@@ -1469,8 +1469,8 @@ export default function RoutePulse() {
         const movedM = lastFixRef.current
           ? haversineM(lastFixRef.current, fix)
           : 999;
-        const minInterval = tripActiveRef.current ? 1200 : 2500;
-        const minMove = tripActiveRef.current ? 8 : 18;
+        const minInterval = tripActiveRef.current ? 1600 : 3000;
+        const minMove = tripActiveRef.current ? 12 : 24;
         const shouldUi =
           !lastGpsUiAtRef.current ||
           now - lastGpsUiAtRef.current >= minInterval ||
@@ -1647,7 +1647,7 @@ export default function RoutePulse() {
     const mobile =
       typeof window !== "undefined" &&
       window.matchMedia("(max-width: 640px)").matches;
-    return slimLatLngLine(full, mobile ? 72 : 120);
+    return slimLatLngLine(full, mobile ? 48 : 100);
   }, [routeQuery.data]);
 
   // Every scored route (the server returns the full set, including the one
@@ -1684,7 +1684,7 @@ export default function RoutePulse() {
     const mobile =
       typeof window !== "undefined" &&
       window.matchMedia("(max-width: 640px)").matches;
-    return slimLatLngLine(full, mobile ? 72 : 120);
+    return slimLatLngLine(full, mobile ? 48 : 100);
   }, [displayedIdx, previewIdx, allRoutes, routeLine]);
 
   // v8: the route object behind whatever is drawn solid right now (chosen
@@ -2057,8 +2057,8 @@ export default function RoutePulse() {
     // Mobile: fewer CircleMarkers = less lag (color still on segment lines).
     const isMobile =
       typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches;
-    if (isMobile && pts.length > 6) {
-      const step = Math.ceil(pts.length / 6);
+    if (isMobile && pts.length > 4) {
+      const step = Math.ceil(pts.length / 4);
       return pts.filter((_, i) => i % step === 0);
     }
     return pts;
@@ -2177,13 +2177,20 @@ export default function RoutePulse() {
     : null;
 
   const altLinesForMap = useMemo(() => {
-    return allRoutes
+    const mobile =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 640px)").matches;
+    const maxPts = mobile ? 36 : 80;
+    // Mobile: at most one dashed alternative — second/third alts are sheet-only.
+    const routes = mobile ? allRoutes.slice(0, 2) : allRoutes;
+    return routes
       .map((alt, idx) => {
         if (idx === displayedIdx) return null;
         const coords = (alt.geometry as { coordinates?: [number, number][] })
           ?.coordinates;
         if (!coords?.length) return null;
-        const step = coords.length > 80 ? Math.ceil(coords.length / 80) : 1;
+        const step =
+          coords.length > maxPts ? Math.ceil(coords.length / maxPts) : 1;
         const slim =
           step > 1
             ? coords.filter((_, i) => i % step === 0 || i === coords.length - 1)

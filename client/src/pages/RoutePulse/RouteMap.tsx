@@ -102,8 +102,9 @@ function createRouteCanvasRenderer(): L.Canvas {
     typeof window !== "undefined" &&
     window.matchMedia("(max-width: 640px)").matches;
   return L.canvas({
-    padding: 0.5,
-    tolerance: mobile ? 1.25 / dpr : 0.6 / dpr,
+    padding: mobile ? 0.35 : 0.5,
+    // Higher tolerance = fewer path points painted → better pan FPS on phones
+    tolerance: mobile ? 2.0 / dpr : 0.75 / dpr,
   });
 }
 
@@ -111,7 +112,9 @@ function routePathDefaults(extra: L.PathOptions = {}): L.PathOptions {
   return {
     interactive: false,
     bubblingMouseEvents: false,
-    smoothFactor: 1.5,
+    // Leaflet simplifies geometry further at paint time; higher = cheaper pan
+    smoothFactor: 2.25,
+    noClip: false,
     ...extra,
   };
 }
@@ -218,7 +221,10 @@ function MapViewportTracker({
     moveend: () => {
       if (!enabled) return;
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(report, 750);
+      const mobile =
+        typeof window !== "undefined" &&
+        window.matchMedia("(max-width: 640px)").matches;
+      timerRef.current = setTimeout(report, mobile ? 1200 : 750);
     },
   });
 
@@ -372,7 +378,7 @@ function RouteMapInner(props: RouteMapProps) {
         url={BASEMAPS[props.basemap].url}
         updateWhenZooming={false}
         updateWhenIdle
-        keepBuffer={2}
+        keepBuffer={isMobile ? 1 : 2}
       />
       {props.trafficOverlay && (
         <TileLayer
@@ -383,12 +389,16 @@ function RouteMapInner(props: RouteMapProps) {
           maxZoom={22}
           updateWhenZooming={false}
           updateWhenIdle
+          keepBuffer={isMobile ? 1 : 2}
           zIndex={350}
         />
       )}
       <MapCanvasPerf />
-      <ZoomControl position="topright" />
-      <ScaleControl position="topright" metric={false} imperial />
+      {/* Zoom/scale are desktop chrome — pinch + sheet own phones */}
+      {!isMobile && <ZoomControl position="topright" />}
+      {!isMobile && (
+        <ScaleControl position="topright" metric={false} imperial />
+      )}
       <FitBounds
         bounds={props.mapBounds}
         fitKey={props.mapFitKey}
@@ -408,7 +418,8 @@ function RouteMapInner(props: RouteMapProps) {
 
       {props.userLocation && (
         <>
-          {props.accuracy !== null && props.accuracy < 500 && (
+          {props.accuracy !== null &&
+            props.accuracy < (isMobile ? 80 : 500) && (
             <Circle
               center={props.userLocation}
               radius={props.accuracy}
@@ -416,10 +427,10 @@ function RouteMapInner(props: RouteMapProps) {
                 renderer,
                 color: "#2563eb",
                 weight: 1,
-                opacity: 0.5,
+                opacity: 0.45,
                 fillColor: "#2563eb",
-                fillOpacity: 0.08,
-                smoothFactor: 2,
+                fillOpacity: 0.06,
+                smoothFactor: 3,
               })}
             />
           )}
@@ -537,33 +548,40 @@ function RouteMapInner(props: RouteMapProps) {
                 pathOptions={routePathDefaults({
                   renderer,
                   color: "#3b82f6",
-                  weight: 6,
+                  weight: isMobile ? 5 : 6,
                   opacity: 0.92,
                   lineCap: "round",
                   lineJoin: "round",
-                  smoothFactor: 2,
+                  smoothFactor: isMobile ? 3 : 2.25,
                 })}
               />
             ))}
-          {props.altLines.map(alt => (
+          {(isMobile ? props.altLines.slice(0, 1) : props.altLines).map(alt => (
             <Polyline
               key={alt.key}
               positions={alt.positions}
               pathOptions={routePathDefaults({
                 renderer,
                 color: "#94a3b8",
-                weight: 3,
-                opacity: 0.55,
-                dashArray: "6, 8",
-                smoothFactor: 2.5,
+                weight: isMobile ? 2 : 3,
+                opacity: isMobile ? 0.4 : 0.55,
+                dashArray: isMobile ? undefined : "6, 8",
+                smoothFactor: 3,
               })}
             />
           ))}
-          {props.routeIncidents.map(inc => (
+          {(isMobile
+            ? props.routeIncidents.slice(0, 24)
+            : props.routeIncidents
+          ).map(inc => (
             <CircleMarker
               key={inc.id}
               center={[inc.lat, inc.lng]}
-              radius={INCIDENT_RADIUS[inc.severity ?? "minor"] ?? 5}
+              radius={
+                isMobile
+                  ? Math.max(4, (INCIDENT_RADIUS[inc.severity ?? "minor"] ?? 5) - 1)
+                  : INCIDENT_RADIUS[inc.severity ?? "minor"] ?? 5
+              }
               pathOptions={routePathDefaults({
                 renderer,
                 color: "#fff",
@@ -587,11 +605,11 @@ function RouteMapInner(props: RouteMapProps) {
             </CircleMarker>
           ))}
           {props.camerasOn &&
-            props.routeCameras.map(cam => (
+            (isMobile ? props.routeCameras.slice(0, 12) : props.routeCameras).map(cam => (
               <CircleMarker
                 key={cam.id}
                 center={[cam.lat, cam.lng]}
-                radius={4}
+                radius={isMobile ? 3 : 4}
                 pathOptions={routePathDefaults({
                   renderer,
                   color: "#a855f7",
@@ -614,10 +632,15 @@ function RouteMapInner(props: RouteMapProps) {
       {!props.hasRoute && (
         <MarkerClusterGroup
           chunkedLoading
-          maxClusterRadius={60}
+          chunkInterval={isMobile ? 120 : 50}
+          chunkDelay={isMobile ? 40 : 20}
+          maxClusterRadius={isMobile ? 90 : 60}
+          disableClusteringAtZoom={isMobile ? 14 : 16}
           spiderfyOnMaxZoom={false}
+          animate={false}
+          removeOutsideVisibleBounds
         >
-          {props.emptyIncidents.map(inc => (
+          {(isMobile ? props.emptyIncidents.slice(0, 40) : props.emptyIncidents).map(inc => (
             <CircleMarker
               key={inc.id}
               center={[inc.lat, inc.lng]}
@@ -645,8 +668,13 @@ function RouteMapInner(props: RouteMapProps) {
       )}
 
       {!props.hasRoute && props.camerasOn && props.emptyCameras.length > 0 && (
-        <MarkerClusterGroup chunkedLoading maxClusterRadius={50}>
-          {props.emptyCameras.map(cam => (
+        <MarkerClusterGroup
+          chunkedLoading
+          animate={false}
+          maxClusterRadius={isMobile ? 80 : 50}
+          removeOutsideVisibleBounds
+        >
+          {(isMobile ? props.emptyCameras.slice(0, 20) : props.emptyCameras).map(cam => (
             <CircleMarker
               key={cam.id}
               center={[cam.lat, cam.lng]}

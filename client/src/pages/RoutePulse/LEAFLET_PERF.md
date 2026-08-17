@@ -1,18 +1,16 @@
 # RoutePulse Leaflet performance notes
 
-## Architecture
-- `RouteMap.tsx` — `React.memo` map surface (sheet/form/GPS chrome cannot rebuild layers unless map props change)
-- Shared canvas renderer for vectors; empty-state incidents/cameras as **CircleMarker** (not DivIcon)
-- Cameras viewport-culled via `viewportBbox`
-- `softInvalidateSize` → `{ animate: false, pan: false, debounceMoveend: true }`
+## Active strategies
+- Single shared `L.canvas` renderer for all route/incident vectors
+- `React.memo(RouteMap)` with shallow propsEqual — sheet/GPS must not rebuild layers
+- Geometry slim: main route ≤48 pts mobile / 100 desktop; alts ≤36 mobile
+- Mobile: no per-step congestion polylines; ≤1 alt line; ≤4 flow probes
+- Mobile: hide zoom/scale; larger cluster radius; chunkedLoading; cap markers
+- GPS UI throttle: 1.6s trip / 3s idle; min move 12–24 m
+- Tile layers: `updateWhenIdle`, `keepBuffer` 1 on mobile
+- `softInvalidateSize({ animate:false, pan:false, debounceMoveend:true })`
 
 ## Measure on mid Android
-1. Chrome → Site settings → clear cache for 1commerce.online
-2. Open `/tools/route-pulse`, plan a PDX route
-3. DevTools remote → Performance → record 5s of pan/zoom
-4. Compare FPS route-on vs empty map; target smooth 50+ on mid device for route-only
-
-## Do not
-- fitBounds to statewide incidents
-- invalidateSize without pan:false
-- CSS animate-ping on many markers
+1. Chrome remote debug → Performance
+2. Pan with route on vs off — target ≥30 FPS sustained
+3. Toggle traffic overlay — note tile cost separately from vector cost
