@@ -59,6 +59,7 @@ import {
   Maximize,
   Minimize,
   Layers,
+  Activity,
   Share2,
   ExternalLink,
   ChevronUp,
@@ -1055,6 +1056,7 @@ export default function RoutePulse() {
    *  collapsed by default — map + ETA first, details on demand. */
   const [detailsOpen, setDetailsOpen] = useState(false);
   /** M1: viewport cameras only when the driver asks — keeps first paint light. */
+  const [trafficOverlay, setTrafficOverlay] = useState(true);
   const [camerasOn, setCamerasOn] = useState(false);
   const [offRoute, setOffRoute] = useState(false);
   /** Nearby metro feed — collapsed once a route is on screen (M1 polish). */
@@ -2677,6 +2679,7 @@ export default function RoutePulse() {
             <RouteMap
               mapRef={mapRef}
               basemap={basemap}
+              trafficOverlay={trafficOverlay}
               hasRoute={hasRoute}
               hasActiveRoute={hasActiveRoute}
               mapBounds={mapBounds}
@@ -3277,6 +3280,27 @@ export default function RoutePulse() {
                 className="w-11 h-11 sm:w-9 sm:h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
               >
                 <Layers className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setTrafficOverlay(v => !v)}
+                title={
+                  trafficOverlay
+                    ? "Hide live TomTom traffic"
+                    : "Show live TomTom traffic"
+                }
+                aria-label={
+                  trafficOverlay
+                    ? "Hide live TomTom traffic"
+                    : "Show live TomTom traffic"
+                }
+                className={`w-11 h-11 sm:w-9 sm:h-9 rounded-md backdrop-blur-md border shadow-lg flex items-center justify-center transition-colors ${
+                  trafficOverlay
+                    ? "bg-emerald-600/90 text-white border-emerald-500"
+                    : "bg-background/90 hover:bg-background"
+                }`}
+              >
+                <Activity className="w-4 h-4" />
               </button>
               <button
                 type="button"

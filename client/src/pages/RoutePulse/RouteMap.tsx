@@ -287,6 +287,8 @@ export type RouteMapCamera = {
 export type RouteMapProps = {
   mapRef: RefObject<L.Map | null>;
   basemap: BasemapKey;
+  /** TomTom live traffic flow raster (proxied). */
+  trafficOverlay?: boolean;
   hasRoute: boolean;
   hasActiveRoute: boolean;
   mapBounds: LatLngBoundsExpression | null;
@@ -369,6 +371,18 @@ function RouteMapInner(props: RouteMapProps) {
         updateWhenIdle
         keepBuffer={2}
       />
+      {props.trafficOverlay && (
+        <TileLayer
+          key="tomtom-flow"
+          url="/api/tomtom-traffic-tile/flow/{z}/{x}/{y}"
+          attribution='&copy; <a href="https://www.tomtom.com/">TomTom</a> traffic'
+          opacity={0.72}
+          maxZoom={22}
+          updateWhenZooming={false}
+          updateWhenIdle
+          zIndex={350}
+        />
+      )}
       <MapCanvasPerf />
       <ZoomControl position="topright" />
       <ScaleControl position="topright" metric={false} imperial />
@@ -657,6 +671,7 @@ function RouteMapInner(props: RouteMapProps) {
 function propsEqual(a: RouteMapProps, b: RouteMapProps): boolean {
   return (
     a.basemap === b.basemap &&
+    a.trafficOverlay === b.trafficOverlay &&
     a.hasRoute === b.hasRoute &&
     a.hasActiveRoute === b.hasActiveRoute &&
     a.mapFitKey === b.mapFitKey &&
