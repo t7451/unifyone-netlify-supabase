@@ -665,19 +665,21 @@ function slimLatLngLine(
 function MapCanvasPerf() {
   const map = useMap();
   useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | null = null;
     const onResize = () => {
-      // Coalesce resize redraws — Leaflet already debounces, this just ensures
-      // canvas layers redraw once after orientation / sheet changes.
-      requestAnimationFrame(() => {
+      // Debounced — raw resize→invalidateSize→moveend loops caused zoom jitter.
+      if (t) clearTimeout(t);
+      t = setTimeout(() => {
         try {
-          map.invalidateSize({ animate: false });
+          map.invalidateSize({ animate: false, pan: false });
         } catch {
           /* ignore */
         }
-      });
+      }, 200);
     };
     map.on("resize", onResize);
     return () => {
+      if (t) clearTimeout(t);
       map.off("resize", onResize);
     };
   }, [map]);
@@ -901,29 +903,40 @@ function MapViewportTracker({
  *  map stays put until the next search resets the flag. */
 function FitBounds({
   bounds,
+  fitKey,
   skipAutoFit,
 }: {
   bounds: LatLngBoundsExpression | null;
+  /** Stable key for this plan — fit at most once per key. */
+  fitKey: string | null;
   skipAutoFit: React.MutableRefObject<boolean>;
 }) {
   const map = useMap();
+  const fittedKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!bounds || skipAutoFit.current) return;
+    if (!bounds || !fitKey || skipAutoFit.current) return;
+    if (fittedKeyRef.current === fitKey) return;
+    fittedKeyRef.current = fitKey;
+
     const mobile =
       typeof window !== "undefined" &&
       window.matchMedia("(max-width: 640px)").matches;
-    const pad: [number, number] = mobile ? [32, 32] : [48, 48];
-    if (mobile) {
-      // Instant fit — fly animations fight touch inertia and feel laggy.
-      map.fitBounds(bounds, { padding: pad, maxZoom: 14, animate: false });
-    } else {
-      map.flyToBounds(bounds, {
-        padding: pad,
-        maxZoom: 15,
-        duration: 0.45,
-      });
-    }
-  }, [bounds, map, skipAutoFit]);
+    const pad: [number, number] = mobile ? [36, 36] : [48, 48];
+    // Always non-animated fit — flyToBounds chains with resize and feels like
+    // the map is "reloading" while zooming out.
+    map.fitBounds(bounds, {
+      padding: pad,
+      maxZoom: mobile ? 13 : 14,
+      animate: false,
+    });
+  }, [bounds, fitKey, map, skipAutoFit]);
+
+  // New search resets the "already fitted" guard via fitKey change above.
+  useEffect(() => {
+    if (!fitKey) fittedKeyRef.current = null;
+  }, [fitKey]);
+
   return null;
 }
 
@@ -2109,26 +2122,23 @@ export default function RoutePulse() {
     [camerasQuery.data]
   );
 
+  // Fit ONLY to an explicit plan. Never to statewide incident clouds —
+  // that caused continuous zoom-out on load as markers streamed in.
   const mapBounds: LatLngBoundsExpression | null = useMemo(() => {
-    if (routeQuery.data) {
-      const { origin: o, destination: d, route } = routeQuery.data;
-      const points: LatLngExpression[] = [
-        [o.lat, o.lng],
-        [d.lat, d.lng],
-        ...(routeLine ?? []),
-        ...route.incidents
-          .filter(i => Number.isFinite(i.lat) && Number.isFinite(i.lng))
-          .map((i): LatLngExpression => [i.lat, i.lng]),
-      ];
-      return L.latLngBounds(points);
-    }
-    if (activeIncidents.length > 1) {
-      return L.latLngBounds(
-        activeIncidents.map((i: any): LatLngExpression => [i.lat, i.lng])
-      );
-    }
-    return null;
-  }, [routeQuery.data, routeLine, activeIncidents]);
+    if (!routeQuery.data) return null;
+    const { origin: o, destination: d } = routeQuery.data;
+    const points: LatLngExpression[] = [
+      [o.lat, o.lng],
+      [d.lat, d.lng],
+      ...(routeLine ?? []),
+    ];
+    // Do not include every incident pin in fit bounds — outliers yank zoom out.
+    return L.latLngBounds(points);
+  }, [routeQuery.data, routeLine]);
+
+  const mapFitKey = submitted
+    ? `${submitted.origin}|${submitted.destination}|${previewIdx ?? "main"}`
+    : null;
 
   // Risk: prefer the server's deterministic 0-100 score (v5+). Pre-v5
   // cached responses (2-min TTL) lack it — fall back to the same weights
@@ -2322,11 +2332,11 @@ export default function RoutePulse() {
   useEffect(() => {
     const t = window.setTimeout(() => {
       try {
-        mapRef.current?.invalidateSize?.();
+        mapRef.current?.invalidateSize?.({ animate: false, pan: false });
       } catch {
         /* ignore */
       }
-    }, 320);
+    }, 280);
     return () => window.clearTimeout(t);
   }, [sheetExpanded, tripActive, hasRoute]);
   useEffect(() => {
@@ -2578,7 +2588,7 @@ export default function RoutePulse() {
                   controls on mobile. */}
               <ZoomControl position="topright" />
               <ScaleControl position="topright" metric={false} imperial />
-              <FitBounds bounds={mapBounds} skipAutoFit={userPannedRef} />
+              <FitBounds bounds={mapBounds} fitKey={mapFitKey} skipAutoFit={userPannedRef} />
               <MapViewportTracker onChange={setViewportBbox} enabled={!hasActiveRoute} />
               <MapInteractionHandler
                 onDrag={() => {
