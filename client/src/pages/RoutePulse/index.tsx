@@ -21,6 +21,8 @@ import "leaflet/dist/leaflet.css";
 // layer — see NOTE FOR KIMI near MapClusterGroup below for why this was
 // needed (unclustered map with statewide feeds gets unusable fast).
 import MarkerClusterGroup from "react-leaflet-cluster";
+import { RouteMap } from "./RouteMap";
+import { softInvalidateSize } from "./mapInvalidate";
 import {
   googleMapsDirectionsUrl,
   appleMapsDirectionsUrl,
@@ -1611,7 +1613,7 @@ export default function RoutePulse() {
       // Container size changed (fullscreen <-> normal) — Leaflet needs a
       // nudge to recompute its internal size, or tiles render into a
       // stale viewport.
-      setTimeout(() => mapRef.current?.invalidateSize(), 50);
+      setTimeout(() => softInvalidateSize(mapRef.current), 50);
     };
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
@@ -2140,6 +2142,132 @@ export default function RoutePulse() {
     ? `${submitted.origin}|${submitted.destination}|${previewIdx ?? "main"}`
     : null;
 
+  const altLinesForMap = useMemo(() => {
+    return allRoutes
+      .map((alt, idx) => {
+        if (idx === displayedIdx) return null;
+        const coords = (alt.geometry as { coordinates?: [number, number][] })
+          ?.coordinates;
+        if (!coords?.length) return null;
+        const step = coords.length > 80 ? Math.ceil(coords.length / 80) : 1;
+        const slim =
+          step > 1
+            ? coords.filter((_, i) => i % step === 0 || i === coords.length - 1)
+            : coords;
+        return {
+          key: `alt-${idx}`,
+          positions: slim.map(
+            ([lng, lat]) => [lat, lng] as LatLngExpression
+          ),
+        };
+      })
+      .filter(Boolean) as Array<{ key: string; positions: LatLngExpression[] }>;
+  }, [allRoutes, displayedIdx]);
+
+  const stopsForMap = useMemo(() => {
+    const d = routeQuery.data as
+      | {
+          stopPlan?: { stops: Array<{ lat: number; lng: number }> };
+          stops?: Array<{ lat: number; lng: number }>;
+        }
+      | undefined;
+    return d?.stopPlan?.stops ?? d?.stops ?? [];
+  }, [routeQuery.data]);
+
+  const routeIncidentsForMap = useMemo(() => {
+    const list = routeQuery.data?.route.incidents ?? [];
+    return list
+      .filter(i => Number.isFinite(i.lat) && Number.isFinite(i.lng))
+      .map(i => ({
+        id: String(i.id),
+        lat: i.lat,
+        lng: i.lng,
+        severity: i.severity,
+        road_name: i.road_name,
+        description: i.description,
+        incident_type: i.incident_type,
+      }));
+  }, [routeQuery.data]);
+
+  const emptyIncidentsForMap = useMemo(() => {
+    return (activeIncidents as any[])
+      .filter(i => Number.isFinite(i?.lat) && Number.isFinite(i?.lng))
+      .slice(0, 200)
+      .map(i => ({
+        id: String(i.id),
+        lat: i.lat as number,
+        lng: i.lng as number,
+        severity: i.severity as string | undefined,
+        road_name: i.road_name as string | undefined,
+        description: i.description as string | undefined,
+        incident_type: i.incident_type as string | undefined,
+      }));
+  }, [activeIncidents]);
+
+  const routeCamerasForMap = useMemo(() => {
+    return (routeCameras as any[])
+      .filter(c => Number.isFinite(c?.lat) && Number.isFinite(c?.lng))
+      .map(c => ({
+        id: String(c.id),
+        lat: c.lat as number,
+        lng: c.lng as number,
+        name: c.name as string | undefined,
+        url: c.url as string | undefined,
+      }));
+  }, [routeCameras]);
+
+  /** Viewport-cull empty-state cameras — only those inside current bbox. */
+  const emptyCamerasForMap = useMemo(() => {
+    const cams = ((camerasQuery.data as any[]) ?? []).filter(
+      c => Number.isFinite(c?.lat) && Number.isFinite(c?.lng)
+    );
+    if (!viewportBbox) return cams.slice(0, 80).map(c => ({
+      id: String(c.id),
+      lat: c.lat as number,
+      lng: c.lng as number,
+      name: c.name as string | undefined,
+      url: c.url as string | undefined,
+    }));
+    const { minLat, minLng, maxLat, maxLng } = viewportBbox;
+    return cams
+      .filter(
+        c =>
+          c.lat >= minLat &&
+          c.lat <= maxLat &&
+          c.lng >= minLng &&
+          c.lng <= maxLng
+      )
+      .slice(0, 120)
+      .map(c => ({
+        id: String(c.id),
+        lat: c.lat as number,
+        lng: c.lng as number,
+        name: c.name as string | undefined,
+        url: c.url as string | undefined,
+      }));
+  }, [camerasQuery.data, viewportBbox]);
+
+  const transitForMap = useMemo(() => {
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 640px)").matches
+    ) {
+      return [];
+    }
+    const list = transitQuery.data ?? [];
+    if (!routeLine?.length) return list.slice(0, 12);
+    return list
+      .filter(lm => {
+        const line = routeLine.map(p => {
+          const a = p as [number, number];
+          return [a[0], a[1]] as [number, number];
+        });
+        return distanceToPolylineM(lm.lat, lm.lng, line) < 2500;
+      })
+      .slice(0, 12);
+  }, [transitQuery.data, routeLine]);
+
+
   // Risk: prefer the server's deterministic 0-100 score (v5+). Pre-v5
   // cached responses (2-min TTL) lack it — fall back to the same weights
   // computed locally so the meter never disappears mid-rollout.
@@ -2332,7 +2460,7 @@ export default function RoutePulse() {
   useEffect(() => {
     const t = window.setTimeout(() => {
       try {
-        mapRef.current?.invalidateSize?.({ animate: false, pan: false });
+        softInvalidateSize(mapRef.current);
       } catch {
         /* ignore */
       }
@@ -2546,389 +2674,51 @@ export default function RoutePulse() {
                   : "relative h-[calc(100dvh-2.75rem)] max-h-none min-h-[420px] sm:h-[70dvh] sm:max-h-[720px] sm:min-h-[480px] w-full bg-muted"
             }
           >
-            <MapContainer
-              ref={mapRef}
-              center={DEFAULT_CENTER}
-              zoom={DEFAULT_ZOOM}
-              zoomControl={false}
-              scrollWheelZoom
-              zoomSnap={0.5}
-              zoomDelta={0.5}
-              wheelPxPerZoomLevel={100}
-              preferCanvas
-              renderer={routeCanvasRenderer}
-              fadeAnimation={false}
-              markerZoomAnimation={false}
-              zoomAnimation={false}
-              inertia
-              inertiaDeceleration={3000}
-              bounceAtZoomLimits={false}
-              style={{ height: "100%", width: "100%", touchAction: "manipulation", contain: "strict" as const }}
-            >
-              <TileLayer
-                key={basemap}
-                attribution={BASEMAPS[basemap].attribution}
-                url={BASEMAPS[basemap].url}
-                updateWhenZooming={false}
-                updateWhenIdle
-                keepBuffer={2}
-              />
-              <MapCanvasPerf />
-              {/* NOTE FOR KIMI: these were both "bottomright", which put
-                  Leaflet's native control container (z-index 1000 by
-                  default) directly on top of the v14 mobile bottom sheet
-                  (z-[450], anchored bottom of this same map wrapper) — the
-                  "2000 ft" scale box floating oddly over the sheet on
-                  mobile was this collision, not a sheet bug. Moved both to
-                  topright, which is empty on every viewport size and is
-                  the standard placement mobile map apps use to stay clear
-                  of a bottom sheet/nav bar. Don't move these back to a
-                  bottom* position without also either raising the sheet's
-                  z-index above Leaflet's control container or hiding the
-                  controls on mobile. */}
-              <ZoomControl position="topright" />
-              <ScaleControl position="topright" metric={false} imperial />
-              <FitBounds bounds={mapBounds} fitKey={mapFitKey} skipAutoFit={userPannedRef} />
-              <MapViewportTracker onChange={setViewportBbox} enabled={!hasActiveRoute} />
-              <MapInteractionHandler
-                onDrag={() => {
-                  setFollow(false);
-                  userPannedRef.current = true;
-                }}
-              />
-              <MapClickHandler
-                onSetAddress={addr => {
-                  if (!origin.trim()) {
-                    setOrigin(addr);
-                  } else if (!destination.trim()) {
-                    setDestination(addr);
-                  } else {
-                    // Both filled — set destination and let user decide
-                    setDestination(addr);
-                  }
-                }}
-                disabled={routeQuery.isFetching}
-              />
-
-              {userLocation && (
-                <>
-                  {accuracy !== null && accuracy < 500 && (
-                    <Circle
-                      center={userLocation}
-                      radius={accuracy}
-                      pathOptions={routePathDefaults({
-                        renderer: routeCanvasRenderer,
-                        color: "#2563eb",
-                        weight: 1,
-                        opacity: 0.5,
-                        fillColor: "#2563eb",
-                        fillOpacity: 0.08,
-                        smoothFactor: 2,
-                      })}
-                    />
-                  )}
-                  {/* v8: heading cone under the dot (dot draws on top) */}
-                  {heading !== null && (
-                    <Marker
-                      position={userLocation}
-                      icon={headingConeIcon(heading)}
-                      interactive={false}
-                    />
-                  )}
-                  <Marker position={userLocation} icon={USER_LOCATION_ICON} />
-                </>
-              )}
-
-              {hasRoute ? (
-                <>
-                  <Marker
-                    position={[
-                      routeQuery.data!.origin.lat,
-                      routeQuery.data!.origin.lng,
-                    ]}
-                    icon={ORIGIN_ICON}
-                  />
-                  <Marker
-                    position={[
-                      routeQuery.data!.destination.lat,
-                      routeQuery.data!.destination.lng,
-                    ]}
-                    icon={DEST_ICON}
-                  />
-                  {/* M1: lettered stop markers A, B, C… */}
-                  {(
-                    (
-                      routeQuery.data as {
-                        stopPlan?: {
-                          stops: Array<{ lat: number; lng: number }>;
-                        };
-                        stops?: Array<{ lat: number; lng: number }>;
-                      }
-                    ).stopPlan?.stops ??
-                    (routeQuery.data as { stops?: Array<{ lat: number; lng: number }> })
-                      .stops ??
-                    []
-                  ).map((s, i) => (
-                    <Marker
-                      key={`stop-${i}`}
-                      position={[s.lat, s.lng]}
-                      icon={letterPinIcon(
-                        String.fromCharCode(65 + (i % 26)),
-                        "#8b5cf6"
-                      )}
-                    />
-                  ))}
-                  {(typeof window !== "undefined" &&
-                  window.matchMedia("(max-width: 640px)").matches
-                    ? []
-                    : transitQuery.data ?? []
-                  )
-                    .filter(lm => {
-                      if (!routeLine?.length) return true;
-                      const line = routeLine.map(p => {
-                        const a = p as [number, number];
-                        return [a[0], a[1]] as [number, number];
-                      });
-                      return distanceToPolylineM(lm.lat, lm.lng, line) < 2500;
-                    })
-                    .slice(0, 12)
-                    .map(lm => (
-                    <Marker
-                      key={lm.id}
-                      position={[lm.lat, lm.lng]}
-                      icon={letterPinIcon(
-                        lm.kind === "max" ? "M" : lm.kind === "streetcar" ? "S" : "T",
-                        "#0d9488"
-                      )}
-                      title={lm.name}
-                    >
-                      <Popup>
-                        <span className="text-xs font-medium">{lm.name}</span>
-                        <span className="block text-[10px] text-muted-foreground">
-                          TriMet {lm.kind.replace("_", " ")}
-                        </span>
-                      </Popup>
-                    </Marker>
-                  ))}
-                  {displayedLine &&
-                    (segmentLines.length > 0 ? (
-                      <>
-                        {/* Casing under the per-step segments so the split
-                            line still reads as one continuous route */}
-                        <Polyline
-                          positions={displayedLine}
-                          pathOptions={routePathDefaults({
-                            renderer: routeCanvasRenderer,
-                            color: "#1e3a8a",
-                            weight: 7,
-                            opacity: 0.25,
-                            smoothFactor: 2,
-                          })}
-                        />
-                        {segmentLines.map((seg, i) => (
-                          <Polyline
-                            key={`seg-${i}`}
-                            positions={seg.positions}
-                            pathOptions={routePathDefaults({
-                              renderer: routeCanvasRenderer,
-                              color: seg.color,
-                              weight: 6,
-                              opacity: 0.95,
-                              lineCap: "round",
-                              lineJoin: "round",
-                              smoothFactor: 1.75,
-                            })}
-                          />
-                        ))}
-                        {/* TomTom flow probes — small speed dots along the route */}
-                        {/* Flow dots: desktop only — mobile keeps the line + legend */}
-                        {typeof window !== "undefined" &&
-                          window.matchMedia("(min-width: 640px)").matches &&
-                          flowPoints.map((p, i) => {
-                          const ratio = p.ratio ?? (p.closed ? 0 : 1);
-                          const fill =
-                            p.closed || ratio < 0.45
-                              ? "#ef4444"
-                              : ratio < 0.75
-                                ? "#f59e0b"
-                                : "#22c55e";
-                          return (
-                            <CircleMarker
-                              key={`flow-${i}`}
-                              center={[p.lat, p.lng]}
-                              radius={5}
-                              pathOptions={routePathDefaults({
-                                renderer: routeCanvasRenderer,
-                                color: "#0f172a",
-                                weight: 1,
-                                fillColor: fill,
-                                fillOpacity: 0.95,
-                                interactive: true,
-                              })}
-                            >
-                              <Popup>
-                                <span className="text-xs font-medium">
-                                  Live traffic probe
-                                </span>
-                                <span className="block text-[11px] text-muted-foreground">
-                                  {p.closed
-                                    ? "Road closed (TomTom)"
-                                    : `${Math.round(ratio * 100)}% of free-flow`}
-                                  {!p.closed &&
-                                    p.currentMph != null &&
-                                    p.freeflowMph != null && (
-                                      <>
-                                        <br />
-                                        {p.currentMph} mph now ·{" "}
-                                        {p.freeflowMph} mph free-flow
-                                      </>
-                                    )}
-                                </span>
-                              </Popup>
-                            </CircleMarker>
-                          );
-                        })}
-                      </>
-                    ) : (
-                      <Polyline
-                        positions={displayedLine}
-                        pathOptions={routePathDefaults({
-                          renderer: routeCanvasRenderer,
-                          color: "#3b82f6",
-                          weight: 6,
-                          opacity: 0.92,
-                          lineCap: "round",
-                          lineJoin: "round",
-                          smoothFactor: 2,
-                        })}
-                      />
-                    ))}
-                  {/* Alternative routes — lighter, dashed lines. The route
-                      currently displayed solid is skipped so the chosen
-                      route isn't double-drawn. */}
-                  {allRoutes.map((alt, idx) => {
-                    if (idx === displayedIdx) return null;
-                    const coords = (
-                      alt.geometry as {
-                        coordinates: [number, number][];
-                      }
-                    )?.coordinates;
-                    if (!coords?.length) return null;
-                    const step = coords.length > 80 ? Math.ceil(coords.length / 80) : 1;
-                    const slim =
-                      step > 1
-                        ? coords.filter((_, i) => i % step === 0 || i === coords.length - 1)
-                        : coords;
-                    return (
-                      <Polyline
-                        key={`alt-${idx}`}
-                        positions={slim.map(
-                          ([lng, lat]) => [lat, lng] as LatLngExpression
-                        )}
-                        pathOptions={routePathDefaults({
-                          renderer: routeCanvasRenderer,
-                          color: "#94a3b8",
-                          weight: 3,
-                          opacity: 0.55,
-                          dashArray: "6, 8",
-                          smoothFactor: 2.5,
-                        })}
-                      />
-                    );
-                  })}
-                  {routeQuery
-                    .data!.route.incidents.filter(
-                      inc =>
-                        Number.isFinite(inc.lat) && Number.isFinite(inc.lng)
-                    )
-                    .map(inc => (
-                      <Marker
-                        key={inc.id}
-                        position={[inc.lat, inc.lng]}
-                        icon={
-                          INCIDENT_ICONS[inc.severity] ?? INCIDENT_ICONS.minor
-                        }
-                      >
-                        <Popup>
-                          <div className="text-sm space-y-0.5">
-                            {inc.road_name && (
-                              <p className="font-medium">{inc.road_name}</p>
-                            )}
-                            <p>{inc.description ?? inc.incident_type}</p>
-                            <p className="text-xs uppercase text-muted-foreground">
-                              {inc.severity}
-                            </p>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    ))}
-                  {/* Traffic cameras along the recommended route (v6) */}
-                  {camerasOn && routeCameras.map(cameraMarker)}
-                </>
-              ) : (
-                // No route searched yet — show every active incident and
-                // traffic camera so the map is never just an empty base
-                // layer.
-                //
-                // NOTE FOR KIMI (v17): this used to render every incident
-                // and camera as an individual unclustered Marker. Fine at
-                // the handful-of-incidents scale this was built and tested
-                // at, but the incident feed spans ODOT TripCheck + 511 +
-                // NWS + WSDOT statewide — a busy weather day easily puts
-                // 50-200+ pins in view at once, at which point the map
-                // becomes an unreadable pile of overlapping dots rather
-                // than useful signal. Wrapped both layers in
-                // MarkerClusterGroup (react-leaflet-cluster) so nearby
-                // markers collapse into a count bubble until zoomed in
-                // enough to separate them — standard behavior for any
-                // real-world incident map at this density. Route-scoped
-                // incidents/cameras (the `hasRoute` branch above) are NOT
-                // clustered on purpose — that set is already small
-                // (bounded to what's actually near one route) and
-                // clustering it would hide exactly the incidents a driver
-                // is trying to see.
-                <>
-                  <MarkerClusterGroup
-                    chunkedLoading
-                    maxClusterRadius={60}
-                    spiderfyOnMaxZoom
-                    iconCreateFunction={incidentClusterIcon}
-                  >
-                    {activeIncidents.map((inc: any) => (
-                      <Marker
-                        key={inc.id}
-                        position={[inc.lat, inc.lng]}
-                        icon={
-                          INCIDENT_ICONS[inc.severity] ?? INCIDENT_ICONS.minor
-                        }
-                      >
-                        <Popup>
-                          <div className="text-sm space-y-0.5">
-                            {inc.road_name && (
-                              <p className="font-medium">{inc.road_name}</p>
-                            )}
-                            <p>{inc.description ?? inc.incident_type}</p>
-                            <p className="text-xs uppercase text-muted-foreground">
-                              {inc.severity}
-                            </p>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    ))}
-                  </MarkerClusterGroup>
-                  {camerasOn && (
-                    <MarkerClusterGroup
-                      chunkedLoading
-                      maxClusterRadius={50}
-                      spiderfyOnMaxZoom
-                      iconCreateFunction={cameraClusterIcon}
-                    >
-                      {activeCameras.map(cameraMarker)}
-                    </MarkerClusterGroup>
-                  )}
-                </>
-              )}
-            </MapContainer>
+            <RouteMap
+              mapRef={mapRef}
+              basemap={basemap}
+              hasRoute={hasRoute}
+              hasActiveRoute={hasActiveRoute}
+              mapBounds={mapBounds}
+              mapFitKey={mapFitKey}
+              userPannedRef={userPannedRef}
+              onViewportChange={setViewportBbox}
+              onDrag={() => setFollow(false)}
+              onSetAddress={addr => {
+                if (!origin.trim()) setOrigin(addr);
+                else if (!destination.trim()) setDestination(addr);
+                else setDestination(addr);
+              }}
+              userLocation={userLocation}
+              accuracy={accuracy}
+              displayedLine={displayedLine}
+              segmentLines={segmentLines}
+              flowPoints={flowPoints}
+              altLines={altLinesForMap}
+              origin={
+                routeQuery.data
+                  ? {
+                      lat: routeQuery.data.origin.lat,
+                      lng: routeQuery.data.origin.lng,
+                    }
+                  : null
+              }
+              destination={
+                routeQuery.data
+                  ? {
+                      lat: routeQuery.data.destination.lat,
+                      lng: routeQuery.data.destination.lng,
+                    }
+                  : null
+              }
+              stops={stopsForMap}
+              routeIncidents={routeIncidentsForMap}
+              emptyIncidents={emptyIncidentsForMap}
+              routeCameras={routeCamerasForMap}
+              emptyCameras={emptyCamerasForMap}
+              camerasOn={camerasOn}
+              transit={transitForMap}
+            />
 
             {/* Loading veil while a route is being scored */}
             {routeQuery.isFetching && (
