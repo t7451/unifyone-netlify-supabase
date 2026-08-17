@@ -1201,9 +1201,17 @@ export default function RoutePulse() {
     userPannedRef.current = false;
   }, [submitted]);
 
-  // 10s ticker for the "updated Xs ago" freshness label.
+  // Freshness label ticker — rare on mobile (full tree re-render is expensive).
   useEffect(() => {
-    const id = window.setInterval(() => setNowTick(t => t + 1), 10_000);
+    const ms =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 640px)").matches
+        ? 30_000
+        : 15_000;
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "hidden") return;
+      setNowTick(t => t + 1);
+    }, ms);
     return () => window.clearInterval(id);
   }, []);
 
@@ -1249,6 +1257,8 @@ export default function RoutePulse() {
   const userPannedRef = useRef(false);
   // v8: last fix, for deriving heading when the browser doesn't provide one.
   const lastFixRef = useRef<{ lat: number; lng: number } | null>(null);
+  const lastGpsUiAtRef = useRef(0);
+  const tripActiveRef = useRef(false);
 
   // One Canvas for all polylines/circles — must be stable across renders.
   const routeCanvasRenderer = useMemo(() => createRouteCanvasRenderer(), []);
@@ -1428,7 +1438,25 @@ export default function RoutePulse() {
           pos.coords.latitude,
           pos.coords.longitude,
         ];
+        const fix = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         gotFixRef.current = true;
+        // Throttle React state: GPS can fire many times/sec; each setState
+        // re-renders the entire RoutePulse tree + Leaflet layers → jank.
+        const now = Date.now();
+        const movedM = lastFixRef.current
+          ? haversineM(lastFixRef.current, fix)
+          : 999;
+        const minInterval = tripActiveRef.current ? 1200 : 2500;
+        const minMove = tripActiveRef.current ? 8 : 18;
+        const shouldUi =
+          !lastGpsUiAtRef.current ||
+          now - lastGpsUiAtRef.current >= minInterval ||
+          movedM >= minMove;
+        if (!shouldUi) {
+          lastFixRef.current = fix;
+          return;
+        }
+        lastGpsUiAtRef.current = now;
         setUserLocation(point);
         setAccuracy(
           Number.isFinite(pos.coords.accuracy) ? pos.coords.accuracy : null
@@ -1442,7 +1470,6 @@ export default function RoutePulse() {
           (pos.coords.speed ?? 0) > 0.5
             ? pos.coords.heading
             : null;
-        const fix = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         if (
           hdg === null &&
           lastFixRef.current &&
@@ -2278,6 +2305,9 @@ export default function RoutePulse() {
   useEffect(() => {
     hasRouteRef.current = hasRoute;
   }, [hasRoute]);
+  useEffect(() => {
+    tripActiveRef.current = tripActive;
+  }, [tripActive]);
 
   // v9: once a route is on the map, fold the search card into a chip so
   // the map (and the route on it) gets the screen back. Editing the
@@ -2520,6 +2550,9 @@ export default function RoutePulse() {
               fadeAnimation={false}
               markerZoomAnimation={false}
               zoomAnimation={false}
+              inertia
+              inertiaDeceleration={3000}
+              bounceAtZoomLimits={false}
               style={{ height: "100%", width: "100%", touchAction: "manipulation", contain: "strict" as const }}
             >
               <TileLayer
@@ -2968,7 +3001,7 @@ export default function RoutePulse() {
                 screen. */}
             {!tripActive && (
             <Card
-              className={`absolute z-[400] top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-auto sm:w-[300px] lg:w-[320px] bg-background/95 backdrop-blur-md shadow-xl border rounded-xl ${
+              className={`absolute z-[400] top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-auto sm:w-[300px] lg:w-[320px] bg-background/95 sm:backdrop-blur-md shadow-xl border rounded-xl ${
                 searchCollapsed && hasRoute
                   ? "p-2.5 sm:p-3"
                   : "p-3 sm:p-3.5 max-h-[min(52dvh,420px)] overflow-y-auto sm:max-h-[min(70vh,640px)]"
@@ -3541,30 +3574,22 @@ export default function RoutePulse() {
                 sm and up keep the existing result card below the map
                 instead (untouched — see the Card block further down). */}
             {hasRoute && (
-              <motion.div
-                className="sm:hidden absolute inset-x-0 bottom-0 z-[450] rounded-t-2xl bg-background/98 backdrop-blur-xl border-t border-border/80 shadow-[0_-8px_30px_rgba(0,0,0,0.35)] flex flex-col overflow-hidden"
-                style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
-                initial={false}
-                animate={{
+              <div
+                className="sm:hidden absolute inset-x-0 bottom-0 z-[450] rounded-t-2xl bg-background/98 border-t border-border/80 shadow-[0_-8px_30px_rgba(0,0,0,0.35)] flex flex-col overflow-hidden"
+                style={{
+                  paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
                   height: sheetExpanded
                     ? "58dvh"
                     : tripActive
                       ? "16dvh"
                       : "20dvh",
+                  transition: "height 0.2s ease-out",
+                  // No backdrop-blur on mobile — expensive on low-end GPUs
                 }}
-                transition={{ type: "tween", duration: 0.22, ease: "easeOut" }}
               >
-                {/* Drag handle — swipe up/down or tap to expand/collapse. */}
-                <motion.div
-                  className="flex justify-center pt-2 pb-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
-                  drag="y"
-                  dragConstraints={{ top: 0, bottom: 0 }}
-                  dragElastic={0.35}
-                  dragSnapToOrigin
-                  onDragEnd={(_e, info) => {
-                    if (info.offset.y < -18) setSheetExpanded(true);
-                    else if (info.offset.y > 18) setSheetExpanded(false);
-                  }}
+                {/* Tap handle only — Framer drag competed with map pan. */}
+                <div
+                  className="flex justify-center pt-2 pb-1 shrink-0 touch-manipulation"
                   onClick={() => setSheetExpanded(v => !v)}
                   role="button"
                   aria-label={
@@ -3575,7 +3600,7 @@ export default function RoutePulse() {
                   aria-expanded={sheetExpanded}
                 >
                   <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
-                </motion.div>
+                </div>
 
                 {/* Always-visible glanceable header — vitals + one-sentence
                     AI summary (getMobileSummary), tap to expand too. */}
@@ -3723,13 +3748,8 @@ export default function RoutePulse() {
                     only when expanded (not just visually hidden) so the
                     peek state stays cheap to paint on every incident
                     refresh. */}
-                <AnimatePresence>
-                  {sheetExpanded && (
-                    <motion.div
-                      key="expanded-steps"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
+                {sheetExpanded && (
+                    <div
                       className="flex-1 overflow-y-auto px-2 py-1 border-t overscroll-contain"
                     >
                       {allRoutes.length > 1 && (
@@ -3778,10 +3798,9 @@ export default function RoutePulse() {
                           No turn-by-turn available for this route.
                         </p>
                       )}
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
-              </motion.div>
+              </div>
             )}
           </div>
         </div>
