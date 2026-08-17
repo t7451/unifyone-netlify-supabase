@@ -344,23 +344,26 @@ function RouteMapInner(props: RouteMapProps) {
       center={DEFAULT_CENTER}
       zoom={DEFAULT_ZOOM}
       zoomControl={false}
-      scrollWheelZoom
-      zoomSnap={0.5}
-      zoomDelta={0.5}
+      scrollWheelZoom={!isMobile}
+      doubleClickZoom={!isMobile}
+      zoomSnap={isMobile ? 0.25 : 0.5}
+      zoomDelta={isMobile ? 0.5 : 0.5}
       wheelPxPerZoomLevel={100}
       preferCanvas
       renderer={renderer}
       fadeAnimation={false}
       markerZoomAnimation={false}
-      zoomAnimation={false}
+      zoomAnimation={!isMobile}
       inertia
-      inertiaDeceleration={3000}
+      inertiaDeceleration={isMobile ? 2500 : 3000}
       bounceAtZoomLimits={false}
       style={{
         height: "100%",
         width: "100%",
         touchAction: "manipulation",
         contain: "strict",
+        WebkitUserSelect: "none",
+        userSelect: "none",
       }}
     >
       <TileLayer

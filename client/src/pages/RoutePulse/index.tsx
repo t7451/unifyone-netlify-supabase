@@ -2509,6 +2509,18 @@ export default function RoutePulse() {
     };
   }, [sheetExpanded]);
 
+  // Mobile: once a route lands, collapse search so map + sheet own the screen.
+  useEffect(() => {
+    if (
+      hasRoute &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 640px)").matches
+    ) {
+      setSearchCollapsed(true);
+      setSheetExpanded(false);
+    }
+  }, [hasRoute, routeQuery.dataUpdatedAt]);
+
   useEffect(() => {
     const t = window.setTimeout(() => {
       try {
@@ -2842,7 +2854,7 @@ export default function RoutePulse() {
                   title={
                     voiceMuted ? "Unmute voice prompts" : "Mute voice prompts"
                   }
-                  className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-muted active:bg-muted transition-colors"
+                  className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-muted active:bg-muted active:scale-95 transition-colors touch-manipulation"
                 >
                   {voiceMuted ? (
                     <VolumeX className="w-5 h-5" />
@@ -2854,7 +2866,7 @@ export default function RoutePulse() {
                   type="button"
                   onClick={() => setTripActive(false)}
                   title="End trip"
-                  className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-muted active:bg-muted transition-colors"
+                  className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-muted-foreground hover:bg-muted active:bg-muted active:scale-95 transition-colors touch-manipulation"
                 >
                   <Square className="w-5 h-5" />
                 </button>
@@ -2868,7 +2880,7 @@ export default function RoutePulse() {
                 <button
                   type="button"
                   onClick={handleRecalculateFromHere}
-                  className="w-full min-h-[52px] rounded-2xl bg-amber-500 text-amber-950 font-semibold text-base shadow-xl border border-amber-400/80 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform touch-manipulation px-4"
+                  className="w-full min-h-[56px] rounded-2xl bg-amber-500 text-amber-950 font-semibold text-[17px] shadow-xl border border-amber-400/80 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform touch-manipulation px-4 select-none"
                 >
                   <Navigation className="w-5 h-5 shrink-0" />
                   Recalculate from here
@@ -2899,7 +2911,7 @@ export default function RoutePulse() {
                   type="button"
                   onClick={() => setSearchCollapsed(false)}
                   title="Edit this search"
-                  className="flex w-full items-center gap-2 text-left"
+                  className="flex w-full items-center gap-2 text-left min-h-[44px] touch-manipulation active:opacity-80"
                 >
                   <RouteIcon className="w-4 h-4 shrink-0 text-primary" />
                   <span className="flex-1 truncate text-sm">
@@ -3039,7 +3051,7 @@ export default function RoutePulse() {
                           <button
                             type="button"
                             onClick={handleEnableLocation}
-                            className="mt-1.5 text-xs font-medium text-primary hover:underline"
+                            className="mt-2 inline-flex items-center min-h-[40px] px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold active:scale-95 touch-manipulation"
                           >
                             Enable location
                           </button>
@@ -3243,7 +3255,7 @@ export default function RoutePulse() {
                                 /* ignore */
                               }
                             }}
-                            className={`rounded-lg px-1.5 py-2.5 text-[11px] font-medium border transition-colors min-h-[44px] ${
+                            className={`rounded-lg px-1 py-2.5 text-[11px] sm:text-xs font-medium border transition-colors min-h-[48px] sm:min-h-[44px] active:scale-95 touch-manipulation ${
                               preference === value
                                 ? "border-primary bg-primary/15 text-primary"
                                 : "border-border bg-muted/40 text-muted-foreground hover:bg-muted"
@@ -3267,7 +3279,7 @@ export default function RoutePulse() {
                     <Button
                       type="submit"
                       size="sm"
-                      className="gap-2 w-full group min-h-[44px]"
+                      className="gap-2 w-full group min-h-[48px] sm:min-h-[44px] text-base sm:text-sm font-semibold active:scale-[0.99] touch-manipulation"
                     >
                       {routeQuery.isFetching && (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -3288,9 +3300,9 @@ export default function RoutePulse() {
                 v9: on phones these live in the bottom-right thumb zone with
                 bigger touch targets; on desktop they stay top-right. */}
             {/* Routing progress — keeps the map interactive but shows status */}
-            {routeQuery.isFetching && (
+            {routeQuery.isFetching && !tripActive && (
               <div className="absolute z-[450] top-3 left-1/2 -translate-x-1/2 sm:left-auto sm:right-[4.5rem] sm:translate-x-0 pointer-events-none">
-                <div className="inline-flex items-center gap-2 rounded-full border bg-background/95 backdrop-blur-md px-3 py-1.5 text-xs font-medium shadow-lg">
+                <div className="inline-flex items-center gap-2 rounded-full border bg-background/95 px-3 py-1.5 text-xs font-medium shadow-lg">
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
                   Scoring live traffic…
                 </div>
@@ -3321,17 +3333,20 @@ export default function RoutePulse() {
             )}
 
             <div
-              className="absolute z-[400] right-3 sm:bottom-auto sm:top-4 sm:right-4 flex flex-col gap-2"
+              className={`absolute z-[400] right-3 flex flex-col gap-2 touch-manipulation ${
+                tripActive
+                  ? "top-[max(5.5rem,calc(env(safe-area-inset-top)+4.75rem))] sm:top-4"
+                  : "sm:bottom-auto sm:top-4 sm:right-4"
+              }`}
               style={
+                !tripActive &&
                 typeof window !== "undefined" &&
                 window.matchMedia("(max-width: 640px)").matches &&
                 hasRoute
                   ? {
                       bottom: sheetExpanded
                         ? "calc(min(72dvh, 72vh) + 0.5rem)"
-                        : tripActive
-                          ? "calc(min(18dvh, 18vh) + 0.5rem)"
-                          : "calc(min(30dvh, 30vh) + 0.5rem)",
+                        : "calc(min(32dvh, 32vh) + 0.5rem)",
                       transition: "bottom 0.22s ease-out",
                     }
                   : undefined
@@ -3358,7 +3373,7 @@ export default function RoutePulse() {
                         : "Click to re-center on you"
                       : "Find my location"
                 }
-                className={`w-11 h-11 sm:w-9 sm:h-9 rounded-md backdrop-blur-md border shadow-lg flex items-center justify-center transition-colors ${
+                className={`w-11 h-11 sm:w-9 sm:h-9 rounded-md backdrop-blur-md border shadow-lg flex items-center justify-center transition-colors active:scale-95 ${
                   tracking && follow
                     ? "bg-blue-500/90 text-white border-blue-400"
                     : "bg-background/90 hover:bg-background"
@@ -3377,7 +3392,7 @@ export default function RoutePulse() {
                 }
                 title="Toggle map style"
                 aria-label="Toggle map style"
-                className="w-11 h-11 sm:w-9 sm:h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
+                className={`${tripActive ? "hidden sm:flex" : "flex"} w-11 h-11 sm:w-9 sm:h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg items-center justify-center hover:bg-background transition-colors active:scale-95`}
               >
                 <Layers className="w-4 h-4" />
               </button>
@@ -3394,7 +3409,7 @@ export default function RoutePulse() {
                     ? "Hide live TomTom traffic"
                     : "Show live TomTom traffic"
                 }
-                className={`w-11 h-11 sm:w-9 sm:h-9 rounded-md backdrop-blur-md border shadow-lg flex items-center justify-center transition-colors ${
+                className={`${tripActive ? "hidden sm:flex" : "flex"} w-11 h-11 sm:w-9 sm:h-9 rounded-md backdrop-blur-md border shadow-lg items-center justify-center transition-colors active:scale-95 ${
                   trafficOverlay
                     ? "bg-emerald-600/90 text-white border-emerald-500"
                     : "bg-background/90 hover:bg-background"
@@ -3407,7 +3422,7 @@ export default function RoutePulse() {
                 onClick={() => setCamerasOn(v => !v)}
                 title={camerasOn ? "Hide traffic cameras" : "Show traffic cameras"}
                 aria-label={camerasOn ? "Hide traffic cameras" : "Show traffic cameras"}
-                className={`w-11 h-11 sm:w-9 sm:h-9 rounded-md backdrop-blur-md border shadow-lg flex items-center justify-center transition-colors ${
+                className={`${tripActive ? "hidden sm:flex" : "flex"} w-11 h-11 sm:w-9 sm:h-9 rounded-md backdrop-blur-md border shadow-lg items-center justify-center transition-colors active:scale-95 ${
                   camerasOn
                     ? "bg-primary/90 text-primary-foreground border-primary"
                     : "bg-background/90 hover:bg-background"
@@ -3422,7 +3437,7 @@ export default function RoutePulse() {
                 aria-label={
                   isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
                 }
-                className="w-11 h-11 sm:w-9 sm:h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg flex items-center justify-center hover:bg-background transition-colors"
+                className={`${tripActive ? "hidden sm:flex" : "flex"} w-11 h-11 sm:w-9 sm:h-9 rounded-md bg-background/90 backdrop-blur-md border shadow-lg items-center justify-center hover:bg-background transition-colors active:scale-95`}
               >
                 {isFullscreen ? (
                   <Minimize className="w-4 h-4" />
@@ -3508,7 +3523,7 @@ export default function RoutePulse() {
                     ? "min(72dvh, 72vh)"
                     : tripActive
                       ? "min(18dvh, 18vh)"
-                      : "min(30dvh, 30vh)",
+                      : "min(32dvh, 32vh)",
                   maxHeight: sheetExpanded
                     ? "calc(100dvh - 3.25rem)"
                     : undefined,
@@ -3519,7 +3534,7 @@ export default function RoutePulse() {
               >
                 {/* Tap handle only — Framer drag competed with map pan. */}
                 <div
-                  className="flex justify-center items-center min-h-[28px] pt-1.5 pb-0.5 shrink-0 touch-manipulation select-none"
+                  className="flex justify-center items-center min-h-[32px] pt-2 pb-1 shrink-0 touch-manipulation select-none active:opacity-70"
                   onClick={() => setSheetExpanded(v => !v)}
                   role="button"
                   aria-label={
@@ -3620,17 +3635,18 @@ export default function RoutePulse() {
 
                 {/* Action row — Steps / trip mode, always reachable
                     without expanding (44px touch targets per spec). */}
-                <div className="flex items-center gap-2 px-4 pb-3 shrink-0">
+                <div className="flex items-center gap-2 px-3 pb-3 shrink-0">
                   {displayedManeuvers.length > 0 && (
                     <Button
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="gap-1.5 shrink-0 h-11 sm:h-9"
+                      className="gap-1.5 shrink-0 h-12 w-12 sm:h-9 sm:w-auto sm:px-3 px-0"
                       onClick={() => setSheetExpanded(true)}
+                      title="Turn-by-turn steps"
                     >
                       <List className="w-4 h-4" />
-                      Steps
+                      <span className="hidden sm:inline">Steps</span>
                     </Button>
                   )}
                   {displayedManeuvers.length > 0 && (
@@ -3638,7 +3654,7 @@ export default function RoutePulse() {
                       type="button"
                       size="sm"
                       variant={tripActive ? "destructive" : "default"}
-                      className="gap-1.5 flex-1 h-12 sm:h-9 min-w-[7.5rem] font-semibold shadow-sm text-base sm:text-sm"
+                      className="gap-1.5 flex-1 h-12 sm:h-9 min-w-[7.5rem] font-semibold shadow-sm text-base sm:text-sm active:scale-[0.98]"
                       onClick={() =>
                         tripActive ? setTripActive(false) : startTrip()
                       }
@@ -3662,7 +3678,7 @@ export default function RoutePulse() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-12 sm:h-9 px-2.5 text-xs"
+                        className="h-12 sm:h-9 px-2.5 text-xs flex-1 active:scale-95"
                         onClick={handleOpenGoogleMaps}
                       >
                         Google
@@ -3671,7 +3687,7 @@ export default function RoutePulse() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-12 sm:h-9 px-2.5 text-xs"
+                        className="h-12 sm:h-9 px-2.5 text-xs flex-1 active:scale-95"
                         onClick={handleOpenAppleMaps}
                       >
                         Apple
