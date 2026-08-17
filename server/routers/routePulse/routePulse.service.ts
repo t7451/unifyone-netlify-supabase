@@ -834,6 +834,8 @@ export type ScoredRoute = {
   historicalIncidentCount?: number;
   /** v24: local-driver knowledge corridor/event ids that fired. */
   localKnowledgeIds?: string[];
+  /** Top local-driver tip for this route, if any. */
+  localTip?: string | null;
   /**
    * Turn-by-turn steps. Empty when the routing engine can't provide them
    * (e.g. the TomTom fallback path) — the client hides the panel then.
@@ -863,6 +865,8 @@ export type RouteCamera = {
 };
 
 export type RouteResult = {
+  /** Best local-driver tip for the chosen route (Portland metro). */
+  localTip?: string | null;
   route: ScoredRoute;
   explanation: string;
   alternatives: ScoredRoute[];
@@ -2743,6 +2747,7 @@ export async function getRoute(
         bottleneckScore,
         historicalIncidentCount: historical.incidentCount,
         localKnowledgeIds: localHits.map(h => h.id),
+        localTip: localKnowledgeSummary(localHits),
         maneuvers: r.maneuvers,
         flow,
       };

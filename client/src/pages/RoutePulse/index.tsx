@@ -2345,9 +2345,12 @@ export default function RoutePulse() {
   // present (pre-v13 cached responses).
   const mobileSummary = useMemo(() => {
     if (!routeQuery.data) return "";
+    const notes = (routeQuery.data as { localDriverNotes?: string[] })
+      .localDriverNotes;
     return getMobileSummary({
       incidents: routeQuery.data.route.incidents,
       leaveNowDelayMin: departureOutlook?.delayMin?.[0] ?? null,
+      localNote: notes?.[0] ?? null,
     });
   }, [routeQuery.data, departureOutlook]);
 
@@ -3230,7 +3233,7 @@ export default function RoutePulse() {
 
             {/* Congestion legend when TomTom flow is on the map */}
             {hasRoute && flowPoints.length > 0 && (
-              <div className="absolute z-[400] bottom-[calc(22dvh+0.75rem)] left-3 sm:bottom-4 sm:left-[340px] pointer-events-none">
+              <div className="hidden sm:block absolute z-[400] bottom-4 left-[340px] pointer-events-none">
                 <div className="rounded-md border bg-background/90 backdrop-blur-md px-2.5 py-1.5 text-[10px] shadow-md flex items-center gap-2">
                   <span className="font-semibold text-muted-foreground uppercase tracking-wide">
                     Live
@@ -3504,9 +3507,15 @@ export default function RoutePulse() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-[13px] text-muted-foreground leading-snug mt-0.5">
+                  <p className="text-[13px] text-muted-foreground leading-snug mt-0.5 line-clamp-3">
                     {mobileSummary}
                   </p>
+                  {(routeQuery.data as { localDriverNotes?: string[] })
+                    ?.localDriverNotes?.[0] && (
+                    <span className="mt-1 inline-flex items-center rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                      Local intel
+                    </span>
+                  )}
                 </button>
 
                 {/* M1: incidents only when expanded — peek stays time + actions */}
