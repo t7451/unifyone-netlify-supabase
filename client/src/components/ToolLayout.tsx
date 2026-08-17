@@ -10,6 +10,11 @@ interface ToolLayoutProps {
   /** Last breadcrumb segment (current page label). */
   breadcrumb: string;
   children: ReactNode;
+  /**
+   * Map-first tools (RoutePulse): on phones, drop breadcrumbs, vertical
+   * padding, ads, email capture, and related-tools so the map owns the screen.
+   */
+  immersiveMobile?: boolean;
 }
 
 /** Registry of the live free tools, used to cross-link siblings. */
@@ -33,6 +38,7 @@ export default function ToolLayout({
   toolName,
   breadcrumb,
   children,
+  immersiveMobile = false,
 }: ToolLayoutProps) {
   const [location] = useLocation();
   const currentSlug = location.split("/").filter(Boolean).pop() ?? "";
@@ -45,8 +51,18 @@ export default function ToolLayout({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-4">
+      <nav
+        className={`border-b bg-background/95 backdrop-blur sticky top-0 z-10 ${
+          immersiveMobile ? "h-11 sm:h-auto" : ""
+        }`}
+      >
+        <div
+          className={`mx-auto flex items-center gap-4 ${
+            immersiveMobile
+              ? "max-w-3xl px-3 h-11 sm:px-6 sm:h-14"
+              : "max-w-3xl px-6 h-14"
+          }`}
+        >
           <Link
             href="/tools"
             className="text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
@@ -58,8 +74,17 @@ export default function ToolLayout({
         </div>
       </nav>
 
-      <main className="max-w-3xl mx-auto px-6 py-12">
-        <nav aria-label="breadcrumb" className="mb-6">
+      <main
+        className={
+          immersiveMobile
+            ? "max-w-3xl mx-auto px-0 py-0 sm:px-6 sm:py-12"
+            : "max-w-3xl mx-auto px-6 py-12"
+        }
+      >
+        <nav
+          aria-label="breadcrumb"
+          className={immersiveMobile ? "mb-6 hidden sm:block" : "mb-6"}
+        >
           <ol className="flex items-center gap-2 text-xs text-muted-foreground">
             <li>
               <Link
@@ -84,6 +109,7 @@ export default function ToolLayout({
         </nav>
         {children}
 
+        <div className={immersiveMobile ? "hidden sm:block" : undefined}>
         {/* Display ad -- no-op until an ad network is enabled via env. */}
         <AdSlot slotId="tool-below-result" label="Advertisement" />
 
@@ -157,6 +183,7 @@ export default function ToolLayout({
             All gig worker tax guides →
           </Link>
         </section>
+        </div>
       </main>
     </div>
   );

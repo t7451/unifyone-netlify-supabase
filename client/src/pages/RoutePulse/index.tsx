@@ -2285,6 +2285,9 @@ export default function RoutePulse() {
   useEffect(() => {
     if (hasRoute) setSearchCollapsed(true);
   }, [hasRoute]);
+  useEffect(() => {
+    if (routeQuery.isFetching) setSearchCollapsed(true);
+  }, [routeQuery.isFetching]);
   // Leaflet must remeasure when sheet height changes or map tiles look offset.
   useEffect(() => {
     const t = window.setTimeout(() => {
@@ -2395,7 +2398,7 @@ export default function RoutePulse() {
         jsonLd={jsonLd}
       />
 
-      <ToolLayout toolName="RoutePulse" breadcrumb="RoutePulse">
+      <ToolLayout toolName="RoutePulse" breadcrumb="RoutePulse" immersiveMobile>
         {/* sr-only live region — announces route results/errors to screen
             reader users, who otherwise get no signal that a search finished
             (the visual result cards below aren't announced on their own).
@@ -2497,10 +2500,10 @@ export default function RoutePulse() {
             ref={mapWrapperRef}
             className={
               tripActive
-                ? "relative h-[100dvh] max-h-none min-h-[480px] w-full bg-muted"
+                ? "relative h-[100dvh] max-h-none min-h-[420px] w-full bg-muted"
                 : hasRoute
-                  ? "relative h-[calc(100dvh-5.5rem)] max-h-none min-h-[480px] sm:h-[70dvh] sm:max-h-[720px] w-full bg-muted"
-                  : "relative h-[78dvh] max-h-[720px] min-h-[460px] sm:min-h-[480px] w-full bg-muted"
+                  ? "relative h-[calc(100dvh-2.75rem)] max-h-none min-h-[420px] sm:h-[70dvh] sm:max-h-[720px] w-full bg-muted"
+                  : "relative h-[calc(100dvh-2.75rem)] max-h-none min-h-[420px] sm:h-[70dvh] sm:max-h-[720px] sm:min-h-[480px] w-full bg-muted"
             }
           >
             <MapContainer
@@ -2632,7 +2635,11 @@ export default function RoutePulse() {
                       )}
                     />
                   ))}
-                  {(transitQuery.data ?? [])
+                  {(typeof window !== "undefined" &&
+                  window.matchMedia("(max-width: 640px)").matches
+                    ? []
+                    : transitQuery.data ?? []
+                  )
                     .filter(lm => {
                       if (!routeLine?.length) return true;
                       const line = routeLine.map(p => {
@@ -2691,7 +2698,10 @@ export default function RoutePulse() {
                           />
                         ))}
                         {/* TomTom flow probes — small speed dots along the route */}
-                        {flowPoints.map((p, i) => {
+                        {/* Flow dots: desktop only — mobile keeps the line + legend */}
+                        {typeof window !== "undefined" &&
+                          window.matchMedia("(min-width: 640px)").matches &&
+                          flowPoints.map((p, i) => {
                           const ratio = p.ratio ?? (p.closed ? 0 : 1);
                           const fill =
                             p.closed || ratio < 0.45
@@ -2710,7 +2720,7 @@ export default function RoutePulse() {
                                 weight: 1,
                                 fillColor: fill,
                                 fillOpacity: 0.95,
-                                interactive: true, // popups need hit-test
+                                interactive: true,
                               })}
                             >
                               <Popup>
@@ -4544,7 +4554,7 @@ export default function RoutePulse() {
             other; they don't, they're answering different questions. Label
             says so explicitly now — don't quietly rename this back to
             "Active incidents" without the qualifier. */}
-        <Card className={`p-6 sm:p-8 mb-10 ${hasRoute ? "hidden sm:block" : ""}`}>
+        <Card className="p-6 sm:p-8 mb-10 hidden sm:block">
           <div className="flex items-center justify-between gap-2 mb-4">
             <button
               type="button"
@@ -4614,7 +4624,7 @@ export default function RoutePulse() {
         </Card>
 
         {/* Context */}
-        <section className={`prose prose-neutral dark:prose-invert max-w-none mb-12 ${hasRoute ? "hidden sm:block" : ""}`}>
+        <section className="prose prose-neutral dark:prose-invert max-w-none mb-12 hidden sm:block">
           <h2>Why route intelligence matters for gig drivers</h2>
           <p>
             A closed lane or a fresh crash can add 15+ minutes to a delivery or
@@ -4647,7 +4657,7 @@ export default function RoutePulse() {
         </section>
 
         {/* FAQ */}
-        <section className="mb-12">
+        <section className="mb-12 hidden sm:block">
           <h2 className="text-xl font-semibold mb-6">
             Frequently Asked Questions
           </h2>
@@ -4681,7 +4691,7 @@ export default function RoutePulse() {
         </section>
 
         {/* CTA */}
-        <section className="rounded-xl border bg-muted/30 p-6 text-center">
+        <section className="rounded-xl border bg-muted/30 p-6 text-center hidden sm:block">
           <h2 className="text-lg font-semibold mb-2">
             Get route intelligence built into your gig dashboard
           </h2>
