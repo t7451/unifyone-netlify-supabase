@@ -2459,6 +2459,21 @@ export default function RoutePulse() {
     if (routeQuery.isFetching) setSearchCollapsed(true);
   }, [routeQuery.isFetching]);
   // Leaflet must remeasure when sheet height changes or map tiles look offset.
+  
+  // Mobile: lock page scroll while the route sheet is expanded so Safari
+  // doesn't rubber-band the whole tool under the sheet.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const mobile =
+      window.matchMedia("(max-width: 640px)").matches;
+    if (!mobile || !sheetExpanded) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [sheetExpanded]);
+
   useEffect(() => {
     const t = window.setTimeout(() => {
       try {
@@ -2670,10 +2685,10 @@ export default function RoutePulse() {
             ref={mapWrapperRef}
             className={
               tripActive
-                ? "relative h-[100dvh] max-h-none min-h-[420px] w-full bg-muted"
+                ? "relative h-[100svh] h-[100dvh] max-h-none min-h-[320px] w-full bg-muted"
                 : hasRoute
-                  ? "relative h-[calc(100dvh-2.75rem)] max-h-none min-h-[420px] sm:h-[70dvh] sm:max-h-[720px] w-full bg-muted"
-                  : "relative h-[calc(100dvh-2.75rem)] max-h-none min-h-[420px] sm:h-[70dvh] sm:max-h-[720px] sm:min-h-[480px] w-full bg-muted"
+                  ? "relative h-[calc(100svh-2.75rem)] h-[calc(100dvh-2.75rem)] max-h-none min-h-[320px] sm:h-[70dvh] sm:max-h-[720px] w-full bg-muted"
+                  : "relative h-[calc(100svh-2.75rem)] h-[calc(100dvh-2.75rem)] max-h-none min-h-[320px] sm:h-[70dvh] sm:max-h-[720px] sm:min-h-[480px] w-full bg-muted"
             }
           >
             <RouteMap
@@ -2804,10 +2819,10 @@ export default function RoutePulse() {
                 screen. */}
             {!tripActive && (
             <Card
-              className={`absolute z-[400] top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-auto sm:w-[300px] lg:w-[320px] bg-background/95 sm:backdrop-blur-md shadow-xl border rounded-xl ${
+              className={`absolute z-[400] top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-auto sm:w-[300px] lg:w-[320px] bg-background/95 sm:backdrop-blur-md shadow-xl border rounded-xl touch-manipulation ${
                 searchCollapsed && hasRoute
                   ? "p-2.5 sm:p-3"
-                  : "p-3 sm:p-3.5 max-h-[min(52dvh,420px)] overflow-y-auto sm:max-h-[min(70vh,640px)]"
+                  : "p-3 sm:p-3.5 max-h-[min(42dvh,380px)] overflow-y-auto overscroll-contain sm:max-h-[min(70vh,640px)]"
               }`}
             >
               {searchCollapsed && hasRoute ? (
@@ -3236,7 +3251,23 @@ export default function RoutePulse() {
               </div>
             )}
 
-            <div className="absolute z-[400] bottom-[calc(22dvh+0.75rem)] right-3 sm:bottom-auto sm:top-4 sm:right-4 flex flex-col gap-2 pb-safe">
+            <div
+              className="absolute z-[400] right-3 sm:bottom-auto sm:top-4 sm:right-4 flex flex-col gap-2"
+              style={
+                typeof window !== "undefined" &&
+                window.matchMedia("(max-width: 640px)").matches &&
+                hasRoute
+                  ? {
+                      bottom: sheetExpanded
+                        ? "calc(min(72dvh, 72vh) + 0.5rem)"
+                        : tripActive
+                          ? "calc(min(18dvh, 18vh) + 0.5rem)"
+                          : "calc(min(30dvh, 30vh) + 0.5rem)",
+                      transition: "bottom 0.22s ease-out",
+                    }
+                  : undefined
+              }
+            >
               <button
                 type="button"
                 onClick={handleLocateMe}
@@ -3401,19 +3432,25 @@ export default function RoutePulse() {
               <div
                 className="sm:hidden absolute inset-x-0 bottom-0 z-[450] rounded-t-2xl bg-background/98 border-t border-border/80 shadow-[0_-8px_30px_rgba(0,0,0,0.35)] flex flex-col overflow-hidden"
                 style={{
-                  paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
+                  paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+                  // Peek must fit ETA + one-line summary + Go/Steps row on
+                  // iOS Safari (dvh) and older WebKit (vh fallback via min).
                   height: sheetExpanded
-                    ? "58dvh"
+                    ? "min(72dvh, 72vh)"
                     : tripActive
-                      ? "16dvh"
-                      : "20dvh",
-                  transition: "height 0.2s ease-out",
-                  // No backdrop-blur on mobile — expensive on low-end GPUs
+                      ? "min(18dvh, 18vh)"
+                      : "min(30dvh, 30vh)",
+                  maxHeight: sheetExpanded
+                    ? "calc(100dvh - 3.25rem)"
+                    : undefined,
+                  transition: "height 0.22s ease-out",
+                  overscrollBehavior: "contain",
+                  WebkitOverflowScrolling: "touch",
                 }}
               >
                 {/* Tap handle only — Framer drag competed with map pan. */}
                 <div
-                  className="flex justify-center pt-2 pb-1 shrink-0 touch-manipulation"
+                  className="flex justify-center items-center min-h-[28px] pt-1.5 pb-0.5 shrink-0 touch-manipulation select-none"
                   onClick={() => setSheetExpanded(v => !v)}
                   role="button"
                   aria-label={
@@ -3423,7 +3460,7 @@ export default function RoutePulse() {
                   }
                   aria-expanded={sheetExpanded}
                 >
-                  <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
+                  <div className="w-12 h-1.5 rounded-full bg-muted-foreground/40" />
                 </div>
 
                 {/* Always-visible glanceable header — vitals + one-sentence
@@ -3434,7 +3471,7 @@ export default function RoutePulse() {
                   onClick={() => setSheetExpanded(v => !v)}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold leading-tight flex items-center gap-1.5">
+                    <p className="text-base font-semibold leading-tight flex items-center gap-1.5 tabular-nums">
                       {(routeQuery.data!.route.distance / 1609.34).toFixed(1)}{" "}
                       mi ·{" "}
                       {Math.round(
@@ -3526,7 +3563,7 @@ export default function RoutePulse() {
                       type="button"
                       size="sm"
                       variant={tripActive ? "destructive" : "default"}
-                      className="gap-1.5 shrink-0 h-12 sm:h-9 min-w-[7.5rem] font-semibold shadow-sm"
+                      className="gap-1.5 flex-1 h-12 sm:h-9 min-w-[7.5rem] font-semibold shadow-sm text-base sm:text-sm"
                       onClick={() =>
                         tripActive ? setTripActive(false) : startTrip()
                       }
@@ -3574,7 +3611,8 @@ export default function RoutePulse() {
                     refresh. */}
                 {sheetExpanded && (
                     <div
-                      className="flex-1 overflow-y-auto px-2 py-1 border-t overscroll-contain"
+                      className="flex-1 min-h-0 overflow-y-auto px-2 py-1 border-t overscroll-contain touch-pan-y"
+                      style={{ WebkitOverflowScrolling: "touch" }}
                     >
                       {allRoutes.length > 1 && (
                         <div className="px-2 py-2 space-y-1">

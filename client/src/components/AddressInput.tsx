@@ -228,7 +228,7 @@ export function AddressInput({
           enterKeyHint="search"
           // text-base (16px) on mobile stops iOS Safari from auto-zooming
           // the page on focus; sm and up keeps the compact desktop size.
-          className={`bg-background text-base sm:text-sm ${voiceSupported ? "pr-9" : ""}`}
+          className={`bg-background text-base sm:text-sm min-h-[44px] sm:min-h-0 ${voiceSupported ? "pr-9" : ""}`}
         />
         {voiceSupported && (
           <button

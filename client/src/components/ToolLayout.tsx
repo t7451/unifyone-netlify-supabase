@@ -53,7 +53,9 @@ export default function ToolLayout({
     <div className="min-h-screen bg-background text-foreground">
       <nav
         className={`border-b bg-background/95 backdrop-blur sticky top-0 z-10 ${
-          immersiveMobile ? "h-11 sm:h-auto" : ""
+          immersiveMobile
+            ? "h-11 sm:h-auto pt-[env(safe-area-inset-top)]"
+            : ""
         }`}
       >
         <div
