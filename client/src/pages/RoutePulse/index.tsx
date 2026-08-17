@@ -2756,25 +2756,40 @@ export default function RoutePulse() {
                 distance-to-turn; auto-advances as fixes arrive. */}
             {tripActive && nextStep && (
               <div
-                className="absolute z-[450] top-2 sm:top-3 left-1/2 -translate-x-1/2 w-[min(96vw,440px)] rounded-2xl bg-background/95 backdrop-blur-md border shadow-xl px-3.5 py-3.5 flex items-center gap-3"
-                style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
+                className="absolute z-[450] top-2 sm:top-3 left-1/2 -translate-x-1/2 w-[min(96vw,440px)] rounded-2xl bg-background border shadow-xl px-3 py-3 flex items-center gap-3 touch-manipulation"
+                style={{
+                  paddingTop: "max(0.65rem, env(safe-area-inset-top))",
+                  // Solid bg — blur is costly mid-trip on mobile GPUs
+                }}
               >
-                <span className="w-12 h-12 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                  <ManeuverGlyph
-                    type={nextStep.type}
-                    modifier={nextStep.modifier}
-                  />
-                </span>
+                {/* Waze-style: distance + glyph column is the glance target */}
+                <div className="flex flex-col items-center justify-center shrink-0 min-w-[3.75rem] gap-0.5">
+                  <span className="w-11 h-11 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-sm">
+                    <ManeuverGlyph
+                      type={nextStep.type}
+                      modifier={nextStep.modifier}
+                    />
+                  </span>
+                  <p className="text-sm font-bold tabular-nums leading-none mt-1">
+                    {nextStepDistM !== null
+                      ? nextStepDistM >= 160
+                        ? `${(nextStepDistM / 1609.34).toFixed(1)} mi`
+                        : `${Math.max(50, Math.round(nextStepDistM / 0.3048 / 10) * 10)} ft`
+                      : "—"}
+                  </p>
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-base sm:text-sm font-semibold leading-snug line-clamp-2">
+                  <p className="text-[17px] sm:text-base font-semibold leading-snug line-clamp-2 tracking-tight">
                     {nextStep.instruction}
                   </p>
-                  <p className="text-xs text-muted-foreground leading-tight mt-0.5">
-                    {nextStepDistM !== null &&
-                      (nextStepDistM >= 160
-                        ? `in ${(nextStepDistM / 1609.34).toFixed(1)} mi`
-                        : `in ${Math.max(50, Math.round(nextStepDistM / 0.3048 / 10) * 10)} ft`)}
-                    {" · "}step {nextStepIdx + 1}/{displayedManeuvers.length}
+                  <p className="text-xs text-muted-foreground leading-tight mt-0.5 tabular-nums">
+                    {nextStep.roadName ? (
+                      <span className="font-medium text-foreground/80">
+                        {nextStep.roadName}
+                        {" · "}
+                      </span>
+                    ) : null}
+                    step {nextStepIdx + 1}/{displayedManeuvers.length}
                     {speedMps !== null && speedMps > 1.5 && (
                       <>
                         {" · "}
@@ -3641,15 +3656,22 @@ export default function RoutePulse() {
                                     : "border-border"
                                 }`}
                               >
-                                <span className="font-medium tabular-nums">
-                                  {Math.round(displayDurationS(alt) / 60)} min
-                                  <span className="text-muted-foreground font-normal">
-                                    {" "}
-                                    · {(alt.distance / 1609.34).toFixed(1)} mi
+                                <span className="min-w-0 flex-1">
+                                  <span className="font-medium tabular-nums block">
+                                    {Math.round(displayDurationS(alt) / 60)} min
+                                    <span className="text-muted-foreground font-normal">
+                                      {" "}
+                                      · {(alt.distance / 1609.34).toFixed(1)} mi
+                                    </span>
                                   </span>
+                                  {(routeQuery.data?.verdicts as (string | null)[] | undefined)?.[i] && (
+                                    <span className="text-[11px] text-muted-foreground line-clamp-1">
+                                      {(routeQuery.data?.verdicts as (string | null)[])[i]}
+                                    </span>
+                                  )}
                                 </span>
                                 {i === chosenIdx && (
-                                  <span className="text-[10px] text-primary font-semibold">
+                                  <span className="text-[10px] text-primary font-semibold shrink-0">
                                     BEST
                                   </span>
                                 )}
