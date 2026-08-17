@@ -1782,6 +1782,8 @@ async function fetchTomTomRoutes(
     via.length === 0 && !opts.computeBestOrder
       ? Math.min(2, opts.maxAlternatives ?? 2)
       : 0;
+  // Keep params freemium-safe. sectionType=traffic / rich guidance often 403
+  // on free keys and we were swallowing that as "no TomTom routing".
   const url =
     `https://api.tomtom.com/routing/1/calculateRoute/${parts.join(":")}/json` +
     `?key=${apiKey}` +
@@ -1790,12 +1792,10 @@ async function fetchTomTomRoutes(
     `&routeType=fastest` +
     `&vehicleMaxSpeed=120` +
     `&computeTravelTimeFor=all` +
-    `&sectionType=traffic` +
     (opts.computeBestOrder && via.length >= 1
       ? `&computeBestOrder=true`
       : "") +
     (maxAlt > 0 ? `&maxAlternatives=${maxAlt}` : "") +
-    `&instructionsType=text` +
     `&language=en-US`;
 
   try {
@@ -1834,7 +1834,13 @@ async function fetchTomTomRoutes(
       }>;
     };
     const routes = body.routes ?? [];
-    if (!routes.length) return null;
+    if (!routes.length) {
+      console.warn("[routePulse] TomTom routing returned 0 routes");
+      return null;
+    }
+    console.info(
+      `[routePulse] TomTom routing OK — ${routes.length} route(s)`
+    );
     return routes.map(r => {
       const coords: [number, number][] = [];
       for (const leg of r.legs ?? []) {
@@ -2362,6 +2368,12 @@ export async function getRoute(
   // resolved coordinates, and a bad address should fail fast with a clear
   // message rather than an OSRM "no route" error.
   const stopList = stopAddresses.map(s => s.trim()).filter(s => s.length >= 3).slice(0, 8);
+  if (!ENV.tomtomApiKey) {
+    console.warn(
+      "[routePulse] TOMTOM_API_KEY is empty at runtime — flow/routing/matrix/incidents will no-op"
+    );
+  }
+
   const [origin, destination, ...rawStops] = await Promise.all([
     geocodeAddress(originAddress),
     geocodeAddress(destinationAddress),
@@ -2416,12 +2428,14 @@ export async function getRoute(
     };
   }
 
+  // _vtt1 busts caches written before TomTom routing/flow were reliably called.
   const key =
     cacheKey(origin, destination, preference) +
     (stops.length
       ? `_via:${stops.map(s => `${s.lat.toFixed(4)},${s.lng.toFixed(4)}`).join("|")}`
       : "") +
-    (optimizeStops && rawStops.length >= 2 ? "_opt" : "");
+    (optimizeStops && rawStops.length >= 2 ? "_opt" : "") +
+    "_vtt1";
 
   const cached = await readCache(key);
   if (cached) return cached;

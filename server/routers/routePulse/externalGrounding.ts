@@ -452,7 +452,12 @@ export async function fetchTomTomFlow(
   coords: [number, number][]
 ): Promise<FlowGrounding | null> {
   const key = ENV.tomtomApiKey;
-  if (!key || coords.length === 0) return null;
+  if (!key || coords.length === 0) {
+    if (!key) {
+      console.warn("[routePulse] TomTom flow skipped — no TOMTOM_API_KEY");
+    }
+    return null;
+  }
 
   // Dense enough to catch mid-corridor jams; still bounded for freemium quota.
   // ~14 samples × alternatives stays well under TomTom's 2.5k/day at modest traffic.
