@@ -37,6 +37,10 @@ import {
   OFF_ROUTE_THRESHOLD_M,
   type OfflineRouteSnapshot,
 } from "./routeOfflineStore";
+import {
+  buildRecalcPayload,
+  nextOffRouteStrikes,
+} from "./tripRecalc";
 import { warmTripTiles, clearTripTiles } from "./tileCache";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
