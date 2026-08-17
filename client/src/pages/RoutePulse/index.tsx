@@ -386,13 +386,19 @@ function pinIcon(color: string, size = 16) {
 const ORIGIN_ICON = pinIcon("#3b82f6");
 const DEST_ICON = pinIcon("#ef4444");
 /** A/B/C stop markers for multi-stop plans (M1). */
+const letterPinCache = new Map<string, L.DivIcon>();
 function letterPinIcon(letter: string, color = "#8b5cf6") {
-  return L.divIcon({
+  const key = `${letter}|${color}`;
+  const hit = letterPinCache.get(key);
+  if (hit) return hit;
+  const icon = L.divIcon({
     className: "",
     html: `<div style="width:22px;height:22px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font:700 11px/1 system-ui,sans-serif;color:white">${letter}</div>`,
     iconSize: [22, 22],
     iconAnchor: [11, 11],
   });
+  letterPinCache.set(key, icon);
+  return icon;
 }
 const USER_LOCATION_ICON = L.divIcon({
   className: "",
@@ -428,7 +434,7 @@ const INCIDENT_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
         L.divIcon({
           className: "",
           html: `<div style="position:relative;width:${ringSize}px;height:${ringSize}px;display:flex;align-items:center;justify-content:center">
-            <div class="animate-ping" style="position:absolute;width:${size}px;height:${size}px;border-radius:50%;background:${color};opacity:0.45"></div>
+            <div class="" style="position:absolute;width:${size}px;height:${size}px;border-radius:50%;background:${color};opacity:0.45"></div>
             <div style="position:relative;width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.35)"></div>
           </div>`,
           iconSize: [ringSize, ringSize],
@@ -836,32 +842,47 @@ type ViewportBbox = {
  */
 function MapViewportTracker({
   onChange,
+  enabled = true,
 }: {
   onChange: (bbox: ViewportBbox) => void;
+  /** When false (e.g. active route), stop bbox churn that refetches layers. */
+  enabled?: boolean;
 }) {
   const map = useMap();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastRef = useRef<ViewportBbox | null>(null);
 
   const report = () => {
-    const b = map.getBounds().pad(0.25);
-    onChange({
+    if (!enabled) return;
+    const b = map.getBounds().pad(0.2);
+    const next: ViewportBbox = {
       minLat: b.getSouth(),
       minLng: b.getWest(),
       maxLat: b.getNorth(),
       maxLng: b.getEast(),
-    });
+    };
+    const prev = lastRef.current;
+    if (prev) {
+      const dLat = Math.abs(prev.minLat - next.minLat) + Math.abs(prev.maxLat - next.maxLat);
+      const dLng = Math.abs(prev.minLng - next.minLng) + Math.abs(prev.maxLng - next.maxLng);
+      // Ignore tiny pans (sub-pixel jitter / rubber-band).
+      if (dLat + dLng < 0.02) return;
+    }
+    lastRef.current = next;
+    onChange(next);
   };
 
   useEffect(() => {
-    // Initial viewport on mount — don't wait for the first pan/zoom.
+    if (!enabled) return;
     report();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map]);
+  }, [map, enabled]);
 
   useMapEvents({
     moveend: () => {
+      if (!enabled) return;
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(report, 500);
+      timerRef.current = setTimeout(report, 750);
     },
   });
 
@@ -887,11 +908,19 @@ function FitBounds({
 }) {
   const map = useMap();
   useEffect(() => {
-    if (bounds && !skipAutoFit.current) {
+    if (!bounds || skipAutoFit.current) return;
+    const mobile =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 640px)").matches;
+    const pad: [number, number] = mobile ? [32, 32] : [48, 48];
+    if (mobile) {
+      // Instant fit — fly animations fight touch inertia and feel laggy.
+      map.fitBounds(bounds, { padding: pad, maxZoom: 14, animate: false });
+    } else {
       map.flyToBounds(bounds, {
-        padding: [48, 48],
+        padding: pad,
         maxZoom: 15,
-        duration: 0.8,
+        duration: 0.45,
       });
     }
   }, [bounds, map, skipAutoFit]);
@@ -1561,7 +1590,10 @@ export default function RoutePulse() {
     const full = geometry.coordinates.map(
       ([lng, lat]) => [lat, lng] as LatLngExpression
     );
-    return slimLatLngLine(full, 120);
+    const mobile =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 640px)").matches;
+    return slimLatLngLine(full, mobile ? 72 : 120);
   }, [routeQuery.data]);
 
   // Every scored route (the server returns the full set, including the one
@@ -1595,7 +1627,10 @@ export default function RoutePulse() {
     const full = geometry.coordinates.map(
       ([lng, lat]) => [lat, lng] as LatLngExpression
     );
-    return slimLatLngLine(full, 120);
+    const mobile =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 640px)").matches;
+    return slimLatLngLine(full, mobile ? 72 : 120);
   }, [displayedIdx, previewIdx, allRoutes, routeLine]);
 
   // v8: the route object behind whatever is drawn solid right now (chosen
@@ -2478,7 +2513,7 @@ export default function RoutePulse() {
               fadeAnimation={false}
               markerZoomAnimation={false}
               zoomAnimation={false}
-              style={{ height: "100%", width: "100%", touchAction: "manipulation" }}
+              style={{ height: "100%", width: "100%", touchAction: "manipulation", contain: "strict" as const }}
             >
               <TileLayer
                 key={basemap}
@@ -2504,7 +2539,7 @@ export default function RoutePulse() {
               <ZoomControl position="topright" />
               <ScaleControl position="topright" metric={false} imperial />
               <FitBounds bounds={mapBounds} skipAutoFit={userPannedRef} />
-              <MapViewportTracker onChange={setViewportBbox} />
+              <MapViewportTracker onChange={setViewportBbox} enabled={!hasActiveRoute} />
               <MapInteractionHandler
                 onDrag={() => {
                   setFollow(false);
