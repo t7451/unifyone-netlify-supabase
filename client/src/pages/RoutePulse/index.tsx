@@ -1278,8 +1278,12 @@ export default function RoutePulse() {
   const [viewportBbox, setViewportBbox] = useState<ViewportBbox | undefined>(
     undefined
   );
+  const hasActiveRoute = !!(submitted && routeQuery.data);
   const incidentsQuery = trpc.routePulse.listIncidents.useQuery(viewportBbox, {
-    refetchInterval: 60_000,
+    enabled: !hasActiveRoute,
+    refetchInterval: hasActiveRoute ? false : 120_000,
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
   });
   // v6: traffic cameras for the always-on map layer, refreshed on roughly
   // the same cadence the ingester polls ODOT's camera list.
