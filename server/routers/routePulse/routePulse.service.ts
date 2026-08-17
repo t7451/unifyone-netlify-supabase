@@ -105,6 +105,21 @@
 import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "../../_core/supabaseAdmin";
 import { ENV } from "../../_core/env";
+
+
+/** AbortSignal that works even when AbortSignal.timeout is missing. */
+function abortAfter(ms: number): AbortSignal {
+  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+    try {
+      return AbortSignal.timeout(ms);
+    } catch {
+      /* fall through */
+    }
+  }
+  const c = new AbortController();
+  setTimeout(() => c.abort(), ms);
+  return c.signal;
+}
 import {
   FREE_TIER_FALLBACK_CHAIN,
   GROQ_FALLBACK_MODEL,
@@ -341,7 +356,7 @@ async function reverseGeocodeTomTom(
       `?key=${key}&radius=100`;
     const res = await fetch(url, {
       headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(6_000),
+      signal: abortAfter(6_000),
     });
     if (!res.ok) return null;
     const body = (await res.json()) as {
@@ -1224,7 +1239,7 @@ async function fetchTomTomLiveDuration(
       `https://api.tomtom.com/routing/1/calculateRoute/` +
       `${origin.lat},${origin.lng}:${destination.lat},${destination.lng}/json` +
       `?key=${apiKey}&traffic=true&travelMode=car&routeType=fastest`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(8_000) });
+    const res = await fetch(url, { signal: abortAfter(8_000) });
     if (!res.ok) return null;
     const body = (await res.json()) as {
       routes?: Array<{
@@ -1527,10 +1542,9 @@ export async function fetchTomTomMatrix(
           traffic: "live",
           travelMode: "car",
           routeType: "fastest",
-          vehicleMaxSpeed: 120,
         },
       }),
-      signal: AbortSignal.timeout(15_000),
+      signal: abortAfter(15_000),
     });
     if (!res.ok) {
       const bodyText = await res.text().catch(() => "");
@@ -1729,7 +1743,7 @@ export async function optimizeStopsTomTom(
           // via reconstructed order mapping below.
         },
       }),
-      signal: AbortSignal.timeout(10_000),
+      signal: abortAfter(10_000),
     });
     if (!res.ok) {
       const bodyText = await res.text().catch(() => "");
@@ -1782,32 +1796,90 @@ async function fetchTomTomRoutes(
     via.length === 0 && !opts.computeBestOrder
       ? Math.min(2, opts.maxAlternatives ?? 2)
       : 0;
-  // Keep params freemium-safe. sectionType=traffic / rich guidance often 403
-  // on free keys and we were swallowing that as "no TomTom routing".
-  const url =
+  // Minimal freemium-safe query. Extra params (computeTravelTimeFor, vehicleMaxSpeed,
+  // sectionType) have produced 4xx on free keys without counting as "Routing API".
+  let url =
     `https://api.tomtom.com/routing/1/calculateRoute/${parts.join(":")}/json` +
     `?key=${apiKey}` +
     `&traffic=true` +
     `&travelMode=car` +
-    `&routeType=fastest` +
-    `&vehicleMaxSpeed=120` +
-    `&computeTravelTimeFor=all` +
-    (opts.computeBestOrder && via.length >= 1
-      ? `&computeBestOrder=true`
-      : "") +
-    (maxAlt > 0 ? `&maxAlternatives=${maxAlt}` : "") +
-    `&language=en-US`;
+    `&routeType=fastest`;
+  if (opts.computeBestOrder && via.length >= 1) url += `&computeBestOrder=true`;
+  if (maxAlt > 0) url += `&maxAlternatives=${maxAlt}`;
 
   try {
     const res = await fetch(url, {
       headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(12_000),
+      signal: abortAfter(12_000),
     });
     if (!res.ok) {
       const bodyText = await res.text().catch(() => "");
       console.warn(
-        `[routePulse] TomTom routing HTTP ${res.status}: ${bodyText.slice(0, 200)}`
+        `[routePulse] TomTom routing HTTP ${res.status}: ${bodyText.slice(0, 300)}`
       );
+      // One retry with absolute-minimum params (still counts as Routing API usage).
+      if (res.status >= 400 && res.status < 500) {
+        const bare =
+          `https://api.tomtom.com/routing/1/calculateRoute/${parts.join(":")}/json` +
+          `?key=${apiKey}&travelMode=car`;
+        try {
+          const res2 = await fetch(bare, {
+            headers: { Accept: "application/json" },
+            signal: abortAfter(10_000),
+          });
+          if (res2.ok) {
+            console.info("[routePulse] TomTom routing recovered on bare retry");
+            const body2 = (await res2.json()) as {
+              routes?: Array<{
+                summary?: {
+                  lengthInMeters?: number;
+                  travelTimeInSeconds?: number;
+                  trafficDelayInSeconds?: number;
+                };
+                legs?: Array<{
+                  points?: Array<{ latitude: number; longitude: number }>;
+                }>;
+                guidance?: {
+                  instructions?: Array<{
+                    message?: string;
+                    routeOffsetInMeters?: number;
+                    point?: { latitude: number; longitude: number };
+                  }>;
+                };
+              }>;
+            };
+            const routes2 = body2.routes ?? [];
+            if (routes2.length) {
+              return routes2.map(r => {
+                const coords: [number, number][] = [];
+                for (const leg of r.legs ?? []) {
+                  for (const p of leg.points ?? []) {
+                    coords.push([p.longitude, p.latitude]);
+                  }
+                }
+                return {
+                  distance: r.summary?.lengthInMeters ?? 0,
+                  duration: r.summary?.travelTimeInSeconds ?? 0,
+                  geometry: {
+                    type: "LineString" as const,
+                    coordinates: coords,
+                  },
+                  maneuvers: [],
+                  pathStyle: "standard" as const,
+                  trafficDelayInSeconds: r.summary?.trafficDelayInSeconds,
+                } satisfies BaseRoute;
+              });
+            }
+          } else {
+            const t2 = await res2.text().catch(() => "");
+            console.warn(
+              `[routePulse] TomTom routing bare retry HTTP ${res2.status}: ${t2.slice(0, 200)}`
+            );
+          }
+        } catch (err2) {
+          console.warn("[routePulse] TomTom routing bare retry failed:", err2);
+        }
+      }
       return null;
     }
     const body = (await res.json()) as {

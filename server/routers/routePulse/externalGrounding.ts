@@ -133,10 +133,23 @@ export function dedupeIncidents(
   );
 }
 
+function abortAfter(ms: number): AbortSignal {
+  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+    try {
+      return AbortSignal.timeout(ms);
+    } catch {
+      /* fall through */
+    }
+  }
+  const c = new AbortController();
+  setTimeout(() => c.abort(), ms);
+  return c.signal;
+}
+
 function withTimeout(): AbortSignal {
   // Hard cap on every upstream call — grounding is an enhancement, and a
   // hung third party must never stall route scoring.
-  return AbortSignal.timeout(8_000);
+  return abortAfter(8_000);
 }
 
 // ── TomTom Traffic Incident Details ────────────────────────────────────────
