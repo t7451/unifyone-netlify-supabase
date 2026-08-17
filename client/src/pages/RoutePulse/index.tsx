@@ -648,6 +648,62 @@ function slimLatLngLine(
 }
 
 
+/**
+ * Shared Canvas renderer for all route vectors.
+ * One renderer → one canvas element → far less compositing than SVG paths.
+ * padding expands redraw bounds slightly so pan doesn't flash empty edges.
+ * tolerance is in px at current zoom — higher = more aggressive line simplify.
+ */
+
+/** After map create: keep canvas crisp on resize without full SVG fallback. */
+function MapCanvasPerf() {
+  const map = useMap();
+  useEffect(() => {
+    const onResize = () => {
+      // Coalesce resize redraws — Leaflet already debounces, this just ensures
+      // canvas layers redraw once after orientation / sheet changes.
+      requestAnimationFrame(() => {
+        try {
+          map.invalidateSize({ animate: false });
+        } catch {
+          /* ignore */
+        }
+      });
+    };
+    map.on("resize", onResize);
+    return () => {
+      map.off("resize", onResize);
+    };
+  }, [map]);
+  return null;
+}
+
+function createRouteCanvasRenderer(): L.Canvas {
+  const dpr =
+    typeof window !== "undefined" ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+  // Mobile: slightly higher tolerance (cheaper redraw). Desktop: sharper lines.
+  const mobile =
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 640px)").matches;
+  return L.canvas({
+    padding: 0.5,
+    tolerance: mobile ? 1.25 / dpr : 0.6 / dpr,
+  });
+}
+
+function routePathDefaults(extra: L.PathOptions = {}): L.PathOptions {
+  return {
+    interactive: false,
+    bubblingMouseEvents: false,
+    // smoothFactor: Leaflet drops intermediate pts when zoomed out
+    smoothFactor: 1.5,
+    ...extra,
+  };
+}
+
+
+
+
 
 /** Prefer "SE Lambert St" over the full Nominatim blob. */
 function shortPlaceName(name: string | null | undefined, max = 42): string {
@@ -1164,6 +1220,9 @@ export default function RoutePulse() {
   const userPannedRef = useRef(false);
   // v8: last fix, for deriving heading when the browser doesn't provide one.
   const lastFixRef = useRef<{ lat: number; lng: number } | null>(null);
+
+  // One Canvas for all polylines/circles — must be stable across renders.
+  const routeCanvasRenderer = useMemo(() => createRouteCanvasRenderer(), []);
 
   const routeQuery = trpc.routePulse.getRoute.useQuery(submitted!, {
     enabled: !!submitted,
@@ -2415,8 +2474,10 @@ export default function RoutePulse() {
               zoomDelta={0.5}
               wheelPxPerZoomLevel={100}
               preferCanvas
+              renderer={routeCanvasRenderer}
               fadeAnimation={false}
               markerZoomAnimation={false}
+              zoomAnimation={false}
               style={{ height: "100%", width: "100%", touchAction: "manipulation" }}
             >
               <TileLayer
@@ -2427,6 +2488,7 @@ export default function RoutePulse() {
                 updateWhenIdle
                 keepBuffer={2}
               />
+              <MapCanvasPerf />
               {/* NOTE FOR KIMI: these were both "bottomright", which put
                   Leaflet's native control container (z-index 1000 by
                   default) directly on top of the v14 mobile bottom sheet
@@ -2469,13 +2531,15 @@ export default function RoutePulse() {
                     <Circle
                       center={userLocation}
                       radius={accuracy}
-                      pathOptions={{
+                      pathOptions={routePathDefaults({
+                        renderer: routeCanvasRenderer,
                         color: "#2563eb",
                         weight: 1,
                         opacity: 0.5,
                         fillColor: "#2563eb",
                         fillOpacity: 0.08,
-                      }}
+                        smoothFactor: 2,
+                      })}
                     />
                   )}
                   {/* v8: heading cone under the dot (dot draws on top) */}
@@ -2564,23 +2628,27 @@ export default function RoutePulse() {
                             line still reads as one continuous route */}
                         <Polyline
                           positions={displayedLine}
-                          pathOptions={{
+                          pathOptions={routePathDefaults({
+                            renderer: routeCanvasRenderer,
                             color: "#1e3a8a",
                             weight: 7,
                             opacity: 0.25,
-                          }}
+                            smoothFactor: 2,
+                          })}
                         />
                         {segmentLines.map((seg, i) => (
                           <Polyline
                             key={`seg-${i}`}
                             positions={seg.positions}
-                            pathOptions={{
+                            pathOptions={routePathDefaults({
+                              renderer: routeCanvasRenderer,
                               color: seg.color,
                               weight: 6,
                               opacity: 0.95,
                               lineCap: "round",
                               lineJoin: "round",
-                            }}
+                              smoothFactor: 1.75,
+                            })}
                           />
                         ))}
                         {/* TomTom flow probes — small speed dots along the route */}
@@ -2597,12 +2665,14 @@ export default function RoutePulse() {
                               key={`flow-${i}`}
                               center={[p.lat, p.lng]}
                               radius={5}
-                              pathOptions={{
+                              pathOptions={routePathDefaults({
+                                renderer: routeCanvasRenderer,
                                 color: "#0f172a",
                                 weight: 1,
                                 fillColor: fill,
                                 fillOpacity: 0.95,
-                              }}
+                                interactive: true, // popups need hit-test
+                              })}
                             >
                               <Popup>
                                 <span className="text-xs font-medium">
@@ -2630,14 +2700,15 @@ export default function RoutePulse() {
                     ) : (
                       <Polyline
                         positions={displayedLine}
-                        pathOptions={{
+                        pathOptions={routePathDefaults({
+                          renderer: routeCanvasRenderer,
                           color: "#3b82f6",
                           weight: 6,
                           opacity: 0.92,
                           lineCap: "round",
                           lineJoin: "round",
-                          interactive: false,
-                        }}
+                          smoothFactor: 2,
+                        })}
                       />
                     ))}
                   {/* Alternative routes — lighter, dashed lines. The route
@@ -2662,13 +2733,14 @@ export default function RoutePulse() {
                         positions={slim.map(
                           ([lng, lat]) => [lat, lng] as LatLngExpression
                         )}
-                        pathOptions={{
+                        pathOptions={routePathDefaults({
+                          renderer: routeCanvasRenderer,
                           color: "#94a3b8",
                           weight: 3,
                           opacity: 0.55,
                           dashArray: "6, 8",
-                          interactive: false,
-                        }}
+                          smoothFactor: 2.5,
+                        })}
                       />
                     );
                   })}
