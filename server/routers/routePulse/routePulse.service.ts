@@ -866,6 +866,10 @@ export type RouteResult = {
     tomtomIncidents: number;
     wazeAlerts: number;
     flowSamples: number;
+    /** Which TomTom products contributed to this response. */
+    tomtomApis?: Array<
+      "routing" | "matrix" | "waypointOptimization" | "flow" | "incidents" | "reverseGeocode"
+    >;
   } | null;
   /**
    * v12: per-route AI verdicts, aligned by route index. Null for the chosen
@@ -1480,6 +1484,220 @@ function pathLengthM(points: LatLng[]): number {
  * Falls back to null so callers can use local NN+2-opt.
  * https://developer.tomtom.com/routing/documentation/waypoint-optimization
  */
+
+/**
+ * TomTom Matrix Routing v2 (synchronous) — live-traffic travel times between
+ * many OD pairs in one request. Used for multi-stop ordering quality.
+ * https://developer.tomtom.com/routing-api/documentation/matrix-routing-v2/matrix-routing-v2-service
+ */
+export type MatrixCell = {
+  originIndex: number;
+  destinationIndex: number;
+  travelTimeS: number;
+  distanceM: number;
+  trafficDelayS: number;
+};
+
+export async function fetchTomTomMatrix(
+  origins: LatLng[],
+  destinations: LatLng[]
+): Promise<MatrixCell[] | null> {
+  const key = ENV.tomtomApiKey;
+  if (!key || origins.length === 0 || destinations.length === 0) return null;
+  // Sync matrix max cells = 2500; keep delivery stops small.
+  if (origins.length * destinations.length > 100) return null;
+
+  try {
+    const url = `https://api.tomtom.com/routing/matrix/2?key=${key}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        origins: origins.map(o => ({
+          point: { latitude: o.lat, longitude: o.lng },
+        })),
+        destinations: destinations.map(d => ({
+          point: { latitude: d.lat, longitude: d.lng },
+        })),
+        options: {
+          departAt: "any",
+          traffic: "live",
+          travelMode: "car",
+          routeType: "fastest",
+          vehicleMaxSpeed: 120,
+        },
+      }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) {
+      const bodyText = await res.text().catch(() => "");
+      console.warn(
+        `[routePulse] TomTom matrix HTTP ${res.status}: ${bodyText.slice(0, 240)}`
+      );
+      return null;
+    }
+    const body = (await res.json()) as {
+      data?: Array<{
+        originIndex?: number;
+        destinationIndex?: number;
+        routeSummary?: {
+          lengthInMeters?: number;
+          travelTimeInSeconds?: number;
+          trafficDelayInSeconds?: number;
+        };
+        // Some responses nest under `routeResults`
+        routeResults?: Array<{
+          lengthInMeters?: number;
+          travelTimeInSeconds?: number;
+          trafficDelayInSeconds?: number;
+        }>;
+      }>;
+      // Legacy matrix shape
+      matrix?: Array<
+        Array<{
+          statusCode?: number;
+          response?: {
+            routeSummary?: {
+              lengthInMeters?: number;
+              travelTimeInSeconds?: number;
+              trafficDelayInSeconds?: number;
+            };
+          };
+        }>
+      >;
+    };
+
+    const cells: MatrixCell[] = [];
+    if (Array.isArray(body.data)) {
+      for (const row of body.data) {
+        const summary =
+          row.routeSummary ??
+          row.routeResults?.[0] ??
+          null;
+        if (!summary) continue;
+        cells.push({
+          originIndex: row.originIndex ?? 0,
+          destinationIndex: row.destinationIndex ?? 0,
+          travelTimeS: summary.travelTimeInSeconds ?? 0,
+          distanceM: summary.lengthInMeters ?? 0,
+          trafficDelayS: summary.trafficDelayInSeconds ?? 0,
+        });
+      }
+    } else if (Array.isArray(body.matrix)) {
+      body.matrix.forEach((row, oi) => {
+        row.forEach((cell, di) => {
+          const summary = cell.response?.routeSummary;
+          if (!summary || cell.statusCode !== 200) return;
+          cells.push({
+            originIndex: oi,
+            destinationIndex: di,
+            travelTimeS: summary.travelTimeInSeconds ?? 0,
+            distanceM: summary.lengthInMeters ?? 0,
+            trafficDelayS: summary.trafficDelayInSeconds ?? 0,
+          });
+        });
+      });
+    }
+    return cells.length ? cells : null;
+  } catch (err) {
+    console.warn("[routePulse] TomTom matrix failed:", err);
+    return null;
+  }
+}
+
+/**
+ * NN + 2-opt stop order using TomTom Matrix live travel times (not haversine).
+ * Points = [origin, ...stops, destination]; returns order of stop indices only.
+ */
+export async function optimizeStopsViaMatrix(
+  origin: LatLng,
+  destination: LatLng,
+  stops: LatLng[]
+): Promise<{ order: number[]; minutesSaved: number; usedMatrix: true } | null> {
+  if (stops.length < 2 || stops.length > 8) return null;
+  const points = [origin, ...stops, destination];
+  const cells = await fetchTomTomMatrix(points, points);
+  if (!cells) return null;
+
+  const n = points.length;
+  const time = Array.from({ length: n }, () =>
+    Array.from({ length: n }, () => Infinity)
+  );
+  for (const c of cells) {
+    if (
+      c.originIndex >= 0 &&
+      c.originIndex < n &&
+      c.destinationIndex >= 0 &&
+      c.destinationIndex < n
+    ) {
+      time[c.originIndex]![c.destinationIndex] = c.travelTimeS || Infinity;
+    }
+  }
+
+  const pathTime = (ord: number[]) => {
+    // ord is stop indices 0..stops.length-1; path is 0 → stops → n-1
+    let t = 0;
+    let prev = 0;
+    for (const si of ord) {
+      const idx = si + 1;
+      t += time[prev]![idx] ?? 1e9;
+      prev = idx;
+    }
+    t += time[prev]![n - 1] ?? 1e9;
+    return t;
+  };
+
+  // Nearest neighbor from origin
+  const remaining = new Set(stops.map((_, i) => i));
+  const order: number[] = [];
+  let current = 0; // point index
+  while (remaining.size) {
+    let best: number | null = null;
+    let bestT = Infinity;
+    for (const si of remaining) {
+      const t = time[current]![si + 1] ?? Infinity;
+      if (t < bestT) {
+        bestT = t;
+        best = si;
+      }
+    }
+    if (best === null) break;
+    order.push(best);
+    remaining.delete(best);
+    current = best + 1;
+  }
+
+  // 2-opt on travel time
+  let bestOrder = order;
+  let bestT = pathTime(bestOrder);
+  const baseline = pathTime(stops.map((_, i) => i));
+  let improved = true;
+  while (improved) {
+    improved = false;
+    for (let i = 0; i < bestOrder.length - 1; i++) {
+      for (let k = i + 1; k < bestOrder.length; k++) {
+        const candidate = [
+          ...bestOrder.slice(0, i),
+          ...bestOrder.slice(i, k + 1).reverse(),
+          ...bestOrder.slice(k + 1),
+        ];
+        const t = pathTime(candidate);
+        if (t + 1 < bestT) {
+          bestT = t;
+          bestOrder = candidate;
+          improved = true;
+        }
+      }
+    }
+  }
+
+  const minutesSaved = Math.max(0, Math.round((baseline - bestT) / 60));
+  return { order: bestOrder, minutesSaved, usedMatrix: true };
+}
+
 export async function optimizeStopsTomTom(
   origin: LatLng,
   destination: LatLng,
@@ -2154,20 +2372,41 @@ export async function getRoute(
   // itself follows the efficient sequence, not just the typed order.
   let stops = rawStops;
   let stopPlan: RouteResult["stopPlan"] = undefined;
+  // Track which TomTom products actually answered (for UI receipts).
+  let tomtomMatrixUsed = false;
+  let tomtomWaypointOptUsed = false;
+
   if (rawStops.length >= 2 && optimizeStops) {
-    const ttOrder = await optimizeStopsTomTom(origin, destination, rawStops);
+    // 1) Matrix v2 live-traffic TSP  2) Waypoint Optimization API  3) haversine
+    const matrixPlan = await optimizeStopsViaMatrix(
+      origin,
+      destination,
+      rawStops
+    );
+    const ttOrder = matrixPlan
+      ? null
+      : await optimizeStopsTomTom(origin, destination, rawStops);
+    if (matrixPlan) tomtomMatrixUsed = true;
+    if (ttOrder) tomtomWaypointOptUsed = true;
+
     const { order: localOrder, milesSaved } = optimizeStopOrder(
       origin,
       destination,
       rawStops
     );
-    const order = ttOrder ?? localOrder;
+    const order = matrixPlan?.order ?? ttOrder ?? localOrder;
     stops = order.map(i => rawStops[i]!);
     const orderChanged = order.some((v, i) => v !== i);
+    const milesFromMatrix =
+      matrixPlan && orderChanged
+        ? Math.round((matrixPlan.minutesSaved / 60) * 25 * 10) / 10 // rough mi from min
+        : null;
     stopPlan = {
       optimized: orderChanged,
       stops: order.map(i => ({ ...rawStops[i]!, originalIndex: i })),
-      estimatedMilesSaved: orderChanged ? milesSaved : 0,
+      estimatedMilesSaved: orderChanged
+        ? (milesFromMatrix ?? milesSaved)
+        : 0,
     };
   } else if (rawStops.length > 0) {
     stopPlan = {
@@ -2409,12 +2648,40 @@ export async function getRoute(
     (n, r) => n + (r.flow?.samples ?? 0),
     0
   );
+  const tomtomApis: Array<
+    | "routing"
+    | "matrix"
+    | "waypointOptimization"
+    | "flow"
+    | "incidents"
+  > = [];
+  if (tomtomIncidents.length > 0) tomtomApis.push("incidents");
+  if (flowSamples > 0) tomtomApis.push("flow");
+  if (typeof tomtomLiveDurationS === "number" && tomtomLiveDurationS > 0) {
+    tomtomApis.push("routing");
+  }
+  // Routing candidates also come from fetchTomTomRoutes inside fetchBaseRoutes
+  if (
+    baseRoutes.some(
+      r =>
+        // TomTom routes carry traffic-aware durations distinct from pure OSRM
+        // when merged; treat any successful live duration as routing used.
+        false
+    )
+  ) {
+    /* no-op — live duration covers routing receipt */
+  }
+  if (tomtomMatrixUsed) tomtomApis.push("matrix");
+  if (tomtomWaypointOptUsed) tomtomApis.push("waypointOptimization");
+
   const grounding =
-    tomtomIncidents.length + wazeAlerts.length + flowSamples > 0
+    tomtomIncidents.length + wazeAlerts.length + flowSamples + tomtomApis.length >
+    0
       ? {
           tomtomIncidents: tomtomIncidents.length,
           wazeAlerts: wazeAlerts.length,
           flowSamples,
+          tomtomApis: [...new Set(tomtomApis)],
         }
       : null;
 

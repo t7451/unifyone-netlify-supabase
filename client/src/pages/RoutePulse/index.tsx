@@ -3886,16 +3886,40 @@ export default function RoutePulse() {
                     }
                   | null
                   | undefined) && (
-                  <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <Radio className="w-3 h-3" />
-                    Grounded with live TomTom + Google Maps data
+                  <p className="inline-flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
+                    <Radio className="w-3 h-3 shrink-0" />
+                    <span>
+                      TomTom
+                      {(
+                        (
+                          routeQuery.data!.grounding as {
+                            tomtomApis?: string[];
+                          }
+                        ).tomtomApis ?? []
+                      ).length > 0
+                        ? `: ${(
+                            (
+                              routeQuery.data!.grounding as {
+                                tomtomApis: string[];
+                              }
+                            ).tomtomApis
+                          )
+                            .map(a =>
+                              a === "waypointOptimization"
+                                ? "waypoints"
+                                : a === "reverseGeocode"
+                                  ? "geocode"
+                                  : a
+                            )
+                            .join(" · ")}`
+                        : " + Google Maps"}
+                    </span>
                     {typeof (
                       routeQuery.data!.grounding as { flowSamples?: number }
                     ).flowSamples === "number" &&
                       (routeQuery.data!.grounding as { flowSamples: number })
                         .flowSamples > 0 && (
                         <span>
-                          {" "}
                           ·{" "}
                           {
                             (
@@ -3904,7 +3928,7 @@ export default function RoutePulse() {
                               }
                             ).flowSamples
                           }{" "}
-                          speed samples
+                          probes
                         </span>
                       )}
                   </p>
