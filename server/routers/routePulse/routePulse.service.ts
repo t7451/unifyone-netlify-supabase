@@ -2228,7 +2228,19 @@ async function scoreRoutesWithAI(
     )
   );
 
-  const prompt = `You are a route intelligence engine for delivery and gig drivers in the Portland metro (and surrounding areas). Pick the best driving route under the stated preference. Weigh live-traffic-corrected duration, incident delay, stressScore, energyScore, bottleneckScore, and local-driver knowledge. Under balanced/quiet/fuel modes you SHOULD prefer a slightly longer route when it clearly reduces stress, chronic bottleneck exposure, or known local pain. ${timeNote} ${prefNote}
+  // Compact TomTom snapshot for the model (ratios already in route objects).
+  const flowLines = routes
+    .map((r, i) => {
+      const f = r.flow;
+      if (!f || f.samples < 1) return null;
+      return `Route ${i}: TomTom flow avg ${(f.avgRatio * 100).toFixed(0)}% free-flow, worst ${(f.worstRatio * 100).toFixed(0)}%, closedSamples=${f.roadClosedCount}, ~${f.avgCurrentMph} mph now vs ${f.avgFreeflowMph} free-flow`;
+    })
+    .filter(Boolean)
+    .join("\n");
+
+  const prompt = `You are a senior Portland-metro route desk for delivery and gig drivers. Pick the best driving route under the stated preference. Reason like someone who drives these streets daily: weigh live-traffic-corrected duration, TomTom measured flow, incident delay, stressScore, energyScore, bottleneckScore, and local-driver knowledge. Under balanced/quiet/fuel modes you SHOULD prefer a slightly longer route when it clearly reduces stress, chronic bottleneck exposure, or known local pain. Name real corridor pressure (I-5, I-205, US-26, bridges, SE arterial backups) when the numbers support it. ${timeNote} ${prefNote}
+
+${flowLines ? "Live TomTom flow grounding:\n" + flowLines + "\n" : ""}
 
 ${localBlock ? localBlock + "\n\n" : ""}
 Incidents combine DOT/511/NWS/WSDOT agency feeds with live TomTom Traffic and Google Maps crowdsourced alerts (source field tells you which). Each incident may include distance_m (how far off the route line it is — already factored into risk_score, but useful context) and age_min (minutes since it was first reported — also already factored in, except for closures/construction which don't decay). A report over 2-3 hours old with no closure/construction type may already be cleared in reality even though it's still in the feed; you can note that in your explanation when it's the deciding factor, but don't need to re-derive risk from these fields yourself. live_flow is TomTom's measured speed as a percentage of free-flow, sampled along the route right now: 100 = free-flowing, below 70 = heavy congestion, road_closed_segments > 0 means TomTom flags the road itself as closed. live_duration_s already has this live-flow correction baked in (it is NOT the same as base duration_s — it's what the trip will actually take right now, not the static routing-graph estimate). Treat live_flow/live_duration_s as ground truth for current conditions — it catches slowdowns that haven't generated an incident report yet.
@@ -2286,14 +2298,25 @@ Routes: ${JSON.stringify(
 Respond ONLY with JSON: { "chosen_index": 0, "explanation": "1-2 short sentences for the driver: name the specific trade-off (time vs stress/energy/incidents) and quantify when relevant. If you chose a non-fastest route, say why the calmer/leaner option wins under the preference.", "confidence": "high|medium|low", "avoid_reasons": ["", "2-8 words on why each NON-chosen route loses, aligned by route index; empty string for the chosen route"] }`;
 
   try {
-    // Free-first chain: Groq → native Gemini → OpenRouter :free models.
-    // High-volume RoutePulse scoring should burn free quota before any
-    // metered path. Keys unset for a provider just skip that hop.
+    // Prefer native Gemini when GEMINI_API_KEY is set (Netlify already has it).
+    // Then Groq, then OpenRouter free. Unset keys are skipped by the chain.
+    const geminiPrimary = (ENV.geminiApiKey ?? "").length > 0;
+    const primary = geminiPrimary
+      ? "gemini-2.5-flash"
+      : `groq/${GROQ_FALLBACK_MODEL}`;
+    const chain = geminiPrimary
+      ? [
+          "gemini-2.5-flash",
+          `gemini/${GEMINI_FALLBACK_MODEL}`,
+          `groq/${GROQ_FALLBACK_MODEL}`,
+          ...FREE_TIER_FALLBACK_CHAIN,
+        ]
+      : [...FREE_TIER_FALLBACK_CHAIN];
     const result = await invokeLLM({
       messages: [{ role: "user", content: prompt }],
-      model: `groq/${GROQ_FALLBACK_MODEL}`,
-      modelChain: [...FREE_TIER_FALLBACK_CHAIN],
-      maxTokens: 300,
+      model: primary,
+      modelChain: chain,
+      maxTokens: 380,
     });
 
     const text = (result.choices[0]?.message.content ?? "")
@@ -2588,7 +2611,11 @@ export async function getRoute(
 
   // AI earns its call for incidents/congestion, or any non-fastest preference
   // so it can explain deliberate trade-offs.
+  // With Gemini free tier available, always run brief inference so the
+  // driver gets a grounded one-liner even on "clear" corridors. Without
+  // Gemini, keep the cheaper gate (incidents / congestion / non-fastest).
   const needsAi =
+    (ENV.geminiApiKey ?? "").length > 0 ||
     preference !== "fastest" ||
     scoredRoutes.some(
       r =>
