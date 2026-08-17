@@ -2146,6 +2146,17 @@ export default function RoutePulse() {
   useEffect(() => {
     if (hasRoute) setSearchCollapsed(true);
   }, [hasRoute]);
+  // Leaflet must remeasure when sheet height changes or map tiles look offset.
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      try {
+        mapRef.current?.invalidateSize?.();
+      } catch {
+        /* ignore */
+      }
+    }, 320);
+    return () => window.clearTimeout(t);
+  }, [sheetExpanded, tripActive, hasRoute]);
   useEffect(() => {
     if (hasRoute) setNearbyOpen(false);
   }, [hasRoute]);
@@ -2305,7 +2316,7 @@ export default function RoutePulse() {
           </div>
         )}
 
-        <header className="mb-8">
+        <header className={`mb-4 sm:mb-8 ${hasRoute ? "hidden sm:block" : ""}`}>
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
             Free Tool · Route Intelligence
           </p>
@@ -2342,13 +2353,15 @@ export default function RoutePulse() {
             column on purpose so it reads as the hero of the page, not a
             small embed. Always live with active incidents, even before a
             route is searched. */}
-        <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen mb-8">
+        <div className={`relative left-1/2 right-1/2 -mx-[50vw] w-screen ${hasRoute ? "mb-0 sm:mb-8" : "mb-6 sm:mb-8"}`}>
           <div
             ref={mapWrapperRef}
             className={
               tripActive
-                ? "relative h-[88dvh] max-h-none min-h-[480px] w-full bg-muted"
-                : "relative h-[70dvh] max-h-[720px] min-h-[420px] sm:min-h-[480px] w-full bg-muted"
+                ? "relative h-[100dvh] max-h-none min-h-[480px] w-full bg-muted"
+                : hasRoute
+                  ? "relative h-[calc(100dvh-5.5rem)] max-h-none min-h-[480px] sm:h-[70dvh] sm:max-h-[720px] w-full bg-muted"
+                  : "relative h-[78dvh] max-h-[720px] min-h-[460px] sm:min-h-[480px] w-full bg-muted"
             }
           >
             <MapContainer
@@ -2780,10 +2793,10 @@ export default function RoutePulse() {
                 screen. */}
             {!tripActive && (
             <Card
-              className={`absolute z-[400] top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-auto sm:w-[300px] lg:w-[320px] bg-background/90 backdrop-blur-md shadow-xl border ${
+              className={`absolute z-[400] top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-auto sm:w-[300px] lg:w-[320px] bg-background/95 backdrop-blur-md shadow-xl border rounded-xl ${
                 searchCollapsed && hasRoute
                   ? "p-2.5 sm:p-3"
-                  : "p-3 sm:p-3.5 max-h-[62dvh] overflow-y-auto sm:max-h-[min(70vh,640px)] sm:overflow-y-auto"
+                  : "p-3 sm:p-3.5 max-h-[min(52dvh,420px)] overflow-y-auto sm:max-h-[min(70vh,640px)]"
               }`}
             >
               {searchCollapsed && hasRoute ? (
@@ -3191,7 +3204,7 @@ export default function RoutePulse() {
 
             {/* Congestion legend when TomTom flow is on the map */}
             {hasRoute && flowPoints.length > 0 && (
-              <div className="absolute z-[400] bottom-28 left-3 sm:bottom-4 sm:left-[340px] pointer-events-none">
+              <div className="absolute z-[400] bottom-[calc(22dvh+0.75rem)] left-3 sm:bottom-4 sm:left-[340px] pointer-events-none">
                 <div className="rounded-md border bg-background/90 backdrop-blur-md px-2.5 py-1.5 text-[10px] shadow-md flex items-center gap-2">
                   <span className="font-semibold text-muted-foreground uppercase tracking-wide">
                     Live
@@ -3212,7 +3225,7 @@ export default function RoutePulse() {
               </div>
             )}
 
-            <div className="absolute z-[400] bottom-28 right-3 sm:bottom-auto sm:top-4 sm:right-4 flex flex-col gap-2 pb-safe">
+            <div className="absolute z-[400] bottom-[calc(22dvh+0.75rem)] right-3 sm:bottom-auto sm:top-4 sm:right-4 flex flex-col gap-2 pb-safe">
               <button
                 type="button"
                 onClick={handleLocateMe}
@@ -3354,14 +3367,15 @@ export default function RoutePulse() {
                 instead (untouched — see the Card block further down). */}
             {hasRoute && (
               <motion.div
-                className="sm:hidden absolute inset-x-0 bottom-0 z-[450] rounded-t-2xl bg-background/95 backdrop-blur-md border-t shadow-2xl flex flex-col overflow-hidden pb-safe"
+                className="sm:hidden absolute inset-x-0 bottom-0 z-[450] rounded-t-2xl bg-background/98 backdrop-blur-xl border-t border-border/80 shadow-[0_-8px_30px_rgba(0,0,0,0.35)] flex flex-col overflow-hidden"
+                style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
                 initial={false}
                 animate={{
                   height: sheetExpanded
-                    ? "72vh"
+                    ? "58dvh"
                     : tripActive
-                      ? "20vh"
-                      : "26vh",
+                      ? "16dvh"
+                      : "20dvh",
                 }}
                 transition={{ type: "spring", stiffness: 340, damping: 32 }}
               >
@@ -3541,8 +3555,43 @@ export default function RoutePulse() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="flex-1 overflow-y-auto px-2 py-1 border-t"
+                      className="flex-1 overflow-y-auto px-2 py-1 border-t overscroll-contain"
                     >
+                      {allRoutes.length > 1 && (
+                        <div className="px-2 py-2 space-y-1">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Routes
+                          </p>
+                          {allRoutes.slice(0, 3).map((alt, i) => {
+                            const isDisplayed = i === displayedIdx;
+                            return (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => setPreviewIdx(i === chosenIdx ? null : i)}
+                                className={`w-full flex items-center justify-between rounded-lg border px-3 py-2.5 text-left text-sm min-h-[44px] ${
+                                  isDisplayed
+                                    ? "border-primary/50 bg-primary/10"
+                                    : "border-border"
+                                }`}
+                              >
+                                <span className="font-medium tabular-nums">
+                                  {Math.round(displayDurationS(alt) / 60)} min
+                                  <span className="text-muted-foreground font-normal">
+                                    {" "}
+                                    · {(alt.distance / 1609.34).toFixed(1)} mi
+                                  </span>
+                                </span>
+                                {i === chosenIdx && (
+                                  <span className="text-[10px] text-primary font-semibold">
+                                    BEST
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                       <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide px-2 py-2 flex items-center gap-1.5">
                         <List className="w-3.5 h-3.5" />
                         Turn-by-turn · {displayedManeuvers.length} steps
@@ -3572,6 +3621,7 @@ export default function RoutePulse() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
+            className="hidden sm:block"
           >
             <Card className="p-6 sm:p-8 mb-8 space-y-4">
               {/* NOTE FOR KIMI: this distance/duration + risk badge line is a
@@ -4329,7 +4379,7 @@ export default function RoutePulse() {
             other; they don't, they're answering different questions. Label
             says so explicitly now — don't quietly rename this back to
             "Active incidents" without the qualifier. */}
-        <Card className="p-6 sm:p-8 mb-10">
+        <Card className={`p-6 sm:p-8 mb-10 ${hasRoute ? "hidden sm:block" : ""}`}>
           <div className="flex items-center justify-between gap-2 mb-4">
             <button
               type="button"
@@ -4399,7 +4449,7 @@ export default function RoutePulse() {
         </Card>
 
         {/* Context */}
-        <section className="prose prose-neutral dark:prose-invert max-w-none mb-12">
+        <section className={`prose prose-neutral dark:prose-invert max-w-none mb-12 ${hasRoute ? "hidden sm:block" : ""}`}>
           <h2>Why route intelligence matters for gig drivers</h2>
           <p>
             A closed lane or a fresh crash can add 15+ minutes to a delivery or
