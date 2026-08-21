@@ -58,6 +58,28 @@ would silently reorder past several real deadlines.
 | Deadlines carried into the shareable URL                                                                | **Not done** — same simplification; share links reopen with addresses only                                                                                                                                                                                                                  |
 | Timezone handling                                                                                       | Portland-local (`America/Los_Angeles`) hardcoded — fine for this tool's actual service area, would need generalizing for other regions                                                                                                                                                      |
 
+## Milestone 6 — Import the whole route from a photo — **v1 DONE**
+
+Typing a 14-stop courier sheet into the form by hand defeats the point of
+a "fast" tool. New `routePulse.importStopsFromImage` mutation sends a
+downscaled photo (client-side canvas resize, ≤1600px longest edge, JPEG
+0.85) to Gemini 2.5 Flash (vision) with a structured-extraction prompt —
+text-only fallback models are deliberately excluded since a model that
+can't see the image would just hallucinate rows. Returns each row's
+address, customer/business label, and `dueBy` (or null for "on call"/no
+fixed time rows), capped at 15 and merged into the existing per-stop
+due-by UI from Milestone 5.
+
+| Item                                                                              | Status                                                                                                                                                                                                                                        |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `importStopsFromImage` mutation (vision LLM, JSON-only response, capped 15 stops) | Done (`routePulse.service.ts` / `index.ts`)                                                                                                                                                                                                   |
+| Dedicated rate limit (vision calls cost real money)                               | Done — `routeSheetImportLimiter`, 6/5min per IP                                                                                                                                                                                               |
+| Client-side downscale before upload                                               | Done — `downscaleImageToDataUrl`, avoids the payload cap and cuts LLM cost/latency                                                                                                                                                            |
+| "📷 Import from photo" buttons (empty state + already-open stops panel)           | Done                                                                                                                                                                                                                                          |
+| Merge behavior                                                                    | Appends after any already-typed stops (blank placeholder rows dropped first) rather than always replacing                                                                                                                                     |
+| Tests                                                                             | Done — 4 new tests: missing API key, a realistic multi-row response with on-call rows and a >15-row cap, unparseable model output, and an unparseable `dueBy` value getting dropped rather than passed through                                |
+| Not done                                                                          | Geocoding/validating each extracted address happens the same way manual entry does (on submit) — the import step itself doesn't verify addresses resolve, so a misread address surfaces as a normal geocode failure later, not at import time |
+
 ## Next engineering priorities
 
 1. ~~Reverse-geocode raw GPS origins for readable labels~~ — **Done.** The

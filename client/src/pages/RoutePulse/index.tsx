@@ -587,6 +587,28 @@ type ViewportBbox = {
   maxLng: number;
 };
 
+/**
+ * v31: downscale + re-encode a photo before it goes to the vision LLM — a
+ * full-resolution phone photo (often 3-10MB) is far more than a route-sheet
+ * table needs and would blow past the server's payload cap. Longest edge
+ * capped at 1600px, JPEG quality 0.85; still comfortably legible for a
+ * handwritten clipboard sheet.
+ */
+async function downscaleImageToDataUrl(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const maxEdge = 1600;
+  const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+  const w = Math.max(1, Math.round(bitmap.width * scale));
+  const h = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D context unavailable");
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", 0.85);
+}
+
 /** M1: single plain-language difference vs the recommended route. */
 function routeOneLineDifference(
   alt: {
@@ -724,6 +746,10 @@ export default function RoutePulse() {
   const recalcPreserveTripRef = useRef(false);
   /** Multi-stop editor hidden until the driver asks for it. */
   const [stopsOpen, setStopsOpen] = useState(false);
+  /** v31: "import stops from photo" — see handleStopsPhotoSelected below. */
+  const stopsPhotoInputRef = useRef<HTMLInputElement>(null);
+  const importStopsMutation =
+    trpc.routePulse.importStopsFromImage.useMutation();
   // Ticker so the "updated Xs ago" live indicator stays honest.
   const [nowTick, setNowTick] = useState(0);
   // v10: location onboarding prompt. Shown once per browser (persisted) so
@@ -1076,6 +1102,45 @@ export default function RoutePulse() {
     });
     addRoute(origin.trim(), destination.trim());
     trackToolUsage("route-pulse", "start");
+  };
+
+  /**
+   * v31: "add the whole route instantly" — read a photo of a courier route
+   * sheet and populate every stop (address + due-by time) in one shot.
+   * Appends after any already-typed stops (dropping blank placeholder rows
+   * first), capped at the same 15-stop limit as manual entry.
+   */
+  const handleStopsPhotoSelected = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const dataUrl = await downscaleImageToDataUrl(file);
+      const extracted = await importStopsMutation.mutateAsync({
+        imageDataUrl: dataUrl,
+      });
+      setStops(prev => {
+        const existing = prev
+          .map((s, i) => ({ address: s, dueBy: stopDueBy[i] ?? "" }))
+          .filter(s => s.address.trim().length >= 3);
+        const merged = [
+          ...existing,
+          ...extracted.map(s => ({ address: s.address, dueBy: s.dueBy ?? "" })),
+        ].slice(0, 15);
+        setStopDueBy(merged.map(s => s.dueBy));
+        return merged.map(s => s.address);
+      });
+      setStopsOpen(true);
+      const withTimes = extracted.filter(s => s.dueBy).length;
+      toast.success(
+        `Imported ${extracted.length} stop${extracted.length === 1 ? "" : "s"} from photo` +
+          (withTimes ? ` (${withTimes} with a due-by time)` : "")
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Couldn't read that photo — try a clearer, well-lit shot."
+      );
+    }
   };
 
   // v7: stops the watch and clears all location state.
@@ -2778,37 +2843,80 @@ export default function RoutePulse() {
                       )}
 
                       {/* v25: stops stay out of the way until requested */}
+                      {/* v31: hidden input shared by both "import from photo"
+                          buttons below — file pickers can't be styled, so a
+                          plain button proxies a click to this. */}
+                      <input
+                        ref={stopsPhotoInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          e.target.value = "";
+                          void handleStopsPhotoSelected(file);
+                        }}
+                      />
                       <div className="space-y-1.5">
                         {!stopsOpen && stops.length === 0 ? (
-                          <button
-                            type="button"
-                            className="text-xs text-muted-foreground hover:text-primary min-h-[36px]"
-                            onClick={() => {
-                              setStopsOpen(true);
-                              setStops([""]);
-                              setStopDueBy([""]);
-                            }}
-                          >
-                            + Add stops (optional)
-                          </button>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <button
+                              type="button"
+                              className="text-xs text-muted-foreground hover:text-primary min-h-[36px]"
+                              onClick={() => {
+                                setStopsOpen(true);
+                                setStops([""]);
+                                setStopDueBy([""]);
+                              }}
+                            >
+                              + Add stops (optional)
+                            </button>
+                            <button
+                              type="button"
+                              disabled={importStopsMutation.isPending}
+                              className="text-xs text-primary font-medium min-h-[36px] disabled:opacity-50"
+                              onClick={() =>
+                                stopsPhotoInputRef.current?.click()
+                              }
+                            >
+                              {importStopsMutation.isPending
+                                ? "Reading photo…"
+                                : "📷 Import stops from a photo"}
+                            </button>
+                          </div>
                         ) : (
                           <>
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
                               <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
                                 Stops
                               </p>
-                              {stops.length < 15 && (
+                              <div className="flex items-center gap-2">
                                 <button
                                   type="button"
-                                  className="text-[11px] text-primary font-medium min-h-[32px] px-1"
-                                  onClick={() => {
-                                    setStops(s => [...s, ""]);
-                                    setStopDueBy(s => [...s, ""]);
-                                  }}
+                                  disabled={importStopsMutation.isPending}
+                                  className="text-[11px] text-primary font-medium min-h-[32px] px-1 disabled:opacity-50"
+                                  onClick={() =>
+                                    stopsPhotoInputRef.current?.click()
+                                  }
                                 >
-                                  + Add another
+                                  {importStopsMutation.isPending
+                                    ? "Reading photo…"
+                                    : "📷 Import from photo"}
                                 </button>
-                              )}
+                                {stops.length < 15 && (
+                                  <button
+                                    type="button"
+                                    className="text-[11px] text-primary font-medium min-h-[32px] px-1"
+                                    onClick={() => {
+                                      setStops(s => [...s, ""]);
+                                      setStopDueBy(s => [...s, ""]);
+                                    }}
+                                  >
+                                    + Add another
+                                  </button>
+                                )}
+                              </div>
                             </div>
                             {/* v30: optional per-stop deadline turns this from a
                                 shortest-path reorder into a schedule that won't
