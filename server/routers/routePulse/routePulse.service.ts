@@ -974,6 +974,32 @@ export type RouteResult = {
   driverHealthScore?: number;
   /** v24: local-driver tips that applied to the chosen route. */
   localDriverNotes?: string[];
+  /**
+   * v30: per-stop delivery schedule — set only when at least one stop was
+   * given a dueBy deadline. A plain shortest-path/2-opt reorder (stopPlan
+   * above) has no concept of "must arrive by 14:00" and will happily
+   * reorder past a hard pickup window; this is a separate, deadline-aware
+   * ordering (scheduleStopsWithDeadlines) that supersedes stopPlan's order
+   * whenever any stop carries a deadline.
+   */
+  stopSchedule?: {
+    /** False when at least one stop couldn't be reached by its deadline. */
+    feasible: boolean;
+    /** Total minutes late, summed across every stop that missed its deadline. */
+    totalLateMin: number;
+    stops: Array<{
+      address: string;
+      lat: number;
+      lng: number;
+      originalIndex: number;
+      /** "HH:MM" as given by the caller, or null if this stop had none. */
+      dueBy: string | null;
+      /** Estimated arrival, "HH:MM" local. */
+      etaClock: string;
+      /** 0 if on time or no deadline; otherwise minutes past dueBy. */
+      lateByMin: number;
+    }>;
+  } | null;
 };
 
 function cacheKey(
@@ -1715,6 +1741,183 @@ export async function optimizeStopsViaMatrix(
 
   const minutesSaved = Math.max(0, Math.round((baseline - bestT) / 60));
   return { order: bestOrder, minutesSaved, usedMatrix: true };
+}
+
+/** Fallback average urban travel speed when TomTom Matrix is unavailable — 25mph. */
+const FALLBACK_SPEED_M_PER_MIN = (25 * 1609.34) / 60;
+
+/** "HH:MM" → minutes since midnight. Returns null for anything unparseable. */
+export function hhmmToMin(hhmm: string): number | null {
+  const m = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(hhmm.trim());
+  if (!m) return null;
+  return parseInt(m[1]!, 10) * 60 + parseInt(m[2]!, 10);
+}
+
+/** Minutes since midnight → "HH:MM" (24h), wrapping past 1440 into the next day. */
+export function minToHHMM(min: number): string {
+  const wrapped = ((Math.round(min) % 1440) + 1440) % 1440;
+  const h = Math.floor(wrapped / 60);
+  const m = wrapped % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/** Current minutes-since-midnight in Portland local time (America/Los_Angeles). */
+export function nowMinutesInPortland(now = new Date()): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).formatToParts(now);
+  const get = (t: string) => parts.find(p => p.type === t)?.value ?? "0";
+  return (
+    (parseInt(get("hour"), 10) % 24) * 60 + (parseInt(get("minute"), 10) || 0)
+  );
+}
+
+/**
+ * v30: cheapest-feasible-insertion scheduler for stops with due-by deadlines
+ * (a real vehicle-routing-with-time-windows problem, not a plain shortest
+ * path). Pure distance/time optimizers like optimizeStopsViaMatrix have no
+ * concept of "must arrive by 14:00" — reordering to minimize total drive
+ * time can and will blow through hard pickup windows. This builds the route
+ * stop by stop, at each step inserting whichever remaining stop/position
+ * costs the least extra travel time WITHOUT pushing any already-placed stop
+ * past its deadline. When no fully-feasible insertion exists for a stop
+ * (deadlines are simply too tight to hit all of them), it falls back to the
+ * insertion that minimizes total lateness and flags the result infeasible,
+ * rather than silently producing a route that looks fine but is wrong.
+ */
+export async function scheduleStopsWithDeadlines(
+  origin: LatLng,
+  destination: LatLng,
+  stops: LatLng[],
+  dueByMin: (number | null)[],
+  departAtMin: number,
+  dwellMin = 5
+): Promise<{
+  order: number[];
+  etaMin: number[];
+  feasible: boolean;
+  totalLateMin: number;
+  usedMatrix: boolean;
+}> {
+  const points = [origin, ...stops, destination];
+  const pCount = points.length;
+
+  const cells = await fetchTomTomMatrix(points, points);
+  const usedMatrix = !!cells;
+  const time: number[][] = Array.from({ length: pCount }, () =>
+    Array.from({ length: pCount }, () => Infinity)
+  );
+  for (let i = 0; i < pCount; i++) {
+    for (let j = 0; j < pCount; j++) {
+      if (i === j) {
+        time[i]![j] = 0;
+        continue;
+      }
+      time[i]![j] =
+        haversineM(points[i]!, points[j]!) / FALLBACK_SPEED_M_PER_MIN;
+    }
+  }
+  if (cells) {
+    for (const c of cells) {
+      if (
+        c.originIndex >= 0 &&
+        c.originIndex < pCount &&
+        c.destinationIndex >= 0 &&
+        c.destinationIndex < pCount &&
+        c.travelTimeS > 0
+      ) {
+        time[c.originIndex]![c.destinationIndex] = c.travelTimeS / 60;
+      }
+    }
+  }
+
+  /** origin=0, stop i is point i+1, destination is point pCount-1. */
+  const pointIdx = (stopIdx: number) => stopIdx + 1;
+
+  /** Arrival clock-minutes at each stop in `seq`, starting from origin. */
+  const arrivalsFor = (seq: number[]): number[] => {
+    const out: number[] = [];
+    let clock = departAtMin;
+    let prevPoint = 0;
+    for (const stopIdx of seq) {
+      clock += time[prevPoint]![pointIdx(stopIdx)]!;
+      out.push(clock);
+      clock += dwellMin;
+      prevPoint = pointIdx(stopIdx);
+    }
+    return out;
+  };
+
+  const latenessFor = (seq: number[], arrivals: number[]): number =>
+    seq.reduce((sum, stopIdx, i) => {
+      const due = dueByMin[stopIdx];
+      if (due == null) return sum;
+      return sum + Math.max(0, arrivals[i]! - due);
+    }, 0);
+
+  let placed: number[] = [];
+  const unplaced = new Set<number>(stops.map((_, i) => i));
+
+  while (unplaced.size > 0) {
+    let bestFeasible: { seq: number[]; stopIdx: number; cost: number } | null =
+      null;
+    let bestAny: {
+      seq: number[];
+      stopIdx: number;
+      lateness: number;
+      cost: number;
+    } | null = null;
+
+    for (const stopIdx of unplaced) {
+      for (let pos = 0; pos <= placed.length; pos++) {
+        const candidate = [
+          ...placed.slice(0, pos),
+          stopIdx,
+          ...placed.slice(pos),
+        ];
+        const prevPoint = pos === 0 ? 0 : pointIdx(placed[pos - 1]!);
+        const nextPoint =
+          pos === placed.length ? pCount - 1 : pointIdx(placed[pos]!);
+        const insertionCost =
+          time[prevPoint]![pointIdx(stopIdx)]! +
+          time[pointIdx(stopIdx)]![nextPoint]! -
+          time[prevPoint]![nextPoint]!;
+
+        const arrivals = arrivalsFor(candidate);
+        const lateness = latenessFor(candidate, arrivals);
+
+        if (lateness === 0) {
+          if (!bestFeasible || insertionCost < bestFeasible.cost) {
+            bestFeasible = { seq: candidate, stopIdx, cost: insertionCost };
+          }
+        }
+        if (
+          !bestAny ||
+          lateness < bestAny.lateness ||
+          (lateness === bestAny.lateness && insertionCost < bestAny.cost)
+        ) {
+          bestAny = { seq: candidate, stopIdx, lateness, cost: insertionCost };
+        }
+      }
+    }
+
+    const chosen = bestFeasible ?? bestAny!;
+    placed = chosen.seq;
+    unplaced.delete(chosen.stopIdx);
+  }
+
+  const finalArrivals = arrivalsFor(placed);
+  const totalLateMin = Math.round(latenessFor(placed, finalArrivals));
+  return {
+    order: placed,
+    etaMin: finalArrivals.map(Math.round),
+    feasible: totalLateMin === 0,
+    totalLateMin,
+    usedMatrix,
+  };
 }
 
 export async function optimizeStopsTomTom(
@@ -2466,20 +2669,30 @@ Respond ONLY with JSON: { "chosen_index": 0, "explanation": "1-2 short sentences
   }
 }
 
+/** A stop address, optionally with a "must arrive by" deadline ("HH:MM", 24h). */
+export type StopWithDeadline = string | { address: string; dueBy?: string };
+
 export async function getRoute(
   originAddress: string,
   destinationAddress: string,
   preference: RoutePreference = "balanced",
-  stopAddresses: string[] = [],
-  optimizeStops = true
+  stopAddresses: StopWithDeadline[] = [],
+  optimizeStops = true,
+  /** "HH:MM" local departure time — only meaningful when a stop has a dueBy. */
+  departAt?: string
 ): Promise<RouteResult> {
   // Geocode first — the cache key and every downstream step depends on
   // resolved coordinates, and a bad address should fail fast with a clear
   // message rather than an OSRM "no route" error.
-  const stopList = stopAddresses
-    .map(s => s.trim())
-    .filter(s => s.length >= 3)
-    .slice(0, 8);
+  const stopEntries = stopAddresses
+    .map(s =>
+      typeof s === "string"
+        ? { address: s.trim(), dueBy: undefined as string | undefined }
+        : { address: s.address.trim(), dueBy: s.dueBy }
+    )
+    .filter(s => s.address.length >= 3)
+    .slice(0, 15);
+  const stopList = stopEntries.map(s => s.address);
   if (!ENV.tomtomApiKey) {
     console.warn(
       "[routePulse] TOMTOM_API_KEY is empty at runtime — flow/routing/matrix/incidents will no-op"
@@ -2492,15 +2705,62 @@ export async function getRoute(
     ...stopList.map(a => geocodeAddress(a)),
   ]);
 
+  // v30: dueBy deadlines turn this from a shortest-path problem into a
+  // vehicle-routing-with-time-windows problem — a plain distance/time
+  // optimizer (below) has no idea a stop must happen by a specific clock
+  // time and will happily reorder past it. Deadlines take priority over
+  // optimizeStops whenever any are present.
+  const dueByMinList = stopEntries.map(s =>
+    s.dueBy ? hhmmToMin(s.dueBy) : null
+  );
+  const hasDeadlines = dueByMinList.some(d => d != null);
+
   // v23: smart stop order for delivery — reorder before OSRM so the route
   // itself follows the efficient sequence, not just the typed order.
   let stops = rawStops;
   let stopPlan: RouteResult["stopPlan"] = undefined;
+  let stopSchedule: RouteResult["stopSchedule"] = null;
   // Track which TomTom products actually answered (for UI receipts).
   let tomtomMatrixUsed = false;
   let tomtomWaypointOptUsed = false;
 
-  if (rawStops.length >= 2 && optimizeStops) {
+  if (rawStops.length >= 1 && hasDeadlines) {
+    const departAtMin = departAt
+      ? (hhmmToMin(departAt) ?? nowMinutesInPortland())
+      : nowMinutesInPortland();
+    const sched = await scheduleStopsWithDeadlines(
+      origin,
+      destination,
+      rawStops,
+      dueByMinList,
+      departAtMin
+    );
+    if (sched.usedMatrix) tomtomMatrixUsed = true;
+    stops = sched.order.map(i => rawStops[i]!);
+    const orderChanged = sched.order.some((v, i) => v !== i);
+    stopPlan = {
+      optimized: orderChanged,
+      stops: sched.order.map(i => ({ ...rawStops[i]!, originalIndex: i })),
+      estimatedMilesSaved: null,
+    };
+    stopSchedule = {
+      feasible: sched.feasible,
+      totalLateMin: sched.totalLateMin,
+      stops: sched.order.map((stopIdx, seqPos) => {
+        const due = dueByMinList[stopIdx];
+        const eta = sched.etaMin[seqPos]!;
+        return {
+          address: stopEntries[stopIdx]!.address,
+          lat: rawStops[stopIdx]!.lat,
+          lng: rawStops[stopIdx]!.lng,
+          originalIndex: stopIdx,
+          dueBy: due != null ? minToHHMM(due) : null,
+          etaClock: minToHHMM(eta),
+          lateByMin: due != null ? Math.max(0, Math.round(eta - due)) : 0,
+        };
+      }),
+    };
+  } else if (rawStops.length >= 2 && optimizeStops) {
     // 1) Matrix v2 live-traffic TSP  2) Waypoint Optimization API  3) haversine
     const matrixPlan = await optimizeStopsViaMatrix(
       origin,
@@ -2545,6 +2805,10 @@ export async function getRoute(
       ? `_via:${stops.map(s => `${s.lat.toFixed(4)},${s.lng.toFixed(4)}`).join("|")}`
       : "") +
     (optimizeStops && rawStops.length >= 2 ? "_opt" : "") +
+    // Deadlines change stopSchedule (ETAs/feasibility) independent of the
+    // stop lat/lngs above, so they need their own cache-key component —
+    // otherwise a different departAt/dueBy set could hit a stale schedule.
+    (hasDeadlines ? `_dl:${departAt ?? "now"}:${dueByMinList.join(",")}` : "") +
     "_vtt1";
 
   const cached = await readCache(key);
@@ -3011,6 +3275,7 @@ export async function getRoute(
     dataConfidence,
     stops: stops.length ? stops : undefined,
     stopPlan,
+    stopSchedule,
     driverHealthScore,
     localDriverNotes,
   };

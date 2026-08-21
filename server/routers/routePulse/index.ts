@@ -10,6 +10,14 @@ const address = z
   .min(3, "Enter a more complete address.")
   .max(300);
 
+const hhmm = z.string().regex(/^([01]?\d|2[0-3]):[0-5]\d$/, "Use HH:MM (24h)");
+
+/** A stop address, optionally with a "must arrive by" deadline. */
+const stopInput = z.union([
+  address,
+  z.object({ address, dueBy: hhmm.optional() }),
+]);
+
 export const routePulseRouter = router({
   geocode: publicRateLimitedProcedure(publicFormLimiter, "routepulse:geocode")
     .input(z.object({ address }))
@@ -37,10 +45,13 @@ export const routePulseRouter = router({
           .enum(["fastest", "balanced", "quiet", "fuel"])
           .optional()
           .default("balanced"),
-        /** Intermediate stops (max 8) — delivery waypoints. */
-        stops: z.array(address).max(8).optional().default([]),
+        /** Intermediate stops (max 15) — delivery waypoints, each optionally
+         *  carrying a "must arrive by" deadline. */
+        stops: z.array(stopInput).max(15).optional().default([]),
         /** Reorder stops for a shorter path (default true when 2+ stops). */
         optimizeStops: z.boolean().optional().default(true),
+        /** "HH:MM" local departure time — only used when a stop has a dueBy. */
+        departAt: hhmm.optional(),
       })
     )
     .query(async ({ input }) => {
@@ -49,7 +60,8 @@ export const routePulseRouter = router({
         input.destination,
         input.preference,
         input.stops,
-        input.optimizeStops
+        input.optimizeStops,
+        input.departAt
       );
     }),
 

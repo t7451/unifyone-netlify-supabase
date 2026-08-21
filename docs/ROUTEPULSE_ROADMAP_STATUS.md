@@ -35,6 +35,29 @@ handoff Google/Apple, cameras on demand, clustering.
 Charge later for: multi-stop optimize, saved routes, fleet share, historical pack freshness, higher offline limits.
 Keep basic A→B + incidents free.
 
+## Milestone 5 — Deadline-aware multi-stop (VRPTW) — **v1 DONE**
+
+Prompted by a real courier route (14+ stops, Wilsonville/Tigard/Lake
+Oswego/Portland/Hillsboro/Beaverton, most with hard pickup-time windows
+14:00-19:30). Audit found the existing multi-stop optimizer
+(`optimizeStopsViaMatrix`/`optimizeStopsTomTom`, NN+2-opt) has **zero**
+concept of time windows — it minimizes distance/time only, and the
+`stops` schema was hard-capped at 8 (this route has 15). Fed as-is, it
+would silently reorder past several real deadlines.
+
+| Item                                                                                                    | Status                                                                                                                                                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stops can carry an optional `dueBy` ("HH:MM") deadline                                                  | Done — `stops: z.array(string \| {address, dueBy})`, max raised 8→15                                                                                                                                                                                                                        |
+| Optional `departAt` ("HH:MM", default now, Portland-local)                                              | Done                                                                                                                                                                                                                                                                                        |
+| `scheduleStopsWithDeadlines` — cheapest-feasible-insertion VRPTW-lite heuristic                         | Done (`routePulse.service.ts`) — builds the route stop by stop, inserting whichever remaining stop/position costs least extra travel time _without_ pushing an already-placed stop past its deadline; falls back to TomTom Matrix v2 travel times when available, haversine/25mph otherwise |
+| Infeasibility reporting (not silent reordering past a deadline)                                         | Done — `stopSchedule.feasible` + per-stop `lateByMin`, surfaced in the UI as "N min late overall — not all deadlines are reachable"                                                                                                                                                         |
+| Deadline scheduling takes priority over plain optimizeStops whenever any stop has a dueBy               | Done                                                                                                                                                                                                                                                                                        |
+| Per-stop "Due by" + shared "Depart at" UI inputs, schedule results panel                                | Done (`client/src/pages/RoutePulse/index.tsx`)                                                                                                                                                                                                                                              |
+| Unit tests against a scaled synthetic version of the real route (return-trip-through-Wilsonville shape) | Done — 6 new tests in `routePulse.service.test.ts`                                                                                                                                                                                                                                          |
+| Deadlines carried through mid-trip "Recalculate from here"                                              | **Not done** — recalculate re-plans with addresses only, deadlines are dropped (v1 simplification)                                                                                                                                                                                          |
+| Deadlines carried into the shareable URL                                                                | **Not done** — same simplification; share links reopen with addresses only                                                                                                                                                                                                                  |
+| Timezone handling                                                                                       | Portland-local (`America/Los_Angeles`) hardcoded — fine for this tool's actual service area, would need generalizing for other regions                                                                                                                                                      |
+
 ## Next engineering priorities
 
 1. ~~Reverse-geocode raw GPS origins for readable labels~~ — **Done.** The

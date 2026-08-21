@@ -1199,8 +1199,18 @@ describe("routePulse.service — multi-objective preference scoring (v19/v21)", 
   };
 
   it("preferenceCost ranks pure time first under fastest", () => {
-    const calm = { ...base, liveDurationS: 1320, stressScore: 10, energyScore: 12 };
-    const hot = { ...base, liveDurationS: 1200, stressScore: 70, energyScore: 55 };
+    const calm = {
+      ...base,
+      liveDurationS: 1320,
+      stressScore: 10,
+      energyScore: 12,
+    };
+    const hot = {
+      ...base,
+      liveDurationS: 1200,
+      stressScore: 70,
+      energyScore: 55,
+    };
     const calmCost = service.preferenceCost(calm, "fastest");
     const hotCost = service.preferenceCost(hot, "fastest");
     // Under fastest, the 2-minute savings should still win over stress
@@ -1208,8 +1218,18 @@ describe("routePulse.service — multi-objective preference scoring (v19/v21)", 
   });
 
   it("preferenceCost can prefer a calmer route under quiet", () => {
-    const calm = { ...base, liveDurationS: 1320, stressScore: 10, energyScore: 12 };
-    const hot = { ...base, liveDurationS: 1200, stressScore: 70, energyScore: 55 };
+    const calm = {
+      ...base,
+      liveDurationS: 1320,
+      stressScore: 10,
+      energyScore: 12,
+    };
+    const hot = {
+      ...base,
+      liveDurationS: 1200,
+      stressScore: 70,
+      energyScore: 55,
+    };
     const calmCost = service.preferenceCost(calm, "quiet");
     const hotCost = service.preferenceCost(hot, "quiet");
     expect(calmCost).toBeLessThan(hotCost);
@@ -1302,5 +1322,134 @@ describe("routePulse.service — delivery stop order + health (v23)", () => {
     expect(clear).toBeGreaterThan(rough);
     expect(clear).toBeGreaterThan(70);
     expect(rough).toBeLessThan(40);
+  });
+});
+
+describe("routePulse.service — hhmm helpers (v30)", () => {
+  it("hhmmToMin parses 24h clock strings", () => {
+    expect(service.hhmmToMin("00:00")).toBe(0);
+    expect(service.hhmmToMin("14:00")).toBe(840);
+    expect(service.hhmmToMin("9:05")).toBe(545);
+    expect(service.hhmmToMin("23:59")).toBe(1439);
+    expect(service.hhmmToMin("24:00")).toBeNull();
+    expect(service.hhmmToMin("not a time")).toBeNull();
+  });
+
+  it("minToHHMM round-trips and wraps past midnight", () => {
+    expect(service.minToHHMM(840)).toBe("14:00");
+    expect(service.minToHHMM(0)).toBe("00:00");
+    expect(service.minToHHMM(1440)).toBe("00:00");
+    expect(service.minToHHMM(1500)).toBe("01:00");
+  });
+});
+
+describe("routePulse.service — scheduleStopsWithDeadlines (v30, VRPTW-lite)", () => {
+  // ENV.tomtomApiKey is "" in the module mock above, so fetchTomTomMatrix
+  // always returns null and every case below exercises the haversine
+  // fallback — deterministic, no network mocking needed.
+
+  it("keeps the typed order when every deadline is easily reachable", () => {
+    const origin = { lat: 45.52, lng: -122.68 };
+    const destination = { lat: 45.5, lng: -122.6 };
+    const stops = [
+      { lat: 45.515, lng: -122.675 },
+      { lat: 45.51, lng: -122.65 },
+    ];
+    const result = service.scheduleStopsWithDeadlines(
+      origin,
+      destination,
+      stops,
+      [900, 1200], // 15:00, 20:00 — plenty of slack
+      480 // depart 08:00
+    );
+    return result.then(r => {
+      expect(r.feasible).toBe(true);
+      expect(r.totalLateMin).toBe(0);
+      expect(r.order.sort()).toEqual([0, 1]);
+    });
+  });
+
+  it("reorders around a tight early deadline instead of a naive nearest-first pass", async () => {
+    // Stop A is geographically first from origin but has no deadline; stop B
+    // is farther but must be hit very soon after departure. A pure
+    // distance-first optimizer would visit A first and blow B's deadline.
+    const origin = { lat: 45.52, lng: -122.68 };
+    const destination = { lat: 45.4, lng: -122.6 };
+    const stopA = { lat: 45.515, lng: -122.676 }; // ~600m from origin, no deadline
+    const stopB = { lat: 45.3, lng: -122.5 }; // far, but due almost immediately
+    const departAtMin = 480; // 08:00
+    const result = await service.scheduleStopsWithDeadlines(
+      origin,
+      destination,
+      [stopA, stopB],
+      [null, departAtMin + 5],
+      departAtMin
+    );
+    // B has to be visited first (or as close to first as physically
+    // possible) to have any chance of hitting an 08:05 deadline that's
+    // realistically miles away — confirming the scheduler isn't just
+    // falling back to distance-only ordering.
+    expect(result.order[0]).toBe(1);
+  });
+
+  it("flags infeasible when a deadline cannot physically be met", () => {
+    const origin = { lat: 45.52, lng: -122.68 };
+    const destination = { lat: 45.4, lng: -122.5 };
+    // ~30 miles away but due 2 minutes after departure — no vehicle makes that.
+    const stops = [{ lat: 45.2, lng: -122.3 }];
+    return service
+      .scheduleStopsWithDeadlines(origin, destination, stops, [482], 480)
+      .then(r => {
+        expect(r.feasible).toBe(false);
+        expect(r.totalLateMin).toBeGreaterThan(0);
+      });
+  });
+
+  it("models the real courier-run shape: a return trip driven by a mid-run deadline", () => {
+    // Scaled-down version of a real Portland-metro multi-stop pickup run:
+    // Wilsonville (14:00) -> Tigard/Lake Oswego (14:55-15:40, no hard
+    // deadlines) -> back to Wilsonville for a 16:30 pharmacy window -> on
+    // to Portland. A pure nearest-neighbor/2-opt pass (optimizeStopOrder)
+    // would never route back through Wilsonville a second time; the
+    // deadline-aware scheduler should, because that's the only way to hit
+    // both Wilsonville windows.
+    const origin = { lat: 45.5, lng: -122.72 }; // Wilsonville area start
+    const wilsonville1 = { lat: 45.3059, lng: -122.7715 }; // 14:00 due
+    const tigard = { lat: 45.4312, lng: -122.7715 }; // no deadline
+    const lakeOswego = { lat: 45.4207, lng: -122.6706 }; // no deadline
+    const wilsonvillePharmacy = { lat: 45.3, lng: -122.76 }; // 16:30 due, near stop 1
+    const destination = { lat: 45.512, lng: -122.679 }; // Portland
+
+    const stops = [wilsonville1, tigard, lakeOswego, wilsonvillePharmacy];
+    const dueByMin = [
+      service.hhmmToMin("14:00"),
+      null,
+      null,
+      service.hhmmToMin("16:30"),
+    ];
+    const departAtMin = service.hhmmToMin("13:00")!;
+
+    return service
+      .scheduleStopsWithDeadlines(
+        origin,
+        destination,
+        stops,
+        dueByMin,
+        departAtMin
+      )
+      .then(r => {
+        // Both real deadlines (Wilsonville 14:00, pharmacy 16:30) must be
+        // respected — this is the actual bar for beating a driver who
+        // already keeps these windows in their head.
+        const wilsonville1Pos = r.order.indexOf(0);
+        const pharmacyPos = r.order.indexOf(3);
+        expect(r.etaMin[wilsonville1Pos]!).toBeLessThanOrEqual(
+          service.hhmmToMin("14:00")!
+        );
+        expect(r.etaMin[pharmacyPos]!).toBeLessThanOrEqual(
+          service.hhmmToMin("16:30")!
+        );
+        expect(r.feasible).toBe(true);
+      });
   });
 });

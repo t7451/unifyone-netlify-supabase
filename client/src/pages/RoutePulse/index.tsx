@@ -338,6 +338,16 @@ const LOCAL_RISK_WEIGHT: Record<string, number> = {
 const fmtTime = (d: Date) =>
   d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
+/**
+ * v30: a stop, optionally with a "must arrive by" deadline. Plain distance
+ * optimization (stopPlan) has no concept of hard pickup windows — a stop
+ * carrying dueBy switches the server onto scheduleStopsWithDeadlines
+ * instead, which won't reorder past a deadline it can otherwise meet.
+ */
+type StopEntry = string | { address: string; dueBy?: string };
+const stopAddress = (s: StopEntry): string =>
+  typeof s === "string" ? s : s.address;
+
 // Severity legend colors — the actual incident markers render as
 // CircleMarkers in RouteMap.tsx (INCIDENT_COLORS/INCIDENT_RADIUS there);
 // this stays only for the legend swatches further down this file.
@@ -646,11 +656,18 @@ export default function RoutePulse() {
     return "balanced";
   });
   const [stops, setStops] = useState<string[]>([]);
+  // v30: parallel to `stops` — "" means that stop has no deadline. Kept
+  // separate from `stops` rather than merging into objects so every
+  // existing string[]-based stop handler (add/remove/reorder/share URL)
+  // keeps working unchanged.
+  const [stopDueBy, setStopDueBy] = useState<string[]>([]);
+  const [departAt, setDepartAt] = useState("");
   const [submitted, setSubmitted] = useState<{
     origin: string;
     destination: string;
     preference: RoutePreference;
-    stops: string[];
+    stops: StopEntry[];
+    departAt?: string;
   } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   // v17: was hardcoded to "light" regardless of the app's own theme — a
@@ -796,12 +813,13 @@ export default function RoutePulse() {
           .split("|")
           .map(s => s.trim())
           .filter(s => s.length >= 3)
-          .slice(0, 8)
+          .slice(0, 15)
       : [];
     if (urlOrigin) setOrigin(urlOrigin);
     if (urlDestination) setDestination(urlDestination);
     if (stopList.length) {
       setStops(stopList);
+      setStopDueBy(stopList.map(() => ""));
       setStopsOpen(true);
     }
     const pref =
@@ -838,7 +856,9 @@ export default function RoutePulse() {
       origin: submitted.origin,
       destination: submitted.destination,
       preference: submitted.preference,
-      stops: submitted.stops,
+      // Deadlines aren't carried into the share URL (v1 simplification) —
+      // a shared link reopens with plain addressed stops, no dueBy.
+      stops: submitted.stops.map(stopAddress),
     });
     const newUrl = `${window.location.pathname}?${qs}`;
     window.history.replaceState({}, "", newUrl);
@@ -1044,11 +1064,16 @@ export default function RoutePulse() {
     }
     setFormError(null);
     setDetailsOpen(false);
+    const stopEntries: StopEntry[] = stops
+      .map((s, i) => ({ address: s.trim(), dueBy: stopDueBy[i]?.trim() }))
+      .filter(s => s.address.length >= 3)
+      .map(s => (s.dueBy ? s : s.address));
     setSubmitted({
       origin: origin.trim(),
       destination: destination.trim(),
       preference,
-      stops: stops.map(s => s.trim()).filter(s => s.length >= 3),
+      stops: stopEntries,
+      departAt: departAt.trim() || undefined,
     });
     addRoute(origin.trim(), destination.trim());
     trackToolUsage("route-pulse", "start");
@@ -1454,7 +1479,9 @@ export default function RoutePulse() {
       userLng: lng,
       destination: submitted.destination,
       preference: submitted.preference,
-      stops: submitted.stops ?? [],
+      // Deadlines aren't preserved across a mid-trip recalculate (v1
+      // simplification) — the remaining stops keep their addresses only.
+      stops: (submitted.stops ?? []).map(stopAddress),
     });
     if (!built.ok) {
       const msg =
@@ -1527,7 +1554,7 @@ export default function RoutePulse() {
       originLabel: d.origin.displayName,
       destinationLabel: d.destination.displayName,
       preference: submitted?.preference,
-      stops: submitted?.stops,
+      stops: submitted?.stops?.map(stopAddress),
       miles: d.route.distance / 1609.34,
       minutes: Math.round(displayDurationS(d.route) / 60),
       incidentCount: d.route.incidents.length,
@@ -2230,7 +2257,7 @@ export default function RoutePulse() {
                 origin: submitted.origin,
                 destination: submitted.destination,
                 preference: submitted.preference,
-                stops: submitted.stops,
+                stops: submitted.stops.map(stopAddress),
               })}`
             : CANONICAL
         }
@@ -2756,6 +2783,7 @@ export default function RoutePulse() {
                             onClick={() => {
                               setStopsOpen(true);
                               setStops([""]);
+                              setStopDueBy([""]);
                             }}
                           >
                             + Add stops (optional)
@@ -2766,19 +2794,47 @@ export default function RoutePulse() {
                               <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
                                 Stops
                               </p>
-                              {stops.length < 8 && (
+                              {stops.length < 15 && (
                                 <button
                                   type="button"
                                   className="text-[11px] text-primary font-medium min-h-[32px] px-1"
-                                  onClick={() => setStops(s => [...s, ""])}
+                                  onClick={() => {
+                                    setStops(s => [...s, ""]);
+                                    setStopDueBy(s => [...s, ""]);
+                                  }}
                                 >
                                   + Add another
                                 </button>
                               )}
                             </div>
+                            {/* v30: optional per-stop deadline turns this from a
+                                shortest-path reorder into a schedule that won't
+                                blow past a hard pickup window — see
+                                scheduleStopsWithDeadlines server-side. */}
+                            {stops.length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <label
+                                  htmlFor="routepulse-depart-at"
+                                  className="text-[11px] text-muted-foreground shrink-0"
+                                >
+                                  Depart at
+                                </label>
+                                <input
+                                  id="routepulse-depart-at"
+                                  type="time"
+                                  value={departAt}
+                                  onChange={e => setDepartAt(e.target.value)}
+                                  className="text-xs rounded-md border border-border bg-background px-2 py-1 min-h-[32px]"
+                                />
+                                <span className="text-[10px] text-muted-foreground">
+                                  (blank = now — only matters if a stop below
+                                  has a due time)
+                                </span>
+                              </div>
+                            )}
                             {stops.map((stop, i) => (
                               <div key={i} className="flex gap-1.5 items-start">
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1 min-w-0 space-y-1">
                                   <AddressInput
                                     id={`routepulse-stop-${i}`}
                                     name={`stop-${i}`}
@@ -2792,22 +2848,65 @@ export default function RoutePulse() {
                                     }
                                     placeholder={`Stop ${i + 1} address`}
                                   />
+                                  <div className="flex items-center gap-1.5">
+                                    <label
+                                      htmlFor={`routepulse-stop-${i}-dueby`}
+                                      className="text-[10px] text-muted-foreground shrink-0"
+                                    >
+                                      Due by
+                                    </label>
+                                    <input
+                                      id={`routepulse-stop-${i}-dueby`}
+                                      type="time"
+                                      value={stopDueBy[i] ?? ""}
+                                      onChange={e =>
+                                        setStopDueBy(prev => {
+                                          const next = [...prev];
+                                          next[i] = e.target.value;
+                                          return next;
+                                        })
+                                      }
+                                      className="text-[11px] rounded-md border border-border bg-background px-1.5 py-0.5 min-h-[28px]"
+                                    />
+                                    {stopDueBy[i] && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setStopDueBy(prev => {
+                                            const next = [...prev];
+                                            next[i] = "";
+                                            return next;
+                                          })
+                                        }
+                                        className="text-[10px] text-muted-foreground hover:text-destructive"
+                                      >
+                                        clear
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="flex flex-col gap-0.5 mt-6">
                                   <button
                                     type="button"
                                     className="text-muted-foreground min-w-[36px] min-h-[36px] flex items-center justify-center disabled:opacity-30"
                                     disabled={i === 0}
-                                    onClick={() =>
+                                    onClick={() => {
+                                      if (i === 0) return;
                                       setStops(prev => {
-                                        if (i === 0) return prev;
                                         const next = [...prev];
                                         const tmp = next[i - 1]!;
                                         next[i - 1] = next[i]!;
                                         next[i] = tmp;
                                         return next;
-                                      })
-                                    }
+                                      });
+                                      setStopDueBy(prev => {
+                                        const next = [...prev];
+                                        const tmp = next[i - 1] ?? "";
+                                        next[i - 1] = next[i] ?? "";
+                                        next[i] = tmp;
+                                        return next;
+                                      });
+                                    }}
                                     title="Move up"
                                     aria-label="Move stop up"
                                   >
@@ -2817,7 +2916,8 @@ export default function RoutePulse() {
                                     type="button"
                                     className="text-muted-foreground min-w-[36px] min-h-[36px] flex items-center justify-center disabled:opacity-30"
                                     disabled={i >= stops.length - 1}
-                                    onClick={() =>
+                                    onClick={() => {
+                                      if (i >= stops.length - 1) return;
                                       setStops(prev => {
                                         if (i >= prev.length - 1) return prev;
                                         const next = [...prev];
@@ -2825,8 +2925,16 @@ export default function RoutePulse() {
                                         next[i + 1] = next[i]!;
                                         next[i] = tmp;
                                         return next;
-                                      })
-                                    }
+                                      });
+                                      setStopDueBy(prev => {
+                                        if (i >= prev.length - 1) return prev;
+                                        const next = [...prev];
+                                        const tmp = next[i + 1] ?? "";
+                                        next[i + 1] = next[i] ?? "";
+                                        next[i] = tmp;
+                                        return next;
+                                      });
+                                    }}
                                     title="Move down"
                                     aria-label="Move stop down"
                                   >
@@ -2840,6 +2948,9 @@ export default function RoutePulse() {
                                         (_, j) => j !== i
                                       );
                                       setStops(next);
+                                      setStopDueBy(prev =>
+                                        prev.filter((_, j) => j !== i)
+                                      );
                                       if (next.length === 0)
                                         setStopsOpen(false);
                                     }}
@@ -3756,6 +3867,49 @@ export default function RoutePulse() {
                           </ol>
                         </div>
                       )}
+                    {/* v30: per-stop delivery schedule — only present when at
+                        least one stop carried a due-by deadline. Distinct
+                        from "Stop order" above: this is a deadline-aware
+                        schedule (scheduleStopsWithDeadlines), not just a
+                        shorter-path reorder, and it says outright when a
+                        deadline can't physically be met rather than
+                        silently reordering past it. */}
+                    {routeQuery.data?.stopSchedule && (
+                      <div className="space-y-1">
+                        <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                          Schedule
+                          {routeQuery.data.stopSchedule.feasible ? (
+                            <span className="ml-1.5 text-emerald-600 dark:text-emerald-400 normal-case tracking-normal font-medium">
+                              all deadlines met
+                            </span>
+                          ) : (
+                            <span className="ml-1.5 text-destructive normal-case tracking-normal font-medium">
+                              {routeQuery.data.stopSchedule.totalLateMin} min
+                              late overall — not all deadlines are reachable
+                            </span>
+                          )}
+                        </p>
+                        <ol className="text-xs space-y-0.5 list-decimal list-inside">
+                          {routeQuery.data.stopSchedule.stops.map((s, i) => (
+                            <li key={i} className="truncate">
+                              <span className="text-foreground">
+                                {s.address}
+                              </span>{" "}
+                              <span className="text-muted-foreground">
+                                · ETA {s.etaClock}
+                                {s.dueBy ? ` (due ${s.dueBy})` : ""}
+                              </span>
+                              {s.lateByMin > 0 && (
+                                <span className="text-destructive font-medium">
+                                  {" "}
+                                  — {s.lateByMin} min late
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
                     {(
                       routeQuery.data as {
                         dataConfidence?: { score: number; label: string };
