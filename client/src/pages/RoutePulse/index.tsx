@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Link } from "wouter";
 import L, { type LatLngExpression, type LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { RouteMap, type BasemapKey } from "./RouteMap";
+import { RouteMap, type BasemapKey } from "@/pages/RoutePulse/RouteMap";
 import { softInvalidateSize } from "./mapInvalidate";
 import {
   googleMapsDirectionsUrl,
@@ -566,6 +566,10 @@ async function reverseGeocode(
           "User-Agent": "UnifyOne-RoutePulse/1.0 (+https://1commerce.online)",
           Accept: "application/json",
         },
+        // A stalled Nominatim request must not block callers indefinitely
+        // (e.g. mid-trip recalculate) — they all fall back to raw
+        // coordinates on any failure, timeout included.
+        signal: AbortSignal.timeout(6_000),
       }
     );
     if (!res.ok) return null;
@@ -690,12 +694,7 @@ export default function RoutePulse() {
   const [follow, setFollow] = useState(false);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   // v8: direction of travel for the heading cone (null when stationary).
-  // NOTE: the actual cone marker (headingConeIcon) was dropped when map
-  // rendering moved into RouteMap.tsx and was never re-added there — this
-  // is computed but currently has no consumer. Prefixed rather than
-  // deleted so the GPS-bearing derivation below survives for whoever
-  // restores the cone marker in RouteMap.tsx.
-  const [_heading, setHeading] = useState<number | null>(null);
+  const [heading, setHeading] = useState<number | null>(null);
   // v4: arrive-by planner + alternative-route preview on the map.
   const [arriveBy, setArriveBy] = useState("");
   const [previewIdx, setPreviewIdx] = useState<number | null>(null);
@@ -1491,16 +1490,19 @@ export default function RoutePulse() {
       toast.error(msg);
       return;
     }
-    // Show a readable place name instead of raw coordinates while
-    // recalculating — same reverse-geocode path as "use current location".
-    const resolvedOrigin =
+    // Show a readable place name in the input field, but keep the exact
+    // GPS coordinate as the value actually submitted for routing — a
+    // display address round-tripped back through forward geocoding can
+    // resolve a few dozen meters off the real fix, which matters for a
+    // "recalculate from exactly where I am" action.
+    const displayOrigin =
       (await reverseGeocode(lat, lng)) ?? built.payload.origin;
-    setOrigin(resolvedOrigin);
+    setOrigin(displayOrigin);
     setOffRoute(false);
     offRouteStrikesRef.current = 0;
     recalcPreserveTripRef.current = true;
     setSubmitted({
-      origin: resolvedOrigin,
+      origin: built.payload.origin,
       destination: built.payload.destination,
       preference: built.payload.preference as typeof submitted.preference,
       stops: built.payload.stops,
@@ -2407,6 +2409,7 @@ export default function RoutePulse() {
                 else setDestination(addr);
               }}
               userLocation={userLocation}
+              heading={heading}
               accuracy={accuracy}
               displayedLine={displayedLine}
               segmentLines={segmentLines}

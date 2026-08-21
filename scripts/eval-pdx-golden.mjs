@@ -38,7 +38,14 @@ const live = process.argv.includes("--live");
 if (!live) process.exit(0);
 
 const base = (process.env.BASE_URL || "https://1commerce.online").replace(/\/+$/, "");
-const sampleSize = Number(process.env.GOLDEN_LIVE_SAMPLE_SIZE) || 5;
+const rawSampleSize = process.env.GOLDEN_LIVE_SAMPLE_SIZE;
+const sampleSize = rawSampleSize === undefined ? 5 : Number(rawSampleSize);
+if (!Number.isSafeInteger(sampleSize) || sampleSize < 1) {
+  console.error(
+    `GOLDEN_LIVE_SAMPLE_SIZE must be a positive integer, got: ${rawSampleSize}`
+  );
+  process.exit(1);
+}
 const sample = origins.slice(0, sampleSize);
 console.log(`\nLive smoke against ${base} (${sample.length} routes)...`);
 
@@ -65,7 +72,7 @@ for (let i = 0; i < sample.length; i++) {
   );
   const url = `${base}/api/trpc/routePulse.getRoute?batch=1&input=${input}`;
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(25_000) });
     const text = await res.text();
     if (!res.ok) {
       console.log(`  [${i + 1}] HTTP ${res.status} ${origin.slice(0, 40)}`);

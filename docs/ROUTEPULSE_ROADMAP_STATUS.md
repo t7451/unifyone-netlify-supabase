@@ -98,9 +98,10 @@ test now sees 2 calls instead of 1; an "incidents RPC errors → skip LLM"
 test now sees `invokeLLM` called once). This needs someone to look at
 whether the service's gating logic changed intentionally and the tests
 are stale, or the reverse. Also fixed in this pass, unrelated to the
-above: 30 pre-existing `pnpm lint` errors (all dead code left over from
-the RouteMap.tsx extraction — unused Leaflet imports/icons/components in
-`index.tsx`, an unused import in `routePulse.service.ts`, an unused
-helper in `mapHandoff.ts`, and a broken assertion in
-`mapHandoff.test.ts`) that had `pnpm lint` — and therefore CI — failing
-on this branch.
+above: 30 pre-existing `pnpm lint` errors caused by dead code left over
+from the RouteMap.tsx extraction (unused Leaflet imports/icons/
+components in `index.tsx`, an unused import in `routePulse.service.ts`,
+an unused helper in `mapHandoff.ts`) that had `pnpm lint` — and
+therefore CI — failing on this branch. Separately, fixed a pre-existing
+broken assertion (an `||` between two `expect()` calls instead of a
+single boolean assertion) in `mapHandoff.test.ts`.
