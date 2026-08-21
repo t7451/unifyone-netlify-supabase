@@ -1453,3 +1453,166 @@ describe("routePulse.service — scheduleStopsWithDeadlines (v30, VRPTW-lite)", 
       });
   });
 });
+
+describe("routePulse.service — extractStopsFromImage (v31, photo import)", () => {
+  const originalGeminiKey = ENV.geminiApiKey;
+
+  afterEach(() => {
+    (ENV as { geminiApiKey?: string }).geminiApiKey = originalGeminiKey;
+    vi.mocked(invokeLLM).mockReset();
+  });
+
+  it("rejects when GEMINI_API_KEY isn't configured, without calling the model", async () => {
+    (ENV as { geminiApiKey?: string }).geminiApiKey = undefined;
+    await expect(
+      service.extractStopsFromImage("data:image/jpeg;base64,AAAA")
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    expect(invokeLLM).not.toHaveBeenCalled();
+  });
+
+  it("parses a real courier-run-shaped response: due times, on-call rows, and a >15-row cap", async () => {
+    (ENV as { geminiApiKey?: string }).geminiApiKey = "test-key";
+    // Mirrors the actual route sheet this feature was built for: a mix of
+    // hard pickup times, "on call" rows with no fixed time, and more than
+    // 15 rows to prove the cap holds.
+    const rows = [
+      {
+        address: "29345 SW Towncenter Loop East 216, Wilsonville, OR 97070",
+        label: "PROV MED ASST PROGRAM",
+        dueBy: "14:00",
+      },
+      {
+        address: "11956 SW Garden Place, Tigard, OR 97223",
+        label: "ZOOMCARE WAREHOUSE",
+        dueBy: "14:55",
+      },
+      {
+        address: "7352 SW Durham, Portland, OR 97224",
+        label: "TAX SERVICES INC",
+        dueBy: null,
+      },
+      ...Array.from({ length: 14 }, (_, i) => ({
+        address: `${100 + i} SW Extra St, Portland, OR 97201`,
+        label: `EXTRA STOP ${i}`,
+        dueBy: null,
+      })),
+    ];
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      id: "x",
+      created: 0,
+      model: "gemini-2.5-flash",
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: "assistant",
+            content: JSON.stringify({ stops: rows }),
+          },
+          finish_reason: "stop",
+        },
+      ],
+    } as any);
+
+    const stops = await service.extractStopsFromImage(
+      "data:image/jpeg;base64,AAAA"
+    );
+
+    expect(invokeLLM).toHaveBeenCalledTimes(1);
+    expect(stops.length).toBe(15); // capped, even though 17 rows were returned
+    expect(stops[0]).toEqual({
+      address: "29345 SW Towncenter Loop East 216, Wilsonville, OR 97070",
+      label: "PROV MED ASST PROGRAM",
+      dueBy: "14:00",
+    });
+    expect(stops[2].dueBy).toBeNull(); // "on call" row stays null, not fabricated
+  });
+
+  it("throws a clear error instead of returning garbage when the model response isn't parseable JSON", async () => {
+    (ENV as { geminiApiKey?: string }).geminiApiKey = "test-key";
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      id: "x",
+      created: 0,
+      model: "gemini-2.5-flash",
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: "assistant",
+            content: "sorry, I can't read this image",
+          },
+          finish_reason: "stop",
+        },
+      ],
+    } as any);
+
+    await expect(
+      service.extractStopsFromImage("data:image/jpeg;base64,AAAA")
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("drops rows whose dueBy the model returned in an unparseable format rather than passing it through", async () => {
+    (ENV as { geminiApiKey?: string }).geminiApiKey = "test-key";
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      id: "x",
+      created: 0,
+      model: "gemini-2.5-flash",
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: "assistant",
+            content: JSON.stringify({
+              stops: [
+                {
+                  address: "123 SW Main St, Portland, OR",
+                  label: "Test",
+                  dueBy: "not-a-time",
+                },
+              ],
+            }),
+          },
+          finish_reason: "stop",
+        },
+      ],
+    } as any);
+
+    const stops = await service.extractStopsFromImage(
+      "data:image/jpeg;base64,AAAA"
+    );
+    expect(stops[0]!.dueBy).toBeNull();
+  });
+
+  it("zero-pads a single-digit hour the model returns (e.g. '3:30') instead of passing it through raw", async () => {
+    (ENV as { geminiApiKey?: string }).geminiApiKey = "test-key";
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      id: "x",
+      created: 0,
+      model: "gemini-2.5-flash",
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: "assistant",
+            content: JSON.stringify({
+              stops: [
+                {
+                  address: "123 SW Main St, Portland, OR",
+                  label: "Test",
+                  dueBy: "3:30",
+                },
+              ],
+            }),
+          },
+          finish_reason: "stop",
+        },
+      ],
+    } as any);
+
+    const stops = await service.extractStopsFromImage(
+      "data:image/jpeg;base64,AAAA"
+    );
+    // Un-padded "3:30" must come out as "03:30" — an <input type="time">
+    // silently rejects the un-padded form.
+    expect(stops[0]!.dueBy).toBe("03:30");
+  });
+});

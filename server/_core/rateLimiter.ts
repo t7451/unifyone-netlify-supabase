@@ -229,6 +229,18 @@ export const imageUploadLimiter = createRateLimiter({
 });
 
 /**
+ * RoutePulse "import stops from photo" — triggers a vision LLM call, so
+ * priced/rate-limited much tighter than a plain form submit: 6 per 5
+ * minutes per IP is enough for a real multi-stop route (occasional retake)
+ * without leaving room for someone to run up vision-API cost via the tool.
+ */
+export const routeSheetImportLimiter = createRateLimiter({
+  name: "routesheetimport",
+  maxAttempts: 6,
+  windowMs: 5 * 60 * 1000,
+});
+
+/**
  * MCP / external worker proxies (knowledge graph, terpforge catalog):
  * 60 calls per minute per user — generous for UI polling but caps abuse.
  */

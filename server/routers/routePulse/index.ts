@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { publicRateLimitedProcedure, router } from "../../_core/trpc";
-import { publicFormLimiter, typeaheadLimiter } from "../../_core/rateLimiter";
+import {
+  publicFormLimiter,
+  typeaheadLimiter,
+  routeSheetImportLimiter,
+} from "../../_core/rateLimiter";
 import * as service from "./routePulse.service";
 import { landmarksNear } from "./trimetContext";
 
@@ -115,5 +119,32 @@ export const routePulseRouter = router({
     )
     .query(async ({ input }) => {
       return landmarksNear(input.lat, input.lng, input.radiusKm);
+    }),
+
+  /**
+   * v31: "add the whole route instantly" — reads a photo of a courier/
+   * delivery route sheet and returns stop addresses + due-by times so the
+   * UI can populate the multi-stop form in one shot instead of typing each
+   * row by hand. Mutation (not query) since it's a costed vision-LLM call
+   * that should never silently re-fire on refetch/refocus.
+   */
+  importStopsFromImage: publicRateLimitedProcedure(
+    routeSheetImportLimiter,
+    "routepulse:importStopsFromImage"
+  )
+    .input(
+      z.object({
+        /** data: URL (image/jpeg|png|webp), capped ~7.5MB base64-encoded. */
+        imageDataUrl: z
+          .string()
+          .regex(
+            /^data:image\/(jpeg|jpg|png|webp);base64,/,
+            "Expected a JPEG, PNG, or WEBP image."
+          )
+          .max(10_000_000, "Image is too large — try a smaller photo."),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return service.extractStopsFromImage(input.imageDataUrl);
     }),
 });

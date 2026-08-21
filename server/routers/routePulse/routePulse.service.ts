@@ -1775,6 +1775,119 @@ export function nowMinutesInPortland(now = new Date()): number {
   );
 }
 
+export class ImageExtractionError extends TRPCError {
+  constructor(message: string, code: TRPCError["code"] = "NOT_FOUND") {
+    super({ code, message });
+  }
+}
+
+/** v31: one row of a courier/delivery route sheet, read off a photo. */
+export type ExtractedStop = {
+  address: string;
+  /** Customer/business name shown on the sheet, for the UI list — not sent to the geocoder. */
+  label: string | null;
+  /** "HH:MM" 24h if the row had a specific pickup/arrival time; null for "on call"/no time. */
+  dueBy: string | null;
+};
+
+const EXTRACT_STOPS_PROMPT = `You are reading a photo of a courier/delivery route sheet — a table of pickup or delivery stops, each with a customer name, an address, and often a scheduled time.
+
+For every stop row in the image, extract:
+- address: the full street address for that stop (street, city, state — combine any address lines that are split across the row; do not include the customer/business name in this field).
+- label: the customer/business name for that row, or null if none is shown.
+- dueBy: the row's specific pickup/arrival time as 24-hour "HH:MM" (e.g. "1455" -> "14:55", "3:30" in an afternoon-looking sheet -> "15:30" using surrounding rows' times as context for AM/PM). Use null when the row says things like "on call", "call everyday", "ASAP", "before 5", "need key", or otherwise has no single fixed clock time.
+
+Skip rows that are only instructions and not an actual stop (e.g. "back to bldg", section headers, blank rows).
+
+Respond ONLY with JSON: { "stops": [{ "address": "...", "label": "...", "dueBy": "14:00" }] }`;
+
+/**
+ * v31: "add the whole route instantly" — a real courier route sheet has
+ * 10-15+ stops with a mix of hard times and "on call" rows; typing that in
+ * by hand defeats the point of a fast tool. This reads it directly off a
+ * photo with a vision-capable model (Gemini 2.5 Flash) instead of a
+ * text-only fallback chain, since a model that can't see the image would
+ * just hallucinate rows.
+ */
+export async function extractStopsFromImage(
+  imageDataUrl: string
+): Promise<ExtractedStop[]> {
+  if (!ENV.geminiApiKey) {
+    throw new ImageExtractionError(
+      "Photo import isn't configured on this server (missing GEMINI_API_KEY).",
+      "INTERNAL_SERVER_ERROR"
+    );
+  }
+
+  const result = await invokeLLM({
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: EXTRACT_STOPS_PROMPT },
+          {
+            type: "image_url",
+            image_url: { url: imageDataUrl, detail: "high" },
+          },
+        ],
+      },
+    ],
+    model: "gemini-2.5-flash",
+    maxTokens: 3000,
+  });
+
+  const text = (result.choices[0]?.message.content ?? "")
+    .toString()
+    .replace(/```json|```/g, "")
+    .trim();
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new ImageExtractionError(
+      "Couldn't read a route sheet in that image — try a clearer, well-lit photo."
+    );
+  }
+
+  const rawStops = (parsed as { stops?: unknown })?.stops;
+  if (!Array.isArray(rawStops)) {
+    throw new ImageExtractionError(
+      "Couldn't find any stops in that image — try a clearer, well-lit photo."
+    );
+  }
+
+  const stops: ExtractedStop[] = rawStops
+    .filter((s): s is Record<string, unknown> => {
+      if (!s || typeof s !== "object") return false;
+      return typeof (s as Record<string, unknown>).address === "string";
+    })
+    .map(s => {
+      const address = String(s.address).trim().slice(0, 300);
+      const label =
+        typeof s.label === "string" && s.label.trim().length > 0
+          ? s.label.trim().slice(0, 120)
+          : null;
+      const dueByRaw = typeof s.dueBy === "string" ? s.dueBy.trim() : null;
+      // Normalize to zero-padded "HH:MM" regardless of what the model
+      // returned (e.g. "3:30") — an un-padded string silently fails to
+      // populate an <input type="time"> in the UI.
+      const dueByMin = dueByRaw ? hhmmToMin(dueByRaw) : null;
+      const dueBy = dueByMin != null ? minToHHMM(dueByMin) : null;
+      return { address, label, dueBy };
+    })
+    .filter(s => s.address.length >= 3)
+    .slice(0, 15);
+
+  if (stops.length === 0) {
+    throw new ImageExtractionError(
+      "Couldn't find any usable stops in that image — try a clearer, well-lit photo."
+    );
+  }
+
+  return stops;
+}
+
 /**
  * v30: cheapest-feasible-insertion scheduler for stops with due-by deadlines
  * (a real vehicle-routing-with-time-windows problem, not a plain shortest
