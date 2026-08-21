@@ -106,10 +106,12 @@ import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "../../_core/supabaseAdmin";
 import { ENV } from "../../_core/env";
 
-
 /** AbortSignal that works even when AbortSignal.timeout is missing. */
 function abortAfter(ms: number): AbortSignal {
-  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+  if (
+    typeof AbortSignal !== "undefined" &&
+    typeof AbortSignal.timeout === "function"
+  ) {
     try {
       return AbortSignal.timeout(ms);
     } catch {
@@ -131,7 +133,6 @@ import {
   localKnowledgePenalties,
   formatLocalKnowledgeForPrompt,
   localKnowledgeSummary,
-  isPortlandMetro,
 } from "./portlandLocalKnowledge";
 import { blobKvGet, blobKvSet, BlobKvNS } from "../../lib/blobKv";
 import { getClearRouteBrief } from "./aiBriefWorker";
@@ -311,9 +312,7 @@ async function geocodeViaCensus(
 function parseLatLngLiteral(input: string): LatLng | null {
   const m = input
     .trim()
-    .match(
-      /^(-?\d{1,2}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)$/
-    );
+    .match(/^(-?\d{1,2}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)$/);
   if (!m) return null;
   const lat = parseFloat(m[1]!);
   const lng = parseFloat(m[2]!);
@@ -432,7 +431,6 @@ export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
   writeGeocodeCache(trimmed, point);
   return point;
 }
-
 
 /**
  * Lightweight address suggestion lookup for typeahead UI. Calls Nominatim
@@ -712,9 +710,7 @@ export function computeRouteScores(
   const base = computeRouteRisk(incidents, timeContext);
   const maneuverCount = maneuvers?.length ?? 0;
   const congestion =
-    flow && flow.samples >= 2
-      ? Math.max(0, Math.min(1, 1 - flow.avgRatio))
-      : 0;
+    flow && flow.samples >= 2 ? Math.max(0, Math.min(1, 1 - flow.avgRatio)) : 0;
   const worstCongestion =
     flow && flow.samples >= 2
       ? Math.max(0, Math.min(1, 1 - flow.worstRatio))
@@ -723,7 +719,9 @@ export function computeRouteScores(
   const congestionPenalty = Math.round(worstCongestion * 40 + congestion * 15);
   const stressScore = Math.min(
     100,
-    Math.round(base.riskScore * 0.7 + congestionPenalty + complexityPenalty * 0.45)
+    Math.round(
+      base.riskScore * 0.7 + congestionPenalty + complexityPenalty * 0.45
+    )
   );
   const distanceMi = distanceM / 1609.34;
   const distanceBand = Math.min(40, distanceMi * 1.6);
@@ -749,7 +747,13 @@ export function preferenceCost(
   const bottleneck = route.bottleneckScore ?? 0;
   // Historical bottlenecks count as stress — quiet/fuel feel them hardest.
   const bottleneckWeight =
-    preference === "quiet" ? 0.22 : preference === "fuel" ? 0.12 : preference === "balanced" ? 0.1 : 0.04;
+    preference === "quiet"
+      ? 0.22
+      : preference === "fuel"
+        ? 0.12
+        : preference === "balanced"
+          ? 0.1
+          : 0.04;
   return (
     w.time * timeMin +
     w.stress * (route.stressScore * 0.18) +
@@ -887,7 +891,12 @@ export type RouteResult = {
     flowSamples: number;
     /** Which TomTom products contributed to this response. */
     tomtomApis?: Array<
-      "routing" | "matrix" | "waypointOptimization" | "flow" | "incidents" | "reverseGeocode"
+      | "routing"
+      | "matrix"
+      | "waypointOptimization"
+      | "flow"
+      | "incidents"
+      | "reverseGeocode"
     >;
   } | null;
   /**
@@ -979,7 +988,8 @@ function normalizeCachedResult(result: RouteResult): RouteResult {
   const withManeuvers = (r: ScoredRoute): ScoredRoute => ({
     ...r,
     maneuvers: Array.isArray(r.maneuvers) ? r.maneuvers : [],
-    stressScore: typeof r.stressScore === "number" ? r.stressScore : r.riskScore ?? 0,
+    stressScore:
+      typeof r.stressScore === "number" ? r.stressScore : (r.riskScore ?? 0),
     energyScore: typeof r.energyScore === "number" ? r.energyScore : 0,
     maneuverCount:
       typeof r.maneuverCount === "number"
@@ -1180,8 +1190,7 @@ async function fetchOSRM(
   const pathStyle: "standard" | "surface" = opts.excludeMotorway
     ? "surface"
     : "standard";
-  const query =
-    `?alternatives=${alternatives}&geometries=geojson&overview=full&steps=true${exclude}`;
+  const query = `?alternatives=${alternatives}&geometries=geojson&overview=full&steps=true${exclude}`;
   const bases = [ENV.osrmUrl, ENV.osrmFallbackUrl].filter(
     (u, i, arr) => typeof u === "string" && u.length > 0 && arr.indexOf(u) === i
   );
@@ -1222,11 +1231,8 @@ async function fetchOSRM(
       continue;
     }
   }
-  throw lastErr instanceof Error
-    ? lastErr
-    : new Error("OSRM unreachable");
+  throw lastErr instanceof Error ? lastErr : new Error("OSRM unreachable");
 }
-
 
 /**
  * M28: TomTom Routing with traffic=true for a live ETA (not only as OSRM fallback).
@@ -1247,7 +1253,10 @@ async function fetchTomTomLiveDuration(
     if (!res.ok) return null;
     const body = (await res.json()) as {
       routes?: Array<{
-        summary?: { travelTimeInSeconds?: number; trafficDelayInSeconds?: number };
+        summary?: {
+          travelTimeInSeconds?: number;
+          trafficDelayInSeconds?: number;
+        };
       }>;
     };
     const sec = body.routes?.[0]?.summary?.travelTimeInSeconds;
@@ -1387,11 +1396,7 @@ async function fetchBaseRoutes(
       surfacePromise,
       tomtomPromise,
     ]);
-    const merged = mergeRouteCandidates([
-      standard,
-      surface,
-      tomtom ?? [],
-    ]);
+    const merged = mergeRouteCandidates([standard, surface, tomtom ?? []]);
     if (merged.length === 0) {
       throw new TRPCError({
         code: "NOT_FOUND",
@@ -1465,8 +1470,7 @@ export function bottleneckScoreFromDensity(d: {
   congestionCount: number;
 }): number {
   // Diminishing returns so a single bad week doesn't max the score.
-  const raw =
-    d.incidentCount * 4 + d.majorOrWorse * 8 + d.congestionCount * 5;
+  const raw = d.incidentCount * 4 + d.majorOrWorse * 8 + d.congestionCount * 5;
   return Math.min(100, Math.round(raw));
 }
 
@@ -1591,10 +1595,7 @@ export async function fetchTomTomMatrix(
     const cells: MatrixCell[] = [];
     if (Array.isArray(body.data)) {
       for (const row of body.data) {
-        const summary =
-          row.routeSummary ??
-          row.routeResults?.[0] ??
-          null;
+        const summary = row.routeSummary ?? row.routeResults?.[0] ?? null;
         if (!summary) continue;
         cells.push({
           originIndex: row.originIndex ?? 0,
@@ -1914,9 +1915,7 @@ async function fetchTomTomRoutes(
       console.warn("[routePulse] TomTom routing returned 0 routes");
       return null;
     }
-    console.info(
-      `[routePulse] TomTom routing OK — ${routes.length} route(s)`
-    );
+    console.info(`[routePulse] TomTom routing OK — ${routes.length} route(s)`);
     return routes.map(r => {
       const coords: [number, number][] = [];
       for (const leg of r.legs ?? []) {
@@ -2194,7 +2193,11 @@ function deterministicPick(
   });
   const chosen = routes[best];
   if (!chosen) {
-    return { chosenIndex: 0, explanation: "Best available route.", confidence: "none" };
+    return {
+      chosenIndex: 0,
+      explanation: "Best available route.",
+      confidence: "none",
+    };
   }
   let pureTimeBest = 0;
   let pureTimeCost = Infinity;
@@ -2217,9 +2220,12 @@ function deterministicPick(
     const timeDelta = timeMin - pureMin;
     const parts: string[] = [];
     if (stressDelta >= 8) parts.push(`cuts stress by ~${stressDelta} pts`);
-    if (energyDelta >= 8) parts.push(`lower energy/effort (~${energyDelta} pts)`);
+    if (energyDelta >= 8)
+      parts.push(`lower energy/effort (~${energyDelta} pts)`);
     if (chosen.maneuverCount + 3 < pure.maneuverCount) {
-      parts.push(`fewer turns (${chosen.maneuverCount} vs ${pure.maneuverCount})`);
+      parts.push(
+        `fewer turns (${chosen.maneuverCount} vs ${pure.maneuverCount})`
+      );
     }
     if (chosen.pathStyle === "surface" && pure.pathStyle !== "surface") {
       parts.push("uses surface streets instead of the freeway");
@@ -2238,7 +2244,10 @@ function deterministicPick(
     if (avoidedLocal.length > 0) {
       parts.push(`avoids known local pain (${avoidedLocal[0]!.id})`);
     }
-    const why = parts.length > 0 ? parts.join(", ") : "avoids heavier congestion / incidents";
+    const why =
+      parts.length > 0
+        ? parts.join(", ")
+        : "avoids heavier congestion / incidents";
     explanation = `Chose a calmer option (+${Math.max(0, timeDelta)} min vs pure fastest) because it ${why}. Preference: ${preference}.`;
     const chosenLocalSummary = localKnowledgeSummary(
       matchLocalKnowledge(
@@ -2252,7 +2261,8 @@ function deterministicPick(
     );
     if (chosenLocalSummary && preference !== "fastest") {
       explanation = `${explanation} Local note: ${chosenLocalSummary.slice(0, 180)}`;
-      if (explanation.length > 480) explanation = explanation.slice(0, 477) + "...";
+      if (explanation.length > 480)
+        explanation = explanation.slice(0, 477) + "...";
     }
   } else if (flowDelay >= 3) {
     explanation = `Best route under ${preference} preference accounting for current traffic (measured ~${flowDelay} min slower than usual${chosen.incidentDelayMin > 0 ? `, plus ${chosen.incidentDelayMin} min for incidents` : ""}).`;
@@ -2466,7 +2476,10 @@ export async function getRoute(
   // Geocode first — the cache key and every downstream step depends on
   // resolved coordinates, and a bad address should fail fast with a clear
   // message rather than an OSRM "no route" error.
-  const stopList = stopAddresses.map(s => s.trim()).filter(s => s.length >= 3).slice(0, 8);
+  const stopList = stopAddresses
+    .map(s => s.trim())
+    .filter(s => s.length >= 3)
+    .slice(0, 8);
   if (!ENV.tomtomApiKey) {
     console.warn(
       "[routePulse] TOMTOM_API_KEY is empty at runtime — flow/routing/matrix/incidents will no-op"
@@ -2515,9 +2528,7 @@ export async function getRoute(
     stopPlan = {
       optimized: orderChanged,
       stops: order.map(i => ({ ...rawStops[i]!, originalIndex: i })),
-      estimatedMilesSaved: orderChanged
-        ? (milesFromMatrix ?? milesSaved)
-        : 0,
+      estimatedMilesSaved: orderChanged ? (milesFromMatrix ?? milesSaved) : 0,
     };
   } else if (rawStops.length > 0) {
     stopPlan = {
@@ -2562,7 +2573,8 @@ export async function getRoute(
             ...existing,
             ...dedupeIncidents(existing, near),
           ];
-          let liveDurationS = cached.route.liveDurationS ?? cached.route.duration;
+          let liveDurationS =
+            cached.route.liveDurationS ?? cached.route.duration;
           if (freshFlow && freshFlow.samples >= 2 && freshFlow.avgRatio > 0) {
             const clamped = Math.max(0.3, Math.min(1.15, freshFlow.avgRatio));
             liveDurationS = Math.round(cached.route.duration / clamped);
@@ -2725,7 +2737,10 @@ export async function getRoute(
         timeContext
       );
       const localPen = localKnowledgePenalties(localHits);
-      stressScore = Math.min(100, Math.round(stressScore + localPen.stress * 0.55));
+      stressScore = Math.min(
+        100,
+        Math.round(stressScore + localPen.stress * 0.55)
+      );
       bottleneckScore = Math.min(
         100,
         Math.round(bottleneckScore + localPen.bottleneck * 0.5)
@@ -2835,33 +2850,21 @@ export async function getRoute(
     0
   );
   const tomtomApis: Array<
-    | "routing"
-    | "matrix"
-    | "waypointOptimization"
-    | "flow"
-    | "incidents"
+    "routing" | "matrix" | "waypointOptimization" | "flow" | "incidents"
   > = [];
   if (tomtomIncidents.length > 0) tomtomApis.push("incidents");
   if (flowSamples > 0) tomtomApis.push("flow");
   if (typeof tomtomLiveDurationS === "number" && tomtomLiveDurationS > 0) {
     tomtomApis.push("routing");
   }
-  // Routing candidates also come from fetchTomTomRoutes inside fetchBaseRoutes
-  if (
-    baseRoutes.some(
-      r =>
-        // TomTom routes carry traffic-aware durations distinct from pure OSRM
-        // when merged; treat any successful live duration as routing used.
-        false
-    )
-  ) {
-    /* no-op — live duration covers routing receipt */
-  }
   if (tomtomMatrixUsed) tomtomApis.push("matrix");
   if (tomtomWaypointOptUsed) tomtomApis.push("waypointOptimization");
 
   const grounding =
-    tomtomIncidents.length + wazeAlerts.length + flowSamples + tomtomApis.length >
+    tomtomIncidents.length +
+      wazeAlerts.length +
+      flowSamples +
+      tomtomApis.length >
     0
       ? {
           tomtomIncidents: tomtomIncidents.length,
@@ -2898,7 +2901,9 @@ export async function getRoute(
     if (stressDelta >= 6) parts.push(`~${stressDelta} pts less stress`);
     if (energyDelta >= 6) parts.push(`~${energyDelta} pts less energy/effort`);
     if (bottleneckDelta >= 6)
-      parts.push(`historically clearer corridor (−${bottleneckDelta} bottleneck)`);
+      parts.push(
+        `historically clearer corridor (−${bottleneckDelta} bottleneck)`
+      );
     if (chosenRoute.pathStyle === "surface")
       parts.push("surface streets instead of the freeway");
     const detail =

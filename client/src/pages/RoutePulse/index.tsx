@@ -1,27 +1,10 @@
 /// <reference types="leaflet.markercluster" />
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Link } from "wouter";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Polyline,
-  Popup,
-  Circle,
-  CircleMarker,
-  ScaleControl,
-  ZoomControl,
-  useMap,
-  useMapEvents,
-} from "react-leaflet";
 import L, { type LatLngExpression, type LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
-// v17: marker clustering for the pre-search "every active incident/camera"
-// layer — see NOTE FOR KIMI near MapClusterGroup below for why this was
-// needed (unclustered map with statewide feeds gets unusable fast).
-import MarkerClusterGroup from "react-leaflet-cluster";
-import { RouteMap } from "./RouteMap";
+import { RouteMap, type BasemapKey } from "./RouteMap";
 import { softInvalidateSize } from "./mapInvalidate";
 import {
   googleMapsDirectionsUrl,
@@ -34,14 +17,10 @@ import {
   saveActiveTrip,
   clearActiveTrip,
   distanceToPolylineM,
-  OFF_ROUTE_THRESHOLD_M,
   type OfflineRouteSnapshot,
 } from "./routeOfflineStore";
-import {
-  buildRecalcPayload,
-  nextOffRouteStrikes,
-} from "./tripRecalc";
-import { warmTripTiles, clearTripTiles } from "./tileCache";
+import { buildRecalcPayload, nextOffRouteStrikes } from "./tripRecalc";
+import { warmTripTiles } from "./tileCache";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -336,27 +315,6 @@ const SEVERITY_BADGE: Record<string, string> = {
   critical: "bg-red-600/20 text-red-800 border-red-600/40 dark:text-red-400",
 };
 
-// Default view before any search: Portland, OR — the center of current
-// (OR / SW WA) incident coverage.
-const DEFAULT_CENTER: LatLngExpression = [45.5152, -122.6784];
-const DEFAULT_ZOOM = 10;
-
-// Free CARTO basemaps — no API key, just attribution. Meaningfully cleaner
-// than raw OpenStreetMap default tiles (less visual noise, better label
-// hierarchy), with a dark variant for a genuine Google-Maps-style toggle.
-const BASEMAPS = {
-  light: {
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  },
-  dark: {
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  },
-} as const;
-
 // Minutes of buffer each incident severity adds to the leave-by estimate.
 // Fallback only — v5+ responses carry a server-computed delayEstimateMin
 // (same numbers, computed in routePulse.service.ts) which takes precedence.
@@ -380,140 +338,21 @@ const LOCAL_RISK_WEIGHT: Record<string, number> = {
 const fmtTime = (d: Date) =>
   d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
-// Custom pin icons (avoid Leaflet's default marker image path, which breaks
-// under bundlers) — simple colored divs, no extra image assets to manage.
-function pinIcon(color: string, size = 16) {
-  return L.divIcon({
-    className: "",
-    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.3)"></div>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
-}
-const ORIGIN_ICON = pinIcon("#3b82f6");
-const DEST_ICON = pinIcon("#ef4444");
-/** A/B/C stop markers for multi-stop plans (M1). */
-const letterPinCache = new Map<string, L.DivIcon>();
-function letterPinIcon(letter: string, color = "#8b5cf6") {
-  const key = `${letter}|${color}`;
-  const hit = letterPinCache.get(key);
-  if (hit) return hit;
-  const icon = L.divIcon({
-    className: "",
-    html: `<div style="width:22px;height:22px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font:700 11px/1 system-ui,sans-serif;color:white">${letter}</div>`,
-    iconSize: [22, 22],
-    iconAnchor: [11, 11],
-  });
-  letterPinCache.set(key, icon);
-  return icon;
-}
-const USER_LOCATION_ICON = L.divIcon({
-  className: "",
-  html: `<div class="animate-pulse" style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 0 0 4px rgba(37,99,235,0.25)"></div>`,
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
-});
+// Severity legend colors — the actual incident markers render as
+// CircleMarkers in RouteMap.tsx (INCIDENT_COLORS/INCIDENT_RADIUS there);
+// this stays only for the legend swatches further down this file.
 const INCIDENT_ICON_COLOR: Record<string, string> = {
   minor: "#eab308",
   moderate: "#f97316",
   major: "#dc2626",
   critical: "#991b1b",
 };
-// v17: severity used to only change color, all four pins were the same
-// 14px dot — on a busy map a critical closure looked exactly as loud as a
-// minor hazard. Real map apps (Google/Waze included) size-code severity
-// too; critical also gets a soft pulsing ring so it's findable at a
-// glance even in a cluttered view, matching the same pulse language
-// already used for the live user-location dot elsewhere on this map.
-const INCIDENT_ICON_SIZE: Record<string, number> = {
-  minor: 12,
-  moderate: 15,
-  major: 18,
-  critical: 20,
-};
-const INCIDENT_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
-  Object.entries(INCIDENT_ICON_COLOR).map(([severity, color]) => {
-    const size = INCIDENT_ICON_SIZE[severity] ?? 14;
-    if (severity === "critical") {
-      const ringSize = size + 12;
-      return [
-        severity,
-        L.divIcon({
-          className: "",
-          html: `<div style="position:relative;width:${ringSize}px;height:${ringSize}px;display:flex;align-items:center;justify-content:center">
-            <div class="" style="position:absolute;width:${size}px;height:${size}px;border-radius:50%;background:${color};opacity:0.45"></div>
-            <div style="position:relative;width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.35)"></div>
-          </div>`,
-          iconSize: [ringSize, ringSize],
-          iconAnchor: [ringSize / 2, ringSize / 2],
-        }),
-      ];
-    }
-    return [severity, pinIcon(color, size)];
-  })
-);
 
 // v6: traffic camera layer.
 // Optional Cloudflare camera proxy (workers/routepulse-cam-proxy) — when
 // set, camera stills load through it so the ODOT TripCheck subscription key
 // stays server-side. When unset we load the stills directly (works for the
 // camera hosts that don't require the key header).
-const CAM_PROXY: string =
-  (import.meta.env.VITE_ROUTEPULSE_CAM_PROXY as string | undefined) ?? "";
-
-function camImg(url: string | null | undefined): string | null {
-  if (!url) return null;
-  return CAM_PROXY ? `${CAM_PROXY}/img?u=${encodeURIComponent(url)}` : url;
-}
-
-const CAMERA_ICON = L.divIcon({
-  className: "",
-  html: `<div style="width:18px;height:18px;border-radius:50%;background:#7c3aed;border:2px solid white;box-shadow:0 0 0 1px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;line-height:1">📷</div>`,
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-});
-
-// v17: cluster bubble icons for the pre-search "every active incident/
-// camera" layers (see MarkerClusterGroup usage below). Incident clusters
-// take the color of the worst severity inside them, so a cluster hiding a
-// critical incident still reads as urgent at a glance instead of looking
-// like an ordinary gray blob.
-const SEVERITY_RANK: Record<string, number> = {
-  critical: 3,
-  major: 2,
-  moderate: 1,
-  minor: 0,
-};
-function clusterBubble(count: number, color: string, size: number) {
-  return L.divIcon({
-    className: "",
-    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:${size > 40 ? 13 : 11}px;font-family:inherit">${count}</div>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
-}
-function incidentClusterIcon(cluster: L.MarkerCluster) {
-  const count = cluster.getChildCount();
-  let worst = "minor";
-  for (const m of cluster.getAllChildMarkers()) {
-    // markers were built with pinIcon()/INCIDENT_ICONS above, which don't
-    // carry severity as marker data — options.icon identity is the
-    // cheapest way back to it without threading extra state through
-    // react-leaflet's Marker props.
-    const icon = (m as L.Marker).options.icon;
-    const entry = Object.entries(INCIDENT_ICONS).find(([, i]) => i === icon);
-    const sev = entry?.[0] ?? "minor";
-    if ((SEVERITY_RANK[sev] ?? 0) > (SEVERITY_RANK[worst] ?? 0)) worst = sev;
-  }
-  const size = count >= 25 ? 44 : count >= 10 ? 38 : 32;
-  return clusterBubble(count, INCIDENT_ICON_COLOR[worst] ?? "#eab308", size);
-}
-function cameraClusterIcon(cluster: L.MarkerCluster) {
-  const count = cluster.getChildCount();
-  const size = count >= 25 ? 40 : count >= 10 ? 34 : 28;
-  return clusterBubble(count, "#7c3aed", size);
-}
-
 // Human labels for the incident feed sources (migration 0053 widened the
 // source set to include NWS + WSDOT).
 const SOURCE_LABEL: Record<string, string> = {
@@ -660,7 +499,6 @@ function slimLatLngLine(
   return out;
 }
 
-
 /**
  * Shared Canvas renderer for all route vectors.
  * One renderer → one canvas element → far less compositing than SVG paths.
@@ -668,65 +506,12 @@ function slimLatLngLine(
  * tolerance is in px at current zoom — higher = more aggressive line simplify.
  */
 
-/** After map create: keep canvas crisp on resize without full SVG fallback. */
-function MapCanvasPerf() {
-  const map = useMap();
-  useEffect(() => {
-    let t: ReturnType<typeof setTimeout> | null = null;
-    const onResize = () => {
-      // Debounced — raw resize→invalidateSize→moveend loops caused zoom jitter.
-      if (t) clearTimeout(t);
-      t = setTimeout(() => {
-        try {
-          map.invalidateSize({ animate: false, pan: false });
-        } catch {
-          /* ignore */
-        }
-      }, 200);
-    };
-    map.on("resize", onResize);
-    return () => {
-      if (t) clearTimeout(t);
-      map.off("resize", onResize);
-    };
-  }, [map]);
-  return null;
-}
-
-function createRouteCanvasRenderer(): L.Canvas {
-  const dpr =
-    typeof window !== "undefined" ? Math.min(window.devicePixelRatio || 1, 2) : 1;
-  // Mobile: slightly higher tolerance (cheaper redraw). Desktop: sharper lines.
-  const mobile =
-    typeof window !== "undefined" &&
-    window.matchMedia("(max-width: 640px)").matches;
-  return L.canvas({
-    padding: 0.5,
-    tolerance: mobile ? 1.25 / dpr : 0.6 / dpr,
-  });
-}
-
-function routePathDefaults(extra: L.PathOptions = {}): L.PathOptions {
-  return {
-    interactive: false,
-    bubblingMouseEvents: false,
-    // smoothFactor: Leaflet drops intermediate pts when zoomed out
-    smoothFactor: 1.5,
-    ...extra,
-  };
-}
-
-
-
-
-
 /** Prefer "SE Lambert St" over the full Nominatim blob. */
 function shortPlaceName(name: string | null | undefined, max = 42): string {
   if (!name) return "";
   const first = name.split(",")[0]?.trim() || name;
   return first.length > max ? first.slice(0, max - 1) + "…" : first;
 }
-
 
 /** Great-circle distance in meters between two lat/lng fixes. */
 function haversineM(
@@ -757,20 +542,6 @@ function bearingDeg(
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
-/**
- * Direction-of-travel cone behind the blue dot (Google Maps style). The
- * triangle's apex sits at the dot and the cone widens in the heading
- * direction; the whole div rotates around the apex.
- */
-function headingConeIcon(deg: number) {
-  return L.divIcon({
-    className: "",
-    html: `<div style="width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:36px solid rgba(37,99,235,0.30);transform:rotate(${deg}deg);transform-origin:50% 100%"></div>`,
-    iconSize: [32, 36],
-    iconAnchor: [16, 36],
-  });
-}
-
 /** Shared Nominatim reverse-geocoder — map clicks and the "use current
  *  location" button both resolve coordinates to an address through this. */
 async function reverseGeocode(
@@ -795,157 +566,12 @@ async function reverseGeocode(
   }
 }
 
-/**
- * Handles map clicks for reverse-geocoding origin/destination.
- * Clicking the map when an input is empty sets that point via reverse geocode.
- */
-function MapClickHandler({
-  onSetAddress,
-  disabled,
-}: {
-  onSetAddress: (address: string) => void;
-  disabled?: boolean;
-}) {
-  useMapEvents({
-    click: async e => {
-      if (disabled) return;
-      const { lat, lng } = e.latlng;
-      const addr = await reverseGeocode(lat, lng);
-      if (addr) {
-        onSetAddress(addr);
-        toast.success("Location set from map click");
-      }
-    },
-  });
-  return null;
-}
-
-/**
- * Any user-initiated drag: detaches follow-me mode (Google Maps behavior —
- * tracking continues, the locate button then offers one-tap re-center) and
- * suspends auto-fit so the periodic incident refresh can't yank the map
- * away from wherever the user is looking.
- */
-function MapInteractionHandler({ onDrag }: { onDrag: () => void }) {
-  useMapEvents({
-    dragstart: () => onDrag(),
-  });
-  return null;
-}
-
 type ViewportBbox = {
   minLat: number;
   minLng: number;
   maxLat: number;
   maxLng: number;
 };
-
-/**
- * v17: reports the current map viewport bounds (padded) so the always-on
- * incident/camera layer can be geofenced instead of pulling the whole
- * state — see server/routers/routePulse/index.ts's listIncidents/
- * listCameras bbox param. Debounced 500ms on moveend so a fast pan/zoom
- * sequence doesn't fire a query per frame, and padded 25% on every side
- * so incidents just outside the visible edge are already loaded before
- * they'd otherwise pop in in mid-pan.
- */
-function MapViewportTracker({
-  onChange,
-  enabled = true,
-}: {
-  onChange: (bbox: ViewportBbox) => void;
-  /** When false (e.g. active route), stop bbox churn that refetches layers. */
-  enabled?: boolean;
-}) {
-  const map = useMap();
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastRef = useRef<ViewportBbox | null>(null);
-
-  const report = () => {
-    if (!enabled) return;
-    const b = map.getBounds().pad(0.2);
-    const next: ViewportBbox = {
-      minLat: b.getSouth(),
-      minLng: b.getWest(),
-      maxLat: b.getNorth(),
-      maxLng: b.getEast(),
-    };
-    const prev = lastRef.current;
-    if (prev) {
-      const dLat = Math.abs(prev.minLat - next.minLat) + Math.abs(prev.maxLat - next.maxLat);
-      const dLng = Math.abs(prev.minLng - next.minLng) + Math.abs(prev.maxLng - next.maxLng);
-      // Ignore tiny pans (sub-pixel jitter / rubber-band).
-      if (dLat + dLng < 0.02) return;
-    }
-    lastRef.current = next;
-    onChange(next);
-  };
-
-  useEffect(() => {
-    if (!enabled) return;
-    report();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, enabled]);
-
-  useMapEvents({
-    moveend: () => {
-      if (!enabled) return;
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(report, 750);
-    },
-  });
-
-  useEffect(
-    () => () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    },
-    []
-  );
-
-  return null;
-}
-
-/** Flies to the given bounds whenever they change — unless the user has
- *  taken manual control of the viewport (skipAutoFit), in which case the
- *  map stays put until the next search resets the flag. */
-function FitBounds({
-  bounds,
-  fitKey,
-  skipAutoFit,
-}: {
-  bounds: LatLngBoundsExpression | null;
-  /** Stable key for this plan — fit at most once per key. */
-  fitKey: string | null;
-  skipAutoFit: React.MutableRefObject<boolean>;
-}) {
-  const map = useMap();
-  const fittedKeyRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!bounds || !fitKey || skipAutoFit.current) return;
-    if (fittedKeyRef.current === fitKey) return;
-    fittedKeyRef.current = fitKey;
-
-    const mobile =
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 640px)").matches;
-    const pad: [number, number] = mobile ? [36, 36] : [48, 48];
-    // Always non-animated fit — flyToBounds chains with resize and feels like
-    // the map is "reloading" while zooming out.
-    map.fitBounds(bounds, {
-      padding: pad,
-      maxZoom: mobile ? 13 : 14,
-      animate: false,
-    });
-  }, [bounds, fitKey, map, skipAutoFit]);
-
-  // New search resets the "already fitted" guard via fitKey change above.
-  useEffect(() => {
-    if (!fitKey) fittedKeyRef.current = null;
-  }, [fitKey]);
-
-  return null;
-}
 
 /** M1: single plain-language difference vs the recommended route. */
 function routeOneLineDifference(
@@ -1006,7 +632,12 @@ export default function RoutePulse() {
   const [preference, setPreference] = useState<RoutePreference>(() => {
     try {
       const v = localStorage.getItem("routepulse:preference");
-      if (v === "fastest" || v === "balanced" || v === "quiet" || v === "fuel") {
+      if (
+        v === "fastest" ||
+        v === "balanced" ||
+        v === "quiet" ||
+        v === "fuel"
+      ) {
         return v;
       }
     } catch {
@@ -1029,7 +660,7 @@ export default function RoutePulse() {
   // the floating toggle still overrides it independently per-map after
   // that, same as before.
   const { theme: appTheme } = useTheme();
-  const [basemap, setBasemap] = useState<keyof typeof BASEMAPS>(appTheme);
+  const [basemap, setBasemap] = useState<BasemapKey>(appTheme);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [userLocation, setUserLocation] = useState<LatLngExpression | null>(
     null
@@ -1042,7 +673,12 @@ export default function RoutePulse() {
   const [follow, setFollow] = useState(false);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   // v8: direction of travel for the heading cone (null when stationary).
-  const [heading, setHeading] = useState<number | null>(null);
+  // NOTE: the actual cone marker (headingConeIcon) was dropped when map
+  // rendering moved into RouteMap.tsx and was never re-added there — this
+  // is computed but currently has no consumer. Prefixed rather than
+  // deleted so the GPS-bearing derivation below survives for whoever
+  // restores the cone marker in RouteMap.tsx.
+  const [_heading, setHeading] = useState<number | null>(null);
   // v4: arrive-by planner + alternative-route preview on the map.
   const [arriveBy, setArriveBy] = useState("");
   const [previewIdx, setPreviewIdx] = useState<number | null>(null);
@@ -1065,7 +701,8 @@ export default function RoutePulse() {
   const [offRoute, setOffRoute] = useState(false);
   /** Nearby metro feed — collapsed once a route is on screen (M1 polish). */
   const [nearbyOpen, setNearbyOpen] = useState(true);
-  const [offlineSnapshot, setOfflineSnapshot] = useState<OfflineRouteSnapshot | null>(null);
+  const [offlineSnapshot, setOfflineSnapshot] =
+    useState<OfflineRouteSnapshot | null>(null);
   const offRouteStrikesRef = useRef(0);
   /** When true, next submitted change is a GPS recalculate — keep trip mode. */
   const recalcPreserveTripRef = useRef(false);
@@ -1155,7 +792,11 @@ export default function RoutePulse() {
     const urlPref = params.get("pref");
     const urlStops = params.get("stops");
     const stopList = urlStops
-      ? urlStops.split("|").map(s => s.trim()).filter(s => s.length >= 3).slice(0, 8)
+      ? urlStops
+          .split("|")
+          .map(s => s.trim())
+          .filter(s => s.length >= 3)
+          .slice(0, 8)
       : [];
     if (urlOrigin) setOrigin(urlOrigin);
     if (urlDestination) setDestination(urlDestination);
@@ -1283,9 +924,6 @@ export default function RoutePulse() {
   const lastGpsUiAtRef = useRef(0);
   const tripActiveRef = useRef(false);
 
-  // One Canvas for all polylines/circles — must be stable across renders.
-  const routeCanvasRenderer = useMemo(() => createRouteCanvasRenderer(), []);
-
   const routeQuery = trpc.routePulse.getRoute.useQuery(submitted!, {
     enabled: !!submitted,
     retry: false,
@@ -1386,7 +1024,7 @@ export default function RoutePulse() {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-    const handleShareRoute = async () => {
+  const handleShareRoute = async () => {
     const url = window.location.href;
     try {
       await navigator.clipboard.writeText(url);
@@ -1801,7 +1439,7 @@ export default function RoutePulse() {
   };
 
   /** M2: re-route from current GPS without silent auto-loop. */
-  const handleRecalculateFromHere = () => {
+  const handleRecalculateFromHere = async () => {
     if (!submitted) {
       toast.error("No active route to recalculate");
       return;
@@ -1826,12 +1464,16 @@ export default function RoutePulse() {
       toast.error(msg);
       return;
     }
-    setOrigin(built.payload.origin);
+    // Show a readable place name instead of raw coordinates while
+    // recalculating — same reverse-geocode path as "use current location".
+    const resolvedOrigin =
+      (await reverseGeocode(lat, lng)) ?? built.payload.origin;
+    setOrigin(resolvedOrigin);
     setOffRoute(false);
     offRouteStrikesRef.current = 0;
     recalcPreserveTripRef.current = true;
     setSubmitted({
-      origin: built.payload.origin,
+      origin: resolvedOrigin,
       destination: built.payload.destination,
       preference: built.payload.preference as typeof submitted.preference,
       stops: built.payload.stops,
@@ -2056,7 +1698,8 @@ export default function RoutePulse() {
     const pts = (flow?.points ?? []).filter(p => p.ratio !== null || p.closed);
     // Mobile: fewer CircleMarkers = less lag (color still on segment lines).
     const isMobile =
-      typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches;
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 640px)").matches;
     if (isMobile && pts.length > 4) {
       const step = Math.ceil(pts.length / 4);
       return pts.filter((_, i) => i % step === 0);
@@ -2149,15 +1792,6 @@ export default function RoutePulse() {
     [routeQuery.data]
   );
 
-  // All known cameras for the pre-search live layer.
-  const activeCameras = useMemo(
-    () =>
-      ((camerasQuery.data as any[] | undefined) ?? []).filter(
-        c => Number.isFinite(c?.lat) && Number.isFinite(c?.lng)
-      ),
-    [camerasQuery.data]
-  );
-
   // Fit ONLY to an explicit plan. Never to statewide incident clouds —
   // that caused continuous zoom-out on load as markers streamed in.
   const mapBounds: LatLngBoundsExpression | null = useMemo(() => {
@@ -2197,9 +1831,7 @@ export default function RoutePulse() {
             : coords;
         return {
           key: `alt-${idx}`,
-          positions: slim.map(
-            ([lng, lat]) => [lat, lng] as LatLngExpression
-          ),
+          positions: slim.map(([lng, lat]) => [lat, lng] as LatLngExpression),
         };
       })
       .filter(Boolean) as Array<{ key: string; positions: LatLngExpression[] }>;
@@ -2262,13 +1894,14 @@ export default function RoutePulse() {
     const cams = ((camerasQuery.data as any[]) ?? []).filter(
       c => Number.isFinite(c?.lat) && Number.isFinite(c?.lng)
     );
-    if (!viewportBbox) return cams.slice(0, 80).map(c => ({
-      id: String(c.id),
-      lat: c.lat as number,
-      lng: c.lng as number,
-      name: c.name as string | undefined,
-      url: c.url as string | undefined,
-    }));
+    if (!viewportBbox)
+      return cams.slice(0, 80).map(c => ({
+        id: String(c.id),
+        lat: c.lat as number,
+        lng: c.lng as number,
+        name: c.name as string | undefined,
+        url: c.url as string | undefined,
+      }));
     const { minLat, minLng, maxLat, maxLng } = viewportBbox;
     return cams
       .filter(
@@ -2307,7 +1940,6 @@ export default function RoutePulse() {
       })
       .slice(0, 12);
   }, [transitQuery.data, routeLine]);
-
 
   // Risk: prefer the server's deterministic 0-100 score (v5+). Pre-v5
   // cached responses (2-min TTL) lack it — fall back to the same weights
@@ -2501,13 +2133,12 @@ export default function RoutePulse() {
     if (routeQuery.isFetching) setSearchCollapsed(true);
   }, [routeQuery.isFetching]);
   // Leaflet must remeasure when sheet height changes or map tiles look offset.
-  
+
   // Mobile: lock page scroll while the route sheet is expanded so Safari
   // doesn't rubber-band the whole tool under the sheet.
   useEffect(() => {
     if (typeof document === "undefined") return;
-    const mobile =
-      window.matchMedia("(max-width: 640px)").matches;
+    const mobile = window.matchMedia("(max-width: 640px)").matches;
     if (!mobile || !sheetExpanded) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -2541,40 +2172,6 @@ export default function RoutePulse() {
   useEffect(() => {
     if (hasRoute) setNearbyOpen(false);
   }, [hasRoute]);
-
-  // Shared camera marker + popup for both the pre-search live layer and the
-  // on-route layer. Camera stills 404 / go stale often, so broken images
-  // hide themselves rather than showing a broken-image tile.
-  const cameraMarker = (cam: any) => (
-    <Marker
-      key={`cam-${cam.id}`}
-      position={[cam.lat, cam.lng]}
-      icon={CAMERA_ICON}
-    >
-      <Popup>
-        <div className="text-sm space-y-1.5 max-w-[240px]">
-          {cam.description && (
-            <p className="font-medium leading-snug">{cam.description}</p>
-          )}
-          {camImg(cam.image_url ?? cam.thumbnail_url) && (
-            <img
-              src={camImg(cam.image_url ?? cam.thumbnail_url)!}
-              alt={cam.description ?? "Traffic camera snapshot"}
-              loading="lazy"
-              referrerPolicy="no-referrer"
-              className="rounded-md w-full h-auto"
-              onError={e => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-          )}
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            ODOT TripCheck · live snapshot
-          </p>
-        </div>
-      </Popup>
-    </Marker>
-  );
 
   // v9: one steps list, two homes — the desktop result-card panel and the
   // mobile bottom sheet. Tapping a step flies the map to the maneuver (and
@@ -2621,7 +2218,10 @@ export default function RoutePulse() {
         }
         description={
           hasRoute
-            ? `${Math.round(displayDurationS(routeQuery.data!.route) / 60)} min drive (${(routeQuery.data!.route.distance / 1609.34).toFixed(1)} mi). ${routeQuery.data!.route.incidents.length} incident${routeQuery.data!.route.incidents.length === 1 ? "" : "s"} on path. ${routeQuery.data!.explanation}`.slice(0, 160)
+            ? `${Math.round(displayDurationS(routeQuery.data!.route) / 60)} min drive (${(routeQuery.data!.route.distance / 1609.34).toFixed(1)} mi). ${routeQuery.data!.route.incidents.length} incident${routeQuery.data!.route.incidents.length === 1 ? "" : "s"} on path. ${routeQuery.data!.explanation}`.slice(
+                0,
+                160
+              )
             : "Free tool for gig drivers: check a route for live incidents and get an AI explanation of what to watch for before you drive. No account required, built on OpenStreetMap."
         }
         canonical={
@@ -2698,44 +2298,61 @@ export default function RoutePulse() {
           </div>
         )}
 
-        <header className="mb-3 sm:mb-8 hidden sm:block">
-          <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
-            Free Tool · Route Intelligence
-          </p>
+        {/* Desktop map-first layout: the full marketing hero (tagline,
+            gold rule, description) only earns its space before a route
+            exists — once `hasRoute`, the map should be the thing the
+            desktop viewport is spent on, so this collapses to a slim
+            title strip instead of ~200px of chrome sitting above it. */}
+        <header className={`hidden sm:block ${hasRoute ? "mb-3" : "mb-8"}`}>
+          {!hasRoute && (
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
+              Free Tool · Route Intelligence
+            </p>
+          )}
           <h1
             style={{ fontFamily: '"Cinzel", serif' }}
-            className="text-3xl sm:text-4xl font-semibold tracking-tight mb-4 flex items-center gap-3"
+            className={`font-semibold tracking-tight flex items-center gap-3 ${
+              hasRoute ? "text-xl mb-0" : "text-3xl sm:text-4xl mb-4"
+            }`}
           >
-            <Navigation className="w-8 h-8 shrink-0 text-primary" />
+            <Navigation
+              className={`shrink-0 text-primary ${hasRoute ? "w-5 h-5" : "w-8 h-8"}`}
+            />
             RoutePulse
           </h1>
-          {/* Illuminated rule — the same gold-on-stone language used
-              elsewhere on the site (see --gold-illuminate in index.css),
-              previously absent here so RoutePulse's header read as a
-              generic bolded h1 rather than matching the rest of the
-              site's identity. */}
-          <div
-            className="h-px w-24 mb-4"
-            style={{
-              background:
-                "linear-gradient(90deg, var(--gold-illuminate), transparent)",
-            }}
-          />
-          <p className="text-lg text-muted-foreground">
-            Routes that factor traffic, accidents, roadwork, and bottlenecks —
-            then pick the option that saves time, energy, and stress.{" "}
-            <strong className="text-foreground">
-              Choose Balanced, Quiet, Fuel, or Fastest
-            </strong>{" "}
-            and take the backroads when they win.
-          </p>
+          {!hasRoute && (
+            <>
+              {/* Illuminated rule — the same gold-on-stone language used
+                  elsewhere on the site (see --gold-illuminate in
+                  index.css), previously absent here so RoutePulse's
+                  header read as a generic bolded h1 rather than
+                  matching the rest of the site's identity. */}
+              <div
+                className="h-px w-24 mb-4"
+                style={{
+                  background:
+                    "linear-gradient(90deg, var(--gold-illuminate), transparent)",
+                }}
+              />
+              <p className="text-lg text-muted-foreground">
+                Routes that factor traffic, accidents, roadwork, and bottlenecks
+                — then pick the option that saves time, energy, and stress.{" "}
+                <strong className="text-foreground">
+                  Choose Balanced, Quiet, Fuel, or Fastest
+                </strong>{" "}
+                and take the backroads when they win.
+              </p>
+            </>
+          )}
         </header>
 
         {/* Full-bleed immersive map — breaks out of the tool's content
             column on purpose so it reads as the hero of the page, not a
             small embed. Always live with active incidents, even before a
             route is searched. */}
-        <div className={`relative left-1/2 right-1/2 -mx-[50vw] w-screen ${hasRoute ? "mb-0 sm:mb-8" : "mb-6 sm:mb-8"}`}>
+        <div
+          className={`relative left-1/2 right-1/2 -mx-[50vw] w-screen ${hasRoute ? "mb-0 sm:mb-8" : "mb-6 sm:mb-8"}`}
+        >
           <div
             ref={mapWrapperRef}
             className={
@@ -2906,59 +2523,114 @@ export default function RoutePulse() {
                 v20: fully hidden during trip mode so guidance + road own the
                 screen. */}
             {!tripActive && (
-            <Card
-              className={`absolute z-[400] top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-auto sm:w-[300px] lg:w-[320px] bg-background/95 sm:backdrop-blur-md shadow-xl border rounded-xl touch-manipulation ${
-                searchCollapsed && hasRoute
-                  ? "p-2.5 sm:p-3"
-                  : "p-3 sm:p-3.5 max-h-[min(42dvh,380px)] overflow-y-auto overscroll-contain sm:max-h-[min(70vh,640px)]"
-              }`}
-            >
-              {searchCollapsed && hasRoute ? (
-                <button
-                  type="button"
-                  onClick={() => setSearchCollapsed(false)}
-                  title="Edit this search"
-                  className="flex w-full items-center gap-2 text-left min-h-[44px] touch-manipulation active:opacity-80"
-                >
-                  <RouteIcon className="w-4 h-4 shrink-0 text-primary" />
-                  <span className="flex-1 truncate text-sm">
-                    {shortPlaceName(
-                      routeQuery.data?.origin?.displayName || origin
-                    )}{" "}
-                    <span className="text-muted-foreground">→</span>{" "}
-                    {shortPlaceName(
-                      routeQuery.data?.destination?.displayName || destination
+              <Card
+                className={`absolute z-[400] top-2 left-2 right-2 sm:top-4 sm:left-4 sm:right-auto sm:w-[300px] lg:w-[320px] bg-background/95 sm:backdrop-blur-md shadow-xl border rounded-xl touch-manipulation ${
+                  searchCollapsed && hasRoute
+                    ? "p-2.5 sm:p-3"
+                    : "p-3 sm:p-3.5 max-h-[min(42dvh,380px)] overflow-y-auto overscroll-contain sm:max-h-[min(70vh,640px)]"
+                }`}
+              >
+                {searchCollapsed && hasRoute ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearchCollapsed(false)}
+                    title="Edit this search"
+                    className="flex w-full items-center gap-2 text-left min-h-[44px] touch-manipulation active:opacity-80"
+                  >
+                    <RouteIcon className="w-4 h-4 shrink-0 text-primary" />
+                    <span className="flex-1 truncate text-sm">
+                      {shortPlaceName(
+                        routeQuery.data?.origin?.displayName || origin
+                      )}{" "}
+                      <span className="text-muted-foreground">→</span>{" "}
+                      {shortPlaceName(
+                        routeQuery.data?.destination?.displayName || destination
+                      )}
+                    </span>
+                    <Pencil className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                  </button>
+                ) : (
+                  <>
+                    {hasRoute && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchCollapsed(true)}
+                        title="Collapse search"
+                        aria-label="Collapse search"
+                        className="absolute top-2 right-2 w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                      >
+                        <ChevronUp className="w-4 h-4" />
+                      </button>
                     )}
-                  </span>
-                  <Pencil className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                </button>
-              ) : (
-                <>
-                  {hasRoute && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchCollapsed(true)}
-                      title="Collapse search"
-                      aria-label="Collapse search"
-                      className="absolute top-2 right-2 w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
-                    >
-                      <ChevronUp className="w-4 h-4" />
-                    </button>
-                  )}
-                  {/* Saved routes — driver-pinned favorites, always on top */}
-                  {!hasRoute && starred.length > 0 && (
-                    <div className="mb-3 pb-3 border-b border-border/50">
-                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1 mb-1.5">
-                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        Saved
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {starred.map((r, i) => (
-                          <span
-                            key={i}
-                            className="inline-flex items-center rounded-full bg-yellow-500/10 border border-yellow-500/20 max-w-full"
+                    {/* Saved routes — driver-pinned favorites, always on top */}
+                    {!hasRoute && starred.length > 0 && (
+                      <div className="mb-3 pb-3 border-b border-border/50">
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1 mb-1.5">
+                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                          Saved
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {starred.map((r, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center rounded-full bg-yellow-500/10 border border-yellow-500/20 max-w-full"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOrigin(r.origin);
+                                  setDestination(r.destination);
+                                  setSubmitted({
+                                    origin: r.origin,
+                                    destination: r.destination,
+                                    preference,
+                                    stops: [],
+                                  });
+                                }}
+                                className="text-[11px] pl-2 py-1 hover:text-foreground transition-colors truncate"
+                                title={`${r.origin} → ${r.destination}`}
+                              >
+                                {r.origin.slice(0, 18)}
+                                {r.origin.length > 18 ? "…" : ""} →{" "}
+                                {r.destination.slice(0, 18)}
+                                {r.destination.length > 18 ? "…" : ""}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  unstarRoute(r.origin, r.destination)
+                                }
+                                className="px-1.5 py-1 text-muted-foreground hover:text-destructive transition-colors"
+                                title="Remove saved route"
+                                aria-label={`Remove saved route ${r.origin} to ${r.destination}`}
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Recent routes — one-tap re-check, no typing on mobile */}
+                    {!hasRoute && recent.length > 0 && (
+                      <div className="mb-3 pb-3 border-b border-border/50">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1">
+                            <History className="w-3 h-3" />
+                            Recent
+                          </span>
+                          <button
+                            type="button"
+                            onClick={clearRoutes}
+                            className="text-[10px] text-muted-foreground hover:text-destructive transition-colors"
                           >
+                            Clear
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {recent.map((r, i) => (
                             <button
+                              key={i}
                               type="button"
                               onClick={() => {
                                 setOrigin(r.origin);
@@ -2970,7 +2642,7 @@ export default function RoutePulse() {
                                   stops: [],
                                 });
                               }}
-                              className="text-[11px] pl-2 py-1 hover:text-foreground transition-colors truncate"
+                              className="text-[11px] px-2 py-1 rounded-full bg-muted hover:bg-accent transition-colors truncate max-w-full"
                               title={`${r.origin} → ${r.destination}`}
                             >
                               {r.origin.slice(0, 18)}
@@ -2978,330 +2650,277 @@ export default function RoutePulse() {
                               {r.destination.slice(0, 18)}
                               {r.destination.length > 18 ? "…" : ""}
                             </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                unstarRoute(r.origin, r.destination)
-                              }
-                              className="px-1.5 py-1 text-muted-foreground hover:text-destructive transition-colors"
-                              title="Remove saved route"
-                              aria-label={`Remove saved route ${r.origin} to ${r.destination}`}
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </span>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {/* Recent routes — one-tap re-check, no typing on mobile */}
-                  {!hasRoute && recent.length > 0 && (
-                    <div className="mb-3 pb-3 border-b border-border/50">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1">
-                          <History className="w-3 h-3" />
-                          Recent
-                        </span>
-                        <button
-                          type="button"
-                          onClick={clearRoutes}
-                          className="text-[10px] text-muted-foreground hover:text-destructive transition-colors"
-                        >
-                          Clear
-                        </button>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {recent.map((r, i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() => {
-                              setOrigin(r.origin);
-                              setDestination(r.destination);
-                              setSubmitted({
-                                origin: r.origin,
-                                destination: r.destination,
-                                preference,
-                                stops: [],
-                              });
-                            }}
-                            className="text-[11px] px-2 py-1 rounded-full bg-muted hover:bg-accent transition-colors truncate max-w-full"
-                            title={`${r.origin} → ${r.destination}`}
-                          >
-                            {r.origin.slice(0, 18)}
-                            {r.origin.length > 18 ? "…" : ""} →{" "}
-                            {r.destination.slice(0, 18)}
-                            {r.destination.length > 18 ? "…" : ""}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {/* v10: location onboarding CTA — one tap triggers the native
+                    )}
+                    {/* v10: location onboarding CTA — one tap triggers the native
                   permission prompt via handleLocateMe(). Only shown before
                   a first route search, before we have a fix, and while the
                   driver hasn't dismissed it or already denied permission. */}
-                  {!hasRoute &&
-                    !userLocation &&
-                    !locationPromptDismissed &&
-                    geoPermission !== "denied" && (
-                      <div className="mb-3 flex items-start gap-2.5 rounded-md border border-blue-500/20 bg-blue-500/5 px-3 py-2.5">
-                        <LocateFixed className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium">
-                            Enable location for one-tap routes
-                          </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            Find your position automatically and set it as your
-                            origin instantly.
-                          </p>
+                    {!hasRoute &&
+                      !userLocation &&
+                      !locationPromptDismissed &&
+                      geoPermission !== "denied" && (
+                        <div className="mb-3 flex items-start gap-2.5 rounded-md border border-blue-500/20 bg-blue-500/5 px-3 py-2.5">
+                          <LocateFixed className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium">
+                              Enable location for one-tap routes
+                            </p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              Find your position automatically and set it as
+                              your origin instantly.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={handleEnableLocation}
+                              className="mt-2 inline-flex items-center min-h-[40px] px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold active:scale-95 touch-manipulation"
+                            >
+                              Enable location
+                            </button>
+                          </div>
                           <button
                             type="button"
-                            onClick={handleEnableLocation}
-                            className="mt-2 inline-flex items-center min-h-[40px] px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold active:scale-95 touch-manipulation"
+                            onClick={dismissLocationPrompt}
+                            title="Dismiss"
+                            aria-label="Dismiss location prompt"
+                            className="shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
                           >
-                            Enable location
+                            <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
+                      )}
+
+                    <form onSubmit={handleSubmit} className="space-y-3">
+                      <AddressInput
+                        id="routepulse-origin"
+                        label="Origin"
+                        placeholder="123 SW Broadway, Portland, OR"
+                        value={origin}
+                        onChange={setOrigin}
+                        pinColor="blue"
+                        name="routepulse-origin-query"
+                      />
+
+                      {/* v7: one-tap "route from where I am" once we have a fix */}
+                      {userLocation && (
                         <button
                           type="button"
-                          onClick={dismissLocationPrompt}
-                          title="Dismiss"
-                          aria-label="Dismiss location prompt"
-                          className="shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                          onClick={handleUseCurrentAsOrigin}
+                          className="flex items-center gap-1.5 text-xs text-primary hover:underline py-0.5"
+                          title="Reverse-geocode your live position into the origin field"
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <LocateFixed className="w-3.5 h-3.5" />
+                          Use current location as origin
                         </button>
-                      </div>
-                    )}
+                      )}
 
-                  <form onSubmit={handleSubmit} className="space-y-3">
-                    <AddressInput
-                      id="routepulse-origin"
-                      label="Origin"
-                      placeholder="123 SW Broadway, Portland, OR"
-                      value={origin}
-                      onChange={setOrigin}
-                      pinColor="blue"
-                      name="routepulse-origin-query"
-                    />
+                      <AddressInput
+                        id="routepulse-destination"
+                        label="Destination"
+                        placeholder="800 SE 10th Ave, Portland, OR"
+                        value={destination}
+                        onChange={setDestination}
+                        pinColor="red"
+                        name="routepulse-destination-query"
+                      />
 
-                    {/* v7: one-tap "route from where I am" once we have a fix */}
-                    {userLocation && (
+                      {/* Swap button — mobile-optimized touch target */}
                       <button
                         type="button"
-                        onClick={handleUseCurrentAsOrigin}
-                        className="flex items-center gap-1.5 text-xs text-primary hover:underline py-0.5"
-                        title="Reverse-geocode your live position into the origin field"
+                        onClick={handleSwap}
+                        className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+                        title="Swap origin and destination"
                       >
-                        <LocateFixed className="w-3.5 h-3.5" />
-                        Use current location as origin
-                      </button>
-                    )}
-
-                    <AddressInput
-                      id="routepulse-destination"
-                      label="Destination"
-                      placeholder="800 SE 10th Ave, Portland, OR"
-                      value={destination}
-                      onChange={setDestination}
-                      pinColor="red"
-                      name="routepulse-destination-query"
-                    />
-
-                    {/* Swap button — mobile-optimized touch target */}
-                    <button
-                      type="button"
-                      onClick={handleSwap}
-                      className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
-                      title="Swap origin and destination"
-                    >
-                      <motion.span
-                        animate={{ rotate: swapCount * 180 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="inline-flex"
-                      >
-                        <ArrowLeftRight className="w-3.5 h-3.5" />
-                      </motion.span>
-                      Swap origin & destination
-                    </button>
-
-                    {formError && (
-                      <p className="text-xs text-destructive">{formError}</p>
-                    )}
-
-                    {/* v25: stops stay out of the way until requested */}
-                    <div className="space-y-1.5">
-                      {!stopsOpen && stops.length === 0 ? (
-                        <button
-                          type="button"
-                          className="text-xs text-muted-foreground hover:text-primary min-h-[36px]"
-                          onClick={() => {
-                            setStopsOpen(true);
-                            setStops([""]);
-                          }}
+                        <motion.span
+                          animate={{ rotate: swapCount * 180 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                          className="inline-flex"
                         >
-                          + Add stops (optional)
-                        </button>
-                      ) : (
-                        <>
-                          <div className="flex items-center justify-between">
-                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-                              Stops
-                            </p>
-                            {stops.length < 8 && (
-                              <button
-                                type="button"
-                                className="text-[11px] text-primary font-medium min-h-[32px] px-1"
-                                onClick={() => setStops(s => [...s, ""])}
-                              >
-                                + Add another
-                              </button>
-                            )}
-                          </div>
-                          {stops.map((stop, i) => (
-                            <div key={i} className="flex gap-1.5 items-start">
-                              <div className="flex-1 min-w-0">
-                                <AddressInput
-                                  id={`routepulse-stop-${i}`}
-                                  name={`stop-${i}`}
-                                  label={`Stop ${i + 1}`}
-                                  pinColor="blue"
-                                  value={stop}
-                                  onChange={v =>
-                                    setStops(prev =>
-                                      prev.map((s, j) => (j === i ? v : s))
-                                    )
-                                  }
-                                  placeholder={`Stop ${i + 1} address`}
-                                />
-                              </div>
-                              <div className="flex flex-col gap-0.5 mt-6">
-                                <button
-                                  type="button"
-                                  className="text-muted-foreground min-w-[36px] min-h-[36px] flex items-center justify-center disabled:opacity-30"
-                                  disabled={i === 0}
-                                  onClick={() =>
-                                    setStops(prev => {
-                                      if (i === 0) return prev;
-                                      const next = [...prev];
-                                      const tmp = next[i - 1]!;
-                                      next[i - 1] = next[i]!;
-                                      next[i] = tmp;
-                                      return next;
-                                    })
-                                  }
-                                  title="Move up"
-                                  aria-label="Move stop up"
-                                >
-                                  <ChevronUp className="w-4 h-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="text-muted-foreground min-w-[36px] min-h-[36px] flex items-center justify-center disabled:opacity-30"
-                                  disabled={i >= stops.length - 1}
-                                  onClick={() =>
-                                    setStops(prev => {
-                                      if (i >= prev.length - 1) return prev;
-                                      const next = [...prev];
-                                      const tmp = next[i + 1]!;
-                                      next[i + 1] = next[i]!;
-                                      next[i] = tmp;
-                                      return next;
-                                    })
-                                  }
-                                  title="Move down"
-                                  aria-label="Move stop down"
-                                >
-                                  <ChevronDown className="w-4 h-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="text-muted-foreground text-xs min-w-[36px] min-h-[36px]"
-                                  onClick={() => {
-                                    const next = stops.filter((_, j) => j !== i);
-                                    setStops(next);
-                                    if (next.length === 0) setStopsOpen(false);
-                                  }}
-                                  title="Remove stop"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </>
-                      )}
-                    </div>
+                          <ArrowLeftRight className="w-3.5 h-3.5" />
+                        </motion.span>
+                        Swap origin & destination
+                      </button>
 
-                    {/* v19: routing preference — changes multi-objective ranking */}
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-                        Style
-                      </p>
-                      <div className="grid grid-cols-4 gap-1.5">
-                        {(
-                          [
-                            ["balanced", "Balanced"],
-                            ["quiet", "Quiet"],
-                            ["fuel", "Fuel"],
-                            ["fastest", "Fastest"],
-                          ] as const
-                        ).map(([value, label]) => (
+                      {formError && (
+                        <p className="text-xs text-destructive">{formError}</p>
+                      )}
+
+                      {/* v25: stops stay out of the way until requested */}
+                      <div className="space-y-1.5">
+                        {!stopsOpen && stops.length === 0 ? (
                           <button
-                            key={value}
                             type="button"
+                            className="text-xs text-muted-foreground hover:text-primary min-h-[36px]"
                             onClick={() => {
-                              setPreference(value);
-                              try {
-                                localStorage.setItem(
-                                  "routepulse:preference",
-                                  value
-                                );
-                              } catch {
-                                /* ignore */
-                              }
+                              setStopsOpen(true);
+                              setStops([""]);
                             }}
-                            className={`rounded-lg px-1 py-2.5 text-[11px] sm:text-xs font-medium border transition-colors min-h-[48px] sm:min-h-[44px] active:scale-95 touch-manipulation ${
-                              preference === value
-                                ? "border-primary bg-primary/15 text-primary"
-                                : "border-border bg-muted/40 text-muted-foreground hover:bg-muted"
-                            }`}
-                            title={
-                              value === "balanced"
-                                ? "Time first, but take calmer roads when the time cost is small"
-                                : value === "quiet"
-                                  ? "Prefer lower stress / fewer surprises even if a bit slower"
-                                  : value === "fuel"
-                                    ? "Prefer lower energy / less stop-go congestion"
-                                    : "Pure fastest time"
-                            }
                           >
-                            {label}
+                            + Add stops (optional)
                           </button>
-                        ))}
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-between">
+                              <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                                Stops
+                              </p>
+                              {stops.length < 8 && (
+                                <button
+                                  type="button"
+                                  className="text-[11px] text-primary font-medium min-h-[32px] px-1"
+                                  onClick={() => setStops(s => [...s, ""])}
+                                >
+                                  + Add another
+                                </button>
+                              )}
+                            </div>
+                            {stops.map((stop, i) => (
+                              <div key={i} className="flex gap-1.5 items-start">
+                                <div className="flex-1 min-w-0">
+                                  <AddressInput
+                                    id={`routepulse-stop-${i}`}
+                                    name={`stop-${i}`}
+                                    label={`Stop ${i + 1}`}
+                                    pinColor="blue"
+                                    value={stop}
+                                    onChange={v =>
+                                      setStops(prev =>
+                                        prev.map((s, j) => (j === i ? v : s))
+                                      )
+                                    }
+                                    placeholder={`Stop ${i + 1} address`}
+                                  />
+                                </div>
+                                <div className="flex flex-col gap-0.5 mt-6">
+                                  <button
+                                    type="button"
+                                    className="text-muted-foreground min-w-[36px] min-h-[36px] flex items-center justify-center disabled:opacity-30"
+                                    disabled={i === 0}
+                                    onClick={() =>
+                                      setStops(prev => {
+                                        if (i === 0) return prev;
+                                        const next = [...prev];
+                                        const tmp = next[i - 1]!;
+                                        next[i - 1] = next[i]!;
+                                        next[i] = tmp;
+                                        return next;
+                                      })
+                                    }
+                                    title="Move up"
+                                    aria-label="Move stop up"
+                                  >
+                                    <ChevronUp className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="text-muted-foreground min-w-[36px] min-h-[36px] flex items-center justify-center disabled:opacity-30"
+                                    disabled={i >= stops.length - 1}
+                                    onClick={() =>
+                                      setStops(prev => {
+                                        if (i >= prev.length - 1) return prev;
+                                        const next = [...prev];
+                                        const tmp = next[i + 1]!;
+                                        next[i + 1] = next[i]!;
+                                        next[i] = tmp;
+                                        return next;
+                                      })
+                                    }
+                                    title="Move down"
+                                    aria-label="Move stop down"
+                                  >
+                                    <ChevronDown className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="text-muted-foreground text-xs min-w-[36px] min-h-[36px]"
+                                    onClick={() => {
+                                      const next = stops.filter(
+                                        (_, j) => j !== i
+                                      );
+                                      setStops(next);
+                                      if (next.length === 0)
+                                        setStopsOpen(false);
+                                    }}
+                                    title="Remove stop"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
                       </div>
-                    </div>
 
-                    <Button
-                      type="submit"
-                      size="sm"
-                      className="gap-2 w-full group min-h-[48px] sm:min-h-[44px] text-base sm:text-sm font-semibold active:scale-[0.99] touch-manipulation"
-                    >
-                      {routeQuery.isFetching && (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      )}
-                      Find route
-                      {!routeQuery.isFetching && (
-                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                      )}
-                    </Button>
-                  </form>
-                </>
-              )}
-            </Card>
+                      {/* v19: routing preference — changes multi-objective ranking */}
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+                          Style
+                        </p>
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {(
+                            [
+                              ["balanced", "Balanced"],
+                              ["quiet", "Quiet"],
+                              ["fuel", "Fuel"],
+                              ["fastest", "Fastest"],
+                            ] as const
+                          ).map(([value, label]) => (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => {
+                                setPreference(value);
+                                try {
+                                  localStorage.setItem(
+                                    "routepulse:preference",
+                                    value
+                                  );
+                                } catch {
+                                  /* ignore */
+                                }
+                              }}
+                              className={`rounded-lg px-1 py-2.5 text-[11px] sm:text-xs font-medium border transition-colors min-h-[48px] sm:min-h-[44px] active:scale-95 touch-manipulation ${
+                                preference === value
+                                  ? "border-primary bg-primary/15 text-primary"
+                                  : "border-border bg-muted/40 text-muted-foreground hover:bg-muted"
+                              }`}
+                              title={
+                                value === "balanced"
+                                  ? "Time first, but take calmer roads when the time cost is small"
+                                  : value === "quiet"
+                                    ? "Prefer lower stress / fewer surprises even if a bit slower"
+                                    : value === "fuel"
+                                      ? "Prefer lower energy / less stop-go congestion"
+                                      : "Pure fastest time"
+                              }
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Button
+                        type="submit"
+                        size="sm"
+                        className="gap-2 w-full group min-h-[48px] sm:min-h-[44px] text-base sm:text-sm font-semibold active:scale-[0.99] touch-manipulation"
+                      >
+                        {routeQuery.isFetching && (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        )}
+                        Find route
+                        {!routeQuery.isFetching && (
+                          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                        )}
+                      </Button>
+                    </form>
+                  </>
+                )}
+              </Card>
             )}
-
 
             {/* Floating controls — locate me, basemap toggle, fullscreen.
                 v9: on phones these live in the bottom-right thumb zone with
@@ -3427,8 +3046,12 @@ export default function RoutePulse() {
               <button
                 type="button"
                 onClick={() => setCamerasOn(v => !v)}
-                title={camerasOn ? "Hide traffic cameras" : "Show traffic cameras"}
-                aria-label={camerasOn ? "Hide traffic cameras" : "Show traffic cameras"}
+                title={
+                  camerasOn ? "Hide traffic cameras" : "Show traffic cameras"
+                }
+                aria-label={
+                  camerasOn ? "Hide traffic cameras" : "Show traffic cameras"
+                }
                 className={`${tripActive ? "hidden sm:flex" : "flex"} w-11 h-11 sm:w-9 sm:h-9 rounded-md backdrop-blur-md border shadow-lg items-center justify-center transition-colors active:scale-95 ${
                   camerasOn
                     ? "bg-primary/90 text-primary-foreground border-primary"
@@ -3607,38 +3230,41 @@ export default function RoutePulse() {
                 </button>
 
                 {/* M1: incidents only when expanded — peek stays time + actions */}
-                {sheetExpanded && routeQuery.data!.route.incidents.length > 0 && (
-                  <div
-                    className="flex gap-2 overflow-x-auto px-4 pb-3 shrink-0 [-webkit-overflow-scrolling:touch]"
-                    role="list"
-                    aria-label="Incidents on this route"
-                  >
-                    {routeQuery.data!.route.incidents.slice(0, 10).map(inc => (
-                      <div
-                        key={inc.id}
-                        role="listitem"
-                        className="shrink-0 w-[168px] rounded-lg border bg-card px-3 py-2"
-                      >
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                          <span
-                            className={`text-[10px] font-semibold uppercase tracking-wide rounded border px-1 py-px ${SEVERITY_BADGE[inc.severity] ?? ""}`}
+                {sheetExpanded &&
+                  routeQuery.data!.route.incidents.length > 0 && (
+                    <div
+                      className="flex gap-2 overflow-x-auto px-4 pb-3 shrink-0 [-webkit-overflow-scrolling:touch]"
+                      role="list"
+                      aria-label="Incidents on this route"
+                    >
+                      {routeQuery
+                        .data!.route.incidents.slice(0, 10)
+                        .map(inc => (
+                          <div
+                            key={inc.id}
+                            role="listitem"
+                            className="shrink-0 w-[168px] rounded-lg border bg-card px-3 py-2"
                           >
-                            {inc.severity}
-                          </span>
-                        </div>
-                        <p className="text-xs font-medium leading-snug line-clamp-2">
-                          {inc.road_name && (
-                            <span className="font-semibold">
-                              {inc.road_name}:{" "}
-                            </span>
-                          )}
-                          {inc.description ?? inc.incident_type}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                              <span
+                                className={`text-[10px] font-semibold uppercase tracking-wide rounded border px-1 py-px ${SEVERITY_BADGE[inc.severity] ?? ""}`}
+                              >
+                                {inc.severity}
+                              </span>
+                            </div>
+                            <p className="text-xs font-medium leading-snug line-clamp-2">
+                              {inc.road_name && (
+                                <span className="font-semibold">
+                                  {inc.road_name}:{" "}
+                                </span>
+                              )}
+                              {inc.description ?? inc.incident_type}
+                            </p>
+                          </div>
+                        ))}
+                    </div>
+                  )}
 
                 {/* Action row — Steps / trip mode, always reachable
                     without expanding (44px touch targets per spec). */}
@@ -3708,65 +3334,78 @@ export default function RoutePulse() {
                     peek state stays cheap to paint on every incident
                     refresh. */}
                 {sheetExpanded && (
-                    <div
-                      className="flex-1 min-h-0 overflow-y-auto px-2 py-1 border-t overscroll-contain touch-pan-y"
-                      style={{ WebkitOverflowScrolling: "touch" }}
-                    >
-                      {allRoutes.length > 1 && (
-                        <div className="px-2 py-2 space-y-1">
-                          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            Routes
-                          </p>
-                          {allRoutes.slice(0, 3).map((alt, i) => {
-                            const isDisplayed = i === displayedIdx;
-                            return (
-                              <button
-                                key={i}
-                                type="button"
-                                onClick={() => setPreviewIdx(i === chosenIdx ? null : i)}
-                                className={`w-full flex items-center justify-between rounded-lg border px-3 py-2.5 text-left text-sm min-h-[44px] ${
-                                  isDisplayed
-                                    ? "border-primary/50 bg-primary/10"
-                                    : "border-border"
-                                }`}
-                              >
-                                <span className="min-w-0 flex-1">
-                                  <span className="font-medium tabular-nums block">
-                                    {Math.round(displayDurationS(alt) / 60)} min
-                                    <span className="text-muted-foreground font-normal">
-                                      {" "}
-                                      · {(alt.distance / 1609.34).toFixed(1)} mi
-                                    </span>
+                  <div
+                    className="flex-1 min-h-0 overflow-y-auto px-2 py-1 border-t overscroll-contain touch-pan-y"
+                    style={{ WebkitOverflowScrolling: "touch" }}
+                  >
+                    {allRoutes.length > 1 && (
+                      <div className="px-2 py-2 space-y-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Routes
+                        </p>
+                        {allRoutes.slice(0, 3).map((alt, i) => {
+                          const isDisplayed = i === displayedIdx;
+                          return (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() =>
+                                setPreviewIdx(i === chosenIdx ? null : i)
+                              }
+                              className={`w-full flex items-center justify-between rounded-lg border px-3 py-2.5 text-left text-sm min-h-[44px] ${
+                                isDisplayed
+                                  ? "border-primary/50 bg-primary/10"
+                                  : "border-border"
+                              }`}
+                            >
+                              <span className="min-w-0 flex-1">
+                                <span className="font-medium tabular-nums block">
+                                  {Math.round(displayDurationS(alt) / 60)} min
+                                  <span className="text-muted-foreground font-normal">
+                                    {" "}
+                                    · {(alt.distance / 1609.34).toFixed(1)} mi
                                   </span>
-                                  {(routeQuery.data?.verdicts as (string | null)[] | undefined)?.[i] && (
-                                    <span className="text-[11px] text-muted-foreground line-clamp-1">
-                                      {(routeQuery.data?.verdicts as (string | null)[])[i]}
-                                    </span>
-                                  )}
                                 </span>
-                                {i === chosenIdx && (
-                                  <span className="text-[10px] text-primary font-semibold shrink-0">
-                                    BEST
+                                {(
+                                  routeQuery.data?.verdicts as
+                                    | (string | null)[]
+                                    | undefined
+                                )?.[i] && (
+                                  <span className="text-[11px] text-muted-foreground line-clamp-1">
+                                    {
+                                      (
+                                        routeQuery.data?.verdicts as (
+                                          | string
+                                          | null
+                                        )[]
+                                      )[i]
+                                    }
                                   </span>
                                 )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide px-2 py-2 flex items-center gap-1.5">
-                        <List className="w-3.5 h-3.5" />
-                        Turn-by-turn · {displayedManeuvers.length} steps
+                              </span>
+                              {i === chosenIdx && (
+                                <span className="text-[10px] text-primary font-semibold shrink-0">
+                                  BEST
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide px-2 py-2 flex items-center gap-1.5">
+                      <List className="w-3.5 h-3.5" />
+                      Turn-by-turn · {displayedManeuvers.length} steps
+                    </p>
+                    {displayedManeuvers.length > 0 ? (
+                      stepsList
+                    ) : (
+                      <p className="text-sm text-muted-foreground px-4 py-6 text-center">
+                        No turn-by-turn available for this route.
                       </p>
-                      {displayedManeuvers.length > 0 ? (
-                        stepsList
-                      ) : (
-                        <p className="text-sm text-muted-foreground px-4 py-6 text-center">
-                          No turn-by-turn available for this route.
-                        </p>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -3944,7 +3583,10 @@ export default function RoutePulse() {
                 </div>
               )}
 
-              <p className="text-[11px] text-muted-foreground truncate" title={`${routeQuery.data!.origin.displayName} → ${routeQuery.data!.destination.displayName}`}>
+              <p
+                className="text-[11px] text-muted-foreground truncate"
+                title={`${routeQuery.data!.origin.displayName} → ${routeQuery.data!.destination.displayName}`}
+              >
                 {shortPlaceName(routeQuery.data!.origin.displayName, 36)}
                 <span className="mx-1.5 opacity-50">→</span>
                 {shortPlaceName(routeQuery.data!.destination.displayName, 36)}
@@ -3963,12 +3605,17 @@ export default function RoutePulse() {
                   aria-expanded={detailsOpen}
                 >
                   <span className="text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">Route details</span>
-                    {typeof (routeQuery.data as { driverHealthScore?: number }).driverHealthScore ===
-                      "number" && (
+                    <span className="font-medium text-foreground">
+                      Route details
+                    </span>
+                    {typeof (routeQuery.data as { driverHealthScore?: number })
+                      .driverHealthScore === "number" && (
                       <span className="ml-1.5">
                         · Health{" "}
-                        {(routeQuery.data as { driverHealthScore: number }).driverHealthScore}
+                        {
+                          (routeQuery.data as { driverHealthScore: number })
+                            .driverHealthScore
+                        }
                       </span>
                     )}
                     {routeQuery.data!.route.incidents.length > 0 && (
@@ -3983,49 +3630,84 @@ export default function RoutePulse() {
                 </button>
                 {detailsOpen && (
                   <div className="px-3.5 pb-3.5 space-y-3 border-t border-border/50 pt-3">
-                    {typeof (routeQuery.data as { driverHealthScore?: number }).driverHealthScore ===
-                      "number" && (
+                    {typeof (routeQuery.data as { driverHealthScore?: number })
+                      .driverHealthScore === "number" && (
                       <div className="flex items-center gap-3">
                         <div
                           className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold tabular-nums ${
-                            (routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 75
+                            (routeQuery.data as { driverHealthScore: number })
+                              .driverHealthScore >= 75
                               ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                              : (routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 50
+                              : (
+                                    routeQuery.data as {
+                                      driverHealthScore: number;
+                                    }
+                                  ).driverHealthScore >= 50
                                 ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
                                 : "bg-red-500/15 text-red-700 dark:text-red-400"
                           }`}
                         >
-                          {(routeQuery.data as { driverHealthScore: number }).driverHealthScore}
+                          {
+                            (routeQuery.data as { driverHealthScore: number })
+                              .driverHealthScore
+                          }
                         </div>
                         <div className="min-w-0">
                           <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
                             Driver health
                           </p>
                           <p className="text-sm leading-snug">
-                            {(routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 75
+                            {(routeQuery.data as { driverHealthScore: number })
+                              .driverHealthScore >= 75
                               ? "Clear run"
-                              : (routeQuery.data as { driverHealthScore: number }).driverHealthScore >= 50
+                              : (
+                                    routeQuery.data as {
+                                      driverHealthScore: number;
+                                    }
+                                  ).driverHealthScore >= 50
                                 ? "Manageable — watch conditions"
                                 : "Rough corridor"}
                           </p>
                         </div>
                       </div>
                     )}
-                    {(routeQuery.data as { valueInsight?: { headline: string; detail: string } | null })
-                      ?.valueInsight && (
+                    {(
+                      routeQuery.data as {
+                        valueInsight?: {
+                          headline: string;
+                          detail: string;
+                        } | null;
+                      }
+                    )?.valueInsight && (
                       <div className="space-y-0.5">
                         <p className="text-sm font-medium">
-                          {(routeQuery.data as { valueInsight: { headline: string } }).valueInsight.headline}
+                          {
+                            (
+                              routeQuery.data as {
+                                valueInsight: { headline: string };
+                              }
+                            ).valueInsight.headline
+                          }
                         </p>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                          {(routeQuery.data as { valueInsight: { detail: string } }).valueInsight.detail}
+                          {
+                            (
+                              routeQuery.data as {
+                                valueInsight: { detail: string };
+                              }
+                            ).valueInsight.detail
+                          }
                         </p>
                       </div>
                     )}
-                    {(routeQuery.data as { localDriverNotes?: string[] })?.localDriverNotes &&
-                      (routeQuery.data as { localDriverNotes: string[] }).localDriverNotes.length > 0 && (
+                    {(routeQuery.data as { localDriverNotes?: string[] })
+                      ?.localDriverNotes &&
+                      (routeQuery.data as { localDriverNotes: string[] })
+                        .localDriverNotes.length > 0 && (
                         <ul className="text-xs text-muted-foreground space-y-1.5">
-                          {(routeQuery.data as { localDriverNotes: string[] }).localDriverNotes
+                          {(
+                            routeQuery.data as { localDriverNotes: string[] }
+                          ).localDriverNotes
                             .slice(0, 3)
                             .map((note, i) => (
                               <li key={i} className="leading-relaxed">
@@ -4034,13 +3716,24 @@ export default function RoutePulse() {
                             ))}
                         </ul>
                       )}
-                    {(routeQuery.data as { stopPlan?: { optimized: boolean; stops: Array<{ displayName: string }> } })
-                      ?.stopPlan &&
-                      (routeQuery.data as { stopPlan: { stops: unknown[] } }).stopPlan.stops.length > 0 && (
+                    {(
+                      routeQuery.data as {
+                        stopPlan?: {
+                          optimized: boolean;
+                          stops: Array<{ displayName: string }>;
+                        };
+                      }
+                    )?.stopPlan &&
+                      (routeQuery.data as { stopPlan: { stops: unknown[] } })
+                        .stopPlan.stops.length > 0 && (
                         <div className="space-y-1">
                           <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
                             Stop order
-                            {(routeQuery.data as { stopPlan: { optimized: boolean } }).stopPlan.optimized && (
+                            {(
+                              routeQuery.data as {
+                                stopPlan: { optimized: boolean };
+                              }
+                            ).stopPlan.optimized && (
                               <span className="ml-1.5 text-primary normal-case tracking-normal font-medium">
                                 optimized
                               </span>
@@ -4049,23 +3742,47 @@ export default function RoutePulse() {
                           <ol className="text-xs space-y-0.5 list-decimal list-inside text-muted-foreground">
                             {(
                               routeQuery.data as {
-                                stopPlan: { stops: Array<{ displayName: string }> };
+                                stopPlan: {
+                                  stops: Array<{ displayName: string }>;
+                                };
                               }
                             ).stopPlan.stops.map((s, i) => (
                               <li key={i} className="truncate">
-                                <span className="text-foreground">{s.displayName}</span>
+                                <span className="text-foreground">
+                                  {s.displayName}
+                                </span>
                               </li>
                             ))}
                           </ol>
                         </div>
                       )}
-                    {(routeQuery.data as { dataConfidence?: { score: number; label: string } })
-                      ?.dataConfidence && (
+                    {(
+                      routeQuery.data as {
+                        dataConfidence?: { score: number; label: string };
+                      }
+                    )?.dataConfidence && (
                       <p className="text-[11px] text-muted-foreground">
                         Data confidence:{" "}
                         <span className="text-foreground font-medium">
-                          {(routeQuery.data as { dataConfidence: { label: string; score: number } }).dataConfidence.label}{" "}
-                          ({(routeQuery.data as { dataConfidence: { score: number } }).dataConfidence.score}/100)
+                          {
+                            (
+                              routeQuery.data as {
+                                dataConfidence: {
+                                  label: string;
+                                  score: number;
+                                };
+                              }
+                            ).dataConfidence.label
+                          }{" "}
+                          (
+                          {
+                            (
+                              routeQuery.data as {
+                                dataConfidence: { score: number };
+                              }
+                            ).dataConfidence.score
+                          }
+                          /100)
                         </span>
                       </p>
                     )}
@@ -4109,12 +3826,10 @@ export default function RoutePulse() {
                         ).tomtomApis ?? []
                       ).length > 0
                         ? `: ${(
-                            (
-                              routeQuery.data!.grounding as {
-                                tomtomApis: string[];
-                              }
-                            ).tomtomApis
-                          )
+                            routeQuery.data!.grounding as {
+                              tomtomApis: string[];
+                            }
+                          ).tomtomApis
                             .map(a =>
                               a === "waypointOptimization"
                                 ? "waypoints"
@@ -4378,8 +4093,11 @@ export default function RoutePulse() {
                               {" "}
                               · {(alt.distance / 1609.34).toFixed(1)} mi
                             </span>
-                            {typeof (alt as { flow?: { avgRatio?: number; samples?: number } }).flow
-                              ?.avgRatio === "number" &&
+                            {typeof (
+                              alt as {
+                                flow?: { avgRatio?: number; samples?: number };
+                              }
+                            ).flow?.avgRatio === "number" &&
                               ((alt as { flow: { samples?: number } }).flow
                                 .samples ?? 0) >= 2 && (
                                 <span

@@ -1,0 +1,60 @@
+name: routepulse-golden-eval
+
+on:
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - "server/routers/routePulse/**"
+      - "scripts/eval-pdx-golden.mjs"
+  schedule:
+    # Sampled live check against production, rate-limited — see
+    # scripts/eval-pdx-golden.mjs. Daily is enough to catch regressions
+    # without adding meaningful load on top of the existing Netlify
+    # scheduled smoke (routepulse-golden-smoke-scheduled.mts, every 6h).
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: routepulse-golden-eval-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Validate golden set structure
+        run: node scripts/eval-pdx-golden.mjs
+
+  live:
+    # Only meaningful against the deployed site — skip on PRs from forks
+    # (no need, and outbound calls would just fail auth/CORS anyway) and
+    # only run live on schedule/dispatch or same-repo PRs.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Live sampled eval against production
+        env:
+          BASE_URL: https://1commerce.online
+          GOLDEN_LIVE_SAMPLE_SIZE: "5"
+        run: node scripts/eval-pdx-golden.mjs --live
