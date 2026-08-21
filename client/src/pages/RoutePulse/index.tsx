@@ -1117,17 +1117,19 @@ export default function RoutePulse() {
       const extracted = await importStopsMutation.mutateAsync({
         imageDataUrl: dataUrl,
       });
-      setStops(prev => {
-        const existing = prev
-          .map((s, i) => ({ address: s, dueBy: stopDueBy[i] ?? "" }))
-          .filter(s => s.address.trim().length >= 3);
-        const merged = [
-          ...existing,
-          ...extracted.map(s => ({ address: s.address, dueBy: s.dueBy ?? "" })),
-        ].slice(0, 15);
-        setStopDueBy(merged.map(s => s.dueBy));
-        return merged.map(s => s.address);
-      });
+      // Computed from the current stops/stopDueBy directly (not inside a
+      // setStops updater) — a state updater can be replayed by React, and
+      // calling setStopDueBy from inside one is an impure side effect that
+      // can desync the two arrays.
+      const existing = stops
+        .map((s, i) => ({ address: s, dueBy: stopDueBy[i] ?? "" }))
+        .filter(s => s.address.trim().length >= 3);
+      const merged = [
+        ...existing,
+        ...extracted.map(s => ({ address: s.address, dueBy: s.dueBy ?? "" })),
+      ].slice(0, 15);
+      setStops(merged.map(s => s.address));
+      setStopDueBy(merged.map(s => s.dueBy));
       setStopsOpen(true);
       const withTimes = extracted.filter(s => s.dueBy).length;
       toast.success(

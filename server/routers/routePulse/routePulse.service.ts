@@ -1858,10 +1858,10 @@ export async function extractStopsFromImage(
   }
 
   const stops: ExtractedStop[] = rawStops
-    .filter(
-      (s): s is Record<string, unknown> =>
-        !!s && typeof s === "object" && typeof (s as any).address === "string"
-    )
+    .filter((s): s is Record<string, unknown> => {
+      if (!s || typeof s !== "object") return false;
+      return typeof (s as Record<string, unknown>).address === "string";
+    })
     .map(s => {
       const address = String(s.address).trim().slice(0, 300);
       const label =
@@ -1869,7 +1869,11 @@ export async function extractStopsFromImage(
           ? s.label.trim().slice(0, 120)
           : null;
       const dueByRaw = typeof s.dueBy === "string" ? s.dueBy.trim() : null;
-      const dueBy = dueByRaw && hhmmToMin(dueByRaw) != null ? dueByRaw : null;
+      // Normalize to zero-padded "HH:MM" regardless of what the model
+      // returned (e.g. "3:30") — an un-padded string silently fails to
+      // populate an <input type="time"> in the UI.
+      const dueByMin = dueByRaw ? hhmmToMin(dueByRaw) : null;
+      const dueBy = dueByMin != null ? minToHHMM(dueByMin) : null;
       return { address, label, dueBy };
     })
     .filter(s => s.address.length >= 3)

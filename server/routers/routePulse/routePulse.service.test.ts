@@ -1581,4 +1581,38 @@ describe("routePulse.service — extractStopsFromImage (v31, photo import)", () 
     );
     expect(stops[0]!.dueBy).toBeNull();
   });
+
+  it("zero-pads a single-digit hour the model returns (e.g. '3:30') instead of passing it through raw", async () => {
+    (ENV as { geminiApiKey?: string }).geminiApiKey = "test-key";
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      id: "x",
+      created: 0,
+      model: "gemini-2.5-flash",
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: "assistant",
+            content: JSON.stringify({
+              stops: [
+                {
+                  address: "123 SW Main St, Portland, OR",
+                  label: "Test",
+                  dueBy: "3:30",
+                },
+              ],
+            }),
+          },
+          finish_reason: "stop",
+        },
+      ],
+    } as any);
+
+    const stops = await service.extractStopsFromImage(
+      "data:image/jpeg;base64,AAAA"
+    );
+    // Un-padded "3:30" must come out as "03:30" — an <input type="time">
+    // silently rejects the un-padded form.
+    expect(stops[0]!.dueBy).toBe("03:30");
+  });
 });
