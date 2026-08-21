@@ -32,6 +32,6 @@ describe("mapHandoff", () => {
     });
     expect(qs).toContain("origin=A");
     expect(qs).toContain("pref=quiet");
-    expect(qs).toContain("stops=C%7CD") || expect(qs).toContain("stops=C|D");
+    expect(qs.includes("stops=C%7CD") || qs.includes("stops=C|D")).toBe(true);
   });
 });

@@ -38,9 +38,18 @@ const live = process.argv.includes("--live");
 if (!live) process.exit(0);
 
 const base = (process.env.BASE_URL || "https://1commerce.online").replace(/\/+$/, "");
-const sample = origins.slice(0, 5);
+const rawSampleSize = process.env.GOLDEN_LIVE_SAMPLE_SIZE;
+const sampleSize = rawSampleSize === undefined ? 5 : Number(rawSampleSize);
+if (!Number.isSafeInteger(sampleSize) || sampleSize < 1) {
+  console.error(
+    `GOLDEN_LIVE_SAMPLE_SIZE must be a positive integer, got: ${rawSampleSize}`
+  );
+  process.exit(1);
+}
+const sample = origins.slice(0, sampleSize);
 console.log(`\nLive smoke against ${base} (${sample.length} routes)...`);
 
+let okCount = 0;
 for (let i = 0; i < sample.length; i++) {
   const origin = sample[i];
   const destMatch = src.match(
@@ -63,7 +72,7 @@ for (let i = 0; i < sample.length; i++) {
   );
   const url = `${base}/api/trpc/routePulse.getRoute?batch=1&input=${input}`;
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(25_000) });
     const text = await res.text();
     if (!res.ok) {
       console.log(`  [${i + 1}] HTTP ${res.status} ${origin.slice(0, 40)}`);
@@ -76,10 +85,19 @@ for (let i = 0; i < sample.length; i++) {
       : null;
     const flow = result?.route?.flow?.samples ?? 0;
     const g = result?.grounding;
+    if (result?.route) okCount++;
     console.log(
       `  [${i + 1}] ${min ?? "?"} min · flow ${flow} · tt ${g?.tomtomIncidents ?? 0} · ${origin.slice(0, 28)} → ${destination.slice(0, 28)}`
     );
   } catch (e) {
     console.log(`  [${i + 1}] error: ${e.message}`);
   }
+  // Soft rate limit between samples — production quota-aware.
+  await new Promise(r => setTimeout(r, 1500));
+}
+
+console.log(`\nLive smoke: ${okCount}/${sample.length} routes resolved`);
+if (okCount < Math.ceil(sample.length / 2)) {
+  console.error("Fewer than half the sampled golden routes resolved — failing.");
+  process.exit(1);
 }

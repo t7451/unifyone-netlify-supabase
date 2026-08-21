@@ -9,10 +9,6 @@ export type HandoffPoint = {
   label?: string;
 };
 
-function enc(s: string): string {
-  return encodeURIComponent(s);
-}
-
 /** Google Maps directions URL (works on mobile + desktop). */
 export function googleMapsDirectionsUrl(
   origin: HandoffPoint,
@@ -28,10 +24,7 @@ export function googleMapsDirectionsUrl(
     travelmode: "driving",
   });
   if (stops.length > 0) {
-    params.set(
-      "waypoints",
-      stops.map(s => `${s.lat},${s.lng}`).join("|")
-    );
+    params.set("waypoints", stops.map(s => `${s.lat},${s.lng}`).join("|"));
   }
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }

@@ -2,7 +2,14 @@
  * Memoized Leaflet surface for RoutePulse.
  * Parent sheet/GPS/form state must NOT rebuild this tree unless map props change.
  */
-import { memo, useEffect, useMemo, useRef, type MutableRefObject, type RefObject } from "react";
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  type MutableRefObject,
+  type RefObject,
+} from "react";
 import {
   MapContainer,
   TileLayer,
@@ -16,10 +23,7 @@ import {
   useMap,
   useMapEvents,
 } from "react-leaflet";
-import L, {
-  type LatLngExpression,
-  type LatLngBoundsExpression,
-} from "leaflet";
+import L, { type LatLngExpression, type LatLngBoundsExpression } from "leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import { softInvalidateSize } from "./mapInvalidate";
 
@@ -67,6 +71,29 @@ const USER_LOCATION_ICON = L.divIcon({
   iconAnchor: [8, 8],
 });
 
+const headingConeIconCache = new Map<number, L.DivIcon>();
+/**
+ * Direction-of-travel cone behind the live location dot (Google Maps
+ * style). The triangle's apex sits at the dot and the cone widens in the
+ * heading direction; the whole div rotates around the apex. Cached per
+ * rounded-degree so a steady heading doesn't churn new DivIcon instances
+ * every GPS tick.
+ */
+function headingConeIcon(deg: number): L.DivIcon {
+  const rounded = Math.round(deg);
+  const hit = headingConeIconCache.get(rounded);
+  if (hit) return hit;
+  const icon = L.divIcon({
+    className: "",
+    html: `<div style="width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:36px solid rgba(37,99,235,0.30);transform:rotate(${rounded}deg);transform-origin:50% 100%"></div>`,
+    iconSize: [32, 36],
+    iconAnchor: [16, 36],
+  });
+  if (headingConeIconCache.size >= 360) headingConeIconCache.clear();
+  headingConeIconCache.set(rounded, icon);
+  return icon;
+}
+
 const letterPinCache = new Map<string, L.DivIcon>();
 function letterPinIcon(letter: string, color = "#8b5cf6") {
   const key = `${letter}|${color}`;
@@ -97,7 +124,9 @@ const INCIDENT_RADIUS: Record<string, number> = {
 
 function createRouteCanvasRenderer(): L.Canvas {
   const dpr =
-    typeof window !== "undefined" ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+    typeof window !== "undefined"
+      ? Math.min(window.devicePixelRatio || 1, 2)
+      : 1;
   const mobile =
     typeof window !== "undefined" &&
     window.matchMedia("(max-width: 640px)").matches;
@@ -149,12 +178,15 @@ function MapClickHandler({
           {
             headers: {
               Accept: "application/json",
-              "User-Agent": "UnifyOne-RoutePulse/1.0 (+https://1commerce.online)",
+              "User-Agent":
+                "UnifyOne-RoutePulse/1.0 (+https://1commerce.online)",
             },
           }
         );
         if (!res.ok) {
-          onSetAddress(`${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`);
+          onSetAddress(
+            `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`
+          );
           return;
         }
         const body = (await res.json()) as { display_name?: string };
@@ -304,6 +336,8 @@ export type RouteMapProps = {
   onDrag: () => void;
   onSetAddress: (addr: string) => void;
   userLocation: LatLngExpression | null;
+  /** Device/GPS-bearing heading in degrees, or null when stationary/unknown. */
+  heading: number | null;
   accuracy: number | null;
   displayedLine: LatLngExpression[] | null;
   segmentLines: Array<{ positions: LatLngExpression[]; color: string }>;
@@ -420,18 +454,25 @@ function RouteMapInner(props: RouteMapProps) {
         <>
           {props.accuracy !== null &&
             props.accuracy < (isMobile ? 80 : 500) && (
-            <Circle
-              center={props.userLocation}
-              radius={props.accuracy}
-              pathOptions={routePathDefaults({
-                renderer,
-                color: "#2563eb",
-                weight: 1,
-                opacity: 0.45,
-                fillColor: "#2563eb",
-                fillOpacity: 0.06,
-                smoothFactor: 3,
-              })}
+              <Circle
+                center={props.userLocation}
+                radius={props.accuracy}
+                pathOptions={routePathDefaults({
+                  renderer,
+                  color: "#2563eb",
+                  weight: 1,
+                  opacity: 0.45,
+                  fillColor: "#2563eb",
+                  fillOpacity: 0.06,
+                  smoothFactor: 3,
+                })}
+              />
+            )}
+          {props.heading != null && (
+            <Marker
+              position={props.userLocation}
+              icon={headingConeIcon(props.heading)}
+              interactive={false}
             />
           )}
           <Marker position={props.userLocation} icon={USER_LOCATION_ICON} />
@@ -579,14 +620,18 @@ function RouteMapInner(props: RouteMapProps) {
               center={[inc.lat, inc.lng]}
               radius={
                 isMobile
-                  ? Math.max(4, (INCIDENT_RADIUS[inc.severity ?? "minor"] ?? 5) - 1)
-                  : INCIDENT_RADIUS[inc.severity ?? "minor"] ?? 5
+                  ? Math.max(
+                      4,
+                      (INCIDENT_RADIUS[inc.severity ?? "minor"] ?? 5) - 1
+                    )
+                  : (INCIDENT_RADIUS[inc.severity ?? "minor"] ?? 5)
               }
               pathOptions={routePathDefaults({
                 renderer,
                 color: "#fff",
                 weight: 1,
-                fillColor: INCIDENT_COLORS[inc.severity ?? "minor"] ?? "#eab308",
+                fillColor:
+                  INCIDENT_COLORS[inc.severity ?? "minor"] ?? "#eab308",
                 fillOpacity: 0.95,
                 interactive: true,
               })}
@@ -605,7 +650,10 @@ function RouteMapInner(props: RouteMapProps) {
             </CircleMarker>
           ))}
           {props.camerasOn &&
-            (isMobile ? props.routeCameras.slice(0, 12) : props.routeCameras).map(cam => (
+            (isMobile
+              ? props.routeCameras.slice(0, 12)
+              : props.routeCameras
+            ).map(cam => (
               <CircleMarker
                 key={cam.id}
                 center={[cam.lat, cam.lng]}
@@ -640,7 +688,10 @@ function RouteMapInner(props: RouteMapProps) {
           animate={false}
           removeOutsideVisibleBounds
         >
-          {(isMobile ? props.emptyIncidents.slice(0, 40) : props.emptyIncidents).map(inc => (
+          {(isMobile
+            ? props.emptyIncidents.slice(0, 40)
+            : props.emptyIncidents
+          ).map(inc => (
             <CircleMarker
               key={inc.id}
               center={[inc.lat, inc.lng]}
@@ -649,7 +700,8 @@ function RouteMapInner(props: RouteMapProps) {
                 renderer,
                 color: "#fff",
                 weight: 1,
-                fillColor: INCIDENT_COLORS[inc.severity ?? "minor"] ?? "#eab308",
+                fillColor:
+                  INCIDENT_COLORS[inc.severity ?? "minor"] ?? "#eab308",
                 fillOpacity: 0.9,
                 interactive: true,
               })}
@@ -674,7 +726,10 @@ function RouteMapInner(props: RouteMapProps) {
           maxClusterRadius={isMobile ? 80 : 50}
           removeOutsideVisibleBounds
         >
-          {(isMobile ? props.emptyCameras.slice(0, 20) : props.emptyCameras).map(cam => (
+          {(isMobile
+            ? props.emptyCameras.slice(0, 20)
+            : props.emptyCameras
+          ).map(cam => (
             <CircleMarker
               key={cam.id}
               center={[cam.lat, cam.lng]}
@@ -708,6 +763,7 @@ function propsEqual(a: RouteMapProps, b: RouteMapProps): boolean {
     a.mapFitKey === b.mapFitKey &&
     a.camerasOn === b.camerasOn &&
     a.userLocation === b.userLocation &&
+    a.heading === b.heading &&
     a.accuracy === b.accuracy &&
     a.displayedLine === b.displayedLine &&
     a.segmentLines === b.segmentLines &&

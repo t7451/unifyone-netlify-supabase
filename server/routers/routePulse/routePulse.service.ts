@@ -106,10 +106,12 @@ import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "../../_core/supabaseAdmin";
 import { ENV } from "../../_core/env";
 
-
 /** AbortSignal that works even when AbortSignal.timeout is missing. */
 function abortAfter(ms: number): AbortSignal {
-  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+  if (
+    typeof AbortSignal !== "undefined" &&
+    typeof AbortSignal.timeout === "function"
+  ) {
     try {
       return AbortSignal.timeout(ms);
     } catch {
@@ -131,7 +133,6 @@ import {
   localKnowledgePenalties,
   formatLocalKnowledgeForPrompt,
   localKnowledgeSummary,
-  isPortlandMetro,
 } from "./portlandLocalKnowledge";
 import { blobKvGet, blobKvSet, BlobKvNS } from "../../lib/blobKv";
 import { getClearRouteBrief } from "./aiBriefWorker";
@@ -311,9 +312,7 @@ async function geocodeViaCensus(
 function parseLatLngLiteral(input: string): LatLng | null {
   const m = input
     .trim()
-    .match(
-      /^(-?\d{1,2}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)$/
-    );
+    .match(/^(-?\d{1,2}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)$/);
   if (!m) return null;
   const lat = parseFloat(m[1]!);
   const lng = parseFloat(m[2]!);
@@ -432,7 +431,6 @@ export async function geocodeAddress(address: string): Promise<GeocodedPoint> {
   writeGeocodeCache(trimmed, point);
   return point;
 }
-
 
 /**
  * Lightweight address suggestion lookup for typeahead UI. Calls Nominatim
@@ -712,9 +710,7 @@ export function computeRouteScores(
   const base = computeRouteRisk(incidents, timeContext);
   const maneuverCount = maneuvers?.length ?? 0;
   const congestion =
-    flow && flow.samples >= 2
-      ? Math.max(0, Math.min(1, 1 - flow.avgRatio))
-      : 0;
+    flow && flow.samples >= 2 ? Math.max(0, Math.min(1, 1 - flow.avgRatio)) : 0;
   const worstCongestion =
     flow && flow.samples >= 2
       ? Math.max(0, Math.min(1, 1 - flow.worstRatio))
@@ -723,7 +719,9 @@ export function computeRouteScores(
   const congestionPenalty = Math.round(worstCongestion * 40 + congestion * 15);
   const stressScore = Math.min(
     100,
-    Math.round(base.riskScore * 0.7 + congestionPenalty + complexityPenalty * 0.45)
+    Math.round(
+      base.riskScore * 0.7 + congestionPenalty + complexityPenalty * 0.45
+    )
   );
   const distanceMi = distanceM / 1609.34;
   const distanceBand = Math.min(40, distanceMi * 1.6);
@@ -749,7 +747,13 @@ export function preferenceCost(
   const bottleneck = route.bottleneckScore ?? 0;
   // Historical bottlenecks count as stress — quiet/fuel feel them hardest.
   const bottleneckWeight =
-    preference === "quiet" ? 0.22 : preference === "fuel" ? 0.12 : preference === "balanced" ? 0.1 : 0.04;
+    preference === "quiet"
+      ? 0.22
+      : preference === "fuel"
+        ? 0.12
+        : preference === "balanced"
+          ? 0.1
+          : 0.04;
   return (
     w.time * timeMin +
     w.stress * (route.stressScore * 0.18) +
@@ -887,7 +891,12 @@ export type RouteResult = {
     flowSamples: number;
     /** Which TomTom products contributed to this response. */
     tomtomApis?: Array<
-      "routing" | "matrix" | "waypointOptimization" | "flow" | "incidents" | "reverseGeocode"
+      | "routing"
+      | "matrix"
+      | "waypointOptimization"
+      | "flow"
+      | "incidents"
+      | "reverseGeocode"
     >;
   } | null;
   /**
@@ -965,6 +974,32 @@ export type RouteResult = {
   driverHealthScore?: number;
   /** v24: local-driver tips that applied to the chosen route. */
   localDriverNotes?: string[];
+  /**
+   * v30: per-stop delivery schedule — set only when at least one stop was
+   * given a dueBy deadline. A plain shortest-path/2-opt reorder (stopPlan
+   * above) has no concept of "must arrive by 14:00" and will happily
+   * reorder past a hard pickup window; this is a separate, deadline-aware
+   * ordering (scheduleStopsWithDeadlines) that supersedes stopPlan's order
+   * whenever any stop carries a deadline.
+   */
+  stopSchedule?: {
+    /** False when at least one stop couldn't be reached by its deadline. */
+    feasible: boolean;
+    /** Total minutes late, summed across every stop that missed its deadline. */
+    totalLateMin: number;
+    stops: Array<{
+      address: string;
+      lat: number;
+      lng: number;
+      originalIndex: number;
+      /** "HH:MM" as given by the caller, or null if this stop had none. */
+      dueBy: string | null;
+      /** Estimated arrival, "HH:MM" local. */
+      etaClock: string;
+      /** 0 if on time or no deadline; otherwise minutes past dueBy. */
+      lateByMin: number;
+    }>;
+  } | null;
 };
 
 function cacheKey(
@@ -979,7 +1014,8 @@ function normalizeCachedResult(result: RouteResult): RouteResult {
   const withManeuvers = (r: ScoredRoute): ScoredRoute => ({
     ...r,
     maneuvers: Array.isArray(r.maneuvers) ? r.maneuvers : [],
-    stressScore: typeof r.stressScore === "number" ? r.stressScore : r.riskScore ?? 0,
+    stressScore:
+      typeof r.stressScore === "number" ? r.stressScore : (r.riskScore ?? 0),
     energyScore: typeof r.energyScore === "number" ? r.energyScore : 0,
     maneuverCount:
       typeof r.maneuverCount === "number"
@@ -1180,8 +1216,7 @@ async function fetchOSRM(
   const pathStyle: "standard" | "surface" = opts.excludeMotorway
     ? "surface"
     : "standard";
-  const query =
-    `?alternatives=${alternatives}&geometries=geojson&overview=full&steps=true${exclude}`;
+  const query = `?alternatives=${alternatives}&geometries=geojson&overview=full&steps=true${exclude}`;
   const bases = [ENV.osrmUrl, ENV.osrmFallbackUrl].filter(
     (u, i, arr) => typeof u === "string" && u.length > 0 && arr.indexOf(u) === i
   );
@@ -1222,11 +1257,8 @@ async function fetchOSRM(
       continue;
     }
   }
-  throw lastErr instanceof Error
-    ? lastErr
-    : new Error("OSRM unreachable");
+  throw lastErr instanceof Error ? lastErr : new Error("OSRM unreachable");
 }
-
 
 /**
  * M28: TomTom Routing with traffic=true for a live ETA (not only as OSRM fallback).
@@ -1247,7 +1279,10 @@ async function fetchTomTomLiveDuration(
     if (!res.ok) return null;
     const body = (await res.json()) as {
       routes?: Array<{
-        summary?: { travelTimeInSeconds?: number; trafficDelayInSeconds?: number };
+        summary?: {
+          travelTimeInSeconds?: number;
+          trafficDelayInSeconds?: number;
+        };
       }>;
     };
     const sec = body.routes?.[0]?.summary?.travelTimeInSeconds;
@@ -1387,11 +1422,7 @@ async function fetchBaseRoutes(
       surfacePromise,
       tomtomPromise,
     ]);
-    const merged = mergeRouteCandidates([
-      standard,
-      surface,
-      tomtom ?? [],
-    ]);
+    const merged = mergeRouteCandidates([standard, surface, tomtom ?? []]);
     if (merged.length === 0) {
       throw new TRPCError({
         code: "NOT_FOUND",
@@ -1465,8 +1496,7 @@ export function bottleneckScoreFromDensity(d: {
   congestionCount: number;
 }): number {
   // Diminishing returns so a single bad week doesn't max the score.
-  const raw =
-    d.incidentCount * 4 + d.majorOrWorse * 8 + d.congestionCount * 5;
+  const raw = d.incidentCount * 4 + d.majorOrWorse * 8 + d.congestionCount * 5;
   return Math.min(100, Math.round(raw));
 }
 
@@ -1591,10 +1621,7 @@ export async function fetchTomTomMatrix(
     const cells: MatrixCell[] = [];
     if (Array.isArray(body.data)) {
       for (const row of body.data) {
-        const summary =
-          row.routeSummary ??
-          row.routeResults?.[0] ??
-          null;
+        const summary = row.routeSummary ?? row.routeResults?.[0] ?? null;
         if (!summary) continue;
         cells.push({
           originIndex: row.originIndex ?? 0,
@@ -1714,6 +1741,183 @@ export async function optimizeStopsViaMatrix(
 
   const minutesSaved = Math.max(0, Math.round((baseline - bestT) / 60));
   return { order: bestOrder, minutesSaved, usedMatrix: true };
+}
+
+/** Fallback average urban travel speed when TomTom Matrix is unavailable — 25mph. */
+const FALLBACK_SPEED_M_PER_MIN = (25 * 1609.34) / 60;
+
+/** "HH:MM" → minutes since midnight. Returns null for anything unparseable. */
+export function hhmmToMin(hhmm: string): number | null {
+  const m = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(hhmm.trim());
+  if (!m) return null;
+  return parseInt(m[1]!, 10) * 60 + parseInt(m[2]!, 10);
+}
+
+/** Minutes since midnight → "HH:MM" (24h), wrapping past 1440 into the next day. */
+export function minToHHMM(min: number): string {
+  const wrapped = ((Math.round(min) % 1440) + 1440) % 1440;
+  const h = Math.floor(wrapped / 60);
+  const m = wrapped % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/** Current minutes-since-midnight in Portland local time (America/Los_Angeles). */
+export function nowMinutesInPortland(now = new Date()): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).formatToParts(now);
+  const get = (t: string) => parts.find(p => p.type === t)?.value ?? "0";
+  return (
+    (parseInt(get("hour"), 10) % 24) * 60 + (parseInt(get("minute"), 10) || 0)
+  );
+}
+
+/**
+ * v30: cheapest-feasible-insertion scheduler for stops with due-by deadlines
+ * (a real vehicle-routing-with-time-windows problem, not a plain shortest
+ * path). Pure distance/time optimizers like optimizeStopsViaMatrix have no
+ * concept of "must arrive by 14:00" — reordering to minimize total drive
+ * time can and will blow through hard pickup windows. This builds the route
+ * stop by stop, at each step inserting whichever remaining stop/position
+ * costs the least extra travel time WITHOUT pushing any already-placed stop
+ * past its deadline. When no fully-feasible insertion exists for a stop
+ * (deadlines are simply too tight to hit all of them), it falls back to the
+ * insertion that minimizes total lateness and flags the result infeasible,
+ * rather than silently producing a route that looks fine but is wrong.
+ */
+export async function scheduleStopsWithDeadlines(
+  origin: LatLng,
+  destination: LatLng,
+  stops: LatLng[],
+  dueByMin: (number | null)[],
+  departAtMin: number,
+  dwellMin = 5
+): Promise<{
+  order: number[];
+  etaMin: number[];
+  feasible: boolean;
+  totalLateMin: number;
+  usedMatrix: boolean;
+}> {
+  const points = [origin, ...stops, destination];
+  const pCount = points.length;
+
+  const cells = await fetchTomTomMatrix(points, points);
+  const usedMatrix = !!cells;
+  const time: number[][] = Array.from({ length: pCount }, () =>
+    Array.from({ length: pCount }, () => Infinity)
+  );
+  for (let i = 0; i < pCount; i++) {
+    for (let j = 0; j < pCount; j++) {
+      if (i === j) {
+        time[i]![j] = 0;
+        continue;
+      }
+      time[i]![j] =
+        haversineM(points[i]!, points[j]!) / FALLBACK_SPEED_M_PER_MIN;
+    }
+  }
+  if (cells) {
+    for (const c of cells) {
+      if (
+        c.originIndex >= 0 &&
+        c.originIndex < pCount &&
+        c.destinationIndex >= 0 &&
+        c.destinationIndex < pCount &&
+        c.travelTimeS > 0
+      ) {
+        time[c.originIndex]![c.destinationIndex] = c.travelTimeS / 60;
+      }
+    }
+  }
+
+  /** origin=0, stop i is point i+1, destination is point pCount-1. */
+  const pointIdx = (stopIdx: number) => stopIdx + 1;
+
+  /** Arrival clock-minutes at each stop in `seq`, starting from origin. */
+  const arrivalsFor = (seq: number[]): number[] => {
+    const out: number[] = [];
+    let clock = departAtMin;
+    let prevPoint = 0;
+    for (const stopIdx of seq) {
+      clock += time[prevPoint]![pointIdx(stopIdx)]!;
+      out.push(clock);
+      clock += dwellMin;
+      prevPoint = pointIdx(stopIdx);
+    }
+    return out;
+  };
+
+  const latenessFor = (seq: number[], arrivals: number[]): number =>
+    seq.reduce((sum, stopIdx, i) => {
+      const due = dueByMin[stopIdx];
+      if (due == null) return sum;
+      return sum + Math.max(0, arrivals[i]! - due);
+    }, 0);
+
+  let placed: number[] = [];
+  const unplaced = new Set<number>(stops.map((_, i) => i));
+
+  while (unplaced.size > 0) {
+    let bestFeasible: { seq: number[]; stopIdx: number; cost: number } | null =
+      null;
+    let bestAny: {
+      seq: number[];
+      stopIdx: number;
+      lateness: number;
+      cost: number;
+    } | null = null;
+
+    for (const stopIdx of unplaced) {
+      for (let pos = 0; pos <= placed.length; pos++) {
+        const candidate = [
+          ...placed.slice(0, pos),
+          stopIdx,
+          ...placed.slice(pos),
+        ];
+        const prevPoint = pos === 0 ? 0 : pointIdx(placed[pos - 1]!);
+        const nextPoint =
+          pos === placed.length ? pCount - 1 : pointIdx(placed[pos]!);
+        const insertionCost =
+          time[prevPoint]![pointIdx(stopIdx)]! +
+          time[pointIdx(stopIdx)]![nextPoint]! -
+          time[prevPoint]![nextPoint]!;
+
+        const arrivals = arrivalsFor(candidate);
+        const lateness = latenessFor(candidate, arrivals);
+
+        if (lateness === 0) {
+          if (!bestFeasible || insertionCost < bestFeasible.cost) {
+            bestFeasible = { seq: candidate, stopIdx, cost: insertionCost };
+          }
+        }
+        if (
+          !bestAny ||
+          lateness < bestAny.lateness ||
+          (lateness === bestAny.lateness && insertionCost < bestAny.cost)
+        ) {
+          bestAny = { seq: candidate, stopIdx, lateness, cost: insertionCost };
+        }
+      }
+    }
+
+    const chosen = bestFeasible ?? bestAny!;
+    placed = chosen.seq;
+    unplaced.delete(chosen.stopIdx);
+  }
+
+  const finalArrivals = arrivalsFor(placed);
+  const totalLateMin = Math.round(latenessFor(placed, finalArrivals));
+  return {
+    order: placed,
+    etaMin: finalArrivals.map(Math.round),
+    feasible: totalLateMin === 0,
+    totalLateMin,
+    usedMatrix,
+  };
 }
 
 export async function optimizeStopsTomTom(
@@ -1914,9 +2118,7 @@ async function fetchTomTomRoutes(
       console.warn("[routePulse] TomTom routing returned 0 routes");
       return null;
     }
-    console.info(
-      `[routePulse] TomTom routing OK — ${routes.length} route(s)`
-    );
+    console.info(`[routePulse] TomTom routing OK — ${routes.length} route(s)`);
     return routes.map(r => {
       const coords: [number, number][] = [];
       for (const leg of r.legs ?? []) {
@@ -2194,7 +2396,11 @@ function deterministicPick(
   });
   const chosen = routes[best];
   if (!chosen) {
-    return { chosenIndex: 0, explanation: "Best available route.", confidence: "none" };
+    return {
+      chosenIndex: 0,
+      explanation: "Best available route.",
+      confidence: "none",
+    };
   }
   let pureTimeBest = 0;
   let pureTimeCost = Infinity;
@@ -2217,9 +2423,12 @@ function deterministicPick(
     const timeDelta = timeMin - pureMin;
     const parts: string[] = [];
     if (stressDelta >= 8) parts.push(`cuts stress by ~${stressDelta} pts`);
-    if (energyDelta >= 8) parts.push(`lower energy/effort (~${energyDelta} pts)`);
+    if (energyDelta >= 8)
+      parts.push(`lower energy/effort (~${energyDelta} pts)`);
     if (chosen.maneuverCount + 3 < pure.maneuverCount) {
-      parts.push(`fewer turns (${chosen.maneuverCount} vs ${pure.maneuverCount})`);
+      parts.push(
+        `fewer turns (${chosen.maneuverCount} vs ${pure.maneuverCount})`
+      );
     }
     if (chosen.pathStyle === "surface" && pure.pathStyle !== "surface") {
       parts.push("uses surface streets instead of the freeway");
@@ -2238,7 +2447,10 @@ function deterministicPick(
     if (avoidedLocal.length > 0) {
       parts.push(`avoids known local pain (${avoidedLocal[0]!.id})`);
     }
-    const why = parts.length > 0 ? parts.join(", ") : "avoids heavier congestion / incidents";
+    const why =
+      parts.length > 0
+        ? parts.join(", ")
+        : "avoids heavier congestion / incidents";
     explanation = `Chose a calmer option (+${Math.max(0, timeDelta)} min vs pure fastest) because it ${why}. Preference: ${preference}.`;
     const chosenLocalSummary = localKnowledgeSummary(
       matchLocalKnowledge(
@@ -2252,7 +2464,8 @@ function deterministicPick(
     );
     if (chosenLocalSummary && preference !== "fastest") {
       explanation = `${explanation} Local note: ${chosenLocalSummary.slice(0, 180)}`;
-      if (explanation.length > 480) explanation = explanation.slice(0, 477) + "...";
+      if (explanation.length > 480)
+        explanation = explanation.slice(0, 477) + "...";
     }
   } else if (flowDelay >= 3) {
     explanation = `Best route under ${preference} preference accounting for current traffic (measured ~${flowDelay} min slower than usual${chosen.incidentDelayMin > 0 ? `, plus ${chosen.incidentDelayMin} min for incidents` : ""}).`;
@@ -2456,17 +2669,30 @@ Respond ONLY with JSON: { "chosen_index": 0, "explanation": "1-2 short sentences
   }
 }
 
+/** A stop address, optionally with a "must arrive by" deadline ("HH:MM", 24h). */
+export type StopWithDeadline = string | { address: string; dueBy?: string };
+
 export async function getRoute(
   originAddress: string,
   destinationAddress: string,
   preference: RoutePreference = "balanced",
-  stopAddresses: string[] = [],
-  optimizeStops = true
+  stopAddresses: StopWithDeadline[] = [],
+  optimizeStops = true,
+  /** "HH:MM" local departure time — only meaningful when a stop has a dueBy. */
+  departAt?: string
 ): Promise<RouteResult> {
   // Geocode first — the cache key and every downstream step depends on
   // resolved coordinates, and a bad address should fail fast with a clear
   // message rather than an OSRM "no route" error.
-  const stopList = stopAddresses.map(s => s.trim()).filter(s => s.length >= 3).slice(0, 8);
+  const stopEntries = stopAddresses
+    .map(s =>
+      typeof s === "string"
+        ? { address: s.trim(), dueBy: undefined as string | undefined }
+        : { address: s.address.trim(), dueBy: s.dueBy }
+    )
+    .filter(s => s.address.length >= 3)
+    .slice(0, 15);
+  const stopList = stopEntries.map(s => s.address);
   if (!ENV.tomtomApiKey) {
     console.warn(
       "[routePulse] TOMTOM_API_KEY is empty at runtime — flow/routing/matrix/incidents will no-op"
@@ -2479,15 +2705,62 @@ export async function getRoute(
     ...stopList.map(a => geocodeAddress(a)),
   ]);
 
+  // v30: dueBy deadlines turn this from a shortest-path problem into a
+  // vehicle-routing-with-time-windows problem — a plain distance/time
+  // optimizer (below) has no idea a stop must happen by a specific clock
+  // time and will happily reorder past it. Deadlines take priority over
+  // optimizeStops whenever any are present.
+  const dueByMinList = stopEntries.map(s =>
+    s.dueBy ? hhmmToMin(s.dueBy) : null
+  );
+  const hasDeadlines = dueByMinList.some(d => d != null);
+
   // v23: smart stop order for delivery — reorder before OSRM so the route
   // itself follows the efficient sequence, not just the typed order.
   let stops = rawStops;
   let stopPlan: RouteResult["stopPlan"] = undefined;
+  let stopSchedule: RouteResult["stopSchedule"] = null;
   // Track which TomTom products actually answered (for UI receipts).
   let tomtomMatrixUsed = false;
   let tomtomWaypointOptUsed = false;
 
-  if (rawStops.length >= 2 && optimizeStops) {
+  if (rawStops.length >= 1 && hasDeadlines) {
+    const departAtMin = departAt
+      ? (hhmmToMin(departAt) ?? nowMinutesInPortland())
+      : nowMinutesInPortland();
+    const sched = await scheduleStopsWithDeadlines(
+      origin,
+      destination,
+      rawStops,
+      dueByMinList,
+      departAtMin
+    );
+    if (sched.usedMatrix) tomtomMatrixUsed = true;
+    stops = sched.order.map(i => rawStops[i]!);
+    const orderChanged = sched.order.some((v, i) => v !== i);
+    stopPlan = {
+      optimized: orderChanged,
+      stops: sched.order.map(i => ({ ...rawStops[i]!, originalIndex: i })),
+      estimatedMilesSaved: null,
+    };
+    stopSchedule = {
+      feasible: sched.feasible,
+      totalLateMin: sched.totalLateMin,
+      stops: sched.order.map((stopIdx, seqPos) => {
+        const due = dueByMinList[stopIdx];
+        const eta = sched.etaMin[seqPos]!;
+        return {
+          address: stopEntries[stopIdx]!.address,
+          lat: rawStops[stopIdx]!.lat,
+          lng: rawStops[stopIdx]!.lng,
+          originalIndex: stopIdx,
+          dueBy: due != null ? minToHHMM(due) : null,
+          etaClock: minToHHMM(eta),
+          lateByMin: due != null ? Math.max(0, Math.round(eta - due)) : 0,
+        };
+      }),
+    };
+  } else if (rawStops.length >= 2 && optimizeStops) {
     // 1) Matrix v2 live-traffic TSP  2) Waypoint Optimization API  3) haversine
     const matrixPlan = await optimizeStopsViaMatrix(
       origin,
@@ -2515,9 +2788,7 @@ export async function getRoute(
     stopPlan = {
       optimized: orderChanged,
       stops: order.map(i => ({ ...rawStops[i]!, originalIndex: i })),
-      estimatedMilesSaved: orderChanged
-        ? (milesFromMatrix ?? milesSaved)
-        : 0,
+      estimatedMilesSaved: orderChanged ? (milesFromMatrix ?? milesSaved) : 0,
     };
   } else if (rawStops.length > 0) {
     stopPlan = {
@@ -2534,6 +2805,10 @@ export async function getRoute(
       ? `_via:${stops.map(s => `${s.lat.toFixed(4)},${s.lng.toFixed(4)}`).join("|")}`
       : "") +
     (optimizeStops && rawStops.length >= 2 ? "_opt" : "") +
+    // Deadlines change stopSchedule (ETAs/feasibility) independent of the
+    // stop lat/lngs above, so they need their own cache-key component —
+    // otherwise a different departAt/dueBy set could hit a stale schedule.
+    (hasDeadlines ? `_dl:${departAt ?? "now"}:${dueByMinList.join(",")}` : "") +
     "_vtt1";
 
   const cached = await readCache(key);
@@ -2562,7 +2837,8 @@ export async function getRoute(
             ...existing,
             ...dedupeIncidents(existing, near),
           ];
-          let liveDurationS = cached.route.liveDurationS ?? cached.route.duration;
+          let liveDurationS =
+            cached.route.liveDurationS ?? cached.route.duration;
           if (freshFlow && freshFlow.samples >= 2 && freshFlow.avgRatio > 0) {
             const clamped = Math.max(0.3, Math.min(1.15, freshFlow.avgRatio));
             liveDurationS = Math.round(cached.route.duration / clamped);
@@ -2725,7 +3001,10 @@ export async function getRoute(
         timeContext
       );
       const localPen = localKnowledgePenalties(localHits);
-      stressScore = Math.min(100, Math.round(stressScore + localPen.stress * 0.55));
+      stressScore = Math.min(
+        100,
+        Math.round(stressScore + localPen.stress * 0.55)
+      );
       bottleneckScore = Math.min(
         100,
         Math.round(bottleneckScore + localPen.bottleneck * 0.5)
@@ -2835,33 +3114,21 @@ export async function getRoute(
     0
   );
   const tomtomApis: Array<
-    | "routing"
-    | "matrix"
-    | "waypointOptimization"
-    | "flow"
-    | "incidents"
+    "routing" | "matrix" | "waypointOptimization" | "flow" | "incidents"
   > = [];
   if (tomtomIncidents.length > 0) tomtomApis.push("incidents");
   if (flowSamples > 0) tomtomApis.push("flow");
   if (typeof tomtomLiveDurationS === "number" && tomtomLiveDurationS > 0) {
     tomtomApis.push("routing");
   }
-  // Routing candidates also come from fetchTomTomRoutes inside fetchBaseRoutes
-  if (
-    baseRoutes.some(
-      r =>
-        // TomTom routes carry traffic-aware durations distinct from pure OSRM
-        // when merged; treat any successful live duration as routing used.
-        false
-    )
-  ) {
-    /* no-op — live duration covers routing receipt */
-  }
   if (tomtomMatrixUsed) tomtomApis.push("matrix");
   if (tomtomWaypointOptUsed) tomtomApis.push("waypointOptimization");
 
   const grounding =
-    tomtomIncidents.length + wazeAlerts.length + flowSamples + tomtomApis.length >
+    tomtomIncidents.length +
+      wazeAlerts.length +
+      flowSamples +
+      tomtomApis.length >
     0
       ? {
           tomtomIncidents: tomtomIncidents.length,
@@ -2898,7 +3165,9 @@ export async function getRoute(
     if (stressDelta >= 6) parts.push(`~${stressDelta} pts less stress`);
     if (energyDelta >= 6) parts.push(`~${energyDelta} pts less energy/effort`);
     if (bottleneckDelta >= 6)
-      parts.push(`historically clearer corridor (−${bottleneckDelta} bottleneck)`);
+      parts.push(
+        `historically clearer corridor (−${bottleneckDelta} bottleneck)`
+      );
     if (chosenRoute.pathStyle === "surface")
       parts.push("surface streets instead of the freeway");
     const detail =
@@ -3006,6 +3275,7 @@ export async function getRoute(
     dataConfidence,
     stops: stops.length ? stops : undefined,
     stopPlan,
+    stopSchedule,
     driverHealthScore,
     localDriverNotes,
   };
