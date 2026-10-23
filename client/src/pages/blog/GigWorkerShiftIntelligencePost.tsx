@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import ReadingLayout from "@/components/ReadingLayout";
 import PageHead from "@/components/PageHead";
 import {
   BLOG_POSTS,
@@ -16,13 +16,7 @@ export default function GigWorkerShiftIntelligencePost() {
   const readingTime = getReadingTimeText(post.wordCount);
 
   return (
-    <div
-      style={{
-        backgroundColor: "#020202",
-        color: "#F0E8D0",
-        minHeight: "100vh",
-      }}
-    >
+    <ReadingLayout kind="article">
       <PageHead
         title={post.title}
         description={post.description}
@@ -33,62 +27,7 @@ export default function GigWorkerShiftIntelligencePost() {
         jsonLd={buildArticleJsonLd(post)}
       />
 
-      <nav
-        className="fixed top-0 left-0 right-0 z-50"
-        style={{
-          backgroundColor: "rgba(2,2,2,0.97)",
-          borderBottom: "1px solid rgba(212,168,67,0.12)",
-          backdropFilter: "blur(12px)",
-        }}
-      >
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/">
-            <span
-              className="font-cinzel text-xs font-700 tracking-widest cursor-pointer"
-              style={{ color: "#D4A843", letterSpacing: "0.2em" }}
-            >
-              ← UNIFYONE
-            </span>
-          </Link>
-          <span className="inscription" style={{ color: "#3A3A3A" }}>
-            Cathedral Codex
-          </span>
-        </div>
-      </nav>
-
-      <article className="max-w-4xl mx-auto px-6 sm:px-8 pt-28 pb-24">
-        <nav aria-label="breadcrumb" className="mb-4">
-          <ol
-            className="flex items-center gap-2 text-xs"
-            style={{
-              fontFamily: "Cinzel, serif",
-              letterSpacing: "0.15em",
-              color: "#3A3A3A",
-            }}
-          >
-            <li>
-              <Link href="/">
-                <span className="cursor-pointer hover:text-amber-500 transition-colors">
-                  Home
-                </span>
-              </Link>
-            </li>
-            <li style={{ color: "#242424" }}>›</li>
-            <li>
-              <Link href="/blog">
-                <span
-                  className="cursor-pointer hover:text-amber-500 transition-colors"
-                  style={{ color: "#5A5A5A" }}
-                >
-                  Blog
-                </span>
-              </Link>
-            </li>
-            <li style={{ color: "#242424" }}>›</li>
-            <li style={{ color: "#D4A843" }}>{post.breadcrumbName}</li>
-          </ol>
-        </nav>
-
+      <article className="reading-content">
         <BlogBackLink className="mb-8" />
 
         <header className="mb-12">
@@ -479,6 +418,6 @@ export default function GigWorkerShiftIntelligencePost() {
 
         <RelatedPostsSection currentPost="gigWorkerShiftIntelligence" />
       </article>
-    </div>
+    </ReadingLayout>
   );
 }

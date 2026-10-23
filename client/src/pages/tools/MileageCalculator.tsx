@@ -1,3 +1,4 @@
+import ReadingLayout from "@/components/ReadingLayout";
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import PageHead from "@/components/PageHead";
@@ -75,7 +76,7 @@ const jsonLd = [
         name: "How do I track mileage for taxes?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "The IRS requires a contemporaneous log — date, destination, business purpose, and miles. UnifyOne automatically captures mileage from your connected gig platform data and maintains a running YTD deduction total.",
+          text: "The IRS requires a contemporaneous log — date, destination, business purpose, and miles. Keep a dated trip log with the destination, business purpose, and business miles; this calculator does not create that log.",
         },
       },
     ],
@@ -139,7 +140,7 @@ export default function MileageCalculator() {
 
   const deduction = useMemo(() => {
     const m = parseFloat(miles.replace(/,/g, ""));
-    if (!m || m <= 0) return null;
+    if (!Number.isFinite(m) || m <= 0) return null;
     const total = m * IRS_BUSINESS_RATE;
     return {
       miles: m,
@@ -163,7 +164,7 @@ export default function MileageCalculator() {
   const fmt = formatUsd0;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <ReadingLayout kind="calculator">
       <PageHead
         title="IRS Mileage Deduction Calculator for Gig Workers 2025 | UnifyOne"
         description="Free IRS mileage deduction calculator for gig workers. Enter miles driven to see your $0.70/mile deduction and estimated tax savings at 4 federal brackets."
@@ -171,46 +172,7 @@ export default function MileageCalculator() {
         jsonLd={jsonLd}
       />
 
-      <nav className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link
-            href="/tools"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Free Tools
-          </Link>
-          <span className="text-muted-foreground/40">/</span>
-          <span className="text-sm font-medium">
-            Mileage Deduction Calculator
-          </span>
-        </div>
-      </nav>
-
-      <main className="max-w-3xl mx-auto px-6 py-12">
-        <nav aria-label="breadcrumb" className="mb-6">
-          <ol className="flex items-center gap-2 text-xs text-muted-foreground">
-            <li>
-              <Link
-                href="/"
-                className="hover:text-foreground transition-colors"
-              >
-                Home
-              </Link>
-            </li>
-            <li>›</li>
-            <li>
-              <Link
-                href="/tools"
-                className="hover:text-foreground transition-colors"
-              >
-                Free Tools
-              </Link>
-            </li>
-            <li>›</li>
-            <li className="text-foreground">Mileage Calculator</li>
-          </ol>
-        </nav>
-
+      <div className="reading-content">
         <header className="mb-10">
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
             Free Tool · Tax Management
@@ -220,10 +182,10 @@ export default function MileageCalculator() {
           </h1>
           <p className="text-lg text-muted-foreground">
             At the 2025 IRS standard mileage rate of{" "}
-            <strong className="text-foreground">$0.70/mile</strong>, every mile
-            you drive for DoorDash, Uber, Instacart, or any gig platform is a
-            real tax deduction. Enter your miles to see exactly what you've
-            earned.
+            <strong className="text-foreground">$0.70/mile</strong>, eligible
+            business miles may qualify for a deduction. Commuting and personal
+            miles are excluded. Enter eligible miles to estimate the deduction,
+            not a cash payment.
           </p>
         </header>
 
@@ -248,6 +210,8 @@ export default function MileageCalculator() {
                       trackToolUsage("mileage-deduction-calculator", "start");
                   }}
                   className="flex-1 rounded-md border bg-background px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+                  min={0}
+                  step="any"
                 />
                 <button
                   onClick={handleCalculate}
@@ -264,7 +228,11 @@ export default function MileageCalculator() {
             </div>
 
             {hasResult && deduction && (
-              <div className="rounded-lg bg-muted/50 p-5 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div
+                className="rounded-lg bg-muted/50 p-5 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300"
+                role="status"
+                aria-live="polite"
+              >
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground mb-1">
                     Total IRS mileage deduction
@@ -305,8 +273,8 @@ export default function MileageCalculator() {
 
                 <div className="border-t pt-4 text-center">
                   <p className="text-sm text-muted-foreground mb-3">
-                    Save this result and track mileage automatically across all
-                    your gig platforms.
+                    Keep a mileage record with the date, destination, and
+                    business purpose of each eligible trip.
                   </p>
                   <Link
                     href="/register"
@@ -318,7 +286,7 @@ export default function MileageCalculator() {
                     }
                     className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
                   >
-                    Track mileage automatically →
+                    Start a free tracking record →
                   </Link>
                 </div>
               </div>
@@ -398,8 +366,8 @@ export default function MileageCalculator() {
                 a: "Without a contemporaneous log, the IRS can disallow your mileage deduction entirely during an audit, even if you actually drove those miles. Keep a record of date, destination, and purpose for every business trip.",
               },
               {
-                q: "How does UnifyOne track mileage automatically?",
-                a: "UnifyOne connects to your DoorDash, Uber Eats, Instacart, and other gig platform accounts and reconstructs your mileage log from your shift data. Every delivery and active mile is captured and totaled automatically.",
+                q: "What should my mileage record include?",
+                a: "Keep the date, starting point, destination, business purpose, and business miles for each trip. This calculator estimates a deduction from the miles you enter; it does not create or verify your trip log.",
               },
             ].map(({ q, a }) => (
               <div key={q} className="border-b pb-6 last:border-0">
@@ -496,7 +464,7 @@ export default function MileageCalculator() {
             Start tracking for free →
           </Link>
         </section>
-      </main>
-    </div>
+      </div>
+    </ReadingLayout>
   );
 }

@@ -1,3 +1,4 @@
+import ReadingLayout from "@/components/ReadingLayout";
 import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
@@ -124,7 +125,7 @@ const jsonLd = [
  */
 export default function HowToFileGigTaxes() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <ReadingLayout kind="article">
       <PageHead
         title="How to File Taxes as a Gig Worker: Step-by-Step | UnifyOne"
         description="Step-by-step guide to filing gig worker taxes: gather 1099s, total income, file Schedule C & Schedule SE, complete Form 1040, and pay quarterly estimates."
@@ -133,24 +134,7 @@ export default function HowToFileGigTaxes() {
         jsonLd={jsonLd}
       />
 
-      <nav className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Home
-          </Link>
-          <Link
-            href="/tools"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Free Tools
-          </Link>
-        </div>
-      </nav>
-
-      <main className="max-w-3xl mx-auto px-6 py-12">
+      <div className="reading-content">
         <header className="mb-10">
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
             Gig Tax Guide
@@ -384,7 +368,7 @@ export default function HowToFileGigTaxes() {
           department of revenue, or a qualified tax professional before you
           file.
         </p>
-      </main>
-    </div>
+      </div>
+    </ReadingLayout>
   );
 }

@@ -38,9 +38,9 @@ interface ToolEmailCaptureProps {
  */
 export default function ToolEmailCapture({
   source,
-  heading = "Email yourself this result + get quarterly tax reminders",
-  subheading = "We'll send your numbers and a plain-English nudge before each IRS quarterly deadline. No spam, unsubscribe anytime.",
-  cta = "Email me my result",
+  heading = "Want to hear about product updates?",
+  subheading = "Leave your email if you would like updates from UnifyOne. This is optional; your calculation is available above.",
+  cta = "Keep me updated",
   resultSummary,
   className,
 }: ToolEmailCaptureProps) {
@@ -78,8 +78,8 @@ export default function ToolEmailCapture({
     >
       {submitted ? (
         <p className="text-sm font-medium text-primary">
-          &#10003; Done -- check your inbox. We&apos;ll also remind you before
-          the next quarterly tax deadline.
+          &#10003; Your request was received. Thanks for your interest in
+          UnifyOne.
         </p>
       ) : (
         <>

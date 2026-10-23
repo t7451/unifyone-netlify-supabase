@@ -381,6 +381,7 @@ export default function CashflowTracker() {
                             onChange={e => setEarnings(def.id, e.target.value)}
                             className="h-7 w-24 rounded-md border bg-background pl-5 pr-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                             aria-label={`${def.name} weekly earnings`}
+                            step="any"
                           />
                         </div>
                       </div>

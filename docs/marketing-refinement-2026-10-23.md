@@ -56,8 +56,9 @@ branch and is not included here.
 
 ## Follow-up work
 
-1. Review and modernize individual article and calculator page templates;
-   this change updates their discovery paths, not every article's layout.
+1. Completed in the next round: article and calculator layouts. See
+   [the follow-up report](article-calculator-refinement-2026-10-23.md) for scope,
+   calculation corrections, and verification.
 2. Reconcile older commerce-focused SEO pages and downloads with the current
    audience before changing routes or removing indexed material.
 3. Verify actual plan entitlements, AI availability, billing cancellation/refund

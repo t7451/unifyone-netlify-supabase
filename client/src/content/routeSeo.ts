@@ -2668,9 +2668,9 @@ export const ROUTE_SEO: RouteSeo[] = [
     externalLinks: [IRS.estimated],
     title: "Quarterly Estimated Tax Calculator — 1099 Self-Employed | UnifyOne",
     description:
-      "Free 1099 quarterly tax calculator for gig workers. See your SE tax + income tax and exact quarterly payment amounts with 2026 due dates.",
+      "Free 1099 quarterly tax calculator for gig workers. See your SE tax + income tax and estimated quarterly amounts with 2025 tax-year dates.",
     body: [
-      "1099 gig workers owe taxes four times a year, not just in April. This calculator estimates your self-employment tax and federal income tax from your net earnings, then breaks the total into the four quarterly payments the IRS expects — with the 2026 due dates.",
+      "1099 gig workers owe taxes four times a year, not just in April. This calculator estimates your self-employment tax and federal income tax from your net earnings, then breaks the total into the four quarterly payments the IRS expects — with the 2025 tax-year dates.",
       "Knowing each quarter's number in advance prevents underpayment penalties and April surprises. UnifyOne can derive these estimates from your live earnings so the amount is always current.",
     ],
   },

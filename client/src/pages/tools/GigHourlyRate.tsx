@@ -1,3 +1,5 @@
+import { earningsAfterExpenses } from "@shared/publicTax2025";
+import ReadingLayout from "@/components/ReadingLayout";
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import PageHead from "@/components/PageHead";
@@ -20,28 +22,28 @@ const PLATFORM_DEFAULTS = [
 
 const FAQS = [
   {
-    q: "Why is my actual hourly rate lower than what gig apps advertise?",
-    a: "Gig platforms advertise gross per-order or per-hour figures that don't account for vehicle expenses, waiting time between orders, deadhead miles, or the self-employment tax you owe. After fuel costs at the IRS mileage rate ($0.70/mile in 2025), SE tax (~15.3%), and unpaid waiting time, many gig workers net $8–$14/hour — well below the headline rate.",
+    q: "Why can a payout look different from an hourly rate?",
+    a: "The time and expenses behind a payout matter. This calculator subtracts a 2025 mileage-allowance proxy from the earnings you enter, then divides by all the hours you record, including waiting time. It does not estimate your taxes.",
   },
   {
-    q: "How do I calculate my real gig earnings per hour?",
-    a: "Real gig hourly rate = (Gross earnings − vehicle expenses − platform fees) ÷ total hours on-app. Vehicle expenses are best estimated using the IRS standard mileage rate ($0.70/mile). Include all time the app is open — not just active delivery time — because waiting between orders is unpaid work.",
+    q: "How is the hourly rate calculated?",
+    a: "The estimate is (entered earnings minus miles multiplied by $0.70) divided by recorded hours. Enter figures for the same period. Platform fees are not entered separately, so use earnings figures on a consistent basis when comparing apps.",
   },
   {
-    q: "Should I include miles driven between orders (deadhead miles)?",
-    a: "Yes. Miles driving to restaurants, between pickups, and back to your zone while on the app all count as business miles under the IRS standard mileage deduction. They also reduce your effective hourly rate because you're spending time and fuel without earning. Include all active-app miles in this calculator.",
+    q: "Which miles should I enter?",
+    a: "Enter the miles attributable to the work period you are comparing. Whether a trip qualifies for a tax deduction is a separate question; commuting and personal trips have different rules. Check IRS Publication 463 for your circumstances.",
   },
   {
-    q: "Which gig platforms pay the highest effective hourly rate?",
-    a: "Effective hourly rate varies significantly by market, time of day, and surge pricing. This calculator lets you compare your actual results across platforms based on your own earnings data — which is far more accurate than industry averages. Many drivers find that Instacart batch orders yield higher net hourly rates than delivery apps in urban markets.",
+    q: "Does the mileage allowance equal my actual costs?",
+    a: "No. The 2025 IRS mileage allowance is used here as a simple comparison proxy. Your actual fuel, maintenance, insurance, and depreciation costs can be higher or lower. There is no separate fuel-cost input in this tool.",
   },
   {
-    q: "How does this calculator handle vehicle costs?",
-    a: "This tool uses the IRS 2025 standard mileage rate of $0.70 per mile to estimate the full cost of operating your vehicle for business — gas, oil, depreciation, tires, and insurance. You enter miles driven and your fuel cost input is optional. The IRS rate is the most conservative, accurate, and tax-aligned estimate for most gig drivers.",
+    q: "Can a result be negative?",
+    a: "Yes. If the mileage proxy exceeds the earnings entered, the calculator shows a loss. That is useful information when comparing the work, rather than treating the loss as zero.",
   },
   {
-    q: "Can I use this to decide which platform to prioritize?",
-    a: "Yes — that's the main use case. Enter the same time period (e.g., last week) for each platform and compare net hourly rates. Platforms with higher gross-per-order but more miles and wait time often yield lower net rates than shorter-distance, high-volume apps in dense areas. Let the data drive your platform prioritization.",
+    q: "Can I compare different platforms?",
+    a: "Yes. Use the same time period and consistent earnings definitions for each platform. Results describe the records you enter; they do not predict future pay or guarantee that one platform will be more profitable.",
   },
 ];
 
@@ -189,9 +191,15 @@ export default function GigHourlyRate() {
         const gross = parseFloat(p.gross.replace(/,/g, "")) || 0;
         const hours = parseFloat(p.hours.replace(/,/g, "")) || 0;
         const miles = parseFloat(p.miles.replace(/,/g, "")) || 0;
-        if (gross <= 0 || hours <= 0) return null;
+        if (
+          ![gross, hours, miles].every(Number.isFinite) ||
+          gross < 0 ||
+          hours <= 0 ||
+          miles < 0
+        )
+          return null;
         const mileageCost = miles * IRS_MILEAGE_RATE;
-        const net = Math.max(0, gross - mileageCost);
+        const net = earningsAfterExpenses(gross, mileageCost);
         const hourly = net / hours;
         return {
           id: p.id,
@@ -233,7 +241,7 @@ export default function GigHourlyRate() {
   const canCalculate = results.length > 0;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <ReadingLayout kind="calculator">
       <PageHead
         title="Gig Worker Real Hourly Rate Calculator — DoorDash, Uber Eats, Instacart | UnifyOne"
         description="Find your true hourly rate from DoorDash, Uber Eats, Instacart, and Grubhub after vehicle costs and miles. Free gig earnings optimizer — compare platforms."
@@ -241,46 +249,7 @@ export default function GigHourlyRate() {
         jsonLd={jsonLd}
       />
 
-      <nav className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link
-            href="/tools"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Free Tools
-          </Link>
-          <span className="text-muted-foreground/40">/</span>
-          <span className="text-sm font-medium">
-            Gig Hourly Rate Calculator
-          </span>
-        </div>
-      </nav>
-
-      <main className="max-w-3xl mx-auto px-6 py-12">
-        <nav aria-label="breadcrumb" className="mb-6">
-          <ol className="flex items-center gap-2 text-xs text-muted-foreground">
-            <li>
-              <Link
-                href="/"
-                className="hover:text-foreground transition-colors"
-              >
-                Home
-              </Link>
-            </li>
-            <li>›</li>
-            <li>
-              <Link
-                href="/tools"
-                className="hover:text-foreground transition-colors"
-              >
-                Free Tools
-              </Link>
-            </li>
-            <li>›</li>
-            <li className="text-foreground">Gig Hourly Rate Calculator</li>
-          </ol>
-        </nav>
-
+      <div className="reading-content">
         <header className="mb-10">
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
             Free Tool · Earnings Optimization
@@ -315,6 +284,7 @@ export default function GigHourlyRate() {
                         updatePlatform(p.id, "name", e.target.value)
                       }
                       className="text-sm font-medium bg-transparent border-0 border-b border-dashed border-muted-foreground/40 focus:outline-none focus:border-primary pb-0.5 w-32"
+                      aria-label={p.name + ": " + "Platform name"}
                     />
                     {idx >= 2 && (
                       <button
@@ -342,6 +312,9 @@ export default function GigHourlyRate() {
                             trackToolUsage("gig-hourly-rate", "start");
                         }}
                         className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        min={0}
+                        step="any"
+                        aria-label={p.name + ": " + "Gross earnings ($)"}
                       />
                     </div>
                     <div>
@@ -357,6 +330,9 @@ export default function GigHourlyRate() {
                           updatePlatform(p.id, "hours", e.target.value)
                         }
                         className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        min={0}
+                        step="any"
+                        aria-label={p.name + ": " + "Hours on-app"}
                       />
                     </div>
                     <div>
@@ -372,6 +348,9 @@ export default function GigHourlyRate() {
                           updatePlatform(p.id, "miles", e.target.value)
                         }
                         className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        min={0}
+                        step="any"
+                        aria-label={p.name + ": " + "Miles driven"}
                       />
                     </div>
                   </div>
@@ -404,7 +383,11 @@ export default function GigHourlyRate() {
             </p>
 
             {hasResult && totals && (
-              <div className="rounded-lg bg-muted/50 p-5 space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div
+                className="rounded-lg bg-muted/50 p-5 space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300"
+                role="status"
+                aria-live="polite"
+              >
                 {/* Per-platform results */}
                 {results.length > 1 && (
                   <div>
@@ -483,8 +466,8 @@ export default function GigHourlyRate() {
 
                 <div className="border-t pt-4 text-center">
                   <p className="text-sm text-muted-foreground mb-3">
-                    See your real hourly rate across all platforms automatically
-                    — with mileage, SE tax, and payout timing in one dashboard.
+                    Keep a record of earnings, expenses, and mileage across the
+                    work you do.
                   </p>
                   <Link
                     href="/register"
@@ -504,19 +487,16 @@ export default function GigHourlyRate() {
         {/* Context */}
         <section className="prose prose-neutral dark:prose-invert max-w-none mb-12">
           <h2>Why your actual hourly rate is lower than you think</h2>
-          <p>
-            Gig apps report gross earnings — before vehicle depreciation, fuel,
-            tires, and the miles you drive between orders. At the IRS rate of
-            $0.70/mile, a gig driver putting 300 miles on their car in a week
-            has <strong>$210 in vehicle costs</strong> that come straight out of
-            their net pay.
+          <p className="text-muted-foreground">
+            A payout is only part of the picture. Record the time and expenses
+            behind it, then compare the work using consistent assumptions. The
+            mileage allowance used here is a planning proxy, not a measurement
+            of your vehicle costs.
           </p>
           <p>
-            Add in unpaid waiting time between orders and self-employment tax
-            (~15.3% of net income), and the gap between advertised and real
-            hourly rates can be $8–$12 per hour. This calculator uses the IRS
-            standard mileage rate to give you the most accurate, tax-aligned
-            cost estimate.
+            Include unpaid waiting time in your recorded hours. The result is a
+            comparison estimate before taxes; actual vehicle costs may differ
+            from the mileage allowance.
           </p>
 
           <h2>How to use this to earn more</h2>
@@ -527,11 +507,10 @@ export default function GigHourlyRate() {
             your weekly data for each platform and sort by effective hourly
             rate. Shift more of your hours toward the winners.
           </p>
-          <p>
-            Common findings: shorter-distance, dense-order apps often beat
-            long-haul delivery apps on net hourly rate. High-surge windows are
-            significantly more valuable than baseline pay — so knowing your
-            off-peak vs. peak hourly rates lets you schedule with intention.
+          <p className="text-muted-foreground">
+            Compare equivalent periods and include waiting time. A higher result
+            in your past records can help you ask better questions about future
+            work, but conditions and pay can change.
           </p>
 
           <h2>What this calculator doesn't include</h2>
@@ -565,12 +544,12 @@ export default function GigHourlyRate() {
         {/* CTA */}
         <section className="rounded-xl border bg-muted/30 p-6 text-center">
           <h2 className="text-lg font-semibold mb-2">
-            Know exactly what you're earning — automatically
+            Build a clearer record over time
           </h2>
-          <p className="text-muted-foreground text-sm mb-4">
-            UnifyOne connects to your gig platforms and calculates your true
-            hourly rate in real time — across DoorDash, Uber Eats, Instacart,
-            and more. Free to start.
+          <p className="text-muted-foreground">
+            Create a free account to keep a record of your shifts, mileage, and
+            earnings over time. Log the work you do across different platforms
+            or clients in one place.
           </p>
           <Link
             href="/register"
@@ -579,7 +558,7 @@ export default function GigHourlyRate() {
             Start for free →
           </Link>
         </section>
-      </main>
-    </div>
+      </div>
+    </ReadingLayout>
   );
 }
