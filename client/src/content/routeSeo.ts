@@ -2542,9 +2542,9 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/architecture",
-    title: "Architecture | UnifyOne by 1Commerce",
+    title: "How UnifyOne is built | UnifyOne",
     description:
-      "How UnifyOne is built for gig and 1099 workers — GigIQ earnings intelligence, Tax Autopilot, Money Manager, and Kai, with more AI tools as they ship.",
+      "A plain-language overview of UnifyOne's React application, server API, account boundaries, and separate PostgreSQL data stores.",
   },
   {
     path: "/the-system",
@@ -2606,25 +2606,25 @@ export const ROUTE_SEO: RouteSeo[] = [
     path: "/documents",
     title: "Documentation | UnifyOne",
     description:
-      "UnifyOne documentation — guides, integrations, case studies, and the full build timeline for the gig-worker earnings & tax app.",
+      "Start with UnifyOne's free tools and practical guides, then explore workflow examples, technical references, and the project history.",
   },
   {
     path: "/documents/case-studies",
-    title: "Case Studies | UnifyOne",
+    title: "Workflow examples | UnifyOne",
     description:
-      "Detailed case studies of UnifyOne features for gig workers: GigIQ earnings intelligence, Tax Autopilot, Money Manager, and the Kai AI assistant.",
+      "Illustrative workflows for comparing gig earnings, keeping mileage records, and planning irregular income with UnifyOne's free tools.",
   },
   {
     path: "/documents/integrations",
-    title: "Integration Guides | UnifyOne",
+    title: "Integration Guides | UnifyOne Documentation",
     description:
-      "Integration guides for UnifyOne — connect gig platforms and payout accounts, plus Kai, the Claude-powered AI assistant, to track earnings and taxes.",
+      "Developer reference examples for UnifyOne API configuration, MCP, webhooks, and n8n. Check account and deployment availability before use.",
   },
   {
     path: "/documents/work-proof",
-    title: "Build Timeline & Work Proof | UnifyOne",
+    title: "Project history | UnifyOne",
     description:
-      "Complete timeline of 36 development phases, deliverables, and technical achievements behind UnifyOne's gig-worker earnings & tax app.",
+      "The recorded development phases behind UnifyOne, with links to repository commits and releases. A project history, not a live feature-status report.",
   },
   {
     path: "/tools",

@@ -15,9 +15,11 @@ const TAX_TOOLS = new Set([
 export default function ReadingLayout({
   children,
   kind = "article",
+  collection,
 }: {
   children: ReactNode;
-  kind?: "article" | "calculator";
+  kind?: "article" | "calculator" | "reference";
+  collection?: { label: string; href: string };
 }) {
   const [location] = useLocation();
   const content = useRef<HTMLDivElement>(null);
@@ -25,7 +27,7 @@ export default function ReadingLayout({
   const tool = location.split("/").pop() ?? "";
 
   useEffect(() => {
-    if (kind !== "article") return;
+    if (kind === "calculator") return;
     const used = new Set<string>();
     const headings = Array.from(content.current?.querySelectorAll("h2") ?? []);
     setOutline(
@@ -55,8 +57,22 @@ export default function ReadingLayout({
         <nav className="reading-context" aria-label="Content navigation">
           <Link href="/">Home</Link>
           <span aria-hidden="true">/</span>
-          <Link href={kind === "calculator" ? "/tools" : "/resources"}>
-            {kind === "calculator" ? "Free tools" : "Guides & articles"}
+          <Link
+            href={
+              collection?.href ??
+              (kind === "calculator"
+                ? "/tools"
+                : kind === "reference"
+                  ? "/documents"
+                  : "/resources")
+            }
+          >
+            {collection?.label ??
+              (kind === "calculator"
+                ? "Free tools"
+                : kind === "reference"
+                  ? "Documentation"
+                  : "Guides & articles")}
           </Link>
           {kind === "article" && (
             <Link href="/tools" className="reading-context-extra">
@@ -64,7 +80,7 @@ export default function ReadingLayout({
             </Link>
           )}
         </nav>
-        {kind === "article" && outline.length > 2 && (
+        {kind !== "calculator" && outline.length > 2 && (
           <details className="reading-outline">
             <summary>
               On this page <span>{outline.length} sections</span>
