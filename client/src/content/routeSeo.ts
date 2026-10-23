@@ -11,6 +11,8 @@
  *
  * Keep every `description` ≤158 characters (Ahrefs/Google snippet limit).
  */
+import { CHIME_PLACEMENT } from "./geo/chimePlacement";
+
 export interface RouteSeo {
   path: string;
   title: string;
@@ -1094,6 +1096,9 @@ export const ROUTE_SEO: RouteSeo[] = [
       "That's why gig workers often target the higher end of the usual three-to-six-months-of-expenses range. Base the figure on essentials — housing, food, utilities, insurance, minimum debt payments — not total spending.",
       "Keep the fund safe and liquid in a separate high-yield savings account, distinct from both your spending money and your tax set-aside (which is money you already owe, not savings). On variable income, save a percentage of every payout rather than a fixed monthly amount, and route windfalls straight in.",
       "Start with a small milestone, then a one-month buffer, then the full fund. This is educational information, not financial advice.",
+      CHIME_PLACEMENT.label,
+      ...CHIME_PLACEMENT.paragraphs,
+      CHIME_PLACEMENT.source,
     ],
   },
   {

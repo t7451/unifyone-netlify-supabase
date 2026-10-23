@@ -125,6 +125,24 @@ export default function GigFinanceGuide({ slug }: { slug: string }) {
                 <p key={i}>{p}</p>
               ))}
             </div>
+            {section.sponsoredMention && (
+              <aside
+                aria-label={section.sponsoredMention.label}
+                className="mt-6 rounded-lg border p-5"
+              >
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {section.sponsoredMention.label}
+                </p>
+                <div className="space-y-4 text-muted-foreground leading-relaxed">
+                  {section.sponsoredMention.paragraphs.map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))}
+                </div>
+                <p className="mt-4 text-xs text-muted-foreground">
+                  {section.sponsoredMention.source}
+                </p>
+              </aside>
+            )}
           </section>
         ))}
 

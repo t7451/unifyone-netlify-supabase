@@ -10,6 +10,8 @@
  * the IRS / HealthCare.gov), and points to a professional for specifics.
  */
 
+import { CHIME_PLACEMENT } from "./chimePlacement";
+
 export interface FinanceFaq {
   q: string;
   a: string;
@@ -18,6 +20,7 @@ export interface FinanceFaq {
 export interface FinanceSection {
   heading: string;
   body: string[];
+  sponsoredMention?: typeof CHIME_PLACEMENT;
 }
 
 export interface FinanceResourceLink {
@@ -542,6 +545,7 @@ export const FINANCE_GUIDES: FinanceGuide[] = [
       },
       {
         heading: "How to build it without a steady paycheck",
+        sponsoredMention: CHIME_PLACEMENT,
         body: [
           "Start with a small, concrete milestone — a few hundred dollars — then a one-month income buffer, then the full fund. On variable income, the most reliable method is to save a percentage of every payout rather than a fixed monthly amount, so good weeks contribute more.",
           "Funnel windfalls (a strong week, a tax refund, a referral bonus) straight to the fund, and once it's full, redirect that same percentage toward retirement or other goals. Automating a transfer the day you're paid keeps it from competing with spending.",
