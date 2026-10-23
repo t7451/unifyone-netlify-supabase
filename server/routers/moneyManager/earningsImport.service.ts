@@ -15,7 +15,8 @@
  */
 
 import { TRPCError } from "@trpc/server";
-import * as repo from "./moneyManager.repo";
+import { createHash } from "node:crypto";
+import * as repo from "./earningsImport.repo";
 
 // Normalized earnings row shape (mirrors taxExport's TaxReportShiftRow, minus
 // duration — imports carry no reliable per-row time). Dollar amounts are plain
@@ -354,6 +355,85 @@ function normalizeRow(
   };
 }
 
+export const MAX_IMPORT_ROWS = 5_000;
+const MAX_IMPORT_BYTES = 2_000_000;
+
+function badImport(message: string): never {
+  throw new TRPCError({ code: "BAD_REQUEST", message });
+}
+
+function canonicalImport(platform: string, rows: NormalizedImportRow[]) {
+  const platformKey = normalizeHeader(platform);
+  if (!platformKey || platform.trim().length > 100)
+    badImport("Choose a valid platform.");
+  if (rows.length === 0 || rows.length > MAX_IMPORT_ROWS)
+    badImport(
+      `Import between 1 and ${MAX_IMPORT_ROWS.toLocaleString("en-US")} rows at a time. Split larger files before importing.`
+    );
+  if (Buffer.byteLength(JSON.stringify(rows), "utf8") > MAX_IMPORT_BYTES)
+    badImport("This import is too large. Split it into smaller files.");
+  const normalized = rows.map(row => {
+    if (normalizeHeader(row.platform) !== platformKey)
+      badImport("Every imported row must belong to the selected platform.");
+    if (!/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/i.test(row.earnedDate))
+      badImport(
+        "Imported timestamps must include an explicit timezone. Preview the file again."
+      );
+    const date = new Date(row.earnedDate);
+    if (!Number.isFinite(date.getTime()))
+      badImport("An imported date is invalid.");
+    const decimal = (value: number, max: number) => {
+      if (!Number.isFinite(value) || Math.abs(value) > max)
+        badImport("An imported amount is outside the supported range.");
+      return round2(value).toFixed(2);
+    };
+    return {
+      earnedDate: date.toISOString(),
+      grossEarnings: decimal(row.grossDollars, 99_999_999.99),
+      tips: decimal(row.tipsDollars, 99_999_999.99),
+      bonuses: decimal(row.bonusDollars, 99_999_999.99),
+      totalMiles: row.miles == null ? null : decimal(row.miles, 999_999.99),
+      rawRow: row.rawRow,
+    };
+  });
+  const contents = normalized
+    .map(row => {
+      // Recognized columns already have canonical dates/decimals above. Keep
+      // unrecognized metadata (e.g. trip IDs) so distinct work isn't collapsed.
+      const headers = Object.keys(row.rawRow);
+      const mapped = new Set(
+        Object.values(buildHeaderMap(headers, aliasesFor(platform)))
+      );
+      const metadata = headers
+        .flatMap((header, index) =>
+          mapped.has(index)
+            ? []
+            : [
+                [
+                  normalizeHeader(header),
+                  row.rawRow[header].trim().replace(/\r\n?/g, "\n"),
+                ],
+              ]
+        )
+        .sort((a, b) =>
+          JSON.stringify(a).localeCompare(JSON.stringify(b), "en")
+        );
+      return JSON.stringify([
+        row.earnedDate,
+        row.grossEarnings,
+        row.tips,
+        row.bonuses,
+        row.totalMiles,
+        metadata,
+      ]);
+    })
+    .sort(); // Treat reordered rows as the same multiset; preserve repetitions.
+  const fingerprint = createHash("sha256")
+    .update(JSON.stringify([platformKey, contents]))
+    .digest("hex");
+  return { platformKey, fingerprint, rows: normalized, contents };
+}
+
 export const earningsImportService = {
   parseCsv,
 
@@ -376,7 +456,15 @@ export const earningsImportService = {
       },
     };
 
+    if (Buffer.byteLength(text ?? "", "utf8") > 512_000)
+      badImport(
+        "This CSV is too large. Split it into files smaller than 512 KB."
+      );
     const matrix = parseCsv(text ?? "");
+    if (matrix.length > MAX_IMPORT_ROWS + 1)
+      badImport(
+        `Import at most ${MAX_IMPORT_ROWS.toLocaleString("en-US")} rows at a time. Split larger files before importing.`
+      );
     if (matrix.length < 2) return empty; // header only (or nothing) → no rows
 
     const headers = matrix[0];
@@ -423,71 +511,163 @@ export const earningsImportService = {
     };
   },
 
-  /**
-   * Persist a validated import: one earnings_import_batches row, then the
-   * imported_earnings rows referencing it. Rows are already normalized/validated
-   * by previewImport on the client round-trip and re-validated by the router's
-   * Zod schema.
-   */
+  /** Persist a complete batch atomically, or return an exact owned duplicate. */
   async commitImport(
     userId: number,
-    input: {
-      platform: string;
-      fileName?: string;
-      rows: NormalizedImportRow[];
-    }
-  ): Promise<{ batchId: number; inserted: number }> {
+    input: { platform: string; fileName?: string; rows: NormalizedImportRow[] }
+  ): Promise<{
+    batchId: number;
+    inserted: number;
+    duplicate: boolean;
+    status: "committed" | "duplicate";
+    rowCount: number;
+    totalDollars: number;
+  }> {
+    const canonical = canonicalImport(input.platform, input.rows);
+    if (input.fileName != null && input.fileName.length > 300)
+      badImport("The file name is too long.");
     const db = await repo.getDb();
-    if (!db) {
+    if (!db)
       throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
+        code: "SERVICE_UNAVAILABLE",
         message: "Import is temporarily unavailable — please try again.",
       });
-    }
-
-    const [batch] = await repo.insertImportBatch(db, {
-      userId,
-      platform: input.platform,
-      fileName: input.fileName ?? null,
-      rowCount: input.rows.length,
-      status: "committed",
+    const duplicateResult = (batch: {
+      id: number;
+      rowCount: number;
+      totalDollars: number;
+    }) => ({
+      batchId: batch.id,
+      inserted: 0,
+      duplicate: true,
+      status: "duplicate" as const,
+      rowCount: batch.rowCount,
+      totalDollars: batch.totalDollars,
     });
-    const batchId = batch.id;
-
-    if (input.rows.length === 0) return { batchId, inserted: 0 };
-
-    const insertRows = input.rows.map(r => ({
+    const existing = await repo.findByFingerprint(
+      db,
       userId,
-      platform: r.platform || input.platform,
-      earnedDate: new Date(r.earnedDate),
-      grossEarnings: r.grossDollars.toFixed(2),
-      tips: r.tipsDollars.toFixed(2),
-      bonuses: r.bonusDollars.toFixed(2),
-      totalMiles: r.miles == null ? null : r.miles.toFixed(2),
-      source: "csv" as const,
-      importBatchId: batchId,
-      rawRow: r.rawRow,
-    }));
+      canonical.fingerprint
+    );
+    if (existing) return duplicateResult(existing);
 
-    // Chunk the insert: each row binds ~10 parameters and Postgres caps a single
-    // statement at 65535 bind parameters, so a multi-thousand-row yearly export
-    // would overflow one INSERT. 1000 rows/chunk keeps us well under the limit.
-    const CHUNK = 1000;
-    let inserted = 0;
-    for (let i = 0; i < insertRows.length; i += CHUNK) {
-      const rows = await repo.insertImportedEarnings(
-        db,
-        insertRows.slice(i, i + CHUNK)
-      );
-      inserted += rows.length;
+    const legacyRows = await repo.getLegacyCandidateRows(
+      db,
+      userId,
+      canonical.platformKey,
+      canonical.rows.length
+    );
+    if (legacyRows.length > 25_000)
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message:
+          "Too many older imports to check safely. Review or undo older matching imports before retrying.",
+      });
+    const candidates = new Map<number, NormalizedImportRow[]>();
+    for (const row of legacyRows) {
+      const rows = candidates.get(row.batchId) ?? [];
+      const raw = row.rawRow;
+      const rawRow: Record<string, string> = {};
+      if (raw != null) {
+        if (typeof raw !== "object" || Array.isArray(raw))
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message:
+              "An older import cannot be compared safely. Review or undo it before importing this file.",
+          });
+        for (const [key, value] of Object.entries(raw)) {
+          if (typeof value !== "string")
+            throw new TRPCError({
+              code: "PRECONDITION_FAILED",
+              message:
+                "An older import cannot be compared safely. Review or undo it before importing this file.",
+            });
+          rawRow[key] = value;
+        }
+      }
+      rows.push({
+        platform: row.platform,
+        earnedDate: row.earnedDate.toISOString(),
+        grossDollars: Number(row.grossEarnings),
+        tipsDollars: Number(row.tips),
+        bonusDollars: Number(row.bonuses),
+        miles: row.totalMiles == null ? null : Number(row.totalMiles),
+        rawRow,
+      });
+      candidates.set(row.batchId, rows);
     }
-    return { batchId, inserted };
+    const incomingRows = new Set(canonical.contents);
+    for (const [batchId, rows] of Array.from(candidates)) {
+      const retained = canonicalImport(input.platform, rows);
+      if (
+        rows.length !== canonical.rows.length &&
+        retained.contents.some(row => incomingRows.has(row))
+      )
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message:
+            "An older matching import is incomplete. Review or undo it before importing this file.",
+        });
+      if (retained.fingerprint === canonical.fingerprint)
+        return duplicateResult({
+          id: batchId,
+          rowCount: rows.length,
+          totalDollars: round2(
+            rows.reduce(
+              (sum, row) =>
+                sum + row.grossDollars + row.tipsDollars + row.bonusDollars,
+              0
+            )
+          ),
+        });
+    }
+    const created = await repo.insertAtomic(db, userId, {
+      platform: input.platform.trim(),
+      fileName: input.fileName ?? null,
+      contentFingerprint: canonical.fingerprint,
+      rows: canonical.rows,
+    });
+    if (created)
+      return {
+        batchId: created.batchId,
+        inserted: created.inserted,
+        duplicate: false,
+        status: "committed",
+        rowCount: created.inserted,
+        totalDollars: round2(
+          canonical.rows.reduce(
+            (sum, row) =>
+              sum +
+              Number(row.grossEarnings) +
+              Number(row.tips) +
+              Number(row.bonuses),
+            0
+          )
+        ),
+      };
+    // A conflicting concurrent insert may not be visible inside that statement's
+    // snapshot. A subsequent statement sees its committed complete batch.
+    const concurrent = await repo.findByFingerprint(
+      db,
+      userId,
+      canonical.fingerprint
+    );
+    if (concurrent) return duplicateResult(concurrent);
+    throw new TRPCError({
+      code: "CONFLICT",
+      message: "This import changed while saving. Please retry the same file.",
+    });
   },
 
   /** List an operator's past import batches, newest first. */
   async listBatches(userId: number) {
     const db = await repo.getDb();
-    if (!db) return [];
+    if (!db)
+      throw new TRPCError({
+        code: "SERVICE_UNAVAILABLE",
+        message:
+          "Import history is temporarily unavailable — please try again.",
+      });
     return repo.getImportBatches(db, userId);
   },
 
@@ -506,9 +686,6 @@ export const earningsImportService = {
         message: "Import is temporarily unavailable — please try again.",
       });
     }
-    // Remove child rows first, then the batch header.
-    await repo.deleteImportedEarningsForBatch(db, batchId, userId);
-    await repo.deleteImportBatch(db, batchId, userId);
-    return { deleted: true };
+    return { deleted: await repo.deleteAtomic(db, userId, batchId) };
   },
 };

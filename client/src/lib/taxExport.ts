@@ -1,11 +1,4 @@
-/**
- * client/src/lib/taxExport.ts
- *
- * Turns the server's structured tax report (moneyManager.exportTaxReport) into
- * downloadable CSV and PDF documents. The report is fetched from a Pro-gated
- * endpoint, so a free operator never reaches these functions with real data —
- * the gate lives on the server.
- */
+/** Client downloads for the owner-scoped, Pro-gated accountant records endpoint. */
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { inferRouterOutputs } from "@trpc/server";
@@ -13,50 +6,225 @@ import type { AppRouter } from "../../../server/routers";
 
 export type TaxReport =
   inferRouterOutputs<AppRouter>["moneyManager"]["exportTaxReport"];
-
-function fmtUsd(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-}
-
+const fmtUsd = (value: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+    value
+  );
+const fmtNumber = (value: number) =>
+  value.toLocaleString("en-US", { maximumFractionDigits: 2 });
 export function formatTaxReportMileageRates(
   report: Pick<TaxReport, "mileageRatePeriods">
 ): string {
-  const rate = (cents: number) =>
-    (cents / 100).toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 3,
-    });
   return report.mileageRatePeriods
     .map(
       period =>
-        `${period.startDate} to ${period.endDate}: $${rate(period.rateCents)}/mi`
+        `${period.startDate} to ${period.endDate}: $${(period.rateCents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 3 })}/mi`
     )
     .join("; ");
 }
-
 function fmtDate(iso: string): string {
-  // YYYY-MM-DD — stable, sortable, CPA-friendly. Guard against bad input.
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
 }
 
-function escapeCsvCell(value: string | number): string {
-  let normalized = String(value ?? "").replace(/\r?\n|\r/g, " ");
-  // CSV formula-injection guard: a cell that begins with = + - @ (or a control
-  // char) is executed as a formula by Excel/Sheets. User-authored fields
-  // (platform, purpose, addresses) reach this file, so neutralize them by
-  // prefixing a single quote before the normal quoting rules.
-  if (/^[=+\-@\t\r]/.test(normalized)) {
+/** Neutralize formulas even after leading whitespace/control characters, in every string column. */
+export function escapeAccountantCsvCell(value: string | number): string {
+  let normalized = String(value ?? "").replace(/\r\n|\n|\r/g, " ");
+  // Spreadsheet engines ignore leading whitespace and some control characters.
+  // eslint-disable-next-line no-control-regex
+  const dangerousPrefix = /^[\s\u0000-\u001f]*[=+\-@]|^[\u0000-\u001f]/;
+  if (typeof value === "string" && dangerousPrefix.test(normalized))
     normalized = `'${normalized}`;
-  }
   return /[",\n]/.test(normalized)
     ? `"${normalized.replace(/"/g, '""')}"`
     : normalized;
 }
-
+export const ACCOUNTANT_RECORDS_NOTE =
+  "Records for review, not a tax return or a calculated tax bill. Imported earnings may overlap work records; duplicate earnings have not been reconciled. Linked provider activity and bank deposits are excluded. Recorded expenses are self-reported and may be incomplete. Do not claim actual vehicle expenses and the standard mileage deduction for the same vehicle costs; review eligibility and method with your preparer.";
+type Section = {
+  title: string;
+  columns: string[];
+  rows: (string | number)[][];
+};
+function sections(report: TaxReport): Section[] {
+  return [
+    {
+      title: "Coverage — annual records, USD",
+      columns: ["Source", "Records", "Amount (USD)"],
+      rows: [
+        [
+          "Timer work sessions",
+          report.coverage.sources.timer.count,
+          fmtUsd(report.coverage.sources.timer.totalDollars),
+        ],
+        [
+          "Manually entered work",
+          report.coverage.sources.manual.count,
+          fmtUsd(report.coverage.sources.manual.totalDollars),
+        ],
+        [
+          "Committed CSV earnings (unreconciled)",
+          report.coverage.sources.csv.count,
+          fmtUsd(report.coverage.sources.csv.totalDollars),
+        ],
+        [
+          "Recorded expenses",
+          report.coverage.sources.expenses.count,
+          fmtUsd(report.coverage.sources.expenses.totalDollars),
+        ],
+        [
+          "Saved mileage log rows",
+          report.coverage.mileage.count,
+          "See mileage summary; work-only miles can also contribute",
+        ],
+      ],
+    },
+    {
+      title: "Bookkeeping subtotals — overlaps not reconciled",
+      columns: ["Measure", "Value (USD unless noted)"],
+      rows: [
+        [
+          "Work-record earnings only",
+          fmtUsd(report.summary.totalEarningsDollars),
+        ],
+        [
+          "CSV earnings, separately recorded",
+          fmtUsd(report.coverage.sources.csv.totalDollars),
+        ],
+        [
+          "Combined recorded income (may contain duplicates)",
+          fmtUsd(report.bookkeeping.recordedIncomeDollars),
+        ],
+        [
+          "Recorded expenses (not a tax deductibility decision)",
+          fmtUsd(report.bookkeeping.recordedExpenseDollars),
+        ],
+        [
+          "Income minus recorded expenses (unreconciled)",
+          fmtUsd(report.bookkeeping.incomeAfterRecordedExpensesDollars),
+        ],
+        [
+          "Business miles, deduplicated work/log total",
+          fmtNumber(report.coverage.mileage.totalMiles),
+        ],
+        [
+          "Mileage deduction estimate, separate from expenses",
+          fmtUsd(report.coverage.mileage.deductionDollars),
+        ],
+      ],
+    },
+    {
+      title: "Work session ledger — timer and manual",
+      columns: [
+        "Date (UTC)",
+        "Source",
+        "Platform",
+        "Hours",
+        "Gross USD",
+        "Tips USD",
+        "Bonus USD",
+        "Total USD",
+        "Miles",
+      ],
+      rows: report.shifts.map(row => [
+        fmtDate(row.date),
+        row.source,
+        row.platform,
+        row.durationHours,
+        row.grossDollars.toFixed(2),
+        row.tipsDollars.toFixed(2),
+        row.bonusesDollars.toFixed(2),
+        row.totalDollars.toFixed(2),
+        row.miles,
+      ]),
+    },
+    {
+      title: "Committed CSV earnings — not reconciled with work sessions",
+      columns: [
+        "Date (UTC)",
+        "Batch",
+        "Platform",
+        "Hours",
+        "Gross USD",
+        "Tips USD",
+        "Bonus USD",
+        "Total USD",
+        "Miles",
+      ],
+      rows: report.imports.map(row => [
+        fmtDate(row.date),
+        row.batchId,
+        row.platform,
+        "Not supplied",
+        row.grossDollars.toFixed(2),
+        row.tipsDollars.toFixed(2),
+        row.bonusesDollars.toFixed(2),
+        row.totalDollars.toFixed(2),
+        row.miles,
+      ]),
+    },
+    {
+      title: "Recorded expense ledger — local calendar dates",
+      columns: ["Date", "Category", "Amount USD", "Merchant", "Notes"],
+      rows: report.expenses.map(row => [
+        row.date,
+        row.category,
+        (row.amountCents / 100).toFixed(2),
+        row.merchant ?? "",
+        row.notes ?? "",
+      ]),
+    },
+    {
+      title: "Saved mileage ledger — original stored rates",
+      columns: [
+        "Date",
+        "Miles",
+        "Purpose",
+        "Rate USD/mi",
+        "Deduction USD",
+        "Total treatment",
+        "From",
+        "To",
+      ],
+      rows: report.mileageLogs.map(row => [
+        fmtDate(row.date),
+        row.miles,
+        row.purpose,
+        (row.rateCents / 100).toFixed(3),
+        row.deductionDollars.toFixed(2),
+        row.includedSeparately
+          ? "Added separately"
+          : "Included with work session",
+        row.startAddress,
+        row.endAddress,
+      ]),
+    },
+  ];
+}
+export function buildAccountantRecordsCsv(report: TaxReport): string {
+  const rows: (string | number)[][] = [
+    [`UnifyOne Accountant Records — ${report.year}`],
+    ["Generated (UTC)", fmtDate(report.generatedAt)],
+    ["Scope", ACCOUNTANT_RECORDS_NOTE],
+    ["IRS business mileage periods", formatTaxReportMileageRates(report)],
+    [
+      "Mileage basis",
+      "Saved mileage rows retain original rates and deductions. Work-only mileage may contribute to totals without a separate log row. Mileage deductions are not subtracted from the bookkeeping subtotal.",
+    ],
+    ...report.coverage.exclusions.map(note => ["Excluded", note]),
+    ...report.coverage.warnings.map(note => ["Review", note]),
+  ];
+  for (const section of sections(report))
+    rows.push(
+      [],
+      [section.title],
+      section.columns,
+      ...(section.rows.length ? section.rows : [["No records for this year"]])
+    );
+  return rows
+    .map(row => row.map(escapeAccountantCsvCell).join(","))
+    .join("\r\n");
+}
 function triggerDownload(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -64,247 +232,91 @@ function triggerDownload(blob: Blob, filename: string): void {
   link.download = filename;
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-
-/**
- * Build a single CSV containing the summary block, the shift ledger, and the
- * mileage ledger — the record a worker hands to a CPA. Sections are separated
- * by blank lines so the file stays human-readable while remaining valid CSV.
- */
 export function downloadTaxCsv(report: TaxReport): void {
-  const lines: string[] = [];
-  const row = (cells: Array<string | number>) =>
-    lines.push(cells.map(escapeCsvCell).join(","));
-
-  row([`UnifyOne Tax Report — ${report.year}`]);
-  row(["Generated", fmtDate(report.generatedAt)]);
-  row(["IRS business mileage periods", formatTaxReportMileageRates(report)]);
-  row([
-    "Recorded deductions",
-    "Existing mileage records retain their original stored rates and amounts.",
-  ]);
-  row([]);
-
-  row(["Summary"]);
-  row(["Shifts", report.summary.shiftCount]);
-  row(["Gross earnings", report.summary.totalGrossDollars]);
-  row(["Tips", report.summary.totalTipsDollars]);
-  row(["Bonuses", report.summary.totalBonusesDollars]);
-  row(["Total earnings", report.summary.totalEarningsDollars]);
-  row(["Total miles", report.summary.totalMiles]);
-  row(["Mileage deduction", report.summary.mileageDeductionDollars]);
-  row(["Net earnings", report.summary.netEarningsDollars]);
-  row([]);
-
-  row(["Estimated annual tax (Form 1040-ES basis)"]);
-  row(["Self-employment tax", report.tax.seTaxDollars]);
-  row(["Federal income tax (est.)", report.tax.fedIncomeTaxDollars]);
-  row(["Total estimated tax", report.tax.totalEstimatedTaxDollars]);
-  row([
-    `Next quarterly payment due (Q${report.tax.nextQuarter})`,
-    fmtDate(report.tax.nextQuarterlyDueDate),
-  ]);
-  row([]);
-
-  row(["Shift ledger"]);
-  row([
-    "Date",
-    "Platform",
-    "Hours",
-    "Gross",
-    "Tips",
-    "Bonuses",
-    "Total",
-    "Miles",
-    "$/hr",
-  ]);
-  for (const s of report.shifts) {
-    row([
-      fmtDate(s.date),
-      s.platform,
-      s.durationHours,
-      s.grossDollars,
-      s.tipsDollars,
-      s.bonusesDollars,
-      s.totalDollars,
-      s.miles,
-      s.perHourDollars,
-    ]);
-  }
-  row([]);
-
-  row(["Mileage ledger"]);
-  row([
-    "Date",
-    "Miles",
-    "Purpose",
-    "Recorded rate ($/mi)",
-    "Deduction",
-    "Total treatment",
-    "From",
-    "To",
-  ]);
-  for (const m of report.mileageLogs) {
-    row([
-      fmtDate(m.date),
-      m.miles,
-      m.purpose,
-      m.rateCents / 100,
-      m.deductionDollars,
-      m.includedSeparately ? "Added separately" : "Included with work session",
-      m.startAddress,
-      m.endAddress,
-    ]);
-  }
-
-  const blob = new Blob([lines.join("\n")], {
-    type: "text/csv;charset=utf-8;",
-  });
-  triggerDownload(blob, `unifyone-tax-report-${report.year}.csv`);
+  triggerDownload(
+    new Blob([buildAccountantRecordsCsv(report)], {
+      type: "text/csv;charset=utf-8;",
+    }),
+    `unifyone-accountant-records-${report.year}.csv`
+  );
 }
-
-/** jspdf-autotable augments the doc with lastAutoTable; type it narrowly. */
 interface DocWithAutoTable extends jsPDF {
   lastAutoTable?: { finalY: number };
 }
-
-/**
- * Build a formatted one/two-page PDF: header, a totals + tax summary block, and
- * the shift and mileage tables. This is the "at a glance" document the Pro tax
- * export promises.
- */
 export function downloadTaxPdf(report: TaxReport): void {
   const doc = new jsPDF() as DocWithAutoTable;
-  const marginX = 14;
+  const margin = 14;
   let y = 18;
-
-  doc.setFontSize(18);
-  doc.text(`UnifyOne Tax Report — ${report.year}`, marginX, y);
-  y += 7;
-  doc.setFontSize(10);
-  doc.setTextColor(120);
-  doc.text(`Generated ${fmtDate(report.generatedAt)}`, marginX, y);
-  y += 5;
-  const rateLines = doc.splitTextToSize(
-    formatTaxReportMileageRates(report),
-    180
+  const paragraph = (text: string, size = 9) => {
+    doc.setFontSize(size);
+    const lines = doc.splitTextToSize(text, 180) as string[];
+    for (const line of lines) {
+      if (y > 275) {
+        doc.addPage();
+        y = 18;
+      }
+      doc.text(line, margin, y);
+      y += size * 0.45 + 1;
+    }
+    y += 3;
+  };
+  paragraph(`UnifyOne Accountant Records - ${report.year}`, 17);
+  paragraph(`Generated ${fmtDate(report.generatedAt)} (UTC). Currency: USD.`);
+  paragraph(ACCOUNTANT_RECORDS_NOTE);
+  paragraph(
+    `IRS business mileage periods: ${formatTaxReportMileageRates(report)}`,
+    8
   );
-  doc.text(rateLines, marginX, y);
-  y += rateLines.length * 5;
-  doc.setFontSize(8);
-  const storedRateNote = doc.splitTextToSize(
-    "Existing mileage records retain their original stored rates and amounts.",
-    180
+  paragraph(
+    "Stored mileage rates are preserved. Work-only miles may contribute without a separate saved log row. Mileage deductions are not subtracted from the bookkeeping subtotal.",
+    8
   );
-  doc.text(storedRateNote, marginX, y);
-  doc.setTextColor(0);
-  y += storedRateNote.length * 4 + 5;
-
-  autoTable(doc, {
-    startY: y,
-    head: [["Summary", ""]],
-    body: [
-      ["Shifts", String(report.summary.shiftCount)],
-      ["Gross earnings", fmtUsd(report.summary.totalGrossDollars)],
-      ["Tips", fmtUsd(report.summary.totalTipsDollars)],
-      ["Bonuses", fmtUsd(report.summary.totalBonusesDollars)],
-      ["Total earnings", fmtUsd(report.summary.totalEarningsDollars)],
-      ["Total miles", report.summary.totalMiles.toFixed(1)],
-      ["Mileage deduction", fmtUsd(report.summary.mileageDeductionDollars)],
-      ["Net earnings", fmtUsd(report.summary.netEarningsDollars)],
-    ],
-    theme: "striped",
-    headStyles: { fillColor: [212, 168, 67] },
-    styles: { fontSize: 9 },
-  });
-  y = (doc.lastAutoTable?.finalY ?? y) + 6;
-
-  autoTable(doc, {
-    startY: y,
-    head: [["Estimated annual tax (Form 1040-ES basis)", ""]],
-    body: [
-      ["Self-employment tax", fmtUsd(report.tax.seTaxDollars)],
-      ["Federal income tax (est.)", fmtUsd(report.tax.fedIncomeTaxDollars)],
-      ["Total estimated tax", fmtUsd(report.tax.totalEstimatedTaxDollars)],
-      [
-        `Next quarterly payment (Q${report.tax.nextQuarter})`,
-        fmtDate(report.tax.nextQuarterlyDueDate),
-      ],
-    ],
-    theme: "striped",
-    headStyles: { fillColor: [212, 168, 67] },
-    styles: { fontSize: 9 },
-  });
-  y = (doc.lastAutoTable?.finalY ?? y) + 6;
-
-  if (report.shifts.length > 0) {
+  for (const note of report.coverage.exclusions)
+    paragraph(`Excluded: ${note}`, 8);
+  for (const note of report.coverage.warnings) paragraph(`Review: ${note}`, 8);
+  for (const section of sections(report)) {
+    if (y > 245) {
+      doc.addPage();
+      y = 18;
+    }
     autoTable(doc, {
       startY: y,
-      // Mirror the CSV shift ledger's columns so a CPA cross-referencing the PDF
-      // against the CSV sees the same per-shift bonuses and totals.
+      margin: { top: 14, bottom: 18, left: margin, right: margin },
       head: [
-        [
-          "Date",
-          "Platform",
-          "Hrs",
-          "Gross",
-          "Tips",
-          "Bonus",
-          "Total",
-          "Miles",
-          "$/hr",
-        ],
+        [{ content: section.title, colSpan: section.columns.length }],
+        section.columns,
       ],
-      body: report.shifts.map(s => [
-        fmtDate(s.date),
-        s.platform,
-        s.durationHours.toFixed(1),
-        fmtUsd(s.grossDollars),
-        fmtUsd(s.tipsDollars),
-        fmtUsd(s.bonusesDollars),
-        fmtUsd(s.totalDollars),
-        s.miles.toFixed(1),
-        fmtUsd(s.perHourDollars),
-      ]),
-      theme: "grid",
-      headStyles: { fillColor: [30, 30, 30] },
-      styles: { fontSize: 7 },
+      body: section.rows.length
+        ? section.rows.map(row => row.map(String))
+        : [
+            [
+              {
+                content: "No records for this year",
+                colSpan: section.columns.length,
+              },
+            ],
+          ],
+      theme: "striped",
+      headStyles: { fillColor: [55, 55, 55] },
+      styles: { fontSize: 7, overflow: "linebreak", cellPadding: 2 },
+      showHead: "everyPage",
+      rowPageBreak: "avoid",
     });
-    y = (doc.lastAutoTable?.finalY ?? y) + 6;
+    y = (doc.lastAutoTable?.finalY ?? y) + 8;
   }
-
-  if (report.mileageLogs.length > 0) {
-    autoTable(doc, {
-      startY: y,
-      head: [
-        [
-          "Date",
-          "Miles",
-          "Purpose",
-          "Rate ($/mi)",
-          "Deduction",
-          "Total treatment",
-          "From",
-          "To",
-        ],
-      ],
-      body: report.mileageLogs.map(m => [
-        fmtDate(m.date),
-        m.miles.toFixed(1),
-        m.purpose,
-        (m.rateCents / 100).toFixed(3),
-        fmtUsd(m.deductionDollars),
-        m.includedSeparately ? "Added separately" : "Included with session",
-        m.startAddress,
-        m.endAddress,
-      ]),
-      theme: "grid",
-      headStyles: { fillColor: [30, 30, 30] },
-      styles: { fontSize: 8 },
-    });
+  const pages = doc.getNumberOfPages();
+  for (let page = 1; page <= pages; page++) {
+    doc.setPage(page);
+    doc.setFontSize(8);
+    doc.setTextColor(100);
+    doc.text(
+      `Accountant records ${report.year} | USD | ${page} / ${pages}`,
+      margin,
+      289
+    );
   }
-
-  doc.save(`unifyone-tax-report-${report.year}.pdf`);
+  doc.save(`unifyone-accountant-records-${report.year}.pdf`);
 }

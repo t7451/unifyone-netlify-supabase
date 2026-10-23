@@ -31,6 +31,75 @@ const validMiles = (value: string) =>
   Number(value) <= 10_000_000 &&
   Number(value) === Number(Number(value).toFixed(2));
 
+const FAQS = [
+  {
+    question: "Which mileage rate should I use?",
+    answer:
+      "Use the business rate for the date you drove. Choose a supported year and separate miles for every rate period shown. Enter 0 for a period with no eligible miles.",
+  },
+  {
+    question: "Does a deduction mean I receive that amount in cash?",
+    answer:
+      "No. An eligible mileage deduction reduces taxable income. It is separate from a reimbursement, tax refund, or the actual cost of running your vehicle.",
+  },
+  {
+    question: "Does this change my saved mileage records?",
+    answer:
+      "No. This public calculator estimates the miles you enter here. Saved mileage records keep their original rates and amounts, and you should keep supporting records and review eligibility before filing.",
+  },
+];
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "Business Mileage Deduction Calculator",
+    url: CANONICAL,
+    applicationCategory: "FinanceApplication",
+    operatingSystem: "Any",
+    description:
+      "Estimate eligible business mileage deductions using verified IRS rate periods, including both 2026 periods. A deduction is not a cash payment.",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    publisher: {
+      "@type": "Organization",
+      name: "1Commerce / UnifyOne",
+      url: SITE_URL,
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: `${SITE_URL}/`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Free Tools",
+        item: `${SITE_URL}/tools`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "Mileage Deduction Calculator",
+        item: CANONICAL,
+      },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map(faq => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  },
+];
+
 export default function MileageCalculator() {
   const [year, setYear] = useState(() =>
     YEARS.includes(new Date().getFullYear())
@@ -95,48 +164,7 @@ export default function MileageCalculator() {
         title="Business Mileage Deduction Calculator | UnifyOne"
         description="Estimate business mileage deductions with date-specific IRS rates. Split 2026 miles between its two rate periods and keep deductions separate from cash savings."
         canonical={CANONICAL}
-        jsonLd={[
-          {
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: "Business Mileage Deduction Calculator",
-            url: CANONICAL,
-            applicationCategory: "FinanceApplication",
-            operatingSystem: "Any",
-            description:
-              "Estimate eligible business mileage deductions using verified IRS rate periods, including both 2026 periods. A deduction is not a cash payment.",
-            offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-            publisher: {
-              "@type": "Organization",
-              name: "1Commerce / UnifyOne",
-              url: SITE_URL,
-            },
-          },
-          {
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            itemListElement: [
-              {
-                "@type": "ListItem",
-                position: 1,
-                name: "Home",
-                item: `${SITE_URL}/`,
-              },
-              {
-                "@type": "ListItem",
-                position: 2,
-                name: "Free Tools",
-                item: `${SITE_URL}/tools`,
-              },
-              {
-                "@type": "ListItem",
-                position: 3,
-                name: "Mileage Deduction Calculator",
-                item: CANONICAL,
-              },
-            ],
-          },
-        ]}
+        jsonLd={jsonLd}
       />
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <Link
@@ -351,6 +379,24 @@ export default function MileageCalculator() {
               Review IRS standard mileage rates ↗
             </a>
           </div>
+        </section>
+        <section
+          className="mt-8 space-y-3"
+          aria-labelledby="mileage-faq-heading"
+        >
+          <h2 id="mileage-faq-heading" className="text-lg font-semibold">
+            Mileage questions
+          </h2>
+          {FAQS.map(faq => (
+            <details key={faq.question} className="rounded-xl border p-4">
+              <summary className="cursor-pointer font-medium">
+                {faq.question}
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {faq.answer}
+              </p>
+            </details>
+          ))}
         </section>
         <section className="mt-8 rounded-xl bg-muted/30 p-6">
           <h2 className="text-lg font-semibold">

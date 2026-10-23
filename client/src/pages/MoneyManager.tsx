@@ -5,6 +5,7 @@ import ManualWorkEntry from "@/components/ManualWorkEntry";
 import { getBusinessMileageRateForDate } from "@shared/mileageRates";
 
 import { trpc } from "@/lib/trpc";
+import { TRPCClientError } from "@trpc/client";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -197,6 +198,16 @@ export default function MoneyManager() {
     ReturnType<typeof utils.moneyManager.previewEarningsImport.fetch>
   > | null>(null);
   const [parsingImport, setParsingImport] = useState(false);
+  const [importRetryLocked, setImportRetryLocked] = useState(false);
+  const [importNotice, setImportNotice] = useState("");
+  const [importDeleteError, setImportDeleteError] = useState("");
+  const [deleteRetryId, setDeleteRetryId] = useState<number | null>(null);
+  type ImportPayload = {
+    platform: string;
+    fileName?: string;
+    rows: NonNullable<typeof importPreview>["rows"];
+  };
+  const submittedImport = useRef<ImportPayload | null>(null);
 
   const stats = trpc.moneyManager.getShiftStats.useQuery({ period });
   const shifts = trpc.moneyManager.listShifts.useQuery({
@@ -334,38 +345,117 @@ export default function MoneyManager() {
   const importAccess = trpc.gigWorker.checkFeatureAccess.useQuery({
     feature: "earnings_import",
   });
-  const importBatches = trpc.moneyManager.listImportBatches.useQuery();
+  const importBatches = trpc.moneyManager.listImportBatches.useQuery(
+    undefined,
+    { refetchOnWindowFocus: false }
+  );
 
-  const commitImport = trpc.moneyManager.commitEarningsImport.useMutation({
-    onSuccess: data => {
-      toast.success(`Imported ${data.inserted} earnings row(s) 📥`);
+  const commitImport = trpc.moneyManager.commitEarningsImport.useMutation();
+  const deleteImportBatch = trpc.moneyManager.deleteImportBatch.useMutation();
+  const importLocked =
+    commitImport.isPending ||
+    importRetryLocked ||
+    deleteImportBatch.isPending ||
+    deleteRetryId !== null;
+  async function refreshImportedEarnings() {
+    await Promise.allSettled([
+      importBatches.refetch(),
+      stats.refetch(),
+      utils.moneyManager.getShiftBreakdown.invalidate(),
+      utils.moneyManager.getTaxEstimate.invalidate(),
+      utils.workInsights.summary.invalidate(),
+      utils.workHistory.list.invalidate(),
+    ]);
+  }
+  async function saveImport() {
+    if (
+      commitImport.isPending ||
+      deleteImportBatch.isPending ||
+      deleteRetryId !== null ||
+      !importPreview
+    )
+      return;
+    const payload = submittedImport.current ?? {
+      platform: importPlatform,
+      fileName: importFileName ?? undefined,
+      rows: importPreview.rows,
+    };
+    submittedImport.current = payload;
+    setImportError("");
+    setImportNotice("");
+    try {
+      const result = await commitImport.mutateAsync(payload);
+      const message = result.duplicate
+        ? "This CSV was already imported. No earnings were added again."
+        : `Saved ${result.inserted} earnings row(s).`;
+      setImportNotice(message);
+      toast.success(message);
+      submittedImport.current = null;
+      setImportRetryLocked(false);
       setImportPreview(null);
       setImportFileName(null);
-      importBatches.refetch();
-      stats.refetch();
-      // Blended platform breakdown lives behind another query — invalidate it so
-      // the GigIQ view reflects the new imported earnings on next read.
-      utils.moneyManager.getShiftBreakdown.invalidate();
-    },
-    onError: e => toast.error(e.message),
-  });
-
-  const deleteImportBatch = trpc.moneyManager.deleteImportBatch.useMutation({
-    onSuccess: () => {
+      await refreshImportedEarnings();
+    } catch (error) {
+      const code =
+        error instanceof TRPCClientError ? error.data?.code : undefined;
+      const definitive = [
+        "BAD_REQUEST",
+        "FORBIDDEN",
+        "UNAUTHORIZED",
+        "NOT_FOUND",
+        "PAYMENT_REQUIRED",
+        "PRECONDITION_FAILED",
+      ].includes(code ?? "");
+      if (definitive) {
+        submittedImport.current = null;
+        setImportRetryLocked(false);
+        setImportError(
+          error instanceof Error
+            ? error.message
+            : "Check this import and try again."
+        );
+      } else {
+        setImportRetryLocked(true);
+        setImportError(
+          "We could not confirm this import. It may already have saved. Your file, platform and rows are kept on this page. Retry the same import to confirm safely before uploading another file. Do not reload or leave this page until resolved."
+        );
+      }
+    }
+  }
+  async function removeImport(batchId: number) {
+    if (deleteImportBatch.isPending) return;
+    setImportDeleteError("");
+    try {
+      await deleteImportBatch.mutateAsync({ batchId });
       setConfirmImportDelete(null);
-      toast.success("Import removed from your earnings history.");
-      importBatches.refetch();
-      stats.refetch();
-      utils.moneyManager.getShiftBreakdown.invalidate();
-    },
-    onError: e => toast.error(e.message),
-  });
+      setDeleteRetryId(null);
+      setImportNotice(
+        "Import removed from recorded earnings. Your original CSV is unchanged."
+      );
+      await refreshImportedEarnings();
+    } catch (error) {
+      const code =
+        error instanceof TRPCClientError ? error.data?.code : undefined;
+      const definitive = ["BAD_REQUEST", "FORBIDDEN", "UNAUTHORIZED"].includes(
+        code ?? ""
+      );
+      setDeleteRetryId(definitive ? null : batchId);
+      setImportDeleteError(
+        definitive
+          ? error instanceof Error
+            ? error.message
+            : "This import could not be removed."
+          : "We could not confirm removal. Your totals may already have changed. Retry removing this same import to confirm; do not import the file again yet."
+      );
+    }
+  }
 
   function handleImportFile(file: File | undefined) {
-    if (!file) return;
+    if (!file || importLocked) return;
     const requestId = ++importRequest.current;
     setImportPreview(null);
     setImportError("");
+    setImportNotice("");
     setImportFileName(file.name);
     if (!file.name.toLowerCase().endsWith(".csv") || file.size > 512_000) {
       setImportError("Choose a CSV file no larger than 500 KB.");
@@ -461,6 +551,9 @@ export default function MoneyManager() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <Button asChild variant="outline" className="min-h-11">
+            <Link href="/work-history">View work history</Link>
+          </Button>
           <ManualWorkEntry
             initialOpen={new URLSearchParams(search).get("add") === "work"}
             onSaved={() => setShiftOffset(0)}
@@ -1343,8 +1436,10 @@ export default function MoneyManager() {
               <p className="text-sm text-muted-foreground">
                 Upload earnings from a gig platform or freelance source. Review
                 the recognized rows before saving. Nothing is imported until you
-                confirm. Import each earnings period once, and avoid importing
-                earnings already recorded in work sessions.
+                confirm. Repeating the same normalized CSV for the same platform
+                is detected. Overlapping earnings in different files or manual
+                work sessions are not automatically reconciled; review them to
+                avoid double-counting.
               </p>
               <p className="text-xs leading-relaxed text-muted-foreground">
                 CSV up to 500 KB. Include a date and gross/base earnings column.
@@ -1383,13 +1478,14 @@ export default function MoneyManager() {
                   <Label htmlFor="import-platform">Platform</Label>
                   <Select
                     value={importPlatform}
-                    disabled={parsingImport || commitImport.isPending}
+                    disabled={parsingImport || importLocked}
                     onValueChange={value => {
                       importRequest.current++;
                       setImportPlatform(value);
                       setImportPreview(null);
                       setImportFileName(null);
                       setImportError("");
+                      setImportNotice("");
                     }}
                   >
                     <SelectTrigger id="import-platform">
@@ -1410,7 +1506,7 @@ export default function MoneyManager() {
                     id="import-file"
                     type="file"
                     accept=".csv,text/csv"
-                    disabled={parsingImport || commitImport.isPending}
+                    disabled={parsingImport || importLocked}
                     onChange={e => {
                       handleImportFile(e.target.files?.[0]);
                       e.currentTarget.value = "";
@@ -1418,6 +1514,17 @@ export default function MoneyManager() {
                   />
                 </div>
               </div>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                CSV contents are sent to preview and save your earnings. Unsaved
+                details stay only in this page’s memory; they are not stored in
+                your browser. Saved imports remain in your account until
+                removed.
+              </p>
+              {importNotice && (
+                <p role="status" className="rounded-lg border p-3 text-sm">
+                  {importNotice}
+                </p>
+              )}
               {importError && (
                 <p role="alert" className="text-sm text-destructive">
                   {importError}
@@ -1548,24 +1655,22 @@ export default function MoneyManager() {
                       className="w-full gap-2"
                       disabled={
                         commitImport.isPending ||
+                        deleteImportBatch.isPending ||
+                        deleteRetryId !== null ||
                         parsingImport ||
                         importAccess.isLoading ||
                         importAccess.isError ||
                         importAccess.data?.hasAccess !== true ||
                         importPreview.rows.length === 0
                       }
-                      onClick={() =>
-                        commitImport.mutate({
-                          platform: importPlatform,
-                          fileName: importFileName ?? undefined,
-                          rows: importPreview.rows,
-                        })
-                      }
+                      onClick={() => void saveImport()}
                     >
                       <Upload className="h-4 w-4" />
                       {commitImport.isPending
                         ? "Saving…"
-                        : `Save import (${importPreview.rows.length} rows)`}
+                        : importRetryLocked
+                          ? "Retry same import"
+                          : `Save import (${importPreview.rows.length} rows)`}
                     </Button>
                   )}
                 </div>
@@ -1582,6 +1687,14 @@ export default function MoneyManager() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {importDeleteError && (
+                <p
+                  role="alert"
+                  className="mb-3 rounded-lg border border-destructive/30 p-3 text-sm"
+                >
+                  {importDeleteError}
+                </p>
+              )}
               {importBatches.isLoading ? (
                 <div className="space-y-2">
                   {Array.from({ length: 2 }).map((_, i) => (
@@ -1620,8 +1733,15 @@ export default function MoneyManager() {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 text-destructive hover:text-destructive"
-                        disabled={deleteImportBatch.isPending}
-                        onClick={() => setConfirmImportDelete(batch.id)}
+                        disabled={
+                          deleteImportBatch.isPending ||
+                          importLocked ||
+                          deleteRetryId !== null
+                        }
+                        onClick={() => {
+                          setConfirmImportDelete(batch.id);
+                          setImportDeleteError("");
+                        }}
                         aria-label={`Remove import ${batch.fileName ?? batch.platform}`}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -1630,24 +1750,37 @@ export default function MoneyManager() {
                         <div className="w-full rounded-lg border border-destructive/30 p-3 text-sm">
                           <p>
                             Remove these {batch.rowCount} rows from your
-                            recorded earnings? This changes your totals; your
-                            original CSV is untouched.
+                            recorded earnings
+                            {typeof batch.totalDollars === "number"
+                              ? ` (${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(batch.totalDollars)})`
+                              : ""}
+                            ? This changes your totals; your original CSV is
+                            untouched.
                           </p>
                           <div className="mt-3 flex gap-2">
                             <Button
                               size="sm"
                               variant="destructive"
                               disabled={deleteImportBatch.isPending}
-                              onClick={() =>
-                                deleteImportBatch.mutate({ batchId: batch.id })
-                              }
+                              onClick={() => void removeImport(batch.id)}
                             >
-                              Remove imported rows
+                              {deleteImportBatch.isPending
+                                ? "Removing…"
+                                : deleteRetryId === batch.id
+                                  ? "Retry removing import"
+                                  : "Remove imported rows"}
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => setConfirmImportDelete(null)}
+                              disabled={
+                                deleteImportBatch.isPending ||
+                                deleteRetryId === batch.id
+                              }
+                              onClick={() => {
+                                setConfirmImportDelete(null);
+                                setImportDeleteError("");
+                              }}
                             >
                               Cancel
                             </Button>

@@ -344,7 +344,7 @@ export const moneyManagerRouter = router({
       z.object({
         platform: z.string().min(1).max(100),
         fileName: z.string().max(300).optional(),
-        rows: z.array(normalizedImportRowSchema).max(50_000),
+        rows: z.array(normalizedImportRowSchema).min(1).max(5_000),
       })
     )
     .mutation(async ({ ctx, input }) => {

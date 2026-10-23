@@ -64,12 +64,14 @@ import { financialConnectionsRouter } from "./routers/financialConnections";
 import { workRecordsRouter } from "./routers/workRecords";
 import { workInsightsRouter } from "./routers/workInsights";
 import { workExpensesRouter } from "./routers/workExpenses";
+import { workHistoryRouter } from "./routers/workHistory";
 
 export const appRouter = router({
   financialConnections: financialConnectionsRouter,
   workRecords: workRecordsRouter,
   workInsights: workInsightsRouter,
   workExpenses: workExpensesRouter,
+  workHistory: workHistoryRouter,
   system: systemRouter,
 
   auth: router({

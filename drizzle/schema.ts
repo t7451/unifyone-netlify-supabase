@@ -1103,10 +1103,13 @@ export const earningsImportBatches = pgTable("earnings_import_batches", {
   userId: integer("userId").notNull(),
   platform: varchar("platform", { length: 100 }).notNull(),
   fileName: varchar("fileName", { length: 300 }),
+  contentFingerprint: varchar("contentFingerprint", { length: 64 }),
   rowCount: integer("rowCount").default(0).notNull(),
   status: varchar("status", { length: 50 }).default("committed").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, table => [
+  uniqueIndex("earnings_import_batches_user_content_idx").on(table.userId, table.contentFingerprint),
+]);
 export type EarningsImportBatch = typeof earningsImportBatches.$inferSelect;
 export type InsertEarningsImportBatch =
   typeof earningsImportBatches.$inferInsert;

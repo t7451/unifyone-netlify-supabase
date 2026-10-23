@@ -74,6 +74,7 @@ const GigCommand = lazy(() => import("../pages/GigCommand"));
 const ConnectedMoney = lazy(() => import("../pages/ConnectedMoney"));
 const WorkInsights = lazy(() => import("../pages/WorkInsights"));
 const WorkExpenses = lazy(() => import("../pages/WorkExpenses"));
+const WorkHistory = lazy(() => import("../pages/WorkHistory"));
 const GigHome = lazy(() => import("../pages/GigHome"));
 const GigWorkerPlans = lazy(() => import("../pages/GigWorkerPlans"));
 const MobileAutomation = lazy(() => import("../pages/MobileAutomation"));
@@ -291,6 +292,14 @@ export function AppRoutes() {
           component={() => (
             <DashboardRoute>
               <WorkExpenses />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/work-history"
+          component={() => (
+            <DashboardRoute>
+              <WorkHistory />
             </DashboardRoute>
           )}
         />

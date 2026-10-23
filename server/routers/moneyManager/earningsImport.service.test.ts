@@ -15,6 +15,15 @@ vi.mock("./moneyManager.repo", () => ({
   deleteImportedEarningsForBatch: vi.fn(),
 }));
 
+vi.mock("./earningsImport.repo", () => ({
+  getDb: vi.fn(),
+  findByFingerprint: vi.fn(),
+  getLegacyCandidateRows: vi.fn(),
+  insertAtomic: vi.fn(),
+  getImportBatches: vi.fn(),
+  deleteAtomic: vi.fn(),
+}));
+import * as importRepo from "./earningsImport.repo";
 import * as repo from "./moneyManager.repo";
 import { parseCsv, earningsImportService } from "./earningsImport.service";
 import { shiftsService } from "./shifts.service";
@@ -329,5 +338,298 @@ describe("getShiftStats merge with imported earnings", () => {
     expect(stats.totalHours).toBe(5);
     // avgPerHour is shift-only: 100 / 5 = 20.
     expect(stats.avgPerHour).toBe(20);
+  });
+});
+
+describe("earnings import persistence and identity", () => {
+  const persistence = vi.mocked(importRepo);
+  const csv =
+    "Date,Earnings,Tips,Miles,Trip ID\n2026-10-01,20,3,4,trip-1\n2026-10-02,30,2,6,trip-2";
+  const input = (
+    text = csv,
+    platform = "DoorDash",
+    fileName = "earnings.csv"
+  ) => ({
+    platform,
+    fileName,
+    rows: earningsImportService.previewImport(text, platform).rows,
+  });
+  beforeEach(() => {
+    vi.resetAllMocks();
+    persistence.getDb.mockResolvedValue({} as never);
+    persistence.findByFingerprint.mockResolvedValue(undefined);
+    persistence.getLegacyCandidateRows.mockResolvedValue([]);
+    persistence.insertAtomic.mockResolvedValue({ batchId: 8, inserted: 2 });
+  });
+  it("sends one complete atomic payload and preserves reference metadata", async () => {
+    expect(await earningsImportService.commitImport(7, input())).toEqual({
+      batchId: 8,
+      inserted: 2,
+      duplicate: false,
+      status: "committed",
+      rowCount: 2,
+      totalDollars: 55,
+    });
+    expect(persistence.insertAtomic).toHaveBeenCalledOnce();
+    expect(persistence.insertAtomic.mock.calls[0][1]).toBe(7);
+    expect(persistence.insertAtomic.mock.calls[0][2]).toMatchObject({
+      platform: "DoorDash",
+      fileName: "earnings.csv",
+      rows: [
+        {
+          earnedDate: "2026-10-01T00:00:00.000Z",
+          grossEarnings: "20.00",
+          tips: "3.00",
+          totalMiles: "4.00",
+          rawRow: { "Trip ID": "trip-1" },
+        },
+        { grossEarnings: "30.00", rawRow: { "Trip ID": "trip-2" } },
+      ],
+    });
+  });
+  it("identifies the same normalized multiset across filenames, row order and CSV formatting", async () => {
+    await earningsImportService.commitImport(7, input());
+    const first = persistence.insertAtomic.mock.calls[0][2].contentFingerprint;
+    const reformatted =
+      'trip_id,mileage,tip,amount,pay_date\r\n"trip-2","6.00","2.00","30.00","10/02/2026"\r\n"trip-1","4.00","3.00","20.00","10/01/2026"\r\n';
+    await earningsImportService.commitImport(
+      7,
+      input(reformatted, "door dash", "renamed.csv")
+    );
+    expect(persistence.insertAtomic.mock.calls[1][2].contentFingerprint).toBe(
+      first
+    );
+    expect(first).toMatch(/^[a-f0-9]{64}$/);
+  });
+  it("does not collapse overlapping different files or distinct trip references", async () => {
+    await earningsImportService.commitImport(7, input());
+    await earningsImportService.commitImport(
+      7,
+      input(csv.replace("trip-2", "different-trip"))
+    );
+    await earningsImportService.commitImport(
+      7,
+      input(csv.split("\n").slice(0, 2).join("\n"))
+    );
+    const hashes = persistence.insertAtomic.mock.calls.map(
+      call => call[2].contentFingerprint
+    );
+    expect(new Set(hashes).size).toBe(3);
+  });
+  it("preserves repeated identical rows rather than silently dropping legitimate work", async () => {
+    await earningsImportService.commitImport(7, input());
+    await earningsImportService.commitImport(
+      7,
+      input(csv + "\n" + csv.split("\n")[1])
+    );
+    expect(persistence.insertAtomic.mock.calls[1][2].rows).toHaveLength(3);
+    expect(
+      persistence.insertAtomic.mock.calls[1][2].contentFingerprint
+    ).not.toBe(persistence.insertAtomic.mock.calls[0][2].contentFingerprint);
+  });
+  it("returns an owned duplicate without writing and reports no inserted income", async () => {
+    persistence.findByFingerprint.mockResolvedValue({
+      id: 44,
+      rowCount: 2,
+      totalDollars: 55,
+    } as never);
+    expect(await earningsImportService.commitImport(7, input())).toEqual({
+      batchId: 44,
+      inserted: 0,
+      duplicate: true,
+      status: "duplicate",
+      rowCount: 2,
+      totalDollars: 55,
+    });
+    expect(persistence.findByFingerprint.mock.calls[0][1]).toBe(7);
+    expect(persistence.insertAtomic).not.toHaveBeenCalled();
+  });
+  it("recovers a concurrent winner after the conflicting insert statement", async () => {
+    persistence.findByFingerprint
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({
+        id: 99,
+        rowCount: 2,
+        totalDollars: 55,
+      } as never);
+    persistence.insertAtomic.mockResolvedValue(undefined);
+    expect(await earningsImportService.commitImport(7, input())).toMatchObject({
+      batchId: 99,
+      inserted: 0,
+      duplicate: true,
+    });
+    expect(persistence.findByFingerprint).toHaveBeenCalledTimes(2);
+  });
+  it("finds exact legacy imports from retained rows without modifying their data", async () => {
+    persistence.getLegacyCandidateRows.mockResolvedValue(
+      input().rows.map(row => ({
+        batchId: 5,
+        platform: row.platform,
+        earnedDate: new Date(row.earnedDate),
+        grossEarnings: row.grossDollars.toFixed(2),
+        tips: row.tipsDollars.toFixed(2),
+        bonuses: row.bonusDollars.toFixed(2),
+        totalMiles: row.miles?.toFixed(2) ?? null,
+        rawRow: row.rawRow,
+      }))
+    );
+    expect(await earningsImportService.commitImport(7, input())).toMatchObject({
+      batchId: 5,
+      duplicate: true,
+      inserted: 0,
+      totalDollars: 55,
+    });
+    expect(persistence.getLegacyCandidateRows).toHaveBeenCalledWith(
+      expect.anything(),
+      7,
+      "doordash",
+      2
+    );
+    expect(persistence.insertAtomic).not.toHaveBeenCalled();
+  });
+  it("refuses to add a complete file on top of a formerly partial legacy import", async () => {
+    const row = input().rows[0];
+    persistence.getLegacyCandidateRows.mockResolvedValue([
+      {
+        batchId: 5,
+        platform: row.platform,
+        earnedDate: new Date(row.earnedDate),
+        grossEarnings: "20.00",
+        tips: "3.00",
+        bonuses: "0.00",
+        totalMiles: "4.00",
+        rawRow: row.rawRow,
+      },
+    ]);
+    await expect(
+      earningsImportService.commitImport(7, input())
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      message: expect.stringContaining("incomplete"),
+    });
+    expect(persistence.insertAtomic).not.toHaveBeenCalled();
+  });
+  it("allows an unrelated same-sized file beside an incomplete legacy import", async () => {
+    const row = input().rows[0];
+    persistence.getLegacyCandidateRows.mockResolvedValue([
+      {
+        batchId: 5,
+        platform: row.platform,
+        earnedDate: new Date(row.earnedDate),
+        grossEarnings: "20.00",
+        tips: "3.00",
+        bonuses: "0.00",
+        totalMiles: "4.00",
+        rawRow: { ...row.rawRow, "Trip ID": "unrelated-trip" },
+      },
+    ]);
+    expect(await earningsImportService.commitImport(7, input())).toMatchObject({
+      duplicate: false,
+      inserted: 2,
+    });
+  });
+  it("keeps identical contents on different platforms separate", async () => {
+    await earningsImportService.commitImport(7, input());
+    await earningsImportService.commitImport(7, input(csv, "Uber"));
+    expect(
+      persistence.insertAtomic.mock.calls[0][2].contentFingerprint
+    ).not.toBe(persistence.insertAtomic.mock.calls[1][2].contentFingerprint);
+  });
+  it("fails closed when legacy identity cannot be safely checked", async () => {
+    persistence.getLegacyCandidateRows.mockResolvedValue(
+      Array.from({ length: 25_001 }, () => ({})) as never
+    );
+    await expect(
+      earningsImportService.commitImport(7, input())
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect(persistence.insertAtomic).not.toHaveBeenCalled();
+  });
+  it("propagates atomic persistence errors without claiming successful income", async () => {
+    persistence.insertAtomic.mockRejectedValue(
+      new Error("row constraint failed")
+    );
+    await expect(
+      earningsImportService.commitImport(7, input())
+    ).rejects.toThrow("row constraint failed");
+  });
+  it("bounds direct commit row counts and payload sizes before querying", async () => {
+    await expect(
+      earningsImportService.commitImport(7, { ...input(), rows: [] })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(
+      earningsImportService.commitImport(7, {
+        ...input(),
+        rows: Array(5001).fill(input().rows[0]),
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    const large = input();
+    large.rows[0].rawRow.note = "x".repeat(2_000_001);
+    await expect(
+      earningsImportService.commitImport(7, large)
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(persistence.getDb).not.toHaveBeenCalled();
+  });
+  it("rejects ambiguous timestamps, mixed platforms and invalid decimal values", async () => {
+    for (const change of [
+      { earnedDate: "2026-10-01T12:00:00" },
+      { platform: "Uber" },
+      { grossDollars: Infinity },
+      { miles: 1_000_000 },
+    ]) {
+      const invalid = input();
+      Object.assign(invalid.rows[0], change);
+      await expect(
+        earningsImportService.commitImport(7, invalid)
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    }
+    expect(persistence.getDb).not.toHaveBeenCalled();
+  });
+  it("keeps explicit offsets as the same UTC instant and preserves adjustments", async () => {
+    const corrected = input();
+    Object.assign(corrected.rows[0], {
+      earnedDate: "2026-09-30T17:00:00-07:00",
+      grossDollars: -4.25,
+    });
+    await earningsImportService.commitImport(7, corrected);
+    expect(persistence.insertAtomic.mock.calls[0][2].rows[0]).toMatchObject({
+      earnedDate: "2026-10-01T00:00:00.000Z",
+      grossEarnings: "-4.25",
+    });
+  });
+  it("uses owner-scoped atomic undo and treats a repeated undo as already absent", async () => {
+    persistence.deleteAtomic
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false);
+    expect(await earningsImportService.deleteBatch(7, 8)).toEqual({
+      deleted: true,
+    });
+    expect(await earningsImportService.deleteBatch(7, 8)).toEqual({
+      deleted: false,
+    });
+    expect(persistence.deleteAtomic).toHaveBeenCalledWith(
+      expect.anything(),
+      7,
+      8
+    );
+  });
+  it("never returns misleading empty history when its database is unavailable", async () => {
+    persistence.getDb.mockResolvedValue(null);
+    await expect(earningsImportService.listBatches(7)).rejects.toMatchObject({
+      code: "SERVICE_UNAVAILABLE",
+    });
+    await expect(
+      earningsImportService.commitImport(7, input())
+    ).rejects.toMatchObject({ code: "SERVICE_UNAVAILABLE" });
+  });
+  it("bounds preview size and row count", () => {
+    expect(() =>
+      earningsImportService.previewImport("x".repeat(512_001), "DoorDash")
+    ).toThrow(/large/);
+    expect(() =>
+      earningsImportService.previewImport(
+        "Date,Earnings\n" + "2026-10-01,1\n".repeat(5001),
+        "DoorDash"
+      )
+    ).toThrow(/5,000/);
   });
 });

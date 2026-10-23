@@ -8,6 +8,13 @@ imported from CSV. Saving uses an owner-scoped retry reference to prevent an
 uncertain network response from creating duplicate work. Only manual completed
 entries can be deleted through this flow.
 
+Work history (`/work-history`) combines completed manual/timer entries and
+committed statement imports with date, source, and literal source-name filters.
+Totals cover the entire filtered result, not only the visible page. Imported
+hours remain unknown. Session dates follow the worker's local calendar; imported
+statement dates retain their recorded UTC calendar date. Bank/provider activity
+is excluded. Only manual work opens the correction form.
+
 Manual completed entries can also be corrected. Editing loads the owned saved
 record, including its mileage date and notes. An optimistic version check keeps
 a stale browser tab from overwriting a newer correction. A pay-only correction
@@ -24,6 +31,18 @@ Vehicle cost, additional costs, reserve percentage, and hourly goal are editable
 planning assumptions. A reserve is not a tax calculation, transfer, or savings
 account. The public `/tools/gig-hourly-rate` calculator uses the same calculation
 and supports comparing several sources without saving financial inputs.
+
+## CSV import safety
+
+Imports are committed as one atomic statement, with a 5,000-row and 2 MB
+normalized-payload bound. An owner-scoped SHA256 identity uses normalized platform
+and row contents, retaining reference metadata and repeated rows. Renaming or
+reordering an identical file does not add income again. The server also checks
+retained legacy rows; a matching incomplete legacy import requires review before
+retrying. Distinct overlapping statements and manual entries are not automatically
+reconciled. Confirmed undo removes only the owned batch and its rows; re-import
+after undo is allowed. Uncertain browser saves and removals retain the exact
+payload or batch reference until the result is confirmed.
 
 ## Work expenses
 
@@ -48,6 +67,19 @@ Expenses are applied to the overall result; source comparisons do not allocate
 these unassigned expenses between apps or clients. Missing expense records can
 overstate the amount left after costs. The public calculator remains a separate,
 unsaved planning tool.
+
+## Accountant records
+
+The Pro export offers a supported-year selector and opens a coverage review before
+preparing CSV or PDF. Changing years clears stale coverage and downloads. It includes
+separate timer/manual work, committed statement earnings, the recorded expense
+ledger, and mileage with original stored rates. It identifies unknown import
+hours, potential overlaps, and excluded provider/bank activity. Income totals are
+bookkeeping subtotals without automatic reconciliation. Mileage deductions are
+not subtracted on top of the actual expense ledger. The packet is not a tax
+return and the downloads do not include legacy tax projections for unsupported
+years. Income uses UTC annual boundaries; expense dates use recorded calendar
+years. Mileage belongs to its saved log date, including cross-year sessions.
 
 ## Mileage
 
@@ -79,6 +111,14 @@ migrations were applied to the configured application database on October 23,
 transaction with bounded lock/statement timeouts. Post-migration checks verified
 the tables, indexes, ownership foreign keys, and rate precision; saved mileage
 rates and deductions were compared inside the transaction and remained unchanged.
+
+The import-safety release additionally applied the existing prerequisite
+`drizzle/0049_earnings_import.sql` and
+`drizzle/0062_csv_import_identity.sql` to the configured application database on
+October 23, 2026. The original import tables were missing. Both migrations ran in
+one transaction; the nullable fingerprint, owner/fingerprint uniqueness and
+preservation of existing batch records were verified before commit. Separate
+databases need migration 0049 before 0062. No legacy rows were rewritten.
 
 Provider linking has separate prerequisites and migration 0058; see
 [CONNECTED_MONEY.md](CONNECTED_MONEY.md). Plaid and Argyle credentials, approvals,

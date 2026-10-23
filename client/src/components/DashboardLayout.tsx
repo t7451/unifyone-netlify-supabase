@@ -55,6 +55,7 @@ import {
   Route,
   Wallet,
   ReceiptText,
+  Clock3,
 } from "lucide-react";
 import { AIChatBox } from "@/components/AIChatBox";
 import type { Message } from "@/components/AIChatBox";
@@ -84,6 +85,7 @@ const gigCoreItems: NavItem[] = [
   { icon: Wallet, label: "Connected accounts", path: "/connected-money" },
   { icon: TrendingUp, label: "Work insights", path: "/work-insights" },
   { icon: ReceiptText, label: "Work expenses", path: "/work-expenses" },
+  { icon: Clock3, label: "Work history", path: "/work-history" },
   { icon: Route, label: "Route planner", path: "/tools/route-pulse" },
 ];
 

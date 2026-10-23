@@ -1,17 +1,11 @@
-/**
- * server/routers/moneyManager/taxExport.service.ts
- *
- * Assembles a gig worker's year tax report from their real recorded data:
- * completed shifts (gigShifts) and mileage logs (mileageLogs). The tax figures
- * reuse the same IRS SE/1040-ES math as the live tax estimate
- * (server/lib/taxEstimator), annualized the same way, so the export does not
- * diverge from what the app shows on screen. This backs the "Tax Export
- * (CSV/PDF)" Pro feature — the client renders CSV + PDF from this structured
- * payload; all gating happens at the router before this is called.
+/** Owner-scoped annual bookkeeping packet. Recorded sources are unreconciled;
+ * saved expenses and mileage are separate records, never a combined tax deduction.
+ * Legacy summary/tax fields remain for compatibility and carry explicit scope.
  */
 
 import { TRPCError } from "@trpc/server";
 import * as repo from "./moneyManager.repo";
+import { getAnnualRecords } from "./taxExport.repo";
 import {
   computeAnnualProjection,
   getNextQuarterlyDueDate,
@@ -29,6 +23,7 @@ function round2(n: number): number {
 }
 
 export interface TaxReportShiftRow {
+  source: "timer" | "manual";
   date: string; // ISO date
   platform: string;
   durationHours: number;
@@ -66,10 +61,54 @@ export interface TaxReport {
     mileageDeductionDollars: number;
     netEarningsDollars: number;
   };
+  coverage: {
+    sources: Record<
+      "timer" | "manual" | "csv" | "expenses",
+      { count: number; totalDollars: number }
+    >;
+    mileage: { count: number; totalMiles: number; deductionDollars: number };
+    exclusions: string[];
+    warnings: string[];
+    reconciled: false;
+  };
+  bookkeeping: {
+    recordedIncomeDollars: number;
+    recordedExpenseDollars: number;
+    incomeAfterRecordedExpensesDollars: number;
+    mileageDeductionDollars: number;
+    expensesByCategory: {
+      category: string;
+      amountCents: number;
+      count: number;
+    }[];
+  };
+  imports: {
+    id: number;
+    batchId: number;
+    date: string;
+    platform: string;
+    grossDollars: number;
+    tipsDollars: number;
+    bonusesDollars: number;
+    totalDollars: number;
+    miles: number;
+    durationHours: null;
+  }[];
+  expenses: {
+    id: number;
+    date: string;
+    category: string;
+    amountCents: number;
+    merchant: string | null;
+    notes: string | null;
+  }[];
   tax: {
+    status: "legacy_2025_estimate" | "unavailable";
+    basisYear: 2025;
+    reason: string;
     /**
-     * Estimated tax, annualized from year-to-date gross + mileage to match the
-     * in-app estimate (a completed prior year projects at factor 1 = actuals).
+     * Compatibility illustration using 2025 work-only rules. Consumers must check
+     * status and reason; these values are never a complete tax liability.
      */
     seTaxDollars: number;
     fedIncomeTaxDollars: number;
@@ -83,20 +122,14 @@ export interface TaxReport {
 }
 
 export const taxExportService = {
-  /**
-   * Build the full tax report for a given calendar year from the user's
-   * recorded shifts and mileage logs. Earnings/mileage totals are the actual
-   * recorded figures; the tax estimate is annualized from year-to-date data to
-   * match the in-app estimate (a completed prior year projects at factor 1, so
-   * its figure is the actual annual tax).
-   */
+  /** Export recorded annual sources without claiming reconciliation or tax liability. */
   async buildTaxReport(
     userId: number,
     input: { year: number }
   ): Promise<TaxReport> {
     const year = input.year;
-    const startOfYear = new Date(year, 0, 1);
-    const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+    const startOfYear = new Date(Date.UTC(year, 0, 1));
+    const endOfYear = new Date(Date.UTC(year + 1, 0, 1) - 1);
 
     const db = await repo.getDb();
     const now = new Date();
@@ -127,16 +160,13 @@ export const taxExportService = {
       });
     }
 
-    const [shiftRows, mileageRows] = await Promise.all([
-      repo.getCompletedShiftsSinceOrdered(db, userId, startOfYear),
-      repo.getMileageLogsBetween(db, userId, startOfYear, endOfYear),
-    ]);
-
-    // Keep only shifts that actually started within the requested year (the
-    // repo query is a lower-bound since startOfYear; a future year won't have
-    // rows, but bound the upper edge defensively for a past-year export).
-    const yearShifts = shiftRows.filter(
-      s => s.startTime instanceof Date && s.startTime <= endOfYear
+    const records = await getAnnualRecords(db, userId, year);
+    const mileageRows = records.mileage;
+    const yearShifts = records.shifts.filter(
+      s =>
+        s.startTime instanceof Date &&
+        s.startTime >= startOfYear &&
+        s.startTime <= endOfYear
     );
 
     const shifts: TaxReportShiftRow[] = yearShifts.map(s => {
@@ -148,6 +178,7 @@ export const taxExportService = {
       const total = round2(gross + tips + bonuses);
       const perHour = durationHours > 0 ? round2(total / durationHours) : 0;
       return {
+        source: s.entrySource === "manual" ? "manual" : "timer",
         date: (s.startTime as Date).toISOString(),
         platform: s.platform ?? "unknown",
         durationHours,
@@ -185,8 +216,13 @@ export const taxExportService = {
     const totalBonuses = shifts.reduce((s, r) => s + r.bonusesDollars, 0);
     const totalEarnings = round2(totalGross + totalTips + totalBonuses);
 
+    const mileageElsewhereIds = new Set(
+      (records.mileageElsewhere ?? []).map(row => row.shiftId)
+    );
     const recordedMileage = summarizeRecordedBusinessMileage(
-      yearShifts,
+      yearShifts.map(row =>
+        mileageElsewhereIds.has(row.id) ? { ...row, totalMiles: "0" } : row
+      ),
       mileageRows.filter(row => row.date instanceof Date)
     );
     const mileageDeduction = recordedMileage.deductionCents / 100;
@@ -194,16 +230,11 @@ export const taxExportService = {
 
     const netEarnings = round2(Math.max(0, totalEarnings - mileageDeduction));
 
-    // Tax estimate — mirror the on-screen estimate (mileageTax.getTaxEstimate):
-    // annualize year-to-date gross + mileage, then apply the IRS 2025 SE +
-    // federal math. Computing on partial-year net with the FULL annual standard
-    // deduction would print $0 federal income tax mid-year and diverge from what
-    // the app shows. For a completed prior year there is nothing to project
-    // (dayOfYear = daysInYear → factor 1), so the figure is the actual annual
-    // tax; for the current year it matches the projected in-app estimate.
+    // Compatibility estimate is explicitly scoped to 2025 work records only.
+    // It must not be presented as liability for other years or partial coverage.
     const daysInYear = year % 4 === 0 ? 366 : 365;
     const dayOfYear =
-      year === now.getFullYear()
+      year === now.getUTCFullYear()
         ? Math.max(
             1,
             Math.ceil((now.getTime() - startOfYear.getTime()) / 86400000)
@@ -216,6 +247,50 @@ export const taxExportService = {
       daysInYear,
     });
     const nextDue = getNextQuarterlyDueDate(now);
+
+    const imports = records.imports.map(row => ({
+      id: row.id,
+      batchId: row.batchId,
+      date: row.date.toISOString(),
+      platform: row.platform,
+      grossDollars: round2(Number(row.grossEarnings)),
+      tipsDollars: round2(Number(row.tips)),
+      bonusesDollars: round2(Number(row.bonuses)),
+      totalDollars: round2(
+        Number(row.grossEarnings) + Number(row.tips) + Number(row.bonuses)
+      ),
+      miles: round2(Number(row.totalMiles ?? 0)),
+      durationHours: null,
+    }));
+    const sourceTotal = (rows: { totalDollars: number }[]) =>
+      round2(rows.reduce((total, row) => total + row.totalDollars, 0));
+    const expenseTotalCents = records.expenses.reduce(
+      (total, row) => total + row.amountCents,
+      0
+    );
+    if (!Number.isSafeInteger(expenseTotalCents))
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Expense total is too large to export safely.",
+      });
+    const categories = new Map<
+      string,
+      { category: string; amountCents: number; count: number }
+    >();
+    for (const row of records.expenses) {
+      const current = categories.get(row.category) ?? {
+        category: row.category,
+        amountCents: 0,
+        count: 0,
+      };
+      current.amountCents += row.amountCents;
+      current.count++;
+      categories.set(row.category, current);
+    }
+    const recordedIncome = round2(totalEarnings + sourceTotal(imports));
+    const expenseDollars = round2(expenseTotalCents / 100);
+    const taxAvailable =
+      year === 2025 && imports.length === 0 && records.expenses.length === 0;
 
     return {
       year,
@@ -232,7 +307,65 @@ export const taxExportService = {
         mileageDeductionDollars: mileageDeduction,
         netEarningsDollars: netEarnings,
       },
+      coverage: {
+        sources: {
+          timer: {
+            count: shifts.filter(row => row.source === "timer").length,
+            totalDollars: sourceTotal(
+              shifts.filter(row => row.source === "timer")
+            ),
+          },
+          manual: {
+            count: shifts.filter(row => row.source === "manual").length,
+            totalDollars: sourceTotal(
+              shifts.filter(row => row.source === "manual")
+            ),
+          },
+          csv: { count: imports.length, totalDollars: sourceTotal(imports) },
+          expenses: {
+            count: records.expenses.length,
+            totalDollars: expenseDollars,
+          },
+        },
+        mileage: {
+          count: mileageLogs.length,
+          totalMiles,
+          deductionDollars: mileageDeduction,
+        },
+        exclusions: [
+          "Provider gig earnings are excluded.",
+          "Bank transactions and deposits are excluded to avoid counting payouts as additional income.",
+          "Uncommitted imports are excluded.",
+        ],
+        warnings: [
+          "CSV imports and manual/timer income have not been reconciled; overlapping records may count the same income twice.",
+          "CSV work hours are unknown; imported miles are shown separately and are not included in the mileage deduction.",
+          "Mileage totals include shift-only miles where no matching saved mileage log exists; mileage count counts saved logs only.",
+          "Recorded expenses are bookkeeping amounts, not a determination of tax deductibility. Actual vehicle costs and mileage deductions are not combined.",
+          "Legacy summary and tax fields cover completed work records only, excluding CSV income and expenses.",
+          "Saved mileage belongs to its log calendar year; cross-year sessions do not also count fallback miles in the session year.",
+        ],
+        reconciled: false,
+      },
+      bookkeeping: {
+        recordedIncomeDollars: recordedIncome,
+        recordedExpenseDollars: expenseDollars,
+        incomeAfterRecordedExpensesDollars: round2(
+          recordedIncome - expenseDollars
+        ),
+        mileageDeductionDollars: mileageDeduction,
+        expensesByCategory: Array.from(categories.values()).sort((a, b) =>
+          a.category.localeCompare(b.category)
+        ),
+      },
+      imports,
+      expenses: records.expenses,
       tax: {
+        status: taxAvailable ? "legacy_2025_estimate" : "unavailable",
+        basisYear: 2025,
+        reason: taxAvailable
+          ? "Illustrative 2025 federal estimate from recorded work and mileage only; excludes other income, credits, state tax and personal circumstances. Not a tax liability calculation."
+          : "Tax estimate unavailable: the legacy calculator uses 2025 rules and excludes imported income and saved expenses. Numeric fields are a legacy work-only illustration, not this year's liability.",
         seTaxDollars: round2(projection.projectedSeTaxCents / 100),
         fedIncomeTaxDollars: round2(
           projection.projectedFedIncomeTaxCents / 100
