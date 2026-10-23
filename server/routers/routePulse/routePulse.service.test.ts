@@ -16,6 +16,7 @@ vi.mock("../../_core/supabaseAdmin", () => ({
 vi.mock("../../_core/llm", () => ({
   invokeLLM: vi.fn(),
   GROQ_FALLBACK_MODEL: "llama-3.3-70b-versatile",
+  GEMINI_FALLBACK_MODEL: "gemini-2.0-flash",
   FREE_TIER_FALLBACK_CHAIN: [
     "groq/llama-3.3-70b-versatile",
     "gemini/gemini-2.0-flash",
@@ -37,6 +38,7 @@ vi.mock("../../_core/env", () => ({
   ENV: {
     osrmUrl: "https://router.project-osrm.org",
     osrmFallbackUrl: "",
+    geminiApiKey: "",
     tomtomApiKey: "",
     nominatimUrl: "https://nominatim.openstreetmap.org",
     nominatimUserAgent: "UnifyOne-RoutePulse/1.0 (+https://example.com)",
@@ -49,6 +51,7 @@ import { getSupabaseAdmin } from "../../_core/supabaseAdmin";
 import { invokeLLM } from "../../_core/llm";
 import { ENV } from "../../_core/env";
 import * as service from "./routePulse.service";
+import * as grounding from "./externalGrounding";
 
 const ORIGIN_ADDR = "1000 SW Broadway, Portland, OR";
 const DEST_ADDR = "800 SE 10th Ave, Portland, OR";
@@ -538,11 +541,52 @@ describe("routePulse.service — suggestions (typeahead)", () => {
 describe("routePulse.service — getRoute (address-based)", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    ENV.geminiApiKey = "";
     (ENV as any).tomtomApiKey = "";
     service._resetGeocodeCacheForTests();
   });
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    ENV.geminiApiKey = "";
+  });
+
+  it("uses the configured Gemini fallback chain instead of silently degrading", async () => {
+    ENV.geminiApiKey = "test-only-key";
+    mockSupabaseWithIncidents([]);
+    installFetchMock({});
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      id: "route-regression",
+      created: 0,
+      model: "gemini-2.5-flash",
+      choices: [
+        {
+          index: 0,
+          finish_reason: "stop",
+          message: {
+            role: "assistant",
+            content: JSON.stringify({
+              chosen_index: 0,
+              explanation: "Grounded route recommendation.",
+              confidence: "high",
+            }),
+          },
+        },
+      ],
+    });
+    const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
+    expect(invokeLLM).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "gemini-2.5-flash",
+        modelChain: expect.arrayContaining([
+          "gemini/gemini-2.0-flash",
+          "groq/llama-3.3-70b-versatile",
+        ]),
+      })
+    );
+    expect(result.confidence).toBe("high");
   });
 
   function mockGeocodeFor(originName: string, destName: string) {
@@ -963,6 +1007,50 @@ describe("routePulse.service — getRoute (address-based)", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(TRPCError);
     }
+  });
+
+  it("fills required grounding counters when refreshing a legacy cached route", async () => {
+    ENV.tomtomApiKey = "test-only-key";
+    const cachedResult = {
+      route: { ...makeRoute(), incidents: [] },
+      explanation: "Cached route",
+      alternatives: [],
+      origin: { ...ORIGIN_COORDS, displayName: "Origin" },
+      destination: { ...DEST_COORDS, displayName: "Destination" },
+      generated_at: new Date().toISOString(),
+      cached: true,
+      grounding: null,
+    };
+    const { from } = mockSupabaseWithIncidents([]);
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      maybeSingle: vi
+        .fn()
+        .mockResolvedValue({ data: { result: cachedResult }, error: null }),
+    };
+    from.mockReturnValue(chain);
+    installFetchMock({});
+    vi.spyOn(grounding, "fetchTomTomTrafficIncidents").mockResolvedValue([]);
+    vi.spyOn(grounding, "fetchTomTomFlow").mockResolvedValue({
+      samples: 2,
+      avgRatio: 0.5,
+      worstRatio: 0.4,
+      roadClosedCount: 0,
+      avgCurrentMph: 25,
+      avgFreeflowMph: 50,
+      points: [],
+    });
+    const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
+    expect(result.cached).toBe(true);
+    expect(result.grounding).toMatchObject({
+      tomtomIncidents: 0,
+      wazeAlerts: 0,
+      flowSamples: 2,
+      tomtomApis: ["flow"],
+    });
+    expect(result.route.liveDurationS).toBe(1200);
   });
 
   it("serves from cache without hitting OSRM/TomTom/Supabase RPC on a cache hit", async () => {

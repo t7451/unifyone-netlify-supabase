@@ -28,9 +28,9 @@ const TOOLS_REGISTRY: ToolMeta[] = [
     slug: "mileage-deduction-calculator",
     title: "Gig Worker Mileage & Deduction Calculator",
     tagline:
-      "Estimate your IRS mileage deduction for Uber, DoorDash, and other gig apps",
+      "Estimate eligible business mileage using the rate for when you drove",
     description:
-      "Enter your miles driven and app income to calculate the current IRS standard mileage deduction. Works for all 1099 gig workers.",
+      "Choose a supported tax year and enter eligible miles for each verified IRS rate period. Deductions are separate from cash savings and vehicle costs.",
     audience: "Rideshare and delivery drivers, gig workers",
     keywords: [
       "mileage deduction",
@@ -120,12 +120,12 @@ const TOOLS_REGISTRY: ToolMeta[] = [
   },
   {
     slug: "gig-hourly-rate",
-    title: "Gig Worker Real Hourly Rate Calculator",
+    title: "Work Profit & Hourly Rate Calculator",
     tagline:
-      "Find your true effective hourly rate across DoorDash, Uber Eats, Instacart, and more",
+      "Compare delivery, rideshare and freelance work after estimated costs",
     description:
-      "Enter gross earnings, hours, and miles per platform to calculate your real net hourly rate after vehicle costs. Compare platforms side by side to see where your time pays most.",
-    audience: "Delivery drivers and gig workers on multiple platforms",
+      "Enter earnings, all working hours, business miles and other costs. Choose a planning tax reserve, compare sources, and check the earnings needed for your hourly goal.",
+    audience: "Delivery drivers, rideshare drivers and freelancers",
     keywords: [
       "gig worker hourly rate",
       "DoorDash earnings calculator",

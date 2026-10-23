@@ -18,20 +18,11 @@ import {
   TAX_CONSTANTS,
 } from "../../lib/taxEstimator";
 
-// IRS business standard mileage rates by tax year (dollars/mile). Manual mileage
-// logs already store their own per-row deduction at the rate in effect when
-// logged; this map is applied to shift-tracked miles, which carry no stored
-// rate. Unknown/future years fall back to the latest known rate.
-const IRS_MILEAGE_RATES: Record<number, number> = {
-  2023: 0.655,
-  2024: 0.67,
-  2025: 0.7,
-};
-const LATEST_IRS_RATE = TAX_CONSTANTS.MILEAGE_RATE_CENTS / 100; // 0.70 (2025)
-
-function mileageRateForYear(year: number): number {
-  return IRS_MILEAGE_RATES[year] ?? LATEST_IRS_RATE;
-}
+import {
+  getBusinessMileagePeriods,
+  summarizeRecordedBusinessMileage,
+  type MileageRatePeriod,
+} from "../../../shared/mileageRates";
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -56,12 +47,15 @@ export interface TaxReportMileageRow {
   deductionDollars: number;
   startAddress: string;
   endAddress: string;
+  rateCents: number;
+  includedSeparately: boolean;
 }
 
 export interface TaxReport {
   year: number;
   generatedAt: string;
-  irsMileageRate: number;
+  irsMileageRate: number | null;
+  mileageRatePeriods: readonly MileageRatePeriod[];
   summary: {
     shiftCount: number;
     totalGrossDollars: number;
@@ -106,7 +100,22 @@ export const taxExportService = {
 
     const db = await repo.getDb();
     const now = new Date();
-    const irsRate = mileageRateForYear(year);
+    let mileageRatePeriods: readonly MileageRatePeriod[];
+    try {
+      mileageRatePeriods = getBusinessMileagePeriods(year);
+    } catch (error) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          error instanceof Error
+            ? error.message
+            : "A supported mileage year is required.",
+      });
+    }
+    const irsRate =
+      mileageRatePeriods.length === 1
+        ? mileageRatePeriods[0].rateCents / 100
+        : null;
 
     if (!db) {
       // A DB outage must never masquerade as a real "$0 / no activity" tax year —
@@ -151,6 +160,7 @@ export const taxExportService = {
       };
     });
 
+    const countedShiftIds = new Set(yearShifts.map(shift => shift.id));
     const mileageLogs: TaxReportMileageRow[] = mileageRows
       // Guard against legacy/bad rows with a null or non-Date date — otherwise
       // `.toISOString()` would throw and 500 the whole export (same defensive
@@ -163,6 +173,9 @@ export const taxExportService = {
         deductionDollars: round2((m.deductionCents ?? 0) / 100),
         startAddress: m.startAddress ?? "",
         endAddress: m.endAddress ?? "",
+        rateCents: Number(m.irsRateCents),
+        includedSeparately:
+          m.shiftId === null || !countedShiftIds.has(m.shiftId),
       }));
 
     // Totals — earnings from shifts; deductible miles from BOTH shift-tracked
@@ -172,18 +185,12 @@ export const taxExportService = {
     const totalBonuses = shifts.reduce((s, r) => s + r.bonusesDollars, 0);
     const totalEarnings = round2(totalGross + totalTips + totalBonuses);
 
-    const shiftMiles = shifts.reduce((s, r) => s + r.miles, 0);
-    const shiftMileageDeduction = shiftMiles * irsRate;
-    const manualMileageDeduction = mileageLogs.reduce(
-      (s, r) => s + r.deductionDollars,
-      0
+    const recordedMileage = summarizeRecordedBusinessMileage(
+      yearShifts,
+      mileageRows.filter(row => row.date instanceof Date)
     );
-    const mileageDeduction = round2(
-      shiftMileageDeduction + manualMileageDeduction
-    );
-    const totalMiles = round2(
-      shiftMiles + mileageLogs.reduce((s, r) => s + r.miles, 0)
-    );
+    const mileageDeduction = recordedMileage.deductionCents / 100;
+    const totalMiles = round2(recordedMileage.totalMiles);
 
     const netEarnings = round2(Math.max(0, totalEarnings - mileageDeduction));
 
@@ -214,6 +221,7 @@ export const taxExportService = {
       year,
       generatedAt: now.toISOString(),
       irsMileageRate: irsRate,
+      mileageRatePeriods,
       summary: {
         shiftCount: shifts.length,
         totalGrossDollars: round2(totalGross),

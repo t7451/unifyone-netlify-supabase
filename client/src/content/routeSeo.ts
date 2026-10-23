@@ -2632,12 +2632,12 @@ export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/tools/mileage-deduction-calculator",
     externalLinks: [IRS.mileage],
-    title: "IRS Mileage Deduction Calculator for Gig Workers 2025 | UnifyOne",
+    title: "Business Mileage Deduction Calculator | UnifyOne",
     description:
-      "Free IRS mileage deduction calculator for gig workers. Enter miles driven to see your $0.70/mile deduction and estimated tax savings at 4 federal brackets.",
+      "Estimate business mileage deductions with verified IRS rate periods. Separate 2026 miles by date and distinguish deductions from cash savings.",
     body: [
-      "Every mile you drive for DoorDash, Uber Eats, Instacart, Amazon Flex, or any 1099 gig is deductible at the IRS standard mileage rate. This free calculator turns your miles into a dollar deduction and shows the estimated tax it saves across four common federal brackets.",
-      "Enter your business miles for the year to see your total deduction and how much it lowers your taxable income. For drivers who want their mileage tracked automatically alongside real earnings, UnifyOne consolidates miles, payouts, and expenses in one place.",
+      "Choose a supported tax year and enter eligible business miles for each rate period. Rates can change within a year, so one rate cannot always be applied to a full-year total.",
+      "A mileage deduction reduces taxable income; it is not a reimbursement or a measure of actual vehicle costs. Keep dated mileage records and review eligibility and IRS rules before filing.",
     ],
   },
   {
@@ -2706,13 +2706,12 @@ export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/tools/gig-hourly-rate",
     externalLinks: PLATFORMS,
-    title:
-      "Gig Worker Real Hourly Rate Calculator — DoorDash, Uber Eats, Instacart | UnifyOne",
+    title: "Work Profit & Hourly Rate Calculator | UnifyOne",
     description:
-      "Find your true hourly rate from DoorDash, Uber Eats, Instacart, and Grubhub after vehicle costs and miles. Free gig earnings optimizer — compare platforms.",
+      "Compare delivery, rideshare and freelance earnings after your estimated business costs and chosen tax reserve. Check your hourly goal using entered figures.",
     body: [
-      "The hourly rate a gig app advertises ignores gas, depreciation, and dead miles. This calculator factors vehicle cost-per-mile and your actual driving into a true hourly rate for DoorDash, Uber Eats, Instacart, and Grubhub.",
-      "Comparing real net-per-hour across platforms shows where your time pays best. UnifyOne turns this one-off check into continuous optimization across every app you run.",
+      "Compare income sources using earnings, total working hours, business miles and other costs for the same period. Vehicle cost per mile is your editable estimate, not the IRS mileage deduction.",
+      "See operating profit, a chosen planning tax reserve, and earnings needed to meet your after-reserve hourly goal. Results use entered figures; they do not predict future earnings or automatically link accounts.",
     ],
   },
   {

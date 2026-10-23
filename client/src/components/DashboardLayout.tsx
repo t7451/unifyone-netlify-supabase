@@ -20,7 +20,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
-import { useIsMobile } from "@/hooks/useMobile";
 import {
   LayoutDashboard,
   LogOut,
@@ -54,6 +53,8 @@ import {
   Handshake,
   RefreshCcw,
   Route,
+  Wallet,
+  ReceiptText,
 } from "lucide-react";
 import { AIChatBox } from "@/components/AIChatBox";
 import type { Message } from "@/components/AIChatBox";
@@ -78,10 +79,12 @@ type NavSection = {
 // Gig-operator core — the front door. Operator-gated on the server.
 const gigCoreItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Overview", path: "/overview" },
-  { icon: Navigation, label: "Gig Command", path: "/gig-command" },
-  { icon: Route, label: "RoutePulse", path: "/tools/route-pulse" },
-  { icon: DollarSign, label: "Money Manager", path: "/money-manager" },
-  { icon: Star, label: "Gig Worker Plans", path: "/gig-worker-plans" },
+  { icon: Navigation, label: "Track work", path: "/gig-command" },
+  { icon: DollarSign, label: "Earnings & mileage", path: "/money-manager" },
+  { icon: Wallet, label: "Connected accounts", path: "/connected-money" },
+  { icon: TrendingUp, label: "Work insights", path: "/work-insights" },
+  { icon: ReceiptText, label: "Work expenses", path: "/work-expenses" },
+  { icon: Route, label: "Route planner", path: "/tools/route-pulse" },
 ];
 
 // Gig-operator growth/engagement tools. Also operator-gated (Revenue Command /
@@ -97,6 +100,7 @@ const gigGrowthItems: NavItem[] = [
 
 // Cross-product / account items — shown regardless of product.
 const accountMenuItems: NavItem[] = [
+  { icon: Star, label: "Plans", path: "/gig-worker-plans" },
   { icon: Sparkles, label: "AI Assistant", path: "/ai-assistant" },
   { icon: Bell, label: "Notifications", path: "/notifications" },
   { icon: Zap, label: "Integrations", path: "/integrations" },
@@ -145,9 +149,9 @@ function navSectionsForProduct(isCommerceFirst: boolean): NavSection[] {
     ];
   }
   return [
-    { key: "gig", label: "Gig operations", items: gigCoreItems },
-    { key: "grow", label: "Earn more", items: gigGrowthItems },
+    { key: "gig", label: "Your work", items: gigCoreItems },
     { key: "account", label: "Account", items: accountMenuItems },
+    { key: "grow", label: "More tools", items: gigGrowthItems, muted: true },
     {
       key: "commerce",
       label: "Commerce · optional",
@@ -168,8 +172,14 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarWidth, setSidebarWidth] = useState(() => {
-    const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
-    return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
+    try {
+      const saved = Number(localStorage.getItem(SIDEBAR_WIDTH_KEY));
+      return Number.isFinite(saved) && saved >= MIN_WIDTH && saved <= MAX_WIDTH
+        ? saved
+        : DEFAULT_WIDTH;
+    } catch {
+      return DEFAULT_WIDTH;
+    }
   });
   const { loading, user } = useAuth();
   // Fires a deduped CompleteRegistration (Pixel + CAPI) on first dashboard
@@ -177,7 +187,11 @@ export default function DashboardLayout({
   useSignupTracker();
 
   useEffect(() => {
-    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
+    try {
+      localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
+    } catch {
+      /* Navigation remains usable when browser storage is unavailable. */
+    }
   }, [sidebarWidth]);
 
   if (loading) {
@@ -219,6 +233,12 @@ export default function DashboardLayout({
         } as CSSProperties
       }
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-background focus:px-4 focus:py-3 focus:text-foreground focus:ring-2 focus:ring-primary"
+      >
+        Skip to content
+      </a>
       <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
         {children}
       </DashboardLayoutContent>
@@ -241,13 +261,15 @@ function DashboardLayoutContent({
   // tenants get the inverse. Account items stay primary either way.
   const isCommerceFirst = (user?.primaryProduct ?? "gig") === "commerce";
   const navSections = navSectionsForProduct(isCommerceFirst);
-  const [location, setLocation] = useLocation();
-  const { state, toggleSidebar } = useSidebar();
-  const isCollapsed = state === "collapsed";
+  const [location] = useLocation();
+  const { state, toggleSidebar, setOpenMobile, isMobile } = useSidebar();
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({});
+  const isCollapsed = state === "collapsed" && !isMobile;
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = allNavItems.find(item => item.path === location);
-  const isMobile = useIsMobile();
   const tenantQuery = trpc.tenant.list.useQuery(undefined, { retry: false });
   const tenantName =
     (tenantQuery.data && tenantQuery.data.length > 0
@@ -406,6 +428,13 @@ function DashboardLayoutContent({
           <SidebarContent className="gap-0 pb-2">
             {navSections.map((section, sIdx) => {
               const muted = section.muted ?? false;
+              const containsActivePage = section.items.some(
+                item => location === item.path
+              );
+              const expanded =
+                !muted || (expandedSections[section.key] ?? containsActivePage);
+              if (muted && isCollapsed && !isMobile && !containsActivePage)
+                return null;
               return (
                 <div key={section.key}>
                   {!isCollapsed && (
@@ -421,21 +450,36 @@ function DashboardLayoutContent({
                           : { borderTop: "1px solid rgba(212,168,67,0.1)" }
                       }
                     >
-                      <span
-                        className="font-cinzel block"
-                        style={{
-                          color: muted ? "#8A8A8A" : "#9C7A32",
-                          fontSize: "0.5rem",
-                          letterSpacing: "0.18em",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {section.label}
-                      </span>
+                      {muted ? (
+                        <button
+                          type="button"
+                          className="flex min-h-10 w-full items-center justify-between text-left text-xs font-semibold text-slate-400 hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          aria-expanded={expanded}
+                          aria-controls={`nav-${section.key}`}
+                          onClick={() =>
+                            setExpandedSections(previous => ({
+                              ...previous,
+                              [section.key]: !expanded,
+                            }))
+                          }
+                        >
+                          {section.label}
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                      ) : (
+                        <span className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                          {section.label}
+                        </span>
+                      )}
                     </div>
                   )}
                   <SidebarMenu
-                    className={muted ? "px-2 py-1 opacity-70" : "px-2 py-1"}
+                    id={`nav-${section.key}`}
+                    hidden={!expanded}
+                    className={`${expanded ? "" : "hidden"} px-2 py-1`}
                   >
                     {section.items.map(item => {
                       const isActive =
@@ -445,12 +489,12 @@ function DashboardLayoutContent({
                       return (
                         <SidebarMenuItem key={item.path}>
                           <SidebarMenuButton
+                            asChild
                             isActive={isActive}
-                            onClick={() => setLocation(item.path)}
                             tooltip={
                               muted ? `${item.label} (optional)` : item.label
                             }
-                            className={`${muted ? "h-8" : "h-9"} rounded-none font-normal transition-all`}
+                            className="min-h-11 rounded-lg font-normal transition-colors"
                             style={
                               isActive
                                 ? {
@@ -465,30 +509,36 @@ function DashboardLayoutContent({
                                   }
                             }
                           >
-                            <item.icon
-                              className={muted ? "h-3 w-3" : "h-3.5 w-3.5"}
-                              style={{
-                                color: isActive
-                                  ? "#D4A843"
-                                  : muted
-                                    ? "#9A9A9A"
-                                    : "#BCBCBC",
-                              }}
-                            />
-                            <span
-                              className="font-cinzel"
-                              style={{
-                                color: isActive
-                                  ? "#D4A843"
-                                  : muted
-                                    ? "#A8A8A8"
-                                    : "#D2D2D2",
-                                fontSize: muted ? "0.55rem" : "0.6rem",
-                                letterSpacing: "0.12em",
-                              }}
+                            <Link
+                              href={item.path}
+                              aria-current={isActive ? "page" : undefined}
+                              onClick={() => setOpenMobile(false)}
                             >
-                              {item.label}
-                            </span>
+                              <item.icon
+                                className="h-4 w-4"
+                                style={{
+                                  color: isActive
+                                    ? "#D4A843"
+                                    : muted
+                                      ? "#9A9A9A"
+                                      : "#BCBCBC",
+                                }}
+                              />
+                              <span
+                                className="font-medium"
+                                style={{
+                                  color: isActive
+                                    ? "#D4A843"
+                                    : muted
+                                      ? "#A8A8A8"
+                                      : "#D2D2D2",
+                                  fontSize: "0.875rem",
+                                  letterSpacing: "0",
+                                }}
+                              >
+                                {item.label}
+                              </span>
+                            </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );
@@ -572,10 +622,41 @@ function DashboardLayoutContent({
             </div>
           </div>
         )}
-        <main className="min-h-screen flex-1 bg-[radial-gradient(circle_at_top_right,rgba(212,168,67,0.08),transparent_32%),linear-gradient(180deg,rgba(10,10,10,0.35),transparent_340px)]">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className={`${!isCommerceFirst ? "pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-28" : "pb-6 md:pb-28"} min-h-screen min-w-0 flex-1 bg-[radial-gradient(circle_at_top_right,rgba(212,168,67,0.08),transparent_32%),linear-gradient(180deg,rgba(10,10,10,0.35),transparent_340px)]`}
+        >
           {children}
         </main>
       </SidebarInset>
+      {!isCommerceFirst && (
+        <nav
+          aria-label="Primary worker navigation"
+          className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-white/10 bg-[#101012]/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        >
+          {gigCoreItems.slice(0, 4).map(item => (
+            <Link
+              key={item.path}
+              href={item.path}
+              aria-current={location === item.path ? "page" : undefined}
+              onClick={() => setOpenMobile(false)}
+              className={`flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${location === item.path ? "text-[#E8C25A]" : "text-slate-400 hover:text-slate-100"}`}
+            >
+              <item.icon className="h-5 w-5" aria-hidden="true" />
+              <span>
+                {item.path === "/money-manager"
+                  ? "Earnings"
+                  : item.path === "/connected-money"
+                    ? "Accounts"
+                    : item.path === "/gig-command"
+                      ? "Track work"
+                      : item.label}
+              </span>
+            </Link>
+          ))}
+        </nav>
+      )}
       <FloatingAIWidget />
     </>
   );
@@ -584,6 +665,7 @@ function DashboardLayoutContent({
 // ─── Floating AI Chat Widget ─────────────────────────────────────────────────
 function FloatingAIWidget() {
   const { user } = useAuth();
+  const { isMobile } = useSidebar();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [unread, setUnread] = useState(0);
@@ -635,18 +717,20 @@ function FloatingAIWidget() {
     setUnread(0);
   };
 
-  if (!user) return null;
+  if (!user || isMobile) return null;
 
   const contextLabel = context.replace(/-/g, " ") || "general";
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <div
+      className={`fixed right-4 z-50 flex flex-col items-end gap-3 sm:right-6 ${user.primaryProduct === "commerce" ? "bottom-6" : "bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-6"}`}
+    >
       {/* Chat panel */}
       {open && (
         <div
-          className="w-80 sm:w-96 flex flex-col overflow-hidden shadow-2xl"
+          className="w-[calc(100vw-2rem)] max-w-96 flex flex-col overflow-hidden shadow-2xl"
           style={{
-            height: "480px",
+            height: "min(480px, calc(100dvh - 13rem))",
             border: "1px solid rgba(201,168,76,0.25)",
             backgroundColor: "#0F0F11",
           }}

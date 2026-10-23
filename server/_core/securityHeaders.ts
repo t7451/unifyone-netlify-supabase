@@ -37,12 +37,12 @@ import type { Request, Response, NextFunction } from "express";
  */
 const PRODUCTION_CSP = [
   "default-src 'self'",
-  "script-src 'self' https://plausible.io https://connect.facebook.net https://js.stripe.com https://www.paypal.com https://www.paypalobjects.com https://assets.apollo.io https://challenges.cloudflare.com",
+  "script-src 'self' https://plausible.io https://connect.facebook.net https://js.stripe.com https://www.paypal.com https://www.paypalobjects.com https://assets.apollo.io https://challenges.cloudflare.com https://cdn.plaid.com https://plugin.argyle.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob: https: https://d.impactradius-event.com",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://checkout.stripe.com https://api.paypal.com https://www.facebook.com https://plausible.io https://api.anthropic.com https://*.apollo.io https://*.workers.dev https://challenges.cloudflare.com",
-  "frame-src https://js.stripe.com https://hooks.stripe.com https://www.paypal.com https://challenges.cloudflare.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://checkout.stripe.com https://api.paypal.com https://www.facebook.com https://plausible.io https://api.anthropic.com https://*.apollo.io https://*.workers.dev https://challenges.cloudflare.com https://*.plaid.com https://*.argyle.com",
+  "frame-src https://js.stripe.com https://hooks.stripe.com https://www.paypal.com https://challenges.cloudflare.com https://cdn.plaid.com https://plugin.argyle.com https://link.argyle.com",
   "frame-ancestors 'none'",
   "worker-src 'self'",
   "manifest-src 'self'",
@@ -81,7 +81,7 @@ export function securityHeaders(
     res.setHeader("Content-Security-Policy", PRODUCTION_CSP);
   }
 
-  if (isApiRoute) {
+  if (isApiRoute || req.path === "/connected-money") {
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("X-DNS-Prefetch-Control", "off");
   }
@@ -123,7 +123,7 @@ export function securityHeaders(
   );
 
   // Cross-Origin isolation headers
-  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Opener-Policy", req.path === "/connected-money" ? "same-origin-allow-popups" : "same-origin");
   res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
   res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
 

@@ -16,6 +16,7 @@ import { taxExportService } from "./taxExport.service";
 const mockRepo = vi.mocked(repo);
 
 const shift = (over: Record<string, unknown>) => ({
+  id: 1,
   grossEarnings: "0",
   tips: "0",
   bonuses: "0",
@@ -28,6 +29,8 @@ const shift = (over: Record<string, unknown>) => ({
 });
 
 const mileage = (over: Record<string, unknown>) => ({
+  shiftId: null,
+  irsRateCents: "70.00",
   date: new Date("2025-02-01T12:00:00Z"),
   miles: "0",
   purpose: "business",
@@ -121,4 +124,58 @@ describe("taxExportService.buildTaxReport", () => {
       taxExportService.buildTaxReport(1, { year: 2025 })
     ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
   });
+});
+
+it("reports both 2026 periods, applies per-shift dates, and preserves stored log rates without duplicate totals", async () => {
+  mockRepo.getDb.mockResolvedValue({} as never);
+  mockRepo.getCompletedShiftsSinceOrdered.mockResolvedValue([
+    shift({
+      id: 1,
+      startTime: new Date("2026-06-30T12:00:00Z"),
+      totalMiles: "10",
+    }),
+    shift({
+      id: 2,
+      startTime: new Date("2026-07-01T12:00:00Z"),
+      totalMiles: "10",
+    }),
+    shift({
+      id: 3,
+      startTime: new Date("2026-07-02T12:00:00Z"),
+      totalMiles: "10",
+    }),
+  ] as never);
+  mockRepo.getMileageLogsBetween.mockResolvedValue([
+    mileage({
+      shiftId: 3,
+      date: new Date("2026-07-02T12:00:00Z"),
+      miles: "10",
+      irsRateCents: "72.50",
+      deductionCents: 725,
+    }),
+    mileage({
+      date: new Date("2026-07-02T12:00:00Z"),
+      miles: "2",
+      irsRateCents: "70.00",
+      deductionCents: 140,
+    }),
+  ] as never);
+  const report = await taxExportService.buildTaxReport(1, { year: 2026 });
+  expect(report.irsMileageRate).toBeNull();
+  expect(report.mileageRatePeriods.map(period => period.rateCents)).toEqual([
+    72.5, 76,
+  ]);
+  expect(report.summary.totalMiles).toBe(32);
+  expect(report.summary.mileageDeductionDollars).toBe(23.5);
+  expect(report.mileageLogs[0]).toMatchObject({
+    rateCents: 72.5,
+    deductionDollars: 7.25,
+    includedSeparately: false,
+  });
+});
+it("does not export an invented mileage rate for an unsupported year", async () => {
+  mockRepo.getDb.mockResolvedValue({} as never);
+  await expect(
+    taxExportService.buildTaxReport(1, { year: 2027 })
+  ).rejects.toThrow("No verified business mileage rate");
 });

@@ -1059,10 +1059,14 @@ export const gigShifts = pgTable("gig_shifts", {
   tips: decimal("tips", { precision: 10, scale: 2 }).default("0.00").notNull(),
   bonuses: decimal("bonuses", { precision: 10, scale: 2 }).default("0.00").notNull(),
   notes: text("notes"),
+  entrySource: varchar("entrySource", { length: 20 }).notNull().default("timer"),
+  clientReference: varchar("clientReference", { length: 36 }),
   status: gigShiftStatusEnum("status").notNull().default("active"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
+}, table => [
+  uniqueIndex("gig_shifts_user_client_reference_idx").on(table.userId, table.clientReference),
+]);
 export type GigShift = typeof gigShifts.$inferSelect;
 export type InsertGigShift = typeof gigShifts.$inferInsert;
 
@@ -1074,8 +1078,8 @@ export const mileageLogs = pgTable("mileage_logs", {
   date: timestamp("date").notNull(),
   miles: decimal("miles", { precision: 8, scale: 2 }).notNull(),
   purpose: varchar("purpose", { length: 255 }).notNull().default("business"),
-  // IRS 2025 rate: 0.70/mile
-  irsRateCents: integer("irsRateCents").default(70).notNull(),
+  // Stored historical rate in cents, including fractional cents; do not reprice old logs.
+  irsRateCents: decimal("irsRateCents", { precision: 5, scale: 2 }).default("70.00").notNull(),
   deductionCents: integer("deductionCents").notNull(),
   startAddress: varchar("startAddress", { length: 500 }),
   endAddress: varchar("endAddress", { length: 500 }),
@@ -2352,3 +2356,64 @@ export const userApiKeys = pgTable(
 
 export type UserApiKey = typeof userApiKeys.$inferSelect;
 export type InsertUserApiKey = typeof userApiKeys.$inferInsert;
+
+// Read-only personal financial connections. Independent of commerce tenants.
+export const financialConnections = pgTable("financial_connections", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: integer("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  provider: varchar("provider", { length: 10 }).notNull(),
+  environment: varchar("environment", { length: 10 }).notNull(),
+  externalId: text("externalId"),
+  encryptedToken: text("encryptedToken"),
+  cursor: text("cursor"),
+  status: varchar("status", { length: 30 }).default("linking").notNull(),
+  accounts: jsonb("accounts").$type<{ id: string; name: string; mask?: string; state: string; balance?: number | null; currency?: string | null }[]>().default([]).notNull(),
+  consentAt: timestamp("consentAt").defaultNow().notNull(),
+  consentVersion: varchar("consentVersion", { length: 30 }).default("read-only-v1").notNull(),
+  lastSyncedAt: timestamp("lastSyncedAt"),
+  syncLease: varchar("syncLease", { length: 36 }),
+  syncLeaseUntil: timestamp("syncLeaseUntil"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  uniqueIndex("financial_connections_external_idx").on(table.provider, table.environment, table.externalId),
+  uniqueIndex("financial_connections_argyle_user_idx").on(table.userId, table.environment).where(sql`${table.provider} = 'argyle'`),
+  index("financial_connections_user_idx").on(table.userId),
+]);
+
+export const financialActivity = pgTable("financial_activity", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  connectionId: varchar("connectionId", { length: 36 }).notNull().references(() => financialConnections.id, { onDelete: "cascade" }),
+  userId: integer("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  providerRecordId: text("providerRecordId").notNull(),
+  sourceAccountId: text("sourceAccountId").notNull(),
+  kind: varchar("kind", { length: 30 }).notNull(),
+  date: date("date").notNull(),
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 16, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).notNull(),
+  pending: boolean("pending").default(false).notNull(),
+  // Duration is active task time, never assumed to include waiting/admin time.
+  durationSeconds: integer("durationSeconds"),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+}, table => [
+  uniqueIndex("financial_activity_provider_record_idx").on(table.connectionId, table.providerRecordId),
+  index("financial_activity_user_date_idx").on(table.userId, table.date),
+]);
+
+// Manually recorded business spending; bank activity is kept separate.
+export const workExpenses = pgTable("work_expenses", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  clientReference: varchar("clientReference", { length: 36 }).notNull(),
+  expenseDate: date("expenseDate").notNull(),
+  amountCents: integer("amountCents").notNull(),
+  category: varchar("category", { length: 20 }).$type<"fuel" | "maintenance" | "insurance" | "tolls" | "parking" | "supplies" | "software" | "fees" | "other">().notNull(),
+  merchant: varchar("merchant", { length: 100 }),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  uniqueIndex("work_expenses_user_reference_idx").on(table.userId, table.clientReference),
+  index("work_expenses_user_date_idx").on(table.userId, table.expenseDate),
+  check("work_expenses_amount_check", sql`${table.amountCents} > 0 AND ${table.amountCents} <= 99999999`),
+  check("work_expenses_category_check", sql`${table.category} IN ('fuel', 'maintenance', 'insurance', 'tolls', 'parking', 'supplies', 'software', 'fees', 'other')`),
+]);

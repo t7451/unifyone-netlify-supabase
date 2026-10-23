@@ -7,6 +7,7 @@ vi.mock("./moneyManager.repo", () => ({
   getCompletedShiftsSince: vi.fn(),
   getCompletedShiftsSinceOrdered: vi.fn(),
   getImportedEarningsSince: vi.fn(),
+  getMileageDeductionsSince: vi.fn(),
   insertImportBatch: vi.fn(),
   insertImportedEarnings: vi.fn(),
   getImportBatches: vi.fn(),
@@ -296,11 +297,14 @@ describe("getShiftStats merge with imported earnings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRepo.getDb.mockResolvedValue({} as never);
+    mockRepo.getMileageDeductionsSince.mockResolvedValue([]);
   });
 
   it("adds imported earnings/miles to totals but not to avgPerHour", async () => {
     mockRepo.getCompletedShiftsSince.mockResolvedValue([
       {
+        id: 1,
+        startTime: new Date("2026-06-30T12:00:00Z"),
         grossEarnings: "100",
         tips: "0",
         bonuses: "0",
@@ -309,7 +313,13 @@ describe("getShiftStats merge with imported earnings", () => {
       },
     ] as never);
     mockRepo.getImportedEarningsSince.mockResolvedValue([
-      { grossEarnings: "50", tips: "0", bonuses: "0", totalMiles: "10" },
+      {
+        grossEarnings: "50",
+        tips: "0",
+        bonuses: "0",
+        totalMiles: "10",
+        earnedDate: new Date("2026-06-30T00:00:00Z"),
+      },
     ] as never);
 
     const stats = await shiftsService.getShiftStats(1, { period: "month" });

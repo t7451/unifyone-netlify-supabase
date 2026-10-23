@@ -72,6 +72,9 @@ const DesignSystem = lazy(() => import("../pages/DesignSystem"));
 const Achievements = lazy(() => import("../pages/Achievements"));
 const Friends = lazy(() => import("../pages/Friends"));
 const GigCommand = lazy(() => import("../pages/GigCommand"));
+const ConnectedMoney = lazy(() => import("../pages/ConnectedMoney"));
+const WorkInsights = lazy(() => import("../pages/WorkInsights"));
+const WorkExpenses = lazy(() => import("../pages/WorkExpenses"));
 const GigHome = lazy(() => import("../pages/GigHome"));
 const GigWorkerPlans = lazy(() => import("../pages/GigWorkerPlans"));
 const MobileAutomation = lazy(() => import("../pages/MobileAutomation"));
@@ -227,7 +230,8 @@ function TenantGuard({ children }: { children: ReactNode }) {
   return <DashboardLayout>{children}</DashboardLayout>;
 }
 
-export function AppRoutes() {
+// Session resolution must not recreate inline route components and erase forms.
+function AppBackgroundEffects() {
   useTracking();
   // Connect to the SSE stream. Only establishes when the user is in an
   // authenticated session (EventSource uses cookies). Gives up after 5
@@ -240,8 +244,13 @@ export function AppRoutes() {
   useCreditBalanceRealtime(user?.openId);
   useCreditUsageRealtime(user?.openId);
 
+  return null;
+}
+
+export function AppRoutes() {
   return (
     <>
+      <AppBackgroundEffects />
       <Switch>
         <Route path="/" component={() => <Home />} />
         <Route path="/login" component={() => <Login />} />
@@ -267,6 +276,30 @@ export function AppRoutes() {
           component={() => (
             <DashboardRoute>
               <GigHome />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/work-insights"
+          component={() => (
+            <DashboardRoute>
+              <WorkInsights />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/work-expenses"
+          component={() => (
+            <DashboardRoute>
+              <WorkExpenses />
+            </DashboardRoute>
+          )}
+        />
+        <Route
+          path="/connected-money"
+          component={() => (
+            <DashboardRoute>
+              <ConnectedMoney />
             </DashboardRoute>
           )}
         />

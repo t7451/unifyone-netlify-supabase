@@ -21,7 +21,12 @@ import { checkAndResolveFriendChallengesForUser } from "../../challengeCompletio
 import * as repo from "./moneyManager.repo";
 import { gigShifts } from "../../../drizzle/schema";
 import { awardPoints, POINTS } from "./points.service";
-import { IRS_RATE_CENTS } from "./mileageTax.service";
+import { mileageTaxService } from "./mileageTax.service";
+import {
+  calculateBusinessMileageDeductionCents,
+  getBusinessMileagePeriodForDate,
+  summarizeRecordedBusinessMileage,
+} from "../../../shared/mileageRates";
 
 export const shiftsService = {
   async startShift(
@@ -55,6 +60,7 @@ export const shiftsService = {
       tips: number;
       bonuses: number;
       totalMiles: number;
+      mileageDate?: string;
       endLat?: number;
       endLng?: number;
       notes?: string;
@@ -82,6 +88,51 @@ export const shiftsService = {
       (endTime.getTime() - new Date(existing.startTime).getTime()) / 60000
     );
 
+    let mileageRateCents: number | null = null;
+    let mileageLoggedAt = endTime;
+    if (input.totalMiles > 0) {
+      try {
+        if (input.mileageDate !== undefined) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(input.mileageDate))
+            throw new Error("Select a valid mileage calendar date.");
+          const selected = getBusinessMileagePeriodForDate(input.mileageDate);
+          mileageLoggedAt = new Date(`${input.mileageDate}T00:00:00Z`);
+          const startDay = Date.parse(
+            new Date(existing.startTime).toISOString().slice(0, 10)
+          );
+          const endDay = Date.parse(endTime.toISOString().slice(0, 10));
+          if (
+            mileageLoggedAt.getTime() < startDay - 86400000 ||
+            mileageLoggedAt.getTime() > endDay + 86400000
+          )
+            throw new Error(
+              "Mileage date must be within the work session's calendar dates (allowing one day for time zones)."
+            );
+          mileageRateCents = selected.rateCents;
+        } else {
+          // Legacy clients provide no local driving date. Their recorded UTC
+          // timestamps are only an estimate; never guess across a rate change.
+          const started = getBusinessMileagePeriodForDate(
+            new Date(existing.startTime)
+          );
+          const ended = getBusinessMileagePeriodForDate(endTime);
+          if (started.startDate !== ended.startDate)
+            throw new Error(
+              "This work session spans mileage-rate periods. Select the mileage date, or finish with zero miles and log dated mileage separately."
+            );
+          mileageRateCents = ended.rateCents;
+        }
+      } catch (error) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            error instanceof Error
+              ? error.message
+              : "A supported mileage period is required.",
+        });
+      }
+    }
+
     await repo.updateOwnedShift(db, input.shiftId, ctx.user.id, {
       endTime,
       durationMinutes,
@@ -97,14 +148,14 @@ export const shiftsService = {
 
     // Auto-log mileage if provided
     if (input.totalMiles > 0) {
-      const deductionCents = Math.round(input.totalMiles * IRS_RATE_CENTS);
+      const deductionCents = Math.round(input.totalMiles * mileageRateCents!);
       await repo.insertMileageLog(db, {
         userId: ctx.user.id,
         shiftId: input.shiftId,
-        date: endTime,
+        date: mileageLoggedAt,
         miles: input.totalMiles.toFixed(2),
         purpose: "business",
-        irsRateCents: IRS_RATE_CENTS,
+        irsRateCents: mileageRateCents!.toFixed(2),
         deductionCents,
       });
     }
@@ -238,9 +289,10 @@ export const shiftsService = {
       startDate = new Date(now.getFullYear(), 0, 1);
     else startDate = new Date(0);
 
-    const [shifts, imported] = await Promise.all([
+    const [shifts, imported, mileageLogs] = await Promise.all([
       repo.getCompletedShiftsSince(db, userId, startDate),
       repo.getImportedEarningsSince(db, userId, startDate),
+      repo.getMileageDeductionsSince(db, userId, startDate),
     ]);
 
     const shiftEarnings = shifts.reduce(
@@ -270,7 +322,30 @@ export const shiftsService = {
 
     const totalEarnings = shiftEarnings + importedEarningsTotal;
     const totalMiles = shiftMiles + importedMiles;
-    const taxDeduction = (totalMiles * IRS_RATE_CENTS) / 100;
+    let taxDeduction: number | null = null;
+    try {
+      const shiftIds = new Set(shifts.map(shift => shift.id));
+      const shiftDeductionCents = summarizeRecordedBusinessMileage(
+        shifts,
+        mileageLogs.filter(
+          log => log.shiftId !== null && shiftIds.has(log.shiftId)
+        )
+      ).deductionCents;
+      const importedDeductionCents = imported.reduce((sum, row) => {
+        const miles = Number(row.totalMiles ?? 0);
+        return (
+          sum +
+          (miles > 0
+            ? calculateBusinessMileageDeductionCents(miles, row.earnedDate)
+            : 0)
+        );
+      }, 0);
+      taxDeduction = (shiftDeductionCents + importedDeductionCents) / 100;
+    } catch {
+      // Preserve the earnings view if historical mileage lacks a verified rate.
+      // An unavailable deduction must not silently become zero or the latest rate.
+      taxDeduction = null;
+    }
 
     return {
       totalEarnings: Math.round(totalEarnings * 100) / 100,
@@ -283,7 +358,9 @@ export const shiftsService = {
         totalHours > 0
           ? Math.round((shiftEarnings / totalHours) * 100) / 100
           : 0,
-      taxDeduction: Math.round(taxDeduction * 100) / 100,
+      taxDeduction:
+        taxDeduction === null ? null : Math.round(taxDeduction * 100) / 100,
+      mileageRateUnavailable: taxDeduction === null,
     };
   },
 
@@ -398,8 +475,8 @@ Provide a JSON response with:
 
     try {
       const response = await invokeLLM({
-    model: `groq/${GROQ_FALLBACK_MODEL}`,
-    modelChain: [...FREE_TIER_FALLBACK_CHAIN],
+        model: `groq/${GROQ_FALLBACK_MODEL}`,
+        modelChain: [...FREE_TIER_FALLBACK_CHAIN],
         messages: [
           {
             role: "system",
@@ -509,8 +586,8 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
 
     try {
       const response = await invokeLLM({
-    model: `groq/${GROQ_FALLBACK_MODEL}`,
-    modelChain: [...FREE_TIER_FALLBACK_CHAIN],
+        model: `groq/${GROQ_FALLBACK_MODEL}`,
+        modelChain: [...FREE_TIER_FALLBACK_CHAIN],
         messages: [
           {
             role: "system",
@@ -761,8 +838,6 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const IRS_RATE = 0.7;
 
     // TODO(earnings-import): blend importedEarnings into the month/year earnings
     // and ytdMiles here too. Left out for now because this context builds off a
@@ -782,7 +857,6 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
     }
 
     const monthShifts = allShifts.filter(s => s.startTime >= startOfMonth);
-    const yearShifts = allShifts.filter(s => s.startTime >= startOfYear);
 
     const earnings = (arr: typeof allShifts) =>
       arr.reduce(
@@ -792,8 +866,6 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
       );
     const hours = (arr: typeof allShifts) =>
       arr.reduce((s, r) => s + (r.durationMinutes ?? 0), 0) / 60;
-    const miles = (arr: typeof allShifts) =>
-      arr.reduce((s, r) => s + Number(r.totalMiles), 0);
 
     // Per-platform this month
     const platformMap: Record<string, { e: number; h: number }> = {};
@@ -812,7 +884,7 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
 
     const monthEarnings = earnings(monthShifts);
     const monthHours = hours(monthShifts);
-    const yearMiles = miles(yearShifts);
+    const ytdMileage = await mileageTaxService.getYTDDeduction(userId);
 
     const ctx_data = {
       period: "this month",
@@ -823,8 +895,8 @@ Generate 5 shortcuts as a JSON array. Each shortcut has:
           ? Math.round((monthEarnings / monthHours) * 100) / 100
           : 0,
       totalShifts: monthShifts.length,
-      ytdMiles: Math.round(yearMiles * 10) / 10,
-      ytdDeduction: Math.round(yearMiles * IRS_RATE * 100) / 100,
+      ytdMiles: ytdMileage.ytdMiles,
+      ytdDeduction: ytdMileage.ytdDeduction,
       platforms,
       topPlatform: platforms[0]?.platform ?? null,
       lowestPlatform: platforms[platforms.length - 1]?.platform ?? null,

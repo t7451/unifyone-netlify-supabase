@@ -60,7 +60,16 @@ import { connectedAccountsRouter } from "./routers/connectedAccounts";
 import { trackingRouter } from "./routers/tracking";
 import { surveysRouter } from "./routers/surveys";
 
+import { financialConnectionsRouter } from "./routers/financialConnections";
+import { workRecordsRouter } from "./routers/workRecords";
+import { workInsightsRouter } from "./routers/workInsights";
+import { workExpensesRouter } from "./routers/workExpenses";
+
 export const appRouter = router({
+  financialConnections: financialConnectionsRouter,
+  workRecords: workRecordsRouter,
+  workInsights: workInsightsRouter,
+  workExpenses: workExpensesRouter,
   system: systemRouter,
 
   auth: router({

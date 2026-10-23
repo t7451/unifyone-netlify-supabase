@@ -137,7 +137,7 @@ function createRouteCanvasRenderer(): L.Canvas {
   });
 }
 
-function routePathDefaults(extra: L.PathOptions = {}): L.PathOptions {
+function routePathDefaults(extra: L.PolylineOptions = {}): L.PolylineOptions {
   return {
     interactive: false,
     bubblingMouseEvents: false,

@@ -225,6 +225,8 @@ export function getCompletedShiftEarningsSince(
 ) {
   return db
     .select({
+      id: gigShifts.id,
+      startTime: gigShifts.startTime,
       grossEarnings: gigShifts.grossEarnings,
       tips: gigShifts.tips,
       bonuses: gigShifts.bonuses,
@@ -247,6 +249,7 @@ export function getCompletedShiftMilesSince(
 ) {
   return db
     .select({
+      id: gigShifts.id,
       totalMiles: gigShifts.totalMiles,
       startTime: gigShifts.startTime,
     })
@@ -302,7 +305,13 @@ export function getMileageMilesSince(
   startOfYear: Date
 ) {
   return db
-    .select({ miles: mileageLogs.miles })
+    .select({
+      miles: mileageLogs.miles,
+      shiftId: mileageLogs.shiftId,
+      date: mileageLogs.date,
+      irsRateCents: mileageLogs.irsRateCents,
+      deductionCents: mileageLogs.deductionCents,
+    })
     .from(mileageLogs)
     .where(
       and(eq(mileageLogs.userId, userId), gte(mileageLogs.date, startOfYear))
@@ -318,6 +327,9 @@ export function getMileageDeductionsSince(
     .select({
       deductionCents: mileageLogs.deductionCents,
       miles: mileageLogs.miles,
+      shiftId: mileageLogs.shiftId,
+      date: mileageLogs.date,
+      irsRateCents: mileageLogs.irsRateCents,
     })
     .from(mileageLogs)
     .where(

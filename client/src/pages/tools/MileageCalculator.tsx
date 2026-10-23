@@ -1,499 +1,340 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "wouter";
+import { ArrowDownToLine, ArrowRight, Car, Info } from "lucide-react";
 import PageHead from "@/components/PageHead";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trackToolUsage } from "@/lib/userTracking";
-import { formatUsd0 } from "@/lib/format";
+import {
+  BUSINESS_MILEAGE_RATE_PERIODS,
+  BUSINESS_MILEAGE_SOURCE_URL,
+  calculateBusinessMileageDeductionCents,
+  getBusinessMileagePeriods,
+} from "@shared/mileageRates";
 
 const CANONICAL = `${SITE_URL}/tools/mileage-deduction-calculator`;
-
-// IRS standard mileage rates 2025
-const IRS_BUSINESS_RATE = 0.7;
-
-const TAX_BRACKETS: Array<{ label: string; rate: number }> = [
-  { label: "22%", rate: 0.22 },
-  { label: "24%", rate: 0.24 },
-  { label: "32%", rate: 0.32 },
-  { label: "35%", rate: 0.35 },
-];
-
-const jsonLd = [
-  {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    name: "IRS Mileage Deduction Calculator for Gig Workers",
-    url: CANONICAL,
-    description:
-      "Calculate your IRS standard mileage deduction for 1099 gig work. Enter miles driven to see your total deduction and estimated tax savings at multiple brackets.",
-    applicationCategory: "FinanceApplication",
-    operatingSystem: "Any",
-    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-    publisher: {
-      "@type": "Organization",
-      name: "1Commerce / UnifyOne",
-      url: SITE_URL,
-    },
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: "What is the IRS standard mileage rate for 2025?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "The IRS standard mileage rate for business use in 2025 is 70 cents ($0.70) per mile. This applies to rideshare drivers, delivery workers, and all 1099 self-employed workers using their vehicle for business.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Can DoorDash, Uber, and Instacart drivers deduct mileage?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Yes. Any miles driven for gig work — picking up orders, driving to customers, and deadhead miles between deliveries — qualify for the IRS standard mileage deduction. You must keep a log of dates, destinations, and miles driven.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Do I use actual expenses or standard mileage?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Most gig workers use the standard mileage rate because it's simpler and often yields a larger deduction. You cannot switch between methods mid-year for the same vehicle. The standard rate covers fuel, depreciation, oil, tires, and most vehicle costs.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "What counts as a deductible mile for gig workers?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Deductible miles include driving from your first delivery pickup to your last dropoff (including driving between deliveries while actively working), driving to a required orientation or meeting, and driving to pick up supplies. Commuting from home to your first pickup does not qualify.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "How do I track mileage for taxes?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "The IRS requires a contemporaneous log — date, destination, business purpose, and miles. UnifyOne automatically captures mileage from your connected gig platform data and maintains a running YTD deduction total.",
-        },
-      },
-    ],
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "HowTo",
-    name: "How to use the IRS Mileage Deduction Calculator",
-    description:
-      "Estimate your IRS standard mileage deduction and tax savings from the business miles you drove for gig work.",
-    totalTime: "PT1M",
-    tool: [{ "@type": "HowToTool", name: "Mileage Deduction Calculator" }],
-    supply: [
-      {
-        "@type": "HowToSupply",
-        name: "Total business miles driven this year",
-      },
-    ],
-    step: [
-      {
-        "@type": "HowToStep",
-        name: "Enter your business miles",
-        text: "In the 'Business miles driven this year' field, type the total miles you drove for gig work (for example, 12000). Use only business miles — commuting from home to your first pickup does not count.",
-      },
-      {
-        "@type": "HowToStep",
-        name: "Calculate your deduction",
-        text: "Click Calculate to multiply your miles by the 2025 IRS standard rate of $0.70 per mile and see your total mileage deduction.",
-      },
-      {
-        "@type": "HowToStep",
-        name: "Review your estimated tax savings",
-        text: "Read the estimated tax savings shown for the 22%, 24%, 32%, and 35% federal brackets to gauge how much the deduction could lower your tax bill at your marginal rate.",
-      },
-    ],
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "Free Tools",
-        item: `${SITE_URL}/tools`,
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: "Mileage Deduction Calculator",
-        item: CANONICAL,
-      },
-    ],
-  },
-];
+const YEARS = Array.from(
+  new Set(
+    BUSINESS_MILEAGE_RATE_PERIODS.map(period =>
+      Number(period.startDate.slice(0, 4))
+    )
+  )
+).sort((a, b) => b - a);
+const usd = (cents: number) =>
+  (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+const validMiles = (value: string) =>
+  value.trim() !== "" &&
+  Number.isFinite(Number(value)) &&
+  Number(value) >= 0 &&
+  Number(value) <= 10_000_000 &&
+  Number(value) === Number(Number(value).toFixed(2));
 
 export default function MileageCalculator() {
-  const [miles, setMiles] = useState("");
-  const [hasResult, setHasResult] = useState(false);
+  const [year, setYear] = useState(() =>
+    YEARS.includes(new Date().getFullYear())
+      ? String(new Date().getFullYear())
+      : ""
+  );
+  const [milesByPeriod, setMilesByPeriod] = useState<Record<string, string>>(
+    {}
+  );
+  const [showResult, setShowResult] = useState(false);
+  const periods = useMemo(
+    () => (year ? getBusinessMileagePeriods(Number(year)) : []),
+    [year]
+  );
+  const valid =
+    periods.length > 0 &&
+    periods.every(period => validMiles(milesByPeriod[period.startDate] ?? ""));
+  const results = valid
+    ? periods.map(period => ({
+        ...period,
+        miles: Number(milesByPeriod[period.startDate]),
+        deductionCents: calculateBusinessMileageDeductionCents(
+          Number(milesByPeriod[period.startDate]),
+          period.startDate
+        ),
+      }))
+    : [];
+  const totalMiles = results.reduce((sum, row) => sum + row.miles, 0);
+  const totalCents = results.reduce((sum, row) => sum + row.deductionCents, 0);
 
-  const deduction = useMemo(() => {
-    const m = parseFloat(miles.replace(/,/g, ""));
-    if (!m || m <= 0) return null;
-    const total = m * IRS_BUSINESS_RATE;
-    return {
-      miles: m,
-      deduction: total,
-      savings: TAX_BRACKETS.map(b => ({
-        label: b.label,
-        amount: total * b.rate,
-      })),
-    };
-  }, [miles]);
-
-  function handleCalculate() {
-    if (deduction) {
-      setHasResult(true);
-      trackToolUsage("mileage-deduction-calculator", "result", {
-        miles: deduction.miles,
-      });
-    }
+  function download() {
+    if (!valid) return;
+    const csv = [
+      "Tax year,Period start,Period end,Business miles,Rate cents per mile,Estimated deduction USD",
+      ...results.map(row =>
+        [
+          year,
+          row.startDate,
+          row.endDate,
+          row.miles,
+          row.rateCents,
+          (row.deductionCents / 100).toFixed(2),
+        ].join(",")
+      ),
+      `Total,,,${totalMiles},,${(totalCents / 100).toFixed(2)}`,
+      "",
+      "Estimate only. Eligibility and contemporaneous mileage records must be reviewed before filing.",
+    ].join("\r\n");
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8" })
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `unifyone-mileage-${year}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-
-  const fmt = formatUsd0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <PageHead
-        title="IRS Mileage Deduction Calculator for Gig Workers 2025 | UnifyOne"
-        description="Free IRS mileage deduction calculator for gig workers. Enter miles driven to see your $0.70/mile deduction and estimated tax savings at 4 federal brackets."
+        title="Business Mileage Deduction Calculator | UnifyOne"
+        description="Estimate business mileage deductions with date-specific IRS rates. Split 2026 miles between its two rate periods and keep deductions separate from cash savings."
         canonical={CANONICAL}
-        jsonLd={jsonLd}
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Business Mileage Deduction Calculator",
+            url: CANONICAL,
+            applicationCategory: "FinanceApplication",
+            operatingSystem: "Any",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+          },
+        ]}
       />
-
-      <nav className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link
-            href="/tools"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Free Tools
-          </Link>
-          <span className="text-muted-foreground/40">/</span>
-          <span className="text-sm font-medium">
-            Mileage Deduction Calculator
-          </span>
-        </div>
-      </nav>
-
-      <main className="max-w-3xl mx-auto px-6 py-12">
-        <nav aria-label="breadcrumb" className="mb-6">
-          <ol className="flex items-center gap-2 text-xs text-muted-foreground">
-            <li>
-              <Link
-                href="/"
-                className="hover:text-foreground transition-colors"
-              >
-                Home
-              </Link>
-            </li>
-            <li>›</li>
-            <li>
-              <Link
-                href="/tools"
-                className="hover:text-foreground transition-colors"
-              >
-                Free Tools
-              </Link>
-            </li>
-            <li>›</li>
-            <li className="text-foreground">Mileage Calculator</li>
-          </ol>
-        </nav>
-
-        <header className="mb-10">
-          <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
-            Free Tool · Tax Management
+      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+        <Link
+          href="/tools"
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          ← All free tools
+        </Link>
+        <header className="my-8 max-w-2xl">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-primary">
+            Keep the miles. Know the deduction.
           </p>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-            IRS Mileage Deduction Calculator
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            What can your business miles deduct?
           </h1>
-          <p className="text-lg text-muted-foreground">
-            At the 2025 IRS standard mileage rate of{" "}
-            <strong className="text-foreground">$0.70/mile</strong>, every mile
-            you drive for DoorDash, Uber, Instacart, or any gig platform is a
-            real tax deduction. Enter your miles to see exactly what you've
-            earned.
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            For delivery routes, rideshare trips and travel for client work. Use
+            eligible business miles from your records and the rate for when you
+            drove them.
           </p>
         </header>
-
-        {/* Calculator */}
-        <section className="rounded-xl border bg-card p-6 sm:p-8 mb-10">
-          <div className="space-y-5">
+        <div className="grid gap-6 md:grid-cols-[1.2fr_1fr]">
+          <form
+            className="space-y-6 rounded-2xl border bg-card p-5 sm:p-6"
+            onSubmit={event => {
+              event.preventDefault();
+              if (valid) {
+                setShowResult(true);
+                trackToolUsage("mileage-deduction-calculator", "result");
+              }
+            }}
+          >
             <div>
-              <label className="block text-sm font-medium mb-2" htmlFor="miles">
-                Business miles driven this year
-              </label>
-              <div className="flex gap-3">
-                <input
-                  id="miles"
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="e.g. 12000"
-                  value={miles}
-                  onChange={e => {
-                    setMiles(e.target.value);
-                    setHasResult(false);
-                    if (e.target.value)
-                      trackToolUsage("mileage-deduction-calculator", "start");
-                  }}
-                  className="flex-1 rounded-md border bg-background px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <button
-                  onClick={handleCalculate}
-                  disabled={!deduction}
-                  className="rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-40 hover:bg-primary/90 transition-colors"
-                >
-                  Calculate
-                </button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                IRS rate: $0.70/mile (2025 business use). Does not include
-                medical or charity miles.
+              <Label htmlFor="mileage-year">Tax year</Label>
+              <select
+                id="mileage-year"
+                className="mt-2 min-h-11 w-full rounded-md border bg-background px-3 text-sm"
+                value={year}
+                onChange={event => {
+                  setYear(event.target.value);
+                  setMilesByPeriod({});
+                  setShowResult(false);
+                }}
+              >
+                <option value="">Choose a supported year</option>
+                {YEARS.map(value => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Only verified rate periods are offered. An unsupported year does
+                not inherit an older rate.
               </p>
             </div>
-
-            {hasResult && deduction && (
-              <div className="rounded-lg bg-muted/50 p-5 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Total IRS mileage deduction
-                  </p>
-                  <p className="text-4xl font-bold text-primary">
-                    {fmt(deduction.deduction)}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {deduction.miles.toLocaleString()} miles × $0.70
-                  </p>
-                </div>
-
-                <div className="border-t pt-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                    Estimated tax savings by bracket
-                  </p>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {deduction.savings.map(s => (
-                      <div
-                        key={s.label}
-                        className="rounded-md bg-background border p-3 text-center"
-                      >
-                        <p className="text-xs text-muted-foreground">
-                          {s.label} bracket
-                        </p>
-                        <p className="text-lg font-bold mt-1">
-                          {fmt(s.amount)}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-3">
-                    Estimated savings = deduction × your marginal tax rate.
-                    Actual savings depend on your total income and deductions.
-                    Consult a tax professional for your specific situation.
-                  </p>
-                </div>
-
-                <div className="border-t pt-4 text-center">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Save this result and track mileage automatically across all
-                    your gig platforms.
-                  </p>
-                  <Link
-                    href="/register"
-                    onClick={() =>
-                      trackToolUsage(
-                        "mileage-deduction-calculator",
-                        "signup_cta"
-                      )
-                    }
-                    className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-                  >
-                    Track mileage automatically →
-                  </Link>
-                </div>
+            {periods.length > 1 && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm">
+                <p className="font-semibold">
+                  2026 has two business mileage rates
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  Separate miles driven January–June from July–December. Enter 0
+                  for a period with no eligible miles. Do not enter your
+                  full-year mileage twice.
+                </p>
               </div>
             )}
-          </div>
-        </section>
-
-        {/* Context */}
-        <section className="prose prose-neutral dark:prose-invert max-w-none mb-12">
-          <h2>Why mileage deductions matter for gig workers</h2>
-          <p>
-            At $0.70/mile, a gig worker who drives 15,000 miles per year has a{" "}
-            <strong>$10,500 deduction</strong> — before any other business
-            expenses. At a 22% marginal rate, that's $2,310 back. At 24%, it's
-            $2,520.
-          </p>
-          <p>
-            The catch: you must keep a contemporaneous log. The IRS requires the
-            date, destination, business purpose, and mileage for every trip.
-            Most gig workers who get audited lose deductions not because they
-            didn't drive — but because they can't prove it.
-          </p>
-          <p>
-            UnifyOne connects to your gig platform accounts and automatically
-            reconstructs your mileage log from your shift data. Every delivery,
-            every pickup, every active mile — logged and totaled in real time.
-          </p>
-
-          <h2>Standard mileage vs. actual expenses</h2>
-          <p>
-            You can deduct vehicle costs one of two ways: the IRS standard
-            mileage rate ($0.70/mile in 2025) or your actual vehicle expenses
-            (fuel, oil, tires, insurance, depreciation). You choose your method
-            when you file for a vehicle the first year. Most gig workers benefit
-            from the standard rate because it's simpler and doesn't require
-            tracking every fuel receipt.
-          </p>
-
-          <h2>What counts as a deductible mile</h2>
-          <ul>
-            <li>
-              Miles from your first pickup to your last drop-off (including
-              between deliveries while actively working)
-            </li>
-            <li>
-              Miles driving to required orientations, meetings, or training
-            </li>
-            <li>Miles to pick up supplies for your gig business</li>
-          </ul>
-          <p>
-            <strong>Does not count:</strong> commuting from home to your first
-            pickup. Once you accept your first order, you're in business use.
-          </p>
-        </section>
-
-        {/* FAQ */}
-        <section className="mb-12">
-          <h2 className="text-xl font-semibold mb-6">
-            Frequently Asked Questions
-          </h2>
-          <div className="space-y-6">
-            {[
-              {
-                q: "What is the IRS standard mileage rate for 2025?",
-                a: "The IRS standard mileage rate for business use in 2025 is $0.70 per mile. This applies to rideshare drivers, delivery workers, and all 1099 self-employed workers using their vehicle for business.",
-              },
-              {
-                q: "Can DoorDash, Uber, and Instacart drivers deduct mileage?",
-                a: "Yes. Any miles driven for gig work — picking up orders, driving to customers, and miles between deliveries while actively working — qualify for the IRS standard mileage deduction.",
-              },
-              {
-                q: "Do I use actual expenses or standard mileage?",
-                a: "Most gig workers use the standard mileage rate because it's simpler and often yields a larger deduction. The standard rate covers fuel, depreciation, oil, tires, and most vehicle costs.",
-              },
-              {
-                q: "What happens if I don't track my mileage?",
-                a: "Without a contemporaneous log, the IRS can disallow your mileage deduction entirely during an audit, even if you actually drove those miles. Keep a record of date, destination, and purpose for every business trip.",
-              },
-              {
-                q: "How does UnifyOne track mileage automatically?",
-                a: "UnifyOne connects to your DoorDash, Uber Eats, Instacart, and other gig platform accounts and reconstructs your mileage log from your shift data. Every delivery and active mile is captured and totaled automatically.",
-              },
-            ].map(({ q, a }) => (
-              <div key={q} className="border-b pb-6 last:border-0">
-                <h3 className="font-semibold mb-2">{q}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {a}
+            {periods.map(period => (
+              <div key={period.startDate}>
+                <Label htmlFor={`miles-${period.startDate}`}>
+                  {period.label} business miles
+                </Label>
+                <Input
+                  id={`miles-${period.startDate}`}
+                  className="mt-2 min-h-11"
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  max="10000000"
+                  step="0.01"
+                  required
+                  value={milesByPeriod[period.startDate] ?? ""}
+                  aria-describedby={`rate-${period.startDate}`}
+                  aria-invalid={
+                    !!milesByPeriod[period.startDate] &&
+                    !validMiles(milesByPeriod[period.startDate])
+                  }
+                  onChange={event => {
+                    setMilesByPeriod(previous => ({
+                      ...previous,
+                      [period.startDate]: event.target.value,
+                    }));
+                    setShowResult(false);
+                  }}
+                />
+                <p
+                  id={`rate-${period.startDate}`}
+                  className="mt-2 text-sm text-muted-foreground"
+                >
+                  {period.rateCents}¢ per mile · {period.startDate} through{" "}
+                  {period.endDate}
                 </p>
               </div>
             ))}
-          </div>
-        </section>
-
-        {/* IRS Resources */}
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-4">
-            Authoritative IRS resources
-          </h2>
-          <ul className="space-y-2">
-            {[
-              {
-                label: "IRS: Standard Mileage Rates (2025)",
-                href: "https://www.irs.gov/tax-professionals/standard-mileage-rates",
-              },
-              {
-                label: "IRS: How to Deduct Business Mileage",
-                href: "https://www.irs.gov/businesses/small-businesses-self-employed/standard-mileage-rates",
-              },
-              {
-                label: "IRS Publication 463 (Travel Expenses)",
-                href: "https://www.irs.gov/publications/p463",
-              },
-            ].map(({ label, href }) => (
-              <li key={href}>
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline"
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Enter zero or more miles, with up to two decimal places. This
+              calculator estimates business mileage only; it does not use
+              business rates for medical, charity or personal trips.
+            </p>
+            <Button className="min-h-11 w-full" type="submit" disabled={!valid}>
+              Calculate mileage deduction
+            </Button>
+          </form>
+          <section
+            className="rounded-2xl border bg-card p-6"
+            aria-labelledby="deduction-heading"
+            aria-live="polite"
+          >
+            <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-primary">
+              <Car className="h-5 w-5" aria-hidden="true" />
+              Mileage estimate
+            </div>
+            <h2 id="deduction-heading" className="text-lg font-semibold">
+              {showResult && valid
+                ? `Your ${year} deduction estimate`
+                : "Use your records to estimate"}
+            </h2>
+            {showResult && valid ? (
+              <>
+                <p className="mt-4 text-4xl font-bold tabular-nums">
+                  {usd(totalCents)}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Estimated deduction from{" "}
+                  {totalMiles.toLocaleString("en-US", {
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  eligible business miles.
+                </p>
+                <dl className="mt-6 space-y-4">
+                  {results.map(row => (
+                    <div
+                      key={row.startDate}
+                      className="flex justify-between gap-4 border-b pb-3 text-sm"
+                    >
+                      <dt className="text-muted-foreground">
+                        {row.miles.toLocaleString()} mi × {row.rateCents}¢
+                        <span className="mt-1 block text-xs">{row.label}</span>
+                      </dt>
+                      <dd className="font-semibold tabular-nums">
+                        {usd(row.deductionCents)}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <Button
+                  variant="outline"
+                  className="mt-5 min-h-11 w-full"
+                  onClick={download}
                 >
-                  {label} ↗
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Related Tools */}
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-4">Related free tools</h2>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {[
-              {
-                label: "Quarterly Estimated Tax Calculator",
-                href: "/tools/quarterly-tax-estimator",
-              },
-              {
-                label: "Gig Income Aggregator",
-                href: "/gig-income-aggregator",
-              },
-              {
-                label: "1099 Tax Management Guide",
-                href: "/1099-tax-management",
-              },
-              {
-                label: "Financial Intelligence for Gig Workers",
-                href: "/financial-intelligence-gig-workers",
-              },
-            ].map(({ label, href }) => (
-              <Link
-                key={href}
-                href={href}
-                className="rounded-lg border p-4 text-sm font-medium hover:bg-muted transition-colors block"
-              >
-                {label} →
-              </Link>
-            ))}
+                  <ArrowDownToLine className="mr-2 h-4 w-4" />
+                  Download estimate CSV
+                </Button>
+              </>
+            ) : (
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                Choose a tax year and fill in the business miles for each
+                period. Your result will show how each rate contributes to the
+                total.
+              </p>
+            )}
+            <div className="mt-6 flex gap-2 rounded-xl bg-muted/40 p-4 text-sm">
+              <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <p>
+                A deduction reduces taxable income. It is not a reimbursement,
+                cash refund, or a measure of your actual vehicle costs.
+              </p>
+            </div>
+          </section>
+        </div>
+        <section className="mt-8 grid gap-6 sm:grid-cols-2">
+          <div className="rounded-xl border p-5">
+            <h2 className="font-semibold">Keep a mileage log</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Keep dates, destinations, business purpose and miles. Personal use
+              and commuting generally do not qualify. Eligibility depends on
+              your circumstances and the deduction method you use.
+            </p>
+            <Link
+              href="/money-manager?tab=mileage"
+              className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary"
+            >
+              Open mileage records <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="rounded-xl border p-5">
+            <h2 className="font-semibold">
+              Use the official rate, not a guess
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Rates here come from the IRS table. Historical mileage saved in
+              UnifyOne retains its stored rate; this public estimate does not
+              change your saved records or calculate your tax bill.
+            </p>
+            <a
+              href={BUSINESS_MILEAGE_SOURCE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary"
+            >
+              Review IRS standard mileage rates ↗
+            </a>
           </div>
         </section>
-
-        {/* CTA */}
-        <section className="rounded-xl border bg-muted/30 p-6 text-center">
-          <h2 className="text-lg font-semibold mb-2">
-            Never miss a deductible mile again
+        <section className="mt-8 rounded-xl bg-muted/30 p-6">
+          <h2 className="text-lg font-semibold">
+            Want to know what the work actually paid?
           </h2>
-          <p className="text-muted-foreground text-sm mb-4">
-            Connect your gig platforms to UnifyOne and get automatic mileage
-            tracking, quarterly tax estimates, and a unified earnings dashboard.
-            Free to start.
+          <p className="mt-2 text-sm text-muted-foreground">
+            Compare your earnings against your actual estimated vehicle and
+            business costs. The mileage deduction and your operating costs are
+            different numbers.
           </p>
           <Link
-            href="/register"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+            href="/tools/gig-hourly-rate"
+            className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary"
           >
-            Start tracking for free →
+            Check your real hourly rate <ArrowRight className="h-4 w-4" />
           </Link>
         </section>
       </main>

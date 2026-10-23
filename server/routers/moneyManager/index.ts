@@ -52,6 +52,10 @@ export const moneyManagerRouter = router({
         tips: z.number().min(0).default(0),
         bonuses: z.number().min(0).default(0),
         totalMiles: z.number().min(0).default(0),
+        mileageDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
         endLat: z.number().optional(),
         endLng: z.number().optional(),
         notes: z.string().max(1000).optional(),

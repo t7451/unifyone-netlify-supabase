@@ -21,6 +21,22 @@ function fmtUsd(value: number): string {
   }).format(value);
 }
 
+export function formatTaxReportMileageRates(
+  report: Pick<TaxReport, "mileageRatePeriods">
+): string {
+  const rate = (cents: number) =>
+    (cents / 100).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 3,
+    });
+  return report.mileageRatePeriods
+    .map(
+      period =>
+        `${period.startDate} to ${period.endDate}: $${rate(period.rateCents)}/mi`
+    )
+    .join("; ");
+}
+
 function fmtDate(iso: string): string {
   // YYYY-MM-DD — stable, sortable, CPA-friendly. Guard against bad input.
   const d = new Date(iso);
@@ -64,7 +80,11 @@ export function downloadTaxCsv(report: TaxReport): void {
 
   row([`UnifyOne Tax Report — ${report.year}`]);
   row(["Generated", fmtDate(report.generatedAt)]);
-  row(["IRS mileage rate", `$${report.irsMileageRate.toFixed(2)}/mi`]);
+  row(["IRS business mileage periods", formatTaxReportMileageRates(report)]);
+  row([
+    "Recorded deductions",
+    "Existing mileage records retain their original stored rates and amounts.",
+  ]);
   row([]);
 
   row(["Summary"]);
@@ -116,13 +136,24 @@ export function downloadTaxCsv(report: TaxReport): void {
   row([]);
 
   row(["Mileage ledger"]);
-  row(["Date", "Miles", "Purpose", "Deduction", "From", "To"]);
+  row([
+    "Date",
+    "Miles",
+    "Purpose",
+    "Recorded rate ($/mi)",
+    "Deduction",
+    "Total treatment",
+    "From",
+    "To",
+  ]);
   for (const m of report.mileageLogs) {
     row([
       fmtDate(m.date),
       m.miles,
       m.purpose,
+      m.rateCents / 100,
       m.deductionDollars,
+      m.includedSeparately ? "Added separately" : "Included with work session",
       m.startAddress,
       m.endAddress,
     ]);
@@ -154,13 +185,22 @@ export function downloadTaxPdf(report: TaxReport): void {
   y += 7;
   doc.setFontSize(10);
   doc.setTextColor(120);
-  doc.text(
-    `Generated ${fmtDate(report.generatedAt)} · IRS mileage rate $${report.irsMileageRate.toFixed(2)}/mi`,
-    marginX,
-    y
+  doc.text(`Generated ${fmtDate(report.generatedAt)}`, marginX, y);
+  y += 5;
+  const rateLines = doc.splitTextToSize(
+    formatTaxReportMileageRates(report),
+    180
   );
+  doc.text(rateLines, marginX, y);
+  y += rateLines.length * 5;
+  doc.setFontSize(8);
+  const storedRateNote = doc.splitTextToSize(
+    "Existing mileage records retain their original stored rates and amounts.",
+    180
+  );
+  doc.text(storedRateNote, marginX, y);
   doc.setTextColor(0);
-  y += 8;
+  y += storedRateNote.length * 4 + 5;
 
   autoTable(doc, {
     startY: y,
@@ -238,12 +278,25 @@ export function downloadTaxPdf(report: TaxReport): void {
   if (report.mileageLogs.length > 0) {
     autoTable(doc, {
       startY: y,
-      head: [["Date", "Miles", "Purpose", "Deduction", "From", "To"]],
+      head: [
+        [
+          "Date",
+          "Miles",
+          "Purpose",
+          "Rate ($/mi)",
+          "Deduction",
+          "Total treatment",
+          "From",
+          "To",
+        ],
+      ],
       body: report.mileageLogs.map(m => [
         fmtDate(m.date),
         m.miles.toFixed(1),
         m.purpose,
+        (m.rateCents / 100).toFixed(3),
         fmtUsd(m.deductionDollars),
+        m.includedSeparately ? "Added separately" : "Included with session",
         m.startAddress,
         m.endAddress,
       ]),

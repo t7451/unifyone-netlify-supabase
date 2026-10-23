@@ -1,566 +1,491 @@
-import { useState, useEffect } from "react";
-import { useLocation, Link } from "wouter";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useLocation } from "wouter";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BriefcaseBusiness,
+  Check,
+  Loader2,
+  ShoppingBag,
+} from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trackActivation } from "@/lib/userTracking";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
 import {
-  Layers,
-  ArrowRight,
-  ArrowLeft,
-  Briefcase,
-  CheckCircle,
-  Loader2,
-  Sparkles,
-  MapPin,
-  Link2,
-  Rocket,
-  Users,
-} from "lucide-react";
-import {
-  PRODUCT_OPTIONS,
   landingPathForProduct,
   type PrimaryProduct,
 } from "@/lib/primaryProduct";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
-const STEPS = [
+const FIRST_ACTIONS = [
   {
-    id: 1,
-    label: "Set Up Workspace",
-    description: "Name your workspace and claim your URL.",
+    value: "/overview",
+    title: "See my overview",
+    description: "Start with a clear view of earnings, mileage and next steps.",
   },
   {
-    id: 2,
-    label: "Configure Workspace",
-    description: "Choose whether to start with sample data.",
+    value: "/gig-command",
+    title: "Track my next shift",
+    description:
+      "Start the timer for a delivery, rideshare or freelance work session.",
   },
   {
-    id: 3,
-    label: "Start Tracking",
-    description: "Review what to do next before heading to your dashboard.",
+    value: "/money-manager",
+    title: "Add past earnings",
+    description: "Import a platform export and review your work history.",
   },
-];
+] as const;
 
-function slugify(str: string) {
-  return str
+function slugify(value: string) {
+  return value
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, "")
     .trim()
-    .replace(/[\s]+/g, "-")
-    .replace(/^-|-$/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/^-+|-+$/g, "")
     .slice(0, 60);
-}
-
-function StepProgressBar({ step }: { step: number }) {
-  const currentStep = STEPS[step - 1] ?? STEPS[0];
-  const progressValue = (step / STEPS.length) * 100;
-
-  return (
-    <Card
-      className="mb-8 border-white/10 bg-white/5 text-white shadow-xl shadow-black/20"
-      aria-label={`Step ${step} of ${STEPS.length}`}
-    >
-      <CardHeader className="gap-4 pb-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-[#D4A843]">
-              Step {step} of {STEPS.length}: {currentStep.label}
-            </p>
-            <p className="mt-1 text-sm text-gray-400">
-              {currentStep.description}
-            </p>
-          </div>
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-            {Math.round(progressValue)}% complete
-          </span>
-        </div>
-        <Progress
-          value={progressValue}
-          className="h-2 bg-white/10 [&_[data-slot=progress-indicator]]:bg-[#D4A843]"
-        />
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-3 gap-3">
-          {STEPS.map(item => {
-            const isCompleted = step > item.id;
-            const isActive = step === item.id;
-
-            return (
-              <div
-                key={item.id}
-                className={cn(
-                  "rounded-xl border px-3 py-3 text-left transition-colors",
-                  isActive && "border-[#D4A843]/40 bg-[#D4A843]/10",
-                  isCompleted && "border-emerald-500/30 bg-emerald-500/10",
-                  !isActive && !isCompleted && "border-white/10 bg-white/5"
-                )}
-              >
-                <div
-                  className={cn(
-                    "mb-3 flex h-8 w-8 items-center justify-center rounded-full border text-sm font-semibold",
-                    isActive && "border-[#D4A843] bg-[#D4A843] text-[#020202]",
-                    isCompleted &&
-                      "border-emerald-500 bg-emerald-500 text-white",
-                    !isActive && !isCompleted && "border-white/15 text-gray-400"
-                  )}
-                >
-                  {isCompleted ? <CheckCircle className="h-4 w-4" /> : item.id}
-                </div>
-                <p className="text-sm font-semibold text-white">{item.label}</p>
-                <p className="mt-1 text-xs text-gray-400">{item.description}</p>
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 export default function TenantSetup() {
   const [, navigate] = useLocation();
+  const { user, loading } = useAuth();
   const utils = trpc.useUtils();
-  const { user } = useAuth();
-  const [step, setStep] = useState(1);
   const [name, setName] = useState("");
+  const [nameEdited, setNameEdited] = useState(false);
   const [slug, setSlug] = useState("");
-  const [slugTouched, setSlugTouched] = useState(false);
-  const [showSlug, setShowSlug] = useState(false);
+  const [slugEdited, setSlugEdited] = useState(false);
+  const [showIdentifier, setShowIdentifier] = useState(false);
   const [primaryProduct, setPrimaryProduct] = useState<PrimaryProduct>("gig");
+  const [firstAction, setFirstAction] = useState<string>("/overview");
+  const [createdTenantId, setCreatedTenantId] = useState<number | null>(null);
+  const [createdProduct, setCreatedProduct] = useState<PrimaryProduct>("gig");
+  const [step, setStep] = useState<1 | 2>(1);
   const [seedDemo, setSeedDemo] = useState(false);
-  const [demoSeeded, setDemoSeeded] = useState(false);
-  const [createdTenantId, setCreatedTenantId] = useState<number | null>(
-    user?.tenantId ?? null
-  );
-  const [visible, setVisible] = useState(false);
+  const [finishing, setFinishing] = useState(false);
+  const [error, setError] = useState("");
+  const createTenant = trpc.tenant.create.useMutation();
+  const seedDemoMutation = trpc.tenant.seedDemoData.useMutation();
+  const busy =
+    finishing || createTenant.isPending || seedDemoMutation.isPending;
 
   useEffect(() => {
-    if (user?.name && !name) {
-      const autoName = `${user.name}'s Workspace`;
-      setName(autoName);
-      setSlug(slugify(autoName));
-    }
-    if (user?.tenantId && !createdTenantId) {
-      setCreatedTenantId(user.tenantId);
-    }
-    const timeoutId = setTimeout(() => setVisible(true), 80);
-    return () => clearTimeout(timeoutId);
-    // `name` is intentionally omitted — we only auto-populate when user loads,
-    // not when the user edits the name field.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createdTenantId, user]);
+    if (nameEdited || !user) return;
+    const defaultName = user.name?.trim()
+      ? `${user.name.trim()}'s work`
+      : "My work";
+    setName(defaultName);
+    if (!slugEdited) setSlug(slugify(defaultName) || "my-work");
+  }, [user, nameEdited, slugEdited]);
 
-  const createTenant = trpc.tenant.create.useMutation({
-    onSuccess: tenant => {
-      // Funnel: tenant creation is the mandatory first-value gate after signup.
-      trackActivation("tenant_created");
-      setCreatedTenantId(tenant.id);
-      setDemoSeeded(false);
-      setStep(2);
-    },
-    onError: err => toast.error(err.message),
-  });
+  const validName = name.trim().length >= 2 && name.trim().length <= 255;
+  const validSlug = /^[a-z0-9-]{2,100}$/.test(slug);
 
-  const seedDemoMutation = trpc.tenant.seedDemoData.useMutation({
-    onSuccess: data => {
-      setDemoSeeded(true);
-      void utils.products.list.invalidate();
-      toast.success(
-        `Added ${data.productsCreated} sample records to your workspace.`
+  async function finish(path: string) {
+    setFinishing(true);
+    try {
+      // Both guards must see the newly created workspace before navigating.
+      await Promise.all([
+        utils.auth.me.invalidate(),
+        utils.tenant.list.invalidate(),
+      ]);
+      navigate(path);
+    } catch {
+      setError(
+        "Your workspace was created, but we could not open it yet. Try opening it again."
       );
-    },
-    onError: err => toast.error(`Demo seed failed: ${err.message}`),
-  });
+    } finally {
+      setFinishing(false);
+    }
+  }
 
-  const handleNameChange = (value: string) => {
-    setName(value);
-    if (!slugTouched) setSlug(slugify(value));
-  };
+  async function createWorkspace(event: FormEvent) {
+    event.preventDefault();
+    if (busy) return;
+    setError("");
+    if (!validName || !validSlug) {
+      setShowIdentifier(!validSlug);
+      setError(
+        !validName
+          ? "Use a workspace name with 2–255 characters."
+          : "Use 2–100 lowercase letters, numbers or hyphens for your workspace identifier."
+      );
+      return;
+    }
+    if (createdTenantId) {
+      if (createdProduct === "commerce") setStep(2);
+      else await finish(firstAction);
+      return;
+    }
+    try {
+      const tenant = await createTenant.mutateAsync({
+        name: name.trim(),
+        slug,
+        primaryProduct,
+      });
+      const savedProduct =
+        tenant.primaryProduct === "commerce" ? "commerce" : "gig";
+      setCreatedTenantId(tenant.id);
+      setCreatedProduct(savedProduct);
+      trackActivation("tenant_created");
+      if (savedProduct === "commerce") setStep(2);
+      else await finish(firstAction);
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "We could not create your workspace. Please try again."
+      );
+      setShowIdentifier(true);
+    }
+  }
 
-  const handleStep1Submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !slug.trim()) return;
-    createTenant.mutate({
-      name: name.trim(),
-      slug: slug.trim(),
-      primaryProduct,
-    });
-  };
-
-  const handleStep2Submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (seedDemo && createdTenantId) {
+  async function finishCommerce(withSamples: boolean) {
+    if (busy || !createdTenantId) return;
+    setError("");
+    if (withSamples) {
       try {
         await seedDemoMutation.mutateAsync({ tenantId: createdTenantId });
+        await utils.products.list.invalidate();
       } catch {
-        // Error already shown via onError.
+        setError(
+          "The sample products could not be added. Try again, or open your empty storefront workspace."
+        );
+        return;
       }
-    } else if (seedDemo) {
-      toast.error(
-        "We couldn't find your new workspace yet, but setup can continue."
-      );
     }
+    await finish("/dashboard");
+  }
 
-    setStep(3);
-  };
+  if (loading)
+    return (
+      <main
+        className="flex min-h-screen items-center justify-center bg-[#020202] p-6 text-white"
+        aria-busy="true"
+      >
+        <p role="status">Loading your workspace…</p>
+      </main>
+    );
 
-  const handleFinish = async () => {
-    toast.success("Welcome to UnifyOne! Your workspace is ready.");
-    // Refresh auth.me so the new tenant's primaryProduct drives nav + landing.
-    await utils.auth.me.invalidate();
-    navigate(landingPathForProduct(primaryProduct));
-  };
-
-  const isStep2Pending = seedDemoMutation.isPending;
-  const nextSteps = [
-    {
-      href: "/gig-command",
-      title: "Track your first shift",
-      description:
-        "Log a shift and your miles to start building your earnings and tax picture.",
-      icon: MapPin,
-    },
-    {
-      href: "/settings",
-      title: "Connect your gig platforms",
-      description:
-        "Link the apps you drive for so your earnings and mileage stay in one place.",
-      icon: Link2,
-    },
-    {
-      href: "/team",
-      title: "Invite your team",
-      description: "Bring teammates into your workspace and assign roles.",
-      icon: Users,
-    },
-  ];
+  if (user?.tenantId && !createdTenantId)
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#020202] p-6 text-white">
+        <section className="w-full max-w-lg rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8">
+          <Check className="mb-4 h-8 w-8 text-emerald-400" aria-hidden="true" />
+          <h1 className="text-2xl font-bold">
+            Your workspace is already ready
+          </h1>
+          <p className="mt-3 text-sm text-slate-400">
+            Continue where you left off. You can change your workspace name and
+            experience in Settings.
+          </p>
+          <Button
+            className="mt-6 min-h-11 w-full bg-[#D4A843] font-semibold text-black hover:bg-[#D4A843]/90"
+            onClick={() => navigate(landingPathForProduct(user.primaryProduct))}
+          >
+            Open my workspace <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </section>
+      </main>
+    );
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-6"
-      style={{ backgroundColor: "#020202" }}
-    >
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[400px] w-[600px] rounded-full bg-[#D4A843]/5 blur-3xl" />
-        <div className="absolute bottom-1/4 left-1/3 h-[300px] w-[300px] rounded-full bg-[#6A1B9A]/8 blur-3xl" />
-      </div>
-
-      <div
-        className={cn(
-          "relative w-full max-w-3xl transition-all duration-500",
-          visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
-        )}
-      >
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#D4A843] to-[#0284C7] shadow-lg shadow-[#D4A843]/20">
-            <Layers className="h-7 w-7 text-[#020202]" />
-          </div>
-          <h1 className="text-2xl font-bold text-white">Welcome to UnifyOne</h1>
-          <p className="mt-1 text-sm text-gray-400">
-            {step === 3
-              ? "Your workspace is ready to launch."
-              : "Let's get your workspace set up."}
+    <main className="min-h-screen bg-[#020202] px-4 py-8 text-white sm:px-6 sm:py-12">
+      <div className="mx-auto w-full max-w-2xl">
+        <Link
+          href="/"
+          className="text-sm font-semibold tracking-wide text-[#D4A843]"
+        >
+          UNIFYONE
+        </Link>
+        <header className="mb-7 mt-8">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#D4A843]">
+            {step === 2 ? "One optional step" : "Start with your own numbers"}
           </p>
-        </div>
-
-        <StepProgressBar step={step} />
-
-        {step === 1 && (
-          <Card className="border-white/10 bg-white/5 text-white shadow-xl shadow-black/20">
-            <CardContent className="p-8">
-              <form onSubmit={handleStep1Submit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="name"
-                    className="text-sm font-medium text-gray-300"
-                  >
-                    Workspace Name
-                  </Label>
-                  <div className="relative">
-                    <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <Input
-                      id="name"
-                      value={name}
-                      onChange={e => handleNameChange(e.target.value)}
-                      placeholder="e.g. Sam's Rideshare & Delivery"
-                      className="h-11 border-white/10 bg-white/5 pl-10 text-white placeholder:text-gray-500 focus:border-[#D4A843]/50"
-                      required
-                      autoFocus
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  {!showSlug ? (
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5">
-                      <p className="truncate text-sm text-gray-400">
-                        Your workspace URL:{" "}
-                        <span className="text-gray-300">
-                          unifyone.app/{slug || "your-workspace"}
-                        </span>
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setShowSlug(true)}
-                        className="whitespace-nowrap text-xs font-medium text-[#D4A843] hover:underline"
-                      >
-                        Customize
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <Label
-                        htmlFor="slug"
-                        className="text-sm font-medium text-gray-300"
-                      >
-                        Workspace URL Slug
-                      </Label>
-                      <div className="flex items-center overflow-hidden rounded-lg border border-white/10 bg-white/5 transition-colors focus-within:border-[#D4A843]/50">
-                        <span className="whitespace-nowrap border-r border-white/10 bg-white/3 px-3 py-2.5 text-sm text-gray-500">
-                          unifyone.app/
-                        </span>
-                        <Input
-                          id="slug"
-                          value={slug}
-                          onChange={e => {
-                            setSlug(e.target.value);
-                            setSlugTouched(true);
-                          }}
-                          placeholder="my-workspace"
-                          pattern="[a-z0-9-]+"
-                          className="h-11 border-0 bg-transparent text-white placeholder:text-gray-500 focus-visible:ring-0"
-                          required
-                        />
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        Lowercase letters, numbers, and hyphens only. Choose
-                        carefully — your workspace URL can&apos;t be changed
-                        later.
-                      </p>
-                    </>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-300">
-                    What will you primarily use UnifyOne for?
-                  </Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {PRODUCT_OPTIONS.map(option => {
-                      const isSelected = primaryProduct === option.id;
-                      return (
-                        <button
-                          key={option.id}
-                          type="button"
-                          onClick={() => setPrimaryProduct(option.id)}
-                          aria-pressed={isSelected}
-                          className={cn(
-                            "flex flex-col gap-2 rounded-xl border p-4 text-left transition-colors",
-                            isSelected
-                              ? "border-[#D4A843]/40 bg-[#D4A843]/10"
-                              : "border-white/10 bg-white/5 hover:border-white/20"
-                          )}
-                        >
-                          <div
-                            className={cn(
-                              "flex h-9 w-9 items-center justify-center rounded-full",
-                              isSelected
-                                ? "bg-[#D4A843] text-[#020202]"
-                                : "bg-white/5 text-gray-400"
-                            )}
-                          >
-                            <option.icon className="h-5 w-5" />
-                          </div>
-                          <p className="text-sm font-semibold text-white">
-                            {option.label}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            {option.description}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    This sets your primary experience — you can change it later
-                    in Settings.
-                  </p>
-                </div>
-
-                <p className="text-center text-xs text-gray-500">
-                  Every workspace starts on the free{" "}
-                  <span className="text-[#D4A843]">Gig Starter</span> plan. You
-                  can upgrade to Gig Pro anytime from{" "}
-                  <Link
-                    href="/billing"
-                    className="text-[#D4A843] hover:underline"
-                  >
-                    Billing
-                  </Link>
-                  .
-                </p>
-
-                <Button
-                  type="submit"
-                  disabled={
-                    !name.trim() || !slug.trim() || createTenant.isPending
-                  }
-                  className="mt-2 h-11 w-full bg-[#D4A843] font-bold text-[#020202] hover:bg-[#D4A843]/90"
-                >
-                  {createTenant.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      Continue <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            {step === 2
+              ? "Your storefront workspace is ready"
+              : "Make your work add up"}
+          </h1>
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-400 sm:text-base">
+            {step === 2
+              ? "Choose an empty workspace or explore with clearly labeled sample products."
+              : "Delivery, rideshare, freelance—or a mix. Set up your workspace, then track a shift or bring in your earnings."}
+          </p>
+        </header>
+        {error && (
+          <div
+            role="alert"
+            className="mb-5 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200"
+          >
+            {error}
+          </div>
         )}
-
-        {step === 2 && (
-          <Card className="border-white/10 bg-white/5 text-white shadow-xl shadow-black/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Workspace Preferences</CardTitle>
-              <p className="text-sm text-gray-400">
-                Choose how you want to explore the platform on day one.
-              </p>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleStep2Submit} className="space-y-6">
-                <button
-                  type="button"
-                  className={cn(
-                    "flex w-full items-start gap-4 rounded-xl border p-4 text-left transition-colors",
-                    seedDemo
-                      ? "border-[#D4A843]/30 bg-[#D4A843]/5"
-                      : "border-white/10 bg-white/5 hover:border-white/20"
-                  )}
-                  onClick={() => setSeedDemo(value => !value)}
-                >
-                  <Checkbox
-                    id="seedDemo"
-                    checked={seedDemo}
-                    onCheckedChange={checked => setSeedDemo(checked === true)}
-                    className="mt-0.5 border-white/30 data-[state=checked]:border-[#D4A843] data-[state=checked]:bg-[#D4A843]"
-                    onClick={e => e.stopPropagation()}
-                  />
-                  <div className="flex-1">
-                    <Label
-                      htmlFor="seedDemo"
-                      className="cursor-pointer text-sm font-medium text-white"
-                    >
-                      Fill my workspace with sample data to explore the platform
-                    </Label>
-                    <p className="mt-1 text-xs text-gray-400">
-                      Add a handful of example records so you can see how shift,
-                      mileage, and earnings tracking works right away.
-                    </p>
-                  </div>
-                  <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-gray-500" />
-                </button>
-
-                <div className="flex gap-3 pt-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep(1)}
-                    className="h-11 flex-1 border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
-                  >
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isStep2Pending}
-                    className="h-11 flex-1 bg-[#D4A843] font-bold text-[#020202] hover:bg-[#D4A843]/90"
-                  >
-                    {isStep2Pending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Setting up...
-                      </>
-                    ) : (
-                      <>
-                        Finish Setup <ArrowRight className="ml-2 h-4 w-4" />
-                      </>
+        {step === 1 ? (
+          <form
+            onSubmit={event => void createWorkspace(event)}
+            className="space-y-6 rounded-2xl border border-white/10 bg-white/5 p-5 sm:p-7"
+          >
+            <fieldset disabled={busy || !!createdTenantId}>
+              <legend className="mb-3 text-sm font-semibold">
+                What are you here to manage?
+              </legend>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {(
+                  [
+                    {
+                      id: "gig",
+                      title: "My work and earnings",
+                      description:
+                        "Delivery, rideshare and freelance income, work sessions and mileage.",
+                      icon: BriefcaseBusiness,
+                    },
+                    {
+                      id: "commerce",
+                      title: "A storefront",
+                      description:
+                        "Products, customers and orders for a commerce business.",
+                      icon: ShoppingBag,
+                    },
+                  ] as const
+                ).map(option => (
+                  <label
+                    key={option.id}
+                    className={cn(
+                      "relative flex cursor-pointer gap-3 rounded-xl border p-4 transition-colors focus-within:ring-2 focus-within:ring-[#D4A843]",
+                      primaryProduct === option.id
+                        ? "border-[#D4A843]/60 bg-[#D4A843]/10"
+                        : "border-white/10 hover:border-white/25"
                     )}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        )}
-
-        {step === 3 && (
-          <Card className="border-emerald-500/20 bg-white/5 text-white shadow-xl shadow-black/20">
-            <CardContent className="space-y-8 p-8">
-              <div className="text-center">
-                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/15">
-                  <Sparkles className="h-8 w-8 text-emerald-400" />
-                </div>
-                <h2 className="text-2xl font-bold text-white">
-                  Setup Complete! 🎉
-                </h2>
-                <p className="mt-2 text-sm text-gray-400">
-                  <span className="font-medium text-white">{name}</span> is
-                  ready.
-                  {demoSeeded
-                    ? " We also added sample data so you can explore right away."
-                    : " Your dashboard is live and waiting for your first shift."}
+                  >
+                    <input
+                      type="radio"
+                      name="primary-product"
+                      value={option.id}
+                      checked={primaryProduct === option.id}
+                      onChange={() => {
+                        setPrimaryProduct(option.id);
+                        setError("");
+                      }}
+                      className="mt-1 h-4 w-4 shrink-0 accent-[#D4A843]"
+                    />
+                    <span>
+                      <span className="flex items-center gap-2 text-sm font-semibold">
+                        <option.icon className="h-4 w-4" aria-hidden="true" />
+                        {option.title}
+                      </span>
+                      <span className="mt-2 block text-xs leading-relaxed text-slate-400">
+                        {option.description}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <div className="space-y-2">
+              <Label htmlFor="workspace-name">Workspace name</Label>
+              <Input
+                id="workspace-name"
+                value={name}
+                minLength={2}
+                maxLength={255}
+                required
+                disabled={busy || !!createdTenantId}
+                aria-describedby="workspace-name-hint"
+                className="min-h-11 border-white/15 bg-black/20 text-white"
+                placeholder="e.g. Sam's work"
+                onChange={event => {
+                  const value = event.target.value;
+                  setNameEdited(true);
+                  setName(value);
+                  if (!slugEdited) setSlug(slugify(value));
+                  setError("");
+                }}
+              />
+              <p
+                id="workspace-name-hint"
+                className="text-xs leading-relaxed text-slate-400"
+              >
+                A label for your records. Your name or business name is fine;
+                you can rename it later.
+              </p>
+            </div>
+            <details
+              open={showIdentifier}
+              onToggle={event => setShowIdentifier(event.currentTarget.open)}
+              className="rounded-xl border border-white/10 p-3"
+            >
+              <summary className="cursor-pointer text-sm text-slate-300">
+                Workspace identifier{" "}
+                <span className="text-xs text-slate-500">
+                  · optional to customize
+                </span>
+              </summary>
+              <div className="mt-3 space-y-2">
+                <Label htmlFor="workspace-identifier">Identifier</Label>
+                <Input
+                  id="workspace-identifier"
+                  value={slug}
+                  disabled={busy || !!createdTenantId}
+                  minLength={2}
+                  maxLength={100}
+                  pattern="[a-z0-9-]+"
+                  aria-describedby="identifier-hint"
+                  className="min-h-11 border-white/15 bg-black/20 text-white"
+                  onChange={event => {
+                    setSlugEdited(true);
+                    setSlug(event.target.value);
+                    setError("");
+                  }}
+                />
+                <p
+                  id="identifier-hint"
+                  className="text-xs leading-relaxed text-slate-400"
+                >
+                  An internal identifier, not a public website. Use 2–100
+                  lowercase letters, numbers or hyphens.
                 </p>
               </div>
-
-              <div>
-                <div className="mb-4 flex items-center gap-2 text-sm font-medium text-[#D4A843]">
-                  <Rocket className="h-4 w-4" />
-                  What&apos;s Next
-                </div>
-                <div className="grid gap-4 md:grid-cols-3">
-                  {nextSteps.map(item => (
-                    <Link key={item.title} href={item.href} className="block">
-                      <Card className="h-full border-white/10 bg-white/5 text-white transition-colors hover:border-[#D4A843]/30 hover:bg-white/10">
-                        <CardContent className="flex h-full flex-col gap-3 p-5">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#D4A843]/10 text-[#D4A843]">
-                            <item.icon className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-white">
-                              {item.title} →
-                            </p>
-                            <p className="mt-1 text-xs text-gray-400">
-                              {item.description}
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
+            </details>
+            {primaryProduct === "gig" && (
+              <fieldset disabled={busy}>
+                <legend className="mb-3 text-sm font-semibold">
+                  Where would you like to start?
+                </legend>
+                <div className="space-y-2">
+                  {FIRST_ACTIONS.map(action => (
+                    <label
+                      key={action.value}
+                      className={cn(
+                        "flex cursor-pointer gap-3 rounded-xl border p-3 focus-within:ring-2 focus-within:ring-[#D4A843]",
+                        firstAction === action.value
+                          ? "border-[#D4A843]/40 bg-[#D4A843]/5"
+                          : "border-white/10"
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="first-action"
+                        value={action.value}
+                        checked={firstAction === action.value}
+                        onChange={() => setFirstAction(action.value)}
+                        className="mt-1 h-4 w-4 shrink-0 accent-[#D4A843]"
+                      />
+                      <span>
+                        <span className="block text-sm font-medium">
+                          {action.title}
+                        </span>
+                        <span className="mt-1 block text-xs text-slate-400">
+                          {action.description}
+                        </span>
+                      </span>
+                    </label>
                   ))}
                 </div>
+              </fieldset>
+            )}
+            <Button
+              type="submit"
+              disabled={busy || !validName || !validSlug}
+              className="min-h-12 w-full bg-[#D4A843] font-bold text-black hover:bg-[#D4A843]/90"
+            >
+              {busy ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {finishing
+                    ? "Opening your workspace…"
+                    : "Creating your workspace…"}
+                </>
+              ) : (
+                <>
+                  {createdTenantId
+                    ? "Open my workspace"
+                    : primaryProduct === "gig"
+                      ? "Create my workspace"
+                      : "Continue with storefront"}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+            {primaryProduct === "gig" && (
+              <p className="text-center text-xs leading-relaxed text-slate-400">
+                No bank connection needed to get started. Track work or import
+                earnings while automatic account linking is being prepared. Your
+                records start empty.
+              </p>
+            )}
+          </form>
+        ) : (
+          <section className="space-y-5 rounded-2xl border border-white/10 bg-white/5 p-5 sm:p-7">
+            <div className="flex items-start gap-3 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4">
+              <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
+              <p className="text-sm">
+                <strong>{name}</strong> has been created. Sample products are
+                optional and do not represent real sales.
+              </p>
+            </div>
+            <div className="flex items-start gap-3 rounded-xl border border-white/10 p-4">
+              <Checkbox
+                id="sample-products"
+                checked={seedDemo}
+                disabled={busy}
+                onCheckedChange={checked => setSeedDemo(checked === true)}
+                className="mt-0.5 border-white/30"
+              />
+              <div>
+                <Label
+                  htmlFor="sample-products"
+                  className="text-sm font-medium"
+                >
+                  Add sample products
+                </Label>
+                <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                  Explore the product catalog with example records. These are
+                  storefront products, not gig earnings or tracked shifts.
+                </p>
               </div>
-
+            </div>
+            <Button
+              disabled={busy}
+              onClick={() => void finishCommerce(seedDemo)}
+              className="min-h-12 w-full bg-[#D4A843] font-bold text-black hover:bg-[#D4A843]/90"
+            >
+              {busy ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Opening your storefront…
+                </>
+              ) : (
+                <>
+                  Open my storefront <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+            {seedDemo && (
               <Button
-                onClick={handleFinish}
-                className="h-11 w-full bg-[#D4A843] font-bold text-[#020202] shadow-lg shadow-[#D4A843]/20 hover:bg-[#D4A843]/90"
+                variant="ghost"
+                disabled={busy}
+                onClick={() => void finishCommerce(false)}
+                className="min-h-11 w-full text-slate-300"
               >
-                Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+                Skip sample products
               </Button>
-            </CardContent>
-          </Card>
+            )}
+          </section>
         )}
+        <p className="mt-6 text-center text-xs text-slate-500">
+          <Link
+            href="/tools"
+            className="inline-flex min-h-11 items-center gap-2 text-slate-400 hover:text-white"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Explore the free tools
+          </Link>
+        </p>
       </div>
-    </div>
+    </main>
   );
 }

@@ -3,7 +3,7 @@
  *
  * Mileage + tax use-cases: mileage logging/summary, the YTD deduction
  * widget, the comprehensive tax estimate, and earnings anomaly detection.
- * The mileage/tax math is preserved byte-identical from the original router.
+ * YTD mileage counts completed shifts once, with separate manual mileage logs.
  */
 
 import { getAppUrl } from "../../_core/env";
@@ -12,8 +12,11 @@ import * as repo from "./moneyManager.repo";
 import { awardPoints, POINTS } from "./points.service";
 import { checkAndResolveFriendChallengesForUser } from "../../challengeCompletion";
 
-// IRS 2025 standard mileage rate (cents per mile)
-export const IRS_RATE_CENTS = 70;
+import {
+  getBusinessMileageRateForDate,
+  getDayWeightedBusinessMileageRateCents,
+  summarizeRecordedBusinessMileage,
+} from "../../../shared/mileageRates";
 
 export const mileageTaxService = {
   async logMileage(
@@ -34,13 +37,26 @@ export const mileageTaxService = {
         message: "DB unavailable",
       });
 
-    const deductionCents = Math.round(input.miles * IRS_RATE_CENTS);
+    const date = input.date ?? new Date();
+    let rateCents: number;
+    try {
+      rateCents = getBusinessMileageRateForDate(date);
+    } catch (error) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          error instanceof Error
+            ? error.message
+            : "A supported mileage date is required.",
+      });
+    }
+    const deductionCents = Math.round(input.miles * rateCents);
     await repo.insertMileageLog(db, {
       userId: ctx.user.id,
-      date: input.date ? new Date(input.date) : new Date(),
+      date: new Date(date),
       miles: input.miles.toFixed(2),
       purpose: input.purpose,
-      irsRateCents: IRS_RATE_CENTS,
+      irsRateCents: rateCents.toFixed(2),
       deductionCents,
       startAddress: input.startAddress,
       endAddress: input.endAddress,
@@ -105,7 +121,6 @@ export const mileageTaxService = {
 
   async getYTDDeduction(userId: number) {
     const db = await repo.getDb();
-    const IRS_RATE = 0.7; // 2025
     if (!db)
       return {
         ytdMiles: 0,
@@ -127,13 +142,11 @@ export const mileageTaxService = {
       startOfYear
     );
 
-    // Also pull mileageLogs for manually logged miles
-    const manualLogs = await repo.getMileageMilesSince(db, userId, startOfYear);
+    const logs = await repo.getMileageMilesSince(db, userId, startOfYear);
 
-    const shiftMiles = shifts.reduce((s, r) => s + Number(r.totalMiles), 0);
-    const manualMiles = manualLogs.reduce((s, r) => s + Number(r.miles), 0);
-    const ytdMiles = Math.round((shiftMiles + manualMiles) * 10) / 10;
-    const ytdDeduction = Math.round(ytdMiles * IRS_RATE * 100) / 100;
+    const recordedMileage = summarizeRecordedBusinessMileage(shifts, logs);
+    const ytdMiles = Math.round(recordedMileage.totalMiles * 10) / 10;
+    const ytdDeduction = recordedMileage.deductionCents / 100;
 
     // Project to year end based on pace so far
     const dayOfYear = Math.ceil(
@@ -143,7 +156,12 @@ export const mileageTaxService = {
     const dailyRate = dayOfYear > 0 ? ytdMiles / dayOfYear : 0;
     const projectedYearlyMiles = Math.round(dailyRate * daysInYear * 10) / 10;
     const projectedYearlyDeduction =
-      Math.round(projectedYearlyMiles * IRS_RATE * 100) / 100;
+      projectedYearlyMiles > 0
+        ? Math.round(
+            projectedYearlyMiles *
+              getDayWeightedBusinessMileageRateCents(now.getUTCFullYear())
+          ) / 100
+        : 0;
 
     // Quarterly estimate (simple: YTD / quarters elapsed * 4)
     const quarterElapsed = Math.ceil((now.getMonth() + 1) / 3);
@@ -188,11 +206,7 @@ export const mileageTaxService = {
       startOfYear
     );
 
-    const manualLogs = await repo.getMileageDeductionsSince(
-      db,
-      userId,
-      startOfYear
-    );
+    const logs = await repo.getMileageDeductionsSince(db, userId, startOfYear);
 
     const ytdGrossCents = Math.round(
       shifts.reduce(
@@ -201,10 +215,10 @@ export const mileageTaxService = {
         0
       ) * 100
     );
-    const shiftMiles = shifts.reduce((s, r) => s + Number(r.totalMiles), 0);
-    const ytdMileageDeductionCents =
-      Math.round(shiftMiles * 70) +
-      manualLogs.reduce((s, r) => s + r.deductionCents, 0);
+    const ytdMileageDeductionCents = summarizeRecordedBusinessMileage(
+      shifts,
+      logs
+    ).deductionCents;
 
     const {
       computeAnnualProjection,

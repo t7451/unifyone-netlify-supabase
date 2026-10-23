@@ -124,6 +124,7 @@ function abortAfter(ms: number): AbortSignal {
 }
 import {
   FREE_TIER_FALLBACK_CHAIN,
+  GEMINI_FALLBACK_MODEL,
   GROQ_FALLBACK_MODEL,
   invokeLLM,
 } from "../../_core/llm";
@@ -807,7 +808,7 @@ export type ScoredRoute = {
    * ETA should read — not raw `duration`.
    */
   liveDurationS: number;
-  geometry: unknown;
+  geometry: BaseRoute["geometry"];
   incidents: RouteIncident[];
   riskScore: number;
   delayEstimateMin: number;
@@ -889,6 +890,8 @@ export type RouteResult = {
     tomtomIncidents: number;
     wazeAlerts: number;
     flowSamples: number;
+    /** Live sources added while refreshing a cached route. */
+    sources?: string[];
     /** Which TomTom products contributed to this response. */
     tomtomApis?: Array<
       | "routing"
@@ -1079,6 +1082,8 @@ async function writeCache(key: string, result: RouteResult) {
 }
 
 type BaseRoute = {
+  /** Live traffic delay when supplied by a routing provider, in seconds. */
+  trafficDelayInSeconds?: number;
   distance: number;
   duration: number;
   geometry: { type: "LineString"; coordinates: [number, number][] };
@@ -1702,7 +1707,7 @@ export async function optimizeStopsViaMatrix(
   while (remaining.size) {
     let best: number | null = null;
     let bestT = Infinity;
-    for (const si of remaining) {
+    for (const si of Array.from(remaining)) {
       const t = time[current]![si + 1] ?? Infinity;
       if (t < bestT) {
         bestT = t;
@@ -1984,7 +1989,7 @@ export async function scheduleStopsWithDeadlines(
       cost: number;
     } | null = null;
 
-    for (const stopIdx of unplaced) {
+    for (const stopIdx of Array.from(unplaced)) {
       for (let pos = 0; pos <= placed.length; pos++) {
         const candidate = [
           ...placed.slice(0, pos),
@@ -2284,7 +2289,7 @@ export function optimizeStopOrder(
   while (remaining.size > 0) {
     let best = -1;
     let bestD = Infinity;
-    for (const i of remaining) {
+    for (const i of Array.from(remaining)) {
       const d = haversineM(current, stops[i]!);
       if (d < bestD) {
         bestD = d;
@@ -2575,7 +2580,7 @@ function deterministicPick(
         "peak"
       )
     );
-    if (chosenLocalSummary && preference !== "fastest") {
+    if (chosenLocalSummary) {
       explanation = `${explanation} Local note: ${chosenLocalSummary.slice(0, 180)}`;
       if (explanation.length > 480)
         explanation = explanation.slice(0, 477) + "...";
@@ -2966,18 +2971,19 @@ export async function getRoute(
             },
             grounding: {
               ...(cached.grounding ?? {}),
+              tomtomIncidents: freshIncidents.length,
+              wazeAlerts: cached.grounding?.wazeAlerts ?? 0,
+              flowSamples: freshFlow?.samples ?? cached.grounding?.flowSamples ?? 0,
               sources: Array.from(
                 new Set([
-                  ...((cached.grounding as { sources?: string[] })?.sources ??
-                    []),
+                  ...(cached.grounding?.sources ?? []),
                   ...(freshIncidents.length ? ["tomtom-incidents"] : []),
                   ...(freshFlow ? ["tomtom-flow"] : []),
                 ])
               ),
               tomtomApis: Array.from(
                 new Set([
-                  ...((cached.grounding as { tomtomApis?: string[] })
-                    ?.tomtomApis ?? []),
+                  ...(cached.grounding?.tomtomApis ?? []),
                   ...(freshIncidents.length ? (["incidents"] as const) : []),
                   ...(freshFlow ? (["flow"] as const) : []),
                 ])
@@ -3247,7 +3253,7 @@ export async function getRoute(
           tomtomIncidents: tomtomIncidents.length,
           wazeAlerts: wazeAlerts.length,
           flowSamples,
-          tomtomApis: [...new Set(tomtomApis)],
+          tomtomApis: Array.from(new Set(tomtomApis)),
         }
       : null;
 

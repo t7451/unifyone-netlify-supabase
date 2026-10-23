@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import DashboardLayout from "@/components/DashboardLayout";
 import { TaxExportButton } from "@/components/TaxExportButton";
 import { MapView } from "@/components/Map";
 import { Button } from "@/components/ui/button";
@@ -46,7 +45,6 @@ import {
 import AIInsightsCard from "@/components/AIInsightsCard";
 import GigIQDashboard from "@/components/GigIQDashboard";
 
-const IRS_RATE = 0.7; // 2025 rate per mile
 const GIG_PLATFORMS = [
   "DoorDash",
   "Uber Eats",
@@ -56,6 +54,9 @@ const GIG_PLATFORMS = [
   "Amazon Flex",
   "Shipt",
   "Grubhub",
+  "Upwork",
+  "Fiverr",
+  "Client / project",
   "Other",
 ];
 
@@ -86,6 +87,7 @@ function DemandBadge({ level }: { level: "high" | "medium" | "low" }) {
 
 export default function GigCommand() {
   useAuth();
+  const utils = trpc.useUtils();
   const mapRef = useRef<google.maps.Map | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
   const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
@@ -98,6 +100,13 @@ export default function GigCommand() {
   const [timerActive, setTimerActive] = useState(false);
   const [startTs, setStartTs] = useState<number | null>(null);
   const [platform, setPlatform] = useState("DoorDash");
+  const [customPlatform, setCustomPlatform] = useState("");
+  const [gpsOptIn, setGpsOptIn] = useState(false);
+  const [gpsRequesting, setGpsRequesting] = useState(false);
+  const [gpsError, setGpsError] = useState("");
+  const positionRef = useRef<{ lat: number; lng: number } | null>(null);
+  const namedWork = platform === "Other" || platform === "Client / project";
+  const workName = namedWork ? customPlatform.trim() : platform;
   const [currentPos, setCurrentPos] = useState<{
     lat: number;
     lng: number;
@@ -110,11 +119,12 @@ export default function GigCommand() {
     lat: number;
     lng: number;
   } | null>(null);
-  const [_showShortcuts, setShowShortcuts] = useState(false);
 
   // Shift end form state
   const [endEarnings, setEndEarnings] = useState("");
-  const [endTips, setEndTips] = useState("");
+  const [endTips, setEndTips] = useState("0");
+  const [endBonuses, setEndBonuses] = useState("0");
+  const [endFormError, setEndFormError] = useState("");
   const [endMiles, setEndMiles] = useState("");
   const [showEndForm, setShowEndForm] = useState(false);
 
@@ -159,7 +169,7 @@ export default function GigCommand() {
     {
       lat: intelligencePos?.lat ?? 47.6062,
       lng: intelligencePos?.lng ?? -122.3321,
-      platform,
+      platform: workName || platform,
     },
     {
       enabled: !!intelligencePos && routeAccess.data?.hasAccess === true,
@@ -180,7 +190,6 @@ export default function GigCommand() {
   const generateShortcuts = trpc.moneyManager.generateAIShortcuts.useMutation({
     onError: e => toast.error(e.message),
   });
-  const { data: gigSubscription } = trpc.gigWorker.getSubscription.useQuery();
   const [shortcuts, setShortcuts] = useState<
     Array<{
       title: string;
@@ -191,19 +200,6 @@ export default function GigCommand() {
     }>
   >([]);
 
-  // Restore active shift timer on mount
-  useEffect(() => {
-    if (activeShift && !timerActive) {
-      const startTime = new Date(activeShift.startTime).getTime();
-      setStartTs(startTime);
-      setTimerActive(true);
-      setPlatform(activeShift.platform);
-    }
-    // timerActive is intentionally omitted — we only want to restore state when
-    // activeShift is (re)loaded, not when the timer is toggled by user action.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeShift]);
-
   // Elapsed timer
   useEffect(() => {
     if (!timerActive || !startTs) return;
@@ -213,143 +209,237 @@ export default function GigCommand() {
     return () => clearInterval(interval);
   }, [timerActive, startTs]);
 
-  // GPS tracking
+  // Location is optional. A shift starts without requesting browser permission.
   const startGPS = useCallback(() => {
-    if (!navigator.geolocation) return;
-    setGpsEnabled(true);
+    if (!navigator.geolocation) {
+      setGpsError(
+        "This browser does not support location. Your timer still works; enter miles manually when you finish."
+      );
+      return;
+    }
+    if (watchIdRef.current !== null)
+      navigator.geolocation.clearWatch(watchIdRef.current);
+    setGpsError("");
+    setGpsRequesting(true);
     watchIdRef.current = navigator.geolocation.watchPosition(
       pos => {
         const { latitude: lat, longitude: lng } = pos.coords;
+        setGpsRequesting(false);
+        setGpsEnabled(true);
+        positionRef.current = { lat, lng };
         setCurrentPos({ lat, lng });
         setRoutePath(prev => [...prev, { lat, lng }]);
         if (mapRef.current) {
           mapRef.current.panTo({ lat, lng });
-          if (markerRef.current) {
-            markerRef.current.position = { lat, lng };
-          }
-          if (polylineRef.current) {
-            const path = polylineRef.current.getPath();
-            path.push(new google.maps.LatLng(lat, lng));
-          }
+          if (markerRef.current) markerRef.current.position = { lat, lng };
+          if (polylineRef.current)
+            polylineRef.current
+              .getPath()
+              .push(new google.maps.LatLng(lat, lng));
         }
-        // Set intelligence position on first fix
         setIntelligencePos(prev => prev ?? { lat, lng });
       },
-      err => console.warn("GPS error:", err.message),
+      error => {
+        if (watchIdRef.current !== null)
+          navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+        setGpsRequesting(false);
+        setGpsEnabled(false);
+        positionRef.current = null;
+        setIntelligencePos(null);
+        setGpsError(
+          error.code === 1
+            ? "Location permission was declined. Your timer is still running. You can enter mileage manually, or enable location in your browser and try again."
+            : "A location fix is unavailable. Your timer is still running; enter mileage manually or try GPS again."
+        );
+      },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
     );
   }, []);
 
   const stopGPS = useCallback(() => {
-    if (watchIdRef.current !== null) {
+    if (watchIdRef.current !== null)
       navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
-    if (gpsIntervalRef.current) {
-      clearInterval(gpsIntervalRef.current);
-      gpsIntervalRef.current = null;
-    }
+    watchIdRef.current = null;
+    if (gpsIntervalRef.current) clearInterval(gpsIntervalRef.current);
+    gpsIntervalRef.current = null;
+    positionRef.current = null;
     setGpsEnabled(false);
+    setGpsRequesting(false);
+    setIntelligencePos(null);
   }, []);
 
-  // Sync waypoints to server every 60s when shift is active
+  // Restore a saved timer, and clear local state when a refreshed status is ended.
   useEffect(() => {
-    if (!timerActive || !activeShift || !currentPos) return;
-    const interval = setInterval(async () => {
-      if (currentPos) {
-        // A failed GPS sync should not throw unhandled; the mutation's
-        // onError already surfaces a toast.
-        await updateGPS
+    if (activeShift === null) {
+      setTimerActive(false);
+      setStartTs(null);
+      setElapsed(0);
+      setShowEndForm(false);
+      stopGPS();
+    } else if (activeShift && !timerActive) {
+      const startTime = new Date(activeShift.startTime).getTime();
+      setStartTs(startTime);
+      setElapsed(Math.max(0, Date.now() - startTime));
+      setTimerActive(true);
+      setPlatform(
+        GIG_PLATFORMS.includes(activeShift.platform)
+          ? activeShift.platform
+          : "Other"
+      );
+      setCustomPlatform(activeShift.platform);
+    }
+    // timerActive is intentionally omitted — we only want to restore state when
+    // activeShift is (re)loaded, not when the timer is toggled by user action.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeShift, stopGPS]);
+
+  useEffect(
+    () => () => {
+      if (watchIdRef.current !== null)
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      if (gpsIntervalRef.current) clearInterval(gpsIntervalRef.current);
+    },
+    []
+  );
+
+  // Read the latest fix from a ref: moving should not restart the sync timer.
+  const activeShiftId = activeShift?.id;
+  useEffect(() => {
+    if (!timerActive || !activeShiftId || !gpsEnabled) return;
+    const interval = setInterval(() => {
+      const position = positionRef.current;
+      if (position)
+        void updateGPS
           .mutateAsync({
-            shiftId: activeShift.id,
-            lat: currentPos.lat,
-            lng: currentPos.lng,
+            shiftId: activeShiftId,
+            ...position,
             appendWaypoint: true,
           })
           .catch(() => {});
-      }
     }, 60000);
     gpsIntervalRef.current = interval;
     return () => clearInterval(interval);
-    // updateGPS mutation identity changes on every render; we only want to
-    // restart the interval when shift state or position changes.
+    // The mutation identity changes on render; the active ID is sufficient.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timerActive, activeShift, currentPos]);
+  }, [timerActive, activeShiftId, gpsEnabled]);
+
+  async function refreshWorkData() {
+    await Promise.allSettled([
+      utils.moneyManager.getActiveShift.invalidate(),
+      utils.moneyManager.listShifts.invalidate(),
+      utils.moneyManager.getShiftStats.invalidate(),
+      utils.moneyManager.getMileageSummary.invalidate(),
+      utils.moneyManager.getYTDDeduction.invalidate(),
+      utils.moneyManager.getShiftBreakdown.invalidate(),
+    ]);
+  }
 
   const handleStartShift = async () => {
+    if (!workName || startShift.isPending || timerActive) return;
     try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          timeout: 8000,
-        })
-      ).catch(() => null);
-
-      await startShift.mutateAsync({
-        platform,
-        startLat: pos?.coords.latitude ?? undefined,
-        startLng: pos?.coords.longitude ?? undefined,
-      });
-
-      const now = Date.now();
-      setStartTs(now);
+      const created = await startShift.mutateAsync({ platform: workName });
+      const startedAt = new Date(created.startTime).getTime();
+      setStartTs(startedAt);
       setTimerActive(true);
-      setElapsed(0);
+      setElapsed(Math.max(0, Date.now() - startedAt));
       setRoutePath([]);
-      startGPS();
-      await refetchActive();
-      toast.success(`${platform} shift started! GPS tracking active.`);
-    } catch (e: unknown) {
-      toast.error(`Failed to start shift: ${(e as Error).message}`);
+      setGpsError("");
+      if (gpsOptIn) startGPS();
+      void refreshWorkData();
+      toast.success(`${workName} shift started. Your timer is running.`);
+    } catch {
+      // The mutation's onError shows the server response. Keep entries intact.
     }
   };
 
+  const endAmounts = [endEarnings, endTips, endBonuses, endMiles];
+  const endValuesValid =
+    endAmounts
+      .slice(0, 3)
+      .every(value => Number(value) === Number(Number(value).toFixed(2))) &&
+    endAmounts.every(
+      value =>
+        value.trim() !== "" &&
+        Number.isFinite(Number(value)) &&
+        Number(value) >= 0
+    );
+  const totalReceived = endValuesValid
+    ? Number(endEarnings) + Number(endTips) + Number(endBonuses)
+    : null;
   const handleEndShift = async () => {
-    if (!activeShift) return;
+    if (!activeShift || endShift.isPending) return;
+    if (!endValuesValid) {
+      setEndFormError(
+        "Enter earnings and miles as zero or a positive number. Use at most two decimal places for pay. Enter 0 explicitly if you earned nothing or did not drive."
+      );
+      return;
+    }
+    setEndFormError("");
     try {
+      const completedOn = new Date();
+      const mileageDate = [
+        completedOn.getFullYear(),
+        String(completedOn.getMonth() + 1).padStart(2, "0"),
+        String(completedOn.getDate()).padStart(2, "0"),
+      ].join("-");
       await endShift.mutateAsync({
         shiftId: activeShift.id,
-        grossEarnings: parseFloat(endEarnings) || 0,
-        tips: parseFloat(endTips) || 0,
-        totalMiles: parseFloat(endMiles) || 0,
+        grossEarnings: Number(endEarnings),
+        tips: Number(endTips),
+        bonuses: Number(endBonuses),
+        totalMiles: Number(endMiles),
+        mileageDate,
       });
       setTimerActive(false);
       setStartTs(null);
       setElapsed(0);
       setShowEndForm(false);
       setEndEarnings("");
-      setEndTips("");
+      setEndTips("0");
+      setEndBonuses("0");
       setEndMiles("");
       stopGPS();
-      await refetchActive();
-      toast.success("Shift completed! Earnings and mileage logged.");
-    } catch (e: unknown) {
-      toast.error(`Failed to end shift: ${(e as Error).message}`);
+      void refreshWorkData();
+      toast.success("Shift saved. Your earnings and mileage are updating.");
+    } catch {
+      // Failed saves leave the running shift and entered values available to retry.
     }
   };
 
   const handleGenerateShortcuts = async () => {
     try {
-      const result = await generateShortcuts.mutateAsync({ platform });
+      const result = await generateShortcuts.mutateAsync({
+        platform: workName || platform,
+      });
       setShortcuts(result);
-      setShowShortcuts(true);
     } catch {
       toast.error("Could not generate AI shortcuts right now.");
     }
   };
 
-  const ytdDeduction = (mileageSummary?.totalMiles ?? 0) * IRS_RATE;
+  const ytdDeduction = mileageSummary?.totalDeduction ?? 0;
+  const completedShifts = recentShifts.filter(
+    shift => shift.status === "completed"
+  );
+  const timedShifts = completedShifts
+    .filter(shift => (shift.durationMinutes ?? 0) > 0)
+    .slice(0, 5);
+  const totalTimedHours = timedShifts.reduce(
+    (sum, shift) => sum + (shift.durationMinutes ?? 0) / 60,
+    0
+  );
   const earningsPerHour =
-    recentShifts.length > 0
-      ? recentShifts
-          .slice(0, 5)
-          .reduce((s, r) => s + parseFloat(String(r.grossEarnings)), 0) /
-        Math.max(
-          recentShifts
-            .slice(0, 5)
-            .reduce((s, r) => s + (r.durationMinutes ?? 0), 0) / 60,
-          0.1
-        )
-      : 0;
+    totalTimedHours > 0
+      ? timedShifts.reduce(
+          (sum, shift) =>
+            sum +
+            Number(shift.grossEarnings ?? 0) +
+            Number(shift.tips ?? 0) +
+            Number(shift.bonuses ?? 0),
+          0
+        ) / totalTimedHours
+      : null;
 
   const impactColor = (impact: string) =>
     ({
@@ -359,17 +449,18 @@ export default function GigCommand() {
     })[impact] ?? "text-gray-400";
 
   return (
-    <DashboardLayout>
+    <>
       <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <Navigation className="h-6 w-6 text-primary" />
-              Gig Command Center
+              Your work session
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              GPS-aware shift control, route intelligence, and AI optimization
+              Track delivery, rideshare or freelance work. Start a timer, then
+              record what you earned.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -385,28 +476,6 @@ export default function GigCommand() {
           </div>
         </div>
 
-        {/* Gig subscription upgrade banner (shown only on Starter plan) */}
-        {gigSubscription && gigSubscription.plan?.tier === "starter" && (
-          <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-lg bg-violet-900/30 border border-violet-500/40">
-            <div className="flex items-center gap-2 text-sm text-violet-200">
-              <span className="text-violet-400">⚡</span>
-              <span>
-                <strong>{gigSubscription.plan.name}</strong> —{" "}
-                {gigSubscription.aiCreditsRemaining} AI credits remaining this
-                month. Upgrade for route optimizer, tax export &amp; more AI
-                credits.
-              </span>
-            </div>
-            <Button
-              asChild
-              size="sm"
-              className="bg-violet-600 hover:bg-violet-700 text-white shrink-0"
-            >
-              <Link href="/gig-worker-plans">Upgrade</Link>
-            </Button>
-          </div>
-        )}
-
         {/* Tax export (Pro) — download the full shift + mileage + tax record */}
         <div className="flex items-center justify-end">
           <TaxExportButton />
@@ -420,7 +489,7 @@ export default function GigCommand() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Car className="h-4 w-4 text-primary" />
-                  Shift Control
+                  Start and finish work
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -433,16 +502,28 @@ export default function GigCommand() {
                 ) : activeError ? (
                   <div className="flex flex-col items-center gap-2 py-4 text-center text-sm text-muted-foreground">
                     <AlertTriangle className="h-5 w-5 text-amber-400" />
-                    <p>Could not load shift status. Try again later.</p>
+                    <p>
+                      We could not check whether a shift is already running.
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => void refetchActive()}
+                    >
+                      Retry shift status
+                    </Button>
                   </div>
                 ) : !timerActive ? (
                   <>
                     <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">
-                        Platform
+                      <Label htmlFor="shift-platform" className="text-sm">
+                        Platform or type of work
                       </Label>
-                      <Select value={platform} onValueChange={setPlatform}>
-                        <SelectTrigger className="h-9">
+                      <Select
+                        value={platform}
+                        onValueChange={setPlatform}
+                        disabled={startShift.isPending}
+                      >
+                        <SelectTrigger id="shift-platform" className="min-h-11">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -454,10 +535,43 @@ export default function GigCommand() {
                         </SelectContent>
                       </Select>
                     </div>
+                    {namedWork && (
+                      <div className="space-y-2">
+                        <Label htmlFor="shift-work-name">
+                          Client, project or platform name
+                        </Label>
+                        <Input
+                          id="shift-work-name"
+                          value={customPlatform}
+                          maxLength={100}
+                          placeholder="e.g. Design project for Acme"
+                          onChange={event =>
+                            setCustomPlatform(event.target.value)
+                          }
+                        />
+                      </div>
+                    )}
+                    <div className="rounded-xl border p-3 text-sm">
+                      <label className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={gpsOptIn}
+                          disabled={startShift.isPending}
+                          onChange={event => setGpsOptIn(event.target.checked)}
+                          className="mt-1 h-4 w-4"
+                        />
+                        <span>Use GPS for this shift (optional)</span>
+                      </label>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        GPS records route points while this page is open. You
+                        will still confirm total business miles when finishing.
+                        Leave it off for desk work or manual mileage.
+                      </p>
+                    </div>
                     <Button
-                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white"
+                      className="min-h-12 w-full bg-emerald-600 hover:bg-emerald-500 text-white"
                       onClick={handleStartShift}
-                      disabled={startShift.isPending}
+                      disabled={startShift.isPending || !workName}
                     >
                       <Play className="h-4 w-4 mr-2" />
                       {startShift.isPending ? "Starting…" : "Start Shift"}
@@ -471,103 +585,198 @@ export default function GigCommand() {
                         {formatDuration(elapsed)}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {platform} shift in progress
+                        {activeShift?.platform ?? workName} shift in progress
                       </p>
                     </div>
 
                     {/* GPS indicator */}
-                    <div className="flex items-center justify-between text-xs bg-muted/30 rounded-lg px-3 py-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs bg-muted/30 rounded-lg px-3 py-2">
                       <span className="text-muted-foreground flex items-center gap-1.5">
                         <MapPin className="h-3.5 w-3.5" />
                         GPS Tracking
                       </span>
-                      {gpsEnabled ? (
-                        <span className="text-emerald-400 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          Active · {routePath.length} pts
+                      <div className="flex items-center gap-2">
+                        <span>
+                          {gpsRequesting
+                            ? "Waiting for permission / location…"
+                            : gpsEnabled
+                              ? `Active · ${routePath.length} points`
+                              : "Off · manual mileage"}
                         </span>
-                      ) : (
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          className="h-6 text-xs px-2"
-                          onClick={startGPS}
+                          className="min-h-10"
+                          onClick={
+                            gpsEnabled || gpsRequesting ? stopGPS : startGPS
+                          }
                         >
-                          Enable
+                          {gpsEnabled || gpsRequesting
+                            ? "Stop GPS"
+                            : "Enable GPS"}
                         </Button>
-                      )}
+                      </div>
                     </div>
 
+                    <p className="text-xs text-muted-foreground">
+                      The timer keeps running until you end the shift, including
+                      waiting and admin time. GPS stops when you close this
+                      page. Enter your final mileage when saving.
+                    </p>
+                    {gpsError && (
+                      <p
+                        role="status"
+                        className="rounded-lg border border-amber-500/30 p-3 text-sm text-amber-300"
+                      >
+                        {gpsError}
+                      </p>
+                    )}
                     {!showEndForm ? (
                       <Button
                         variant="outline"
-                        className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10"
+                        className="min-h-12 w-full border-red-500/30 text-red-400 hover:bg-red-500/10"
                         onClick={() => setShowEndForm(true)}
                       >
                         <Square className="h-4 w-4 mr-2" />
                         End Shift
                       </Button>
                     ) : (
-                      <div className="space-y-3 border border-border/50 rounded-lg p-3">
-                        <p className="text-xs font-medium text-muted-foreground">
-                          Log shift results
-                        </p>
-                        <div className="grid grid-cols-3 gap-2">
-                          <div>
-                            <Label className="text-xs text-muted-foreground">
-                              Earnings $
-                            </Label>
-                            <Input
-                              type="number"
-                              placeholder="0.00"
-                              value={endEarnings}
-                              onChange={e => setEndEarnings(e.target.value)}
-                              className="h-8 text-sm mt-1"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">
-                              Tips $
-                            </Label>
-                            <Input
-                              type="number"
-                              placeholder="0.00"
-                              value={endTips}
-                              onChange={e => setEndTips(e.target.value)}
-                              className="h-8 text-sm mt-1"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">
-                              Miles
-                            </Label>
-                            <Input
-                              type="number"
-                              placeholder="0.0"
-                              value={endMiles}
-                              onChange={e => setEndMiles(e.target.value)}
-                              className="h-8 text-sm mt-1"
-                            />
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            className="flex-1 bg-red-600 hover:bg-red-500 text-white"
-                            onClick={handleEndShift}
-                            disabled={endShift.isPending}
+                      <form
+                        className="space-y-4 border border-border/50 rounded-xl p-4"
+                        onSubmit={event => {
+                          event.preventDefault();
+                          void handleEndShift();
+                        }}
+                        noValidate
+                      >
+                        <div>
+                          <h3 className="font-semibold">
+                            Finish and save your shift
+                          </h3>
+                          <p
+                            id="shift-earnings-help"
+                            className="mt-1 text-xs text-muted-foreground"
                           >
-                            {endShift.isPending ? "Saving…" : "Confirm End"}
+                            Base pay excludes tips and bonuses. If your app only
+                            shows a combined total, enter it as base pay and
+                            keep tips and bonuses at 0 so money is counted once.
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3">
+                          {(
+                            [
+                              [
+                                "shift-base-pay",
+                                "Base pay ($)",
+                                endEarnings,
+                                setEndEarnings,
+                              ],
+                              ["shift-tips", "Tips ($)", endTips, setEndTips],
+                              [
+                                "shift-bonuses",
+                                "Bonuses ($)",
+                                endBonuses,
+                                setEndBonuses,
+                              ],
+                              [
+                                "shift-miles",
+                                "Business miles",
+                                endMiles,
+                                setEndMiles,
+                              ],
+                            ] as const
+                          ).map(([id, label, value, change]) => (
+                            <div key={id}>
+                              <Label htmlFor={id}>{label}</Label>
+                              <Input
+                                id={id}
+                                type="number"
+                                inputMode="decimal"
+                                min="0"
+                                step={id === "shift-miles" ? "any" : "0.01"}
+                                value={value}
+                                onChange={event => {
+                                  change(event.target.value);
+                                  setEndFormError("");
+                                }}
+                                className="mt-1 min-h-11"
+                                aria-describedby={
+                                  id === "shift-miles"
+                                    ? "shift-mileage-help"
+                                    : "shift-earnings-help"
+                                }
+                                aria-invalid={
+                                  value !== "" &&
+                                  (!Number.isFinite(Number(value)) ||
+                                    Number(value) < 0)
+                                }
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <p
+                          id="shift-mileage-help"
+                          className="text-xs text-muted-foreground"
+                        >
+                          Include business driving between jobs. Enter 0 if you
+                          did not drive; do not include personal miles.
+                        </p>
+                        <div className="rounded-lg bg-muted/30 p-3 text-sm">
+                          <span>Total received: </span>
+                          <strong>
+                            {totalReceived === null
+                              ? "Complete the fields above"
+                              : totalReceived.toLocaleString("en-US", {
+                                  style: "currency",
+                                  currency: "USD",
+                                })}
+                          </strong>
+                        </div>
+                        {endFormError && (
+                          <p role="alert" className="text-sm text-destructive">
+                            {endFormError}
+                          </p>
+                        )}
+                        {endShift.isError && (
+                          <div className="space-y-2">
+                            <p
+                              role="alert"
+                              className="text-sm text-destructive"
+                            >
+                              We could not confirm this save. Your entries are
+                              still here; check shift status or retry when your
+                              connection is restored.
+                            </p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => void refetchActive()}
+                            >
+                              Check shift status
+                            </Button>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="submit"
+                            className="min-h-11 flex-1 bg-red-600 hover:bg-red-500 text-white"
+                            disabled={endShift.isPending || !activeShift}
+                          >
+                            {endShift.isPending
+                              ? "Saving…"
+                              : "Save and end shift"}
                           </Button>
                           <Button
-                            size="sm"
-                            variant="ghost"
+                            type="button"
+                            className="min-h-11"
+                            variant="outline"
+                            disabled={endShift.isPending}
                             onClick={() => setShowEndForm(false)}
                           >
-                            Cancel
+                            Keep working
                           </Button>
                         </div>
-                      </div>
+                      </form>
                     )}
                   </>
                 )}
@@ -581,13 +790,23 @@ export default function GigCommand() {
                   <div className="flex items-center gap-2 mb-1">
                     <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
                     <span className="text-xs text-muted-foreground">
-                      Avg $/hr
+                      Gross per hour
                     </span>
                   </div>
-                  <p className="text-xl font-bold text-foreground">
-                    ${earningsPerHour.toFixed(2)}
+                  {loadingShifts ? (
+                    <Skeleton className="h-7 w-20" />
+                  ) : (
+                    <p className="text-xl font-bold text-foreground">
+                      {shiftsError || earningsPerHour === null
+                        ? "—"
+                        : `$${earningsPerHour?.toFixed(2) ?? "unavailable"}`}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {timedShifts.length
+                      ? `${timedShifts.length} recent completed shifts · before costs/tax`
+                      : "Complete a shift to see your rate"}
                   </p>
-                  <p className="text-xs text-muted-foreground">last 5 shifts</p>
                 </CardContent>
               </Card>
               <Card className="border-border/50 bg-card/80">
@@ -626,7 +845,7 @@ export default function GigCommand() {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    YTD @ $0.70/mi
+                    Recorded mileage deductions
                   </p>
                 </CardContent>
               </Card>
@@ -635,11 +854,11 @@ export default function GigCommand() {
                   <div className="flex items-center gap-2 mb-1">
                     <Clock className="h-3.5 w-3.5 text-purple-400" />
                     <span className="text-xs text-muted-foreground">
-                      Total Shifts
+                      Completed shifts
                     </span>
                   </div>
                   <p className="text-xl font-bold text-foreground">
-                    {recentShifts.length}
+                    {shiftsError ? "—" : completedShifts.length}
                   </p>
                   <p className="text-xs text-muted-foreground">recent shifts</p>
                 </CardContent>
@@ -652,8 +871,8 @@ export default function GigCommand() {
             <AIInsightsCard
               context="gig-command"
               title="Gig Command AI"
-              dataContext={`Platform: ${platform}. Avg $/hour (last 5 shifts): $${earningsPerHour.toFixed(2)}. YTD miles: ${(mileageSummary?.totalMiles ?? 0).toFixed(1)}. YTD tax deduction: $${ytdDeduction.toFixed(2)} (IRS 2025 $0.70/mile). Recent shifts: ${recentShifts.length}. Shift currently ${timerActive ? `active (${formatDuration(elapsed)} elapsed)` : "not active"}.`}
-              defaultCollapsed={false}
+              dataContext={`Platform: ${activeShift?.platform ?? workName}. Gross earnings per hour (last 5 shifts): $${earningsPerHour?.toFixed(2) ?? "unavailable"}. YTD miles: ${(mileageSummary?.totalMiles ?? 0).toFixed(1)}. YTD tax deduction: $${ytdDeduction.toFixed(2)} (recorded mileage deductions; not tax savings). Recent shifts: ${recentShifts.length}. Shift currently ${timerActive ? `active (${formatDuration(elapsed)} elapsed)` : "not active"}.`}
+              defaultCollapsed={true}
             />
 
             {/* AI Shortcuts */}
@@ -741,36 +960,48 @@ export default function GigCommand() {
                 )}
               </CardHeader>
               <CardContent className="p-0">
-                <div className="h-[340px] md:h-[400px]">
-                  <MapView
-                    initialCenter={
-                      currentPos ?? { lat: 47.6062, lng: -122.3321 }
-                    }
-                    initialZoom={13}
-                    onMapReady={map => {
-                      mapRef.current = map;
-
-                      // Draw route polyline
-                      polylineRef.current = new google.maps.Polyline({
-                        map,
-                        path: routePath,
-                        strokeColor: "#6366f1",
-                        strokeOpacity: 0.9,
-                        strokeWeight: 4,
-                      });
-
-                      // Current position marker
-                      if (currentPos) {
-                        markerRef.current =
-                          new google.maps.marker.AdvancedMarkerElement({
-                            map,
-                            position: currentPos,
-                            title: "Current Position",
-                          });
+                {gpsEnabled && currentPos ? (
+                  <div className="h-[280px] md:h-[400px]">
+                    <MapView
+                      initialCenter={
+                        currentPos ?? { lat: 47.6062, lng: -122.3321 }
                       }
-                    }}
-                  />
-                </div>
+                      initialZoom={13}
+                      onMapReady={map => {
+                        mapRef.current = map;
+
+                        // Draw route polyline
+                        polylineRef.current = new google.maps.Polyline({
+                          map,
+                          path: routePath,
+                          strokeColor: "#6366f1",
+                          strokeOpacity: 0.9,
+                          strokeWeight: 4,
+                        });
+
+                        // Current position marker
+                        if (currentPos) {
+                          markerRef.current =
+                            new google.maps.marker.AdvancedMarkerElement({
+                              map,
+                              position: currentPos,
+                              title: "Current Position",
+                            });
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex min-h-48 flex-col items-center justify-center gap-3 p-6 text-center">
+                    <MapPin className="h-8 w-8 text-muted-foreground" />
+                    <h3 className="font-medium">Location is optional</h3>
+                    <p className="max-w-sm text-sm text-muted-foreground">
+                      Start your shift without GPS. Your timer and earnings log
+                      work for driving and desk work alike. Enable GPS during a
+                      shift to record route points.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -789,20 +1020,13 @@ export default function GigCommand() {
                     size="sm"
                     variant="ghost"
                     className="h-7 text-xs"
-                    onClick={() => {
-                      if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(pos => {
-                          setIntelligencePos({
-                            lat: pos.coords.latitude,
-                            lng: pos.coords.longitude,
-                          });
-                          setTimeout(() => refetchIntelligence(), 100);
-                        });
-                      } else {
-                        refetchIntelligence();
-                      }
-                    }}
-                    disabled={fetchingIntel}
+                    onClick={() => void refetchIntelligence()}
+                    disabled={
+                      fetchingIntel ||
+                      routeAccess.data?.hasAccess !== true ||
+                      !gpsEnabled ||
+                      !intelligencePos
+                    }
                   >
                     <RefreshCw
                       className={`h-3.5 w-3.5 mr-1 ${fetchingIntel ? "animate-spin" : ""}`}
@@ -831,7 +1055,8 @@ export default function GigCommand() {
                   <div className="text-center py-6 text-muted-foreground text-sm">
                     <MapPin className="h-8 w-8 mx-auto mb-2 opacity-30" />
                     <p>
-                      Enable GPS or start a shift to load route intelligence.
+                      Optional: enable GPS during a shift to load route
+                      intelligence.
                     </p>
                   </div>
                 ) : fetchingIntel ? (
@@ -930,31 +1155,24 @@ export default function GigCommand() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Route className="h-4 w-4 text-blue-400" />
-                  Mileage Log &amp; Tax Calculator
+                  Recent work &amp; mileage
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {/* Tax summary */}
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-center">
-                    <p className="text-xs text-muted-foreground">YTD Miles</p>
-                    <p className="text-lg font-bold text-blue-400">
-                      {(mileageSummary?.totalMiles ?? 0).toFixed(1)}
-                    </p>
-                  </div>
-                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-center">
-                    <p className="text-xs text-muted-foreground">IRS Rate</p>
-                    <p className="text-lg font-bold text-emerald-400">$0.70</p>
-                    <p className="text-xs text-muted-foreground">per mile</p>
-                  </div>
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-center">
-                    <p className="text-xs text-muted-foreground">
-                      Tax Deduction
-                    </p>
-                    <p className="text-lg font-bold text-amber-400">
-                      ${ytdDeduction.toFixed(2)}
-                    </p>
-                  </div>
+                <div className="mb-4 rounded-xl bg-muted/30 p-4 text-sm">
+                  <p className="font-medium">Your mileage record</p>
+                  <p className="mt-1 text-muted-foreground">
+                    {loadingMileage
+                      ? "Loading mileage…"
+                      : mileageError
+                        ? "Mileage could not load. Please retry from Money Manager."
+                        : `${(mileageSummary?.totalMiles ?? 0).toFixed(1)} business miles logged this year · $${ytdDeduction.toFixed(2)} in recorded deductions.`}
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    A deduction reduces taxable income; it is not cash saved or
+                    tax owed. Use the tax tools for an estimate based on your
+                    circumstances.
+                  </p>
                 </div>
 
                 {/* Recent shifts table */}
@@ -978,18 +1196,16 @@ export default function GigCommand() {
                           <TableHead>Platform</TableHead>
                           <TableHead className="text-right">Miles</TableHead>
                           <TableHead className="text-right">Earnings</TableHead>
-                          <TableHead className="text-right">
-                            Deduction
-                          </TableHead>
+                          <TableHead>Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {recentShifts.slice(0, 8).map(shift => {
-                          const miles = parseFloat(String(shift.totalMiles));
+                          const miles = Number(shift.totalMiles ?? 0);
                           const earnings =
-                            parseFloat(String(shift.grossEarnings)) +
-                            parseFloat(String(shift.tips));
-                          const deduction = miles * IRS_RATE;
+                            Number(shift.grossEarnings ?? 0) +
+                            Number(shift.tips ?? 0) +
+                            Number(shift.bonuses ?? 0);
                           return (
                             <TableRow
                               key={shift.id}
@@ -1010,8 +1226,12 @@ export default function GigCommand() {
                               <TableCell className="text-right text-emerald-400">
                                 ${earnings.toFixed(2)}
                               </TableCell>
-                              <TableCell className="text-right text-amber-400">
-                                ${deduction.toFixed(2)}
+                              <TableCell>
+                                {shift.status === "active"
+                                  ? "In progress"
+                                  : shift.status === "completed"
+                                    ? "Saved"
+                                    : "Cancelled"}
                               </TableCell>
                             </TableRow>
                           );
@@ -1036,6 +1256,6 @@ export default function GigCommand() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
