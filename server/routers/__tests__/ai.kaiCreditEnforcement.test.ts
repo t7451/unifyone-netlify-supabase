@@ -12,6 +12,15 @@ vi.mock("../../db", () => ({
   getDb: vi.fn(),
 }));
 
+// Credit/refusal behavior does not depend on loading the real shift-data router.
+vi.mock("../moneyManager", () => ({
+  moneyManagerRouter: {
+    createCaller: vi.fn(() => ({
+      getKaiContext: vi.fn().mockResolvedValue({ hasSufficientData: false }),
+    })),
+  },
+}));
+
 import { getDb } from "../../db";
 import { aiRouter } from "../ai";
 
@@ -423,7 +432,9 @@ describe("aiRouter Kai Neon credit enforcement", () => {
         type: "usage",
         creditDelta: -1,
       });
-      expect(row.idempotencyKey).toMatch(/^kai_chat_usage:44:7:resp-kai-stress-/);
+      expect(row.idempotencyKey).toMatch(
+        /^kai_chat_usage:44:7:resp-kai-stress-/
+      );
     }
     for (const result of results) {
       expect(result.reply).toMatch(/^Kai response /);
@@ -462,7 +473,9 @@ describe("aiRouter Kai Neon credit enforcement", () => {
         model: "kai-fast",
       });
 
-      expect(result.reply).toContain("I can help with your dashboard workflow.");
+      expect(result.reply).toContain(
+        "I can help with your dashboard workflow."
+      );
       expect(result.reply).toContain("concrete action plan");
     }
   });

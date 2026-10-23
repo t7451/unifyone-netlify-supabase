@@ -15,14 +15,17 @@ import crypto from "crypto";
 
 const TEST_WEBHOOK_SECRET = "whsec_test_" + "0".repeat(40);
 
-beforeAll(() => {
+let registerStripeFetchRoutes: (typeof import("./stripe"))["registerStripeFetchRoutes"];
+
+beforeAll(async () => {
   process.env.STRIPE_WEBHOOK_SECRET = TEST_WEBHOOK_SECRET;
   // A non-empty key so the module-level Stripe instance constructs.
   // Webhook signature verification is pure crypto — it does not call the API.
   if (!process.env.STRIPE_SECRET_KEY) {
     process.env.STRIPE_SECRET_KEY = "sk_test_" + "0".repeat(40);
   }
-});
+  ({ registerStripeFetchRoutes } = await import("./stripe"));
+}, 30_000);
 
 function signStripePayload(
   payload: string,

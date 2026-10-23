@@ -62,3 +62,10 @@ The standalone Vite review does not serve backend APIs. Live routing, provider
 credentials, geolocation, paid model calls, and production deployment were not
 exercised. External calls in RoutePulse service tests are mocked. This repair
 does not activate integrations or merge the draft PR.
+
+## Full-suite follow-up
+
+The 11 failures recorded above are now resolved. The complete suite passes:
+911 tests passed, 7 existing skips, and zero failures. See the
+[test-suite repair report](test-suite-repair-2026-10-23.md) for the fixes and
+two intermittent cold-start timeout repairs.

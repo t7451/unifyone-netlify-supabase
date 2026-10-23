@@ -40,27 +40,35 @@ describe("resource download routes", () => {
     expect(resp!.status).toBe(404);
   });
 
-  it("backs every Resources page download with an app-served route", () => {
+  it("links every Resources guide to a registered app page", () => {
     const resourcesPage = readFileSync(
       new URL("../client/src/pages/Resources.tsx", import.meta.url),
       "utf8"
     );
-    const downloadUrls = [
-      ...resourcesPage.matchAll(/downloadUrl: "([^"]+)"/g),
+    const routesSource = readFileSync(
+      new URL("../client/src/app/routes.tsx", import.meta.url),
+      "utf8"
+    );
+    const guideUrls = [...resourcesPage.matchAll(/href: "([^"]+)"/g)].map(
+      match => match[1]
+    );
+    const routes = [
+      ...routesSource.matchAll(/<Route\s+(?:[^>]*?\s)?path="([^"]+)"/g),
     ].map(match => match[1]);
-
-    expect(downloadUrls.length).toBeGreaterThan(0);
-    expect(downloadUrls.filter(url => /^https?:\/\//.test(url))).toEqual([]);
-
-    for (const url of downloadUrls) {
-      const match = url.match(/^\/api\/resources\/([^/]+)\/download$/);
-      expect(match, `${url} should use the generated download route`).not.toBe(
-        null
+    expect(guideUrls.length).toBeGreaterThan(0);
+    expect(routes.length).toBeGreaterThan(0);
+    for (const url of guideUrls) {
+      expect(url, "Guides should point to an app page").toMatch(/^\/(?!\/)/);
+      const pathname = url.split(/[?#]/)[0];
+      const registered = routes.some(route => {
+        if (!route.includes(":")) return route === pathname;
+        return new RegExp("^" + route.replace(/:[^/]+/g, "[^/]+") + "$").test(
+          pathname
+        );
+      });
+      expect(registered, url + " should resolve to a registered route").toBe(
+        true
       );
-      expect(
-        RESOURCE_DOWNLOADS[match![1]],
-        `${url} should be registered`
-      ).toBeDefined();
     }
   });
 });
