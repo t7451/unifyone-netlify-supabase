@@ -22,3 +22,12 @@ a month." Confirm the supplied copy with Drew before publication.
 Drew's reply does not specify the placement duration, future edit/removal
 terms, or a final approval process. It does not settle those open questions.
 No publication or email send is part of this local implementation.
+
+## Publication decision — October 23, 2026
+
+Keith explicitly authorized publishing the prepared copy while Drew contacts
+his team about the discrepancy, with a later correction if needed. Publish the
+supplied two paragraphs unchanged, keep the Sponsored mention label and no
+links, and use the previously confirmed Oct-23, 2026 source date. This records
+Keith's publication instruction; it does not imply Drew's team has resolved
+the wording or any other open terms.
