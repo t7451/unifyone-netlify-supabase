@@ -1,3 +1,9 @@
+import {
+  estimateSelfEmployment2025,
+  STANDARD_DEDUCTION_SINGLE_2025,
+  STANDARD_DEDUCTION_MFJ_2025,
+} from "@shared/publicTax2025";
+import ReadingLayout from "@/components/ReadingLayout";
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import PageHead from "@/components/PageHead";
@@ -8,10 +14,8 @@ import { formatUsd0 } from "@/lib/format";
 const CANONICAL = `${SITE_URL}/tools/quarterly-tax-estimator`;
 
 // 2025 tax constants
-const SE_RATE = 0.153;
-const SE_INCOME_FACTOR = 0.9235;
-const STANDARD_DEDUCTION_SINGLE = 15000;
-const STANDARD_DEDUCTION_MFJ = 30000;
+const STANDARD_DEDUCTION_SINGLE = STANDARD_DEDUCTION_SINGLE_2025;
+const STANDARD_DEDUCTION_MFJ = STANDARD_DEDUCTION_MFJ_2025;
 
 // 2025 federal income tax brackets
 const BRACKETS_SINGLE = [
@@ -34,12 +38,12 @@ const BRACKETS_MFJ = [
   { min: 751600, max: Infinity, rate: 0.37 },
 ];
 
-// 2026 due dates
+// Historical 2025 tax-year due dates
 const DUE_DATES = [
-  "April 15, 2026",
-  "June 15, 2026",
-  "September 15, 2026",
-  "January 15, 2027",
+  "April 15, 2025",
+  "June 16, 2025",
+  "September 15, 2025",
+  "January 15, 2026",
 ];
 
 function calcIncomeTax(
@@ -86,10 +90,10 @@ const jsonLd = [
       },
       {
         "@type": "Question",
-        name: "When are the 2026 quarterly estimated tax due dates?",
+        name: "When are the 2025 quarterly estimated tax due dates?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "The 2026 quarterly estimated tax due dates are: Q1 — April 15, 2026; Q2 — June 15, 2026; Q3 — September 15, 2026; Q4 — January 15, 2027.",
+          text: "The 2025 quarterly estimated tax due dates are: Q1 — April 15, 2025; Q2 — June 16, 2025; Q3 — September 15, 2025; Q4 — January 15, 2026.",
         },
       },
       {
@@ -123,7 +127,7 @@ const jsonLd = [
     "@type": "HowTo",
     name: "How to use the Quarterly Estimated Tax Calculator",
     description:
-      "Estimate your federal self-employment and income tax and split it into four quarterly estimated payments with their 2026 due dates.",
+      "Estimate your federal self-employment and income tax and split it into four quarterly estimated payments with their 2025 tax-year due dates.",
     totalTime: "PT2M",
     tool: [{ "@type": "HowToTool", name: "Quarterly Tax Estimator" }],
     supply: [
@@ -146,12 +150,12 @@ const jsonLd = [
       {
         "@type": "HowToStep",
         name: "Choose your filing status",
-        text: "Select either Single / Head of Household or Married Filing Jointly so the correct standard deduction and federal brackets are applied.",
+        text: "Select either Single or Married Filing Jointly so the correct standard deduction and federal brackets are applied.",
       },
       {
         "@type": "HowToStep",
         name: "Calculate your quarterly payments",
-        text: "Click 'Calculate quarterly payments' to see your self-employment tax, federal income tax, total annual tax, and the four equal quarterly payment amounts due April 15, June 15, September 15, 2026, and January 15, 2027.",
+        text: "Click 'Calculate quarterly payments' to see your self-employment tax, federal income tax, total annual tax, and the four equal quarterly payment amounts due April 15, June 16, September 15, 2025, and January 15, 2026.",
       },
     ],
   },
@@ -184,13 +188,14 @@ export default function QuarterlyTaxEstimator() {
 
   const result = useMemo(() => {
     const net = parseFloat(income.replace(/,/g, ""));
-    if (!net || net <= 0) return null;
+    if (!Number.isFinite(net) || net <= 0) return null;
 
-    const mileDeduction = (parseFloat(mileage.replace(/,/g, "")) || 0) * 0.7;
+    const enteredMiles = parseFloat(mileage.replace(/,/g, "")) || 0;
+    if (!Number.isFinite(enteredMiles) || enteredMiles < 0) return null;
+    const mileDeduction = enteredMiles * 0.7;
     const netAfterMileage = Math.max(0, net - mileDeduction);
 
-    const seTaxBase = netAfterMileage * SE_INCOME_FACTOR;
-    const seTax = seTaxBase * SE_RATE;
+    const seTax = estimateSelfEmployment2025(netAfterMileage).totalSETax;
     const deductibleSE = seTax / 2;
 
     const standardDed =
@@ -221,52 +226,15 @@ export default function QuarterlyTaxEstimator() {
   const fmt = formatUsd0;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <ReadingLayout kind="calculator">
       <PageHead
         title="Quarterly Estimated Tax Calculator — 1099 Self-Employed | UnifyOne"
-        description="Free 1099 quarterly tax calculator for gig workers. See your SE tax + income tax and exact quarterly payment amounts with 2026 due dates."
+        description="Free 1099 quarterly tax calculator for gig workers. See your SE tax + income tax and estimated quarterly payment amounts for tax year 2025."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />
 
-      <nav className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link
-            href="/tools"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Free Tools
-          </Link>
-          <span className="text-muted-foreground/40">/</span>
-          <span className="text-sm font-medium">Quarterly Tax Estimator</span>
-        </div>
-      </nav>
-
-      <main className="max-w-3xl mx-auto px-6 py-12">
-        <nav aria-label="breadcrumb" className="mb-6">
-          <ol className="flex items-center gap-2 text-xs text-muted-foreground">
-            <li>
-              <Link
-                href="/"
-                className="hover:text-foreground transition-colors"
-              >
-                Home
-              </Link>
-            </li>
-            <li>›</li>
-            <li>
-              <Link
-                href="/tools"
-                className="hover:text-foreground transition-colors"
-              >
-                Free Tools
-              </Link>
-            </li>
-            <li>›</li>
-            <li className="text-foreground">Quarterly Tax Estimator</li>
-          </ol>
-        </nav>
-
+      <div className="reading-content">
         <header className="mb-10">
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
             Free Tool · Tax Management
@@ -276,7 +244,7 @@ export default function QuarterlyTaxEstimator() {
           </h1>
           <p className="text-lg text-muted-foreground">
             As a 1099 worker, you pay taxes yourself — four times per year. This
-            calculator shows your exact quarterly payment amounts so you're
+            calculator shows your estimated quarterly payment amounts so you're
             never caught short before an IRS deadline.
           </p>
         </header>
@@ -289,7 +257,7 @@ export default function QuarterlyTaxEstimator() {
                 className="block text-sm font-medium mb-2"
                 htmlFor="income"
               >
-                Net self-employment income (annual estimate)
+                Business profit before mileage deduction (2025)
               </label>
               <input
                 id="income"
@@ -304,10 +272,12 @@ export default function QuarterlyTaxEstimator() {
                     trackToolUsage("quarterly-tax-estimator", "start");
                 }}
                 className="w-full rounded-md border bg-background px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+                min={0}
+                step="any"
               />
               <p className="text-xs text-muted-foreground mt-1.5">
-                Net income after business expenses (not gross platform
-                earnings).
+                Income after other business expenses. If mileage is already
+                deducted, leave the miles field empty.
               </p>
             </div>
 
@@ -316,7 +286,7 @@ export default function QuarterlyTaxEstimator() {
                 className="block text-sm font-medium mb-2"
                 htmlFor="mileage"
               >
-                Business miles driven (optional — reduces taxable income)
+                Business miles not already deducted (optional)
               </label>
               <input
                 id="mileage"
@@ -329,6 +299,8 @@ export default function QuarterlyTaxEstimator() {
                   setHasResult(false);
                 }}
                 className="w-full rounded-md border bg-background px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+                min={0}
+                step="any"
               />
               <p className="text-xs text-muted-foreground mt-1.5">
                 IRS rate: $0.70/mile (2025)
@@ -352,10 +324,9 @@ export default function QuarterlyTaxEstimator() {
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border bg-background hover:bg-muted"
                     }`}
+                    aria-pressed={filingStatus === s}
                   >
-                    {s === "single"
-                      ? "Single / Head of Household"
-                      : "Married Filing Jointly"}
+                    {s === "single" ? "Single" : "Married Filing Jointly"}
                   </button>
                 ))}
               </div>
@@ -376,11 +347,15 @@ export default function QuarterlyTaxEstimator() {
             </button>
 
             {hasResult && result && (
-              <div className="rounded-lg bg-muted/50 p-5 space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div
+                className="rounded-lg bg-muted/50 p-5 space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300"
+                role="status"
+                aria-live="polite"
+              >
                 {/* Quarterly payments */}
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                    2026 quarterly payments
+                    2025 quarterly payments
                   </p>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {DUE_DATES.map((date, i) => (
@@ -443,8 +418,8 @@ export default function QuarterlyTaxEstimator() {
 
                 <div className="border-t pt-4 text-center">
                   <p className="text-sm text-muted-foreground mb-3">
-                    Get automatic quarterly reminders and real-time tax position
-                    tracking across all your platforms.
+                    Keep your income and expense records together so you can
+                    review your estimates as your earnings change.
                   </p>
                   <Link
                     href="/register"
@@ -453,7 +428,7 @@ export default function QuarterlyTaxEstimator() {
                     }
                     className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
                   >
-                    Track taxes automatically →
+                    Start a free tracking record →
                   </Link>
                 </div>
               </div>
@@ -503,8 +478,8 @@ export default function QuarterlyTaxEstimator() {
                 a: "You must pay quarterly estimated taxes if you expect to owe at least $1,000 in federal taxes and your withholding won't cover your liability. This applies to all 1099 gig workers including DoorDash, Uber Eats, and Instacart drivers.",
               },
               {
-                q: "When are the 2026 quarterly tax due dates?",
-                a: "Q1: April 15, 2026 · Q2: June 15, 2026 · Q3: September 15, 2026 · Q4: January 15, 2027.",
+                q: "When are the 2025 quarterly tax due dates?",
+                a: "Q1: April 15, 2025 · Q2: June 16, 2025 · Q3: September 15, 2025 · Q4: January 15, 2026.",
               },
               {
                 q: "What is self-employment tax?",
@@ -516,7 +491,7 @@ export default function QuarterlyTaxEstimator() {
               },
               {
                 q: "How does UnifyOne help with quarterly taxes?",
-                a: "UnifyOne tracks your income across all connected gig platforms in real time and generates quarterly payment alerts before each deadline. Your current tax position is always visible in the dashboard — not just at year end.",
+                a: "Use UnifyOne to keep an income and expense record, then review your estimated payments against current IRS guidance. This public calculator does not schedule payments or send deadline reminders.",
               },
             ].map(({ q, a }) => (
               <div key={q} className="border-b pb-6 last:border-0">
@@ -607,11 +582,12 @@ export default function QuarterlyTaxEstimator() {
         {/* CTA */}
         <section className="rounded-xl border bg-muted/30 p-6 text-center">
           <h2 className="text-lg font-semibold mb-2">
-            Never miss a quarterly payment
+            Keep your tax records organized
           </h2>
-          <p className="text-muted-foreground text-sm mb-4">
-            UnifyOne monitors your income across every platform and sends
-            quarterly tax reminders before each deadline. Free to start.
+          <p className="text-muted-foreground">
+            Keep a record of your earnings, expenses, and mileage with a free
+            UnifyOne account. Review estimates against your records before
+            making tax decisions.
           </p>
           <Link
             href="/register"
@@ -620,7 +596,7 @@ export default function QuarterlyTaxEstimator() {
             Start for free →
           </Link>
         </section>
-      </main>
-    </div>
+      </div>
+    </ReadingLayout>
   );
 }

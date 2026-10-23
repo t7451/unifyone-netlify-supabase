@@ -74,64 +74,61 @@ export default function BlogIndex() {
   return (
     <PublicLayout>
       <PageHead
-        title="Blog | UnifyOne by 1Commerce"
+        title="Notes on independent work | UnifyOne"
         description={DESCRIPTION}
         canonical={CANONICAL}
         jsonLd={JSON_LD}
       />
-
-      <section className="max-w-4xl mx-auto px-6 sm:px-8 pt-32 pb-24">
-        <div className="inscription mb-6" style={{ color: "#D4A843" }}>
-          BLOG
-        </div>
-
-        <h1
-          className="font-cinzel text-4xl sm:text-5xl font-black mb-6"
-          style={{ color: "#F0E8D0" }}
+      <div className="marketing-page">
+        <header className="marketing-page-heading marketing-container">
+          <p className="marketing-eyebrow">From the UnifyOne notebook</p>
+          <h1>
+            A closer look at
+            <br />
+            <em>independent work.</em>
+          </h1>
+          <p className="marketing-lead">
+            Ideas and product notes on earnings, expenses, tax planning, and the
+            tools behind a clearer working week.
+          </p>
+        </header>
+        <section
+          className="marketing-library marketing-container"
+          aria-label="Articles"
         >
-          Public writing on gig earnings &amp; taxes.
-        </h1>
-
-        <p
-          className="max-w-2xl text-lg mb-12"
-          style={{ color: "#6A6A6A", lineHeight: 1.7 }}
-        >
-          Explore the public side of UnifyOne: how drivers and freelancers track
-          earnings, automate mileage and 1099 taxes, and use AI to find their
-          best-paying work.
-        </p>
-
-        <div className="grid gap-6 md:grid-cols-3">
-          {POSTS.map(post => (
-            <article
-              key={post.href}
-              className="rounded-3xl border p-6"
-              style={{
-                borderColor: "rgba(212, 168, 67, 0.2)",
-                backgroundColor: "rgba(10, 10, 10, 0.92)",
-              }}
-            >
-              <h2
-                className="font-cinzel text-2xl font-bold mb-4"
-                style={{ color: "#F0E8D0" }}
+          <div className="marketing-tool-grid">
+            {POSTS.map(post => (
+              <Link
+                key={post.href}
+                href={post.href}
+                className="marketing-tool-card"
               >
-                {post.title}
-              </h2>
-              <p className="mb-6" style={{ color: "#8A8A8A", lineHeight: 1.7 }}>
-                {post.description}
-              </p>
-              <Link href={post.href}>
-                <span
-                  className="cursor-pointer font-cinzel text-sm tracking-[0.2em] uppercase"
-                  style={{ color: "#D4A843" }}
-                >
-                  Read article →
+                <span className="marketing-card-category">
+                  From the notebook
                 </span>
+                <h2>{post.title}</h2>
+                <p>{post.description}</p>
+                <span>Read article →</span>
               </Link>
-            </article>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+        <section className="marketing-closing">
+          <div className="marketing-container">
+            <p className="marketing-eyebrow">
+              Looking for something practical?
+            </p>
+            <h2>There’s a guide for that.</h2>
+            <p>
+              Find a starting point for taxes, income records, and money between
+              paydays.
+            </p>
+            <Link href="/resources" className="marketing-button">
+              Explore the guide library →
+            </Link>
+          </div>
+        </section>
+      </div>
     </PublicLayout>
   );
 }

@@ -19,7 +19,8 @@ vi.mock("./mcpClient", () => ({
   mcpCallTool: vi.fn(),
 }));
 
-vi.mock("../_core/llm", () => ({
+vi.mock("../_core/llm", async importOriginal => ({
+  ...(await importOriginal<typeof import("../_core/llm")>()),
   invokeLLM: vi.fn(),
 }));
 
@@ -30,6 +31,8 @@ import { mcpCallTool } from "./mcpClient";
 describe("runKaiAgent", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(invokeLLM).mockReset();
+    vi.mocked(mcpCallTool).mockReset();
   });
 
   it("returns terminal content without tool calls", async () => {

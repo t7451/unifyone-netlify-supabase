@@ -1,3 +1,4 @@
+import ReadingLayout from "@/components/ReadingLayout";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 
@@ -5,7 +6,10 @@ const TOS_CANONICAL = `${SITE_URL}/terms`;
 
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-background">
+    <ReadingLayout
+      kind="reference"
+      collection={{ label: "Terms of service", href: "/terms" }}
+    >
       <PageHead
         title="Terms of Service | UnifyOne"
         description="UnifyOne Terms of Service — usage terms, subscription billing, the Promote & Earn program, data ownership, and liability limits. 1Commerce LLC."
@@ -18,7 +22,7 @@ export default function TermsOfService() {
           breadcrumbs: [{ name: "Terms of Service", item: TOS_CANONICAL }],
         })}
       />
-      <div className="max-w-4xl mx-auto px-6 py-16">
+      <article className="reading-content">
         <div className="mb-10">
           <h1 className="text-3xl font-bold tracking-tight mb-2">
             Terms of Service
@@ -28,7 +32,7 @@ export default function TermsOfService() {
           </p>
         </div>
 
-        <div className="prose prose-invert prose-sm max-w-none space-y-8 text-foreground/90">
+        <div className="prose prose-sm max-w-none space-y-8 text-foreground/90">
           <section>
             <h2 className="text-xl font-semibold mb-3">
               1. Acceptance of Terms
@@ -225,7 +229,7 @@ export default function TermsOfService() {
             </div>
           </section>
         </div>
-      </div>
-    </div>
+      </article>
+    </ReadingLayout>
   );
 }

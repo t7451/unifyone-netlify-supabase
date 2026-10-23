@@ -1,3 +1,5 @@
+import { estimateSelfEmployment2025 } from "@shared/publicTax2025";
+import ReadingLayout from "@/components/ReadingLayout";
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import PageHead from "@/components/PageHead";
@@ -6,11 +8,6 @@ import { trackToolUsage } from "@/lib/userTracking";
 import { formatUsd0 } from "@/lib/format";
 
 const CANONICAL = `${SITE_URL}/tools/se-tax-calculator`;
-
-// 2025 SE tax constants
-const SE_RATE_MEDICARE_ONLY = 0.029;
-const SS_WAGE_BASE = 168600; // 2024 Social Security wage base (unchanged for 2025 planning)
-const SE_ADJUSTMENT = 0.9235; // net SE earnings = gross × 0.9235 per IRS
 
 const FAQS = [
   {
@@ -35,7 +32,7 @@ const FAQS = [
   },
   {
     q: "What is the Social Security wage base for 2025?",
-    a: "The Social Security wage base for 2025 is $176,100. Only net SE earnings up to this amount are subject to the 12.4% Social Security portion of SE tax. All net SE earnings are subject to the 2.9% Medicare portion — and an additional 0.9% Additional Medicare Tax applies above $200,000 (single filers).",
+    a: "The Social Security wage base for 2025 is $176,100. Only net SE earnings up to this amount are subject to the 12.4% Social Security portion of SE tax. Medicare continues above the Social Security cap. This calculator estimates regular SE tax only, assumes no W-2 wages, and does not include Additional Medicare Tax.",
   },
 ];
 
@@ -129,27 +126,8 @@ interface SEResult {
   quarterlyPayment: number;
 }
 
-function computeSETax(netIncome: number): SEResult {
-  const seNetEarnings = netIncome * SE_ADJUSTMENT;
-  const ssBase = Math.min(seNetEarnings, SS_WAGE_BASE);
-  const ssTax = ssBase * 0.124;
-  const medicareTax = seNetEarnings * SE_RATE_MEDICARE_ONLY;
-  const totalSETax = ssTax + medicareTax;
-  // Verify against simple flat-rate check (should match for income below wage base)
-  const deductibleHalf = totalSETax * 0.5;
-  const adjustedIncome = netIncome - deductibleHalf;
-  const quarterlyPayment = totalSETax / 4;
-  return {
-    netIncome,
-    seNetEarnings,
-    ssTax,
-    medicareTax,
-    totalSETax,
-    deductibleHalf,
-    adjustedIncome,
-    quarterlyPayment,
-  };
-}
+const computeSETax = (netIncome: number): SEResult =>
+  estimateSelfEmployment2025(netIncome);
 
 export default function SETaxCalculator() {
   const [income, setIncome] = useState("");
@@ -157,7 +135,7 @@ export default function SETaxCalculator() {
 
   const result = useMemo<SEResult | null>(() => {
     const n = parseFloat(income.replace(/,/g, ""));
-    if (!n || n <= 0) return null;
+    if (!Number.isFinite(n) || n <= 0) return null;
     return computeSETax(n);
   }, [income]);
 
@@ -177,7 +155,7 @@ export default function SETaxCalculator() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <ReadingLayout kind="calculator">
       <PageHead
         title="Self-Employment Tax Calculator for 1099 Gig Workers 2025 | UnifyOne"
         description="Free self-employment tax calculator for DoorDash, Uber, and Instacart 1099 workers. See your SE tax (Social Security + Medicare) and quarterly estimates."
@@ -185,44 +163,7 @@ export default function SETaxCalculator() {
         jsonLd={jsonLd}
       />
 
-      <nav className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link
-            href="/tools"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Free Tools
-          </Link>
-          <span className="text-muted-foreground/40">/</span>
-          <span className="text-sm font-medium">SE Tax Calculator</span>
-        </div>
-      </nav>
-
-      <main className="max-w-3xl mx-auto px-6 py-12">
-        <nav aria-label="breadcrumb" className="mb-6">
-          <ol className="flex items-center gap-2 text-xs text-muted-foreground">
-            <li>
-              <Link
-                href="/"
-                className="hover:text-foreground transition-colors"
-              >
-                Home
-              </Link>
-            </li>
-            <li>›</li>
-            <li>
-              <Link
-                href="/tools"
-                className="hover:text-foreground transition-colors"
-              >
-                Free Tools
-              </Link>
-            </li>
-            <li>›</li>
-            <li className="text-foreground">SE Tax Calculator</li>
-          </ol>
-        </nav>
-
+      <div className="reading-content">
         <header className="mb-10">
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
             Free Tool · Tax Management
@@ -266,6 +207,8 @@ export default function SETaxCalculator() {
                         trackToolUsage("se-tax-calculator", "start");
                     }}
                     className="w-full rounded-md border bg-background pl-7 pr-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+                    min={0}
+                    step="any"
                   />
                 </div>
                 <button
@@ -283,7 +226,11 @@ export default function SETaxCalculator() {
             </div>
 
             {hasResult && result && (
-              <div className="rounded-lg bg-muted/50 p-5 space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div
+                className="rounded-lg bg-muted/50 p-5 space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300"
+                role="status"
+                aria-live="polite"
+              >
                 {/* Primary result */}
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground mb-1">
@@ -364,9 +311,10 @@ export default function SETaxCalculator() {
                 </div>
 
                 <div className="border-t pt-4 text-center">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Track your quarterly payments and get reminders
-                    automatically inside UnifyOne.
+                  <p className="text-muted-foreground">
+                    Keep a record of your earnings, expenses, and mileage with a
+                    free UnifyOne account. Review estimates against your records
+                    before making tax decisions.
                   </p>
                   <Link
                     href="/register"
@@ -375,7 +323,7 @@ export default function SETaxCalculator() {
                     }
                     className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
                   >
-                    Set up quarterly reminders →
+                    Start a free tracking record →
                   </Link>
                 </div>
               </div>
@@ -392,7 +340,7 @@ export default function SETaxCalculator() {
             half. When you work as a 1099 contractor or gig worker, you are both
             the employee and employer — so you owe the full{" "}
             <strong>15.3%</strong>: 12.4% for Social Security (on the first
-            $168,600 of net earnings) and 2.9% for Medicare (on all net
+            $176,100 of net earnings) and 2.9% for Medicare (on all net
             earnings).
           </p>
           <p>
@@ -443,19 +391,19 @@ export default function SETaxCalculator() {
           <h2 className="text-lg font-semibold mb-2">
             Stop guessing on quarterly taxes
           </h2>
-          <p className="text-muted-foreground text-sm mb-4">
-            UnifyOne tracks your gig earnings year-round, estimates your SE tax
-            in real time, and sends quarterly payment reminders before each IRS
-            due date. Free to start.
+          <p className="text-muted-foreground">
+            Keep a record of your earnings, expenses, and mileage with a free
+            UnifyOne account. Review estimates against your records before
+            making tax decisions.
           </p>
           <Link
             href="/register"
             className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
           >
-            Track taxes automatically →
+            Start a free tracking record →
           </Link>
         </section>
-      </main>
-    </div>
+      </div>
+    </ReadingLayout>
   );
 }

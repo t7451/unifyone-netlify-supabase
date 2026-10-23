@@ -220,26 +220,17 @@ export function RelatedPostsSection({
       <span className="inscription block mb-6">Related Posts</span>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         {relatedPosts.map(([key, post]) => (
-          <Button
-            key={key}
-            asChild
-            variant="outline"
-            className={cn(
-              "h-auto justify-start rounded-xl border-[#D4A843]/20 bg-transparent p-0 text-left text-inherit shadow-none transition-colors hover:border-[#D4A843]/40 hover:bg-[#0B0B0B]"
-            )}
-          >
-            <Link href={post.href} className="block w-full p-6">
-              <span className="inscription mb-2 block text-[#3A3A3A]">
-                {post.category}
-              </span>
-              <h3 className="font-cinzel text-sm font-semibold tracking-[0.05em] text-[#F0E8D0]">
-                {post.headline}
-              </h3>
-              <p className="mt-3 font-crimson text-sm leading-6 text-[#9A9A9A]">
-                {post.shortDescription}
-              </p>
-            </Link>
-          </Button>
+          <Link key={key} href={post.href} className="reading-related-card">
+            <span className="inscription mb-2 block text-[#3A3A3A]">
+              {post.category}
+            </span>
+            <h3 className="font-cinzel text-sm font-semibold tracking-[0.05em] text-[#F0E8D0]">
+              {post.headline}
+            </h3>
+            <p className="mt-3 font-crimson text-sm leading-6 text-[#9A9A9A]">
+              {post.shortDescription}
+            </p>
+          </Link>
         ))}
       </div>
     </section>

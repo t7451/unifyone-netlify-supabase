@@ -1,3 +1,4 @@
+import ReadingLayout from "@/components/ReadingLayout";
 import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
@@ -86,7 +87,7 @@ const jsonLd = [
 
 export default function TaxManagement1099() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <ReadingLayout kind="article">
       <PageHead
         title="1099 Tax Management for Gig Workers — Quarterly Estimates & Deductions | UnifyOne"
         description="Automated 1099 tax management for gig workers: quarterly payments from live earnings, SE tax, mileage deductions, and IRS-ready records."
@@ -94,18 +95,7 @@ export default function TaxManagement1099() {
         jsonLd={jsonLd}
       />
 
-      <nav className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Home
-          </Link>
-        </div>
-      </nav>
-
-      <main className="max-w-3xl mx-auto px-6 py-12">
+      <div className="reading-content">
         <header className="mb-10">
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
             Tax Management
@@ -388,7 +378,7 @@ export default function TaxManagement1099() {
             </Link>
           </div>
         </section>
-      </main>
-    </div>
+      </div>
+    </ReadingLayout>
   );
 }

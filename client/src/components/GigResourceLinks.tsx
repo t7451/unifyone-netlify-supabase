@@ -1,127 +1,51 @@
 import { Link, useLocation } from "wouter";
-import { PLATFORM_TAX_GUIDES as PLATFORM_GUIDES } from "@/content/geo/platformTaxGuides";
 
-const GEO_GUIDES = [
-  { path: "/gig-income-aggregator", label: "Consolidate gig income" },
-  { path: "/1099-tax-management", label: "1099 tax management" },
-  { path: "/gig-earnings-optimizer", label: "Optimize gig earnings" },
+const PICKS = [
   {
-    path: "/financial-intelligence-gig-workers",
-    label: "Financial intelligence for gig workers",
+    href: "/tools/gig-hourly-rate",
+    title: "Check your real hourly rate",
+    text: "Compare what a shift pays after costs.",
   },
-  { path: "/gig-route-intelligence", label: "Gig route intelligence" },
+  {
+    href: "/tools/tax-set-aside",
+    title: "Explore a tax set-aside",
+    text: "Work through a 2025 planning estimate.",
+  },
+  {
+    href: "/gig-worker-budgeting",
+    title: "Plan around irregular pay",
+    text: "Build a budget for different kinds of weeks.",
+  },
+  {
+    href: "/gig-worker-emergency-fund",
+    title: "Build a buffer",
+    text: "Think through saving for the unexpected.",
+  },
 ];
 
-// Derived from the centralized platform-guide content so slugs/labels can't
-// drift out of sync with the actual pages.
-const PLATFORM_TAX_GUIDES = PLATFORM_GUIDES.map(guide => ({
-  path: `/${guide.slug}`,
-  label: `${guide.platform} taxes`,
-}));
-
-const KEY_TOOLS = [
-  { path: "/tools/earnings-consolidator", label: "Earnings Consolidator" },
-  { path: "/tools/gig-hourly-rate", label: "Real Hourly Rate Calculator" },
-  { path: "/tools/quarterly-tax-estimator", label: "Quarterly Tax Estimator" },
-  { path: "/tools/tax-set-aside", label: "Tax Set-Aside Calculator" },
-];
-
-/**
- * Cross-link block appended to the gig (GEO) landing pages so each one links
- * out to the relevant free calculators and the sibling guides — turning the
- * standalone landing pages into connected hubs for users and crawlers.
- */
 export default function GigResourceLinks() {
   const [location] = useLocation();
-  const guides = GEO_GUIDES.filter(guide => guide.path !== location);
-  const taxGuides = PLATFORM_TAX_GUIDES.filter(
-    guide => guide.path !== location
-  );
-
   return (
-    <section className="border-t bg-muted/20 px-6 py-12 text-foreground">
-      <div className="mx-auto max-w-5xl">
-        <h2 className="mb-6 text-xl font-semibold">Keep going</h2>
-        <div className="grid gap-8 md:grid-cols-3">
-          <div>
-            <h3 className="mb-3 text-sm font-medium text-muted-foreground">
-              Free calculators
-            </h3>
-            <ul className="space-y-2">
-              {KEY_TOOLS.map(tool => (
-                <li key={tool.path}>
-                  <Link
-                    href={tool.path}
-                    className="text-sm transition-colors hover:text-primary"
-                  >
-                    {tool.label}
-                  </Link>
-                </li>
-              ))}
-              <li>
-                <Link
-                  href="/tools"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  All free tools →
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="mb-3 text-sm font-medium text-muted-foreground">
-              Platform tax guides
-            </h3>
-            <ul className="space-y-2">
-              {taxGuides.map(guide => (
-                <li key={guide.path}>
-                  <Link
-                    href={guide.path}
-                    className="text-sm transition-colors hover:text-primary"
-                  >
-                    {guide.label}
-                  </Link>
-                </li>
-              ))}
-              {location !== "/gig-taxes" && (
-                <li>
-                  <Link
-                    href="/gig-taxes"
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    Gig worker taxes guide →
-                  </Link>
-                </li>
-              )}
-            </ul>
-          </div>
-          <div>
-            <h3 className="mb-3 text-sm font-medium text-muted-foreground">
-              More gig guides
-            </h3>
-            <ul className="space-y-2">
-              {guides.map(guide => (
-                <li key={guide.path}>
-                  <Link
-                    href={guide.path}
-                    className="text-sm transition-colors hover:text-primary"
-                  >
-                    {guide.label}
-                  </Link>
-                </li>
-              ))}
-              <li>
-                <Link
-                  href="/seo"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Browse all guides →
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
+    <section className="reading-next">
+      <div>
+        <p className="marketing-eyebrow">A useful next step</p>
+        <h2>Put it into practice.</h2>
       </div>
+      <div className="reading-next-grid">
+        {PICKS.filter(item => item.href !== location)
+          .slice(0, 3)
+          .map(item => (
+            <Link key={item.href} href={item.href}>
+              <h3>{item.title}</h3>
+              <p>{item.text}</p>
+              <span aria-hidden="true">↗</span>
+            </Link>
+          ))}
+      </div>
+      <p className="reading-next-all">
+        <Link href="/resources">Browse the guide library →</Link>
+        <Link href="/tools">All free tools →</Link>
+      </p>
     </section>
   );
 }

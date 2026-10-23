@@ -1,3 +1,4 @@
+import { earningsAfterExpenses } from "@shared/publicTax2025";
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import PageHead from "@/components/PageHead";
@@ -200,8 +201,14 @@ export default function EarningsConsolidator() {
         const gross = parseFloat(p.gross) || 0;
         const hours = parseFloat(p.hours) || 0;
         const expenses = parseFloat(p.expenses) || 0;
-        if (gross <= 0 || hours <= 0) return null;
-        const net = Math.max(0, gross - expenses);
+        if (
+          ![gross, hours, expenses].every(Number.isFinite) ||
+          gross < 0 ||
+          hours <= 0 ||
+          expenses < 0
+        )
+          return null;
+        const net = earningsAfterExpenses(gross, expenses);
         return {
           name: p.name || "Platform",
           gross,
@@ -326,6 +333,7 @@ export default function EarningsConsolidator() {
                       updateRow(p.id, "gross", e.target.value);
                     }}
                     className={dollarInputClass}
+                    step="any"
                   />
                 </div>
 
@@ -362,6 +370,7 @@ export default function EarningsConsolidator() {
                       updateRow(p.id, "expenses", e.target.value);
                     }}
                     className={dollarInputClass}
+                    step="any"
                   />
                 </div>
 
