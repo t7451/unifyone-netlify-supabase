@@ -103,7 +103,38 @@ export default function MileageCalculator() {
             url: CANONICAL,
             applicationCategory: "FinanceApplication",
             operatingSystem: "Any",
+            description:
+              "Estimate eligible business mileage deductions using verified IRS rate periods, including both 2026 periods. A deduction is not a cash payment.",
             offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+            publisher: {
+              "@type": "Organization",
+              name: "1Commerce / UnifyOne",
+              url: SITE_URL,
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: `${SITE_URL}/`,
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Free Tools",
+                item: `${SITE_URL}/tools`,
+              },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: "Mileage Deduction Calculator",
+                item: CANONICAL,
+              },
+            ],
           },
         ]}
       />

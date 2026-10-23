@@ -11,7 +11,8 @@ the provider-owned Link experience, not in UnifyOne.
 
 1. Use a **development database** and apply `drizzle/0058_financial_connections.sql`
    through your normal migration process. The script is repeatable and creates
-   two tables and their indexes. It has not been applied to production. Test
+   two tables and their indexes. The configured release database was migrated
+   on October 23, 2026; separate development databases still need setup. Test
    against a clean database first: `IF NOT EXISTS` does not repair a conflicting
    existing table. No schema push or seed is needed.
 2. Set these variables securely in environment settings:
@@ -131,7 +132,9 @@ migration and actual repository queries were also exercised against an isolated
 local PostgreSQL-compatible PGlite engine using a Neon transport adapter: repeat
 migration, owner isolation, lease contention, idempotency, transactional rollback,
 cursor atomicity, pending exclusion, removals and cascading deletion passed.
-No live Plaid/Argyle connection or production migration has been performed.
+No live Plaid/Argyle connection has been performed. Migration 0058 was applied
+with worker-money migrations 0059–0061 to the configured application database on
+October 23, 2026, in one verified transaction before the main-branch release.
 
 ## Provider references
 

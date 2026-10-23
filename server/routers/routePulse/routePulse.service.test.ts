@@ -15,8 +15,8 @@ vi.mock("../../_core/supabaseAdmin", () => ({
 }));
 vi.mock("../../_core/llm", () => ({
   invokeLLM: vi.fn(),
-  GROQ_FALLBACK_MODEL: "llama-3.3-70b-versatile",
   GEMINI_FALLBACK_MODEL: "gemini-2.0-flash",
+  GROQ_FALLBACK_MODEL: "llama-3.3-70b-versatile",
   FREE_TIER_FALLBACK_CHAIN: [
     "groq/llama-3.3-70b-versatile",
     "gemini/gemini-2.0-flash",
@@ -614,16 +614,58 @@ describe("routePulse.service — getRoute (address-based)", () => {
       }),
     });
 
-    const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
+    const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR, "fastest");
 
     expect(result.origin.lat).toBeCloseTo(ORIGIN_COORDS.lat);
     expect(result.destination.lat).toBeCloseTo(DEST_COORDS.lat);
     expect(result.cached).toBe(false);
-    expect(result.explanation).toMatch(/no active incidents/i);
+    expect(result.explanation).toBe("Fastest available route.");
     expect(result.confidence).toBe("none");
     expect(result.route.riskScore).toBe(0);
     expect(result.route.delayEstimateMin).toBe(0);
     expect(invokeLLM).not.toHaveBeenCalled();
+  });
+
+  it("uses the Gemini scoring chain when its key is configured", async () => {
+    const previousKey = ENV.geminiApiKey;
+    (ENV as { geminiApiKey?: string }).geminiApiKey = "test-key";
+    try {
+      mockSupabaseWithIncidents([
+        {
+          id: "gemini-incident",
+          incident_type: "crash",
+          severity: "major",
+          description: "Crash",
+          road_name: "I-5",
+          source: "ODOT",
+        },
+      ]);
+      installFetchMock({});
+      vi.mocked(invokeLLM).mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                chosen_index: 0,
+                explanation: "Allow extra time for the crash.",
+                confidence: "high",
+              }),
+            },
+          },
+        ],
+      } as Awaited<ReturnType<typeof invokeLLM>>);
+      const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
+      expect(invokeLLM).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: "gemini-2.5-flash",
+          modelChain: expect.arrayContaining(["gemini/gemini-2.0-flash"]),
+        })
+      );
+      expect(result.confidence).toBe("high");
+      expect(result.explanation).toBe("Allow extra time for the crash.");
+    } finally {
+      (ENV as { geminiApiKey?: string }).geminiApiKey = previousKey;
+    }
   });
 
   it("rejects with NOT_FOUND before ever calling OSRM when an address can't be geocoded", async () => {
@@ -799,7 +841,9 @@ describe("routePulse.service — getRoute (address-based)", () => {
 
     expect(result.route.duration).toBe(600);
     expect(result.confidence).toBe("none");
-    expect(result.explanation).toBe("Fastest available route.");
+    expect(result.explanation).toBe(
+      "Best available route for balanced preference (~10 min)."
+    );
   });
 
   it.each([
@@ -831,7 +875,7 @@ describe("routePulse.service — getRoute (address-based)", () => {
       const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
 
       expect(result.explanation).toBe(
-        "Fastest route after adjusting for current incidents (est. +2 min delay)."
+        "Best route under balanced preference after adjusting for current incidents (est. +2 min delay)."
       );
       expect(result.confidence).toBe("none");
       expect(result.route).toBe(result.alternatives[0]);
@@ -856,7 +900,7 @@ describe("routePulse.service — getRoute (address-based)", () => {
 
     const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
     expect(result.explanation).toBe(
-      "Fastest route after adjusting for current incidents (est. +2 min delay)."
+      "Best route under balanced preference after adjusting for current incidents (est. +2 min delay)."
     );
     expect(result.confidence).toBe("none");
   });
@@ -877,7 +921,7 @@ describe("routePulse.service — getRoute (address-based)", () => {
 
     const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
     expect(result.explanation).toBe(
-      "Fastest route after adjusting for current incidents (est. +15 min delay)."
+      "Best route under balanced preference after adjusting for current incidents (est. +15 min delay)."
     );
     expect(result.confidence).toBe("none");
   });
@@ -993,7 +1037,12 @@ describe("routePulse.service — getRoute (address-based)", () => {
       (global.fetch as any).mock.calls.filter((c: any[]) =>
         String(c[0]).includes("router.project-osrm.org")
       )
-    ).toHaveLength(1);
+    ).toHaveLength(2);
+    expect(
+      vi
+        .mocked(fetch)
+        .mock.calls.some(([url]) => String(url).includes("api.tomtom.com"))
+    ).toBe(false);
   });
 
   it("does not fall back to TomTom on a clean OSRM no-route TRPCError", async () => {
@@ -1089,6 +1138,77 @@ describe("routePulse.service — getRoute (address-based)", () => {
     ).toBe(false);
   });
 
+  it.each([
+    undefined,
+    {
+      tomtomIncidents: 8,
+      wazeAlerts: 3,
+      flowSamples: 9,
+      tomtomApis: ["routing", "flow"],
+      sources: ["tomtom-flow"],
+    },
+  ])(
+    "refreshes cached traffic with complete counts and unique API labels (%j)",
+    async grounding => {
+      (ENV as { tomtomApiKey: string }).tomtomApiKey = "test-key";
+      const cachedResult = {
+        route: { ...makeRoute(), incidents: [] },
+        alternatives: [],
+        origin: { ...ORIGIN_COORDS, displayName: "origin" },
+        destination: { ...DEST_COORDS, displayName: "destination" },
+        explanation: "cached",
+        generated_at: new Date().toISOString(),
+        cached: true,
+        grounding,
+      };
+      const from = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        gt: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            result: cachedResult,
+            created_at: new Date().toISOString(),
+          },
+          error: null,
+        }),
+      });
+      vi.mocked(getSupabaseAdmin).mockReturnValue({
+        from,
+      } as unknown as NonNullable<ReturnType<typeof getSupabaseAdmin>>);
+      installFetchMock({
+        tomtom: () => ({
+          ok: true,
+          body: {
+            incidents: [],
+            flowSegmentData: {
+              currentSpeed: 20,
+              freeFlowSpeed: 40,
+              roadClosure: false,
+            },
+          },
+        }),
+      });
+      const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
+      expect(result.cached).toBe(true);
+      expect(result.route.liveDurationS).toBe(1200);
+      expect(result.grounding).toMatchObject({
+        tomtomIncidents: 0,
+        wazeAlerts: grounding?.wazeAlerts ?? 0,
+        flowSamples: 2,
+        sources: ["tomtom-flow"],
+        tomtomApis: grounding ? ["routing", "flow"] : ["flow"],
+      });
+      expect(
+        vi
+          .mocked(fetch)
+          .mock.calls.some(([url]) =>
+            String(url).includes("router.project-osrm.org")
+          )
+      ).toBe(false);
+    }
+  );
+
   it("degrades to an empty incident list (not a throw) when the incidents RPC errors", async () => {
     const rpc = vi
       .fn()
@@ -1103,7 +1223,7 @@ describe("routePulse.service — getRoute (address-based)", () => {
     (getSupabaseAdmin as any).mockReturnValue({ rpc, from });
     installFetchMock({});
 
-    const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR);
+    const result = await service.getRoute(ORIGIN_ADDR, DEST_ADDR, "fastest");
     expect(result.route.incidents).toEqual([]);
     expect(invokeLLM).not.toHaveBeenCalled();
   });

@@ -59,9 +59,9 @@ export function CookieConsentBanner() {
         <div className="flex items-start gap-3">
           <Cookie className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
           <p className="text-sm leading-relaxed text-gray-300">
-            We use cookies to understand how customers browse and shop so we can
-            recommend what you&apos;re looking for. You can accept analytics
-            cookies or keep only the essentials.{" "}
+            Optional analytics help us understand how the site is used and
+            improve the tools. You can accept analytics cookies or keep only the
+            essentials.{" "}
             <Link
               href="/privacy"
               className="font-medium text-white underline underline-offset-2 hover:text-amber-200"

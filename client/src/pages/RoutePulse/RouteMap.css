@@ -1,0 +1,4 @@
+/* Apply the dark treatment only to the fallback basemap, never route overlays. */
+.routepulse-osm-dark {
+  filter: invert(0.9) hue-rotate(180deg) saturate(0.65);
+}

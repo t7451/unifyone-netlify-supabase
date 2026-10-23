@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import ToolEmailCapture from "@/components/ToolEmailCapture";
 import PartnerOffers from "@/components/PartnerOffers";
 import AdSlot from "@/components/AdSlot";
+import ReadingLayout from "@/components/ReadingLayout";
 
 interface ToolLayoutProps {
   /** Short name shown in the sticky nav bar. */
@@ -49,13 +50,41 @@ export default function ToolLayout({
       ? ALL_TOOLS.slice(0, 3)
       : [1, 2, 3].map(offset => ALL_TOOLS[(idx + offset) % ALL_TOOLS.length]);
 
+  // Keep RoutePulse's map-first layout independent of the reading experience.
+  if (!immersiveMobile)
+    return (
+      <ReadingLayout kind="calculator">
+        <div className="reading-content">
+          {children}
+          <AdSlot slotId="tool-below-result" label="Advertisement" />
+          <PartnerOffers toolSlug={currentSlug} />
+          <ToolEmailCapture source={`tool:${currentSlug || "unknown"}`} />
+          <section className="mt-12 border-t pt-6">
+            <h2>Keep exploring</h2>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {related.map(tool => (
+                <Link
+                  key={tool.slug}
+                  href={`/tools/${tool.slug}`}
+                  className="rounded-lg border bg-card p-4 text-sm"
+                >
+                  {tool.label} →
+                </Link>
+              ))}
+            </div>
+            <p className="mt-6">
+              <Link href="/resources">Read the guide library →</Link>
+            </p>
+          </section>
+        </div>
+      </ReadingLayout>
+    );
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <nav
         className={`border-b bg-background/95 backdrop-blur sticky top-0 z-10 ${
-          immersiveMobile
-            ? "h-11 sm:h-auto pt-[env(safe-area-inset-top)]"
-            : ""
+          immersiveMobile ? "h-11 sm:h-auto pt-[env(safe-area-inset-top)]" : ""
         }`}
       >
         <div
@@ -112,79 +141,82 @@ export default function ToolLayout({
         {children}
 
         <div className={immersiveMobile ? "hidden sm:block" : undefined}>
-        {/* Display ad -- no-op until an ad network is enabled via env. */}
-        <AdSlot slotId="tool-below-result" label="Advertisement" />
+          {/* Display ad -- no-op until an ad network is enabled via env. */}
+          <AdSlot slotId="tool-below-result" label="Advertisement" />
 
-        {/* Contextual, disclosed partner offers matched to this tool. */}
-        <PartnerOffers toolSlug={currentSlug} />
+          {/* Contextual, disclosed partner offers matched to this tool. */}
+          <PartnerOffers toolSlug={currentSlug} />
 
-        {/* Lead capture -- turn high-intent tool traffic into an owned email
+          {/* Lead capture -- turn high-intent tool traffic into an owned email
             list. Tagged per-tool so leads can be segmented downstream. */}
-        <ToolEmailCapture source={`tool:${currentSlug || "unknown"}`} />
+          <ToolEmailCapture source={`tool:${currentSlug || "unknown"}`} />
 
-        {/* Related tools — internal links so each calculator is a hub, not a dead end. */}
-        <section className="mt-16 border-t pt-8">
-          <h2 className="text-sm font-semibold text-muted-foreground mb-4">
-            More free tools
-          </h2>
-          <ul className="grid gap-3 sm:grid-cols-3">
-            {related.map(tool => (
-              <li key={tool.slug}>
-                <Link
-                  href={`/tools/${tool.slug}`}
-                  className="block rounded-lg border bg-card px-4 py-3 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
-                >
-                  {tool.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <Link
-            href="/tools"
-            className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            View all free tools →
-          </Link>
-        </section>
+          {/* Related tools — internal links so each calculator is a hub, not a dead end. */}
+          <section className="mt-16 border-t pt-8">
+            <h2 className="text-sm font-semibold text-muted-foreground mb-4">
+              More free tools
+            </h2>
+            <ul className="grid gap-3 sm:grid-cols-3">
+              {related.map(tool => (
+                <li key={tool.slug}>
+                  <Link
+                    href={`/tools/${tool.slug}`}
+                    className="block rounded-lg border bg-card px-4 py-3 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
+                  >
+                    {tool.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/tools"
+              className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              View all free tools →
+            </Link>
+          </section>
 
-        {/* Gig worker guides — backlink each calculator into the gig-tax cluster. */}
-        <section className="mt-10 border-t pt-8">
-          <h2 className="text-sm font-semibold text-muted-foreground mb-4">
-            Gig worker guides
-          </h2>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {[
-              { href: "/gig-taxes", label: "Gig Worker Taxes: complete guide" },
-              {
-                href: "/gig-worker-tax-deductions",
-                label: "Tax deductions checklist",
-              },
-              {
-                href: "/gig-quarterly-taxes",
-                label: "Quarterly estimated taxes",
-              },
-              {
-                href: "/1099-nec-vs-1099-k",
-                label: "1099-NEC vs 1099-K explained",
-              },
-            ].map(guide => (
-              <li key={guide.href}>
-                <Link
-                  href={guide.href}
-                  className="block rounded-lg border bg-card px-4 py-3 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
-                >
-                  {guide.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <Link
-            href="/gig-taxes"
-            className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            All gig worker tax guides →
-          </Link>
-        </section>
+          {/* Gig worker guides — backlink each calculator into the gig-tax cluster. */}
+          <section className="mt-10 border-t pt-8">
+            <h2 className="text-sm font-semibold text-muted-foreground mb-4">
+              Gig worker guides
+            </h2>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {[
+                {
+                  href: "/gig-taxes",
+                  label: "Gig Worker Taxes: complete guide",
+                },
+                {
+                  href: "/gig-worker-tax-deductions",
+                  label: "Tax deductions checklist",
+                },
+                {
+                  href: "/gig-quarterly-taxes",
+                  label: "Quarterly estimated taxes",
+                },
+                {
+                  href: "/1099-nec-vs-1099-k",
+                  label: "1099-NEC vs 1099-K explained",
+                },
+              ].map(guide => (
+                <li key={guide.href}>
+                  <Link
+                    href={guide.href}
+                    className="block rounded-lg border bg-card px-4 py-3 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
+                  >
+                    {guide.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/gig-taxes"
+              className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              All gig worker tax guides →
+            </Link>
+          </section>
         </div>
       </main>
     </div>

@@ -1,3 +1,4 @@
+import ReadingLayout from "@/components/ReadingLayout";
 import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
@@ -78,7 +79,7 @@ const jsonLd = [
 
 export default function GigEarningsOptimizer() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <ReadingLayout kind="article">
       <PageHead
         title="Gig Earnings Optimizer — Maximize Net Pay Across DoorDash, Uber, Instacart | UnifyOne"
         description="Find which gig apps and shifts generate the highest net pay after expenses. UnifyOne compares real net earnings per hour across all platforms."
@@ -86,18 +87,7 @@ export default function GigEarningsOptimizer() {
         jsonLd={jsonLd}
       />
 
-      <nav className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center gap-4">
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Home
-          </Link>
-        </div>
-      </nav>
-
-      <main className="max-w-3xl mx-auto px-6 py-12">
+      <div className="reading-content">
         <header className="mb-10">
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
             Earnings Optimization
@@ -329,7 +319,7 @@ export default function GigEarningsOptimizer() {
             </Link>
           </div>
         </section>
-      </main>
-    </div>
+      </div>
+    </ReadingLayout>
   );
 }

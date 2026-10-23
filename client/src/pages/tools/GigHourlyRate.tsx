@@ -95,6 +95,28 @@ const assumptionFields = [
     hint: "What you want to keep for each hour of work, including the time you cannot bill.",
   },
 ] as const;
+const FAQS = [
+  {
+    q: "How is the hourly result calculated?",
+    a: "Operating profit is your entered earnings minus business miles multiplied by your editable actual cost per mile, minus other costs. We reserve your chosen percentage of combined positive operating profit, then divide what remains by all recorded working hours, including waiting and unpaid work. No reserve is subtracted from a combined loss.",
+  },
+  {
+    q: "Does the mileage deduction equal my actual costs?",
+    a: "No. A tax deduction reduces taxable income. This planner uses your estimate of actual vehicle costs, including fuel, maintenance, insurance and depreciation. The $0.35 starting assumption is editable and is not an IRS mileage rate. Do not also enter those same vehicle costs under other costs.",
+  },
+  {
+    q: "Can a result be negative?",
+    a: "Yes. When entered business costs exceed earnings, the calculator shows the loss, including its effect on the combined hourly result. A loss is not rounded up to zero.",
+  },
+  {
+    q: "Can I compare different platforms or clients?",
+    a: "Yes. Use the same time period and consistent earnings definitions for every source. Include unpaid waiting and administrative work, and avoid counting the same hours twice when apps overlap. Deduct platform fees only if they are still included in the earnings you enter. Results describe your records and assumptions; they do not predict future pay.",
+  },
+  {
+    q: "Which miles should I enter?",
+    a: "Enter business miles attributable to the work period you are comparing. Tax eligibility is a separate question: personal trips and commuting can have different rules. Check IRS Publication 463 for guidance on deductible mileage.",
+  },
+];
 const jsonLd = [
   {
     "@context": "https://schema.org",
@@ -106,6 +128,39 @@ const jsonLd = [
     applicationCategory: "FinanceApplication",
     operatingSystem: "Any",
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    publisher: {
+      "@type": "Organization",
+      name: "1Commerce / UnifyOne",
+      url: SITE_URL,
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map(({ q, a }) => ({
+      "@type": "Question",
+      name: q,
+      acceptedAnswer: { "@type": "Answer", text: a },
+    })),
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Free tools",
+        item: `${SITE_URL}/tools`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "Work Profit and Hourly Rate Planner",
+        item: CANONICAL,
+      },
+    ],
   },
 ];
 
@@ -698,6 +753,24 @@ export default function GigHourlyRate() {
               Explore tax planning{" "}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
+          </div>
+        </section>
+        <section
+          className="mt-8 rounded-2xl border p-5 sm:p-6"
+          aria-labelledby="profit-faq-heading"
+        >
+          <h2 id="profit-faq-heading" className="text-xl font-semibold">
+            Frequently asked questions
+          </h2>
+          <div className="mt-5 space-y-6">
+            {FAQS.map(({ q, a }) => (
+              <div key={q}>
+                <h3 className="font-semibold">{q}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {a}
+                </p>
+              </div>
+            ))}
           </div>
         </section>
       </main>

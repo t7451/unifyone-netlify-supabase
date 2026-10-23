@@ -2,7 +2,9 @@ import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trackOrganicLanding } from "@/lib/userTracking";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { ArrowUpRight, Calculator, Search } from "lucide-react";
+import PublicLayout from "@/components/PublicLayout";
 
 /** Metadata shape for a free tool listing. */
 interface ToolMeta {
@@ -59,7 +61,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
   {
     slug: "quarterly-tax-estimator",
     title: "Quarterly Estimated Tax Estimator — 1099 Self-Employed",
-    tagline: "Never miss a quarterly IRS payment. Know exactly what you owe.",
+    tagline: "Explore an estimate for your quarterly federal tax planning.",
     description:
       "Based on your net self-employment income, calculate your Q1–Q4 estimated tax payments using the IRS safe-harbor method.",
     audience: "Freelancers, contractors, gig workers, side-hustle earners",
@@ -105,8 +107,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
   {
     slug: "se-tax-calculator",
     title: "Self-Employment Tax Calculator — 1099 Gig Workers",
-    tagline:
-      "See exactly how much SE tax you owe, your deductible half, and quarterly payment amounts",
+    tagline: "Estimate self-employment tax and see how the calculation works.",
     description:
       "Enter your net self-employment income to calculate Social Security + Medicare tax (15.3%), the deductible half that lowers your AGI, and how much to pay each quarter.",
     audience: "1099 contractors, freelancers, gig workers",
@@ -137,8 +138,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
   {
     slug: "tax-set-aside",
     title: "1099 Tax Set-Aside Calculator",
-    tagline:
-      "Know exactly what percentage of each gig payment to save for taxes",
+    tagline: "Explore a starting point for your tax set-aside.",
     description:
       "Enter your net income, filing status, and state rate to get a personalized set-aside percentage combining SE tax, federal income tax, and state tax — plus the dollar amount to save per payment.",
     audience:
@@ -154,8 +154,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
   {
     slug: "route-pulse",
     title: "RoutePulse — AI Route & Incident Checker",
-    tagline:
-      "Check a route for live incidents before mainstream traffic apps catch up",
+    tagline: "Review route and incident information before a trip.",
     description:
       "Enter an origin and destination to get an AI-scored route with live incident data factored in, plus a plain-language explanation of what to watch for.",
     audience: "Rideshare and delivery drivers planning a route",
@@ -203,201 +202,119 @@ const jsonLd = [
 ];
 
 export default function ToolsIndex() {
+  const [search, setSearch] = useState("");
+  const query = search.trim().toLowerCase();
+  const visibleTools = TOOLS_REGISTRY.filter(tool =>
+    (tool.title + " " + tool.tagline + " " + tool.keywords.join(" "))
+      .toLowerCase()
+      .includes(query)
+  );
   useEffect(() => {
     trackOrganicLanding("/tools");
   }, []);
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <PublicLayout>
       <PageHead
-        title="Free Tools for Gig Workers & Sellers | UnifyOne"
-        description="Free tools for 1099 gig workers: mileage, quarterly tax, earnings consolidation, break-even pricing, and cash-flow tracking. No account required."
+        title="Free calculators for independent work | UnifyOne"
+        description="Explore free calculators for gig earnings, mileage, tax planning, pricing, and cash flow. Enter your own numbers to see an estimate."
         canonical={CANONICAL}
         jsonLd={jsonLd}
       />
-
-      {/* Hero */}
-      <section className="border-b bg-muted/30 py-14 px-6">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-medium text-primary uppercase tracking-wide mb-3">
-            Free Tools
-          </p>
-          <h1 className="text-4xl font-bold tracking-tight mb-4">
-            Calculators & Estimators for Independent Earners
+      <div className="marketing-page">
+        <header className="marketing-page-heading marketing-container">
+          <p className="marketing-eyebrow">The free toolkit</p>
+          <h1>
+            Bring your numbers.
+            <br />
+            <em>Find a clearer answer.</em>
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Standalone tools for 1099 gig workers, multi-platform sellers, and
-            side-hustle earners. Real computed output — not guesses. No account
-            required.
+          <p className="marketing-lead">
+            A useful starting point for earnings, expenses, and planning.
+            Explore the calculators without creating an account.
           </p>
-        </div>
-      </section>
-
-      {/* Tool grid */}
-      <section className="py-12 px-6">
-        <div className="mx-auto max-w-5xl">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {TOOLS_REGISTRY.map(tool => (
-              <ToolCard key={tool.slug} tool={tool} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Related guides — internal links to gig-finance landing pages + AEO hub */}
-      <section className="border-t py-12 px-6">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="text-2xl font-semibold mb-2">Related guides</h2>
-          <p className="text-muted-foreground mb-8">
-            Go deeper on gig-income strategy, taxes, and multi-platform
-            earnings.
+        </header>
+        <section
+          className="marketing-library marketing-container"
+          aria-label="Browse free tools"
+        >
+          <label className="marketing-search">
+            <Search size={18} aria-hidden="true" />
+            <span className="sr-only">Search free tools</span>
+            <input
+              type="search"
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              placeholder="Search mileage, hourly rate, taxes…"
+            />
+          </label>
+          <p className="marketing-result-count" role="status">
+            {visibleTools.length} {visibleTools.length === 1 ? "tool" : "tools"}
           </p>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { label: "Gig worker taxes: complete guide", href: "/gig-taxes" },
-              { label: "DoorDash taxes", href: "/doordash-taxes" },
-              { label: "Uber driver taxes", href: "/uber-driver-taxes" },
-              { label: "Instacart taxes", href: "/instacart-taxes" },
-              {
-                label: "How to make money on DoorDash",
-                href: "/how-to-make-money-on-doordash",
-              },
-              {
-                label: "How to make money driving for Uber",
-                href: "/how-to-make-money-driving-for-uber",
-              },
-              {
-                label: "How to make money with Instacart",
-                href: "/how-to-make-money-with-instacart",
-              },
-              {
-                label: "How to make money with Amazon Flex",
-                href: "/how-to-make-money-with-amazon-flex",
-              },
-              {
-                label: "Consolidate gig income",
-                href: "/gig-income-aggregator",
-              },
-              { label: "1099 tax management", href: "/1099-tax-management" },
-              {
-                label: "Optimize gig earnings",
-                href: "/gig-earnings-optimizer",
-              },
-              {
-                label: "Financial intelligence for gig workers",
-                href: "/financial-intelligence-gig-workers",
-              },
-              {
-                label: "Gig route intelligence",
-                href: "/gig-route-intelligence",
-              },
-              {
-                label: "Retirement accounts for gig workers",
-                href: "/gig-worker-retirement",
-              },
-              {
-                label: "Health insurance for gig workers",
-                href: "/gig-worker-health-insurance",
-              },
-              {
-                label: "Bookkeeping for gig workers",
-                href: "/gig-worker-bookkeeping",
-              },
-              {
-                label: "Budgeting on irregular income",
-                href: "/gig-worker-budgeting",
-              },
-              { label: "Browse all SEO guides", href: "/seo" },
-            ].map(g => (
-              <Link
-                key={g.href}
-                href={g.href}
-                className="rounded-lg border bg-card px-4 py-3 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
+          {visibleTools.length ? (
+            <div className="marketing-tool-grid">
+              {visibleTools.map(tool =>
+                tool.live ? (
+                  <Link
+                    key={tool.slug}
+                    href={"/tools/" + tool.slug}
+                    className="marketing-tool-card"
+                  >
+                    <Calculator size={22} aria-hidden="true" />
+                    <h2>{tool.title}</h2>
+                    <p>{tool.tagline}</p>
+                    <span>
+                      Open tool <ArrowUpRight size={16} aria-hidden="true" />
+                    </span>
+                  </Link>
+                ) : (
+                  <article className="marketing-tool-card" key={tool.slug}>
+                    <h2>{tool.title}</h2>
+                    <p>{tool.tagline}</p>
+                    <span>Coming soon</span>
+                  </article>
+                )
+              )}
+            </div>
+          ) : (
+            <div className="marketing-empty">
+              <h2>No matching tools.</h2>
+              <p>Try another phrase or see the full toolkit.</p>
+              <button
+                type="button"
+                className="marketing-button marketing-button-outline"
+                onClick={() => setSearch("")}
               >
-                {g.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Conversion CTA — separate from tool content, clearly marked */}
-      <section className="border-t bg-muted/20 py-12 px-6">
-        <div className="mx-auto max-w-xl text-center">
-          <h2 className="text-xl font-semibold mb-2">
-            Save your results to a dashboard
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            Create a free UnifyOne account to store calculations, track earnings
-            across platforms, and get quarterly tax reminders automatically.
+                Clear search
+              </button>
+            </div>
+          )}
+          <p className="marketing-library-note">
+            Results depend on the numbers you enter. Estimates support planning
+            and do not replace professional tax, legal, or financial advice.
           </p>
-          <Link
-            href="/register"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            Create free account
-          </Link>
-        </div>
-      </section>
-
-      {/* FAQ — boosts AI citation */}
-      <section className="border-t py-12 px-6">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="text-2xl font-semibold mb-8">
-            Frequently Asked Questions
-          </h2>
-          <div className="space-y-6">
-            <Faq
-              q="Are these tools really free?"
-              a="Yes. All calculators on this page work without an account. You can optionally sign up to save results to a dashboard, but every tool produces real computed output for free."
-            />
-            <Faq
-              q="Do the tools work for all gig platforms?"
-              a="Yes. The tools are platform-agnostic — enter numbers from Uber, DoorDash, Etsy, eBay, Amazon, or any other platform. The mileage calculator uses the current IRS standard rate."
-            />
-            <Faq
-              q="How accurate is the quarterly tax estimator?"
-              a="It uses the IRS safe-harbor method (pay 100% of last year's tax or 90% of this year's, whichever is smaller). It is an estimate — consult a CPA for your specific situation."
-            />
-            <Faq
-              q="What is UnifyOne?"
-              a="UnifyOne is a gig-worker earnings & tax platform built for independent 1099 workers — rideshare and delivery drivers, freelancers, contractors, and resellers. It unifies income across gig apps and selling channels into one workspace, with tax estimates, mileage tracking, and money management. These free tools are a standalone subset of its financial-management features."
-            />
+        </section>
+        <section className="marketing-closing">
+          <div className="marketing-container">
+            <p className="marketing-eyebrow">Build on what you learn</p>
+            <h2>
+              One calculation today.
+              <br />A better habit tomorrow.
+            </h2>
+            <p>
+              Keep a record of your work with a free account, or explore the
+              guide library.
+            </p>
+            <div className="marketing-actions">
+              <Link href="/register" className="marketing-button">
+                Start tracking for free →
+              </Link>
+              <Link href="/resources" className="marketing-text-link">
+                Read the guides →
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function ToolCard({ tool }: { tool: ToolMeta }) {
-  const inner = (
-    <div className="group rounded-lg border bg-card p-6 flex flex-col gap-3 h-full transition-shadow hover:shadow-md">
-      <div className="flex items-start justify-between gap-2">
-        <h2 className="font-semibold text-base leading-snug group-hover:text-primary transition-colors">
-          {tool.title}
-        </h2>
-        {!tool.live && (
-          <span className="shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border">
-            Coming soon
-          </span>
-        )}
+        </section>
       </div>
-      <p className="text-sm text-muted-foreground flex-1">{tool.tagline}</p>
-      <p className="text-xs text-muted-foreground/70">{tool.audience}</p>
-    </div>
-  );
-
-  if (!tool.live)
-    return <div className="opacity-70 cursor-default">{inner}</div>;
-  return <Link href={`/tools/${tool.slug}`}>{inner}</Link>;
-}
-
-function Faq({ q, a }: { q: string; a: string }) {
-  return (
-    <div>
-      <h3 className="font-medium mb-1">{q}</h3>
-      <p className="text-sm text-muted-foreground leading-relaxed">{a}</p>
-    </div>
+    </PublicLayout>
   );
 }

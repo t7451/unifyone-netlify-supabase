@@ -1,3 +1,4 @@
+import { GROQ_FALLBACK_MODEL, GEMINI_FALLBACK_MODEL } from "../_core/llm";
 import { describe, expect, it } from "vitest";
 import {
   buildKaiChatMeterMetadata,
@@ -52,14 +53,22 @@ describe("Kai model allowlist", () => {
     expect(defaultModel.creditMultiplier).toBe(0);
     expect(defaultModel.minimumCredits).toBe(0);
 
+    const approvedDirectFallbacks = new Set([
+      `groq/${GROQ_FALLBACK_MODEL}`,
+      `gemini/${GEMINI_FALLBACK_MODEL}`,
+    ]);
     for (const id of KAI_MODEL_IDS) {
       const entry = KAI_MODEL_CATALOG[id];
       if (entry.tier !== "free") continue;
       expect(entry.creditMultiplier).toBe(0);
       expect(entry.minimumCredits).toBe(0);
-      // Every free fallback must be an explicit free OpenRouter slug.
+      // Allow the approved direct-provider chain or an explicit OpenRouter free model.
       for (const fallback of entry.fallbackModels) {
-        expect(fallback).toMatch(/^openrouter\/.+:free$/);
+        expect(
+          approvedDirectFallbacks.has(fallback) ||
+            /^openrouter\/.+:free$/.test(fallback),
+          `${id}: unexpected free fallback ${fallback}`
+        ).toBe(true);
       }
     }
   });

@@ -1,22 +1,12 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import PublicLayout from "@/components/PublicLayout";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import ReadingLayout from "@/components/ReadingLayout";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const SECTIONS = [
   { id: "overview", label: "Overview" },
   { id: "setup", label: "API Setup" },
-  { id: "mcp", label: "MCP Server (Live)" },
+  { id: "mcp", label: "MCP Server" },
   { id: "webhook", label: "Webhooks" },
   { id: "tasks", label: "Task Patterns" },
   { id: "n8n", label: "n8n Bridge" },
@@ -157,73 +147,6 @@ await runAITask({
 });`,
 };
 
-const INTEGRATION_CARDS = [
-  {
-    avatar: "S",
-    title: "Stripe",
-    description:
-      "Subscriptions, checkout sessions, and webhook-based billing sync for tenant plans.",
-    difficulty: "Easy",
-    tab: "setup",
-  },
-  {
-    avatar: "P",
-    title: "PayPal",
-    description:
-      "Layer PayPal order capture into checkout for broader buyer coverage and payment redundancy.",
-    difficulty: "Easy",
-    tab: "setup",
-  },
-  {
-    avatar: "SQ",
-    title: "Square",
-    description:
-      "Connect POS and online payment data so in-person and digital sales stay in one operating view.",
-    difficulty: "Medium",
-    tab: "setup",
-  },
-  {
-    avatar: "🛍️",
-    title: "Shopify",
-    description:
-      "Bridge storefront products, checkout flows, and commerce events into the UnifyOne tenant model.",
-    difficulty: "Medium",
-    tab: "setup",
-  },
-  {
-    avatar: "I",
-    title: "Impact.com",
-    description:
-      "Track affiliate relationships, payouts, and campaign performance alongside your native referral suite.",
-    difficulty: "Medium",
-    tab: "tasks",
-  },
-  {
-    avatar: "n8n",
-    title: "n8n",
-    description:
-      "Automate lead routing, fulfillment, and AI-triggered workflows with low-code orchestration.",
-    difficulty: "Medium",
-    tab: "n8n",
-  },
-  {
-    avatar: "✦",
-    title: "Anthropic Claude",
-    description:
-      "Run context-aware Claude workflows through MCP for research, drafting, and operator copilots.",
-    difficulty: "Advanced",
-    tab: "mcp",
-  },
-  {
-    avatar: "R",
-    title: "Resend",
-    description:
-      "Deliver transactional and lifecycle email from automations, onboarding, and revenue workflows.",
-    difficulty: "Easy",
-    tab: "webhook",
-  },
-] as const;
-
 const CHECKLIST = [
   {
     id: "c1",
@@ -266,14 +189,18 @@ const CHECKLIST = [
 ];
 
 function CodeBlock({ code }: { code: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+  const [copyStatus, setCopyStatus] = useState("Copy");
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopyStatus("Copied");
+    } catch {
+      setCopyStatus("Copy failed — select the code instead");
+    }
   };
   return (
     <div
+      className="reference-code"
       style={{
         position: "relative",
         marginTop: "1rem",
@@ -281,6 +208,8 @@ function CodeBlock({ code }: { code: string }) {
       }}
     >
       <pre
+        tabIndex={0}
+        aria-label="Code example"
         style={{
           background: "#0d1117",
           color: "#c9d1d9",
@@ -297,13 +226,14 @@ function CodeBlock({ code }: { code: string }) {
         {code}
       </pre>
       <button
+        aria-live="polite"
         onClick={copy}
         style={{
           position: "absolute",
           top: 10,
           right: 10,
-          background: copied ? "#238636" : "rgba(212,168,67,0.1)",
-          color: copied ? "#fff" : "#D4A843",
+          background: copyStatus === "Copied" ? "#238636" : "#234c3b",
+          color: "#fff",
           border: "1px solid rgba(212,168,67,0.3)",
           borderRadius: 6,
           padding: "6px 12px",
@@ -313,7 +243,7 @@ function CodeBlock({ code }: { code: string }) {
           transition: "all 0.2s",
         }}
       >
-        {copied ? "✓ Copied" : "Copy"}
+        {copyStatus}
       </button>
     </div>
   );
@@ -329,12 +259,12 @@ export default function IntegrationGuides() {
   const done = checks.filter(c => c.done).length;
 
   return (
-    <PublicLayout>
+    <ReadingLayout kind="reference">
       <Helmet>
         <title>Integration Guides | UnifyOne Documentation</title>
         <meta
           name="description"
-          content="Complete integration guides for Kai, Claude, n8n, and payment processors."
+          content="Developer reference examples for UnifyOne API configuration, MCP, webhooks, and n8n. Check account and deployment availability before use."
         />
         <link rel="canonical" href={`${SITE_URL}/documents/integrations`} />
         <meta
@@ -355,7 +285,7 @@ export default function IntegrationGuides() {
             "@type": "HowTo",
             name: "AI Integration Guide",
             description:
-              "Complete guide to integrating Kai AI and Claude with UnifyOne platform",
+              "Reference examples for the UnifyOne integration workflow",
             step: [
               {
                 "@type": "HowToStep",
@@ -382,15 +312,8 @@ export default function IntegrationGuides() {
         </script>
       </Helmet>
 
-      <section
-        style={{
-          backgroundColor: "#020202",
-          minHeight: "100vh",
-          paddingTop: "6rem",
-          paddingBottom: "4rem",
-        }}
-      >
-        <div className="max-w-5xl mx-auto px-6 sm:px-8">
+      <article className="reading-content integration-reference">
+        <div>
           {/* Header */}
           <div className="text-center mb-12">
             <span className="inscription block mb-4">INTEGRATION GUIDES</span>
@@ -398,69 +321,28 @@ export default function IntegrationGuides() {
               className="font-cinzel text-4xl sm:text-5xl font-bold mb-6"
               style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
             >
-              Connect your entire stack
+              Technical integration reference
             </h1>
             <p
               className="font-crimson text-lg max-w-2xl mx-auto"
               style={{ color: "#9A9A9A", lineHeight: 1.8 }}
             >
-              Complete technical guide to integrating Kai AI for autonomous task
-              execution and Claude for intelligent automation.
+              Configuration examples for developers working with the existing
+              API, MCP, and webhook integrations. Availability depends on your
+              account and deployment.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 mb-12 sm:grid-cols-2 lg:grid-cols-4">
-            {INTEGRATION_CARDS.map(integration => (
-              <Card
-                key={integration.title}
-                className="border-[#d4a84333] bg-[#0d0d0d] text-left"
-              >
-                <CardHeader className="space-y-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d4a84355] bg-[#d4a84314] font-cinzel text-sm font-bold text-[#D4A843]">
-                      {integration.avatar}
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className="border-[#d4a84344] text-[#D4A843]"
-                    >
-                      {integration.difficulty}
-                    </Badge>
-                  </div>
-                  <div>
-                    <CardTitle
-                      className="font-cinzel text-base"
-                      style={{ color: "#F0E8D0", letterSpacing: "0.04em" }}
-                    >
-                      {integration.title}
-                    </CardTitle>
-                    <CardDescription
-                      className="mt-2 font-crimson text-sm"
-                      style={{ color: "#9A9A9A", lineHeight: 1.6 }}
-                    >
-                      {integration.description}
-                    </CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent />
-                <CardFooter>
-                  <Button
-                    variant="link"
-                    className="h-auto px-0 font-cinzel text-xs font-semibold tracking-[0.1em] text-[#D4A843]"
-                    onClick={() => setActiveTab(integration.tab)}
-                  >
-                    View Guide →
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-
           {/* Tab Navigation */}
-          <div className="flex flex-wrap gap-2 mb-8 justify-center">
+          <div
+            className="flex flex-wrap gap-2 mb-8"
+            role="group"
+            aria-label="Reference sections"
+          >
             {SECTIONS.map(section => (
               <button
                 key={section.id}
+                aria-pressed={activeTab === section.id}
                 onClick={() => setActiveTab(section.id)}
                 style={{
                   padding: "10px 16px",
@@ -488,7 +370,7 @@ export default function IntegrationGuides() {
             style={{
               backgroundColor: "rgba(212,168,67,0.02)",
               border: "1px solid rgba(212,168,67,0.1)",
-              padding: "2.5rem",
+              padding: "1.25rem",
             }}
           >
             {activeTab === "overview" && (
@@ -504,11 +386,9 @@ export default function IntegrationGuides() {
                   style={{ color: "#C0C0C0", lineHeight: 1.8 }}
                 >
                   <p>
-                    Kai is a context-aware AI sidekick that{" "}
-                    <strong style={{ color: "#D4A843" }}>executes tasks</strong>{" "}
-                    — not just answers questions. Integrate Kai with UnifyOne to
-                    automate complex workflows: affiliate research, SEO audits,
-                    digital product fulfillment, store provisioning, and more.
+                    The examples below describe API and automation configuration
+                    patterns. Check the relevant service settings and access
+                    before using them in a deployment.
                   </p>
                   <p>
                     This guide covers: API setup, MCP server configuration,
@@ -666,30 +546,18 @@ export default function IntegrationGuides() {
                   >
                     Progress: {done}/{checks.length} complete
                   </div>
-                  <div
-                    style={{
-                      background: "rgba(212,168,67,0.1)",
-                      borderRadius: 4,
-                      height: 8,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: `${(done / checks.length) * 100}%`,
-                        background:
-                          done === checks.length ? "#3fb950" : "#D4A843",
-                        height: "100%",
-                        borderRadius: 4,
-                        transition: "width 0.3s",
-                      }}
-                    />
-                  </div>
+                  <progress
+                    className="reference-progress"
+                    aria-label="Implementation checklist progress"
+                    value={done}
+                    max={checks.length}
+                  />
                 </div>
               </div>
             )}
           </div>
         </div>
-      </section>
-    </PublicLayout>
+      </article>
+    </ReadingLayout>
   );
 }

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import { ROUTE_SEO } from "@/content/routeSeo";
 import { SEO_PAGES } from "@/content/seoPages";
 
-const ROOT = new URL("..", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const CLIENT_SRC = join(ROOT, "client/src");
 
 // Mirror of the sitemap paths derived in vite.config.ts (SITEMAP_ROUTES): the
@@ -56,7 +57,13 @@ function internalLinks() {
     /(?:href|to)=(?:"([^"]+)"|'([^']+)'|\{"([^"]+)"\}|\{'([^']+)'\})/g;
 
   return walk(CLIENT_SRC)
-    .filter(file => !file.includes("/components/ui/"))
+    .filter(
+      file =>
+        !relative(CLIENT_SRC, file)
+          .split(sep)
+          .join("/")
+          .startsWith("components/ui/")
+    )
     .flatMap(file => {
       const source = readFileSync(file, "utf8");
       return [...source.matchAll(linkPattern)]
@@ -72,7 +79,7 @@ function internalLinks() {
         .map(href => ({
           href,
           path: href.split(/[?#]/)[0],
-          file: file.replace(`${ROOT}/`, ""),
+          file: relative(ROOT, file).split(sep).join("/"),
         }));
     });
 }

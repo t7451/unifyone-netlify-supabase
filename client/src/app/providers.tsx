@@ -32,9 +32,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
               fallback={
                 <LoadingExperience
                   fullScreen
-                  title="Loading your next view"
-                  description="Streaming route bundles, restoring interface state, and preparing a smoother transition."
-                  label="Route bundle loading"
+                  title="Loading your page"
+                  description="Just a moment. Your page will be ready shortly."
+                  label="UnifyOne"
+                  steps={[]}
                 />
               }
             >

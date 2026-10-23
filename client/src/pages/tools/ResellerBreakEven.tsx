@@ -169,7 +169,15 @@ export default function ResellerBreakEven() {
     const R = returnRate / 100;
     const margin = targetMarginPct / 100;
 
-    if (C <= 0) return null;
+    if (
+      ![C, S, fee, R, margin].every(Number.isFinite) ||
+      C <= 0 ||
+      S < 0 ||
+      fee < 0 ||
+      R < 0 ||
+      margin < 0
+    )
+      return null;
 
     // Model:
     //   Net profit per sale = P*(1 - fee - R) - C - S*(1 + R)
@@ -290,6 +298,7 @@ export default function ResellerBreakEven() {
                       setItemCost(e.target.value);
                     }}
                     className="h-9 rounded-md border bg-background pl-6 pr-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    step="any"
                   />
                 </div>
               </div>
@@ -316,6 +325,7 @@ export default function ResellerBreakEven() {
                       setShipping(e.target.value);
                     }}
                     className="h-9 rounded-md border bg-background pl-6 pr-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    step="any"
                   />
                 </div>
               </div>
@@ -374,6 +384,7 @@ export default function ResellerBreakEven() {
                     onChange={e => setCustomFee(e.target.value)}
                     className="h-9 w-28 rounded-md border bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                     autoFocus
+                    aria-label="Marketplace fee"
                   />
                   <span className="text-sm text-muted-foreground">% fee</span>
                 </div>

@@ -2,14 +2,28 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const invokeLLMMock = vi.hoisted(() => vi.fn());
 
-vi.mock("../../_core/llm", () => ({
+vi.mock("../../_core/llm", async importOriginal => ({
+  ...(await importOriginal<typeof import("../../_core/llm")>()),
   invokeLLM: invokeLLMMock,
-  GROQ_FALLBACK_MODEL: "llama-3.3-70b-versatile",
-  VERCEL_AI_GATEWAY_FALLBACK_MODEL: "openai/gpt-5.5",
+}));
+
+// These tests exercise the ledger and refusal fallback, without remote tools.
+vi.mock("../../lib/mcpClient", () => ({
+  mcpListTools: vi.fn().mockResolvedValue([]),
+  mcpCallTool: vi.fn().mockRejectedValue(new Error("Unexpected MCP tool call")),
 }));
 
 vi.mock("../../db", () => ({
   getDb: vi.fn(),
+}));
+
+// Credit/refusal behavior does not depend on loading the real shift-data router.
+vi.mock("../moneyManager", () => ({
+  moneyManagerRouter: {
+    createCaller: vi.fn(() => ({
+      getKaiContext: vi.fn().mockResolvedValue({ hasSufficientData: false }),
+    })),
+  },
 }));
 
 import { getDb } from "../../db";
@@ -25,6 +39,9 @@ type LedgerRow = {
   description?: string;
   metadata?: Record<string, unknown>;
 };
+
+// Keep optional response refinement outside this credit-enforcement suite.
+const quality = "fast" as const;
 
 const ctx = {
   user: {
@@ -224,6 +241,7 @@ describe("aiRouter Kai Neon credit enforcement", () => {
       message: "Help me plan",
       context: "general",
       model: "kai-fast",
+      quality,
     });
 
     expect(invokeLLMMock).toHaveBeenCalledOnce();
@@ -257,6 +275,7 @@ describe("aiRouter Kai Neon credit enforcement", () => {
         message: "Use premium reasoning",
         context: "general",
         model: "kai-premium",
+        quality,
       })
     ).rejects.toMatchObject({
       code: "FORBIDDEN",
@@ -284,6 +303,7 @@ describe("aiRouter Kai Neon credit enforcement", () => {
       message: "Summarize my orders",
       context: "general",
       model: "kai-balanced",
+      quality,
     });
 
     const usageRows = rows.filter(row => row.type === "usage");
@@ -329,11 +349,13 @@ describe("aiRouter Kai Neon credit enforcement", () => {
       message: "First",
       context: "general",
       model: "kai-fast",
+      quality,
     });
     const replay = await caller.chat({
       message: "Replay",
       context: "general",
       model: "kai-fast",
+      quality,
     });
 
     expect(rows.filter(row => row.type === "usage")).toHaveLength(1);
@@ -372,6 +394,7 @@ describe("aiRouter Kai Neon credit enforcement", () => {
       message: "Stay isolated",
       context: "general",
       model: "kai-fast",
+      quality,
     });
 
     expect(result.metadata.credits).toMatchObject({
@@ -406,6 +429,7 @@ describe("aiRouter Kai Neon credit enforcement", () => {
           message: `Stress chat ${index}`,
           context: "general",
           model: "kai-fast",
+          quality,
         })
       )
     );
@@ -423,7 +447,9 @@ describe("aiRouter Kai Neon credit enforcement", () => {
         type: "usage",
         creditDelta: -1,
       });
-      expect(row.idempotencyKey).toMatch(/^kai_chat_usage:44:7:resp-kai-stress-/);
+      expect(row.idempotencyKey).toMatch(
+        /^kai_chat_usage:44:7:resp-kai-stress-/
+      );
     }
     for (const result of results) {
       expect(result.reply).toMatch(/^Kai response /);
@@ -460,9 +486,12 @@ describe("aiRouter Kai Neon credit enforcement", () => {
         message: "Help me plan sales for next week",
         context: "dashboard",
         model: "kai-fast",
+        quality,
       });
 
-      expect(result.reply).toContain("I can help with your dashboard workflow.");
+      expect(result.reply).toContain(
+        "I can help with your dashboard workflow."
+      );
       expect(result.reply).toContain("concrete action plan");
     }
   });
@@ -476,6 +505,7 @@ describe("aiRouter Kai Neon credit enforcement", () => {
         message: "Are credits available?",
         context: "general",
         model: "kai-fast",
+        quality,
       })
     ).rejects.toMatchObject({
       code: "SERVICE_UNAVAILABLE",

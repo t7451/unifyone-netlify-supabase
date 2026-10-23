@@ -74,7 +74,11 @@ before deploying this code. The first adds manual-entry metadata and the
 owner/reference uniqueness constraint. The second preserves saved rates while
 allowing half-cent rates. The third creates the owner-scoped expense ledger.
 Validate on a development database first. These
-migrations have not been applied to production by this work.
+migrations were applied to the configured application database on October 23,
+2026, before the main-branch release. All four migrations (0058–0061) ran in one
+transaction with bounded lock/statement timeouts. Post-migration checks verified
+the tables, indexes, ownership foreign keys, and rate precision; saved mileage
+rates and deductions were compared inside the transaction and remained unchanged.
 
 Provider linking has separate prerequisites and migration 0058; see
 [CONNECTED_MONEY.md](CONNECTED_MONEY.md). Plaid and Argyle credentials, approvals,

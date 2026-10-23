@@ -1,3 +1,4 @@
+import { HOME_TITLE, HOME_DESCRIPTION } from "./marketing";
 /**
  * routeSeo.ts — per-route SEO metadata for non-SEO-landing routes.
  *
@@ -11,6 +12,8 @@
  *
  * Keep every `description` ≤158 characters (Ahrefs/Google snippet limit).
  */
+import { CHIME_PLACEMENT } from "./geo/chimePlacement";
+
 export interface RouteSeo {
   path: string;
   title: string;
@@ -1015,15 +1018,13 @@ const ROTH_IRA_LINKS = [
 export const ROUTE_SEO: RouteSeo[] = [
   {
     path: "/",
-    externalLinks: [IRS.mileage, IRS.estimated, IRS.selfEmployedCenter],
-    title:
-      "UnifyOne by 1Commerce — Gig Earnings & Tax Tracker for 1099 Workers",
-    description:
-      "Track gig earnings from DoorDash, Uber, Lyft, Instacart, Amazon Flex & Grubhub. Log IRS mileage and set aside quarterly taxes. Free + Pro $4.99/mo.",
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
     body: [
-      "UnifyOne is built for the 76M+ US gig and 1099 workers who drive, deliver, and shop across DoorDash, Uber, Uber Eats, Lyft, Instacart, Amazon Flex, and Grubhub. It pulls your earnings into one place so you finally know what you actually made — and what you owe.",
-      "GigIQ turns your shifts and payouts into clear earnings intelligence, so you can see which hours and platforms pay best. Tax Autopilot tracks deductible miles at the IRS standard mileage rate and estimates your quarterly Form 1040-ES payments, so a surprise tax bill never wrecks your year.",
-      "Money Manager keeps your set-aside, deductions, and cash flow organized, and Kai helps you make sense of the numbers. Start free, or upgrade to Pro for $4.99/month — no commerce contracts, no per-seat gotchas.",
+      "Your work is flexible. Your money should feel clear. UnifyOne helps independent workers log earnings, expenses, mileage, and shifts in one place.",
+      "Record work from different platforms or clients, review your earnings after expenses, and use the free calculators to plan ahead. Direct connections to gig platforms are not required to log your work.",
+      "Start with Gig Starter at no cost or choose Gig Pro for unlimited saved history, a year-round tax dashboard, priority support, and a larger AI allowance. Tax tools provide estimates, not tax filing.",
+      "Explore the free calculators without an account, or read the guide library for help with income records, budgeting, and tax planning.",
     ],
   },
   {
@@ -1094,6 +1095,9 @@ export const ROUTE_SEO: RouteSeo[] = [
       "That's why gig workers often target the higher end of the usual three-to-six-months-of-expenses range. Base the figure on essentials — housing, food, utilities, insurance, minimum debt payments — not total spending.",
       "Keep the fund safe and liquid in a separate high-yield savings account, distinct from both your spending money and your tax set-aside (which is money you already owe, not savings). On variable income, save a percentage of every payout rather than a fixed monthly amount, and route windfalls straight in.",
       "Start with a small milestone, then a one-month buffer, then the full fund. This is educational information, not financial advice.",
+      CHIME_PLACEMENT.label,
+      ...CHIME_PLACEMENT.paragraphs,
+      CHIME_PLACEMENT.source,
     ],
   },
   {
@@ -2543,27 +2547,39 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/architecture",
-    title: "Architecture | UnifyOne by 1Commerce",
+    title: "How UnifyOne is built | UnifyOne",
     description:
-      "How UnifyOne is built for gig and 1099 workers — GigIQ earnings intelligence, Tax Autopilot, Money Manager, and Kai, with more AI tools as they ship.",
+      "A plain-language overview of UnifyOne's React application, server API, account boundaries, and separate PostgreSQL data stores.",
   },
   {
     path: "/the-system",
-    title: "The System | UnifyOne",
+    title: "How UnifyOne works | Earnings, mileage & tax planning",
     description:
-      "How UnifyOne works for gig workers: GigIQ, Tax Autopilot, Money Manager, and Kai in one app, with more AI tools added as they ship. Free + Pro $4.99/mo.",
+      "See how UnifyOne helps independent workers log shifts, understand earnings after expenses, record mileage, and plan for taxes.",
+    body: [
+      "Log shifts and jobs, include earnings and expenses, and record mileage to build a useful picture of your working week.",
+      "Use the public calculators without an account, then create a free account when you want to track your work over time.",
+    ],
   },
   {
     path: "/pricing",
     title: "Pricing | UnifyOne",
     description:
-      "UnifyOne pricing for gig workers: Free forever, or Pro at $4.99/mo ($49/yr). Track earnings across every app, auto-log IRS mileage, and stay ahead of quarterly taxes.",
+      "Compare UnifyOne plans: free shift tracking, mileage, and calculators, or Pro for $4.99 a month or $49 a year. See billing and AI allowances.",
+    body: [
+      "Gig Starter includes shift tracking, a mileage log, tax calculators, and 25 AI requests per month. No credit card is required to start.",
+      "Gig Pro costs $4.99 per month or $49 per year, charged annually if you choose annual billing. Pro adds unlimited saved history, a year-round tax dashboard, priority support, and 250 AI requests per month.",
+    ],
   },
   {
     path: "/about",
-    title: "About | UnifyOne by 1Commerce",
+    title: "About UnifyOne | Built for independent work",
     description:
-      "UnifyOne is built by 1Commerce LLC (PNW Enterprises) of Canby, Oregon — earnings & tax tools that help gig and 1099 workers track real pay, capture IRS mileage deductions, and stay ahead of quarterly taxes.",
+      "Meet UnifyOne by 1Commerce: tools to help independent workers keep clearer earnings records, understand expenses, and plan for taxes.",
+    body: [
+      "UnifyOne is built by 1Commerce in Oregon to help independent workers keep a useful record of shifts, earnings, expenses, and mileage.",
+      "Explore the public calculators, begin a free tracking habit, or contact the team with a product question. Tax estimates and AI answers need review; the tools do not file your return.",
+    ],
   },
   {
     path: "/press",
@@ -2577,9 +2593,13 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/contact",
-    title: "Contact | UnifyOne",
+    title: "Contact & support | UnifyOne",
     description:
-      "Get in touch with the UnifyOne team at 1Commerce LLC — questions on gig earnings tracking, taxes, pricing, partnerships, and support.",
+      "Contact the UnifyOne team for product questions, account support, feedback, or partnerships. Use the form or email support@1commerce.online.",
+    body: [
+      "Contact support@1commerce.online or use the contact form for product questions, account help, feedback, and partnerships.",
+      "A brief description is enough to start. Please do not include passwords, payment details, or tax documents.",
+    ],
   },
   {
     path: "/tithes",
@@ -2591,37 +2611,45 @@ export const ROUTE_SEO: RouteSeo[] = [
     path: "/documents",
     title: "Documentation | UnifyOne",
     description:
-      "UnifyOne documentation — guides, integrations, case studies, and the full build timeline for the gig-worker earnings & tax app.",
+      "Start with UnifyOne's free tools and practical guides, then explore workflow examples, technical references, and the project history.",
   },
   {
     path: "/documents/case-studies",
-    title: "Case Studies | UnifyOne",
+    title: "Workflow examples | UnifyOne",
     description:
-      "Detailed case studies of UnifyOne features for gig workers: GigIQ earnings intelligence, Tax Autopilot, Money Manager, and the Kai AI assistant.",
+      "Illustrative workflows for comparing gig earnings, keeping mileage records, and planning irregular income with UnifyOne's free tools.",
   },
   {
     path: "/documents/integrations",
-    title: "Integration Guides | UnifyOne",
+    title: "Integration Guides | UnifyOne Documentation",
     description:
-      "Integration guides for UnifyOne — connect gig platforms and payout accounts, plus Kai, the Claude-powered AI assistant, to track earnings and taxes.",
+      "Developer reference examples for UnifyOne API configuration, MCP, webhooks, and n8n. Check account and deployment availability before use.",
   },
   {
     path: "/documents/work-proof",
-    title: "Build Timeline & Work Proof | UnifyOne",
+    title: "Project history | UnifyOne",
     description:
-      "Complete timeline of 36 development phases, deliverables, and technical achievements behind UnifyOne's gig-worker earnings & tax app.",
+      "The recorded development phases behind UnifyOne, with links to repository commits and releases. A project history, not a live feature-status report.",
   },
   {
     path: "/tools",
-    title: "Free Tools for Gig Workers & Sellers | UnifyOne",
+    title: "Free calculators for independent work | UnifyOne",
     description:
-      "Free tools for 1099 gig workers: mileage, quarterly tax, earnings consolidation, break-even pricing, and cash-flow tracking. No account required.",
+      "Explore free calculators for gig earnings, mileage, tax planning, pricing, and cash flow. Enter your own numbers to see an estimate.",
+    body: [
+      "Explore free calculators for earnings, mileage, hourly rates, estimated taxes, tax set-asides, cash flow, and resale pricing.",
+      "Enter your own numbers to see an estimate. Tax calculations support planning and do not replace professional advice.",
+    ],
   },
   {
     path: "/blog",
-    title: "Blog | UnifyOne by 1Commerce",
+    title: "Notes on independent work | UnifyOne",
     description:
-      "UnifyOne blog — gig-economy earnings, 1099 taxes, mileage deductions, and AI tools that help DoorDash, Uber, Lyft, and Instacart workers keep more pay.",
+      "Read UnifyOne essays on gig-worker earnings, mileage and 1099 tax tracking, and AI-assisted shift intelligence for drivers and freelancers.",
+    body: [
+      "Ideas and product notes on earnings, expenses, tax planning, and tools for independent work.",
+      "Explore the guide library for practical reading on taxes, money between paydays, and getting started with UnifyOne.",
+    ],
   },
   {
     path: "/blog/gig-worker-shift-intelligence",
@@ -2645,9 +2673,9 @@ export const ROUTE_SEO: RouteSeo[] = [
     externalLinks: [IRS.estimated],
     title: "Quarterly Estimated Tax Calculator — 1099 Self-Employed | UnifyOne",
     description:
-      "Free 1099 quarterly tax calculator for gig workers. See your SE tax + income tax and exact quarterly payment amounts with 2026 due dates.",
+      "Free 1099 quarterly tax calculator for gig workers. See your SE tax + income tax and estimated quarterly amounts with 2025 tax-year dates.",
     body: [
-      "1099 gig workers owe taxes four times a year, not just in April. This calculator estimates your self-employment tax and federal income tax from your net earnings, then breaks the total into the four quarterly payments the IRS expects — with the 2026 due dates.",
+      "1099 gig workers owe taxes four times a year, not just in April. This calculator estimates your self-employment tax and federal income tax from your net earnings, then breaks the total into the four quarterly payments the IRS expects — with the 2025 tax-year dates.",
       "Knowing each quarter's number in advance prevents underpayment penalties and April surprises. UnifyOne can derive these estimates from your live earnings so the amount is always current.",
     ],
   },
@@ -3057,9 +3085,13 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/resources",
-    title: "Resources | UnifyOne",
+    title: "Guides for independent work | UnifyOne",
     description:
-      "Free resources for gig and 1099 workers — earnings playbooks, mileage and tax templates, deduction guides, and video walkthroughs. Download free.",
+      "Practical guides for gig and freelance work: income records, mileage, tax planning, budgeting, and getting started with UnifyOne.",
+    body: [
+      "Browse practical guides about gig worker taxes, income records, budgeting on irregular income, emergency funds, and getting started.",
+      "Read the guides online, search the library by topic, and try the public calculators with your own numbers.",
+    ],
   },
   {
     path: "/sovereign",

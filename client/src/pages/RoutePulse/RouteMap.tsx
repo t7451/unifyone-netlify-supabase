@@ -1,3 +1,5 @@
+import { createRouteBasemaps } from "@shared/routePulseBasemap";
+import "./RouteMap.css";
 /**
  * Memoized Leaflet surface for RoutePulse.
  * Parent sheet/GPS/form state must NOT rebuild this tree unless map props change.
@@ -30,18 +32,9 @@ import { softInvalidateSize } from "./mapInvalidate";
 export const DEFAULT_CENTER: LatLngExpression = [45.5152, -122.6784];
 export const DEFAULT_ZOOM = 10;
 
-export const BASEMAPS = {
-  light: {
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  },
-  dark: {
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  },
-} as const;
+export const BASEMAPS = createRouteBasemaps(
+  import.meta.env.VITE_CARTO_BASEMAP_KEY
+);
 
 export type BasemapKey = keyof typeof BASEMAPS;
 
@@ -408,6 +401,9 @@ function RouteMapInner(props: RouteMapProps) {
     >
       <TileLayer
         key={props.basemap}
+        className={BASEMAPS[props.basemap].className}
+        maxNativeZoom={19}
+        referrerPolicy="strict-origin-when-cross-origin"
         attribution={BASEMAPS[props.basemap].attribution}
         url={BASEMAPS[props.basemap].url}
         updateWhenZooming={false}

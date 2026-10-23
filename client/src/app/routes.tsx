@@ -4,7 +4,6 @@ import { Route, Switch, useLocation } from "wouter";
 import LoadingExperience from "../components/LoadingExperience";
 import { useAuth } from "../_core/hooks/useAuth";
 import DashboardLayout from "../components/DashboardLayout";
-import GigResourceLinks from "../components/GigResourceLinks";
 import { getLoginUrl } from "../const";
 import { trpc } from "../lib/trpc";
 import { useTracking } from "../hooks/useTracking";
@@ -701,7 +700,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigIncomeAggregator />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -710,7 +708,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <TaxManagement1099 />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -719,7 +716,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigEarningsOptimizer />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -728,7 +724,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <FinancialIntelligenceGig />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -737,7 +732,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigRouteIntelligence />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -747,7 +741,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigTaxesHub />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -756,7 +749,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="doordash-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -765,7 +757,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="uber-driver-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -774,7 +765,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="instacart-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -783,7 +773,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="amazon-flex-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -792,7 +781,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="grubhub-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -801,7 +789,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="lyft-driver-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -810,7 +797,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="spark-driver-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -819,7 +805,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="shipt-shopper-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -828,7 +813,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="roadie-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -837,7 +821,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="gopuff-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -846,7 +829,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="taskrabbit-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -855,7 +837,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="rover-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -864,7 +845,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="upwork-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -873,7 +853,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="fiverr-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -882,7 +861,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="favor-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -891,7 +869,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="veho-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -900,7 +877,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="dolly-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -909,7 +885,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="goshare-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -918,7 +893,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="wag-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -927,7 +901,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="etsy-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -936,7 +909,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="ebay-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -945,7 +917,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="poshmark-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -954,7 +925,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="mercari-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -963,7 +933,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformTaxGuide slug="depop-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -973,7 +942,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="california-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -982,7 +950,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="texas-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -991,7 +958,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="florida-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1000,7 +966,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="new-york-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1009,7 +974,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="illinois-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1018,7 +982,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="washington-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1028,7 +991,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="doordash-vs-uber-eats" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1037,7 +999,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="instacart-vs-doordash" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1046,7 +1007,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="uber-vs-lyft-driver" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1056,7 +1016,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <Form1099Explainer />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1065,7 +1024,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigDeductionsGuide />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1074,7 +1032,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <HowToFileGigTaxes />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1083,7 +1040,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigQuarterlyTaxes />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1093,7 +1049,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="georgia-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1102,7 +1057,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="pennsylvania-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1111,7 +1065,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="new-jersey-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1120,7 +1073,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="arizona-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1129,7 +1081,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="ohio-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1138,7 +1089,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="north-carolina-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1147,7 +1097,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="michigan-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1156,7 +1105,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="colorado-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1165,7 +1113,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="virginia-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1174,7 +1121,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="massachusetts-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1183,7 +1129,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="maryland-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1192,7 +1137,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="minnesota-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1201,7 +1145,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="missouri-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1210,7 +1153,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="indiana-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1219,7 +1161,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="tennessee-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1228,7 +1169,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="nevada-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1237,7 +1177,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="wisconsin-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1246,7 +1185,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="oregon-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1255,7 +1193,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="south-carolina-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1264,7 +1201,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="alabama-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1273,7 +1209,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="louisiana-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1282,7 +1217,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="kentucky-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1291,7 +1225,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="oklahoma-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1300,7 +1233,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="connecticut-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1309,7 +1241,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="utah-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1318,7 +1249,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="iowa-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1327,7 +1257,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="kansas-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1336,7 +1265,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="new-mexico-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1345,7 +1273,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="nebraska-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1354,7 +1281,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="mississippi-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1363,7 +1289,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="arkansas-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1372,7 +1297,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="west-virginia-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1381,7 +1305,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="idaho-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1390,7 +1313,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="hawaii-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1399,7 +1321,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="maine-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1408,7 +1329,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="rhode-island-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1417,7 +1337,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="alaska-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1426,7 +1345,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="new-hampshire-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1435,7 +1353,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="south-dakota-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1444,7 +1361,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="wyoming-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1453,7 +1369,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="delaware-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1462,7 +1377,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="montana-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1471,7 +1385,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="north-dakota-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1480,7 +1393,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="vermont-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1489,7 +1401,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <StateTaxGuide slug="washington-dc-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1499,7 +1410,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <CityTaxGuide slug="new-york-city-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1508,7 +1418,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <CityTaxGuide slug="philadelphia-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1517,7 +1426,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <CityTaxGuide slug="portland-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1526,7 +1434,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <CityTaxGuide slug="detroit-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1535,7 +1442,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <CityTaxGuide slug="kansas-city-gig-worker-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1545,7 +1451,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="doordash-vs-grubhub" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1554,7 +1459,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="amazon-flex-vs-spark" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1563,7 +1467,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="instacart-vs-shipt" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1572,7 +1475,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="uber-vs-doordash" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1581,7 +1483,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="uber-eats-vs-grubhub" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1590,7 +1491,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="doordash-vs-spark" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1599,7 +1499,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="amazon-flex-vs-doordash" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1608,7 +1507,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="upwork-vs-fiverr" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1617,7 +1515,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="gopuff-vs-doordash" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1626,7 +1523,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="rover-vs-wag" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1635,7 +1531,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <PlatformComparison slug="lyft-vs-uber-eats" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1645,7 +1540,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-on-doordash" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1654,7 +1548,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-driving-for-uber" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1663,7 +1556,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-with-instacart" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1672,7 +1564,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-with-amazon-flex" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1681,7 +1572,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-with-lyft" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1690,7 +1580,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-delivering-for-grubhub" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1699,7 +1588,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-as-a-spark-driver" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1708,7 +1596,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-on-taskrabbit" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1717,7 +1604,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-with-rover" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1726,7 +1612,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-with-shipt" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1735,7 +1620,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-with-gopuff" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1744,7 +1628,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-with-roadie" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1753,7 +1636,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-with-favor" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1762,7 +1644,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GettingStartedGuide slug="how-to-make-money-with-wag" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1772,7 +1653,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="gig-worker-retirement" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1781,7 +1661,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="gig-worker-health-insurance" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1790,7 +1669,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="gig-worker-bookkeeping" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1799,7 +1677,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="gig-worker-budgeting" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1808,7 +1685,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="gig-worker-emergency-fund" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1817,7 +1693,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="gig-worker-debt-payoff" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1826,7 +1701,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="sep-ira-vs-solo-401k" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1835,7 +1709,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="llc-vs-sole-proprietorship" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1844,7 +1717,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="gig-worker-w2-job-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1853,7 +1725,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="multi-state-gig-taxes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1862,7 +1733,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="new-gig-worker-tax-checklist" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1871,7 +1741,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="self-employment-tax-explained" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1880,7 +1749,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="gig-worker-home-office-deduction" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1889,7 +1757,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="gig-worker-tax-mistakes" />
-              <GigResourceLinks />
             </>
           )}
         />
@@ -1898,7 +1765,6 @@ export function AppRoutes() {
           component={() => (
             <>
               <GigFinanceGuide slug="gig-worker-roth-ira" />
-              <GigResourceLinks />
             </>
           )}
         />

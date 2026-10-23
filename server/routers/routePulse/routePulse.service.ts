@@ -887,11 +887,11 @@ export type RouteResult = {
    * Waze data" UI chip and makes quota burn observable.
    */
   grounding?: {
+    /** Labels retained when cached routes are refreshed with live traffic. */
+    sources?: string[];
     tomtomIncidents: number;
     wazeAlerts: number;
     flowSamples: number;
-    /** Live sources added while refreshing a cached route. */
-    sources?: string[];
     /** Which TomTom products contributed to this response. */
     tomtomApis?: Array<
       | "routing"
@@ -1082,7 +1082,7 @@ async function writeCache(key: string, result: RouteResult) {
 }
 
 type BaseRoute = {
-  /** Live traffic delay when supplied by a routing provider, in seconds. */
+  /** Provider-reported live traffic delay, when available (seconds). */
   trafficDelayInSeconds?: number;
   distance: number;
   duration: number;
@@ -2973,7 +2973,8 @@ export async function getRoute(
               ...(cached.grounding ?? {}),
               tomtomIncidents: freshIncidents.length,
               wazeAlerts: cached.grounding?.wazeAlerts ?? 0,
-              flowSamples: freshFlow?.samples ?? cached.grounding?.flowSamples ?? 0,
+              flowSamples:
+                freshFlow?.samples ?? cached.grounding?.flowSamples ?? 0,
               sources: Array.from(
                 new Set([
                   ...(cached.grounding?.sources ?? []),
