@@ -2112,12 +2112,9 @@ export default function RoutePulse() {
   // present (pre-v13 cached responses).
   const mobileSummary = useMemo(() => {
     if (!routeQuery.data) return "";
-    const notes = (routeQuery.data as { localDriverNotes?: string[] })
-      .localDriverNotes;
     return getMobileSummary({
       incidents: routeQuery.data.route.incidents,
       leaveNowDelayMin: departureOutlook?.delayMin?.[0] ?? null,
-      localNote: notes?.[0] ?? null,
     });
   }, [routeQuery.data, departureOutlook]);
 
@@ -4340,7 +4337,7 @@ export default function RoutePulse() {
                               pathStyle?: string;
                             })
                           : null,
-                        routeVerdicts?.[i],
+                        routeVerdicts?.[i] ?? undefined,
                         isChosen
                       );
                       return (

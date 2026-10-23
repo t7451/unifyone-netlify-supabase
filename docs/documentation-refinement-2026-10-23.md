@@ -49,3 +49,9 @@ terms was performed. Technical examples were reviewed as documentation; external
 services and their live availability were not exercised. Local standalone Vite
 does not serve backend APIs, so transient local auth/API toasts are not evidence
 of production behavior.
+
+## RoutePulse follow-up
+
+The 20 TypeScript errors recorded above were resolved in the next pass. The
+full typecheck now passes. See [the RoutePulse repair report](routepulse-repair-2026-10-23.md)
+for validation, basemap recovery, and the separate full-suite test failures.

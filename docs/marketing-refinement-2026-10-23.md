@@ -69,3 +69,9 @@ branch and is not included here.
    consent behavior, and the signup journey on production and a physical phone.
 
 The source/build checks above do not confirm deployment or live contact delivery.
+
+## RoutePulse follow-up
+
+The 20 TypeScript errors recorded above were resolved in the next pass. The
+full typecheck now passes. See [the RoutePulse repair report](routepulse-repair-2026-10-23.md)
+for validation, basemap recovery, and the separate full-suite test failures.

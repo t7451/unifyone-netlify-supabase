@@ -63,3 +63,9 @@ features, lead delivery, physical devices, and production deployment were not
 verified. No production merge was performed. GitHub Actions on the prior commit
 could not start because the account was locked for billing; hosted checks must be
 reassessed separately. Pending Chime placement remains a separate change.
+
+## RoutePulse follow-up
+
+The 20 TypeScript errors recorded above were resolved in the next pass. The
+full typecheck now passes. See [the RoutePulse repair report](routepulse-repair-2026-10-23.md)
+for validation, basemap recovery, and the separate full-suite test failures.
