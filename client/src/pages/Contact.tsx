@@ -1,346 +1,213 @@
 import { useState } from "react";
+import { Link } from "wouter";
+import { ArrowUpRight, Mail } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import PageHead from "@/components/PageHead";
 import PublicLayout from "@/components/PublicLayout";
-import { CdnImage } from "@/components/CdnImage";
 import { SITE_URL } from "@/lib/siteConfig";
 
-const CANONICAL = `${SITE_URL}/contact`;
 const DESCRIPTION =
-  "Get in touch with the UnifyOne team. Questions about earnings tracking, mileage deductions, quarterly taxes, or pricing? We respond within one business day.";
-
-const SUPPORT_EMAIL = "support@1commerce.online";
-const ORG_ID = `${SITE_URL}/#organization`;
-
-const CONTACT_PAGE_JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "ContactPage",
-  "@id": CANONICAL,
-  url: CANONICAL,
-  name: "Contact | UnifyOne",
-  description:
-    "Get in touch with the UnifyOne team. Questions about pricing, enterprise plans, or integrations? We respond within one business day.",
-  isPartOf: { "@id": `${SITE_URL}/#website` },
-  inLanguage: "en-US",
-  about: { "@id": ORG_ID },
-};
-
-const ORGANIZATION_JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "@id": ORG_ID,
-  name: "1Commerce Solutions",
-  legalName: "1Commerce LLC",
-  alternateName: [
-    "PNW Enterprises",
-    "1Commerce LLC",
-    "PNW Enterprises / 1Commerce LLC",
-    "1Commerce",
-    "1-Commerce",
-    "UnifyOne Solutions",
-  ],
-  url: SITE_URL,
-  logo: `${SITE_URL}/favicon.svg`,
-  email: SUPPORT_EMAIL,
-  address: {
-    "@type": "PostalAddress",
-    addressLocality: "Canby",
-    addressRegion: "OR",
-    addressCountry: "US",
-  },
-  areaServed: "US",
-  sameAs: [
-    "https://github.com/unifyone",
-    "https://x.com/unifyone",
-    "https://www.instagram.com/1commerce_llc",
-    "https://1commerce.online",
-  ],
-  contactPoint: {
-    "@type": "ContactPoint",
-    contactType: "customer support",
-    email: SUPPORT_EMAIL,
-    availableLanguage: "en",
-  },
-};
-
-const BREADCRUMB_JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
-    { "@type": "ListItem", position: 2, name: "Contact", item: CANONICAL },
-  ],
-};
-
-const JSON_LD = [
-  CONTACT_PAGE_JSON_LD,
-  ORGANIZATION_JSON_LD,
-  BREADCRUMB_JSON_LD,
-];
-
+  "Contact the UnifyOne team for product questions, account support, feedback, or partnerships. Use the form or email support@1commerce.online.";
 function initialMessageFromQuery(): string {
   if (typeof window === "undefined") return "";
-  const topic = new URLSearchParams(window.location.search).get("topic");
-  if (topic !== "custom-resources") return "";
-
-  return "I'd like to request custom UnifyOne resources for my business.";
+  return new URLSearchParams(window.location.search).get("topic") ===
+    "custom-resources"
+    ? "I'd like to request custom UnifyOne resources for my business."
+    : "";
 }
-
 export default function Contact() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState(initialMessageFromQuery);
-  const [company, setCompany] = useState(""); // honeypot
+  const [company, setCompany] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
   const [feedback, setFeedback] = useState("");
-
   const sendContact = trpc.contact.send.useMutation();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (status === "sending") return;
     setStatus("sending");
     setFeedback("");
     try {
-      const res = await sendContact.mutateAsync({
-        name,
-        email,
-        message,
+      const result = await sendContact.mutateAsync({
+        name: name.trim(),
+        email: email.trim(),
+        message: message.trim(),
         company,
       });
-      if (res.success) {
-        setStatus("sent");
-        setFeedback(
-          "Your message was received. We'll respond within one business day."
-        );
-        setName("");
-        setEmail("");
-        setMessage("");
-      } else {
+      if (!result.success) {
         setStatus("error");
         setFeedback(
-          "Something went wrong. Please email us directly at support@1commerce.online"
+          result.message ||
+            "We could not send your message. Please try again or email support@1commerce.online."
         );
+        return;
       }
+      setStatus("sent");
+      setFeedback("Your message was received. Thanks for getting in touch.");
+      setName("");
+      setEmail("");
+      setMessage("");
     } catch {
       setStatus("error");
       setFeedback(
-        "Something went wrong. Please email us directly at support@1commerce.online"
+        "We could not send your message. Your text is still here. Try again, or email support@1commerce.online."
       );
     }
   };
-
   return (
     <PublicLayout>
       <PageHead
-        title="Contact | UnifyOne"
+        title="Contact & support | UnifyOne"
         description={DESCRIPTION}
-        canonical={CANONICAL}
-        jsonLd={JSON_LD}
+        canonical={SITE_URL + "/contact"}
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "ContactPage",
+            name: "Contact & support | UnifyOne",
+            description: DESCRIPTION,
+            url: SITE_URL + "/contact",
+          },
+        ]}
       />
-
-      <section
-        className="max-w-2xl mx-auto px-6 sm:px-8"
-        style={{ paddingTop: "8rem", paddingBottom: "6rem" }}
-      >
-        <div className="inscription mb-6" style={{ color: "#D4A843" }}>
-          CONTACT
-        </div>
-
-        <h1
-          className="font-cinzel text-4xl sm:text-5xl font-black mb-6"
-          style={{ color: "#F0E8D0" }}
+      <div className="marketing-page">
+        <header className="marketing-page-heading marketing-container">
+          <p className="marketing-eyebrow">Contact & support</p>
+          <h1>
+            A question.
+            <br />
+            An idea.
+            <br />
+            <em>We’re listening.</em>
+          </h1>
+          <p className="marketing-lead">
+            Tell us what you’re working through, or what would make UnifyOne
+            more useful to you.
+          </p>
+        </header>
+        <section
+          className="marketing-contact-grid marketing-container"
+          aria-label="Contact options"
         >
-          Talk to a human.
-        </h1>
-
-        <p
-          className="font-crimson text-lg mb-12"
-          style={{ color: "#6A6A6A", fontStyle: "italic", lineHeight: 1.7 }}
-        >
-          Questions about your earnings, mileage deductions, or quarterly taxes
-          — plus pricing, feedback, and support — write to us and we'll respond
-          within one business day. Or email{" "}
-          <a
-            href="mailto:support@1commerce.online"
-            style={{ color: "#D4A843" }}
-            className="underline"
-          >
-            support@1commerce.online
-          </a>{" "}
-          directly.
-        </p>
-
-        {/* Instagram */}
-        <div
-          className="flex items-center gap-6 mb-12 pb-12"
-          style={{ borderBottom: "1px solid #242424" }}
-        >
-          <a
-            href="https://www.instagram.com/1commerce_llc"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex-shrink-0"
-          >
-            <CdnImage
-              src="https://github.com/user-attachments/assets/6dbb3057-6f53-4fcd-9d50-edff38133fed"
-              alt="Follow @1COMMERCE_LLC on Instagram — scan QR code"
-              width={100}
-              height={100}
-              fit="cover"
-              className="rounded-lg opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-              style={{ imageRendering: "pixelated" }}
-            />
-          </a>
           <div>
-            <span
-              className="inscription block mb-2"
-              style={{ color: "#D4A843" }}
-            >
-              INSTAGRAM
-            </span>
+            <h2>Talk to the team.</h2>
+            <p>
+              For account help, product questions, partnerships, or feedback,
+              send us a note here.
+            </p>
             <a
-              href="https://www.instagram.com/1commerce_llc"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-cinzel text-sm tracking-widest transition-colors duration-200"
-              style={{ color: "#8A8A8A", letterSpacing: "0.15em" }}
-              onMouseEnter={e =>
-                ((e.currentTarget as HTMLElement).style.color = "#D4A843")
-              }
-              onMouseLeave={e =>
-                ((e.currentTarget as HTMLElement).style.color = "#8A8A8A")
-              }
+              href="mailto:support@1commerce.online"
+              className="marketing-text-link"
             >
-              @1COMMERCE_LLC
+              <Mail size={18} aria-hidden="true" />
+              support@1commerce.online
             </a>
-            <p
-              className="font-crimson text-sm mt-1"
-              style={{ color: "#5A5A5A", fontStyle: "italic" }}
-            >
-              Scan to follow — product updates, tax tips for gig workers, and
-              behind-the-scenes build notes.
+            <p>
+              Please keep passwords, payment details, and tax documents out of
+              your message. A brief description is enough to get started.
+            </p>
+            <p>
+              Looking for a quick answer?
+              <br />
+              <Link className="marketing-text-link" href="/pricing">
+                Compare plans →
+              </Link>
+              <br />
+              <Link className="marketing-text-link" href="/tools">
+                Explore the free tools →
+              </Link>
             </p>
           </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label
-              className="block inscription mb-2"
-              style={{ color: "#5A5A5A" }}
+          <div className="marketing-contact-card">
+            <form
+              onSubmit={handleSubmit}
+              className="marketing-contact-form"
+              aria-busy={status === "sending"}
             >
-              NAME
-            </label>
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={e => setName(e.target.value)}
-              className="w-full px-4 py-3 font-crimson text-base"
-              style={{
-                backgroundColor: "#0A0A0A",
-                border: "1px solid #242424",
-                color: "#F0E8D0",
-                outline: "none",
-              }}
-            />
+              <label>
+                Your name
+                <input
+                  name="name"
+                  autoComplete="name"
+                  required
+                  maxLength={120}
+                  value={name}
+                  onChange={event => setName(event.target.value)}
+                />
+              </label>
+              <label>
+                Email address
+                <input
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  maxLength={254}
+                  value={email}
+                  onChange={event => setEmail(event.target.value)}
+                />
+              </label>
+              <label>
+                Your message
+                <textarea
+                  name="message"
+                  required
+                  minLength={10}
+                  maxLength={5000}
+                  rows={6}
+                  value={message}
+                  onChange={event => setMessage(event.target.value)}
+                  aria-describedby="contact-message-hint"
+                />
+              </label>
+              <span id="contact-message-hint" className="marketing-fine">
+                At least 10 characters. Include the page or feature you’re
+                asking about.
+              </span>
+              <div className="marketing-honeypot" aria-hidden="true">
+                <label>
+                  Company
+                  <input
+                    name="company"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={company}
+                    onChange={event => setCompany(event.target.value)}
+                  />
+                </label>
+              </div>
+              {feedback && (
+                <div
+                  className="marketing-feedback"
+                  data-error={status === "error"}
+                  role={status === "error" ? "alert" : "status"}
+                >
+                  {feedback}
+                </div>
+              )}
+              <button
+                className="marketing-button"
+                type="submit"
+                disabled={status === "sending"}
+              >
+                {status === "sending"
+                  ? "Sending…"
+                  : status === "sent"
+                    ? "Send another message"
+                    : "Send message"}
+                <ArrowUpRight size={18} aria-hidden="true" />
+              </button>
+              <p className="marketing-fine">
+                We use your details to respond to your request.{" "}
+                <Link href="/privacy">Privacy policy</Link>.
+              </p>
+            </form>
           </div>
-
-          <div>
-            <label
-              className="block inscription mb-2"
-              style={{ color: "#5A5A5A" }}
-            >
-              EMAIL
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full px-4 py-3 font-crimson text-base"
-              style={{
-                backgroundColor: "#0A0A0A",
-                border: "1px solid #242424",
-                color: "#F0E8D0",
-                outline: "none",
-              }}
-            />
-          </div>
-
-          <div>
-            <label
-              className="block inscription mb-2"
-              style={{ color: "#5A5A5A" }}
-            >
-              MESSAGE
-            </label>
-            <textarea
-              required
-              minLength={10}
-              rows={6}
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-              className="w-full px-4 py-3 font-crimson text-base resize-y"
-              style={{
-                backgroundColor: "#0A0A0A",
-                border: "1px solid #242424",
-                color: "#F0E8D0",
-                outline: "none",
-              }}
-            />
-          </div>
-
-          {/* Honeypot — hidden from real users */}
-          <div
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              left: "-9999px",
-              width: 1,
-              height: 1,
-              overflow: "hidden",
-            }}
-          >
-            <label>
-              Company
-              <input
-                type="text"
-                tabIndex={-1}
-                autoComplete="off"
-                value={company}
-                onChange={e => setCompany(e.target.value)}
-              />
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            disabled={status === "sending" || status === "sent"}
-            className="btn-illuminate"
-            style={{ opacity: status === "sending" ? 0.6 : 1 }}
-          >
-            {status === "sending"
-              ? "Sending..."
-              : status === "sent"
-                ? "Message Sent"
-                : "Send Message"}
-          </button>
-
-          {feedback && (
-            <p
-              className="font-crimson text-sm"
-              style={{
-                color: status === "error" ? "#FF6B6B" : "#D4A843",
-              }}
-            >
-              {feedback}
-            </p>
-          )}
-        </form>
-      </section>
+        </section>
+      </div>
     </PublicLayout>
   );
 }

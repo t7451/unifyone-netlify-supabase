@@ -1,218 +1,119 @@
-/**
- * LandingPricing — pricing cards embedded in the landing page.
- *
- * Conversion logic: every click away from the landing page sheds
- * visitors. Put the buy decision on the page itself. Annual is the
- * default (higher LTV, "2 months free" anchor), Gig Pro is the
- * highlighted default choice, Gig Starter (free) removes signup
- * friction, and the refund guarantee sits directly under the buttons —
- * not in a footer FAQ.
- *
- * Reuses the canonical gig TIERS content so landing and /pricing never
- * drift.
- */
 import { useState } from "react";
-import { TIERS } from "@/content/pricing";
+import { Link } from "wouter";
+import { ArrowUpRight, Check } from "lucide-react";
+import {
+  GIG_PLAN_CATALOG,
+  formatGigPrice,
+  getGigAnnualSubtext,
+} from "@shared/gigPricing";
 import { getSignupUrl } from "@/const";
 
-export default function LandingPricing() {
-  const [billing, setBilling] = useState<"monthly" | "annual">("annual");
+const proPlan = GIG_PLAN_CATALOG.find(plan => plan.slug === "gig-pro")!;
+const annualSavings = Math.round(
+  (1 - proPlan.yearlyPriceCents / (proPlan.monthlyPriceCents * 12)) * 100
+);
 
+export default function LandingPricing() {
+  const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   return (
-    <section
-      id="pricing"
-      className="parchment-alt-bg"
-      style={{ padding: "5rem 0" }}
-    >
-      <div className="max-w-7xl mx-auto px-6 sm:px-8">
-        <div className="text-center mb-10">
-          <div className="inscription-ink mb-4">PRICING</div>
-          <h2
-            className="font-cinzel text-3xl sm:text-5xl font-black mb-4"
-            style={{ color: "var(--ink)" }}
-          >
-            Start free. Upgrade when it pays for itself.
+    <section id="pricing" className="marketing-pricing">
+      <div className="marketing-container marketing-section">
+        <div className="marketing-section-heading marketing-centered">
+          <p className="marketing-eyebrow">Room to start. Room to grow.</p>
+          <h2>
+            A simple place to start.
+            <br />A little more when you need it.
           </h2>
-          <p
-            className="font-crimson text-lg mx-auto"
-            style={{
-              color: "var(--ink-soft)",
-              fontStyle: "italic",
-              maxWidth: 480,
-            }}
-          >
-            Track every shift, mile, and dollar you owe. Free forever — go Pro
-            when it pays for itself.
+          <p>
+            Keep the basics free. Choose Pro for a longer view of your work.
           </p>
         </div>
-
-        {/* Billing toggle — annual default */}
-        <div className="flex justify-center mb-8">
-          <div
-            className="inline-flex items-center p-1"
-            style={{
-              border: "1px solid var(--parchment-line)",
-              borderRadius: "var(--radius-soft)",
-              backgroundColor: "var(--parchment)",
-            }}
+        <div
+          className="marketing-billing"
+          role="group"
+          aria-label="Billing period"
+        >
+          <button
+            type="button"
+            aria-pressed={billing === "monthly"}
+            onClick={() => setBilling("monthly")}
           >
-            {(["annual", "monthly"] as const).map(mode => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setBilling(mode)}
-                className="px-4 py-2 font-cinzel text-sm transition-colors"
-                style={{
-                  backgroundColor:
-                    billing === mode ? "var(--gold-ink)" : "transparent",
-                  color:
-                    billing === mode ? "var(--parchment)" : "var(--ink-faint)",
-                  borderRadius: "calc(var(--radius-soft) - 2px)",
-                }}
-              >
-                {mode === "annual" ? (
-                  <>
-                    Annual
-                    <span
-                      className="ml-2 font-crimson"
-                      style={{
-                        color:
-                          billing === "annual" ? "var(--parchment)" : "#1F9D6B",
-                      }}
-                    >
-                      — 2 months free
-                    </span>
-                  </>
-                ) : (
-                  "Monthly"
-                )}
-              </button>
-            ))}
-          </div>
+            Monthly
+          </button>
+          <button
+            type="button"
+            aria-pressed={billing === "yearly"}
+            onClick={() => setBilling("yearly")}
+          >
+            Annual <span>Save about {annualSavings}%</span>
+          </button>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          {TIERS.map(tier => {
-            const showAnnual =
-              billing === "annual" && Boolean(tier.annualPrice);
-            const displayedPrice = showAnnual ? tier.annualPrice : tier.price;
-            const displayedPeriod = showAnnual
-              ? tier.annualPeriod
-              : tier.period;
-            const isPaid = tier.id !== "gig-starter";
-            const href = isPaid
+        <div className="marketing-plan-grid">
+          {GIG_PLAN_CATALOG.map(plan => {
+            const paid = plan.monthlyPriceCents > 0;
+            const annual = paid && billing === "yearly";
+            const href = paid
               ? getSignupUrl(
                   undefined,
-                  `/checkout/plan?plan=${tier.id}&period=${showAnnual ? "yearly" : "monthly"}`
+                  "/checkout/plan?plan=" + plan.slug + "&period=" + billing
                 )
-              : // Free gig-starter signup: land the new operator on the gig-first
-                // home, not the commerce dashboard.
-                getSignupUrl(undefined, "/overview");
-
+              : getSignupUrl(undefined, "/overview");
             return (
-              <div
-                key={tier.id}
-                className="surface-card relative p-8 sm:p-10"
-                style={
-                  tier.highlight
-                    ? {
-                        border: "2px solid var(--gold-ink)",
-                        boxShadow:
-                          "0 0 0 4px rgba(154,123,34,0.08), 0 8px 32px rgba(154,123,34,0.12)",
-                      }
-                    : undefined
+              <article
+                key={plan.slug}
+                className={
+                  "marketing-plan" + (paid ? " marketing-plan-pro" : "")
                 }
               >
-                {tier.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span
-                      className="inscription px-3 py-1"
-                      style={{
-                        backgroundColor: "var(--gold-ink)",
-                        color: "var(--parchment)",
-                        borderRadius: "var(--radius-pill)",
-                      }}
-                    >
-                      Most Chosen
-                    </span>
-                  </div>
-                )}
-
-                <div className="inscription-ink mb-6">
-                  {tier.name.toUpperCase()}
+                <div className="marketing-plan-title">
+                  <h3>{plan.name}</h3>
+                  <span>{paid ? "For the whole year" : "The essentials"}</span>
                 </div>
-
-                <div className="mb-2">
-                  <span
-                    className="font-cinzel text-4xl font-black"
-                    style={{ color: "var(--ink)" }}
-                  >
-                    {displayedPrice}
+                <p className="marketing-plan-price">
+                  {paid
+                    ? formatGigPrice(
+                        annual ? plan.yearlyPriceCents : plan.monthlyPriceCents
+                      )
+                    : "$0"}
+                  <span>
+                    {" "}
+                    / {paid ? (annual ? "year" : "month") : "forever"}
                   </span>
-                  <div
-                    className="font-crimson text-sm"
-                    style={{ color: "var(--ink-faint)" }}
-                  >
-                    / {displayedPeriod}
-                  </div>
-                  {showAnnual && tier.annualSubtext && (
-                    <div
-                      className="font-crimson text-sm mt-1"
-                      style={{ color: "var(--ink-faint)" }}
-                    >
-                      {tier.annualSubtext}
-                    </div>
-                  )}
-                </div>
-
-                <p
-                  className="font-crimson text-base mb-6"
-                  style={{ color: "var(--ink-soft)", fontStyle: "italic" }}
-                >
-                  {tier.description}
                 </p>
-
-                <div className="space-y-3 mb-8">
-                  {tier.features.slice(0, 6).map(f => (
-                    <div key={f} className="flex items-center gap-3">
-                      <div
-                        className="w-3 h-px shrink-0"
-                        style={{ backgroundColor: "var(--gold-ink)" }}
-                      />
-                      <span
-                        className="font-crimson text-sm"
-                        style={{ color: "var(--ink-soft)" }}
-                      >
-                        {f}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
+                <p className="marketing-plan-billing">
+                  {paid
+                    ? annual
+                      ? getGigAnnualSubtext(plan)
+                      : "Billed monthly. Annual billing is optional."
+                    : "No subscription payment or credit card needed."}
+                </p>
+                <p className="marketing-plan-description">{plan.description}</p>
                 <a
                   href={href}
                   className={
-                    tier.highlight
-                      ? "btn-solid-gold block text-center"
-                      : "btn-line-ink block text-center"
+                    "marketing-button" +
+                    (paid ? "" : " marketing-button-outline")
                   }
                 >
-                  {tier.cta}
+                  {paid ? "Choose Pro" : "Start free"}
+                  <ArrowUpRight size={17} aria-hidden="true" />
                 </a>
-
-                {/* Risk reversal at the point of decision */}
-                {isPaid && (
-                  <p
-                    className="font-crimson text-xs text-center mt-3"
-                    style={{ color: "var(--ink-faint)" }}
-                  >
-                    14-day full refund · cancel anytime
-                  </p>
-                )}
-              </div>
+                <ul>
+                  {plan.features.map(feature => (
+                    <li key={feature}>
+                      <Check size={17} aria-hidden="true" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </article>
             );
           })}
         </div>
+        <p className="marketing-pricing-note">
+          Prices in USD. Tax tools provide estimates, not tax filing.{" "}
+          <Link href="/terms">Review subscription terms</Link>.
+        </p>
       </div>
     </section>
   );
