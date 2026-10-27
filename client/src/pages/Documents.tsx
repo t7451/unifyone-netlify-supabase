@@ -1,6 +1,7 @@
 import "@/components/reading.css";
+import { useRef, useState } from "react";
 import { Link } from "wouter";
-import { ArrowUpRight, BookOpen } from "lucide-react";
+import { ArrowUpRight, BookOpen, Search } from "lucide-react";
 import PageHead from "@/components/PageHead";
 import PublicLayout from "@/components/PublicLayout";
 import { SITE_URL } from "@/lib/siteConfig";
@@ -57,6 +58,24 @@ const GROUPS = [
   },
 ];
 export default function Documents() {
+  const [search, setSearch] = useState("");
+  const searchInput = useRef<HTMLInputElement>(null);
+  const query = search.trim().toLowerCase();
+  const groups = GROUPS.map(group => ({
+    ...group,
+    links: group.links.filter(item =>
+      [item.title, item.text, group.title]
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    ),
+  })).filter(group => group.links.length);
+  const total = GROUPS.reduce((count, group) => count + group.links.length, 0);
+  const count = groups.reduce((count, group) => count + group.links.length, 0);
+  function clearSearch() {
+    setSearch("");
+    searchInput.current?.focus();
+  }
   return (
     <PublicLayout>
       <PageHead
@@ -83,28 +102,76 @@ export default function Documents() {
           </p>
         </header>
         <div className="marketing-container marketing-library">
-          {GROUPS.map(group => (
-            <section key={group.title} className="reference-group">
-              <h2>{group.title}</h2>
-              <p>{group.text}</p>
-              <div className="marketing-tool-grid">
-                {group.links.map(item => (
-                  <Link
-                    className="marketing-tool-card"
-                    key={item.href}
-                    href={item.href}
-                  >
-                    <BookOpen size={22} aria-hidden="true" />
-                    <h3>{item.title}</h3>
-                    <p>{item.text}</p>
-                    <span>
-                      Explore <ArrowUpRight size={16} aria-hidden="true" />
-                    </span>
-                  </Link>
-                ))}
+          <div className="marketing-library-controls">
+            <label className="marketing-search">
+              <Search size={18} aria-hidden="true" />
+              <span className="sr-only">Search documentation</span>
+              <input
+                ref={searchInput}
+                type="search"
+                aria-controls="document-results"
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+                onKeyDown={event => {
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    clearSearch();
+                  }
+                }}
+                placeholder="Search workflows, integrations, guides…"
+              />
+            </label>
+            {search && (
+              <button
+                type="button"
+                className="marketing-button marketing-button-outline"
+                onClick={clearSearch}
+              >
+                Clear search
+              </button>
+            )}
+          </div>
+          <p
+            className="marketing-result-count"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {count} {count === 1 ? "reference" : "references"} of {total}
+          </p>
+          <div id="document-results">
+            {!count && (
+              <div className="marketing-empty">
+                <h2>No matching references.</h2>
+                <p>
+                  Try another phrase or clear your search to browse the
+                  documentation.
+                </p>
               </div>
-            </section>
-          ))}
+            )}
+            {groups.map(group => (
+              <section key={group.title} className="reference-group">
+                <h2>{group.title}</h2>
+                <p>{group.text}</p>
+                <div className="marketing-tool-grid">
+                  {group.links.map(item => (
+                    <Link
+                      className="marketing-tool-card"
+                      key={item.href}
+                      href={item.href}
+                    >
+                      <BookOpen size={22} aria-hidden="true" />
+                      <h3>{item.title}</h3>
+                      <p>{item.text}</p>
+                      <span>
+                        Explore <ArrowUpRight size={16} aria-hidden="true" />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
           <aside className="reference-note">
             <h2>Need help with your account?</h2>
             <p>

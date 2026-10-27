@@ -285,654 +285,661 @@ function SectionHeader({
 export default function DesignSystem() {
   return (
     <PublicLayout>
-      <PageHead
-        title="Design System | UnifyOne"
-        description="The UnifyOne design system — Cathedral Framework tokens for color, typography, spacing, and radii, plus the full component library used across the product."
-        canonical={CANONICAL}
-        jsonLd={JSON_LD}
-      />
+      <div className="marketing-page">
+        <PageHead
+          title="Design System | UnifyOne"
+          description="The UnifyOne design system — Cathedral Framework tokens for color, typography, spacing, and radii, plus the full component library used across the product."
+          canonical={CANONICAL}
+          jsonLd={JSON_LD}
+        />
 
-      {/* Hero */}
-      <section className="relative cathedral-bg border-b border-border">
-        <div className="apex-light absolute inset-0 pointer-events-none" />
-        <div className="container mx-auto px-6 py-20 md:py-28 relative">
-          <div className="max-w-3xl">
-            <div className="inscription mb-4">The Cathedral Framework</div>
-            <h1 className="font-cinzel text-4xl md:text-6xl leading-tight mb-6">
-              <span className="gradient-gold">UnifyOne</span> Design System
-            </h1>
-            <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-              The canonical reference for color, typography, spacing, motion,
-              and components that power the UnifyOne product surface. Every
-              token here is wired into Tailwind and consumed by the component
-              library — change a token, change the system.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button asChild>
-                <Link href="/components">Browse component library</Link>
-              </Button>
-              <Button variant="outline" asChild>
-                <a href="#principles">Jump to tokens</a>
-              </Button>
-            </div>
-            <div className="mt-8 flex flex-wrap gap-2">
-              <Badge variant="outline">Tailwind CSS 4</Badge>
-              <Badge variant="outline">shadcn/ui · Radix</Badge>
-              <Badge variant="outline">OKLCH color space</Badge>
-              <Badge variant="outline">Dark-first</Badge>
+        {/* Hero */}
+        <section className="relative bg-background border-b border-border">
+          <div className="container mx-auto px-6 py-20 md:py-28 relative">
+            <div className="max-w-3xl">
+              <div className="inscription mb-4">The Cathedral Framework</div>
+              <h1 className="font-sans text-4xl md:text-6xl leading-tight mb-6">
+                <span className="text-primary">UnifyOne</span> Design System
+              </h1>
+              <p className="text-lg text-muted-foreground leading-relaxed mb-8">
+                The canonical reference for color, typography, spacing, motion,
+                and components that power the UnifyOne product surface. Every
+                token here is wired into Tailwind and consumed by the component
+                library — change a token, change the system.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild>
+                  <Link href="/components">Browse component library</Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <a href="#principles">Jump to tokens</a>
+                </Button>
+              </div>
+              <div className="mt-8 flex flex-wrap gap-2">
+                <Badge variant="outline">Tailwind CSS 4</Badge>
+                <Badge variant="outline">shadcn/ui · Radix</Badge>
+                <Badge variant="outline">OKLCH color space</Badge>
+                <Badge variant="outline">Dark-first</Badge>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* In-page TOC */}
-      <nav
-        aria-label="Design system sections"
-        className="sticky top-16 z-30 border-b border-border bg-background/85 backdrop-blur"
-      >
-        <div className="container mx-auto px-6">
-          <ul className="flex flex-wrap gap-x-6 gap-y-2 py-3 text-xs">
-            {SECTIONS.map(s => (
-              <li key={s.id}>
-                <a
-                  href={`#${s.id}`}
-                  className="inscription text-muted-foreground hover:text-gold transition-colors"
-                >
-                  {s.label}
-                </a>
-              </li>
+        {/* In-page TOC */}
+        <nav
+          aria-label="Design system sections"
+          className="sticky top-16 z-30 border-b border-border bg-background/85 backdrop-blur"
+        >
+          <div className="container mx-auto px-6">
+            <ul className="flex flex-wrap gap-x-6 gap-y-2 py-3 text-xs">
+              {SECTIONS.map(s => (
+                <li key={s.id}>
+                  <a
+                    href={`#${s.id}`}
+                    className="inscription text-muted-foreground hover:text-gold transition-colors"
+                  >
+                    {s.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </nav>
+
+        {/* Principles */}
+        <section
+          id="principles"
+          className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
+        >
+          <SectionHeader
+            eyebrow="Principles"
+            title="Sequential, structural, built to endure"
+            description="UnifyOne's interface is dark-first and gold-led. Surfaces are stone — quiet, layered, load-bearing. Color is structural, not decorative. Motion is restrained. Geometry is squared, like cathedral stone."
+          />
+          <div className="grid gap-6 md:grid-cols-3">
+            {[
+              {
+                title: "Dark by default",
+                body: "Backgrounds descend from void to nave, building visual hierarchy through depth rather than borders. Tokens are defined once and reused everywhere.",
+              },
+              {
+                title: "Gold is intent",
+                body: "Illuminated gold marks action, focus, and brand. Use it sparingly so it always reads as a signal — never as a decoration.",
+              },
+              {
+                title: "Geometry over ornament",
+                body: "Squared corners, hairline borders, and Cinzel inscriptions echo the architectural identity. Avoid arbitrary radii and gradients.",
+              },
+            ].map(p => (
+              <Card key={p.title} className="stone-card">
+                <CardHeader>
+                  <CardTitle className="font-cinzel text-xl text-gold-apex">
+                    {p.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {p.body}
+                  </p>
+                </CardContent>
+              </Card>
             ))}
-          </ul>
-        </div>
-      </nav>
+          </div>
+        </section>
 
-      {/* Principles */}
-      <section
-        id="principles"
-        className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
-      >
-        <SectionHeader
-          eyebrow="Principles"
-          title="Sequential, structural, built to endure"
-          description="UnifyOne's interface is dark-first and gold-led. Surfaces are stone — quiet, layered, load-bearing. Color is structural, not decorative. Motion is restrained. Geometry is squared, like cathedral stone."
-        />
-        <div className="grid gap-6 md:grid-cols-3">
-          {[
-            {
-              title: "Dark by default",
-              body: "Backgrounds descend from void to nave, building visual hierarchy through depth rather than borders. Tokens are defined once and reused everywhere.",
-            },
-            {
-              title: "Gold is intent",
-              body: "Illuminated gold marks action, focus, and brand. Use it sparingly so it always reads as a signal — never as a decoration.",
-            },
-            {
-              title: "Geometry over ornament",
-              body: "Squared corners, hairline borders, and Cinzel inscriptions echo the architectural identity. Avoid arbitrary radii and gradients.",
-            },
-          ].map(p => (
-            <Card key={p.title} className="stone-card">
+        <Separator />
+
+        {/* Color */}
+        <section
+          id="color"
+          className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
+        >
+          <SectionHeader
+            eyebrow="Color"
+            title="Stone & illumination"
+            description="Two palettes anchor the system. Stone provides the structural neutrals; gold provides the illuminated highlights. Both are exposed as CSS custom properties and as semantic Tailwind tokens."
+          />
+
+          <h3 className="font-cinzel text-xl text-foreground mb-4">
+            Stone palette
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-12">
+            {STONE_PALETTE.map(c => (
+              <ColorSwatch key={c.token} {...c} />
+            ))}
+          </div>
+
+          <h3 className="font-cinzel text-xl text-foreground mb-4">
+            Illumination palette
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-12">
+            {GOLD_PALETTE.map(c => (
+              <ColorSwatch key={c.token} {...c} />
+            ))}
+          </div>
+
+          <h3 className="font-cinzel text-xl text-foreground mb-4">
+            Semantic tokens
+          </h3>
+          <p className="text-sm text-muted-foreground mb-6 max-w-2xl">
+            These are the day-to-day tokens consumed by components via Tailwind
+            utilities (e.g. <code className="text-gold">bg-card</code>,{" "}
+            <code className="text-gold">text-muted-foreground</code>,{" "}
+            <code className="text-gold">ring-ring</code>). They map to the
+            underlying palettes above.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {SEMANTIC_TOKENS.map(s => (
+              <SemanticSwatch key={s.name} {...s} />
+            ))}
+          </div>
+        </section>
+
+        <Separator />
+
+        {/* Typography */}
+        <section
+          id="typography"
+          className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
+        >
+          <SectionHeader
+            eyebrow="Typography"
+            title="Three voices, one stack"
+            description="Cinzel inscribes — used for headings, eyebrows, and brand moments. Inter speaks — the default UI face for buttons, labels, and body. Crimson Pro reads — reserved for long-form editorial."
+          />
+
+          <div className="grid gap-6 md:grid-cols-3">
+            <Card className="stone-card">
               <CardHeader>
-                <CardTitle className="font-cinzel text-xl text-gold-apex">
-                  {p.title}
+                <CardTitle className="font-cinzel text-2xl text-gold-apex">
+                  Cinzel
                 </CardTitle>
+                <CardDescription>
+                  Display / inscriptions · serif
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {p.body}
+              <CardContent className="space-y-3">
+                <div className="font-cinzel text-4xl tracking-wider">
+                  UnifyOne
+                </div>
+                <p className="text-xs text-muted-foreground font-mono">
+                  .font-cinzel · letter-spacing 0.04em
                 </p>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* Color */}
-      <section
-        id="color"
-        className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
-      >
-        <SectionHeader
-          eyebrow="Color"
-          title="Stone & illumination"
-          description="Two palettes anchor the system. Stone provides the structural neutrals; gold provides the illuminated highlights. Both are exposed as CSS custom properties and as semantic Tailwind tokens."
-        />
-
-        <h3 className="font-cinzel text-xl text-foreground mb-4">
-          Stone palette
-        </h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-12">
-          {STONE_PALETTE.map(c => (
-            <ColorSwatch key={c.token} {...c} />
-          ))}
-        </div>
-
-        <h3 className="font-cinzel text-xl text-foreground mb-4">
-          Illumination palette
-        </h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-12">
-          {GOLD_PALETTE.map(c => (
-            <ColorSwatch key={c.token} {...c} />
-          ))}
-        </div>
-
-        <h3 className="font-cinzel text-xl text-foreground mb-4">
-          Semantic tokens
-        </h3>
-        <p className="text-sm text-muted-foreground mb-6 max-w-2xl">
-          These are the day-to-day tokens consumed by components via Tailwind
-          utilities (e.g. <code className="text-gold">bg-card</code>,{" "}
-          <code className="text-gold">text-muted-foreground</code>,{" "}
-          <code className="text-gold">ring-ring</code>). They map to the
-          underlying palettes above.
-        </p>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {SEMANTIC_TOKENS.map(s => (
-            <SemanticSwatch key={s.name} {...s} />
-          ))}
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* Typography */}
-      <section
-        id="typography"
-        className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
-      >
-        <SectionHeader
-          eyebrow="Typography"
-          title="Three voices, one stack"
-          description="Cinzel inscribes — used for headings, eyebrows, and brand moments. Inter speaks — the default UI face for buttons, labels, and body. Crimson Pro reads — reserved for long-form editorial."
-        />
-
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card className="stone-card">
-            <CardHeader>
-              <CardTitle className="font-cinzel text-2xl text-gold-apex">
-                Cinzel
-              </CardTitle>
-              <CardDescription>
-                Display / inscriptions · serif
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="font-cinzel text-4xl tracking-wider">
-                UnifyOne
-              </div>
-              <p className="text-xs text-muted-foreground font-mono">
-                .font-cinzel · letter-spacing 0.04em
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="stone-card">
-            <CardHeader>
-              <CardTitle className="text-2xl">Inter</CardTitle>
-              <CardDescription>UI / body · sans-serif</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="text-2xl">The quick brown fox</div>
-              <p className="text-xs text-muted-foreground font-mono">
-                default body — bg-background text-foreground
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="stone-card">
-            <CardHeader>
-              <CardTitle className="font-crimson text-2xl">
-                Crimson Pro
-              </CardTitle>
-              <CardDescription>Editorial / longform · serif</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="font-crimson text-lg leading-relaxed">
-                Sequential. Structural. Built to endure.
-              </p>
-              <p className="text-xs text-muted-foreground font-mono">
-                .font-crimson
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mt-10 stone-card p-6 space-y-4">
-          <div className="inscription">Type scale</div>
-          <div className="space-y-3">
-            <div>
-              <h1 className="font-cinzel text-5xl">
-                <span className="gradient-gold">Heading 1</span>
-              </h1>
-              <p className="text-xs text-muted-foreground font-mono">
-                text-5xl font-cinzel
-              </p>
-            </div>
-            <div>
-              <h2 className="font-cinzel text-3xl">Heading 2</h2>
-              <p className="text-xs text-muted-foreground font-mono">
-                text-3xl font-cinzel
-              </p>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold">Heading 3</h3>
-              <p className="text-xs text-muted-foreground font-mono">
-                text-xl font-semibold
-              </p>
-            </div>
-            <div>
-              <p className="text-base">
-                Body — the default reading size. Inter, 16px, line-height
-                relaxed.
-              </p>
-              <p className="text-xs text-muted-foreground font-mono">
-                text-base
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Muted — supporting copy, captions, helper text.
-              </p>
-              <p className="text-xs text-muted-foreground font-mono">
-                text-sm text-muted-foreground
-              </p>
-            </div>
-            <div>
-              <p className="inscription">Inscription · eyebrow label</p>
-              <p className="text-xs text-muted-foreground font-mono">
-                .inscription
-              </p>
-            </div>
+            <Card className="stone-card">
+              <CardHeader>
+                <CardTitle className="text-2xl">Inter</CardTitle>
+                <CardDescription>UI / body · sans-serif</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="text-2xl">The quick brown fox</div>
+                <p className="text-xs text-muted-foreground font-mono">
+                  default body — bg-background text-foreground
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="stone-card">
+              <CardHeader>
+                <CardTitle className="font-crimson text-2xl">
+                  Crimson Pro
+                </CardTitle>
+                <CardDescription>Editorial / longform · serif</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="font-crimson text-lg leading-relaxed">
+                  Sequential. Structural. Built to endure.
+                </p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  .font-crimson
+                </p>
+              </CardContent>
+            </Card>
           </div>
-        </div>
-      </section>
 
-      <Separator />
-
-      {/* Spacing & Radii */}
-      <section
-        id="layout"
-        className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
-      >
-        <SectionHeader
-          eyebrow="Layout"
-          title="Spacing & geometry"
-          description="Spacing follows Tailwind's 4px base scale. Radii are deliberately small — Cathedral geometry favors squared corners that read as carved stone, not soft plastic."
-        />
-
-        <div className="grid gap-10 lg:grid-cols-2">
-          <div>
-            <h3 className="font-cinzel text-xl text-foreground mb-4">
-              Spacing scale
-            </h3>
-            <div className="stone-card p-6 space-y-3">
-              {SPACING_SCALE.map(s => (
-                <div key={s.token} className="flex items-center gap-4">
-                  <code className="text-xs text-gold font-mono w-12">
-                    {s.token}
-                  </code>
-                  <div
-                    aria-hidden="true"
-                    className="h-3 bg-primary/70"
-                    style={{ width: s.rem }}
-                  />
-                  <div className="text-xs text-muted-foreground font-mono">
-                    {s.rem} · {s.px}
-                  </div>
+          <div className="mt-10 stone-card p-6 space-y-4">
+            <div className="inscription">Type scale</div>
+            <div className="space-y-3">
+              <div>
+                <div className="font-cinzel text-5xl">
+                  <span className="gradient-gold">Heading 1</span>
                 </div>
-              ))}
+                <p className="text-xs text-muted-foreground font-mono">
+                  text-5xl font-cinzel
+                </p>
+              </div>
+              <div>
+                <h2 className="font-cinzel text-3xl">Heading 2</h2>
+                <p className="text-xs text-muted-foreground font-mono">
+                  text-3xl font-cinzel
+                </p>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold">Heading 3</h3>
+                <p className="text-xs text-muted-foreground font-mono">
+                  text-xl font-semibold
+                </p>
+              </div>
+              <div>
+                <p className="text-base">
+                  Body — the default reading size. Inter, 16px, line-height
+                  relaxed.
+                </p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  text-base
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Muted — supporting copy, captions, helper text.
+                </p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  text-sm text-muted-foreground
+                </p>
+              </div>
+              <div>
+                <p className="inscription">Inscription · eyebrow label</p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  .inscription
+                </p>
+              </div>
             </div>
           </div>
+        </section>
 
-          <div>
-            <h3 className="font-cinzel text-xl text-foreground mb-4">
-              Radii
-            </h3>
-            <div className="stone-card p-6 space-y-3">
-              {RADII.map(r => (
-                <div key={r.token} className="flex items-center gap-4">
-                  <code className="text-xs text-gold font-mono w-32 shrink-0">
-                    {r.token}
-                  </code>
-                  <div className="flex-1 text-xs text-muted-foreground font-mono break-all">
-                    {r.value}
+        <Separator />
+
+        {/* Spacing & Radii */}
+        <section
+          id="layout"
+          className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
+        >
+          <SectionHeader
+            eyebrow="Layout"
+            title="Spacing & geometry"
+            description="Spacing follows Tailwind's 4px base scale. Radii are deliberately small — Cathedral geometry favors squared corners that read as carved stone, not soft plastic."
+          />
+
+          <div className="grid gap-10 lg:grid-cols-2">
+            <div>
+              <h3 className="font-cinzel text-xl text-foreground mb-4">
+                Spacing scale
+              </h3>
+              <div className="stone-card p-6 space-y-3">
+                {SPACING_SCALE.map(s => (
+                  <div key={s.token} className="flex items-center gap-4">
+                    <code className="text-xs text-gold font-mono w-12">
+                      {s.token}
+                    </code>
+                    <div
+                      aria-hidden="true"
+                      className="h-3 bg-primary/70"
+                      style={{ width: s.rem }}
+                    />
+                    <div className="text-xs text-muted-foreground font-mono">
+                      {s.rem} · {s.px}
+                    </div>
                   </div>
-                  <div className="text-xs text-foreground/80 hidden sm:block">
-                    {r.note}
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-cinzel text-xl text-foreground mb-4">
+                Radii
+              </h3>
+              <div className="stone-card p-6 space-y-3">
+                {RADII.map(r => (
+                  <div key={r.token} className="flex items-center gap-4">
+                    <code className="text-xs text-gold font-mono w-32 shrink-0">
+                      {r.token}
+                    </code>
+                    <div className="flex-1 text-xs text-muted-foreground font-mono break-all">
+                      {r.value}
+                    </div>
+                    <div className="text-xs text-foreground/80 hidden sm:block">
+                      {r.note}
+                    </div>
                   </div>
+                ))}
+                <p className="text-xs text-muted-foreground pt-3 border-t border-border">
+                  The base radius is <code className="text-gold">0px</code> by
+                  design. Components like{" "}
+                  <code className="text-gold">Card</code> and{" "}
+                  <code className="text-gold">Button</code> reference these
+                  tokens so the entire system reshapes from a single value.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <Separator />
+
+        {/* Motion */}
+        <section
+          id="motion"
+          className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
+        >
+          <SectionHeader
+            eyebrow="Motion"
+            title="Restrained, purposeful, never decorative"
+            description="Motion in UnifyOne signals state changes and draws the eye toward illumination. Durations are short, easings are gentle, and ambient animation is reserved for loading and brand moments. Honor reduced-motion preferences."
+          />
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Card className="stone-card">
+              <CardHeader>
+                <CardTitle className="font-cinzel text-lg text-gold-apex">
+                  Durations
+                </CardTitle>
+                <CardDescription>Tailwind transition tokens</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex justify-between">
+                    <code className="text-gold font-mono text-xs">
+                      duration-150
+                    </code>
+                    <span className="text-muted-foreground">
+                      Hover &amp; focus
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <code className="text-gold font-mono text-xs">
+                      duration-200
+                    </code>
+                    <span className="text-muted-foreground">
+                      Button / link states
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <code className="text-gold font-mono text-xs">
+                      duration-300
+                    </code>
+                    <span className="text-muted-foreground">
+                      Surface transitions
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <code className="text-gold font-mono text-xs">
+                      duration-500
+                    </code>
+                    <span className="text-muted-foreground">
+                      Reveal on scroll
+                    </span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="stone-card">
+              <CardHeader>
+                <CardTitle className="font-cinzel text-lg text-gold-apex">
+                  Easings
+                </CardTitle>
+                <CardDescription>Standard curves only</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex justify-between">
+                    <code className="text-gold font-mono text-xs">
+                      ease-out
+                    </code>
+                    <span className="text-muted-foreground">
+                      Default — enter
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <code className="text-gold font-mono text-xs">ease-in</code>
+                    <span className="text-muted-foreground">
+                      Exit / dismiss
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <code className="text-gold font-mono text-xs">
+                      ease-in-out
+                    </code>
+                    <span className="text-muted-foreground">
+                      Loops &amp; floats
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <code className="text-gold font-mono text-xs">linear</code>
+                    <span className="text-muted-foreground">
+                      Spinners &amp; grids
+                    </span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="stone-card overflow-hidden">
+              <CardHeader>
+                <CardTitle className="font-cinzel text-lg text-gold-apex">
+                  Brand animations
+                </CardTitle>
+                <CardDescription>
+                  Reserved for loading &amp; hero moments
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="relative h-16 overflow-hidden border border-border">
+                  <div className="loading-grid absolute inset-0" aria-hidden />
                 </div>
-              ))}
-              <p className="text-xs text-muted-foreground pt-3 border-t border-border">
-                The base radius is <code className="text-gold">0px</code> by
-                design. Components like <code className="text-gold">Card</code>{" "}
-                and <code className="text-gold">Button</code> reference these
-                tokens so the entire system reshapes from a single value.
-              </p>
-            </div>
+                <ul className="space-y-1 text-xs font-mono">
+                  <li>
+                    <code className="text-gold">.loading-grid</code>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      — ambient pan
+                    </span>
+                  </li>
+                  <li>
+                    <code className="text-gold">.loading-orbit</code>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      — rotation 10s
+                    </span>
+                  </li>
+                  <li>
+                    <code className="text-gold">.loading-float</code>
+                    <span className="text-muted-foreground"> — drift 3.8s</span>
+                  </li>
+                  <li>
+                    <code className="text-gold">.loading-shimmer</code>
+                    <span className="text-muted-foreground"> — sweep 2.8s</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
           </div>
-        </div>
-      </section>
 
-      <Separator />
-
-      {/* Motion */}
-      <section
-        id="motion"
-        className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
-      >
-        <SectionHeader
-          eyebrow="Motion"
-          title="Restrained, purposeful, never decorative"
-          description="Motion in UnifyOne signals state changes and draws the eye toward illumination. Durations are short, easings are gentle, and ambient animation is reserved for loading and brand moments. Honor reduced-motion preferences."
-        />
-
-        <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="stone-card">
-            <CardHeader>
-              <CardTitle className="font-cinzel text-lg text-gold-apex">
-                Durations
-              </CardTitle>
-              <CardDescription>Tailwind transition tokens</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm">
-                <li className="flex justify-between">
-                  <code className="text-gold font-mono text-xs">
-                    duration-150
-                  </code>
-                  <span className="text-muted-foreground">
-                    Hover &amp; focus
-                  </span>
-                </li>
-                <li className="flex justify-between">
-                  <code className="text-gold font-mono text-xs">
-                    duration-200
-                  </code>
-                  <span className="text-muted-foreground">
-                    Button / link states
-                  </span>
-                </li>
-                <li className="flex justify-between">
-                  <code className="text-gold font-mono text-xs">
-                    duration-300
-                  </code>
-                  <span className="text-muted-foreground">
-                    Surface transitions
-                  </span>
-                </li>
-                <li className="flex justify-between">
-                  <code className="text-gold font-mono text-xs">
-                    duration-500
-                  </code>
-                  <span className="text-muted-foreground">
-                    Reveal on scroll
-                  </span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="stone-card">
-            <CardHeader>
-              <CardTitle className="font-cinzel text-lg text-gold-apex">
-                Easings
-              </CardTitle>
-              <CardDescription>Standard curves only</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm">
-                <li className="flex justify-between">
-                  <code className="text-gold font-mono text-xs">
-                    ease-out
-                  </code>
-                  <span className="text-muted-foreground">
-                    Default — enter
-                  </span>
-                </li>
-                <li className="flex justify-between">
-                  <code className="text-gold font-mono text-xs">
-                    ease-in
-                  </code>
-                  <span className="text-muted-foreground">Exit / dismiss</span>
-                </li>
-                <li className="flex justify-between">
-                  <code className="text-gold font-mono text-xs">
-                    ease-in-out
-                  </code>
-                  <span className="text-muted-foreground">
-                    Loops &amp; floats
-                  </span>
-                </li>
-                <li className="flex justify-between">
-                  <code className="text-gold font-mono text-xs">linear</code>
-                  <span className="text-muted-foreground">
-                    Spinners &amp; grids
-                  </span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="stone-card overflow-hidden">
-            <CardHeader>
-              <CardTitle className="font-cinzel text-lg text-gold-apex">
-                Brand animations
-              </CardTitle>
-              <CardDescription>
-                Reserved for loading &amp; hero moments
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="relative h-16 overflow-hidden border border-border">
-                <div className="loading-grid absolute inset-0" aria-hidden />
-              </div>
-              <ul className="space-y-1 text-xs font-mono">
-                <li>
-                  <code className="text-gold">.loading-grid</code>
-                  <span className="text-muted-foreground"> — ambient pan</span>
-                </li>
-                <li>
-                  <code className="text-gold">.loading-orbit</code>
-                  <span className="text-muted-foreground">
-                    {" "}
-                    — rotation 10s
-                  </span>
-                </li>
-                <li>
-                  <code className="text-gold">.loading-float</code>
-                  <span className="text-muted-foreground"> — drift 3.8s</span>
-                </li>
-                <li>
-                  <code className="text-gold">.loading-shimmer</code>
-                  <span className="text-muted-foreground">
-                    {" "}
-                    — sweep 2.8s
-                  </span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-
-        <p className="text-xs text-muted-foreground mt-6 max-w-2xl">
-          Animations live in <code className="text-gold">client/src/index.css</code>{" "}
-          alongside the tokens. Always wrap new motion in a{" "}
-          <code className="text-gold">prefers-reduced-motion</code> guard if it
-          loops or moves significantly.
-        </p>
-      </section>
-
-      <Separator />
-
-      {/* Components */}
-      <section
-        id="components"
-        className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
-      >
-        <SectionHeader
-          eyebrow="Components"
-          title="A library of stone blocks"
-          description="The component library is built on shadcn/ui + Radix primitives, restyled with the Cathedral tokens. Every component consumes the semantic tokens above — there is no per-component color."
-        />
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="stone-card">
-            <CardHeader>
-              <CardTitle>Buttons</CardTitle>
-              <CardDescription>
-                Primary, secondary, outline, ghost, destructive.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              <Button>Primary</Button>
-              <Button variant="secondary">Secondary</Button>
-              <Button variant="outline">Outline</Button>
-              <Button variant="ghost">Ghost</Button>
-              <Button variant="destructive">Destructive</Button>
-            </CardContent>
-          </Card>
-
-          <Card className="stone-card">
-            <CardHeader>
-              <CardTitle>Badges</CardTitle>
-              <CardDescription>
-                Status chips for plans, states, and labels.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              <Badge>Default</Badge>
-              <Badge variant="secondary">Secondary</Badge>
-              <Badge variant="outline">Outline</Badge>
-              <Badge variant="destructive">Destructive</Badge>
-            </CardContent>
-          </Card>
-
-          <Card className="stone-card">
-            <CardHeader>
-              <CardTitle>Form controls</CardTitle>
-              <CardDescription>
-                Input, checkbox, switch — all inherit ring &amp; border tokens.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="ds-email">Email</Label>
-                <Input
-                  id="ds-email"
-                  type="email"
-                  placeholder="you@1commerce.online"
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <Checkbox id="ds-check" defaultChecked />
-                <Label htmlFor="ds-check" className="text-sm font-normal">
-                  Subscribe to release notes
-                </Label>
-              </div>
-              <div className="flex items-center gap-3">
-                <Switch id="ds-switch" defaultChecked />
-                <Label htmlFor="ds-switch" className="text-sm font-normal">
-                  Enable automation
-                </Label>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="stone-card">
-            <CardHeader>
-              <CardTitle>Interaction states</CardTitle>
-              <CardDescription>
-                Hover, focus-visible, disabled — driven entirely by tokens.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                <Button>Default</Button>
-                <Button className="hover:bg-primary/90">Hover</Button>
-                <Button className="ring-2 ring-ring ring-offset-2 ring-offset-background">
-                  Focus
-                </Button>
-                <Button disabled>Disabled</Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Focus rings use <code className="text-gold">--ring</code> with
-                an offset against <code className="text-gold">--background</code>{" "}
-                for accessibility against any surface.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mt-10 stone-card p-8 text-center">
-          <div className="inscription mb-3">Full library</div>
-          <h3 className="font-cinzel text-2xl mb-3">
-            70+ components, one canonical showcase
-          </h3>
-          <p className="text-sm text-muted-foreground max-w-xl mx-auto mb-6">
-            Accordion, alert, avatar, breadcrumb, calendar, carousel, command,
-            dialog, dropdown, form, input, popover, sheet, tabs, toast, tooltip
-            — every interactive primitive lives in the component library.
+          <p className="text-xs text-muted-foreground mt-6 max-w-2xl">
+            Animations live in{" "}
+            <code className="text-gold">client/src/index.css</code> alongside
+            the tokens. Always wrap new motion in a{" "}
+            <code className="text-gold">prefers-reduced-motion</code> guard if
+            it loops or moves significantly.
           </p>
-          <Button asChild>
-            <Link href="/components">Open component library →</Link>
-          </Button>
-        </div>
-      </section>
+        </section>
 
-      <Separator />
+        <Separator />
 
-      {/* Implementation */}
-      <section
-        id="implementation"
-        className="container mx-auto px-6 py-16 md:py-24 scroll-mt-24"
-      >
-        <SectionHeader
-          eyebrow="Implementation"
-          title="Where the tokens live"
-          description="The system is intentionally small and file-local. There is no design-tokens package — Tailwind reads CSS custom properties directly."
-        />
+        {/* Components */}
+        <section
+          id="components"
+          className="container mx-auto px-6 py-16 md:py-20 scroll-mt-24"
+        >
+          <SectionHeader
+            eyebrow="Components"
+            title="A library of stone blocks"
+            description="The component library is built on shadcn/ui + Radix primitives, restyled with the Cathedral tokens. Every component consumes the semantic tokens above — there is no per-component color."
+          />
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="stone-card">
-            <CardHeader>
-              <CardTitle className="font-cinzel text-lg text-gold-apex">
-                client/src/index.css
-              </CardTitle>
-              <CardDescription>
-                Source of truth for tokens, palettes, and base layer styles.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Defines the stone / gold palettes, the semantic mapping
-                (background, foreground, primary, etc.), radii, and Cathedral
-                utilities like <code className="text-gold">.font-cinzel</code>,{" "}
-                <code className="text-gold">.gradient-gold</code>, and{" "}
-                <code className="text-gold">.stone-card</code>.
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="stone-card">
-            <CardHeader>
-              <CardTitle className="font-cinzel text-lg text-gold-apex">
-                components.json
-              </CardTitle>
-              <CardDescription>
-                shadcn/ui config — New York variant, neutral base, CSS
-                variables.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Generated components live under{" "}
-                <code className="text-gold">client/src/components/ui/</code>{" "}
-                and consume the semantic tokens above. Add new components with
-                the standard shadcn workflow — the theme follows automatically.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="stone-card">
+              <CardHeader>
+                <CardTitle>Buttons</CardTitle>
+                <CardDescription>
+                  Primary, secondary, outline, ghost, destructive.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                <Button>Primary</Button>
+                <Button variant="secondary">Secondary</Button>
+                <Button variant="outline">Outline</Button>
+                <Button variant="ghost">Ghost</Button>
+                <Button variant="destructive">Destructive</Button>
+              </CardContent>
+            </Card>
+
+            <Card className="stone-card">
+              <CardHeader>
+                <CardTitle>Badges</CardTitle>
+                <CardDescription>
+                  Status chips for plans, states, and labels.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                <Badge>Default</Badge>
+                <Badge variant="secondary">Secondary</Badge>
+                <Badge variant="outline">Outline</Badge>
+                <Badge variant="destructive">Destructive</Badge>
+              </CardContent>
+            </Card>
+
+            <Card className="stone-card">
+              <CardHeader>
+                <CardTitle>Form controls</CardTitle>
+                <CardDescription>
+                  Input, checkbox, switch — all inherit ring &amp; border
+                  tokens.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="ds-email">Email</Label>
+                  <Input
+                    id="ds-email"
+                    type="email"
+                    placeholder="you@1commerce.online"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <Checkbox id="ds-check" defaultChecked />
+                  <Label htmlFor="ds-check" className="text-sm font-normal">
+                    Subscribe to release notes
+                  </Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Switch id="ds-switch" defaultChecked />
+                  <Label htmlFor="ds-switch" className="text-sm font-normal">
+                    Enable automation
+                  </Label>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="stone-card">
+              <CardHeader>
+                <CardTitle>Interaction states</CardTitle>
+                <CardDescription>
+                  Hover, focus-visible, disabled — driven entirely by tokens.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  <Button>Default</Button>
+                  <Button className="hover:bg-primary/90">Hover</Button>
+                  <Button className="ring-2 ring-ring ring-offset-2 ring-offset-background">
+                    Focus
+                  </Button>
+                  <Button disabled>Disabled</Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Focus rings use <code className="text-gold">--ring</code> with
+                  an offset against{" "}
+                  <code className="text-gold">--background</code> for
+                  accessibility against any surface.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="mt-10 stone-card p-8 text-center">
+            <div className="inscription mb-3">Full library</div>
+            <h3 className="font-cinzel text-2xl mb-3">
+              70+ components, one canonical showcase
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-xl mx-auto mb-6">
+              Accordion, alert, avatar, breadcrumb, calendar, carousel, command,
+              dialog, dropdown, form, input, popover, sheet, tabs, toast,
+              tooltip — every interactive primitive lives in the component
+              library.
+            </p>
+            <Button asChild>
+              <Link href="/components">Open component library →</Link>
+            </Button>
+          </div>
+        </section>
+
+        <Separator />
+
+        {/* Implementation */}
+        <section
+          id="implementation"
+          className="container mx-auto px-6 py-16 md:py-24 scroll-mt-24"
+        >
+          <SectionHeader
+            eyebrow="Implementation"
+            title="Where the tokens live"
+            description="The system is intentionally small and file-local. There is no design-tokens package — Tailwind reads CSS custom properties directly."
+          />
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="stone-card">
+              <CardHeader>
+                <CardTitle className="font-cinzel text-lg text-gold-apex">
+                  client/src/index.css
+                </CardTitle>
+                <CardDescription>
+                  Source of truth for tokens, palettes, and base layer styles.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Defines the stone / gold palettes, the semantic mapping
+                  (background, foreground, primary, etc.), radii, and Cathedral
+                  utilities like <code className="text-gold">.font-cinzel</code>
+                  , <code className="text-gold">.gradient-gold</code>, and{" "}
+                  <code className="text-gold">.stone-card</code>.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="stone-card">
+              <CardHeader>
+                <CardTitle className="font-cinzel text-lg text-gold-apex">
+                  components.json
+                </CardTitle>
+                <CardDescription>
+                  shadcn/ui config — New York variant, neutral base, CSS
+                  variables.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Generated components live under{" "}
+                  <code className="text-gold">client/src/components/ui/</code>{" "}
+                  and consume the semantic tokens above. Add new components with
+                  the standard shadcn workflow — the theme follows
+                  automatically.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      </div>
     </PublicLayout>
   );
 }

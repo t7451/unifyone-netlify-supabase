@@ -1,3 +1,4 @@
+import { BrandMark, BrandLockup } from "@/components/Brand";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -329,71 +330,23 @@ function DashboardLayoutContent({
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
                 onClick={toggleSidebar}
-                className="h-8 w-8 flex items-center justify-center transition-colors focus:outline-none shrink-0 hover:opacity-70"
+                className="h-8 w-8 flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f39450] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111416] shrink-0 hover:opacity-70"
                 aria-label="Toggle navigation"
               >
-                <PanelLeft className="h-4 w-4" style={{ color: "#B8B8B8" }} />
+                {isCollapsed ? (
+                  <BrandMark size={28} />
+                ) : (
+                  <PanelLeft className="h-4 w-4" style={{ color: "#B8B8B8" }} />
+                )}
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  {/* Cathedral cross glyph + wordmark */}
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div
-                      className="w-5 h-5 flex items-center justify-center shrink-0"
-                      style={{ border: "1px solid rgba(212,168,67,0.35)" }}
-                    >
-                      <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
-                        <line
-                          x1="4.5"
-                          y1="1"
-                          x2="4.5"
-                          y2="8"
-                          stroke="#D4A843"
-                          strokeWidth="1"
-                        />
-                        <line
-                          x1="1"
-                          y1="3.5"
-                          x2="8"
-                          y2="3.5"
-                          stroke="#D4A843"
-                          strokeWidth="1"
-                        />
-                      </svg>
-                    </div>
-                    <span
-                      className="font-cinzel text-xs font-700 truncate"
-                      style={{ color: "#D4A843", letterSpacing: "0.2em" }}
-                    >
-                      UNIFYONE
-                    </span>
-                  </div>
+                  <BrandLockup
+                    size={24}
+                    byline={false}
+                    className="min-w-0 flex-1 overflow-hidden !gap-1.5 [&_.brand-wordmark]:!text-[17px] [&_.brand-wordmark]:truncate"
+                  />
                   <NotificationCenter />
-                </div>
-              ) : null}
-              {isCollapsed ? (
-                <div
-                  className="w-7 h-7 flex items-center justify-center shrink-0"
-                  style={{ border: "1px solid rgba(212,168,67,0.3)" }}
-                >
-                  <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                    <line
-                      x1="5.5"
-                      y1="1"
-                      x2="5.5"
-                      y2="10"
-                      stroke="#D4A843"
-                      strokeWidth="1"
-                    />
-                    <line
-                      x1="1"
-                      y1="4"
-                      x2="10"
-                      y2="4"
-                      stroke="#D4A843"
-                      strokeWidth="1"
-                    />
-                  </svg>
                 </div>
               ) : null}
             </div>

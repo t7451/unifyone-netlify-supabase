@@ -93,6 +93,28 @@
   font-size: 14px;
   line-height: 1.7;
 }
+.marketing-site,
+:root[data-public-brand="unifyone"] {
+  color-scheme: dark;
+  --background: #111416;
+  --foreground: #f4f2ed;
+  --card: #1c2022;
+  --card-foreground: #f4f2ed;
+  --popover: #1c2022;
+  --popover-foreground: #f4f2ed;
+  --primary: #f39450;
+  --primary-foreground: #111416;
+  --secondary: #252c2f;
+  --secondary-foreground: #f4f2ed;
+  --muted: #252c2f;
+  --muted-foreground: #b5bab7;
+  --accent: #30383c;
+  --accent-foreground: #f4f2ed;
+  --border: #414b50;
+  --input: #414b50;
+  --ring: #f39450;
+  --destructive: #ff9992;
+}
 .marketing-site {
   --mk-paper: #111416;
   --mk-ink: #f4f2ed;
@@ -151,33 +173,6 @@
   letter-spacing: -1px;
   text-decoration: none;
   line-height: 1.05;
-}
-.marketing-brand small {
-  display: block;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.09em;
-  margin-top: 5px;
-  text-transform: uppercase;
-  color: var(--mk-muted);
-}
-.marketing-brand-mark {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  width: 41px;
-  height: 41px;
-  padding-top: 8px;
-  background: var(--mk-green);
-  color: var(--mk-paper);
-  border-radius: 3px;
-  font-size: 25px;
-  font-weight: 600;
-  letter-spacing: -3px;
-}
-.marketing-brand-mark span {
-  font-size: 16px;
-  color: inherit;
 }
 .marketing-desktop-nav {
   display: flex;
@@ -1000,14 +995,6 @@
   text-decoration: none;
   letter-spacing: -0.05em;
 }
-.marketing-footer-brand span {
-  display: block;
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.07em;
-  margin-top: 5px;
-  color: #aab2ae;
-}
 .marketing-footer-intro p {
   font-size: 12px;
   line-height: 1.9;
@@ -1092,15 +1079,6 @@
   }
   .marketing-brand {
     font-size: 21px;
-  }
-  .marketing-brand-mark {
-    width: 35px;
-    height: 35px;
-    font-size: 22px;
-    padding-top: 5px;
-  }
-  .marketing-brand small {
-    font-size: 8px;
   }
   .marketing-nav-actions {
     gap: 9px;
@@ -1290,19 +1268,11 @@
 }
 
 /* UnifyOne's public front door: working records, strong type, actual screens. */
-.marketing-brand small {
-  letter-spacing: 0;
-  text-transform: none;
-  font-size: 11px;
-}
 .marketing-nav {
   height: 76px;
 }
 .marketing-container {
   width: min(1240px, calc(100% - 80px));
-}
-.marketing-brand-mark {
-  font-weight: 700;
 }
 .work-front {
   overflow: clip;
@@ -1679,15 +1649,6 @@
     font-size: 21px;
     gap: 8px;
   }
-  .marketing-brand-mark {
-    width: 35px;
-    height: 35px;
-    padding-top: 6px;
-    font-size: 23px;
-  }
-  .marketing-brand small {
-    font-size: 9px;
-  }
   .marketing-nav-actions {
     gap: 10px;
   }
@@ -1851,5 +1812,115 @@
   }
   .work-faq > div > .marketing-text-link {
     margin-top: 18px;
+  }
+}
+
+/* Shared interaction states, scoped to public pages. */
+.marketing-site #main-content {
+  scroll-margin-top: 90px;
+}
+.marketing-site :where(button, input, select, textarea) {
+  font: inherit;
+}
+.marketing-site :where(input, select, textarea) {
+  accent-color: #f39450;
+}
+.marketing-site :where(a, button, summary, input, select, textarea) {
+  -webkit-tap-highlight-color: #f3945026;
+}
+.marketing-site :where(button:not(:disabled), summary, select) {
+  cursor: pointer;
+}
+.marketing-site
+  :where(button:disabled, input:disabled, select:disabled, textarea:disabled) {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.marketing-site :where(a, button, summary) {
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease,
+    opacity 140ms ease;
+}
+.marketing-site .marketing-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.marketing-site .marketing-button:hover {
+  transform: none;
+}
+.marketing-site .marketing-menu-toggle:hover {
+  background: #252c2f;
+  border-color: #f39450;
+}
+.marketing-site .marketing-mobile-menu {
+  overscroll-behavior: contain;
+}
+.marketing-site .marketing-mobile-menu > a:not(.marketing-button):hover {
+  color: #f39450;
+  padding-left: 5px;
+}
+.marketing-site .marketing-desktop-nav a {
+  position: relative;
+  padding-block: 12px;
+}
+.marketing-site .marketing-desktop-nav a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #f39450;
+}
+.marketing-site .marketing-footer nav a {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+.marketing-site .marketing-search:focus-within {
+  border-color: #f39450;
+  outline: 2px solid #f39450;
+  outline-offset: 3px;
+}
+.marketing-site .marketing-faq summary:hover {
+  color: #f39450;
+}
+.marketing-site .marketing-faq details[open] {
+  border-color: #f39450;
+}
+.marketing-site .marketing-contact-fields {
+  display: grid;
+  gap: 20px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.marketing-site .marketing-contact-fields:disabled {
+  opacity: 0.7;
+}
+.marketing-site .marketing-footer-brand .brand-wordmark > span {
+  display: inline;
+}
+.marketing-site .marketing-footer-brand .brand-byline {
+  display: block;
+  margin-top: 3px;
+}
+@media (max-width: 700px) {
+  .marketing-brand .brand-mark {
+    width: 34px;
+    height: 34px;
+  }
+  .marketing-site .marketing-mobile-menu .marketing-button {
+    color: #111416;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marketing-site :where(a, button, summary) {
+    transition: none;
+  }
+  .marketing-site .marketing-button:active:not(:disabled) {
+    transform: none;
   }
 }

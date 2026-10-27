@@ -1,3 +1,4 @@
+import PublicLayout from "@/components/PublicLayout";
 import {
   Accordion,
   AccordionContent,
@@ -173,7 +174,7 @@ import { useState } from "react";
 import { toast as sonnerToast } from "sonner";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
 
-export default function ComponentsShowcase() {
+function ComponentsShowcaseContent() {
   const { theme, toggleTheme } = useTheme();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [datePickerDate, setDatePickerDate] = useState<Date>();
@@ -227,12 +228,18 @@ export default function ComponentsShowcase() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="container max-w-6xl mx-auto">
-        <div className="space-y-2 justify-between flex">
-          <h2 className="text-3xl font-bold tracking-tight mb-6">
-            Shadcn/ui Component Library
-          </h2>
-          <Button variant="outline" size="icon" onClick={toggleTheme}>
+      <section className="container max-w-6xl mx-auto px-5 py-12">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <h1 className="text-3xl font-bold tracking-tight mb-6">
+            Component reference
+          </h1>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleTheme}
+            aria-label="Toggle app theme"
+            title="Toggle app theme"
+          >
             {theme === "light" ? (
               <Moon className="h-5 w-5" />
             ) : (
@@ -735,7 +742,7 @@ export default function ComponentsShowcase() {
                 <div className="space-y-2">
                   <Label>Pagination</Label>
                   <Pagination>
-                    <PaginationContent>
+                    <PaginationContent className="flex-wrap justify-center">
                       <PaginationItem>
                         <PaginationPrevious
                           href={`/components?page=${Math.max(1, currentPage - 1)}`}
@@ -989,8 +996,13 @@ export default function ComponentsShowcase() {
               <Card>
                 <CardHeader>
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" className="w-full justify-between">
-                      <CardTitle>@peduarte starred 3 repositories</CardTitle>
+                    <Button
+                      variant="ghost"
+                      className="h-auto min-h-11 w-full min-w-0 justify-between whitespace-normal text-left"
+                    >
+                      <CardTitle className="min-w-0 break-words">
+                        @peduarte starred 3 repositories
+                      </CardTitle>
                     </Button>
                   </CollapsibleTrigger>
                 </CardHeader>
@@ -1173,13 +1185,15 @@ export default function ComponentsShowcase() {
           <section className="space-y-4">
             <h3 className="text-2xl font-semibold">Calendar</h3>
             <Card>
-              <CardContent className="pt-6 flex justify-center">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  className="rounded-md border"
-                />
+              <CardContent className="pt-6 overflow-x-auto">
+                <div className="flex min-w-fit justify-center">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    className="rounded-md border"
+                  />
+                </div>
               </CardContent>
             </Card>
           </section>
@@ -1205,8 +1219,8 @@ export default function ComponentsShowcase() {
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
+                  <CarouselPrevious className="left-2" />
+                  <CarouselNext className="right-2" />
                 </Carousel>
               </CardContent>
             </Card>
@@ -1427,13 +1441,17 @@ export default function ComponentsShowcase() {
             </Card>
           </section>
         </div>
-      </main>
-
-      <footer className="border-t py-6 mt-12">
-        <div className="container text-center text-sm text-muted-foreground">
-          <p>Shadcn/ui Component Showcase</p>
-        </div>
-      </footer>
+      </section>
     </div>
+  );
+}
+
+export default function ComponentsShowcase() {
+  return (
+    <PublicLayout>
+      <div className="marketing-page">
+        <ComponentsShowcaseContent />
+      </div>
+    </PublicLayout>
   );
 }

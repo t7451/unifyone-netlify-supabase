@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { BrandMark, BrandLockup } from "@/components/Brand";
 import { useAuth } from "@/_core/hooks/useAuth";
 import LoadingExperience from "@/components/LoadingExperience";
 import { useLocation } from "wouter";
@@ -91,36 +92,7 @@ const FEATURES = [
 ];
 
 function LogoMark({ size = 40 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 40 40"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Cathedral cross medallion — gold on near-black */}
-      <rect
-        x="0.75"
-        y="0.75"
-        width="38.5"
-        height="38.5"
-        rx="6"
-        fill="#020202"
-        stroke="#D4A843"
-        strokeWidth="1.5"
-      />
-      <line x1="20" y1="9" x2="20" y2="31" stroke="#D4A843" strokeWidth="2.5" />
-      <line
-        x1="11"
-        y1="17"
-        x2="29"
-        y2="17"
-        stroke="#D4A843"
-        strokeWidth="2.5"
-      />
-    </svg>
-  );
+  return <BrandMark size={size} />;
 }
 
 type AuthMode = "password" | "sign-in" | "sign-up" | "forgot-password";
@@ -211,7 +183,7 @@ function ClerkSignInSection({
         variant="outline"
         onClick={handleClerkSignIn}
         disabled={isClerkSubmitting}
-        className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white"
+        className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-[#f4f2ed]"
       >
         {isClerkSubmitting ? (
           <span className="flex items-center gap-2">
@@ -643,23 +615,23 @@ export default function Login({
   // Success message (magic link sent, confirmation sent, etc.)
   if (successMessage) {
     return (
-      <div className="min-h-screen bg-[#020202] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#111416] flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center space-y-6">
           <LogoMark size={48} />
           <div className="space-y-2">
             <h2
-              className="font-cinzel text-2xl font-black"
-              style={{ color: "#F0E8D0" }}
+              className="font-[Inter,Arial,sans-serif] text-2xl font-semibold"
+              style={{ color: "#f4f2ed" }}
             >
               Check your email
             </h2>
-            <p className="font-crimson text-sm" style={{ color: "#9A9A9A" }}>
+            <p className="font-[Inter,Arial,sans-serif] text-sm" style={{ color: "#b5bab7" }}>
               {successMessage}
             </p>
           </div>
           <div className="flex items-start gap-2 p-3 rounded-lg bg-white/3 border border-white/5">
-            <Mail className="w-4 h-4 text-[#D4A843] mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-slate-500 leading-relaxed text-left">
+            <Mail className="w-4 h-4 text-[#f39450] mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-[#a2aaa7] leading-relaxed text-left">
               The link will expire in 1 hour. If you don't see the email, check
               your spam folder.
             </p>
@@ -670,7 +642,7 @@ export default function Login({
               setSuccessMessage(null);
               setError(null);
             }}
-            className="border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-sm"
+            className="border-white/10 bg-white/5 hover:bg-white/10 text-[#d0d3ce] hover:text-[#f4f2ed] text-sm"
           >
             Back to sign in
           </Button>
@@ -688,45 +660,28 @@ export default function Login({
   const isGoogleAvailable = providerStatus?.google.enabled === true;
   const hasOAuthProvider = isGoogleAvailable;
   return (
-    <div className="min-h-screen bg-[#020202] flex">
+    <div className="min-h-screen bg-[#111416] flex">
       {/* Left panel: branding + features */}
-      <div className="hidden lg:flex flex-col justify-between w-[520px] flex-shrink-0 bg-gradient-to-br from-[#0A0A0A] via-[#050505] to-[#020202] border-r border-white/5 p-12 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-[#D4A843]/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-[#8A6B22]/8 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none" />
-
+      <div className="hidden lg:flex flex-col justify-between w-[520px] flex-shrink-0 bg-[#1c2022] border-r border-white/5 p-12 relative overflow-hidden">
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-2">
-            <LogoMark size={36} />
-            <span
-              className="font-cinzel text-2xl font-bold"
-              style={{ color: "#D4A843", letterSpacing: "0.18em" }}
-            >
-              UNIFYONE
-            </span>
-          </div>
-          <p
-            className="font-crimson text-sm ml-[48px]"
-            style={{ color: "#6A6A6A" }}
-          >
-            by 1Commerce Solutions
-          </p>
+          <BrandLockup size={36} />
         </div>
 
         <div className="relative z-10 space-y-6">
           <div>
             <h1
-              className="font-cinzel text-3xl font-black leading-tight mb-3"
-              style={{ color: "#F0E8D0" }}
+              className="font-[Inter,Arial,sans-serif] text-3xl font-semibold leading-tight mb-3"
+              style={{ color: "#f4f2ed" }}
             >
               Know what you earn.
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F0D080] to-[#D4A843]">
+              <span className="text-[#f39450]">
                 Keep what you owe.
               </span>
             </h1>
             <p
-              className="font-crimson text-base leading-relaxed"
-              style={{ color: "#9A9A9A" }}
+              className="font-[Inter,Arial,sans-serif] text-base leading-relaxed"
+              style={{ color: "#b5bab7" }}
             >
               Earnings clarity and tax confidence for gig and 1099 workers —
               track every shift, mile, and dollar across all your apps, with
@@ -737,27 +692,27 @@ export default function Login({
           <div className="space-y-3">
             {FEATURES.map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-[#D4A843]/10 border border-[#D4A843]/20 flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-3.5 h-3.5 text-[#D4A843]" />
+                <div className="w-7 h-7 rounded-lg bg-[#f39450]/10 border border-[#f39450]/20 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-3.5 h-3.5 text-[#f39450]" />
                 </div>
-                <span className="text-sm text-slate-300">{text}</span>
+                <span className="text-sm text-[#d0d3ce]">{text}</span>
               </div>
             ))}
           </div>
         </div>
 
         <div className="relative z-10">
-          <div className="flex items-center gap-4 text-xs text-slate-600">
+          <div className="flex items-center gap-4 text-xs text-[#a2aaa7]">
             <span>&copy; 2025 1Commerce Solutions</span>
             <span>&middot;</span>
             <a
               href="/privacy"
-              className="hover:text-slate-400 transition-colors"
+              className="hover:text-[#b5bab7] transition-colors"
             >
               Privacy
             </a>
             <span>&middot;</span>
-            <a href="/terms" className="hover:text-slate-400 transition-colors">
+            <a href="/terms" className="hover:text-[#b5bab7] transition-colors">
               Terms
             </a>
           </div>
@@ -767,24 +722,18 @@ export default function Login({
       {/* Right panel: login form */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12">
         <div className="flex lg:hidden items-center gap-3 mb-10">
-          <LogoMark size={32} />
-          <span
-            className="font-cinzel text-xl font-bold"
-            style={{ color: "#D4A843", letterSpacing: "0.16em" }}
-          >
-            UNIFYONE
-          </span>
+          <BrandLockup size={32} />
         </div>
 
         <div className="w-full max-w-[400px] space-y-6">
           <div>
             <h2
-              className="font-cinzel text-2xl font-black mb-1"
-              style={{ color: "#F0E8D0" }}
+              className="font-[Inter,Arial,sans-serif] text-2xl font-semibold mb-1"
+              style={{ color: "#f4f2ed" }}
             >
               {intent === "signup" ? "Create your workspace" : "Welcome back"}
             </h2>
-            <p className="font-crimson text-sm" style={{ color: "#9A9A9A" }}>
+            <p className="font-[Inter,Arial,sans-serif] text-sm" style={{ color: "#b5bab7" }}>
               {intent === "signup"
                 ? "Start free. No credit card required."
                 : "Sign in to your UnifyOne workspace"}
@@ -799,7 +748,7 @@ export default function Login({
                 <button
                   onClick={handleResendVerification}
                   disabled={isResendingVerification}
-                  className="text-[#D4A843] hover:text-[#E8C25A] transition-colors text-xs underline underline-offset-2 disabled:opacity-50"
+                  className="text-[#f39450] hover:text-[#ffad74] transition-colors text-xs underline underline-offset-2 disabled:opacity-50"
                 >
                   {isResendingVerification
                     ? "Sending..."
@@ -812,7 +761,7 @@ export default function Login({
           {/* Form */}
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">
+              <Label className="text-[#d0d3ce] text-sm">
                 {intent === "signup" ? "Email" : "Email or username"}
               </Label>
               <Input
@@ -826,8 +775,8 @@ export default function Login({
                 onChange={e => setEmail(e.target.value)}
                 onKeyDown={handleKeyDown}
                 className={cn(
-                  "bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-11 transition-all",
-                  "focus:border-[#D4A843]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#D4A843]/20"
+                  "bg-white/5 border-white/10 text-[#f4f2ed] placeholder:text-[#a2aaa7] h-11 transition-all",
+                  "focus:border-[#f39450]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#f39450]/20"
                 )}
                 autoComplete="email"
                 autoFocus
@@ -836,9 +785,9 @@ export default function Login({
 
             {intent === "signup" && (
               <div className="space-y-1.5">
-                <Label className="text-slate-300 text-sm">Username</Label>
+                <Label className="text-[#d0d3ce] text-sm">Username</Label>
                 <div className="relative">
-                  <AtSign className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <AtSign className="w-4 h-4 text-[#a2aaa7] absolute left-3 top-1/2 -translate-y-1/2" />
                   <Input
                     type="text"
                     placeholder="yourname"
@@ -846,13 +795,13 @@ export default function Login({
                     onChange={e => setUsername(e.target.value.toLowerCase())}
                     onKeyDown={handleKeyDown}
                     className={cn(
-                      "bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-11 pl-9 transition-all",
-                      "focus:border-[#D4A843]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#D4A843]/20"
+                      "bg-white/5 border-white/10 text-[#f4f2ed] placeholder:text-[#a2aaa7] h-11 pl-9 transition-all",
+                      "focus:border-[#f39450]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#f39450]/20"
                     )}
                     autoComplete="username"
                   />
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[#a2aaa7]">
                   Lowercase letters, numbers, dots, hyphens, and underscores.
                 </p>
               </div>
@@ -861,11 +810,11 @@ export default function Login({
             {showPasswordField && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label className="text-slate-300 text-sm">Password</Label>
+                  <Label className="text-[#d0d3ce] text-sm">Password</Label>
                   {isSignInMode && (
                     <button
                       onClick={() => switchMode("forgot-password")}
-                      className="text-xs text-[#D4A843] hover:text-[#E8C25A] transition-colors"
+                      className="text-xs text-[#f39450] hover:text-[#ffad74] transition-colors"
                     >
                       Forgot password?
                     </button>
@@ -882,8 +831,8 @@ export default function Login({
                   onChange={e => setPassword(e.target.value)}
                   onKeyDown={handleKeyDown}
                   className={cn(
-                    "bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-11 transition-all",
-                    "focus:border-[#D4A843]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#D4A843]/20"
+                    "bg-white/5 border-white/10 text-[#f4f2ed] placeholder:text-[#a2aaa7] h-11 transition-all",
+                    "focus:border-[#f39450]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#f39450]/20"
                   )}
                   autoComplete={
                     mode === "sign-up" ? "new-password" : "current-password"
@@ -907,8 +856,8 @@ export default function Login({
               }
               className={cn(
                 "w-full h-11 font-semibold text-sm transition-all",
-                "bg-gradient-to-r from-[#E8C25A] to-[#C4952F] hover:from-[#F0D080] hover:to-[#D4A843]",
-                "text-[#020202] shadow-lg shadow-[#D4A843]/20",
+                "bg-[#f39450] hover:bg-[#ffad74]",
+                "text-[#111416] shadow-none",
                 isSubmitting && "opacity-80 cursor-not-allowed"
               )}
             >
@@ -943,7 +892,7 @@ export default function Login({
                   variant="outline"
                   onClick={handleGoogleOAuth}
                   disabled={isGoogleSubmitting}
-                  className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-white"
+                  className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-[#f4f2ed]"
                 >
                   {isGoogleSubmitting ? (
                     <span className="flex items-center gap-2">
@@ -955,7 +904,7 @@ export default function Login({
                   )}
                 </Button>
               )}
-              <p className="text-xs text-slate-500 text-center">
+              <p className="text-xs text-[#a2aaa7] text-center">
                 Social sign-in uses the configured provider settings and creates
                 the same secure UnifyOne session.
               </p>
@@ -971,7 +920,7 @@ export default function Login({
 
           {mode === "password" && (
             <>
-              <p className="text-center text-sm text-slate-500">
+              <p className="text-center text-sm text-[#a2aaa7]">
                 {intent === "signup" ? (
                   <>
                     Already have an account?{" "}
@@ -981,7 +930,7 @@ export default function Login({
                         setError(null);
                       }}
                       disabled={isSubmitting}
-                      className="text-[#D4A843] hover:text-[#E8C25A] font-medium transition-colors"
+                      className="text-[#f39450] hover:text-[#ffad74] font-medium transition-colors"
                     >
                       Sign in
                     </button>
@@ -995,7 +944,7 @@ export default function Login({
                         setError(null);
                       }}
                       disabled={isSubmitting}
-                      className="text-[#D4A843] hover:text-[#E8C25A] font-medium transition-colors"
+                      className="text-[#f39450] hover:text-[#ffad74] font-medium transition-colors"
                     >
                       Create an account
                     </button>
@@ -1007,8 +956,8 @@ export default function Login({
 
           {/* Security note */}
           <div className="flex items-start gap-2 p-3 rounded-lg bg-white/3 border border-white/5">
-            <Shield className="w-4 h-4 text-[#D4A843] mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <Shield className="w-4 h-4 text-[#f39450] mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-[#a2aaa7] leading-relaxed">
               Your password is securely hashed with scrypt. UnifyOne never
               stores your password in plain text.
             </p>

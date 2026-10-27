@@ -1,3 +1,4 @@
+import PublicLayout from "@/components/PublicLayout";
 import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -20,7 +21,6 @@ import { Link } from "wouter";
 import {
   Shield,
   Zap,
-  Lock,
   ChevronRight,
   CheckCircle,
   ArrowRight,
@@ -108,7 +108,7 @@ const CATHEDRAL_TIERS = [
     tier: "Tier 1",
     name: "Holding Company",
     icon: Building2,
-    color: "#D4A843",
+    color: "#f39450",
     desc: "Owns everything, does nothing. Pure control and liability separation.",
   },
   {
@@ -185,7 +185,7 @@ const TESTIMONIALS = [
   },
 ];
 
-export default function Sovereign() {
+function SovereignContent() {
   const [step, setStep] = useState<"landing" | "form" | "success">("landing");
   const [formData, setFormData] = useState({
     email: "",
@@ -271,10 +271,10 @@ export default function Sovereign() {
 
   if (step === "success") {
     return (
-      <div className="min-h-screen bg-[#030712] text-white flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[#111416] text-white flex items-center justify-center px-4">
         <div className="max-w-lg w-full text-center">
-          <div className="w-20 h-20 rounded-full bg-[#D4A843]/10 border border-[#D4A843]/30 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-[#D4A843]" />
+          <div className="w-20 h-20 rounded-full bg-[#f39450]/10 border border-[#f39450]/30 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-10 h-10 text-[#f39450]" />
           </div>
           <h1 className="text-3xl font-bold mb-4">You're on the list.</h1>
           <p className="text-gray-400 text-lg mb-2">
@@ -284,30 +284,30 @@ export default function Sovereign() {
           <p className="text-gray-500 text-sm mb-8">
             This isn't a newsletter. This is a conversation.
           </p>
-          <div className="bg-[#020202] border border-[#1E3A5F] rounded-xl p-6 mb-8 text-left">
+          <div className="bg-[#111416] border border-[#343a3d] rounded-xl p-6 mb-8 text-left">
             <p className="text-sm text-gray-400 mb-3 font-medium uppercase tracking-wider">
               While you wait
             </p>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
-                <CheckCircle className="w-4 h-4 text-[#D4A843] mt-0.5 shrink-0" />
+                <CheckCircle className="w-4 h-4 text-[#f39450] mt-0.5 shrink-0" />
                 <span className="text-sm text-gray-300">
                   Share the waitlist with one other founder who's tired of being
                   fragile
                 </span>
               </li>
               <li className="flex items-start gap-3">
-                <CheckCircle className="w-4 h-4 text-[#D4A843] mt-0.5 shrink-0" />
+                <CheckCircle className="w-4 h-4 text-[#f39450] mt-0.5 shrink-0" />
                 <span className="text-sm text-gray-300">
                   Explore UnifyOne — the gig earnings & tax app that powers the
                   stack:{" "}
-                  <Link href="/" className="text-[#D4A843] hover:underline">
+                  <Link href="/" className="text-[#f39450] hover:underline">
                     1commerce.online
                   </Link>
                 </span>
               </li>
               <li className="flex items-start gap-3">
-                <CheckCircle className="w-4 h-4 text-[#D4A843] mt-0.5 shrink-0" />
+                <CheckCircle className="w-4 h-4 text-[#f39450] mt-0.5 shrink-0" />
                 <span className="text-sm text-gray-300">
                   Follow Keith on LinkedIn for the Cathedral Principle breakdown
                 </span>
@@ -317,7 +317,7 @@ export default function Sovereign() {
           <Link href="/">
             <Button
               variant="outline"
-              className="border-[#1E3A5F] text-gray-300 hover:bg-[#020202]"
+              className="border-[#343a3d] text-gray-300 hover:bg-[#111416]"
             >
               ← Back to UnifyOne
             </Button>
@@ -328,35 +328,19 @@ export default function Sovereign() {
   }
 
   return (
-    <div className="min-h-screen bg-[#030712] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#111416] text-white overflow-x-hidden">
       <PageHead
         title="The Sovereign Stack | 1Commerce"
         description="The Sovereign Stack gives gig operators legal protection, financial independence, and resilience. Break free from platform lock-in. Waitlist open."
         canonical={SOV_CANONICAL}
         jsonLd={SOV_JSON_LD}
       />
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#030712]/90 backdrop-blur-sm border-b border-[#1E3A5F]/50">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/">
-            <span className="text-[#D4A843] font-bold text-lg tracking-tight">
-              1Commerce
-            </span>
-          </Link>
-          <Button
-            onClick={scrollToForm}
-            size="sm"
-            className="bg-[#D4A843] hover:bg-[#00B8D9] text-black font-semibold text-xs px-4"
-          >
-            Join Waitlist
-          </Button>
-        </div>
-      </nav>
 
       {/* Hero */}
-      <section className="pt-28 pb-20 px-4 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#D4A843]/5 via-transparent to-transparent pointer-events-none" />
+      <section className="pt-16 pb-20 px-4 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#f39450]/5 via-transparent to-transparent pointer-events-none" />
         <div className="max-w-4xl mx-auto text-center relative">
-          <Badge className="bg-[#D4A843]/10 text-[#D4A843] border-[#D4A843]/30 mb-6 text-xs px-3 py-1">
+          <Badge className="bg-[#f39450]/10 text-[#f39450] border-[#f39450]/30 mb-6 text-xs px-3 py-1">
             Limited Waitlist —{" "}
             {animatedCount > 0
               ? `${animatedCount} founders already in`
@@ -365,7 +349,7 @@ export default function Sovereign() {
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black leading-tight mb-6">
             Stop being fragile.
             <br />
-            <span className="text-[#D4A843]">Own the structure.</span>
+            <span className="text-[#f39450]">Own the structure.</span>
           </h1>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-6 leading-relaxed">
             The Sovereign Stack is a complete corporate and technical
@@ -388,7 +372,7 @@ export default function Sovereign() {
             <Button
               onClick={scrollToForm}
               size="lg"
-              className="bg-[#D4A843] hover:bg-[#00B8D9] text-black font-bold text-base px-8 h-14 w-full sm:w-auto"
+              className="bg-[#f39450] hover:bg-[#ffad70] text-black font-bold text-base px-8 h-14 w-full sm:w-auto"
             >
               Join the Waitlist <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
@@ -400,7 +384,7 @@ export default function Sovereign() {
       </section>
 
       {/* The Problem */}
-      <section className="py-16 px-4 bg-[#0A0F1E]">
+      <section className="py-16 px-4 bg-[#191e20]">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">The Solopreneur's Trap</h2>
@@ -429,7 +413,7 @@ export default function Sovereign() {
             ].map(item => (
               <div
                 key={item.title}
-                className="bg-[#0D1526] border border-red-900/30 rounded-xl p-6"
+                className="bg-[#1c2022] border border-red-900/30 rounded-xl p-6"
               >
                 <div className="text-2xl mb-3">{item.icon}</div>
                 <h3 className="font-semibold text-white mb-2">{item.title}</h3>
@@ -440,7 +424,7 @@ export default function Sovereign() {
           <div className="mt-8 text-center">
             <p className="text-xl font-semibold text-white">
               "We're told to hustle harder. That's a losing game.{" "}
-              <span className="text-[#D4A843]">
+              <span className="text-[#f39450]">
                 You're digging for gold with a plastic shovel while they own the
                 mountain.
               </span>
@@ -473,7 +457,7 @@ export default function Sovereign() {
               return (
                 <div
                   key={tier.tier}
-                  className="flex items-start gap-4 bg-[#020202] border border-[#1E3A5F] rounded-xl p-5"
+                  className="flex items-start gap-4 bg-[#111416] border border-[#343a3d] rounded-xl p-5"
                   style={{
                     marginLeft: `${i * 16}px`,
                     borderLeftColor: tier.color,
@@ -508,10 +492,10 @@ export default function Sovereign() {
       </section>
 
       {/* The Sovereign Tech Stack */}
-      <section className="py-16 px-4 bg-[#0A0F1E]">
+      <section className="py-16 px-4 bg-[#191e20]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <Badge className="bg-[#D4A843]/10 text-[#D4A843] border-[#D4A843]/30 mb-4 text-xs px-3 py-1">
+            <Badge className="bg-[#f39450]/10 text-[#f39450] border-[#f39450]/30 mb-4 text-xs px-3 py-1">
               The Technology
             </Badge>
             <h2 className="text-3xl font-bold mb-4">
@@ -526,10 +510,10 @@ export default function Sovereign() {
             {SOVEREIGN_STACK.map(item => (
               <div
                 key={item.label}
-                className="bg-[#0D1526] border border-[#1E3A5F] rounded-xl p-5"
+                className="bg-[#1c2022] border border-[#343a3d] rounded-xl p-5"
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-4 h-4 text-[#D4A843]" />
+                  <Zap className="w-4 h-4 text-[#f39450]" />
                   <span className="font-semibold text-sm text-white">
                     {item.label}
                   </span>
@@ -551,7 +535,7 @@ export default function Sovereign() {
               you.
             </p>
           </div>
-          <div className="bg-[#020202] border border-[#1E3A5F] rounded-2xl p-8">
+          <div className="bg-[#111416] border border-[#343a3d] rounded-2xl p-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
               {[
                 "Multi-entity corporate structure (Trust + Holding + Ops)",
@@ -566,12 +550,12 @@ export default function Sovereign() {
                 "Ongoing architecture consultation",
               ].map(item => (
                 <div key={item} className="flex items-start gap-3">
-                  <CheckCircle className="w-4 h-4 text-[#D4A843] mt-0.5 shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-[#f39450] mt-0.5 shrink-0" />
                   <span className="text-sm text-gray-300">{item}</span>
                 </div>
               ))}
             </div>
-            <div className="border-t border-[#1E3A5F] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="border-t border-[#343a3d] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
                 <p className="text-2xl font-bold text-white">
                   $5,000 – $10,000
@@ -582,7 +566,7 @@ export default function Sovereign() {
               </div>
               <Button
                 onClick={scrollToForm}
-                className="bg-[#D4A843] hover:bg-[#00B8D9] text-black font-bold px-8 h-12 w-full sm:w-auto"
+                className="bg-[#f39450] hover:bg-[#ffad70] text-black font-bold px-8 h-12 w-full sm:w-auto"
               >
                 Apply for a Spot <ChevronRight className="ml-1 w-4 h-4" />
               </Button>
@@ -592,7 +576,7 @@ export default function Sovereign() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-16 px-4 bg-[#0A0F1E]">
+      <section className="py-16 px-4 bg-[#191e20]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Early Feedback</h2>
@@ -601,7 +585,7 @@ export default function Sovereign() {
             {TESTIMONIALS.map(t => (
               <div
                 key={t.name}
-                className="bg-[#0D1526] border border-[#1E3A5F] rounded-xl p-6"
+                className="bg-[#1c2022] border border-[#343a3d] rounded-xl p-6"
               >
                 <div className="flex gap-0.5 mb-4">
                   {Array.from({ length: t.stars }).map((_, i) => (
@@ -611,7 +595,7 @@ export default function Sovereign() {
                     />
                   ))}
                 </div>
-                <Quote className="w-5 h-5 text-[#D4A843]/40 mb-3" />
+                <Quote className="w-5 h-5 text-[#f39450]/40 mb-3" />
                 <p className="text-sm text-gray-300 mb-4 italic">"{t.quote}"</p>
                 <div>
                   <p className="text-sm font-semibold text-white">{t.name}</p>
@@ -627,7 +611,7 @@ export default function Sovereign() {
       <section className="py-16 px-4">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
-            <Badge className="bg-[#D4A843]/10 text-[#D4A843] border-[#D4A843]/30 mb-4 text-xs px-3 py-1">
+            <Badge className="bg-[#f39450]/10 text-[#f39450] border-[#f39450]/30 mb-4 text-xs px-3 py-1">
               FAQ
             </Badge>
             <h2 className="text-3xl font-bold mb-4">
@@ -638,7 +622,7 @@ export default function Sovereign() {
             {SOV_FAQS.map(item => (
               <div
                 key={item.q}
-                className="bg-[#020202] border border-[#1E3A5F] rounded-xl p-6"
+                className="bg-[#111416] border border-[#343a3d] rounded-xl p-6"
               >
                 <h3 className="font-semibold text-white mb-2">{item.q}</h3>
                 <p className="text-sm text-gray-400 leading-relaxed">
@@ -654,7 +638,7 @@ export default function Sovereign() {
       <section ref={formRef} className="py-16 px-4" id="waitlist">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-10">
-            <Badge className="bg-[#D4A843]/10 text-[#D4A843] border-[#D4A843]/30 mb-4 text-xs px-3 py-1">
+            <Badge className="bg-[#f39450]/10 text-[#f39450] border-[#f39450]/30 mb-4 text-xs px-3 py-1">
               Limited Spots
             </Badge>
             <h2 className="text-3xl font-bold mb-4">Join the Waitlist</h2>
@@ -669,7 +653,7 @@ export default function Sovereign() {
               <Button
                 onClick={() => setStep("form")}
                 size="lg"
-                className="bg-[#D4A843] hover:bg-[#00B8D9] text-black font-bold text-base px-10 h-14"
+                className="bg-[#f39450] hover:bg-[#ffad70] text-black font-bold text-base px-10 h-14"
               >
                 Apply Now <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
@@ -677,7 +661,7 @@ export default function Sovereign() {
           ) : (
             <form
               onSubmit={handleSubmit}
-              className="bg-[#020202] border border-[#1E3A5F] rounded-2xl p-8 space-y-5"
+              className="bg-[#111416] border border-[#343a3d] rounded-2xl p-8 space-y-5"
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -692,7 +676,7 @@ export default function Sovereign() {
                     onChange={e =>
                       setFormData(p => ({ ...p, email: e.target.value }))
                     }
-                    className="bg-[#0D1526] border-[#1E3A5F] text-white placeholder:text-gray-600 focus:border-[#D4A843]"
+                    className="bg-[#1c2022] border-[#343a3d] text-white placeholder:text-gray-600 focus:border-[#f39450]"
                   />
                 </div>
                 <div>
@@ -705,7 +689,7 @@ export default function Sovereign() {
                     onChange={e =>
                       setFormData(p => ({ ...p, name: e.target.value }))
                     }
-                    className="bg-[#0D1526] border-[#1E3A5F] text-white placeholder:text-gray-600 focus:border-[#D4A843]"
+                    className="bg-[#1c2022] border-[#343a3d] text-white placeholder:text-gray-600 focus:border-[#f39450]"
                   />
                 </div>
               </div>
@@ -719,7 +703,7 @@ export default function Sovereign() {
                   onChange={e =>
                     setFormData(p => ({ ...p, company: e.target.value }))
                   }
-                  className="bg-[#0D1526] border-[#1E3A5F] text-white placeholder:text-gray-600 focus:border-[#D4A843]"
+                  className="bg-[#1c2022] border-[#343a3d] text-white placeholder:text-gray-600 focus:border-[#f39450]"
                 />
               </div>
               <div>
@@ -735,10 +719,10 @@ export default function Sovereign() {
                     }))
                   }
                 >
-                  <SelectTrigger className="bg-[#0D1526] border-[#1E3A5F] text-white focus:border-[#D4A843]">
+                  <SelectTrigger className="bg-[#1c2022] border-[#343a3d] text-white focus:border-[#f39450]">
                     <SelectValue placeholder="Select range..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0D1526] border-[#1E3A5F]">
+                  <SelectContent className="bg-[#1c2022] border-[#343a3d]">
                     <SelectItem value="pre_revenue">Pre-revenue</SelectItem>
                     <SelectItem value="under_5k">Under $5K/mo</SelectItem>
                     <SelectItem value="5k_25k">$5K – $25K/mo</SelectItem>
@@ -757,7 +741,7 @@ export default function Sovereign() {
                   onChange={e =>
                     setFormData(p => ({ ...p, currentStack: e.target.value }))
                   }
-                  className="bg-[#0D1526] border-[#1E3A5F] text-white placeholder:text-gray-600 focus:border-[#D4A843]"
+                  className="bg-[#1c2022] border-[#343a3d] text-white placeholder:text-gray-600 focus:border-[#f39450]"
                 />
               </div>
               <div>
@@ -773,13 +757,13 @@ export default function Sovereign() {
                       biggestChallenge: e.target.value,
                     }))
                   }
-                  className="bg-[#0D1526] border-[#1E3A5F] text-white placeholder:text-gray-600 focus:border-[#D4A843] min-h-[80px] resize-none"
+                  className="bg-[#1c2022] border-[#343a3d] text-white placeholder:text-gray-600 focus:border-[#f39450] min-h-[80px] resize-none"
                 />
               </div>
               <Button
                 type="submit"
                 disabled={joinWaitlist.isPending}
-                className="w-full bg-[#D4A843] hover:bg-[#00B8D9] text-black font-bold h-12 text-base"
+                className="w-full bg-[#f39450] hover:bg-[#ffad70] text-black font-bold h-12 text-base"
               >
                 {joinWaitlist.isPending
                   ? "Submitting..."
@@ -796,29 +780,16 @@ export default function Sovereign() {
           )}
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="py-8 px-4 border-t border-[#1E3A5F]">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-[#D4A843]" />
-            <span className="text-sm text-gray-400">
-              1Commerce LLC — PNW Enterprises
-            </span>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-gray-500">
-            <Link href="/privacy" className="hover:text-gray-300">
-              Privacy
-            </Link>
-            <Link href="/terms" className="hover:text-gray-300">
-              Terms
-            </Link>
-            <Link href="/" className="hover:text-gray-300 text-[#D4A843]">
-              UnifyOne Platform →
-            </Link>
-          </div>
-        </div>
-      </footer>
     </div>
+  );
+}
+
+export default function Sovereign() {
+  return (
+    <PublicLayout>
+      <div className="marketing-page">
+        <SovereignContent />
+      </div>
+    </PublicLayout>
   );
 }

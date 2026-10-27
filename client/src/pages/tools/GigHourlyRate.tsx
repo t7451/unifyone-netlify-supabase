@@ -9,6 +9,8 @@ import {
   Trash2,
 } from "lucide-react";
 import PageHead from "@/components/PageHead";
+import PublicLayout from "@/components/PublicLayout";
+import "@/components/reading.css";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -322,458 +324,518 @@ export default function GigHourlyRate() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <PageHead
-        title="Work Profit & Real Hourly Rate Calculator | UnifyOne"
-        description="Compare delivery, rideshare and freelance work after actual costs and a tax reserve you choose. See the earnings needed to reach your hourly goal."
-        canonical={CANONICAL}
-        jsonLd={jsonLd}
-      />
-      <nav className="border-b bg-background" aria-label="Tool navigation">
-        <div className="mx-auto flex min-h-14 max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <Link
-            href="/tools"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            ← Free tools
-          </Link>
-          <Link
-            href="/gig-command"
-            className="text-sm font-medium text-primary"
-          >
-            Track my work{" "}
-            <ArrowRight className="ml-1 inline h-4 w-4" aria-hidden="true" />
-          </Link>
-        </div>
-      </nav>
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-        <header className="mb-8 max-w-3xl">
-          <Badge
-            variant="outline"
-            className="mb-4 border-primary/30 text-primary"
-          >
-            Free · No account needed
-          </Badge>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
-            What did you really earn?
-          </h1>
-          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-            Delivery, rideshare, freelance—or all three. Find what stays yours
-            after business costs and a tax reserve. Then decide which work
-            deserves your next hour.
-          </p>
-        </header>
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          {pristine && (
-            <Button variant="outline" onClick={loadExample}>
-              Try an example
-            </Button>
-          )}
-          {example && (
-            <Button variant="outline" onClick={clear}>
-              Start with my own figures
-            </Button>
-          )}
-          <p className="text-sm text-muted-foreground">
-            No bank connection needed. Nothing is saved in your browser.
-          </p>
-        </div>
-        {example && (
-          <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
-            <strong>Illustrative example.</strong> These figures are for
-            learning, not actual earnings or market averages. Choose “Start with
-            my own figures” to enter your work.
-          </div>
-        )}
-        <div className="grid items-start gap-6 lg:grid-cols-[1.25fr_1fr]">
-          <section
-            className="min-w-0 space-y-5 rounded-2xl border bg-card p-5 sm:p-6"
-            aria-labelledby="work-heading"
-          >
-            <div>
-              <h2 id="work-heading" className="text-xl font-semibold">
-                1. Account for all your working time
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Use the same period for every source. Include tips and bonuses
-                once. Count waiting, driving between jobs, admin and unpaid
-                client work. Split shared hours and miles between sources so
-                they are counted once.
-              </p>
-            </div>
-            {rows.map((row, index) => (
-              <fieldset
-                key={row.id}
-                className="min-w-0 rounded-xl border bg-background/30 p-4"
-              >
-                <legend className="px-1 text-sm font-semibold">
-                  Income source {index + 1}
-                </legend>
-                <div className="mb-4 flex items-end gap-2">
-                  <div className="min-w-0 flex-1">
-                    <Label htmlFor={`source-${row.id}`}>
-                      App, client or project
-                    </Label>
-                    <Input
-                      className="mt-1"
-                      id={`source-${row.id}`}
-                      value={row.name}
-                      maxLength={80}
-                      placeholder="e.g. DoorDash, Uber, design client"
-                      onChange={event =>
-                        updateRow(row.id, "name", event.target.value)
-                      }
-                    />
-                  </div>
-                  {rows.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="min-h-11 min-w-11 shrink-0"
-                      aria-label={`Remove income source ${index + 1}`}
-                      onClick={() => {
-                        setRows(previous =>
-                          previous.filter(item => item.id !== row.id)
-                        );
-                        setNotice("");
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden="true" />
-                    </Button>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  {rowFields.map(({ key, label, max }) => {
-                    const invalid =
-                      row[key] !== "" &&
-                      (numberFrom(row[key], max) === null ||
-                        (key === "hours" && Number(row[key]) === 0));
-                    return (
-                      <div key={key} className="min-w-0">
-                        <Label htmlFor={`${row.id}-${key}`}>{label}</Label>
-                        <Input
-                          className="mt-1"
-                          id={`${row.id}-${key}`}
-                          type="number"
-                          min="0"
-                          max={max}
-                          step="any"
-                          inputMode="decimal"
-                          value={row[key]}
-                          aria-invalid={invalid}
-                          aria-describedby={
-                            invalid ? `${row.id}-${key}-error` : undefined
-                          }
-                          onChange={event =>
-                            updateRow(row.id, key, event.target.value)
-                          }
-                        />
-                        {invalid && (
-                          <p
-                            id={`${row.id}-${key}-error`}
-                            className="mt-1 text-xs text-red-300"
-                          >
-                            {key === "hours"
-                              ? "Enter work hours above zero."
-                              : "Enter zero or a positive value within the input limit."}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                  Other costs: tolls, parking, supplies, software, or fees not
-                  already deducted from earnings. Do not include the vehicle
-                  costs a second time.
-                </p>
-              </fieldset>
-            ))}
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto"
-              disabled={rows.length >= 10}
-              onClick={() => {
-                setRows(previous => [...previous, blankRow(nextId)]);
-                setNextId(value => value + 1);
-                setNotice("");
-              }}
-            >
-              <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
-              Add an income source
-            </Button>
-            <fieldset className="space-y-4 border-t pt-5">
-              <legend className="pt-5 text-xl font-semibold">
-                2. Choose your assumptions
-              </legend>
-              {assumptionFields.map(({ key, label, max, hint }) => {
-                const invalid = numberFrom(form[key], max) === null;
-                return (
-                  <div key={key}>
-                    <Label htmlFor={key}>{label}</Label>
-                    <Input
-                      className="mt-1 max-w-48"
-                      id={key}
-                      type="number"
-                      min="0"
-                      max={max}
-                      step="any"
-                      inputMode="decimal"
-                      value={form[key]}
-                      aria-describedby={`${key}-hint`}
-                      aria-invalid={invalid}
-                      onChange={event => {
-                        setForm(previous => ({
-                          ...previous,
-                          [key]: event.target.value,
-                        }));
-                        setNotice("");
-                      }}
-                    />
-                    <p
-                      id={`${key}-hint`}
-                      className={`mt-1 text-xs leading-relaxed ${invalid ? "text-red-300" : "text-muted-foreground"}`}
-                    >
-                      {hint}
-                    </p>
-                  </div>
-                );
-              })}
-            </fieldset>
-          </section>
-          <aside
-            className="min-w-0 space-y-4 lg:sticky lg:top-6"
-            aria-label="Your profit plan"
-          >
-            <section
-              className="rounded-2xl border border-primary/30 bg-card p-5 sm:p-6"
-              aria-labelledby="results-heading"
-            >
-              <div className="flex items-center gap-2 text-primary">
-                <Calculator className="h-4 w-4" aria-hidden="true" />
-                <h2
-                  id="results-heading"
-                  className="text-sm font-semibold uppercase tracking-wider"
-                >
-                  {example ? "Example result" : "Your profit plan"}
-                </h2>
-              </div>
-              {calculation && settings ? (
-                <>
-                  <p
-                    data-testid="take-home"
-                    className={`mt-4 break-words text-4xl font-bold tabular-nums ${calculation.result.takeHome < 0 ? "text-red-300" : "text-foreground"}`}
-                  >
-                    {usd(calculation.result.takeHome)}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    left after costs and your chosen reserve
-                  </p>
-                  <dl className="my-6 space-y-3 text-sm">
-                    {[
-                      ["Total earnings", calculation.totals.earnings],
-                      [
-                        "Estimated vehicle costs",
-                        -calculation.result.vehicleCost,
-                      ],
-                      ["Other business costs", -calculation.totals.otherCosts],
-                      ["Operating profit", calculation.result.operatingProfit],
-                      ["Tax reserve", -calculation.result.taxReserve],
-                    ].map(([label, value]) => (
-                      <div
-                        key={label}
-                        className="flex flex-wrap justify-between gap-2"
-                      >
-                        <dt className="text-muted-foreground">{label}</dt>
-                        <dd className="font-medium tabular-nums">
-                          {usd(Number(value))}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                  <div className="border-t pt-5">
-                    <p
-                      data-testid="hourly-result"
-                      className="break-words text-3xl font-bold tabular-nums"
-                    >
-                      {usd(calculation.result.hourly!)}
-                      <span className="text-base font-normal text-muted-foreground">
-                        {" "}
-                        / hour
-                      </span>
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Across{" "}
-                      {calculation.totals.hours.toLocaleString("en-US", {
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      total work hours, after costs and reserve
-                    </p>
-                  </div>
-                  <div className="mt-5 rounded-xl bg-muted/40 p-4">
-                    <h3 className="font-semibold">
-                      {calculation.result.earningsGap! > 0.005
-                        ? `${usd(roundUpCents(calculation.result.earningsGap!))} short of your goal`
-                        : "This work meets your hourly goal"}
-                    </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                      {calculation.result.earningsGap! > 0.005
-                        ? `At the same hours and costs, you need ${usd(roundUpCents(calculation.result.requiredEarnings!))} in total earnings to keep ${usd(settings.targetHourly)} per hour after reserve.`
-                        : `Your goal is ${usd(settings.targetHourly)} per hour after costs and reserve.`}
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <div className="py-8">
-                  <h3 className="text-xl font-semibold">
-                    Start with one shift or project
-                  </h3>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                    Enter earnings and work hours for every source. Zero
-                    earnings are allowed; hours must be above zero. Complete all
-                    sources to see a combined result.
-                  </p>
-                  {calculationState.error && (
-                    <p role="alert" className="mt-3 text-sm text-red-300">
-                      {calculationState.error}
-                    </p>
-                  )}
-                  {!settings && (
-                    <p role="alert" className="mt-3 text-sm text-red-300">
-                      Check your assumptions. Use nonnegative values and a
-                      reserve below 100%.
-                    </p>
-                  )}
-                </div>
-              )}
-            </section>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                className="min-h-11"
-                variant="outline"
-                disabled={!calculation}
-                onClick={download}
-              >
-                <ArrowDownToLine className="mr-2 h-4 w-4" aria-hidden="true" />
-                Download CSV
-              </Button>
-              <Button className="min-h-11" variant="ghost" onClick={clear}>
-                <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
-                Clear figures
-              </Button>
-            </div>
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              Figures stay on this page until you clear, reload or leave it.
-              Download a CSV if you want a copy; it contains your financial
-              figures and assumptions.
-            </p>
-            <p role="status" className="text-sm text-muted-foreground">
-              {notice}
-            </p>
-          </aside>
-        </div>
-        {calculation && (
-          <section
-            className="mt-8 rounded-2xl border bg-card p-5 sm:p-6"
-            aria-labelledby="comparison-heading"
-          >
-            <h2 id="comparison-heading" className="text-xl font-semibold">
-              Which work paid best?
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Ranked by operating profit per hour before the combined tax
-              reserve. These are the results you entered, not predicted
-              earnings. A profitable source can offset a loss in the combined
-              reserve calculation.
-            </p>
-            <ul
-              className="mt-5 space-y-3"
-              aria-label="Income source comparison"
-            >
-              {calculation.sources.map((source, index) => (
-                <li key={source.id} className="min-w-0 rounded-xl border p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="break-words font-semibold">
-                        {source.name}
-                      </h3>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {source.work.hours} hours · {source.work.miles} miles ·{" "}
-                        {usd(source.result.operatingProfit)} operating profit
-                      </p>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <p
-                        className={`font-semibold tabular-nums ${source.result.operatingProfit < 0 ? "text-red-300" : "text-foreground"}`}
-                      >
-                        {usd(source.result.operatingProfit / source.work.hours)}{" "}
-                        / hr
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        before reserve
-                      </p>
-                    </div>
-                  </div>
-                  {index === 0 && calculation.sources.length > 1 && (
-                    <Badge variant="outline" className="mt-3">
-                      Highest entered hourly profit
-                    </Badge>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-        <section className="mt-8 grid gap-6 rounded-2xl border bg-muted/20 p-5 sm:grid-cols-2 sm:p-6">
-          <div>
-            <h2 className="font-semibold">
-              A deduction is not cash in your pocket
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              The planner subtracts your estimated actual costs. An IRS mileage
-              deduction reduces taxable income; it is not a reimbursement or a
-              measure of what your vehicle actually cost. We do not subtract
-              both.
-            </p>
-          </div>
-          <div>
-            <h2 className="font-semibold">
-              A reserve is a plan, not your tax bill
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Your real tax depends on income, deductions, filing status and
-              location. This planner uses the percentage you choose and reserves
-              nothing against a combined loss. Bank deposits are not added as a
-              second source of the same earnings.
-            </p>
+    <PublicLayout>
+      <div className="reading-page reading-calculator bg-background text-foreground font-sans">
+        <PageHead
+          title="Work Profit & Real Hourly Rate Calculator | UnifyOne"
+          description="Compare delivery, rideshare and freelance work after actual costs and a tax reserve you choose. See the earnings needed to reach your hourly goal."
+          canonical={CANONICAL}
+          jsonLd={jsonLd}
+        />
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 text-sm">
             <Link
-              href="/tools/quarterly-tax-estimator"
-              className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary"
+              href="/tools"
+              className="text-muted-foreground hover:text-foreground"
             >
-              Explore tax planning{" "}
+              ← Free tools
+            </Link>
+            <Link
+              href="/gig-command"
+              className="inline-flex min-h-11 items-center gap-1 font-medium text-primary"
+            >
+              Track my work{" "}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
-        </section>
-        <section
-          className="mt-8 rounded-2xl border p-5 sm:p-6"
-          aria-labelledby="profit-faq-heading"
-        >
-          <h2 id="profit-faq-heading" className="text-xl font-semibold">
-            Frequently asked questions
-          </h2>
-          <div className="mt-5 space-y-6">
-            {FAQS.map(({ q, a }) => (
-              <div key={q}>
-                <h3 className="font-semibold">{q}</h3>
+          <header className="mb-8 max-w-3xl">
+            <Badge
+              variant="outline"
+              className="mb-4 border-primary/30 text-primary"
+            >
+              Free · No account needed
+            </Badge>
+            <h1
+              style={{ fontFamily: '"Inter", Arial, Helvetica, sans-serif' }}
+              className="text-3xl font-bold tracking-tight sm:text-5xl"
+            >
+              What did you really earn?
+            </h1>
+            <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+              Delivery, rideshare, freelance—or all three. Find what stays yours
+              after business costs and a tax reserve. Then decide which work
+              deserves your next hour.
+            </p>
+          </header>
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            {pristine && (
+              <Button variant="outline" onClick={loadExample}>
+                Try an example
+              </Button>
+            )}
+            {example && (
+              <Button variant="outline" onClick={clear}>
+                Start with my own figures
+              </Button>
+            )}
+            <p className="text-sm text-muted-foreground">
+              No bank connection needed. Nothing is saved in your browser.
+            </p>
+          </div>
+          {example && (
+            <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
+              <strong>Illustrative example.</strong> These figures are for
+              learning, not actual earnings or market averages. Choose “Start
+              with my own figures” to enter your work.
+            </div>
+          )}
+          <div className="grid items-start gap-6 lg:grid-cols-[1.25fr_1fr]">
+            <section
+              className="min-w-0 space-y-5 rounded-2xl border bg-card p-5 sm:p-6"
+              aria-labelledby="work-heading"
+            >
+              <div>
+                <h2
+                  style={{
+                    fontFamily: '"Inter", Arial, Helvetica, sans-serif',
+                  }}
+                  id="work-heading"
+                  className="text-xl font-semibold"
+                >
+                  1. Account for all your working time
+                </h2>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {a}
+                  Use the same period for every source. Include tips and bonuses
+                  once. Count waiting, driving between jobs, admin and unpaid
+                  client work. Split shared hours and miles between sources so
+                  they are counted once.
                 </p>
               </div>
-            ))}
+              {rows.map((row, index) => (
+                <fieldset
+                  key={row.id}
+                  className="min-w-0 rounded-xl border bg-background/30 p-4"
+                >
+                  <legend className="px-1 text-sm font-semibold">
+                    Income source {index + 1}
+                  </legend>
+                  <div className="mb-4 flex items-end gap-2">
+                    <div className="min-w-0 flex-1">
+                      <Label htmlFor={`source-${row.id}`}>
+                        App, client or project
+                      </Label>
+                      <Input
+                        className="mt-1"
+                        id={`source-${row.id}`}
+                        value={row.name}
+                        maxLength={80}
+                        placeholder="e.g. DoorDash, Uber, design client"
+                        onChange={event =>
+                          updateRow(row.id, "name", event.target.value)
+                        }
+                      />
+                    </div>
+                    {rows.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="min-h-11 min-w-11 shrink-0"
+                        aria-label={`Remove income source ${index + 1}`}
+                        onClick={() => {
+                          setRows(previous =>
+                            previous.filter(item => item.id !== row.id)
+                          );
+                          setNotice("");
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {rowFields.map(({ key, label, max }) => {
+                      const invalid =
+                        row[key] !== "" &&
+                        (numberFrom(row[key], max) === null ||
+                          (key === "hours" && Number(row[key]) === 0));
+                      return (
+                        <div key={key} className="min-w-0">
+                          <Label htmlFor={`${row.id}-${key}`}>{label}</Label>
+                          <Input
+                            className="mt-1"
+                            id={`${row.id}-${key}`}
+                            type="number"
+                            min="0"
+                            max={max}
+                            step="any"
+                            inputMode="decimal"
+                            value={row[key]}
+                            aria-invalid={invalid}
+                            aria-describedby={
+                              invalid ? `${row.id}-${key}-error` : undefined
+                            }
+                            onChange={event =>
+                              updateRow(row.id, key, event.target.value)
+                            }
+                          />
+                          {invalid && (
+                            <p
+                              id={`${row.id}-${key}-error`}
+                              className="mt-1 text-xs text-destructive"
+                            >
+                              {key === "hours"
+                                ? "Enter work hours above zero."
+                                : "Enter zero or a positive value within the input limit."}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                    Other costs: tolls, parking, supplies, software, or fees not
+                    already deducted from earnings. Do not include the vehicle
+                    costs a second time.
+                  </p>
+                </fieldset>
+              ))}
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                disabled={rows.length >= 10}
+                onClick={() => {
+                  setRows(previous => [...previous, blankRow(nextId)]);
+                  setNextId(value => value + 1);
+                  setNotice("");
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+                Add an income source
+              </Button>
+              <fieldset className="space-y-4 border-t pt-5">
+                <legend className="pt-5 text-xl font-semibold">
+                  2. Choose your assumptions
+                </legend>
+                {assumptionFields.map(({ key, label, max, hint }) => {
+                  const invalid = numberFrom(form[key], max) === null;
+                  return (
+                    <div key={key}>
+                      <Label htmlFor={key}>{label}</Label>
+                      <Input
+                        className="mt-1 max-w-48"
+                        id={key}
+                        type="number"
+                        min="0"
+                        max={max}
+                        step="any"
+                        inputMode="decimal"
+                        value={form[key]}
+                        aria-describedby={`${key}-hint`}
+                        aria-invalid={invalid}
+                        onChange={event => {
+                          setForm(previous => ({
+                            ...previous,
+                            [key]: event.target.value,
+                          }));
+                          setNotice("");
+                        }}
+                      />
+                      <p
+                        id={`${key}-hint`}
+                        className={`mt-1 text-xs leading-relaxed ${invalid ? "text-destructive" : "text-muted-foreground"}`}
+                      >
+                        {hint}
+                      </p>
+                    </div>
+                  );
+                })}
+              </fieldset>
+            </section>
+            <aside
+              className="min-w-0 space-y-4 lg:sticky lg:top-6"
+              aria-label="Your profit plan"
+            >
+              <section
+                className="rounded-2xl border border-primary/30 bg-card p-5 sm:p-6"
+                aria-labelledby="results-heading"
+              >
+                <div className="flex items-center gap-2 text-primary">
+                  <Calculator className="h-4 w-4" aria-hidden="true" />
+                  <h2
+                    style={{
+                      fontFamily: '"Inter", Arial, Helvetica, sans-serif',
+                    }}
+                    id="results-heading"
+                    className="text-sm font-semibold uppercase tracking-wider"
+                  >
+                    {example ? "Example result" : "Your profit plan"}
+                  </h2>
+                </div>
+                {calculation && settings ? (
+                  <>
+                    <p
+                      data-testid="take-home"
+                      className={`mt-4 break-words text-4xl font-bold tabular-nums ${calculation.result.takeHome < 0 ? "text-destructive" : "text-foreground"}`}
+                    >
+                      {usd(calculation.result.takeHome)}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      left after costs and your chosen reserve
+                    </p>
+                    <dl className="my-6 space-y-3 text-sm">
+                      {[
+                        ["Total earnings", calculation.totals.earnings],
+                        [
+                          "Estimated vehicle costs",
+                          -calculation.result.vehicleCost,
+                        ],
+                        [
+                          "Other business costs",
+                          -calculation.totals.otherCosts,
+                        ],
+                        [
+                          "Operating profit",
+                          calculation.result.operatingProfit,
+                        ],
+                        ["Tax reserve", -calculation.result.taxReserve],
+                      ].map(([label, value]) => (
+                        <div
+                          key={label}
+                          className="flex flex-wrap justify-between gap-2"
+                        >
+                          <dt className="text-muted-foreground">{label}</dt>
+                          <dd className="font-medium tabular-nums">
+                            {usd(Number(value))}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <div className="border-t pt-5">
+                      <p
+                        data-testid="hourly-result"
+                        className="break-words text-3xl font-bold tabular-nums"
+                      >
+                        {usd(calculation.result.hourly!)}
+                        <span className="text-base font-normal text-muted-foreground">
+                          {" "}
+                          / hour
+                        </span>
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Across{" "}
+                        {calculation.totals.hours.toLocaleString("en-US", {
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        total work hours, after costs and reserve
+                      </p>
+                    </div>
+                    <div className="mt-5 rounded-xl bg-muted/40 p-4">
+                      <h3
+                        style={{
+                          fontFamily: '"Inter", Arial, Helvetica, sans-serif',
+                        }}
+                        className="font-semibold"
+                      >
+                        {calculation.result.earningsGap! > 0.005
+                          ? `${usd(roundUpCents(calculation.result.earningsGap!))} short of your goal`
+                          : "This work meets your hourly goal"}
+                      </h3>
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                        {calculation.result.earningsGap! > 0.005
+                          ? `At the same hours and costs, you need ${usd(roundUpCents(calculation.result.requiredEarnings!))} in total earnings to keep ${usd(settings.targetHourly)} per hour after reserve.`
+                          : `Your goal is ${usd(settings.targetHourly)} per hour after costs and reserve.`}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="py-8">
+                    <h3
+                      style={{
+                        fontFamily: '"Inter", Arial, Helvetica, sans-serif',
+                      }}
+                      className="text-xl font-semibold"
+                    >
+                      Start with one shift or project
+                    </h3>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                      Enter earnings and work hours for every source. Zero
+                      earnings are allowed; hours must be above zero. Complete
+                      all sources to see a combined result.
+                    </p>
+                    {calculationState.error && (
+                      <p role="alert" className="mt-3 text-sm text-destructive">
+                        {calculationState.error}
+                      </p>
+                    )}
+                    {!settings && (
+                      <p role="alert" className="mt-3 text-sm text-destructive">
+                        Check your assumptions. Use nonnegative values and a
+                        reserve below 100%.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </section>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  className="min-h-11"
+                  variant="outline"
+                  disabled={!calculation}
+                  onClick={download}
+                >
+                  <ArrowDownToLine
+                    className="mr-2 h-4 w-4"
+                    aria-hidden="true"
+                  />
+                  Download CSV
+                </Button>
+                <Button className="min-h-11" variant="ghost" onClick={clear}>
+                  <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Clear figures
+                </Button>
+              </div>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Figures stay on this page until you clear, reload or leave it.
+                Download a CSV if you want a copy; it contains your financial
+                figures and assumptions.
+              </p>
+              <p role="status" className="text-sm text-muted-foreground">
+                {notice}
+              </p>
+            </aside>
           </div>
-        </section>
-      </main>
-    </div>
+          {calculation && (
+            <section
+              className="mt-8 rounded-2xl border bg-card p-5 sm:p-6"
+              aria-labelledby="comparison-heading"
+            >
+              <h2
+                style={{ fontFamily: '"Inter", Arial, Helvetica, sans-serif' }}
+                id="comparison-heading"
+                className="text-xl font-semibold"
+              >
+                Which work paid best?
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Ranked by operating profit per hour before the combined tax
+                reserve. These are the results you entered, not predicted
+                earnings. A profitable source can offset a loss in the combined
+                reserve calculation.
+              </p>
+              <ul
+                className="mt-5 space-y-3"
+                aria-label="Income source comparison"
+              >
+                {calculation.sources.map((source, index) => (
+                  <li key={source.id} className="min-w-0 rounded-xl border p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h3
+                          style={{
+                            fontFamily: '"Inter", Arial, Helvetica, sans-serif',
+                          }}
+                          className="break-words font-semibold"
+                        >
+                          {source.name}
+                        </h3>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {source.work.hours} hours · {source.work.miles} miles
+                          · {usd(source.result.operatingProfit)} operating
+                          profit
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p
+                          className={`font-semibold tabular-nums ${source.result.operatingProfit < 0 ? "text-destructive" : "text-foreground"}`}
+                        >
+                          {usd(
+                            source.result.operatingProfit / source.work.hours
+                          )}{" "}
+                          / hr
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          before reserve
+                        </p>
+                      </div>
+                    </div>
+                    {index === 0 && calculation.sources.length > 1 && (
+                      <Badge variant="outline" className="mt-3">
+                        Highest entered hourly profit
+                      </Badge>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          <section className="mt-8 grid gap-6 rounded-2xl border bg-muted/20 p-5 sm:grid-cols-2 sm:p-6">
+            <div>
+              <h2
+                style={{ fontFamily: '"Inter", Arial, Helvetica, sans-serif' }}
+                className="font-semibold"
+              >
+                A deduction is not cash in your pocket
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                The planner subtracts your estimated actual costs. An IRS
+                mileage deduction reduces taxable income; it is not a
+                reimbursement or a measure of what your vehicle actually cost.
+                We do not subtract both.
+              </p>
+            </div>
+            <div>
+              <h2
+                style={{ fontFamily: '"Inter", Arial, Helvetica, sans-serif' }}
+                className="font-semibold"
+              >
+                A reserve is a plan, not your tax bill
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Your real tax depends on income, deductions, filing status and
+                location. This planner uses the percentage you choose and
+                reserves nothing against a combined loss. Bank deposits are not
+                added as a second source of the same earnings.
+              </p>
+              <Link
+                href="/tools/quarterly-tax-estimator"
+                className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary"
+              >
+                Explore tax planning{" "}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
+          </section>
+          <section
+            className="mt-8 rounded-2xl border p-5 sm:p-6"
+            aria-labelledby="profit-faq-heading"
+          >
+            <h2
+              style={{ fontFamily: '"Inter", Arial, Helvetica, sans-serif' }}
+              id="profit-faq-heading"
+              className="text-xl font-semibold"
+            >
+              Frequently asked questions
+            </h2>
+            <div className="mt-5 space-y-6">
+              {FAQS.map(({ q, a }) => (
+                <div key={q}>
+                  <h3
+                    style={{
+                      fontFamily: '"Inter", Arial, Helvetica, sans-serif',
+                    }}
+                    className="font-semibold"
+                  >
+                    {q}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {a}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+    </PublicLayout>
   );
 }

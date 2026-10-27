@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 import { getSignupUrl } from "@/const";
 import { usePixelPageView } from "@/hooks/usePixelPageView";
+import { BrandLockup } from "./Brand";
 import "./marketing.css";
 
 const NAV_LINKS = [
@@ -56,7 +57,19 @@ export default function PublicLayout({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const nav = useRef<HTMLElement>(null);
+  const menuPanel = useRef<HTMLDivElement>(null);
   usePixelPageView();
+
+  // Keep portaled menus/dialogs on the same theme as the public page.
+  useEffect(() => {
+    const root = document.documentElement;
+    const previous = root.getAttribute("data-public-brand");
+    root.setAttribute("data-public-brand", "unifyone");
+    return () => {
+      if (previous === null) root.removeAttribute("data-public-brand");
+      else root.setAttribute("data-public-brand", previous);
+    };
+  }, []);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -65,6 +78,9 @@ export default function PublicLayout({
 
   useEffect(() => {
     if (!menuOpen) return;
+    const focusFrame = requestAnimationFrame(() =>
+      menuPanel.current?.querySelector<HTMLAnchorElement>("a")?.focus()
+    );
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setMenuOpen(false);
@@ -77,10 +93,20 @@ export default function PublicLayout({
     document.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onPointer);
     return () => {
+      cancelAnimationFrame(focusFrame);
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointer);
     };
   }, [menuOpen]);
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1021px)");
+    const closeOnDesktop = () => {
+      if (desktop.matches) setMenuOpen(false);
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
 
   return (
     <div className="marketing-site">
@@ -92,14 +118,16 @@ export default function PublicLayout({
           ref={nav}
           className="marketing-nav marketing-container"
           aria-label="Main navigation"
+          onBlurCapture={event => {
+            if (
+              event.relatedTarget instanceof Node &&
+              !event.currentTarget.contains(event.relatedTarget)
+            )
+              setMenuOpen(false);
+          }}
         >
           <Link href="/" className="marketing-brand" aria-label="UnifyOne home">
-            <span className="marketing-brand-mark" aria-hidden="true">
-              u<span>1</span>
-            </span>
-            <span>
-              UnifyOne<small>For the work you do.</small>
-            </span>
+            <BrandLockup />
           </Link>
           <div className="marketing-desktop-nav">
             {NAV_LINKS.map(item => (
@@ -135,7 +163,11 @@ export default function PublicLayout({
             </button>
           </div>
           {menuOpen && (
-            <div id="marketing-mobile-menu" className="marketing-mobile-menu">
+            <div
+              ref={menuPanel}
+              id="marketing-mobile-menu"
+              className="marketing-mobile-menu"
+            >
               {NAV_LINKS.map(item => (
                 <Link
                   key={item.href}
@@ -152,6 +184,13 @@ export default function PublicLayout({
               <Link href="/contact" onClick={() => setMenuOpen(false)}>
                 Contact & support
               </Link>
+              <a
+                href={getSignupUrl()}
+                className="marketing-button"
+                onClick={() => setMenuOpen(false)}
+              >
+                Start free <ArrowUpRight size={17} aria-hidden="true" />
+              </a>
               <Link href="/login" onClick={() => setMenuOpen(false)}>
                 Sign in
               </Link>
@@ -167,7 +206,7 @@ export default function PublicLayout({
           <div className="marketing-footer-grid">
             <div className="marketing-footer-intro">
               <Link href="/" className="marketing-footer-brand">
-                UnifyOne<span>by 1Commerce</span>
+                <BrandLockup size={34} />
               </Link>
               <p>
                 Work logs, costs, mileage and records for people earning across

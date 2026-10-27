@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 import { trackOrganicLanding } from "@/lib/userTracking";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Calculator, Search } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 
@@ -203,9 +203,21 @@ const jsonLd = [
 
 export default function ToolsIndex() {
   const [search, setSearch] = useState("");
+  const searchInput = useRef<HTMLInputElement>(null);
+  function clearSearch() {
+    setSearch("");
+    searchInput.current?.focus();
+  }
   const query = search.trim().toLowerCase();
   const visibleTools = TOOLS_REGISTRY.filter(tool =>
-    (tool.title + " " + tool.tagline + " " + tool.keywords.join(" "))
+    [
+      tool.title,
+      tool.tagline,
+      tool.description,
+      tool.audience,
+      ...tool.keywords,
+    ]
+      .join(" ")
       .toLowerCase()
       .includes(query)
   );
@@ -241,17 +253,40 @@ export default function ToolsIndex() {
             <Search size={18} aria-hidden="true" />
             <span className="sr-only">Search free tools</span>
             <input
+              ref={searchInput}
               type="search"
+              aria-controls="tool-results"
+              onKeyDown={event => {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  clearSearch();
+                }
+              }}
               value={search}
               onChange={event => setSearch(event.target.value)}
               placeholder="Search mileage, hourly rate, taxes…"
             />
           </label>
-          <p className="marketing-result-count" role="status">
-            {visibleTools.length} {visibleTools.length === 1 ? "tool" : "tools"}
+          {search && (
+            <button
+              type="button"
+              className="marketing-button marketing-button-outline"
+              onClick={clearSearch}
+            >
+              Clear search
+            </button>
+          )}
+          <p
+            className="marketing-result-count"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {visibleTools.length} {visibleTools.length === 1 ? "tool" : "tools"}{" "}
+            of {TOOLS_REGISTRY.length}
           </p>
           {visibleTools.length ? (
-            <div className="marketing-tool-grid">
+            <div id="tool-results" className="marketing-tool-grid">
               {visibleTools.map(tool =>
                 tool.live ? (
                   <Link
@@ -276,16 +311,9 @@ export default function ToolsIndex() {
               )}
             </div>
           ) : (
-            <div className="marketing-empty">
+            <div id="tool-results" className="marketing-empty">
               <h2>No matching tools.</h2>
               <p>Try another phrase or see the full toolkit.</p>
-              <button
-                type="button"
-                className="marketing-button marketing-button-outline"
-                onClick={() => setSearch("")}
-              >
-                Clear search
-              </button>
             </div>
           )}
           <p className="marketing-library-note">

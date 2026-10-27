@@ -214,27 +214,29 @@ function CodeBlock({ code }: { code: string }) {
           background: "#0d1117",
           color: "#c9d1d9",
           borderRadius: 8,
-          padding: "1.2rem",
+          padding: "3.5rem 1.2rem 1.2rem",
           overflowX: "auto",
           fontSize: 12,
           lineHeight: 1.6,
           margin: 0,
-          border: "1px solid rgba(212,168,67,0.2)",
+          border: "1px solid rgba(243,148,80,0.2)",
           fontFamily: "'JetBrains Mono', monospace",
         }}
       >
         {code}
       </pre>
       <button
+        type="button"
         aria-live="polite"
         onClick={copy}
         style={{
           position: "absolute",
           top: 10,
           right: 10,
-          background: copyStatus === "Copied" ? "#238636" : "#234c3b",
-          color: "#fff",
-          border: "1px solid rgba(212,168,67,0.3)",
+          background: copyStatus === "Copied" ? "#238636" : "#f39450",
+          color: copyStatus === "Copied" ? "#fff" : "#111416",
+          minHeight: 44,
+          border: "1px solid rgba(243,148,80,0.3)",
           borderRadius: 6,
           padding: "6px 12px",
           fontSize: 11,
@@ -319,13 +321,13 @@ export default function IntegrationGuides() {
             <span className="inscription block mb-4">INTEGRATION GUIDES</span>
             <h1
               className="font-cinzel text-4xl sm:text-5xl font-bold mb-6"
-              style={{ color: "#F0E8D0", letterSpacing: "0.02em" }}
+              style={{ color: "#f4f2ed", letterSpacing: "0.02em" }}
             >
               Technical integration reference
             </h1>
             <p
               className="font-crimson text-lg max-w-2xl mx-auto"
-              style={{ color: "#9A9A9A", lineHeight: 1.8 }}
+              style={{ color: "#b5bab7", lineHeight: 1.8 }}
             >
               Configuration examples for developers working with the existing
               API, MCP, and webhook integrations. Availability depends on your
@@ -348,10 +350,10 @@ export default function IntegrationGuides() {
                   padding: "10px 16px",
                   backgroundColor:
                     activeTab === section.id
-                      ? "rgba(212,168,67,0.15)"
-                      : "rgba(212,168,67,0.05)",
-                  border: `1px solid ${activeTab === section.id ? "rgba(212,168,67,0.4)" : "rgba(212,168,67,0.15)"}`,
-                  color: activeTab === section.id ? "#D4A843" : "#7A7A7A",
+                      ? "rgba(243,148,80,0.15)"
+                      : "rgba(243,148,80,0.05)",
+                  border: `1px solid ${activeTab === section.id ? "rgba(243,148,80,0.4)" : "rgba(243,148,80,0.15)"}`,
+                  color: activeTab === section.id ? "#f39450" : "#b5bab7",
                   fontFamily: "'Cinzel', serif",
                   fontSize: "12px",
                   fontWeight: 600,
@@ -368,8 +370,8 @@ export default function IntegrationGuides() {
           {/* Content */}
           <div
             style={{
-              backgroundColor: "rgba(212,168,67,0.02)",
-              border: "1px solid rgba(212,168,67,0.1)",
+              backgroundColor: "rgba(243,148,80,0.02)",
+              border: "1px solid rgba(243,148,80,0.1)",
               padding: "1.25rem",
             }}
           >
@@ -377,7 +379,7 @@ export default function IntegrationGuides() {
               <div>
                 <h2
                   className="font-cinzel text-2xl font-bold mb-6"
-                  style={{ color: "#D4A843" }}
+                  style={{ color: "#f39450" }}
                 >
                   Overview
                 </h2>
@@ -402,7 +404,7 @@ export default function IntegrationGuides() {
               <div>
                 <h2
                   className="font-cinzel text-2xl font-bold mb-6"
-                  style={{ color: "#D4A843" }}
+                  style={{ color: "#f39450" }}
                 >
                   1. API Setup
                 </h2>
@@ -420,7 +422,7 @@ export default function IntegrationGuides() {
               <div>
                 <h2
                   className="font-cinzel text-2xl font-bold mb-6"
-                  style={{ color: "#D4A843" }}
+                  style={{ color: "#f39450" }}
                 >
                   2. MCP Server
                 </h2>
@@ -440,7 +442,7 @@ export default function IntegrationGuides() {
               <div>
                 <h2
                   className="font-cinzel text-2xl font-bold mb-6"
-                  style={{ color: "#D4A843" }}
+                  style={{ color: "#f39450" }}
                 >
                   3. Webhooks
                 </h2>
@@ -458,7 +460,7 @@ export default function IntegrationGuides() {
               <div>
                 <h2
                   className="font-cinzel text-2xl font-bold mb-6"
-                  style={{ color: "#D4A843" }}
+                  style={{ color: "#f39450" }}
                 >
                   4. Task Patterns
                 </h2>
@@ -476,7 +478,7 @@ export default function IntegrationGuides() {
               <div>
                 <h2
                   className="font-cinzel text-2xl font-bold mb-6"
-                  style={{ color: "#D4A843" }}
+                  style={{ color: "#f39450" }}
                 >
                   5. n8n Bridge
                 </h2>
@@ -494,7 +496,7 @@ export default function IntegrationGuides() {
               <div>
                 <h2
                   className="font-cinzel text-2xl font-bold mb-6"
-                  style={{ color: "#D4A843" }}
+                  style={{ color: "#f39450" }}
                 >
                   Implementation Checklist
                 </h2>
@@ -508,8 +510,8 @@ export default function IntegrationGuides() {
                         padding: "12px",
                         backgroundColor: check.done
                           ? "rgba(63, 185, 80, 0.05)"
-                          : "rgba(212,168,67,0.05)",
-                        border: `1px solid ${check.done ? "rgba(63, 185, 80, 0.2)" : "rgba(212,168,67,0.15)"}`,
+                          : "rgba(243,148,80,0.05)",
+                        border: `1px solid ${check.done ? "rgba(63, 185, 80, 0.2)" : "rgba(243,148,80,0.15)"}`,
                         borderRadius: 6,
                         cursor: "pointer",
                         transition: "all 0.2s",
@@ -524,7 +526,7 @@ export default function IntegrationGuides() {
                       <span
                         className="font-crimson text-base"
                         style={{
-                          color: check.done ? "#7A7A7A" : "#C0C0C0",
+                          color: check.done ? "#b5bab7" : "#C0C0C0",
                           textDecoration: check.done ? "line-through" : "none",
                         }}
                       >
@@ -537,12 +539,12 @@ export default function IntegrationGuides() {
                   style={{
                     marginTop: "1.5rem",
                     paddingTop: "1.5rem",
-                    borderTop: "1px solid rgba(212,168,67,0.1)",
+                    borderTop: "1px solid rgba(243,148,80,0.1)",
                   }}
                 >
                   <div
                     className="font-cinzel text-sm"
-                    style={{ color: "#D4A843", marginBottom: "8px" }}
+                    style={{ color: "#f39450", marginBottom: "8px" }}
                   >
                     Progress: {done}/{checks.length} complete
                   </div>

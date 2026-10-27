@@ -1,3 +1,4 @@
+import PublicLayout from "@/components/PublicLayout";
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import {
@@ -94,7 +95,7 @@ function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
 }
 
-export default function ClipsToolkit() {
+function ClipsToolkitContent() {
   const productQuery = trpc.clipsToolkit.getProduct.useQuery();
   const createCheckout = trpc.clipsToolkit.createCheckout.useMutation();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -142,7 +143,7 @@ export default function ClipsToolkit() {
       <header className="border-b border-border/40">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/clips" className="font-semibold tracking-tight">
-            <span className="text-[#D4A843]">1Commerce</span> Research
+            <span className="text-[#f39450]">1Commerce</span> Research
           </Link>
           <Link
             href="/contact"
@@ -157,7 +158,7 @@ export default function ClipsToolkit() {
       <section className="mx-auto max-w-6xl px-6 py-16 md:py-24">
         <div className="grid gap-12 md:grid-cols-[1.2fr_1fr] md:items-center">
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#D4A843]/30 bg-[#D4A843]/5 px-3 py-1 text-xs text-[#D4A843]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#f39450]/30 bg-[#f39450]/5 px-3 py-1 text-xs text-[#f39450]">
               <Sparkles className="h-3.5 w-3.5" />
               Instant delivery — download immediately after checkout
             </div>
@@ -179,7 +180,7 @@ export default function ClipsToolkit() {
                 onClick={handleBuy}
                 disabled={isLoading || !productQuery.data}
                 size="lg"
-                className="bg-[#D4A843] font-semibold text-black hover:bg-[#00B8D9]"
+                className="bg-[#f39450] font-semibold text-black hover:bg-[#ffad70]"
               >
                 {isLoading
                   ? "Starting checkout…"
@@ -228,7 +229,7 @@ export default function ClipsToolkit() {
                   "Citations for every entry",
                 ].map(item => (
                   <li key={item} className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-[#D4A843]" />
+                    <CheckCircle2 className="h-4 w-4 text-[#f39450]" />
                     {item}
                   </li>
                 ))}
@@ -245,8 +246,8 @@ export default function ClipsToolkit() {
             {HIGHLIGHTS.map(({ icon: Icon, title, body }) => (
               <Card key={title} className="border-border/40">
                 <CardContent className="space-y-3 p-6">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#D4A843]/10">
-                    <Icon className="h-5 w-5 text-[#D4A843]" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#f39450]/10">
+                    <Icon className="h-5 w-5 text-[#f39450]" />
                   </div>
                   <h3 className="text-lg font-semibold">{title}</h3>
                   <p className="text-sm text-muted-foreground">{body}</p>
@@ -260,7 +261,7 @@ export default function ClipsToolkit() {
       {/* Preview */}
       <section className="mx-auto max-w-6xl px-6 py-16">
         <div className="mb-8 flex items-center gap-3">
-          <TableIcon className="h-5 w-5 text-[#D4A843]" />
+          <TableIcon className="h-5 w-5 text-[#f39450]" />
           <h2 className="text-2xl font-semibold">Sample rows</h2>
         </div>
         <div className="overflow-hidden rounded-lg border border-border/40">
@@ -307,7 +308,7 @@ export default function ClipsToolkit() {
             onClick={handleBuy}
             disabled={isLoading || !productQuery.data}
             size="lg"
-            className="mt-6 bg-[#D4A843] font-semibold text-black hover:bg-[#00B8D9]"
+            className="mt-6 bg-[#f39450] font-semibold text-black hover:bg-[#ffad70]"
           >
             {isLoading
               ? "Starting checkout…"
@@ -316,12 +317,16 @@ export default function ClipsToolkit() {
           </Button>
         </div>
       </section>
-
-      <footer className="border-t border-border/40 py-8">
-        <div className="mx-auto max-w-6xl px-6 text-center text-xs text-muted-foreground">
-          © 2026 1Commerce LLC. All rights reserved.
-        </div>
-      </footer>
     </div>
+  );
+}
+
+export default function ClipsToolkit() {
+  return (
+    <PublicLayout>
+      <div className="marketing-page">
+        <ClipsToolkitContent />
+      </div>
+    </PublicLayout>
   );
 }

@@ -1,0 +1,54 @@
+/* Shared identity across public pages, authentication, and the workspace. */
+.brand-mark {
+  display: block;
+  flex: none;
+  color: var(--brand-accent, #f39450);
+}
+.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  vertical-align: middle;
+}
+.brand-lockup-type {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+}
+.brand-wordmark {
+  display: block;
+  color: var(--brand-ink, #f4f2ed);
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.065em;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.brand-wordmark > span {
+  color: var(--brand-accent, #f39450);
+}
+.brand-byline {
+  display: block;
+  margin-top: 3px;
+  color: var(--brand-muted, #b5bab7);
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.015em;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+@media (max-width: 700px) {
+  .brand-lockup {
+    gap: 8px;
+  }
+  .brand-wordmark {
+    font-size: 21px;
+  }
+  .brand-byline {
+    font-size: 9px;
+  }
+}

@@ -1,3 +1,4 @@
+import PublicLayout from "@/components/PublicLayout";
 import { useState } from "react";
 import { Copy, Download, Filter, Search, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -163,7 +164,7 @@ const CAMPAIGNS = [
   "RETARGETING_VISITOR",
 ];
 
-export default function AdCopyHub() {
+function AdCopyHubContent() {
   const [selectedPlatform, setSelectedPlatform] = useState("All");
   const [selectedCampaign, setSelectedCampaign] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
@@ -505,5 +506,15 @@ export default function AdCopyHub() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function AdCopyHub() {
+  return (
+    <PublicLayout>
+      <div className="marketing-page">
+        <AdCopyHubContent />
+      </div>
+    </PublicLayout>
   );
 }

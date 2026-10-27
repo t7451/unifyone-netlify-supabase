@@ -61,17 +61,20 @@ export default function ToolLayout({
           <ToolEmailCapture source={`tool:${currentSlug || "unknown"}`} />
           <section className="mt-12 border-t pt-6">
             <h2>Keep exploring</h2>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {related.map(tool => (
-                <Link
-                  key={tool.slug}
-                  href={`/tools/${tool.slug}`}
-                  className="rounded-lg border bg-card p-4 text-sm"
-                >
-                  {tool.label} →
-                </Link>
-              ))}
-            </div>
+            <nav aria-label="Related calculators">
+              <ul className="grid list-none gap-3 p-0 sm:grid-cols-3">
+                {related.map(tool => (
+                  <li key={tool.slug}>
+                    <Link
+                      href={`/tools/${tool.slug}`}
+                      className="reading-related-card text-sm"
+                    >
+                      {tool.label} →
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
             <p className="mt-6">
               <Link href="/resources">Read the guide library →</Link>
             </p>
@@ -83,6 +86,7 @@ export default function ToolLayout({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <nav
+        aria-label="Tool navigation"
         className={`border-b bg-background/95 backdrop-blur sticky top-0 z-10 ${
           immersiveMobile ? "h-11 sm:h-auto pt-[env(safe-area-inset-top)]" : ""
         }`}

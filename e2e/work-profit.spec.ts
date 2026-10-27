@@ -15,6 +15,12 @@ async function openPlanner(page: Page) {
     });
   });
   await page.goto("/tools/gig-hourly-rate");
+  await expect(page.getByRole("main")).toHaveCount(1);
+  await expect(
+    page.getByRole("navigation", { name: "Main navigation" })
+  ).toBeVisible();
+  await expect(page.locator(".marketing-footer")).toBeVisible();
+  await expect(page.locator(".reading-year-note")).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: "What did you really earn?" })
   ).toBeVisible();

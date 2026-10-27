@@ -1,3 +1,4 @@
+import PublicLayout from "@/components/PublicLayout";
 import { Link } from "wouter";
 import {
   Megaphone,
@@ -68,7 +69,7 @@ const STEPS = [
   },
 ];
 
-export default function AffiliateLanding() {
+function AffiliateLandingContent() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <PageHead
@@ -89,7 +90,9 @@ export default function AffiliateLanding() {
       <section className="border-b border-border bg-card py-16">
         <div className={CONTAINER_CLASS}>
           <div className="max-w-3xl space-y-6">
-            <Badge variant="secondary">Creator Growth + Affiliate Revenue</Badge>
+            <Badge variant="secondary">
+              Creator Growth + Affiliate Revenue
+            </Badge>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
               Become a UnifyOne Affiliate and Grow with Automated Social
               Marketing
@@ -173,5 +176,15 @@ export default function AffiliateLanding() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function AffiliateLanding() {
+  return (
+    <PublicLayout>
+      <div className="marketing-page">
+        <AffiliateLandingContent />
+      </div>
+    </PublicLayout>
   );
 }

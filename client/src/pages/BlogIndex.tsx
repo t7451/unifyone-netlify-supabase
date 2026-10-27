@@ -1,3 +1,5 @@
+import { useRef, useState } from "react";
+import { Search } from "lucide-react";
 import { Link } from "wouter";
 import PageHead from "@/components/PageHead";
 import PublicLayout from "@/components/PublicLayout";
@@ -71,6 +73,18 @@ const ITEM_LIST_JSON_LD = {
 const JSON_LD = [BLOG_JSON_LD, ITEM_LIST_JSON_LD];
 
 export default function BlogIndex() {
+  const [search, setSearch] = useState("");
+  const searchInput = useRef<HTMLInputElement>(null);
+  const posts = POSTS.filter(post =>
+    [post.title, post.description]
+      .join(" ")
+      .toLowerCase()
+      .includes(search.trim().toLowerCase())
+  );
+  function clearSearch() {
+    setSearch("");
+    searchInput.current?.focus();
+  }
   return (
     <PublicLayout>
       <PageHead
@@ -96,8 +110,58 @@ export default function BlogIndex() {
           className="marketing-library marketing-container"
           aria-label="Articles"
         >
-          <div className="marketing-tool-grid">
-            {POSTS.map(post => (
+          <div className="marketing-library-controls">
+            <label className="marketing-search">
+              <Search size={18} aria-hidden="true" />
+              <span className="sr-only">Search articles</span>
+              <input
+                ref={searchInput}
+                type="search"
+                aria-controls="article-results"
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+                onKeyDown={event => {
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    clearSearch();
+                  }
+                }}
+                placeholder="Search earnings, taxes, architecture…"
+              />
+            </label>
+            {search && (
+              <button
+                type="button"
+                className="marketing-button marketing-button-outline"
+                onClick={clearSearch}
+              >
+                Clear search
+              </button>
+            )}
+          </div>
+          <p
+            className="marketing-result-count"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {posts.length} {posts.length === 1 ? "article" : "articles"} of{" "}
+            {POSTS.length}
+          </p>
+          <div
+            id="article-results"
+            className={posts.length ? "marketing-tool-grid" : "marketing-empty"}
+          >
+            {!posts.length && (
+              <>
+                <h2>No matching articles.</h2>
+                <p>
+                  Try a different phrase or clear your search to see all
+                  articles.
+                </p>
+              </>
+            )}
+            {posts.map(post => (
               <Link
                 key={post.href}
                 href={post.href}

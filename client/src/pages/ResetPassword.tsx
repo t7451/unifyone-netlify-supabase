@@ -1,3 +1,4 @@
+import { BrandLockup } from "@/components/Brand";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -5,40 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Shield, CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-function LogoMark({ size = 40 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 40 40"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect width="40" height="40" rx="10" fill="url(#lg-rp)" />
-      <path
-        d="M10 14 L20 26 L30 14"
-        stroke="white"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <defs>
-        <linearGradient
-          id="lg-rp"
-          x1="0"
-          y1="0"
-          x2="40"
-          y2="40"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#D4A843" />
-          <stop offset="1" stopColor="#B8863B" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -58,17 +25,17 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-[#020202] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#111416] flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center space-y-6">
-          <LogoMark size={48} />
+          <BrandLockup size={48} />
           <div className="flex items-center justify-center">
             <XCircle className="w-12 h-12 text-red-400" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-white">
+            <h2 className="text-2xl font-bold text-[#f4f2ed]">
               Invalid reset link
             </h2>
-            <p className="text-slate-400 text-sm">
+            <p className="text-[#b5bab7] text-sm">
               This reset link is invalid. Please request a new one.
             </p>
           </div>
@@ -76,8 +43,8 @@ export default function ResetPassword() {
             onClick={() => navigate("/login")}
             className={cn(
               "h-11 px-6 font-semibold text-sm transition-all",
-              "bg-gradient-to-r from-[#D4A843] to-[#B8863B] hover:from-[#E8C25A] hover:to-[#B8863B]",
-              "text-[#020202] shadow-lg shadow-[#D4A843]/20"
+              "bg-[#f39450] hover:bg-[#ffad74]",
+              "text-[#111416] shadow-none"
             )}
           >
             Request new link
@@ -89,15 +56,15 @@ export default function ResetPassword() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#020202] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#111416] flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center space-y-6">
-          <LogoMark size={48} />
+          <BrandLockup size={48} />
           <div className="flex items-center justify-center">
-            <CheckCircle className="w-12 h-12 text-[#D4A843]" />
+            <CheckCircle className="w-12 h-12 text-[#f39450]" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-white">Password updated!</h2>
-            <p className="text-slate-400 text-sm">
+            <h2 className="text-2xl font-bold text-[#f4f2ed]">Password updated!</h2>
+            <p className="text-[#b5bab7] text-sm">
               You can now sign in with your new password.
             </p>
           </div>
@@ -105,8 +72,8 @@ export default function ResetPassword() {
             onClick={() => navigate("/login")}
             className={cn(
               "h-11 px-6 font-semibold text-sm transition-all",
-              "bg-gradient-to-r from-[#D4A843] to-[#B8863B] hover:from-[#E8C25A] hover:to-[#B8863B]",
-              "text-[#020202] shadow-lg shadow-[#D4A843]/20"
+              "bg-[#f39450] hover:bg-[#ffad74]",
+              "text-[#111416] shadow-none"
             )}
           >
             Sign in
@@ -160,18 +127,17 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020202] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#111416] flex items-center justify-center p-6">
       <div className="w-full max-w-[400px] space-y-6">
         <div className="flex flex-col items-center gap-3 mb-2">
-          <LogoMark size={44} />
-          <span className="text-xl font-bold text-white">UnifyOne</span>
+          <BrandLockup size={44} />
         </div>
 
         <div>
-          <h2 className="text-2xl font-bold text-white mb-1">
+          <h2 className="text-2xl font-bold text-[#f4f2ed] mb-1">
             Reset your password
           </h2>
-          <p className="text-slate-400 text-sm">
+          <p className="text-[#b5bab7] text-sm">
             Enter and confirm your new password below.
           </p>
         </div>
@@ -184,7 +150,7 @@ export default function ResetPassword() {
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">New password</Label>
+            <Label className="text-[#d0d3ce] text-sm">New password</Label>
             <Input
               type="password"
               placeholder="At least 8 characters"
@@ -192,8 +158,8 @@ export default function ResetPassword() {
               onChange={e => setNewPassword(e.target.value)}
               onKeyDown={handleKeyDown}
               className={cn(
-                "bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-11 transition-all",
-                "focus:border-[#D4A843]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#D4A843]/20"
+                "bg-white/5 border-white/10 text-[#f4f2ed] placeholder:text-[#a2aaa7] h-11 transition-all",
+                "focus:border-[#f39450]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#f39450]/20"
               )}
               autoComplete="new-password"
               autoFocus
@@ -201,7 +167,7 @@ export default function ResetPassword() {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">Confirm password</Label>
+            <Label className="text-[#d0d3ce] text-sm">Confirm password</Label>
             <Input
               type="password"
               placeholder="Re-enter your new password"
@@ -209,8 +175,8 @@ export default function ResetPassword() {
               onChange={e => setConfirmPassword(e.target.value)}
               onKeyDown={handleKeyDown}
               className={cn(
-                "bg-white/5 border-white/10 text-white placeholder:text-slate-600 h-11 transition-all",
-                "focus:border-[#D4A843]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#D4A843]/20"
+                "bg-white/5 border-white/10 text-[#f4f2ed] placeholder:text-[#a2aaa7] h-11 transition-all",
+                "focus:border-[#f39450]/50 focus:bg-white/8 focus:ring-1 focus:ring-[#f39450]/20"
               )}
               autoComplete="new-password"
             />
@@ -221,8 +187,8 @@ export default function ResetPassword() {
             disabled={isSubmitting}
             className={cn(
               "w-full h-11 font-semibold text-sm transition-all",
-              "bg-gradient-to-r from-[#D4A843] to-[#B8863B] hover:from-[#E8C25A] hover:to-[#B8863B]",
-              "text-[#020202] shadow-lg shadow-[#D4A843]/20",
+              "bg-[#f39450] hover:bg-[#ffad74]",
+              "text-[#111416] shadow-none",
               isSubmitting && "opacity-80 cursor-not-allowed"
             )}
           >
@@ -238,8 +204,8 @@ export default function ResetPassword() {
         </div>
 
         <div className="flex items-start gap-2 p-3 rounded-lg bg-white/3 border border-white/5">
-          <Shield className="w-4 h-4 text-[#D4A843] mt-0.5 flex-shrink-0" />
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <Shield className="w-4 h-4 text-[#f39450] mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-[#a2aaa7] leading-relaxed">
             Your password is securely hashed with scrypt. UnifyOne never stores
             your password in plain text.
           </p>

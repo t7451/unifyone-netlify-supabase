@@ -127,58 +127,63 @@ export default function Contact() {
               className="marketing-contact-form"
               aria-busy={status === "sending"}
             >
-              <label>
-                Your name
-                <input
-                  name="name"
-                  autoComplete="name"
-                  required
-                  maxLength={120}
-                  value={name}
-                  onChange={event => setName(event.target.value)}
-                />
-              </label>
-              <label>
-                Email address
-                <input
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  maxLength={254}
-                  value={email}
-                  onChange={event => setEmail(event.target.value)}
-                />
-              </label>
-              <label>
-                Your message
-                <textarea
-                  name="message"
-                  required
-                  minLength={10}
-                  maxLength={5000}
-                  rows={6}
-                  value={message}
-                  onChange={event => setMessage(event.target.value)}
-                  aria-describedby="contact-message-hint"
-                />
-              </label>
-              <span id="contact-message-hint" className="marketing-fine">
-                At least 10 characters. Include the page or feature you’re
-                asking about.
-              </span>
-              <div className="marketing-honeypot" aria-hidden="true">
+              <fieldset
+                className="marketing-contact-fields"
+                disabled={status === "sending"}
+              >
                 <label>
-                  Company
+                  Your name
                   <input
-                    name="company"
-                    tabIndex={-1}
-                    autoComplete="off"
-                    value={company}
-                    onChange={event => setCompany(event.target.value)}
+                    name="name"
+                    autoComplete="name"
+                    required
+                    maxLength={120}
+                    value={name}
+                    onChange={event => setName(event.target.value)}
                   />
                 </label>
-              </div>
+                <label>
+                  Email address
+                  <input
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    maxLength={254}
+                    value={email}
+                    onChange={event => setEmail(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Your message
+                  <textarea
+                    name="message"
+                    required
+                    minLength={10}
+                    maxLength={5000}
+                    rows={6}
+                    value={message}
+                    onChange={event => setMessage(event.target.value)}
+                    aria-describedby="contact-message-hint"
+                  />
+                </label>
+                <span id="contact-message-hint" className="marketing-fine">
+                  At least 10 characters. Include the page or feature you’re
+                  asking about.
+                </span>
+                <div className="marketing-honeypot" aria-hidden="true">
+                  <label>
+                    Company
+                    <input
+                      name="company"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={company}
+                      onChange={event => setCompany(event.target.value)}
+                    />
+                  </label>
+                </div>
+              </fieldset>
               {feedback && (
                 <div
                   className="marketing-feedback"

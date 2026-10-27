@@ -4,12 +4,10 @@ import PublicLayout from "./PublicLayout";
 import GigResourceLinks from "./GigResourceLinks";
 import "./reading.css";
 
-const TAX_TOOLS = new Set([
-  "mileage-deduction-calculator",
+const TAX_BASIS_2025_TOOLS = new Set([
   "quarterly-tax-estimator",
   "se-tax-calculator",
   "tax-set-aside",
-  "gig-hourly-rate",
 ]);
 
 export default function ReadingLayout({
@@ -27,27 +25,47 @@ export default function ReadingLayout({
   const tool = location.split("/").pop() ?? "";
 
   useEffect(() => {
-    if (kind === "calculator") return;
-    const used = new Set<string>();
+    if (kind === "calculator") {
+      setOutline([]);
+      return;
+    }
     const headings = Array.from(content.current?.querySelectorAll("h2") ?? []);
-    setOutline(
+    const headingSet = new Set<Element>(headings);
+    // Keep authored deep links, and avoid collisions with IDs outside the outline.
+    const used = new Set(
+      Array.from(document.querySelectorAll("[id]"))
+        .filter(element => !headingSet.has(element))
+        .map(element => element.id)
+    );
+    const authoredIds = new Set(
       headings
-        .map((heading, index) => {
-          const text = heading.textContent?.trim() ?? "";
-          const base =
-            heading.id ||
-            text
+        .filter(heading => !heading.dataset.readingGeneratedAnchor)
+        .map(heading => heading.id)
+        .filter(Boolean)
+    );
+    setOutline(
+      headings.flatMap(heading => {
+        const text = heading.textContent?.trim() ?? "";
+        if (!text) return [];
+        const authored =
+          !!heading.id && !heading.dataset.readingGeneratedAnchor;
+        const base = authored
+          ? heading.id
+          : text
               .toLowerCase()
               .replace(/[^a-z0-9]+/g, "-")
-              .replace(/^-|-$/g, "") ||
-            "section";
-          let id = base;
-          if (used.has(id)) id = base + "-" + (index + 1);
-          used.add(id);
-          heading.id = id;
-          return { id, text };
-        })
-        .filter(heading => heading.text)
+              .replace(/^-|-$/g, "") || "section";
+        let id = base;
+        let suffix = 2;
+        while (used.has(id) || (!authored && authoredIds.has(id)))
+          id = `${base}-${suffix++}`;
+        used.add(id);
+        heading.id = id;
+        if (!authored) heading.dataset.readingGeneratedAnchor = "true";
+        // Native anchors can now move keyboard/screen-reader focus to the heading.
+        if (!heading.hasAttribute("tabindex")) heading.tabIndex = -1;
+        return [{ id, text }];
+      })
     );
   }, [kind, location, children]);
 
@@ -89,20 +107,30 @@ export default function ReadingLayout({
               <ol>
                 {outline.map(item => (
                   <li key={item.id}>
-                    <a href={"#" + item.id}>{item.text}</a>
+                    <a
+                      href={"#" + item.id}
+                      onClick={() =>
+                        document
+                          .getElementById(item.id)
+                          ?.focus({ preventScroll: true })
+                      }
+                    >
+                      {item.text}
+                    </a>
                   </li>
                 ))}
               </ol>
             </nav>
           </details>
         )}
-        {kind === "calculator" && TAX_TOOLS.has(tool) && (
+        {kind === "calculator" && TAX_BASIS_2025_TOOLS.has(tool) && (
           <aside className="reading-year-note">
             <strong>2025 calculation basis</strong>
             <p>
-              {tool === "gig-hourly-rate"
-                ? "Uses the 2025 mileage allowance as a cost proxy, not your actual vehicle costs. Results are before income and self-employment taxes."
-                : "Uses 2025 tax-year figures. This is not a 2026 estimate or a filing/payment instruction. Assumes no W-2 wages. Other income, credits, QBI, age-related deductions, and Additional Medicare Tax can change your result."}{" "}
+              Uses 2025 tax-year figures. This is not a 2026 estimate or a
+              filing/payment instruction. Assumes no W-2 wages. Other income,
+              credits, QBI, age-related deductions, and Additional Medicare Tax
+              can change your result.{" "}
               <a
                 href="https://www.irs.gov/publications/p501"
                 target="_blank"

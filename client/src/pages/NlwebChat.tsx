@@ -93,38 +93,42 @@ export default function NlwebChat() {
 
   return (
     <PublicLayout>
-      <PageHead
-        title="AI Chat | UnifyOne"
-        description="Chat with the 1Commerce AI assistant, powered by Cloudflare Workers AI."
-        canonical={`${SITE_URL}/chat`}
-      />
+      <div className="marketing-page">
+        <PageHead
+          title="AI Chat | UnifyOne"
+          description="Chat with the 1Commerce AI assistant, powered by Cloudflare Workers AI."
+          canonical={`${SITE_URL}/chat`}
+        />
 
-      <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <header className="mb-8 text-center">
-            <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full border border-[rgba(212,168,67,0.25)] text-[#D4A843] text-xs uppercase tracking-widest">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>1commerce-nlweb</span>
+        <div className="min-h-screen pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <header className="mb-8 text-center">
+              <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full border border-[rgba(243,148,80,0.25)] text-[#f39450] text-xs uppercase tracking-widest">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>1commerce-nlweb</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-semibold mb-3">
+                AI Chat
+              </h1>
+              <p className="text-sm text-[rgba(244,242,237,0.7)] max-w-2xl mx-auto">
+                Streaming responses from the{" "}
+                <code className="text-[#f39450]">1commerce-nlweb</code>{" "}
+                Cloudflare Worker. Each message round-trips to{" "}
+                <span className="text-[#f39450]">{workerUrl}</span>.
+              </p>
+            </header>
+
+            <div className="rounded-2xl border border-[rgba(243,148,80,0.18)] bg-[rgba(17,20,22,0.6)] backdrop-blur-md p-4 sm:p-6">
+              <AIChatBox
+                messages={messages}
+                onSendMessage={handleSend}
+                isLoading={isLoading}
+                height="min(70vh, 640px)"
+                emptyStateMessage="Ask me anything about UnifyOne."
+                suggestedPrompts={SUGGESTED_PROMPTS}
+                placeholder="Type a message and press Enter…"
+              />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-semibold mb-3">AI Chat</h1>
-            <p className="text-sm text-[rgba(240,232,208,0.7)] max-w-2xl mx-auto">
-              Streaming responses from the{" "}
-              <code className="text-[#D4A843]">1commerce-nlweb</code> Cloudflare
-              Worker. Each message round-trips to{" "}
-              <span className="text-[#D4A843]">{workerUrl}</span>.
-            </p>
-          </header>
-
-          <div className="rounded-2xl border border-[rgba(212,168,67,0.18)] bg-[rgba(2,2,2,0.6)] backdrop-blur-md p-4 sm:p-6">
-            <AIChatBox
-              messages={messages}
-              onSendMessage={handleSend}
-              isLoading={isLoading}
-              height="min(70vh, 640px)"
-              emptyStateMessage="Ask me anything about UnifyOne."
-              suggestedPrompts={SUGGESTED_PROMPTS}
-              placeholder="Type a message and press Enter…"
-            />
           </div>
         </div>
       </div>

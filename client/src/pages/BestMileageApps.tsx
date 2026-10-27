@@ -1,3 +1,4 @@
+import ReadingLayout from "@/components/ReadingLayout";
 import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
@@ -94,7 +95,7 @@ const jsonLd = [
 
 export default function BestMileageApps() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <ReadingLayout collection={{ label: "Guides", href: "/resources" }}>
       <PageHead
         title="Best Mileage Tracking Apps for Gig Workers (2026)"
         description="Honest 2026 comparison of Stride, Everlance, Hurdlr & MileIQ for gig drivers, plus the 72.5-cent IRS mileage rate and a free deduction calculator."
@@ -103,25 +104,7 @@ export default function BestMileageApps() {
         jsonLd={jsonLd}
       />
 
-      <main className="mx-auto max-w-3xl px-6 py-12">
-        <nav aria-label="breadcrumb" className="mb-6">
-          <ol className="flex items-center gap-2 text-xs text-muted-foreground">
-            <li>
-              <Link href="/" className="hover:text-foreground">
-                Home
-              </Link>
-            </li>
-            <li>&rsaquo;</li>
-            <li>
-              <Link href="/seo" className="hover:text-foreground">
-                Guides
-              </Link>
-            </li>
-            <li>&rsaquo;</li>
-            <li className="text-foreground">Best Mileage Tracking Apps</li>
-          </ol>
-        </nav>
-
+      <article className="reading-content">
         <h1 className="text-3xl font-bold tracking-tight">
           Best Mileage Tracking Apps for Gig Workers (2026)
         </h1>
@@ -152,8 +135,12 @@ export default function BestMileageApps() {
                 {APPS.map(a => (
                   <tr key={a.name} className="border-b align-top">
                     <td className="py-3 pr-4 font-medium">{a.name}</td>
-                    <td className="py-3 pr-4 text-muted-foreground">{a.free}</td>
-                    <td className="py-3 pr-4 text-muted-foreground">{a.paid}</td>
+                    <td className="py-3 pr-4 text-muted-foreground">
+                      {a.free}
+                    </td>
+                    <td className="py-3 pr-4 text-muted-foreground">
+                      {a.paid}
+                    </td>
                     <td className="py-3 text-muted-foreground">{a.best}</td>
                   </tr>
                 ))}
@@ -212,9 +199,9 @@ export default function BestMileageApps() {
             >
               Mileage &amp; Deduction Calculator
             </Link>{" "}
-            turns your business miles into an estimated deduction and tax savings
-            at the 2026 IRS rate -- no account required. Then let an app keep the
-            log running all year.
+            turns your business miles into an estimated deduction and tax
+            savings at the 2026 IRS rate -- no account required. Then let an app
+            keep the log running all year.
           </p>
         </section>
 
@@ -243,7 +230,7 @@ export default function BestMileageApps() {
           links are partner/affiliate links; we may earn a commission at no
           extra cost to you.
         </p>
-      </main>
-    </div>
+      </article>
+    </ReadingLayout>
   );
 }

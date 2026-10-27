@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { ArrowRight, BookOpen, Search } from "lucide-react";
+import PublicLayout from "@/components/PublicLayout";
 import { Link } from "wouter";
 import { Helmet } from "react-helmet-async";
 import { SITE_URL } from "@/lib/siteConfig";
@@ -48,14 +51,17 @@ const JSON_LD = [
 ];
 
 export default function SeoIndex() {
+  const [search, setSearch] = useState("");
+  const query = search.trim().toLowerCase();
+  const pages = SEO_PAGES.filter(
+    page =>
+      !query ||
+      `${page.h1} ${page.title} ${page.tagline} ${page.keywords.join(" ")}`
+        .toLowerCase()
+        .includes(query)
+  );
   return (
-    <div
-      style={{
-        backgroundColor: "#020202",
-        color: "#F0E8D0",
-        minHeight: "100vh",
-      }}
-    >
+    <PublicLayout>
       <Helmet>
         <title>{TITLE}</title>
         <meta name="description" content={DESCRIPTION} />
@@ -81,90 +87,102 @@ export default function SeoIndex() {
           </script>
         ))}
       </Helmet>
-
-      <nav
-        className="fixed top-0 left-0 right-0 z-50"
-        style={{
-          backgroundColor: "rgba(2,2,2,0.97)",
-          borderBottom: "1px solid rgba(212,168,67,0.12)",
-          backdropFilter: "blur(12px)",
-        }}
-      >
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/">
-            <span
-              className="font-cinzel text-xs font-700 tracking-widest cursor-pointer"
-              style={{ color: "#D4A843", letterSpacing: "0.2em" }}
-            >
-              ← UNIFYONE
-            </span>
-          </Link>
-          <span className="inscription" style={{ color: "#3A3A3A" }}>
-            UnifyOne Guides
+      <div className="marketing-page marketing-library">
+        <header className="marketing-container marketing-page-heading">
+          <span className="marketing-eyebrow">
+            The UnifyOne guide collection
           </span>
-        </div>
-      </nav>
-
-      <main className="max-w-5xl mx-auto px-6 sm:px-8 pt-28 pb-24">
-        <header className="mb-12">
-          <span className="inscription block mb-4">
-            UnifyOne · 1Commerce · UnifOne · OneCommerce · 1-Commerce · PNW
-            Enterprises
-          </span>
-          <h1
-            className="font-cinzel text-3xl sm:text-5xl font-black mb-6"
-            style={{
-              color: "#F0E8D0",
-              lineHeight: 1.1,
-              letterSpacing: "0.01em",
-            }}
-          >
-            The Complete Guide to UnifyOne by 1Commerce
-          </h1>
-          <p
-            className="font-crimson text-xl sm:text-2xl"
-            style={{ color: "#9A9A9A", fontStyle: "italic", lineHeight: 1.6 }}
-          >
-            UnifyOne (also written UnifOne, OneCommerce, OneCommerc, 1-commerce,
-            or 1Commerce) is the AI-powered earnings & tax app for gig and 1099
-            workers by 1Commerce LLC / PNW Enterprises. Browse every guide below
-            to find exactly what you searched for.
+          <h1>Find the guide you need.</h1>
+          <p className="marketing-lead">
+            Browse practical guides to UnifyOne, gig work, earnings and business
+            records. Search by a topic or question, then follow a guide at your
+            own pace.
           </p>
-          <div
-            className="h-px mt-8"
-            style={{
-              background: "linear-gradient(to right, #D4A843, transparent)",
-            }}
-          />
-        </header>
-
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {SEO_PAGES.map(p => (
-            <Link key={p.slug} href={`/seo/${p.slug}`}>
-              <article className="stone-card p-6 cursor-pointer group h-full">
-                <span
-                  className="inscription block mb-2"
-                  style={{ color: "#3A3A3A" }}
-                >
-                  UnifyOne Guide
-                </span>
-                <h2
-                  className="font-cinzel text-base font-600 mb-3 group-hover:text-amber-400 transition-colors"
-                  style={{ color: "#F0E8D0", letterSpacing: "0.03em" }}
-                >
-                  {p.h1}
-                </h2>
-                <p
-                  className="font-crimson text-sm"
-                  style={{ color: "#9A9A9A", lineHeight: 1.6 }}
-                >
-                  {p.tagline}
-                </p>
-              </article>
+          <div className="marketing-actions">
+            <Link
+              href="/resources"
+              className="marketing-button marketing-button-outline"
+            >
+              Browse all resources <ArrowRight size={15} aria-hidden="true" />
             </Link>
-          ))}
+            <Link
+              href="/tools"
+              className="marketing-button marketing-button-outline"
+            >
+              Try a free tool <ArrowRight size={15} aria-hidden="true" />
+            </Link>
+          </div>
+        </header>
+        <section
+          className="marketing-container"
+          aria-labelledby="guide-library-heading"
+        >
+          <div className="marketing-library-controls">
+            <h2 id="guide-library-heading" className="sr-only">
+              Search the guide collection
+            </h2>
+            <label className="marketing-search">
+              <Search size={18} aria-hidden="true" />
+              <span className="sr-only">Search guides</span>
+              <input
+                type="search"
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+                placeholder="Search earnings, mileage, taxes…"
+              />
+            </label>
+            <p
+              role="status"
+              aria-live="polite"
+              className="marketing-result-count"
+            >
+              {pages.length} of {SEO_PAGES.length} guides
+            </p>
+          </div>
+          {pages.length ? (
+            <div className="marketing-tool-grid">
+              {pages.map(page => (
+                <Link
+                  key={page.slug}
+                  href={`/seo/${page.slug}`}
+                  className="marketing-tool-card"
+                >
+                  <BookOpen size={22} aria-hidden="true" />
+                  <span className="marketing-card-category">
+                    UnifyOne guide
+                  </span>
+                  <h2>{page.h1}</h2>
+                  <p>{page.tagline}</p>
+                  <span className="marketing-text-link">
+                    Read the guide <ArrowRight size={15} aria-hidden="true" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="marketing-empty">
+              <h2>No guides match that search.</h2>
+              <p>
+                Try a shorter topic, or clear your search to browse the
+                collection.
+              </p>
+              <button
+                type="button"
+                className="marketing-button marketing-button-outline"
+                onClick={() => setSearch("")}
+              >
+                Show all guides
+              </button>
+            </div>
+          )}
+          <p className="marketing-library-note">
+            Looking for a practical starting point? The{" "}
+            <Link href="/resources">resource library</Link> organizes worker
+            guides by topic; the <Link href="/tools">free tools</Link> let you
+            explore a scenario with your own figures.
+          </p>
         </section>
-      </main>
-    </div>
+      </div>
+    </PublicLayout>
   );
 }

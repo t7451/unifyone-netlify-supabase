@@ -57,14 +57,14 @@ export function CookieConsentBanner() {
     >
       <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
-          <Cookie className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+          <Cookie className="mt-0.5 h-5 w-5 shrink-0 text-[#f39450]" />
           <p className="text-sm leading-relaxed text-gray-300">
             Optional analytics help us understand how the site is used and
             improve the tools. You can accept analytics cookies or keep only the
             essentials.{" "}
             <Link
               href="/privacy"
-              className="font-medium text-white underline underline-offset-2 hover:text-amber-200"
+              className="font-medium text-white underline underline-offset-2 hover:text-[#ffb079]"
             >
               Privacy Policy
             </Link>
@@ -81,7 +81,7 @@ export function CookieConsentBanner() {
           </Button>
           <Button
             onClick={accept}
-            className="bg-amber-400 text-neutral-950 hover:bg-amber-300"
+            className="bg-[#f39450] text-[#111416] hover:bg-[#ffb079]"
           >
             Accept all
           </Button>

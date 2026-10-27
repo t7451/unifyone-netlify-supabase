@@ -25,6 +25,12 @@ test("session resolution preserves figures entered before authentication finishe
   });
   await mockPublic(page, sessionGate);
   await page.goto("/tools/mileage-deduction-calculator");
+  await expect(page.getByRole("main")).toHaveCount(1);
+  await expect(
+    page.getByRole("navigation", { name: "Main navigation" })
+  ).toBeVisible();
+  await expect(page.locator(".marketing-footer")).toBeVisible();
+  await expect(page.locator(".reading-year-note")).toHaveCount(0);
   await page.getByLabel("Tax year", { exact: true }).selectOption("2023");
   const miles = page.getByLabel("2023 business miles", { exact: true });
   await miles.fill("123");

@@ -1,29 +1,28 @@
-.reading-content [class*="text-[#F0E8D0]"],
-.reading-content [class*="text-[#9A9A9A]"] {
-  color: #43513d !important;
+/* Shared public reading surfaces. Brand colors stay scoped away from the app. */
+.reading-content [class*="text-[#F0E8D0]"] {
+  color: var(--foreground) !important;
 }
-.reading-article .reading-content [class*="bg-[#"] {
-  background-color: #f0f2e8 !important;
-  border-color: #d7ddcf !important;
+.reading-content [class*="text-[#9A9A9A]"] {
+  color: var(--muted-foreground) !important;
 }
 .reading-related-card {
   display: block;
   min-width: 0;
   padding: 24px;
   white-space: normal;
-  border: 1px solid #d7ddcf;
+  border: 1px solid #343a3d;
   border-radius: 8px;
   text-decoration: none;
-  background: #fffefa;
+  background: #1c2022;
 }
 .reading-related-card:hover {
-  border-color: #718b65;
+  border-color: #f39450;
 }
 .reading-next {
   width: min(1020px, calc(100% - 40px));
   margin: 0 auto;
   padding: 35px 0 55px;
-  border-top: 1px solid #d7ddcf;
+  border-top: 1px solid #343a3d;
 }
 .reading-next h2 {
   margin-top: 12px;
@@ -39,9 +38,9 @@
   display: block;
   position: relative;
   padding: 23px;
-  border: 1px solid #d7ddcf;
+  border: 1px solid #343a3d;
   border-radius: 7px;
-  background: #fffefa;
+  background: #1c2022;
   text-decoration: none;
 }
 .reading-next-grid h3 {
@@ -51,21 +50,21 @@
 }
 .reading-next-grid p {
   margin-top: 13px;
-  color: #59635b;
+  color: #b5bab7;
   font-size: 13px;
   line-height: 1.8;
 }
 .reading-next-grid span {
   display: block;
   margin-top: 18px;
-  color: #234c3b;
+  color: #f39450;
 }
 .reading-next-all {
   display: flex;
   gap: 24px;
   margin-top: 25px !important;
   font-size: 12px;
-  color: #234c3b;
+  color: #f39450;
 }
 @media (max-width: 640px) {
   .reading-next-grid {
@@ -73,22 +72,30 @@
   }
 }
 .reading-page {
-  --background: #faf8f2;
-  --foreground: #202923;
-  --card: #fffefa;
-  --card-foreground: #202923;
-  --muted: #edf0e6;
-  --muted-foreground: #59635b;
-  --primary: #234c3b;
-  --primary-foreground: #fffefa;
-  --border: #d7ddcf;
-  --input: #a5b39e;
-  --ring: #547450;
-  --popover: #fffefa;
-  --popover-foreground: #202923;
-  --accent: #e8eedf;
-  --accent-foreground: #234c3b;
+  --background: #111416;
+  --foreground: #f4f2ed;
+  --card: #1c2022;
+  --card-foreground: #f4f2ed;
+  --secondary: #202629;
+  --secondary-foreground: #f4f2ed;
+  --destructive: #fda4af;
+  --destructive-foreground: #301113;
+  --muted: #202629;
+  --muted-foreground: #b5bab7;
+  --primary: #f39450;
+  --primary-foreground: #111416;
+  --border: #343a3d;
+  --input: #50585b;
+  --ring: #f39450;
+  --popover: #1c2022;
+  --popover-foreground: #f4f2ed;
+  --accent: #30261f;
+  --accent-foreground: #f39450;
   --radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  color-scheme: dark;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
   padding-bottom: 60px;
 }
 .reading-context,
@@ -104,7 +111,7 @@
   align-items: center;
   gap: 12px;
   padding-block: 28px;
-  color: #59635b;
+  color: #b5bab7;
   font-size: 12px;
 }
 .reading-context a {
@@ -115,7 +122,7 @@
 }
 .reading-context-extra {
   margin-left: auto;
-  color: #234c3b;
+  color: #f39450;
 }
 .reading-content {
   padding-block: 28px 50px;
@@ -123,35 +130,35 @@
 }
 .reading-content > header {
   padding-bottom: 30px;
-  border-bottom: 1px solid #d7ddcf;
+  border-bottom: 1px solid #343a3d;
   margin-bottom: 38px;
 }
 .reading-content h1 {
-  font-family: Georgia, "Times New Roman", serif !important;
-  font-size: clamp(36px, 4.6vw, 58px) !important;
+  font-family: "Inter", Arial, Helvetica, sans-serif !important;
+  font-size: clamp(32px, 4.2vw, 50px) !important;
   line-height: 1.12 !important;
-  font-weight: 400 !important;
+  font-weight: 600 !important;
   letter-spacing: -0.04em !important;
-  color: #202923 !important;
+  color: #f4f2ed !important;
   margin-block: 14px 25px !important;
   text-wrap: balance;
 }
 .reading-content h2 {
-  font-family: Georgia, "Times New Roman", serif !important;
+  font-family: "Inter", Arial, Helvetica, sans-serif !important;
   font-size: clamp(27px, 3vw, 34px) !important;
-  font-weight: 400 !important;
+  font-weight: 600 !important;
   line-height: 1.25 !important;
   letter-spacing: -0.025em !important;
   margin-block: 36px 18px !important;
-  color: #202923 !important;
-  scroll-margin-top: 110px;
+  color: #f4f2ed !important;
+  scroll-margin-top: 120px;
 }
 .reading-content h3 {
-  font-family: Arial, Helvetica, sans-serif !important;
+  font-family: "Inter", Arial, Helvetica, sans-serif !important;
   font-size: 18px !important;
   font-weight: 600 !important;
   line-height: 1.5 !important;
-  color: #2d3f2f !important;
+  color: #f4f2ed !important;
 }
 .reference-group {
   margin-bottom: 60px;
@@ -161,12 +168,13 @@
 }
 .reference-group > p {
   margin-block: 15px 28px;
-  color: #53604f;
+  color: #b5bab7;
   line-height: 1.8;
 }
 .marketing-reference-hub .marketing-tool-card h3 {
   font:
-    500 20px/1.4 Arial,
+    600 20px/1.4 "Inter",
+    Arial,
     Helvetica,
     sans-serif;
   margin-block: 24px 14px;
@@ -174,9 +182,9 @@
 .reference-note {
   margin-top: 40px;
   padding: 24px;
-  border: 1px solid #d7ddcf;
+  border: 1px solid #343a3d;
   border-radius: 8px;
-  background: #f0f2e8;
+  background: #202629;
 }
 .reference-note h2 {
   margin-top: 0 !important;
@@ -209,11 +217,11 @@
   grid-template-columns: 75px minmax(0, 1fr);
   gap: 20px;
   padding-block: 20px;
-  border-top: 1px solid #d7ddcf;
+  border-top: 1px solid #343a3d;
 }
 .reference-phase {
   font-size: 12px;
-  color: #59635b;
+  color: #b5bab7;
 }
 .reference-timeline p {
   margin-bottom: 0;
@@ -238,7 +246,7 @@
 .reference-progress {
   width: 100%;
   height: 12px;
-  accent-color: #234c3b;
+  accent-color: #f39450;
 }
 .integration-reference input[type="checkbox"] {
   min-height: 20px;
@@ -247,29 +255,24 @@
   flex-shrink: 0;
 }
 .integration-reference button[aria-pressed] {
-  background: #f0f2e8 !important;
-  border-color: #a9b2a3 !important;
-  color: #234c3b !important;
-  font-family: Arial, Helvetica, sans-serif !important;
+  background: #202629 !important;
+  border-color: #50585b !important;
+  color: #f39450 !important;
+  font-family: "Inter", Arial, Helvetica, sans-serif !important;
   letter-spacing: normal !important;
 }
 .integration-reference button[aria-pressed="true"] {
-  background: #234c3b !important;
-  color: #fffefa !important;
-}
-.integration-reference [class*="bg-[#"] {
-  background: #fffefa;
-  color: #234c3b;
-  border-color: #d7ddcf;
+  background: #f39450 !important;
+  color: #1c2022 !important;
 }
 .reading-content :where(p, li) {
-  font-family: Arial, Helvetica, sans-serif !important;
+  font-family: "Inter", Arial, Helvetica, sans-serif !important;
   font-size: 16px;
   line-height: 1.9;
   overflow-wrap: anywhere;
 }
-.reading-content p {
-  color: #53604f;
+.reading-content p:not([class*="text-"]):not([style*="color"]) {
+  color: var(--muted-foreground);
 }
 .reading-content p.text-xs,
 .reading-content .text-xs {
@@ -280,24 +283,17 @@
   font-size: 14px;
   line-height: 1.8;
 }
-.reading-content
-  :where(h1, h2, h3, p, span, strong, li, blockquote)[style*="color"] {
-  color: inherit !important;
-}
-.reading-content :where(div, section, aside)[style*="background"] {
-  background: #f1f2e8 !important;
-  border-color: #d7ddcf !important;
-}
-.reading-content :where(p, span, li, strong, blockquote)[style*="font"] {
-  font-family: Arial, Helvetica, sans-serif !important;
+.reading-content [style*="Cinzel"] {
+  font-family: "Inter", Arial, Helvetica, sans-serif !important;
   letter-spacing: normal !important;
 }
-.reading-content a:not([class*="bg-primary"]) {
-  color: #234c3b !important;
+.reading-content a:not(.marketing-button):not([class*="bg-primary"]) {
+  color: #f39450 !important;
   text-underline-offset: 4px;
 }
-.reading-content :where(a, button, input, select, textarea):focus-visible {
-  outline: 3px solid #9d6c16 !important;
+.reading-page
+  :where(a, button, input, select, textarea, summary, pre):focus-visible {
+  outline: 3px solid #f39450 !important;
   outline-offset: 4px;
 }
 .reading-content button {
@@ -307,64 +303,65 @@
 .reading-content button:disabled {
   cursor: not-allowed;
 }
-.reading-content input,
-.reading-content select,
-.reading-content textarea {
+.reading-content
+  :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
   min-width: 0;
   max-width: 100%;
   min-height: 46px;
   font-size: 16px;
   border-radius: 6px;
-  color: #202923;
+  background: var(--background);
+  color: var(--foreground);
 }
 .reading-content input {
-  accent-color: #234c3b;
+  accent-color: #f39450;
 }
 .reading-content label {
-  color: #43513d;
+  color: #b5bab7;
   line-height: 1.6;
 }
 .reading-content :where(input, select, textarea)::placeholder {
-  color: #727b6d;
+  color: #a2aaa7;
 }
 .reading-content table {
   display: block;
   max-width: 100%;
   overflow-x: auto;
-  border: 1px solid #d7ddcf;
+  border: 1px solid #343a3d;
   border-radius: 8px;
   font-size: 14px;
   line-height: 1.7;
 }
 .reading-content :where(th, td) {
   padding: 13px 16px;
-  border-color: #d7ddcf;
+  border-color: #343a3d;
   min-width: 120px;
 }
 .reading-content th {
-  color: #234c3b;
-  background: #edf0e6;
+  color: #f39450;
+  background: #202629;
   font-weight: 600;
 }
 .reading-content blockquote {
   padding: 20px 24px;
-  border-left: 3px solid #8d9f7b;
-  background: #f0f2e8;
+  border-left: 3px solid #f39450;
+  background: #202629;
   border-radius: 0 6px 6px 0;
 }
 .reading-outline {
-  border-block: 1px solid #d7ddcf;
+  border-block: 1px solid #343a3d;
   padding: 15px 0;
-  color: #234c3b;
+  color: #f39450;
   font-size: 13px;
 }
 .reading-outline summary {
   cursor: pointer;
-  min-height: 26px;
+  min-height: 44px;
+  padding-block: 10px;
 }
 .reading-outline summary > span {
   margin-left: 12px;
-  color: #59635b;
+  color: #b5bab7;
   font-size: 11px;
 }
 .reading-outline ol {
@@ -385,10 +382,10 @@
 .reading-year-note {
   padding: 19px 23px;
   margin-bottom: 20px;
-  border: 1px solid #cad5bd;
+  border: 1px solid #72513a;
   border-radius: 8px;
-  background: #edf1e5;
-  color: #324b2b;
+  background: #241f1b;
+  color: #f4f2ed;
 }
 .reading-year-note strong {
   font-size: 13px;
@@ -397,13 +394,13 @@
   margin-top: 7px;
   font-size: 12px;
   line-height: 1.8;
-  color: #53604f;
+  color: #b5bab7;
 }
 .reading-year-note a {
   text-decoration: underline;
 }
 .reading-calculator .reading-content > section:first-of-type {
-  box-shadow: 0 10px 35px #243b2110;
+  box-shadow: 0 10px 35px #00000030;
 }
 .reading-calculator .reading-content h2 {
   font-size: 28px !important;
@@ -454,5 +451,62 @@
   .reading-content :where(th, td) {
     min-width: 105px;
     padding: 10px;
+  }
+}
+
+/* Inline links and form states retain their meaning on a dark surface. */
+.reading-page a:hover {
+  text-decoration-thickness: 2px;
+}
+.reading-content a:not(.marketing-button):not([class*="bg-primary"]):hover {
+  color: #ffb47c !important;
+}
+.reading-content a[class*="bg-primary"] {
+  color: var(--primary-foreground);
+}
+.reading-content :where(input, select, textarea):hover:not(:disabled) {
+  border-color: #788184;
+}
+.reading-content :where(input, select, textarea)[aria-invalid="true"] {
+  border-color: #fda4af;
+}
+.reading-content :where(.text-red-500, .text-red-600, .text-destructive) {
+  color: #fda4af;
+}
+.reading-content :where(.text-green-500, .text-green-600) {
+  color: #86efac;
+}
+.reading-content :where(.text-amber-600, .text-yellow-600) {
+  color: #fcd34d;
+}
+.reading-content :where(pre, code) {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+.reading-content pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.reading-content h2:focus {
+  outline: none;
+}
+.reading-content h2:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 6px;
+}
+.reading-content :where(h3, h4, [id], [aria-live]) {
+  scroll-margin-top: 120px;
+}
+.reading-body {
+  min-width: 0;
+}
+.reference-code > button {
+  min-height: 44px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reading-page *,
+  .reading-page *::before,
+  .reading-page *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

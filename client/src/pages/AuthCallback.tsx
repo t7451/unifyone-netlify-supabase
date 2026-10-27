@@ -1,41 +1,8 @@
+import { BrandMark, BrandLockup } from "@/components/Brand";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { landingPathForProduct } from "@/lib/primaryProduct";
-
-function LogoMark({ size = 48 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 40 40"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect width="40" height="40" rx="10" fill="url(#lg2)" />
-      <path
-        d="M10 14 L20 26 L30 14"
-        stroke="white"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <defs>
-        <linearGradient
-          id="lg2"
-          x1="0"
-          y1="0"
-          x2="40"
-          y2="40"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#D4A843" />
-          <stop offset="1" stopColor="#B8863B" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
 
 const STEPS = [
   "Verifying your identity...",
@@ -125,15 +92,15 @@ export default function AuthCallback() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#020202] flex flex-col items-center justify-center gap-6">
-        <LogoMark size={56} />
+      <div className="min-h-screen bg-[#111416] flex flex-col items-center justify-center gap-6">
+        <BrandLockup size={56} />
         <div className="text-center space-y-2">
-          <h2 className="text-xl font-bold text-white">Sign-in failed</h2>
+          <h2 className="text-xl font-bold text-[#f4f2ed]">Sign-in failed</h2>
           <p className="text-sm text-red-400 max-w-xs">{error}</p>
         </div>
         <button
           onClick={() => navigate("/login")}
-          className="text-sm text-[#D4A843] hover:text-[#E8C25A] font-medium transition-colors"
+          className="text-sm text-[#f39450] hover:text-[#ffad74] font-medium transition-colors"
         >
           Back to sign in
         </button>
@@ -142,23 +109,21 @@ export default function AuthCallback() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020202] flex flex-col items-center justify-center gap-8">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#D4A843]/5 rounded-full blur-3xl" />
-      </div>
-
+    <div className="min-h-screen bg-[#111416] flex flex-col items-center justify-center gap-8">
       <div className="relative flex flex-col items-center gap-6">
         <div className="relative">
-          <LogoMark size={56} />
+          <BrandMark size={56} />
           <div
-            className="absolute inset-0 -m-2 rounded-[14px] border-2 border-transparent border-t-[#D4A843] animate-spin"
+            className="absolute inset-0 -m-2 rounded-[14px] border-2 border-transparent border-t-[#f39450] animate-spin"
             style={{ borderRadius: "16px" }}
           />
         </div>
 
         <div className="text-center space-y-1">
-          <h2 className="text-xl font-bold text-white">UnifyOne</h2>
-          <p className="text-sm text-[#D4A843] animate-pulse min-h-[20px]">
+          <h2 className="brand-wordmark">
+            Unify<span>One</span>
+          </h2>
+          <p className="text-sm text-[#f39450] animate-pulse min-h-[20px]">
             {STEPS[stepIdx]}
           </p>
         </div>
@@ -169,13 +134,13 @@ export default function AuthCallback() {
           <div
             key={i}
             className={`h-1.5 rounded-full transition-all duration-500 ${
-              i <= stepIdx ? "w-6 bg-[#D4A843]" : "w-1.5 bg-white/20"
+              i <= stepIdx ? "w-6 bg-[#f39450]" : "w-1.5 bg-white/20"
             }`}
           />
         ))}
       </div>
 
-      <p className="text-xs text-slate-600 text-center max-w-xs">
+      <p className="text-xs text-[#a2aaa7] text-center max-w-xs">
         Establishing a secure connection to your workspace. This only takes a
         moment.
       </p>

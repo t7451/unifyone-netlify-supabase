@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "wouter";
 import { ArrowUpRight, BookOpen, Search } from "lucide-react";
 import PageHead from "@/components/PageHead";
@@ -72,11 +72,20 @@ const DESCRIPTION =
 export default function Resources() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All guides");
+  const searchInput = useRef<HTMLInputElement>(null);
+  function clearFilters() {
+    setSearch("");
+    setCategory("All guides");
+    searchInput.current?.focus();
+  }
   const query = search.trim().toLowerCase();
   const guides = GUIDES.filter(
     guide =>
       (category === "All guides" || guide.category === category) &&
-      (guide.title + " " + guide.text).toLowerCase().includes(query)
+      [guide.title, guide.text, guide.category]
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
   );
   return (
     <PublicLayout>
@@ -125,7 +134,15 @@ export default function Resources() {
               <Search size={18} aria-hidden="true" />
               <span className="sr-only">Search guides</span>
               <input
+                ref={searchInput}
                 type="search"
+                aria-controls="guide-results"
+                onKeyDown={event => {
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    setSearch("");
+                  }
+                }}
                 value={search}
                 onChange={event => setSearch(event.target.value)}
                 placeholder="Search taxes, budgeting, mileage…"
@@ -148,11 +165,26 @@ export default function Resources() {
               ))}
             </div>
           </div>
-          <p className="marketing-result-count" role="status">
-            {guides.length} {guides.length === 1 ? "guide" : "guides"}
+          {(search || category !== "All guides") && (
+            <button
+              type="button"
+              className="marketing-button marketing-button-outline"
+              onClick={clearFilters}
+            >
+              Clear filters
+            </button>
+          )}
+          <p
+            className="marketing-result-count"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {guides.length} {guides.length === 1 ? "guide" : "guides"} of{" "}
+            {GUIDES.length}
           </p>
           {guides.length ? (
-            <div className="marketing-tool-grid">
+            <div id="guide-results" className="marketing-tool-grid">
               {guides.map(guide => (
                 <Link
                   className="marketing-tool-card"
@@ -172,19 +204,9 @@ export default function Resources() {
               ))}
             </div>
           ) : (
-            <div className="marketing-empty">
+            <div id="guide-results" className="marketing-empty">
               <h2>No matching guides yet.</h2>
               <p>Try a different phrase or browse the full library.</p>
-              <button
-                className="marketing-button marketing-button-outline"
-                type="button"
-                onClick={() => {
-                  setSearch("");
-                  setCategory("All guides");
-                }}
-              >
-                Clear filters
-              </button>
             </div>
           )}
           <p className="marketing-library-note">

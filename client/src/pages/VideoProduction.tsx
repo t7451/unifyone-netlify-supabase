@@ -1,3 +1,4 @@
+import PublicLayout from "@/components/PublicLayout";
 import { useState } from "react";
 import {
   Play,
@@ -235,7 +236,7 @@ const SHOWCASE_LIBRARY: Showcase[] = [
   ...ADDITIONAL_SHOWCASES,
 ];
 
-export default function VideoProduction() {
+function VideoProductionContent() {
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [storyboardOpen, setStoryboardOpen] = useState(false);
   const [activeShowcaseId, setActiveShowcaseId] =
@@ -479,7 +480,7 @@ export default function VideoProduction() {
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button size="lg" className="gap-2" onClick={handleDownload}>
                   <Download className="w-4 h-4" />
                   {isPlayable ? "Download Video" : "Download Storyboard"}
@@ -747,5 +748,15 @@ export default function VideoProduction() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function VideoProduction() {
+  return (
+    <PublicLayout>
+      <div className="marketing-page">
+        <VideoProductionContent />
+      </div>
+    </PublicLayout>
   );
 }
