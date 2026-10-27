@@ -61,13 +61,13 @@ export default function Pricing() {
         <header className="marketing-page-heading marketing-container">
           <p className="marketing-eyebrow">UnifyOne plans</p>
           <h1>
-            Good records.
+            Start with
             <br />
-            <em>A clear price.</em>
+            one work log.
           </h1>
           <p className="marketing-lead">
-            Start with the essentials. Add unlimited history, a year-round tax
-            dashboard, and more AI requests when you need them.
+            Choose free tracking or Pro for statement imports, saved history and
+            annual records. Monthly and annual prices are shown below.
           </p>
         </header>
         <LandingPricing />

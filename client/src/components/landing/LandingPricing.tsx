@@ -19,13 +19,15 @@ export default function LandingPricing() {
     <section id="pricing" className="marketing-pricing">
       <div className="marketing-container marketing-section">
         <div className="marketing-section-heading marketing-centered">
-          <p className="marketing-eyebrow">Room to start. Room to grow.</p>
+          <p className="marketing-eyebrow">Choose a plan</p>
           <h2>
-            A simple place to start.
-            <br />A little more when you need it.
+            Start recording your work.
+            <br />
+            Keep more history with Pro.
           </h2>
           <p>
-            Keep the basics free. Choose Pro for a longer view of your work.
+            Starter includes the shift tracker and mileage log. Pro adds
+            unlimited saved history and annual accountant records in CSV or PDF.
           </p>
         </div>
         <div
@@ -67,7 +69,11 @@ export default function LandingPricing() {
               >
                 <div className="marketing-plan-title">
                   <h3>{plan.name}</h3>
-                  <span>{paid ? "For the whole year" : "The essentials"}</span>
+                  <span>
+                    {paid
+                      ? "History & annual records"
+                      : "Shift & mileage records"}
+                  </span>
                 </div>
                 <p className="marketing-plan-price">
                   {paid
@@ -87,7 +93,11 @@ export default function LandingPricing() {
                       : "Billed monthly. Annual billing is optional."
                     : "No subscription payment or credit card needed."}
                 </p>
-                <p className="marketing-plan-description">{plan.description}</p>
+                <p className="marketing-plan-description">
+                  {paid
+                    ? "Keep your saved history and review a year of work, imports, expenses and mileage before exporting records for your accountant."
+                    : "Time a work session, record its earnings and business miles, and use the calculators to check your own assumptions."}
+                </p>
                 <a
                   href={href}
                   className={
@@ -111,7 +121,8 @@ export default function LandingPricing() {
           })}
         </div>
         <p className="marketing-pricing-note">
-          Prices in USD. Tax tools provide estimates, not tax filing.{" "}
+          Prices in USD. Annual plans charge the full year upfront. Accountant
+          records and tax estimates are not a tax return.{" "}
           <Link href="/terms">Review subscription terms</Link>.
         </p>
       </div>

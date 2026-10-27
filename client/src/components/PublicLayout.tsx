@@ -98,7 +98,7 @@ export default function PublicLayout({
               u<span>1</span>
             </span>
             <span>
-              UnifyOne<small>by 1Commerce</small>
+              UnifyOne<small>For the work you do.</small>
             </span>
           </Link>
           <div className="marketing-desktop-nav">
@@ -120,7 +120,7 @@ export default function PublicLayout({
               href={getSignupUrl()}
               className="marketing-button marketing-button-small"
             >
-              Start free <ArrowUpRight size={15} aria-hidden="true" />
+              Get started <ArrowUpRight size={15} aria-hidden="true" />
             </a>
             <button
               ref={menuButton}
@@ -170,8 +170,8 @@ export default function PublicLayout({
                 UnifyOne<span>by 1Commerce</span>
               </Link>
               <p>
-                A clearer picture of the money you work for. Earnings, mileage,
-                and tax planning for independent work.
+                Work logs, costs, mileage and records for people earning across
+                apps and clients. Built by 1Commerce.
               </p>
               <a href="mailto:support@1commerce.online">
                 support@1commerce.online

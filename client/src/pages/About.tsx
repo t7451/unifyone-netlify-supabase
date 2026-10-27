@@ -34,13 +34,13 @@ export default function About() {
         <header className="marketing-page-heading marketing-container">
           <p className="marketing-eyebrow">UnifyOne by 1Commerce</p>
           <h1>
-            Independent work.
+            Built for work
             <br />
-            <em>A clearer picture.</em>
+            across apps.
           </h1>
           <p className="marketing-lead">
-            Your income can come from different places. Understanding it should
-            not take another shift.
+            Keep delivery runs, rideshare shifts and client jobs together, with
+            the hours, pay, miles and costs that explain them.
           </p>
         </header>
         <section className="marketing-section marketing-container marketing-story">
