@@ -108,11 +108,7 @@ export default function GigIQDashboard({
     period: activePeriod,
   });
   const ytd = trpc.moneyManager.getYTDDeduction.useQuery();
-  const stats = trpc.moneyManager.getShiftStats.useQuery({
-    period: activePeriod,
-  });
-
-  const isLoading = breakdown.isLoading || ytd.isLoading || stats.isLoading;
+  const isLoading = breakdown.isLoading;
   const hasShifts = (breakdown.data?.byPlatform?.length ?? 0) > 0;
 
   const topPlatform = breakdown.data?.byPlatform?.[0];
@@ -161,6 +157,7 @@ export default function GigIQDashboard({
           {PERIODS.map(p => (
             <button
               key={p.value}
+              aria-pressed={activePeriod === p.value}
               onClick={() => setActivePeriod(p.value)}
               className={cn(
                 "px-2.5 py-1 rounded text-xs font-medium transition-all",
@@ -188,10 +185,23 @@ export default function GigIQDashboard({
       )}
 
       {/* Empty state */}
-      {!isLoading && !hasShifts && <EmptyState />}
+      {!isLoading && breakdown.isError && (
+        <Card>
+          <CardContent className="space-y-3 pt-5">
+            <p role="alert" className="text-sm">
+              Platform comparisons could not be loaded. Your recorded shifts
+              have not changed.
+            </p>
+            <Button variant="outline" onClick={() => void breakdown.refetch()}>
+              Retry comparisons
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      {!isLoading && !breakdown.isError && !hasShifts && <EmptyState />}
 
       {/* Intelligence cards */}
-      {!isLoading && hasShifts && (
+      {!isLoading && !breakdown.isError && hasShifts && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Card 1: Platform gap */}
@@ -263,6 +273,25 @@ export default function GigIQDashboard({
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-4 pb-4 space-y-3">
+                {ytd.isLoading && (
+                  <p role="status" className="text-sm text-muted-foreground">
+                    Loading recorded mileage…
+                  </p>
+                )}
+                {ytd.isError && (
+                  <div className="space-y-2">
+                    <p role="alert" className="text-sm">
+                      Recorded mileage estimates could not be loaded.
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void ytd.refetch()}
+                    >
+                      Retry mileage estimate
+                    </Button>
+                  </div>
+                )}
                 <div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-2xl font-bold text-foreground">
@@ -281,27 +310,31 @@ export default function GigIQDashboard({
                   </p>
                 </div>
 
-                {(ytd.data?.projectedYearlyDeduction ?? 0) > 0 && (
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      Projected year-end deduction
-                    </span>
-                    <span className="text-emerald-400 font-semibold">
-                      {fmt(ytd.data!.projectedYearlyDeduction)}
-                    </span>
-                  </div>
-                )}
+                {!ytd.isError &&
+                  !ytd.isLoading &&
+                  (ytd.data?.projectedYearlyDeduction ?? 0) > 0 && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">
+                        Projected year-end deduction
+                      </span>
+                      <span className="text-emerald-400 font-semibold">
+                        {fmt(ytd.data!.projectedYearlyDeduction)}
+                      </span>
+                    </div>
+                  )}
 
-                {(ytd.data?.quarterlyEstimate ?? 0) > 0 && (
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      Quarterly deduction estimate
-                    </span>
-                    <span className="text-foreground font-medium">
-                      {fmt(ytd.data!.quarterlyEstimate)}
-                    </span>
-                  </div>
-                )}
+                {!ytd.isError &&
+                  !ytd.isLoading &&
+                  (ytd.data?.quarterlyEstimate ?? 0) > 0 && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">
+                        Quarterly deduction estimate
+                      </span>
+                      <span className="text-foreground font-medium">
+                        {fmt(ytd.data!.quarterlyEstimate)}
+                      </span>
+                    </div>
+                  )}
               </CardContent>
             </Card>
 

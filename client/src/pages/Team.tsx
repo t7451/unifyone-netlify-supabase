@@ -116,14 +116,26 @@ export default function Team() {
   });
 
   const handleSendInvite = () => {
-    if (!inviteEmail.trim()) return;
+    if (sendInvite.isPending) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteEmail.trim())) {
+      toast.error("Enter a valid email address");
+      return;
+    }
     sendInvite.mutate({ email: inviteEmail.trim(), role: inviteRole });
   };
 
+  const copyLink = async (link: string) => {
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("Invite link copied!");
+    } catch {
+      toast.error(
+        "Could not copy the invite link. Select and copy it manually."
+      );
+    }
+  };
   const copyInviteLink = () => {
-    if (!inviteLink) return;
-    navigator.clipboard.writeText(inviteLink);
-    toast.success("Invite link copied to clipboard!");
+    if (inviteLink) void copyLink(inviteLink);
   };
 
   const pendingInvites = (invites.data ?? []).filter(
@@ -149,6 +161,7 @@ export default function Team() {
               setShowInviteModal(true);
               setInviteLink(null);
               setInviteEmail("");
+              setInviteRole("user");
             }}
             className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
           >
@@ -424,8 +437,7 @@ export default function Team() {
                         className="h-7 px-2 text-xs text-primary hover:text-primary/80 gap-1"
                         onClick={() => {
                           const link = `${window.location.origin}/join?token=${inv.token}`;
-                          navigator.clipboard.writeText(link);
-                          toast.success("Invite link copied!");
+                          void copyLink(link);
                         }}
                       >
                         <Copy className="w-3 h-3" /> Copy Link
@@ -495,7 +507,10 @@ export default function Team() {
       )}
 
       {/* Invite Modal */}
-      <Dialog open={showInviteModal} onOpenChange={setShowInviteModal}>
+      <Dialog
+        open={showInviteModal}
+        onOpenChange={open => !sendInvite.isPending && setShowInviteModal(open)}
+      >
         <DialogContent className="bg-card border-border text-foreground max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -505,12 +520,19 @@ export default function Team() {
           </DialogHeader>
 
           {!inviteLink ? (
-            <div className="space-y-4 pt-2">
+            <fieldset
+              disabled={sendInvite.isPending}
+              className="space-y-4 pt-2 min-w-0"
+            >
               <div>
-                <label className="text-gray-400 text-sm mb-1.5 block">
+                <label
+                  htmlFor="team-invite-email"
+                  className="text-gray-400 text-sm mb-1.5 block"
+                >
                   Email Address
                 </label>
                 <Input
+                  id="team-invite-email"
                   type="email"
                   value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)}
@@ -588,7 +610,7 @@ export default function Team() {
                   )}
                 </Button>
               </div>
-            </div>
+            </fieldset>
           ) : (
             <div className="space-y-4 pt-2">
               <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 text-center">

@@ -105,6 +105,87 @@ export function insertShift(db: Db, values: typeof gigShifts.$inferInsert) {
   return db.insert(gigShifts).values(values).returning({ id: gigShifts.id });
 }
 
+/** Owner lock and separate statements share a READ COMMITTED Neon transaction.
+ * The select after acquiring the lock sees the previous starter's committed row. */
+export async function startOrResumeShift(
+  db: Db,
+  userId: number,
+  platform: string,
+  startLat?: number,
+  startLng?: number
+) {
+  const [, , , active] = await db.batch([
+    db.execute(sql`set transaction isolation level read committed`),
+    db.execute(sql`select pg_advisory_xact_lock(718331, ${userId})`),
+    db.execute(sql`insert into gig_shifts ("userId", platform, "startTime", "startLat", "startLng", status)
+      select ${userId}, ${platform}, now() at time zone 'UTC', ${startLat?.toFixed(7) ?? null}, ${startLng?.toFixed(7) ?? null}, 'active'
+      where not exists (select 1 from gig_shifts where "userId" = ${userId} and status = 'active')`),
+    db
+      .select({
+        id: gigShifts.id,
+        startTime: gigShifts.startTime,
+        platform: gigShifts.platform,
+      })
+      .from(gigShifts)
+      .where(and(eq(gigShifts.userId, userId), eq(gigShifts.status, "active")))
+      .orderBy(desc(gigShifts.startTime), desc(gigShifts.id))
+      .limit(1),
+  ]);
+  return active[0];
+}
+
+/** The completion and its mileage record commit together; only one active-row
+ * claimant can win, so simultaneous end requests cannot duplicate mileage. */
+export async function completeShiftWithMileage(
+  db: Db,
+  userId: number,
+  shiftId: number,
+  values: {
+    endTime: Date;
+    durationMinutes: number;
+    grossEarnings: string;
+    tips: string;
+    bonuses: string;
+    totalMiles: string;
+    endLat?: string;
+    endLng?: string;
+    notes?: string;
+  },
+  mileage: {
+    date: Date;
+    miles: string;
+    irsRateCents: string;
+    deductionCents: number;
+  } | null
+) {
+  const result = await db.execute(sql`with completed as (
+    update gig_shifts set "endTime" = ${values.endTime.toISOString()}::timestamp,
+      "durationMinutes" = ${values.durationMinutes}, "grossEarnings" = ${values.grossEarnings}, tips = ${values.tips}, bonuses = ${values.bonuses},
+      "totalMiles" = ${values.totalMiles}, "endLat" = ${values.endLat ?? null}, "endLng" = ${values.endLng ?? null}, notes = ${values.notes ?? null}, status = 'completed', "updatedAt" = now()
+    where id = ${shiftId} and "userId" = ${userId} and status = 'active' returning id
+  ), logged as (
+    insert into mileage_logs ("userId", "shiftId", date, miles, purpose, "irsRateCents", "deductionCents")
+    select ${userId}, id, ${mileage?.date.toISOString() ?? values.endTime.toISOString()}::timestamp,
+      ${mileage?.miles ?? "0"}, 'business', ${mileage?.irsRateCents ?? "0"}, ${mileage?.deductionCents ?? 0}
+    from completed where ${mileage !== null} returning id
+  ) select id from completed`);
+  return result.rows.length > 0;
+}
+export async function getOwnedShiftMileageDate(
+  db: Db,
+  userId: number,
+  shiftId: number
+) {
+  const [row] = await db
+    .select({ date: mileageLogs.date })
+    .from(mileageLogs)
+    .where(
+      and(eq(mileageLogs.userId, userId), eq(mileageLogs.shiftId, shiftId))
+    )
+    .limit(1);
+  return row?.date ?? null;
+}
+
 export function getOwnedShift(db: Db, shiftId: number, userId: number) {
   return db
     .select()

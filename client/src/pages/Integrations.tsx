@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import {
   useIntegrationStatusQuery,
@@ -30,17 +30,16 @@ export default function Integrations() {
   const [, navigate] = useLocation();
   const [shopifyDomain, setShopifyDomain] = useState("");
   const [shopifyToken, setShopifyToken] = useState("");
-  const [shopifyCheckoutUrlInput, setShopifyCheckoutUrlInput] = useState("");
-  const [n8nUrl, setN8nUrl] = useState("");
+  const [shopifyCheckoutDraft, setShopifyCheckoutUrlInput] = useState<
+    string | null
+  >(null);
+  const [n8nDraft, setN8nUrl] = useState<string | null>(null);
 
   const intStatus = useIntegrationStatusQuery();
 
-  // Pre-fill Shopify checkout URL from server data
-  useEffect(() => {
-    if (intStatus.data?.shopifyCheckoutUrl && !shopifyCheckoutUrlInput) {
-      setShopifyCheckoutUrlInput(intStatus.data.shopifyCheckoutUrl);
-    }
-  }, [intStatus.data?.shopifyCheckoutUrl, shopifyCheckoutUrlInput]);
+  const shopifyCheckoutUrlInput =
+    shopifyCheckoutDraft ?? intStatus.data?.shopifyCheckoutUrl ?? "";
+  const n8nUrl = n8nDraft ?? intStatus.data?.n8n?.webhookUrl ?? "";
 
   const shopifyConnect = useShopifyConnectMutation({
     onSuccess: () => {
@@ -295,7 +294,8 @@ export default function Integrations() {
                   })
                 }
                 disabled={
-                  shopifySetCheckoutUrl.isPending || !shopifyCheckoutUrlInput
+                  shopifySetCheckoutUrl.isPending ||
+                  shopifyCheckoutDraft === null
                 }
                 className="w-full font-semibold text-sm text-foreground"
                 style={{ backgroundColor: "#96BF48" }}
@@ -411,7 +411,7 @@ export default function Integrations() {
               <div>
                 <Label className="text-foreground text-xs">Webhook URL</Label>
                 <Input
-                  value={n8nUrl || intStatus.data?.n8n?.webhookUrl || ""}
+                  value={n8nUrl}
                   onChange={e => setN8nUrl(e.target.value)}
                   placeholder="https://n8n.example.com/webhook/..."
                   className="bg-muted/30 border-border text-foreground mt-1 text-sm"

@@ -8,14 +8,16 @@ async function mockApp(
   configured = true,
   failFirstRefresh = false
 ) {
+  const calls = { sdkLoads: 0, completed: [] as string[] };
   const connections: Record<string, unknown>[] = [];
   const activity: Record<string, unknown>[] = [];
-  await page.route("https://cdn.plaid.com/**", route =>
-    route.fulfill({
+  await page.route("https://cdn.plaid.com/**", route => {
+    calls.sdkLoads++;
+    return route.fulfill({
       contentType: "application/javascript",
       body: 'window.Plaid = { create: options => ({ open: () => options.onSuccess("test-public-token"), destroy: () => {} }) };',
-    })
-  );
+    });
+  });
   await page.route("https://plugin.argyle.com/**", route =>
     route.fulfill({
       contentType: "application/javascript",
@@ -87,6 +89,7 @@ async function mockApp(
           data = { token: "test-link-token", environment: "sandbox" };
           break;
         case "financialConnections.completeBankLink":
+          calls.completed.push(args.publicToken);
           connections.push({
             id: bankId,
             provider: "plaid",
@@ -178,6 +181,7 @@ async function mockApp(
       ),
     });
   });
+  return calls;
 }
 
 test("does not offer an active connection flow before setup or consent", async ({
@@ -295,4 +299,111 @@ test("keeps a provider error visible and lets the worker retry the imported conn
       .getByRole("alert")
       .filter({ hasText: "Your previous data is unchanged" })
   ).toHaveCount(0);
+});
+
+for (const invalid of [
+  "different-user",
+  "missing-time",
+  "future-time",
+  "expired-time",
+  "malformed",
+] as const) {
+  test(`rejects ${invalid} OAuth session data without opening the provider and allows a fresh consented link`, async ({
+    page,
+  }) => {
+    const calls = await mockApp(page);
+    await page.addInitScript(kind => {
+      const saved = {
+        token: "old-session-token",
+        userId: kind === "different-user" ? 99 : 7,
+        createdAt:
+          kind === "future-time"
+            ? Date.now() + 60_000
+            : kind === "expired-time"
+              ? Date.now() - 31 * 60_000
+              : Date.now(),
+      };
+      sessionStorage.setItem(
+        "unifyone.plaid-link",
+        kind === "malformed"
+          ? "{bad-json"
+          : JSON.stringify(
+              kind === "missing-time"
+                ? { token: saved.token, userId: saved.userId }
+                : saved
+            )
+      );
+    }, invalid);
+    await page.goto("/connected-money?oauth_state_id=synthetic-state");
+    await expect(
+      page
+        .getByRole("alert")
+        .filter({ hasText: "Your bank linking session expired" })
+    ).toBeVisible();
+    expect(calls.sdkLoads).toBe(0);
+    expect(calls.completed).toEqual([]);
+    expect(
+      await page.evaluate(() => sessionStorage.getItem("unifyone.plaid-link"))
+    ).toBeNull();
+    await page.getByLabel(/I authorize read-only access/).check();
+    await page
+      .getByRole("button", { name: "Link a bank", exact: true })
+      .click();
+    await expect(
+      page.getByRole("cell", { name: "Test platform deposit", exact: false })
+    ).toBeVisible();
+    expect(calls.completed).toEqual(["test-public-token"]);
+  });
+}
+test("resumes a current consented bank session for the same authenticated worker", async ({
+  page,
+}) => {
+  const calls = await mockApp(page);
+  await page.addInitScript(() =>
+    sessionStorage.setItem(
+      "unifyone.plaid-link",
+      JSON.stringify({
+        token: "saved-link-token",
+        createdAt: Date.now(),
+        userId: 7,
+      })
+    )
+  );
+  await page.goto("/connected-money?oauth_state_id=synthetic-state");
+  await expect(
+    page.getByRole("cell", { name: "Test platform deposit", exact: false })
+  ).toBeVisible();
+  expect(calls.sdkLoads).toBe(1);
+  expect(calls.completed).toEqual(["test-public-token"]);
+  expect(
+    await page.evaluate(() => sessionStorage.getItem("unifyone.plaid-link"))
+  ).toBeNull();
+});
+test("handles blocked OAuth session storage without crashing or calling a provider", async ({
+  page,
+}) => {
+  const calls = await mockApp(page);
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.addInitScript(() =>
+    Object.defineProperty(window, "sessionStorage", {
+      value: {
+        getItem() {
+          throw new Error("Storage blocked");
+        },
+        removeItem() {
+          throw new Error("Storage blocked");
+        },
+      },
+    })
+  );
+  await page.goto("/connected-money?oauth_state_id=synthetic-state");
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "Your bank linking session expired" })
+  ).toBeVisible();
+  expect(calls.sdkLoads).toBe(0);
+  expect(calls.completed).toEqual([]);
+  expect(errors).toEqual([]);
 });

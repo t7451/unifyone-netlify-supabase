@@ -1,7 +1,21 @@
 import { expect, test, type Page } from "@playwright/test";
 
 // Synthetic UI data only; no production database or provider calls.
-async function mockMoney(page: Page, active = false) {
+async function mockMoney(
+  page: Page,
+  active = false,
+  uncertainFinish = false,
+  uncertainMileage = false
+) {
+  let mileageAttempts = 0;
+  const mileageLogs: {
+    id: number;
+    date: string;
+    miles: string;
+    irsRateCents: string;
+    deductionCents: number;
+  }[] = [];
+  let finishAttempts = 0;
   const saved: unknown[] = [];
   let hasActiveSession = active;
   await page.route("**/api/events**", route => route.abort());
@@ -63,7 +77,7 @@ async function mockMoney(page: Page, active = false) {
             : null;
           break;
         case "moneyManager.getMileageSummary":
-          data = { totalMiles: 0, totalDeduction: 0, logs: [] };
+          data = { totalMiles: 0, totalDeduction: 0, logs: mileageLogs };
           break;
         case "moneyManager.listRules":
         case "moneyManager.listEnvelopes":
@@ -103,8 +117,49 @@ async function mockMoney(page: Page, active = false) {
             },
           };
           break;
+        case "moneyManager.logMileage":
+          saved.push(args);
+          mileageAttempts++;
+          mileageLogs.push({
+            id: mileageAttempts,
+            date: `${args.date}T00:00:00Z`,
+            miles: String(args.miles),
+            irsRateCents: "76.00",
+            deductionCents: Math.round(args.miles * 76),
+          });
+          if (uncertainMileage && mileageAttempts === 1)
+            return {
+              error: {
+                json: {
+                  message: "Response lost after saving",
+                  code: -32603,
+                  data: {
+                    code: "INTERNAL_SERVER_ERROR",
+                    httpStatus: 500,
+                    path,
+                  },
+                },
+              },
+            };
+          data = { deductionCents: 399, deductionDollars: 3.99 };
+          break;
         case "moneyManager.endShift":
           saved.push(args);
+          finishAttempts++;
+          if (uncertainFinish && finishAttempts === 1)
+            return {
+              error: {
+                json: {
+                  message: "Response lost after saving",
+                  code: -32603,
+                  data: {
+                    code: "INTERNAL_SERVER_ERROR",
+                    httpStatus: 500,
+                    path,
+                  },
+                },
+              },
+            };
           hasActiveSession = false;
           data = { success: true };
           break;
@@ -207,4 +262,141 @@ test("virtual envelopes are clearly labeled and negative targets cannot be saved
   await expect(
     dialog.getByRole("button", { name: "Create Envelope", exact: true })
   ).toBeEnabled();
+});
+
+test("rejects precision loss and database-overflow amounts before completing a timer", async ({
+  page,
+}) => {
+  const saved = await mockMoney(page, true);
+  await page.goto("/money-manager");
+  await page
+    .getByRole("button", { name: "Finish session", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog");
+  const save = dialog.getByRole("button", { name: "Save completed session" });
+  const base = dialog.getByLabel("Base pay, before tips ($)");
+  const miles = dialog.getByLabel("Miles Driven");
+  await miles.fill("0");
+  for (const invalid of ["1.001", "100000000"]) {
+    await base.fill(invalid);
+    await expect(save).toBeDisabled();
+    await expect(base).toHaveAttribute("aria-invalid", "true");
+  }
+  await base.fill("100");
+  await miles.fill("1000000");
+  await expect(save).toBeDisabled();
+  await miles.fill("0.001");
+  await expect(save).toBeDisabled();
+  await miles.fill("0");
+  await expect(save).toBeEnabled();
+  expect(saved).toHaveLength(0);
+});
+
+test("mileage and planning targets respect API minimums and integer-cent bounds", async ({
+  page,
+}) => {
+  await mockMoney(page);
+  await page.goto("/money-manager");
+  const miles = page.locator("#mileage-miles");
+  const saveMiles = page.getByRole("button", {
+    name: "Save business miles",
+    exact: true,
+  });
+  for (const invalid of ["0.01", "1.001", "1000000"]) {
+    await miles.fill(invalid);
+    await expect(saveMiles).toBeDisabled();
+    await expect(miles).toHaveAttribute("aria-invalid", "true");
+  }
+  await miles.fill("0.1");
+  await expect(saveMiles).toBeEnabled();
+  await page.getByRole("tab", { name: "Set-aside plan", exact: true }).click();
+  await page.getByRole("button", { name: "New Envelope" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Envelope Name").fill("Work reserve");
+  const target = dialog.getByLabel("Target ($, optional)");
+  const saveEnvelope = dialog.getByRole("button", {
+    name: "Create Envelope",
+    exact: true,
+  });
+  for (const invalid of ["21474836.48", "12.345"]) {
+    await target.fill(invalid);
+    await expect(saveEnvelope).toBeDisabled();
+  }
+  await target.fill("21474836.47");
+  await expect(saveEnvelope).toBeEnabled();
+});
+
+test("uncertain timer completion keeps an exact retry draft even after closing the dialog", async ({
+  page,
+}) => {
+  const saved = await mockMoney(page, true, true);
+  await page.goto("/money-manager");
+  await page
+    .getByRole("button", { name: "Finish session", exact: true })
+    .click();
+  let dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Base pay, before tips ($)").fill("125.25");
+  await dialog.getByLabel("Miles Driven").fill("0");
+  await dialog.getByLabel("Notes (optional)").fill("Finished project");
+  await dialog
+    .getByRole("button", { name: "Save completed session", exact: true })
+    .click();
+  await expect(dialog.getByRole("alert")).toContainText("could not confirm");
+  await expect(dialog.getByLabel("Base pay, before tips ($)")).toBeDisabled();
+  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Finish session", exact: true })
+    .click();
+  dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Notes (optional)")).toHaveValue(
+    "Finished project"
+  );
+  await dialog
+    .getByRole("button", { name: "Retry same completed session", exact: true })
+    .click();
+  await expect(dialog).toHaveCount(0);
+  expect(saved).toHaveLength(2);
+  expect(saved[1]).toEqual(saved[0]);
+});
+
+test("uncertain standalone mileage requires refreshed-record review instead of blind resubmission", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const saved = await mockMoney(page, false, false, true);
+  await page.goto("/money-manager");
+  await page.locator("#mileage-miles").fill("5.25");
+  const save = page.getByRole("button", {
+    name: "Save business miles",
+    exact: true,
+  });
+  await save.click();
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "could not confirm this mileage" })
+  ).toBeVisible();
+  await expect(save).toBeDisabled();
+  await expect(page.locator("#mileage-miles")).toBeDisabled();
+  await page
+    .getByRole("button", {
+      name: "Refresh mileage records before retrying",
+      exact: true,
+    })
+    .click();
+  await expect(page.getByText(/Saved mileage for .*5.25 miles/)).toBeVisible();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth)
+  ).toBeLessThanOrEqual(390);
+  await expect(save).toBeDisabled();
+  await page
+    .getByRole("button", {
+      name: "These miles are already saved; clear draft",
+      exact: true,
+    })
+    .click();
+  await expect(page.locator("#mileage-miles")).toBeEnabled();
+  await expect(page.locator("#mileage-miles")).toHaveValue("");
+  await expect(save).toBeDisabled();
+  expect(saved).toHaveLength(1);
 });

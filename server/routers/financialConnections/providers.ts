@@ -145,6 +145,18 @@ async function request(
       const code = z
         .object({ error_code: z.string().optional() })
         .safeParse(data);
+      // A previous removal may have succeeded even when its response (or the
+      // following local deletion) was lost. Only an absent item/token confirms
+      // revocation; login-required and provider outages still require retry.
+      if (
+        provider === "plaid" &&
+        url.pathname === "/item/remove" &&
+        code.success &&
+        ["INVALID_ACCESS_TOKEN", "ITEM_NOT_FOUND"].includes(
+          code.data.error_code ?? ""
+        )
+      )
+        return {};
       if (
         code.success &&
         code.data.error_code === "TRANSACTIONS_SYNC_MUTATION_DURING_PAGINATION"
@@ -181,7 +193,8 @@ function day(value: string) {
   const result = value.slice(0, 10);
   if (
     !/^\d{4}-\d{2}-\d{2}$/.test(result) ||
-    !Number.isFinite(Date.parse(result))
+    !Number.isFinite(Date.parse(result)) ||
+    new Date(`${result}T00:00:00Z`).toISOString().slice(0, 10) !== result
   )
     throw new ProviderError("invalid_data");
   return result;

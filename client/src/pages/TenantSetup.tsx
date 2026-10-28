@@ -36,7 +36,7 @@ const FIRST_ACTIONS = [
       "Start the timer for a delivery, rideshare or freelance work session.",
   },
   {
-    value: "/money-manager",
+    value: "/money-manager?tab=import",
     title: "Add past earnings",
     description: "Import a platform export and review your work history.",
   },

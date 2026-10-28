@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { useTheme } from "@/contexts/ThemeContext";
 import {
@@ -67,7 +68,8 @@ export default function AppearanceSettings() {
   const utils = trpc.useUtils();
 
   const updatePrefs = trpc.user.updatePreferences.useMutation({
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      if (variables.theme) setTheme(variables.theme);
       utils.user.getPreferences.invalidate();
       toast.success("Preferences saved");
     },
@@ -75,7 +77,6 @@ export default function AppearanceSettings() {
   });
 
   const handleThemeChange = (value: "light" | "dark") => {
-    setTheme(value);
     updatePrefs.mutate({ theme: value });
   };
 
@@ -113,6 +114,9 @@ export default function AppearanceSettings() {
                 {prefs.error?.message ||
                   "Could not connect to the server. Please try again later."}
               </p>
+              <Button variant="outline" onClick={() => void prefs.refetch()}>
+                Retry preferences
+              </Button>
             </div>
           </CardContent>
         </Card>

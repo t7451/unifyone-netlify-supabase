@@ -124,10 +124,13 @@ export function useProducts() {
   });
 
   const handleCreate = () => {
-    const allTouched = { name: true, price: true };
+    const allTouched = Object.fromEntries(
+      Object.keys(form).map(key => [key, true])
+    );
     setCreateTouched(allTouched);
-    if (!form.name || !form.price || Number(form.price) <= 0)
-      return toast.error("Name and a valid price are required");
+    const errors = getErrors(form, allTouched);
+    if (Object.values(errors).some(Boolean))
+      return toast.error(Object.values(errors)[0]);
 
     const parsedCategoryId =
       form.categoryId && form.categoryId !== "none"
@@ -135,7 +138,7 @@ export function useProducts() {
         : undefined;
 
     createMutation.mutate({
-      name: form.name,
+      name: form.name.trim(),
       description: form.description || undefined,
       price: Number(form.price),
       compareAtPrice: form.compareAtPrice
@@ -172,11 +175,14 @@ export function useProducts() {
   };
 
   const handleUpdate = () => {
-    const allTouched = { name: true, price: true };
+    const allTouched = Object.fromEntries(
+      Object.keys(editForm).map(key => [key, true])
+    );
     setEditTouched(allTouched);
     if (!editProduct) return;
-    if (!editForm.name || !editForm.price || Number(editForm.price) <= 0)
-      return toast.error("Name and a valid price are required");
+    const errors = getErrors(editForm, allTouched);
+    if (Object.values(errors).some(Boolean))
+      return toast.error(Object.values(errors)[0]);
 
     const parsedCategoryId =
       editForm.categoryId && editForm.categoryId !== "none"
@@ -185,18 +191,25 @@ export function useProducts() {
 
     updateMutation.mutate({
       id: editProduct.id,
-      name: editForm.name,
-      description: editForm.description || undefined,
+      name: editForm.name.trim(),
+      description: editForm.description,
       price: Number(editForm.price),
       compareAtPrice: editForm.compareAtPrice
         ? Number(editForm.compareAtPrice)
-        : undefined,
-      sku: editForm.sku || undefined,
+        : null,
+      sku: editForm.sku,
       status: editForm.status,
-      categoryId: Number.isFinite(parsedCategoryId)
-        ? parsedCategoryId
-        : undefined,
-      imageUrl: editForm.imageUrl || undefined,
+      categoryId: Number.isFinite(parsedCategoryId) ? parsedCategoryId : null,
+      imageUrl: editForm.imageUrl.trim(),
+      ...(Number(editForm.initialStock) !==
+        (editProduct.inventory?.quantity ?? 0) ||
+      Number(editForm.lowStockThreshold) !==
+        (editProduct.inventory?.lowStockThreshold ?? 5)
+        ? {
+            quantity: Number(editForm.initialStock),
+            lowStockThreshold: Number(editForm.lowStockThreshold),
+          }
+        : {}),
     });
   };
 
@@ -208,10 +221,11 @@ export function useProducts() {
   const totalPages = productResponse?.totalPages ?? 1;
 
   useEffect(() => {
-    if (page > totalPages) {
+    // A new page has no data while loading; its fallback page count is not a result.
+    if (products.data && !products.isFetching && page > totalPages) {
       setPage(1);
     }
-  }, [page, totalPages]);
+  }, [page, totalPages, products.data, products.isFetching]);
 
   const lowStockCount = productList.filter(
     product =>

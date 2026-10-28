@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { isValidImageUrl } from "./Products.utils";
+import { isValidImageUrl, type ProductErrors } from "./Products.utils";
 import type {
   CategoryOption,
   ProductForm,
@@ -22,22 +22,28 @@ export function ProductFormFields({
   setForm,
   errors,
   onTouch,
+  disabled = false,
 }: {
   form: ProductForm;
   setForm: (f: ProductForm) => void;
-  errors?: { name?: string; price?: string };
+  errors?: ProductErrors;
+  disabled?: boolean;
   onTouch?: (field: string) => void;
 }) {
+  const prefix = useId();
   const categories = trpc.products.categories.useQuery();
   const categoryList = (categories.data ?? []) as CategoryOption[];
   const [imgBroken, setImgBroken] = useState(false);
   const showImagePreview = isValidImageUrl(form.imageUrl) && !imgBroken;
 
   return (
-    <div className="space-y-4">
+    <fieldset disabled={disabled} className="space-y-4 min-w-0">
       <div>
-        <Label className="text-gray-300 text-sm">Product Name *</Label>
+        <Label htmlFor={`${prefix}-name`} className="text-gray-300 text-sm">
+          Product Name *
+        </Label>
         <Input
+          id={`${prefix}-name`}
           value={form.name}
           onChange={e => setForm({ ...form, name: e.target.value })}
           onBlur={() => onTouch?.("name")}
@@ -49,8 +55,14 @@ export function ProductFormFields({
         )}
       </div>
       <div>
-        <Label className="text-gray-300 text-sm">Description</Label>
+        <Label
+          htmlFor={`${prefix}-description`}
+          className="text-gray-300 text-sm"
+        >
+          Description
+        </Label>
         <Textarea
+          id={`${prefix}-description`}
           value={form.description}
           onChange={e => setForm({ ...form, description: e.target.value })}
           placeholder="Product description..."
@@ -60,7 +72,9 @@ export function ProductFormFields({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-gray-300 text-sm">Price *</Label>
+          <Label htmlFor={`${prefix}-price`} className="text-gray-300 text-sm">
+            Price *
+          </Label>
           <div className="relative mt-1">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
               $
@@ -69,6 +83,7 @@ export function ProductFormFields({
               type="number"
               step="0.01"
               min="0"
+              id={`${prefix}-price`}
               value={form.price}
               onChange={e => setForm({ ...form, price: e.target.value })}
               onBlur={() => onTouch?.("price")}
@@ -81,7 +96,12 @@ export function ProductFormFields({
           )}
         </div>
         <div>
-          <Label className="text-gray-300 text-sm">Compare-at Price</Label>
+          <Label
+            htmlFor={`${prefix}-compareAtPrice`}
+            className="text-gray-300 text-sm"
+          >
+            Compare-at Price
+          </Label>
           <div className="relative mt-1">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
               $
@@ -90,6 +110,7 @@ export function ProductFormFields({
               type="number"
               step="0.01"
               min="0"
+              id={`${prefix}-compareAtPrice`}
               value={form.compareAtPrice}
               onChange={e =>
                 setForm({ ...form, compareAtPrice: e.target.value })
@@ -102,34 +123,33 @@ export function ProductFormFields({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-gray-300 text-sm">SKU</Label>
+          <Label htmlFor={`${prefix}-sku`} className="text-gray-300 text-sm">
+            SKU
+          </Label>
           <Input
+            id={`${prefix}-sku`}
             value={form.sku}
             onChange={e => setForm({ ...form, sku: e.target.value })}
             placeholder="SKU-001"
             className="bg-muted/40 border-border text-foreground mt-1 focus:border-primary/50"
           />
         </div>
-        <div>
-          <Label className="text-gray-300 text-sm">Barcode</Label>
-          <Input
-            value={form.barcode}
-            onChange={e => setForm({ ...form, barcode: e.target.value })}
-            placeholder="UPC / EAN"
-            className="bg-muted/40 border-border text-foreground mt-1 focus:border-primary/50"
-          />
-        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-gray-300 text-sm">Status</Label>
+          <Label htmlFor={`${prefix}-status`} className="text-gray-300 text-sm">
+            Status
+          </Label>
           <Select
             value={form.status}
             onValueChange={value =>
               setForm({ ...form, status: value as ProductStatus })
             }
           >
-            <SelectTrigger className="bg-muted/40 border-border text-foreground mt-1">
+            <SelectTrigger
+              id={`${prefix}-status`}
+              className="bg-muted/40 border-border text-foreground mt-1"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-card border-border">
@@ -140,12 +160,20 @@ export function ProductFormFields({
           </Select>
         </div>
         <div>
-          <Label className="text-gray-300 text-sm">Category</Label>
+          <Label
+            htmlFor={`${prefix}-categoryId`}
+            className="text-gray-300 text-sm"
+          >
+            Category
+          </Label>
           <Select
             value={form.categoryId}
             onValueChange={v => setForm({ ...form, categoryId: v })}
           >
-            <SelectTrigger className="bg-muted/40 border-border text-foreground mt-1">
+            <SelectTrigger
+              id={`${prefix}-categoryId`}
+              className="bg-muted/40 border-border text-foreground mt-1"
+            >
               <SelectValue placeholder="None" />
             </SelectTrigger>
             <SelectContent className="bg-card border-border">
@@ -165,20 +193,32 @@ export function ProductFormFields({
         </p>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-gray-300 text-sm">Stock Quantity</Label>
+            <Label
+              htmlFor={`${prefix}-initialStock`}
+              className="text-gray-300 text-sm"
+            >
+              Stock Quantity
+            </Label>
             <Input
               type="number"
               min="0"
+              id={`${prefix}-initialStock`}
               value={form.initialStock}
               onChange={e => setForm({ ...form, initialStock: e.target.value })}
               className="bg-muted/40 border-border text-foreground mt-1 focus:border-primary/50"
             />
           </div>
           <div>
-            <Label className="text-gray-300 text-sm">Low Stock Alert</Label>
+            <Label
+              htmlFor={`${prefix}-lowStockThreshold`}
+              className="text-gray-300 text-sm"
+            >
+              Low Stock Alert
+            </Label>
             <Input
               type="number"
               min="0"
+              id={`${prefix}-lowStockThreshold`}
               value={form.lowStockThreshold}
               onChange={e =>
                 setForm({ ...form, lowStockThreshold: e.target.value })
@@ -189,21 +229,12 @@ export function ProductFormFields({
         </div>
       </div>
       <div>
-        <Label className="text-gray-300 text-sm">Weight (lbs)</Label>
-        <Input
-          type="number"
-          step="0.01"
-          min="0"
-          value={form.weight}
-          onChange={e => setForm({ ...form, weight: e.target.value })}
-          placeholder="0.00"
-          className="bg-muted/40 border-border text-foreground mt-1 focus:border-primary/50"
-        />
-      </div>
-      <div>
-        <Label className="text-gray-300 text-sm">Image URL</Label>
+        <Label htmlFor={`${prefix}-imageUrl`} className="text-gray-300 text-sm">
+          Image URL
+        </Label>
         <div className="mt-1 flex items-start gap-3">
           <Input
+            id={`${prefix}-imageUrl`}
             value={form.imageUrl}
             onChange={e => {
               setForm({ ...form, imageUrl: e.target.value });
@@ -229,6 +260,14 @@ export function ProductFormFields({
           </p>
         )}
       </div>
-    </div>
+      {errors &&
+        Object.entries(errors)
+          .filter(([key]) => key !== "name" && key !== "price")
+          .map(([key, error]) => (
+            <p key={key} role="alert" className="text-red-400 text-xs">
+              {error}
+            </p>
+          ))}
+    </fieldset>
   );
 }

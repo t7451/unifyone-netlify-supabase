@@ -22,6 +22,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
+import { toast } from "sonner";
 
 // ── Type icon map ─────────────────────────────────────────────────────────────
 const TYPE_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
@@ -62,6 +63,7 @@ export function NotificationCenter() {
   const {
     data: notifs = [],
     isLoading,
+    error: listError,
     refetch: refetchList,
   } = trpc.notifications.list.useQuery({ limit: 30 }, { staleTime: 60_000 });
   const { data: unread, refetch: refetchCount } =
@@ -70,18 +72,24 @@ export function NotificationCenter() {
     });
 
   const markRead = trpc.notifications.markRead.useMutation({
+    onError: error =>
+      toast.error(error.message || "Notification action failed. Try again."),
     onSuccess: () => {
       utils.notifications.list.invalidate();
       utils.notifications.unreadCount.invalidate();
     },
   });
   const markAllRead = trpc.notifications.markAllRead.useMutation({
+    onError: error =>
+      toast.error(error.message || "Notification action failed. Try again."),
     onSuccess: () => {
       utils.notifications.list.invalidate();
       utils.notifications.unreadCount.invalidate();
     },
   });
   const deleteNotif = trpc.notifications.delete.useMutation({
+    onError: error =>
+      toast.error(error.message || "Notification action failed. Try again."),
     onSuccess: () => {
       utils.notifications.list.invalidate();
       utils.notifications.unreadCount.invalidate();
@@ -107,7 +115,7 @@ export function NotificationCenter() {
     if (notif.link) {
       setOpen(false);
       if (notif.link.startsWith("http")) {
-        window.open(notif.link, "_blank");
+        window.open(notif.link, "_blank", "noopener,noreferrer");
       } else {
         navigate(notif.link);
       }
@@ -171,7 +179,7 @@ export function NotificationCenter() {
                 size="sm"
                 className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
                 onClick={() => markAllRead.mutate()}
-                disabled={markAllRead.isPending}
+                disabled={!!listError || markAllRead.isPending}
               >
                 <CheckCheck className="h-3.5 w-3.5 mr-1" />
                 Mark all read
@@ -181,7 +189,18 @@ export function NotificationCenter() {
 
           {/* List */}
           <ScrollArea className="max-h-96">
-            {isLoading ? (
+            {listError ? (
+              <div role="alert" className="p-4 space-y-3">
+                <p className="text-sm">Could not load notifications</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void refetchList()}
+                >
+                  Retry notifications
+                </Button>
+              </div>
+            ) : isLoading ? (
               <div className="flex items-center justify-center py-10 text-muted-foreground text-sm">
                 Loading…
               </div>

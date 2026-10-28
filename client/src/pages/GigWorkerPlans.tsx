@@ -70,6 +70,7 @@ function PlanCard({
   billingPeriod,
   onSelect,
   loading,
+  checkoutPending,
 }: {
   plan: {
     id: number;
@@ -86,6 +87,7 @@ function PlanCard({
   billingPeriod: "monthly" | "yearly";
   onSelect: (slug: string) => void;
   loading: boolean;
+  checkoutPending: boolean;
 }) {
   const Icon = TIER_ICONS[plan.tier] ?? Rocket;
   const price =
@@ -180,7 +182,7 @@ function PlanCard({
           variant={
             isCurrentPlan ? "outline" : isPopular ? "default" : "secondary"
           }
-          disabled={isCurrentPlan || loading || isFree}
+          disabled={isCurrentPlan || checkoutPending || isFree}
           onClick={() => !isFree && onSelect(plan.slug)}
         >
           {isCurrentPlan
@@ -203,14 +205,17 @@ export default function GigWorkerPlans() {
   );
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
 
-  const { data: plans, isLoading: plansLoading } =
-    trpc.gigWorker.getPlans.useQuery();
-  const { data: subscription } = trpc.gigWorker.getSubscription.useQuery();
+  const plansQuery = trpc.gigWorker.getPlans.useQuery();
+  const { data: plans, isLoading: plansLoading } = plansQuery;
+  const subscriptionQuery = trpc.gigWorker.getSubscription.useQuery();
+  const { data: subscription } = subscriptionQuery;
   const createCheckout = trpc.gigWorker.createCheckout.useMutation();
 
   const currentPlanSlug = subscription?.plan?.slug ?? "gig-starter";
 
   async function handleSelect(slug: string) {
+    if (loadingSlug || subscriptionQuery.isLoading || subscriptionQuery.isError)
+      return;
     setLoadingSlug(slug);
     try {
       const origin = window.location.origin;
@@ -272,11 +277,40 @@ export default function GigWorkerPlans() {
     >
       <div className="mx-auto w-full max-w-6xl space-y-6">
         {/* Plan cards */}
-        {plansLoading ? (
+        {plansQuery.isError || subscriptionQuery.isError ? (
+          <div
+            role="alert"
+            className="rounded-xl border border-border bg-card p-5 space-y-3"
+          >
+            <p className="font-medium">Could not load plans and subscription</p>
+            <p className="text-sm text-muted-foreground">
+              Your current plan must be verified before choosing another.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                void plansQuery.refetch();
+                void subscriptionQuery.refetch();
+              }}
+            >
+              Retry plans
+            </Button>
+          </div>
+        ) : plansLoading || subscriptionQuery.isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[0, 1, 2].map(i => (
               <Skeleton key={i} className="h-96 rounded-xl" />
             ))}
+          </div>
+        ) : !plans?.length ? (
+          <div
+            role="status"
+            className="rounded-xl border border-border bg-card p-5 space-y-3"
+          >
+            <p>No plans are available right now.</p>
+            <Button variant="outline" onClick={() => void plansQuery.refetch()}>
+              Reload plans
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -288,6 +322,7 @@ export default function GigWorkerPlans() {
                 billingPeriod={billingPeriod}
                 onSelect={handleSelect}
                 loading={loadingSlug === plan.slug}
+                checkoutPending={loadingSlug !== null}
               />
             ))}
           </div>

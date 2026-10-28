@@ -30,6 +30,17 @@ export const mileageTaxService = {
       notes?: string;
     }
   ) {
+    if (
+      !Number.isFinite(input.miles) ||
+      input.miles < 0.1 ||
+      input.miles > 999_999.99 ||
+      Math.abs(input.miles * 100 - Math.round(input.miles * 100)) > 0.000001
+    )
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          "Enter 0.1–999,999.99 business miles, using no more than two decimal places.",
+      });
     const db = await repo.getDb();
     if (!db)
       throw new TRPCError({
@@ -50,10 +61,22 @@ export const mileageTaxService = {
             : "A supported mileage date is required.",
       });
     }
+    const recordedDate = new Date(date);
+    const latestLocalDay = new Date();
+    latestLocalDay.setUTCHours(0, 0, 0, 0);
+    latestLocalDay.setUTCDate(latestLocalDay.getUTCDate() + 1);
+    if (
+      !Number.isFinite(recordedDate.getTime()) ||
+      recordedDate.getTime() > latestLocalDay.getTime()
+    )
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Mileage cannot be logged for a future calendar date.",
+      });
     const deductionCents = Math.round(input.miles * rateCents);
     await repo.insertMileageLog(db, {
       userId: ctx.user.id,
-      date: new Date(date),
+      date: recordedDate,
       miles: input.miles.toFixed(2),
       purpose: input.purpose,
       irsRateCents: rateCents.toFixed(2),
@@ -63,16 +86,18 @@ export const mileageTaxService = {
       notes: input.notes,
     });
 
-    await awardPoints(
-      db,
-      ctx.user.id,
-      "mileage_logged",
-      POINTS.mileage_logged,
-      `Logged ${input.miles} miles — $${(deductionCents / 100).toFixed(2)} deduction`
-    );
-
-    // Auto-detect friend challenge completion after mileage progress updates.
-    await checkAndResolveFriendChallengesForUser(ctx.user.id);
+    // These optional engagement effects must never turn a committed mileage
+    // save into an apparent failure that encourages a duplicate submission.
+    await Promise.allSettled([
+      awardPoints(
+        db,
+        ctx.user.id,
+        "mileage_logged",
+        POINTS.mileage_logged,
+        `Logged ${input.miles} miles — $${(deductionCents / 100).toFixed(2)} deduction`
+      ),
+      checkAndResolveFriendChallengesForUser(ctx.user.id),
+    ]);
 
     // Fire Meta CAPI MileageLogged event (non-blocking)
     try {
@@ -97,7 +122,11 @@ export const mileageTaxService = {
 
   async getMileageSummary(userId: number, input: { year: number }) {
     const db = await repo.getDb();
-    if (!db) return { totalMiles: 0, totalDeduction: 0, logs: [] };
+    if (!db)
+      throw new TRPCError({
+        code: "SERVICE_UNAVAILABLE",
+        message: "Saved mileage could not be checked. Please try again.",
+      });
 
     const startOfYear = new Date(input.year, 0, 1);
     const endOfYear = new Date(input.year, 11, 31, 23, 59, 59);

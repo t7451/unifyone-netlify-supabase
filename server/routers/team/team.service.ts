@@ -13,9 +13,7 @@ import {
   findMemberByIdForTenant,
   updateMemberRole as repoUpdateMemberRole,
   unlinkMemberFromTenant,
-  findPendingInviteByToken,
-  linkUserToTenant,
-  markInviteAccepted,
+  acceptInviteAtomic,
 } from "./team.repo";
 
 /**
@@ -60,9 +58,10 @@ export async function invite(
 ) {
   const tenantId = requireTenant(actor);
   const db = await requireDb();
+  const email = input.email.trim().toLowerCase();
 
   // Check if already a member
-  const existing = await findMemberByEmail(db, tenantId, input.email);
+  const existing = await findMemberByEmail(db, tenantId, email);
   if (existing.length > 0) {
     throw new TRPCError({
       code: "CONFLICT",
@@ -71,7 +70,7 @@ export async function invite(
   }
 
   // Revoke any existing pending invite for this email
-  await revokePendingInvitesForEmail(db, tenantId, input.email);
+  await revokePendingInvitesForEmail(db, tenantId, email);
 
   // Create new invite
   const token = crypto.randomBytes(48).toString("hex");
@@ -81,7 +80,7 @@ export async function invite(
 
   await insertInvite(db, {
     tenantId,
-    email: input.email,
+    email: email,
     role: input.role,
     token,
     invitedBy: actor.id,
@@ -97,11 +96,11 @@ export async function invite(
     if (apiKey) {
       const inviteUrl = `${
         process.env.VITE_APP_URL ?? "https://1commerce.online"
-      }/accept-invite?token=${token}`;
+      }/join?token=${token}`;
       const resend = new Resend(apiKey);
       await resend.emails.send({
         from: "UnifyOne <hello@1commerce.online>",
-        to: input.email,
+        to: email,
         subject: `You've been invited to a UnifyOne workspace`,
         text:
           `${actor.name ?? actor.email} invited you to join their UnifyOne workspace as ${input.role}.\n\n` +
@@ -183,22 +182,32 @@ export async function removeMember(actor: Actor, input: { userId: number }) {
 }
 
 export async function acceptInvite(actor: Actor, input: { token: string }) {
-  const db = await requireDb();
-
-  const invite = await findPendingInviteByToken(db, input.token);
-
-  if (!invite[0]) {
+  const result = await acceptInviteAtomic(
+    await requireDb(),
+    actor.id,
+    input.token
+  );
+  if (
+    result?.reason === "accepted" &&
+    result.tenantId !== null &&
+    result.role !== null
+  )
+    return { tenantId: result.tenantId, role: result.role };
+  if (result?.reason === "email")
     throw new TRPCError({
-      code: "NOT_FOUND",
-      message: "Invite not found or expired",
+      code: "FORBIDDEN",
+      message:
+        "Sign in with the verified email address this invitation was sent to.",
     });
-  }
-
-  // Link user to tenant with the invited role
-  await linkUserToTenant(db, actor.id, invite[0].tenantId, invite[0].role);
-
-  // Mark invite as accepted
-  await markInviteAccepted(db, invite[0].id);
-
-  return { tenantId: invite[0].tenantId, role: invite[0].role };
+  if (result?.reason === "owner")
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message:
+        "Workspace owners cannot switch teams or lower their owner role through an invitation. Transfer ownership first.",
+    });
+  throw new TRPCError({
+    code: "NOT_FOUND",
+    message:
+      "This invitation has expired, was revoked, or has already been used. Ask an admin for a new invitation.",
+  });
 }

@@ -7,6 +7,7 @@ import {
   plaidLinkToken,
   syncArgyle,
   syncPlaid,
+  revokeProvider,
 } from "./providers";
 import { openToken, sealToken } from "./crypto";
 
@@ -279,5 +280,77 @@ describe("provider refresh pagination", () => {
     expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
       user: "server-owned-user",
     });
+  });
+});
+
+describe("provider recovery and calendar integrity", () => {
+  it.each(["INVALID_ACCESS_TOKEN", "ITEM_NOT_FOUND"])(
+    "confirms an already removed Plaid item on disconnect retry (%s)",
+    async error_code => {
+      const fetch = vi.fn().mockResolvedValue(json({ error_code }, 400));
+      vi.stubGlobal("fetch", fetch);
+      await expect(
+        revokeProvider("plaid", "sandbox", "item", "previous-token")
+      ).resolves.toBeUndefined();
+      expect(new URL(fetch.mock.calls[0][0]).pathname).toBe("/item/remove");
+    }
+  );
+  it("does not treat login-required or a provider outage as confirmed revocation", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(json({ error_code: "ITEM_LOGIN_REQUIRED" }, 400))
+      .mockResolvedValueOnce(
+        json({ error_code: "INTERNAL_SERVER_ERROR" }, 500)
+      );
+    vi.stubGlobal("fetch", fetch);
+    await expect(
+      revokeProvider("plaid", "sandbox", "item", "token")
+    ).rejects.toMatchObject({ code: "reconnect" });
+    await expect(
+      revokeProvider("plaid", "sandbox", "item", "token")
+    ).rejects.toMatchObject({ code: "unavailable" });
+  });
+  it("still rejects an invalid access token while importing rather than declaring an empty successful sync", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(json({ error_code: "INVALID_ACCESS_TOKEN" }, 400))
+    );
+    await expect(syncPlaid("invalid", "sandbox", null)).rejects.toMatchObject({
+      code: "reconnect",
+    });
+  });
+  it.each(["2026-02-29", "2026-02-31", "2026-04-31", "2026-13-01"])(
+    "rejects impossible date %s across bank, gig and payroll records",
+    date => {
+      expect(() =>
+        normalizePlaidTransaction({ ...transaction, date })
+      ).toThrow();
+      expect(() =>
+        normalizeArgyleGig(
+          { ...gig, end_datetime: date + "T12:00:00Z" },
+          new Set([gig.account])
+        )
+      ).toThrow();
+      expect(() =>
+        normalizeArgylePaystub(
+          {
+            id: "p1",
+            account: gig.account,
+            status: "completed",
+            paystub_date: date,
+            net_pay: "50",
+            currency: "USD",
+          },
+          new Set([gig.account])
+        )
+      ).toThrow();
+    }
+  );
+  it("preserves a valid leap day without moving it through the local timezone", () => {
+    expect(
+      normalizePlaidTransaction({ ...transaction, date: "2024-02-29" }).date
+    ).toBe("2024-02-29");
   });
 });

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { openArgyle, openPlaid } from "@/lib/financialLink";
 import { DashboardPageShell } from "@/components/DashboardPageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +25,13 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 const SESSION_KEY = "unifyone.plaid-link";
+function clearBankSession() {
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* Browser storage can be disabled. */
+  }
+}
 const money = (amount: string | number, currency: string) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
     Number(amount)
@@ -44,6 +52,7 @@ const kinds: Record<string, string> = {
 
 export default function ConnectedMoney() {
   const utils = trpc.useUtils();
+  const { user } = useAuth();
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [operation, setOperation] = useState("");
@@ -95,7 +104,7 @@ export default function ConnectedMoney() {
           setOperation(
             "Saving your bank connection and importing available transactions…"
           );
-          sessionStorage.removeItem(SESSION_KEY);
+          clearBankSession();
           void (async () => {
             try {
               const linked = await completeBank.mutateAsync({
@@ -121,7 +130,7 @@ export default function ConnectedMoney() {
           })();
         },
         onExit: () => {
-          sessionStorage.removeItem(SESSION_KEY);
+          clearBankSession();
           setBusy(false);
         },
       });
@@ -133,6 +142,7 @@ export default function ConnectedMoney() {
   useEffect(() => {
     if (
       resumed.current ||
+      !user?.id ||
       !new URLSearchParams(window.location.search).has("oauth_state_id")
     )
       return;
@@ -140,10 +150,15 @@ export default function ConnectedMoney() {
     try {
       const saved = JSON.parse(
         sessionStorage.getItem(SESSION_KEY) ?? "null"
-      ) as { token: string; createdAt: number } | null;
+      ) as { token: string; createdAt: number; userId: number } | null;
       if (
         !saved ||
         typeof saved.token !== "string" ||
+        !saved.token ||
+        saved.userId !== user.id ||
+        typeof saved.createdAt !== "number" ||
+        !Number.isFinite(saved.createdAt) ||
+        saved.createdAt > Date.now() ||
         Date.now() - saved.createdAt > 30 * 60_000
       )
         throw new Error(
@@ -154,14 +169,11 @@ export default function ConnectedMoney() {
         setBusy(false);
         showError(error.message);
       });
-    } catch (error) {
-      showError(
-        error instanceof Error
-          ? error.message
-          : "Please start bank linking again."
-      );
+    } catch {
+      clearBankSession();
+      showError("Your bank linking session expired. Please start again.");
     }
-  }, [launchBank, showError]);
+  }, [launchBank, showError, user?.id]);
   useEffect(
     () => () => {
       handle.current?.destroy?.();
@@ -171,6 +183,7 @@ export default function ConnectedMoney() {
   );
 
   async function linkBank() {
+    if (!consent || !user?.id || busy) return;
     setOperation("Opening secure bank linking…");
     setNotice(null);
     setBusy(true);
@@ -178,7 +191,11 @@ export default function ConnectedMoney() {
       const session = await beginBank.mutateAsync({ readOnlyConsent: true });
       sessionStorage.setItem(
         SESSION_KEY,
-        JSON.stringify({ token: session.token, createdAt: Date.now() })
+        JSON.stringify({
+          token: session.token,
+          createdAt: Date.now(),
+          userId: user.id,
+        })
       );
       await launchBank(session.token);
     } catch (error) {
@@ -189,6 +206,7 @@ export default function ConnectedMoney() {
     }
   }
   async function linkGig() {
+    if (!consent || !user?.id || busy) return;
     setOperation("Opening secure gig account linking…");
     setNotice(null);
     setBusy(true);

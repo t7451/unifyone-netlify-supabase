@@ -162,3 +162,15 @@ test("does not create another workspace when an existing worker opens setup", as
   await expect(page).toHaveURL(/\/overview$/);
   expect(fixture.creates).toHaveLength(0);
 });
+
+test("add past earnings opens the promised statement import view", async ({
+  page,
+}) => {
+  const fixture = await setupFixture(page);
+  await page.goto("/setup");
+  await page.getByRole("radio", { name: /Add past earnings/ }).check();
+  await page.getByRole("button", { name: "Create my workspace" }).click();
+  await expect(page).toHaveURL(/\/money-manager\?tab=import$/);
+  expect(fixture.creates).toHaveLength(1);
+  expect(fixture.seeds()).toBe(0);
+});

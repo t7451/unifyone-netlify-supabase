@@ -149,6 +149,79 @@ describe("taxExportService.buildTaxReport", () => {
     expect(report.shifts[0].platform).toBe("DoorDash");
   });
 
+  it("uses unrounded recorded time for short-session hourly rates", async () => {
+    mockShifts.mockResolvedValue([
+      shift({ grossEarnings: "60", durationMinutes: 1 }),
+    ]);
+    const report = await taxExportService.buildTaxReport(1, { year: 2025 });
+    expect(report.shifts[0].durationHours).toBe(1 / 60);
+    expect(report.shifts[0].perHourDollars).toBe(3600);
+  });
+
+  it("keeps missing/invalid duration distinct from a measured zero and never invents an hourly rate", async () => {
+    mockShifts.mockResolvedValue([
+      shift({ id: 1, durationMinutes: null, grossEarnings: "20" }),
+      shift({ id: 2, durationMinutes: 0, grossEarnings: "0" }),
+      shift({ id: 3, durationMinutes: -5, grossEarnings: "30" }),
+    ]);
+    const report = await taxExportService.buildTaxReport(1, { year: 2025 });
+    expect(report.shifts.map(row => row.durationHours)).toEqual([
+      null,
+      0,
+      null,
+    ]);
+    expect(report.shifts.map(row => row.perHourDollars)).toEqual([
+      null,
+      null,
+      null,
+    ]);
+    expect(report.summary.totalEarningsDollars).toBe(50);
+    expect(report.coverage.warnings.join(" ")).toMatch(
+      /unknown, not zero hours/
+    );
+  });
+
+  it.each(["NaN", "", null, "-1"])(
+    "refuses malformed saved money %j instead of exporting it as zero",
+    async value => {
+      mockShifts.mockResolvedValue([shift({ grossEarnings: value })]);
+      await expect(
+        taxExportService.buildTaxReport(1, { year: 2025 })
+      ).rejects.toMatchObject({
+        code: "INTERNAL_SERVER_ERROR",
+        message:
+          "Some recorded amounts could not be read reliably. No export was produced.",
+      });
+    }
+  );
+
+  it("preserves unknown imported mileage without converting it to measured zero", async () => {
+    annual.getAnnualRecords.mockResolvedValue({
+      shifts: [],
+      mileage: [],
+      expenses: [],
+      imports: [
+        {
+          id: 1,
+          batchId: 2,
+          date: new Date("2025-10-01T00:00:00Z"),
+          platform: "CSV",
+          grossEarnings: "50",
+          tips: "0",
+          bonuses: "0",
+          totalMiles: null,
+        },
+      ],
+    } as never);
+    const report = await taxExportService.buildTaxReport(1, { year: 2025 });
+    expect(report.imports[0]).toMatchObject({
+      miles: null,
+      durationHours: null,
+      totalDollars: 50,
+    });
+    expect(report.summary.totalMiles).toBe(0);
+  });
+
   it("throws (not a silent zero report) when the DB is unavailable", async () => {
     mockRepo.getDb.mockResolvedValue(null as never);
 
@@ -307,6 +380,44 @@ describe("annual accountant packet source coverage", () => {
       status: "unavailable",
       basisYear: 2025,
     });
+  });
+
+  it("refuses malformed CSV income and negative saved expenses without emitting a misleading packet", async () => {
+    const base = { shifts: [], mileage: [], imports: [], expenses: [] };
+    annual.getAnnualRecords.mockResolvedValue({
+      ...base,
+      imports: [
+        {
+          id: 1,
+          batchId: 2,
+          date: new Date("2025-10-01T00:00:00Z"),
+          platform: "CSV",
+          grossEarnings: "NaN",
+          tips: "0",
+          bonuses: "0",
+          totalMiles: null,
+        },
+      ],
+    } as never);
+    await expect(
+      taxExportService.buildTaxReport(1, { year: 2025 })
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    annual.getAnnualRecords.mockResolvedValue({
+      ...base,
+      expenses: [
+        {
+          id: 1,
+          date: "2025-10-01",
+          category: "fuel",
+          amountCents: -100,
+          merchant: null,
+          notes: null,
+        },
+      ],
+    } as never);
+    await expect(
+      taxExportService.buildTaxReport(1, { year: 2025 })
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
   });
 
   it("never labels 2026 numeric compatibility fields as current-year tax liability", async () => {

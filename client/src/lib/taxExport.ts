@@ -130,7 +130,7 @@ function sections(report: TaxReport): Section[] {
         fmtDate(row.date),
         row.source,
         row.platform,
-        row.durationHours,
+        row.durationHours === null ? "Not supplied" : row.durationHours,
         row.grossDollars.toFixed(2),
         row.tipsDollars.toFixed(2),
         row.bonusesDollars.toFixed(2),
@@ -160,7 +160,7 @@ function sections(report: TaxReport): Section[] {
         row.tipsDollars.toFixed(2),
         row.bonusesDollars.toFixed(2),
         row.totalDollars.toFixed(2),
-        row.miles,
+        row.miles === null ? "Not supplied" : row.miles,
       ]),
     },
     {

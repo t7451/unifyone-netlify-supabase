@@ -10,11 +10,12 @@ export const teamRouter = router({
 
   // List all invites (all statuses) for the current tenant
   listInvites: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") return [];
     return teamService.listInvites(ctx.user);
   }),
 
   // Send an invite to an email address
-  invite: protectedProcedure
+  invite: adminProcedure
     .input(
       z.object({
         email: z.string().email(),
@@ -26,7 +27,7 @@ export const teamRouter = router({
     }),
 
   // Revoke a pending invite
-  revokeInvite: protectedProcedure
+  revokeInvite: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       return teamService.revokeInvite(ctx.user, input);
@@ -53,7 +54,7 @@ export const teamRouter = router({
 
   // Accept an invite by token (called after OAuth login)
   acceptInvite: protectedProcedure
-    .input(z.object({ token: z.string() }))
+    .input(z.object({ token: z.string().regex(/^[a-f0-9]{96}$/i) }))
     .mutation(async ({ ctx, input }) => {
       return teamService.acceptInvite(ctx.user, input);
     }),

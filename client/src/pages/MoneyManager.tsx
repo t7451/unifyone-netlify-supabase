@@ -126,12 +126,17 @@ function mileageRateDollars(value: string) {
   }
 }
 const MONEY_TABS = ["mileage", "import", "rules", "envelopes"] as const;
-function validAmount(value: string, optional = false) {
+const MAX_MONEY = 99_999_999.99;
+const MAX_MILES = 999_999.99;
+const MAX_ENVELOPE_TARGET = 21_474_836.47; // PostgreSQL integer cents.
+function validAmount(value: string, optional = false, maximum = MAX_MONEY) {
   return (
     (optional && value.trim() === "") ||
     (value.trim() !== "" &&
       Number.isFinite(Number(value)) &&
-      Number(value) >= 0)
+      Number(value) >= 0 &&
+      Number(value) <= maximum &&
+      Number(value) === Number(Number(value).toFixed(2)))
   );
 }
 
@@ -155,6 +160,18 @@ export default function MoneyManager() {
   }, [search]);
   const [activeShiftId, setActiveShiftId] = useState<number | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState("DoorDash");
+  const [startedPlatform, setStartedPlatform] = useState<string | null>(null);
+  const [endRetryLocked, setEndRetryLocked] = useState(false);
+  const [endSaveError, setEndSaveError] = useState("");
+  const submittedEnd = useRef<{
+    shiftId: number;
+    grossEarnings: number;
+    tips: number;
+    bonuses: number;
+    totalMiles: number;
+    mileageDate?: string;
+    notes?: string;
+  } | null>(null);
   const [period, setPeriod] = useState<"week" | "month" | "year" | "all">(
     "month"
   );
@@ -166,6 +183,12 @@ export default function MoneyManager() {
     mileageDate: localCalendarDate(),
     notes: "",
   });
+  const [mileageSaveUncertain, setMileageSaveUncertain] = useState(false);
+  const [mileageSaveError, setMileageSaveError] = useState("");
+  const [reviewingMileage, setReviewingMileage] = useState(false);
+  const [mileageSaveReview, setMileageSaveReview] = useState<
+    { date: string; miles: string }[] | null
+  >(null);
   const [mileageForm, setMileageForm] = useState({
     miles: "",
     date: localCalendarDate(),
@@ -215,8 +238,10 @@ export default function MoneyManager() {
     offset: shiftOffset,
   });
   const activeShift = trpc.moneyManager.getActiveShift.useQuery();
-  const currentShiftId = activeShift.data?.id ?? activeShiftId;
-  const currentPlatform = activeShift.data?.platform ?? selectedPlatform;
+  const currentShiftId =
+    activeShift.data?.id ?? (activeShift.isFetching ? activeShiftId : null);
+  const currentPlatform =
+    activeShift.data?.platform ?? startedPlatform ?? selectedPlatform;
   const mileage = trpc.moneyManager.getMileageSummary.useQuery({
     year: new Date().getFullYear(),
   });
@@ -257,10 +282,14 @@ export default function MoneyManager() {
   });
 
   const startShift = trpc.moneyManager.startShift.useMutation({
-    onSuccess: data => {
+    onSuccess: async (data, input) => {
       setActiveShiftId(data.id);
-      void activeShift.refetch();
-      toast.success(`${selectedPlatform} work session started.`);
+      setStartedPlatform(data.platform ?? input.platform);
+      toast.success(`${data.platform ?? input.platform} work session started.`);
+      await activeShift.refetch();
+      // This fallback exists only while the just-created session is loading.
+      // Keeping it after a successful read resurrects sessions ended elsewhere.
+      setActiveShiftId(null);
     },
     onError: () => toast.error("Failed to start shift"),
   });
@@ -268,7 +297,11 @@ export default function MoneyManager() {
   const endShift = trpc.moneyManager.endShift.useMutation({
     onSuccess: () => {
       setActiveShiftId(null);
+      submittedEnd.current = null;
+      setEndRetryLocked(false);
+      setEndSaveError("");
       setShowEndShift(false);
+      setShiftOffset(0);
       setShiftEndForm({
         grossEarnings: "",
         tips: "",
@@ -283,16 +316,42 @@ export default function MoneyManager() {
       void activeShift.refetch();
       void mileage.refetch();
       void taxEstimate.refetch();
-      void utils.moneyManager.getShiftStats.invalidate();
+      void refreshRecordedWork();
       toast.success(
         "Work session saved. Earnings include base pay, tips and bonuses."
       );
     },
-    onError: () => toast.error("Failed to end shift"),
+    onError: error => {
+      const code = error.data?.code;
+      const known = [
+        "BAD_REQUEST",
+        "NOT_FOUND",
+        "FORBIDDEN",
+        "UNAUTHORIZED",
+        "CONFLICT",
+      ].includes(code ?? "");
+      if (known) {
+        submittedEnd.current = null;
+        setEndRetryLocked(false);
+        setEndSaveError(
+          error.message || "Check your session details and retry."
+        );
+        if (code === "CONFLICT" || code === "NOT_FOUND")
+          void activeShift.refetch();
+      } else {
+        setEndRetryLocked(true);
+        setEndSaveError(
+          "We could not confirm this save. Your details are preserved and may already be saved. Retry this exact session before making changes; it will not be counted twice."
+        );
+      }
+    },
   });
 
   const logMileage = trpc.moneyManager.logMileage.useMutation({
     onSuccess: data => {
+      setMileageSaveUncertain(false);
+      setMileageSaveError("");
+      setMileageSaveReview(null);
       setMileageForm({
         miles: "",
         date: localCalendarDate(),
@@ -300,13 +359,27 @@ export default function MoneyManager() {
         startAddress: "",
         endAddress: "",
       });
-      mileage.refetch();
+      void refreshRecordedWork();
       points.refetch();
       toast.success(
         `Mileage logged! Tax deduction: $${data.deductionDollars.toFixed(2)}`
       );
     },
-    onError: () => toast.error("Failed to log mileage"),
+    onError: error => {
+      const known = [
+        "BAD_REQUEST",
+        "NOT_FOUND",
+        "FORBIDDEN",
+        "UNAUTHORIZED",
+      ].includes(error.data?.code ?? "");
+      setMileageSaveError(
+        known
+          ? error.message
+          : "We could not confirm this mileage save. It may already be recorded. Your draft is preserved; refresh and review saved records before attempting another save, which could add a duplicate."
+      );
+      setMileageSaveUncertain(!known);
+      setMileageSaveReview(null);
+    },
   });
 
   const createRule = trpc.moneyManager.createRule.useMutation({
@@ -513,7 +586,7 @@ export default function MoneyManager() {
   const logMileageRate = mileageRateDollars(mileageForm.date);
   const shiftAmountsValid =
     validAmount(shiftEndForm.grossEarnings) &&
-    validAmount(shiftEndForm.totalMiles) &&
+    validAmount(shiftEndForm.totalMiles, false, MAX_MILES) &&
     validAmount(shiftEndForm.tips, true) &&
     validAmount(shiftEndForm.bonuses, true) &&
     (Number(shiftEndForm.totalMiles) === 0 ||
@@ -521,7 +594,8 @@ export default function MoneyManager() {
         shiftEndForm.mileageDate <= localCalendarDate() &&
         endMileageRate !== null));
   const mileageAmountValid =
-    validAmount(mileageForm.miles) && Number(mileageForm.miles) > 0;
+    validAmount(mileageForm.miles, false, MAX_MILES) &&
+    Number(mileageForm.miles) >= 0.1;
   const mileageValid =
     mileageAmountValid &&
     validCalendarDate(mileageForm.date) &&
@@ -536,7 +610,8 @@ export default function MoneyManager() {
     (ruleForm.actionPercent === "" || Number(ruleForm.actionPercent) <= 100);
   const envelopeValid =
     envelopeForm.name.trim().length > 0 &&
-    validAmount(envelopeForm.target, true);
+    envelopeForm.name.trim().length <= 200 &&
+    validAmount(envelopeForm.target, true, MAX_ENVELOPE_TARGET);
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">
@@ -747,6 +822,7 @@ export default function MoneyManager() {
               <Select
                 value={selectedPlatform}
                 onValueChange={setSelectedPlatform}
+                disabled={startShift.isPending}
               >
                 <SelectTrigger
                   aria-label="Work platform"
@@ -766,7 +842,7 @@ export default function MoneyManager() {
                 onClick={() =>
                   startShift.mutate({ platform: selectedPlatform })
                 }
-                disabled={startShift.isPending}
+                disabled={startShift.isPending || activeShift.isFetching}
                 className="gap-2 bg-green-600 hover:bg-green-700 text-white"
               >
                 <Play className="h-4 w-4" />
@@ -781,197 +857,239 @@ export default function MoneyManager() {
                   Work session in progress — {currentPlatform}
                 </span>
               </div>
-              <Dialog open={showEndShift} onOpenChange={setShowEndShift}>
+              <Dialog
+                open={showEndShift}
+                onOpenChange={value => {
+                  if (!endShift.isPending) setShowEndShift(value);
+                }}
+              >
                 <DialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="gap-2">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="gap-2"
+                    disabled={activeShift.isFetching || endShift.isPending}
+                  >
                     <Square className="h-3.5 w-3.5" />
                     Finish session
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent showCloseButton={!endShift.isPending}>
                   <DialogHeader>
                     <DialogTitle>
                       Finish session — {currentPlatform}
                     </DialogTitle>
                   </DialogHeader>
                   <div className="space-y-3 pt-2">
-                    <p className="text-sm text-muted-foreground">
-                      Enter base pay before tips and bonuses; each is added
-                      once. Include all business miles, or enter 0 if this work
-                      involved no driving. Blank tips and bonuses count as 0.
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label htmlFor="session-base">
-                          Base pay, before tips ($)
-                        </Label>
-                        <Input
-                          className="min-h-11"
-                          id="session-base"
-                          type="number"
-                          min="0"
-                          inputMode="decimal"
-                          step="0.01"
-                          placeholder="0.00"
-                          aria-invalid={
-                            shiftEndForm.grossEarnings !== "" &&
-                            !validAmount(shiftEndForm.grossEarnings)
-                          }
-                          value={shiftEndForm.grossEarnings}
-                          onChange={e =>
-                            setShiftEndForm(f => ({
-                              ...f,
-                              grossEarnings: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="session-tips">Tips ($)</Label>
-                        <Input
-                          className="min-h-11"
-                          id="session-tips"
-                          type="number"
-                          min="0"
-                          inputMode="decimal"
-                          step="0.01"
-                          placeholder="0.00"
-                          aria-invalid={
-                            shiftEndForm.tips !== "" &&
-                            !validAmount(shiftEndForm.tips)
-                          }
-                          value={shiftEndForm.tips}
-                          onChange={e =>
-                            setShiftEndForm(f => ({
-                              ...f,
-                              tips: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="session-bonuses">Bonuses ($)</Label>
-                        <Input
-                          className="min-h-11"
-                          id="session-bonuses"
-                          type="number"
-                          min="0"
-                          inputMode="decimal"
-                          step="0.01"
-                          placeholder="0.00"
-                          aria-invalid={
-                            shiftEndForm.bonuses !== "" &&
-                            !validAmount(shiftEndForm.bonuses)
-                          }
-                          value={shiftEndForm.bonuses}
-                          onChange={e =>
-                            setShiftEndForm(f => ({
-                              ...f,
-                              bonuses: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="session-miles">Miles Driven</Label>
-                        <Input
-                          className="min-h-11"
-                          id="session-miles"
-                          type="number"
-                          min="0"
-                          inputMode="decimal"
-                          step="0.1"
-                          placeholder="0.0"
-                          aria-invalid={
-                            shiftEndForm.totalMiles !== "" &&
-                            !validAmount(shiftEndForm.totalMiles)
-                          }
-                          value={shiftEndForm.totalMiles}
-                          onChange={e =>
-                            setShiftEndForm(f => ({
-                              ...f,
-                              totalMiles: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="session-notes">Notes (optional)</Label>
-                      <Input
-                        className="min-h-11"
-                        id="session-notes"
-                        placeholder="Any notes about this shift..."
-                        maxLength={1000}
-                        value={shiftEndForm.notes}
-                        onChange={e =>
-                          setShiftEndForm(f => ({
-                            ...f,
-                            notes: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    {Number(shiftEndForm.totalMiles) > 0 && (
-                      <div>
-                        <Label htmlFor="session-mileage-date">
-                          Date these business miles were driven
-                        </Label>
-                        <Input
-                          className="min-h-11"
-                          id="session-mileage-date"
-                          type="date"
-                          value={shiftEndForm.mileageDate}
-                          max={localCalendarDate()}
-                          onChange={event =>
-                            setShiftEndForm(previous => ({
-                              ...previous,
-                              mileageDate: event.target.value,
-                            }))
-                          }
-                          aria-describedby="session-mileage-date-help"
-                        />
-                        <p
-                          id="session-mileage-date-help"
-                          className="mt-1 text-xs text-muted-foreground"
-                        >
-                          Confirm these miles were driven on this local date.
-                          For driving across dates or a rate change, record
-                          mileage separately by date.
-                        </p>
-                      </div>
-                    )}
-                    {validAmount(shiftEndForm.totalMiles) && (
-                      <p className="text-xs text-muted-foreground">
-                        {endMileageRate === null ? (
-                          "No deduction preview is available for this date."
-                        ) : (
-                          <>
-                            Estimated mileage deduction:{" "}
-                            <span className="font-medium text-green-400">
-                              $
-                              {(
-                                Number(shiftEndForm.totalMiles) * endMileageRate
-                              ).toFixed(2)}
-                            </span>{" "}
-                            at ${endMileageRate.toFixed(3).replace(/0+$/, "")}{" "}
-                            per mile for the selected mileage date. A deduction
-                            is not tax saved.
-                          </>
-                        )}
+                    <fieldset
+                      disabled={endShift.isPending || endRetryLocked}
+                      className="min-w-0 space-y-3"
+                    >
+                      <p className="text-sm text-muted-foreground">
+                        Enter base pay before tips and bonuses; each is added
+                        once. Include all business miles, or enter 0 if this
+                        work involved no driving. Blank tips and bonuses count
+                        as 0.
                       </p>
-                    )}
-                    {!shiftAmountsValid && (
-                      <p className="text-xs text-muted-foreground">
-                        Enter base pay and miles as zero or more. Optional tips
-                        and bonuses must also be zero or more.
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label htmlFor="session-base">
+                            Base pay, before tips ($)
+                          </Label>
+                          <Input
+                            className="min-h-11"
+                            id="session-base"
+                            type="number"
+                            min="0"
+                            max={MAX_MONEY}
+                            inputMode="decimal"
+                            step="0.01"
+                            placeholder="0.00"
+                            aria-invalid={
+                              shiftEndForm.grossEarnings !== "" &&
+                              !validAmount(shiftEndForm.grossEarnings)
+                            }
+                            value={shiftEndForm.grossEarnings}
+                            onChange={e =>
+                              setShiftEndForm(f => ({
+                                ...f,
+                                grossEarnings: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="session-tips">Tips ($)</Label>
+                          <Input
+                            className="min-h-11"
+                            id="session-tips"
+                            type="number"
+                            min="0"
+                            max={MAX_MONEY}
+                            inputMode="decimal"
+                            step="0.01"
+                            placeholder="0.00"
+                            aria-invalid={
+                              shiftEndForm.tips !== "" &&
+                              !validAmount(shiftEndForm.tips)
+                            }
+                            value={shiftEndForm.tips}
+                            onChange={e =>
+                              setShiftEndForm(f => ({
+                                ...f,
+                                tips: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="session-bonuses">Bonuses ($)</Label>
+                          <Input
+                            className="min-h-11"
+                            id="session-bonuses"
+                            type="number"
+                            min="0"
+                            max={MAX_MONEY}
+                            inputMode="decimal"
+                            step="0.01"
+                            placeholder="0.00"
+                            aria-invalid={
+                              shiftEndForm.bonuses !== "" &&
+                              !validAmount(shiftEndForm.bonuses)
+                            }
+                            value={shiftEndForm.bonuses}
+                            onChange={e =>
+                              setShiftEndForm(f => ({
+                                ...f,
+                                bonuses: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="session-miles">Miles Driven</Label>
+                          <Input
+                            className="min-h-11"
+                            id="session-miles"
+                            type="number"
+                            min="0"
+                            max={MAX_MILES}
+                            inputMode="decimal"
+                            step="0.1"
+                            placeholder="0.0"
+                            aria-invalid={
+                              shiftEndForm.totalMiles !== "" &&
+                              !validAmount(
+                                shiftEndForm.totalMiles,
+                                false,
+                                MAX_MILES
+                              )
+                            }
+                            value={shiftEndForm.totalMiles}
+                            onChange={e =>
+                              setShiftEndForm(f => ({
+                                ...f,
+                                totalMiles: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="session-notes">Notes (optional)</Label>
+                        <Input
+                          className="min-h-11"
+                          id="session-notes"
+                          placeholder="Any notes about this shift..."
+                          maxLength={1000}
+                          value={shiftEndForm.notes}
+                          onChange={e =>
+                            setShiftEndForm(f => ({
+                              ...f,
+                              notes: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      {Number(shiftEndForm.totalMiles) > 0 && (
+                        <div>
+                          <Label htmlFor="session-mileage-date">
+                            Date these business miles were driven
+                          </Label>
+                          <Input
+                            className="min-h-11"
+                            id="session-mileage-date"
+                            type="date"
+                            value={shiftEndForm.mileageDate}
+                            max={localCalendarDate()}
+                            onChange={event =>
+                              setShiftEndForm(previous => ({
+                                ...previous,
+                                mileageDate: event.target.value,
+                              }))
+                            }
+                            aria-describedby="session-mileage-date-help"
+                          />
+                          <p
+                            id="session-mileage-date-help"
+                            className="mt-1 text-xs text-muted-foreground"
+                          >
+                            Confirm these miles were driven on this local date.
+                            For driving across dates or a rate change, record
+                            mileage separately by date.
+                          </p>
+                        </div>
+                      )}
+                      {validAmount(
+                        shiftEndForm.totalMiles,
+                        false,
+                        MAX_MILES
+                      ) && (
+                        <p className="text-xs text-muted-foreground">
+                          {endMileageRate === null ? (
+                            "No deduction preview is available for this date."
+                          ) : (
+                            <>
+                              Estimated mileage deduction:{" "}
+                              <span className="font-medium text-green-400">
+                                $
+                                {(
+                                  Number(shiftEndForm.totalMiles) *
+                                  endMileageRate
+                                ).toFixed(2)}
+                              </span>{" "}
+                              at ${endMileageRate.toFixed(3).replace(/0+$/, "")}{" "}
+                              per mile for the selected mileage date. A
+                              deduction is not tax saved.
+                            </>
+                          )}
+                        </p>
+                      )}
+                      {!shiftAmountsValid && (
+                        <p className="text-xs text-muted-foreground">
+                          Use up to two decimal places. Pay must be
+                          $0–$99,999,999.99; business miles must be
+                          0–999,999.99. Optional tips and bonuses must also be
+                          within the pay limit.
+                        </p>
+                      )}
+                    </fieldset>
+                    {endSaveError && (
+                      <p
+                        role="alert"
+                        className="rounded-lg border border-destructive/30 p-3 text-sm"
+                      >
+                        {endSaveError}
                       </p>
                     )}
                     <Button
                       className="w-full"
-                      disabled={endShift.isPending || !shiftAmountsValid}
-                      onClick={() =>
-                        endShift.mutate({
+                      disabled={
+                        endShift.isPending ||
+                        (!endRetryLocked && !shiftAmountsValid)
+                      }
+                      onClick={() => {
+                        const payload = submittedEnd.current ?? {
                           shiftId: currentShiftId!,
                           grossEarnings: Number(shiftEndForm.grossEarnings),
                           tips: Number(shiftEndForm.tips || 0),
@@ -981,12 +1099,17 @@ export default function MoneyManager() {
                             ? { mileageDate: shiftEndForm.mileageDate }
                             : {}),
                           notes: shiftEndForm.notes || undefined,
-                        })
-                      }
+                        };
+                        submittedEnd.current = payload;
+                        setEndSaveError("");
+                        endShift.mutate(payload);
+                      }}
                     >
                       {endShift.isPending
                         ? "Saving..."
-                        : "Save completed session"}
+                        : endRetryLocked
+                          ? "Retry same completed session"
+                          : "Save completed session"}
                     </Button>
                   </div>
                 </DialogContent>
@@ -1205,7 +1328,7 @@ export default function MoneyManager() {
         <TabsContent value="mileage" className="space-y-4 mt-4">
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card/50 px-4 py-3">
             <p className="text-sm text-muted-foreground">
-              Export your shifts, mileage &amp; estimated tax for your CPA.
+              Export recorded income, mileage and expenses for your accountant.
             </p>
             <TaxExportButton />
           </div>
@@ -1217,124 +1340,235 @@ export default function MoneyManager() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="mileage-miles">Miles Driven</Label>
-                  <Input
-                    className="min-h-11"
-                    id="mileage-miles"
-                    type="number"
-                    min="0"
-                    inputMode="decimal"
-                    step="0.1"
-                    placeholder="0.0"
-                    aria-invalid={mileageForm.miles !== "" && !mileageValid}
-                    value={mileageForm.miles}
-                    onChange={e =>
-                      setMileageForm(f => ({ ...f, miles: e.target.value }))
-                    }
-                  />
+              <fieldset
+                disabled={logMileage.isPending || mileageSaveUncertain}
+                className="min-w-0 space-y-3"
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="mileage-miles">Miles Driven</Label>
+                    <Input
+                      className="min-h-11"
+                      id="mileage-miles"
+                      type="number"
+                      min="0.1"
+                      max={MAX_MILES}
+                      inputMode="decimal"
+                      step="0.1"
+                      placeholder="0.0"
+                      aria-invalid={
+                        mileageForm.miles !== "" && !mileageAmountValid
+                      }
+                      value={mileageForm.miles}
+                      onChange={e =>
+                        setMileageForm(f => ({ ...f, miles: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="mileage-purpose">Purpose</Label>
+                    <Select
+                      value={mileageForm.purpose}
+                      onValueChange={v =>
+                        setMileageForm(f => ({ ...f, purpose: v }))
+                      }
+                    >
+                      <SelectTrigger className="min-h-11" id="mileage-purpose">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="business">Business</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div>
-                  <Label htmlFor="mileage-purpose">Purpose</Label>
-                  <Select
-                    value={mileageForm.purpose}
-                    onValueChange={v =>
-                      setMileageForm(f => ({ ...f, purpose: v }))
+                  <Label htmlFor="mileage-date">
+                    Date these miles were driven
+                  </Label>
+                  <Input
+                    className="min-h-11"
+                    id="mileage-date"
+                    type="date"
+                    value={mileageForm.date}
+                    max={localCalendarDate()}
+                    onChange={event =>
+                      setMileageForm(previous => ({
+                        ...previous,
+                        date: event.target.value,
+                      }))
                     }
+                    aria-describedby="mileage-date-help"
+                  />
+                  <p
+                    id="mileage-date-help"
+                    className="mt-1 text-xs text-muted-foreground"
                   >
-                    <SelectTrigger className="min-h-11" id="mileage-purpose">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="business">Business</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    Use the local calendar date you drove these miles. Enter
+                    trips from different dates separately; the selected date
+                    determines the rate.
+                  </p>
                 </div>
-              </div>
-              <div>
-                <Label htmlFor="mileage-date">
-                  Date these miles were driven
-                </Label>
-                <Input
-                  className="min-h-11"
-                  id="mileage-date"
-                  type="date"
-                  value={mileageForm.date}
-                  max={localCalendarDate()}
-                  onChange={event =>
-                    setMileageForm(previous => ({
-                      ...previous,
-                      date: event.target.value,
-                    }))
-                  }
-                  aria-describedby="mileage-date-help"
-                />
-                <p
-                  id="mileage-date-help"
-                  className="mt-1 text-xs text-muted-foreground"
-                >
-                  Use the local calendar date you drove these miles. Enter trips
-                  from different dates separately; the selected date determines
-                  the rate.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="mileage-from">From (optional)</Label>
-                  <Input
-                    className="min-h-11"
-                    id="mileage-from"
-                    placeholder="Start address"
-                    value={mileageForm.startAddress}
-                    onChange={e =>
-                      setMileageForm(f => ({
-                        ...f,
-                        startAddress: e.target.value,
-                      }))
-                    }
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="mileage-from">From (optional)</Label>
+                    <Input
+                      className="min-h-11"
+                      id="mileage-from"
+                      placeholder="Start address"
+                      value={mileageForm.startAddress}
+                      onChange={e =>
+                        setMileageForm(f => ({
+                          ...f,
+                          startAddress: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="mileage-to">To (optional)</Label>
+                    <Input
+                      className="min-h-11"
+                      id="mileage-to"
+                      placeholder="End address"
+                      value={mileageForm.endAddress}
+                      onChange={e =>
+                        setMileageForm(f => ({
+                          ...f,
+                          endAddress: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="mileage-to">To (optional)</Label>
-                  <Input
-                    className="min-h-11"
-                    id="mileage-to"
-                    placeholder="End address"
-                    value={mileageForm.endAddress}
-                    onChange={e =>
-                      setMileageForm(f => ({
-                        ...f,
-                        endAddress: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-              {mileageAmountValid && (
+                {mileageAmountValid && (
+                  <p className="text-xs text-muted-foreground">
+                    {logMileageRate === null ? (
+                      "No deduction preview is available for this date."
+                    ) : (
+                      <>
+                        Estimated deduction:{" "}
+                        <span className="font-medium text-green-400">
+                          $
+                          {(Number(mileageForm.miles) * logMileageRate).toFixed(
+                            2
+                          )}
+                        </span>{" "}
+                        at ${logMileageRate.toFixed(3).replace(/0+$/, "")} per
+                        mile for the selected mileage date. A deduction reduces
+                        taxable income; it is not cash saved.
+                      </>
+                    )}
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground">
-                  {logMileageRate === null ? (
-                    "No deduction preview is available for this date."
-                  ) : (
-                    <>
-                      Estimated deduction:{" "}
-                      <span className="font-medium text-green-400">
-                        $
-                        {(Number(mileageForm.miles) * logMileageRate).toFixed(
-                          2
-                        )}
-                      </span>{" "}
-                      at ${logMileageRate.toFixed(3).replace(/0+$/, "")} per
-                      mile for the selected mileage date. A deduction reduces
-                      taxable income; it is not cash saved.
-                    </>
-                  )}
+                  Add business miles not already recorded by a work session. Do
+                  not log the same trip twice. Enter 0.1–999,999.99 miles with
+                  up to two decimal places.
+                </p>
+              </fieldset>
+              {mileageSaveError && (
+                <p
+                  role="alert"
+                  className="rounded-lg border border-destructive/30 p-3 text-sm"
+                >
+                  {mileageSaveError}
                 </p>
               )}
-              <p className="text-xs text-muted-foreground">
-                Add business miles not already recorded by a work session. Do
-                not log the same trip twice. Enter miles above zero.
-              </p>
+              {mileageSaveUncertain && (
+                <div className="space-y-3 rounded-lg border p-3 text-sm">
+                  <Button
+                    variant="outline"
+                    className="h-auto min-h-11 whitespace-normal text-left"
+                    disabled={reviewingMileage}
+                    onClick={async () => {
+                      setReviewingMileage(true);
+                      try {
+                        const records =
+                          await utils.moneyManager.getMileageSummary.fetch(
+                            { year: Number(mileageForm.date.slice(0, 4)) },
+                            { staleTime: 0 }
+                          );
+                        setMileageSaveReview(
+                          records.logs
+                            .filter(
+                              log =>
+                                new Date(log.date)
+                                  .toISOString()
+                                  .slice(0, 10) === mileageForm.date
+                            )
+                            .map(log => ({
+                              date: new Date(log.date)
+                                .toISOString()
+                                .slice(0, 10),
+                              miles: log.miles,
+                            }))
+                        );
+                      } catch {
+                        setMileageSaveReview(null);
+                        setMileageSaveError(
+                          "Saved mileage records could not be refreshed. Your draft is still here; review is required before another save."
+                        );
+                      } finally {
+                        setReviewingMileage(false);
+                      }
+                    }}
+                  >
+                    {reviewingMileage
+                      ? "Refreshing records…"
+                      : "Refresh mileage records before retrying"}
+                  </Button>
+                  {mileageSaveReview !== null && (
+                    <>
+                      <p>
+                        Saved mileage for {mileageForm.date}:{" "}
+                        {mileageSaveReview.length === 0
+                          ? "No records returned for this date."
+                          : mileageSaveReview
+                              .map(
+                                row => `${Number(row.miles).toFixed(2)} miles`
+                              )
+                              .join(", ")}
+                      </p>
+                      <p>
+                        Compare these records with your draft (
+                        {mileageForm.miles} miles). Records with the same
+                        distance may be different trips; nothing has been merged
+                        or removed automatically.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="h-auto min-h-11 whitespace-normal text-left"
+                        onClick={() => {
+                          setMileageSaveUncertain(false);
+                          setMileageSaveError("");
+                          setMileageSaveReview(null);
+                        }}
+                      >
+                        I checked the records; allow another save
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="h-auto min-h-11 whitespace-normal text-left"
+                        onClick={() => {
+                          setMileageForm({
+                            miles: "",
+                            date: localCalendarDate(),
+                            purpose: "business",
+                            startAddress: "",
+                            endAddress: "",
+                          });
+                          setMileageSaveUncertain(false);
+                          setMileageSaveError("");
+                          setMileageSaveReview(null);
+                        }}
+                      >
+                        These miles are already saved; clear draft
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
               <Button
                 onClick={() =>
                   logMileage.mutate({
@@ -1345,7 +1579,9 @@ export default function MoneyManager() {
                     endAddress: mileageForm.endAddress || undefined,
                   })
                 }
-                disabled={logMileage.isPending || !mileageValid}
+                disabled={
+                  logMileage.isPending || mileageSaveUncertain || !mileageValid
+                }
                 className="w-full gap-2"
               >
                 <MapPin className="h-4 w-4" />
@@ -2243,12 +2479,17 @@ export default function MoneyManager() {
                         id="envelope-target"
                         type="number"
                         min="0"
+                        max={MAX_ENVELOPE_TARGET}
                         inputMode="decimal"
                         step="0.01"
                         placeholder="0.00"
                         aria-invalid={
                           envelopeForm.target !== "" &&
-                          !validAmount(envelopeForm.target)
+                          !validAmount(
+                            envelopeForm.target,
+                            false,
+                            MAX_ENVELOPE_TARGET
+                          )
                         }
                         value={envelopeForm.target}
                         onChange={e =>
@@ -2262,8 +2503,9 @@ export default function MoneyManager() {
                   </div>
                   {!envelopeValid && (
                     <p className="text-xs text-muted-foreground">
-                      Enter an envelope name. If you add a target, use zero or a
-                      positive dollar amount.
+                      Enter an envelope name (up to 200 characters). Optional
+                      targets must be $0–$21,474,836.47 with up to two decimal
+                      places.
                     </p>
                   )}
                   <Button

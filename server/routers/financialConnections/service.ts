@@ -209,8 +209,11 @@ export async function disconnect(userId: number, connectionId: string) {
     true
   );
   try {
-    const { provider, environment } = connectionProvider(connection);
-    if (connection.externalId)
+    // A cancelled/failed initial Link session can leave an owned placeholder
+    // with no upstream identity. It has no provider access to revoke and must
+    // remain removable even after credentials/environment are reconfigured.
+    if (connection.externalId) {
+      const { provider, environment } = connectionProvider(connection);
       await providers.revokeProvider(
         provider,
         environment,
@@ -219,6 +222,7 @@ export async function disconnect(userId: number, connectionId: string) {
           ? openToken(connection.encryptedToken!, scope(connection))
           : undefined
       );
+    }
     await repo.deleteConnection(userId, connectionId);
     return { disconnected: true };
   } catch (error) {

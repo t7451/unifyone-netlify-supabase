@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import {
   Card,
@@ -31,19 +32,20 @@ import SettingsLayout from "./SettingsLayout";
 
 export default function GeneralSettings() {
   const tenantList = trpc.tenant.list.useQuery();
-  const tenant = tenantList.data?.[0];
+  const { user } = useAuth();
+  const tenant = tenantList.data?.find(item => item.id === user?.tenantId);
   const utils = trpc.useUtils();
-  const [name, setName] = useState("");
-  const [domain, setDomain] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
+  const [name, setName] = useState<string | undefined>();
+  const [domain, setDomain] = useState<string | undefined>();
+  const [logoUrl, setLogoUrl] = useState<string | undefined>();
   const [copiedSlug, setCopiedSlug] = useState(false);
 
   const updateTenant = trpc.tenant.update.useMutation({
     onSuccess: () => {
       toast.success("Settings saved");
-      setName("");
-      setDomain("");
-      setLogoUrl("");
+      setName(undefined);
+      setDomain(undefined);
+      setLogoUrl(undefined);
       utils.tenant.list.invalidate();
       // primaryProduct can change here — refresh auth.me so nav + landing update.
       utils.auth.me.invalidate();
@@ -57,10 +59,17 @@ export default function GeneralSettings() {
   const handleSave = () => {
     if (!tenant) return;
     const data: Record<string, unknown> = { id: tenant.id };
-    if (name) data.name = name;
-    if (domain) data.domain = domain;
-    if (logoUrl) data.logoUrl = logoUrl;
-    if (!name && !domain && !logoUrl) {
+    if (name !== undefined) {
+      const nextName = name.trim();
+      if (nextName.length < 2 || nextName.length > 255) {
+        toast.error("Use a workspace name with 2–255 characters.");
+        return;
+      }
+      data.name = nextName;
+    }
+    if (domain !== undefined) data.domain = domain.trim();
+    if (logoUrl !== undefined) data.logoUrl = logoUrl.trim();
+    if (name === undefined && domain === undefined && logoUrl === undefined) {
       toast.info("No changes to save");
       return;
     }
@@ -104,6 +113,27 @@ export default function GeneralSettings() {
       </SettingsLayout>
     );
   }
+
+  if (tenantList.isError || !tenant)
+    return (
+      <SettingsLayout>
+        <div
+          role="alert"
+          className="rounded-xl border border-border bg-card p-5 space-y-3"
+        >
+          <p className="font-medium">
+            Could not load this workspace’s settings
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {tenantList.error?.message ??
+              "No owned workspace matches your current workspace."}
+          </p>
+          <Button variant="outline" onClick={() => void tenantList.refetch()}>
+            Retry workspace settings
+          </Button>
+        </div>
+      </SettingsLayout>
+    );
 
   return (
     <SettingsLayout>
@@ -189,7 +219,7 @@ export default function GeneralSettings() {
                 {nameLabel}
               </Label>
               <Input
-                value={name || tenant?.name || ""}
+                value={name ?? tenant?.name ?? ""}
                 onChange={e => setName(e.target.value)}
                 placeholder={
                   tenant?.name ??
@@ -264,7 +294,7 @@ export default function GeneralSettings() {
               </Label>
               <div className="flex items-center gap-2">
                 <Input
-                  value={domain || tenant?.domain || ""}
+                  value={domain ?? tenant?.domain ?? ""}
                   onChange={e => setDomain(e.target.value)}
                   placeholder="shop.yourdomain.com"
                   className="bg-muted/40 border-border text-foreground focus:border-primary/50"
@@ -293,16 +323,16 @@ export default function GeneralSettings() {
             <div className="space-y-1.5">
               <Label className="text-muted-foreground text-sm">Logo URL</Label>
               <Input
-                value={logoUrl || tenant?.logoUrl || ""}
+                value={logoUrl ?? tenant?.logoUrl ?? ""}
                 onChange={e => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
                 className="bg-muted/40 border-border text-foreground focus:border-primary/50"
               />
-              {(logoUrl || tenant?.logoUrl) && (
+              {(logoUrl ?? tenant?.logoUrl) && (
                 <div className="mt-2 p-3 rounded-lg bg-muted/40 border border-border inline-flex items-center gap-3">
                   <Image className="w-4 h-4 text-muted-foreground" />
                   {(() => {
-                    const rawSrc = logoUrl || tenant?.logoUrl;
+                    const rawSrc = logoUrl ?? tenant?.logoUrl;
                     // Use URL constructor to reject malformed or non-http(s) URLs
                     let safeSrc: string | undefined;
                     try {
@@ -336,7 +366,12 @@ export default function GeneralSettings() {
         <div className="flex justify-end">
           <Button
             onClick={handleSave}
-            disabled={updateTenant.isPending || (!name && !domain && !logoUrl)}
+            disabled={
+              updateTenant.isPending ||
+              (name === undefined &&
+                domain === undefined &&
+                logoUrl === undefined)
+            }
             className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
           >
             {updateTenant.isPending ? (

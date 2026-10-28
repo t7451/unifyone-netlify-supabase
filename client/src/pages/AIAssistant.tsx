@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { inferRouterInputs } from "@trpc/server";
 import { trpc } from "@/lib/trpc";
 import type { AppRouter } from "../../../server/routers";
@@ -95,6 +95,9 @@ export default function AIAssistant() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedModel, setSelectedModel] = useState<KaiModelId | undefined>();
   const [creditNotice, setCreditNotice] = useState<string | null>(null);
+  const [conversationLoading, setConversationLoading] = useState(false);
+  const conversationRequest = useRef(0);
+  const sending = useRef(false);
 
   const utils = trpc.useUtils();
 
@@ -118,8 +121,12 @@ export default function AIAssistant() {
   const hasOwnKey = !!apiKeysData?.keys.some(k => k.provider === "openrouter");
 
   // Fetch conversation list
-  const { data: historyData, isLoading: historyLoading } =
-    trpc.ai.listConversations.useQuery({ limit: 20 }, { enabled: !!user });
+  const {
+    data: historyData,
+    isLoading: historyLoading,
+    isError: historyError,
+    refetch: retryHistory,
+  } = trpc.ai.listConversations.useQuery({ limit: 20 }, { enabled: !!user });
 
   // Fetch context suggestions
   const { data: suggestionsData } = trpc.ai.getSuggestions.useQuery(
@@ -178,7 +185,12 @@ export default function AIAssistant() {
     if (selectedModel || models.length === 0) return;
     // Restore the last-used model, otherwise default to the first free model
     // so every user can chat without credits.
-    const remembered = localStorage.getItem("kai:model");
+    let remembered: string | null = null;
+    try {
+      remembered = localStorage.getItem("kai:model");
+    } catch {
+      /* Storage can be unavailable in private browsing. */
+    }
     const recommended =
       models.find(model => model.id === remembered) ??
       models.find(model => model.tier === "free") ??
@@ -188,12 +200,17 @@ export default function AIAssistant() {
 
   const handleModelChange = useCallback((value: string) => {
     setSelectedModel(value as KaiModelId);
-    localStorage.setItem("kai:model", value);
+    try {
+      localStorage.setItem("kai:model", value);
+    } catch {
+      /* Model selection still works without persistence. */
+    }
   }, []);
 
   // Chat mutation
   const chatMutation = trpc.ai.chat.useMutation({
     onSuccess: data => {
+      sending.current = false;
       setCreditNotice(null);
       setActiveConversationId(data.conversationId);
       setMessages(prev => [
@@ -204,9 +221,9 @@ export default function AIAssistant() {
       utils.kaiCredits.getBalance.invalidate();
     },
     onError: err => {
+      sending.current = false;
       const message = err.message || "AI response failed";
-      const isCreditError =
-        err.data?.code === "FORBIDDEN" || /insufficient|credit/i.test(message);
+      const isCreditError = /insufficient|credit/i.test(message);
       setCreditNotice(message);
       toast.error(isCreditError ? "Kai credits needed" : "AI response failed", {
         description: message,
@@ -248,10 +265,15 @@ export default function AIAssistant() {
 
   // Delete conversation mutation
   const deleteMutation = trpc.ai.deleteConversation.useMutation({
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      if (activeConversationId === variables.id) startNewConversation();
       utils.ai.listConversations.invalidate();
       toast.success("Conversation deleted");
     },
+    onError: () =>
+      toast.error(
+        "Conversation could not be deleted. Your chat is still open."
+      ),
   });
 
   // Clear all conversations mutation
@@ -261,6 +283,8 @@ export default function AIAssistant() {
       startNewConversation();
       toast.success("All conversations cleared");
     },
+    onError: () =>
+      toast.error("Conversations could not be cleared. Please try again."),
   });
 
   // Load a conversation
@@ -272,18 +296,36 @@ export default function AIAssistant() {
   );
 
   const handleLoadConversation = async (id: number) => {
-    setActiveConversationId(id);
+    if (
+      sending.current ||
+      deleteMutation.isPending ||
+      clearAllMutation.isPending
+    )
+      return;
+    const request = ++conversationRequest.current;
+    setConversationLoading(true);
     try {
       const result = await utils.ai.getConversation.fetch({ id });
+      if (request !== conversationRequest.current) return;
       const msgs = (result.conversation.messages as Message[]) ?? [];
+      setActiveConversationId(id);
       setMessages(msgs.filter(m => m.role !== "system"));
       setActiveContext(result.conversation.context ?? "general");
     } catch {
-      toast.error("Failed to load conversation");
+      if (request === conversationRequest.current)
+        toast.error(
+          "Failed to load conversation. Your current chat is unchanged."
+        );
+    } finally {
+      if (request === conversationRequest.current)
+        setConversationLoading(false);
     }
   };
 
   const startNewConversation = useCallback(() => {
+    if (sending.current) return;
+    conversationRequest.current += 1;
+    setConversationLoading(false);
     setActiveConversationId(undefined);
     setMessages([]);
     setActiveContext("general");
@@ -291,6 +333,14 @@ export default function AIAssistant() {
 
   const handleSendMessage = useCallback(
     (content: string) => {
+      if (
+        sending.current ||
+        conversationLoading ||
+        deleteMutation.isPending ||
+        clearAllMutation.isPending
+      )
+        return;
+      sending.current = true;
       setCreditNotice(null);
       setMessages(prev => [...prev, { role: "user", content }]);
       chatMutation.mutate({
@@ -300,12 +350,26 @@ export default function AIAssistant() {
         model: selectedModel,
       });
     },
-    [activeContext, activeConversationId, chatMutation, selectedModel]
+    [
+      activeContext,
+      activeConversationId,
+      chatMutation,
+      selectedModel,
+      conversationLoading,
+      deleteMutation.isPending,
+      clearAllMutation.isPending,
+    ]
   );
 
   const handleContextChange = (ctx: string) => {
-    setActiveContext(ctx);
+    if (
+      sending.current ||
+      deleteMutation.isPending ||
+      clearAllMutation.isPending
+    )
+      return;
     startNewConversation();
+    setActiveContext(ctx);
   };
 
   if (loading) {
@@ -502,6 +566,12 @@ export default function AIAssistant() {
               variant="ghost"
               size="sm"
               onClick={startNewConversation}
+              aria-label="New conversation"
+              disabled={
+                chatMutation.isPending ||
+                deleteMutation.isPending ||
+                clearAllMutation.isPending
+              }
               className="h-7 w-7 p-0"
             >
               <Plus className="h-4 w-4" />
@@ -520,6 +590,11 @@ export default function AIAssistant() {
                   <button
                     key={ctx}
                     onClick={() => handleContextChange(ctx)}
+                    disabled={
+                      chatMutation.isPending ||
+                      deleteMutation.isPending ||
+                      clearAllMutation.isPending
+                    }
                     className={cn(
                       "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors text-left",
                       activeContext === ctx
@@ -547,6 +622,12 @@ export default function AIAssistant() {
                   size="sm"
                   className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                   onClick={() => clearAllMutation.mutate()}
+                  disabled={
+                    chatMutation.isPending ||
+                    conversationLoading ||
+                    deleteMutation.isPending ||
+                    clearAllMutation.isPending
+                  }
                   title="Clear all conversations"
                 >
                   <Trash2 className="h-3 w-3" />
@@ -557,6 +638,17 @@ export default function AIAssistant() {
               {historyLoading ? (
                 <div className="flex justify-center py-4">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              ) : historyError ? (
+                <div role="alert" className="p-3 text-sm">
+                  <p>Conversation history could not be loaded.</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => retryHistory()}
+                  >
+                    Retry history
+                  </Button>
                 </div>
               ) : conversations.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-4 px-2">
@@ -573,19 +665,31 @@ export default function AIAssistant() {
                           ? "bg-primary/10"
                           : "hover:bg-accent"
                       )}
-                      onClick={() => handleLoadConversation(convo.id)}
                     >
                       <MessageSquare className="h-3 w-3 shrink-0 text-muted-foreground" />
-                      <span className="flex-1 text-xs truncate text-foreground">
-                        {convo.title ?? "Conversation"}
-                      </span>
                       <button
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:text-destructive"
+                        className="min-h-11 flex-1 min-w-0 text-left text-xs truncate text-foreground"
+                        disabled={
+                          chatMutation.isPending ||
+                          deleteMutation.isPending ||
+                          clearAllMutation.isPending
+                        }
+                        onClick={() => handleLoadConversation(convo.id)}
+                      >
+                        {convo.title ?? "Conversation"}
+                      </button>
+                      <button
+                        aria-label={`Delete ${convo.title ?? "conversation"}`}
+                        disabled={
+                          chatMutation.isPending ||
+                          conversationLoading ||
+                          deleteMutation.isPending ||
+                          clearAllMutation.isPending
+                        }
+                        className="min-h-11 min-w-8 opacity-70 hover:opacity-100 focus-visible:opacity-100 transition-opacity p-0.5 rounded hover:text-destructive"
                         onClick={e => {
                           e.stopPropagation();
                           deleteMutation.mutate({ id: convo.id });
-                          if (activeConversationId === convo.id)
-                            startNewConversation();
                         }}
                       >
                         <Trash2 className="h-3 w-3" />
@@ -607,6 +711,7 @@ export default function AIAssistant() {
               size="sm"
               className="h-7 w-7 p-0"
               onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Toggle conversation history"
             >
               <ChevronRight
                 className={cn(
@@ -697,6 +802,11 @@ export default function AIAssistant() {
                 variant="ghost"
                 size="sm"
                 onClick={startNewConversation}
+                disabled={
+                  chatMutation.isPending ||
+                  deleteMutation.isPending ||
+                  clearAllMutation.isPending
+                }
                 className="text-xs h-7"
               >
                 <Plus className="h-3.5 w-3.5 mr-1" />
@@ -735,7 +845,12 @@ export default function AIAssistant() {
               <AIChatBox
                 messages={messages}
                 onSendMessage={handleSendMessage}
-                isLoading={chatMutation.isPending}
+                isLoading={
+                  chatMutation.isPending ||
+                  conversationLoading ||
+                  deleteMutation.isPending ||
+                  clearAllMutation.isPending
+                }
                 placeholder={`Ask Kai anything about your ${CONTEXT_LABELS[activeContext] ?? "business"}…`}
                 height="100%"
                 className="min-h-[34rem] xl:min-h-0"

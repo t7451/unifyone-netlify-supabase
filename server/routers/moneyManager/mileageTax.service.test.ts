@@ -15,6 +15,8 @@ vi.mock("../../challengeCompletion", () => ({
 }));
 
 import * as repo from "./moneyManager.repo";
+import { awardPoints } from "./points.service";
+import { checkAndResolveFriendChallengesForUser } from "../../challengeCompletion";
 import { mileageTaxService } from "./mileageTax.service";
 
 const mockRepo = vi.mocked(repo);
@@ -42,6 +44,13 @@ beforeEach(() => {
   mockRepo.getMileageDeductionsSince.mockResolvedValue([]);
 });
 afterEach(() => vi.useRealTimers());
+
+it("does not confirm an empty mileage history when storage is unavailable", async () => {
+  mockRepo.getDb.mockResolvedValue(null);
+  await expect(
+    mileageTaxService.getMileageSummary(7, { year: 2026 })
+  ).rejects.toMatchObject({ code: "SERVICE_UNAVAILABLE" });
+});
 
 describe("getYTDDeduction mileage sources", () => {
   it("counts a 20-mile shift once when its auto log also has 20 miles, while retaining 5 manual miles", async () => {
@@ -207,4 +216,85 @@ it("rejects unknown mileage periods before storing a guessed rate", async () => 
     )
   ).rejects.toThrow("No verified business mileage rate");
   expect(mockRepo.insertMileageLog).not.toHaveBeenCalled();
+});
+
+describe("standalone mileage commit safety", () => {
+  const ctx = { user: { id: 7, email: null } };
+  it.each([0.01, -1, Number.NaN, Number.POSITIVE_INFINITY, 1_000_000, 1.001])(
+    "rejects invalid distance %s before touching the database",
+    async miles => {
+      await expect(
+        mileageTaxService.logMileage(ctx, {
+          miles,
+          purpose: "business",
+          date: "2026-10-01",
+        })
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+      expect(mockRepo.insertMileageLog).not.toHaveBeenCalled();
+      expect(awardPoints).not.toHaveBeenCalled();
+    }
+  );
+  it("preserves an exact two-decimal distance and fractional rate", async () => {
+    const result = await mileageTaxService.logMileage(ctx, {
+      miles: 1.01,
+      purpose: "business",
+      date: "2026-06-30",
+    });
+    expect(mockRepo.insertMileageLog).toHaveBeenCalledWith(
+      DB,
+      expect.objectContaining({
+        userId: 7,
+        miles: "1.01",
+        irsRateCents: "72.50",
+        deductionCents: 73,
+      })
+    );
+    expect(result).toEqual({ deductionCents: 73, deductionDollars: 0.73 });
+  });
+  it("reports a committed save as successful when points and challenge processing fail", async () => {
+    vi.mocked(awardPoints).mockRejectedValueOnce(
+      new Error("points unavailable")
+    );
+    vi.mocked(checkAndResolveFriendChallengesForUser).mockRejectedValueOnce(
+      new Error("challenge unavailable")
+    );
+    await expect(
+      mileageTaxService.logMileage(ctx, {
+        miles: 10,
+        purpose: "business",
+        date: "2026-10-01",
+      })
+    ).resolves.toEqual({ deductionCents: 760, deductionDollars: 7.6 });
+    expect(mockRepo.insertMileageLog).toHaveBeenCalledTimes(1);
+    expect(checkAndResolveFriendChallengesForUser).toHaveBeenCalledWith(7);
+  });
+  it("does not hide an actual insert failure or run engagement effects", async () => {
+    mockRepo.insertMileageLog.mockRejectedValueOnce(new Error("insert failed"));
+    await expect(
+      mileageTaxService.logMileage(ctx, {
+        miles: 10,
+        purpose: "business",
+        date: "2026-10-01",
+      })
+    ).rejects.toThrow("insert failed");
+    expect(awardPoints).not.toHaveBeenCalled();
+    expect(checkAndResolveFriendChallengesForUser).not.toHaveBeenCalled();
+  });
+  it("rejects future calendar dates while allowing the next UTC day for local time zones", async () => {
+    await expect(
+      mileageTaxService.logMileage(ctx, {
+        miles: 10,
+        purpose: "business",
+        date: "2026-10-25",
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(mockRepo.insertMileageLog).not.toHaveBeenCalled();
+    await expect(
+      mileageTaxService.logMileage(ctx, {
+        miles: 10,
+        purpose: "business",
+        date: "2026-10-24",
+      })
+    ).resolves.toBeDefined();
+  });
 });

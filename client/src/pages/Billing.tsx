@@ -231,12 +231,12 @@ export default function Billing() {
   const { user } = useAuth();
   // Gig is the default experience; commerce is the optional storefront add-on.
   const isCommerce = (user?.primaryProduct ?? "gig") === "commerce";
-  const { data: subStatus, isLoading: subLoading } =
-    trpc.subscription.getStatus.useQuery();
-  const { data: usage, isLoading: usageLoading } =
-    trpc.tenant.getUsage.useQuery();
-  const { data: invoices, isLoading: invoicesLoading } =
-    trpc.subscription.getInvoices.useQuery();
+  const statusQuery = trpc.subscription.getStatus.useQuery();
+  const { data: subStatus, isLoading: subLoading } = statusQuery;
+  const usageQuery = trpc.tenant.getUsage.useQuery();
+  const { data: usage, isLoading: usageLoading } = usageQuery;
+  const invoicesQuery = trpc.subscription.getInvoices.useQuery();
+  const { data: invoices, isLoading: invoicesLoading } = invoicesQuery;
 
   const createCheckout = trpc.subscription.createCheckout.useMutation({
     onSuccess: data => {
@@ -279,8 +279,8 @@ export default function Billing() {
         }),
       });
       const data = (await res.json()) as { url?: string; error?: string };
-      if (data.url) {
-        window.open(data.url, "_blank");
+      if (res.ok && data.url) {
+        window.location.assign(data.url);
         toast.success("Opening Stripe billing portal...");
       } else {
         toast.error(data.error ?? "Failed to open billing portal");
@@ -317,6 +317,41 @@ export default function Billing() {
     maxUsers: subStatus?.plan?.maxUsers ?? catalogPlan.maxUsers,
   };
   const proPlan = PLAN_CATALOG_BY_SLUG.pro;
+
+  if (statusQuery.isLoading)
+    return (
+      <DashboardPageShell
+        title="Billing & Subscription"
+        description="Checking your current subscription before making billing changes."
+      >
+        <Skeleton
+          className="h-64 rounded-xl"
+          aria-label="Loading subscription"
+        />
+      </DashboardPageShell>
+    );
+
+  if (statusQuery.isError)
+    return (
+      <DashboardPageShell
+        title="Billing & Subscription"
+        description="Manage your plan, payment method, and invoice history."
+      >
+        <div
+          role="alert"
+          className="rounded-xl border border-border bg-card p-5 space-y-3"
+        >
+          <p className="font-medium">Could not load your subscription</p>
+          <p className="text-sm text-muted-foreground">
+            Your current plan could not be verified. Retry before making billing
+            changes.
+          </p>
+          <Button variant="outline" onClick={() => void statusQuery.refetch()}>
+            Retry subscription
+          </Button>
+        </div>
+      </DashboardPageShell>
+    );
 
   return (
     <DashboardPageShell
@@ -435,6 +470,18 @@ export default function Billing() {
                   </span>
                 )}
               </div>
+              {usageQuery.isError && (
+                <div role="alert" className="mb-3 space-y-2">
+                  <p className="text-sm">Usage is unavailable.</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void usageQuery.refetch()}
+                  >
+                    Retry usage
+                  </Button>
+                </div>
+              )}
               <div className="space-y-4 rounded-xl border border-border bg-background/30 p-4">
                 <UsageBar
                   icon={Package}
@@ -597,7 +644,17 @@ export default function Billing() {
           </CardHeader>
 
           <CardContent className="px-0 pt-0">
-            {invoicesLoading ? (
+            {invoicesQuery.isError ? (
+              <div role="alert" className="p-5 space-y-3">
+                <p>Could not load invoice history</p>
+                <Button
+                  variant="outline"
+                  onClick={() => void invoicesQuery.refetch()}
+                >
+                  Retry invoices
+                </Button>
+              </div>
+            ) : invoicesLoading ? (
               <div className="space-y-3 p-5">
                 {[1, 2, 3].map(item => (
                   <div key={item} className="flex items-center justify-between">

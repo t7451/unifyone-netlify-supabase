@@ -13,24 +13,31 @@ import type {
 // ── NotificationList data + mutations ─────────────────────────────────────────
 export function useNotificationList() {
   const utils = trpc.useUtils();
-  const { data: notifs = [], isLoading } = trpc.notifications.list.useQuery({
+  const listQuery = trpc.notifications.list.useQuery({
     limit: 50,
   });
+  const { data: notifs = [], isLoading, error, refetch } = listQuery;
   const { data: unread } = trpc.notifications.unreadCount.useQuery();
 
   const markRead = trpc.notifications.markRead.useMutation({
+    onError: error =>
+      toast.error(error.message || "Notification action failed. Try again."),
     onSuccess: () => {
       utils.notifications.list.invalidate();
       utils.notifications.unreadCount.invalidate();
     },
   });
   const markAllRead = trpc.notifications.markAllRead.useMutation({
+    onError: error =>
+      toast.error(error.message || "Notification action failed. Try again."),
     onSuccess: () => {
       utils.notifications.list.invalidate();
       utils.notifications.unreadCount.invalidate();
     },
   });
   const deleteNotif = trpc.notifications.delete.useMutation({
+    onError: error =>
+      toast.error(error.message || "Notification action failed. Try again."),
     onSuccess: () => {
       utils.notifications.list.invalidate();
       utils.notifications.unreadCount.invalidate();
@@ -50,6 +57,8 @@ export function useNotificationList() {
   return {
     notifs,
     isLoading,
+    error,
+    refetch,
     unread,
     markRead,
     markAllRead,
@@ -119,11 +128,11 @@ export function useTriggerConfig() {
   const tenantId = user?.tenantId;
   const utils = trpc.useUtils();
 
-  const { data: triggers = [], isLoading } =
-    trpc.notifications.listTriggers.useQuery(
-      { tenantId: tenantId! },
-      { enabled: !!tenantId }
-    );
+  const triggersQuery = trpc.notifications.listTriggers.useQuery(
+    { tenantId: tenantId! },
+    { enabled: !!tenantId }
+  );
+  const { data: triggers = [], isLoading, error, refetch } = triggersQuery;
 
   const upsert = trpc.notifications.upsertTrigger.useMutation({
     onSuccess: () => {
@@ -134,6 +143,7 @@ export function useTriggerConfig() {
   });
 
   const deleteTrigger = trpc.notifications.deleteTrigger.useMutation({
+    onError: error => toast.error(error.message),
     onSuccess: () => utils.notifications.listTriggers.invalidate(),
   });
 
@@ -184,6 +194,12 @@ export function useTriggerConfig() {
       toast.error("No active tenant.");
       return;
     }
+    if (isLoading || error) {
+      toast.error(
+        "Load the saved trigger configuration before making changes."
+      );
+      return;
+    }
     upsert.mutate({ tenantId, event, ...configs[event] });
   };
 
@@ -191,6 +207,8 @@ export function useTriggerConfig() {
     tenantId,
     triggers,
     isLoading,
+    error,
+    refetch,
     upsert,
     deleteTrigger,
     configs,

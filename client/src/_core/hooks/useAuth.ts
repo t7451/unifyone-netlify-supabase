@@ -1,7 +1,8 @@
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { TRPCClientError } from "@trpc/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -12,38 +13,42 @@ export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
     options ?? {};
   const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
   });
 
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: () => {
-      utils.auth.me.setData(undefined, null);
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      // This route clears both cookies in Express and Netlify's fetch adapter.
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!response.ok || (await response.json()).success !== true) {
+        throw new Error("Sign out could not be confirmed. Please try again.");
+      }
     },
+    onSuccess: async () => {
+      await queryClient.cancelQueries();
+      queryClient.clear();
+      utils.auth.me.setData(undefined, null);
+      window.location.assign(getLoginUrl());
+    },
+    onError: () =>
+      toast.error("Sign out could not be confirmed. Please try again."),
   });
 
   const logout = useCallback(async () => {
     try {
-      // Clear the server-side session cookie. In Express (local/Docker) the
-      // tRPC mutation clears it via ctx.res.clearCookie. In the Netlify fetch
-      // adapter ctx.res is unavailable, so the /api/auth/logout non-tRPC route
-      // handles cookie clearing; the mutation still returns { success: true }.
       await logoutMutation.mutateAsync();
-    } catch (error: unknown) {
-      if (
-        error instanceof TRPCClientError &&
-        error.data?.code === "UNAUTHORIZED"
-      ) {
-        return;
-      }
-      throw error;
-    } finally {
-      utils.auth.me.setData(undefined, null);
-      await utils.auth.me.invalidate();
+    } catch {
+      // Preserve the current session until the server confirms cookie removal.
     }
-  }, [logoutMutation, utils]);
+  }, [logoutMutation]);
 
   const state = useMemo(() => {
     return {

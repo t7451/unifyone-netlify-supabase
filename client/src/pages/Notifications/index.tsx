@@ -60,6 +60,8 @@ import {
 function NotificationList() {
   const {
     isLoading,
+    error,
+    refetch,
     unread,
     markRead,
     markAllRead,
@@ -85,14 +87,27 @@ function NotificationList() {
           size="sm"
           className="min-h-11 bg-primary px-4 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:bg-primary/40 disabled:text-primary-foreground/70"
           onClick={() => markAllRead.mutate()}
-          disabled={markAllRead.isPending || (unread?.count ?? 0) === 0}
+          disabled={
+            !!error || markAllRead.isPending || (unread?.count ?? 0) === 0
+          }
         >
           <CheckCheck className="mr-1.5 h-3.5 w-3.5" />
           {markAllRead.isPending ? "Marking…" : "Mark all as read"}
         </Button>
       </div>
 
-      {isLoading ? (
+      {error ? (
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/40 bg-card p-5 space-y-3"
+        >
+          <p className="font-medium">Could not load notifications</p>
+          <p className="text-sm text-muted-foreground">{error.message}</p>
+          <Button variant="outline" onClick={() => void refetch()}>
+            Retry notifications
+          </Button>
+        </div>
+      ) : isLoading ? (
         <div className="space-y-5">
           {["Today", "Yesterday", "This Week"].map(group => (
             <div key={group} className="space-y-3">
@@ -196,13 +211,14 @@ function NotificationList() {
                           {timeAgo(n.createdAt)}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
                         {!n.read && (
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-11 w-11 text-muted-foreground hover:text-primary"
                             onClick={() => markRead.mutate({ id: n.id })}
+                            disabled={markRead.isPending}
                             title="Mark as read"
                           >
                             <CheckCheck className="h-3.5 w-3.5" />
@@ -213,6 +229,7 @@ function NotificationList() {
                           size="icon"
                           className="h-11 w-11 text-muted-foreground hover:text-red-400"
                           onClick={() => deleteNotif.mutate({ id: n.id })}
+                          disabled={deleteNotif.isPending}
                           title="Delete"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -431,6 +448,8 @@ function TriggerConfig() {
     tenantId,
     triggers,
     isLoading,
+    error,
+    refetch,
     upsert,
     deleteTrigger,
     configs,
@@ -445,6 +464,19 @@ function TriggerConfig() {
       </div>
     );
   }
+
+  if (error)
+    return (
+      <div
+        role="alert"
+        className="rounded-xl border border-border bg-card p-5 space-y-3"
+      >
+        <p>Could not load trigger configuration</p>
+        <Button variant="outline" onClick={() => void refetch()}>
+          Retry triggers
+        </Button>
+      </div>
+    );
 
   return (
     <div className="space-y-4">

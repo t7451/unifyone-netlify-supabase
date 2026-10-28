@@ -18,21 +18,39 @@ import {
   type MileageRatePeriod,
 } from "../../../shared/mileageRates";
 
+function invalidRecordedAmount(): never {
+  throw new TRPCError({
+    code: "INTERNAL_SERVER_ERROR",
+    message:
+      "Some recorded amounts could not be read reliably. No export was produced.",
+  });
+}
 function round2(n: number): number {
-  return Math.round(n * 100) / 100;
+  const cents = Math.round(n * 100);
+  if (!Number.isFinite(n) || !Number.isSafeInteger(cents))
+    invalidRecordedAmount();
+  return cents / 100;
+}
+function recordedAmount(value: string | number | null | undefined): number {
+  if (value == null || (typeof value === "string" && !value.trim()))
+    invalidRecordedAmount();
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount < 0) invalidRecordedAmount();
+  round2(amount); // Reject values whose cents cannot be represented safely.
+  return amount;
 }
 
 export interface TaxReportShiftRow {
   source: "timer" | "manual";
   date: string; // ISO date
   platform: string;
-  durationHours: number;
+  durationHours: number | null;
   grossDollars: number;
   tipsDollars: number;
   bonusesDollars: number;
   totalDollars: number;
   miles: number;
-  perHourDollars: number;
+  perHourDollars: number | null;
 }
 
 export interface TaxReportMileageRow {
@@ -91,7 +109,7 @@ export interface TaxReport {
     tipsDollars: number;
     bonusesDollars: number;
     totalDollars: number;
-    miles: number;
+    miles: number | null;
     durationHours: null;
   }[];
   expenses: {
@@ -170,13 +188,21 @@ export const taxExportService = {
     );
 
     const shifts: TaxReportShiftRow[] = yearShifts.map(s => {
-      const gross = Number(s.grossEarnings) || 0;
-      const tips = Number(s.tips) || 0;
-      const bonuses = Number(s.bonuses) || 0;
-      const miles = Number(s.totalMiles) || 0;
-      const durationHours = round2((s.durationMinutes ?? 0) / 60);
+      const gross = recordedAmount(s.grossEarnings);
+      const tips = recordedAmount(s.tips);
+      const bonuses = recordedAmount(s.bonuses);
+      const miles = recordedAmount(s.totalMiles);
+      const durationHours =
+        s.durationMinutes !== null &&
+        Number.isFinite(s.durationMinutes) &&
+        s.durationMinutes >= 0
+          ? s.durationMinutes / 60
+          : null;
       const total = round2(gross + tips + bonuses);
-      const perHour = durationHours > 0 ? round2(total / durationHours) : 0;
+      const perHour =
+        durationHours !== null && durationHours > 0
+          ? round2(total / durationHours)
+          : null;
       return {
         source: s.entrySource === "manual" ? "manual" : "timer",
         date: (s.startTime as Date).toISOString(),
@@ -199,7 +225,7 @@ export const taxExportService = {
       .filter(m => m.date instanceof Date)
       .map(m => ({
         date: (m.date as Date).toISOString(),
-        miles: round2(Number(m.miles) || 0),
+        miles: round2(recordedAmount(m.miles)),
         purpose: m.purpose ?? "business",
         deductionDollars: round2((m.deductionCents ?? 0) / 100),
         startAddress: m.startAddress ?? "",
@@ -253,21 +279,25 @@ export const taxExportService = {
       batchId: row.batchId,
       date: row.date.toISOString(),
       platform: row.platform,
-      grossDollars: round2(Number(row.grossEarnings)),
-      tipsDollars: round2(Number(row.tips)),
-      bonusesDollars: round2(Number(row.bonuses)),
+      grossDollars: round2(recordedAmount(row.grossEarnings)),
+      tipsDollars: round2(recordedAmount(row.tips)),
+      bonusesDollars: round2(recordedAmount(row.bonuses)),
       totalDollars: round2(
-        Number(row.grossEarnings) + Number(row.tips) + Number(row.bonuses)
+        recordedAmount(row.grossEarnings) +
+          recordedAmount(row.tips) +
+          recordedAmount(row.bonuses)
       ),
-      miles: round2(Number(row.totalMiles ?? 0)),
+      miles:
+        row.totalMiles === null ? null : round2(recordedAmount(row.totalMiles)),
       durationHours: null,
     }));
     const sourceTotal = (rows: { totalDollars: number }[]) =>
       round2(rows.reduce((total, row) => total + row.totalDollars, 0));
-    const expenseTotalCents = records.expenses.reduce(
-      (total, row) => total + row.amountCents,
-      0
-    );
+    const expenseTotalCents = records.expenses.reduce((total, row) => {
+      if (!Number.isSafeInteger(row.amountCents) || row.amountCents < 0)
+        invalidRecordedAmount();
+      return total + row.amountCents;
+    }, 0);
     if (!Number.isSafeInteger(expenseTotalCents))
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
@@ -340,6 +370,7 @@ export const taxExportService = {
         warnings: [
           "CSV imports and manual/timer income have not been reconciled; overlapping records may count the same income twice.",
           "CSV work hours are unknown; imported miles are shown separately and are not included in the mileage deduction.",
+          "Missing or invalid session durations are marked as unknown, not zero hours. Hourly rates use the full recorded duration before rounding the dollar result.",
           "Mileage totals include shift-only miles where no matching saved mileage log exists; mileage count counts saved logs only.",
           "Recorded expenses are bookkeeping amounts, not a determination of tax deductibility. Actual vehicle costs and mileage deductions are not combined.",
           "Legacy summary and tax fields cover completed work records only, excluding CSV income and expenses.",

@@ -590,11 +590,18 @@ export async function getInvoices(user: SubscriptionUser) {
   if (!tenantId) return [];
 
   const tenant = await repo.getTenantById(tenantId);
-  if (!tenant?.stripeCustomerId) return [];
+  if (!tenant)
+    throw new TRPCError({ code: "NOT_FOUND", message: "Workspace not found." });
+  if (!tenant.stripeCustomerId) return [];
 
   try {
     const stripe = getStripe();
-    if (!stripe) return [];
+    if (!stripe)
+      throw new TRPCError({
+        code: "SERVICE_UNAVAILABLE",
+        message:
+          "Invoice history is temporarily unavailable. Please try again.",
+      });
     const invoices = await stripe.invoices.list({
       customer: tenant.stripeCustomerId,
       limit: 20,
@@ -612,6 +619,9 @@ export async function getInvoices(user: SubscriptionUser) {
       number: string | null;
     }>;
   } catch {
-    return [];
+    throw new TRPCError({
+      code: "SERVICE_UNAVAILABLE",
+      message: "Invoice history is temporarily unavailable. Please try again.",
+    });
   }
 }

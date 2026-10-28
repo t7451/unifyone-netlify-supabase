@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "wouter";
+import { TRPCClientError } from "@trpc/client";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { TaxExportButton } from "@/components/TaxExportButton";
@@ -85,6 +86,18 @@ function DemandBadge({ level }: { level: "high" | "medium" | "low" }) {
   );
 }
 
+function localCalendarDate(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+function validCalendarDate(value: string) {
+  const date = new Date(`${value}T00:00:00Z`);
+  return (
+    /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+    Number.isFinite(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value
+  );
+}
+
 export default function GigCommand() {
   useAuth();
   const utils = trpc.useUtils();
@@ -96,6 +109,18 @@ export default function GigCommand() {
   const watchIdRef = useRef<number | null>(null);
   const gpsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const gpsGeneration = useRef(0);
+  const restoredShiftId = useRef<number | null>(null);
+  const pendingEnd = useRef<{
+    shiftId: number;
+    grossEarnings: number;
+    tips: number;
+    bonuses: number;
+    totalMiles: number;
+    mileageDate?: string;
+  } | null>(null);
+  const [endRetryLocked, setEndRetryLocked] = useState(false);
+  const [endMileageDate, setEndMileageDate] = useState(localCalendarDate);
   const [elapsed, setElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
   const [startTs, setStartTs] = useState<number | null>(null);
@@ -219,10 +244,12 @@ export default function GigCommand() {
     }
     if (watchIdRef.current !== null)
       navigator.geolocation.clearWatch(watchIdRef.current);
+    const generation = ++gpsGeneration.current;
     setGpsError("");
     setGpsRequesting(true);
     watchIdRef.current = navigator.geolocation.watchPosition(
       pos => {
+        if (generation !== gpsGeneration.current) return;
         const { latitude: lat, longitude: lng } = pos.coords;
         setGpsRequesting(false);
         setGpsEnabled(true);
@@ -240,12 +267,14 @@ export default function GigCommand() {
         setIntelligencePos(prev => prev ?? { lat, lng });
       },
       error => {
+        if (generation !== gpsGeneration.current) return;
         if (watchIdRef.current !== null)
           navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
         setGpsRequesting(false);
         setGpsEnabled(false);
         positionRef.current = null;
+        setCurrentPos(null);
         setIntelligencePos(null);
         setGpsError(
           error.code === 1
@@ -258,6 +287,8 @@ export default function GigCommand() {
   }, []);
 
   const stopGPS = useCallback(() => {
+    gpsGeneration.current++;
+    setCurrentPos(null);
     if (watchIdRef.current !== null)
       navigator.geolocation.clearWatch(watchIdRef.current);
     watchIdRef.current = null;
@@ -269,15 +300,31 @@ export default function GigCommand() {
     setIntelligencePos(null);
   }, []);
 
-  // Restore a saved timer, and clear local state when a refreshed status is ended.
+  // Reconcile server identity, including an active shift replaced in another tab.
   useEffect(() => {
-    if (activeShift === null) {
+    if (activeShift === undefined) return;
+    const identity = activeShift?.id ?? null;
+    if (identity !== restoredShiftId.current) {
+      stopGPS();
+      setRoutePath([]);
+      setGpsError("");
+      pendingEnd.current = null;
+      setEndRetryLocked(false);
+      setEndEarnings("");
+      setEndTips("0");
+      setEndBonuses("0");
+      setEndMiles("");
+      setEndMileageDate(localCalendarDate());
+      setEndFormError("");
+      setShowEndForm(false);
+      restoredShiftId.current = identity;
+    }
+    if (!activeShift) {
       setTimerActive(false);
       setStartTs(null);
       setElapsed(0);
-      setShowEndForm(false);
       stopGPS();
-    } else if (activeShift && !timerActive) {
+    } else {
       const startTime = new Date(activeShift.startTime).getTime();
       setStartTs(startTime);
       setElapsed(Math.max(0, Date.now() - startTime));
@@ -289,13 +336,11 @@ export default function GigCommand() {
       );
       setCustomPlatform(activeShift.platform);
     }
-    // timerActive is intentionally omitted — we only want to restore state when
-    // activeShift is (re)loaded, not when the timer is toggled by user action.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeShift, stopGPS]);
 
   useEffect(
     () => () => {
+      gpsGeneration.current++;
       if (watchIdRef.current !== null)
         navigator.geolocation.clearWatch(watchIdRef.current);
       if (gpsIntervalRef.current) clearInterval(gpsIntervalRef.current);
@@ -332,6 +377,7 @@ export default function GigCommand() {
       utils.moneyManager.getMileageSummary.invalidate(),
       utils.moneyManager.getYTDDeduction.invalidate(),
       utils.moneyManager.getShiftBreakdown.invalidate(),
+      utils.workInsights.summary.invalidate(),
     ]);
   }
 
@@ -340,6 +386,7 @@ export default function GigCommand() {
     try {
       const created = await startShift.mutateAsync({ platform: workName });
       const startedAt = new Date(created.startTime).getTime();
+      restoredShiftId.current = created.id;
       setStartTs(startedAt);
       setTimerActive(true);
       setElapsed(Math.max(0, Date.now() - startedAt));
@@ -349,48 +396,57 @@ export default function GigCommand() {
       void refreshWorkData();
       toast.success(`${workName} shift started. Your timer is running.`);
     } catch {
-      // The mutation's onError shows the server response. Keep entries intact.
+      // A response may be lost after insertion. Reconcile before another start.
+      await refetchActive();
     }
   };
 
   const endAmounts = [endEarnings, endTips, endBonuses, endMiles];
-  const endValuesValid =
-    endAmounts
-      .slice(0, 3)
-      .every(value => Number(value) === Number(Number(value).toFixed(2))) &&
-    endAmounts.every(
-      value =>
-        value.trim() !== "" &&
-        Number.isFinite(Number(value)) &&
-        Number(value) >= 0
-    );
+  const endValuesValid = endAmounts.every(
+    (value, index) =>
+      value.trim() !== "" &&
+      Number.isFinite(Number(value)) &&
+      Number(value) >= 0 &&
+      Number(value) <= (index === 3 ? 999999.99 : 99999999.99) &&
+      Number(value) === Number(Number(value).toFixed(2))
+  );
   const totalReceived = endValuesValid
     ? Number(endEarnings) + Number(endTips) + Number(endBonuses)
     : null;
   const handleEndShift = async () => {
     if (!activeShift || endShift.isPending) return;
-    if (!endValuesValid) {
+    if (!endRetryLocked && !endValuesValid) {
       setEndFormError(
-        "Enter earnings and miles as zero or a positive number. Use at most two decimal places for pay. Enter 0 explicitly if you earned nothing or did not drive."
+        "Enter earnings and miles as zero or a positive number. Use at most two decimal places; pay must be below $100 million and miles below 1 million. Enter 0 explicitly if you earned nothing or did not drive."
+      );
+      return;
+    }
+    if (
+      !endRetryLocked &&
+      Number(endMiles) > 0 &&
+      (!validCalendarDate(endMileageDate) ||
+        endMileageDate > localCalendarDate() ||
+        endMileageDate < localCalendarDate(new Date(activeShift.startTime)))
+    ) {
+      setEndFormError(
+        "Choose the date you drove these miles, within this session and through today. Split mileage driven on different dates into separate dated mileage entries."
       );
       return;
     }
     setEndFormError("");
+    const payload = pendingEnd.current ?? {
+      shiftId: activeShift.id,
+      grossEarnings: Number(endEarnings),
+      tips: Number(endTips),
+      bonuses: Number(endBonuses),
+      totalMiles: Number(endMiles),
+      ...(Number(endMiles) > 0 ? { mileageDate: endMileageDate } : {}),
+    };
+    pendingEnd.current = payload;
     try {
-      const completedOn = new Date();
-      const mileageDate = [
-        completedOn.getFullYear(),
-        String(completedOn.getMonth() + 1).padStart(2, "0"),
-        String(completedOn.getDate()).padStart(2, "0"),
-      ].join("-");
-      await endShift.mutateAsync({
-        shiftId: activeShift.id,
-        grossEarnings: Number(endEarnings),
-        tips: Number(endTips),
-        bonuses: Number(endBonuses),
-        totalMiles: Number(endMiles),
-        mileageDate,
-      });
+      await endShift.mutateAsync(payload);
+      pendingEnd.current = null;
+      setEndRetryLocked(false);
       setTimerActive(false);
       setStartTs(null);
       setElapsed(0);
@@ -402,8 +458,20 @@ export default function GigCommand() {
       stopGPS();
       void refreshWorkData();
       toast.success("Shift saved. Your earnings and mileage are updating.");
-    } catch {
-      // Failed saves leave the running shift and entered values available to retry.
+    } catch (error) {
+      if (
+        error instanceof TRPCClientError &&
+        error.data?.code === "BAD_REQUEST"
+      ) {
+        pendingEnd.current = null;
+        setEndRetryLocked(false);
+        setEndFormError(error.message);
+        return;
+      }
+      setEndRetryLocked(true);
+      setEndFormError(
+        "The save could not be confirmed. Your exact pay, miles and date are preserved for a safe retry. Check shift status before entering different work."
+      );
     }
   };
 
@@ -663,7 +731,10 @@ export default function GigCommand() {
                             keep tips and bonuses at 0 so money is counted once.
                           </p>
                         </div>
-                        <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3">
+                        <fieldset
+                          disabled={endShift.isPending || endRetryLocked}
+                          className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3"
+                        >
                           {(
                             [
                               [
@@ -714,7 +785,39 @@ export default function GigCommand() {
                               />
                             </div>
                           ))}
-                        </div>
+                        </fieldset>
+                        {Number(endMiles) > 0 && (
+                          <div>
+                            <Label htmlFor="shift-mileage-date">
+                              Date these business miles were driven
+                            </Label>
+                            <Input
+                              id="shift-mileage-date"
+                              type="date"
+                              className="mt-1 min-h-11"
+                              disabled={endShift.isPending || endRetryLocked}
+                              value={endMileageDate}
+                              min={
+                                activeShift
+                                  ? localCalendarDate(
+                                      new Date(activeShift.startTime)
+                                    )
+                                  : undefined
+                              }
+                              max={localCalendarDate()}
+                              onChange={event => {
+                                setEndMileageDate(event.target.value);
+                                setEndFormError("");
+                              }}
+                            />
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              Confirm all miles were driven on this local
+                              calendar date. For multiple dates, save zero here
+                              and add separate dated mileage entries in
+                              Earnings.
+                            </p>
+                          </div>
+                        )}
                         <p
                           id="shift-mileage-help"
                           className="text-xs text-muted-foreground"
@@ -738,24 +841,14 @@ export default function GigCommand() {
                             {endFormError}
                           </p>
                         )}
-                        {endShift.isError && (
-                          <div className="space-y-2">
-                            <p
-                              role="alert"
-                              className="text-sm text-destructive"
-                            >
-                              We could not confirm this save. Your entries are
-                              still here; check shift status or retry when your
-                              connection is restored.
-                            </p>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => void refetchActive()}
-                            >
-                              Check shift status
-                            </Button>
-                          </div>
+                        {endRetryLocked && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => void refetchActive()}
+                          >
+                            Check shift status
+                          </Button>
                         )}
                         <div className="flex flex-wrap gap-2">
                           <Button
@@ -765,7 +858,9 @@ export default function GigCommand() {
                           >
                             {endShift.isPending
                               ? "Saving…"
-                              : "Save and end shift"}
+                              : endRetryLocked
+                                ? "Retry same shift save"
+                                : "Save and end shift"}
                           </Button>
                           <Button
                             type="button"

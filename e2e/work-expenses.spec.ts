@@ -25,7 +25,12 @@ async function mockExpenses(
         amountCents: 100,
         category: "supplies",
         merchant: index === 0 ? "=SUM(1,2)" : `Shop ${index + 1}`,
-        notes: index === 0 ? " +formula" : null,
+        notes:
+          index === 0
+            ? " +formula"
+            : index === 1
+              ? "\u0000=hidden-formula"
+              : null,
         createdAt: "2026-10-01T20:00:00Z",
       }))
     : [];
@@ -270,6 +275,7 @@ test("reviews full-period totals with pagination and exports only visible formul
   const csv = Buffer.concat(chunks).toString("utf8");
   expect(csv).toContain('"\'=SUM(1,2)"');
   expect(csv).toContain('"\' +formula"');
+  expect(csv).toContain('"\'\u0000=hidden-formula"');
   expect(csv).not.toContain("Shop 26");
   await page.getByRole("button", { name: "Next expenses" }).click();
   await expect(
@@ -288,4 +294,36 @@ test("reviews full-period totals with pagination and exports only visible formul
         /^\d{4}-\d{2}-\d{2}$/.test(String(query.asOfDate))
     )
   ).toBe(true);
+});
+
+test("returns to the last valid expense page when another tab removes its final row", async ({
+  page,
+}) => {
+  await page.clock.install({ time: new Date("2026-10-28T12:00:00Z") });
+  const calls = await mockExpenses(page, { many: true });
+  await page.goto("/work-expenses");
+  await page.getByRole("button", { name: "Next expenses" }).click();
+  await expect(page.getByText("Shop 26", { exact: true })).toBeVisible();
+  calls.entries.splice(25, 1);
+  await page.clock.fastForward(31_000);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+    window.dispatchEvent(new Event("visibilitychange"));
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "visible",
+    });
+    window.dispatchEvent(new Event("visibilitychange"));
+  });
+  await expect(
+    page.getByText("Showing 1–25 of 25.", { exact: false })
+  ).toBeVisible();
+  await expect(page.getByText("Shop 25", { exact: true })).toBeVisible();
+  expect(calls.queries.at(-1)?.offset).toBe(0);
+  await expect(
+    page.getByText("No expenses recorded for this period")
+  ).toHaveCount(0);
 });

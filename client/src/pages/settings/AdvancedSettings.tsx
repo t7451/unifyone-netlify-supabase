@@ -112,7 +112,8 @@ export default function AdvancedSettings() {
 
 function GoogleOAuthCard() {
   const utils = trpc.useUtils();
-  const { data, isLoading } = trpc.tenant.getOAuthSettings.useQuery();
+  const oauthQuery = trpc.tenant.getOAuthSettings.useQuery();
+  const { data, isLoading } = oauthQuery;
   const [enabled, setEnabled] = useState(false);
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
@@ -139,6 +140,7 @@ function GoogleOAuthCard() {
   }, [resolvedGoogle]);
 
   const handleSave = () => {
+    if (isLoading || oauthQuery.isError) return;
     saveOAuth.mutate({
       google: {
         enabled,
@@ -149,6 +151,18 @@ function GoogleOAuthCard() {
       },
     });
   };
+
+  if (oauthQuery.isError)
+    return (
+      <Card>
+        <CardContent className="p-5 space-y-3" role="alert">
+          <p>Could not load Google OAuth settings</p>
+          <Button variant="outline" onClick={() => void oauthQuery.refetch()}>
+            Retry OAuth settings
+          </Button>
+        </CardContent>
+      </Card>
+    );
 
   return (
     <Card className="bg-card border-border">

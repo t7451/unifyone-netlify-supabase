@@ -98,7 +98,12 @@ export default function Products() {
       title="Product Catalog"
       description="An optional add-on for gig workers who also run a store on the side. Manage product listings, inventory, and bulk catalog edits here — none of this is required to track your gig earnings or taxes."
       actions={
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <Dialog
+          open={createOpen}
+          onOpenChange={open =>
+            !createMutation.isPending && setCreateOpen(open)
+          }
+        >
           <DialogTrigger asChild>
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
               <Plus className="w-4 h-4 mr-2" /> Add Product
@@ -111,6 +116,7 @@ export default function Products() {
               </DialogTitle>
             </DialogHeader>
             <ProductFormFields
+              disabled={createMutation.isPending}
               form={form}
               setForm={setForm}
               errors={getErrors(form, createTouched)}
@@ -122,6 +128,7 @@ export default function Products() {
               <Button
                 variant="ghost"
                 className="text-gray-400 hover:text-foreground"
+                disabled={createMutation.isPending}
                 onClick={() => setCreateOpen(false)}
               >
                 Cancel
@@ -132,7 +139,8 @@ export default function Products() {
                   createMutation.isPending ||
                   !form.name ||
                   !form.price ||
-                  Number(form.price) <= 0
+                  !Number.isFinite(Number(form.price)) ||
+                  Number(form.price) < 0
                 }
                 className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold"
               >
@@ -606,7 +614,9 @@ export default function Products() {
       {/* Edit Modal */}
       <Dialog
         open={!!editProduct}
-        onOpenChange={open => !open && setEditProduct(null)}
+        onOpenChange={open =>
+          !open && !updateMutation.isPending && setEditProduct(null)
+        }
       >
         <DialogContent className="bg-card border-border text-foreground max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -616,6 +626,7 @@ export default function Products() {
             </DialogTitle>
           </DialogHeader>
           <ProductFormFields
+            disabled={updateMutation.isPending}
             form={editForm}
             setForm={setEditForm}
             errors={getErrors(editForm, editTouched)}
@@ -627,6 +638,7 @@ export default function Products() {
             <Button
               variant="ghost"
               className="text-gray-400 hover:text-foreground"
+              disabled={updateMutation.isPending}
               onClick={() => setEditProduct(null)}
             >
               Cancel
@@ -637,7 +649,8 @@ export default function Products() {
                 updateMutation.isPending ||
                 !editForm.name ||
                 !editForm.price ||
-                Number(editForm.price) <= 0
+                !Number.isFinite(Number(editForm.price)) ||
+                Number(editForm.price) < 0
               }
               className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold"
             >

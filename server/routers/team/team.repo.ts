@@ -1,6 +1,6 @@
 import { getDb } from "../../db";
 import { teamInvites, users } from "../../../drizzle/schema";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 /**
@@ -166,4 +166,54 @@ export async function markInviteAccepted(db: Db, inviteId: number) {
     .update(teamInvites)
     .set({ status: "accepted", acceptedAt: new Date() })
     .where(eq(teamInvites.id, inviteId));
+}
+
+/** One statement is atomic over Neon HTTP, including trigger/constraint errors. */
+export async function acceptInviteAtomic(
+  db: Db,
+  userId: number,
+  token: string
+) {
+  const result = await db.execute<{
+    tenantId: number | null;
+    role: "user" | "admin" | null;
+    reason: "accepted" | "unavailable" | "email" | "owner";
+  }>(sql`
+    WITH acting_user AS MATERIALIZED (
+      SELECT id, email, "emailVerified" FROM users WHERE id = ${userId} FOR UPDATE
+    ), locked_invite AS MATERIALIZED (
+      SELECT i.id, i."tenantId", i.email, i.role
+      FROM team_invites i CROSS JOIN acting_user u
+      WHERE i.token = ${token} AND i.status = 'pending' AND i."expiresAt" > now()
+      FOR UPDATE OF i
+    ), eligible AS (
+      SELECT i.* FROM locked_invite i CROSS JOIN acting_user u
+      WHERE u."emailVerified" IS TRUE
+        AND lower(btrim(u.email)) = lower(btrim(i.email))
+        AND NOT EXISTS (
+          SELECT 1 FROM tenants t WHERE t."ownerId" = u.id
+            AND (t.id <> i."tenantId" OR i.role <> 'admin')
+        )
+        AND EXISTS (SELECT 1 FROM tenants t WHERE t.id = i."tenantId")
+    ), consumed AS (
+      UPDATE team_invites i SET status = 'accepted', "acceptedAt" = now()
+      FROM eligible e WHERE i.id = e.id AND i.status = 'pending'
+      RETURNING i."tenantId", i.role
+    ), switched AS (
+      UPDATE users u SET "tenantId" = c."tenantId", role = c.role
+      FROM consumed c WHERE u.id = ${userId}
+      RETURNING u."tenantId", u.role
+    ) SELECT "tenantId", role::text AS role, 'accepted'::text AS reason FROM switched
+    UNION ALL SELECT NULL::integer, NULL::text,
+      CASE
+        WHEN NOT EXISTS (SELECT 1 FROM locked_invite) THEN 'unavailable'
+        WHEN NOT EXISTS (
+          SELECT 1 FROM acting_user u CROSS JOIN locked_invite i
+          WHERE u."emailVerified" IS TRUE AND lower(btrim(u.email)) = lower(btrim(i.email))
+        ) THEN 'email'
+        ELSE 'owner'
+      END
+      WHERE NOT EXISTS (SELECT 1 FROM switched)
+  `);
+  return result.rows[0];
 }

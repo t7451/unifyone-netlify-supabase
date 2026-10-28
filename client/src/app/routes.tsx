@@ -2,6 +2,7 @@ import { lazy, type ReactNode } from "react";
 import { Route, Switch, useLocation } from "wouter";
 
 import LoadingExperience from "../components/LoadingExperience";
+import { Button } from "../components/ui/button";
 import { useAuth } from "../_core/hooks/useAuth";
 import DashboardLayout from "../components/DashboardLayout";
 import { getLoginUrl } from "../const";
@@ -39,6 +40,7 @@ const AdvancedSettings = lazy(
   () => import("../pages/settings/AdvancedSettings")
 );
 const TenantSetup = lazy(() => import("../pages/TenantSetup"));
+const JoinTeam = lazy(() => import("../pages/JoinTeam"));
 const Checkout = lazy(() => import("../pages/Checkout"));
 const PlanCheckout = lazy(() => import("../pages/PlanCheckout"));
 const BillingSuccess = lazy(() => import("../pages/BillingSuccess"));
@@ -172,7 +174,7 @@ const ClipsToolkit = lazy(() => import("../pages/ClipsToolkit"));
 const ClipsToolkitSuccess = lazy(() => import("../pages/ClipsToolkitSuccess"));
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, error, refresh } = useAuth();
 
   if (loading) {
     return (
@@ -185,10 +187,24 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
     );
   }
 
+  if (error && !isAuthenticated) {
+    return (
+      <main className="workspace-shell flex min-h-screen items-center justify-center p-6">
+        <div role="alert" className="max-w-md space-y-4">
+          <h1 className="text-2xl font-semibold">
+            Your session could not be checked
+          </h1>
+          <p>Please retry before signing in again.</p>
+          <Button onClick={() => refresh()}>Retry session</Button>
+        </div>
+      </main>
+    );
+  }
+
   if (!isAuthenticated) {
     const returnTo =
       window.location.pathname && window.location.pathname !== "/login"
-        ? `?returnTo=${encodeURIComponent(window.location.pathname)}`
+        ? `?returnTo=${encodeURIComponent(window.location.pathname + window.location.search + window.location.hash)}`
         : "";
     window.location.href = `${getLoginUrl()}${returnTo}`;
     return null;
@@ -223,6 +239,19 @@ function TenantGuard({ children }: { children: ReactNode }) {
   }
 
   if (!hasTenant) {
+    if (tenants.isError) {
+      return (
+        <main className="workspace-shell flex min-h-screen items-center justify-center p-6">
+          <div role="alert" className="max-w-md space-y-4">
+            <h1 className="text-2xl font-semibold">
+              Your workspace could not be loaded
+            </h1>
+            <p>Your saved workspace has not been changed.</p>
+            <Button onClick={() => tenants.refetch()}>Retry workspace</Button>
+          </div>
+        </main>
+      );
+    }
     navigate("/setup");
     return null;
   }
@@ -259,6 +288,8 @@ export function AppRoutes() {
         <Route path="/auth/callback" component={() => <AuthCallback />} />
         <Route path="/reset-password" component={() => <ResetPassword />} />
         <Route path="/verify-email" component={() => <VerifyEmail />} />
+        <Route path="/join" component={() => <JoinTeam />} />
+        <Route path="/accept-invite" component={() => <JoinTeam />} />
         <Route path="/pricing" component={() => <Pricing />} />
         <Route path="/about" component={() => <About />} />
         <Route path="/press" component={() => <Press />} />

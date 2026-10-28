@@ -1,6 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function recordsFixture(page: Page, mileageUnavailable = false) {
+async function recordsFixture(
+  page: Page,
+  mileageUnavailable = false,
+  failComparisons = false
+) {
   await page.route("**/api/events**", route => route.abort());
   await page.route("**/api/trpc/**", async route => {
     const url = new URL(route.request().url());
@@ -33,6 +37,16 @@ async function recordsFixture(page: Page, mileageUnavailable = false) {
           totalHours: 10,
           avgPerHour: 25,
           taxDeduction: 812.34,
+        };
+      if (path === "moneyManager.getShiftBreakdown" && failComparisons)
+        return {
+          error: {
+            json: {
+              message: "Comparisons unavailable",
+              code: -32603,
+              data: { code: "INTERNAL_SERVER_ERROR", httpStatus: 500, path },
+            },
+          },
         };
       if (path === "moneyManager.getShiftBreakdown")
         data = {
@@ -72,6 +86,9 @@ async function recordsFixture(page: Page, mileageUnavailable = false) {
       ),
     });
   });
+  return () => {
+    failComparisons = false;
+  };
 }
 
 test("keeps actual deduction estimates without invented averages, missed deductions or a fixed rate", async ({
@@ -124,4 +141,26 @@ test("does not turn an unavailable mileage response into a zero deduction", asyn
     timeout: 20000,
   });
   await expect(widget.getByText("$0.00", { exact: true })).toHaveCount(0);
+});
+
+test("failed comparisons have an actual retry instead of a no-shifts empty state", async ({
+  page,
+}) => {
+  const recover = await recordsFixture(page, false, true);
+  await page.goto("/gig-command");
+  const widget = page
+    .getByText("GigIQ Intelligence", { exact: true })
+    .locator("xpath=../../..");
+  await expect(
+    widget.getByText(/Platform comparisons could not be loaded/)
+  ).toBeVisible();
+  await expect(
+    widget.getByText("No shifts logged yet", { exact: true })
+  ).toHaveCount(0);
+  recover();
+  await widget.getByRole("button", { name: "Retry comparisons" }).click();
+  await expect(widget.getByText("$812.34", { exact: true })).toBeVisible();
+  await expect(
+    widget.getByText("Platform ranking", { exact: true })
+  ).toBeVisible();
 });

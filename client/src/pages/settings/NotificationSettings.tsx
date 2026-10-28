@@ -6,6 +6,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -73,6 +74,9 @@ export default function NotificationSettings() {
                 {prefs.error?.message ||
                   "Could not connect to the server. Please try again later."}
               </p>
+              <Button variant="outline" onClick={() => void prefs.refetch()}>
+                Retry preferences
+              </Button>
             </div>
           </CardContent>
         </Card>

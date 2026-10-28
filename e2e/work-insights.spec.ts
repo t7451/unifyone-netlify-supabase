@@ -36,12 +36,14 @@ async function fixture(
   mode: "loaded" | "empty" | "error" = "loaded"
 ) {
   let shouldFail = mode === "error";
+  const queries: Record<string, unknown>[] = [];
   await page.route("**/api/events**", route => route.abort());
   await page.route("**/api/trpc/**", async route => {
     const url = new URL(route.request().url());
     const paths = url.pathname.split("/api/trpc/")[1].split(",");
     let status = 200;
-    const responses = paths.map(path => {
+    const inputs = JSON.parse(url.searchParams.get("input") ?? "{}");
+    const responses = paths.map((path, index) => {
       let data: unknown = null;
       if (path === "auth.me")
         data = {
@@ -59,6 +61,7 @@ async function fixture(
         data = [];
       if (path === "notifications.unreadCount") data = { count: 0 };
       if (path === "workInsights.summary") {
+        queries.push(inputs[index]?.json ?? inputs.json ?? {});
         if (shouldFail) {
           status = 500;
           return {
@@ -93,6 +96,7 @@ async function fixture(
     });
   });
   return {
+    queries,
     recover: () => {
       shouldFail = false;
     },
@@ -257,5 +261,22 @@ test("switches saved expense modes without counting fuel and mileage costs twice
   await page.getByRole("radio", { name: /^Mileage cost estimate/ }).check();
   await expect(
     page.getByRole("heading", { name: "-$145.00", exact: true })
+  ).toBeVisible();
+});
+
+test("an overnight tab updates its expense reporting date at the local month boundary", async ({
+  page,
+}) => {
+  await page.clock.install({ time: new Date("2026-10-31T23:59:50Z") });
+  const state = await fixture(page);
+  await page.goto("/work-insights");
+  await expect(
+    page.getByRole("heading", { name: "$191.25", exact: true })
+  ).toBeVisible();
+  expect(state.queries.at(-1)?.asOfDate).toBe("2026-10-31");
+  await page.clock.runFor(10_010);
+  await expect.poll(() => state.queries.at(-1)?.asOfDate).toBe("2026-11-01");
+  await expect(
+    page.getByText(/month or year through 2026-11-01/)
   ).toBeVisible();
 });

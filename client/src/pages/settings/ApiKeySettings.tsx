@@ -25,7 +25,8 @@ export default function ApiKeySettings() {
   const [keyInput, setKeyInput] = useState("");
   const utils = trpc.useUtils();
 
-  const { data, isLoading } = trpc.apiKeys.list.useQuery();
+  const keysQuery = trpc.apiKeys.list.useQuery();
+  const { data, isLoading } = keysQuery;
   const openRouterKey = data?.keys.find(k => k.provider === "openrouter");
 
   const saveMutation = trpc.apiKeys.save.useMutation({
@@ -70,7 +71,17 @@ export default function ApiKeySettings() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {isLoading ? (
+            {keysQuery.isError ? (
+              <div role="alert" className="space-y-3">
+                <p>Could not load your API keys</p>
+                <Button
+                  variant="outline"
+                  onClick={() => void keysQuery.refetch()}
+                >
+                  Retry API keys
+                </Button>
+              </div>
+            ) : isLoading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading your keys…
@@ -138,7 +149,10 @@ export default function ApiKeySettings() {
                     })
                   }
                   disabled={
-                    keyInput.trim().length < 20 || saveMutation.isPending
+                    keysQuery.isError ||
+                    isLoading ||
+                    keyInput.trim().length < 20 ||
+                    saveMutation.isPending
                   }
                 >
                   {saveMutation.isPending ? (

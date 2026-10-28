@@ -130,3 +130,60 @@ describe("accountant records CSV formatting", () => {
     );
   });
 });
+
+it("exports unknown work duration as Not supplied while preserving a measured zero and full short duration", () => {
+  const input = report();
+  const row = {
+    source: "timer" as const,
+    date: "2026-10-01T12:00:00Z",
+    platform: "Short work",
+    durationHours: 1 / 60,
+    grossDollars: 60,
+    tipsDollars: 0,
+    bonusesDollars: 0,
+    totalDollars: 60,
+    miles: 0,
+    perHourDollars: 3600,
+  };
+  input.shifts = [
+    row,
+    {
+      ...row,
+      platform: "Missing duration",
+      durationHours: null,
+      perHourDollars: null,
+    },
+    {
+      ...row,
+      platform: "Measured zero",
+      durationHours: 0,
+      perHourDollars: null,
+    },
+  ];
+  const csv = buildAccountantRecordsCsv(input);
+  expect(csv).toContain("timer,Short work,0.016666666666666666,60.00");
+  expect(csv).toContain("timer,Missing duration,Not supplied,60.00");
+  expect(csv).toContain("timer,Measured zero,0,60.00");
+});
+
+it("marks unknown imported miles without replacing an actual zero", () => {
+  const input = report();
+  const row = {
+    id: 1,
+    batchId: 2,
+    date: "2026-10-01T00:00:00Z",
+    platform: "Missing miles",
+    grossDollars: 10,
+    tipsDollars: 0,
+    bonusesDollars: 0,
+    totalDollars: 10,
+    miles: null,
+    durationHours: null,
+  };
+  input.imports = [row, { ...row, id: 2, platform: "Zero miles", miles: 0 }];
+  const csv = buildAccountantRecordsCsv(input);
+  expect(csv).toContain(
+    "Missing miles,Not supplied,10.00,0.00,0.00,10.00,Not supplied"
+  );
+  expect(csv).toContain("Zero miles,Not supplied,10.00,0.00,0.00,10.00,0");
+});

@@ -146,10 +146,11 @@ export default function Customers() {
     (customerOrders.data as CustomerOrderSummary[] | undefined) ?? [];
 
   useEffect(() => {
-    if (page > totalPages) {
+    // A new page has no data while loading; its fallback page count is not a result.
+    if (customers.data && !customers.isFetching && page > totalPages) {
       setPage(1);
     }
-  }, [page, totalPages]);
+  }, [page, totalPages, customers.data, customers.isFetching]);
 
   function openProfile(c: CustomerListItem) {
     setSelectedCustomer(c);
@@ -158,6 +159,7 @@ export default function Customers() {
 
   function openEdit(c: CustomerListItem) {
     setSelectedCustomer(c);
+    setTagInput("");
     setFirstName(c.firstName ?? "");
     setLastName(c.lastName ?? "");
     setPhone(c.phone ?? "");
@@ -190,16 +192,17 @@ export default function Customers() {
     if (!selectedCustomer) return;
     updateCustomer.mutate({
       id: selectedCustomer.id,
-      firstName: firstName || undefined,
-      lastName: lastName || undefined,
-      phone: phone || undefined,
+      firstName,
+      lastName,
+      phone,
       tags,
       address: {
-        line1: addrLine1 || undefined,
-        city: addrCity || undefined,
-        state: addrState || undefined,
-        zip: addrZip || undefined,
-        country: addrCountry || undefined,
+        ...selectedCustomer.address,
+        line1: addrLine1,
+        city: addrCity,
+        state: addrState,
+        zip: addrZip,
+        country: addrCountry,
       },
     });
   }
@@ -644,16 +647,28 @@ export default function Customers() {
       </Dialog>
 
       {/* Edit Modal */}
-      <Dialog open={showEdit} onOpenChange={setShowEdit}>
+      <Dialog
+        open={showEdit}
+        onOpenChange={open => !updateCustomer.isPending && setShowEdit(open)}
+      >
         <DialogContent className="max-w-lg bg-card border-border text-foreground max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Customer</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <fieldset
+            disabled={updateCustomer.isPending}
+            className="space-y-4 min-w-0"
+          >
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-gray-300 text-sm">First Name</Label>
+                <Label
+                  htmlFor="customer-edit-firstName"
+                  className="text-gray-300 text-sm"
+                >
+                  First Name
+                </Label>
                 <Input
+                  id="customer-edit-firstName"
                   value={firstName}
                   onChange={e => setFirstName(e.target.value)}
                   className="bg-muted/40 border-border text-foreground"
@@ -661,8 +676,14 @@ export default function Customers() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-gray-300 text-sm">Last Name</Label>
+                <Label
+                  htmlFor="customer-edit-lastName"
+                  className="text-gray-300 text-sm"
+                >
+                  Last Name
+                </Label>
                 <Input
+                  id="customer-edit-lastName"
                   value={lastName}
                   onChange={e => setLastName(e.target.value)}
                   className="bg-muted/40 border-border text-foreground"
@@ -671,8 +692,14 @@ export default function Customers() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-gray-300 text-sm">Phone</Label>
+              <Label
+                htmlFor="customer-edit-phone"
+                className="text-gray-300 text-sm"
+              >
+                Phone
+              </Label>
               <Input
+                id="customer-edit-phone"
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 className="bg-muted/40 border-border text-foreground"
@@ -681,8 +708,14 @@ export default function Customers() {
             </div>
             <Separator className="bg-muted/40" />
             <div className="space-y-2">
-              <Label className="text-gray-300 text-sm">Address</Label>
+              <Label
+                htmlFor="customer-edit-addrLine1"
+                className="text-gray-300 text-sm"
+              >
+                Address
+              </Label>
               <Input
+                id="customer-edit-addrLine1"
                 value={addrLine1}
                 onChange={e => setAddrLine1(e.target.value)}
                 className="bg-muted/40 border-border text-foreground"
@@ -690,18 +723,21 @@ export default function Customers() {
               />
               <div className="grid grid-cols-3 gap-2">
                 <Input
+                  aria-label="City"
                   value={addrCity}
                   onChange={e => setAddrCity(e.target.value)}
                   className="bg-muted/40 border-border text-foreground"
                   placeholder="City"
                 />
                 <Input
+                  aria-label="State"
                   value={addrState}
                   onChange={e => setAddrState(e.target.value)}
                   className="bg-muted/40 border-border text-foreground"
                   placeholder="State"
                 />
                 <Input
+                  aria-label="ZIP"
                   value={addrZip}
                   onChange={e => setAddrZip(e.target.value)}
                   className="bg-muted/40 border-border text-foreground"
@@ -709,6 +745,7 @@ export default function Customers() {
                 />
               </div>
               <Input
+                aria-label="Country"
                 value={addrCountry}
                 onChange={e => setAddrCountry(e.target.value)}
                 className="bg-muted/40 border-border text-foreground"
@@ -717,9 +754,15 @@ export default function Customers() {
             </div>
             <Separator className="bg-muted/40" />
             <div className="space-y-2">
-              <Label className="text-gray-300 text-sm">Tags</Label>
+              <Label
+                htmlFor="customer-edit-tagInput"
+                className="text-gray-300 text-sm"
+              >
+                Tags
+              </Label>
               <div className="flex gap-2">
                 <Input
+                  id="customer-edit-tagInput"
                   value={tagInput}
                   onChange={e => setTagInput(e.target.value)}
                   onKeyDown={e =>
@@ -758,10 +801,11 @@ export default function Customers() {
                 </div>
               )}
             </div>
-          </div>
+          </fieldset>
           <DialogFooter>
             <Button
               variant="outline"
+              disabled={updateCustomer.isPending}
               onClick={() => setShowEdit(false)}
               className="border-border text-gray-300"
             >

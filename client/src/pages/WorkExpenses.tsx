@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { TRPCClientError } from "@trpc/client";
 import { Download, Plus, Receipt, Trash2 } from "lucide-react";
@@ -57,8 +57,10 @@ function validDate(value: string) {
 // Escape quotes and spreadsheet formulas, including formulas after whitespace.
 const csvCell = (value: unknown) => {
   const text = String(value ?? "");
-  const safe =
-    /^[\s]*[=+@-]/.test(text) || /^[\t\r\n]/.test(text) ? `'${text}` : text;
+  // Spreadsheet readers can strip leading control characters before evaluating.
+  // eslint-disable-next-line no-control-regex
+  const dangerousPrefix = /^[\s\u0000-\u001f]*[=+@-]|^[\u0000-\u001f]/;
+  const safe = dangerousPrefix.test(text) ? `'${text}` : text;
   return `"${safe.replaceAll('"', '""')}"`;
 };
 
@@ -87,6 +89,11 @@ export default function WorkExpenses() {
   const create = trpc.workExpenses.create.useMutation();
   const remove = trpc.workExpenses.remove.useMutation();
   const data = list.data;
+  useEffect(() => {
+    // Another tab may remove the last row of this page while it is open.
+    if (data && offset > 0 && offset >= data.totalEntries)
+      setOffset(Math.max(0, Math.floor((data.totalEntries - 1) / 25) * 25));
+  }, [data, offset]);
   const refresh = () =>
     Promise.allSettled([
       utils.workExpenses.list.invalidate(),

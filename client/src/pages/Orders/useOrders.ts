@@ -150,10 +150,11 @@ export function useOrders() {
   const orderData = orderDetail.data as OrderDetailData | undefined;
 
   useEffect(() => {
-    if (page > totalPages) {
+    // A new page has no data while loading; its fallback page count is not a result.
+    if (orders.data && !orders.isFetching && page > totalPages) {
       setPage(1);
     }
-  }, [page, totalPages]);
+  }, [page, totalPages, orders.data, orders.isFetching]);
 
   const updateStatus = trpc.orders.updateStatus.useMutation({
     onMutate: async ({ id, status, paymentStatus }) => {
@@ -186,9 +187,9 @@ export function useOrders() {
       }
       toast.error("Failed to update order status");
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       toast.success("Order status updated");
-      if (showDetail) utils.orders.get.invalidate({ id: selectedOrder?.id });
+      void utils.orders.get.invalidate({ id: variables.id });
     },
     onSettled: (_data, _err, _vars, ctx) => {
       // Always revalidate to stay in sync with the server

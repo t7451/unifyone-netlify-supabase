@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import {
   Calculator,
@@ -63,12 +63,37 @@ const FIELD_DETAILS = [
 ] as const;
 type Assumptions = Record<(typeof FIELD_DETAILS)[number]["key"], string>;
 
+function localToday() {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
 export default function WorkInsights() {
   const [costMode, setCostMode] = useState<"mileage" | "recorded">("mileage");
-  const [asOfDate] = useState(() => {
-    const date = new Date();
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-  });
+  const [asOfDate, setAsOfDate] = useState(localToday);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const updateDate = () => {
+      clearTimeout(timer);
+      setAsOfDate(localToday());
+      const nextDay = new Date();
+      nextDay.setHours(24, 0, 0, 0);
+      timer = setTimeout(
+        updateDate,
+        Math.max(1, nextDay.getTime() - Date.now())
+      );
+    };
+    const onVisible = () => {
+      if (!document.hidden) updateDate();
+    };
+    updateDate();
+    window.addEventListener("focus", updateDate);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("focus", updateDate);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
   const [period, setPeriod] = useState<Period>("month");
   const [assumptions, setAssumptions] = useState<Assumptions>({
     costPerMile: String(DEFAULT_PROFIT_SETTINGS.costPerMile),

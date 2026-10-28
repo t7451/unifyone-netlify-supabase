@@ -40,16 +40,20 @@ export const shiftsService = {
         message: "DB unavailable",
       });
 
-    const [shift] = await repo.insertShift(db, {
+    const shift = await repo.startOrResumeShift(
+      db,
       userId,
-      platform: input.platform,
-      startTime: new Date(),
-      startLat: input.startLat?.toFixed(7),
-      startLng: input.startLng?.toFixed(7),
-      status: "active",
-    });
-
-    return { id: shift.id, startTime: new Date() };
+      input.platform,
+      input.startLat,
+      input.startLng
+    );
+    if (!shift)
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message:
+          "The running shift could not be confirmed. Check shift status before retrying.",
+      });
+    return shift;
   },
 
   async endShift(
@@ -66,6 +70,34 @@ export const shiftsService = {
       notes?: string;
     }
   ) {
+    for (const [value, max] of [
+      [input.grossEarnings, 99999999.99],
+      [input.tips, 99999999.99],
+      [input.bonuses, 99999999.99],
+      [input.totalMiles, 999999.99],
+    ]) {
+      if (
+        !Number.isFinite(value) ||
+        value < 0 ||
+        value > max ||
+        value !== Number(value.toFixed(2))
+      )
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Use nonnegative amounts and miles with at most two decimal places, within the supported limits.",
+        });
+    }
+    if (
+      (input.endLat !== undefined &&
+        (!Number.isFinite(input.endLat) || Math.abs(input.endLat) > 90)) ||
+      (input.endLng !== undefined &&
+        (!Number.isFinite(input.endLng) || Math.abs(input.endLng) > 180))
+    )
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Use valid ending coordinates.",
+      });
     const db = await repo.getDb();
     if (!db)
       throw new TRPCError({
@@ -77,11 +109,38 @@ export const shiftsService = {
 
     if (!existing)
       throw new TRPCError({ code: "NOT_FOUND", message: "Shift not found" });
-    if (existing.status !== "active")
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Shift already ended",
-      });
+    const confirmReplay = async (saved: typeof existing) => {
+      const same =
+        saved.status === "completed" &&
+        Number(saved.grossEarnings) === input.grossEarnings &&
+        Number(saved.tips) === input.tips &&
+        Number(saved.bonuses) === input.bonuses &&
+        Number(saved.totalMiles) === input.totalMiles &&
+        (saved.notes ?? "") === (input.notes ?? "") &&
+        Number(saved.endLat ?? 0) === Number(input.endLat?.toFixed(7) ?? 0) &&
+        Number(saved.endLng ?? 0) === Number(input.endLng?.toFixed(7) ?? 0);
+      const date =
+        same && input.totalMiles > 0 && input.mileageDate
+          ? await repo.getOwnedShiftMileageDate(db, ctx.user.id, input.shiftId)
+          : null;
+      if (
+        !same ||
+        (input.totalMiles > 0 &&
+          input.mileageDate &&
+          (!date ||
+            new Date(date).toISOString().slice(0, 10) !== input.mileageDate))
+      )
+        throw new TRPCError({
+          code: "CONFLICT",
+          message:
+            "This shift has already ended with different details. The saved record was kept; refresh your history.",
+        });
+      return {
+        success: true as const,
+        durationMinutes: saved.durationMinutes ?? 0,
+      };
+    };
+    if (existing.status !== "active") return confirmReplay(existing);
 
     const endTime = new Date();
     const durationMinutes = Math.round(
@@ -133,54 +192,70 @@ export const shiftsService = {
       }
     }
 
-    await repo.updateOwnedShift(db, input.shiftId, ctx.user.id, {
-      endTime,
-      durationMinutes,
-      grossEarnings: input.grossEarnings.toFixed(2),
-      tips: input.tips.toFixed(2),
-      bonuses: input.bonuses.toFixed(2),
-      totalMiles: input.totalMiles.toFixed(2),
-      endLat: input.endLat?.toFixed(7),
-      endLng: input.endLng?.toFixed(7),
-      notes: input.notes,
-      status: "completed",
-    });
-
-    // Auto-log mileage if provided
-    if (input.totalMiles > 0) {
-      const deductionCents = Math.round(input.totalMiles * mileageRateCents!);
-      await repo.insertMileageLog(db, {
-        userId: ctx.user.id,
-        shiftId: input.shiftId,
-        date: mileageLoggedAt,
-        miles: input.totalMiles.toFixed(2),
-        purpose: "business",
-        irsRateCents: mileageRateCents!.toFixed(2),
-        deductionCents,
-      });
+    const committed = await repo.completeShiftWithMileage(
+      db,
+      ctx.user.id,
+      input.shiftId,
+      {
+        endTime,
+        durationMinutes,
+        grossEarnings: input.grossEarnings.toFixed(2),
+        tips: input.tips.toFixed(2),
+        bonuses: input.bonuses.toFixed(2),
+        totalMiles: input.totalMiles.toFixed(2),
+        endLat: input.endLat?.toFixed(7),
+        endLng: input.endLng?.toFixed(7),
+        notes: input.notes,
+      },
+      input.totalMiles > 0
+        ? {
+            date: mileageLoggedAt,
+            miles: input.totalMiles.toFixed(2),
+            irsRateCents: mileageRateCents!.toFixed(2),
+            deductionCents: Math.round(input.totalMiles * mileageRateCents!),
+          }
+        : null
+    );
+    if (!committed) {
+      const [saved] = await repo.getOwnedShift(db, input.shiftId, ctx.user.id);
+      if (!saved)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Shift not found" });
+      return confirmReplay(saved);
     }
 
     // Award points
-    await awardPoints(
-      db,
-      ctx.user.id,
-      "shift_completed",
-      POINTS.shift_completed,
-      `Completed ${existing.platform} shift — $${input.grossEarnings.toFixed(2)} earned`,
-      String(input.shiftId)
-    );
+    try {
+      await awardPoints(
+        db,
+        ctx.user.id,
+        "shift_completed",
+        POINTS.shift_completed,
+        `Completed ${existing.platform} shift — $${input.grossEarnings.toFixed(2)} earned`,
+        String(input.shiftId)
+      );
+    } catch {
+      console.warn("Shift saved; points could not be updated.");
+    }
 
     // Push a real-time shift_update so the operator's earnings/stats refresh
     // instantly without a manual refetch.
-    broadcastToUser(ctx.user.id, "shift_update", {
-      shiftId: input.shiftId,
-      status: "completed",
-      grossEarnings: input.grossEarnings,
-      durationMinutes,
-    });
+    try {
+      broadcastToUser(ctx.user.id, "shift_update", {
+        shiftId: input.shiftId,
+        status: "completed",
+        grossEarnings: input.grossEarnings,
+        durationMinutes,
+      });
+    } catch {
+      console.warn("Shift saved; live update could not be sent.");
+    }
 
     // Auto-detect friend challenge completion after shift progress updates.
-    await checkAndResolveFriendChallengesForUser(ctx.user.id);
+    try {
+      await checkAndResolveFriendChallengesForUser(ctx.user.id);
+    } catch {
+      console.warn("Shift saved; challenges could not be refreshed.");
+    }
 
     // Fire Meta CAPI GigShiftCompleted event (non-blocking)
     try {

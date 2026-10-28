@@ -229,3 +229,45 @@ it("can revoke an existing Argyle connection after its Link flow or encryption k
   );
   expect(repo.deleteConnection).toHaveBeenCalledWith(7, "connection");
 });
+
+it("removes an unlinked owned placeholder when no provider setup remains, without an upstream call", async () => {
+  repo.acquireLease.mockResolvedValue({
+    connection: {
+      ...connection(),
+      provider: "argyle",
+      externalId: null,
+      encryptedToken: null,
+      status: "linking",
+    },
+    lease: "lease",
+  });
+  provider.providerCredentialsReady.mockReturnValue(false);
+  provider.providerEnvironment.mockImplementation(() => {
+    throw new Error("not configured");
+  });
+  vi.stubEnv("FINANCIAL_TOKEN_ENC_KEY", "");
+  await expect(service.disconnect(7, "connection")).resolves.toEqual({
+    disconnected: true,
+  });
+  expect(repo.acquireLease).toHaveBeenCalledWith(7, "connection", true);
+  expect(provider.revokeProvider).not.toHaveBeenCalled();
+  expect(provider.providerEnvironment).not.toHaveBeenCalled();
+  expect(repo.deleteConnection).toHaveBeenCalledWith(7, "connection");
+});
+it("keeps an actually linked connection when credentials cannot confirm upstream revocation", async () => {
+  repo.acquireLease.mockResolvedValue({
+    connection: connection(),
+    lease: "lease",
+  });
+  provider.providerCredentialsReady.mockReturnValue(false);
+  await expect(service.disconnect(7, "connection")).rejects.toMatchObject({
+    code: "PRECONDITION_FAILED",
+  });
+  expect(repo.deleteConnection).not.toHaveBeenCalled();
+  expect(repo.releaseLease).toHaveBeenCalledWith(
+    7,
+    "connection",
+    "lease",
+    "disconnect_failed"
+  );
+});
